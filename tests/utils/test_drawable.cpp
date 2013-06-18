@@ -81,7 +81,7 @@ void dump_png(const char * prefix, const Drawable & data)
     sprintf(tmpname, "%sXXXXXX.png", prefix);
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
     FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, data.data, data.width, data.height, data.rowsize);
+    ::dump_png24(f, data.data, data.width, data.height, data.rowsize, false);
     ::fclose(f);
 }
 

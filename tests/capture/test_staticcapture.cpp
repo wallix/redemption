@@ -50,10 +50,11 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     Inifile ini;
     ini.video.png_limit = 3;
     ini.video.png_interval = 20;
-    StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini);
+    RDPDrawable drawable(800, 600, false);
+    StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini, drawable.drawable);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
-    consumer.draw(cmd, screen_rect);
+    drawable.draw(cmd, screen_rect);
     consumer.snapshot(now, 10, 10, true, false);
     now.tv_sec++;
     consumer.snapshot(now, 10, 10, true, false);
@@ -64,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     now.tv_sec++;
 
     RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), BLUE);
-    consumer.draw(cmd1, screen_rect);
+    drawable.draw(cmd1, screen_rect);
     consumer.snapshot(now, 10, 10, true, false);
     now.tv_sec++;
     consumer.snapshot(now, 10, 10, true, false);

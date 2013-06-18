@@ -37,7 +37,8 @@ static inline void png_flush_data(png_structp png_ptr){
 static inline void transport_dump_png24(Transport * trans, const uint8_t * data,
                             const size_t width,
                             const size_t height,
-                            const size_t rowsize)
+                            const size_t rowsize,
+                            const bool bgr)
 {
     png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_set_write_fn(ppng, trans, &png_write_data, &png_flush_data);
@@ -53,10 +54,36 @@ static inline void transport_dump_png24(Transport * trans, const uint8_t * data,
     // send image buffer to file, one pixel row at once
     const uint8_t * row = data;
     for (size_t k = 0 ; k < height ; ++k) {
-        png_write_row(ppng, (unsigned char*)row);
+        if (bgr){
+            uint32_t bgrtmp[8192];
+            const uint32_t * s = reinterpret_cast<const uint32_t*>(row);
+            uint32_t * t = bgrtmp;
+            for (size_t n = 0; n < (width / 4) ; n++){
+                unsigned bRGB = *s++;
+                unsigned GBrg = *s++;
+                unsigned rgbR = *s++;
+                *t++ = ((GBrg << 16) & 0xFF000000)
+                   | ((bRGB << 16) & 0x00FF0000)
+                   | (bRGB         & 0x0000FF00)
+                   | ((bRGB >> 16) & 0x000000FF) ;
+                *t++ = (GBrg         & 0xFF000000)
+                   | ((rgbR << 16) & 0x00FF0000)
+                   | ((bRGB >> 16) & 0x0000FF00)
+                   | ( GBrg        & 0x000000FF) ;
+                *t++ = ((rgbR << 16) & 0xFF000000)
+                   | (rgbR         & 0x00FF0000)
+                   | ((rgbR >> 16) & 0x0000FF00)
+                   | ((GBrg >> 16) & 0x000000FF) ;
+            }
+            png_write_row(ppng, (unsigned char*)bgrtmp);
+        }
+        else {
+            png_write_row(ppng, (unsigned char*)row);
+        }
         row += rowsize;
     }
     png_write_end(ppng, pinfo);
+    
     trans->flush();
     png_destroy_write_struct(&ppng, &pinfo);
     // commented line below it to create row capture
@@ -67,7 +94,8 @@ static inline void transport_dump_png24(Transport * trans, const uint8_t * data,
 static inline void dump_png24(FILE * fd, const uint8_t * data,
                             const size_t width,
                             const size_t height,
-                            const size_t rowsize)
+                            const size_t rowsize,
+                            const bool bgr)
 {
     png_struct * ppng = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     png_info * pinfo = png_create_info_struct(ppng);
@@ -83,8 +111,34 @@ static inline void dump_png24(FILE * fd, const uint8_t * data,
 
     // send image buffer to file, one pixel row at once
     const uint8_t * row = data;
+
     for (size_t k = 0 ; k < height ; ++k) {
-        png_write_row(ppng, (unsigned char*)row);
+        if (bgr){
+            uint32_t bgrtmp[8192];
+            const uint32_t * s = reinterpret_cast<const uint32_t*>(row);
+            uint32_t * t = bgrtmp;
+            for (size_t n = 0; n < (width / 4) ; n++){
+                unsigned bRGB = *s++;
+                unsigned GBrg = *s++;
+                unsigned rgbR = *s++;
+                *t++ = ((GBrg << 16) & 0xFF000000)
+                   | ((bRGB << 16) & 0x00FF0000)
+                   | (bRGB         & 0x0000FF00)
+                   | ((bRGB >> 16) & 0x000000FF) ;
+                *t++ = (GBrg         & 0xFF000000)
+                   | ((rgbR << 16) & 0x00FF0000)
+                   | ((bRGB >> 16) & 0x0000FF00)
+                   | ( GBrg        & 0x000000FF) ;
+                *t++ = ((rgbR << 16) & 0xFF000000)
+                   | (rgbR         & 0x00FF0000)
+                   | ((rgbR >> 16) & 0x0000FF00)
+                   | ((GBrg >> 16) & 0x000000FF) ;
+            }
+            png_write_row(ppng, (unsigned char*)bgrtmp);
+        }
+        else {
+            png_write_row(ppng, (unsigned char*)row);
+        }
         row += rowsize;
     }
     png_write_end(ppng, pinfo);

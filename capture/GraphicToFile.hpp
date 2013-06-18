@@ -220,7 +220,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
         ::transport_dump_png24(&png_trans, this->drawable->drawable.data,
                      this->drawable->drawable.width, this->drawable->drawable.height,
-                     this->drawable->drawable.rowsize
+                     this->drawable->drawable.rowsize,
+                     false
                     );
     }
 

@@ -70,8 +70,8 @@ public:
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
 
-    StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, bool clear_png, const Inifile & ini)
-    : ImageCapture(trans, width, height)
+    StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, bool clear_png, const Inifile & ini, Drawable & drawable)
+    : ImageCapture(trans, width, height, drawable)
     , clear_png(clear_png)
     , seq(seq)
     {
@@ -140,10 +140,6 @@ public:
     }
 
     virtual void flush()
-    {
-    }
-
-    void glyph_index(const RDPGlyphIndex & glyph_index, const Rect & clip)
     {
     }
 };

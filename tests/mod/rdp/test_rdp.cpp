@@ -259,7 +259,7 @@
             sprintf(tmpname, "%sXXXXXX.png", prefix);
             int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
             FILE * f = fdopen(fd, "wb");
-            ::dump_png24(f, this->gd.drawable.data, this->gd.drawable.width, this->gd.drawable.height, this->gd.drawable.rowsize);
+            ::dump_png24(f, this->gd.drawable.data, this->gd.drawable.width, this->gd.drawable.height, this->gd.drawable.rowsize, false);
             ::fclose(f);
         }
 

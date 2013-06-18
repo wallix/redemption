@@ -47,7 +47,7 @@ public:
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
     Capture(const timeval & now, int width, int height, const char * wrm_path, const char * png_path, const char * hash_path, const char * basename, bool clear_png, const Inifile & ini)
       : capture_wrm(ini.video.capture_wrm)
-      , capture_drawable(ini.video.capture_wrm)
+      , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
       , capture_png(ini.video.png_limit > 0)
       , enable_file_encryption(ini.globals.enable_file_encryption)
       , png_trans(NULL)
@@ -58,17 +58,17 @@ public:
       , pnc(NULL)
       , drawable(NULL)
     {
+        if (this->capture_drawable){
+            this->drawable = new RDPDrawable(width, height, false);
+        }
+
         if (this->capture_png){
             if (recursive_create_directory(png_path, S_IRWXU|S_IRWXG, ini.video.capture_groupid) != 0) {
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", png_path);
             }
 
             this->png_trans = new OutFilenameTransport(SQF_PATH_FILE_PID_COUNT_EXTENSION, png_path, basename, ".png", ini.video.capture_groupid);
-            this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, clear_png, ini);
-        }
-
-        if (this->capture_drawable){
-            this->drawable = new RDPDrawable(width, height, false);
+            this->psc = new StaticCapture(now, *this->png_trans, &(this->png_trans->seq), width, height, clear_png, ini, this->drawable->drawable);
         }
 
         if (this->capture_wrm){
@@ -159,9 +159,6 @@ public:
         if (this->capture_drawable){
             this->drawable->set_row(rownum, data);
         }
-        if (this->capture_png){ 
-            this->psc->set_row(rownum, data);
-        }
         if (this->capture_wrm){
             this->pnc->set_row(rownum, data);
         }
@@ -178,9 +175,6 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
         }
-        if (this->capture_png){
-            this->psc->draw(cmd, clip);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
         }
@@ -190,9 +184,6 @@ public:
     {
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
-        }
-        if (this->capture_png){
-            this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
@@ -204,9 +195,6 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
         }
-        if (this->capture_png){
-            this->psc->draw(cmd, clip);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
         }
@@ -216,9 +204,6 @@ public:
     {
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip, bmp);
-        }
-        if (this->capture_png){
-            this->psc->draw(cmd, clip, bmp);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip, bmp);
@@ -230,9 +215,6 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip, bmp);
         }
-        if (this->capture_png){
-            this->psc->draw(cmd, clip, bmp);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip, bmp);
         }
@@ -242,9 +224,6 @@ public:
     {
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
-        }
-        if (this->capture_png){
-            this->psc->draw(cmd, clip);
         }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
@@ -256,9 +235,6 @@ public:
         if (this->capture_drawable){
             this->drawable->draw(cmd, clip);
         }
-        if (this->capture_png){ 
-            this->psc->draw(cmd, clip);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
         }
@@ -266,18 +242,12 @@ public:
 
     void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-//        this->psc->glyph_index(cmd, clip);
-//        this->drawable->draw(cmd, clip);
-//        this->pnc->glyph_index(cmd, clip);
     }
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
         if (this->capture_drawable) {
             this->drawable->draw(bitmap_data, data, size, bmp);
-        }
-        if (this->capture_png) {
-            this->psc->draw(bitmap_data, data, size, bmp);
         }
         if (this->capture_wrm) {
             this->pnc->draw(bitmap_data, data, size, bmp);

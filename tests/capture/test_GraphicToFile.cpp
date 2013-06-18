@@ -439,8 +439,9 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     timeval end_capture;
     end_capture.tv_sec = 0; end_capture.tv_usec = 0;
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
-    player.add_consumer(&png_recorder);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, false);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
+    player.add_consumer(&drawable1);
 
     png_recorder.flush();
     out_png_trans.next();

@@ -158,7 +158,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 
     ::transport_dump_png24(&png_trans, consumer.drawable->drawable.data,
                  consumer.drawable->drawable.width, consumer.drawable->drawable.height,
-                 consumer.drawable->drawable.rowsize
+                 consumer.drawable->drawable.rowsize,
+                 false
                 );
 }
 
@@ -237,7 +238,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
     ::transport_dump_png24(&png_trans, consumer.drawable->drawable.data,
                  consumer.drawable->drawable.width, consumer.drawable->drawable.height,
-                 consumer.drawable->drawable.rowsize
+                 consumer.drawable->drawable.rowsize,
+                 false
                 );
 }
 
@@ -268,7 +270,8 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
     OutFilenameTransport png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
-                 d.drawable.rowsize
+                 d.drawable.rowsize,
+                 false
                 );
     sq_outfilename_unlink(&(png_trans.seq), 0);
 }
@@ -325,12 +328,13 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     ::transport_read_png24(&chunk_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
-                );
+                 );
     const int groupid = 0;
     OutFilenameTransport png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
     ::transport_dump_png24(&png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
-                 d.drawable.rowsize
+                 d.drawable.rowsize,
+                 false
                 );
     sq_outfilename_unlink(&(png_trans.seq), 0);
 }
@@ -391,15 +395,17 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, false);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
-    player.add_consumer(&png_recorder);
+    player.add_consumer(&drawable);
     BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    TODO("check this: I changed 107 to 108 to fix png color bgr/rgb")
+    BOOST_CHECK_EQUAL(108, sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 }
 
@@ -460,23 +466,25 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, false);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
     OutFilenameTransport second_out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
-    ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
+    ImageCapture second_png_recorder(second_out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
-    player.add_consumer(&png_recorder);
-    player.add_consumer(&second_png_recorder);
-    BOOST_CHECK_EQUAL(2, player.nbconsumers);
+    player.add_consumer(&drawable1);
+    BOOST_CHECK_EQUAL(1, player.nbconsumers);
     while (player.next_order()){
         player.interpret_order();
     }
     png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    TODO("check this: I changed 107 to 108 to fix png color bgr/rgb")
+    BOOST_CHECK_EQUAL(108, sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 
     second_png_recorder.flush();
-    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(second_out_png_trans.seq), 0));
+    TODO("check this: I changed 107 to 108 to fix png color bgr/rgb")
+    BOOST_CHECK_EQUAL(108, sq_outfilename_filesize(&(second_out_png_trans.seq), 0));
     sq_outfilename_unlink(&(second_out_png_trans.seq), 0);
 }
 
@@ -538,15 +546,17 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, false);
+    ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
-    player.add_consumer(&png_recorder);
+    player.add_consumer(&drawable);
     while (player.next_order()){
         player.interpret_order();
     }
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
 
-    BOOST_CHECK_EQUAL((unsigned)107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    TODO("check this: I changed 107 to 108 to fix png color bgr/rgb")
+    BOOST_CHECK_EQUAL((unsigned)108, sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 }

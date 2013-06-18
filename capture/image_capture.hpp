@@ -48,22 +48,22 @@
 
 #include "RDP/RDPDrawable.hpp"
 
-class ImageCapture : public RDPDrawable
+class ImageCapture
 {
 public:
     Transport & trans;
     unsigned zoom_factor;
     unsigned scaled_width;
     unsigned scaled_height;
+    Drawable & drawable;
 
-    TODO("RDPDrawable should be provided to Image capture, not instanciated here")
-
-    ImageCapture(Transport & trans, unsigned width, unsigned height)
-    : RDPDrawable(width, height, true)
-    , trans(trans)
+    ImageCapture(Transport & trans, unsigned width, unsigned height, Drawable & drawable)
+    : trans(trans)
     , zoom_factor(100)
     , scaled_width(width)
     , scaled_height(height)
+//    , RDPDrawable(width, height, true)
+    , drawable(drawable)
     {
     }
 
@@ -93,10 +93,12 @@ public:
         }
     }
 
+    TODO("move dump png24 to Drawable")
     void dump24(){
         ::transport_dump_png24(&this->trans, this->drawable.data,
                  this->drawable.width, this->drawable.height,
-                 this->drawable.rowsize
+                 this->drawable.rowsize,
+                 true
                 );
     }
 
@@ -109,11 +111,13 @@ public:
                    this->drawable.rowsize);
         ::transport_dump_png24(&this->trans, scaled_data,
                      this->scaled_width, this->scaled_height,
-                     this->scaled_width * 3
+                     this->scaled_width * 3,
+                     true
                     );
         free(scaled_data);
     }
 
+    TODO("move scale_data to Drawable")
     static void scale_data(uint8_t *dest, const uint8_t *src,
                             unsigned int dest_width, unsigned int src_width,
                             unsigned int dest_height, unsigned int src_height,
@@ -157,7 +161,7 @@ public:
             }
         }
     }
-
+    
 };
 
 #endif
