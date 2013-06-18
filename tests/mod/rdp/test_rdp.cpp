@@ -392,7 +392,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_rdp * mod = new mod_rdp( &t
+    struct mod_api * mod = new mod_rdp( &t
                                       , "administrateur@qa"
                                       , "S3cur3!1nux"
                                       , "10.10.9.161"
@@ -472,7 +472,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_rdp * mod = new mod_rdp( &t
+    struct mod_api * mod = new mod_rdp( &t
                                       , "administrateur"
                                       , "SecureLinux"
                                       , "0.0.0.0"
@@ -559,7 +559,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_rdp * mod = new mod_rdp( &t
+    struct mod_api * mod = new mod_rdp( &t
                                       , "administrateur"
                                       , "SecureLinux$42"
                                       , "0.0.0.0"

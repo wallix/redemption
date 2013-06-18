@@ -43,7 +43,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     general_caps.updateCapability = 6;
     general_caps.remoteUnshare = 7;
     general_caps.compressionLevel = 8;
-    general_caps.pad2 = 9;
+    general_caps.refreshRectSupport = 1;
+    general_caps.suppressOutputSupport = 1;
 
     BOOST_CHECK_EQUAL(general_caps.capabilityType, (uint16_t)CAPSTYPE_GENERAL);
     BOOST_CHECK_EQUAL(general_caps.len, (uint16_t)CAPLEN_GENERAL);
@@ -56,7 +57,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     BOOST_CHECK_EQUAL(general_caps.updateCapability, (uint16_t) 6);
     BOOST_CHECK_EQUAL(general_caps.remoteUnshare, (uint16_t) 7);
     BOOST_CHECK_EQUAL(general_caps.compressionLevel, (uint16_t) 8);
-    BOOST_CHECK_EQUAL(general_caps.pad2, (uint16_t) 9);
+    BOOST_CHECK_EQUAL(general_caps.refreshRectSupport, (uint8_t) 1);
+    BOOST_CHECK_EQUAL(general_caps.suppressOutputSupport, (uint8_t) 1);
 
     BStream stream(1024);
     general_caps.emit(stream);
@@ -82,5 +84,6 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
     BOOST_CHECK_EQUAL(general_caps2.updateCapability, (uint16_t) 6);
     BOOST_CHECK_EQUAL(general_caps2.remoteUnshare, (uint16_t) 7);
     BOOST_CHECK_EQUAL(general_caps2.compressionLevel, (uint16_t) 8);
-    BOOST_CHECK_EQUAL(general_caps2.pad2, (uint16_t) 9);
+    BOOST_CHECK_EQUAL(general_caps2.refreshRectSupport, (uint8_t) 1);
+    BOOST_CHECK_EQUAL(general_caps2.suppressOutputSupport, (uint8_t) 1);
 }
