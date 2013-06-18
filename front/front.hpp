@@ -2240,7 +2240,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                         if (  !this->ini->client.device_redirection
                            && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
                            ) {
-                            LOG(LOG_ERR, "Front::incoming::rdpdr channel disabed");
+                            LOG(LOG_INFO, "Front::incoming::rdpdr channel disabed");
                         }
                         else {
                             if (this->verbose & 16){
