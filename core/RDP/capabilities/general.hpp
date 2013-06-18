@@ -191,7 +191,9 @@ struct GeneralCaps : public Capability {
     uint16_t updateCapability;
     uint16_t remoteUnshare;
     uint16_t compressionLevel;
-    uint16_t pad2;
+    // default caplen stops here
+    uint8_t refreshRectSupport;
+    uint8_t suppressOutputSupport;
     GeneralCaps()
     : Capability(CAPSTYPE_GENERAL, CAPLEN_GENERAL)
     , os_major(OSMAJORTYPE_WINDOWS)
@@ -203,7 +205,9 @@ struct GeneralCaps : public Capability {
     , updateCapability(0)
     , remoteUnshare(0)
     , compressionLevel(0)
-    , pad2(0)
+    // for clients, the two server only fields below are padding
+    , refreshRectSupport(0)
+    , suppressOutputSupport(0)
     {
     }
 
@@ -219,8 +223,8 @@ struct GeneralCaps : public Capability {
         stream.out_uint16_le(this->updateCapability);
         stream.out_uint16_le(this->remoteUnshare);
         stream.out_uint16_le(this->compressionLevel);
-        stream.out_uint16_le(this->pad2);
-        TODO("Add support for server only flags refreshRectSupport and suppressOutputSupport")
+        stream.out_uint8(this->refreshRectSupport);
+        stream.out_uint8(this->suppressOutputSupport);
     }
 
     void recv(Stream & stream, uint16_t len) throw(Error){
@@ -228,7 +232,7 @@ struct GeneralCaps : public Capability {
 
         /* os_major(2) + os_minor(2) + protocolVersion(2) + pad1(2) + compressionType(2) +
          * extraflags(2) + updateCapability(2) + remoteUnshare(2) + compressionLevel(2) +
-         * pad2(2)
+         * + refreshRectSupport(1) + suppressOutputSupport(1)
          */
         const unsigned expected = 20;
         if (!stream.in_check_rem(expected)){
@@ -246,8 +250,8 @@ struct GeneralCaps : public Capability {
         this->updateCapability = stream.in_uint16_le();
         this->remoteUnshare = stream.in_uint16_le();
         this->compressionLevel = stream.in_uint16_le();
-        this->pad2 = stream.in_uint16_le();
-        TODO("Add support for server only flags refreshRectSupport and suppressOutputSupport")
+        this->refreshRectSupport = stream.in_uint8();
+        this->suppressOutputSupport = stream.in_uint8();
     }
 
     void log(const char * msg){
@@ -270,8 +274,8 @@ struct GeneralCaps : public Capability {
         LOG(LOG_INFO, "General caps::updateCapability %x", this->updateCapability);
         LOG(LOG_INFO, "General caps::remoteUnshare %x", this->remoteUnshare);
         LOG(LOG_INFO, "General caps::compressionLevel %x", this->compressionLevel);
-
-        TODO("Add support for server only flags refreshRectSupport and suppressOutputSupport")
+        LOG(LOG_INFO, "General caps::refreshRectSupport %x", this->refreshRectSupport);
+        LOG(LOG_INFO, "General caps::suppressOutputSupport %x", this->suppressOutputSupport);
     }
 };
 
