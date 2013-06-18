@@ -235,12 +235,14 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
             keyboard_buffer_32.mark_end();
 
+/*
             for (uint32_t i = 0, c = keyboard_buffer_32.size() / sizeof(uint32_t);
                  i < c; i++) {
                 LOG(LOG_INFO, "send_timestamp_chunk: '%c'(0x%X)",
                     (keyboard_buffer_32.data[i]<128)?(char)keyboard_buffer_32.data[i]:'?',
                     keyboard_buffer_32.data[i]);
             }
+*/
 
             payload.out_copy_bytes(keyboard_buffer_32.data, keyboard_buffer_32.size());
             keyboard_buffer_32.rewind();
