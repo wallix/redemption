@@ -106,9 +106,9 @@ namespace CHANNELS {
     // 0x0001 CB_RESPONSE_OK   Used by the Format List Response PDU, Format Data Response PDU, and File Contents Response PDU
     //                        to indicate that the associated request Format List PDU, Format Data Request PDU, and File
     //                        Contents Request PDU were processed successfully.
-    //                        
+    //
     // 0x0002 CB_RESPONSE_FAIL Used by the Format List Response PDU, Format Data Response PDU, and File Contents Response PDU
-    //                        to indicate that the associated Format List PDU, Format Data Request PDU, and File Contents 
+    //                        to indicate that the associated Format List PDU, Format Data Request PDU, and File Contents
     //                        Request PDU were not processed successfully.
 
     // 0x0004 CB_ASCII_NAMES   Used by the Short Format Name variant of the Format List Response PDU to indicate the format
@@ -152,7 +152,7 @@ namespace CHANNELS {
              , CB_TEMP_DIRECTORY        = 0x0006
              , CB_CLIP_CAPS             = 0x0007
              , CB_FILECONTENTS_REQUEST  = 0x0008
-             , CB_FILECONTENTS_RESPONSE = 0x0009 
+             , CB_FILECONTENTS_RESPONSE = 0x0009
              , CB_LOCK_CLIPDATA         = 0x000A
              , CB_UNLOCK_CLIPDATA       = 0x000B
         };
@@ -172,7 +172,7 @@ namespace CHANNELS {
         }
 
         void log(unsigned index) const {
-            LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = %8x, chanid = %u)", 
+            LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = %8x, chanid = %u)",
                 index, this->name, (unsigned)this->flags, (unsigned)this->chanid);
         }
     };

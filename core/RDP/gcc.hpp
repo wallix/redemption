@@ -478,7 +478,7 @@ namespace GCC
                     length, stream.size() - stream.get_offset());
                 throw Error(ERR_GCC);
             }
-            
+
             this->payload.resize(stream, stream.size() - stream.get_offset());
         }
     };
@@ -530,7 +530,7 @@ namespace GCC
             RecvFactory(Stream & stream) : payload(stream, stream.get_offset())
             {
                 if (!stream.in_check_rem(4)){
-                    LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");                      
+                    LOG(LOG_WARNING, "Incomplete GCC::UserData data block header");
                     throw Error(ERR_GCC);
                 }
                 this->tag = stream.in_uint16_le();
@@ -539,7 +539,7 @@ namespace GCC
                 if (!stream.in_check_rem(length - 4)){
                     LOG(LOG_WARNING, "Incomplete GCC::UserData data block"
                                      " tag=%u length=%u available_length=%u",
-                                     tag, length, stream.size() - 4);                      
+                                     tag, length, stream.size() - 4);
                     throw Error(ERR_GCC);
                 }
                 stream.in_skip_bytes(length - 4);
@@ -570,7 +570,7 @@ namespace GCC
         // Info Packet (section 2.2.1.11.1.1).
 
         // clientRequestedProtocols (4 bytes): A 32-bit, unsigned integer that contains
-        // the flags sent by the client in the requestedProtocols field of the RDP 
+        // the flags sent by the client in the requestedProtocols field of the RDP
         // Negotiation Request (section 2.2.1.1.1). In the event that an RDP Negotiation
         // Request was not received from the client, this field MUST be initialized to
         // PROTOCOL_RDP (0). If this field is not present, all of the subsequent
@@ -582,7 +582,7 @@ namespace GCC
 
         // +----------------------------------+-----------------------------------------+
         // |             0x00000001           | Indicates that the following key        |
-        // | RNS_UD_SC_EDGE_ACTIONS_SUPPORTED | combinations are reserved by the server | 
+        // | RNS_UD_SC_EDGE_ACTIONS_SUPPORTED | combinations are reserved by the server |
         // |                                  | operating system:                       |
         // |                                  |             - WIN + Z                   |
         // |                                  |             - WIN + CTRL + TAB          |
@@ -628,13 +628,13 @@ namespace GCC
 
             void emit(Stream & stream)
             {
-                if (this->length != 8 
-                && this->length != 12 
+                if (this->length != 8
+                && this->length != 12
                 && this->length != 16) {
                     LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
                     throw Error(ERR_GCC);
                 };
-            
+
                 stream.out_uint16_le(this->userDataType);
                 stream.out_uint16_le(this->length);
                 stream.out_uint32_le(this->version);
@@ -666,7 +666,7 @@ namespace GCC
                         LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
                         throw Error(ERR_GCC);
                     }
-                    return; 
+                    return;
                 }
                 this->earlyCapabilityFlags = stream.in_uint32_le();
                 if (this->length != 16) {
@@ -696,7 +696,7 @@ namespace GCC
                         LOG(LOG_ERR, "SC_CORE invalid length (%u)", this->length);
                         throw Error(ERR_GCC);
                     }
-                    return; 
+                    return;
                 }
                 LOG(LOG_INFO, "sc_core::earlyCapabilityFlags  = %u", this->earlyCapabilityFlags);
                 if (this->length != 16) {
@@ -1022,7 +1022,7 @@ namespace GCC
             uint8_t  pad1octet;
             uint32_t serverSelectedProtocol;
 
-            // we do not provide parameters in constructor, 
+            // we do not provide parameters in constructor,
             // because setting them one field at a time is more explicit and maintainable
             // (drawback: danger is different, not swapping parameters, but we may forget to define some...)
             CSCore()
@@ -1126,7 +1126,7 @@ namespace GCC
                 this->emit_optional(stream);
                 stream.mark_end();
             }
-            
+
             private:
             void emit_optional(Stream & stream)
             {
@@ -1641,7 +1641,7 @@ namespace GCC
             CSNet()
             : userDataType(CS_NET)
             , length(12)
-            , channelCount(0)            
+            , channelCount(0)
             {
             }
 
@@ -1676,7 +1676,7 @@ namespace GCC
 
                 for (size_t i = 0; i < this->channelCount ; i++){
                     uint32_t options = channelDefArray[i].options;
-                    LOG(LOG_INFO, "cs_net::channel '%*s' [%u]%s%s%s%s%s%s%s%s" 
+                    LOG(LOG_INFO, "cs_net::channel '%*s' [%u]%s%s%s%s%s%s%s%s"
                         , 8
                         , channelDefArray[i].name, GCC::MCS_GLOBAL_CHANNEL + i + 1
                         , (options & CHANNEL_OPTION_INITIALIZED)?" INITIALIZED":""
@@ -1789,7 +1789,7 @@ namespace GCC
                 LOG(LOG_INFO, "sc_net::channelCount   = %u", this->channelCount);
 
                 for (size_t i = 0; i < this->channelCount ; i++){
-                    LOG(LOG_INFO, "sc_net::channel[%u]::id = %u" 
+                    LOG(LOG_INFO, "sc_net::channel[%u]::id = %u"
                         , GCC::MCS_GLOBAL_CHANNEL + i + 1
                         , this->channelDefArray[i].id
                         );
@@ -1860,13 +1860,13 @@ namespace GCC
         // high, and FIPS encryption levels.
 
         // serverRandomLen (4 bytes): An optional 32-bit, unsigned integer that specifies
-        // the size in bytes of the serverRandom field. If the encryptionMethod and 
+        // the size in bytes of the serverRandom field. If the encryptionMethod and
         // encryptionLevel fields are both set to zero, then this field MUST NOT be present
-        // and the length of the serverRandom field MUST be zero. If either the 
-        // encryptionMethod or encryptionLevel field is non-zero, this field MUST be set 
+        // and the length of the serverRandom field MUST be zero. If either the
+        // encryptionMethod or encryptionLevel field is non-zero, this field MUST be set
         // to 0x00000020 (32 bytes serverRandom).
 
-        // serverCertLen (4 bytes): An optional 32-bit, unsigned integer that specifies 
+        // serverCertLen (4 bytes): An optional 32-bit, unsigned integer that specifies
         // the size in bytes of the serverCertificate field. If the encryptionMethod and
         // encryptionLevel fields are both set to zero, then this field MUST NOT be present
         // and the length of the serverCertificate field MUST be zero.
@@ -2010,21 +2010,21 @@ namespace GCC
 
         //        0x5b, 0x7b, 0x88, 0xc0
 
-        /// The enumerated integers are in little-endian byte order. The public 
+        /// The enumerated integers are in little-endian byte order. The public
         // key is the pair (e, n), while the private key is the pair (d, n)
 
         // 5.3.3.1.2 Signing a Proprietary Certificate
         // ========================================
 
-        // The Proprietary Certificate is signed by using RSA to encrypt the hash 
+        // The Proprietary Certificate is signed by using RSA to encrypt the hash
         // of the first six fields with the Terminal Services private signing key
         // (specified in section 5.3.3.1.1) and then appending the result to the end
         // of the certificate. Mathematically the signing operation is formulated as follows:
 
         //    s = m^d mod n
-    
+
         // Where
-    
+
         //    s = signature
         //    m = hash of first six fields of certificate
         //    d = private exponent
@@ -2049,7 +2049,7 @@ namespace GCC
         // 0x9f 0xc5 0x4d 0x4a 0xba 0xfa 0xb9 0x2a
         // 0x1b 0xfb 0x10 0xdd 0x91 0x8c 0x60 0xb7: modulus
 
-        // A 128-bit MD5 hash over the first six fields of the proprietary certificate 
+        // A 128-bit MD5 hash over the first six fields of the proprietary certificate
         // (which are all in little-endian format) appears as follows.
 
         //      PublicKeyBlob = wBlobType + wBlobLen + PublicKeyBytes
@@ -2057,19 +2057,19 @@ namespace GCC
 
         // Because the Terminal Services private signing key has a 64-byte modulus, the
         // maximum number of bytes that can be encoded by using the key is 63 (the size
-        // of the modulus, in bytes, minus 1). An array of 63 bytes is created and 
+        // of the modulus, in bytes, minus 1). An array of 63 bytes is created and
         //initialized as follows.
 
-        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff 
         // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
-        // 0x00 0xff 0xff 0xff 0xff 0xff 0xff 0xff 
         // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
-        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff 
+        // 0x00 0xff 0xff 0xff 0xff 0xff 0xff 0xff
         // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
-        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff 
+        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
+        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
+        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
         // 0xff 0xff 0xff 0xff 0xff 0xff 0x01
 
-        // The 128-bit MD5 hash is copied into the first 16 bytes of the array. 
+        // The 128-bit MD5 hash is copied into the first 16 bytes of the array.
         // For example, assume that the generated hash is as follows.
 
         // 0xf5 0xcc 0x18 0xee 0x45 0xe9 0x4d 0xa6
@@ -2079,16 +2079,16 @@ namespace GCC
 
         // 0xf5 0xcc 0x18 0xee 0x45 0xe9 0x4d 0xa6
         // 0x79 0x02 0xca 0x76 0x51 0x33 0xe1 0x7f
-        // 0x00 0xff 0xff 0xff 0xff 0xff 0xff 0xff 
+        // 0x00 0xff 0xff 0xff 0xff 0xff 0xff 0xff
         // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
-        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff 
         // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
-        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff 
+        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
+        // 0xff 0xff 0xff 0xff 0xff 0xff 0xff 0xff
         // 0xff 0xff 0xff 0xff 0xff 0xff 0x01
 
         // The 63-byte array is then treated as an unsigned little-endian integer and signed
         // with the Terminal Services private key by using RSA. The resultant signature must
-        // be in little-endian format before appending it to the Proprietary Certificate 
+        // be in little-endian format before appending it to the Proprietary Certificate
         // structure. The final structure of the certificate must conform to the specification
         // in section 2.2.1.4.3.1.1. This means that fields 7 through to 9 will be the signature
         // BLOB type, the number of bytes in the signature and the actual signature bytes respectively.
@@ -2202,8 +2202,8 @@ namespace GCC
                     //  The modulus field contains all (bitlen / 8) bytes of the public key modulus
                     //  and 8 bytes of zero padding (which MUST follow after the modulus bytes).
                     uint8_t modulus[72];
-                
-                    PublicKeyBlob() 
+
+                    PublicKeyBlob()
                     : magic(RSA_MAGIC)
                     , keylen(72)
                     , bitlen(512)
@@ -2342,15 +2342,15 @@ namespace GCC
                             this->encryptionMethod, this->encryptionLevel);
                         throw Error(ERR_GCC);
                     }
-                    return; 
+                    return;
                 }
-                
+
                 if ((this->encryptionLevel == 0) || (encryptionMethod == 0)){
                     LOG(LOG_ERR, "SC_SECURITY encryption header but no encryption setted : method=%u level=%u",
                         this->encryptionMethod, this->encryptionLevel);
                     throw Error(ERR_GCC);
                 }
-                
+
                 // serverRandomLen (4 bytes): A 32-bit, unsigned integer. The size in bytes of
                 // the serverRandom field. If the encryptionMethod and encryptionLevel fields
                 // are both set to 0 then the contents of this field MUST be ignored and the
@@ -2404,7 +2404,7 @@ namespace GCC
                     this->proprietaryCertificate.wPublicKeyBlobLen = stream.in_uint16_le();
 
                     if (this->proprietaryCertificate.wPublicKeyBlobLen != 92){
-                        LOG(LOG_ERR, "RSA Key blob len too large in certificate %u (expected 92)", 
+                        LOG(LOG_ERR, "RSA Key blob len too large in certificate %u (expected 92)",
                             this->proprietaryCertificate.wPublicKeyBlobLen);
                         throw Error(ERR_GCC);
                     }
@@ -2430,7 +2430,7 @@ namespace GCC
                     //  (0x0008).
                     this->proprietaryCertificate.wSignatureBlobType = stream.in_uint16_le();
                     if (this->proprietaryCertificate.wSignatureBlobType != BB_RSA_SIGNATURE_BLOB){
-                        LOG(LOG_ERR, "RSA Signature blob expected, got %x", 
+                        LOG(LOG_ERR, "RSA Signature blob expected, got %x",
                             this->proprietaryCertificate.wSignatureBlobType);
                         throw Error(ERR_GCC);
                     }
@@ -2443,7 +2443,7 @@ namespace GCC
                     // created with the Terminal Services Signing Key (see sections 5.3.3.1.1 and
                     // 5.3.3.1.2). The length in bytes is given by the wSignatureBlobLen field.
                     if (this->proprietaryCertificate.wSignatureBlobLen != 72){
-                        LOG(LOG_ERR, "RSA Signature blob len too large in certificate %u (expected 72)", 
+                        LOG(LOG_ERR, "RSA Signature blob len too large in certificate %u (expected 72)",
                             this->proprietaryCertificate.wSignatureBlobLen);
                         throw Error(ERR_GCC);
                     }
