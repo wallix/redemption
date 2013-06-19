@@ -154,16 +154,6 @@ public:
         }
     }
 
-    virtual void set_row(size_t rownum, const uint8_t * data)
-    {
-        if (this->capture_drawable){
-            this->drawable->set_row(rownum, data);
-        }
-        if (this->capture_wrm){
-            this->pnc->set_row(rownum, data);
-        }
-    }
-
     void input(const timeval & now, Stream & input_data_32) {
         if (this->capture_wrm){
             this->pnc->input(now, input_data_32);
