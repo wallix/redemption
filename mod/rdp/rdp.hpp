@@ -55,6 +55,7 @@
 #include "RDP/capabilities.hpp"
 #include "RDP/fastpath.hpp"
 #include "authentifier.hpp"
+#include "RDP/RefreshRectPDU.hpp"
 
 #include "genrandom.hpp"
 
@@ -3217,7 +3218,6 @@ struct mod_rdp : public mod_api {
                 LOG(LOG_INFO, "mod_rdp::process_server_caps done");
             }
         }
-
 
         void send_control(int action) throw (Error)
         {
