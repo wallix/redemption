@@ -25,7 +25,6 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_REPLAY_MOD_HPP
 
 #include "FileToGraphic.hpp"
-#include "GraphicToFile.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "inbymetasequencetransport.hpp"
 #include "widget2_internal_mod.hpp"

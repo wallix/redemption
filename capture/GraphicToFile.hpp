@@ -126,7 +126,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     uint16_t mouse_x;
     uint16_t mouse_y;
     bool send_input;
-    RDPDrawable * drawable;
+    RDPDrawable & drawable;
 
     BStream keyboard_buffer_32;
 
@@ -136,7 +136,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
                 , const uint16_t height
                 , const uint8_t  bpp
                 , BmpCache & bmp_cache
-                , RDPDrawable * drawable
+                , RDPDrawable & drawable
                 , const Inifile & ini)
     : RDPSerializer( trans, this->buffer_stream_orders
                    , this->buffer_stream_bitmaps, bpp, bmp_cache, 0, 1, 1, ini)
@@ -218,11 +218,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     {
         OutChunkedBufferingTransport<65536> png_trans(trans);
 
-        ::transport_dump_png24(&png_trans, this->drawable->drawable.data,
-                     this->drawable->drawable.width, this->drawable->drawable.height,
-                     this->drawable->drawable.rowsize,
-                     false
-                    );
+        this->drawable.dump_png24(&png_trans, false);
     }
 
     void send_timestamp_chunk(void)
@@ -405,7 +401,12 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->send_meta_chunk();
         this->send_timestamp_chunk();
         this->send_save_state_chunk();
-        this->send_image_chunk();
+
+        OutChunkedBufferingTransport<65536> png_trans(trans);
+
+        this->drawable.dump_png24(&png_trans, true);
+
+//        this->send_image_chunk();
         this->send_caches_chunk();
     }
 
@@ -432,49 +433,49 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        this->drawable->draw(cmd, clip);
+        this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip)
     {
-        this->drawable->draw(cmd, clip);
+        this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
-        this->drawable->draw(cmd, clip);
+        this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        this->drawable->draw(cmd, clip);
+        this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        this->drawable->draw(cmd, clip, bmp);
+        this->drawable.draw(cmd, clip, bmp);
         this->RDPSerializer::draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        this->drawable->draw(cmd, clip, bmp);
+        this->drawable.draw(cmd, clip, bmp);
         this->RDPSerializer::draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPLineTo& cmd, const Rect & clip)
     {
-        this->drawable->draw(cmd, clip);
+        this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-        this->drawable->draw(cmd, clip);
+        this->drawable.draw(cmd, clip);
         this->RDPSerializer::draw(cmd, clip);
     }
 
@@ -488,7 +489,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) {
-        this->drawable->draw(bitmap_data, data, size, bmp);
+        this->drawable.draw(bitmap_data, data, size, bmp);
         this->RDPSerializer::draw(bitmap_data, data, size, bmp);
     }
 

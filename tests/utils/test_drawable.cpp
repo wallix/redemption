@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPPatBlt(screen_rect.shrink(5), 0x00, WHITE, WHITE, RDPBrush()), screen_rect);
 
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
 //    gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPDestBlt(screen_rect, 0xFF), screen_rect); // WHITENESS
     gd.draw(RDPDestBlt(screen_rect.shrink(5), 0x00), screen_rect); // BLACKNESS
@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
     gd.drawable.trace_mouse(100, 100);
 
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
 
     time_t rawtime;
@@ -346,7 +346,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     BGRPalette palette;
     init_palette332(palette);
 
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
     gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);
 
@@ -454,13 +454,13 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-    "\x6b\x51\x02\x43\xfd\xb5\x37\x97\x8e\x7e"
-    "\x80\xf9\xce\x74\xcb\x7e\x34\x7d\xb8\xe6")){
+    "\x71\x0f\x49\xa2\x10\x42\xf0\x73\xc6\x7f\xcd\x54\x3b\xc2\x29\x53\xe5\x5a\x90\xef"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_memblt_", gd.drawable);
+    //dump_png("./test_memblt_", gd.drawable);
 }
 
 
@@ -473,7 +473,7 @@ BOOST_AUTO_TEST_CASE(TestBgr2RGB)
     BGRPalette palette;
     init_palette332(palette);
 
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, 0xFF0000), screen_rect);
     gd.drawable.bgr2rgb();
 
@@ -483,6 +483,6 @@ BOOST_AUTO_TEST_CASE(TestBgr2RGB)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-//    dump_png("./testBGR2RGB", gd.drawable);
+    //dump_png("./testBGR2RGB", gd.drawable);
 
 }

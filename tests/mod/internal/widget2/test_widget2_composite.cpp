@@ -38,7 +38,7 @@ struct TestDraw : DrawApi
     RDPDrawable gd;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h)
     {}
 
     virtual void draw(const RDPOpaqueRect& cmd, const Rect& rect)
@@ -116,7 +116,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, false);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
