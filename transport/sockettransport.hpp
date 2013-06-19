@@ -101,8 +101,13 @@ class SocketTransport : public Transport {
 
         redemption::string * error_message;
 
-    SocketTransport(const char * name, int sck, const char *ip_address, int port, uint32_t verbose, redemption::string * error_message = 0)
-        : Transport(), tls(false), name(name), verbose(verbose), error_message(error_message)
+        SSL_CTX * allocated_ctx;
+        SSL     * allocated_ssl;
+
+    SocketTransport( const char * name, int sck, const char *ip_address, int port
+                   , uint32_t verbose, redemption::string * error_message = 0)
+        : Transport(), tls(false), name(name), verbose(verbose)
+        , error_message(error_message), allocated_ctx(0), allocated_ssl(0)
     {
         RIO_ERROR res = rio_init_socket(&this->rio, sck);
         this->sck = sck;
@@ -117,6 +122,14 @@ class SocketTransport : public Transport {
     }
 
     virtual ~SocketTransport(){
+        if (this->allocated_ssl) {
+//            SSL_shutdown(this->allocated_ssl);
+            SSL_free(this->allocated_ssl);
+        }
+
+        if (this->allocated_ctx)
+            SSL_CTX_free(this->allocated_ctx);
+
         if (!this->sck_closed){
             this->disconnect();
         }
@@ -435,6 +448,7 @@ class SocketTransport : public Transport {
         // and will indicate that it only understands TLSv1.
 
         SSL_CTX* ctx = SSL_CTX_new(TLSv1_client_method());
+        this->allocated_ctx = ctx;
 
         /*
          * This is necessary, because the Microsoft TLS implementation is not perfect.
@@ -612,6 +626,7 @@ class SocketTransport : public Transport {
         // to find out the reason.
         TODO("add error management")
         SSL * ssl = SSL_new(ctx);
+        this->allocated_ssl = ssl;
 
         TODO("I should probably not be doing that here ? Is it really necessary")
         int flags = fcntl(this->sck, F_GETFL);
@@ -972,6 +987,10 @@ class SocketTransport : public Transport {
         LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
         uint8_t * tmp = public_key_data;
         i2d_PublicKey(pkey, &tmp);
+
+        delete public_key_data;
+        public_key_data =
+        tmp             = 0;
 
 
         X509* xcert = px509;

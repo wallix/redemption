@@ -358,6 +358,9 @@ unit-test test_virchan : tests/core/RDP/capabilities/test_virchan.cpp libboost_u
 unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp libboost_unit_test ;
 unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp openssl libboost_unit_test ;
+unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp openssl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test ;
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test gcov : <variant>coverage ;
 

@@ -55,6 +55,7 @@
 #include "RDP/capabilities.hpp"
 #include "RDP/fastpath.hpp"
 #include "authentifier.hpp"
+#include "RDP/RefreshRectPDU.hpp"
 
 #include "genrandom.hpp"
 
@@ -187,7 +188,7 @@ struct mod_rdp : public mod_api {
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
-        ,  nego(tls, trans, target_user)
+        , nego(tls, trans, target_user)
         , enable_new_pointer(enable_new_pointer)
         , opt_clipboard(clipboard)
         , performanceFlags(info.rdp5_performanceflags)
@@ -3218,7 +3219,6 @@ struct mod_rdp : public mod_api {
             }
         }
 
-
         void send_control(int action) throw (Error)
         {
             if (this->verbose & 1){
@@ -3460,39 +3460,12 @@ struct mod_rdp : public mod_api {
             }
             if (UP_AND_RUNNING == this->connection_finalization_state) {
                 if (!r.isempty()){
-                    BStream stream(65536);
-                    ShareData sdata(stream);
-                    sdata.emit_begin(PDUTYPE2_REFRESH_RECT, this->share_id, RDP::STREAM_MED);
+                    RefreshRectPDU rrpdu( this->share_id, this->userid, this->encryptionLevel
+                                        , this->encrypt);
 
-                   // Payload
-                    stream.out_uint32_le(1);
-                    stream.out_uint16_le(r.x);
-                    stream.out_uint16_le(r.y);
-                    TODO("CGR: check this -1 (difference between rect and clip)")
-                    stream.out_uint16_le(r.cx - 1);
-                    stream.out_uint16_le(r.cy - 1);
-                    stream.mark_end();
+                    rrpdu.addInclusiveRect(r.x, r.y, r.cx - 1, r.cy - 1);
 
-                    // Packet trailer
-                    sdata.emit_end();
-
-                    BStream sctrl_header(256);
-                    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
-
-                    BStream target_stream(65536);
-                    target_stream.out_copy_bytes(sctrl_header);
-                    target_stream.out_copy_bytes(stream);
-                    target_stream.mark_end();
-
-                    BStream x224_header(256);
-                    BStream mcs_header(256);
-                    BStream sec_header(256);
-                    SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
-                    MCS::SendDataRequest_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3,
-                                                  sec_header.size() + target_stream.size() , MCS::PER_ENCODING);
-                    X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + target_stream.size());
-
-                    this->nego.trans->send(x224_header, mcs_header, sec_header, target_stream);
+                    rrpdu.emit(*this->nego.trans);
                 }
             }
             if (this->verbose & 4){

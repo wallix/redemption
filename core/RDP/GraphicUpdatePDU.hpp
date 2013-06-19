@@ -36,7 +36,7 @@
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/fastpath.hpp"
 
-// MS-RDPECGI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
+// MS-RDPEGDI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate
 // secondary drawing orders aligned on byte boundaries. This structure conforms
@@ -67,7 +67,7 @@
 //   field of the Drawing Order identifies the type of drawing order.
 
 
-// MS-RDPECGI 2.2.2.1 Orders Update (TS_UPDATE_ORDERS_PDU_DATA)
+// MS-RDPEGDI 2.2.2.1 Orders Update (TS_UPDATE_ORDERS_PDU_DATA)
 // ============================================================
 // The TS_UPDATE_ORDERS_PDU_DATA structure contains primary, secondary, and
 // alternate secondary drawing orders aligned on byte boundaries. This structure
