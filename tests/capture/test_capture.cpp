@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)sq_outfilename_filesize(&wrm_seq, 0));
         sq_outfilename_unlink(&wrm_seq, 0);
         // Mem3Blt save state = 34 bytes
-        BOOST_CHECK_EQUAL((unsigned)3392 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
+        BOOST_CHECK_EQUAL((unsigned)3393 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
         sq_outfilename_unlink(&wrm_seq, 1);
         // Mem3Blt save state = 34 bytes
         BOOST_CHECK_EQUAL((unsigned)3371 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 2));

@@ -59,7 +59,7 @@ public:
       , drawable(NULL)
     {
         if (this->capture_drawable){
-            this->drawable = new RDPDrawable(width, height, false);
+            this->drawable = new RDPDrawable(width, height);
         }
 
         if (this->capture_png){
@@ -88,19 +88,19 @@ public:
             if (this->enable_file_encryption) {
                 this->crypto_wrm_trans = new CryptoOutmetaTransport(wrm_path, hash_path, basename, now, width, height, ini.video.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
-                this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+                this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, *this->drawable, ini);
             }
             else
             {
                 this->wrm_trans = new OutmetaTransport(wrm_path, basename, now, width, height, ini.video.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
-                this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+                this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, *this->drawable, ini);
             }
             this->pnc->recorder.send_input = true;
         }
    }
 
-    ~Capture(){
+    virtual ~Capture(){
         delete this->psc;
         delete this->png_trans;
 
@@ -116,11 +116,22 @@ public:
         delete this->drawable;
     }
 
+    void pause() {
+        if (this->capture_wrm){
+            if (this->enable_file_encryption) {
+                this->crypto_wrm_trans->next();
+            }
+            else {
+                this->wrm_trans->next();
+            }
+        }
+    }
+
     void update_config(const Inifile & ini){
 //        if (this->capture_drawable){
 //            this->drawable->update_config(ini);
 //        }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->update_config(ini);
         }
         if (this->capture_wrm){
@@ -133,7 +144,7 @@ public:
         if (this->capture_drawable){
             this->drawable->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         }
         if (this->capture_wrm){
@@ -146,7 +157,7 @@ public:
         if (this->capture_drawable){
             this->drawable->flush();
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->flush();
         }
         if (this->capture_wrm){
@@ -230,8 +241,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip)
-    {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip) {
     }
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data

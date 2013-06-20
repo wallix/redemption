@@ -81,7 +81,7 @@ void dump_png(const char * prefix, const Drawable & data)
     sprintf(tmpname, "%sXXXXXX.png", prefix);
     int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
     FILE * f = fdopen(fd, "wb");
-    ::dump_png24(f, data.data, data.width, data.height, data.rowsize, false);
+    ::dump_png24(f, data.data, data.width, data.height, data.rowsize, true);
     ::fclose(f);
 }
 
@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
 
@@ -113,8 +113,8 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-        "\x9c\x08\x94\x45\xa6\xa3\x80\xaa\xb6\x3d"
-        "\xbb\xca\xfc\x31\x16\xd1\x31\xa0\xe4\x9c")){
+    "\xa1\x00\x41\x4c\x4f\x87\x9b\x27\x75\xec\x0c\x8b\xef\xe5\x78\x85\xc3\xb2\xb1\x03"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPPatBlt(screen_rect.shrink(5), 0x00, WHITE, WHITE, RDPBrush()), screen_rect);
 
@@ -181,17 +181,15 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
     // Should be purple
     gd.draw(RDPPatBlt(screen_rect.shrink(125), 0xFA, BLUE, WHITE, RDPBrush()), screen_rect);
 
-    uint8_t shasig[20] = {
-        0x8e, 0x6b, 0xe0, 0x91, 0x08, 0xce, 0x54, 0x3b, 0x58, 0x3a,
-        0x8f, 0x84, 0x6c, 0x59, 0x1c, 0x3e, 0xae, 0x5c, 0x1c, 0xf5
-    };
     char message[1024];
-    if (!check_sig(gd.drawable, message, (char*)shasig)){
+    if (!check_sig(gd.drawable, message, 
+        "\x87\x16\x73\x28\x21\x64\x9a\x4a\xea\x25\x60\xe5\x40\x32\x6e\xac\x28\x63\xe5\xad"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //   dump_png("/tmp/test_patblt_000_", gd.drawable);
+//       dump_png("/tmp/test_patblt_000_", gd.drawable);
 }
 
 
@@ -203,7 +201,7 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
 //    gd.draw(RDPPatBlt(screen_rect, 0xFF, WHITE, WHITE, RDPBrush()), screen_rect);
     gd.draw(RDPDestBlt(screen_rect, 0xFF), screen_rect); // WHITENESS
     gd.draw(RDPDestBlt(screen_rect.shrink(5), 0x00), screen_rect); // BLACKNESS
@@ -213,8 +211,8 @@ BOOST_AUTO_TEST_CASE(TestDestBlt)
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-            "\xca\xee\x18\x2c\x77\x53\x70\x93\xfa\xf3"
-            "\x58\xda\xd1\x65\x1a\x17\x4d\x7c\xff\xd7")){
+    "\x5b\x24\xc7\xec\x13\x7f\xf9\x8a\x32\x59\x62\x50\xef\x6b\x37\x1f\x15\x14\xfc\xbb"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -228,15 +226,15 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
     gd.drawable.trace_mouse(100, 100);
 
     {
         char message[1024];
         if (!check_sig(gd.drawable, message,
-            "\x36\x27\xca\x81\x58\x35\x86\x4c\x20\x90"
-            "\x62\x13\x69\x4a\x91\x79\xb5\x18\x42\x1e")){
+        "\x75\xc6\xe6\x3b\xd3\x22\x88\x14\x27\x03\xf3\x3e\x3c\x90\x5f\xac\xc1\x5c\x61\xa0"
+        )){
             BOOST_CHECK_MESSAGE(false, message);
         }
     }
@@ -249,8 +247,8 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     {
         char message[1024];
         if (!check_sig(gd.drawable, message,
-            "\x59\x99\x2f\x37\x8b\x44\x4b\xad\xf0\x10"
-            "\x23\x03\xd8\xde\xea\x81\x41\x3b\x12\x0a")){
+        "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05"
+        )){
             BOOST_CHECK_MESSAGE(false, message);
         }
     }
@@ -266,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
 
     time_t rawtime;
@@ -288,8 +286,8 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     {
         char message[1024];
         if (!check_sig(gd.drawable, message,
-            "\x69\xc8\xb0\x41\x33\x12\xf8\x13\xe7\x20"
-            "\x6b\xa2\xdb\x2d\x58\x89\xa3\xea\x76\x71")){
+        "\x45\xd6\x7a\xb4\x13\x19\x61\xd0\x31\xce\x4c\x96\x9f\xdf\xdb\xdf\x00\x15\x54\x4a"
+        )){
             BOOST_CHECK_MESSAGE(false, message);
         }
     }
@@ -314,8 +312,8 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     {
         char message[1024];
         if (!check_sig(gd.drawable, message,
-            "\xc3\xd3\xc4\x03\x65\x7e\xe3\xcf\x1a\x94"
-            "\xb0\xa7\x18\x14\x66\xa9\xc8\x78\xb4\x63")){
+        "\x6c\x53\xc6\x6c\xe6\x72\x3d\x0b\x49\x77\x2b\x70\xa8\xbf\xd5\xc5\xfb\x94\x96\xc4"
+        )){
             BOOST_CHECK_MESSAGE(false, message);
         }
     }
@@ -329,8 +327,8 @@ BOOST_AUTO_TEST_CASE(TestTimestampMouse)
     {
         char message[1024];
         if (!check_sig(gd.drawable, message,
-            "\x59\x99\x2f\x37\x8b\x44\x4b\xad\xf0\x10"
-            "\x23\x03\xd8\xde\xea\x81\x41\x3b\x12\x0a")){
+        "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05"
+        )){
             BOOST_CHECK_MESSAGE(false, message);
         }
     }
@@ -346,7 +344,7 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     uint16_t width = 640;
     uint16_t height = 480;
     Rect screen_rect(0, 0, width, height);
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
     gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
     gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
@@ -364,64 +362,144 @@ void test_scrblt(const uint8_t rop, const int cx, const int cy, const char * nam
     // dump_png(tmpname, gd.drawable);
 }
 
+
+
+bool test_scrblt2(const uint8_t rop, const int cx, const int cy, const char * name, const char * shasig, char * message){
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    Rect screen_rect(0, 0, width, height);
+    RDPDrawable gd(width, height);
+    gd.draw(RDPOpaqueRect(Rect(90, 90, 120, 120), RED), screen_rect);
+    gd.draw(RDPOpaqueRect(screen_rect, BLUE), Rect(100, 100, 100, 100));
+    gd.draw(RDPOpaqueRect(Rect(120, 120, 60, 60), PINK), Rect(100, 100, 100, 100));
+    gd.drawable.scrblt(90, 90, Rect(300, 300, 120, 120), 0xCC);
+    gd.drawable.scrblt(90, 90, Rect(90 + cx, 90 + cy, 120, 120), rop);
+
+    // uncomment to see result in png file
+    // char tmpname[128];
+    // sprintf(tmpname, "/tmp/test_scrblt_%s", name);
+    // dump_png(tmpname, gd.drawable);
+
+    return check_sig(gd.drawable, message, shasig);
+
+}
+
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown)
 {
-    test_scrblt(0x00, 0, 20, "down00",
-    "\x3c\x39\xae\x2b\x84\x5b\xc6\xa8\x75\xc1\xaf\xbb\x5c\x26\xa9\x1f\x94\x24\xc4\x68");
+    char message[1024];
+    int res = test_scrblt2(0x00, 0, 20, "down00",
+    "\xf8\xbd\xd7\x1d\x93\x78\x8c\xd9\x7a\x88\x6d\xfe\x52\x71\xe5\xaf\x7d\xba\x61\x46"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
+
+
+//BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown)
+//{
+//    test_scrblt(0x00, 0, 20, "down00",
+//    "\x3c\x39\xae\x2b\x84\x5b\xc6\xa8\x75\xc1\xaf\xbb\x5c\x26\xa9\x1f\x94\x24\xc4\x68");
+//}
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltRight)
 {
-    test_scrblt(0x00, 20, 0, "right00",
-    "\xcc\xe9\x1b\x97\x5e\x2e\x87\xdd\x56\xb6\x9d\x0e\x47\xce\xda\x1e\x7c\x19\x35\x4b");
+    char message[1024];
+    int res = test_scrblt2(0x00, 20, 0, "right00",
+    "\x76\xbb\x56\xf5\x70\xec\x7e\x19\xc7\x68\xe6\x32\xb3\x43\xf1\xc8\xf1\x78\x6e\xf1"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeft)
 {
-    test_scrblt(0x00, -20, 0, "left00",
-    "\x8d\xd3\xf4\x66\x35\x58\x7b\xee\x15\x0b\xad\xc0\x43\x8a\xe4\x07\x71\xaa\xc7\x0d");
+    char message[1024];
+    int res = test_scrblt2(0x00, -20, 0, "left00",
+    "\x05\xdf\xba\x3b\x9f\xa9\x5d\x1c\xa9\x12\xa0\x0b\x1d\x10\x26\x68\x41\xc7\x73\xd9"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltUp)
 {
-    test_scrblt(0x00, 0, -20, "up00",
-    "\xe8\x47\xa1\x86\x2f\x61\xe5\xb6\x4e\xcb\xf4\xe4\x3c\x4c\xa7\x43\xe9\x20\xc3\x2f");
+    char message[1024];
+    int res = test_scrblt2(0x00, 0, -20, "up00",
+    "\x55\x73\x7e\xd8\x0a\x36\xde\x1c\x87\xb3\xbb\x78\x6c\xaf\xb2\xcf\x53\xab\xa2\xe6"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeftUp)
 {
-    test_scrblt(0x00, -20, -20, "left_up00",
-    "\x7b\xec\x31\x5a\x53\x42\x0d\xb3\x48\xc0\xf2\xdc\x85\x38\x3c\x85\x48\xc4\xc2\xe7");
+    char message[1024];
+    int res = test_scrblt2(0x00, -20, -20, "left_up00",
+    "\xb6\x9a\xe7\xd0\x97\xe1\x3b\xce\x8d\xef\x73\x43\xd2\x50\xba\xd0\x06\xe1\x6c\xca"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltDown11)
 {
-    test_scrblt(0x11, 0, 20, "down11",
-    "\x21\x29\x04\x7f\xf7\x49\xfc\x70\xcf\xec\x3a\xfc\x7e\x99\x44\x2e\x88\xed\x99\x32");
+    char message[1024];
+    int res = test_scrblt2(0x11, 0, 20, "down11",
+    "\x20\xd5\x27\xaa\x91\xff\xa5\x21\x91\xe8\x94\x08\x6d\x7f\xb3\x52\x38\x62\x96\x2b"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltRight11)
 {
-    test_scrblt(0x11, 20, 0, "right11",
-    "\x7e\x74\xa5\x21\x20\x49\xbd\x88\x20\x5b\xeb\x6b\xf7\x08\x46\xec\x68\x6b\x76\x29");
+    char message[1024];
+    int res = test_scrblt2(0x11, 20, 0, "right11",
+    "\x85\x82\xdd\x28\x3c\x75\x9c\xdb\xc3\x94\xc8\xd3\x67\x7e\xdf\x76\xfb\x74\x84\x30"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeft11)
 {
-    test_scrblt(0x11, -20, 0, "left11",
-    "\xc3\x8c\x3b\x77\xf3\xa8\xb6\x37\x54\xa7\xf6\x31\x8e\x74\x1a\x45\x2c\xc9\xc5\xbe");
+    char message[1024];
+    int res = test_scrblt2(0x11, -20, 0, "left11",
+    "\x44\xb8\x04\x46\xf6\x80\x67\x05\x5c\xaf\xb4\xd1\xa3\xcc\x56\x9c\xd6\x97\x1f\x67"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltUp11)
 {
-    test_scrblt(0x11, 0, -20, "up11",
-    "\xf8\xba\x16\xbd\xa0\xee\x1d\xc5\xcd\x6d\x48\x14\xe5\x5c\xb7\x1b\xdb\xfe\x26\xf6");
+    char message[1024];
+    int res = test_scrblt2(0x11, 0, -20, "up11",
+    "\x8e\xdb\x52\x5b\x59\x6f\xfc\x9c\x70\x6e\x1f\x4d\x73\xad\x46\xa8\x01\xea\xe3\x4d"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestDrawableScrBltLeftUp11)
 {
-    test_scrblt(0x11, -20, -20, "left_up11",
-    "\x7e\xb4\x25\xbd\xca\xf1\x82\xdb\x7e\xd4\x1f\x15\xc0\xe9\xd3\xe7\xa9\xe9\x93\x0c");
+    char message[1024];
+    int res = test_scrblt2(0x11, -20, -20, "left_up11",
+    "\x5a\xa8\xea\x06\xa6\xa3\xa0\x57\x76\xcb\xc0\xb5\xc3\xb7\x53\x5e\x2b\x7f\xad\x9c"
+    , message);
+    if (!res){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
 
 
@@ -434,7 +512,7 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
     BGRPalette palette;
     init_palette332(palette);
 
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, 0x2F2F2F), screen_rect);
     gd.draw(RDPOpaqueRect(Rect(100,100,20, 20), BLUE), screen_rect);
 
@@ -454,13 +532,13 @@ BOOST_AUTO_TEST_CASE(TestMemblt)
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-    "\x6b\x51\x02\x43\xfd\xb5\x37\x97\x8e\x7e"
-    "\x80\xf9\xce\x74\xcb\x7e\x34\x7d\xb8\xe6")){
+    "\x98\x6c\x40\x0b\x3a\xbc\x39\x38\x29\x11\x77\x37\x98\xe2\x27\xb2\xcb\x61\xec\x5d"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-    //dump_png("/tmp/test_memblt_", gd.drawable);
+    //dump_png("./test_memblt_", gd.drawable);
 }
 
 
@@ -473,16 +551,16 @@ BOOST_AUTO_TEST_CASE(TestBgr2RGB)
     BGRPalette palette;
     init_palette332(palette);
 
-    RDPDrawable gd(width, height, true);
+    RDPDrawable gd(width, height);
     gd.draw(RDPOpaqueRect(screen_rect, 0xFF0000), screen_rect);
     gd.drawable.bgr2rgb();
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-    "\x59\x99\x2f\x37\x8b\x44\x4b\xad\xf0\x10\x23\x03\xd8\xde\xea\x81\x41\x3b\x12\x0a"
+    "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-//    dump_png("./testBGR2RGB", gd.drawable);
+    //dump_png("./testBGR2RGB", gd.drawable);
 
 }

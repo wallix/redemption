@@ -25,7 +25,7 @@
 #define BOOST_TEST_MODULE TestWrmImageChunk
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 
 #include "test_orders.hpp"
 #include "transport.hpp"
@@ -58,19 +58,18 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     /* 0000 */ "\x19\x0a\x1c\x14\x0a\xff"             // RED rect
     /* 0000 */ "\x11\x5f\x05\x05\xF6\xf9\x00\xFF\x11" // BLUE RECT
     /* 0000 */ "\x3f\x05\xfb\xf7\x07\xff\xff"         // WHITE RECT
-    /* 0000 */ "\x00\x10\x73\x00\x00\x00\x01\x00" // 0x1000: IMAGE_CHUNK 0048: chunk_len=86 0001: 1 order
+
+    /* 0000 */ "\x00\x10\x74\x00\x00\x00\x01\x00" // 0x1000: IMAGE_CHUNK 0048: chunk_len=86 0001: 1 order
         "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
         "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
         "\x00\x00\x00\x14\x00\x00\x00\x0a\x08\x02\x00\x00\x00"             //.............
         "\x3b\x37\xe9\xb1"                                                 //;7..
-        "\x00\x00\x00\x32\x49\x44\x41\x54"                                 //...2IDAT
-        "\x28\x91\x63\xfc\xcf\x80\x17\xfc\xff\xcf\xc0\xc8\x88\x4b\x92\x09" //(.c..........K..
-        "\xbf\x5e\xfc\x60\x88\x6a\x66\x41\xe3\x33\x32\xa0\x84\xe0\x7f\x54" //.^.`.jfA.32....T
-        "\x91\xff\x0c\x28\x81\x37\x70\xce\x66\x1c\xb0\x78\x06\x00\x69\xdc" //...(.7p.f..x..i.
-        "\x0a\x12"                                                         //..
-        "\x86\x4a\x0c\x44"                                                 //.J.D
-        "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
-        "\xae\x42\x60\x82"                                                 //.B`.
+        "\x00\x00\x00"
+/* 0000 */ "\x33\x49\x44\x41\x54\x28\x91\x63\x64\x60\xf8\xcf\x80\x1b\xfc\xff" //3IDAT(.cd`......
+/* 0010 */ "\xcf\xc0\xc8\x88\x53\x96\x09\x8f\x4e\x82\x60\x88\x6a\x66\x41\xe3" //....S...N.`.jfA.
+/* 0020 */ "\xff\x67\x40\x0b\x9f\xff\xc8\x22\x8c\xa8\xa1\x3b\x70\xce\x66\x1c" //.g@...."...;p.f.
+/* 0030 */ "\xb0\x78\x06\x00\x69\xde\x0a\x12\x3d\x77\xd0\x9e\x00\x00\x00\x00" //.x..i...=w......
+/* 0040 */ "\x49\x45\x4e\x44\xae\x42\x60\x82"                                 //IEND.B`
     ;
 
     // Timestamps are applied only when flushing
@@ -78,17 +77,22 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
     now.tv_usec = 0;
     now.tv_sec = 1000;
 
-    Rect scr(0, 0, 20, 10);
-    CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
-    Inifile ini;
-    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
-    consumer.draw(RDPOpaqueRect(scr, RED), scr);
-    consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
-    consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
-    consumer.flush_orders();
-    consumer.send_image_chunk();
+    try {
+        Rect scr(0, 0, 20, 10);
+        CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
+        Inifile ini;
+        BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+        RDPDrawable drawable(scr.cx, scr.cy);
+        GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
+        consumer.draw(RDPOpaqueRect(scr, RED), scr);
+        consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
+        consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
+        consumer.flush_orders();
+        consumer.send_image_chunk();
+    }
+    catch (Error & e){
+        BOOST_CHECK(false);
+    };
 }
 
 BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
@@ -147,20 +151,19 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
+    RDPDrawable drawable(scr.cx, scr.cy);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
     consumer.flush_orders();
 
     OutChunkedBufferingTransport<100> png_trans(&trans);
-
-    ::transport_dump_png24(&png_trans, consumer.drawable->drawable.data,
-                 consumer.drawable->drawable.width, consumer.drawable->drawable.height,
-                 consumer.drawable->drawable.rowsize,
-                 false
-                );
+    try {
+        consumer.drawable.dump_png24(&png_trans, true);
+    } catch (Error & e) {
+        BOOST_CHECK(false);
+    };
 }
 
 BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
@@ -227,8 +230,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
-    RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
+    RDPDrawable drawable(scr.cx, scr.cy);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
     consumer.draw(RDPOpaqueRect(Rect(10, 0, 1, 10), WHITE), scr);
@@ -236,11 +239,8 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
     OutChunkedBufferingTransport<16> png_trans(&trans);
 
-    ::transport_dump_png24(&png_trans, consumer.drawable->drawable.data,
-                 consumer.drawable->drawable.width, consumer.drawable->drawable.height,
-                 consumer.drawable->drawable.rowsize,
-                 false
-                );
+    consumer.drawable.dump_png24(&png_trans, true);
+
 }
 
 BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
         "\xae\x42\x60\x82"                                                 //.B`.
     ;
 
-    RDPDrawable d(20, 10, true);
+    RDPDrawable d(20, 10);
     GeneratorTransport in_png_trans(source_png, sizeof(source_png)-1);
     ::transport_read_png24(&in_png_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
@@ -268,11 +268,7 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromTransport)
                 );
     const int groupid = 0;
     OutFilenameTransport png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    ::transport_dump_png24(&png_trans, d.drawable.data,
-                 d.drawable.width, d.drawable.height,
-                 d.drawable.rowsize,
-                 false
-                );
+    d.dump_png24(&png_trans, true);
     sq_outfilename_unlink(&(png_trans.seq), 0);
 }
 
@@ -324,18 +320,14 @@ BOOST_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
     InChunkedImageTransport chunk_trans(chunk_type, chunk_size, &in_png_trans);
 
 
-    RDPDrawable d(20, 10, true);
+    RDPDrawable d(20, 10);
     ::transport_read_png24(&chunk_trans, d.drawable.data,
                  d.drawable.width, d.drawable.height,
                  d.drawable.rowsize
                  );
     const int groupid = 0;
     OutFilenameTransport png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    ::transport_dump_png24(&png_trans, d.drawable.data,
-                 d.drawable.width, d.drawable.height,
-                 d.drawable.rowsize,
-                 false
-                );
+    d.dump_png24(&png_trans, true);
     sq_outfilename_unlink(&(png_trans.seq), 0);
 }
 
@@ -395,7 +387,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, false);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer(&drawable);
@@ -404,8 +396,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
         player.interpret_order();
     }
     png_recorder.flush();
-    TODO("check this: I changed 107 to 108 to fix png color bgr/rgb")
-    BOOST_CHECK_EQUAL(108, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 }
 
@@ -466,7 +457,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy, false);
+    RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable1.drawable);
 
     OutFilenameTransport second_out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid);
@@ -478,13 +469,11 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
         player.interpret_order();
     }
     png_recorder.flush();
-    TODO("check this: I changed 107 to 108 to fix png color bgr/rgb")
-    BOOST_CHECK_EQUAL(108, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 
     second_png_recorder.flush();
-    TODO("check this: I changed 107 to 108 to fix png color bgr/rgb")
-    BOOST_CHECK_EQUAL(108, sq_outfilename_filesize(&(second_out_png_trans.seq), 0));
+    BOOST_CHECK_EQUAL(107, sq_outfilename_filesize(&(second_out_png_trans.seq), 0));
     sq_outfilename_unlink(&(second_out_png_trans.seq), 0);
 }
 
@@ -546,7 +535,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     FileToGraphic player(&in_wrm_trans, begin_capture, end_capture, false, 0);
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "testimg", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, false);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer(&drawable);
@@ -556,7 +545,6 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1004, (unsigned)player.synctime_now.tv_sec);
 
-    TODO("check this: I changed 107 to 108 to fix png color bgr/rgb")
-    BOOST_CHECK_EQUAL((unsigned)108, sq_outfilename_filesize(&(out_png_trans.seq), 0));
+    BOOST_CHECK_EQUAL((unsigned)107, sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 }

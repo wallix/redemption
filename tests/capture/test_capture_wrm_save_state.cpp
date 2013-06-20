@@ -87,8 +87,8 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
     Inifile ini;
     BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
-    RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
+    RDPDrawable drawable(scr.cx, scr.cy);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, BLUE), scr);
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
 
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadSaveCache", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, false);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer(&drawable);
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     Inifile ini;
     ini.debug.primary_orders = 1;
     BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
-    RDPDrawable drawable(scr.cx, scr.cy, true);
-    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, &drawable, ini);
+    RDPDrawable drawable(scr.cx, scr.cy);
+    GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
 
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestReloadOrderStates", ".png", groupid);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, false);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer(&drawable);
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
     const int groupid = 0;
     OutFilenameTransport out_png_trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "TestContinuationOrderStates", ".png", groupid);
     SQ * seq = &(out_png_trans.seq);
-    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy, false);
+    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     ImageCapture png_recorder(out_png_trans, player.screen_rect.cx, player.screen_rect.cy, drawable.drawable);
 
     player.add_consumer(&drawable);
@@ -341,8 +341,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
         player.interpret_order();
     }
     png_recorder.flush();
-    TODO("check this: I changed 341 to 343 to fix test, but there is likely an RGB/BGR inversion")
-    BOOST_CHECK_EQUAL(343, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(341, sq_outfilename_filesize(seq, 0));
     sq_outfilename_unlink(seq, 0);
 }
 

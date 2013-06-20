@@ -38,7 +38,7 @@ struct TestDraw : DrawApi
     RDPDrawable gd;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h)
     {}
 
     virtual void draw(const RDPOpaqueRect& cmd, const Rect& clip)
@@ -116,7 +116,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, false);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
-    int color = 0x04F6CC; /* BGR */
+    int color = 0xCCF604; /* BGR */
 
     WidgetRect wrect(&drawable, Rect(0,0,800,600), parent, notifier, id, color);
 
@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int bgcolor = 0xCCF604; /* BGR */
 
     WidgetRect wrect(&drawable, Rect(-100,-100,200,200), parent, notifier, id, bgcolor);
 
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int bgcolor = 0xCCF604; /* BGR */
 
     WidgetRect wrect(&drawable, Rect(-100,500,200,200), parent, notifier, id, bgcolor);
 
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int bgcolor = 0xCCF604; /* BGR */
 
     WidgetRect wrect(&drawable, Rect(700,500,200,200), parent, notifier, id, bgcolor);
 
@@ -241,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int bgcolor = 0xCCF604; /* BGR */
 
     WidgetRect wrect(&drawable, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
 
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int bgcolor = 0xCCF604; /* BGR */
 
     WidgetRect wrect(&drawable, Rect(300, 200,200,200), parent, notifier, id, bgcolor);
 
@@ -297,7 +297,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int bgcolor = 0xCCF604; /* BGR */
 
     WidgetRect wrect(&drawable, Rect(300,200, 200,200), parent, notifier, id, bgcolor);
 
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
-    int bgcolor = 0x04F6CC; /* BGR */
+    int bgcolor = 0xCCF604; /* BGR */
 
     WidgetRect wrect(&drawable, Rect(700,-100,200,200), parent, notifier, id, bgcolor);
 

@@ -66,7 +66,7 @@ public:
     GraphicToFile recorder;
     uint32_t nb_file;
 
-    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable * drawable, const Inifile & ini)
+    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable, const Inifile & ini)
     : width(width)
     , height(height)
     , bpp(24)

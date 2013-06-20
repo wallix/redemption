@@ -25,7 +25,6 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_REPLAY_MOD_HPP
 
 #include "FileToGraphic.hpp"
-#include "GraphicToFile.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "inbymetasequencetransport.hpp"
 #include "widget2_internal_mod.hpp"
@@ -48,7 +47,6 @@ public:
     : InternalMod(front, width, height)
     , auth_error_message(auth_error_message)
     {
-        TODO("use canonical_path to manage trailing slash")
         strcpy(this->movie, replay_path);
         strcat(this->movie, movie);
         LOG(LOG_INFO, "Playing %s", this->movie);
@@ -56,7 +54,7 @@ public:
         char path[1024];
         char basename[1024];
         char extension[128];
-        strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
+        strcpy(path, RECORD_PATH); // default value, actual one should come from movie_path
         strcpy(basename, "replay"); // default value actual one should come from movie_path
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];

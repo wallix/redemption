@@ -38,7 +38,7 @@ struct TestDraw : DrawApi
     RDPDrawable gd;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h)
     {}
 
     virtual void draw(const RDPOpaqueRect&, const Rect&)
@@ -116,7 +116,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, false);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -141,8 +141,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xea\x3a\xa7\xb0\x19\x23\x98\xfe\xe8\x5f"
-        "\x80\x3a\xae\xd3\xf8\x3e\x4f\x4f\xcd\xad")){
+    "\xe2\x5c\x4a\x10\xe0\xbc\x8f\x3c\xb5\x0b\x10\x98\xd1\xdc\x3b\xb8\x33\x28\x76\xbb"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -167,8 +167,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x81\xdb\x77\xd3\x15\x74\x39\x60\x2e\x73"
-        "\x93\xf2\x61\x0b\x38\x18\x0f\x79\xd2\xa1")){
+    "\xfe\x5c\x1a\x41\xb3\x22\xa4\xc8\xe3\x39\x31\xd3\xd2\xe8\xe6\x55\x56\xce\x9a\xc7"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -193,8 +193,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x55\xd7\xc2\x12\xb1\x92\x26\x5f\xb7\x2c"
-        "\x32\xfe\xde\x84\x04\xb3\x97\x62\xb0\xd9")){
+    "\x15\xf3\xaf\x95\xac\x8e\x9b\xbc\x94\x91\x33\x79\x17\xf9\xee\x43\x74\x9c\x34\xc2"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -219,8 +219,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd2\xca\x0d\xa6\x3f\xa3\x75\x1c\xd5\x3c"
-        "\x0c\xff\xd4\x4f\x56\x2d\x75\x2c\x66\xe1")){
+    "\xff\x70\xc7\xd1\x91\x5d\x2a\x6b\x1d\x70\xf8\xcb\x96\x8d\x04\xef\x03\xcf\x73\x0e"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -245,8 +245,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x69\xa3\x35\xb1\x1d\x7d\xd9\x8e\x3d\x7e"
-        "\x54\x60\x9a\xc7\xc9\xd9\xae\xdc\xad\xf5")){
+    "\x1a\x71\xe8\x5b\x2b\x93\x0c\x4b\x68\x9f\xf8\x65\xc8\x53\xdd\xb5\x59\x9f\x29\x28"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -271,8 +271,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x11\xe6\x83\x39\x2c\xf7\x8a\x9c\xb5\xc1"
-        "\x70\xf8\x97\xa7\x52\xa2\xfa\xae\xf6\xcc")){
+    "\x34\x31\x5a\xd6\x44\x12\x6b\xb0\xb6\x61\x54\x70\x57\x63\xf3\x8f\x27\x76\xa3\x2e"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -297,8 +297,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe2\x17\xab\x79\xd8\x69\x05\x14\x70\xe4"
-        "\xba\x9c\x35\xe8\x39\x45\xa9\x63\x74\x20")){
+    "\x6d\xd7\xa9\xaa\xa3\x9b\x54\x39\xdd\x35\x66\x3c\x3e\xdd\x5c\xf8\xc2\xe7\xc8\x5f"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -323,8 +323,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x0f\xad\x91\xdf\xa5\xbd\x7d\x2b\x3b\xd2"
-        "\x19\xaa\x15\xa9\x78\x80\x11\x7f\x36\x88")){
+    "\x30\xd6\xba\x4a\xd4\x54\x54\xc8\xa6\x55\xe1\xe7\xd1\x95\x83\xca\x36\xd0\x96\x47"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

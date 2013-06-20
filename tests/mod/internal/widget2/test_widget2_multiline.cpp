@@ -39,7 +39,7 @@ struct TestDraw : DrawApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, false)
+    : gd(w, h)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -171,8 +171,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xee\xa2\x81\x4c\x50\xf0\x0d\x1e\x13\x42"
-        "\x3e\xa2\x08\xf8\xc6\x7c\xea\x1d\x84\x87")){
+    "\xee\xa2\x81\x4c\x50\xf0\x0d\x1e\x13\x42\x3e\xa2\x08\xf8\xc6\x7c\xea\x1d\x84\x87"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x44\x7f\x61\x29\x32\x6d\x8b\x64\xd3\x73"
-        "\x39\xf0\x52\x64\x80\xb5\x4a\xcc\x38\x9c")){
+    "\xaf\xf6\x8b\xe7\x3e\xe8\x92\x70\x72\xb8\xcd\x9f\x91\x79\xdf\xf0\x21\x45\xc3\x49"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -247,8 +247,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x2c\xca\x26\x71\x79\xec\x2d\x34\xa5\x49"
-        "\xe9\xc2\xd8\x50\x6c\xda\x50\xb7\xfb\x41")){
+    "\x2c\xca\x26\x71\x79\xec\x2d\x34\xa5\x49\xe9\xc2\xd8\x50\x6c\xda\x50\xb7\xfb\x41"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -285,8 +285,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf4\x3a\x68\xcd\xe4\x9d\x3f\xc4\x9c\x29"
-        "\x96\x88\x7f\xcc\xf5\x2a\xb0\x6e\xa1\xeb")){
+    "\xf4\x3a\x68\xcd\xe4\x9d\x3f\xc4\x9c\x29\x96\x88\x7f\xcc\xf5\x2a\xb0\x6e\xa1\xeb"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -323,8 +323,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x67\x7a\x68\x4e\x01\x53\xbf\xa1\x6b\x23"
-        "\x0f\x73\xb9\x31\x75\x36\xe5\xf5\xcb\x9a")){
+    "\x67\x7a\x68\x4e\x01\x53\xbf\xa1\x6b\x23\x0f\x73\xb9\x31\x75\x36\xe5\xf5\xcb\x9a"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -361,8 +361,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7f\xc3\xfa\x61\x18\x42\x67\x11\xac\xa2"
-        "\xbd\xc6\x7f\x75\x1c\x48\xb4\x38\x30\x92")){
+    "\x7f\xc3\xfa\x61\x18\x42\x67\x11\xac\xa2\xbd\xc6\x7f\x75\x1c\x48\xb4\x38\x30\x92"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -399,8 +399,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xce\x65\x54\x35\xed\x19\x84\x1d\x48\xfd"
-        "\x64\xc0\x4f\xfc\xd9\x56\x24\x93\xa2\x4d")){
+    "\x34\x03\xc1\x93\x3a\x23\xba\xc5\x4e\x7f\x18\x80\x13\xdd\x4c\x32\x2e\x70\x29\xc6"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -412,7 +412,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -437,8 +437,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x03\xe6\x2d\xc8\x57\x6b\x08\x5f\xb4\xef"
-        "\x12\x29\x98\x00\xa9\xe3\xc0\xb4\x08\xa7")){
+    "\x66\xfe\x9d\x60\x01\x62\xb7\xd7\xe6\x33\x32\x65\x67\x5a\xa8\xc2\x04\xf5\xbf\x28"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -450,7 +450,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -473,8 +473,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x8f\xc4\x4d\xb3\xb7\xcd\x94\x7f\xc9\xcc"
-        "\xda\x3c\x50\xe5\xd1\x45\x3b\x58\xb7\xda")){
+    "\x91\xe3\x36\xd1\x6d\xa0\x36\xae\xaf\x26\x5d\x73\x24\x50\x0c\x6e\xad\x59\x50\x52"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
