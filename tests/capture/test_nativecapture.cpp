@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     
     BmpCache bmp_cache(24, 600, 768, 300, 3072, 262, 12288); 
     Inifile ini;
-    RDPDrawable drawable(800, 600, true);
-    NativeCapture consumer(now, trans, 800, 600, bmp_cache, &drawable, ini);
+    RDPDrawable drawable(800, 600);
+    NativeCapture consumer(now, trans, 800, 600, bmp_cache, drawable, ini);
     ini.video.frame_interval = 100; // one snapshot by second
     ini.video.break_interval = 5;   // one WRM file every 5 seconds
     consumer.update_config(ini);
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
     // Mem3Blt save state = 34 bytes
-    BOOST_CHECK_EQUAL((unsigned)3254 + 34, (unsigned)sq_outfilename_filesize(&(trans.seq), 1));
+    BOOST_CHECK_EQUAL((unsigned)3255 + 34, (unsigned)sq_outfilename_filesize(&(trans.seq), 1));
     sq_outfilename_unlink(&(trans.seq), 1);
 }
 

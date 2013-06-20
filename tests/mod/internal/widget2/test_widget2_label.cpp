@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     // WidgetLabel is a label widget at position 0,0 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -242,7 +242,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -306,7 +306,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -370,7 +370,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;

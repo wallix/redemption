@@ -231,8 +231,10 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
-    TestTransport trans("TestTransportPNG", "", 0, expected_red, sizeof(expected_red)-1);;
-    transport_dump_png24(&trans, d.drawable.data, 800, 600, d.drawable.rowsize, false);
+    TestTransport trans("TestTransportPNG", "", 0, expected_red, sizeof(expected_red)-1);
+//    int fd = open("TestTransportPNG.png", O_WRONLY|O_CREAT, 0777);
+//    OutFileTransport trans(fd);
+    transport_dump_png24(&trans, d.drawable.data, 800, 600, d.drawable.rowsize, true);
 }
 
 BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)

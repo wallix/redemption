@@ -171,8 +171,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xee\xa2\x81\x4c\x50\xf0\x0d\x1e\x13\x42"
-        "\x3e\xa2\x08\xf8\xc6\x7c\xea\x1d\x84\x87")){
+    "\x64\x5b\x76\x4b\x09\xed\x9b\x54\x6a\xcc\xf4\x90\xed\xa5\x6a\x44\x33\x83\x58\x2e"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x44\x7f\x61\x29\x32\x6d\x8b\x64\xd3\x73"
-        "\x39\xf0\x52\x64\x80\xb5\x4a\xcc\x38\x9c")){
+    "\x44\x7f\x61\x29\x32\x6d\x8b\x64\xd3\x73\x39\xf0\x52\x64\x80\xb5\x4a\xcc\x38\x9c"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -247,8 +247,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x2c\xca\x26\x71\x79\xec\x2d\x34\xa5\x49"
-        "\xe9\xc2\xd8\x50\x6c\xda\x50\xb7\xfb\x41")){
+    "\xe1\xf2\x27\x1f\x41\x47\xdd\xed\xf7\xbe\xc6\x2b\xc9\xeb\x18\x52\x93\x49\xb3\x4f"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -285,8 +285,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf4\x3a\x68\xcd\xe4\x9d\x3f\xc4\x9c\x29"
-        "\x96\x88\x7f\xcc\xf5\x2a\xb0\x6e\xa1\xeb")){
+    "\x83\x42\x38\x73\xea\x05\xf3\x4d\xe6\xfa\xda\xbe\x16\xe0\x2b\x53\x6a\x28\x96\x88"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -323,8 +323,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x67\x7a\x68\x4e\x01\x53\xbf\xa1\x6b\x23"
-        "\x0f\x73\xb9\x31\x75\x36\xe5\xf5\xcb\x9a")){
+    "\x75\x15\xeb\x7a\xdf\x9d\x0d\xeb\x11\xf9\xba\x54\xae\x99\xf8\x33\xf2\x27\x6c\xc6"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -361,8 +361,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7f\xc3\xfa\x61\x18\x42\x67\x11\xac\xa2"
-        "\xbd\xc6\x7f\x75\x1c\x48\xb4\x38\x30\x92")){
+    "\xee\x47\x3e\xb8\xe2\x8a\xef\x3a\xb3\xdc\x3c\x16\x10\xe4\x4a\x97\x08\xb7\x61\xb4"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -399,8 +399,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xce\x65\x54\x35\xed\x19\x84\x1d\x48\xfd"
-        "\x64\xc0\x4f\xfc\xd9\x56\x24\x93\xa2\x4d")){
+    "\xce\x65\x54\x35\xed\x19\x84\x1d\x48\xfd\x64\xc0\x4f\xfc\xd9\x56\x24\x93\xa2\x4d"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -412,7 +412,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;
@@ -450,7 +450,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
     bool auto_resize = true;

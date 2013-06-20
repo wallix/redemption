@@ -67,7 +67,7 @@ public:
 
     uint32_t RGBtoBGR(uint32_t color)
     {
-        return color; //((color << 16) | (color & 0xFF00)| (color >> 16)) & 0xFFFFFF;
+        return ((color << 16) | (color & 0xFF00)| (color >> 16)) & 0xFFFFFF;
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
@@ -120,13 +120,13 @@ public:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x  - cmd.rect.x)
                 , cmd.srcy + (rect.y  - cmd.rect.y)
-                , 0xFFFFFF, false);
+                , 0xFFFFFF, true);
         break;
         case 0xCC:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x  - cmd.rect.x)
                 , cmd.srcy + (rect.y  - cmd.rect.y)
-                , 0, false);
+                , 0, true);
         break;
         default:
             // should not happen
@@ -143,7 +143,7 @@ public:
         this->drawable.mem_3_blt(rect, bmp
             , cmd.srcx + (rect.x  - cmd.rect.x)
             , cmd.srcy + (rect.y  - cmd.rect.y)
-            , cmd.rop, cmd.fore_color, false);
+            , cmd.rop, cmd.fore_color, true);
     }
 
     /*
