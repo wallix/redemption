@@ -120,9 +120,30 @@ struct Session {
         , mod_transport(NULL)
     {
         SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
+        // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
+        //  here instead of inside Sessionmanager
+         
+        int client_sck = ip_connect(this->ini->globals.authip,
+                                    this->ini->globals.authport,
+                                    30,
+                                    1000,
+                                    this->ini->debug.auth);
+        if (client_sck == -1){
+            LOG(LOG_ERR, "Failed to connect to authentifier");
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
+        }
 
+        SocketTransport auth_trans("Authentifier",
+                                   client_sck,
+                                   this->ini->globals.authip,
+                                   this->ini->globals.authport,
+                                   this->ini->debug.auth);
+        wait_obj auth_event(auth_trans.sck);
+        
         try {
             this->sesman = new SessionManager( this->ini
+                                             , &auth_trans
+                                             , &auth_event
                                              , this->ini->globals.keepalive_grace_delay
                                              , this->ini->globals.max_tick
                                              , this->ini->globals.internal_domain

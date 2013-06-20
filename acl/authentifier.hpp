@@ -79,19 +79,21 @@ class SessionManager {
     int tick_count;
 
     public:
-    struct SocketTransport * auth_trans_t;
+    Transport * auth_trans;
     wait_obj * auth_event;
     int keepalive_grace_delay;
     int max_tick;
     bool internal_domain;
     uint32_t verbose;
 
-    SessionManager(Inifile * ini, int keepalive_grace_delay, int max_tick, bool internal_domain, uint32_t verbose)
+    SessionManager(Inifile * ini, Transport * auth_trans, wait_obj * auth_event,
+                   int keepalive_grace_delay, int max_tick, bool internal_domain, 
+                   uint32_t verbose)
         : mod_state(MOD_STATE_INIT)
         , ini(ini)
         , tick_count(0)
-        , auth_trans_t(NULL)
-        , auth_event(NULL)
+        , auth_trans(auth_trans)
+        , auth_event(auth_event)
         , keepalive_grace_delay(keepalive_grace_delay)
         , max_tick(max_tick)
         , internal_domain(internal_domain)
@@ -107,11 +109,6 @@ class SessionManager {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::~SessionManager");
         }
-        delete this->auth_trans_t;
-        this->auth_trans_t = 0;
-
-        delete this->auth_event;
-        this->auth_event = 0;
     }
 
     bool event(fd_set & rfds){
@@ -127,7 +124,7 @@ class SessionManager {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
         this->tick_count = 1;
-        if (this->auth_trans_t){
+        if (this->auth_trans){
             BStream stream(8192);
 
             stream.out_uint32_be(0); // skip length
@@ -137,7 +134,7 @@ class SessionManager {
             // now set length
             int total_length = stream.get_offset();
             stream.set_out_uint32_be(total_length, 0);
-            this->auth_trans_t->send(stream.data, total_length);
+            this->auth_trans->send(stream.data, total_length);
             keepalive_time = ::time(NULL) + 30;
         }
     }
@@ -145,8 +142,8 @@ class SessionManager {
     // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
     void ask_auth_channel_target(const char * target)
     {
-        if (!this->auth_trans_t) {
-            LOG(LOG_ERR, "Asking auth_channel_target without auth_trans_t!");
+        if (!this->auth_trans) {
+            LOG(LOG_ERR, "Asking auth_channel_target without auth_trans!");
             return;
         }
         if (this->verbose) {
@@ -163,14 +160,14 @@ class SessionManager {
         int total_length = stream.get_offset();
         stream.p = stream.data;
         stream.out_uint32_be(total_length);
-        this->auth_trans_t->send(stream.data, total_length);
+        this->auth_trans->send(stream.data, total_length);
     }
 
     // Set AUTHCHANNEL_RESULT dict value and transmit request to sesman (then wabenginge)
     void set_auth_channel_result(const char * result)
     {
-        if (!this->auth_trans_t) {
-            LOG(LOG_ERR, "Setting auth_channel_result without auth_trans_t!");
+        if (!this->auth_trans) {
+            LOG(LOG_ERR, "Setting auth_channel_result without auth_trans!");
             return;
         }
         if (this->verbose) {
@@ -185,7 +182,7 @@ class SessionManager {
         int total_length = stream.get_offset();
         stream.set_out_uint32_be(total_length, 0);
 
-        this->auth_trans_t->send(stream.data, total_length);
+        this->auth_trans->send(stream.data, total_length);
     }
 
     void in_items(Stream & stream)
@@ -291,7 +288,7 @@ class SessionManager {
         }
 
         // Keepalive Data exchange with sesman
-        if (NULL == this->auth_trans_t){
+        if (!this->auth_trans){
             LOG(LOG_INFO, "authentifier transport closed ...");
             return false;
         }
@@ -329,7 +326,7 @@ class SessionManager {
                 int total_length = stream.get_offset();
                 stream.set_out_uint32_be(total_length, 0); /* size */
                 stream.mark_end();
-                this->auth_trans_t->send(stream.data, total_length);
+                this->auth_trans->send(stream.data, total_length);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -597,11 +594,6 @@ class SessionManager {
                 if (this->ini->context.auth_error_message.is_empty()) {
                     this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
                 }
-                TODO(" check life cycle of auth_trans_t")
-                if (this->auth_trans_t){
-                    delete this->auth_trans_t;
-                    this->auth_trans_t = 0;
-                }
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
                 nextmod = INTERNAL_CLOSE;
                 return MCTX_STATUS_INTERNAL;
@@ -667,7 +659,7 @@ class SessionManager {
     void add_to_fd_set(fd_set & rfds, unsigned & max)
     {
         TODO(" look at concept behind wait_obj")
-        if (this->auth_event && this->auth_trans_t){
+        if (this->auth_event && this->auth_trans){
             this->auth_event->add_to_fd_set(rfds, max);
         }
     }
@@ -679,24 +671,7 @@ class SessionManager {
             BStream stream(8192);
 
             stream.out_uint32_be(0);
-            TODO(" is there a way to make auth_event RAII ? (initialized in sesman constructor)")
-            if (!this->auth_trans_t){
-                static const char * name = "Authentifier";
-                int client_sck = ip_connect(auth_host, authport, 30, 1000, this->verbose);
-                if (client_sck == -1){
-                    LOG(LOG_ERR, "Failed to connect to authentifier");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                this->auth_trans_t = new SocketTransport(
-                      name
-                    , client_sck
-                    , auth_host
-                    , authport
-                    , this->verbose);
-                delete this->auth_event;
-                this->auth_event = new wait_obj(this->auth_trans_t->sck);
-            }
+           
             this->out_item(stream, STRAUTHID_PROXY_TYPE);
             this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
             this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
@@ -725,22 +700,18 @@ class SessionManager {
 
             int total_length = stream.get_offset();
             stream.set_out_uint32_be(total_length, 0); /* size */
-            this->auth_trans_t->send(stream.data, total_length);
+            this->auth_trans->send(stream.data, total_length);
 
         } catch (Error e) {
             this->ini->context.authenticated = false;
             this->ini->context.rejected.copy_c_str("Authentifier service failed");
-            delete this->auth_trans_t;
-            this->auth_trans_t = NULL;
-            delete this->auth_event;
-            this->auth_event = NULL;
         }
     }
 
     void incoming()
     {
         BStream stream(4);
-        this->auth_trans_t->recv(&stream.end, 4);
+        this->auth_trans->recv(&stream.end, 4);
         size_t size = stream.in_uint32_be();
         if (size > 65536){
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
@@ -749,7 +720,7 @@ class SessionManager {
         if (size > stream.capacity){
             stream.init(size);
         }
-        this->auth_trans_t->recv(&stream.end, size - 4);
+        this->auth_trans->recv(&stream.end, size - 4);
 
         bool flag = this->ini->context.session_id.is_empty();
         this->in_items(stream);
@@ -773,8 +744,6 @@ class SessionManager {
         } catch (...) {
             this->ini->context.authenticated = false;
             this->ini->context.rejected.copy_c_str("Authentifier service failed");
-            delete this->auth_trans_t;
-            this->auth_trans_t = NULL;
         }
         this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
     }
