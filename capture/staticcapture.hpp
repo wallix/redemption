@@ -81,7 +81,7 @@ public:
         this->update_config(ini);
     }
 
-    ~StaticCapture()
+    virtual ~StaticCapture()
     {
         // delete all captured files at the end of the RDP client session
         if (this->clear_png){
