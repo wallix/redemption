@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
     // Mem3Blt save state = 34 bytes
-    BOOST_CHECK_EQUAL((unsigned)3255 + 34, (unsigned)sq_outfilename_filesize(&(trans.seq), 1));
+    BOOST_CHECK_EQUAL((unsigned)3254 + 34, (unsigned)sq_outfilename_filesize(&(trans.seq), 1));
     sq_outfilename_unlink(&(trans.seq), 1);
 }
 

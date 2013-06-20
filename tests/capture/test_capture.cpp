@@ -91,15 +91,13 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         sq_outfilename_unlink(&(capture.png_trans->seq), 1);
         BOOST_CHECK_EQUAL((unsigned)3102, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 2));
         sq_outfilename_unlink(&(capture.png_trans->seq), 2);
-        // 3109
-        BOOST_CHECK_EQUAL((unsigned)3108, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 3));
+        BOOST_CHECK_EQUAL((unsigned)3109, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 3));
         sq_outfilename_unlink(&(capture.png_trans->seq), 3);
         BOOST_CHECK_EQUAL((unsigned)3136, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 4));
         sq_outfilename_unlink(&(capture.png_trans->seq), 4);
         BOOST_CHECK_EQUAL((unsigned)3145, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 5));
         sq_outfilename_unlink(&(capture.png_trans->seq), 5);
-        // 3176
-        BOOST_CHECK_EQUAL((unsigned)3177, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 6));
+        BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 6));
         sq_outfilename_unlink(&(capture.png_trans->seq), 6);
 
         SQ wrm_seq;
@@ -107,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         BOOST_CHECK_EQUAL((unsigned)1622, (unsigned)sq_outfilename_filesize(&wrm_seq, 0));
         sq_outfilename_unlink(&wrm_seq, 0);
         // Mem3Blt save state = 34 bytes
-        BOOST_CHECK_EQUAL((unsigned)3392 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
+        BOOST_CHECK_EQUAL((unsigned)3393 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
         sq_outfilename_unlink(&wrm_seq, 1);
         // Mem3Blt save state = 34 bytes
         BOOST_CHECK_EQUAL((unsigned)3371 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 2));
