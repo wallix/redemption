@@ -72,7 +72,14 @@
 class Front : public FrontAPI {
     using FrontAPI::draw;
 public:
+    enum {
+          CAPTURE_STATE_UNKNOWN
+        , CAPTURE_STATE_STARTED
+        , CAPTURE_STATE_PAUSED
+        , CAPTURE_STATE_STOPED
+    } capture_state;
     Capture * capture;
+
     BmpCache * bmp_cache;
     GraphicsUpdatePDU * orders;
     Keymap2 keymap;
@@ -132,6 +139,7 @@ public:
           , bool mem3blt_support
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
+        , capture_state(CAPTURE_STATE_UNKNOWN)
         , capture(NULL)
         , bmp_cache(NULL)
         , orders(NULL)
@@ -399,16 +407,17 @@ public:
     {
         if (ini.globals.movie) {
             this->stop_capture();
+            LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
             struct timeval now = tvtime();
 
             if (this->verbose & 1){
-                LOG(LOG_INFO, "movie_path = %s\n", ini.globals.movie_path);
-                LOG(LOG_INFO, "codec_id = %s\n", ini.globals.codec_id);
+                LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path);
+                LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id);
                 LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality);
-                LOG(LOG_INFO, "auth_user = %s\n", ini.globals.auth_user);
-                LOG(LOG_INFO, "host = %s\n", ini.globals.host);
+                LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user);
+                LOG(LOG_INFO, "host = %s\n",          ini.globals.host);
                 LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device);
-                LOG(LOG_INFO, "target_user = %s\n", ini.globals.target_user);
+                LOG(LOG_INFO, "target_user = %s\n",   ini.globals.target_user);
             }
 
             char path[1024];
@@ -423,17 +432,43 @@ public:
                                         RECORD_TMP_PATH "/",
                                         HASH_PATH "/", basename,
                                         true, ini);
+
+            this->capture_state = CAPTURE_STATE_STARTED;
         }
     }
 
+    void pause_capture() {
+        LOG(LOG_INFO, "---<>  Front::pause_capture  <>---");
+        if (this->capture_state != CAPTURE_STATE_STARTED) {
+            return;
+        }
+
+        this->capture->pause();
+
+        this->capture_state = CAPTURE_STATE_PAUSED;
+    }
+
+    void restart_capture() {
+        LOG(LOG_INFO, "---<> Front::restart_capture <>---");
+        if (this->capture_state != CAPTURE_STATE_PAUSED) {
+            return;
+        }
+
+        this->capture_state = CAPTURE_STATE_STARTED;
+
+    }
+
     void update_config(const Inifile & ini){
-        if (this->capture){
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)){
             this->capture->update_config(ini);
         }
     }
+
     void periodic_snapshot(bool pointer_is_displayed)
     {
-        if (this->capture){
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)){
             struct timeval now = tvtime();
             this->capture->snapshot(now, this->mouse_x, this->mouse_y, pointer_is_displayed|this->nomouse, this->notimestamp);
         }
@@ -442,8 +477,11 @@ public:
     void stop_capture()
     {
         if (this->capture){
+            LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
             delete this->capture;
             this->capture = 0;
+
+            this->capture_state = CAPTURE_STATE_STOPED;
         }
     }
     // ===========================================================================
@@ -2110,7 +2148,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                             this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data);
                             decoded_data.mark_end();
 
-                            if (this->capture && decoded_data.size()) {
+                            if (  this->capture
+                               && (this->capture_state == CAPTURE_STATE_STARTED)
+                               && decoded_data.size()) {
                                 struct timeval now = tvtime();
 
                                 this->capture->input(now, decoded_data);
@@ -3238,7 +3278,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                             this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data);
                             decoded_data.mark_end();
 
-                            if (this->capture && decoded_data.size()) {
+                            if (  this->capture
+                               && (this->capture_state == CAPTURE_STATE_STARTED)
+                               && decoded_data.size()) {
                                 struct timeval now = tvtime();
 
                                 this->capture->input(now, decoded_data);
@@ -3579,7 +3621,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             }
             this->orders->draw(new_cmd, clip);
 
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 RDPOpaqueRect new_cmd24 = cmd;
                 new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
                 this->capture->draw(new_cmd24, clip);
@@ -3592,7 +3635,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->draw(cmd, clip);
 
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 this->capture->draw(cmd, clip);
             }
         }
@@ -3602,7 +3646,10 @@ LOG(LOG_INFO, "Front::send_global_palette()");
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
             this->orders->draw(cmd, clip);
-            if (this->capture){ this->capture->draw(cmd, clip); }
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
+                this->capture->draw(cmd, clip);
+            }
         }
     }
 
@@ -3623,7 +3670,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             this->cache_brush(new_cmd.brush);
             this->orders->draw(new_cmd, clip);
 
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 RDPPatBlt new_cmd24 = cmd;
                 new_cmd24.back_color = back_color24;
                 new_cmd24.fore_color = fore_color24;
@@ -3649,7 +3697,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 const Bitmap tiled_bmp(raw, rect.cx, rect.cy, bpp, src_tile);
                 const RDPMemBlt cmd2(0, dst_tile, 0xCC, 0, 0, 0);
                 this->orders->draw(cmd2, dst_tile, tiled_bmp);
-                if (this->capture){
+                if (  this->capture
+                   && (this->capture_state == CAPTURE_STATE_STARTED)){
                     this->capture->draw(cmd2, dst_tile, tiled_bmp);
                 }
             }
@@ -3676,7 +3725,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         if (src_tile == Rect(0, 0, bitmap.cx, bitmap.cy)){
             const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
             this->orders->draw(cmd2, clip, bitmap);
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 this->capture->draw(cmd2, clip, bitmap);
             }
         }
@@ -3684,7 +3734,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             const Bitmap tiled_bmp(bitmap, src_tile);
             const RDPMemBlt cmd2(0, dst_tile, cmd.rop, 0, 0, 0);
             this->orders->draw(cmd2, clip, tiled_bmp);
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 this->capture->draw(cmd2, clip, tiled_bmp);
             }
         }
@@ -3780,7 +3831,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             }
 
             this->orders->draw(cmd2, clip, bitmap);
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 cmd2.back_color= back_color24;
                 cmd2.fore_color= fore_color24;
 
@@ -3798,7 +3850,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             }
 
             this->orders->draw(cmd2, clip, tiled_bmp);
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 cmd2.back_color= back_color24;
                 cmd2.fore_color= fore_color24;
 
@@ -3889,7 +3942,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
             this->orders->draw(new_cmd, clip);
 
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 RDPLineTo new_cmd24 = cmd;
                 new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
                 new_cmd24.pen.color = color_decode_opaquerect(cmd.pen.color, this->mod_bpp, this->mod_palette);
@@ -3916,7 +3970,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
             this->orders->draw(new_cmd, clip);
 
-            if (this->capture){
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
                 RDPGlyphIndex new_cmd24 = cmd;
                 new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
                 new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
@@ -3969,7 +4024,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                      , size_t size, const Bitmap & bmp) {
 //        LOG(LOG_INFO, "Front::draw(BitmapUpdate)");
         this->orders->draw(bitmap_data, data, size, bmp);
-        if (this->capture) {
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
             this->capture->draw(bitmap_data, data, size, bmp);
         }
     }
