@@ -341,8 +341,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
         player.interpret_order();
     }
     png_recorder.flush();
-    TODO("check this: I changed 341 to 343 to fix test, but there is likely an RGB/BGR inversion")
-    BOOST_CHECK_EQUAL(343, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(341, sq_outfilename_filesize(seq, 0));
     sq_outfilename_unlink(seq, 0);
 }
 
