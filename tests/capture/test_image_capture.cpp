@@ -227,18 +227,20 @@ BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
     // This is how the expected raw PNG (a big flat RED 800x600 screen)
     // will look as a string
 
-    RDPDrawable d(800, 600, RDPDrawableConfig(true));
+    RDPDrawable d(800, 600);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     d.draw(cmd, screen_rect);
-    TestTransport trans("TestTransportPNG", "", 0, expected_red, sizeof(expected_red)-1);;
-    transport_dump_png24(&trans, d.drawable.data, 800, 600, d.drawable.rowsize, false);
+    TestTransport trans("TestTransportPNG", "", 0, expected_red, sizeof(expected_red)-1);
+//    int fd = open("TestTransportPNG.png", O_WRONLY|O_CREAT, 0777);
+//    OutFileTransport trans(fd);
+    transport_dump_png24(&trans, d.drawable.data, 800, 600, d.drawable.rowsize, true);
 }
 
 BOOST_AUTO_TEST_CASE(TestImageCapturePngOneRedScreen)
 {
     CheckTransport trans(expected_red, sizeof(expected_red)-1);
-    RDPDrawable drawable(800, 600, false);
+    RDPDrawable drawable(800, 600);
     ImageCapture d(trans, 800, 600, drawable.drawable);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -261,7 +263,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     }
 
     OutFileTransport trans(fd);
-    RDPDrawable drawable(800, 600, false);
+    RDPDrawable drawable(800, 600);
     ImageCapture d(trans, 800, 600, drawable.drawable);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -277,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test", ".png", groupid);
-    RDPDrawable drawable(800, 600, false);
+    RDPDrawable drawable(800, 600);
     ImageCapture d(trans, 800, 600, drawable.drawable);
     Rect screen_rect(0, 0, 800, 600);
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
@@ -310,7 +312,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     Inifile ini;
     ini.video.png_interval = 1;
     ini.video.png_limit = 3;
-    RDPDrawable drawable(800, 600, false);
+    RDPDrawable drawable(800, 600);
 
     StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini, drawable.drawable);
 
@@ -380,7 +382,7 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     const int groupid = 0;
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, 0x100);
     Rect scr(0, 0, 20, 10);
-    RDPDrawable drawable(20, 10, false);
+    RDPDrawable drawable(20, 10);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
     drawable.draw(RDPOpaqueRect(scr, RED), scr);
     drawable.draw(RDPOpaqueRect(Rect(5, 5, 10, 3), BLUE), scr);
@@ -399,7 +401,7 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     const int groupid = 0;
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "test_scale", ".png", groupid);
     Rect scr(0, 0, width, height);
-    RDPDrawable drawable(scr.cx, scr.cy, false);
+    RDPDrawable drawable(scr.cx, scr.cy);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
     d.zoom(50);
 
@@ -423,7 +425,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     const int groupid = 0;    
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, 0x100);
     Rect scr(0, 0, 800, 600);
-    RDPDrawable drawable(800, 600, false);
+    RDPDrawable drawable(800, 600);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
@@ -537,7 +539,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx, bogus.cy), 0xCC, 0, 0, 0), scr, bogus);
 
     d.flush();
-    BOOST_CHECK_EQUAL(4094, sq_outfilename_filesize(&(trans.seq), 0));
+    BOOST_CHECK_EQUAL(4092, sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
 }
 
@@ -548,7 +550,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     const int groupid = 0;    
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, 0x100);
     Rect scr(0, 0, 800, 600);
-    RDPDrawable drawable(800, 600, false);
+    RDPDrawable drawable(800, 600);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
@@ -591,7 +593,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     };
 
     d.flush();
-    BOOST_CHECK_EQUAL(2913, sq_outfilename_filesize(&(trans.seq), 0));
+    BOOST_CHECK_EQUAL(2912, sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
 }
 

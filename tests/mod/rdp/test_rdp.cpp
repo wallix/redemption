@@ -57,7 +57,13 @@
         CHANNELS::ChannelDefArray cl;
         uint8_t mod_bpp;
         BGRPalette mod_palette;
+        int mouse_x;
+        int mouse_y;
+        bool notimestamp;
+        bool nomouse;
 
+        BGRPalette palette;
+        RDPDrawable gd;
 
         virtual void flush()
         {
@@ -245,21 +251,13 @@
             }
             return 0;
         }
-        int mouse_x;
-        int mouse_y;
-        bool notimestamp;
-        bool nomouse;
-
-        BGRPalette palette;
-        RDPDrawable gd;
-
         void dump_png(const char * prefix)
         {
             char tmpname[128];
             sprintf(tmpname, "%sXXXXXX.png", prefix);
             int fd = ::mkostemps(tmpname, 4, O_WRONLY|O_CREAT);
             FILE * f = fdopen(fd, "wb");
-            ::dump_png24(f, this->gd.drawable.data, this->gd.drawable.width, this->gd.drawable.height, this->gd.drawable.rowsize, false);
+            ::dump_png24(f, this->gd.drawable.data, this->gd.drawable.width, this->gd.drawable.height, this->gd.drawable.rowsize, true);
             ::fclose(f);
         }
 
@@ -271,7 +269,7 @@
               mouse_y(0),
               notimestamp(true),
               nomouse(true),
-              gd(info.width, info.height, true)
+              gd(info.width, info.height)
             {
 
             }

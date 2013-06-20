@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     Inifile ini;
     ini.video.png_limit = 3;
     ini.video.png_interval = 20;
-    RDPDrawable drawable(800, 600, false);
+    RDPDrawable drawable(800, 600);
     StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini, drawable.drawable);
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);

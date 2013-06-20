@@ -35,54 +35,21 @@
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "font.hpp"
-
-
-struct RDPDrawableConfig {
-    bool bgr;
-
-    RDPDrawableConfig(bool bgr = true)
-    : bgr(bgr)
-    {
-    }
-};
+#include "png.hpp"
 
 // orders provided to RDPDrawable *MUST* be 24 bits
 // drawable also only support 24 bits orders
 class RDPDrawable : public RDPGraphicDevice {
 public:
-    RDPDrawableConfig conf;
     Drawable drawable;
 
-    RDPDrawable(const uint16_t width, const uint16_t height, const RDPDrawableConfig & conf)
-    : conf(conf)
-    , drawable(width, height)
+    RDPDrawable(const uint16_t width, const uint16_t height)
+    : drawable(width, height)
     {
     }
 
     virtual void set_row(size_t rownum, const uint8_t * data)
     {
-        if (this->conf.bgr){
-            uint32_t bgrtmp[8192];
-            const uint32_t * s = reinterpret_cast<const uint32_t*>(data);
-            uint32_t * t = bgrtmp;
-            for (size_t n = 0; n < (this->drawable.width / 4) ; n++){
-                unsigned bRGB = *s++;
-                unsigned GBrg = *s++;
-                unsigned rgbR = *s++;
-                *t++ = ((GBrg << 16) & 0xFF000000)
-                   | ((bRGB << 16) & 0x00FF0000)
-                   | (bRGB         & 0x0000FF00)
-                   | ((bRGB >> 16) & 0x000000FF) ;
-                *t++ = (GBrg         & 0xFF000000)
-                   | ((rgbR << 16) & 0x00FF0000)
-                   | ((bRGB >> 16) & 0x0000FF00)
-                   | ( GBrg        & 0x000000FF) ;
-                *t++ = ((rgbR << 16) & 0xFF000000)
-                   | (rgbR         & 0x00FF0000)
-                   | ((rgbR >> 16) & 0x0000FF00)
-                   | ((GBrg >> 16) & 0x000000FF) ;
-            }
-        }
         memcpy(this->drawable.data + this->drawable.rowsize * rownum, data, this->drawable.rowsize);
     }
 
@@ -97,13 +64,16 @@ public:
         return this->drawable.rowsize;
     }
 
+
+    uint32_t RGBtoBGR(uint32_t color)
+    {
+        return ((color << 16) | (color & 0xFF00)| (color >> 16)) & 0xFFFFFF;
+    }
+
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
-        uint32_t color = cmd.color;
-        if (!this->conf.bgr){
-            color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
-        }
+        const uint32_t color = this->RGBtoBGR(cmd.color);
         this->drawable.opaquerect(trect, color);
     }
 
@@ -128,10 +98,7 @@ public:
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
-        uint32_t color = cmd.back_color;
-        if (!this->conf.bgr){
-            color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
-        }
+        const uint32_t color = this->RGBtoBGR(cmd.back_color);
         this->drawable.patblt(trect, cmd.rop, color);
     }
 
@@ -153,13 +120,13 @@ public:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x  - cmd.rect.x)
                 , cmd.srcy + (rect.y  - cmd.rect.y)
-                , 0xFFFFFF, this->conf.bgr);
+                , 0xFFFFFF, true);
         break;
         case 0xCC:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x  - cmd.rect.x)
                 , cmd.srcy + (rect.y  - cmd.rect.y)
-                , 0, this->conf.bgr);
+                , 0, true);
         break;
         default:
             // should not happen
@@ -176,7 +143,7 @@ public:
         this->drawable.mem_3_blt(rect, bmp
             , cmd.srcx + (rect.x  - cmd.rect.x)
             , cmd.srcy + (rect.y  - cmd.rect.y)
-            , cmd.rop, cmd.fore_color, this->conf.bgr);
+            , cmd.rop, cmd.fore_color, true);
     }
 
     /*
@@ -211,10 +178,6 @@ public:
 
         // Color handling
         uint32_t color = lineto.pen.color;
-        if (!this->conf.bgr){
-            color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
-        }
-
 
         int startx = (lineto.startx >= clip.x + clip.cx)?clip.x + clip.cx-1:lineto.startx;
         int endx = (lineto.endx >= clip.x + clip.cx)?clip.x + clip.cx-1:lineto.endx;
@@ -283,9 +246,6 @@ public:
 
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-            if (!this->conf.bgr){
-                fgcolor = ((fgcolor << 16) & 0xFF0000) | (fgcolor & 0xFF00) |((fgcolor >> 16) & 0xFF);
-            }
 
             size_t index = 0;
             FontChar *font_item = 0;
@@ -326,6 +286,15 @@ public:
                                         , bitmap_data.width
                                         , bitmap_data.height)
                                   , bmp);
+    }
+    
+    
+    virtual void dump_png24(Transport * trans, bool bgr){
+            ::transport_dump_png24(trans, this->drawable.data,
+                     this->drawable.width, this->drawable.height,
+                     this->drawable.rowsize,
+                     bgr
+                    );
     }
 };
 

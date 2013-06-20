@@ -59,7 +59,7 @@ public:
       , drawable(NULL)
     {
         if (this->capture_drawable){
-            this->drawable = new RDPDrawable(width, height, false);
+            this->drawable = new RDPDrawable(width, height);
         }
 
         if (this->capture_png){
@@ -88,13 +88,13 @@ public:
             if (this->enable_file_encryption) {
                 this->crypto_wrm_trans = new CryptoOutmetaTransport(wrm_path, hash_path, basename, now, width, height, ini.video.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
-                this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+                this->pnc = new NativeCapture(now, *this->crypto_wrm_trans, width, height, *this->pnc_bmp_cache, *this->drawable, ini);
             }
             else
             {
                 this->wrm_trans = new OutmetaTransport(wrm_path, basename, now, width, height, ini.video.capture_groupid);
                 this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
-                this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, this->drawable, ini);
+                this->pnc = new NativeCapture(now, *this->wrm_trans, width, height, *this->pnc_bmp_cache, *this->drawable, ini);
             }
             this->pnc->recorder.send_input = true;
         }

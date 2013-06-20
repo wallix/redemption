@@ -62,7 +62,6 @@ public:
     , zoom_factor(100)
     , scaled_width(width)
     , scaled_height(height)
-//    , RDPDrawable(width, height, true)
     , drawable(drawable)
     {
     }

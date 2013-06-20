@@ -72,6 +72,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         CHANNELS::ChannelDefArray cl;
         uint8_t mod_bpp;
         BGRPalette mod_palette;
+        int mouse_x;
+        int mouse_y;
+        bool notimestamp;
+        bool nomouse;
+
+        BGRPalette palette;
+        RDPDrawable gd;
 
         virtual void flush()
         {
@@ -165,14 +172,6 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
             return 0;
         }
 
-        int mouse_x;
-        int mouse_y;
-        bool notimestamp;
-        bool nomouse;
-
-        BGRPalette palette;
-        RDPDrawable gd;
-
         void dump_png(const char * prefix)
         {
             char tmpname[128];
@@ -191,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
               mouse_y(0),
               notimestamp(true),
               nomouse(true),
-              gd(info.width, info.height, true)
+              gd(info.width, info.height)
             {
 
             }
