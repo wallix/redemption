@@ -313,14 +313,40 @@ struct Session {
                         time_t timestamp = time(NULL);
                         this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
-                        if (this->sesman && !this->sesman->keep_alive(rfds, this->keep_alive_time, timestamp, &front_trans)){
-                            this->nextmod = INTERNAL_CLOSE;
-                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->nextmod);
-                            this->keep_alive_time = 0;
-                            this->internal_state = SESSION_STATE_RUNNING;
-                            this->front->stop_capture();
-                            delete this->sesman;
-                            this->sesman = NULL;
+                        if (this->sesman){
+                            if (!this->sesman->keep_alive( rfds, this->keep_alive_time
+                                                         , timestamp, &front_trans)) {
+                                this->nextmod = INTERNAL_CLOSE;
+                                this->session_setup_mod(MCTX_STATUS_INTERNAL, this->nextmod);
+                                this->keep_alive_time = 0;
+                                this->internal_state = SESSION_STATE_RUNNING;
+                                this->front->stop_capture();
+                                delete this->sesman;
+                                this->sesman = NULL;
+                            }
+                            else {
+                                if (this->ini->globals.movie) {
+                                    if (this->front->capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                                        this->front->start_capture( this->front->client_info.width
+                                                                  , this->front->client_info.height
+                                                                  , *this->ini
+                                                                  );
+                                        this->mod->rdp_input_invalidate(
+                                            Rect( 0, 0, this->front->client_info.width
+                                                , this->front->client_info.height));
+                                    }
+                                    else if (this->front->capture_state == Front::CAPTURE_STATE_PAUSED) {
+                                        this->front->restart_capture();
+                                        this->mod->rdp_input_invalidate(
+                                            Rect( 0, 0, this->front->client_info.width
+                                                , this->front->client_info.height));
+                                    }
+                                }
+                                else if (this->front->capture_state == Front::CAPTURE_STATE_STARTED) {
+                                    this->front->pause_capture();
+                                }
+                            }
+
                         }
                         // Check if sesman received an answer to auth_channel_target
                         if (this->ini->globals.auth_channel[0]) {

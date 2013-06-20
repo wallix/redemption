@@ -67,7 +67,7 @@ public:
     {
     }
 
-    ~ImageCapture()
+    virtual ~ImageCapture()
     {
     }
 
