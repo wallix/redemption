@@ -382,8 +382,6 @@ struct Session {
                                 bool keep_alive = false;
                                 int next_state = this->sesman->ask_next_module(
                                                                     this->keep_alive_time,
-                                                                    this->ini->globals.authip,
-                                                                    this->ini->globals.authport,
                                                                     record_video, keep_alive, this->nextmod);
                                 if (next_state != MCTX_STATUS_WAITING){
                                     this->internal_state = SESSION_STATE_RUNNING;
@@ -422,8 +420,6 @@ struct Session {
 
                                     int next_state = this->sesman->ask_next_module(
                                                                         this->keep_alive_time,
-                                                                        this->ini->globals.authip,
-                                                                        this->ini->globals.authport,
                                                                         record_video, keep_alive,
                                                                         this->nextmod);
                                     if (this->verbose & 8){

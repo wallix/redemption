@@ -471,7 +471,6 @@ class SessionManager {
     }
 
     int ask_next_module(long & keepalive_time,
-                        const char * auth_host, int auth_port,
                         bool & record_video, bool & keep_alive,
                         submodule_t & nextmod)
     {
@@ -483,28 +482,28 @@ class SessionManager {
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module default state");
             }
-            this->ask_next_module_remote(auth_host, auth_port);
+            this->ask_next_module_remote();
             return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_SELECTOR:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_SELECTOR state");
             }
-            this->ask_next_module_remote(auth_host, auth_port);
+            this->ask_next_module_remote();
             return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_LOGIN:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_LOGIN state");
             }
-            this->ask_next_module_remote(auth_host, auth_port);
+            this->ask_next_module_remote();
             return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_PASSWORD:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_PASSWORD state");
             }
-            this->ask_next_module_remote(auth_host, auth_port);
+            this->ask_next_module_remote();
             return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_RECEIVED_CREDENTIALS:
@@ -664,7 +663,7 @@ class SessionManager {
         }
     }
 
-    void ask_next_module_remote(const char * auth_host, int authport)
+    void ask_next_module_remote()
     {
         // if anything happen, like authentification socked closing, stop current connection
         try {
