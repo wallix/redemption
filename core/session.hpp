@@ -334,8 +334,9 @@ struct Session {
                         this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
                         if (this->sesman){
-                            if (!this->sesman->keep_alive( rfds, this->keep_alive_time
-                                                           , timestamp, &front_trans, auth_event)) {
+                            bool read_auth = auth_event.is_set(rfds);
+                            if (!this->sesman->keep_alive(this->keep_alive_time
+                                                           , timestamp, &front_trans, read_auth)) {
                                 this->nextmod = INTERNAL_CLOSE;
                                 this->session_setup_mod(MCTX_STATUS_INTERNAL);
                                 this->keep_alive_time = 0;

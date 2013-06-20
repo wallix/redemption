@@ -251,8 +251,8 @@ class SessionManager {
         }
         return res;
     }
-
-    bool keep_alive(fd_set & rfds, long & keepalive_time, long & now, Transport * trans, wait_obj & auth_event)
+    
+    bool keep_alive(long & keepalive_time, long & now, Transport * trans, bool read_auth)
     {
 //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
@@ -320,7 +320,7 @@ class SessionManager {
             }
         }
 
-        if (auth_event.is_set(rfds)) {
+        if (read_auth) {
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
             }
