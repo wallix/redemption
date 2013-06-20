@@ -445,7 +445,7 @@ struct Drawable
         }
     }
 
-    void draw_bitmap(const Rect & rect, const Bitmap & bmp) {
+    void draw_bitmap(const Rect & rect, const Bitmap & bmp, bool bgr) {
         const int16_t mincx =
             std::min<int16_t>(bmp.cx, std::min<int16_t>(this->width  - rect.x, rect.cx));
         const int16_t mincy =
@@ -470,6 +470,9 @@ struct Drawable
                     px = (px << 8) + source[Bpp - 1 - b];
                 }
                 uint32_t color = color_decode(px, bmp.original_bpp, bmp.original_palette);
+                if (bgr){
+                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+                }
                 target[0] = color      ;
                 target[1] = color >> 8 ;
                 target[2] = color >> 16;

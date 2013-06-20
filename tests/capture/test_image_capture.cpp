@@ -539,7 +539,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx, bogus.cy), 0xCC, 0, 0, 0), scr, bogus);
 
     d.flush();
-    BOOST_CHECK_EQUAL(4092, sq_outfilename_filesize(&(trans.seq), 0));
+    BOOST_CHECK_EQUAL(4094, sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
 }
 
@@ -593,7 +593,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     };
 
     d.flush();
-    BOOST_CHECK_EQUAL(2912, sq_outfilename_filesize(&(trans.seq), 0));
+    BOOST_CHECK_EQUAL(2913, sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
 }
 
