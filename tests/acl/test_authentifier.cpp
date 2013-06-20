@@ -21,12 +21,13 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define BOOST_TEST_MODULE TestAuthentifier
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
 #include "log.hpp"
 #include "authentifier.hpp"
+#include "testtransport.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestAuthentifier)
@@ -34,5 +35,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifier)
     TODO("Writing an actual test for SessionManager is not so simple because it manage connection to auth_t behind the scene"
          "we should make the auth_t transport explicit dependency to enable writing usefull tests")
     Inifile ini;
-    SessionManager(&ini,NULL,NULL, 30, 30, true, 0);
+    GeneratorTransport gen_trans("TEST",5);
+    SessionManager(&ini, gen_trans, 30, 30, true, 0);
 }

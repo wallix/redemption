@@ -98,7 +98,7 @@ struct Session {
 
     submodule_t nextmod;
     int internal_state;
-    long id;
+    long id;                     // not used
     time_t keep_alive_time;
 
     struct mod_api * mod; /* module interface */
@@ -119,31 +119,30 @@ struct Session {
         , nextmod(INTERNAL_NONE)
         , mod_transport(NULL)
     {
-        SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
-        // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
-        //  here instead of inside Sessionmanager
-         
-        int client_sck = ip_connect(this->ini->globals.authip,
-                                    this->ini->globals.authport,
-                                    30,
-                                    1000,
-                                    this->ini->debug.auth);
-        if (client_sck == -1){
-            LOG(LOG_ERR, "Failed to connect to authentifier");
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
-        }
-
-        SocketTransport auth_trans("Authentifier",
-                                   client_sck,
-                                   this->ini->globals.authip,
-                                   this->ini->globals.authport,
-                                   this->ini->debug.auth);
-        wait_obj auth_event(auth_trans.sck);
-        
         try {
+            SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
+            // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
+            //  here instead of inside Sessionmanager
+         
+            int client_sck = ip_connect(this->ini->globals.authip,
+                                        this->ini->globals.authport,
+                                        30,
+                                        1000,
+                                        this->ini->debug.auth);
+            if (client_sck == -1){
+                LOG(LOG_ERR, "Failed to connect to authentifier");
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
+
+            SocketTransport auth_trans("Authentifier",
+                                       client_sck,
+                                       this->ini->globals.authip,
+                                       this->ini->globals.authport,
+                                       this->ini->debug.auth);
+            wait_obj auth_event(auth_trans.sck);
+
             this->sesman = new SessionManager( this->ini
-                                             , &auth_trans
-                                             , &auth_event
+                                             , auth_trans
                                              , this->ini->globals.keepalive_grace_delay
                                              , this->ini->globals.max_tick
                                              , this->ini->globals.internal_domain
@@ -183,7 +182,6 @@ struct Session {
                         *this->refreshconf ^= 1;
                         DIR * d = opendir(ini->globals.dynamic_conf_path);
                         if (d){
-
                             size_t path_len = strlen(ini->globals.dynamic_conf_path);
                             size_t file_len = pathconf(ini->globals.dynamic_conf_path, _PC_NAME_MAX) + 1;
                             char * buffer = (char*)malloc(file_len + path_len);
@@ -246,7 +244,8 @@ struct Session {
 
                 this->front_event.add_to_fd_set(rfds, max);
                 if (this->front->up_and_running && this->sesman){
-                    this->sesman->add_to_fd_set(rfds, max);
+                    auth_event.add_to_fd_set(rfds, max);
+                    //this->sesman->add_to_fd_set(rfds, max);
                     this->mod->event.add_to_fd_set(rfds, max);
                 }
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
@@ -272,7 +271,7 @@ struct Session {
                     case SESSION_STATE_ENTRY:
                     {
                         if (this->front->up_and_running){
-                            this->session_setup_mod(MCTX_STATUS_CLI, this->nextmod);
+                            this->session_setup_mod(MCTX_STATUS_CLI);
                             this->mod->event.set();
                             this->internal_state = SESSION_STATE_RUNNING;
                         }
@@ -280,7 +279,7 @@ struct Session {
                     break;
                     case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
                     {
-                        if (this->sesman->event(rfds)){
+                        if (auth_event.is_set(rfds)){
                             this->sesman->receive_next_module();
 
                             if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
@@ -307,7 +306,7 @@ struct Session {
                     break;
                     case SESSION_STATE_WAITING_FOR_CONTEXT:
                     {
-                        if (this->sesman->event(rfds)){
+                        if (auth_event.is_set(rfds)){
                             this->sesman->receive_next_module();
 
                             if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
@@ -334,9 +333,9 @@ struct Session {
                         time_t timestamp = time(NULL);
                         this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
-                        if (this->sesman && !this->sesman->keep_alive(rfds, this->keep_alive_time, timestamp, &front_trans)){
+                        if (this->sesman && !this->sesman->keep_alive(rfds, this->keep_alive_time, timestamp, &front_trans, auth_event)){
                             this->nextmod = INTERNAL_CLOSE;
-                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->nextmod);
+                            this->session_setup_mod(MCTX_STATUS_INTERNAL);
                             this->keep_alive_time = 0;
                             this->internal_state = SESSION_STATE_RUNNING;
                             this->front->stop_capture();
@@ -408,7 +407,7 @@ struct Session {
                                     LOG(LOG_INFO, "Session::no authentifier available, closing");
                                     this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
                                     this->nextmod = INTERNAL_CLOSE;
-                                    this->session_setup_mod(MCTX_STATUS_INTERNAL, this->nextmod);
+                                    this->session_setup_mod(MCTX_STATUS_INTERNAL);
                                     this->keep_alive_time = 0;
                                     this->internal_state = SESSION_STATE_RUNNING;
                                     this->front->stop_capture();
@@ -429,7 +428,7 @@ struct Session {
                                     if (next_state != MCTX_STATUS_WAITING){
                                         this->internal_state = SESSION_STATE_STOP;
                                         try {
-                                            this->session_setup_mod(next_state, this->nextmod);
+                                            this->session_setup_mod(next_state);
                                             if (record_video) {
                                                 this->front->start_capture(
                                                     this->front->client_info.width,
@@ -448,7 +447,7 @@ struct Session {
                                         catch (const Error & e) {
                                             LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
                                             this->nextmod = INTERNAL_CLOSE;
-                                            this->session_setup_mod(MCTX_STATUS_INTERNAL, this->nextmod);
+                                            this->session_setup_mod(MCTX_STATUS_INTERNAL);
                                             this->keep_alive_time = 0;
                                             delete sesman;
                                             this->sesman = NULL;
@@ -524,11 +523,11 @@ struct Session {
         }
     }
 
-    TODO("We shoudl be able to flatten MCTX_STATUS and submodule, combining the two we get the desired target")
-    void session_setup_mod(int target_module, submodule_t submodule)
+    TODO("We shoudl be able to flatten MCTX_STATUS and this->nextmod, combining the two we get the desired target")
+    void session_setup_mod(int target_module)
     {
         if (this->verbose){
-            LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, (unsigned)submodule);
+            LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, this->nextmod);
         }
 
         if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
@@ -564,7 +563,7 @@ struct Session {
 
             case MCTX_STATUS_INTERNAL:
             {
-                switch (submodule){
+                switch (this->nextmod){
                     case INTERNAL_CLOSE:
                     {
                         if (this->verbose){
