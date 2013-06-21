@@ -117,6 +117,9 @@ public:
     }
 
     void pause() {
+    }
+
+    void resume() {
         if (this->capture_wrm){
             if (this->enable_file_encryption) {
                 this->crypto_wrm_trans->next();
@@ -124,6 +127,9 @@ public:
             else {
                 this->wrm_trans->next();
             }
+            struct timeval now = tvtime();
+            this->pnc->recorder.timestamp(now);
+            this->pnc->recorder.send_timestamp_chunk(true);
         }
     }
 

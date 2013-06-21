@@ -68,15 +68,21 @@ struct RDPGraphicDevice {
     virtual void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
                          , bool no_timestamp) {}
 
+    virtual void ignore_time_interval(bool flag) { this->_ignore_time_interval = flag; }
+
 protected:
     // this to avoid calling constructor of base abstract class
-    RDPGraphicDevice() {}
+    RDPGraphicDevice() : _ignore_time_interval(false) {}
+
+    bool _ignore_time_interval;
 
 public:
     // we choosed to make destructor virtual to allow destructing object
     // through pointer of base class. As this class is interface only
     // it does not looks really usefull.
     virtual ~RDPGraphicDevice() {}
+
+    virtual void flush() = 0;
 };
 
 #endif

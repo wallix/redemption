@@ -248,6 +248,10 @@ struct Session {
                     //this->sesman->add_to_fd_set(rfds, max);
                     this->mod->event.add_to_fd_set(rfds, max);
                 }
+                if (this->mod->event.is_set(rfds)) {
+                    timeout.tv_sec  = 0;
+                    timeout.tv_usec = 0;
+                }
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
                 if (num < 0){
                     if (errno == EINTR){
@@ -357,7 +361,7 @@ struct Session {
                                                 , this->front->client_info.height));
                                     }
                                     else if (this->front->capture_state == Front::CAPTURE_STATE_PAUSED) {
-                                        this->front->restart_capture();
+                                        this->front->resume_capture();
                                         this->mod->rdp_input_invalidate(
                                             Rect( 0, 0, this->front->client_info.width
                                                 , this->front->client_info.height));

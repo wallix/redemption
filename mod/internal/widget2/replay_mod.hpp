@@ -135,14 +135,12 @@ public:
         TODO("RZ: Support encrypted recorded file.")
         try
         {
-            this->front.begin_update();
-            int i;
-            for (i = 0; (i < 500) && this->reader->next_order(); i++) {
+            while (this->reader->next_order()) {
                 this->reader->interpret_order();
             }
-            if (i < 50)
-                back_event = BACK_EVENT_STOP;
-            this->front.end_update();
+
+            this->front.flush();
+            back_event = BACK_EVENT_STOP;
         }
         catch (Error & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {

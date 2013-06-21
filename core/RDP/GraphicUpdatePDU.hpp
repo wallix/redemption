@@ -201,6 +201,13 @@ struct GraphicsUpdatePDU : public RDPSerializer {
         }
     }
 
+public:
+    virtual void flush() {
+        this->flush_bitmaps();
+        this->flush_orders();
+    }
+
+protected:
     virtual void flush_orders()
     {
         if (this->order_count > 0){

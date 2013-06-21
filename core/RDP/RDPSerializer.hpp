@@ -176,8 +176,10 @@ struct RDPSerializer : public RDPGraphicDevice
 
     ~RDPSerializer() {}
 
+protected:
     virtual void flush_orders() = 0;
     virtual void flush_bitmaps() = 0;
+public:
 
     /*****************************************************************************/
     // check if the next order will fit in available packet size
@@ -266,7 +268,7 @@ struct RDPSerializer : public RDPGraphicDevice
 
     void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx)
     {
-        const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
+        Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
         if (!bmp) {
 //            LOG(LOG_INFO, "skipping RDPSerializer::emit_bmp_cache for %u:%u (entry not used)",
 //                cache_id, cache_idx);
