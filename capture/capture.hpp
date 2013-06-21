@@ -100,7 +100,7 @@ public:
         }
    }
 
-    ~Capture(){
+    virtual ~Capture(){
         delete this->psc;
         delete this->png_trans;
 
@@ -116,11 +116,28 @@ public:
         delete this->drawable;
     }
 
+    void pause() {
+    }
+
+    void resume() {
+        if (this->capture_wrm){
+            if (this->enable_file_encryption) {
+                this->crypto_wrm_trans->next();
+            }
+            else {
+                this->wrm_trans->next();
+            }
+            struct timeval now = tvtime();
+            this->pnc->recorder.timestamp(now);
+            this->pnc->recorder.send_timestamp_chunk(true);
+        }
+    }
+
     void update_config(const Inifile & ini){
 //        if (this->capture_drawable){
 //            this->drawable->update_config(ini);
 //        }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->update_config(ini);
         }
         if (this->capture_wrm){
@@ -133,7 +150,7 @@ public:
         if (this->capture_drawable){
             this->drawable->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->snapshot(now, x, y, pointer_already_displayed, no_timestamp);
         }
         if (this->capture_wrm){
@@ -146,7 +163,7 @@ public:
         if (this->capture_drawable){
             this->drawable->flush();
         }
-        if (this->capture_png){ 
+        if (this->capture_png){
             this->psc->flush();
         }
         if (this->capture_wrm){
@@ -230,8 +247,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip)
-    {
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip) {
     }
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data

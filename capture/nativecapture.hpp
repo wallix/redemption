@@ -87,7 +87,7 @@ public:
     }
 
     ~NativeCapture(){
-        this->recorder.flush_orders();
+        this->recorder.flush();
     }
 
     void update_config(const Inifile & ini)
@@ -124,7 +124,7 @@ public:
 
     virtual void flush()
     {
-        this->recorder.flush_orders();
+        this->recorder.flush();
     }
 
     virtual void input(const timeval & now, Stream & input_data_32) {
@@ -177,7 +177,6 @@ public:
     }
 
 private:
-
     void breakpoint()
     {
         this->recorder.breakpoint();

@@ -404,15 +404,23 @@ struct FileToGraphic
                     this->mouse_x = this->stream.in_uint16_le();
                     this->mouse_y = this->stream.in_uint16_le();
 
-                    if (this->verbose > 16){
-                        LOG(LOG_INFO, "TIMESTAMP %u.%u mouse (x=%u, y=%u)\n"
-                            , this->record_now.tv_sec
-                            , this->record_now.tv_usec
-                            , this->mouse_x
-                            , this->mouse_y);
+                    if (  (this->info_version > 1)
+                       && this->stream.in_uint8()) {
+                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                            this->consumers[i]->ignore_time_interval(true);
+                        }
                     }
 
-                    this->input_len = std::min(static_cast<uint16_t>(stream.end - stream.p), static_cast<uint16_t>(sizeof(this->input)-1));
+                    if (this->verbose > 16) {
+                        LOG( LOG_INFO, "TIMESTAMP %u.%u mouse (x=%u, y=%u)\n"
+                           , this->record_now.tv_sec
+                           , this->record_now.tv_usec
+                           , this->mouse_x
+                           , this->mouse_y);
+                    }
+
+                    this->input_len = std::min( static_cast<uint16_t>(stream.end - stream.p)
+                                              , static_cast<uint16_t>(sizeof(this->input) - 1));
                     if (this->input_len){
                         this->stream.in_copy_bytes(this->input, this->input_len);
                         this->input[this->input_len] = 0;
@@ -425,18 +433,24 @@ struct FileToGraphic
                         }
 
                         if (this->verbose > 16) {
-                            uint32_t key;
+                            const uint8_t * key32;
+                            uint8_t         key8[6];
+                            size_t          len;
 
-                            while (ss.in_check_rem(sizeof(uint32_t))) {
-                                key = ss.in_uint32_le();
+                            while (ss.in_check_rem(4)) {
+                                key32 = ss.in_uint8p(4);
 
-                                LOG(LOG_INFO, "TIMESTAMP %u.%u keyboard '%c'(0x%X)"
-                                    , this->record_now.tv_sec
-                                    , this->record_now.tv_usec
-                                    , key
-                                    , key);
+                                len       = UTF32toUTF8(key32, 4, key8, sizeof(key8));
+                                key8[len] = 0;
+
+                                LOG( LOG_INFO, "TIMESTAMP %u.%u keyboard '%s'(0x%X)"
+                                   , this->record_now.tv_sec
+                                   , this->record_now.tv_usec
+                                   , key8
+                                   , key32);
                             }
                         }
+
                     }
                 }
 
@@ -451,17 +465,26 @@ struct FileToGraphic
                 }
                 else {
                    if (this->real_time){
-                        struct timeval now = tvtime();
-                        uint64_t elapsed = difftimeval(now, this->synctime_now);
-                        this->synctime_now = now;
-                        uint64_t movie_elapsed = difftimeval(this->record_now, last_movie_time);
+                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                            this->consumers[i]->flush();
+                        }
 
-                        if (elapsed <= movie_elapsed){
-                            struct timespec wtime =
-                                { static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
+                        struct   timeval now = tvtime();
+                        uint64_t elapsed     = difftimeval(now, this->synctime_now);
+
+                                 this->synctime_now = now;
+                        uint64_t movie_elapsed      = difftimeval(this->record_now, last_movie_time);
+
+                        if (elapsed <= movie_elapsed) {
+                            struct timespec wtime     = {
+                                  static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<uint32_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
                                 };
-                            nanosleep(&wtime, NULL);
+                            struct timespec wtime_rem = { 0, 0 };
+
+                            while ((nanosleep(&wtime, NULL) == -1) && (errno == EINTR)) {
+                                wtime = wtime_rem;
+                            }
                         }
                     }
                     else {
@@ -475,7 +498,6 @@ struct FileToGraphic
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk")
             {
                 this->info_version        = this->stream.in_uint16_le();
-                (void)this->info_version; // for now there is only one, we do not yet have problems
                 this->mem3blt_support     = (this->info_version > 1);
                 this->info_width          = this->stream.in_uint16_le();
                 this->info_height         = this->stream.in_uint16_le();

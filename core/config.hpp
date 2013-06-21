@@ -1458,7 +1458,7 @@ struct Inifile {
             break;
         case AUTHID_HOST:
             this->context.ask_host      = false;
-            strncpy(this->globals.host,          value, sizeof(this->globals.host));
+            strncpy(this->globals.host, value, sizeof(this->globals.host));
             this->globals.host[sizeof(this->globals.host) - 1]                   = 0;
             break;
 

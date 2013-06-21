@@ -120,13 +120,13 @@ public:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x  - cmd.rect.x)
                 , cmd.srcy + (rect.y  - cmd.rect.y)
-                , 0xFFFFFF, true);
+                , 0xFFFFFF, false);
         break;
         case 0xCC:
             this->drawable.mem_blt(rect, bmp
                 , cmd.srcx + (rect.x  - cmd.rect.x)
                 , cmd.srcy + (rect.y  - cmd.rect.y)
-                , 0, true);
+                , 0, false);
         break;
         default:
             // should not happen
@@ -143,7 +143,7 @@ public:
         this->drawable.mem_3_blt(rect, bmp
             , cmd.srcx + (rect.x  - cmd.rect.x)
             , cmd.srcy + (rect.y  - cmd.rect.y)
-            , cmd.rop, cmd.fore_color, true);
+            , cmd.rop, cmd.fore_color, false);
     }
 
     /*
@@ -177,7 +177,7 @@ public:
         }
 
         // Color handling
-        uint32_t color = lineto.pen.color;
+        uint32_t color = RGBtoBGR(lineto.pen.color);
 
         int startx = (lineto.startx >= clip.x + clip.cx)?clip.x + clip.cx-1:lineto.startx;
         int endx = (lineto.endx >= clip.x + clip.cx)?clip.x + clip.cx-1:lineto.endx;
@@ -244,6 +244,7 @@ public:
                 return ;
             }
 
+            fgcolor = RGBtoBGR(fgcolor);
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
 
@@ -281,11 +282,13 @@ public:
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-        this->drawable.draw_bitmap( Rect( bitmap_data.dest_left
+                     
+        this->drawable.draw_bitmap(Rect( bitmap_data.dest_left
                                         , bitmap_data.dest_top
                                         , bitmap_data.width
                                         , bitmap_data.height)
-                                  , bmp);
+                                  , bmp, 
+                                  false);
     }
     
     

@@ -103,14 +103,14 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
         RDPMemBlt(0, Rect(0, scr.cy - 10, bloc20x10.cx, bloc20x10.cy), 0xCC, 0, 0, 0),
         scr,
         bloc20x10);
-    consumer.flush_orders();
+    consumer.flush();
 
     now.tv_sec++;
     consumer.timestamp(now);
 
     consumer.save_bmp_caches();
 
-    consumer.flush_orders();
+    consumer.flush();
 }
 
 BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
@@ -217,14 +217,14 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     consumer.draw(RDPOpaqueRect(scr.shrink(5), BLUE), scr);
     consumer.draw(RDPOpaqueRect(scr.shrink(10), RED), scr);
 
-    consumer.flush_orders();
+    consumer.flush();
 
     consumer.send_save_state_chunk();
 
     now.tv_sec++;
     consumer.timestamp(now);
     consumer.draw(RDPOpaqueRect(scr.shrink(20), GREEN), scr);
-    consumer.flush_orders();
+    consumer.flush();
 
 
 }
@@ -341,8 +341,7 @@ BOOST_AUTO_TEST_CASE(TestContinuationOrderStates)
         player.interpret_order();
     }
     png_recorder.flush();
-    TODO("check this: I changed 341 to 343 to fix test, but there is likely an RGB/BGR inversion")
-    BOOST_CHECK_EQUAL(343, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(341, sq_outfilename_filesize(seq, 0));
     sq_outfilename_unlink(seq, 0);
 }
 

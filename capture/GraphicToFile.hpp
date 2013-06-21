@@ -221,14 +221,16 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->drawable.dump_png24(&png_trans, false);
     }
 
-    void send_timestamp_chunk(void)
+    void send_timestamp_chunk(bool ignore_time_interval = false)
     {
-        BStream payload(12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t));
+        BStream payload(12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1);
         payload.out_timeval_to_uint64le_usec(this->timer);
 //        payload.out_uint64_le(this->timer.tv_sec * 1000000ULL + this->timer.tv_usec);
         if (this->send_input){
             payload.out_uint16_le(this->mouse_x);
             payload.out_uint16_le(this->mouse_y);
+
+            payload.out_uint8(ignore_time_interval ? 1 : 0);
 
             keyboard_buffer_32.mark_end();
 
@@ -410,6 +412,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->send_caches_chunk();
     }
 
+protected:
     virtual void flush_orders()
     {
         if (this->order_count > 0){
@@ -419,6 +422,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             this->send_orders_chunk();
         }
     }
+public:
 
     void send_orders_chunk()
     {
@@ -479,6 +483,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->RDPSerializer::draw(cmd, clip);
     }
 
+protected:
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
@@ -486,6 +491,11 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             }
             this->send_bitmaps_chunk();
         }
+    }
+public:
+    virtual void flush() {
+        this->flush_bitmaps();
+        this->flush_orders();
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) {

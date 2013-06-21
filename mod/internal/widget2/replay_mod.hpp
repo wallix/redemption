@@ -47,7 +47,6 @@ public:
     : InternalMod(front, width, height)
     , auth_error_message(auth_error_message)
     {
-        TODO("use canonical_path to manage trailing slash")
         strcpy(this->movie, replay_path);
         strcat(this->movie, movie);
         LOG(LOG_INFO, "Playing %s", this->movie);
@@ -55,7 +54,7 @@ public:
         char path[1024];
         char basename[1024];
         char extension[128];
-        strcpy(path, "/tmp/"); // default value, actual one should come from movie_path
+        strcpy(path, RECORD_PATH); // default value, actual one should come from movie_path
         strcpy(basename, "replay"); // default value actual one should come from movie_path
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
@@ -136,14 +135,17 @@ public:
         TODO("RZ: Support encrypted recorded file.")
         try
         {
-            this->front.begin_update();
             int i;
             for (i = 0; (i < 500) && this->reader->next_order(); i++) {
                 this->reader->interpret_order();
             }
-            if (i < 50)
+            if (i == 500) {
+                this->event.set(1);
+            }
+            else {
+                this->front.flush();
                 back_event = BACK_EVENT_STOP;
-            this->front.end_update();
+            }
         }
         catch (Error & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {

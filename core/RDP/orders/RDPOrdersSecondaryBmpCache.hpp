@@ -454,27 +454,23 @@ class RDPBmpCache {
     public:
     int id;
     int idx;
-    const Bitmap * bmp;
+    Bitmap * bmp;
     uint32_t verbose;
-    bool bmp_need_dealloc;
 
-    RDPBmpCache(const Bitmap * bmp, int id, int idx, int verbose = 0)
-        : id(id), idx(idx), bmp(bmp), verbose(verbose), bmp_need_dealloc(false)
+    RDPBmpCache(Bitmap * bmp, int id, int idx, int verbose = 0)
+        : id(id), idx(idx), bmp(bmp), verbose(verbose)
     {
     }
 
-    RDPBmpCache() : id(0), idx(0), bmp(NULL), verbose(0), bmp_need_dealloc(false)
+    RDPBmpCache() : id(0), idx(0), bmp(NULL), verbose(0)
     {
     }
 
     ~RDPBmpCache()
     {
-        if (this->bmp && this->bmp_need_dealloc) {
-            delete this->bmp;
-        }
     }
 
-    void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int use_compact_packets) const
+    void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int use_compact_packets)
     {
         using namespace RDP;
         switch (bitmap_cache_version){
@@ -509,7 +505,7 @@ class RDPBmpCache {
         }
     }
 
-    void emit_v1_compressed(Stream & stream, const int use_compact_packets) const {
+    void emit_v1_compressed(Stream & stream, const int use_compact_packets) {
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -763,7 +759,7 @@ class RDPBmpCache {
     //                              defined in [MS-RDPBCGR] section
     //                              2.2.9.1.1.3.1.2.2).
 
-    void emit_v2_compressed(Stream & stream) const
+    void emit_v2_compressed(Stream & stream)
     {
         using namespace RDP;
 
@@ -966,9 +962,7 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).")
-        this->bmp              = new Bitmap( bpp, &palette, width, height
-                                           , stream.in_uint8p(bufsize), bufsize);
-        this->bmp_need_dealloc = true;
+        this->bmp = new Bitmap(bpp, &palette, width, height, stream.in_uint8p(bufsize), bufsize);
 
         if (bufsize != this->bmp->bmp_size){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
@@ -991,8 +985,7 @@ class RDPBmpCache {
 
         if (flags & NO_BITMAP_COMPRESSION_HDR) {
             const uint8_t* data = stream.in_uint8p(bufsize);
-            this->bmp              = new Bitmap(bpp, &palette, width, height, data, bufsize, true);
-            this->bmp_need_dealloc = true;
+            this->bmp = new Bitmap(bpp, &palette, width, height, data, bufsize, true);
         }
         else {
             stream.in_uint16_le(); // skip padding
@@ -1001,8 +994,7 @@ class RDPBmpCache {
             uint16_t final_size = stream.in_uint16_le(); // size of bitmap after decompression
             const uint8_t* data = stream.in_uint8p(size);
 
-            this->bmp              = new Bitmap(bpp, &palette, width, height, data, size, true);
-            this->bmp_need_dealloc = true;
+            this->bmp = new Bitmap(bpp, &palette, width, height, data, size, true);
             if (row_size != (this->bmp->bmp_size / this->bmp->cy)){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
             }
