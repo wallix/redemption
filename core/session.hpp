@@ -357,7 +357,7 @@ struct Session {
                                                 , this->front->client_info.height));
                                     }
                                     else if (this->front->capture_state == Front::CAPTURE_STATE_PAUSED) {
-                                        this->front->restart_capture();
+                                        this->front->resume_capture();
                                         this->mod->rdp_input_invalidate(
                                             Rect( 0, 0, this->front->client_info.width
                                                 , this->front->client_info.height));

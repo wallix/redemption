@@ -221,14 +221,16 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->drawable.dump_png24(&png_trans, false);
     }
 
-    void send_timestamp_chunk(void)
+    void send_timestamp_chunk(uint8_t ignore_time_interval = 0)
     {
-        BStream payload(12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t));
+        BStream payload(12 + GTF_SIZE_KEYBUF_REC * sizeof(uint32_t) + 1);
         payload.out_timeval_to_uint64le_usec(this->timer);
 //        payload.out_uint64_le(this->timer.tv_sec * 1000000ULL + this->timer.tv_usec);
         if (this->send_input){
             payload.out_uint16_le(this->mouse_x);
             payload.out_uint16_le(this->mouse_y);
+
+            payload.out_uint8(ignore_time_interval);
 
             keyboard_buffer_32.mark_end();
 

@@ -448,11 +448,13 @@ public:
         this->capture_state = CAPTURE_STATE_PAUSED;
     }
 
-    void restart_capture() {
-        LOG(LOG_INFO, "---<> Front::restart_capture <>---");
+    void resume_capture() {
+        LOG(LOG_INFO, "---<>  Front::resume_capture <>---");
         if (this->capture_state != CAPTURE_STATE_PAUSED) {
             return;
         }
+
+        this->capture->resume();
 
         this->capture_state = CAPTURE_STATE_STARTED;
 

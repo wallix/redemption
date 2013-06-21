@@ -404,6 +404,13 @@ struct FileToGraphic
                     this->mouse_x = this->stream.in_uint16_le();
                     this->mouse_y = this->stream.in_uint16_le();
 
+                    if (  (this->info_version > 1)
+                       && this->stream.in_uint8()) {
+                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                            this->consumers[i]->ignore_time_interval(true);
+                        }
+                    }
+
                     if (this->verbose > 16){
                         LOG(LOG_INFO, "TIMESTAMP %u.%u mouse (x=%u, y=%u)\n"
                             , this->record_now.tv_sec
@@ -475,7 +482,6 @@ struct FileToGraphic
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk")
             {
                 this->info_version        = this->stream.in_uint16_le();
-                (void)this->info_version; // for now there is only one, we do not yet have problems
                 this->mem3blt_support     = (this->info_version > 1);
                 this->info_width          = this->stream.in_uint16_le();
                 this->info_height         = this->stream.in_uint16_le();
