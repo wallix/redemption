@@ -91,7 +91,6 @@ class SessionManager {
         , ini(ini)
         , tick_count(0)
         , auth_trans(auth_trans)
-          //, auth_event(auth_event)
         , keepalive_grace_delay(keepalive_grace_delay)
         , max_tick(max_tick)
         , internal_domain(internal_domain)
@@ -251,7 +250,96 @@ class SessionManager {
         }
         return res;
     }
-    
+
+    bool keep_alive_checking(long & keepalive_time, long & now, Transport & trans)
+    {
+        
+        //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
+        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
+            long enddate = this->ini->context.end_date_cnx;
+            //            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
+            if (enddate != 0 && (now > enddate)) {
+                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+                this->mod_state = MOD_STATE_DONE_CLOSE;
+                return false;
+            }
+        }
+
+        if (keepalive_time == 0){
+            //            LOG(LOG_INFO, "keep_alive disabled");
+            return true;
+        }
+
+        TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
+            if (now > (keepalive_time + this->keepalive_grace_delay)){
+                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
+                return false;
+            }
+
+
+        if (now > keepalive_time){
+            // ===================== check if no traffic =====================
+            if (this->verbose & 8){
+                LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
+                    trans.last_quantum_received, trans.total_received,
+                    this->tick_count);
+            }
+            if (trans.last_quantum_received == 0){
+                this->tick_count++;
+                if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
+                    this->ini->context.auth_error_message.copy_c_str("Connection closed on inactivity");
+                    LOG(LOG_INFO, "Session ACL inactivity : closing");
+                    this->mod_state = MOD_STATE_DONE_CLOSE;
+                    return false;
+                }
+
+                keepalive_time = now + this->keepalive_grace_delay;
+            }
+            else {
+                this->tick_count = 0;
+            }
+            trans.tick();
+
+            // ===================== check if keepalive ======================
+            try {
+                BStream stream(8192);
+                stream.out_uint32_be(0); // skip length
+                // set data
+                this->out_item(stream, STRAUTHID_KEEPALIVE);
+                // now set length in header
+                int total_length = stream.get_offset();
+                stream.set_out_uint32_be(total_length, 0); /* size */
+                stream.mark_end();
+                this->auth_trans.send(stream.data, total_length);
+            }
+            catch (...){
+                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
+                this->mod_state = MOD_STATE_DONE_CLOSE;
+                return false;
+            }
+        }
+        return true;
+    }
+    bool keep_alive_response(long & keepalive_time, long & now)
+    {
+        if (this->verbose & 0x10){
+            LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+        }
+        try {
+            this->incoming();
+            if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                keepalive_time = now + this->keepalive_grace_delay;
+                this->ini->context_ask(AUTHID_KEEPALIVE);
+            }
+        }
+        catch (...){
+            this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
+            this->mod_state = MOD_STATE_DONE_CLOSE;
+            return false;
+        }
+        return true;
+    }
     bool keep_alive(long & keepalive_time, long & now, Transport * trans, bool read_auth)
     {
 //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
@@ -647,7 +735,7 @@ class SessionManager {
             BStream stream(8192);
 
             stream.out_uint32_be(0);
-           
+
             this->out_item(stream, STRAUTHID_PROXY_TYPE);
             this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
             this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
