@@ -63,6 +63,8 @@
 #include "internal/widget2/wab_close_mod.hpp"
 #include "internal/widget2/dialog_mod.hpp"
 #include "internal/widget2/login_mod.hpp"
+#include "internal/widget2/rwl_mod.hpp"
+#include "internal/widget2/rwl_login_mod.hpp"
 
 using namespace std;
 
@@ -686,6 +688,32 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
                         }
                         this->mod = new LoginMod(
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height);
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::internal module Login ready");
+                        }
+                        break;
+                    case INTERNAL_WIDGET2_RWL:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
+                        }
+                        this->mod = new RwlMod(
+                            *this->ini,
+                            *this->front,
+                            this->front->client_info.width,
+                            this->front->client_info.height);
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::internal module Login ready");
+                        }
+                        break;
+                    case INTERNAL_WIDGET2_RWL_LOGIN:
+                        if (this->verbose){
+                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
+                        }
+                        this->mod = new RwlLoginMod(
                             *this->ini,
                             *this->front,
                             this->front->client_info.width,

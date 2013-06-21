@@ -25,6 +25,7 @@
 #include "widget2_button.hpp"
 #include "widget2_image.hpp"
 #include "widget2_edit.hpp"
+#include "widget2_label.hpp"
 #include "widget2_multiline.hpp"
 
 #include <vector>
@@ -41,20 +42,6 @@ public:
     WidgetButton cancel;
     WidgetLabel diagnostic;
     WidgetMultiLine diagnostic_lines;
-
-private:
-    struct temporary_text {
-        char text[WidgetLabel::buffer_size];
-
-        temporary_text(const char * lhs, const char * rhs)
-        {
-            size_t len = std::min(WidgetLabel::buffer_size - 1, strlen(lhs));
-            memcpy(this->text, lhs, len);
-            size_t len2 = std::min(WidgetLabel::buffer_size - 1 - len, strlen(rhs));
-            memcpy(&this->text[len], rhs, len2);
-            this->text[len + len2] = '\0';
-        }
-    };
 
 public:
     WindowWabClose(DrawApi* drawable, int16_t x, int16_t y, Widget2* parent,
