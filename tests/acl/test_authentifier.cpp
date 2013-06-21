@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
                       );
     stream.reset();
 
-    // test ask_module_remote
+    // test ask_next_module_remote
     BOOST_CHECK(checktrans.get_status());
     try{
         sesman.ask_next_module_remote();
@@ -166,6 +166,41 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
     };
     BOOST_CHECK(auth_channel_trans2.get_status());
 
+}
 
+BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
+{
+    // test get mod from protocol
+    LogTransport get_mod_trans;
+    Inifile ini;
+    SessionManager sesman(&ini, get_mod_trans, 30, 30, true, 0);
+    submodule_t nextmod;
+    int res;
 
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_EXIT == res);
+    BOOST_CHECK(INTERNAL_CARD == nextmod);
+    
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"autotest");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_TEST == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"");
+
+    ini.context_set_value(AUTHID_TARGET_PROTOCOL, "RDP");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_RDP == res);
+
+    ini.context_set_value(AUTHID_TARGET_PROTOCOL, "VNC");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_VNC == res);
+
+    ini.context_set_value(AUTHID_TARGET_PROTOCOL, "XUP");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_XUP == res);
+
+    // TODO INTERNAL STATUS
+    
+    
 }
