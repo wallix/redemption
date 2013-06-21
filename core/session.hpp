@@ -248,6 +248,10 @@ struct Session {
                     //this->sesman->add_to_fd_set(rfds, max);
                     this->mod->event.add_to_fd_set(rfds, max);
                 }
+                if (this->mod->event.is_set(rfds)) {
+                    timeout.tv_sec  = 0;
+                    timeout.tv_usec = 0;
+                }
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
                 if (num < 0){
                     if (errno == EINTR){

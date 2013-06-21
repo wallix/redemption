@@ -81,6 +81,8 @@ public:
     // through pointer of base class. As this class is interface only
     // it does not looks really usefull.
     virtual ~RDPGraphicDevice() {}
+
+    virtual void flush() = 0;
 };
 
 #endif

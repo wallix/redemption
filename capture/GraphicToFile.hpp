@@ -412,6 +412,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->send_caches_chunk();
     }
 
+protected:
     virtual void flush_orders()
     {
         if (this->order_count > 0){
@@ -421,6 +422,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             this->send_orders_chunk();
         }
     }
+public:
 
     void send_orders_chunk()
     {
@@ -481,6 +483,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         this->RDPSerializer::draw(cmd, clip);
     }
 
+protected:
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
@@ -488,6 +491,11 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             }
             this->send_bitmaps_chunk();
         }
+    }
+public:
+    virtual void flush() {
+        this->flush_bitmaps();
+        this->flush_orders();
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data, size_t size, const Bitmap & bmp) {

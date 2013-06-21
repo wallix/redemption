@@ -458,17 +458,38 @@ struct FileToGraphic
                 }
                 else {
                    if (this->real_time){
+                        for (size_t i = 0; i < this->nbconsumers ; i++){
+                            this->consumers[i]->flush();
+                        }
+
                         struct timeval now = tvtime();
+                        LOG(LOG_INFO, "TIMESTAMP %u.%u - %u.%u mouse (x=%u, y=%u)\n"
+                            , this->record_now.tv_sec
+                            , this->record_now.tv_usec
+                            , now.tv_sec
+                            , now.tv_usec
+                            , this->mouse_x
+                            , this->mouse_y);
+
                         uint64_t elapsed = difftimeval(now, this->synctime_now);
+                        LOG(LOG_INFO, "elapsed %u\n", static_cast<uint32_t>(elapsed / 10000LL));
                         this->synctime_now = now;
                         uint64_t movie_elapsed = difftimeval(this->record_now, last_movie_time);
+                        LOG(LOG_INFO, "movie_elapsed %u\n", static_cast<uint32_t>(movie_elapsed / 10000LL));
 
                         if (elapsed <= movie_elapsed){
                             struct timespec wtime =
                                 { static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<uint32_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
                                 };
-                            nanosleep(&wtime, NULL);
+                            LOG(LOG_INFO, "nanosleep %u.%u\n",
+                                  static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
+                                , static_cast<uint32_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
+                                );
+                            struct timespec wtime_rem = {0, 0};
+                            while ((nanosleep(&wtime, NULL) == -1) && (errno == EINTR)) {
+                                wtime = wtime_rem;
+                            }
                         }
                     }
                     else {

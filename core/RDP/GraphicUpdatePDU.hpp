@@ -201,9 +201,16 @@ struct GraphicsUpdatePDU : public RDPSerializer {
         }
     }
 
+public:
+    virtual void flush() {
+        this->flush_bitmaps();
+        this->flush_orders();
+    }
+protected:
     virtual void flush_orders()
     {
         if (this->order_count > 0){
+LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d offset=%u stream_size=%u", this->order_count, this->offset_order_count, (unsigned)this->stream_orders.size());
             if (this->ini.debug.primary_orders > 3){
                 LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders: order_count=%d offset=%u", this->order_count, this->offset_order_count);
             }
@@ -266,6 +273,9 @@ struct GraphicsUpdatePDU : public RDPSerializer {
 
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {
+LOG( LOG_INFO
+   , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%d offset=%u"
+   , this->bitmap_count, this->offset_bitmap_count);
             if (this->ini.debug.primary_orders > 3){
                 LOG( LOG_INFO
                    , "GraphicsUpdatePDU::flush_bitmaps: bitmap_count=%d offset=%u"

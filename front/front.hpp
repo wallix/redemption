@@ -268,7 +268,7 @@ public:
                 this->client_info.height = height;
 
                 // send buffered orders
-                this->orders->flush_orders();
+                this->orders->flush();
 
                 // clear all pending orders, caches data, and so on and
                 // start a send_deactive, send_deman_active process with
@@ -560,10 +560,8 @@ public:
         }
         this->order_level--;
         if (this->order_level == 0){
-            this->orders->flush_orders();
+            this->orders->flush();
         }
-
-        this->orders->flush_bitmaps();
     }
 
     void disconnect() throw (Error)
@@ -3987,7 +3985,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         this->orders->draw(cmd);
     }
 
-    void flush(){}
+    virtual void flush() {
+        this->orders->flush();
+    }
 
     void cache_brush(RDPBrush & brush)
     {

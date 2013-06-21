@@ -176,8 +176,10 @@ struct RDPSerializer : public RDPGraphicDevice
 
     ~RDPSerializer() {}
 
+protected:
     virtual void flush_orders() = 0;
     virtual void flush_bitmaps() = 0;
+public:
 
     /*****************************************************************************/
     // check if the next order will fit in available packet size

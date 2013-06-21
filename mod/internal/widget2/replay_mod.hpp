@@ -129,20 +129,22 @@ public:
         this->event.reset();
         this->event.set(0);
         TODO("use system constants for sizes");
+//LOG(LOG_INFO, "draw_event");
 
         BackEvent_t back_event = BACK_EVENT_NONE;
 
         TODO("RZ: Support encrypted recorded file.")
         try
         {
-            this->front.begin_update();
-            int i;
-            for (i = 0; (i < 500) && this->reader->next_order(); i++) {
+//            this->front.begin_update();
+            while (this->reader->next_order()) {
                 this->reader->interpret_order();
+//                this->event.set(1);
             }
-            if (i < 50)
+//            else {
+                this->front.flush();
                 back_event = BACK_EVENT_STOP;
-            this->front.end_update();
+//            }
         }
         catch (Error & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
