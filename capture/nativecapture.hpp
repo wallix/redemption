@@ -177,7 +177,6 @@ public:
     }
 
 private:
-
     void breakpoint()
     {
         this->recorder.breakpoint();

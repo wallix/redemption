@@ -411,15 +411,16 @@ struct FileToGraphic
                         }
                     }
 
-                    if (this->verbose > 16){
-                        LOG(LOG_INFO, "TIMESTAMP %u.%u mouse (x=%u, y=%u)\n"
-                            , this->record_now.tv_sec
-                            , this->record_now.tv_usec
-                            , this->mouse_x
-                            , this->mouse_y);
+                    if (this->verbose > 16) {
+                        LOG( LOG_INFO, "TIMESTAMP %u.%u mouse (x=%u, y=%u)\n"
+                           , this->record_now.tv_sec
+                           , this->record_now.tv_usec
+                           , this->mouse_x
+                           , this->mouse_y);
                     }
 
-                    this->input_len = std::min(static_cast<uint16_t>(stream.end - stream.p), static_cast<uint16_t>(sizeof(this->input)-1));
+                    this->input_len = std::min( static_cast<uint16_t>(stream.end - stream.p)
+                                              , static_cast<uint16_t>(sizeof(this->input) - 1));
                     if (this->input_len){
                         this->stream.in_copy_bytes(this->input, this->input_len);
                         this->input[this->input_len] = 0;
@@ -432,18 +433,24 @@ struct FileToGraphic
                         }
 
                         if (this->verbose > 16) {
-                            uint32_t key;
+                            const uint8_t * key32;
+                            uint8_t         key8[6];
+                            size_t          len;
 
-                            while (ss.in_check_rem(sizeof(uint32_t))) {
-                                key = ss.in_uint32_le();
+                            while (ss.in_check_rem(4)) {
+                                key32 = ss.in_uint8p(4);
 
-                                LOG(LOG_INFO, "TIMESTAMP %u.%u keyboard '%c'(0x%X)"
-                                    , this->record_now.tv_sec
-                                    , this->record_now.tv_usec
-                                    , key
-                                    , key);
+                                len       = UTF32toUTF8(key32, 4, key8, sizeof(key8));
+                                key8[len] = 0;
+
+                                LOG( LOG_INFO, "TIMESTAMP %u.%u keyboard '%s'(0x%X)"
+                                   , this->record_now.tv_sec
+                                   , this->record_now.tv_usec
+                                   , key8
+                                   , key32);
                             }
                         }
+
                     }
                 }
 
@@ -462,31 +469,19 @@ struct FileToGraphic
                             this->consumers[i]->flush();
                         }
 
-                        struct timeval now = tvtime();
-                        LOG(LOG_INFO, "TIMESTAMP %u.%u - %u.%u mouse (x=%u, y=%u)\n"
-                            , this->record_now.tv_sec
-                            , this->record_now.tv_usec
-                            , now.tv_sec
-                            , now.tv_usec
-                            , this->mouse_x
-                            , this->mouse_y);
+                        struct   timeval now = tvtime();
+                        uint64_t elapsed     = difftimeval(now, this->synctime_now);
 
-                        uint64_t elapsed = difftimeval(now, this->synctime_now);
-                        LOG(LOG_INFO, "elapsed %u\n", static_cast<uint32_t>(elapsed / 10000LL));
-                        this->synctime_now = now;
-                        uint64_t movie_elapsed = difftimeval(this->record_now, last_movie_time);
-                        LOG(LOG_INFO, "movie_elapsed %u\n", static_cast<uint32_t>(movie_elapsed / 10000LL));
+                                 this->synctime_now = now;
+                        uint64_t movie_elapsed      = difftimeval(this->record_now, last_movie_time);
 
-                        if (elapsed <= movie_elapsed){
-                            struct timespec wtime =
-                                { static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
-                                , static_cast<uint32_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
-                                };
-                            LOG(LOG_INFO, "nanosleep %u.%u\n",
+                        if (elapsed <= movie_elapsed) {
+                            struct timespec wtime     = {
                                   static_cast<uint32_t>((movie_elapsed - elapsed) / 1000000LL)
                                 , static_cast<uint32_t>(((movie_elapsed - elapsed) % 1000000LL) * 1000)
-                                );
-                            struct timespec wtime_rem = {0, 0};
+                                };
+                            struct timespec wtime_rem = { 0, 0 };
+
                             while ((nanosleep(&wtime, NULL) == -1) && (errno == EINTR)) {
                                 wtime = wtime_rem;
                             }
