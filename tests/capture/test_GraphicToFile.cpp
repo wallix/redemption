@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     consumer.timestamp(now);
 
     consumer.draw(RDPOpaqueRect(Rect(0, 50, 700, 30), BLUE), screen_rect);
-    consumer.flush_orders();
+    consumer.flush();
 
     now.tv_sec++;
     consumer.timestamp(now);
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     now.tv_sec++;
     consumer.timestamp(now);
 
-    consumer.flush_orders();
+    consumer.flush();
 }
 
 const char expected_stripped_wrm2[] =
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
 
     consumer.draw(RDPOpaqueRect(Rect(5, 5, 10, 10), BLACK), screen_rect);
 
-    consumer.flush_orders();
+    consumer.flush();
 }
 
 BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
@@ -404,7 +404,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     now.tv_sec++;
     BOOST_CHECK_EQUAL(0, 0);
     consumer.timestamp(now);
-    consumer.flush_orders();
+    consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
 
     RDPOpaqueRect cmd2(Rect(0, 100, 700, 30), WHITE);
@@ -413,7 +413,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.draw(cmd3, screen_rect);
     now.tv_sec+=6;
     consumer.timestamp(now);
-    consumer.flush_orders();
+    consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
     rio_clear(&trans.rio); // close file before reading filesize
     BOOST_CHECK_EQUAL(1588, filesize(filename));
