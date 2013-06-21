@@ -454,10 +454,10 @@ class RDPBmpCache {
     public:
     int id;
     int idx;
-    const Bitmap * bmp;
+    Bitmap * bmp;
     uint32_t verbose;
 
-    RDPBmpCache(const Bitmap * bmp, int id, int idx, int verbose = 0)
+    RDPBmpCache(Bitmap * bmp, int id, int idx, int verbose = 0)
         : id(id), idx(idx), bmp(bmp), verbose(verbose)
     {
     }
@@ -470,7 +470,7 @@ class RDPBmpCache {
     {
     }
 
-    void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int use_compact_packets) const
+    void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int use_compact_packets)
     {
         using namespace RDP;
         switch (bitmap_cache_version){
@@ -505,7 +505,7 @@ class RDPBmpCache {
         }
     }
 
-    void emit_v1_compressed(Stream & stream, const int use_compact_packets) const {
+    void emit_v1_compressed(Stream & stream, const int use_compact_packets) {
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -759,7 +759,7 @@ class RDPBmpCache {
     //                              defined in [MS-RDPBCGR] section
     //                              2.2.9.1.1.3.1.2.2).
 
-    void emit_v2_compressed(Stream & stream) const
+    void emit_v2_compressed(Stream & stream)
     {
         using namespace RDP;
 
