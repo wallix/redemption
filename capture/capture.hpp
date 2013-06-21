@@ -129,7 +129,7 @@ public:
             }
             struct timeval now = tvtime();
             this->pnc->recorder.timestamp(now);
-            this->pnc->recorder.send_timestamp_chunk(1);
+            this->pnc->recorder.send_timestamp_chunk(true);
         }
     }
 
