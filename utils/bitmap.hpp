@@ -85,6 +85,9 @@ public:
         }
     } data_bitmap;
 
+    uint8_t * data_compressed;
+    size_t data_compressed_size;
+
     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false)
         : original_bpp(bpp)
         , cx(align4(cx))
@@ -92,6 +95,8 @@ public:
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * cy)
         , data_bitmap()
+        , data_compressed(NULL)
+        , data_compressed_size(0)
     {
         this->data_bitmap.alloc(this->bmp_size);
 //        LOG(LOG_ERR, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
@@ -129,6 +134,9 @@ public:
         , line_size(this->cx * nbbytes(this->original_bpp))
         , bmp_size(this->line_size * this->cy)
         , data_bitmap()
+        , data_compressed(NULL)
+        , data_compressed_size(0)
+
     {
         this->data_bitmap.alloc(this->bmp_size);
 
@@ -169,6 +177,9 @@ public:
         , line_size(align4(this->cx * nbbytes(this->original_bpp)))
         , bmp_size(this->line_size * this->cy)
         , data_bitmap()
+        , data_compressed(NULL)
+        , data_compressed_size(0)
+
     {
 //        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
@@ -206,6 +217,9 @@ public:
         , line_size(0)
         , bmp_size(0)
         , data_bitmap()
+        , data_compressed(NULL)
+        , data_compressed_size(0)
+
     {
         LOG(LOG_INFO, "loading bitmap %s", filename);
         BGRPalette palette1;
@@ -872,9 +886,15 @@ public:
     }
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
-    TODO(" keep allready compressed bitmaps in cache to avoid useless computations")
-    void compress(Stream & out) const
+    void compress(Stream & out)
     {
+        if (this->data_compressed) {
+            out.out_copy_bytes(this->data_compressed, this->data_compressed_size); 
+            return;
+        }
+    
+        uint8_t * tmp_data_compressed = out.p;
+    
         const uint8_t Bpp = nbbytes(this->original_bpp);
         const uint8_t * pmin = this->data_bitmap.get();
         const uint8_t * p = pmin;
@@ -1020,6 +1040,13 @@ public:
                 copy_count = 0;
             }
         }
+        
+        // Memoize result of compression
+        this->data_compressed_size = out.p - tmp_data_compressed;
+        this->data_compressed = (uint8_t*)malloc(this->data_compressed_size);
+        if (this->data_compressed) {
+            memcpy(this->data_compressed, tmp_data_compressed, this->data_compressed_size);
+        }
     }
 
     void compute_sha1(uint8_t (&sig)[20]) const
@@ -1095,6 +1122,10 @@ public:
     }
 
     ~Bitmap(){
+        if (this->data_compressed) {
+            free(this->data_compressed);
+            this->data_compressed = NULL;
+        }
     }
 
     Bitmap(uint8_t out_bpp, const Bitmap& bmp)
@@ -1104,6 +1135,9 @@ public:
     , line_size(this->cx * nbbytes(this->original_bpp))
     , bmp_size(this->line_size * cy)
     , data_bitmap()
+    , data_compressed(NULL)
+    , data_compressed_size(0)
+
     {
 //        LOG(LOG_ERR, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
