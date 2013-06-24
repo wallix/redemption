@@ -105,17 +105,17 @@ public:
     }
 
     TODO("pointer_already_displayed and no_timestamp are constants, not need to pass then at every snapshot call")
-    void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
-    {
+    void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp
+                 , bool ignore_frame_in_timeval) {
         if (difftimeval(now, this->start_native_capture)
-                >= this->inter_frame_interval_native_capture){
+                >= this->inter_frame_interval_native_capture) {
             this->recorder.timestamp(now);
-            if (!pointer_already_displayed){
+            if (!pointer_already_displayed) {
                 this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
             }
             this->start_native_capture = now;
             if (difftimeval(now, this->start_break_capture)
-                >= this->inter_frame_interval_start_break_capture){
+                    >= this->inter_frame_interval_start_break_capture) {
                 this->breakpoint();
                 this->start_break_capture = now;
             }

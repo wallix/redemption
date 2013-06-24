@@ -66,15 +66,11 @@ struct RDPGraphicDevice {
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
     virtual void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
-                         , bool no_timestamp) {}
-
-    virtual void ignore_time_interval(bool flag) { this->_ignore_time_interval = flag; }
+                         , bool no_timestamp, bool ignore_frame_in_timeval) {}
 
 protected:
     // this to avoid calling constructor of base abstract class
-    RDPGraphicDevice() : _ignore_time_interval(false) {}
-
-    bool _ignore_time_interval;
+    RDPGraphicDevice() {}
 
 public:
     // we choosed to make destructor virtual to allow destructing object

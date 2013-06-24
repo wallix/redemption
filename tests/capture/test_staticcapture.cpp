@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test to conversion of RDP drawing orders to PNG images
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -46,29 +45,31 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
     struct timeval now;
     now.tv_sec = 1350998222;
     now.tv_usec = 0;
-    
+
     Inifile ini;
     ini.video.png_limit = 3;
     ini.video.png_interval = 20;
     RDPDrawable drawable(800, 600);
     StaticCapture consumer(now, trans, &(trans.seq), 800, 600, false, ini, drawable.drawable);
 
+    bool ignore_frame_in_timeval = false;
+
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
-    consumer.snapshot(now, 10, 10, true, false);
+    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false);
+    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false);
+    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false);
+    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
     now.tv_sec++;
 
     RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), BLUE);
     drawable.draw(cmd1, screen_rect);
-    consumer.snapshot(now, 10, 10, true, false);
+    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false);
+    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
     now.tv_sec++;
 
     rio_clear(&trans.rio); // ensure file is closed to have accurate values for size

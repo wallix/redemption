@@ -112,10 +112,11 @@ public:
         }
     }
 
-    virtual void snapshot(const timeval & now, int x, int y, bool pointer_already_displayed, bool no_timestamp)
+    virtual void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
+                         , bool no_timestamp, bool ignore_frame_in_timeval)
     {
         if ((unsigned)difftimeval(now, this->start_static_capture)
-         >= (unsigned)this->inter_frame_interval_static_capture){
+                >= (unsigned)this->inter_frame_interval_static_capture) {
             this->breakpoint(now);
         }
     }
