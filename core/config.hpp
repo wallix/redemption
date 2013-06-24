@@ -406,7 +406,7 @@ struct Inifile {
         char auth_user[512];
         char host[512];     // client_ip
         char target[512];   // target ip
-        char target_device[512];
+        char target_device[32768];
         char target_user[512];
 
         // BEGIN globals
