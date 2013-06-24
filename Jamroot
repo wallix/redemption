@@ -511,8 +511,8 @@ unit-test test_sq_cryptooutfilename : tests/transport/rio/test_sq_cryptooutfilen
 unit-test test_sq_cryptoouttracker : tests/transport/rio/test_sq_cryptoouttracker.cpp libboost_unit_test ;
 unit-test test_sq_cryptoouttracker : tests/transport/rio/test_sq_cryptoouttracker.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_bitmap : tests/utils/test_bitmap.cpp libboost_unit_test ;
-unit-test test_bitmap : tests/utils/test_bitmap.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_bitmap : tests/utils/test_bitmap.cpp z openssl crypto libboost_unit_test ;
+unit-test test_bitmap : tests/utils/test_bitmap.cpp z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 unit-test test_bitmap_perf : tests/test_bitmap_perf.cpp libboost_unit_test ;
 
 unit-test test_colors : tests/utils/test_colors.cpp libboost_unit_test ;
