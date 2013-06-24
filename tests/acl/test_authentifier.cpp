@@ -321,3 +321,78 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
 
 }
+
+
+BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
+{
+
+    Inifile ini;
+
+
+    long keepalive_time;
+    bool record_video, keep_alive;
+    submodule_t nextmod;
+
+    #include "fixtures/dump_auth_wrong_password.hpp"
+
+    const char * name = "Authentifier Normal Case";
+    int verbose = 256;
+    
+    TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
+    SessionManager sesman(&ini, trans, 30, 30, true, 0);
+
+    ini.context_set_value(STRAUTHID_PROXY_TYPE,"RDP");
+    ini.context_set_value(STRAUTHID_DISPLAY_MESSAGE,"");
+    ini.context_set_value(STRAUTHID_ACCEPT_MESSAGE,"");
+    ini.context_set_value(STRAUTHID_HOST,"127.0.0.1");
+    ini.context_set_value(STRAUTHID_TARGET, "127.0.0.1");
+    ini.context_set_value(STRAUTHID_AUTH_USER, "mtan");
+    ini.context_ask(STRAUTHID_PASSWORD);
+    ini.context_ask(STRAUTHID_TARGET_USER);
+    ini.context_ask(STRAUTHID_TARGET_DEVICE);
+    ini.context_ask(STRAUTHID_TARGET_PROTOCOL);
+    ini.context_ask(STRAUTHID_SELECTOR);
+    ini.context_set_value(STRAUTHID_SELECTOR_GROUP_FILTER, "");
+    ini.context_set_value(STRAUTHID_SELECTOR_DEVICE_FILTER, "");
+    ini.context_set_value(STRAUTHID_SELECTOR_LINES_PER_PAGE, "20");
+    ini.context_set_value(STRAUTHID_SELECTOR_CURRENT_PAGE, "1");
+    ini.context_ask(STRAUTHID_TARGET_PASSWORD);
+    ini.context_set_value(STRAUTHID_OPT_WIDTH, "800");
+    ini.context_set_value(STRAUTHID_OPT_HEIGHT, "600");
+    ini.context_set_value(STRAUTHID_OPT_BPP, "24");
+    ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
+    
+
+    BOOST_CHECK(trans.get_status());
+    //SEND No 1
+    sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
+    BOOST_CHECK(trans.get_status());
+    //RECEIVE No 1
+    sesman.receive_next_module();
+
+    // Login (at login window, password is still asked)
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+
+    // set login / password
+    ini.context_set_value(STRAUTHID_AUTH_USER, "x");
+    ini.context_set_value(STRAUTHID_PASSWORD, "wrong"); // wrong is a wrong password
+
+    //SEND No 2
+    sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
+    BOOST_CHECK(trans.get_status());
+    //RECEIVE No 2
+    sesman.receive_next_module();
+    
+    // Wrong password, context is still asked
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+
+
+}
