@@ -1,0 +1,947 @@
+const char outdata[] =
+{
+// Listen: binding socket 4 on 0.0.0.0:3389
+// Listen: listening on socket 4
+// Setting new session socket to 5
+// src=127.0.0.1 sport=43270 dst=127.0.0.1 dport=3389
+// New session on 5 (pid=6199) from 127.0.0.1 to 127.0.0.1
+// connecting to 127.0.0.1:3450
+// connection to 127.0.0.1:3450 succeeded : socket 4
+// auth::SessionManager
+// Reading font file /usr/local/share/rdpproxy/dejavu_11.fv1
+// font name <DejaVu Sans> size <11>
+// Session::session_main_loop() starting
+// Session::-------------- Initializing client session -------------------
+// Front::incoming:CONNECTION_INITIATION
+// Fallback to legacy security protocol
+// -----------------> Front::TLS Support not Enabled
+// GCC::UserData tag=c001 length=212
+// GCC::UserData tag=c004 length=12
+// GCC::UserData tag=c002 length=12
+// GCC::UserData tag=c003 length=32
+// using /dev/urandom as random source
+// Front::incoming::Secure Settings Exchange
+// RDP-5 Style logon
+// Receiving from client InfoPacket
+// InfoPacket::CodePage 0
+// InfoPacket::flags 0x133
+// InfoPacket::flags:INFO_MOUSE yes
+// InfoPacket::flags:INFO_DISABLECTRLALTDEL yes
+// InfoPacket::flags:INFO_AUTOLOGON no
+// InfoPacket::flags:INFO_UNICODE yes
+// InfoPacket::flags:INFO_MAXIMIZESHELL  yes
+// InfoPacket::flags:INFO_LOGONNOTIFY no
+// InfoPacket::flags:INFO_COMPRESSION no
+// InfoPacket::flags:CompressionTypeMask no
+// InfoPacket::flags:INFO_ENABLEWINDOWSKEY  yes
+// InfoPacket::flags:INFO_REMOTECONSOLEAUDIO no
+// InfoPacket::flags:FORCE_ENCRYPTED_CS_PDU no
+// InfoPacket::flags:INFO_RAIL no
+// InfoPacket::flags:INFO_LOGONERRORS no
+// InfoPacket::flags:INFO_MOUSE_HAS_WHEEL no
+// InfoPacket::flags:INFO_PASSWORD_IS_SC_PIN no
+// InfoPacket::flags:INFO_NOAUDIOPLAYBACK no
+// InfoPacket::flags:INFO_USING_SAVED_CREDS no
+// InfoPacket::flags:RNS_INFO_AUDIOCAPTURE no
+// InfoPacket::flags:RNS_INFO_VIDEO_DISABLE no
+// InfoPacket::cbDomain 2
+// InfoPacket::cbUserName 10
+// InfoPacket::cbPassword 2
+// InfoPacket::cbAlternateShell 2
+// InfoPacket::cbWorkingDir 2
+// InfoPacket::Domain 
+// InfoPacket::UserName mtan
+// InfoPacket::Password <hidden>
+// InfoPacket::AlternateShell 
+// InfoPacket::WorkingDir 
+// InfoPacket::ExtendedInfoPacket::clientAddressFamily 2
+// InfoPacket::ExtendedInfoPacket::cbClientAddress 20
+// InfoPacket::ExtendedInfoPacket::clientAddress 127.0.0.1
+// InfoPacket::ExtendedInfoPacket::cbClientDir 60
+// InfoPacket::ExtendedInfoPacket::clientDir C:\WINNT\System32\mstscax.dll
+// InfoPacket::ExtendedInfoPacket::clientSessionId 4294967294
+// InfoPacket::ExtendedInfoPacket::performanceFlags 7
+// InfoPacket::ExtendedInfoPacket::cbAutoReconnectLen 0
+// InfoPacket::ExtendedInfoPacket::autoReconnectCookie 
+// InfoPacket::ExtendedInfoPacket::reserved1 0
+// InfoPacket::ExtendedInfoPacket::reserved2 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::Bias 120
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardName GMT Standard Time
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wYear 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMonth 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDayOfWeek 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wDay 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wHour 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMinute 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wSecond 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardDate.wMilliseconds 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::StandardBias 60
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightName GMT Daylight Time
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wYear 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMonth 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDayOfWeek 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wDay 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wHour 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMinute 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wSecond 0
+// InfoPacket::ExtendedInfoPacket::ClientTimeZone::DaylightDate.wMilliseconds 0
+// Front::incoming::ACTIVATED (new license request)
+// Session::session_setup_mod(target_module=8, submodule=0)
+// Session::Creation of new mod 'CLI parse'
+// asking for selector
+// Session::Creation of new mod 'CLI parse' suceeded
+// Session::-------------- Running -------------------
+// Session::back_event fired
+// signal in transitory mode
+// Session::back event end module
+// Session::starting next module
+// auth::ask_next_module
+// auth::ask_next_module default state
+// sending proxy_type=RDP
+// sending display_message=
+// sending accept_message=
+// sending ip_client=127.0.0.1
+// sending ip_target=127.0.0.1
+// sending login=mtan
+// sending password=ASK
+// sending target_login=ASK
+// sending target_device=ASK
+// sending proto_dest=ASK
+// sending selector=ASK
+// sending selector_group_filter=
+// sending selector_device_filter=
+// sending selector_lines_per_page=20
+// sending selector_current_page=1
+// sending target_password=ASK
+// sending width=800
+// sending height=600
+// sending bpp=24
+// sending real_target_device=
+// Data size sending without header 355
+// Sending on Authentifier (4) 359 bytes
+/*----------------------------
+  SEND No 1
+  ----------------------------*/
+/* 0000 */ "\x00\x00\x01\x63\x70\x72\x6f\x78\x79\x5f\x74\x79\x70\x65\x0a\x21" //...cproxy_type.!
+/* 0010 */ "\x52\x44\x50\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73\x73" //RDP.display_mess
+/* 0020 */ "\x61\x67\x65\x0a\x21\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73" //age.!.accept_mes
+/* 0030 */ "\x73\x61\x67\x65\x0a\x21\x0a\x69\x70\x5f\x63\x6c\x69\x65\x6e\x74" //sage.!.ip_client
+/* 0040 */ "\x0a\x21\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31\x0a\x69\x70\x5f\x74" //.!127.0.0.1.ip_t
+/* 0050 */ "\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31" //arget.!127.0.0.1
+/* 0060 */ "\x0a\x6c\x6f\x67\x69\x6e\x0a\x21\x6d\x74\x61\x6e\x0a\x70\x61\x73" //.login.!mtan.pas
+/* 0070 */ "\x73\x77\x6f\x72\x64\x0a\x41\x53\x4b\x0a\x74\x61\x72\x67\x65\x74" //sword.ASK.target
+/* 0080 */ "\x5f\x6c\x6f\x67\x69\x6e\x0a\x41\x53\x4b\x0a\x74\x61\x72\x67\x65" //_login.ASK.targe
+/* 0090 */ "\x74\x5f\x64\x65\x76\x69\x63\x65\x0a\x41\x53\x4b\x0a\x70\x72\x6f" //t_device.ASK.pro
+/* 00a0 */ "\x74\x6f\x5f\x64\x65\x73\x74\x0a\x41\x53\x4b\x0a\x73\x65\x6c\x65" //to_dest.ASK.sele
+/* 00b0 */ "\x63\x74\x6f\x72\x0a\x41\x53\x4b\x0a\x73\x65\x6c\x65\x63\x74\x6f" //ctor.ASK.selecto
+/* 00c0 */ "\x72\x5f\x67\x72\x6f\x75\x70\x5f\x66\x69\x6c\x74\x65\x72\x0a\x21" //r_group_filter.!
+/* 00d0 */ "\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x64\x65\x76\x69\x63\x65" //.selector_device
+/* 00e0 */ "\x5f\x66\x69\x6c\x74\x65\x72\x0a\x21\x0a\x73\x65\x6c\x65\x63\x74" //_filter.!.select
+/* 00f0 */ "\x6f\x72\x5f\x6c\x69\x6e\x65\x73\x5f\x70\x65\x72\x5f\x70\x61\x67" //or_lines_per_pag
+/* 0100 */ "\x65\x0a\x21\x32\x30\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x63" //e.!20.selector_c
+/* 0110 */ "\x75\x72\x72\x65\x6e\x74\x5f\x70\x61\x67\x65\x0a\x21\x31\x0a\x74" //urrent_page.!1.t
+/* 0120 */ "\x61\x72\x67\x65\x74\x5f\x70\x61\x73\x73\x77\x6f\x72\x64\x0a\x41" //arget_password.A
+/* 0130 */ "\x53\x4b\x0a\x77\x69\x64\x74\x68\x0a\x21\x38\x30\x30\x0a\x68\x65" //SK.width.!800.he
+/* 0140 */ "\x69\x67\x68\x74\x0a\x21\x36\x30\x30\x0a\x62\x70\x70\x0a\x21\x32" //ight.!600.bpp.!2
+/* 0150 */ "\x34\x0a\x72\x65\x61\x6c\x5f\x74\x61\x72\x67\x65\x74\x5f\x64\x65" //4.real_target_de
+/* 0160 */ "\x76\x69\x63\x65\x0a\x21\x0a"                                     //vice.!.
+// Sent dumped on Authentifier (4) 359 bytes
+// session::next_state 1
+
+
+
+
+
+
+// Session::-------------- Running -------------------
+// Session::back_event fired
+// signal in transitory mode
+// Session::back event end module
+// Session::starting next module
+// auth::ask_next_module
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER=False
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD=True
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD is asked
+// session::next_state 5
+// Session::session_setup_mod(target_module=5, submodule=11)
+// Session::Creation of internal module 'Login'
+// loading bitmap /usr/local/share/rdpproxy/ad24b.bmp
+// loading file 140 x 140 x 8
+// loading bitmap /usr/local/share/rdpproxy/xrdp24b-redemption.bmp
+// loading file 256 x 125 x 24
+// Session::internal module Login ready
+// Session::back_event fired
+// blur: 14WidgetPassword
+// focus: 10WidgetEdit 0x142cf08
+// tab
+// blur: 10WidgetEdit
+// focus: 14WidgetPassword 0x142d268
+// blur: 14WidgetPassword
+// focus: 12WidgetButton 0x142d508
+// asking for selector
+// Session::back_event fired
+// Session::back event end module
+// Session::starting next module
+// auth::ask_next_module
+// auth::ask_next_module MOD_STATE_DONE_LOGIN state
+// sending proxy_type=RDP
+// sending display_message=
+// sending accept_message=
+// sending ip_client=127.0.0.1
+// sending ip_target=127.0.0.1
+// sending login=x
+// sending password=<hidden>
+// sending target_login=ASK
+// sending target_device=ASK
+// sending proto_dest=ASK
+// sending selector=ASK
+// sending selector_group_filter=
+// sending selector_device_filter=
+// sending selector_lines_per_page=20
+// sending selector_current_page=1
+// sending target_password=ASK
+// sending width=800
+// sending height=600
+// sending bpp=24
+// sending real_target_device=
+// Data size sending without header 351
+// Sending on Authentifier (4) 355 bytes
+/*----------------------------
+  SEND No 2
+  ----------------------------*/
+/* 0000 */ "\x00\x00\x01\x5f\x70\x72\x6f\x78\x79\x5f\x74\x79\x70\x65\x0a\x21" //..._proxy_type.!
+/* 0010 */ "\x52\x44\x50\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73\x73" //RDP.display_mess
+/* 0020 */ "\x61\x67\x65\x0a\x21\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73" //age.!.accept_mes
+/* 0030 */ "\x73\x61\x67\x65\x0a\x21\x0a\x69\x70\x5f\x63\x6c\x69\x65\x6e\x74" //sage.!.ip_client
+/* 0040 */ "\x0a\x21\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31\x0a\x69\x70\x5f\x74" //.!127.0.0.1.ip_t
+/* 0050 */ "\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31" //arget.!127.0.0.1
+/* 0060 */ "\x0a\x6c\x6f\x67\x69\x6e\x0a\x21\x78\x0a\x70\x61\x73\x73\x77\x6f" //.login.!x.passwo
+/* 0070 */ "\x72\x64\x0a\x21\x78\x0a\x74\x61\x72\x67\x65\x74\x5f\x6c\x6f\x67" //rd.!x.target_log
+/* 0080 */ "\x69\x6e\x0a\x41\x53\x4b\x0a\x74\x61\x72\x67\x65\x74\x5f\x64\x65" //in.ASK.target_de
+/* 0090 */ "\x76\x69\x63\x65\x0a\x41\x53\x4b\x0a\x70\x72\x6f\x74\x6f\x5f\x64" //vice.ASK.proto_d
+/* 00a0 */ "\x65\x73\x74\x0a\x41\x53\x4b\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72" //est.ASK.selector
+/* 00b0 */ "\x0a\x41\x53\x4b\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x67\x72" //.ASK.selector_gr
+/* 00c0 */ "\x6f\x75\x70\x5f\x66\x69\x6c\x74\x65\x72\x0a\x21\x0a\x73\x65\x6c" //oup_filter.!.sel
+/* 00d0 */ "\x65\x63\x74\x6f\x72\x5f\x64\x65\x76\x69\x63\x65\x5f\x66\x69\x6c" //ector_device_fil
+/* 00e0 */ "\x74\x65\x72\x0a\x21\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x6c" //ter.!.selector_l
+/* 00f0 */ "\x69\x6e\x65\x73\x5f\x70\x65\x72\x5f\x70\x61\x67\x65\x0a\x21\x32" //ines_per_page.!2
+/* 0100 */ "\x30\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x63\x75\x72\x72\x65" //0.selector_curre
+/* 0110 */ "\x6e\x74\x5f\x70\x61\x67\x65\x0a\x21\x31\x0a\x74\x61\x72\x67\x65" //nt_page.!1.targe
+/* 0120 */ "\x74\x5f\x70\x61\x73\x73\x77\x6f\x72\x64\x0a\x41\x53\x4b\x0a\x77" //t_password.ASK.w
+/* 0130 */ "\x69\x64\x74\x68\x0a\x21\x38\x30\x30\x0a\x68\x65\x69\x67\x68\x74" //idth.!800.height
+/* 0140 */ "\x0a\x21\x36\x30\x30\x0a\x62\x70\x70\x0a\x21\x32\x34\x0a\x72\x65" //.!600.bpp.!24.re
+/* 0150 */ "\x61\x6c\x5f\x74\x61\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65" //al_target_device
+/* 0160 */ "\x0a\x21\x0a"                                                     //.!.
+// Sent dumped on Authentifier (4) 355 bytes
+// session::next_state 1
+
+
+
+
+
+// Session::-------------- Running -------------------
+// Session::back_event fired
+// signal in transitory mode
+// Session::back event end module
+// Session::starting next module
+// auth::ask_next_module
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER=False
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD=False
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_SELECTOR is asked
+// session::next_state 5
+// Session::session_setup_mod(target_module=5, submodule=7)
+// Session::Creation of internal module 'selector'
+// Session::internal module 'selector' ready
+// Session::back_event fired
+// Session::back event refresh
+// auth::ask_next_module
+// auth::ask_next_module MOD_STATE_DONE_SELECTOR state
+// sending proxy_type=RDP
+// sending display_message=
+// sending accept_message=
+// sending ip_client=127.0.0.1
+// sending ip_target=127.0.0.1
+// sending login=x
+// sending password=<hidden>
+// sending target_login=ASK
+// sending target_device=ASK
+// sending proto_dest=VNC VNC VNC RDP RDP RDP RDP RDP RDP RDP RDP RDP
+// sending selector=ASK
+// sending selector_group_filter=
+// sending selector_device_filter=
+// sending selector_lines_per_page=23
+// sending selector_current_page=1
+// sending target_password=ASK
+// sending width=800
+// sending height=600
+// sending bpp=24
+// sending real_target_device=
+// Data size sending without header 396
+// Sending on Authentifier (4) 400 bytes
+/*----------------------------
+  SEND No 3
+  ----------------------------*/
+/* 0000 */ "\x00\x00\x01\x8c\x70\x72\x6f\x78\x79\x5f\x74\x79\x70\x65\x0a\x21" //....proxy_type.!
+/* 0010 */ "\x52\x44\x50\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73\x73" //RDP.display_mess
+/* 0020 */ "\x61\x67\x65\x0a\x21\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73" //age.!.accept_mes
+/* 0030 */ "\x73\x61\x67\x65\x0a\x21\x0a\x69\x70\x5f\x63\x6c\x69\x65\x6e\x74" //sage.!.ip_client
+/* 0040 */ "\x0a\x21\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31\x0a\x69\x70\x5f\x74" //.!127.0.0.1.ip_t
+/* 0050 */ "\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31" //arget.!127.0.0.1
+/* 0060 */ "\x0a\x6c\x6f\x67\x69\x6e\x0a\x21\x78\x0a\x70\x61\x73\x73\x77\x6f" //.login.!x.passwo
+/* 0070 */ "\x72\x64\x0a\x21\x78\x0a\x74\x61\x72\x67\x65\x74\x5f\x6c\x6f\x67" //rd.!x.target_log
+/* 0080 */ "\x69\x6e\x0a\x41\x53\x4b\x0a\x74\x61\x72\x67\x65\x74\x5f\x64\x65" //in.ASK.target_de
+/* 0090 */ "\x76\x69\x63\x65\x0a\x41\x53\x4b\x0a\x70\x72\x6f\x74\x6f\x5f\x64" //vice.ASK.proto_d
+/* 00a0 */ "\x65\x73\x74\x0a\x21\x56\x4e\x43\x20\x56\x4e\x43\x20\x56\x4e\x43" //est.!VNC VNC VNC
+/* 00b0 */ "\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50" // RDP RDP RDP RDP
+/* 00c0 */ "\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50" // RDP RDP RDP RDP
+/* 00d0 */ "\x20\x52\x44\x50\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x0a\x41\x53" // RDP.selector.AS
+/* 00e0 */ "\x4b\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x67\x72\x6f\x75\x70" //K.selector_group
+/* 00f0 */ "\x5f\x66\x69\x6c\x74\x65\x72\x0a\x21\x0a\x73\x65\x6c\x65\x63\x74" //_filter.!.select
+/* 0100 */ "\x6f\x72\x5f\x64\x65\x76\x69\x63\x65\x5f\x66\x69\x6c\x74\x65\x72" //or_device_filter
+/* 0110 */ "\x0a\x21\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x6c\x69\x6e\x65" //.!.selector_line
+/* 0120 */ "\x73\x5f\x70\x65\x72\x5f\x70\x61\x67\x65\x0a\x21\x32\x33\x0a\x73" //s_per_page.!23.s
+/* 0130 */ "\x65\x6c\x65\x63\x74\x6f\x72\x5f\x63\x75\x72\x72\x65\x6e\x74\x5f" //elector_current_
+/* 0140 */ "\x70\x61\x67\x65\x0a\x21\x31\x0a\x74\x61\x72\x67\x65\x74\x5f\x70" //page.!1.target_p
+/* 0150 */ "\x61\x73\x73\x77\x6f\x72\x64\x0a\x41\x53\x4b\x0a\x77\x69\x64\x74" //assword.ASK.widt
+/* 0160 */ "\x68\x0a\x21\x38\x30\x30\x0a\x68\x65\x69\x67\x68\x74\x0a\x21\x36" //h.!800.height.!6
+/* 0170 */ "\x30\x30\x0a\x62\x70\x70\x0a\x21\x32\x34\x0a\x72\x65\x61\x6c\x5f" //00.bpp.!24.real_
+/* 0180 */ "\x74\x61\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x0a" //target_device.!.
+// Sent dumped on Authentifier (4) 400 bytes
+
+
+
+
+
+
+
+// Session::-------------- Running -------------------
+// Session::back_event fired
+// Session::back event refresh
+// auth::ask_next_module
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER=False
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD=False
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_SELECTOR is asked
+
+// 2cd60
+// asking for selector
+// Session::back_event fired
+// Session::back event end module
+// Session::starting next module
+// auth::ask_next_module
+// auth::ask_next_module MOD_STATE_DONE_SELECTOR state
+// sending proxy_type=RDP
+// sending display_message=
+// sending accept_message=
+// sending ip_client=127.0.0.1
+// sending ip_target=127.0.0.1
+// sending login=x
+// sending password=<hidden>
+// sending target_login=administrateur
+// sending target_device=10.10.46.64
+// sending proto_dest=ASK
+// sending selector=ASK
+// sending selector_group_filter=
+// sending selector_device_filter=
+// sending selector_lines_per_page=23
+// sending selector_current_page=1
+// sending target_password=ASK
+// sending width=800
+// sending height=600
+// sending bpp=24
+// sending real_target_device=
+// Data size sending without header 372
+// Sending on Authentifier (4) 376 bytes
+/*----------------------------
+  SEND No 4
+  ----------------------------*/
+/* 0000 */ "\x00\x00\x01\x74\x70\x72\x6f\x78\x79\x5f\x74\x79\x70\x65\x0a\x21" //...tproxy_type.!
+/* 0010 */ "\x52\x44\x50\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73\x73" //RDP.display_mess
+/* 0020 */ "\x61\x67\x65\x0a\x21\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73" //age.!.accept_mes
+/* 0030 */ "\x73\x61\x67\x65\x0a\x21\x0a\x69\x70\x5f\x63\x6c\x69\x65\x6e\x74" //sage.!.ip_client
+/* 0040 */ "\x0a\x21\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31\x0a\x69\x70\x5f\x74" //.!127.0.0.1.ip_t
+/* 0050 */ "\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30\x2e\x30\x2e\x31" //arget.!127.0.0.1
+/* 0060 */ "\x0a\x6c\x6f\x67\x69\x6e\x0a\x21\x78\x0a\x70\x61\x73\x73\x77\x6f" //.login.!x.passwo
+/* 0070 */ "\x72\x64\x0a\x21\x78\x0a\x74\x61\x72\x67\x65\x74\x5f\x6c\x6f\x67" //rd.!x.target_log
+/* 0080 */ "\x69\x6e\x0a\x21\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65" //in.!administrate
+/* 0090 */ "\x75\x72\x0a\x74\x61\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65" //ur.target_device
+/* 00a0 */ "\x0a\x21\x31\x30\x2e\x31\x30\x2e\x34\x36\x2e\x36\x34\x0a\x70\x72" //.!10.10.46.64.pr
+/* 00b0 */ "\x6f\x74\x6f\x5f\x64\x65\x73\x74\x0a\x41\x53\x4b\x0a\x73\x65\x6c" //oto_dest.ASK.sel
+/* 00c0 */ "\x65\x63\x74\x6f\x72\x0a\x41\x53\x4b\x0a\x73\x65\x6c\x65\x63\x74" //ector.ASK.select
+/* 00d0 */ "\x6f\x72\x5f\x67\x72\x6f\x75\x70\x5f\x66\x69\x6c\x74\x65\x72\x0a" //or_group_filter.
+/* 00e0 */ "\x21\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x64\x65\x76\x69\x63" //!.selector_devic
+/* 00f0 */ "\x65\x5f\x66\x69\x6c\x74\x65\x72\x0a\x21\x0a\x73\x65\x6c\x65\x63" //e_filter.!.selec
+/* 0100 */ "\x74\x6f\x72\x5f\x6c\x69\x6e\x65\x73\x5f\x70\x65\x72\x5f\x70\x61" //tor_lines_per_pa
+/* 0110 */ "\x67\x65\x0a\x21\x32\x33\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f" //ge.!23.selector_
+/* 0120 */ "\x63\x75\x72\x72\x65\x6e\x74\x5f\x70\x61\x67\x65\x0a\x21\x31\x0a" //current_page.!1.
+/* 0130 */ "\x74\x61\x72\x67\x65\x74\x5f\x70\x61\x73\x73\x77\x6f\x72\x64\x0a" //target_password.
+/* 0140 */ "\x41\x53\x4b\x0a\x77\x69\x64\x74\x68\x0a\x21\x38\x30\x30\x0a\x68" //ASK.width.!800.h
+/* 0150 */ "\x65\x69\x67\x68\x74\x0a\x21\x36\x30\x30\x0a\x62\x70\x70\x0a\x21" //eight.!600.bpp.!
+/* 0160 */ "\x32\x34\x0a\x72\x65\x61\x6c\x5f\x74\x61\x72\x67\x65\x74\x5f\x64" //24.real_target_d
+/* 0170 */ "\x65\x76\x69\x63\x65\x0a\x21\x0a"                                 //evice.!.
+// Sent dumped on Authentifier (4) 376 bytes
+// session::next_state 1
+};
+
+const char indata[] =
+{
+// Session::-------------- Waiting for authentifier -------------------
+// Socket Authentifier (4) receiving 4 bytes
+// Recv done on Authentifier (4) 4 bytes
+/*----------------------------
+  RECEIVE No 1
+  ----------------------------*/
+/* 0000 */ "\x00\x00\x01\xd3"                                                 //....
+// Dump done on Authentifier (4) 4 bytes
+// Socket Authentifier (4) receiving 467 bytes
+// Recv done on Authentifier (4) 467 bytes
+/* 0000 */ "\x69\x70\x5f\x74\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30" //ip_target.!127.0
+/* 0010 */ "\x2e\x30\x2e\x31\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73" //.0.1.display_mes
+/* 0020 */ "\x73\x61\x67\x65\x0a\x21\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f" //sage.!.selector_
+/* 0030 */ "\x67\x72\x6f\x75\x70\x5f\x66\x69\x6c\x74\x65\x72\x0a\x21\x0a\x69" //group_filter.!.i
+/* 0040 */ "\x70\x5f\x63\x6c\x69\x65\x6e\x74\x0a\x21\x31\x32\x37\x2e\x30\x2e" //p_client.!127.0.
+/* 0050 */ "\x30\x2e\x31\x0a\x66\x69\x6c\x65\x5f\x65\x6e\x63\x72\x79\x70\x74" //0.1.file_encrypt
+/* 0060 */ "\x69\x6f\x6e\x0a\x21\x74\x72\x75\x65\x0a\x73\x65\x6c\x65\x63\x74" //ion.!true.select
+/* 0070 */ "\x6f\x72\x0a\x41\x53\x4b\x0a\x74\x61\x72\x67\x65\x74\x5f\x64\x65" //or.ASK.target_de
+/* 0080 */ "\x76\x69\x63\x65\x0a\x41\x53\x4b\x0a\x73\x65\x6c\x65\x63\x74\x6f" //vice.ASK.selecto
+/* 0090 */ "\x72\x5f\x64\x65\x76\x69\x63\x65\x5f\x66\x69\x6c\x74\x65\x72\x0a" //r_device_filter.
+/* 00a0 */ "\x21\x0a\x70\x61\x73\x73\x77\x6f\x72\x64\x0a\x41\x53\x4b\x0a\x74" //!.password.ASK.t
+/* 00b0 */ "\x61\x72\x67\x65\x74\x5f\x70\x61\x73\x73\x77\x6f\x72\x64\x0a\x41" //arget_password.A
+/* 00c0 */ "\x53\x4b\x0a\x6b\x65\x65\x70\x61\x6c\x69\x76\x65\x0a\x21\x74\x72" //SK.keepalive.!tr
+/* 00d0 */ "\x75\x65\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73\x73\x61\x67" //ue.accept_messag
+/* 00e0 */ "\x65\x0a\x21\x0a\x74\x72\x61\x6e\x73\x5f\x6f\x6b\x0a\x21\x4f\x75" //e.!.trans_ok.!Ou
+/* 00f0 */ "\x69\x0a\x61\x75\x74\x68\x65\x6e\x74\x69\x63\x61\x74\x65\x64\x0a" //i.authenticated.
+/* 0100 */ "\x21\x66\x61\x6c\x73\x65\x0a\x74\x61\x72\x67\x65\x74\x5f\x6c\x6f" //!false.target_lo
+/* 0110 */ "\x67\x69\x6e\x0a\x41\x53\x4b\x0a\x68\x65\x69\x67\x68\x74\x0a\x21" //gin.ASK.height.!
+/* 0120 */ "\x31\x30\x32\x34\x0a\x77\x69\x64\x74\x68\x0a\x21\x31\x32\x38\x30" //1024.width.!1280
+/* 0130 */ "\x0a\x74\x72\x61\x6e\x73\x5f\x63\x61\x6e\x63\x65\x6c\x0a\x21\x41" //.trans_cancel.!A
+/* 0140 */ "\x6e\x6e\x75\x6c\x65\x72\x0a\x63\x6c\x69\x70\x62\x6f\x61\x72\x64" //nnuler.clipboard
+/* 0150 */ "\x0a\x21\x74\x72\x75\x65\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f" //.!true.selector_
+/* 0160 */ "\x63\x75\x72\x72\x65\x6e\x74\x5f\x70\x61\x67\x65\x0a\x21\x31\x0a" //current_page.!1.
+/* 0170 */ "\x62\x70\x70\x0a\x21\x38\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f" //bpp.!8.selector_
+/* 0180 */ "\x6c\x69\x6e\x65\x73\x5f\x70\x65\x72\x5f\x70\x61\x67\x65\x0a\x21" //lines_per_page.!
+/* 0190 */ "\x32\x30\x0a\x6c\x6f\x67\x69\x6e\x0a\x21\x6d\x74\x61\x6e\x0a\x70" //20.login.!mtan.p
+/* 01a0 */ "\x72\x6f\x74\x6f\x5f\x64\x65\x73\x74\x0a\x41\x53\x4b\x0a\x70\x72" //roto_dest.ASK.pr
+/* 01b0 */ "\x6f\x78\x79\x5f\x74\x79\x70\x65\x0a\x21\x52\x44\x50\x0a\x72\x65" //oxy_type.!RDP.re
+/* 01c0 */ "\x61\x6c\x5f\x74\x61\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65" //al_target_device
+/* 01d0 */ "\x0a\x21\x0a"                                                     //.!.
+// Dump done on Authentifier (4) 467 bytes
+// Data size received without header 467
+// auth::in_items
+// receiving 'ip_target'='127.0.0.1'
+// receiving 'display_message'=''
+// receiving 'selector_group_filter'=''
+// receiving 'ip_client'='127.0.0.1'
+// receiving 'file_encryption'='True'
+// receiving ASK 'selector'
+// receiving ASK 'target_device'
+// receiving 'selector_device_filter'=''
+// receiving ASK 'password'
+// receiving ASK 'target_password'
+// receiving 'keepalive'='True'
+// receiving 'accept_message'=''
+// receiving 'trans_ok'='Oui'
+// receiving 'authenticated'='False'
+// receiving ASK 'target_login'
+// receiving 'height'='1024'
+// receiving 'width'='1280'
+// receiving 'trans_cancel'='Annuler'
+// receiving 'clipboard'='True'
+// receiving 'selector_current_page'='1'
+// receiving 'bpp'='8'
+// receiving 'selector_lines_per_page'='20'
+// receiving 'login'='mtan'
+// receiving ASK 'proto_dest'
+// receiving 'proxy_type'='RDP'
+// receiving 'real_target_device'=''
+// SESSION_ID = 
+
+
+
+// Session::-------------- Waiting for authentifier -------------------
+// Socket Authentifier (4) receiving 4 bytes
+// Recv done on Authentifier (4) 4 bytes
+/*----------------------------
+  RECEIVE No 2
+  ----------------------------*/
+/* 0000 */ "\x00\x00\x04\x5b"                                                 //...[
+// Dump done on Authentifier (4) 4 bytes
+// Socket Authentifier (4) receiving 1115 bytes
+// Recv done on Authentifier (4) 1115 bytes
+/* 0000 */ "\x69\x70\x5f\x74\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30" //ip_target.!127.0
+/* 0010 */ "\x2e\x30\x2e\x31\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73" //.0.1.display_mes
+/* 0020 */ "\x73\x61\x67\x65\x0a\x21\x0a\x68\x65\x69\x67\x68\x74\x0a\x21\x31" //sage.!.height.!1
+/* 0030 */ "\x30\x32\x34\x0a\x74\x61\x72\x67\x65\x74\x5f\x6c\x6f\x67\x69\x6e" //024.target_login
+/* 0040 */ "\x0a\x21\x76\x6e\x63\x20\x76\x6e\x63\x20\x76\x6e\x63\x20\x72\x64" //.!vnc vnc vnc rd
+/* 0050 */ "\x70\x20\x72\x64\x70\x20\x72\x64\x70\x20\x72\x64\x70\x20\x72\x64" //p rdp rdp rdp rd
+/* 0060 */ "\x70\x20\x72\x64\x70\x20\x72\x64\x70\x20\x72\x64\x70\x20\x72\x64" //p rdp rdp rdp rd
+/* 0070 */ "\x70\x0a\x6b\x65\x65\x70\x61\x6c\x69\x76\x65\x0a\x21\x74\x72\x75" //p.keepalive.!tru
+/* 0080 */ "\x65\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73\x73\x61\x67\x65" //e.accept_message
+/* 0090 */ "\x0a\x21\x0a\x74\x72\x61\x6e\x73\x5f\x6f\x6b\x0a\x21\x4f\x75\x69" //.!.trans_ok.!Oui
+/* 00a0 */ "\x0a\x61\x75\x74\x68\x65\x6e\x74\x69\x63\x61\x74\x65\x64\x0a\x21" //.authenticated.!
+/* 00b0 */ "\x74\x72\x75\x65\x0a\x77\x69\x64\x74\x68\x0a\x21\x31\x32\x38\x30" //true.width.!1280
+/* 00c0 */ "\x0a\x63\x6c\x69\x70\x62\x6f\x61\x72\x64\x0a\x21\x74\x72\x75\x65" //.clipboard.!true
+/* 00d0 */ "\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x63\x75\x72\x72\x65\x6e" //.selector_curren
+/* 00e0 */ "\x74\x5f\x70\x61\x67\x65\x0a\x21\x31\x0a\x73\x65\x6c\x65\x63\x74" //t_page.!1.select
+/* 00f0 */ "\x6f\x72\x5f\x6e\x75\x6d\x62\x65\x72\x5f\x6f\x66\x5f\x70\x61\x67" //or_number_of_pag
+/* 0100 */ "\x65\x73\x0a\x21\x31\x0a\x74\x72\x61\x6e\x73\x5f\x63\x61\x6e\x63" //es.!1.trans_canc
+/* 0110 */ "\x65\x6c\x0a\x21\x41\x6e\x6e\x75\x6c\x65\x72\x0a\x70\x72\x6f\x78" //el.!Annuler.prox
+/* 0120 */ "\x79\x5f\x74\x79\x70\x65\x0a\x21\x52\x44\x50\x0a\x73\x65\x6c\x65" //y_type.!RDP.sele
+/* 0130 */ "\x63\x74\x6f\x72\x5f\x67\x72\x6f\x75\x70\x5f\x66\x69\x6c\x74\x65" //ctor_group_filte
+/* 0140 */ "\x72\x0a\x21\x0a\x69\x70\x5f\x63\x6c\x69\x65\x6e\x74\x0a\x21\x31" //r.!.ip_client.!1
+/* 0150 */ "\x32\x37\x2e\x30\x2e\x30\x2e\x31\x0a\x66\x69\x6c\x65\x5f\x65\x6e" //27.0.0.1.file_en
+/* 0160 */ "\x63\x72\x79\x70\x74\x69\x6f\x6e\x0a\x21\x74\x72\x75\x65\x0a\x73" //cryption.!true.s
+/* 0170 */ "\x65\x6c\x65\x63\x74\x6f\x72\x0a\x21\x74\x72\x75\x65\x0a\x74\x61" //elector.!true.ta
+/* 0180 */ "\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x61\x6e\x79" //rget_device.!any
+/* 0190 */ "\x40\x31\x30\x2e\x31\x30\x2e\x34\x36\x2e\x37\x30\x20\x61\x6e\x79" //@10.10.46.70 any
+/* 01a0 */ "\x40\x31\x30\x2e\x31\x30\x2e\x34\x37\x2e\x35\x30\x20\x61\x6e\x79" //@10.10.47.50 any
+/* 01b0 */ "\x40\x31\x30\x2e\x31\x30\x2e\x34\x37\x2e\x31\x37\x35\x20\x61\x64" //@10.10.47.175 ad
+/* 01c0 */ "\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x31\x30\x2e" //ministrateur@10.
+/* 01d0 */ "\x31\x30\x2e\x34\x36\x2e\x36\x34\x20\x61\x64\x6d\x69\x6e\x69\x73" //10.46.64 adminis
+/* 01e0 */ "\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x40\x31\x30\x2e\x31\x30" //trateur@qa@10.10
+/* 01f0 */ "\x2e\x34\x36\x2e\x37\x38\x20\x61\x64\x6d\x69\x6e\x40\x71\x61\x40" //.46.78 admin@qa@
+/* 0200 */ "\x31\x30\x2e\x31\x30\x2e\x34\x36\x2e\x37\x38\x20\x41\x64\x6d\x69" //10.10.46.78 Admi
+/* 0210 */ "\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x40\x31\x30" //nistrateur@qa@10
+/* 0220 */ "\x2e\x31\x30\x2e\x34\x36\x2e\x38\x38\x20\x61\x64\x6d\x69\x6e\x69" //.10.46.88 admini
+/* 0230 */ "\x73\x74\x72\x61\x74\x65\x75\x72\x40\x31\x30\x2e\x31\x30\x2e\x34" //strateur@10.10.4
+/* 0240 */ "\x37\x2e\x31\x34\x38\x20\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61" //7.148 administra
+/* 0250 */ "\x74\x65\x75\x72\x40\x31\x30\x2e\x31\x30\x2e\x34\x37\x2e\x32\x30" //teur@10.10.47.20
+/* 0260 */ "\x35\x20\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72" //5 administrateur
+/* 0270 */ "\x40\x31\x30\x2e\x31\x30\x2e\x34\x37\x2e\x31\x35\x39\x20\x74\x6f" //@10.10.47.159 to
+/* 0280 */ "\x74\x6f\x40\x31\x30\x2e\x31\x30\x2e\x34\x33\x2e\x33\x33\x20\x61" //to@10.10.43.33 a
+/* 0290 */ "\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x31\x30" //dministrateur@10
+/* 02a0 */ "\x2e\x31\x30\x2e\x34\x37\x2e\x31\x37\x35\x0a\x73\x65\x6c\x65\x63" //.10.47.175.selec
+/* 02b0 */ "\x74\x6f\x72\x5f\x64\x65\x76\x69\x63\x65\x5f\x66\x69\x6c\x74\x65" //tor_device_filte
+/* 02c0 */ "\x72\x0a\x21\x0a\x70\x61\x73\x73\x77\x6f\x72\x64\x0a\x21\x78\x0a" //r.!.password.!x.
+/* 02d0 */ "\x6c\x6f\x67\x69\x6e\x0a\x21\x78\x0a\x62\x70\x70\x0a\x21\x38\x0a" //login.!x.bpp.!8.
+/* 02e0 */ "\x65\x6e\x64\x5f\x74\x69\x6d\x65\x0a\x21\x32\x30\x31\x33\x2d\x30" //end_time.!2013-0
+/* 02f0 */ "\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30" //7-02 22:14:13;20
+/* 0300 */ "\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31" //13-07-02 22:14:1
+/* 0310 */ "\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a" //3;2013-07-02 22:
+/* 0320 */ "\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32" //14:13;2013-07-02
+/* 0330 */ "\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30" // 22:14:13;2013-0
+/* 0340 */ "\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30" //7-02 22:14:13;20
+/* 0350 */ "\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31" //13-07-02 22:14:1
+/* 0360 */ "\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a" //3;2013-07-02 22:
+/* 0370 */ "\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32" //14:13;2013-07-02
+/* 0380 */ "\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30" // 22:14:13;2013-0
+/* 0390 */ "\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30" //7-02 22:14:13;20
+/* 03a0 */ "\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31" //13-07-02 22:14:1
+/* 03b0 */ "\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a" //3;2013-07-02 22:
+/* 03c0 */ "\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32" //14:13;2013-07-02
+/* 03d0 */ "\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x0a\x73\x65\x6c\x65\x63\x74" // 22:14:13.select
+/* 03e0 */ "\x6f\x72\x5f\x6c\x69\x6e\x65\x73\x5f\x70\x65\x72\x5f\x70\x61\x67" //or_lines_per_pag
+/* 03f0 */ "\x65\x0a\x21\x32\x30\x0a\x74\x61\x72\x67\x65\x74\x5f\x70\x61\x73" //e.!20.target_pas
+/* 0400 */ "\x73\x77\x6f\x72\x64\x0a\x41\x53\x4b\x0a\x72\x65\x61\x6c\x5f\x74" //sword.ASK.real_t
+/* 0410 */ "\x61\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x0a\x70" //arget_device.!.p
+/* 0420 */ "\x72\x6f\x74\x6f\x5f\x64\x65\x73\x74\x0a\x21\x56\x4e\x43\x20\x56" //roto_dest.!VNC V
+/* 0430 */ "\x4e\x43\x20\x56\x4e\x43\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52" //NC VNC RDP RDP R
+/* 0440 */ "\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52" //DP RDP RDP RDP R
+/* 0450 */ "\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50\x0a"                     //DP RDP RDP.
+// Dump done on Authentifier (4) 1115 bytes
+// Data size received without header 1115
+// auth::in_items
+// receiving 'ip_target'='127.0.0.1'
+// receiving 'display_message'=''
+// receiving 'height'='1024'
+// receiving 'target_login'='vnc vnc vnc rdp rdp rdp rdp rdp rdp rdp rdp rdp'
+// receiving 'keepalive'='True'
+// receiving 'accept_message'=''
+// receiving 'trans_ok'='Oui'
+// receiving 'authenticated'='True'
+// receiving 'width'='1280'
+// receiving 'clipboard'='True'
+// receiving 'selector_current_page'='1'
+// receiving 'selector_number_of_pages'='1'
+// receiving 'trans_cancel'='Annuler'
+// receiving 'proxy_type'='RDP'
+// receiving 'selector_group_filter'=''
+// receiving 'ip_client'='127.0.0.1'
+// receiving 'file_encryption'='True'
+// receiving 'selector'='True'
+// receiving 'target_device'='any@10.10.46.70 any@10.10.47.50 any@10.10.47.175 administrateur@10.10.46.64 administrateur@qa@10.10.46.78 admin@qa@10.10.46.78 Administrateur@qa@10.10.46.88 administrateur@10.10.47.148 administrateur@10.10.47.205 administrateur@10.10.47.159 toto@10.10.43.33 administrateur@10.10.47.175'
+// receiving 'selector_device_filter'=''
+// receiving 'password'=<hidden>
+// receiving 'login'='x'
+// receiving 'bpp'='8'
+// receiving 'end_time'='2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13'
+// receiving 'selector_lines_per_page'='20'
+// receiving ASK 'target_password'
+// receiving 'real_target_device'=''
+// receiving 'proto_dest'='VNC VNC VNC RDP RDP RDP RDP RDP RDP RDP RDP RDP'
+// SESSION_ID = 
+
+// Session::-------------- Waiting for authentifier (context refresh required) -------------------
+// Socket Authentifier (4) receiving 4 bytes
+// Recv done on Authentifier (4) 4 bytes
+/*----------------------------
+  RECEIVE No 3
+  ----------------------------*/
+/* 0000 */ "\x00\x00\x04\x5b"                                                 //...[
+// Dump done on Authentifier (4) 4 bytes
+// Socket Authentifier (4) receiving 1115 bytes
+// Recv done on Authentifier (4) 1115 bytes
+/* 0000 */ "\x69\x70\x5f\x74\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30" //ip_target.!127.0
+/* 0010 */ "\x2e\x30\x2e\x31\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73" //.0.1.display_mes
+/* 0020 */ "\x73\x61\x67\x65\x0a\x21\x0a\x68\x65\x69\x67\x68\x74\x0a\x21\x31" //sage.!.height.!1
+/* 0030 */ "\x30\x32\x34\x0a\x74\x61\x72\x67\x65\x74\x5f\x6c\x6f\x67\x69\x6e" //024.target_login
+/* 0040 */ "\x0a\x21\x76\x6e\x63\x20\x76\x6e\x63\x20\x76\x6e\x63\x20\x72\x64" //.!vnc vnc vnc rd
+/* 0050 */ "\x70\x20\x72\x64\x70\x20\x72\x64\x70\x20\x72\x64\x70\x20\x72\x64" //p rdp rdp rdp rd
+/* 0060 */ "\x70\x20\x72\x64\x70\x20\x72\x64\x70\x20\x72\x64\x70\x20\x72\x64" //p rdp rdp rdp rd
+/* 0070 */ "\x70\x0a\x6b\x65\x65\x70\x61\x6c\x69\x76\x65\x0a\x21\x74\x72\x75" //p.keepalive.!tru
+/* 0080 */ "\x65\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73\x73\x61\x67\x65" //e.accept_message
+/* 0090 */ "\x0a\x21\x0a\x74\x72\x61\x6e\x73\x5f\x6f\x6b\x0a\x21\x4f\x75\x69" //.!.trans_ok.!Oui
+/* 00a0 */ "\x0a\x61\x75\x74\x68\x65\x6e\x74\x69\x63\x61\x74\x65\x64\x0a\x21" //.authenticated.!
+/* 00b0 */ "\x74\x72\x75\x65\x0a\x77\x69\x64\x74\x68\x0a\x21\x31\x32\x38\x30" //true.width.!1280
+/* 00c0 */ "\x0a\x63\x6c\x69\x70\x62\x6f\x61\x72\x64\x0a\x21\x74\x72\x75\x65" //.clipboard.!true
+/* 00d0 */ "\x0a\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x63\x75\x72\x72\x65\x6e" //.selector_curren
+/* 00e0 */ "\x74\x5f\x70\x61\x67\x65\x0a\x21\x31\x0a\x73\x65\x6c\x65\x63\x74" //t_page.!1.select
+/* 00f0 */ "\x6f\x72\x5f\x6e\x75\x6d\x62\x65\x72\x5f\x6f\x66\x5f\x70\x61\x67" //or_number_of_pag
+/* 0100 */ "\x65\x73\x0a\x21\x31\x0a\x74\x72\x61\x6e\x73\x5f\x63\x61\x6e\x63" //es.!1.trans_canc
+/* 0110 */ "\x65\x6c\x0a\x21\x41\x6e\x6e\x75\x6c\x65\x72\x0a\x70\x72\x6f\x78" //el.!Annuler.prox
+/* 0120 */ "\x79\x5f\x74\x79\x70\x65\x0a\x21\x52\x44\x50\x0a\x73\x65\x6c\x65" //y_type.!RDP.sele
+/* 0130 */ "\x63\x74\x6f\x72\x5f\x67\x72\x6f\x75\x70\x5f\x66\x69\x6c\x74\x65" //ctor_group_filte
+/* 0140 */ "\x72\x0a\x21\x0a\x69\x70\x5f\x63\x6c\x69\x65\x6e\x74\x0a\x21\x31" //r.!.ip_client.!1
+/* 0150 */ "\x32\x37\x2e\x30\x2e\x30\x2e\x31\x0a\x66\x69\x6c\x65\x5f\x65\x6e" //27.0.0.1.file_en
+/* 0160 */ "\x63\x72\x79\x70\x74\x69\x6f\x6e\x0a\x21\x74\x72\x75\x65\x0a\x73" //cryption.!true.s
+/* 0170 */ "\x65\x6c\x65\x63\x74\x6f\x72\x0a\x21\x74\x72\x75\x65\x0a\x74\x61" //elector.!true.ta
+/* 0180 */ "\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x61\x6e\x79" //rget_device.!any
+/* 0190 */ "\x40\x31\x30\x2e\x31\x30\x2e\x34\x36\x2e\x37\x30\x20\x61\x6e\x79" //@10.10.46.70 any
+/* 01a0 */ "\x40\x31\x30\x2e\x31\x30\x2e\x34\x37\x2e\x35\x30\x20\x61\x6e\x79" //@10.10.47.50 any
+/* 01b0 */ "\x40\x31\x30\x2e\x31\x30\x2e\x34\x37\x2e\x31\x37\x35\x20\x61\x64" //@10.10.47.175 ad
+/* 01c0 */ "\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x31\x30\x2e" //ministrateur@10.
+/* 01d0 */ "\x31\x30\x2e\x34\x36\x2e\x36\x34\x20\x61\x64\x6d\x69\x6e\x69\x73" //10.46.64 adminis
+/* 01e0 */ "\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x40\x31\x30\x2e\x31\x30" //trateur@qa@10.10
+/* 01f0 */ "\x2e\x34\x36\x2e\x37\x38\x20\x61\x64\x6d\x69\x6e\x40\x71\x61\x40" //.46.78 admin@qa@
+/* 0200 */ "\x31\x30\x2e\x31\x30\x2e\x34\x36\x2e\x37\x38\x20\x41\x64\x6d\x69" //10.10.46.78 Admi
+/* 0210 */ "\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x71\x61\x40\x31\x30" //nistrateur@qa@10
+/* 0220 */ "\x2e\x31\x30\x2e\x34\x36\x2e\x38\x38\x20\x61\x64\x6d\x69\x6e\x69" //.10.46.88 admini
+/* 0230 */ "\x73\x74\x72\x61\x74\x65\x75\x72\x40\x31\x30\x2e\x31\x30\x2e\x34" //strateur@10.10.4
+/* 0240 */ "\x37\x2e\x31\x34\x38\x20\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61" //7.148 administra
+/* 0250 */ "\x74\x65\x75\x72\x40\x31\x30\x2e\x31\x30\x2e\x34\x37\x2e\x32\x30" //teur@10.10.47.20
+/* 0260 */ "\x35\x20\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72" //5 administrateur
+/* 0270 */ "\x40\x31\x30\x2e\x31\x30\x2e\x34\x37\x2e\x31\x35\x39\x20\x74\x6f" //@10.10.47.159 to
+/* 0280 */ "\x74\x6f\x40\x31\x30\x2e\x31\x30\x2e\x34\x33\x2e\x33\x33\x20\x61" //to@10.10.43.33 a
+/* 0290 */ "\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72\x40\x31\x30" //dministrateur@10
+/* 02a0 */ "\x2e\x31\x30\x2e\x34\x37\x2e\x31\x37\x35\x0a\x73\x65\x6c\x65\x63" //.10.47.175.selec
+/* 02b0 */ "\x74\x6f\x72\x5f\x64\x65\x76\x69\x63\x65\x5f\x66\x69\x6c\x74\x65" //tor_device_filte
+/* 02c0 */ "\x72\x0a\x21\x0a\x70\x61\x73\x73\x77\x6f\x72\x64\x0a\x21\x78\x0a" //r.!.password.!x.
+/* 02d0 */ "\x6c\x6f\x67\x69\x6e\x0a\x21\x78\x0a\x62\x70\x70\x0a\x21\x38\x0a" //login.!x.bpp.!8.
+/* 02e0 */ "\x65\x6e\x64\x5f\x74\x69\x6d\x65\x0a\x21\x32\x30\x31\x33\x2d\x30" //end_time.!2013-0
+/* 02f0 */ "\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30" //7-02 22:14:13;20
+/* 0300 */ "\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31" //13-07-02 22:14:1
+/* 0310 */ "\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a" //3;2013-07-02 22:
+/* 0320 */ "\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32" //14:13;2013-07-02
+/* 0330 */ "\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30" // 22:14:13;2013-0
+/* 0340 */ "\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30" //7-02 22:14:13;20
+/* 0350 */ "\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31" //13-07-02 22:14:1
+/* 0360 */ "\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a" //3;2013-07-02 22:
+/* 0370 */ "\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32" //14:13;2013-07-02
+/* 0380 */ "\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30" // 22:14:13;2013-0
+/* 0390 */ "\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30" //7-02 22:14:13;20
+/* 03a0 */ "\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31" //13-07-02 22:14:1
+/* 03b0 */ "\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a" //3;2013-07-02 22:
+/* 03c0 */ "\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32" //14:13;2013-07-02
+/* 03d0 */ "\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x0a\x73\x65\x6c\x65\x63\x74" // 22:14:13.select
+/* 03e0 */ "\x6f\x72\x5f\x6c\x69\x6e\x65\x73\x5f\x70\x65\x72\x5f\x70\x61\x67" //or_lines_per_pag
+/* 03f0 */ "\x65\x0a\x21\x32\x33\x0a\x74\x61\x72\x67\x65\x74\x5f\x70\x61\x73" //e.!23.target_pas
+/* 0400 */ "\x73\x77\x6f\x72\x64\x0a\x41\x53\x4b\x0a\x72\x65\x61\x6c\x5f\x74" //sword.ASK.real_t
+/* 0410 */ "\x61\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x0a\x70" //arget_device.!.p
+/* 0420 */ "\x72\x6f\x74\x6f\x5f\x64\x65\x73\x74\x0a\x21\x56\x4e\x43\x20\x56" //roto_dest.!VNC V
+/* 0430 */ "\x4e\x43\x20\x56\x4e\x43\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52" //NC VNC RDP RDP R
+/* 0440 */ "\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50\x20\x52" //DP RDP RDP RDP R
+/* 0450 */ "\x44\x50\x20\x52\x44\x50\x20\x52\x44\x50\x0a"                     //DP RDP RDP.
+// Dump done on Authentifier (4) 1115 bytes
+// Data size received without header 1115
+// auth::in_items
+// receiving 'ip_target'='127.0.0.1'
+// receiving 'display_message'=''
+// receiving 'height'='1024'
+// receiving 'target_login'='vnc vnc vnc rdp rdp rdp rdp rdp rdp rdp rdp rdp'
+// receiving 'keepalive'='True'
+// receiving 'accept_message'=''
+// receiving 'trans_ok'='Oui'
+// receiving 'authenticated'='True'
+// receiving 'width'='1280'
+// receiving 'clipboard'='True'
+// receiving 'selector_current_page'='1'
+// receiving 'selector_number_of_pages'='1'
+// receiving 'trans_cancel'='Annuler'
+// receiving 'proxy_type'='RDP'
+// receiving 'selector_group_filter'=''
+// receiving 'ip_client'='127.0.0.1'
+// receiving 'file_encryption'='True'
+// receiving 'selector'='True'
+// receiving 'target_device'='any@10.10.46.70 any@10.10.47.50 any@10.10.47.175 administrateur@10.10.46.64 administrateur@qa@10.10.46.78 admin@qa@10.10.46.78 Administrateur@qa@10.10.46.88 administrateur@10.10.47.148 administrateur@10.10.47.205 administrateur@10.10.47.159 toto@10.10.43.33 administrateur@10.10.47.175'
+// receiving 'selector_device_filter'=''
+// receiving 'password'=<hidden>
+// receiving 'login'='x'
+// receiving 'bpp'='8'
+// receiving 'end_time'='2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13'
+// receiving 'selector_lines_per_page'='23'
+// receiving ASK 'target_password'
+// receiving 'real_target_device'=''
+// receiving 'proto_dest'='VNC VNC VNC RDP RDP RDP RDP RDP RDP RDP RDP RDP'
+// SESSION_ID = 
+
+// 2ccc0
+
+
+
+// Session::-------------- Waiting for authentifier -------------------
+// Socket Authentifier (4) receiving 4 bytes
+// Recv done on Authentifier (4) 4 bytes
+/*----------------------------
+  RECEIVE No 4
+  ----------------------------*/
+/* 0000 */ "\x00\x00\x03\x5a"                                                 //...Z 858
+///* 0000 */ "\x00\x00\x03\x4e"                                                 //...Z   846   
+// Dump done on Authentifier (4) 4 bytes
+// Socket Authentifier (4) receiving 858 bytes
+// Recv done on Authentifier (4) 858 bytes
+/* 0000 */ "\x69\x70\x5f\x74\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30" //ip_target.!127.0
+/* 0010 */ "\x2e\x30\x2e\x31\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73" //.0.1.display_mes
+/* 0020 */ "\x73\x61\x67\x65\x0a\x21\x0a\x68\x65\x69\x67\x68\x74\x0a\x21\x31" //sage.!.height.!1
+/* 0030 */ "\x30\x32\x34\x0a\x74\x61\x72\x67\x65\x74\x5f\x6c\x6f\x67\x69\x6e" //024.target_login
+/* 0040 */ "\x0a\x21\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72" //.!administrateur
+/* 0050 */ "\x0a\x6b\x65\x65\x70\x61\x6c\x69\x76\x65\x0a\x21\x74\x72\x75\x65" //.keepalive.!true
+/* 0060 */ "\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73\x73\x61\x67\x65\x0a" //.accept_message.
+/* 0070 */ "\x21\x0a\x74\x72\x61\x6e\x73\x5f\x6f\x6b\x0a\x21\x4f\x75\x69\x0a" //!.trans_ok.!Oui.
+/* 0080 */ "\x61\x75\x74\x68\x65\x6e\x74\x69\x63\x61\x74\x65\x64\x0a\x21\x74" //authenticated.!t
+/* 0090 */ "\x72\x75\x65\x0a\x77\x69\x64\x74\x68\x0a\x21\x31\x32\x38\x30\x0a" //rue.width.!1280.
+/* 00a0 */ "\x63\x6c\x69\x70\x62\x6f\x61\x72\x64\x0a\x21\x74\x72\x75\x65\x0a" //clipboard.!true.
+/* 00b0 */ "\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x63\x75\x72\x72\x65\x6e\x74" //selector_current
+/* 00c0 */ "\x5f\x70\x61\x67\x65\x0a\x21\x31\x0a\x73\x65\x6c\x65\x63\x74\x6f" //_page.!1.selecto
+/* 00d0 */ "\x72\x5f\x6e\x75\x6d\x62\x65\x72\x5f\x6f\x66\x5f\x70\x61\x67\x65" //r_number_of_page
+/* 00e0 */ "\x73\x0a\x21\x31\x0a\x74\x72\x61\x6e\x73\x5f\x63\x61\x6e\x63\x65" //s.!1.trans_cance
+/* 00f0 */ "\x6c\x0a\x21\x41\x6e\x6e\x75\x6c\x65\x72\x0a\x70\x72\x6f\x78\x79" //l.!Annuler.proxy
+/* 0100 */ "\x5f\x74\x79\x70\x65\x0a\x21\x52\x44\x50\x0a\x73\x65\x6c\x65\x63" //_type.!RDP.selec
+/* 0110 */ "\x74\x6f\x72\x5f\x67\x72\x6f\x75\x70\x5f\x66\x69\x6c\x74\x65\x72" //tor_group_filter
+/* 0120 */ "\x0a\x21\x0a\x69\x70\x5f\x63\x6c\x69\x65\x6e\x74\x0a\x21\x31\x32" //.!.ip_client.!12
+/* 0130 */ "\x37\x2e\x30\x2e\x30\x2e\x31\x0a\x66\x69\x6c\x65\x5f\x65\x6e\x63" //7.0.0.1.file_enc
+/* 0140 */ "\x72\x79\x70\x74\x69\x6f\x6e\x0a\x21\x74\x72\x75\x65\x0a\x73\x65" //ryption.!true.se
+/* 0150 */ "\x6c\x65\x63\x74\x6f\x72\x0a\x21\x66\x61\x6c\x73\x65\x0a\x74\x61" //lector.!false.ta
+/* 0160 */ "\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x31\x30\x2e" //rget_device.!10.
+/* 0170 */ "\x31\x30\x2e\x34\x36\x2e\x36\x34\x0a\x73\x65\x6c\x65\x63\x74\x6f" //10.46.64.selecto
+/* 0180 */ "\x72\x5f\x64\x65\x76\x69\x63\x65\x5f\x66\x69\x6c\x74\x65\x72\x0a" //r_device_filter.
+/* 0190 */ "\x21\x0a\x74\x61\x72\x67\x65\x74\x5f\x70\x6f\x72\x74\x0a\x21\x33" //!.target_port.!3
+/* 01a0 */ "\x33\x38\x39\x0a\x69\x73\x5f\x72\x65\x63\x0a\x21\x46\x61\x6c\x73" //389.is_rec.!Fals
+/* 01b0 */ "\x65\x0a\x72\x65\x63\x5f\x70\x61\x74\x68\x0a\x21\x2f\x74\x6d\x70" //e.rec_path.!/tmp
+/* 01c0 */ "\x2f\x74\x65\x73\x74\x78\x78\x78\x2e\x70\x6e\x67\x0a\x70\x61\x73" ///testxxx.png.pas
+/* 01d0 */ "\x73\x77\x6f\x72\x64\x0a\x21\x78\x0a\x6c\x6f\x67\x69\x6e\x0a\x21" //sword.!x.login.!
+/* 01e0 */ "\x78\x0a\x62\x70\x70\x0a\x21\x38\x0a\x74\x69\x6d\x65\x63\x6c\x6f" //x.bpp.!8.timeclo
+/* 01f0 */ "\x73\x65\x0a\x21\x31\x33\x37\x32\x37\x39\x36\x30\x35\x33\x0a\x65" //se.!1372796053.e
+/* 0200 */ "\x6e\x64\x5f\x74\x69\x6d\x65\x0a\x21\x32\x30\x31\x33\x2d\x30\x37" //nd_time.!2013-07
+/* 0210 */ "\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31" //-02 22:14:13;201
+/* 0220 */ "\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33" //3-07-02 22:14:13
+/* 0230 */ "\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31" //;2013-07-02 22:1
+/* 0240 */ "\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20" //4:13;2013-07-02 
+/* 0250 */ "\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37" //22:14:13;2013-07
+/* 0260 */ "\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31" //-02 22:14:13;201
+/* 0270 */ "\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33" //3-07-02 22:14:13
+/* 0280 */ "\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31" //;2013-07-02 22:1
+/* 0290 */ "\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20" //4:13;2013-07-02 
+/* 02a0 */ "\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37" //22:14:13;2013-07
+/* 02b0 */ "\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31" //-02 22:14:13;201
+/* 02c0 */ "\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33" //3-07-02 22:14:13
+/* 02d0 */ "\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31" //;2013-07-02 22:1
+/* 02e0 */ "\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20" //4:13;2013-07-02 
+/* 02f0 */ "\x32\x32\x3a\x31\x34\x3a\x31\x33\x0a\x73\x65\x6c\x65\x63\x74\x6f" //22:14:13.selecto
+/* 0300 */ "\x72\x5f\x6c\x69\x6e\x65\x73\x5f\x70\x65\x72\x5f\x70\x61\x67\x65" //r_lines_per_page
+/* 0310 */ "\x0a\x21\x32\x33\x0a\x74\x61\x72\x67\x65\x74\x5f\x70\x61\x73\x73" //.!23.target_pass
+/* 0320 */ "\x77\x6f\x72\x64\x0a\x21\x53\x65\x63\x75\x72\x65\x4c\x69\x6e\x75" //word.!SecureLinu
+/* 0330 */ "\x78\x24\x34\x32\x0a\x72\x65\x61\x6c\x5f\x74\x61\x72\x67\x65\x74" //x$42.real_target
+/* 0340 */ "\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x0a\x70\x72\x6f\x74\x6f\x5f" //_device.!.proto_
+/* 0350 */ "\x64\x65\x73\x74\x0a\x21\x52\x44\x50\x0a"                         //dest.!RDP.
+
+
+//     \x41\x53\x4b ASK
+// /* 0320 */ "\x77\x6f\x72\x64\x0a\x41\x53\x4b" //word.ASK
+// /* 0330 */ "\x0a\x72\x65\x61\x6c\x5f\x74\x61\x72\x67\x65\x74" //.real_target
+
+// Dump done on Authentifier (4) 858 bytes
+// Data size received without header 858
+// auth::in_items
+// receiving 'ip_target'='127.0.0.1'
+// receiving 'display_message'=''
+// receiving 'height'='1024'
+// receiving 'target_login'='administrateur'
+// receiving 'keepalive'='True'
+// receiving 'accept_message'=''
+// receiving 'trans_ok'='Oui'
+// receiving 'authenticated'='True'
+// receiving 'width'='1280'
+// receiving 'clipboard'='True'
+// receiving 'selector_current_page'='1'
+// receiving 'selector_number_of_pages'='1'
+// receiving 'trans_cancel'='Annuler'
+// receiving 'proxy_type'='RDP'
+// receiving 'selector_group_filter'=''
+// receiving 'ip_client'='127.0.0.1'
+// receiving 'file_encryption'='True'
+// receiving 'selector'='False'
+// receiving 'target_device'='10.10.46.64'
+// receiving 'selector_device_filter'=''
+// receiving 'target_port'='3389'
+// receiving 'is_rec'='False'
+// receiving 'rec_path'='/tmp/testxxx.png'
+// receiving 'password'=<hidden>
+// receiving 'login'='x'
+// receiving 'bpp'='8'
+// receiving 'timeclose'='1372796053'
+// receiving 'end_time'='2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13'
+// receiving 'selector_lines_per_page'='23'
+// receiving 'target_password'=<hidden>
+// receiving 'real_target_device'=''
+// receiving 'proto_dest'='RDP'
+// SESSION_ID = 
+
+};
+
+
+
+
+
+// Session::-------------- Running -------------------
+// Session::back_event fired
+// signal in transitory mode
+// Session::back event end module
+// Session::starting next module
+// auth::ask_next_module
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER=False
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD=False
+// auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS authenticated is True
+// auth::get_mod_from_protocol
+// auth::get_mod_from_protocol RDP
+// session::next_state 3
+// Session::session_setup_mod(target_module=3, submodule=7)
+// Session::Creation of new mod 'RDP'
+// connecting to 10.10.46.64:3389
+// connection to 10.10.46.64:3389 succeeded : socket 6
+// Remote RDP Server login:administrateur host:mta
+// Server key layout is 40c
+// RdpNego::NEGO_STATE_INITIAL
+// RdpNego::send_x224_connection_request_pdu
+// RdpNego::send_x224_connection_request_pdu done
+// RdpNego::NEGO_STATE_TLS
+// RdpNego::recv_connection_confirm
+// GCC::UserData tag=0c01 length=8
+// GCC::UserData tag=0c03 length=12
+// GCC::UserData tag=0c02 length=1410
+// using /dev/urandom as random source
+// send extended login info (RDP5-style) 9017b :administrateur
+// /* 0000 */ 0xff, 0x02, 0x10, 0x00, 0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0xc0, 0x24, 0x00, 0x00,  // .............$..
+// use rdp5
+// Resizing to 800x600x8
+// Session::Creation of new mod 'RDP' suceeded
+// auth::start_keep_alive
+// sending keepalive=ASK
+// Sending on Authentifier (4) 18 bytes
+// /* 0000 */ "\x00\x00\x00\x12\x6b\x65\x65\x70\x61\x6c\x69\x76\x65\x0a\x41\x53" //....keepalive.AS
+// /* 0010 */ "\x4b\x0a"                                                         //K.
+// Sent dumped on Authentifier (4) 18 bytes
+// auth::keep_alive ACL incoming event
+// Socket Authentifier (4) receiving 4 bytes
+// Recv done on Authentifier (4) 4 bytes
+// /* 0000 */ "\x00\x00\x03\x5a"                                                 //...Z
+// Dump done on Authentifier (4) 4 bytes
+// Socket Authentifier (4) receiving 858 bytes
+// Recv done on Authentifier (4) 858 bytes
+// /* 0000 */ "\x69\x70\x5f\x74\x61\x72\x67\x65\x74\x0a\x21\x31\x32\x37\x2e\x30" //ip_target.!127.0
+// /* 0010 */ "\x2e\x30\x2e\x31\x0a\x64\x69\x73\x70\x6c\x61\x79\x5f\x6d\x65\x73" //.0.1.display_mes
+// /* 0020 */ "\x73\x61\x67\x65\x0a\x21\x0a\x68\x65\x69\x67\x68\x74\x0a\x21\x31" //sage.!.height.!1
+// /* 0030 */ "\x30\x32\x34\x0a\x74\x61\x72\x67\x65\x74\x5f\x6c\x6f\x67\x69\x6e" //024.target_login
+// /* 0040 */ "\x0a\x21\x61\x64\x6d\x69\x6e\x69\x73\x74\x72\x61\x74\x65\x75\x72" //.!administrateur
+// /* 0050 */ "\x0a\x6b\x65\x65\x70\x61\x6c\x69\x76\x65\x0a\x21\x74\x72\x75\x65" //.keepalive.!true
+// /* 0060 */ "\x0a\x61\x63\x63\x65\x70\x74\x5f\x6d\x65\x73\x73\x61\x67\x65\x0a" //.accept_message.
+// /* 0070 */ "\x21\x0a\x74\x72\x61\x6e\x73\x5f\x6f\x6b\x0a\x21\x4f\x75\x69\x0a" //!.trans_ok.!Oui.
+// /* 0080 */ "\x61\x75\x74\x68\x65\x6e\x74\x69\x63\x61\x74\x65\x64\x0a\x21\x74" //authenticated.!t
+// /* 0090 */ "\x72\x75\x65\x0a\x77\x69\x64\x74\x68\x0a\x21\x31\x32\x38\x30\x0a" //rue.width.!1280.
+// /* 00a0 */ "\x63\x6c\x69\x70\x62\x6f\x61\x72\x64\x0a\x21\x74\x72\x75\x65\x0a" //clipboard.!true.
+// /* 00b0 */ "\x73\x65\x6c\x65\x63\x74\x6f\x72\x5f\x63\x75\x72\x72\x65\x6e\x74" //selector_current
+// /* 00c0 */ "\x5f\x70\x61\x67\x65\x0a\x21\x31\x0a\x73\x65\x6c\x65\x63\x74\x6f" //_page.!1.selecto
+// /* 00d0 */ "\x72\x5f\x6e\x75\x6d\x62\x65\x72\x5f\x6f\x66\x5f\x70\x61\x67\x65" //r_number_of_page
+// /* 00e0 */ "\x73\x0a\x21\x31\x0a\x74\x72\x61\x6e\x73\x5f\x63\x61\x6e\x63\x65" //s.!1.trans_cance
+// /* 00f0 */ "\x6c\x0a\x21\x41\x6e\x6e\x75\x6c\x65\x72\x0a\x70\x72\x6f\x78\x79" //l.!Annuler.proxy
+// /* 0100 */ "\x5f\x74\x79\x70\x65\x0a\x21\x52\x44\x50\x0a\x73\x65\x6c\x65\x63" //_type.!RDP.selec
+// /* 0110 */ "\x74\x6f\x72\x5f\x67\x72\x6f\x75\x70\x5f\x66\x69\x6c\x74\x65\x72" //tor_group_filter
+// /* 0120 */ "\x0a\x21\x0a\x69\x70\x5f\x63\x6c\x69\x65\x6e\x74\x0a\x21\x31\x32" //.!.ip_client.!12
+// /* 0130 */ "\x37\x2e\x30\x2e\x30\x2e\x31\x0a\x66\x69\x6c\x65\x5f\x65\x6e\x63" //7.0.0.1.file_enc
+// /* 0140 */ "\x72\x79\x70\x74\x69\x6f\x6e\x0a\x21\x74\x72\x75\x65\x0a\x73\x65" //ryption.!true.se
+// /* 0150 */ "\x6c\x65\x63\x74\x6f\x72\x0a\x21\x66\x61\x6c\x73\x65\x0a\x74\x61" //lector.!false.ta
+// /* 0160 */ "\x72\x67\x65\x74\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x31\x30\x2e" //rget_device.!10.
+// /* 0170 */ "\x31\x30\x2e\x34\x36\x2e\x36\x34\x0a\x73\x65\x6c\x65\x63\x74\x6f" //10.46.64.selecto
+// /* 0180 */ "\x72\x5f\x64\x65\x76\x69\x63\x65\x5f\x66\x69\x6c\x74\x65\x72\x0a" //r_device_filter.
+// /* 0190 */ "\x21\x0a\x74\x61\x72\x67\x65\x74\x5f\x70\x6f\x72\x74\x0a\x21\x33" //!.target_port.!3
+// /* 01a0 */ "\x33\x38\x39\x0a\x69\x73\x5f\x72\x65\x63\x0a\x21\x46\x61\x6c\x73" //389.is_rec.!Fals
+// /* 01b0 */ "\x65\x0a\x72\x65\x63\x5f\x70\x61\x74\x68\x0a\x21\x2f\x74\x6d\x70" //e.rec_path.!/tmp
+// /* 01c0 */ "\x2f\x74\x65\x73\x74\x78\x78\x78\x2e\x70\x6e\x67\x0a\x70\x61\x73" ///testxxx.png.pas
+// /* 01d0 */ "\x73\x77\x6f\x72\x64\x0a\x21\x78\x0a\x6c\x6f\x67\x69\x6e\x0a\x21" //sword.!x.login.!
+// /* 01e0 */ "\x78\x0a\x62\x70\x70\x0a\x21\x38\x0a\x74\x69\x6d\x65\x63\x6c\x6f" //x.bpp.!8.timeclo
+// /* 01f0 */ "\x73\x65\x0a\x21\x31\x33\x37\x32\x37\x39\x36\x30\x35\x33\x0a\x65" //se.!1372796053.e
+// /* 0200 */ "\x6e\x64\x5f\x74\x69\x6d\x65\x0a\x21\x32\x30\x31\x33\x2d\x30\x37" //nd_time.!2013-07
+// /* 0210 */ "\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31" //-02 22:14:13;201
+// /* 0220 */ "\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33" //3-07-02 22:14:13
+// /* 0230 */ "\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31" //;2013-07-02 22:1
+// /* 0240 */ "\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20" //4:13;2013-07-02 
+// /* 0250 */ "\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37" //22:14:13;2013-07
+// /* 0260 */ "\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31" //-02 22:14:13;201
+// /* 0270 */ "\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33" //3-07-02 22:14:13
+// /* 0280 */ "\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31" //;2013-07-02 22:1
+// /* 0290 */ "\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20" //4:13;2013-07-02 
+// /* 02a0 */ "\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37" //22:14:13;2013-07
+// /* 02b0 */ "\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33\x3b\x32\x30\x31" //-02 22:14:13;201
+// /* 02c0 */ "\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31\x34\x3a\x31\x33" //3-07-02 22:14:13
+// /* 02d0 */ "\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20\x32\x32\x3a\x31" //;2013-07-02 22:1
+// /* 02e0 */ "\x34\x3a\x31\x33\x3b\x32\x30\x31\x33\x2d\x30\x37\x2d\x30\x32\x20" //4:13;2013-07-02 
+// /* 02f0 */ "\x32\x32\x3a\x31\x34\x3a\x31\x33\x0a\x73\x65\x6c\x65\x63\x74\x6f" //22:14:13.selecto
+// /* 0300 */ "\x72\x5f\x6c\x69\x6e\x65\x73\x5f\x70\x65\x72\x5f\x70\x61\x67\x65" //r_lines_per_page
+// /* 0310 */ "\x0a\x21\x32\x33\x0a\x74\x61\x72\x67\x65\x74\x5f\x70\x61\x73\x73" //.!23.target_pass
+// /* 0320 */ "\x77\x6f\x72\x64\x0a\x21\x53\x65\x63\x75\x72\x65\x4c\x69\x6e\x75" //word.!SecureLinu
+// /* 0330 */ "\x78\x24\x34\x32\x0a\x72\x65\x61\x6c\x5f\x74\x61\x72\x67\x65\x74" //x$42.real_target
+// /* 0340 */ "\x5f\x64\x65\x76\x69\x63\x65\x0a\x21\x0a\x70\x72\x6f\x74\x6f\x5f" //_device.!.proto_
+// /* 0350 */ "\x64\x65\x73\x74\x0a\x21\x52\x44\x50\x0a"                         //dest.!RDP.
+// Dump done on Authentifier (4) 858 bytes
+// Data size received without header 858
+// auth::in_items
+// receiving 'ip_target'='127.0.0.1'
+// receiving 'display_message'=''
+// receiving 'height'='1024'
+// receiving 'target_login'='administrateur'
+// receiving 'keepalive'='True'
+// receiving 'accept_message'=''
+// receiving 'trans_ok'='Oui'
+// receiving 'authenticated'='True'
+// receiving 'width'='1280'
+// receiving 'clipboard'='True'
+// receiving 'selector_current_page'='1'
+// receiving 'selector_number_of_pages'='1'
+// receiving 'trans_cancel'='Annuler'
+// receiving 'proxy_type'='RDP'
+// receiving 'selector_group_filter'=''
+// receiving 'ip_client'='127.0.0.1'
+// receiving 'file_encryption'='True'
+// receiving 'selector'='False'
+// receiving 'target_device'='10.10.46.64'
+// receiving 'selector_device_filter'=''
+// receiving 'target_port'='3389'
+// receiving 'is_rec'='False'
+// receiving 'rec_path'='/tmp/testxxx.png'
+// receiving 'password'=<hidden>
+// receiving 'login'='x'
+// receiving 'bpp'='8'
+// receiving 'timeclose'='1372796053'
+// receiving 'end_time'='2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13;2013-07-02 22:14:13'
+// receiving 'selector_lines_per_page'='23'
+// receiving 'target_password'=<hidden>
+// receiving 'real_target_device'=''
+// receiving 'proto_dest'='RDP'
+// SESSION_ID = 
+// Front::Received Disconnect Request from RDP client
+// Socket Authentifier (4) : closing connection
+// Socket RDP Client (5) : closing connection
+// Session::Client Session Disconnected
+// Session::end of Session(5)

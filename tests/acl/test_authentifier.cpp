@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
     // keep_alive_start should send to the Transport a message asking for keep alive value.
     BStream stream(1024);
 
-    stream.out_uint32_be(strlen(STRAUTHID_KEEPALIVE "\nASK\n") + 4);
+    stream.out_uint32_be(strlen(STRAUTHID_KEEPALIVE "\nASK\n"));
     stream.out_copy_bytes(STRAUTHID_KEEPALIVE "\nASK\n", strlen(STRAUTHID_KEEPALIVE "\nASK\n"));
 
     CheckTransport keepalivetrans((char *)stream.data,stream.get_offset());
@@ -142,7 +142,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
     BStream stream(1024);
     
     // TEST ask_auth_channel_target
-    stream.out_uint32_be(strlen(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n") + 4);
+    stream.out_uint32_be(strlen(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n"));
     stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n", 
                           strlen(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n"));
     CheckTransport auth_channel_trans((char *)stream.data,stream.get_offset());
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
     stream.reset();
 
     // TEST set_auth_channel_result
-    stream.out_uint32_be(strlen(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n") + 4);
+    stream.out_uint32_be(strlen(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n"));
     stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n", 
                           strlen(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n"));
     CheckTransport auth_channel_trans2((char *)stream.data,stream.get_offset());
@@ -226,5 +226,98 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
     BOOST_CHECK(INTERNAL_WIDGET2_LOGIN == nextmod);
+
+}
+
+BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
+{
+
+    Inifile ini;
+
+
+    long keepalive_time;
+    bool record_video, keep_alive;
+    submodule_t nextmod;
+
+    #include "fixtures/dump_auth_normal_case.hpp"
+
+    const char * name = "Authentifier Normal Case";
+    int verbose = 256;
+    
+    TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
+    SessionManager sesman(&ini, trans, 30, 30, true, 0);
+
+    ini.context_set_value(STRAUTHID_PROXY_TYPE,"RDP");
+    ini.context_set_value(STRAUTHID_DISPLAY_MESSAGE,"");
+    ini.context_set_value(STRAUTHID_ACCEPT_MESSAGE,"");
+    ini.context_set_value(STRAUTHID_HOST,"127.0.0.1");
+    ini.context_set_value(STRAUTHID_TARGET, "127.0.0.1");
+    ini.context_set_value(STRAUTHID_AUTH_USER, "mtan");
+    ini.context_ask(STRAUTHID_PASSWORD);
+    ini.context_ask(STRAUTHID_TARGET_USER);
+    ini.context_ask(STRAUTHID_TARGET_DEVICE);
+    ini.context_ask(STRAUTHID_TARGET_PROTOCOL);
+    ini.context_ask(STRAUTHID_SELECTOR);
+    ini.context_set_value(STRAUTHID_SELECTOR_GROUP_FILTER, "");
+    ini.context_set_value(STRAUTHID_SELECTOR_DEVICE_FILTER, "");
+    ini.context_set_value(STRAUTHID_SELECTOR_LINES_PER_PAGE, "20");
+    ini.context_set_value(STRAUTHID_SELECTOR_CURRENT_PAGE, "1");
+    ini.context_ask(STRAUTHID_TARGET_PASSWORD);
+    ini.context_set_value(STRAUTHID_OPT_WIDTH, "800");
+    ini.context_set_value(STRAUTHID_OPT_HEIGHT, "600");
+    ini.context_set_value(STRAUTHID_OPT_BPP, "24");
+    ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
+    
+
+    BOOST_CHECK(trans.get_status());
+    //SEND No 1
+    sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
+    BOOST_CHECK(trans.get_status());
+    //RECEIVE No 1
+    sesman.receive_next_module();
+
+    // Login (at login window, password is still asked)
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+
+    // set login / password
+    ini.context_set_value(STRAUTHID_AUTH_USER, "x");
+    ini.context_set_value(STRAUTHID_PASSWORD, "x");
+
+    //SEND No 2
+    sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
+    BOOST_CHECK(trans.get_status());
+    //RECEIVE No 2
+    sesman.receive_next_module();
+    
+    // Selector 
+    // Got target users, target devices and target protocols at this point
+    // and password is correct.
+    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
+    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_USER));
+    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
+    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+
+    // This is a context refresh
+    //SEND No 3
+    sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
+    BOOST_CHECK(trans.get_status());
+    //RECEIVE No 3
+    sesman.receive_next_module();
+
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+
+    // Target Selected
+    //SEND No 4
+    sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
+    BOOST_CHECK(trans.get_status());
+    //RECEIVE No 4
+    sesman.receive_next_module();
+    // At this point, the target is selected and ACL delivers the target password
+    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
 
 }

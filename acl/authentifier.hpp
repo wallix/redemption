@@ -132,7 +132,7 @@ class SessionManager {
         stream.mark_end();
         // now set length
         int total_length = stream.get_offset();
-        stream.set_out_uint32_be(total_length, 0);
+        stream.set_out_uint32_be(total_length - 4, 0);
         this->auth_trans.send(stream.data, total_length);
         keepalive_time = ::time(NULL) + 30;
 
@@ -154,7 +154,7 @@ class SessionManager {
 
         int total_length = stream.get_offset();
         stream.p = stream.data;
-        stream.out_uint32_be(total_length);
+        stream.out_uint32_be(total_length - 4);
         this->auth_trans.send(stream.data, total_length);
     }
 
@@ -171,7 +171,7 @@ class SessionManager {
         stream.out_uint32_be(0);  // skip length
         this->out_item(stream, STRAUTHID_AUTHCHANNEL_RESULT);
         int total_length = stream.get_offset();
-        stream.set_out_uint32_be(total_length, 0);
+        stream.set_out_uint32_be(total_length - 4, 0);
 
         this->auth_trans.send(stream.data, total_length);
     }
@@ -311,7 +311,7 @@ class SessionManager {
                 this->out_item(stream, STRAUTHID_KEEPALIVE);
                 // now set length in header
                 int total_length = stream.get_offset();
-                stream.set_out_uint32_be(total_length, 0); /* size */
+                stream.set_out_uint32_be(total_length - 4, 0); /* size */
                 stream.mark_end();
                 this->auth_trans.send(stream.data, total_length);
             }
@@ -399,7 +399,7 @@ class SessionManager {
                 this->out_item(stream, STRAUTHID_KEEPALIVE);
                 // now set length in header
                 int total_length = stream.get_offset();
-                stream.set_out_uint32_be(total_length, 0); /* size */
+                stream.set_out_uint32_be(total_length - 4, 0); /* size */
                 stream.mark_end();
                 this->auth_trans.send(stream.data, total_length);
             }
