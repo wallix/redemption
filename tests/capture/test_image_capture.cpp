@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test to conversion of RDP drawing orders to PNG images
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -39,8 +38,7 @@
 #include "RDP/caches/bmpcache.hpp"
 #include <png.h>
 
-
-    const char expected_red[] = 
+const char expected_red[] =
     /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a"                                 //.PNG....
     /* 0000 */ "\x00\x00\x00\x0d\x49\x48\x44\x52"                                 //....IHDR
     /* 0000 */ "\x00\x00\x03\x20\x00\x00\x02\x58\x08\x02\x00\x00\x00"             //... ...X.....
@@ -219,7 +217,7 @@
     /* 0aa0 */ "\x58\x00\x00\xb1\x0b\xbb\xfd\x05\xaf"                             //X........
     /* 0000 */ "\x0d\x9d\x5e\xa4"                                                 //..^.
     /* 0000 */ "\x00\x00\x00\x00\x49\x45\x4e\x44"                                 //....IEND
-     /* 0000 */ "\xae\x42\x60\x82"                                                 //.B`.
+    /* 0000 */ "\xae\x42\x60\x82"                                                 //.B`.
     ;
 
 BOOST_AUTO_TEST_CASE(TestTransportPngOneRedScreen)
@@ -274,7 +272,6 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngOneRedScreen)
     ::unlink(filename);
 }
 
-
 BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
 {
     const int groupid = 0;
@@ -298,7 +295,6 @@ BOOST_AUTO_TEST_CASE(TestImageCaptureToFilePngBlueOnRed)
     sq_outfilename_unlink(&trans.seq, 1);
 }
 
-
 BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 {
     struct timeval now;
@@ -321,27 +317,28 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
-    
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
+    bool ignore_frame_in_timeval = false;
+
+    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 2));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
     BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 3));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
 
     rio_clear(&trans.rio);
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
@@ -392,8 +389,6 @@ BOOST_AUTO_TEST_CASE(TestSmallImage)
     sq_outfilename_unlink(&(trans.seq), 0);
 }
 
-
-
 BOOST_AUTO_TEST_CASE(TestScaleImage)
 {
     const int width = 800;
@@ -418,11 +413,10 @@ BOOST_AUTO_TEST_CASE(TestScaleImage)
     sq_outfilename_unlink(&(trans.seq), 0);
 }
 
-
 BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
-    const int groupid = 0;    
+    const int groupid = 0;
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
@@ -531,7 +525,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 
     Bitmap good16(24, bloc64x64);
     drawable.draw(RDPMemBlt(0, Rect(200, 200, good16.cx, good16.cy), 0xCC, 0, 0, 0), scr, good16);
-    
+
     BStream stream(8192);
     good16.compress(stream);
     stream.mark_end();
@@ -543,18 +537,17 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     sq_outfilename_unlink(&(trans.seq), 0);
 }
 
-
 BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     BOOST_CHECK(1);
-    const int groupid = 0;    
+    const int groupid = 0;
     OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
     drawable.draw(RDPOpaqueRect(scr, GREEN), scr);
 
-    uint8_t source32x1[] = 
+    uint8_t source32x1[] =
 //MemBlt Primary Drawing Order (0x0D)
 //memblt(id=0 idx=15 x=448 y=335 cx=32 cy=1)
 //Cache Bitmap V2 (Compressed) Secondary Drawing Order (0x05)

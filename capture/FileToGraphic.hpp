@@ -106,6 +106,8 @@ struct FileToGraphic
     uint16_t info_big_entries;
     uint16_t info_big_size;
 
+    bool ignore_frame_in_timeval;
+
     FileToGraphic(Transport * trans, const timeval begin_capture, const timeval end_capture, bool real_time, uint32_t verbose)
         : stream(65536)
         , trans(trans)
@@ -147,6 +149,7 @@ struct FileToGraphic
         , info_medium_size(0)
         , info_big_entries(0)
         , info_big_size(0)
+        , ignore_frame_in_timeval(false)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
 
@@ -406,9 +409,7 @@ struct FileToGraphic
 
                     if (  (this->info_version > 1)
                        && this->stream.in_uint8()) {
-                        for (size_t i = 0; i < this->nbconsumers ; i++){
-                            this->consumers[i]->ignore_time_interval(true);
-                        }
+                        this->ignore_frame_in_timeval = true;
                     }
 
                     if (this->verbose > 16) {
@@ -743,38 +744,49 @@ struct FileToGraphic
         }
     }
 
-    void play()
-    {
+    void play() {
         bool send_initial_image = true;
-        if ((this->begin_capture.tv_sec == 0)
-            ||(this->begin_capture.tv_sec > this->record_now.tv_sec)
-            || (this->begin_capture.tv_sec == this->record_now.tv_sec && this->begin_capture.tv_usec > this->record_now.tv_usec)){
+        if (  (this->begin_capture.tv_sec == 0)
+           || (this->begin_capture.tv_sec > this->record_now.tv_sec)
+           || (  (this->begin_capture.tv_sec == this->record_now.tv_sec)
+              && (this->begin_capture.tv_usec > this->record_now.tv_usec)
+              )
+           ) {
                 send_initial_image = false;
         }
 
-        while (this->next_order()){
-            if (this->verbose > 8){
-                LOG(LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n",
-                    (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
+        while (this->next_order()) {
+            if (this->verbose > 8) {
+                LOG( LOG_INFO, "replay TIMESTAMP (first timestamp) = %u order=%u\n"
+                   , (unsigned)this->record_now.tv_sec, (unsigned)this->total_orders_count);
             }
             this->interpret_order();
-            if ((this->begin_capture.tv_sec == 0)
-            || (this->begin_capture.tv_sec < this->record_now.tv_sec)
-            || (this->begin_capture.tv_sec == this->record_now.tv_sec
-            && this->begin_capture.tv_usec <= this->record_now.tv_usec)){
-                if (send_initial_image){
+            if (  (this->begin_capture.tv_sec == 0)
+               || (this->begin_capture.tv_sec < this->record_now.tv_sec)
+               || (  (this->begin_capture.tv_sec == this->record_now.tv_sec)
+                  && (this->begin_capture.tv_usec <= this->record_now.tv_usec)
+                  )
+               ) {
+                if (send_initial_image) {
                     send_initial_image = false;
                 }
-                for (size_t i = 0; i < this->nbconsumers ; i++){
-                    this->consumers[i]->snapshot(this->record_now, this->mouse_x, this->mouse_y, false, false);
+                for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y, false
+                                                , false, this->ignore_frame_in_timeval);
                 }
+
+                this->ignore_frame_in_timeval = false;
             }
-            if (this->max_order_count && this->max_order_count <= this->total_orders_count){
+            if (this->max_order_count && this->max_order_count <= this->total_orders_count) {
                 break;
             }
-            if (this->end_capture.tv_sec
-            && ((this->end_capture.tv_sec < this->record_now.tv_sec)
-               || ((this->end_capture.tv_sec == this->record_now.tv_sec) && (this->end_capture.tv_usec < this->record_now.tv_usec)))){
+            if (  this->end_capture.tv_sec
+               && (  (this->end_capture.tv_sec < this->record_now.tv_sec)
+                  || (  (this->end_capture.tv_sec == this->record_now.tv_sec)
+                     && (this->end_capture.tv_usec < this->record_now.tv_usec)
+                     )
+                  )
+               ) {
                 break;
             }
         }

@@ -100,6 +100,13 @@ struct rdp_orders {
     }
 
     ~rdp_orders(){
+        for (int i = 0; i < 3; i ++) {
+            for (int j = 0; j < 10000; i++) {
+                if (this->cache_bitmap[i][j]) {
+                    delete this->cache_bitmap[i][j];
+                }
+            }
+        }
     }
 
     void process_bmpcache(uint8_t bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)

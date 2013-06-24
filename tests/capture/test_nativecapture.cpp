@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Unit test to conversion of RDP drawing orders to PNG images
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -47,8 +46,8 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     struct timeval now;
     now.tv_sec = 1000;
     now.tv_usec = 0;
-    
-    BmpCache bmp_cache(24, 600, 768, 300, 3072, 262, 12288); 
+
+    BmpCache bmp_cache(24, 600, 768, 300, 3072, 262, 12288);
     Inifile ini;
     RDPDrawable drawable(800, 600);
     NativeCapture consumer(now, trans, 800, 600, bmp_cache, drawable, ini);
@@ -56,12 +55,14 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     ini.video.break_interval = 5;   // one WRM file every 5 seconds
     consumer.update_config(ini);
 
+    bool ignore_frame_in_timeval = false;
+
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
-    consumer.snapshot(now, 10, 10, true, false);
+    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
     now.tv_sec += 6;
-    consumer.snapshot(now, 10, 10, true, false);
+    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
     rio_clear(&trans.rio);
-    
+
     BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.seq), 0));
     sq_outfilename_unlink(&(trans.seq), 0);
     // Mem3Blt save state = 34 bytes

@@ -472,7 +472,11 @@ public:
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)){
             struct timeval now = tvtime();
-            this->capture->snapshot(now, this->mouse_x, this->mouse_y, pointer_is_displayed|this->nomouse, this->notimestamp);
+            this->capture->snapshot( now, this->mouse_x, this->mouse_y
+                                   , pointer_is_displayed | this->nomouse
+                                   , this->notimestamp
+                                   , false  // ignore frame in time interval
+                                   );
         }
     }
 

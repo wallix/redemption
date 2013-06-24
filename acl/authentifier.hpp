@@ -564,7 +564,7 @@ class SessionManager {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
                 protocol[0], protocol[1], protocol[2], protocol[3]);
             nextmod = INTERNAL_CARD;
-            assert(false);
+//            assert(false);
         }
         return res;
     }
