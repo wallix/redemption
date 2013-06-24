@@ -69,7 +69,7 @@
 using namespace std;
 
 enum {
-//    // before anything else : exchange of credentials
+    // before anything else : exchange of credentials
 //    SESSION_STATE_RSA_KEY_HANDSHAKE,
     // initial state no module loaded, init not done
     SESSION_STATE_ENTRY,
@@ -95,7 +95,7 @@ struct Session {
 
     wait_obj & front_event;
 
-    Inifile * ini;
+    Inifile  * ini;
     uint32_t & verbose;
 
     submodule_t nextmod;
@@ -113,6 +113,9 @@ struct Session {
     SessionManager * sesman;
     UdevRandom gen;
 
+    SocketTransport * ptr_auth_trans;
+    wait_obj        * ptr_auth_event;
+
     Session(wait_obj & front_event, int sck, int * refreshconf, Inifile * ini)
         : refreshconf(refreshconf)
         , front_event(front_event)
@@ -120,18 +123,22 @@ struct Session {
         , verbose(this->ini->debug.session)
         , nextmod(INTERNAL_NONE)
         , mod_transport(NULL)
+        , sesman(NULL)
+        , ptr_auth_trans(NULL)
+        , ptr_auth_event(NULL)
     {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
-         
+
             int client_sck = ip_connect(this->ini->globals.authip,
                                         this->ini->globals.authport,
                                         30,
                                         1000,
                                         this->ini->debug.auth);
-            if (client_sck == -1){
+/*
+            if (client_sck == -1) {
                 LOG(LOG_ERR, "Failed to connect to authentifier");
                 throw Error(ERR_SOCKET_CONNECT_FAILED);
             }
@@ -149,6 +156,23 @@ struct Session {
                                              , this->ini->globals.max_tick
                                              , this->ini->globals.internal_domain
                                              , this->ini->debug.auth);
+*/
+            if (client_sck != -1) {
+                this->ptr_auth_trans = new SocketTransport( "Authentifier"
+                                                          , client_sck
+                                                          , this->ini->globals.authip
+                                                          , this->ini->globals.authport
+                                                          , this->ini->debug.auth
+                                                          );
+                this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
+                this->sesman = new SessionManager( this->ini
+                                                 , *this->ptr_auth_trans
+                                                 , this->ini->globals.keepalive_grace_delay
+                                                 , this->ini->globals.max_tick
+                                                 , this->ini->globals.internal_domain
+                                                 , this->ini->debug.auth);
+            }
+
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
             const bool enable_fastpath = true;
@@ -245,8 +269,10 @@ struct Session {
                 struct timeval timeout = time_mark;
 
                 this->front_event.add_to_fd_set(rfds, max);
-                if (this->front->up_and_running && this->sesman){
-                    auth_event.add_to_fd_set(rfds, max);
+                if (this->front->up_and_running && this->sesman) {
+                    REDASSERT(this->ptr_auth_trans);
+//                    auth_event.add_to_fd_set(rfds, max);
+                    this->ptr_auth_event->add_to_fd_set(rfds, max);
                     //this->sesman->add_to_fd_set(rfds, max);
                     this->mod->event.add_to_fd_set(rfds, max);
                 }
@@ -285,7 +311,18 @@ struct Session {
                     break;
                     case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
                     {
-                        if (auth_event.is_set(rfds)){
+                        if (!this->sesman) {
+                            LOG(LOG_INFO, "Session::no authentifier available, closing");
+                            this->ini->context.auth_error_message.copy_c_str("No authentifier available");
+                            this->internal_state  = SESSION_STATE_CLOSE_CONNECTION;
+                            this->nextmod         = INTERNAL_CLOSE;
+                            this->session_setup_mod(MCTX_STATUS_INTERNAL);
+                            this->keep_alive_time = 0;
+                            this->internal_state  = SESSION_STATE_RUNNING;
+                            this->front->stop_capture();
+                        }
+//                        if (auth_event.is_set(rfds)){
+                        else if (this->ptr_auth_event->is_set(rfds)) {
                             this->sesman->receive_next_module();
 
                             if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
@@ -312,7 +349,18 @@ struct Session {
                     break;
                     case SESSION_STATE_WAITING_FOR_CONTEXT:
                     {
-                        if (auth_event.is_set(rfds)){
+                        if (!this->sesman) {
+                            LOG(LOG_INFO, "Session::no authentifier available, closing");
+                            this->ini->context.auth_error_message.copy_c_str("No authentifier available");
+                            this->internal_state  = SESSION_STATE_CLOSE_CONNECTION;
+                            this->nextmod         = INTERNAL_CLOSE;
+                            this->session_setup_mod(MCTX_STATUS_INTERNAL);
+                            this->keep_alive_time = 0;
+                            this->internal_state  = SESSION_STATE_RUNNING;
+                            this->front->stop_capture();
+                        }
+//                        if (auth_event.is_set(rfds)){
+                        else if (this->ptr_auth_event->is_set(rfds)) {
                             this->sesman->receive_next_module();
 
                             if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
@@ -339,8 +387,9 @@ struct Session {
                         time_t timestamp = time(NULL);
                         this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
-                        if (this->sesman){
-                            bool read_auth = auth_event.is_set(rfds);
+                        if (this->sesman) {
+                            bool read_auth = this->ptr_auth_event->is_set(rfds);
+//                            bool read_auth = auth_event.is_set(rfds);
                             if (!this->sesman->keep_alive(this->keep_alive_time
                                                            , timestamp, &front_trans, read_auth)) {
                                 this->nextmod = INTERNAL_CLOSE;
@@ -411,14 +460,26 @@ struct Session {
                                 }
                                 bool record_video = false;
                                 bool keep_alive = false;
-                                int next_state = this->sesman->ask_next_module(
-                                                                    this->keep_alive_time,
-                                                                    record_video, keep_alive, this->nextmod);
-                                if (next_state != MCTX_STATUS_WAITING){
-                                    this->internal_state = SESSION_STATE_RUNNING;
+                                if (!this->sesman) {
+                                    LOG(LOG_INFO, "Session::no authentifier available, closing");
+                                    this->ini->context.auth_error_message.copy_c_str("No authentifier available");
+                                    this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
+                                    this->nextmod        = INTERNAL_CLOSE;
+                                    this->session_setup_mod(MCTX_STATUS_INTERNAL);
+                                    this->keep_alive_time = 0;
+                                    this->internal_state  = SESSION_STATE_RUNNING;
+                                    this->front->stop_capture();
                                 }
                                 else {
-                                    this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
+                                    int next_state = this->sesman->ask_next_module(
+                                                                        this->keep_alive_time,
+                                                                        record_video, keep_alive, this->nextmod);
+                                    if (next_state != MCTX_STATUS_WAITING){
+                                        this->internal_state = SESSION_STATE_RUNNING;
+                                    }
+                                    else {
+                                        this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
+                                    }
                                 }
                             }
                             break;
@@ -437,6 +498,7 @@ struct Session {
                                 bool keep_alive = false;
                                 if (!this->sesman){
                                     LOG(LOG_INFO, "Session::no authentifier available, closing");
+                                    this->ini->context.auth_error_message.copy_c_str("No authentifier available");
                                     this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
                                     this->nextmod = INTERNAL_CLOSE;
                                     this->session_setup_mod(MCTX_STATUS_INTERNAL);
@@ -527,7 +589,9 @@ struct Session {
         delete this->front;
         this->remove_mod();
         delete this->no_mod;
-        delete this->sesman;
+        if (this->sesman) { delete this->sesman; }
+        if (this->ptr_auth_event) { delete this->ptr_auth_event; }
+        if (this->ptr_auth_trans) { delete this->ptr_auth_trans; }
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         if (!this->ini->context.session_id.is_empty()) {
             char new_session_file[256];
