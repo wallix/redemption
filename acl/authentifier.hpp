@@ -46,6 +46,8 @@ typedef enum {
     INTERNAL_WIDGET2_DIALOG,
     INTERNAL_WIDGET2_MESSAGE,
     INTERNAL_WIDGET2_LOGIN,
+    INTERNAL_WIDGET2_RWL,
+    INTERNAL_WIDGET2_RWL_LOGIN,
 } submodule_t;
 
 enum {
@@ -497,6 +499,18 @@ class SessionManager {
                 }
                 nextmod = INTERNAL_WIDGET2_LOGIN;
             }
+            else if (0 == strcmp(target, "rwl_login")){
+                if (this->verbose & 0x4){
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
+                }
+                nextmod = INTERNAL_WIDGET2_RWL_LOGIN;
+            }
+            else if (0 == strcmp(target, "rwl")){
+                if (this->verbose & 0x4){
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
+                }
+                nextmod = INTERNAL_WIDGET2_RWL;
+            }
             else if (0 == strcmp(target, "close")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
@@ -526,6 +540,18 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_login");
                 }
                 nextmod = INTERNAL_WIDGET2_LOGIN;
+            }
+            else if (0 == strcmp(target, "widget2_rwl")){
+                if (this->verbose & 0x4){
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL rwl_login");
+                }
+                nextmod = INTERNAL_WIDGET2_RWL;
+            }
+            else if (0 == strcmp(target, "widget2_rwl_login")){
+                if (this->verbose & 0x4){
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_rwl_login");
+                }
+                nextmod = INTERNAL_WIDGET2_RWL_LOGIN;
             }
             else {
                 if (this->verbose & 0x4){
