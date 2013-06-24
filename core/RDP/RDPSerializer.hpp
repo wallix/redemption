@@ -268,7 +268,7 @@ public:
 
     void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx)
     {
-        Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
+        const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
         if (!bmp) {
 //            LOG(LOG_INFO, "skipping RDPSerializer::emit_bmp_cache for %u:%u (entry not used)",
 //                cache_id, cache_idx);
