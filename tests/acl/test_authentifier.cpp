@@ -32,13 +32,15 @@
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
 {
-    TODO("Writing an actual test for SessionManager is not so simple because it manage connection to auth_t behind the scene"
-         "we should make the auth_t transport explicit dependency to enable writing usefull tests")
+   
     Inifile ini;
     CheckTransport checktrans("TEST",5);
     SessionManager sesman(&ini, checktrans, 30, 30, true, 0);
 
     // test out_item
+    // out_item(Stream stream,const char * key) should add in the Stream a string 
+    // composed of key and its value if known in Inifile, 
+    // or "ASK" if the value is asked.
     BStream stream(1024);
     sesman.out_item(stream, STRAUTHID_PROXY_TYPE);
     BOOST_CHECK_EQUAL(0, 
@@ -99,6 +101,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
     
     
 }
+BOOST_AUTO_TEST_CASE(TestAuthentifierInItem)
+{
+    Inifile ini;
+    
+}
 // test in_item
 
 // test incoming
@@ -107,6 +114,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
 {
     // test keep_alive functions
     // keep alive start
+    // keep_alive_start should send to the Transport a message asking for keep alive value.
     BStream stream(1024);
 
     stream.out_uint32_be(strlen(STRAUTHID_KEEPALIVE "\nASK\n") + 4);
@@ -177,10 +185,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     submodule_t nextmod;
     int res;
 
+    // no known protocol on target device yet (should be an error case)
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_EXIT == res);
     BOOST_CHECK(INTERNAL_CARD == nextmod);
     
+
+    // auto test case
     ini.context_set_value(AUTHID_TARGET_DEVICE,"autotest");
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
@@ -188,19 +199,32 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"");
 
+    // RDP protocol on target
     ini.context_set_value(AUTHID_TARGET_PROTOCOL, "RDP");
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_RDP == res);
 
+    // VNC protocol on target
     ini.context_set_value(AUTHID_TARGET_PROTOCOL, "VNC");
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_VNC == res);
 
+    // XUP protocol on target
     ini.context_set_value(AUTHID_TARGET_PROTOCOL, "XUP");
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_XUP == res);
 
-    // TODO INTERNAL STATUS
+    // INTERNAL STATUS
+    // test nextmod value 
+    ini.context_set_value(AUTHID_TARGET_PROTOCOL,"INTERNAL");
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"bouncer2");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_BOUNCER2 == nextmod);
     
-    
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_login");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_LOGIN == nextmod);
+
 }
