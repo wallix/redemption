@@ -1810,6 +1810,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     Inifile ini;
     char    buffer[128];
 
+    // Translation
     ini.context_set_value(AUTHID_TRANS_BUTTON_OK,       "Ok");
     ini.context_set_value(AUTHID_TRANS_BUTTON_CANCEL,   "Annuler");
     ini.context_set_value(AUTHID_TRANS_BUTTON_HELP,     "Aide");
@@ -1839,6 +1840,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("Message d'aide"),    std::string(ini.context_get_value(AUTHID_TRANS_HELP_MESSAGE,      buffer, sizeof(buffer))));
 
 
+    // bitrate, framerate, qscale
     ini.context_set_value(AUTHID_OPT_BITRATE,           "80000");
     ini.context_set_value(AUTHID_OPT_FRAMERATE,         "6");
     ini.context_set_value(AUTHID_OPT_QSCALE,            "16");
@@ -1852,6 +1854,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("16"),                std::string(ini.context_get_value(AUTHID_OPT_QSCALE,    buffer, sizeof(buffer))));
 
 
+    // bpp, height, width
     ini.context_ask(AUTHID_OPT_BPP);
     ini.context_ask(AUTHID_OPT_HEIGHT);
     ini.context_ask(AUTHID_OPT_WIDTH);
@@ -1884,6 +1887,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("Message d'erreur."), std::string(ini.context_get_value(AUTHID_AUTH_ERROR_MESSAGE, buffer, sizeof(buffer))));
 
 
+    // selector, ...
     ini.context_ask(AUTHID_SELECTOR);
     ini.context_ask(AUTHID_SELECTOR_CURRENT_PAGE);
     ini.context_ask(AUTHID_SELECTOR_DEVICE_FILTER);
@@ -1926,6 +1930,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(true,                             ini.context_get_bool(AUTHID_SELECTOR));
 
 
+    // target_xxxx
     ini.context_set_value(AUTHID_TARGET_DEVICE,         "127.0.0.1");
     ini.context_set_value(AUTHID_TARGET_PASSWORD,       "12345678");
     ini.context_set_value(AUTHID_TARGET_PORT,           "3390");
@@ -1951,6 +1956,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.context_get_value(STRAUTHID_TARGET_USER,     buffer, sizeof(buffer))));
 
 
+    // host
     ini.context_ask(AUTHID_HOST);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_HOST));
@@ -1964,6 +1970,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.context_get_value(STRAUTHID_HOST, buffer, sizeof(buffer))));
 
 
+    // target
     ini.context_ask(AUTHID_TARGET);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_TARGET));
@@ -1977,6 +1984,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("192.168.0.1"),       std::string(ini.context_get_value(STRAUTHID_TARGET, buffer, sizeof(buffer))));
 
 
+    // auth_user
     ini.context_set_value(AUTHID_AUTH_USER,             "admin");
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTH_USER));
@@ -1986,7 +1994,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.context_get_value(STRAUTHID_AUTH_USER, buffer, sizeof(buffer))));
 
 
-
+    // password
     ini.context_ask(AUTHID_PASSWORD);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_PASSWORD));
@@ -2000,8 +2008,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context_get_value(AUTHID_PASSWORD, buffer, sizeof(buffer))));
 
 
-/////
-/////
+    // answer
     ini.context_set_value(AUTHID_AUTHCHANNEL_ANSWER,    "answer");
 
     BOOST_CHECK_EQUAL(std::string("answer"),            std::string(ini.context.authchannel_answer.c_str()));
@@ -2009,6 +2016,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("answer"),            std::string(ini.context_get_value(AUTHID_AUTHCHANNEL_ANSWER, buffer, sizeof(buffer))));
 
 
+    // authchannel_target
     ini.context_ask(AUTHID_AUTHCHANNEL_TARGET);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_AUTHCHANNEL_TARGET));
@@ -2022,6 +2030,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.context_get_value(AUTHID_AUTHCHANNEL_TARGET, buffer, sizeof(buffer))));
 
 
+    // authchannel_result
     ini.context_ask(AUTHID_AUTHCHANNEL_RESULT);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_AUTHCHANNEL_RESULT));
@@ -2035,6 +2044,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("result"),            std::string(ini.context_get_value(AUTHID_AUTHCHANNEL_RESULT, buffer, sizeof(buffer))));
 
 
+    // message
     ini.context_set_value(AUTHID_MESSAGE,               "message");
 
     BOOST_CHECK_EQUAL(std::string("message"),           std::string(ini.context.message.c_str()));
@@ -2042,6 +2052,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("message"),           std::string(ini.context_get_value(AUTHID_MESSAGE, buffer, sizeof(buffer))));
 
 
+    // accept_message
     ini.context_ask(AUTHID_ACCEPT_MESSAGE);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_ACCEPT_MESSAGE));
@@ -2055,6 +2066,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("accept_message"),    std::string(ini.context_get_value(AUTHID_ACCEPT_MESSAGE, buffer, sizeof(buffer))));
 
 
+    // display_message
     ini.context_ask(AUTHID_DISPLAY_MESSAGE);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_DISPLAY_MESSAGE));
@@ -2068,6 +2080,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("display_message"),   std::string(ini.context_get_value(AUTHID_DISPLAY_MESSAGE, buffer, sizeof(buffer))));
 
 
+    // rejected
     ini.context_set_value(AUTHID_REJECTED,              "rejected");
 
     BOOST_CHECK_EQUAL(std::string("rejected"),          std::string(ini.context.rejected.c_str()));
@@ -2075,6 +2088,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("rejected"),          std::string(ini.context_get_value(AUTHID_REJECTED, buffer, sizeof(buffer))));
 
 
+    // authenticated
     ini.context_set_value(AUTHID_AUTHENTICATED,         "True");
 
     BOOST_CHECK_EQUAL(true,                             ini.context.authenticated);
@@ -2084,6 +2098,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("True"),              std::string(ini.context_get_value(AUTHID_AUTHENTICATED, buffer, sizeof(buffer))));
 
 
+    // keepalive
     ini.context_set_value(AUTHID_KEEPALIVE,             "True");
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_KEEPALIVE));
@@ -2095,6 +2110,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("True"),              std::string(ini.context_get_value(AUTHID_KEEPALIVE, buffer, sizeof(buffer))));
 
 
+    // proxy_type
     ini.context_ask(AUTHID_PROXY_TYPE);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_PROXY_TYPE));
@@ -2108,6 +2124,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("VNC"),               std::string(ini.context_get_value(AUTHID_PROXY_TYPE, buffer, sizeof(buffer))));
 
 
+    // trace_seal
     ini.context_ask(AUTHID_TRACE_SEAL);
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_TRACE_SEAL));
@@ -2121,6 +2138,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("trace_seal"),        std::string(ini.context_get_value(AUTHID_TRACE_SEAL, buffer, sizeof(buffer))));
 
 
+    // session_id
     ini.context_set_value(AUTHID_SESSION_ID,            "0123456789");
 
     BOOST_CHECK_EQUAL(std::string("0123456789"),        std::string(ini.context.session_id.c_str()));
@@ -2128,6 +2146,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("0123456789"),        std::string(ini.context_get_value(AUTHID_SESSION_ID, buffer, sizeof(buffer))));
 
 
+    // end_date_cnx
     ini.context_set_value(AUTHID_END_DATE_CNX,          "12345678");
 
     BOOST_CHECK_EQUAL(12345678,                         ini.context.end_date_cnx);
@@ -2135,6 +2154,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context_get_value(AUTHID_END_DATE_CNX, buffer, sizeof(buffer))));
 
 
+    // end_time
     ini.context_set_value(AUTHID_END_TIME,              "end_time");
 
     BOOST_CHECK_EQUAL(std::string("end_time"),          std::string(ini.context.end_time.c_str()));
@@ -2142,6 +2162,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("end_time"),          std::string(ini.context_get_value(AUTHID_END_TIME, buffer, sizeof(buffer))));
 
 
+    // mode_console
     ini.context_set_value(AUTHID_MODE_CONSOLE,          "deny");
 
     BOOST_CHECK_EQUAL(std::string("deny"),              std::string(ini.context.mode_console.c_str()));
@@ -2149,6 +2170,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("deny"),              std::string(ini.context_get_value(AUTHID_MODE_CONSOLE, buffer, sizeof(buffer))));
 
 
+    // timezone
     ini.context_set_value(AUTHID_TIMEZONE,              "-7200");
 
     BOOST_CHECK_EQUAL(-7200,                            ini.context.timezone);
@@ -2156,6 +2178,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("-7200"),             std::string(ini.context_get_value(AUTHID_TIMEZONE, buffer, sizeof(buffer))));
 
 
+    // real_target_device
     ini.context_set_value(AUTHID_REAL_TARGET_DEVICE,    "10.0.0.1");
 
     BOOST_CHECK_EQUAL(std::string("10.0.0.1"),          std::string(ini.context.real_target_device.c_str()));
@@ -2163,6 +2186,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("10.0.0.1"),          std::string(ini.context_get_value(AUTHID_REAL_TARGET_DEVICE, buffer, sizeof(buffer))));
 
 
+    // authentication_challenge
     ini.context_set_value(AUTHID_AUTHENTICATION_CHALLENGE,     "authentication_challenge");
 
     BOOST_CHECK_EQUAL(std::string("authentication_challenge"), std::string(ini.context.authentication_challenge.c_str()));
