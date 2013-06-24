@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     wrm_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)sq_outfilename_filesize(&(out_png_trans.seq), 0));
-    // sq_outfilename_unlink(&(out_png_trans.seq), 0);
+    sq_outfilename_unlink(&(out_png_trans.seq), 0);
 
     BOOST_CHECK_EQUAL((unsigned)500675, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 0));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 0);

@@ -95,7 +95,6 @@ struct BmpCache {
             delete this->cache[id][idx];
             this->cache[id][idx] = bmp;
             this->stamps[id][idx] = ++stamp;
-            //this->crc[id][idx] = bmp->compute_crc();
             bmp->compute_sha1(this->sha1[id][idx]);
         }
 
@@ -116,7 +115,6 @@ struct BmpCache {
         uint32_t cache_bitmap(const Bitmap & oldbmp){
             const Bitmap * bmp = new Bitmap(this->bpp, oldbmp);
 
-            //const unsigned bmp_crc = bmp->compute_crc();
             uint8_t bmp_sha1[20];
             bmp->compute_sha1(bmp_sha1);
 
