@@ -38,7 +38,7 @@ struct BmpCache {
     uint16_t big_entries;
     uint16_t big_size;
 
-    Bitmap * cache[3][8192];
+    const Bitmap * cache[3][8192];
     uint32_t stamps[3][8192];
     //uint32_t crc[3][8192];
     uint8_t sha1[3][8192][20];
@@ -91,7 +91,7 @@ struct BmpCache {
             this->reset_values();
         }
 
-        void put(uint8_t id, uint16_t idx, Bitmap * const bmp){
+        void put(uint8_t id, uint16_t idx, const Bitmap * const bmp){
             delete this->cache[id][idx];
             this->cache[id][idx] = bmp;
             this->stamps[id][idx] = ++stamp;
@@ -103,7 +103,7 @@ struct BmpCache {
             this->stamps[id][idx] = ++stamp;
         }
 
-        Bitmap * get(uint8_t id, uint16_t idx){
+        const Bitmap * get(uint8_t id, uint16_t idx){
             return this->cache[id][idx];
         }
 
@@ -114,7 +114,7 @@ struct BmpCache {
 
         TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap")
         uint32_t cache_bitmap(const Bitmap & oldbmp){
-            Bitmap * bmp = new Bitmap(this->bpp, oldbmp);
+            const Bitmap * bmp = new Bitmap(this->bpp, oldbmp);
 
             //const unsigned bmp_crc = bmp->compute_crc();
             uint8_t bmp_sha1[20];

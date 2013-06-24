@@ -85,8 +85,9 @@ public:
         }
     } data_bitmap;
 
-    uint8_t * data_compressed;
-    size_t data_compressed_size;
+    // Memoize compressed bitmap
+    mutable uint8_t * data_compressed;
+    mutable size_t data_compressed_size;
 
     Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false)
         : original_bpp(bpp)
@@ -474,10 +475,10 @@ private:
         };
     }
 
-    void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size)
+    void decompress(const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size) const
     {
         const uint8_t Bpp = nbbytes(this->original_bpp);
-        uint16_t & dst_cx = this->cx;
+        const uint16_t & dst_cx = this->cx;
         uint8_t* pmin = this->data_bitmap.get();
         uint8_t* pmax = pmin + this->bmp_size;
         uint16_t out_x_count = 0;
@@ -886,7 +887,7 @@ public:
     }
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
-    void compress(Stream & out)
+    void compress(Stream & out) const
     {
         if (this->data_compressed) {
             out.out_copy_bytes(this->data_compressed, this->data_compressed_size); 
