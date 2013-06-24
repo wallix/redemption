@@ -251,6 +251,7 @@ public:
     RwlDefinition(const char * filename = 0)
     : targets()
     , boundary(0)
+    , empty_target()
     {
         if (filename) {
             std::ifstream ifs(filename);
