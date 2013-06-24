@@ -8,14 +8,7 @@ from struct    import unpack
 from struct    import pack
 import datetime
 
-PASSWORD1 = 'XXXpass!wordXXX'
-PASSWORD2 = 'XXXpasswoXXX'
-PASSWORD3 = 'XXXUpPasswoXXX'
-PASSWORD4 = 'XXXUpéasswoXXX'
-PASSWORD5 = 'XXXpass$1$wordXXX'
-PASSWORD6 = 'XXXpass1wordXXX'
-PASSWORD7 = 'XXXpass!wordXXX'
-PASSWORD8 = 'XXXpassXXXwordXXX'
+from password import PASSWORD1, PASSWORD2, PASSWORD3, PASSWORD4, PASSWORD5, PASSWORD6, PASSWORD7, PASSWORD8
 
 def cut_message(message, width = 75, in_cr = '\n', out_cr = '<br>', margin = 6):
     result = []
@@ -262,7 +255,7 @@ class Authentifier(object):
         _data = "".join(_list)
         _len = len(_data)
         print("len=", _len,)
-        self.sck.send(pack(">L", _len+4))
+        self.sck.send(pack(">L", _len))
         self.sck.send(_data)
 
 
@@ -285,6 +278,7 @@ users = [
         Service('Test', 'autotest', 'replay', 'password', 'INTERNAL', '')]),
 
     User('x', 'x', [
+        Service('VirtualBox', '127.0.0.1', 'redjenkins-vbox', 'x', 'RDP', '6389'),
         Service('Message', 'display_message', 'internal', 'internal', 'INTERNAL', '', alive=120),
         Service('Test', 'autotest', 'replay', 'password', 'INTERNAL', ''),
         Service('w2003', '10.10.46.73', r'qa\administrateur', PASSWORD1, 'RDP', '3389'),

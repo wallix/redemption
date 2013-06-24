@@ -3629,7 +3629,12 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
         Bitmap bmp2(bpp, &palette332, 192, 18, compressed, sizeof(compressed), true);
 //        bmp2.dump_decompress(bpp, compressed, sizeof(compressed));
 
-        BOOST_CHECK_EQUAL(1688359122, bmp2.compute_crc());
+        uint8_t sha1[20] = {};
+        uint8_t expected_sha1[20] = {
+            0x7a, 0x33, 0x69, 0xdf, 0x41, 0xe9, 0xda, 0x77, 0x90, 0x46, 0xd4, 0x36, 0x15, 0xdf, 0xec, 0x31, 0xf2, 0x9a, 0x0a, 0x7c
+        };
+        bmp2.compute_sha1(sha1);
+        BOOST_CHECK(0 == memcmp(expected_sha1, sha1, 20));
 //        printf("------- Decompressed ---------\n");
 //        for (size_t i = 0; i < bmp2.bmp_size ; i++){
 //            if (i % 192 == 0) printf("\n");
