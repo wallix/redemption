@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -29,7 +29,6 @@
 #define LOGNULL
 #include "log.hpp"
 #include "RDP/capabilities.hpp"
-
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
 {
@@ -58,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
     BStream stream(1024);
     bitmap_caps.emit(stream);
     stream.mark_end();
-    stream.p = stream.data;
+    stream.p = stream.get_data();
 
     BitmapCaps bitmap_caps2;
 
@@ -83,5 +82,4 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
     BOOST_CHECK_EQUAL(bitmap_caps2.drawingFlags, (uint8_t)0);
     BOOST_CHECK_EQUAL(bitmap_caps2.multipleRectangleSupport, (uint16_t)1);
     BOOST_CHECK_EQUAL(bitmap_caps2.pad2octetsB, (uint16_t)0);
-
 }

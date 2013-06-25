@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -83,9 +82,9 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
             0xDD,        // brush.hatch
             1, 2, 3, 4, 5, 6, 7   // brush.extra
         };
-        check_datas(stream.p-stream.data, stream.data, 30, datas, "PatBlt 1");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 30, datas, "PatBlt 1");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -135,9 +134,9 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
             0x01,        // brush.style
             0xDD,        // brush.hatch
         };
-        check_datas(stream.p-stream.data, stream.data, 23, datas, "PatBlt 2");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 23, datas, "PatBlt 2");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -186,9 +185,9 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
             0x04,        // brush_org_y
             1, 2, 3, 4, 5, 6, 7   // brush_extra
         };
-        check_datas(stream.p-stream.data, stream.data, 28, datas, "PatBlt 3");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 28, datas, "PatBlt 3");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -207,5 +206,4 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
                 RDPBrush(3, 4, 0x03, 0xDD, (uint8_t*)"\1\2\3\4\5\6\7")),
             "PatBlt 3");
     }
-
 }

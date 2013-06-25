@@ -32,7 +32,6 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 #include "sockettransport.hpp"
 #include "wait_obj.hpp"
 
-
 typedef enum {
     INTERNAL_NONE,
     INTERNAL_DIALOG_DISPLAY_MESSAGE,
@@ -87,7 +86,7 @@ class SessionManager {
     bool internal_domain;
     uint32_t verbose;
 
-    SessionManager(Inifile * ini, Transport & auth_trans, int keepalive_grace_delay, 
+    SessionManager(Inifile * ini, Transport & auth_trans, int keepalive_grace_delay,
                    int max_tick, bool internal_domain, uint32_t verbose)
         : mod_state(MOD_STATE_INIT)
         , ini(ini)
@@ -125,7 +124,7 @@ class SessionManager {
         this->tick_count = 1;
 
         BStream stream(8192);
-        
+
         stream.out_uint32_be(0); // skip length
         this->ini->context_ask(AUTHID_KEEPALIVE);
         this->out_item(stream, STRAUTHID_KEEPALIVE);
@@ -133,9 +132,8 @@ class SessionManager {
         // now set length
         int total_length = stream.get_offset();
         stream.set_out_uint32_be(total_length - 4, 0);
-        this->auth_trans.send(stream.data, total_length);
+        this->auth_trans.send(stream.get_data(), total_length);
         keepalive_time = ::time(NULL) + 30;
-
     }
 
     // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
@@ -153,9 +151,9 @@ class SessionManager {
         this->out_item(stream, STRAUTHID_AUTHCHANNEL_TARGET);
 
         int total_length = stream.get_offset();
-        stream.p = stream.data;
+        stream.p = stream.get_data();
         stream.out_uint32_be(total_length - 4);
-        this->auth_trans.send(stream.data, total_length);
+        this->auth_trans.send(stream.get_data(), total_length);
     }
 
     // Set AUTHCHANNEL_RESULT dict value and transmit request to sesman (then wabenginge)
@@ -173,7 +171,7 @@ class SessionManager {
         int total_length = stream.get_offset();
         stream.set_out_uint32_be(total_length - 4, 0);
 
-        this->auth_trans.send(stream.data, total_length);
+        this->auth_trans.send(stream.get_data(), total_length);
     }
 
     void in_items(Stream & stream)
@@ -255,7 +253,7 @@ class SessionManager {
 
     bool keep_alive_checking(long & keepalive_time, long & now, Transport & trans)
     {
-        
+
         //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
             long enddate = this->ini->context.end_date_cnx;
@@ -313,7 +311,7 @@ class SessionManager {
                 int total_length = stream.get_offset();
                 stream.set_out_uint32_be(total_length - 4, 0); /* size */
                 stream.mark_end();
-                this->auth_trans.send(stream.data, total_length);
+                this->auth_trans.send(stream.get_data(), total_length);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -401,7 +399,7 @@ class SessionManager {
                 int total_length = stream.get_offset();
                 stream.set_out_uint32_be(total_length - 4, 0); /* size */
                 stream.mark_end();
-                this->auth_trans.send(stream.data, total_length);
+                this->auth_trans.send(stream.get_data(), total_length);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -791,7 +789,7 @@ class SessionManager {
             int total_length = stream.get_offset();
             LOG(LOG_INFO, "Data size without header (send) %u", total_length - 4);
             stream.set_out_uint32_be(total_length - 4, 0); /* size in header */
-            this->auth_trans.send(stream.data, total_length);
+            this->auth_trans.send(stream.get_data(), total_length);
 
         } catch (Error e) {
             this->ini->context.authenticated = false;

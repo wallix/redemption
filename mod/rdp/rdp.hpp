@@ -347,7 +347,7 @@ struct mod_rdp : public mod_api {
                 size_t length = out_s.size();
 
                 this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                           , out_s.data
+                                           , out_s.get_data()
                                            , length
                                            , out_s.size()
                                            , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
@@ -415,7 +415,7 @@ struct mod_rdp : public mod_api {
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNELS::ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
-        stream.out_copy_bytes(chunk.data, chunk.size());
+        stream.out_copy_bytes(chunk.get_data(), chunk.size());
         stream.mark_end();
 
         BStream x224_header(256);
@@ -1222,11 +1222,11 @@ struct mod_rdp : public mod_api {
             }
             else {
                 LOG(LOG_ERR, "Failed to get expected license negotiation PDU");
-                hexdump(x224.payload.data, x224.payload.size());
+                hexdump(x224.payload.get_data(), x224.payload.size());
 //                throw Error(ERR_SEC);
                 this->state = MOD_RDP_CONNECTED;
                 sec.payload.p = sec.payload.end;
-                hexdump(sec.payload.data, sec.payload.size());
+                hexdump(sec.payload.get_data(), sec.payload.size());
             }
         }
         break;

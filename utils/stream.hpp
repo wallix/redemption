@@ -43,10 +43,12 @@ enum {
 };
 
 class Stream {
-    public:
+public:
     uint8_t* p;
     uint8_t* end;
+protected:
     uint8_t* data;
+public:
     size_t capacity;
 
     virtual ~Stream() {}
@@ -59,6 +61,10 @@ class Stream {
 
     bool has_room(unsigned n) const {
         return this->get_offset() + n <= this->capacity;
+    }
+
+    virtual uint8_t * get_data() const {
+        return this->data;
     }
 
     uint32_t get_offset() const {
@@ -1653,7 +1659,7 @@ class SubStream : public Stream {
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
-        this->p = this->data = stream.data + offset;
+        this->p = this->data = stream.get_data() + offset;
         this->capacity = (new_size == 0)?(stream.capacity - offset):new_size;
         this->end = this->data + this->capacity;
     }

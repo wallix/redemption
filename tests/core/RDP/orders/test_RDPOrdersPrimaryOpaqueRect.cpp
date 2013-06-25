@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -55,9 +54,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             0x90,
             0x01,
             0x4C };
-        check_datas(stream.get_offset(), stream.data, 7, datas, "rect draw 0");
+        check_datas(stream.get_offset(), stream.get_data(), 7, datas, "rect draw 0");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -90,9 +89,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
         RDPOpaqueRect(Rect(0, 0, 10, 10), 0xFFFFFF).emit(stream, newcommon, state_common, state_orect);
 
         uint8_t datas[2] = {SMALL | DELTA | CHANGE | STANDARD, RECT};
-        check_datas(stream.get_offset(), stream.data, 2, datas, "rect draw identical");
+        check_datas(stream.get_offset(), stream.get_data(), 2, datas, "rect draw identical");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -110,7 +109,6 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             "rect draw identical");
     }
 
-
     {
         BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
@@ -124,9 +122,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             1, // x coordinate changed
             5, // +5 on x
         };
-        check_datas(stream.get_offset(), stream.data, 4, datas, "rect draw 1");
+        check_datas(stream.get_offset(), stream.get_data(), 4, datas, "rect draw 1");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -160,9 +158,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             15,   // +15 on w
             20,   // +20 on h
         };
-        check_datas(stream.p-stream.data, stream.data, 7, datas, "rect draw 2");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 7, datas, "rect draw 2");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -180,7 +178,6 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             "rect draw 2");
     }
 
-
     {
         BStream stream(1000);
         RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
@@ -193,9 +190,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             2,  // y coordinate changed
             0x2C, 1 // y = 0x12C = 300
         };
-        check_datas(stream.p-stream.data, stream.data, 5, datas, "rect draw 3");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 5, datas, "rect draw 3");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -226,9 +223,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             0x05, 0, // x = 0x005 = 5
             0x2C, 1, // y = 0x12C = 300
         };
-        check_datas(stream.p-stream.data, stream.data, 7, datas, "rect draw 4");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 7, datas, "rect draw 4");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -261,9 +258,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             25, 0,   // w = 25
             30, 0,   // h = 30
         };
-        check_datas(stream.p-stream.data, stream.data, 11, datas, "rect draw 5");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 11, datas, "rect draw 5");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -279,7 +276,6 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
             RDPOpaqueRect(Rect(5, 300, 25, 30), 0xFFFFFF),
             "rect draw 5");
-
     }
 
     {
@@ -298,9 +294,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             30, 0,   // h = 30
             0x30, 0x20, 0x10  // RGB colors
         };
-        check_datas(stream.p-stream.data, stream.data, 14, datas, "rect draw 6");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 14, datas, "rect draw 6");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -338,9 +334,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             30, 0,   // h = 30
             0x30, 0x20, 0x10  // RGB colors
         };
-        check_datas(stream.p-stream.data, stream.data, 21, datas, "rect draw 7");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 21, datas, "rect draw 7");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -357,7 +353,6 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             RDPOpaqueRect(Rect(5, 300, 25, 30), 0x102030),
             "rect draw 7");
     }
-
 
     {
         BStream stream(1000);
@@ -379,9 +374,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             0x5D, 2,   // H = 605
             0x30, 0x20, 0x10,  // RGB colors
         };
-        check_datas(stream.p-stream.data, stream.data, 17, datas, "rect draw 8");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 17, datas, "rect draw 8");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -399,7 +394,6 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             "rect draw 8");
     }
 
-
     {
         BStream stream(1000);
         RDPOrderCommon state_common(RECT, Rect(0, 0, 800, 600));
@@ -416,9 +410,9 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             0x5D, 2,   // H = 605
             0x30, 0x20, 0x10,  // RGB colors
         };
-        check_datas(stream.p-stream.data, stream.data, 11, datas, "Rect Draw 9");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 11, datas, "Rect Draw 9");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -434,7 +428,6 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             RDPOrderCommon(RECT, Rect(0, 0, 800, 600)),
             RDPOpaqueRect(Rect(5, 0, 810, 605), 0x102030),
             "Rect Draw 9");
-
     }
 
 }

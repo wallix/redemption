@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -29,22 +29,20 @@
 #include "authentifier.hpp"
 #include "testtransport.hpp"
 
-
 BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
 {
-   
     Inifile ini;
     LogTransport trans;
     SessionManager sesman(&ini, trans, 30, 30, true, 0);
 
     // test out_item
-    // out_item(Stream stream,const char * key) should add in the Stream a string 
-    // composed of key and its value if known in Inifile, 
+    // out_item(Stream stream,const char * key) should add in the Stream a string
+    // composed of key and its value if known in Inifile,
     // or "ASK" if the value is asked.
     BStream stream(1024);
     sesman.out_item(stream, STRAUTHID_PROXY_TYPE);
-    BOOST_CHECK_EQUAL(0, 
-                      strncmp((char*)stream.data, 
+    BOOST_CHECK_EQUAL(0,
+                      strncmp((char*)stream.get_data(),
                               STRAUTHID_PROXY_TYPE "\n!RDP\n",
                               strlen(STRAUTHID_PROXY_TYPE "\n!RDP\n")
                               )
@@ -53,32 +51,32 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
 
     ini.context_ask(STRAUTHID_TARGET_PROTOCOL);
     sesman.out_item(stream, STRAUTHID_TARGET_PROTOCOL);
-    BOOST_CHECK_EQUAL(0, 
-                      strncmp((char*)stream.data, 
+    BOOST_CHECK_EQUAL(0,
+                      strncmp((char*)stream.get_data(),
                               STRAUTHID_TARGET_PROTOCOL "\nASK\n",
                               strlen(STRAUTHID_TARGET_PROTOCOL "\nASK\n")
                               )
                       );
     stream.reset();
 
-    sesman.out_item(stream, STRAUTHID_PASSWORD);    
-    BOOST_CHECK_EQUAL(0, 
-                      strncmp((char*)stream.data, 
+    sesman.out_item(stream, STRAUTHID_PASSWORD);
+    BOOST_CHECK_EQUAL(0,
+                      strncmp((char*)stream.get_data(),
                               STRAUTHID_PASSWORD "\nASK\n",
                               strlen(STRAUTHID_PASSWORD "\nASK\n")
                               )
                       );
     ini.context_set_value(STRAUTHID_PASSWORD,"SecureLinux");
     sesman.out_item(stream, STRAUTHID_PASSWORD);
-    BOOST_CHECK_EQUAL(0, 
-                      strncmp((char*)stream.data+13, 
+    BOOST_CHECK_EQUAL(0,
+                      strncmp((char*)stream.get_data() + 13,
                               STRAUTHID_PASSWORD "\n!SecureLinux\n",
                               strlen(STRAUTHID_PASSWORD "\n!SecureLinux\n")
                               )
                       );
     stream.reset();
-    
-    
+
+
 }
 
 
@@ -89,14 +87,14 @@ inline void execute_test_initem(Stream & stream, SessionManager & sesman, const 
     stream.out_copy_bytes(value, strlen(value));
     stream.mark_end();
     stream.rewind();
-        
+
     // execute in_item
     sesman.in_item(stream);
 }
 inline void test_initem_ask(BStream & stream, Inifile & ini, SessionManager & sesman, const char * strauthid, const char * defaut)
 {
     stream.init(strlen(strauthid) + 5);
-    
+
     // Set defaut value to strauthid key
     ini.context_set_value(strauthid, defaut);
     BOOST_CHECK(!ini.context_is_asked(strauthid));
@@ -112,10 +110,10 @@ inline void test_initem_receive(BStream & stream, Inifile & ini, SessionManager 
     ini.context_ask(strauthid);
     BOOST_CHECK(ini.context_is_asked(strauthid));
 
-    execute_test_initem(stream,sesman,strauthid,value);        
-        
+    execute_test_initem(stream,sesman,strauthid,value);
+
     // check key value is known
-    BOOST_CHECK(!ini.context_is_asked(strauthid)); 
+    BOOST_CHECK(!ini.context_is_asked(strauthid));
 }
 BOOST_AUTO_TEST_CASE(TestAuthentifierInItem)
 {
@@ -123,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInItem)
     BStream stream(1);
     LogTransport trans;
     SessionManager sesman(&ini, trans, 30, 30, true, 0x40);
-    
+
     /*
     const char * str = STRAUTHID_PASSWORD "\nASK\n";
     stream.init(strlen(str));
@@ -158,11 +156,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
     stream.out_uint32_be(strlen(STRAUTHID_KEEPALIVE "\nASK\n"));
     stream.out_copy_bytes(STRAUTHID_KEEPALIVE "\nASK\n", strlen(STRAUTHID_KEEPALIVE "\nASK\n"));
 
-    CheckTransport keepalivetrans((char *)stream.data,stream.get_offset());
+    CheckTransport keepalivetrans((char *)stream.get_data(), stream.get_offset());
     Inifile ini;
     SessionManager sesman(&ini, keepalivetrans, 30, 30, true, 0);
     long keepalivetime = 0;
-    
+
     BOOST_CHECK(keepalivetrans.get_status());
     try{
         sesman.start_keep_alive(keepalivetime);
@@ -176,17 +174,17 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
 {
-    
+
     BStream stream(1024);
-    
+
     // TEST ask_auth_channel_target
     stream.out_uint32_be(strlen(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n"));
-    stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n", 
+    stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n",
                           strlen(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n"));
-    CheckTransport auth_channel_trans((char *)stream.data,stream.get_offset());
+    CheckTransport auth_channel_trans((char *)stream.get_data(), stream.get_offset());
     Inifile ini;
     SessionManager sesman(&ini, auth_channel_trans, 30, 30, true, 0);
-    
+
     BOOST_CHECK(auth_channel_trans.get_status());
     try{
         sesman.ask_auth_channel_target("TEST_TARGET");
@@ -198,12 +196,12 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
 
     // TEST set_auth_channel_result
     stream.out_uint32_be(strlen(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n"));
-    stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n", 
+    stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n",
                           strlen(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n"));
-    CheckTransport auth_channel_trans2((char *)stream.data,stream.get_offset());
+    CheckTransport auth_channel_trans2((char *)stream.get_data(), stream.get_offset());
     Inifile ini2;
     SessionManager sesman2(&ini2, auth_channel_trans2, 30, 30, true, 0);
-    
+
     BOOST_CHECK(auth_channel_trans2.get_status());
     try{
         sesman2.set_auth_channel_result("TEST_RESULT");
@@ -227,7 +225,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_EXIT == res);
     BOOST_CHECK(INTERNAL_CARD == nextmod);
-    
+
 
     // auto test case
     ini.context_set_value(AUTHID_TARGET_DEVICE,"autotest");
@@ -253,13 +251,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     BOOST_CHECK(MCTX_STATUS_XUP == res);
 
     // INTERNAL STATUS
-    // test nextmod value 
+    // test nextmod value
     ini.context_set_value(AUTHID_TARGET_PROTOCOL,"INTERNAL");
     ini.context_set_value(AUTHID_TARGET_DEVICE,"bouncer2");
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
     BOOST_CHECK(INTERNAL_BOUNCER2 == nextmod);
-    
+
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_login");
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
@@ -281,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
 
     const char * name = "Authentifier Normal Case";
     int verbose = 256;
-    
+
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
     SessionManager sesman(&ini, trans, 30, 30, true, 0);
 
@@ -305,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     ini.context_set_value(STRAUTHID_OPT_HEIGHT, "600");
     ini.context_set_value(STRAUTHID_OPT_BPP, "24");
     ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
-    
+
 
     BOOST_CHECK(trans.get_status());
     //SEND No 1
@@ -330,8 +328,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     BOOST_CHECK(trans.get_status());
     //RECEIVE No 2
     sesman.receive_next_module();
-    
-    // Selector 
+
+    // Selector
     // Got target users, target devices and target protocols at this point
     // and password is correct.
     BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
@@ -374,7 +372,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
 
     const char * name = "Authentifier Wrong Password";
     int verbose = 256;
-    
+
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
     SessionManager sesman(&ini, trans, 30, 30, true, 0);
 
@@ -398,7 +396,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
     ini.context_set_value(STRAUTHID_OPT_HEIGHT, "600");
     ini.context_set_value(STRAUTHID_OPT_BPP, "24");
     ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
-    
+
 
     BOOST_CHECK(trans.get_status());
     //SEND No 1
@@ -423,7 +421,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
     BOOST_CHECK(trans.get_status());
     //RECEIVE No 2
     sesman.receive_next_module();
-    
+
     // Wrong password, context is still asked
     BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
     BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
@@ -448,7 +446,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
 
     const char * name = "Authentifier Selector Logout";
     int verbose = 256;
-    
+
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
     SessionManager sesman(&ini, trans, 30, 30, true, 0);
 
@@ -472,8 +470,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     ini.context_set_value(STRAUTHID_OPT_HEIGHT, "600");
     ini.context_set_value(STRAUTHID_OPT_BPP, "24");
     ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
-    
-    
+
+
     BOOST_CHECK(trans.get_status());
     //SEND No 1
     sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
@@ -497,8 +495,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     BOOST_CHECK(trans.get_status());
     //RECEIVE No 2
     sesman.receive_next_module();
-    
-    // Selector 
+
+    // Selector
     // Got target users, target devices and target protocols at this point
     // and password is correct.
     BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -529,7 +529,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     BStream stream(8192);
     good16.compress(stream);
     stream.mark_end();
-    Bitmap bogus(24, NULL, 64, 64, stream.data, stream.size(), true);
+    Bitmap bogus(24, NULL, 64, 64, stream.get_data(), stream.size(), true);
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx, bogus.cy), 0xCC, 0, 0, 0), scr, bogus);
 
     d.flush();

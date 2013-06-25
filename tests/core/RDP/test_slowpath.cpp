@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
         }
     }
 
-    out_t.send(out_s.data, out_s.size());
+    out_t.send(out_s.get_data(), out_s.size());
 
     BOOST_CHECK_EQUAL(true, out_t.status);
 } // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
         }
     }
 
-    out_t.send(out_s.data, out_s.size());
+    out_t.send(out_s.get_data(), out_s.size());
 
     BOOST_CHECK_EQUAL(true, out_t.status);
 } // BOOST_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)

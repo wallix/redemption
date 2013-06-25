@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -30,7 +30,6 @@
 #include "log.hpp"
 #include "RDP/capabilities.hpp"
 
-
 BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
 {
     ControlCaps control_caps;
@@ -49,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
     BStream stream(1024);
     control_caps.emit(stream);
     stream.mark_end();
-    stream.p = stream.data;
+    stream.p = stream.get_data();
 
     ControlCaps control_caps2;
 

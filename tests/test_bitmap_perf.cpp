@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Unit test for bitmap class, compression performance
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -53,10 +52,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
         unsigned long long elapcyc = rdtsc() - cycles;
         printf("initial_size = %llu, compressed size: %llu\n",
             (long long)bigbmp.bmp_size,
-            (long long)(out.p - out.data));
+            (long long)(out.p - out.get_data()));
         printf("elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-        Bitmap bmp2(24, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.data, out.p - out.data, true);
+        Bitmap bmp2(24, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.get_data(), out.p - out.get_data(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size, bigbmp.bmp_size);
         BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size));
     }
@@ -73,10 +72,10 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompressPerformance)
         unsigned long long elapcyc = rdtsc() - cycles;
         printf("initial_size = %llu, compressed size: %llu\n",
             (long long)bigbmp.bmp_size,
-            (long long)(out.p - out.data));
+            (long long)(out.p - out.get_data()));
         printf("elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
 
-        Bitmap bmp2(bpp, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.data, out.p - out.data, true);
+        Bitmap bmp2(bpp, (BGRPalette *)NULL, bigbmp.cx, bigbmp.cy, out.get_data(), out.p - out.get_data(), true);
         BOOST_CHECK_EQUAL(bmp2.bmp_size, bigbmp.bmp_size);
         BOOST_CHECK(0 == memcmp(bmp2.data(), bigbmp.data(), bigbmp.bmp_size));
     }

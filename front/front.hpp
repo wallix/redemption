@@ -622,7 +622,7 @@ public:
 
         if (((this->verbose & 128) != 0)||((this->verbose & 16)!=0)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
+            hexdump_d(stream.get_data(), stream.size());
         }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
@@ -701,7 +701,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(target_stream.data, target_stream.size());
+                    hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
                 SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
@@ -955,7 +955,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
             if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
             BStream x224_header(256);
@@ -1062,7 +1062,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
             if ((this->verbose & (128|4)) == (128|4)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
             BStream x224_header(256);
@@ -1642,7 +1642,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 memset(client_random, 0, 64);
                 {
                     uint8_t l_out[64]; memset(l_out, 0, 64);
-                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.data, 64);
+                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.get_data(), 64);
                     uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
                     uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
 
@@ -1713,7 +1713,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.data, sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
 
             if (!sec.flags & SEC::SEC_INFO_PKT) {
@@ -1761,7 +1761,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                     if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
-                        hexdump_d(stream.data, stream.size());
+                        hexdump_d(stream.get_data(), stream.size());
                     }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
@@ -1857,7 +1857,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                 if ((this->verbose & (128|2)) == (128|2)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(stream.data, stream.size());
+                    hexdump_d(stream.get_data(), stream.size());
                 }
 
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
@@ -1897,7 +1897,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.data, sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
 
             // Licensing
@@ -1963,7 +1963,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                     if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
-                        hexdump_d(stream.data, stream.size());
+                        hexdump_d(stream.get_data(), stream.size());
                     }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
@@ -2239,7 +2239,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "sec decrypted payload:");
-                    hexdump_d(sec.payload.data, sec.payload.size());
+                    hexdump_d(sec.payload.get_data(), sec.payload.size());
                 }
 
                 if (this->verbose & 8){
@@ -2418,7 +2418,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
             if ((this->verbose & (128|1)) == (128|1)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
             BStream x224_header(256);
@@ -2599,7 +2599,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
         BStream x224_header(256);
@@ -3011,7 +3011,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
         BStream x224_header(256);
@@ -3079,7 +3079,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
 
@@ -3149,7 +3149,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
         BStream x224_header(256);
@@ -3416,7 +3416,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                 if ((this->verbose & (128|8)) == (128|8)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(target_stream.data, target_stream.size());
+                    hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
                 BStream x224_header(256);
@@ -3600,7 +3600,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
+            hexdump_d(stream.get_data(), stream.size());
         }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);

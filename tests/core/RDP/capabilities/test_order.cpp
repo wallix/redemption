@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -29,7 +29,6 @@
 #define LOGNULL
 #include "log.hpp"
 #include "RDP/capabilities.hpp"
-
 
 BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
 {
@@ -92,7 +91,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
     BStream stream(1024);
     order_caps.emit(stream);
     stream.mark_end();
-    stream.p = stream.data;
+    stream.p = stream.get_data();
 
     OrderCaps order_caps2;
 
@@ -124,5 +123,4 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
     BOOST_CHECK_EQUAL(order_caps2.pad2octetsD, (uint16_t) 12);
     BOOST_CHECK_EQUAL(order_caps2.textANSICodePage, (uint16_t) 13);
     BOOST_CHECK_EQUAL(order_caps2.pad2octetsE, (uint16_t) 14);
-
 }
