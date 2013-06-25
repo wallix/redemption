@@ -31,7 +31,7 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 #include "netutils.hpp"
 #include "sockettransport.hpp"
 #include "wait_obj.hpp"
-
+#include "acl_serializer.hpp"
 
 typedef enum {
     INTERNAL_NONE,
@@ -81,22 +81,25 @@ class SessionManager {
     int tick_count;
 
     public:
-    Transport & auth_trans;
+    //Transport & auth_trans;
+    AclSerializer acl_serial;
     int keepalive_grace_delay;
     int max_tick;
     bool internal_domain;
     uint32_t verbose;
 
-    SessionManager(Inifile * ini, Transport & auth_trans, int keepalive_grace_delay, 
-                   int max_tick, bool internal_domain, uint32_t verbose)
+    SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay, 
+                   int _max_tick, bool _internal_domain, uint32_t _verbose)
         : mod_state(MOD_STATE_INIT)
-        , ini(ini)
+        , ini(_ini)
         , tick_count(0)
-        , auth_trans(auth_trans)
-        , keepalive_grace_delay(keepalive_grace_delay)
-        , max_tick(max_tick)
-        , internal_domain(internal_domain)
-        , verbose(verbose)
+          //, auth_trans(_auth_trans)
+        , acl_serial(AclSerializer(_ini,_auth_trans,_verbose))
+        , keepalive_grace_delay(_keepalive_grace_delay)
+        , max_tick(_max_tick)
+        , internal_domain(_internal_domain)
+        , verbose(_verbose)
+        
     {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::SessionManager");
@@ -109,14 +112,7 @@ class SessionManager {
             LOG(LOG_INFO, "auth::~SessionManager");
         }
     }
-    /*
-    bool event(fd_set & rfds){
-        if (this->verbose & 0x40){
-            LOG(LOG_INFO, "auth::event?");
-        }
-        return this->auth_event?this->auth_event->is_set(rfds):false;
-    }
-    */
+
     void start_keep_alive(long & keepalive_time)
     {
         if (this->verbose & 0x10){
@@ -124,6 +120,9 @@ class SessionManager {
         }
         this->tick_count = 1;
 
+        this->ini->context_ask(AUTHID_KEEPALIVE);
+        this->acl_serial.send_to_acl(STRAUTHID_KEEPALIVE);
+        /* TO REMOVE
         BStream stream(8192);
         
         stream.out_uint32_be(0); // skip length
@@ -134,6 +133,8 @@ class SessionManager {
         int total_length = stream.get_offset();
         stream.set_out_uint32_be(total_length - 4, 0);
         this->auth_trans.send(stream.data, total_length);
+        */
+
         keepalive_time = ::time(NULL) + 30;
 
     }
@@ -145,6 +146,9 @@ class SessionManager {
             LOG(LOG_INFO, "SessionManager::ask_auth_channel_target(%s)", target);
         }
 
+        this->ini->context_set_value(AUTHID_AUTHCHANNEL_TARGET, target);
+        this->acl_serial.send_to_acl(STRAUTHID_AUTHCHANNEL_TARGET);
+        /* TO REMOVE
         BStream stream(8192);
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_TARGET, target);
@@ -156,6 +160,7 @@ class SessionManager {
         stream.p = stream.data;
         stream.out_uint32_be(total_length - 4);
         this->auth_trans.send(stream.data, total_length);
+        */
     }
 
     // Set AUTHCHANNEL_RESULT dict value and transmit request to sesman (then wabenginge)
@@ -164,6 +169,10 @@ class SessionManager {
         if (this->verbose) {
             LOG(LOG_INFO, "SessionManager::set_auth_channel_result(%s)", result);
         }
+
+        this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
+        this->acl_serial.send_to_acl(STRAUTHID_AUTHCHANNEL_RESULT);
+        /*
         BStream stream(8192);
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
@@ -174,8 +183,9 @@ class SessionManager {
         stream.set_out_uint32_be(total_length - 4, 0);
 
         this->auth_trans.send(stream.data, total_length);
+        */
     }
-
+    // TO REMOVE
     void in_items(Stream & stream)
     {
         if (this->verbose & 0x40){
@@ -185,7 +195,7 @@ class SessionManager {
             ;
         }
     }
-
+    // TO REMOVE
     void in_item(Stream & stream)
     {
         enum { STATE_KEYWORD, STATE_VALUE } state = STATE_KEYWORD;
@@ -235,7 +245,7 @@ class SessionManager {
         hexdump((char *)start, stream.p-start);
         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
-
+  
     bool close_on_timestamp(long & timestamp)
     {
         bool res = false;
@@ -252,7 +262,7 @@ class SessionManager {
         }
         return res;
     }
-
+    
     bool keep_alive_checking(long & keepalive_time, long & now, Transport & trans)
     {
         
@@ -305,15 +315,18 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
+                this->acl_serial.send_to_acl(STRAUTHID_KEEPALIVE);
+                /* TO REMOVE
                 BStream stream(8192);
                 stream.out_uint32_be(0); // skip length
                 // set data
                 this->out_item(stream, STRAUTHID_KEEPALIVE);
                 // now set length in header
                 int total_length = stream.get_offset();
-                stream.set_out_uint32_be(total_length - 4, 0); /* size */
+                stream.set_out_uint32_be(total_length - 4, 0); // size
                 stream.mark_end();
                 this->auth_trans.send(stream.data, total_length);
+                */
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -393,15 +406,18 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
+                this->acl_serial.send_to_acl(STRAUTHID_KEEPALIVE);
+                /* TO REMOVE
                 BStream stream(8192);
                 stream.out_uint32_be(0); // skip length
                 // set data
                 this->out_item(stream, STRAUTHID_KEEPALIVE);
                 // now set length in header
                 int total_length = stream.get_offset();
-                stream.set_out_uint32_be(total_length - 4, 0); /* size */
+                stream.set_out_uint32_be(total_length - 4, 0); // size
                 stream.mark_end();
                 this->auth_trans.send(stream.data, total_length);
+                */
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -726,6 +742,7 @@ class SessionManager {
         }
     }
 
+    // TO REMOVE
     TODO("move that function to Inifile create specialized stream object InifileStream")
     void out_item(Stream & stream, const char * key)
     {
@@ -756,6 +773,8 @@ class SessionManager {
 
     void ask_next_module_remote()
     {
+        this->acl_serial.ask_next_module_bis();
+        /* TO REMOVE
         // if anything happen, like authentification socked closing, stop current connection
         try {
             BStream stream(8192);
@@ -790,17 +809,20 @@ class SessionManager {
 
             int total_length = stream.get_offset();
             LOG(LOG_INFO, "Data size without header (send) %u", total_length - 4);
-            stream.set_out_uint32_be(total_length - 4, 0); /* size in header */
+            stream.set_out_uint32_be(total_length - 4, 0); // size in header
             this->auth_trans.send(stream.data, total_length);
 
         } catch (Error e) {
             this->ini->context.authenticated = false;
             this->ini->context.rejected.copy_c_str("Authentifier service failed");
         }
+        */
     }
 
     void incoming()
     {
+        this->acl_serial.incoming();
+        /* TO REMOVE
         BStream stream(4);
         this->auth_trans.recv(&stream.end, 4);
         size_t size = stream.in_uint32_be();
@@ -826,6 +848,7 @@ class SessionManager {
         }
 
         LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.c_str());
+        */
     }
 
     void receive_next_module()

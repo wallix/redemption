@@ -78,7 +78,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
                       );
     stream.reset();
     
-    
 }
 
 
@@ -124,18 +123,18 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInItem)
     LogTransport trans;
     SessionManager sesman(&ini, trans, 30, 30, true, 0x40);
     
-    /*
-    const char * str = STRAUTHID_PASSWORD "\nASK\n";
-    stream.init(strlen(str));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    ini.context_set_value(STRAUTHID_PASSWORD, "SecureLinux");
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
-    stream.out_copy_bytes(str, strlen(str));
-    stream.mark_end();
-    stream.rewind();
-    sesman.in_item(stream);
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    */
+    
+    // const char * str = STRAUTHID_PASSWORD "\nASK\n";
+    // stream.init(strlen(str));
+    // BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
+    // ini.context_set_value(STRAUTHID_PASSWORD, "SecureLinux");
+    // BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
+    // stream.out_copy_bytes(str, strlen(str));
+    // stream.mark_end();
+    // stream.rewind();
+    // sesman.in_item(stream);
+    // BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
+    
 
     test_initem_ask(stream,ini,sesman,STRAUTHID_PASSWORD,"SecureLinux");
     test_initem_ask(stream,ini,sesman,STRAUTHID_PROXY_TYPE,"VNC");
@@ -145,7 +144,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInItem)
     test_initem_receive(stream,ini,sesman,STRAUTHID_PROXY_TYPE,"\nRDP\n");
 
 }
-// test in_item
 
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
@@ -255,6 +253,16 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     // INTERNAL STATUS
     // test nextmod value 
     ini.context_set_value(AUTHID_TARGET_PROTOCOL,"INTERNAL");
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"selector");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_SELECTOR == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"login");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_LOGIN == nextmod);
+
     ini.context_set_value(AUTHID_TARGET_DEVICE,"bouncer2");
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
@@ -265,6 +273,50 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
     BOOST_CHECK(INTERNAL_WIDGET2_LOGIN == nextmod);
 
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"rwl_login");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_RWL_LOGIN == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"rwl");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_RWL == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"close");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_CLOSE == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_close");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_CLOSE == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_dialog");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_DIALOG == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_message");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_MESSAGE == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_rwl");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_RWL == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_rwl_login");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_WIDGET2_RWL_LOGIN == nextmod);
+
+    ini.context_set_value(AUTHID_TARGET_DEVICE,"card");
+    res = sesman.get_mod_from_protocol(nextmod);
+    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
+    BOOST_CHECK(INTERNAL_CARD == nextmod);
 }
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
@@ -283,7 +335,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     int verbose = 256;
     
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
-    SessionManager sesman(&ini, trans, 30, 30, true, 0);
+    SessionManager sesman(&ini, trans, 30, 30, false, 0);
 
     ini.context_set_value(STRAUTHID_PROXY_TYPE,"RDP");
     ini.context_set_value(STRAUTHID_DISPLAY_MESSAGE,"");
@@ -376,7 +428,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
     int verbose = 256;
     
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
-    SessionManager sesman(&ini, trans, 30, 30, true, 0);
+    SessionManager sesman(&ini, trans, 30, 30, false, 0);
 
     ini.context_set_value(STRAUTHID_PROXY_TYPE,"RDP");
     ini.context_set_value(STRAUTHID_DISPLAY_MESSAGE,"");
@@ -399,7 +451,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
     ini.context_set_value(STRAUTHID_OPT_BPP, "24");
     ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
     
-
     BOOST_CHECK(trans.get_status());
     //SEND No 1
     sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
@@ -450,7 +501,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     int verbose = 256;
     
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
-    SessionManager sesman(&ini, trans, 30, 30, true, 0);
+    SessionManager sesman(&ini, trans, 30, 30, false, 0);
 
     ini.context_set_value(STRAUTHID_PROXY_TYPE,"RDP");
     ini.context_set_value(STRAUTHID_DISPLAY_MESSAGE,"");
@@ -531,3 +582,4 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
 
 }
+
