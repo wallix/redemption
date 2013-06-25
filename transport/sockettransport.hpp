@@ -172,7 +172,7 @@ class SocketTransport : public Transport {
 
         BIO * bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
-        SSL_CTX* ctx = SSL_CTX_new(SSLv23_server_method());
+        SSL_CTX* ctx = SSL_CTX_new(TLSv1_server_method());
         this->allocated_ctx = ctx;
 
         /*
@@ -335,6 +335,10 @@ class SocketTransport : public Transport {
 
         LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
+
+        LOG(LOG_INFO, "RIO *::SSL_CTX_set_ciphers(HIGH:!ADH)");
+//        SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
+        SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH");
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
 
