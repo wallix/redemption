@@ -93,15 +93,31 @@ struct rdp_orders {
         this->patblt = RDPPatBlt(Rect(), 0, 0, 0, RDPBrush());
         this->lineto = RDPLineTo(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0));
         this->glyph_index = RDPGlyphIndex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"");
+
+        this->destory_cache_bitmap();
+
         memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
         memset(this->memblt_palette, 0, sizeof(this->memblt_palette));
     }
 
-    ~rdp_orders(){
+    ~rdp_orders() {
+        this->destory_cache_bitmap();
     }
 
+private:
+    void destory_cache_bitmap() {
+        for (uint8_t cid = 0; cid < 3; cid++) {
+            for (uint16_t cidx = 0 ; cidx < 10000; cidx++) {
+                if (this->cache_bitmap[cid][cidx]) {
+                    delete this->cache_bitmap[cid][cidx];
+                }
+            }
+        }
+    }
+
+public:
     void process_bmpcache(uint8_t bpp, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
         if (this->verbose & 64){
