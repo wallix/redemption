@@ -173,6 +173,7 @@ class SocketTransport : public Transport {
         BIO * bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
         SSL_CTX* ctx = SSL_CTX_new(SSLv23_server_method());
+        this->allocated_ctx = ctx;
 
         /*
          * This is necessary, because the Microsoft TLS implementation is not perfect.
@@ -386,6 +387,7 @@ class SocketTransport : public Transport {
         TODO("add error management")
         BIO * sbio = BIO_new_socket(this->sck, BIO_NOCLOSE);
         SSL * ssl = SSL_new(ctx);
+        this->allocated_ssl = ssl;
 
         TODO("I should probably not be doing that here ? Is it really necessary")
         int flags = fcntl(this->sck, F_GETFL);
