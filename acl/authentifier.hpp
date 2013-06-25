@@ -789,7 +789,7 @@ class SessionManager {
             stream.mark_end();
 
             int total_length = stream.get_offset();
-            LOG(LOG_INFO, "Data size sending without header %u", total_length - 4);
+            LOG(LOG_INFO, "Data size without header (send) %u", total_length - 4);
             stream.set_out_uint32_be(total_length - 4, 0); /* size in header */
             this->auth_trans.send(stream.data, total_length);
 
@@ -812,7 +812,7 @@ class SessionManager {
             stream.init(size);
         }
         this->auth_trans.recv(&stream.end, size);
-        LOG(LOG_INFO, "Data size received without header %u", size);
+        LOG(LOG_INFO, "Data size without header (receive) = %u", size);
         bool flag = this->ini->context.session_id.is_empty();
         this->in_items(stream);
         if (flag && !this->ini->context.session_id.is_empty()) {

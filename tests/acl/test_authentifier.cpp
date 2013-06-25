@@ -34,8 +34,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
 {
    
     Inifile ini;
-    CheckTransport checktrans("TEST",5);
-    SessionManager sesman(&ini, checktrans, 30, 30, true, 0);
+    LogTransport trans;
+    SessionManager sesman(&ini, trans, 30, 30, true, 0);
 
     // test out_item
     // out_item(Stream stream,const char * key) should add in the Stream a string 
@@ -80,10 +80,70 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
     
     
 }
+
+
+inline void execute_test_initem(Stream & stream, SessionManager & sesman, const char * strauthid, const char * value)
+{
+    // create stream with key , ask
+    stream.out_copy_bytes(strauthid, strlen(strauthid));
+    stream.out_copy_bytes(value, strlen(value));
+    stream.mark_end();
+    stream.rewind();
+        
+    // execute in_item
+    sesman.in_item(stream);
+}
+inline void test_initem_ask(BStream & stream, Inifile & ini, SessionManager & sesman, const char * strauthid, const char * defaut)
+{
+    stream.init(strlen(strauthid) + 5);
+    
+    // Set defaut value to strauthid key
+    ini.context_set_value(strauthid, defaut);
+    BOOST_CHECK(!ini.context_is_asked(strauthid));
+
+    execute_test_initem(stream,sesman,strauthid,"\nASK\n");
+    // check key value is known
+    BOOST_CHECK(ini.context_is_asked(strauthid));
+}
+inline void test_initem_receive(BStream & stream, Inifile & ini, SessionManager & sesman, const char * strauthid, const char * value)
+{
+    stream.init(strlen(strauthid) + strlen(value));
+    // set strauthid key to be asked
+    ini.context_ask(strauthid);
+    BOOST_CHECK(ini.context_is_asked(strauthid));
+
+    execute_test_initem(stream,sesman,strauthid,value);        
+        
+    // check key value is known
+    BOOST_CHECK(!ini.context_is_asked(strauthid)); 
+}
 BOOST_AUTO_TEST_CASE(TestAuthentifierInItem)
 {
     Inifile ini;
+    BStream stream(1);
+    LogTransport trans;
+    SessionManager sesman(&ini, trans, 30, 30, true, 0x40);
     
+    /*
+    const char * str = STRAUTHID_PASSWORD "\nASK\n";
+    stream.init(strlen(str));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
+    ini.context_set_value(STRAUTHID_PASSWORD, "SecureLinux");
+    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
+    stream.out_copy_bytes(str, strlen(str));
+    stream.mark_end();
+    stream.rewind();
+    sesman.in_item(stream);
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
+    */
+
+    test_initem_ask(stream,ini,sesman,STRAUTHID_PASSWORD,"SecureLinux");
+    test_initem_ask(stream,ini,sesman,STRAUTHID_PROXY_TYPE,"VNC");
+    test_initem_ask(stream,ini,sesman,STRAUTHID_SELECTOR_CURRENT_PAGE,"");
+    test_initem_receive(stream,ini,sesman,STRAUTHID_SELECTOR_CURRENT_PAGE,"\n2\n");
+    test_initem_receive(stream,ini,sesman,STRAUTHID_PASSWORD,"\n!SecureLinux\n");
+    test_initem_receive(stream,ini,sesman,STRAUTHID_PROXY_TYPE,"\nRDP\n");
+
 }
 // test in_item
 
@@ -305,7 +365,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
 {
 
     Inifile ini;
-
 
     long keepalive_time;
     bool record_video, keep_alive;
