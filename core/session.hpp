@@ -452,7 +452,7 @@ struct Session {
                                 // without going to close box.
                                 // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
                                 this->internal_state = SESSION_STATE_STOP;
-                                return;
+                                break;
                             case BACK_EVENT_REFRESH:
                             {
                                 if (this->verbose & 8){
