@@ -11,6 +11,9 @@ res = re.search(r"(\d+[.]*\d+[.]?\d+)\n", gccinfo)
 GCCVERSION = 'gcc-%s' % res.group(1)
 
 TESTSSUBDIR = ''
+if GCCVERSION[:9] in ['gcc-4.6.1']:
+    GCCVERSION = GCCVERSION[:9]
+    TESTSSUBDIR = 'tests/'
 if GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7']:
     GCCVERSION = GCCVERSION[:7]
     TESTSSUBDIR = 'tests/'
