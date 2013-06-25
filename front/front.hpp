@@ -2188,7 +2188,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                                     se.eventFlags);
                             }
 
-                            cb.rdp_input_synchronize(0, 0, se.eventFlags, 0);
+                            this->keymap.synchronize(se.eventFlags & 0xFFFF);
+                            cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
                         }
                         break;
 
