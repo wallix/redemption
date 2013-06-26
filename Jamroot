@@ -211,8 +211,8 @@ exe rgx_cmp : ftests/rgx_cmp.cpp ;
 
 import testing ;
 
-unit-test test_stream : tests/utils/test_stream.cpp libboost_unit_test ;
-unit-test test_stream : tests/utils/test_stream.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_stream : tests/utils/test_stream.cpp openssl libboost_unit_test ;
+unit-test test_stream : tests/utils/test_stream.cpp openssl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test ;
 unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test gcov : <variant>coverage ;

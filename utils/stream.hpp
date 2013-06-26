@@ -55,7 +55,7 @@ public:
 
     virtual void init(size_t capacity) = 0;
 
-    void reset(){
+    virtual void reset(){
         this->end = this->p = this->data;
     }
 
@@ -447,11 +447,11 @@ public:
         this->end = this->p;
     }
 
-    void rewind(){
+    virtual void rewind(){
         this->p = this->data;
     }
 
-    size_t size() const {
+    virtual size_t size() const {
         return this->end - this->data;
     }
 
@@ -1638,6 +1638,96 @@ class BStream : public Stream {
         }
         this->p = this->data;
         this->end = this->data;
+    }
+};
+
+class HStream : public BStream {
+public:
+    size_t    reserved_leading_space;
+    uint8_t * data_start;
+
+    HStream(size_t reserved_leading_space, size_t total_size = AUTOSIZE)
+            : BStream(total_size)
+            , reserved_leading_space(reserved_leading_space) {
+        if (reserved_leading_space >= total_size) {
+            LOG( LOG_ERR
+               , "failed to allocate buffer : total_size=%u, reserved_leading_space=%u\n"
+               , total_size, reserved_leading_space);
+            throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_RESERVED_LEADING_SPACE);
+        }
+
+        this->p          += this->reserved_leading_space;
+        this->data_start  = this->p;
+        this->end         = this->p;
+    }
+
+    virtual ~HStream() {}
+
+    void copy_to_head(const uint8_t * v, size_t n) {
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, v, n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    void copy_to_head(const char * v, size_t n) {
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, v, n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    void copy_to_head(const Stream & stream) {
+        size_t n = stream.size();
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, stream.get_data(), n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    virtual uint8_t * get_data() const {
+        return this->data_start;
+    }
+
+    virtual void reset() {
+        BStream::reset();
+
+        this->p          += this->reserved_leading_space;
+        this->data_start  = this->p;
+        this->end         = this->p;
+    }
+
+    virtual void rewind() {
+        this->p          = this->data + this->reserved_leading_space;;
+        this->data_start = this->p;
+    }
+
+    virtual size_t size() const {
+        return this->end - this->data_start;
     }
 };
 

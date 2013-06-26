@@ -376,7 +376,7 @@ struct mod_rdp : public mod_api {
     // Method used by session to transmit sesman answer for auth_channel
     virtual void send_auth_channel_data(const char * data) {
         if (!this->sesman){ return; }
-        BStream stream(65536);
+        HStream stream(1024, 65536);
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
@@ -408,7 +408,7 @@ struct mod_rdp : public mod_api {
             channel.log(-1);
         }
 
-        BStream stream(65536);
+        HStream stream(1024, 65536);
 
         stream.out_uint32_le(length);
         stream.out_uint32_le(flags);
@@ -433,7 +433,7 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    void send_data_request(uint16_t channelId, Stream & stream)
+    void send_data_request(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
         BStream mcs_header(256);
@@ -481,7 +481,7 @@ struct mod_rdp : public mod_api {
 
                     /* Generic Conference Control (T.124) ConferenceCreateRequest */
 
-                    BStream stream(65536);
+                    HStream stream(1024, 65536);
                     // ------------------------------------------------------------
                     GCC::UserData::CSCore cs_core;
                     cs_core.version = this->use_rdp5?0x00080004:0x00080001;
@@ -823,7 +823,7 @@ struct mod_rdp : public mod_api {
             }
             {
                 BStream x224_header(256);
-                BStream mcs_data(256);
+                HStream mcs_data(256, 512);
 
                 MCS::ErectDomainRequest_Send mcs(mcs_data, 0, 0, MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_data.size());
@@ -834,7 +834,7 @@ struct mod_rdp : public mod_api {
             }
             {
                 BStream x224_header(256);
-                BStream mcs_data(256);
+                HStream mcs_data(256, 512);
 
                 MCS::AttachUserRequest_Send mcs(mcs_data, MCS::PER_ENCODING);
 
@@ -872,7 +872,7 @@ struct mod_rdp : public mod_api {
 
                 for (size_t index = 0; index < num_channels+2; index++){
                     BStream x224_header(256);
-                    BStream mcs_cjrq_data(256);
+                    HStream mcs_cjrq_data(256, 512);
                     if (this->verbose & 16){
                         LOG(LOG_INFO, "cjrq[%u] = %u", index, channels_id[index]);
                     }
@@ -929,7 +929,7 @@ struct mod_rdp : public mod_api {
                 if (this->verbose & 1){
                     LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u", this->server_public_key_len);
                 }
-                BStream stream(this->server_public_key_len + 32);
+                HStream stream(512, 512 + this->server_public_key_len + 32);
                 SEC::SecExchangePacket_Send mcs(stream, client_crypt_random, this->server_public_key_len);
                 this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
             }
@@ -1068,7 +1068,7 @@ struct mod_rdp : public mod_api {
                             BStream x224_header(256);
                             BStream mcs_header(256);
                             BStream sec_header(256);
-                            BStream lic_data(65535);
+                            HStream lic_data(1024, 65535);
 
                             if (this->lic_layer_license_size > 0) {
                                 uint8_t hwid[LIC::LICENSE_HWID_SIZE];
@@ -1155,7 +1155,7 @@ struct mod_rdp : public mod_api {
                             BStream x224_header(256);
                             BStream mcs_header(256);
                             BStream sec_header(256);
-                            BStream lic_data(65535);
+                            HStream lic_data(1024, 65535);
 
                             LIC::ClientPlatformChallengeResponse_Send(lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig);
                             SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
@@ -1958,7 +1958,7 @@ struct mod_rdp : public mod_api {
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
@@ -3245,7 +3245,7 @@ struct mod_rdp : public mod_api {
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
@@ -3283,7 +3283,7 @@ struct mod_rdp : public mod_api {
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
@@ -3325,7 +3325,7 @@ struct mod_rdp : public mod_api {
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
@@ -3382,7 +3382,7 @@ struct mod_rdp : public mod_api {
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
@@ -3408,7 +3408,7 @@ struct mod_rdp : public mod_api {
             }
 
             BStream fastpath_header(256);
-            BStream stream(256);
+            HStream stream(256, 512);
 
             switch (message_type) {
             case RDP_INPUT_SCANCODE:
@@ -3880,7 +3880,7 @@ struct mod_rdp : public mod_api {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_client_info_pdu");
         }
-        BStream stream(1024);
+        HStream stream(1024, 2048);
 
         InfoPacket infoPacket( this->use_rdp5
                              , this->domain

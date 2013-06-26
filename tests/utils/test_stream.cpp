@@ -31,6 +31,7 @@
 #include "log.hpp"
 
 #include "stream.hpp"
+#include "testtransport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestStreamInitWithSize)
 {
@@ -336,3 +337,23 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
     BOOST_CHECK_EQUAL(0, result[7]);
 }
 
+BOOST_AUTO_TEST_CASE(TestStream_HStream)
+{
+    HStream stream(512, 1024);
+
+    BOOST_CHECK_EQUAL(512, stream.room());
+
+    stream.out_copy_bytes("0123456789", 10);
+    stream.copy_to_head("abcdefg", 7);
+    stream.copy_to_head("ABCDEFG", 7);
+    stream.copy_to_head("#*?!+-_", 7);
+    stream.mark_end();
+
+    const char * data = "#*?!+-_ABCDEFGabcdefg0123456789";
+
+    CheckTransport ct(data, strlen(data));
+
+    ct.send(stream);
+
+    BOOST_CHECK_EQUAL(true, ct.get_status());
+}

@@ -91,6 +91,8 @@ public:
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * const buffer, size_t len) throw (Error) = 0;
 
+/*
+protected:
     void send(Stream & header1, Stream & header2, Stream & header3, Stream & header4, Stream & stream) {
         BStream one(65535);
         one.out_copy_bytes(header1);
@@ -101,6 +103,17 @@ public:
         one.mark_end();
         this->send(one);
     }
+public:
+    void send(Stream & header1, Stream & header2, Stream & header3, Stream & header4, HStream & stream) {
+        stream.out_copy_bytes(header4);
+        stream.out_copy_bytes(header3);
+        stream.out_copy_bytes(header2);
+        stream.out_copy_bytes(header1);
+        this->send(stream);
+    }
+*/
+/*
+protected:
     void send(Stream & header1, Stream & header2, Stream & header3, Stream & stream) {
         BStream one(65535);
         one.out_copy_bytes(header1);
@@ -110,6 +123,16 @@ public:
         one.mark_end();
         this->send(one);
     }
+public:
+*/
+    void send(Stream & header1, Stream & header2, Stream & header3, HStream & stream) {
+        stream.copy_to_head(header3);
+        stream.copy_to_head(header2);
+        stream.copy_to_head(header1);
+        this->send(stream);
+    }
+/*
+protected:
     void send(Stream & header1, Stream & header2, Stream & stream) {
         BStream one(65535);
         one.out_copy_bytes(header1);
@@ -118,12 +141,25 @@ public:
         one.mark_end();
         this->send(one);
     }
+public:
+*/
+    void send(Stream & header1, Stream & header2, HStream & stream) {
+        stream.copy_to_head(header2);
+        stream.copy_to_head(header1);
+        this->send(stream);
+    }
+//protected:
     void send(Stream & header, Stream & stream) {
         BStream one(65535);
         one.out_copy_bytes(header);
         one.out_copy_bytes(stream);
         one.mark_end();
         this->send(one);
+    }
+public:
+    void send(Stream & header, HStream & stream) {
+        stream.copy_to_head(header);
+        this->send(stream);
     }
     void send(Stream & stream) throw(Error) {
         this->send(stream.get_data(), stream.size());

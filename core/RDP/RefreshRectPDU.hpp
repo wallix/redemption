@@ -185,7 +185,7 @@ struct RefreshRectPDU {
         ShareControl_Send( sctrl_header, PDUTYPE_DATAPDU, this->userId + GCC::MCS_USERCHANNEL_BASE
                          , this->buffer_stream.size());
 
-        BStream target_stream(65536);
+        HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(this->buffer_stream);
         target_stream.mark_end();

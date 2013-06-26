@@ -226,7 +226,7 @@ protected:
                 BStream sctrl_header(256);
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
 
-                BStream target_stream(65536);
+                HStream target_stream(1024, 65536);
                 target_stream.out_copy_bytes(sctrl_header);
                 target_stream.out_copy_bytes(this->stream_orders);
                 target_stream.mark_end();
@@ -293,7 +293,7 @@ protected:
                                  , this->userid + GCC::MCS_USERCHANNEL_BASE
                                  , this->stream_bitmaps.size());
 
-                BStream target_stream(65536);
+                HStream target_stream(1024, 65536);
                 target_stream.out_copy_bytes(sctrl_header);
                 target_stream.out_copy_bytes(this->stream_bitmaps);
                 target_stream.mark_end();
