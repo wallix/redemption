@@ -29,7 +29,7 @@
 #include "authentifier.hpp"
 #include "testtransport.hpp"
 
-
+/*
 BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
 {
    
@@ -79,8 +79,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierOutItem)
     stream.reset();
     
 }
-
-
+*/
+ /*
 inline void execute_test_initem(Stream & stream, SessionManager & sesman, const char * strauthid, const char * value)
 {
     // create stream with key , ask
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInItem)
     test_initem_receive(stream,ini,sesman,STRAUTHID_PROXY_TYPE,"\nRDP\n");
 
 }
-
+*/
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
 {

@@ -81,7 +81,7 @@ class SessionManager {
     int tick_count;
 
     public:
-    //Transport & auth_trans;
+    //Transport & auth_trans;    //not needed anymore
     AclSerializer acl_serial;
     int keepalive_grace_delay;
     int max_tick;
@@ -185,7 +185,7 @@ class SessionManager {
         this->auth_trans.send(stream.data, total_length);
         */
     }
-    // TO REMOVE
+    /* TO REMOVE
     void in_items(Stream & stream)
     {
         if (this->verbose & 0x40){
@@ -195,7 +195,8 @@ class SessionManager {
             ;
         }
     }
-    // TO REMOVE
+    */
+    /* TO REMOVE
     void in_item(Stream & stream)
     {
         enum { STATE_KEYWORD, STATE_VALUE } state = STATE_KEYWORD;
@@ -245,6 +246,7 @@ class SessionManager {
         hexdump((char *)start, stream.p-start);
         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
+    */
   
     bool close_on_timestamp(long & timestamp)
     {
@@ -742,7 +744,7 @@ class SessionManager {
         }
     }
 
-    // TO REMOVE
+    /* TO REMOVE
     TODO("move that function to Inifile create specialized stream object InifileStream")
     void out_item(Stream & stream, const char * key)
     {
@@ -770,10 +772,10 @@ class SessionManager {
             stream.out_uint8('\n');
         }
     }
-
+    */
     void ask_next_module_remote()
     {
-        this->acl_serial.ask_next_module_bis();
+        this->acl_serial.ask_next_module_remote();
         /* TO REMOVE
         // if anything happen, like authentification socked closing, stop current connection
         try {

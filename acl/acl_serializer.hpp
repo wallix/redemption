@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean
 
-
+   Protocol layer for communication with ACL
 */
 
 #ifndef _REDEMPTION_ACL_SERIALIZER_HPP_
@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <list>
-#include <string>
+
 
 #include "stream.hpp"
 #include "config.hpp"
@@ -35,6 +35,9 @@
 
 
 class AclSerializer{
+    enum {
+        HEADER_SIZE = 4,
+    };
     Inifile * ini;
     Transport & auth_trans;
     uint32_t verbose;
@@ -108,8 +111,8 @@ public:
     }
     void incoming()
     {
-        BStream stream(4);
-        this->auth_trans.recv(&stream.end, 4);
+        BStream stream(HEADER_SIZE);
+        this->auth_trans.recv(&stream.end, HEADER_SIZE);
         size_t size = stream.in_uint32_be();
         if (size > 65536){
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
@@ -164,19 +167,38 @@ public:
             stream.out_uint8('\n');
         }
     }
-    void send_to_acl(std::list< std::string > & list)
+    void send_to_acl(const char * strlist[], size_t len)
     {
         try {
             BStream stream(8192);
             stream.out_uint32_be(0);
             
-            for (std::list< std::string >::const_iterator it = list.begin(), end = list.end(); it != end; ++it) {
-                this->out_item(stream, (*it).data());
+            for (unsigned i = 0; i < len; ++i) {
+                this->out_item(stream,strlist[i]);
             }
             stream.mark_end();
             int total_length = stream.get_offset();
-            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - 4);
-            stream.set_out_uint32_be(total_length - 4, 0); /* size in header */
+            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
+            this->auth_trans.send(stream.data, total_length);
+        } catch (Error e) {
+            this->ini->context.authenticated = false;
+            this->ini->context.rejected.copy_c_str("Authentifier service failed");
+        }
+    }
+    void send_to_acl(std::list< const char * > & list)
+    {
+        try {
+            BStream stream(8192);
+            stream.out_uint32_be(0);
+            
+            for (std::list< const char * >::const_iterator it = list.begin(), end = list.end(); it != end; ++it){
+                this->out_item(stream, *it);
+            }
+            stream.mark_end();
+            int total_length = stream.get_offset();
+            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
             this->auth_trans.send(stream.data, total_length);
         } catch (Error e) {
             this->ini->context.authenticated = false;
@@ -185,41 +207,72 @@ public:
     }
     inline void send_to_acl(const char * strauthid)
     {
-        std::list<std::string> strl(1,std::string(strauthid));
-        send_to_acl(strl);
+        this->send_to_acl(&strauthid,1);
     }
-    void ask_next_module_bis()
+    void ask_next_module_remote()
     {
-        std::list<std::string> strlist;
-        strlist.push_back(std::string(STRAUTHID_PROXY_TYPE));
-        strlist.push_back(std::string(STRAUTHID_DISPLAY_MESSAGE));
-        strlist.push_back(std::string(STRAUTHID_ACCEPT_MESSAGE));
-        strlist.push_back(std::string(STRAUTHID_HOST));
-        strlist.push_back(std::string(STRAUTHID_TARGET));
-        strlist.push_back(std::string(STRAUTHID_AUTH_USER));
-        strlist.push_back(std::string(STRAUTHID_PASSWORD));
-        strlist.push_back(std::string(STRAUTHID_TARGET_USER));
-        strlist.push_back(std::string(STRAUTHID_TARGET_DEVICE));
-        strlist.push_back(std::string(STRAUTHID_TARGET_PROTOCOL));
-        strlist.push_back(std::string(STRAUTHID_SELECTOR));
-        strlist.push_back(std::string(STRAUTHID_SELECTOR_GROUP_FILTER));
-        strlist.push_back(std::string(STRAUTHID_SELECTOR_DEVICE_FILTER));
-        strlist.push_back(std::string(STRAUTHID_SELECTOR_LINES_PER_PAGE));
-        strlist.push_back(std::string(STRAUTHID_SELECTOR_CURRENT_PAGE));
-        strlist.push_back(std::string(STRAUTHID_TARGET_PASSWORD));
-        strlist.push_back(std::string(STRAUTHID_OPT_WIDTH));
-        strlist.push_back(std::string(STRAUTHID_OPT_HEIGHT));
-        strlist.push_back(std::string(STRAUTHID_OPT_BPP));
-        strlist.push_back(std::string(STRAUTHID_REAL_TARGET_DEVICE));
+        const char * strlist[] = {
+        STRAUTHID_PROXY_TYPE,
+        STRAUTHID_DISPLAY_MESSAGE,
+        STRAUTHID_ACCEPT_MESSAGE,
+        STRAUTHID_HOST,
+        STRAUTHID_TARGET,
+        STRAUTHID_AUTH_USER,
+        STRAUTHID_PASSWORD,
+        STRAUTHID_TARGET_USER,
+        STRAUTHID_TARGET_DEVICE,
+        STRAUTHID_TARGET_PROTOCOL,
+        STRAUTHID_SELECTOR,
+        STRAUTHID_SELECTOR_GROUP_FILTER,
+        STRAUTHID_SELECTOR_DEVICE_FILTER,
+        STRAUTHID_SELECTOR_LINES_PER_PAGE,
+        STRAUTHID_SELECTOR_CURRENT_PAGE,
+        STRAUTHID_TARGET_PASSWORD,
+        STRAUTHID_OPT_WIDTH,
+        STRAUTHID_OPT_HEIGHT,
+        STRAUTHID_OPT_BPP,
+        STRAUTHID_REAL_TARGET_DEVICE
+        };
+        /*
         if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
-            strlist.push_back(std::string(STRAUTHID_TRACE_SEAL));
+            STRAUTHID_TRACE_SEAL,
+        }
+        */
+        this->send_to_acl(strlist,sizeof(strlist)/sizeof(char *));
+        
+    }
+    void ask_next_module_remote_()
+    {
+        std::list< const char * > strlist;
+        strlist.push_back(STRAUTHID_PROXY_TYPE);
+        strlist.push_back(STRAUTHID_DISPLAY_MESSAGE);
+        strlist.push_back(STRAUTHID_ACCEPT_MESSAGE);
+        strlist.push_back(STRAUTHID_HOST);
+        strlist.push_back(STRAUTHID_TARGET);
+        strlist.push_back(STRAUTHID_AUTH_USER);
+        strlist.push_back(STRAUTHID_PASSWORD);
+        strlist.push_back(STRAUTHID_TARGET_USER);
+        strlist.push_back(STRAUTHID_TARGET_DEVICE);
+        strlist.push_back(STRAUTHID_TARGET_PROTOCOL);
+        strlist.push_back(STRAUTHID_SELECTOR);
+        strlist.push_back(STRAUTHID_SELECTOR_GROUP_FILTER);
+        strlist.push_back(STRAUTHID_SELECTOR_DEVICE_FILTER);
+        strlist.push_back(STRAUTHID_SELECTOR_LINES_PER_PAGE);
+        strlist.push_back(STRAUTHID_SELECTOR_CURRENT_PAGE);
+        strlist.push_back(STRAUTHID_TARGET_PASSWORD);
+        strlist.push_back(STRAUTHID_OPT_WIDTH);
+        strlist.push_back(STRAUTHID_OPT_HEIGHT);
+        strlist.push_back(STRAUTHID_OPT_BPP);
+        strlist.push_back(STRAUTHID_REAL_TARGET_DEVICE);
+        if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
+            strlist.push_back(STRAUTHID_TRACE_SEAL);
         }
         
         this->send_to_acl(strlist);
         
     }
     
-    void ask_next_module_remote()
+    void ask_next_module_remote_old()
     {
         // if anything happen, like authentification socked closing, stop current connection
         try {
@@ -254,8 +307,8 @@ public:
             stream.mark_end();
 
             int total_length = stream.get_offset();
-            LOG(LOG_INFO, "Data size without header (send) %u", total_length - 4);
-            stream.set_out_uint32_be(total_length - 4, 0); /* size in header */
+            LOG(LOG_INFO, "Data size without header (send) %u", total_length - HEADER_SIZE);
+            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
             this->auth_trans.send(stream.data, total_length);
 
         } catch (Error e) {

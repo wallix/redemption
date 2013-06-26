@@ -17,6 +17,8 @@
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
 
+   Unit tests for Acl Serializer
+
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -32,7 +34,7 @@
 
 BOOST_AUTO_TEST_CASE(TestAclSerializerOutItem)
 {
-   
+    
     Inifile ini;
     LogTransport trans;
     AclSerializer acl(&ini, trans, 0);
@@ -79,8 +81,34 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerOutItem)
     stream.reset();
     
 }
+BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
+{
+    Inifile ini;
+    LogTransport trans;
+    AclSerializer acl(&ini, trans, 0);
+    try {
+        acl.ask_next_module_remote();
+    } catch (const Error & e){
+        BOOST_CHECK(false);
+    }
+}
 
-
+BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
+{
+    Inifile ini;
+    BStream stream(1024);
+    stream.out_uint32_be(0);
+    stream.out_concat(STRAUTHID_AUTH_USER "\nASK\n");
+    stream.out_concat(STRAUTHID_PASSWORD "\nASK\n");
+    
+    GeneratorTransport trans((char *)stream.p,stream.get_offset());
+    AclSerializer acl(&ini, trans, 0);
+    try {
+        acl.incoming();
+    } catch (const Error & e){
+        BOOST_CHECK(false);
+    }
+}
 inline void execute_test_initem(Stream & stream, AclSerializer & acl, const char * strauthid, const char * value)
 {
     // create stream with key , ask
@@ -121,20 +149,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
     Inifile ini;
     BStream stream(1);
     LogTransport trans;
-    AclSerializer acl(&ini, trans, 0);
-    
-    
-    // const char * str = STRAUTHID_PASSWORD "\nASK\n";
-    // stream.init(strlen(str));
-    // BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    // ini.context_set_value(STRAUTHID_PASSWORD, "SecureLinux");
-    // BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
-    // stream.out_copy_bytes(str, strlen(str));
-    // stream.mark_end();
-    // stream.rewind();
-    // acl.in_item(stream);
-    // BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    
+    AclSerializer acl(&ini, trans, 0);    
 
     test_initem_ask(stream,ini,acl,STRAUTHID_PASSWORD,"SecureLinux");
     test_initem_ask(stream,ini,acl,STRAUTHID_PROXY_TYPE,"VNC");
@@ -143,4 +158,24 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
     test_initem_receive(stream,ini,acl,STRAUTHID_PASSWORD,"\n!SecureLinux\n");
     test_initem_receive(stream,ini,acl,STRAUTHID_PROXY_TYPE,"\nRDP\n");
 
+}
+
+BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
+{
+    Inifile ini;
+    BStream stream(1024);
+    LogTransport trans;
+    AclSerializer acl(&ini, trans, 0);
+    
+    ini.context_set_value(STRAUTHID_PASSWORD, "VerySecurePassword");
+    ini.context_ask(STRAUTHID_PROXY_TYPE);
+    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PROXY_TYPE));
+    stream.out_copy_bytes(STRAUTHID_PASSWORD "\nASK\n", strlen(STRAUTHID_PASSWORD "\nASK\n"));
+    stream.out_copy_bytes(STRAUTHID_PROXY_TYPE "\nVNC\n", strlen(STRAUTHID_PROXY_TYPE "\nVNC\n"));
+    stream.mark_end();
+    stream.rewind();
+    acl.in_items(stream);
+    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
+    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PROXY_TYPE));
 }
