@@ -353,6 +353,8 @@ BOOST_AUTO_TEST_CASE(TestStream_HStream)
 
     CheckTransport ct(data, strlen(data));
 
+    BOOST_CHECK_EQUAL(31, stream.size());
+
     ct.send(stream);
 
     BOOST_CHECK_EQUAL(true, ct.get_status());
