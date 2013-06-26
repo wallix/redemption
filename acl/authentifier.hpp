@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou, Meng Tan
 */
 
 #ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
@@ -119,7 +119,7 @@ class SessionManager {
         this->tick_count = 1;
 
         this->ini->context_ask(AUTHID_KEEPALIVE);
-        this->acl_serial.send_to_acl(STRAUTHID_KEEPALIVE);
+        this->acl_serial.send(STRAUTHID_KEEPALIVE);
         
         keepalive_time = ::time(NULL) + 30;
 
@@ -133,7 +133,7 @@ class SessionManager {
         }
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_TARGET, target);
-        this->acl_serial.send_to_acl(STRAUTHID_AUTHCHANNEL_TARGET);
+        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_TARGET);
         
     }
 
@@ -145,7 +145,7 @@ class SessionManager {
         }
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
-        this->acl_serial.send_to_acl(STRAUTHID_AUTHCHANNEL_RESULT);
+        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_RESULT);
         
     }
   
@@ -218,7 +218,7 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
-                this->acl_serial.send_to_acl(STRAUTHID_KEEPALIVE);
+                this->acl_serial.send(STRAUTHID_KEEPALIVE);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -298,7 +298,7 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
-                this->acl_serial.send_to_acl(STRAUTHID_KEEPALIVE);
+                this->acl_serial.send(STRAUTHID_KEEPALIVE);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");

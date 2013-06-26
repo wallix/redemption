@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Meng Tan
 
    Protocol layer for communication with ACL
 */
@@ -139,7 +139,6 @@ public:
     }
     
 
-
     TODO("move that function to Inifile create specialized stream object InifileStream")
     void out_item(Stream & stream, const char * key)
     {
@@ -167,7 +166,34 @@ public:
             stream.out_uint8('\n');
         }
     }
-    void send_to_acl(const char * strlist[], size_t len)
+    void out_item(Stream & stream, authid_t authid)
+    {
+        const char * key = string_from_authid(authid);
+        if (this->ini->context_is_asked(authid)){
+            LOG(LOG_INFO, "sending (from authid) %s=ASK\n", key);
+            stream.out_copy_bytes(key, strlen(key));
+            stream.out_copy_bytes("\nASK\n",5);
+        }
+        else {
+            char temp_buffer[256];
+
+            const char * tmp = this->ini->context_get_value(authid, temp_buffer, sizeof(temp_buffer));
+           
+            if ((strncasecmp("password", (char*)key, 8) == 0)
+            ||(strncasecmp("target_password", (char*)key, 15) == 0)){
+                LOG(LOG_INFO, "sending (from authid) %s=<hidden>\n", key);
+            }
+            else {
+                LOG(LOG_INFO, "sending (from authid) %s=%s\n", key, tmp);
+            }
+            stream.out_copy_bytes(key, strlen(key));
+            stream.out_uint8('\n');
+            stream.out_uint8('!');
+            stream.out_copy_bytes(tmp, strlen(tmp));
+            stream.out_uint8('\n');
+        }
+    }
+    void send(const char * strlist[], size_t len)
     {
         try {
             BStream stream(8192);
@@ -186,7 +212,7 @@ public:
             this->ini->context.rejected.copy_c_str("Authentifier service failed");
         }
     }
-    void send_to_acl(std::list< const char * > & list)
+    void send(std::list< const char * > & list)
     {
         try {
             BStream stream(8192);
@@ -205,9 +231,47 @@ public:
             this->ini->context.rejected.copy_c_str("Authentifier service failed");
         }
     }
-    inline void send_to_acl(const char * strauthid)
+    void send(std::list< authid_t > & list)
     {
-        this->send_to_acl(&strauthid,1);
+        try {
+            BStream stream(8192);
+            stream.out_uint32_be(0);
+            
+            for (std::list< authid_t >::const_iterator it = list.begin(), end = list.end(); it != end; ++it){
+                this->out_item(stream, *it);
+            }
+            stream.mark_end();
+            int total_length = stream.get_offset();
+            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
+            this->auth_trans.send(stream.data, total_length);
+        } catch (Error e) {
+            this->ini->context.authenticated = false;
+            this->ini->context.rejected.copy_c_str("Authentifier service failed");
+        }
+    }
+    void send(authid_t * list, size_t len)
+    {
+        try {
+            BStream stream(8192);
+            stream.out_uint32_be(0);
+            
+            for (unsigned i = 0; i < len; ++i) {
+                this->out_item(stream,*(list+i));
+            }
+            stream.mark_end();
+            int total_length = stream.get_offset();
+            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
+            this->auth_trans.send(stream.data, total_length);
+        } catch (Error e) {
+            this->ini->context.authenticated = false;
+            this->ini->context.rejected.copy_c_str("Authentifier service failed");
+        }
+    }
+    inline void send(const char * strauthid)
+    {
+        this->send(&strauthid,1);
     }
     void ask_next_module_remote_()
     {
@@ -238,10 +302,10 @@ public:
             STRAUTHID_TRACE_SEAL,
         }
         */
-        this->send_to_acl(strlist,sizeof(strlist)/sizeof(char *));
+        this->send(strlist,sizeof(strlist)/sizeof(char *));
         
     }
-    void ask_next_module_remote()
+    void ask_next_module_remote_list()
     {
         std::list< const char * > strlist;
         strlist.push_back(STRAUTHID_PROXY_TYPE);
@@ -267,10 +331,72 @@ public:
         if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
             strlist.push_back(STRAUTHID_TRACE_SEAL);
         }
-        this->send_to_acl(strlist);
+        this->send(strlist);
         
     }
     
+    void ask_next_module_remote_authid()
+    {
+        authid_t authidlist[] = {
+        AUTHID_PROXY_TYPE,
+        AUTHID_DISPLAY_MESSAGE,
+        AUTHID_ACCEPT_MESSAGE,
+        AUTHID_HOST,
+        AUTHID_TARGET,
+        AUTHID_AUTH_USER,
+        AUTHID_PASSWORD,
+        AUTHID_TARGET_USER,
+        AUTHID_TARGET_DEVICE,
+        AUTHID_TARGET_PROTOCOL,
+        AUTHID_SELECTOR,
+        AUTHID_SELECTOR_GROUP_FILTER,
+        AUTHID_SELECTOR_DEVICE_FILTER,
+        AUTHID_SELECTOR_LINES_PER_PAGE,
+        AUTHID_SELECTOR_CURRENT_PAGE,
+        AUTHID_TARGET_PASSWORD,
+        AUTHID_OPT_WIDTH,
+        AUTHID_OPT_HEIGHT,
+        AUTHID_OPT_BPP,
+        AUTHID_REAL_TARGET_DEVICE
+        };
+        /*
+        if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
+            AUTHID_TRACE_SEAL,
+        }
+        */
+        this->send(authidlist,sizeof(authidlist)/sizeof(authid_t));
+        
+    }
+    void ask_next_module_remote()
+    {
+        std::list< authid_t > authidlist;
+        authidlist.push_back(AUTHID_PROXY_TYPE);
+        authidlist.push_back(AUTHID_DISPLAY_MESSAGE);
+        authidlist.push_back(AUTHID_ACCEPT_MESSAGE);
+        authidlist.push_back(AUTHID_HOST);
+        authidlist.push_back(AUTHID_TARGET);
+        authidlist.push_back(AUTHID_AUTH_USER);
+        authidlist.push_back(AUTHID_PASSWORD);
+        authidlist.push_back(AUTHID_TARGET_USER);
+        authidlist.push_back(AUTHID_TARGET_DEVICE);
+        authidlist.push_back(AUTHID_TARGET_PROTOCOL);
+        authidlist.push_back(AUTHID_SELECTOR);
+        authidlist.push_back(AUTHID_SELECTOR_GROUP_FILTER);
+        authidlist.push_back(AUTHID_SELECTOR_DEVICE_FILTER);
+        authidlist.push_back(AUTHID_SELECTOR_LINES_PER_PAGE);
+        authidlist.push_back(AUTHID_SELECTOR_CURRENT_PAGE);
+        authidlist.push_back(AUTHID_TARGET_PASSWORD);
+        authidlist.push_back(AUTHID_OPT_WIDTH);
+        authidlist.push_back(AUTHID_OPT_HEIGHT);
+        authidlist.push_back(AUTHID_OPT_BPP);
+        authidlist.push_back(AUTHID_REAL_TARGET_DEVICE);
+        if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
+            authidlist.push_back(AUTHID_TRACE_SEAL);
+        }
+        this->send(authidlist);
+        
+    }
+
     void ask_next_module_remote_old()
     {
         // if anything happen, like authentification socked closing, stop current connection

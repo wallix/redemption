@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean, Raphael Zhou
+   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 
    configuration file,
    parsing config file rdpproxy.ini
@@ -298,95 +298,95 @@ TODO("This is not a translation but auth_channel answer, change key name in sesm
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
 
+static const std::string authstr[MAX_AUTHID - 1] = {
+    // Translation text
+    STRAUTHID_TRANS_BUTTON_OK,
+    STRAUTHID_TRANS_BUTTON_CANCEL,
+    STRAUTHID_TRANS_BUTTON_HELP,
+    STRAUTHID_TRANS_BUTTON_CLOSE,
+    STRAUTHID_TRANS_BUTTON_REFUSED,
+    STRAUTHID_TRANS_LOGIN,
+    STRAUTHID_TRANS_USERNAME,
+    STRAUTHID_TRANS_PASSWORD,
+    STRAUTHID_TRANS_TARGET,
+    STRAUTHID_TRANS_DIAGNOSTIC,
+    STRAUTHID_TRANS_CONNECTION_CLOSED,
+    STRAUTHID_TRANS_HELP_MESSAGE,
+
+    // Options
+    STRAUTHID_OPT_CLIPBOARD,            // clipboard
+    STRAUTHID_OPT_DEVICEREDIRECTION,    // device_redirection
+    STRAUTHID_OPT_FILE_ENCRYPTION,      // file encryption
+
+    // Video capture
+    STRAUTHID_OPT_CODEC_ID,     // CODEC_ID for video encoding
+    STRAUTHID_OPT_MOVIE,        // is_rec
+    STRAUTHID_OPT_MOVIE_PATH,   // rec_path
+    STRAUTHID_VIDEO_QUALITY,
+
+    // Alternate shell
+    STRAUTHID_ALTERNATE_SHELL,
+    STRAUTHID_SHELL_WORKING_DIRECTORY,
+
+    // Context
+    STRAUTHID_OPT_BITRATE,      // Bit rate for video encoding
+    STRAUTHID_OPT_FRAMERATE,    // Frame rate for video encoding
+    STRAUTHID_OPT_QSCALE,       // QScale parameter for vdeo encoding
+
+    STRAUTHID_OPT_BPP,          // bits per planes (number of colors)
+    STRAUTHID_OPT_HEIGHT,       // client height
+    STRAUTHID_OPT_WIDTH,        // client width
+
+    STRAUTHID_AUTH_ERROR_MESSAGE,
+
+    STRAUTHID_SELECTOR,
+    STRAUTHID_SELECTOR_CURRENT_PAGE,    // current page
+    STRAUTHID_SELECTOR_DEVICE_FILTER,   // device filter text
+    STRAUTHID_SELECTOR_GROUP_FILTER,    // group filter text
+    STRAUTHID_SELECTOR_LINES_PER_PAGE,  // number of lines per page
+    STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
+
+    STRAUTHID_TARGET_DEVICE,    // target_device
+    STRAUTHID_TARGET_PASSWORD,  // target_password
+    STRAUTHID_TARGET_PORT,      // target_port
+    STRAUTHID_TARGET_PROTOCOL,  // proto_dest
+    STRAUTHID_TARGET_USER,      // target_login
+
+    STRAUTHID_AUTH_USER,        // login
+    STRAUTHID_HOST,             // ip_client
+    STRAUTHID_TARGET,           // ip_target
+    STRAUTHID_PASSWORD,         // password
+
+    STRAUTHID_AUTHCHANNEL_ANSWER,   // WabLauncher target answer
+    STRAUTHID_AUTHCHANNEL_RESULT,   // WabLauncher session result
+    STRAUTHID_AUTHCHANNEL_TARGET,   // WabLauncher target request
+
+    STRAUTHID_MESSAGE,  // warning_message
+
+    STRAUTHID_ACCEPT_MESSAGE,   // display a dialog to valid a message
+    STRAUTHID_DISPLAY_MESSAGE,  // display a dialog box with a message
+
+    STRAUTHID_AUTHENTICATED,
+    STRAUTHID_REJECTED,         // rejected
+
+    STRAUTHID_KEEPALIVE,
+    STRAUTHID_PROXY_TYPE,
+
+    STRAUTHID_TRACE_SEAL,   // after closing trace file trace is sealed using a signature hash
+
+    STRAUTHID_SESSION_ID,   // session_id
+
+    STRAUTHID_END_DATE_CNX, // timeclose
+    STRAUTHID_END_TIME,     // end time as text
+
+    STRAUTHID_MODE_CONSOLE,
+    STRAUTHID_TIMEZONE,
+
+    STRAUTHID_REAL_TARGET_DEVICE,
+
+    STRAUTHID_AUTHENTICATION_CHALLENGE,
+};
 static inline authid_t authid_from_string(const char * strauthid) {
-    static const std::string authstr[MAX_AUTHID - 1] = {
-        // Translation text
-        STRAUTHID_TRANS_BUTTON_OK,
-        STRAUTHID_TRANS_BUTTON_CANCEL,
-        STRAUTHID_TRANS_BUTTON_HELP,
-        STRAUTHID_TRANS_BUTTON_CLOSE,
-        STRAUTHID_TRANS_BUTTON_REFUSED,
-        STRAUTHID_TRANS_LOGIN,
-        STRAUTHID_TRANS_USERNAME,
-        STRAUTHID_TRANS_PASSWORD,
-        STRAUTHID_TRANS_TARGET,
-        STRAUTHID_TRANS_DIAGNOSTIC,
-        STRAUTHID_TRANS_CONNECTION_CLOSED,
-        STRAUTHID_TRANS_HELP_MESSAGE,
-
-        // Options
-        STRAUTHID_OPT_CLIPBOARD,            // clipboard
-        STRAUTHID_OPT_DEVICEREDIRECTION,    // device_redirection
-        STRAUTHID_OPT_FILE_ENCRYPTION,      // file encryption
-
-        // Video capture
-        STRAUTHID_OPT_CODEC_ID,     // CODEC_ID for video encoding
-        STRAUTHID_OPT_MOVIE,        // is_rec
-        STRAUTHID_OPT_MOVIE_PATH,   // rec_path
-        STRAUTHID_VIDEO_QUALITY,
-
-        // Alternate shell
-        STRAUTHID_ALTERNATE_SHELL,
-        STRAUTHID_SHELL_WORKING_DIRECTORY,
-
-        // Context
-        STRAUTHID_OPT_BITRATE,      // Bit rate for video encoding
-        STRAUTHID_OPT_FRAMERATE,    // Frame rate for video encoding
-        STRAUTHID_OPT_QSCALE,       // QScale parameter for vdeo encoding
-
-        STRAUTHID_OPT_BPP,          // bits per planes (number of colors)
-        STRAUTHID_OPT_HEIGHT,       // client height
-        STRAUTHID_OPT_WIDTH,        // client width
-
-        STRAUTHID_AUTH_ERROR_MESSAGE,
-
-        STRAUTHID_SELECTOR,
-        STRAUTHID_SELECTOR_CURRENT_PAGE,    // current page
-        STRAUTHID_SELECTOR_DEVICE_FILTER,   // device filter text
-        STRAUTHID_SELECTOR_GROUP_FILTER,    // group filter text
-        STRAUTHID_SELECTOR_LINES_PER_PAGE,  // number of lines per page
-        STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
-
-        STRAUTHID_TARGET_DEVICE,    // target_device
-        STRAUTHID_TARGET_PASSWORD,  // target_password
-        STRAUTHID_TARGET_PORT,      // target_port
-        STRAUTHID_TARGET_PROTOCOL,  // proto_dest
-        STRAUTHID_TARGET_USER,      // target_login
-
-        STRAUTHID_AUTH_USER,        // login
-        STRAUTHID_HOST,             // ip_client
-        STRAUTHID_TARGET,           // ip_target
-        STRAUTHID_PASSWORD,         // password
-
-        STRAUTHID_AUTHCHANNEL_ANSWER,   // WabLauncher target answer
-        STRAUTHID_AUTHCHANNEL_RESULT,   // WabLauncher session result
-        STRAUTHID_AUTHCHANNEL_TARGET,   // WabLauncher target request
-
-        STRAUTHID_MESSAGE,  // warning_message
-
-        STRAUTHID_ACCEPT_MESSAGE,   // display a dialog to valid a message
-        STRAUTHID_DISPLAY_MESSAGE,  // display a dialog box with a message
-
-        STRAUTHID_AUTHENTICATED,
-        STRAUTHID_REJECTED,         // rejected
-
-        STRAUTHID_KEEPALIVE,
-        STRAUTHID_PROXY_TYPE,
-
-        STRAUTHID_TRACE_SEAL,   // after closing trace file trace is sealed using a signature hash
-
-        STRAUTHID_SESSION_ID,   // session_id
-
-        STRAUTHID_END_DATE_CNX, // timeclose
-        STRAUTHID_END_TIME,     // end time as text
-
-        STRAUTHID_MODE_CONSOLE,
-        STRAUTHID_TIMEZONE,
-
-        STRAUTHID_REAL_TARGET_DEVICE,
-
-        STRAUTHID_AUTHENTICATION_CHALLENGE,
-    };
 
     std::string str = std::string(strauthid);
     authid_t res = AUTHID_UNKNOWN;
@@ -397,6 +397,12 @@ static inline authid_t authid_from_string(const char * strauthid) {
         }
     }
     return res;
+}
+
+static inline const char * string_from_authid(authid_t authid) {
+    if ((authid == AUTHID_UNKNOWN) || (authid >= MAX_AUTHID))
+        return "";
+    return authstr[(unsigned)authid - 1].c_str();
 }
 
 struct Inifile {

@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Meng Tan
 
    Unit tests for Acl Serializer
 
@@ -86,28 +86,69 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     Inifile ini;
     LogTransport trans;
     AclSerializer acl(&ini, trans, 0);
+    ini.context_set_value(AUTHID_TRACE_SEAL, "true");
     try {
         acl.ask_next_module_remote();
     } catch (const Error & e){
         BOOST_CHECK(false);
     }
+
+    // try exception
+    CheckTransport transexcpt("something very wrong",21);
+    AclSerializer aclexcpt(&ini, transexcpt, 0);
+    aclexcpt.ask_next_module_remote();
+    char buffer[256];
+    BOOST_CHECK(!ini.context_get_bool(AUTHID_AUTHENTICATED));
+    BOOST_CHECK_EQUAL(0,
+                      strncmp(ini.context_get_value(AUTHID_REJECTED,buffer,sizeof(buffer)), 
+                              "Authentifier service failed",
+                              strlen("Authentifier service failed")
+                              )
+                      );
 }
 
 BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
 {
     Inifile ini;
     BStream stream(1024);
+    // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
     stream.out_concat(STRAUTHID_AUTH_USER "\nASK\n");
     stream.out_concat(STRAUTHID_PASSWORD "\nASK\n");
     
-    GeneratorTransport trans((char *)stream.p,stream.get_offset());
+    stream.out_concat(STRAUTHID_SESSION_ID "\n!6455\n");
+    stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
+
+    GeneratorTransport trans((char *)stream.data,stream.get_offset());
     AclSerializer acl(&ini, trans, 0);
+    ini.context.session_id.empty();
+    ini.context_set_value(AUTHID_AUTH_USER,"didier");
+    BOOST_CHECK(ini.context.session_id.is_empty());
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_AUTH_USER));
+
     try {
         acl.incoming();
     } catch (const Error & e){
         BOOST_CHECK(false);
     }
+    BOOST_CHECK(ini.context_is_asked(AUTHID_AUTH_USER));
+    BOOST_CHECK(!ini.context.session_id.is_empty());
+
+    // CASE EXCEPTION
+    // try exception
+    stream.reset();
+    stream.out_uint32_be(0xFFFFFFFF);
+    stream.out_concat(STRAUTHID_AUTH_USER "\nASK\n");
+    stream.out_concat(STRAUTHID_PASSWORD "\nASK\n");
+    
+    GeneratorTransport transexcpt((char *)stream.p,stream.get_offset());
+    AclSerializer aclexcpt(&ini, transexcpt, 0);
+    try {
+        aclexcpt.incoming();
+    } catch (const Error & e){
+        BOOST_CHECK_EQUAL((uint32_t)ERR_ACL_MESSAGE_TOO_BIG, (uint32_t)e.id);
+    }
+    
 }
 inline void execute_test_initem(Stream & stream, AclSerializer & acl, const char * strauthid, const char * value)
 {
@@ -150,7 +191,8 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
     BStream stream(1);
     LogTransport trans;
     AclSerializer acl(&ini, trans, 0);    
-
+    
+    // SOME NORMAL CASE
     test_initem_ask(stream,ini,acl,STRAUTHID_PASSWORD,"SecureLinux");
     test_initem_ask(stream,ini,acl,STRAUTHID_PROXY_TYPE,"VNC");
     test_initem_ask(stream,ini,acl,STRAUTHID_SELECTOR_CURRENT_PAGE,"");
@@ -158,6 +200,14 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
     test_initem_receive(stream,ini,acl,STRAUTHID_PASSWORD,"\n!SecureLinux\n");
     test_initem_receive(stream,ini,acl,STRAUTHID_PROXY_TYPE,"\nRDP\n");
 
+    // CASE EXCEPTION
+    // try exception
+    stream.init(strlen(STRAUTHID_AUTH_USER "didier"));
+    try{
+        test_initem_receive(stream,ini,acl,STRAUTHID_AUTH_USER,"didier");
+    } catch (const Error & e) {
+         BOOST_CHECK_EQUAL((uint32_t)ERR_ACL_UNEXPECTED_IN_ITEM_OUT, (uint32_t)e.id);
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestAclSerializerInItems)
