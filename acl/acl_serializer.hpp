@@ -209,7 +209,7 @@ public:
     {
         this->send_to_acl(&strauthid,1);
     }
-    void ask_next_module_remote()
+    void ask_next_module_remote_()
     {
         const char * strlist[] = {
         STRAUTHID_PROXY_TYPE,
@@ -241,7 +241,7 @@ public:
         this->send_to_acl(strlist,sizeof(strlist)/sizeof(char *));
         
     }
-    void ask_next_module_remote_()
+    void ask_next_module_remote()
     {
         std::list< const char * > strlist;
         strlist.push_back(STRAUTHID_PROXY_TYPE);
@@ -267,7 +267,6 @@ public:
         if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
             strlist.push_back(STRAUTHID_TRACE_SEAL);
         }
-        
         this->send_to_acl(strlist);
         
     }
