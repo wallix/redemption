@@ -148,7 +148,8 @@ public:
         stream.copy_to_head(header1);
         this->send(stream);
     }
-//protected:
+/*
+protected:
     void send(Stream & header, Stream & stream) {
         BStream one(65535);
         one.out_copy_bytes(header);
@@ -157,6 +158,7 @@ public:
         this->send(one);
     }
 public:
+*/
     void send(Stream & header, HStream & stream) {
         stream.copy_to_head(header);
         this->send(stream);
