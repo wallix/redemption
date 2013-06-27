@@ -67,6 +67,10 @@ public:
         return this->data;
     }
 
+    uint8_t * _get_buffer() const {
+        return this->data;
+    }
+
     uint32_t get_offset() const {
         return this->p - this->get_data();
     }
