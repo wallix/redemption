@@ -110,12 +110,15 @@ void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t v
 {
     DIR * d = opendir(path);
     if (d){
-        char static_buffer[8192];
+//        char static_buffer[8192];
+        char buffer[8192];
         size_t path_len = strlen(path);
         size_t prefix_len = strlen(prefix);
-        size_t file_len = pathconf(path, _PC_NAME_MAX) + 1;
-        char * buffer = static_buffer;
+        size_t file_len = 1024;
+//        size_t file_len = pathconf(path, _PC_NAME_MAX) + 1;
+//        char * buffer = static_buffer;
 
+/*
         if (file_len < 4000){
             if (verbose >= 255) {
                 LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", (unsigned)file_len);
@@ -136,6 +139,11 @@ void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t v
                 file_len = 4000;
             }
         }
+*/
+        if (file_len + path_len + 1 > sizeof(buffer)) {
+            LOG(LOG_WARNING, "Path len %u > %u", file_len + path_len + 1, sizeof(buffer));
+            return;
+        }
         strncpy(buffer, path, file_len + path_len + 1);
         if (buffer[path_len] != '/'){
             buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
@@ -144,9 +152,7 @@ void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t v
         size_t len = offsetof(struct dirent, d_name) + file_len;
         struct dirent * entryp = (struct dirent *)malloc(len);
         if (!entryp){
-            if (verbose >= 255) {
-                LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
-            }
+            LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
             return;
         }
         struct dirent * result;
@@ -178,21 +184,19 @@ void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t v
                 continue;
             }
             if (unlink(buffer) < 0){
-                if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
-                }
+                LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
             }
         }
         closedir(d);
         free(entryp);
+/*
         if (buffer != static_buffer){
             free(buffer);
         }
+*/
     }
     else {
-        if (verbose >= 255) {
-            LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
-        }
+        LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
     }
 }
 
