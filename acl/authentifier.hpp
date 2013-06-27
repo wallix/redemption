@@ -16,12 +16,13 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou, Meng Tan
+
+   Session related with ACL
+   find out the next module to run from context reading
 */
 
 #ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
 #define _REDEMPTION_ACL_AUTHENTIFIER_HPP_
-
-TODO("Sesman is performing two largely unrelated tasks : finding out the next module to run (from context reading) and updating context dictionnary from incoming acl traffic. These tasks should be performed by two different modules")
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -30,7 +31,6 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 #include "config.hpp"
 #include "netutils.hpp"
 #include "sockettransport.hpp"
-#include "wait_obj.hpp"
 #include "acl_serializer.hpp"
 
 typedef enum {

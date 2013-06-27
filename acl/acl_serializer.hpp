@@ -18,6 +18,7 @@
    Author(s): Christophe Grosjean, Meng Tan
 
    Protocol layer for communication with ACL
+   Updating context dictionnary from incoming acl traffic
 */
 
 #ifndef _REDEMPTION_ACL_SERIALIZER_HPP_
@@ -26,12 +27,11 @@
 #include <fcntl.h>
 #include <list>
 
-
 #include "stream.hpp"
 #include "config.hpp"
 #include "netutils.hpp"
 #include "sockettransport.hpp"
-#include "wait_obj.hpp"
+
 
 
 class AclSerializer{
@@ -48,6 +48,16 @@ public:
         , auth_trans(auth_trans)
         , verbose(verbose)
     {
+        if (this->verbose & 0x10){
+            LOG(LOG_INFO, "auth::AclSerializer");
+        }
+    }
+
+    ~AclSerializer()
+    {
+        if (this->verbose & 0x10){
+            LOG(LOG_INFO, "auth::~AclSerializer");
+        }
     }
 
     void in_items(Stream & stream)
