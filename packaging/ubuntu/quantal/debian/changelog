@@ -1,6 +1,14 @@
+redemption (0.9.287-quantal) squeeze; urgency=low
+
+  * Avoid data duplication when building network packets
+  
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 27 Jun 2013 10:12:26 +0200
+
 redemption (0.9.285+quantal) unstable; urgency=low
 
   * Fixed Numlock initial state bug
+  * Use only one RDPDrawable
+  * support for pause/restart recording
   * Fixed disconnection message from mstsc bug
   * Compressed bitmaps in cache are now memoized
 
