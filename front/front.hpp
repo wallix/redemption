@@ -405,8 +405,14 @@ public:
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini)
     {
+        if (this->capture) {
+            LOG(LOG_INFO, "Front::start_capture: session capture is already started");
+
+            return;
+        }
+
         if (ini.globals.movie) {
-            this->stop_capture();
+//            this->stop_capture();
             LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
             struct timeval now = tvtime();
 
