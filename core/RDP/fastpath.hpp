@@ -299,7 +299,7 @@ namespace FastPath {
             stream.out_per_length(length);
 
             if (fipsInformation != NULL) {
-                stream.out_copy_bytes(fipsInformation->data, 4);
+                stream.out_copy_bytes(fipsInformation->get_data(), 4);
             }
 
             if (secFlags & FASTPATH_INPUT_ENCRYPTED) {
@@ -877,7 +877,7 @@ namespace FastPath {
             stream.out_per_length(length);
 
             if (fipsInformation != NULL) {
-                stream.out_copy_bytes(fipsInformation->data, 4);
+                stream.out_copy_bytes(fipsInformation->get_data(), 4);
             }
 
             if (secFlags & FASTPATH_OUTPUT_ENCRYPTED) {

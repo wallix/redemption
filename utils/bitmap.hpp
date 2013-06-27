@@ -276,12 +276,12 @@ public:
         /* read file size */
         TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.")
         BStream stream(8192);
-        if (read(fd, stream.data, 4) < 4){
+        if (read(fd, stream.get_data(), 4) < 4){
             LOG(LOG_ERR, "Widget_load: error read file size\n");
             close(fd);
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
-        stream.end = stream.data + 4;
+        stream.end = stream.get_data() + 4;
         {
             TODO("Check what is this size ? header size ? used as fixed below ?")
             /* uint32_t size = */ stream.in_uint32_le();
@@ -290,12 +290,12 @@ public:
         // skip some bytes to set file pointer to bmp header
         lseek(fd, 14, SEEK_SET);
         stream.init(8192);
-        if (read(fd, stream.data, 40) < 40){
+        if (read(fd, stream.get_data(), 40) < 40){
             close(fd);
             LOG(LOG_ERR, "Widget_load: error read file size (2)\n");
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
-        stream.end = stream.data + 40;
+        stream.end = stream.get_data() + 40;
         TODO(" we should read header size and use it to read header instead of using magic constant 40")
         header.size = stream.in_uint32_le();
         if (header.size != 40){
@@ -329,11 +329,11 @@ public:
             file_Qpp = 2;
         case 4:
             stream.init(8192);
-            if (read(fd, stream.data, header.clr_used * 4) < header.clr_used * 4){
+            if (read(fd, stream.get_data(), header.clr_used * 4) < header.clr_used * 4){
                 close(fd);
                 throw Error(ERR_BITMAP_LOAD_FAILED);
             }
-            stream.end = stream.data + header.clr_used * 4;
+            stream.end = stream.get_data() + header.clr_used * 4;
             for (int i = 0; i < header.clr_used; i++) {
                 uint8_t r = stream.in_uint8();
                 uint8_t g = stream.in_uint8();
@@ -363,7 +363,7 @@ public:
             int row_size = (header.image_width * file_Qpp) / 2;
             int padding = align4(row_size) - row_size;
             for (unsigned y = 0; y < header.image_height; y++) {
-                int k = read(fd, stream.data + y * row_size, row_size + padding);
+                int k = read(fd, stream.get_data() + y * row_size, row_size + padding);
                 if (k != (row_size + padding)) {
                     LOG(LOG_ERR, "Widget_load: read error reading bitmap file [%s] read\n", filename);
                     close(fd);
@@ -371,7 +371,7 @@ public:
                 }
             }
             close(fd); // from now on all is in memory
-            stream.end = stream.data + size;
+            stream.end = stream.get_data() + size;
         }
 
         const uint8_t Bpp = 3;
@@ -890,12 +890,12 @@ public:
     void compress(Stream & out) const
     {
         if (this->data_compressed) {
-            out.out_copy_bytes(this->data_compressed, this->data_compressed_size); 
+            out.out_copy_bytes(this->data_compressed, this->data_compressed_size);
             return;
         }
-    
+
         uint8_t * tmp_data_compressed = out.p;
-    
+
         const uint8_t Bpp = nbbytes(this->original_bpp);
         const uint8_t * pmin = this->data_bitmap.get();
         const uint8_t * p = pmin;
@@ -1041,7 +1041,7 @@ public:
                 copy_count = 0;
             }
         }
-        
+
         // Memoize result of compression
         this->data_compressed_size = out.p - tmp_data_compressed;
         this->data_compressed = (uint8_t*)malloc(this->data_compressed_size);

@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    MCS Channel Management, complies with T.125
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_MCS_HPP_
@@ -35,7 +34,7 @@ namespace MCS
         BER_ENCODING,
         PER_ENCODING
     };
-    
+
     // Reason ::= ENUMERATED   -- in DisconnectProviderUltimatum, DetachUserRequest, DetachUserIndication
     typedef enum {
         RN_DOMAIN_DISCONNECTED = 0,
@@ -145,7 +144,7 @@ namespace MCS
                 if (!stream.in_check_rem(1)){
                     throw Error(ERR_MCS);
                 }
-                this->type = (stream.data[0] >> 2);
+                this->type = ((stream.get_data())[0] >> 2);
             break;
             default:
             case BER_ENCODING:
@@ -154,7 +153,7 @@ namespace MCS
                 }
                 TODO("getting to the type this way should works in our restricted use case,"
                      " but it would be nicer to perform actual BER TAG value decoding")
-                this->type = stream.data[1];
+                this->type = (stream.get_data())[1];
             break;
             }
         }

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -53,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
             0x07, 0x00,     // length (7 means 13 + 7 = 20)
             0x00, 0x00,     // extraFlags
             TS_CACHE_BRUSH, // type
-            
+
             0x00, // cacheIndex
             BMF_1BPP,
             0x08, // cx
@@ -70,8 +69,8 @@ BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
         // BMF_24BPP && iBytes 28 : compression (16 bytes for 64 x 4 colors pixels, + 12 bytes color definitions)
         // Other iBytes values : uncompressed bitmap data
 
-        check_datas(stream.p-stream.data, stream.data, sizeof(datas), datas, "Brush Cache 1BPP");
-        stream.mark_end(); stream.p = stream.data;
+        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Brush Cache 1BPP");
+        stream.mark_end(); stream.p = stream.get_data();
 
         uint8_t control = stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
@@ -82,5 +81,4 @@ BOOST_AUTO_TEST_CASE(TestBrushCache1BPP)
 
         check<RDPBrushCache>(cmd, newcmd, "Brush Cache 1BPP");
     }
-
 }

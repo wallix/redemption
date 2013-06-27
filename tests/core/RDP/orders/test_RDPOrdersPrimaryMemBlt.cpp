@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -60,9 +59,9 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
               3,    // srcx = 0 + 3 = 3
               4,    // srcy = 0 + 4 = 4
         };
-        check_datas(stream.p-stream.data, stream.data, 9, datas, "MemBlt 1");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 9, datas, "MemBlt 1");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -109,9 +108,9 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
             0x04, 0x00,  // srcy = 4
             0x0F, 0      // cache_idx
         };
-        check_datas(stream.p-stream.data, stream.data, 21, datas, "MemBlt 2");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 21, datas, "MemBlt 2");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -131,5 +130,4 @@ BOOST_AUTO_TEST_CASE(TestMemBlt)
             RDPMemBlt(cache_id, Rect(300, 400, 50, 60), 0xFF, 3, 4, cache_idx),
             "MemBlt 2");
     }
-
 }

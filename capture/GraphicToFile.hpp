@@ -188,7 +188,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         uint32_t count  = input_data_32.size() / sizeof(uint32_t);
 
         size_t c = min<size_t>(count, keyboard_buffer_32.room() / sizeof(uint32_t));
-        keyboard_buffer_32.out_copy_bytes(input_data_32.data, c * sizeof(uint32_t));
+        keyboard_buffer_32.out_copy_bytes(input_data_32.get_data(), c * sizeof(uint32_t));
     }
 
     void send_meta_chunk(void)
@@ -243,7 +243,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             }
 */
 
-            payload.out_copy_bytes(keyboard_buffer_32.data, keyboard_buffer_32.size());
+            payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.size());
             keyboard_buffer_32.rewind();
         }
         payload.mark_end();

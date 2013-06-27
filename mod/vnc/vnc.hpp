@@ -158,11 +158,11 @@ struct mod_vnc : public mod_api {
                     memset(key, 0, sizeof(key));
                     strncpy(key, this->password, 8);
                     rfbDesKey((unsigned char*)key, EN0); /* 0, encrypt */
-                    rfbDes((unsigned char*)stream.data, (unsigned char*)stream.data);
-                    rfbDes((unsigned char*)(stream.data + 8), (unsigned char*)(stream.data + 8));
+                    rfbDes((unsigned char*)stream.get_data(), (unsigned char*)stream.get_data());
+                    rfbDes((unsigned char*)(stream.get_data() + 8), (unsigned char*)(stream.get_data() + 8));
                 }
                 LOG(LOG_INFO, "Sending Password");
-                this->t->send(stream.data, 16);
+                this->t->send(stream.get_data(), 16);
 
                 /* sec result */
                 LOG(LOG_INFO, "Waiting for password ack");
@@ -375,7 +375,7 @@ struct mod_vnc : public mod_api {
                 "\x00" // blue shift      : 1 bytes =  0
                 "\0\0\0"; // padding      : 3 bytes
             stream.out_copy_bytes(pixel_format, 16);
-            this->t->send(stream.data, 20);
+            this->t->send(stream.get_data(), 20);
 
             this->bpp = 16;
             this->depth  = 16;
@@ -421,8 +421,8 @@ struct mod_vnc : public mod_api {
             stream.out_uint32_be(1);            /* copy rect */
             stream.out_uint32_be(0xffffff11);   /* cursor */
 
-//            this->t->send(stream.data, 4 + 3 * 4);
-            this->t->send(stream.data, 4 + (new_encoding ? 4 : 3) * 4);                
+//            this->t->send(stream.get_data(), 4 + 3 * 4);
+            this->t->send(stream.get_data(), 4 + (new_encoding ? 4 : 3) * 4);
         }
 
         TODO("Maybe the resize should be done in session ?")
@@ -490,7 +490,7 @@ struct mod_vnc : public mod_api {
         stream.out_uint8(this->mod_mouse_state);
         stream.out_uint16_be(x);
         stream.out_uint16_be(y);
-        this->t->send(stream.data, 6);
+        this->t->send(stream.get_data(), 6);
 
     } // change_mouse_state
 
@@ -551,7 +551,7 @@ struct mod_vnc : public mod_api {
             stream.out_uint8(!(device_flags & KBD_FLAG_UP)); /* down/up flag */
             stream.out_clear_bytes(2);
             stream.out_uint32_be(key);
-            this->t->send(stream.data, 8);
+            this->t->send(stream.get_data(), 8);
             this->event.set(1000);
         }
     } // rdp_input_scancode
@@ -568,7 +568,7 @@ struct mod_vnc : public mod_api {
         stream.out_uint32_be(length);             // length
         stream.out_copy_bytes(data, length);      // text
 
-        this->t->send(stream.data, (length + 8)); // message-type(1) + padding(3) + length(4)
+        this->t->send(stream.get_data(), (length + 8)); // message-type(1) + padding(3) + length(4)
 
         this->event.set(1000);
     } // rdp_input_clip_data
@@ -601,7 +601,7 @@ struct mod_vnc : public mod_api {
             stream.out_uint16_be(r.y);
             stream.out_uint16_be(r.cx);
             stream.out_uint16_be(r.cy);
-            this->t->send(stream.data, 10);
+            this->t->send(stream.get_data(), 10);
             this->incr = 1;
         }
     } // rdp_input_invalidate
@@ -727,7 +727,7 @@ struct mod_vnc : public mod_api {
                 uint32_t number_of_subrectangles_remain;
                 uint32_t number_of_subrectangles_read;
 
-                number_of_subrectangles_remain = 
+                number_of_subrectangles_remain =
                 number_of_subrectangles        = stream.in_uint32_be();
 
                 char * bytes_per_pixel;
@@ -951,14 +951,14 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
             size_t length = out_s.size();
 
-            size_t chunk_size = length < CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH 
+            size_t chunk_size = length < CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH
                               ? length : CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH;
 
             this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                       , out_s.data
+                                       , out_s.get_data()
                                        , length
                                        , chunk_size
-                                       , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                       , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
                                        | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                        );
 
@@ -1042,11 +1042,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             size_t remaining = clip_data_size - chunk_size;
             BStream drop(4096);
             while (remaining > 4096){
-                drop.end = drop.data;
+                drop.end = drop.get_data();
                 this->t->recv(&drop.end, 4096);
                 remaining -= 4096;
             }
-            drop.end = drop.data;
+            drop.end = drop.get_data();
             this->t->recv(&drop.end, remaining);
         }
 
@@ -1074,14 +1074,14 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
             size_t length = out_s.size();
 
-            size_t chunk_size = length < CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH 
+            size_t chunk_size = length < CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH
                               ? length : CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH;
 
             this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                       , out_s.data
+                                       , out_s.get_data()
                                        , length
                                        , chunk_size
-                                       , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                       , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
                                        | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                        );
         }
@@ -1131,7 +1131,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         // specific treatement depending on msgType
         BStream stream(chunk.size());
         TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)")
-        stream.out_copy_bytes(chunk.data, chunk.size());
+        stream.out_copy_bytes(chunk.get_data(), chunk.size());
         stream.mark_end();
         stream.rewind();
 
@@ -1185,7 +1185,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     // 03 00 01 00 00 00 00 00 00 00 00 00
 
                     //--------------------------- Beginning of clipboard PDU Header ----------------------------
-                    
+
                     // 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
                     // =======================================================
                     // The Format List Response PDU is sent as a reply to the Format List PDU. It is used to indicate
@@ -1195,7 +1195,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     // Header MUST be set to CB_FORMAT_LIST_RESPONSE (0x0003). The CB_RESPONSE_OK
                     // (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in the msgFlags field of the
                     // Clipboard PDU Header.
-                    
+
                     TODO("Create a unit tested class for clipboard messages")
 
                     BStream out_s(256);
@@ -1208,10 +1208,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     size_t length = out_s.size();
 
                     this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                               , out_s.data
+                                               , out_s.get_data()
                                                , length
                                                , out_s.size()
-                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
                                                | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                                );
 
@@ -1219,7 +1219,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
                     BStream out_s2(8192);
 
-                    // 04 00 00 00 04 00 00 00 0d 00 00 00 
+                    // 04 00 00 00 04 00 00 00 0d 00 00 00
                     // 00 00 00 00
 
                     out_s2.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_DATA_REQUEST);   //  - MSG Type 2 bytes
@@ -1233,10 +1233,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     size_t chunk_size = length;
 
                     this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                               , out_s2.data
+                                               , out_s2.get_data()
                                                , length
                                                , chunk_size
-                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
                                                | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                                );
                 }
@@ -1257,10 +1257,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     size_t length = out_s.size();
 
                     this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
-                                               , out_s.data
+                                               , out_s.get_data()
                                                , length
                                                , out_s.size()
-                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST 
+                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
                                                | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                                );
                 }
@@ -1308,7 +1308,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     size_t length = this->clip_data.size(); /* Size of clipboard PDU header + clip data */
                     size_t PDU_remain = length;
 
-                    uint8_t *chunk_data = this->clip_data.data;
+                    uint8_t *chunk_data = this->clip_data.get_data();
                     uint32_t chunk_size;
 
                     int send_flags = CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST;
@@ -1379,11 +1379,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                         BStream dataU8(dataLenU16 + dataLenU16 / 2 + 1);
 
-                        size_t len_utf8 = UTF16toUTF8(stream.p, dataLenU16 / 2, dataU8.data, dataU8.capacity);
+                        size_t len_utf8 = UTF16toUTF8(stream.p, dataLenU16 / 2, dataU8.get_data(), dataU8.capacity);
 
-                        dataU8.data[len_utf8] = 0;
+                        (dataU8.get_data())[len_utf8] = 0;
 
-                        this->rdp_input_clip_data(dataU8.data, len_utf8 + 1);
+                        this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
                     }
                     else {
                         // Virtual channel data span in multiple Virtual Channel PDUs.
@@ -1443,11 +1443,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                         BStream dataU8(dataLenU16 + 2);
 
-                        size_t len_utf8 = UTF16toUTF8(this->large_virtual_channel_data.data, dataLenU16 / 2, dataU8.p, dataU8.capacity);
+                        size_t len_utf8 = UTF16toUTF8(this->large_virtual_channel_data.get_data(), dataLenU16 / 2, dataU8.p, dataU8.capacity);
 
-                        dataU8.data[len_utf8] = 0;
+                        (dataU8.get_data())[len_utf8] = 0;
 
-                        this->rdp_input_clip_data(dataU8.data, len_utf8 + 1);
+                        this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
                     }
                 }
                 else{
@@ -1459,7 +1459,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             LOG( LOG_INFO, "mod_vnc::send_to_vnc done" );
         }
     } // send_to_vnc
-    
+
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
     {
         const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
@@ -1467,7 +1467,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
-    
+
     virtual void begin_update()
     {
         this->front.begin_update();

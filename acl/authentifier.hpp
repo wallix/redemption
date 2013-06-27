@@ -87,7 +87,7 @@ class SessionManager {
     bool internal_domain;
     uint32_t verbose;
 
-    SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay, 
+    SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay,
                    int _max_tick, bool _internal_domain, uint32_t _verbose)
         : mod_state(MOD_STATE_INIT)
         , ini(_ini)
@@ -97,7 +97,7 @@ class SessionManager {
         , max_tick(_max_tick)
         , internal_domain(_internal_domain)
         , verbose(_verbose)
-        
+
     {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::SessionManager");
@@ -119,10 +119,8 @@ class SessionManager {
         this->tick_count = 1;
 
         this->ini->context_ask(AUTHID_KEEPALIVE);
-        this->acl_serial.send(STRAUTHID_KEEPALIVE);
-        
+        this->acl_serial.send(AUTHID_KEEPALIVE);
         keepalive_time = ::time(NULL) + 30;
-
     }
 
     // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
@@ -133,8 +131,7 @@ class SessionManager {
         }
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_TARGET, target);
-        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_TARGET);
-        
+        this->acl_serial.send(AUTHID_AUTHCHANNEL_TARGET);
     }
 
     // Set AUTHCHANNEL_RESULT dict value and transmit request to sesman (then wabenginge)
@@ -145,10 +142,9 @@ class SessionManager {
         }
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
-        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_RESULT);
-        
+        this->acl_serial.send(AUTHID_AUTHCHANNEL_RESULT);
     }
-  
+
     bool close_on_timestamp(long & timestamp)
     {
         bool res = false;
@@ -165,10 +161,10 @@ class SessionManager {
         }
         return res;
     }
-    
+
     bool keep_alive_checking(long & keepalive_time, long & now, Transport & trans)
     {
-        
+
         //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
             long enddate = this->ini->context.end_date_cnx;
@@ -218,7 +214,7 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
-                this->acl_serial.send(STRAUTHID_KEEPALIVE);
+                this->acl_serial.send(AUTHID_KEEPALIVE);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -298,7 +294,7 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
-                this->acl_serial.send(STRAUTHID_KEEPALIVE);
+                this->acl_serial.send(AUTHID_KEEPALIVE);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -622,8 +618,6 @@ class SessionManager {
         break;
         }
     }
-
-
 
     void receive_next_module()
     {

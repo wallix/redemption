@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -57,9 +56,9 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             0x2C, 1,  // srcx = 300
             0x90, 1,  // srcy = 400
         };
-        check_datas(stream.p-stream.data, stream.data, 16, datas, "ScrBlt 1");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 16, datas, "ScrBlt 1");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -97,9 +96,9 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             100, 0,  // srcx = 100
             150, 0,  // srcy = 150
         };
-        check_datas(stream.p-stream.data, stream.data, 16, datas, "ScrBlt 2");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 16, datas, "ScrBlt 2");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -115,7 +114,6 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             RDPOrderCommon(SCREENBLT, Rect(0, 0, 800, 600)),
             RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150),
             "ScrBlt 2");
-
     }
 
     {
@@ -137,9 +135,9 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             static_cast<uint8_t>(-10),     // srcx = 110 - 10 = 100
             static_cast<uint8_t>(+10),    // srcy = 140 +10 = 150
         };
-        check_datas(stream.p-stream.data, stream.data, 9, datas, "ScrBlt 3");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 9, datas, "ScrBlt 3");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -155,7 +153,6 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             RDPOrderCommon(SCREENBLT, Rect(0, 0, 800, 600)),
             RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150),
             "ScrBlt 3");
-
     }
 
     {
@@ -176,9 +173,9 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             static_cast<uint8_t>(-10),     // srcx = 110 - 10 = 100
             static_cast<uint8_t>(+10),    // srcy = 140 +10 = 150
         };
-        check_datas(stream.p-stream.data, stream.data, 8, datas, "ScrBlt 4");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 8, datas, "ScrBlt 4");
 
-        stream.mark_end(); stream.p = stream.data;
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -194,6 +191,5 @@ BOOST_AUTO_TEST_CASE(TestScrBlt)
             RDPOrderCommon(SCREENBLT, Rect(311, 0, 800, 600)),
             RDPScrBlt(Rect(300, 400, 50, 60), 0xFF, 100, 150),
             "ScrBlt 4");
-
     }
 }

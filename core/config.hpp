@@ -1299,7 +1299,7 @@ struct Inifile {
         }
     }
 
-    void context_set_value(const char * strauthid, const char * value) {
+    void context_set_value_by_string(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
             context_set_value(authid, value);
@@ -1557,7 +1557,7 @@ struct Inifile {
         }
     }
 
-    const char * context_get_value(const char * strauthid, char * buffer, size_t size) {
+    const char * context_get_value_by_string(const char * strauthid, char * buffer, size_t size) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
             return context_get_value(authid, buffer, size);
@@ -1905,7 +1905,7 @@ struct Inifile {
         return pszReturn;
     }
 
-    void context_ask(const char *strauthid) {
+    void context_ask_by_string(const char *strauthid) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
             context_ask(authid);
@@ -1995,7 +1995,7 @@ struct Inifile {
         }
     }
 
-    bool context_is_asked(const char *strauthid) {
+    bool context_is_asked_by_string(const char *strauthid) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
             return context_is_asked(authid);
@@ -2130,7 +2130,7 @@ struct Inifile {
         target_protocol[0] = 0;
         auth_user[0] = 0;
 
-        this->context_ask(STRAUTHID_SELECTOR);
+        this->context_ask(AUTHID_SELECTOR);
         LOG(LOG_INFO, "asking for selector");
 
         if (username[0]){
@@ -2243,7 +2243,7 @@ struct Inifile {
             this->context_set_value(AUTHID_TARGET_PROTOCOL, target_protocol);
         }
         if (*auth_user == 0) {
-            this->context_ask(STRAUTHID_AUTH_USER);
+            this->context_ask(AUTHID_AUTH_USER);
         }
         else {
             this->context_set_value(AUTHID_AUTH_USER, auth_user);

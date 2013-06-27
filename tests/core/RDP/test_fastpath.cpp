@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
         FastPath::Update_Recv in_upd(in_su.payload);
 
         if (in_upd.updateCode == updateCode) {
-            out_s.out_copy_bytes(in_upd.payload.data, in_upd.payload.size());
+            out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.size());
             out_s.mark_end();
 
             SubStream Upd_s(out_s, 0, FastPath::Update_Send::GetSize());

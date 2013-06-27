@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)
     BStream stream(1024);
     bitmapcachehostsupport_caps.emit(stream);
     stream.mark_end();
-    stream.p = stream.data;
+    stream.p = stream.get_data();
 
     BitmapCacheHostSupportCaps bitmapcachehostsupport_caps2;
 

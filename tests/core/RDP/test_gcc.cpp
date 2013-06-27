@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    T.124 Generic Conference Control (GCC) Unit Test
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -81,10 +80,10 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     "\x00\x00\x80\x80\x63\x6c\x69\x70\x72\x64\x72\x00\x00\x00\xA0\xC0"
     "\x72\x64\x70\x73\x6e\x64\x00\x00\x00\x00\x00\xc0";
 
-    TestTransport t("test_gcc", 
-        "", 0, 
-        gcc_conference_create_request_expected, 
-        sizeof(gcc_conference_create_request_expected), 
+    TestTransport t("test_gcc",
+        "", 0,
+        gcc_conference_create_request_expected,
+        sizeof(gcc_conference_create_request_expected),
         256);
 
     BStream stream(65536);
@@ -94,15 +93,15 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     BStream gcc_header(65536);
     GCC::Create_Request_Send(gcc_header, stream.size());
 
-    t.send(gcc_header.data, gcc_header.size());
-    t.send(stream.data, stream.size());
+    t.send(gcc_header.get_data(), gcc_header.size());
+    t.send(stream.get_data(), stream.size());
     BOOST_CHECK(t.get_status());
 }
 
 
 BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
 {
-    const char expected[] = 
+    const char expected[] =
         "\x01\x0c\x0c\x00" // TS_UD_HEADER::type = SC_CORE (0x0c01), length = 12 bytes
         "\x04\x00\x08\x00" // TS_UD_SC_CORE::version = 0x0080004
         "\x00\x00\x00\x00" // TS_UD_SC_CORE::clientRequestedProtocols = PROTOCOL_RDP
@@ -115,9 +114,9 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     sc_core.clientRequestedProtocols = 0;
     sc_core.emit(stream);
     BOOST_CHECK_EQUAL(12, stream.size());
-    BOOST_CHECK(0 == memcmp(expected, stream.data, 12));
+    BOOST_CHECK(0 == memcmp(expected, stream.get_data(), 12));
 
-    stream.p = stream.data;
+    stream.p = stream.get_data();
     GCC::UserData::SCCore sc_core2;
 
     sc_core2.recv(stream);
@@ -129,14 +128,14 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
 
 BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
 {
-    const char expected[] = 
+    const char expected[] =
         "\x03\x0c\x10\x00" // TS_UD_HEADER::type = SC_NET (0x0c03), length = 16 bytes
         "\xeb\x03"         // TS_UD_SC_NET::MCSChannelID = 0x3eb = 1003 (I/O channel)
         "\x03\x00"         // TS_UD_SC_NET::channelCount = 3
         "\xec\x03"         // channel0 = 0x3ec = 1004 (rdpdr)
         "\xed\x03"         // channel1 = 0x3ed = 1005 (cliprdr)
         "\xee\x03"         // channel2 = 0x3ee = 1006 (rdpsnd)
-        "\x00\x00"         // padding 
+        "\x00\x00"         // padding
     ;
 
     BStream stream(16);
@@ -146,12 +145,12 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     sc_net.channelCount = 3;
     sc_net.channelDefArray[0].id = 1004;
     sc_net.channelDefArray[1].id = 1005;
-    sc_net.channelDefArray[2].id = 1006;   
+    sc_net.channelDefArray[2].id = 1006;
     sc_net.emit(stream);
     BOOST_CHECK_EQUAL(16, stream.size());
-    BOOST_CHECK(0 == memcmp(expected, stream.data, 12));
+    BOOST_CHECK(0 == memcmp(expected, stream.get_data(), 12));
 
-    stream.p = stream.data;
+    stream.p = stream.get_data();
     GCC::UserData::SCNet sc_net2;
 
     sc_net2.recv(stream);
@@ -167,17 +166,17 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
 {
-    const char indata[] = 
+    const char indata[] =
         "\x03\xc0"         // CS_NET
         "\x20\x00"         // 32 bytes user Data
         "\x02\x00\x00\x00" // ChannelCount
         "\x63\x6c\x69\x70\x72\x64\x72\x00" // "cliprdr"
-        "\x00\x00\xa0\xc0" // = CHANNEL_OPTION_INITIALIZED 
-                           // | CHANNEL_OPTION_ENCRYPT_RDP 
-                           // | CHANNEL_OPTION_COMPRESS_RDP 
+        "\x00\x00\xa0\xc0" // = CHANNEL_OPTION_INITIALIZED
+                           // | CHANNEL_OPTION_ENCRYPT_RDP
+                           // | CHANNEL_OPTION_COMPRESS_RDP
                            // | CHANNEL_OPTION_SHOW_PROTOCOL
         "\x72\x64\x70\x64\x72\x00\x00\x00" // "rdpdr"
-        "\x00\x00\x80\x80" // = CHANNEL_OPTION_INITIALIZED 
+        "\x00\x00\x80\x80" // = CHANNEL_OPTION_INITIALIZED
                            // | CHANNEL_OPTION_COMPRESS_RDP
     ;
 
@@ -191,20 +190,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
     BOOST_CHECK_EQUAL(2, cs_net.channelCount);
     BOOST_CHECK_EQUAL('c', cs_net.channelDefArray[0].name[0]);
     BOOST_CHECK_EQUAL(0, memcmp("cliprdr\0", cs_net.channelDefArray[0].name, 8));
-    BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED 
-                     | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP 
+    BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                     | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
-                     | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL 
+                     | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                      , cs_net.channelDefArray[0].options);
     BOOST_CHECK_EQUAL(0, memcmp("rdpdr\0\0\0", cs_net.channelDefArray[1].name, 8));
-    BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED 
+    BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                      , cs_net.channelDefArray[1].options);
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
 {
-    const char indata[] = 
+    const char indata[] =
         /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
     ;
 
@@ -222,7 +221,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
 {
-    const char indata[] = 
+    const char indata[] =
     // SC_SECURITY tag=0c02 length=1410
     /* 0000 */ "\x02\x0c\x82\x05\x01\x00\x00\x00\x02\x00\x00\x00\x20\x00\x00\x00" //............ ...
     /* 0010 */ "\x4e\x05\x00\x00\x5e\x69\xf3\x27\x93\x2d\x98\x35\x0e\x09\x1f\xe6" //N...^i.'.-.5....
@@ -337,7 +336,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
 {
-    const char indata[] = 
+    const char indata[] =
         // SC_SECURITY tag=0c02 length=236
         /* 0000 */ "\x02\x0c\xec\x00\x01\x00\x00\x00\x01\x00\x00\x00\x20\x00\x00\x00" //............ ...
         /* 0010 */ "\xb8\x00\x00\x00\x73\xee\x92\x99\x02\x50\xfd\xe7\x89\xec\x2a\x83" //....s....P....*.
@@ -385,9 +384,9 @@ TODO("Add tests for CS_SECURITY")
 // 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes
 
 // 1b 00 00 00 -> TS_UD_CS_SEC::encryptionMethods
-// 0x1b 
+// 0x1b
 // = 0x01 | 0x02 | 0x08 | 0x10
-// = 40BIT_ENCRYPTION_FLAG | 128BIT_ENCRYPTION_FLAG | 
+// = 40BIT_ENCRYPTION_FLAG | 128BIT_ENCRYPTION_FLAG |
 // 56BIT_ENCRYPTION_FLAG | FIPS_ENCRYPTION_FLAG
 
 // 00 00 00 00 -> TS_UD_CS_SEC::extEncryptionMethods
@@ -416,19 +415,19 @@ TODO("Add some tests for CS_CORE")
 //01 ca -> TS_UD_CS_CORE::colorDepth = RNS_UD_COLOR_8BPP (0xca01)
 //03 aa -> TS_UD_CS_CORE::SASSequence
 //09 04 00 00 -> TS_UD_CS_CORE::keyboardLayout = 0x409 = 1033 = English (US)
-//ce 0e 00 00 -> TS_UD_CS_CORE::clientBuild = 3790 
+//ce 0e 00 00 -> TS_UD_CS_CORE::clientBuild = 3790
 
-//45 00 4c 00 54 00 4f 00 4e 00 53 00 2d 00 44 00 
+//45 00 4c 00 54 00 4f 00 4e 00 53 00 2d 00 44 00
 //45 00 56 00 32 00 00 00 00 00 00 00 00 00 00 00 -> TS_UD_CS_CORE::clientName = ELTONS-TEST2
 
 //04 00 00 00 -> TS_UD_CS_CORE::keyboardType
 //00 00 00 00 -> TS_UD_CS_CORE::keyboardSubtype
 //0c 00 00 00 -> TS_UD_CS_CORE::keyboardFunctionKey
 
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 -> 
+//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ->
 //TS_UD_CS_CORE::imeFileName = ""
 
 //01 ca -> TS_UD_CS_CORE::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (0xca01)
@@ -438,18 +437,18 @@ TODO("Add some tests for CS_CORE")
 //18 00 -> TS_UD_CS_CORE::highColorDepth = 24 bpp
 
 //07 00 -> TS_UD_CS_CORE::supportedColorDepths
-//0x07 
+//0x07
 //= 0x01 | 0x02 | 0x04
 //= RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT
 
 //01 00 -> TS_UD_CS_CORE::earlyCapabilityFlags
-//0x01 
+//0x01
 //= RNS_UD_CS_SUPPORT_ERRINFO_PDU
 
-//36 00 39 00 37 00 31 00 32 00 2d 00 37 00 38 00 
-//33 00 2d 00 30 00 33 00 35 00 37 00 39 00 37 00 
-//34 00 2d 00 34 00 32 00 37 00 31 00 34 00 00 00 
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 -> 
+//36 00 39 00 37 00 31 00 32 00 2d 00 37 00 38 00
+//33 00 2d 00 30 00 33 00 35 00 37 00 39 00 37 00
+//34 00 2d 00 34 00 32 00 37 00 31 00 34 00 00 00
+//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ->
 //TS_UD_CS_CORE::clientDigProductId = "69712-783-0357974-42714"
 
 //00 -> TS_UD_CS_CORE::connectionType = 0 (not used as RNS_UD_CS_VALID_CONNECTION_TYPE not set)

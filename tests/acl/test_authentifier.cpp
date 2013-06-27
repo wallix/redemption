@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean, Meng Tan
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -29,8 +28,6 @@
 #include "authentifier.hpp"
 #include "testtransport.hpp"
 
-
-
 BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
 {
     // test keep_alive functions
@@ -41,11 +38,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
     stream.out_uint32_be(strlen(STRAUTHID_KEEPALIVE "\nASK\n"));
     stream.out_copy_bytes(STRAUTHID_KEEPALIVE "\nASK\n", strlen(STRAUTHID_KEEPALIVE "\nASK\n"));
 
-    CheckTransport keepalivetrans((char *)stream.data,stream.get_offset());
+    CheckTransport keepalivetrans((char *)stream.get_data(), stream.get_offset());
     Inifile ini;
     SessionManager sesman(&ini, keepalivetrans, 30, 30, true, 0);
     long keepalivetime = 0;
-    
+
     BOOST_CHECK(keepalivetrans.get_status());
     try{
         sesman.start_keep_alive(keepalivetime);
@@ -59,17 +56,17 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
 {
-    
+
     BStream stream(1024);
-    
+
     // TEST ask_auth_channel_target
     stream.out_uint32_be(strlen(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n"));
-    stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n", 
+    stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n",
                           strlen(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n"));
-    CheckTransport auth_channel_trans((char *)stream.data,stream.get_offset());
+    CheckTransport auth_channel_trans((char *)stream.get_data(), stream.get_offset());
     Inifile ini;
     SessionManager sesman(&ini, auth_channel_trans, 30, 30, true, 0);
-    
+
     BOOST_CHECK(auth_channel_trans.get_status());
     try{
         sesman.ask_auth_channel_target("TEST_TARGET");
@@ -81,12 +78,12 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
 
     // TEST set_auth_channel_result
     stream.out_uint32_be(strlen(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n"));
-    stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n", 
+    stream.out_copy_bytes(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n",
                           strlen(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n"));
-    CheckTransport auth_channel_trans2((char *)stream.data,stream.get_offset());
+    CheckTransport auth_channel_trans2((char *)stream.get_data(), stream.get_offset());
     Inifile ini2;
     SessionManager sesman2(&ini2, auth_channel_trans2, 30, 30, true, 0);
-    
+
     BOOST_CHECK(auth_channel_trans2.get_status());
     try{
         sesman2.set_auth_channel_result("TEST_RESULT");
@@ -110,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_EXIT == res);
     BOOST_CHECK(INTERNAL_CARD == nextmod);
-    
+
 
     // auto test case
     ini.context_set_value(AUTHID_TARGET_DEVICE,"autotest");
@@ -136,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     BOOST_CHECK(MCTX_STATUS_XUP == res);
 
     // INTERNAL STATUS
-    // test nextmod value 
+    // test nextmod value
     ini.context_set_value(AUTHID_TARGET_PROTOCOL,"INTERNAL");
     ini.context_set_value(AUTHID_TARGET_DEVICE,"selector");
     res = sesman.get_mod_from_protocol(nextmod);
@@ -152,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
     BOOST_CHECK(INTERNAL_BOUNCER2 == nextmod);
-    
+
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_login");
     res = sesman.get_mod_from_protocol(nextmod);
     BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
@@ -218,31 +215,31 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
 
     const char * name = "Authentifier Normal Case";
     int verbose = 256;
-    
+
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
     SessionManager sesman(&ini, trans, 30, 30, false, 0);
 
-    ini.context_set_value(STRAUTHID_PROXY_TYPE,"RDP");
-    ini.context_set_value(STRAUTHID_DISPLAY_MESSAGE,"");
-    ini.context_set_value(STRAUTHID_ACCEPT_MESSAGE,"");
-    ini.context_set_value(STRAUTHID_HOST,"127.0.0.1");
-    ini.context_set_value(STRAUTHID_TARGET, "127.0.0.1");
-    ini.context_set_value(STRAUTHID_AUTH_USER, "mtan");
-    ini.context_ask(STRAUTHID_PASSWORD);
-    ini.context_ask(STRAUTHID_TARGET_USER);
-    ini.context_ask(STRAUTHID_TARGET_DEVICE);
-    ini.context_ask(STRAUTHID_TARGET_PROTOCOL);
-    ini.context_ask(STRAUTHID_SELECTOR);
-    ini.context_set_value(STRAUTHID_SELECTOR_GROUP_FILTER, "");
-    ini.context_set_value(STRAUTHID_SELECTOR_DEVICE_FILTER, "");
-    ini.context_set_value(STRAUTHID_SELECTOR_LINES_PER_PAGE, "20");
-    ini.context_set_value(STRAUTHID_SELECTOR_CURRENT_PAGE, "1");
-    ini.context_ask(STRAUTHID_TARGET_PASSWORD);
-    ini.context_set_value(STRAUTHID_OPT_WIDTH, "800");
-    ini.context_set_value(STRAUTHID_OPT_HEIGHT, "600");
-    ini.context_set_value(STRAUTHID_OPT_BPP, "24");
-    ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
-    
+    ini.context_set_value(AUTHID_PROXY_TYPE,"RDP");
+    ini.context_set_value(AUTHID_DISPLAY_MESSAGE,"");
+    ini.context_set_value(AUTHID_ACCEPT_MESSAGE,"");
+    ini.context_set_value(AUTHID_HOST,"127.0.0.1");
+    ini.context_set_value(AUTHID_TARGET, "127.0.0.1");
+    ini.context_set_value(AUTHID_AUTH_USER, "mtan");
+    ini.context_ask(AUTHID_PASSWORD);
+    ini.context_ask(AUTHID_TARGET_USER);
+    ini.context_ask(AUTHID_TARGET_DEVICE);
+    ini.context_ask(AUTHID_TARGET_PROTOCOL);
+    ini.context_ask(AUTHID_SELECTOR);
+    ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER, "");
+    ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER, "");
+    ini.context_set_value(AUTHID_SELECTOR_LINES_PER_PAGE, "20");
+    ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, "1");
+    ini.context_ask(AUTHID_TARGET_PASSWORD);
+    ini.context_set_value(AUTHID_OPT_WIDTH, "800");
+    ini.context_set_value(AUTHID_OPT_HEIGHT, "600");
+    ini.context_set_value(AUTHID_OPT_BPP, "24");
+    ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, "");
+
 
     BOOST_CHECK(trans.get_status());
     //SEND No 1
@@ -252,30 +249,30 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     sesman.receive_next_module();
 
     // Login (at login window, password is still asked)
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_USER));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_DEVICE));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
     // set login / password
-    ini.context_set_value(STRAUTHID_AUTH_USER, "x");
-    ini.context_set_value(STRAUTHID_PASSWORD, "x");
+    ini.context_set_value(AUTHID_AUTH_USER, "x");
+    ini.context_set_value(AUTHID_PASSWORD, "x");
 
     //SEND No 2
     sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
     BOOST_CHECK(trans.get_status());
     //RECEIVE No 2
     sesman.receive_next_module();
-    
-    // Selector 
+
+    // Selector
     // Got target users, target devices and target protocols at this point
     // and password is correct.
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_USER));
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_PASSWORD));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_TARGET_USER));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_TARGET_DEVICE));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
     // This is a context refresh
     //SEND No 3
@@ -284,7 +281,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     //RECEIVE No 3
     sesman.receive_next_module();
 
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
     // Target Selected
     //SEND No 4
@@ -293,7 +290,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     //RECEIVE No 4
     sesman.receive_next_module();
     // At this point, the target is selected and ACL delivers the target password
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
 }
 
@@ -311,31 +308,31 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
 
     const char * name = "Authentifier Wrong Password";
     int verbose = 256;
-    
+
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
     SessionManager sesman(&ini, trans, 30, 30, false, 0);
 
-    ini.context_set_value(STRAUTHID_PROXY_TYPE,"RDP");
-    ini.context_set_value(STRAUTHID_DISPLAY_MESSAGE,"");
-    ini.context_set_value(STRAUTHID_ACCEPT_MESSAGE,"");
-    ini.context_set_value(STRAUTHID_HOST,"127.0.0.1");
-    ini.context_set_value(STRAUTHID_TARGET, "127.0.0.1");
-    ini.context_set_value(STRAUTHID_AUTH_USER, "mtan");
-    ini.context_ask(STRAUTHID_PASSWORD);
-    ini.context_ask(STRAUTHID_TARGET_USER);
-    ini.context_ask(STRAUTHID_TARGET_DEVICE);
-    ini.context_ask(STRAUTHID_TARGET_PROTOCOL);
-    ini.context_ask(STRAUTHID_SELECTOR);
-    ini.context_set_value(STRAUTHID_SELECTOR_GROUP_FILTER, "");
-    ini.context_set_value(STRAUTHID_SELECTOR_DEVICE_FILTER, "");
-    ini.context_set_value(STRAUTHID_SELECTOR_LINES_PER_PAGE, "20");
-    ini.context_set_value(STRAUTHID_SELECTOR_CURRENT_PAGE, "1");
-    ini.context_ask(STRAUTHID_TARGET_PASSWORD);
-    ini.context_set_value(STRAUTHID_OPT_WIDTH, "800");
-    ini.context_set_value(STRAUTHID_OPT_HEIGHT, "600");
-    ini.context_set_value(STRAUTHID_OPT_BPP, "24");
-    ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
-    
+    ini.context_set_value(AUTHID_PROXY_TYPE,"RDP");
+    ini.context_set_value(AUTHID_DISPLAY_MESSAGE,"");
+    ini.context_set_value(AUTHID_ACCEPT_MESSAGE,"");
+    ini.context_set_value(AUTHID_HOST,"127.0.0.1");
+    ini.context_set_value(AUTHID_TARGET, "127.0.0.1");
+    ini.context_set_value(AUTHID_AUTH_USER, "mtan");
+    ini.context_ask(AUTHID_PASSWORD);
+    ini.context_ask(AUTHID_TARGET_USER);
+    ini.context_ask(AUTHID_TARGET_DEVICE);
+    ini.context_ask(AUTHID_TARGET_PROTOCOL);
+    ini.context_ask(AUTHID_SELECTOR);
+    ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER, "");
+    ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER, "");
+    ini.context_set_value(AUTHID_SELECTOR_LINES_PER_PAGE, "20");
+    ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, "1");
+    ini.context_ask(AUTHID_TARGET_PASSWORD);
+    ini.context_set_value(AUTHID_OPT_WIDTH, "800");
+    ini.context_set_value(AUTHID_OPT_HEIGHT, "600");
+    ini.context_set_value(AUTHID_OPT_BPP, "24");
+    ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, "");
+
     BOOST_CHECK(trans.get_status());
     //SEND No 1
     sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
@@ -344,30 +341,28 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
     sesman.receive_next_module();
 
     // Login (at login window, password is still asked)
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_USER));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_DEVICE));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
     // set login / password
-    ini.context_set_value(STRAUTHID_AUTH_USER, "x");
-    ini.context_set_value(STRAUTHID_PASSWORD, "wrong"); // wrong is a wrong password
+    ini.context_set_value(AUTHID_AUTH_USER, "x");
+    ini.context_set_value(AUTHID_PASSWORD, "wrong"); // wrong is a wrong password
 
     //SEND No 2
     sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
     BOOST_CHECK(trans.get_status());
     //RECEIVE No 2
     sesman.receive_next_module();
-    
+
     // Wrong password, context is still asked
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
-
-
+    BOOST_CHECK(ini.context_is_asked(AUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_USER));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_DEVICE));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 }
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
@@ -384,32 +379,32 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
 
     const char * name = "Authentifier Selector Logout";
     int verbose = 256;
-    
+
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
     SessionManager sesman(&ini, trans, 30, 30, false, 0);
 
-    ini.context_set_value(STRAUTHID_PROXY_TYPE,"RDP");
-    ini.context_set_value(STRAUTHID_DISPLAY_MESSAGE,"");
-    ini.context_set_value(STRAUTHID_ACCEPT_MESSAGE,"");
-    ini.context_set_value(STRAUTHID_HOST,"127.0.0.1");
-    ini.context_set_value(STRAUTHID_TARGET, "127.0.0.1");
-    ini.context_set_value(STRAUTHID_AUTH_USER, "mtan");
-    ini.context_ask(STRAUTHID_PASSWORD);
-    ini.context_ask(STRAUTHID_TARGET_USER);
-    ini.context_ask(STRAUTHID_TARGET_DEVICE);
-    ini.context_ask(STRAUTHID_TARGET_PROTOCOL);
-    ini.context_ask(STRAUTHID_SELECTOR);
-    ini.context_set_value(STRAUTHID_SELECTOR_GROUP_FILTER, "");
-    ini.context_set_value(STRAUTHID_SELECTOR_DEVICE_FILTER, "");
-    ini.context_set_value(STRAUTHID_SELECTOR_LINES_PER_PAGE, "20");
-    ini.context_set_value(STRAUTHID_SELECTOR_CURRENT_PAGE, "1");
-    ini.context_ask(STRAUTHID_TARGET_PASSWORD);
-    ini.context_set_value(STRAUTHID_OPT_WIDTH, "800");
-    ini.context_set_value(STRAUTHID_OPT_HEIGHT, "600");
-    ini.context_set_value(STRAUTHID_OPT_BPP, "24");
-    ini.context_set_value(STRAUTHID_REAL_TARGET_DEVICE, "");
-    
-    
+    ini.context_set_value(AUTHID_PROXY_TYPE,"RDP");
+    ini.context_set_value(AUTHID_DISPLAY_MESSAGE,"");
+    ini.context_set_value(AUTHID_ACCEPT_MESSAGE,"");
+    ini.context_set_value(AUTHID_HOST,"127.0.0.1");
+    ini.context_set_value(AUTHID_TARGET, "127.0.0.1");
+    ini.context_set_value(AUTHID_AUTH_USER, "mtan");
+    ini.context_ask(AUTHID_PASSWORD);
+    ini.context_ask(AUTHID_TARGET_USER);
+    ini.context_ask(AUTHID_TARGET_DEVICE);
+    ini.context_ask(AUTHID_TARGET_PROTOCOL);
+    ini.context_ask(AUTHID_SELECTOR);
+    ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER, "");
+    ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER, "");
+    ini.context_set_value(AUTHID_SELECTOR_LINES_PER_PAGE, "20");
+    ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, "1");
+    ini.context_ask(AUTHID_TARGET_PASSWORD);
+    ini.context_set_value(AUTHID_OPT_WIDTH, "800");
+    ini.context_set_value(AUTHID_OPT_HEIGHT, "600");
+    ini.context_set_value(AUTHID_OPT_BPP, "24");
+    ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, "");
+
+
     BOOST_CHECK(trans.get_status());
     //SEND No 1
     sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
@@ -418,30 +413,30 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     sesman.receive_next_module();
 
     // Login (at login window, password is still asked)
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_USER));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_DEVICE));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
     // set login / password
-    ini.context_set_value(STRAUTHID_AUTH_USER, "x");
-    ini.context_set_value(STRAUTHID_PASSWORD, "x");
+    ini.context_set_value(AUTHID_AUTH_USER, "x");
+    ini.context_set_value(AUTHID_PASSWORD, "x");
 
     //SEND No 2
     sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
     BOOST_CHECK(trans.get_status());
     //RECEIVE No 2
     sesman.receive_next_module();
-    
-    // Selector 
+
+    // Selector
     // Got target users, target devices and target protocols at this point
     // and password is correct.
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_PASSWORD));
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_USER));
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_PASSWORD));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_TARGET_USER));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_TARGET_DEVICE));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
     // This is a context refresh
     //SEND No 3
@@ -450,7 +445,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     //RECEIVE No 3
     sesman.receive_next_module();
 
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
     // Selector Logout
     //SEND No 4
@@ -460,11 +455,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     sesman.receive_next_module();
     // get back to login,
     // Password, target devices, target users are asked (but not target protocol)
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_PASSWORD));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_USER));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK(!ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK(ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_PASSWORD));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_USER));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_DEVICE));
+    BOOST_CHECK(!ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
 }
 

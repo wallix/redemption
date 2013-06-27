@@ -575,7 +575,7 @@ public:
         }
 
         BStream x224_header(256);
-        BStream mcs_data(256);
+        HStream mcs_data(256, 512);
         MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
 
@@ -606,7 +606,7 @@ public:
             LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
         }
 
-        BStream stream(65536);
+        HStream stream(1024, 65536);
 
         stream.out_uint32_le(length);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -622,7 +622,7 @@ public:
 
         if (((this->verbose & 128) != 0)||((this->verbose & 16)!=0)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
+            hexdump_d(stream.get_data(), stream.size());
         }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
@@ -671,14 +671,13 @@ public:
     void send_global_palette() throw (Error)
     {
         if (!this->palette_sent && (this->client_info.bpp == 8)){
-LOG(LOG_INFO, "Front::send_global_palette()");
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
 
-            BStream stream(65536);
-
             if (this->server_fastpath_update_support == false) {
+                BStream stream(65536);
+
                 ShareData sdata(stream);
                 sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -690,7 +689,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 BStream sctrl_header(256);
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-                BStream target_stream(65536);
+                HStream target_stream(1024, 65536);
                 target_stream.out_copy_bytes(sctrl_header);
                 target_stream.out_copy_bytes(stream);
                 target_stream.mark_end();
@@ -701,7 +700,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(target_stream.data, target_stream.size());
+                    hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
                 SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
@@ -710,6 +709,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 this->trans->send(x224_header, mcs_header, sec_header, target_stream);
             }
             else {
+                HStream stream(1024, 65536);
+
                 if (this->verbose & 4){
                     LOG(LOG_INFO, "Front::send_global_palette: fast-path");
                 }
@@ -929,9 +930,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
 
-        BStream stream(65536);
-
         if (this->server_fastpath_update_support == false) {
+            BStream stream(65536);
 
             ShareData sdata(stream);
             sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
@@ -948,14 +948,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
             if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
             BStream x224_header(256);
@@ -968,6 +968,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             this->trans->send(x224_header, mcs_header, sec_header, target_stream);
         }
         else {
+            HStream stream(1024, 65536);
+
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_pointer: fast-path");
             }
@@ -1036,9 +1038,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
-        BStream stream(65536);
 
         if (this->server_fastpath_update_support == false) {
+            BStream stream(65536);
 
             ShareData sdata(stream);
             sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
@@ -1055,14 +1057,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
             if ((this->verbose & (128|4)) == (128|4)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
             BStream x224_header(256);
@@ -1075,6 +1077,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             this->trans->send(x224_header, mcs_header, sec_header, target_stream);
         }
         else {
+            HStream stream(1024, 65536);
+
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::set_pointer: fast-path");
             }
@@ -1334,7 +1338,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             }
 
             // ------------------------------------------------------------------
-            BStream stream(65536);
+            HStream stream(1024, 65536);
             // ------------------------------------------------------------------
 //            GCC::UserData::ServerToClient_Send(stream, this->clientRequestedProtocols, this->channel_list.size());
 
@@ -1506,7 +1510,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             }
             {
                 BStream x224_header(256);
-                BStream mcs_data(256);
+                HStream mcs_data(256, 512);
                 MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_data.size());
                 this->trans->send(x224_header, mcs_data);
@@ -1522,7 +1526,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 this->userid = mcs.initiator;
 
                 BStream x224_header(256);
-                BStream mcs_cjcf_data(256);
+                HStream mcs_cjcf_data(256, 512);
 
                 MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                                              mcs.initiator,
@@ -1544,7 +1548,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
 
                 BStream x224_header(256);
-                BStream mcs_cjcf_data(256);
+                HStream mcs_cjcf_data(256, 512);
 
                 MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                                              mcs.initiator,
@@ -1571,7 +1575,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
 
                 BStream x224_header(256);
-                BStream mcs_cjcf_data(256);
+                HStream mcs_cjcf_data(256, 512);
 
                 MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                                              mcs.initiator,
@@ -1642,7 +1646,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 memset(client_random, 0, 64);
                 {
                     uint8_t l_out[64]; memset(l_out, 0, 64);
-                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.data, 64);
+                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.get_data(), 64);
                     uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
                     uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
 
@@ -1713,7 +1717,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.data, sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
 
             if (!sec.flags & SEC::SEC_INFO_PKT) {
@@ -1743,7 +1747,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
 
                 {
-                    BStream stream(65535);
+                    HStream stream(1024, 65535);
 
                     /* mce */
                     /* some compilers need unsigned char to avoid warnings */
@@ -1761,7 +1765,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                     if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
-                        hexdump_d(stream.data, stream.size());
+                        hexdump_d(stream.get_data(), stream.size());
                     }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
@@ -1796,7 +1800,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
                 }
 
-                BStream stream(65535);
+                HStream stream(1024, 65535);
 
                 stream.out_uint8(LIC::LICENSE_REQUEST);
                 stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
@@ -1857,7 +1861,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                 if ((this->verbose & (128|2)) == (128|2)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(stream.data, stream.size());
+                    hexdump_d(stream.get_data(), stream.size());
                 }
 
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
@@ -1897,7 +1901,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.data, sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
 
             // Licensing
@@ -1941,7 +1945,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     }
                     LIC::NewLicenseRequest_Recv lic(sec.payload);
                     TODO("Instead of returning a license we return a message saying that no license is OK")
-                    BStream stream(65535);
+                    HStream stream(1024, 65535);
                     // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
                     /* some compilers need unsigned char to avoid warnings */
@@ -1963,7 +1967,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                     if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
-                        hexdump_d(stream.data, stream.size());
+                        hexdump_d(stream.get_data(), stream.size());
                     }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
@@ -2239,7 +2243,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "sec decrypted payload:");
-                    hexdump_d(sec.payload.data, sec.payload.size());
+                    hexdump_d(sec.payload.get_data(), sec.payload.size());
                 }
 
                 if (this->verbose & 8){
@@ -2375,7 +2379,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         }
     }
 
-    void send_data_indication(uint16_t channelId, Stream & stream)
+    void send_data_indication(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
         BStream mcs_header(256);
@@ -2411,14 +2415,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
             if ((this->verbose & (128|1)) == (128|1)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
             BStream x224_header(256);
@@ -2434,7 +2438,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_data_update_sync: fast-path");
             }
-            BStream stream(65536);
+            HStream stream(256, 65536);
             stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
             stream.mark_end();
 
@@ -2592,14 +2596,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream sctrl_header(256);
         ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        BStream target_stream(65536);
+        HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
         BStream x224_header(256);
@@ -3004,14 +3008,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream sctrl_header(256);
         ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        BStream target_stream(65536);
+        HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
         BStream x224_header(256);
@@ -3072,14 +3076,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream sctrl_header(256);
         ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        BStream target_stream(65536);
+        HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
 
@@ -3142,14 +3146,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream sctrl_header(256);
         ShareControl_Send sctrl(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        BStream target_stream(65535);
+        HStream target_stream(1024, 65535);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
         BStream x224_header(256);
@@ -3409,14 +3413,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 BStream sctrl_header(256);
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-                BStream target_stream(65536);
+                HStream target_stream(1024, 65536);
                 target_stream.out_copy_bytes(sctrl_header);
                 target_stream.out_copy_bytes(stream);
                 target_stream.mark_end();
 
                 if ((this->verbose & (128|8)) == (128|8)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(target_stream.data, target_stream.size());
+                    hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
                 BStream x224_header(256);
@@ -3595,12 +3599,12 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
-        BStream stream(256);
+        HStream stream(1024, 1024 + 256);
         ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
+            hexdump_d(stream.get_data(), stream.size());
         }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);

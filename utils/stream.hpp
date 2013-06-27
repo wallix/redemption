@@ -43,29 +43,35 @@ enum {
 };
 
 class Stream {
-    public:
+public:
     uint8_t* p;
     uint8_t* end;
+protected:
     uint8_t* data;
+public:
     size_t capacity;
 
     virtual ~Stream() {}
 
     virtual void init(size_t capacity) = 0;
 
-    void reset(){
+    virtual void reset(){
         this->end = this->p = this->data;
     }
 
-    bool has_room(unsigned n) const {
+    virtual bool has_room(unsigned n) const {
         return this->get_offset() + n <= this->capacity;
     }
 
-    uint32_t get_offset() const {
-        return this->p - this->data;
+    virtual uint8_t * get_data() const {
+        return this->data;
     }
 
-    uint32_t room() const {
+    uint32_t get_offset() const {
+        return this->p - this->get_data();
+    }
+
+    virtual uint32_t room() const {
         return this->capacity - this->get_offset();
     }
 
@@ -266,7 +272,7 @@ class Stream {
     }
 
     void set_out_uint8(unsigned char v, size_t offset) {
-        this->data[offset] = v;
+        (this->get_data())[offset] = v;
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
@@ -314,7 +320,7 @@ class Stream {
     }
 
     void set_out_sint8(char v, size_t offset) {
-        this->data[offset] = v;
+        (this->get_data())[offset] = v;
     }
 
     void out_uint16_le(unsigned int v) {
@@ -325,8 +331,8 @@ class Stream {
     }
 
     void set_out_uint16_le(unsigned int v, size_t offset) {
-        this->data[offset] = v & 0xFF;
-        this->data[offset+1] = (v >> 8) & 0xFF;
+        (this->get_data())[offset] = v & 0xFF;
+        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
     }
 
     void out_sint16_le(signed int v) {
@@ -337,8 +343,8 @@ class Stream {
     }
 
     void set_out_sint16_le(signed int v, size_t offset) {
-        this->data[offset] = v & 0xFF;
-        this->data[offset+1] = (v >> 8) & 0xFF;
+        (this->get_data())[offset] = v & 0xFF;
+        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
     }
 
     void out_uint16_be(unsigned int v) {
@@ -349,8 +355,8 @@ class Stream {
     }
 
     void set_out_uint16_be(unsigned int v, size_t offset) {
-        this->data[offset+1] = v & 0xFF;
-        this->data[offset] = (v >> 8) & 0xFF;
+        (this->get_data())[offset+1] = v & 0xFF;
+        (this->get_data())[offset] = (v >> 8) & 0xFF;
     }
 
     void out_uint32_le(unsigned int v) {
@@ -363,10 +369,10 @@ class Stream {
     }
 
     void set_out_uint32_le(unsigned int v, size_t offset) {
-        this->data[offset+0] = v & 0xFF;
-        this->data[offset+1] = (v >> 8) & 0xFF;
-        this->data[offset+2] = (v >> 16) & 0xFF;
-        this->data[offset+3] = (uint8_t)(v >> 24) & 0xFF;
+        (this->get_data())[offset+0] = v & 0xFF;
+        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
+        (this->get_data())[offset+2] = (v >> 16) & 0xFF;
+        (this->get_data())[offset+3] = (uint8_t)(v >> 24) & 0xFF;
     }
 
     void out_uint32_be(unsigned int v) {
@@ -380,10 +386,10 @@ class Stream {
 
     void set_out_uint32_be(unsigned int v, size_t offset) {
         REDASSERT(this->has_room(4));
-        this->data[offset+0] = (uint8_t)(v >> 24) & 0xFF;
-        this->data[offset+1] = (v >> 16) & 0xFF;
-        this->data[offset+2] = (v >> 8) & 0xFF;
-        this->data[offset+3] = v & 0xFF;
+        (this->get_data())[offset+0] = (uint8_t)(v >> 24) & 0xFF;
+        (this->get_data())[offset+1] = (v >> 16) & 0xFF;
+        (this->get_data())[offset+2] = (v >> 8) & 0xFF;
+        (this->get_data())[offset+3] = v & 0xFF;
     }
 
     void out_unistr(const char* text)
@@ -441,12 +447,12 @@ class Stream {
         this->end = this->p;
     }
 
-    void rewind(){
+    virtual void rewind(){
         this->p = this->data;
     }
 
     size_t size() const {
-        return this->end - this->data;
+        return this->end - this->get_data();
     }
 
     // Output zero terminated string, including trailing 0
@@ -463,7 +469,7 @@ class Stream {
 
 
     void out_copy_bytes(Stream & stream) {
-        this->out_copy_bytes(stream.data, stream.size());
+        this->out_copy_bytes(stream.get_data(), stream.size());
     }
 
     void out_copy_bytes(const uint8_t * v, size_t n) {
@@ -473,7 +479,7 @@ class Stream {
     }
 
     void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
-        memcpy(this->data+offset, v, n);
+        memcpy(this->get_data()+offset, v, n);
     }
 
     void out_copy_bytes(const char * v, size_t n) {
@@ -500,7 +506,7 @@ class Stream {
     }
 
     void set_out_clear_bytes(size_t n, size_t offset) {
-        memset(this->data+offset, 0, n);
+        memset(this->get_data()+offset, 0, n);
     }
 
     void out_bytes_le(const uint8_t nb, const unsigned value){
@@ -510,7 +516,7 @@ class Stream {
     }
 
     void set_out_bytes_le(const uint8_t nb, const unsigned value, size_t offset){
-        ::out_bytes_le(this->data+offset, nb, value);
+        ::out_bytes_le(this->get_data()+offset, nb, value);
     }
 
     // =========================================================================
@@ -816,11 +822,11 @@ class Stream {
     void set_out_ber_len(unsigned int v, size_t offset){
         if (v>= 0x80){
             REDASSERT(v < 65536);
-            this->data[offset+0] = 0x82;
+            (this->get_data())[offset+0] = 0x82;
             this->set_out_uint16_be(v, offset+1);
         }
         else {
-            this->data[offset+0] = (uint8_t)v;
+            (this->get_data())[offset+0] = (uint8_t)v;
         }
     }
 
@@ -1635,6 +1641,100 @@ class BStream : public Stream {
     }
 };
 
+class HStream : public BStream {
+public:
+    size_t    reserved_leading_space;
+    uint8_t * data_start;
+
+    HStream(size_t reserved_leading_space, size_t total_size = AUTOSIZE)
+            : BStream(total_size)
+            , reserved_leading_space(reserved_leading_space) {
+        if (reserved_leading_space >= total_size) {
+            LOG( LOG_ERR
+               , "failed to allocate buffer : total_size=%u, reserved_leading_space=%u\n"
+               , total_size, reserved_leading_space);
+            throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_RESERVED_LEADING_SPACE);
+        }
+
+        this->p          += this->reserved_leading_space;
+        this->data_start  = this->p;
+        this->end         = this->p;
+    }
+
+    virtual ~HStream() {}
+
+    void copy_to_head(const uint8_t * v, size_t n) {
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, v, n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    void copy_to_head(const char * v, size_t n) {
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, v, n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    void copy_to_head(const Stream & stream) {
+        size_t n = stream.size();
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, stream.get_data(), n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    virtual uint8_t * get_data() const {
+        return this->data_start;
+    }
+
+    virtual bool has_room(unsigned n) const {
+        return this->get_offset() + this->reserved_leading_space + n <= this->capacity;
+    }
+
+    virtual void reset() {
+        BStream::reset();
+
+        this->p          += this->reserved_leading_space;
+        this->data_start  = this->p;
+        this->end         = this->p;
+    }
+
+    virtual void rewind() {
+        this->p          = this->data + this->reserved_leading_space;
+        this->data_start = this->p;
+    }
+
+    virtual uint32_t room() const {
+        return this->capacity -  this->reserved_leading_space - this->get_offset();
+    }
+};
+
 // SubStream does not allocate any buffer
 // (and the buffer pointed to should probably not be modifiable,
 // but I'm not yet doing any distinction between stream that can or can't be modified
@@ -1653,7 +1753,7 @@ class SubStream : public Stream {
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
-        this->p = this->data = stream.data + offset;
+        this->p = this->data = stream.get_data() + offset;
         this->capacity = (new_size == 0)?(stream.capacity - offset):new_size;
         this->end = this->data + this->capacity;
     }

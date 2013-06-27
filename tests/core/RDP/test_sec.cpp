@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,6 +20,7 @@
    Unit test to Mcs PDU coder/decoder
    Using lib boost functions for testing
 */
+
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestSec
@@ -56,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestSend_SecExchangePacket)
     size_t length = sizeof(sec_pkt);
     SEC::SecExchangePacket_Send sec(stream, client_encrypted_key, 64);
 
-    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
@@ -80,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecExchangePacket)
     BOOST_CHECK_EQUAL((uint32_t)SEC::SEC_EXCHANGE_PKT, sec.basicSecurityHeader);
     BOOST_CHECK_EQUAL(length - 8, sec.payload.size());
     BOOST_CHECK_EQUAL(72, sec.payload.size());
-    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.data, sec.payload.size()));
+    BOOST_CHECK_EQUAL(0, memcmp(sec_pkt+8, sec.payload.get_data(), sec.payload.size()));
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
@@ -123,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
     SEC::SecInfoPacket_Recv sec(stream, length, decrypt);
 
-    const char expected[] = 
+    const char expected[] =
         /* 0000 */ "\x0c\x04\x0c\x04\xb3\x47\x03\x00\x00\x00\x02\x00\x00\x00\x00\x00" //.....G..........
         /* 0010 */ "\x00\x00\x00\x00\x78\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00" //....x...........
         /* 0020 */ "\x18\x00\x31\x00\x30\x00\x2e\x00\x31\x00\x30\x00\x2e\x00\x34\x00" //..1.0...1.0...4.
@@ -146,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
         /* 0130 */ "\x00\x00\x64\x00\x00\x00"
         ;
     BOOST_CHECK_EQUAL(sizeof(expected)-1, sec.payload.size());
-    BOOST_CHECK_EQUAL(0, memcmp(expected, sec.payload.data, sizeof(expected)-1));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, sec.payload.get_data(), sizeof(expected)-1));
 }
 
 
@@ -237,7 +238,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 
 ////BOOST_AUTO_TEST_CASE(TestSend_SecLicensePacket)
 ////{
-////    const char sec_pkt[] = 
+////    const char sec_pkt[] =
 ////    "\x80\x00\x00\x00" // SEC::SEC_LICENSE_PKT
 ////    "\x01"             // LICENSE_REQUEST
 ////    "\x02"             // PREAMBLE_VERSION_2_0 (RDP 4.0)
@@ -263,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 ////    // zero.
 ////    "\x08\x00\x00\x00" // len = 8
 ////    // ProductInfo::pbProductId (variable): Contains a null-terminated Unicode string that identifies the type of
-////    // the license that is required by the terminal server. It MAY have the following string value. 
+////    // the license that is required by the terminal server. It MAY have the following string value.
 ////    // "A02" Per device or per user license
 ////    "\x32\x00\x33\x00\x36\x00\x00\x00" //2.3.6...
 
@@ -318,7 +319,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_SecInfoPacket)
 ////    memcpy(stream.data, sec_pkt, datalen);
 ////    stream.end = stream.data + datalen;
 ////    BOOST_CHECK_EQUAL(datalen, stream.size());
-////    BOOST_CHECK_EQUAL((uint32_t)322, stream.size()); 
+////    BOOST_CHECK_EQUAL((uint32_t)322, stream.size());
 
 ////    CryptContext decrypt;
 ////    SEC::Sec_Recv sec(stream, decrypt, 0, 0);

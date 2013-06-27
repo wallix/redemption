@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -22,7 +22,6 @@
    Using lib boost functions, some tests need to be added
 */
 
-
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestStream
@@ -32,6 +31,7 @@
 #include "log.hpp"
 
 #include "stream.hpp"
+#include "testtransport.hpp"
 
 BOOST_AUTO_TEST_CASE(TestStreamInitWithSize)
 {
@@ -44,7 +44,6 @@ BOOST_AUTO_TEST_CASE(TestStreamInitWithSize)
     delete s;
 }
 
-
 BOOST_AUTO_TEST_CASE(TestStream)
 {
     // test we can create a Stream object
@@ -55,9 +54,9 @@ BOOST_AUTO_TEST_CASE(TestStream)
 
     s->init(8192);
     BOOST_CHECK(s->capacity == 8192);
-    BOOST_CHECK(s->data);
-    BOOST_CHECK(s->data == s->p);
-    BOOST_CHECK(s->data == s->end);
+    BOOST_CHECK(s->get_data());
+    BOOST_CHECK(s->get_data() == s->p);
+    BOOST_CHECK(s->get_data() == s->end);
 
     // and we can destroy Stream.
     delete s;
@@ -68,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint8)
     // test reading of 8 bits data from Stream signed or unsigned is working
 
     Stream * s = new BStream(10);
-    memcpy(s->data, (uint8_t*)"\1\xFE\xFD\4\5", 5);
+    memcpy(s->get_data(), (uint8_t*)"\1\xFE\xFD\4\5", 5);
     s->end += 5;
     // 5 characters are availables
     BOOST_CHECK(s->in_check_rem(5));
@@ -111,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
 
     Stream * s = new BStream(100);
     const char * data = "\1\0\xFE\xFF\xFF\xFD\xFF\xFC\xFB\xFF\0\1";
-    memcpy(s->data, (uint8_t*)data, 12);
+    memcpy(s->get_data(), (uint8_t*)data, 12);
     s->end += 12;
 
     uint8_t * oldp = s->p;
@@ -146,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint32)
 
     Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF";
-    memcpy(s->data, (uint8_t*)data, 16);
+    memcpy(s->get_data(), (uint8_t*)data, 16);
     s->end += 16;
 
     uint8_t * oldp = s->p;
@@ -173,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint64)
 
     Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE\0\0\0\0\0\0\0\1\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
-    memcpy(s->data, (uint8_t*)data, 32);
+    memcpy(s->get_data(), (uint8_t*)data, 32);
     s->end += 32;
 
     uint8_t * oldp = s->p;
@@ -207,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_uint8p)
 
     Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF";
-    memcpy(s->data, (uint8_t*)data, 16);
+    memcpy(s->get_data(), (uint8_t*)data, 16);
     s->end += 16;
 
     uint8_t * oldp = s->p;
@@ -230,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_skip_bytes)
 
     BStream s(100);
     const char * data = "\0\1\2\3\4\5\6\7\x8\x9\xA\xB\xC\xD";
-    memcpy(s.data, (uint8_t*)data, 14);
+    memcpy(s.get_data(), (uint8_t*)data, 14);
     s.end += 14;
 
     uint8_t * oldp = s.p;
@@ -260,25 +259,25 @@ BOOST_AUTO_TEST_CASE(TestStream_out_Stream)
     s->out_uint32_be((5 << 24) + (6 << 16) + (7 << 8) + 8);
 
     BOOST_CHECK_EQUAL(oldp+13, s->p);
-    BOOST_CHECK_EQUAL(s->data[0], 10);
+    BOOST_CHECK_EQUAL((s->get_data())[0], 10);
 
-    BOOST_CHECK_EQUAL(s->data[1], 1);
-    BOOST_CHECK_EQUAL(s->data[2], 2);
+    BOOST_CHECK_EQUAL((s->get_data())[1], 1);
+    BOOST_CHECK_EQUAL((s->get_data())[2], 2);
 
-    BOOST_CHECK_EQUAL(s->data[3], 4);
-    BOOST_CHECK_EQUAL(s->data[4], 3);
+    BOOST_CHECK_EQUAL((s->get_data())[3], 4);
+    BOOST_CHECK_EQUAL((s->get_data())[4], 3);
 
-    BOOST_CHECK_EQUAL(s->data[5], 4);
-    BOOST_CHECK_EQUAL(s->data[6], 3);
-    BOOST_CHECK_EQUAL(s->data[7], 2);
-    BOOST_CHECK_EQUAL(s->data[8], 1);
+    BOOST_CHECK_EQUAL((s->get_data())[5], 4);
+    BOOST_CHECK_EQUAL((s->get_data())[6], 3);
+    BOOST_CHECK_EQUAL((s->get_data())[7], 2);
+    BOOST_CHECK_EQUAL((s->get_data())[8], 1);
 
-    BOOST_CHECK_EQUAL(s->data[9], 5);
-    BOOST_CHECK_EQUAL(s->data[10], 6);
-    BOOST_CHECK_EQUAL(s->data[11], 7);
-    BOOST_CHECK_EQUAL(s->data[12], 8);
+    BOOST_CHECK_EQUAL((s->get_data())[9], 5);
+    BOOST_CHECK_EQUAL((s->get_data())[10], 6);
+    BOOST_CHECK_EQUAL((s->get_data())[11], 7);
+    BOOST_CHECK_EQUAL((s->get_data())[12], 8);
 
-    BOOST_CHECK(!memcmp("\xA\1\2\4\3\4\3\2\1\5\6\7\x8", s->data, 13));
+    BOOST_CHECK(!memcmp("\xA\1\2\4\3\4\3\2\1\5\6\7\x8", s->get_data(), 13));
 
     // underflow because end is not yet moved at p
     BOOST_CHECK(s->p > s->end);
@@ -302,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr)
     stream.out_uint32_le(-1); // just to put a padding after usefull data
     stream.mark_end();
 
-    stream.p = stream.data;
+    stream.p = stream.get_data();
     uint8_t result[256];
     stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
     BOOST_CHECK_EQUAL(14, stream.get_offset());
@@ -324,7 +323,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
     stream.out_uint32_le(-1); // just to put a padding after usefull data
     stream.mark_end();
 
-    stream.p = stream.data;
+    stream.p = stream.get_data();
     uint8_t result[256];
     stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
     BOOST_CHECK_EQUAL(14, stream.get_offset());
@@ -338,3 +337,25 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
     BOOST_CHECK_EQUAL(0, result[7]);
 }
 
+BOOST_AUTO_TEST_CASE(TestStream_HStream)
+{
+    HStream stream(512, 1024);
+
+    BOOST_CHECK_EQUAL(512, stream.room());
+
+    stream.out_copy_bytes("0123456789", 10);
+    stream.copy_to_head("abcdefg", 7);
+    stream.copy_to_head("ABCDEFG", 7);
+    stream.copy_to_head("#*?!+-_", 7);
+    stream.mark_end();
+
+    const char * data = "#*?!+-_ABCDEFGabcdefg0123456789";
+
+    CheckTransport ct(data, strlen(data));
+
+    BOOST_CHECK_EQUAL(31, stream.size());
+
+    ct.send(stream);
+
+    BOOST_CHECK_EQUAL(true, ct.get_status());
+}

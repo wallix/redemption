@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,6 +20,7 @@
    Unit test to Mcs PDU coder/decoder
    Using lib boost functions for testing
 */
+
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE TestMCS
@@ -32,7 +33,6 @@
 #include "transport.hpp"
 #include "testtransport.hpp"
 #include "RDP/mcs.hpp"
-
 
 BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 {
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
 
     BOOST_CHECK_EQUAL(101, mcs.tag);
     BOOST_CHECK_EQUAL(369, mcs.tag_len + 5);
- 
+
     BOOST_CHECK_EQUAL(34, mcs.targetParameters.maxChannelIds);
     BOOST_CHECK_EQUAL(2, mcs.targetParameters.maxUserIds);
     BOOST_CHECK_EQUAL(0, mcs.targetParameters.maxTokenIds);
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(0, mcs.targetParameters.minThroughput);
     BOOST_CHECK_EQUAL(1, mcs.targetParameters.maxHeight);
     BOOST_CHECK_EQUAL(65535, mcs.targetParameters.maxMCSPDUsize);
-    BOOST_CHECK_EQUAL(2, mcs.targetParameters.protocolVersion);            
+    BOOST_CHECK_EQUAL(2, mcs.targetParameters.protocolVersion);
 
     BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxChannelIds);
     BOOST_CHECK_EQUAL(1, mcs.minimumParameters.maxUserIds);
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(106, mcs._header_size); // everything up to USER_DATA
     BOOST_CHECK_EQUAL(263, mcs.payload_size); // USER_DATA (after len)
     BOOST_CHECK_EQUAL(263, mcs.payload.size()); // USER_DATA (after len)
-    BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.data - mcs._header_size);
+    BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.get_data() - mcs._header_size);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
     MCS::CONNECT_INITIAL_Send mcs(stream, payload_length, MCS::BER_ENCODING);
     BOOST_CHECK_EQUAL(106, stream.size());
 
-    const char * expected = 
+    const char * expected =
 /* 0000 */                             "\x7f\x65\x82\x01\x6c\x04\x01\x01\x04" //       .e..l.... |
 /* 0010 */ "\x01\x01\x01\x01\xff\x30\x1a\x02\x01\x22\x02\x01\x02\x02\x01\x00" //.....0..."...... |
 /* 0020 */ "\x02\x01\x01\x02\x01\x00\x02\x01\x01\x02\x03\x00\xff\xff\x02\x01" //................ |
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
 /* 0070 */ "\x07" //.....|.......... |
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, 106));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), 106));
 }
 
 BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_CONNECT_RESPONSE, fac_mcs.type);
 
     MCS::CONNECT_RESPONSE_PDU_Recv mcs(payload, MCS::BER_ENCODING);
- 
+
     BOOST_CHECK_EQUAL(102, mcs.tag);
     BOOST_CHECK_EQUAL(90, mcs.tag_len);
 
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_RESPONSE_with_factory)
     BOOST_CHECK_EQUAL(0, mcs.domainParameters.minThroughput);
     BOOST_CHECK_EQUAL(1, mcs.domainParameters.maxHeight);
     BOOST_CHECK_EQUAL(65528, mcs.domainParameters.maxMCSPDUsize);
-    BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);            
+    BOOST_CHECK_EQUAL(2, mcs.domainParameters.protocolVersion);
 
     BOOST_CHECK_EQUAL(54, mcs.payload_size);
     BOOST_CHECK_EQUAL(54, mcs.payload.size());
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
     MCS::CONNECT_RESPONSE_Send mcs(stream, payload_size, MCS::BER_ENCODING);
     BOOST_CHECK_EQUAL(header_size, stream.size());
 
-    const char * expected = 
+    const char * expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
     "\x5a"     // LEN = payload_size + header_size
         // Result
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE)
         "\x36" // PAYLOAD LEN
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, header_size));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), header_size));
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
     };
     BOOST_CHECK_EQUAL(header_size, stream.size());
 
-    const char * expected = 
+    const char * expected =
     "\x7f\x66" // BER_TAG_MCS_CONNECT_RESPONSE
     "\x82\x04\x26"     // LEN = payload_size + header_size
         // Result
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
         "\x82\x04\x00" // PAYLOAD LEN
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, header_size));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), header_size));
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
     MCS::ErectDomainRequest_Send mcs(stream, subheight, subinterval, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x04"  // ErectDomainRequest * 4
         "\x01"  // subHeight len
         "\x00"  // subHeight
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
         "\x00"  // subInterval
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_ErectDomainRequest)
@@ -352,12 +352,12 @@ BOOST_AUTO_TEST_CASE(TestSend_DisconnectProviderUltimatum)
     MCS::DisconnectProviderUltimatum_Send mcs(stream, MCS::RN_DOMAIN_DISCONNECTED, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x20"  // DisconnectProviderUltimatum * 4
         "\x00"  // reason
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_DisconnectProviderUltimatum)
@@ -384,11 +384,11 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserRequest)
     MCS::AttachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x28"  // AttachUserRequest * 4
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_AttachUserRequest)
@@ -416,12 +416,12 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_without_userid)
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, false, 0, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x2C"  //  AttachUserConfirm * 4
         "\x00"
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_without_userid)
@@ -448,13 +448,13 @@ BOOST_AUTO_TEST_CASE(TestSend_AttachUserConfirm_with_userid)
     MCS::AttachUserConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, true, 1, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x2E"  //  AttachUserConfirm * 4
         "\x00"
         "\x00\x01"
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
@@ -483,13 +483,13 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
     MCS::ChannelJoinRequest_Send mcs(stream, 3, 1004, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x38"  // ChannelJoinRequest * 4
         "\x00\x03" // userId = 3
         "\x03\xec" // channelId = 1004
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinRequest)
@@ -517,7 +517,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
     MCS::ChannelJoinConfirm_Send mcs(stream, MCS::RT_SUCCESSFUL, 3, 1004, true, 1004, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x3E"  // ChannelJoinConfirm * 4
         "\x00"  // result RT_SUCCESSFUL
         "\x00\x03" // userId = 3
@@ -525,7 +525,7 @@ BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinConfirm)
         "\x03\xec" // channelId = 1004
     ;
 
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
@@ -558,14 +558,14 @@ BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
     MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x64"  // SendDataRequest * 4
         "\x00\x03" // userid  = 3
-        "\x03\xec" // channel = 1005 
+        "\x03\xec" // channel = 1005
         "\x70"     // high priority, segmentation end
         "\x81\x7b" // len 379
     ;
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
@@ -575,7 +575,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
     GeneratorTransport t(
         "\x64"  // SendDataRequest * 4
         "\x00\x03" // userid  = 3
-        "\x03\xec" // channel = 1005 
+        "\x03\xec" // channel = 1005
         "\x70"     // high priority, segmentation end
         "\x81\x7b" // len 379
 
@@ -627,14 +627,14 @@ BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
     MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
 
-    const char * expected = 
+    const char * expected =
         "\x68"  // SendDataIndication * 4
         "\x00\x03" // userid  = 3
-        "\x03\xec" // channel = 1005 
+        "\x03\xec" // channel = 1005
         "\x70"     // high priority, segmentation end
         "\x81\x7b" // len 379
     ;
-    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.data, length));
+    BOOST_CHECK_EQUAL(0, memcmp(expected, stream.get_data(), length));
 }
 
 BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
@@ -644,7 +644,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
     GeneratorTransport t(
         "\x68"  // SendDataIndication * 4
         "\x00\x03" // userid  = 3
-        "\x03\xec" // channel = 1005 
+        "\x03\xec" // channel = 1005
         "\x70"     // high priority, segmentation end
         "\x81\x7b" // len 379
 

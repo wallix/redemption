@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,7 +18,6 @@
    Author(s) : Christophe Grosjean
 
    RDP Licence Layer Unit Tests
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -170,7 +169,7 @@ BOOST_AUTO_TEST_CASE(Test_lic_new_licence)
 };
 
     BStream stream(2048);
-    memcpy(stream.data, indata, sizeof(indata));
+    memcpy(stream.get_data(), indata, sizeof(indata));
     stream.end += sizeof(indata);
 
     uint8_t license_key[16] = {};
@@ -463,7 +462,7 @@ BOOST_AUTO_TEST_CASE(Test_lic_upgrade_licence)
 };
 
     BStream stream(2048);
-    memcpy(stream.data, indata, sizeof(indata));
+    memcpy(stream.get_data(), indata, sizeof(indata));
     stream.end += sizeof(indata);
 
     uint8_t license_key[16] = {};
