@@ -119,7 +119,7 @@ class SessionManager {
         this->tick_count = 1;
 
         this->ini->context_ask(AUTHID_KEEPALIVE);
-        this->acl_serial.send(STRAUTHID_KEEPALIVE);
+        this->acl_serial.send(AUTHID_KEEPALIVE);
         keepalive_time = ::time(NULL) + 30;
     }
 
@@ -131,7 +131,7 @@ class SessionManager {
         }
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_TARGET, target);
-        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_TARGET);
+        this->acl_serial.send(AUTHID_AUTHCHANNEL_TARGET);
     }
 
     // Set AUTHCHANNEL_RESULT dict value and transmit request to sesman (then wabenginge)
@@ -142,7 +142,7 @@ class SessionManager {
         }
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
-        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_RESULT);
+        this->acl_serial.send(AUTHID_AUTHCHANNEL_RESULT);
     }
 
     bool close_on_timestamp(long & timestamp)
@@ -214,7 +214,7 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
-                this->acl_serial.send(STRAUTHID_KEEPALIVE);
+                this->acl_serial.send(AUTHID_KEEPALIVE);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -294,7 +294,7 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
-                this->acl_serial.send(STRAUTHID_KEEPALIVE);
+                this->acl_serial.send(AUTHID_KEEPALIVE);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
