@@ -2,7 +2,7 @@ Source: redemption
 Section: net
 Priority: extra
 Maintainer: WAB Dev Team <wab@wallix.com>
-Build-Depends: git, dpkg-dev, debhelper, bjam, boost-build, libboost-program-options-dev, libboost-test1.42-dev, libssl-dev, libpng-dev
+Build-Depends: git, dpkg-dev, debhelper, bjam, libboost-program-options-dev, libboost-test1.42-dev, libssl-dev, libpng-dev
 
 Package: redemption
 Architecture: i386 

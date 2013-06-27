@@ -1,3 +1,10 @@
+redemption (0.9.285-future) squeeze; urgency=low
+
+  * Avoid memcopy when sending packets
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 17 Jun 2013 10:12:26 +0200
+
+
 redemption (0.9.283-future) squeeze; urgency=low
 
   * Fully moved internal pages to new widget components
