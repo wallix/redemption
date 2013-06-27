@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou, Meng Tan
 */
 
 #ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
@@ -31,6 +31,7 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 #include "netutils.hpp"
 #include "sockettransport.hpp"
 #include "wait_obj.hpp"
+#include "acl_serializer.hpp"
 
 typedef enum {
     INTERNAL_NONE,
@@ -80,22 +81,23 @@ class SessionManager {
     int tick_count;
 
     public:
-    Transport & auth_trans;
+    AclSerializer acl_serial;
     int keepalive_grace_delay;
     int max_tick;
     bool internal_domain;
     uint32_t verbose;
 
-    SessionManager(Inifile * ini, Transport & auth_trans, int keepalive_grace_delay,
-                   int max_tick, bool internal_domain, uint32_t verbose)
+    SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay,
+                   int _max_tick, bool _internal_domain, uint32_t _verbose)
         : mod_state(MOD_STATE_INIT)
-        , ini(ini)
+        , ini(_ini)
         , tick_count(0)
-        , auth_trans(auth_trans)
-        , keepalive_grace_delay(keepalive_grace_delay)
-        , max_tick(max_tick)
-        , internal_domain(internal_domain)
-        , verbose(verbose)
+        , acl_serial(AclSerializer(_ini,_auth_trans,_verbose))
+        , keepalive_grace_delay(_keepalive_grace_delay)
+        , max_tick(_max_tick)
+        , internal_domain(_internal_domain)
+        , verbose(_verbose)
+
     {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::SessionManager");
@@ -108,14 +110,7 @@ class SessionManager {
             LOG(LOG_INFO, "auth::~SessionManager");
         }
     }
-    /*
-    bool event(fd_set & rfds){
-        if (this->verbose & 0x40){
-            LOG(LOG_INFO, "auth::event?");
-        }
-        return this->auth_event?this->auth_event->is_set(rfds):false;
-    }
-    */
+
     void start_keep_alive(long & keepalive_time)
     {
         if (this->verbose & 0x10){
@@ -123,16 +118,8 @@ class SessionManager {
         }
         this->tick_count = 1;
 
-        BStream stream(8192);
-
-        stream.out_uint32_be(0); // skip length
         this->ini->context_ask(AUTHID_KEEPALIVE);
-        this->out_item(stream, STRAUTHID_KEEPALIVE);
-        stream.mark_end();
-        // now set length
-        int total_length = stream.get_offset();
-        stream.set_out_uint32_be(total_length - 4, 0);
-        this->auth_trans.send(stream.get_data(), total_length);
+        this->acl_serial.send(STRAUTHID_KEEPALIVE);
         keepalive_time = ::time(NULL) + 30;
     }
 
@@ -143,17 +130,8 @@ class SessionManager {
             LOG(LOG_INFO, "SessionManager::ask_auth_channel_target(%s)", target);
         }
 
-        BStream stream(8192);
-
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_TARGET, target);
-
-        stream.out_uint32_be(0); // skip length
-        this->out_item(stream, STRAUTHID_AUTHCHANNEL_TARGET);
-
-        int total_length = stream.get_offset();
-        stream.p = stream.get_data();
-        stream.out_uint32_be(total_length - 4);
-        this->auth_trans.send(stream.get_data(), total_length);
+        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_TARGET);
     }
 
     // Set AUTHCHANNEL_RESULT dict value and transmit request to sesman (then wabenginge)
@@ -162,76 +140,9 @@ class SessionManager {
         if (this->verbose) {
             LOG(LOG_INFO, "SessionManager::set_auth_channel_result(%s)", result);
         }
-        BStream stream(8192);
 
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
-
-        stream.out_uint32_be(0);  // skip length
-        this->out_item(stream, STRAUTHID_AUTHCHANNEL_RESULT);
-        int total_length = stream.get_offset();
-        stream.set_out_uint32_be(total_length - 4, 0);
-
-        this->auth_trans.send(stream.get_data(), total_length);
-    }
-
-    void in_items(Stream & stream)
-    {
-        if (this->verbose & 0x40){
-            LOG(LOG_INFO, "auth::in_items");
-        }
-        for (; stream.p < stream.end ; this->in_item(stream)){
-            ;
-        }
-    }
-
-    void in_item(Stream & stream)
-    {
-        enum { STATE_KEYWORD, STATE_VALUE } state = STATE_KEYWORD;
-        uint8_t * value = stream.p;
-        uint8_t * keyword = stream.p;
-        const uint8_t * start = stream.p;
-        for ( ; stream.p < stream.end ; stream.p++){
-            switch (state){
-            case STATE_KEYWORD:
-                if (*stream.p == '\n'){
-                    *stream.p = 0;
-                    value = stream.p+1;
-                    state = STATE_VALUE;
-                }
-                break;
-            case STATE_VALUE:
-                if (*stream.p == '\n'){
-                    *stream.p = 0;
-
-                    if ((0 == strncasecmp((char*)value, "ask", 3))) {
-                        this->ini->context_ask((char *)keyword);
-                        LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
-                    }
-                    else {
-                        this->ini->context_set_value((char *)keyword,
-                            (char *)value + (value[0] == '!' ? 1 : 0));
-
-                        if (  (strncasecmp("password",        (char *)keyword, 9 ) == 0)
-                           || (strncasecmp("target_password", (char *)keyword, 16) == 0)
-                           ){
-                            LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char *)keyword);
-                        }
-                        else{
-                            char buffer[128];
-                            LOG(LOG_INFO, "receiving '%s'='%s'\n", keyword,
-                                this->ini->context_get_value((char *)keyword, buffer, sizeof(buffer)));
-                        }
-                    }
-
-                    stream.p = stream.p+1;
-                    return;
-                }
-                break;
-            }
-        }
-        LOG(LOG_WARNING, "Unexpected exit while parsing ACL message");
-        hexdump((char *)start, stream.p-start);
-        throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
+        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_RESULT);
     }
 
     bool close_on_timestamp(long & timestamp)
@@ -303,15 +214,7 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
-                BStream stream(8192);
-                stream.out_uint32_be(0); // skip length
-                // set data
-                this->out_item(stream, STRAUTHID_KEEPALIVE);
-                // now set length in header
-                int total_length = stream.get_offset();
-                stream.set_out_uint32_be(total_length - 4, 0); /* size */
-                stream.mark_end();
-                this->auth_trans.send(stream.get_data(), total_length);
+                this->acl_serial.send(STRAUTHID_KEEPALIVE);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -327,7 +230,7 @@ class SessionManager {
             LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
         }
         try {
-            this->incoming();
+            this->acl_serial.incoming();
             if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
                 keepalive_time = now + this->keepalive_grace_delay;
                 this->ini->context_ask(AUTHID_KEEPALIVE);
@@ -391,15 +294,7 @@ class SessionManager {
 
             // ===================== check if keepalive ======================
             try {
-                BStream stream(8192);
-                stream.out_uint32_be(0); // skip length
-                // set data
-                this->out_item(stream, STRAUTHID_KEEPALIVE);
-                // now set length in header
-                int total_length = stream.get_offset();
-                stream.set_out_uint32_be(total_length - 4, 0); /* size */
-                stream.mark_end();
-                this->auth_trans.send(stream.get_data(), total_length);
+                this->acl_serial.send(STRAUTHID_KEEPALIVE);
             }
             catch (...){
                 this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
@@ -413,7 +308,7 @@ class SessionManager {
                 LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
             }
             try {
-                this->incoming();
+                this->acl_serial.incoming();
                 if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
                     keepalive_time = now + this->keepalive_grace_delay;
                     this->ini->context_ask(AUTHID_KEEPALIVE);
@@ -579,28 +474,28 @@ class SessionManager {
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module default state");
             }
-            this->ask_next_module_remote();
+            this->acl_serial.ask_next_module_remote();
             return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_SELECTOR:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_SELECTOR state");
             }
-            this->ask_next_module_remote();
+            this->acl_serial.ask_next_module_remote();
             return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_LOGIN:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_LOGIN state");
             }
-            this->ask_next_module_remote();
+            this->acl_serial.ask_next_module_remote();
             return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_PASSWORD:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_PASSWORD state");
             }
-            this->ask_next_module_remote();
+            this->acl_serial.ask_next_module_remote();
             return MCTX_STATUS_WAITING;
         break;
         case MOD_STATE_DONE_RECEIVED_CREDENTIALS:
@@ -724,112 +619,10 @@ class SessionManager {
         }
     }
 
-    TODO("move that function to Inifile create specialized stream object InifileStream")
-    void out_item(Stream & stream, const char * key)
-    {
-        if (this->ini->context_is_asked(key)){
-            LOG(LOG_INFO, "sending %s=ASK\n", key);
-            stream.out_copy_bytes(key, strlen(key));
-            stream.out_copy_bytes("\nASK\n",5);
-        }
-        else {
-            char temp_buffer[256];
-
-            const char * tmp = this->ini->context_get_value(key, temp_buffer, sizeof(temp_buffer));
-
-            if ((strncasecmp("password", (char*)key, 8) == 0)
-            ||(strncasecmp("target_password", (char*)key, 15) == 0)){
-                LOG(LOG_INFO, "sending %s=<hidden>\n", key);
-            }
-            else {
-                LOG(LOG_INFO, "sending %s=%s\n", key, tmp);
-            }
-            stream.out_copy_bytes(key, strlen(key));
-            stream.out_uint8('\n');
-            stream.out_uint8('!');
-            stream.out_copy_bytes(tmp, strlen(tmp));
-            stream.out_uint8('\n');
-        }
-    }
-
-    void ask_next_module_remote()
-    {
-        // if anything happen, like authentification socked closing, stop current connection
-        try {
-            BStream stream(8192);
-
-            stream.out_uint32_be(0);
-
-            this->out_item(stream, STRAUTHID_PROXY_TYPE);
-            this->out_item(stream, STRAUTHID_DISPLAY_MESSAGE);
-            this->out_item(stream, STRAUTHID_ACCEPT_MESSAGE);
-            this->out_item(stream, STRAUTHID_HOST);
-            this->out_item(stream, STRAUTHID_TARGET);
-            this->out_item(stream, STRAUTHID_AUTH_USER);
-            this->out_item(stream, STRAUTHID_PASSWORD);
-            this->out_item(stream, STRAUTHID_TARGET_USER);
-            this->out_item(stream, STRAUTHID_TARGET_DEVICE);
-            this->out_item(stream, STRAUTHID_TARGET_PROTOCOL);
-            this->out_item(stream, STRAUTHID_SELECTOR);
-            this->out_item(stream, STRAUTHID_SELECTOR_GROUP_FILTER);
-            this->out_item(stream, STRAUTHID_SELECTOR_DEVICE_FILTER);
-            this->out_item(stream, STRAUTHID_SELECTOR_LINES_PER_PAGE);
-            this->out_item(stream, STRAUTHID_SELECTOR_CURRENT_PAGE);
-            this->out_item(stream, STRAUTHID_TARGET_PASSWORD);
-            this->out_item(stream, STRAUTHID_OPT_WIDTH);
-            this->out_item(stream, STRAUTHID_OPT_HEIGHT);
-            this->out_item(stream, STRAUTHID_OPT_BPP);
-            this->out_item(stream, STRAUTHID_REAL_TARGET_DEVICE);
-            // send trace seal if and only if there is one
-            if (strlen(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0))) {
-                this->out_item(stream, STRAUTHID_TRACE_SEAL);
-            }
-            stream.mark_end();
-
-            int total_length = stream.get_offset();
-            LOG(LOG_INFO, "Data size without header (send) %u", total_length - 4);
-            stream.set_out_uint32_be(total_length - 4, 0); /* size in header */
-            this->auth_trans.send(stream.get_data(), total_length);
-
-        } catch (Error e) {
-            this->ini->context.authenticated = false;
-            this->ini->context.rejected.copy_c_str("Authentifier service failed");
-        }
-    }
-
-    void incoming()
-    {
-        BStream stream(4);
-        this->auth_trans.recv(&stream.end, 4);
-        size_t size = stream.in_uint32_be();
-        if (size > 65536){
-            LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
-            throw Error(ERR_ACL_MESSAGE_TOO_BIG);
-        }
-        if (size > stream.capacity){
-            stream.init(size);
-        }
-        this->auth_trans.recv(&stream.end, size);
-        LOG(LOG_INFO, "Data size without header (receive) = %u", size);
-        bool flag = this->ini->context.session_id.is_empty();
-        this->in_items(stream);
-        if (flag && !this->ini->context.session_id.is_empty()) {
-            int child_pid = getpid();
-            char old_session_file[256];
-            sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
-            char new_session_file[256];
-            sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                this->ini->context.session_id.c_str());
-            rename(old_session_file, new_session_file);
-        }
-
-        LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.c_str());
-    }
-
     void receive_next_module()
     {
         try {
-            this->incoming();
+            this->acl_serial.incoming();
         } catch (...) {
             this->ini->context.authenticated = false;
             this->ini->context.rejected.copy_c_str("Authentifier service failed");

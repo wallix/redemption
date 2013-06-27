@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2012
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan
 */
 
 #ifndef _REDEMPTION_CORE_SESSION_HPP_
