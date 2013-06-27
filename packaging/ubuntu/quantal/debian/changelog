@@ -1,8 +1,9 @@
-redemption (0.9.285+quantal) unstable; urgency=low
+redemption (0.9.289+quantal) unstable; urgency=low
 
   * Fixed Numlock initial state bug
   * Fixed disconnection message from mstsc bug
   * Compressed bitmaps in cache are now memoized
+  * Fixed path_conf returns invalid value for mount point  
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 26 Jun 2013 10:12:26 +0200
  
