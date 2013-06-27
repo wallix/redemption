@@ -582,7 +582,7 @@ public:
 
         BStream x224_header(256);
         HStream mcs_data(256, 512);
-        MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
+        MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
 
         this->trans->send(x224_header, mcs_data);
