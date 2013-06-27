@@ -115,9 +115,9 @@ struct Listen {
             goto end_of_listener;
         }
 
-        TODO("We should find a way to generalize the select loop concept"
-             "say select is waiting on a bunch of transport objects or such"
-             "and whenever of of those wake-up it should get a chance to act"
+        TODO("We should find a way to generalize the select loop concept "
+             "say select is waiting on a bunch of transport objects or such "
+             "and whenever of of those wake-up it should get a chance to act " 
              "read data, write data, accept incoming connections, perform some task, etc.")
 
         return;

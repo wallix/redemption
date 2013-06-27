@@ -1,4 +1,5 @@
 acl/authentifier 100 100
+acl/acl_serializer 100 100
 capture/capture 100 100
 capture/chunked_image_transport 100 100
 capture/FileToGraphic 100 100

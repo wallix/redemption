@@ -1937,11 +1937,11 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ini.context_set_value(AUTHID_TARGET_PROTOCOL,       "RDP");
     ini.context_set_value(AUTHID_TARGET_USER,           "admin");
 
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(STRAUTHID_TARGET_DEVICE));
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(STRAUTHID_TARGET_PASSWORD));
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(STRAUTHID_TARGET_PORT));
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(STRAUTHID_TARGET_PROTOCOL));
-    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(STRAUTHID_TARGET_USER));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_DEVICE));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_PASSWORD));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_PORT));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
+    BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_USER));
 
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.target_device));
     BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context.target_password.c_str()));
@@ -1949,11 +1949,11 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.target_protocol.c_str()));
     BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.globals.target_user));
 
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.context_get_value(STRAUTHID_TARGET_DEVICE,   buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context_get_value(STRAUTHID_TARGET_PASSWORD, buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("3390"),              std::string(ini.context_get_value(STRAUTHID_TARGET_PORT,     buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context_get_value(STRAUTHID_TARGET_PROTOCOL, buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.context_get_value(STRAUTHID_TARGET_USER,     buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.context_get_value(AUTHID_TARGET_DEVICE,   buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context_get_value(AUTHID_TARGET_PASSWORD, buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("3390"),              std::string(ini.context_get_value(AUTHID_TARGET_PORT,     buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context_get_value(AUTHID_TARGET_PROTOCOL, buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.context_get_value(AUTHID_TARGET_USER,     buffer, sizeof(buffer))));
 
 
     // host
@@ -1967,7 +1967,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.host));
 
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.context_get_value(STRAUTHID_HOST, buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.context_get_value(AUTHID_HOST, buffer, sizeof(buffer))));
 
 
     // target
@@ -1981,7 +1981,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(std::string("192.168.0.1"),       std::string(ini.globals.target));
 
-    BOOST_CHECK_EQUAL(std::string("192.168.0.1"),       std::string(ini.context_get_value(STRAUTHID_TARGET, buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("192.168.0.1"),       std::string(ini.context_get_value(AUTHID_TARGET, buffer, sizeof(buffer))));
 
 
     // auth_user
@@ -1991,7 +1991,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.globals.auth_user));
 
-    BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.context_get_value(STRAUTHID_AUTH_USER, buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.context_get_value(AUTHID_AUTH_USER, buffer, sizeof(buffer))));
 
 
     // password
