@@ -25,7 +25,7 @@
 #define _REDEMPTION_ACL_SERIALIZER_HPP_
 #include <unistd.h>
 #include <fcntl.h>
-#include <list>
+
 
 #include "stream.hpp"
 #include "config.hpp"
@@ -119,6 +119,7 @@ public:
         hexdump((char *)start, stream.p-start);
         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
+
     void incoming()
     {
         BStream stream(HEADER_SIZE);
@@ -150,34 +151,6 @@ public:
 
 
     TODO("move that function to Inifile create specialized stream object InifileStream")
-    TODO("out_item should get an ID not a string key")
-    void out_item_by_string(Stream & stream, const char * key)
-    {
-        if (this->ini->context_is_asked_by_string(key)){
-            LOG(LOG_INFO, "sending %s=ASK\n", key);
-            stream.out_copy_bytes(key, strlen(key));
-            stream.out_copy_bytes("\nASK\n",5);
-        }
-        else {
-            char temp_buffer[256];
-
-            const char * tmp = this->ini->context_get_value_by_string(key, temp_buffer, sizeof(temp_buffer));
-
-            if ((strncasecmp("password", (char*)key, 8) == 0)
-            ||(strncasecmp("target_password", (char*)key, 15) == 0)){
-                LOG(LOG_INFO, "sending %s=<hidden>\n", key);
-            }
-            else {
-                LOG(LOG_INFO, "sending %s=%s\n", key, tmp);
-            }
-            stream.out_copy_bytes(key, strlen(key));
-            stream.out_uint8('\n');
-            stream.out_uint8('!');
-            stream.out_copy_bytes(tmp, strlen(tmp));
-            stream.out_uint8('\n');
-        }
-    }
-    
     TODO("maybe out_item should be in config , not here")
     void out_item(Stream & stream, authid_t authid)
     {
