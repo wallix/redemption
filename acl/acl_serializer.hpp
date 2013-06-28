@@ -35,9 +35,16 @@
 
 
 class AclSerializer{
+
+    typedef struct {
+        bool tosend;
+        authid_t field_id;
+    } authid_to_send_t;
+
     enum {
         HEADER_SIZE = 4,
     };
+
     Inifile * ini;
     Transport & auth_trans;
     uint32_t verbose;
@@ -198,10 +205,7 @@ public:
         }
     }
 
-    typedef struct {
-        bool tosend;
-        authid_t field_id;
-    } authid_to_send_t;
+
 
     void send(authid_to_send_t * list, size_t len)
     {
@@ -228,27 +232,28 @@ public:
     
     void ask_next_module_remote()
     {
+        
         authid_to_send_t tosend[] = {
-            {true, AUTHID_PROXY_TYPE},
-            {true, AUTHID_DISPLAY_MESSAGE},
-            {true, AUTHID_ACCEPT_MESSAGE},
-            {true, AUTHID_HOST},
-            {true, AUTHID_TARGET},
-            {true, AUTHID_AUTH_USER},
-            {true, AUTHID_PASSWORD},
-            {true, AUTHID_TARGET_USER},
-            {true, AUTHID_TARGET_DEVICE},
-            {true, AUTHID_TARGET_PROTOCOL},
-            {true, AUTHID_SELECTOR},
-            {true, AUTHID_SELECTOR_GROUP_FILTER},
-            {true, AUTHID_SELECTOR_DEVICE_FILTER},
-            {true, AUTHID_SELECTOR_LINES_PER_PAGE},
-            {true, AUTHID_SELECTOR_CURRENT_PAGE},
-            {true, AUTHID_TARGET_PASSWORD},
-            {true, AUTHID_OPT_WIDTH},
-            {true, AUTHID_OPT_HEIGHT},
-            {true, AUTHID_OPT_BPP},
-            {true, AUTHID_REAL_TARGET_DEVICE},
+            {this->ini->context_has_changed(AUTHID_PROXY_TYPE), AUTHID_PROXY_TYPE},
+            {this->ini->context_has_changed(AUTHID_DISPLAY_MESSAGE), AUTHID_DISPLAY_MESSAGE},
+            {this->ini->context_has_changed(AUTHID_ACCEPT_MESSAGE), AUTHID_ACCEPT_MESSAGE},
+            {this->ini->context_has_changed(AUTHID_HOST), AUTHID_HOST},
+            {this->ini->context_has_changed(AUTHID_TARGET), AUTHID_TARGET},
+            {this->ini->context_has_changed(AUTHID_AUTH_USER), AUTHID_AUTH_USER},
+            {this->ini->context_has_changed(AUTHID_PASSWORD), AUTHID_PASSWORD},
+            {this->ini->context_has_changed(AUTHID_TARGET_USER), AUTHID_TARGET_USER},
+            {this->ini->context_has_changed(AUTHID_TARGET_DEVICE), AUTHID_TARGET_DEVICE},
+            {this->ini->context_has_changed(AUTHID_TARGET_PROTOCOL), AUTHID_TARGET_PROTOCOL},
+            {this->ini->context_has_changed(AUTHID_SELECTOR), AUTHID_SELECTOR},
+            {this->ini->context_has_changed(AUTHID_SELECTOR_GROUP_FILTER), AUTHID_SELECTOR_GROUP_FILTER},
+            {this->ini->context_has_changed(AUTHID_SELECTOR_DEVICE_FILTER), AUTHID_SELECTOR_DEVICE_FILTER},
+            {this->ini->context_has_changed(AUTHID_SELECTOR_LINES_PER_PAGE), AUTHID_SELECTOR_LINES_PER_PAGE},
+            {this->ini->context_has_changed(AUTHID_SELECTOR_CURRENT_PAGE), AUTHID_SELECTOR_CURRENT_PAGE},
+            {this->ini->context_has_changed(AUTHID_TARGET_PASSWORD), AUTHID_TARGET_PASSWORD},
+            {this->ini->context_has_changed(AUTHID_OPT_WIDTH), AUTHID_OPT_WIDTH},
+            {this->ini->context_has_changed(AUTHID_OPT_HEIGHT), AUTHID_OPT_HEIGHT},
+            {this->ini->context_has_changed(AUTHID_OPT_BPP), AUTHID_OPT_BPP},
+            {this->ini->context_has_changed(AUTHID_REAL_TARGET_DEVICE), AUTHID_REAL_TARGET_DEVICE},
             {this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0)[0], AUTHID_TRACE_SEAL}
         };
         this->send(tosend, sizeof(tosend)/sizeof(tosend[0]));

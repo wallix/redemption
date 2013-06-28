@@ -2244,3 +2244,6 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 //    BOOST_CHECK_EQUAL(AUTHID_VIDEO_QUALITY, authid_from_string(STRAUTHID_VIDEO_QUALITY));
 //    BOOST_CHECK_EQUAL(AUTHID_TIMEZONE, authid_from_string(STRAUTHID_TIMEZONE));
 //}
+
+
+TODO("test meta state")

@@ -406,167 +406,289 @@ static inline const char * string_from_authid(authid_t authid) {
 }
 
 struct Inifile {
+private:
+    typedef struct {
+        bool ask;
+        bool modified;
+        bool read;
+    } meta_state_t;
+    
+
+public:
     struct Inifile_globals {
         bool capture_chunk;
+        meta_state_t state_capture_chunk;
 
-        char auth_user[512];
-        char host[512];     // client_ip
-        char target[512];   // target ip
-        char target_device[32768];
-        char target_user[512];
+        char auth_user[512];                    // AUTHID_AUTH_USER
+        meta_state_t state_auth_user;
+        char host[512];                         // client_ip AUTHID_HOST
+        meta_state_t state_host;                // client_ip
+        char target[512];                       // target ip AUTHID_TARGET
+        meta_state_t state_target;              // target ip
+        char target_device[32768];              // AUTHID_TARGET_DEVICE
+        meta_state_t state_target_device;
+        char target_user[512];                  // AUTHID_TARGET_USER
+        meta_state_t state_target_user;
 
         // BEGIN globals
         bool bitmap_cache;       // default true
+        meta_state_t state_bitmap_cache;       // default true
         bool bitmap_compression; // default true
+        meta_state_t state_bitmap_compression; // default true
         int port;                // default 3389
+        meta_state_t state_port;                // default 3389
         bool nomouse;
+        meta_state_t state_nomouse;
         bool notimestamp;
+        meta_state_t state_notimestamp;
         int encryptionLevel;     // 0=low, 1=medium, 2=high
+        meta_state_t state_encryptionLevel;     // 0=low, 1=medium, 2=high
         char authip[255];
+        meta_state_t state_authip;
         int authport;
+        meta_state_t state_authport;
         bool autovalidate;       // dialog autovalidation for test
+        meta_state_t state_autovalidate;       // dialog autovalidation for test
 
         // keepalive and no traffic auto deconnexion
         int max_tick;
+        meta_state_t state_max_tick;
         int keepalive_grace_delay;
+        meta_state_t state_keepalive_grace_delay;
 
         bool internal_domain;
+        meta_state_t state_internal_domain;
 
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
+        meta_state_t state_dynamic_conf_path; // directory where to look for dynamic configuration files
         char auth_channel[512];
+        meta_state_t state_auth_channel;
         bool enable_file_encryption;
+        meta_state_t state_enable_file_encryption;
         bool enable_tls;
+        meta_state_t state_enable_tls;
         char listen_address[256];
+        meta_state_t state_listen_address;
         bool enable_ip_transparent;
+        meta_state_t state_enable_ip_transparent;
         char certificate_password[256];
+        meta_state_t state_certificate_password;
 
         char png_path[1024];
+        meta_state_t state_png_path;
         char wrm_path[1024];
+        meta_state_t state_wrm_path;
 
         char alternate_shell[1024];
+        meta_state_t state_alternate_shell;
         char shell_working_directory[1024];
+        meta_state_t state_shell_working_directory;
 
         char codec_id[512];
+        meta_state_t state_codec_id;
         bool movie;
+        meta_state_t state_movie;
         char movie_path[512];
+        meta_state_t state_movie_path;
         char video_quality[512];
+        meta_state_t state_video_quality;
         bool enable_bitmap_update;
+        meta_state_t state_enable_bitmap_update;
         // END globals
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
+        meta_state_t state_flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval;
+        meta_state_t state_flv_frame_interval;
     } globals;
 
     // section "client"
     struct {
-        bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
+        bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default 
+        meta_state_t state_ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
 
         uint32_t performance_flags_default;
+        meta_state_t state_performance_flags_default;
         uint32_t performance_flags_force_present;
+        meta_state_t state_performance_flags_force_present;
         uint32_t performance_flags_force_not_present;
+        meta_state_t state_performance_flags_force_not_present;
 
         bool tls_fallback_legacy;
-
+        meta_state_t state_tls_fallback_legacy;
+   
         bool clipboard;
+        meta_state_t state_clipboard;
         bool device_redirection;
+        meta_state_t state_device_redirection;
     } client;
 
     // Section "video"
     struct {
         unsigned capture_flags;  // 1 PNG capture, 2 WRM
+        meta_state_t state_capture_flags;  // 1 PNG capture, 2 WRM
         // video opt from capture_flags
         bool capture_png;
+        meta_state_t state_capture_png;
         bool capture_wrm;
+        meta_state_t state_capture_wrm;
         bool capture_flv;
+        meta_state_t state_capture_flv;
         bool capture_ocr;
+        meta_state_t state_capture_ocr;
 
         unsigned ocr_interval;
+        meta_state_t state_ocr_interval;
         unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
+        meta_state_t state_png_interval;   // time between 2 png captures (in 1/10 seconds)
         unsigned capture_groupid;
+        meta_state_t state_capture_groupid;
         unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
+        meta_state_t state_frame_interval; // time between 2 frame captures (in 1/100 seconds)
         unsigned break_interval; // time between 2 wrm movies (in seconds)
+        meta_state_t state_break_interval; // time between 2 wrm movies (in seconds)
         unsigned png_limit;    // number of png captures to keep
+        meta_state_t state_png_limit;    // number of png captures to keep
         char replay_path[1024];
+        meta_state_t state_replay_path;
 
         int l_bitrate;         // bitrate for low quality
+        meta_state_t state_l_bitrate;         // bitrate for low quality
         int l_framerate;       // framerate for low quality
+        meta_state_t state_l_framerate;       // framerate for low quality
         int l_height;          // height for low quality
+        meta_state_t state_l_height;          // height for low quality
         int l_width;           // width for low quality
+        meta_state_t state_l_width;           // width for low quality
         int l_qscale;          // qscale (parameter given to ffmpeg) for low quality
+        meta_state_t state_l_qscale;          // qscale (parameter given to ffmpeg) for low quality
 
         // Same for medium quality
         int m_bitrate;
+        meta_state_t state_m_bitrate;
         int m_framerate;
+        meta_state_t state_m_framerate;
         int m_height;
+        meta_state_t state_m_height;
         int m_width;
+        meta_state_t state_m_width;
         int m_qscale;
+        meta_state_t state_m_qscale;
 
         // Same for high quality
         int h_bitrate;
+        meta_state_t state_h_bitrate;
         int h_framerate;
+        meta_state_t state_h_framerate;
         int h_height;
+        meta_state_t state_h_height;
         int h_width;
+        meta_state_t state_h_width;
         int h_qscale;
+        meta_state_t state_h_qscale;
     } video;
 
     // Section "debug"
     struct {
         uint32_t x224;
+        meta_state_t state_x224;
         uint32_t mcs;
+        meta_state_t state_mcs;
         uint32_t sec;
+        meta_state_t state_sec;
         uint32_t rdp;
+        meta_state_t state_rdp;
         uint32_t primary_orders;
+        meta_state_t state_primary_orders;
         uint32_t secondary_orders;
+        meta_state_t state_secondary_orders;
         uint32_t bitmap;
+        meta_state_t state_bitmap;
         uint32_t capture;
+        meta_state_t state_capture;
         uint32_t auth;
+        meta_state_t state_auth;
         uint32_t session;
+        meta_state_t state_session;
         uint32_t front;
+        meta_state_t state_front;
         uint32_t mod_rdp;
+        meta_state_t state_mod_rdp;
         uint32_t mod_vnc;
+        meta_state_t state_mod_vnc;
         uint32_t mod_int;
+        meta_state_t state_mod_int;
         uint32_t mod_xup;
+        meta_state_t state_mod_xup;
         uint32_t widget;
+        meta_state_t state_widget;
         uint32_t input;
+        meta_state_t state_input;
 
-        int  log_type;
+
+        int log_type;
+        meta_state_t state_log_type;
         char log_file_path[1024]; // log file location
+        meta_state_t state_log_file_path; // log file location
+
     } debug;
 
     // section "translation"
     struct {
         redemption::string button_ok;
+        meta_state_t state_button_ok;
         redemption::string button_cancel;
+        meta_state_t state_button_cancel;
         redemption::string button_help;
+        meta_state_t state_button_help;
         redemption::string button_close;
+        meta_state_t state_button_close;
         redemption::string button_refused;
+        meta_state_t state_button_refused;
         redemption::string login;
+        meta_state_t state_login;
         redemption::string username;
+        meta_state_t state_username;
         redemption::string password;
+        meta_state_t state_password;
         redemption::string target;
+        meta_state_t state_target;
         redemption::string diagnostic;
+        meta_state_t state_diagnostic;
         redemption::string connection_closed;
+        meta_state_t state_connection_closed;
         redemption::string help_message;
+        meta_state_t state_help_message;
     } translation;
 
     // section "context"
     struct {
         unsigned           selector_focus;
+        meta_state_t state_selector_focus;
         char               movie[1024];
+        meta_state_t state_movie;
 
         unsigned           opt_bitrate;
+        meta_state_t state_opt_bitrate;
         unsigned           opt_framerate;
+        meta_state_t state_opt_framerate;
         unsigned           opt_qscale;
+        meta_state_t state_opt_qscale;
 
         bool               ask_opt_bpp;
         bool               ask_opt_height;
         bool               ask_opt_width;
 
-        unsigned           opt_bpp;
-        unsigned           opt_height;
-        unsigned           opt_width;
+
+        unsigned           opt_bpp;                // AUTHID_OPT_BPP
+        meta_state_t state_opt_bpp;
+        unsigned           opt_height;             // AUTHID_OPT_HEIGHT
+        meta_state_t state_opt_height; 
+        unsigned           opt_width;              // AUTHID_OPT_WIDTH
+        meta_state_t state_opt_width;
 
         redemption::string auth_error_message;
+        meta_state_t state_auth_error_message;
 
         bool               ask_selector;
         bool               ask_selector_current_page;
@@ -574,12 +696,19 @@ struct Inifile {
         bool               ask_selector_group_filter;
         bool               ask_selector_lines_per_page;
 
-        bool               selector;
-        unsigned           selector_current_page;
-        redemption::string selector_device_filter;
-        redemption::string selector_group_filter;
-        unsigned           selector_lines_per_page;
+
+        bool               selector;                 // AUTHID_SELECTOR
+        meta_state_t state_selector;
+        unsigned           selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE
+        meta_state_t state_selector_current_page;
+        redemption::string selector_device_filter;   // AUTHID_SELECTOR_DEVICE_FILTER
+        meta_state_t state_selector_device_filter;
+        redemption::string selector_group_filter;    // AUTHID_SELECTOR_GROUP_FILTER
+        meta_state_t state_selector_group_filter;
+        unsigned           selector_lines_per_page;  // AUTHID_SELECTOR_LINES_PER_PAGE
+        meta_state_t state_selector_lines_per_page;
         unsigned           selector_number_of_pages;
+        meta_state_t state_selector_number_of_pages;
 
         bool               ask_target_device;
         bool               ask_target_password;
@@ -587,61 +716,83 @@ struct Inifile {
         bool               ask_target_protocol;
         bool               ask_target_user;
 
-        redemption::string target_password;
+
+        redemption::string target_password;          // AUTHID_TARGET_PASSWORD
+        meta_state_t state_target_password;
         unsigned           target_port;
-        redemption::string target_protocol;
+        meta_state_t state_target_port;
+        redemption::string target_protocol;          // AUTHID_TARGET_PROTOCOL
+        meta_state_t state_target_protocol;
 
         bool               ask_auth_user;
-
+        
         bool               ask_host;
         bool               ask_target;
         bool               ask_password;
 
-        redemption::string password;
+
+        redemption::string password;                 // AUTHID_PASSWORD
+        meta_state_t state_password;
 
         bool               ask_authchannel_target;
         bool               ask_authchannel_result;
 
         redemption::string authchannel_answer;
+        meta_state_t state_authchannel_answer;
         redemption::string authchannel_result;
+        meta_state_t state_authchannel_result;
         redemption::string authchannel_target;
+        meta_state_t state_authchannel_target;
 
         bool               ask_accept_message;
         bool               ask_display_message;
 
         redemption::string message;
-        redemption::string accept_message;
-        redemption::string display_message;
+        meta_state_t state_message;
+        redemption::string accept_message;           // AUTHID_ACCEPT_MESSAGE
+        meta_state_t state_accept_message;
+        redemption::string display_message;          // AUTHID_DISPLAY_MESSAGE
+        meta_state_t state_display_message;
 
         redemption::string rejected;
+        meta_state_t state_rejected;
 
         bool               authenticated;
+        meta_state_t state_authenticated;
 
         bool               ask_keepalive;
         bool               ask_proxy_type;
 
         bool               keepalive;
-        redemption::string proxy_type;
+        meta_state_t state_keepalive;
+        redemption::string proxy_type;               // AUTHID_PROXY_TYPE
+        meta_state_t state_proxy_type;
 
         bool               ask_trace_seal;
 
         redemption::string trace_seal;
+        meta_state_t state_trace_seal;
 
         redemption::string session_id;
+        meta_state_t state_session_id;
 
         unsigned           end_date_cnx;
         redemption::string end_time;
+        meta_state_t state_end_time;
 
         redemption::string mode_console;
+        meta_state_t state_mode_console;
         signed             timezone;
 
-        redemption::string real_target_device;
+        redemption::string real_target_device;       // AUHTID_REAL_TARGET_DEVICE
+        meta_state_t state_real_target_device;
 
         redemption::string authentication_challenge;
+        meta_state_t state_authentication_challenge;
     } context;
 
     struct IniAccounts account;
-
+public:
     Inifile() {
         std::stringstream oss("");
         this->init();
@@ -803,8 +954,14 @@ struct Inifile {
         this->context.opt_qscale                  = 15;
 
         this->context.ask_opt_bpp                 = false;
+        this->context.state_opt_bpp.ask                 = false;
+        this->context.state_opt_bpp.modified                 = true;
         this->context.ask_opt_height              = false;
+        this->context.state_opt_height.ask              = false;
+        this->context.state_opt_height.modified              = true;
         this->context.ask_opt_width               = false;
+        this->context.state_opt_width.ask               = false;
+        this->context.state_opt_width.modified               = true;
 
         this->context.opt_bpp                     = 24;
         this->context.opt_height                  = 600;
@@ -813,10 +970,20 @@ struct Inifile {
         this->context.auth_error_message.empty();
 
         this->context.ask_selector                = false;
+        this->context.state_selector.ask                = false;
+        this->context.state_selector.modified                = true;
         this->context.ask_selector_current_page   = false;
+        this->context.state_selector_current_page.ask   = false;
+        this->context.state_selector_current_page.modified   = true;
         this->context.ask_selector_device_filter  = false;
+        this->context.state_selector_device_filter.ask  = false;
+        this->context.state_selector_device_filter.modified  = true;
         this->context.ask_selector_group_filter   = false;
+        this->context.state_selector_group_filter.ask   = false;
+        this->context.state_selector_group_filter.modified   = true;
         this->context.ask_selector_lines_per_page = false;
+        this->context.state_selector_lines_per_page.ask = false;
+        this->context.state_selector_lines_per_page.modified = true;
 
         this->context.selector                    = false;
         this->context.selector_current_page       = 1;
@@ -826,10 +993,20 @@ struct Inifile {
         this->context.selector_number_of_pages    = 1;
 
         this->context.ask_target_device           = true;
+        this->globals.state_target_device.ask           = true;
+        this->globals.state_target_device.modified           = true;
         this->context.ask_target_password         = true;
+        this->context.state_target_password.ask         = true;
+        this->context.state_target_password.modified         = true;
         this->context.ask_target_port             = true;
+        this->context.state_target_port.ask             = true;
+        this->context.state_target_port.modified             = true;
         this->context.ask_target_protocol         = true;
+        this->context.state_target_protocol.ask         = true;
+        this->context.state_target_protocol.modified         = true;
         this->context.ask_target_user             = true;
+        this->globals.state_target_user.ask             = true;
+        this->globals.state_target_user.modified             = true;
 
         this->context.target_password.empty();
         this->context.target_port                 = 3389;
@@ -837,10 +1014,18 @@ struct Inifile {
 
         // not sure about ask_host and ask_target initial values
         this->context.ask_host                    = false;
+        this->globals.state_host.ask                    = false;
+        this->globals.state_host.modified                    = true;
         this->context.ask_target                  = false;
+        this->globals.state_target.ask                  = false;
+        this->globals.state_target.modified                  = true;
 
         this->context.ask_auth_user               = true;
+        this->globals.state_auth_user.ask               = true;
+        this->globals.state_auth_user.modified               = true;
         this->context.ask_password                = true;
+        this->context.state_password.ask                = true;
+        this->context.state_password.modified                = true;
 
 
         this->context.password.empty();
@@ -853,7 +1038,11 @@ struct Inifile {
         this->context.authchannel_target.empty();
 
         this->context.ask_accept_message          = false;
+        this->context.state_accept_message.ask          = false;
+        this->context.state_accept_message.modified          = true;
         this->context.ask_display_message         = false;
+        this->context.state_display_message.ask         = false;
+        this->context.state_display_message.modified         = true;
 
         this->context.message.empty();
         this->context.accept_message.empty();
@@ -864,12 +1053,18 @@ struct Inifile {
         this->context.authenticated               = false;
 
         this->context.ask_keepalive               = true;
+        this->context.state_keepalive.ask               = true;
+        this->context.state_keepalive.modified               = true;
         this->context.ask_proxy_type              = false;
+        this->context.state_proxy_type.ask              = false;
+        this->context.state_proxy_type.modified              = true;
 
         this->context.keepalive                   = false;
         this->context.proxy_type.copy_c_str("RDP");
 
         this->context.ask_trace_seal              = false;
+        this->context.state_trace_seal.ask              = false;
+        this->context.state_trace_seal.modified              = true;
 
         this->context.trace_seal.empty();
 
@@ -882,6 +1077,8 @@ struct Inifile {
         this->context.timezone                    = -3600;
 
         this->context.real_target_device.empty();
+        this->context.state_real_target_device.ask              = false;
+        this->context.state_real_target_device.modified              = true;
 
         this->context.authentication_challenge.empty();
     };
@@ -981,14 +1178,14 @@ struct Inifile {
                     }
                     *curvalue = 0;
 
-                    this->setglobal(key, value, context);
+                    this->setglobal_from_file(key, value, context);
                     break;
                 }
             }
         }
     }
 
-    void setglobal(const char * key, const char * value, const char * context)
+    void setglobal_from_file(const char * key, const char * value, const char * context)
     {
         if (0 == strcmp(context, "globals")){
             if (0 == strcmp(key, "bitmap_cache")){
@@ -1298,6 +1495,148 @@ struct Inifile {
             LOG(LOG_ERR, "unknown section [%s]", context);
         }
     }
+    TODO("Should only be used by Authentifier "
+         "It currently ask if the field has been modified "
+         "and set it to not modified if it is not asked ")
+    bool context_has_changed(authid_t authid) {
+        bool res;
+        bool * changed;
+        switch (authid) {
+        case AUTHID_OPT_BPP:
+            changed = &this->context.state_opt_bpp.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_OPT_HEIGHT:
+            changed = &this->context.state_opt_height.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_OPT_WIDTH:
+            changed = &this->context.state_opt_width.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_SELECTOR:
+            changed = &this->context.state_selector.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_SELECTOR_CURRENT_PAGE:
+            changed = &this->context.state_selector_current_page.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_SELECTOR_DEVICE_FILTER:
+            changed = &this->context.state_selector_device_filter.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_SELECTOR_GROUP_FILTER:
+            changed = &this->context.state_selector_group_filter.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_SELECTOR_LINES_PER_PAGE:
+            changed = &this->context.state_selector_lines_per_page.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_TARGET_DEVICE:
+            changed = &this->globals.state_target_device.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_TARGET_PASSWORD:
+            changed = &this->context.state_target_password.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_TARGET_PORT:
+            changed = &this->context.state_target_port.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_TARGET_PROTOCOL:
+            changed = &this->context.state_target_protocol.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_TARGET_USER:
+            changed = &this->globals.state_target_user.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_AUTH_USER:
+            changed = &this->globals.state_auth_user.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_HOST:
+            changed = &this->globals.state_host.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_TARGET:
+            changed = &this->globals.state_target.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_PASSWORD:
+            changed = &this->context.state_password.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_AUTHCHANNEL_RESULT:
+            changed = &this->context.state_authchannel_result.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_AUTHCHANNEL_TARGET:
+            changed = &this->context.state_authchannel_target.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_ACCEPT_MESSAGE:
+            changed = &this->context.state_accept_message.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_DISPLAY_MESSAGE:
+            changed = &this->context.state_display_message.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_KEEPALIVE:
+            changed = &this->context.state_keepalive.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_PROXY_TYPE:
+            changed = &this->context.state_proxy_type.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_TRACE_SEAL:
+            changed = &this->context.state_trace_seal.modified;
+            res = *changed;
+            break;
+
+        case AUTHID_REAL_TARGET_DEVICE:
+            changed = &this->context.state_real_target_device.modified;
+            res = *changed;
+            break;
+
+        default:
+            LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
+            return false;
+        }
+        if(!this->context_is_asked(authid)){
+            *changed = false;
+        }
+        return res;
+        
+    }
 
     void context_set_value_by_string(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
@@ -1351,35 +1690,40 @@ struct Inifile {
 
         // Options
         case AUTHID_OPT_CLIPBOARD:
-            this->setglobal("clipboard",              value, "client" );
+            this->client.clipboard = bool_from_cstr(value);
             break;
         case AUTHID_OPT_DEVICEREDIRECTION:
-            this->setglobal("device_redirection",     value, "client" );
+            this->client.device_redirection = bool_from_cstr(value);
             break;
         case AUTHID_OPT_FILE_ENCRYPTION:
-            this->setglobal("enable_file_encryption", value, "globals");
+            this->globals.enable_file_encryption = bool_from_cstr(value);
             break;
 
         // Video capture
         case AUTHID_OPT_CODEC_ID:
-            this->setglobal("codec_id",      value, "globals");
+            strncpy(this->globals.codec_id, value, sizeof(this->globals.codec_id));
+            this->globals.codec_id[sizeof(this->globals.codec_id) - 1] = 0;
             break;
         case AUTHID_OPT_MOVIE:
-            this->setglobal("movie",         value, "globals");
+            this->globals.movie = bool_from_cstr(value);
             break;
         case AUTHID_OPT_MOVIE_PATH:
-            this->setglobal("movie_path",    value, "globals");
+            strncpy(this->globals.movie_path, value, sizeof(this->globals.movie_path));
+            this->globals.movie_path[sizeof(this->globals.movie_path) - 1] = 0;
             break;
         case AUTHID_VIDEO_QUALITY:
-            this->setglobal("video_quality", value, "globals");
+            strncpy(this->globals.video_quality, value, sizeof(this->globals.video_quality));
+            this->globals.video_quality[sizeof(this->globals.video_quality) - 1] = 0;
             break;
 
         // Alternate shell
         case AUTHID_ALTERNATE_SHELL:
-            this->setglobal("alternate_shell",         value, "globals");
+            strncpy(this->globals.alternate_shell, value, sizeof(this->globals.alternate_shell));
+            this->globals.alternate_shell[sizeof(this->globals.alternate_shell) - 1] = 0;
             break;
         case AUTHID_SHELL_WORKING_DIRECTORY:
-            this->setglobal("shell_working_directory", value, "globals");
+            strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
+            this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
             break;
 
         // Context
@@ -1395,14 +1739,23 @@ struct Inifile {
 
         case AUTHID_OPT_WIDTH:
             this->context.ask_opt_width  = false;
+            this->context.state_opt_width.ask = false;
+            if (this->context.opt_width != ulong_from_cstr(value))
+                this->context.state_opt_width.modified = true;
             this->context.opt_width      = ulong_from_cstr(value);
             break;
         case AUTHID_OPT_HEIGHT:
             this->context.ask_opt_height = false;
+            this->context.state_opt_height.ask = false;
+            if (this->context.opt_height != ulong_from_cstr(value))
+                this->context.state_opt_height.modified = true;
             this->context.opt_height     = ulong_from_cstr(value);
             break;
         case AUTHID_OPT_BPP:
             this->context.ask_opt_bpp    = false;
+            this->context.state_opt_bpp.ask    = false;
+            if (this->context.opt_bpp != ulong_from_cstr(value))
+                this->context.state_opt_bpp.modified    = true;
             this->context.opt_bpp        = ulong_from_cstr(value);
             break;
 
@@ -1412,23 +1765,38 @@ struct Inifile {
 
         case AUTHID_SELECTOR:
             this->context.ask_selector                = false;
+            this->context.state_selector.ask                = false;
+            if (this->context.selector != bool_from_cstr(value))
+                this->context.state_selector.modified                = true;
             this->context.selector                    = bool_from_cstr(value);
             break;
         case AUTHID_SELECTOR_CURRENT_PAGE:
             this->context.ask_selector_current_page   = false;
-                this->context.selector_current_page   = ulong_from_cstr(value);
+            this->context.state_selector_current_page.ask   = false;
+            if (this->context.selector_current_page != ulong_from_cstr(value))
+                this->context.state_selector_current_page.modified   = true;
+            this->context.selector_current_page   = ulong_from_cstr(value);
             break;
         case AUTHID_SELECTOR_DEVICE_FILTER:
             this->context.ask_selector_device_filter  = false;
-                this->context.selector_device_filter.copy_c_str(value);
+            this->context.state_selector_device_filter.ask  = false;
+            if (strcmp(value, this->context.selector_device_filter.c_str()))
+                this->context.state_selector_device_filter.modified  = true;
+            this->context.selector_device_filter.copy_c_str(value);
             break;
         case AUTHID_SELECTOR_GROUP_FILTER:
             this->context.ask_selector_group_filter   = false;
-                this->context.selector_group_filter.copy_c_str(value);
+            this->context.state_selector_group_filter.ask   = false;
+            if (strcmp(value, this->context.selector_group_filter.c_str()))
+                this->context.state_selector_group_filter.modified   = true;
+            this->context.selector_group_filter.copy_c_str(value);
             break;
         case AUTHID_SELECTOR_LINES_PER_PAGE:
             this->context.ask_selector_lines_per_page = false;
-                this->context.selector_lines_per_page = ulong_from_cstr(value);
+            this->context.state_selector_lines_per_page.ask = false;
+            if (this->context.selector_lines_per_page != ulong_from_cstr(value))
+                this->context.state_selector_lines_per_page.modified = true;
+            this->context.selector_lines_per_page = ulong_from_cstr(value);
             break;
         case AUTHID_SELECTOR_NUMBER_OF_PAGES:
             this->context.selector_number_of_pages    = ulong_from_cstr(value);
@@ -1436,46 +1804,73 @@ struct Inifile {
 
         case AUTHID_TARGET_DEVICE:
             this->context.ask_target_device   = false;
+            this->globals.state_target_device.ask   = false;
+            if (strcmp(value, this->globals.target_device))
+                this->globals.state_target_device.modified   = true;
             strncpy(this->globals.target_device, value, sizeof(this->globals.target_device));
             this->globals.target_device[sizeof(this->globals.target_device) - 1] = 0;
             break;
         case AUTHID_TARGET_PASSWORD:
             this->context.ask_target_password = false;
+            this->context.state_target_password.ask = false;
+            if (strcmp(value, this->context.target_password.c_str())) 
+                this->context.state_target_password.modified = true;
             this->context.target_password.copy_c_str(value);
             break;
         case AUTHID_TARGET_PORT:
             this->context.ask_target_port     = false;
+            this->context.state_target_port.ask     = false;
+            if (this->context.target_port != ulong_from_cstr(value)) 
+                this->context.state_target_port.modified     = true;
             this->context.target_port         = ulong_from_cstr(value);
             break;
         case AUTHID_TARGET_PROTOCOL:
             this->context.ask_target_protocol = false;
+            this->context.state_target_protocol.ask = false;
+            if (strcmp(value, this->context.target_protocol.c_str()))
+                this->context.state_target_protocol.modified = true;
             this->context.target_protocol.copy_c_str(value);
             break;
         case AUTHID_TARGET_USER:
             this->context.ask_target_user     = false;
+            this->globals.state_target_user.ask     = false;
+            if (strcmp(value, this->globals.target_user))
+                this->globals.state_target_user.modified     = true;
             strncpy(this->globals.target_user,   value, sizeof(this->globals.target_user));
             this->globals.target_user[sizeof(this->globals.target_user) - 1]     = 0;
             break;
 
         case AUTHID_AUTH_USER:
             this->context.ask_auth_user = false;
+            this->globals.state_auth_user.ask = false;
+            if (strcmp(value, this->globals.auth_user))
+                this->globals.state_auth_user.modified = true;
             strncpy(this->globals.auth_user, value, sizeof(this->globals.auth_user));
             this->globals.auth_user[sizeof(this->globals.auth_user) - 1]         = 0;
             break;
         case AUTHID_HOST:
             this->context.ask_host      = false;
+            this->globals.state_host.ask      = false;
+            if (strcmp(value, this->globals.host))
+                this->globals.state_host.modified      = true;
             strncpy(this->globals.host, value, sizeof(this->globals.host));
             this->globals.host[sizeof(this->globals.host) - 1]                   = 0;
             break;
 
         case AUTHID_TARGET:
             this->context.ask_target      = false;
+            this->globals.state_target.ask      = false;
+            if (strcmp(value, this->globals.target))
+                this->globals.state_target.modified      = true;
             strncpy(this->globals.target,        value, sizeof(this->globals.target));
-            this->globals.host[sizeof(this->globals.target) - 1]                 = 0;
+            this->globals.target[sizeof(this->globals.target) - 1]                 = 0;
             break;
 
         case AUTHID_PASSWORD:
             this->context.ask_password = false;
+            this->context.state_password.ask = false;
+            if (strcmp(value, this->context.password.c_str()))
+                this->context.state_password.modified = true;
             this->context.password.copy_c_str(value);
             break;
 
@@ -1484,10 +1879,16 @@ struct Inifile {
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
             this->context.ask_authchannel_result = false;
+            this->context.state_authchannel_result.ask = false;
+            if (strcmp(value, this->context.authchannel_result.c_str()))
+                this->context.state_authchannel_result.modified = true;
             this->context.authchannel_result.copy_c_str(value);
             break;
         case AUTHID_AUTHCHANNEL_TARGET:
             this->context.ask_authchannel_target = false;
+            this->context.state_authchannel_target.ask = false;
+            if (strcmp(value, this->context.authchannel_target.c_str()))
+                this->context.state_authchannel_target.modified = true;
             this->context.authchannel_target.copy_c_str(value);
             break;
 
@@ -1497,10 +1898,16 @@ struct Inifile {
 
         case AUTHID_ACCEPT_MESSAGE:
             this->context.ask_accept_message  = false;
+            this->context.state_accept_message.ask  = false;
+            if (strcmp(value, this->context.accept_message.c_str()))
+                this->context.state_accept_message.modified  = true;
             this->context.accept_message.copy_c_str(value);
             break;
         case AUTHID_DISPLAY_MESSAGE:
             this->context.ask_display_message = false;
+            this->context.state_display_message.ask = false;
+            if (strcmp(value, this->context.display_message.c_str()))
+                this->context.state_display_message.modified = true;
             this->context.display_message.copy_c_str(value);
             break;
 
@@ -1513,15 +1920,24 @@ struct Inifile {
 
         case AUTHID_KEEPALIVE:
             this->context.ask_keepalive  = false;
+            this->context.state_keepalive.ask  = false;
+            if (this->context.keepalive != bool_from_cstr(value))
+                this->context.state_keepalive.modified  = true;
             this->context.keepalive      = bool_from_cstr(value);
             break;
         case AUTHID_PROXY_TYPE:
             this->context.ask_proxy_type = false;
+            this->context.state_proxy_type.ask = false;
+            if (strcmp(value, this->context.proxy_type.c_str()))
+                this->context.state_proxy_type.modified = true;
             this->context.proxy_type.copy_c_str(value);
             break;
 
         case AUTHID_TRACE_SEAL:
             this->context.ask_trace_seal = false;
+            this->context.state_trace_seal.ask = false;
+            if (strcmp(value, this->context.trace_seal.c_str()))
+                this->context.state_trace_seal.modified = true;
             this->context.trace_seal.copy_c_str(value);
             break;
 
@@ -1544,6 +1960,9 @@ struct Inifile {
             break;
 
         case AUTHID_REAL_TARGET_DEVICE:
+            this->context.state_real_target_device.ask = false;
+            if (strcmp(value, this->context.real_target_device.c_str()))
+                this->context.state_real_target_device.modified = true;
             this->context.real_target_device.copy_c_str(value);
             break;
 
@@ -1918,75 +2337,123 @@ struct Inifile {
     void context_ask(authid_t authid) {
         switch (authid) {
         case AUTHID_OPT_BPP:
+            this->context.state_opt_bpp.ask                 = true;
+            this->context.state_opt_bpp.modified                 = true;
             this->context.ask_opt_bpp                 = true; break;
 
         case AUTHID_OPT_HEIGHT:
+            this->context.state_opt_height.ask              = true;
+            this->context.state_opt_height.modified              = true;
             this->context.ask_opt_height              = true; break;
 
         case AUTHID_OPT_WIDTH:
+            this->context.state_opt_width.ask               = true;
+            this->context.state_opt_width.modified               = true;
             this->context.ask_opt_width               = true; break;
 
         case AUTHID_SELECTOR:
+            this->context.state_selector.ask                = true;
+            this->context.state_selector.modified                = true;
             this->context.ask_selector                = true; break;
 
         case AUTHID_SELECTOR_CURRENT_PAGE:
+            this->context.state_selector_current_page.ask   = true;
+            this->context.state_selector_current_page.modified   = true;
             this->context.ask_selector_current_page   = true; break;
 
         case AUTHID_SELECTOR_DEVICE_FILTER:
+            this->context.state_selector_device_filter.ask  = true;
+            this->context.state_selector_device_filter.modified  = true;
             this->context.ask_selector_device_filter  = true; break;
 
         case AUTHID_SELECTOR_GROUP_FILTER:
+            this->context.state_selector_group_filter.ask   = true;
+            this->context.state_selector_group_filter.modified   = true;
             this->context.ask_selector_group_filter   = true; break;
 
         case AUTHID_SELECTOR_LINES_PER_PAGE:
+            this->context.state_selector_lines_per_page.ask = true;
+            this->context.state_selector_lines_per_page.modified = true;
             this->context.ask_selector_lines_per_page = true; break;
 
         case AUTHID_TARGET_DEVICE:
+            this->globals.state_target_device.ask           = true;
+            this->globals.state_target_device.modified           = true;
             this->context.ask_target_device           = true; break;
 
         case AUTHID_TARGET_PASSWORD:
+            this->context.state_target_password.ask         = true;
+            this->context.state_target_password.modified         = true;
             this->context.ask_target_password         = true; break;
 
         case AUTHID_TARGET_PORT:
+            this->context.state_target_port.ask             = true;
+            this->context.state_target_port.modified             = true;
             this->context.ask_target_port             = true; break;
 
         case AUTHID_TARGET_PROTOCOL:
+            this->context.state_target_protocol.ask         = true;
+            this->context.state_target_protocol.modified         = true;
             this->context.ask_target_protocol         = true; break;
 
         case AUTHID_TARGET_USER:
+            this->globals.state_target_user.ask             = true;
+            this->globals.state_target_user.modified             = true;
             this->context.ask_target_user             = true; break;
 
         case AUTHID_AUTH_USER:
+            this->globals.state_auth_user.ask               = true;
+            this->globals.state_auth_user.modified               = true;
             this->context.ask_auth_user               = true; break;
 
         case AUTHID_HOST:
+            this->globals.state_host.ask                    = true;
+            this->globals.state_host.modified                    = true;
             this->context.ask_host                    = true; break;
 
         case AUTHID_TARGET:
+            this->globals.state_target.ask                  = true;
+            this->globals.state_target.modified                  = true;
             this->context.ask_target                  = true; break;
 
         case AUTHID_PASSWORD:
+            this->context.state_password.ask                = true;
+            this->context.state_password.modified                = true;
             this->context.ask_password                = true; break;
 
         case AUTHID_AUTHCHANNEL_RESULT:
+            this->context.state_authchannel_result.ask      = true;
+            this->context.state_authchannel_result.modified      = true;
             this->context.ask_authchannel_result      = true; break;
 
         case AUTHID_AUTHCHANNEL_TARGET:
+            this->context.state_authchannel_target.ask      = true;
+            this->context.state_authchannel_target.modified      = true;
             this->context.ask_authchannel_target      = true; break;
 
         case AUTHID_ACCEPT_MESSAGE:
+            this->context.state_accept_message.ask          = true;
+            this->context.state_accept_message.modified          = true;
             this->context.ask_accept_message          = true; break;
 
         case AUTHID_DISPLAY_MESSAGE:
+            this->context.state_display_message.ask         = true;
+            this->context.state_display_message.modified         = true;
             this->context.ask_display_message         = true; break;
 
         case AUTHID_KEEPALIVE:
+            this->context.state_keepalive.ask               = true;
+            this->context.state_keepalive.modified               = true;
             this->context.ask_keepalive               = true; break;
 
         case AUTHID_PROXY_TYPE:
+            this->context.state_proxy_type.ask              = true;
+            this->context.state_proxy_type.modified              = true;
             this->context.ask_proxy_type              = true; break;
 
         case AUTHID_TRACE_SEAL:
+            this->context.state_trace_seal.ask              = true;
+            this->context.state_trace_seal.modified              = true;
             this->context.ask_trace_seal              = true; break;
 
         default:
@@ -2005,7 +2472,7 @@ struct Inifile {
 
         return false;
     }
-
+    TODO("change ask_* into state_*.ask")
     bool context_is_asked(authid_t authid) {
         switch (authid) {
         case AUTHID_OPT_BPP:
