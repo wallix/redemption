@@ -215,7 +215,7 @@ class ssllib
         uint8_t md5sig[MD5_DIGEST_LENGTH];
         md5.final(md5sig);
 
-        memcpy(signature.get_data(), md5sig, signature.capacity);
+        memcpy(signature.get_data(), md5sig, signature.get_capacity());
     }
 };
 
