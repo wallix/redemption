@@ -54,6 +54,11 @@ void sigsegv(int sig)
     LOG(LOG_INFO, "Ignoring SIGSEGV : signal %d \n", sig);
 }
 
+void sighup(int sig)
+{
+    LOG(LOG_INFO, "Ignoring SIGHUP : signal %d \n", sig);
+}
+
 void sigchld(int sig)
 {
     // triggered when a child close. For now we will just ignore this signal
@@ -61,13 +66,6 @@ void sigchld(int sig)
     // When there will be child management code, we will have to setup
     // some communication protocol to discuss with childs.
     LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d\n", sig, getpid());
-}
-
-int refreshconf;
-
-void sighup(int sig)
-{
-    refreshconf |= 1;
 }
 
 void init_signals(void)
@@ -217,7 +215,7 @@ void redemption_new_session()
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
         wait_obj front_event(sck);
 
-        Session session(front_event, sck, &refreshconf, &ini);
+        Session session(front_event, sck, &ini);
 
         if (ini.debug.session){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);
@@ -236,7 +234,7 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid)
 {
     init_signals();
 
-    SessionServer ss(&refreshconf, uid, gid);
+    SessionServer ss(uid, gid);
 //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.globals.listen_address);
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }

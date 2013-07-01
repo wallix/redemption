@@ -29,16 +29,13 @@
 
 class SessionServer : public Server
 {
-    int * refreshconf ;
-
     // Used for enable transparent proxying on accepted socket (ini.globals.enable_ip_transparent = true).
     unsigned uid;
     unsigned gid;
 
     public:
-    SessionServer(int * refreshconf, unsigned uid, unsigned gid) :
-      refreshconf(refreshconf)
-    , uid(uid)
+    SessionServer(unsigned uid, unsigned gid) :
+      uid(uid)
     , gid(gid) {
     }
 
@@ -147,7 +144,7 @@ class SessionServer : public Server
                 &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                     ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
                 }
-                Session session(front_event, sck, this->refreshconf, &ini);
+                Session session(front_event, sck, &ini);
 
                 // Suppress session file
                 unlink(session_file);
