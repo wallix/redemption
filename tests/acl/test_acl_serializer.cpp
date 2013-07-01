@@ -42,17 +42,15 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerOutItem)
     AclSerializer acl(&ini, trans, 0);
 
     // test out_item
-    // out_item(Stream stream,const char * key) should add in the Stream a string
-    // composed of key and its value if known in Inifile,
+    // out_item(Stream stream,authid_t authid) should add in the Stream a string
+    // composed of authid key string and its value if known in Inifile,
     // or "ASK" if the value is asked.
     BStream stream(1024);
     acl.out_item(stream, AUTHID_PROXY_TYPE);
     BOOST_CHECK_EQUAL(0,
                       strncmp((char*)stream.get_data(),
                               STRAUTHID_PROXY_TYPE "\n!RDP\n",
-                              strlen(STRAUTHID_PROXY_TYPE "\n!RDP\n")
-                              )
-                      );
+                              strlen(STRAUTHID_PROXY_TYPE "\n!RDP\n")));
     stream.reset();
 
     ini.context_ask(AUTHID_TARGET_PROTOCOL);
@@ -60,28 +58,21 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerOutItem)
     BOOST_CHECK_EQUAL(0,
                       strncmp((char*)stream.get_data(),
                               STRAUTHID_TARGET_PROTOCOL "\nASK\n",
-                              strlen(STRAUTHID_TARGET_PROTOCOL "\nASK\n")
-                              )
-                      );
+                              strlen(STRAUTHID_TARGET_PROTOCOL "\nASK\n")));
     stream.reset();
 
     acl.out_item(stream, AUTHID_PASSWORD);
     BOOST_CHECK_EQUAL(0,
                       strncmp((char*)stream.get_data(),
                               STRAUTHID_PASSWORD "\nASK\n",
-                              strlen(STRAUTHID_PASSWORD "\nASK\n")
-                              )
-                      );
+                              strlen(STRAUTHID_PASSWORD "\nASK\n")));
     ini.context_set_value(AUTHID_PASSWORD,"SecureLinux");
     acl.out_item(stream, AUTHID_PASSWORD);
     BOOST_CHECK_EQUAL(0,
                       strncmp((char*)stream.get_data()+13,
                               STRAUTHID_PASSWORD "\n!SecureLinux\n",
-                              strlen(STRAUTHID_PASSWORD "\n!SecureLinux\n")
-                              )
-                      );
+                              strlen(STRAUTHID_PASSWORD "\n!SecureLinux\n")));
     stream.reset();
-
 }
 
 BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
@@ -105,9 +96,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     BOOST_CHECK_EQUAL(0,
                       strncmp(ini.context_get_value(AUTHID_REJECTED,buffer,sizeof(buffer)),
                               "Authentifier service failed",
-                              strlen("Authentifier service failed")
-                              )
-                      );
+                              strlen("Authentifier service failed")));
 }
 
 BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
@@ -126,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     GeneratorTransport trans((char *)stream.get_data(),stream.get_offset());
     AclSerializer acl(&ini, trans, 0);
     ini.context.session_id.empty();
-    ini.context_set_value(AUTHID_AUTH_USER,"didier");
+    ini.context_set_value(AUTHID_AUTH_USER,"testuser");
     BOOST_CHECK(ini.context.session_id.is_empty());
     BOOST_CHECK(!ini.context_is_asked(AUTHID_AUTH_USER));
 
@@ -154,6 +143,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
     }
 
 }
+
 inline void execute_test_initem(Stream & stream, AclSerializer & acl, const authid_t authid, const char * value)
 {
     // create stream with key , ask
@@ -165,6 +155,7 @@ inline void execute_test_initem(Stream & stream, AclSerializer & acl, const auth
     // execute in_item
     acl.in_item(stream);
 }
+
 inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t authid, const char * defaut)
 {
     BStream stream(2048);
@@ -177,6 +168,7 @@ inline void test_initem_ask(Inifile & ini, AclSerializer & acl, const authid_t a
     // check key value is known
     BOOST_CHECK(ini.context_is_asked(authid));
 }
+
 inline void test_initem_receive(Inifile & ini, AclSerializer & acl, const authid_t authid, const char * value)
 {
     BStream stream(2048);
@@ -207,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TestAclSerializerInItem)
 
     // CASE EXCEPTION
     // try exception
-//    stream.init(strlen(STRAUTHID_AUTH_USER "didier"));
+    // stream.init(strlen(STRAUTHID_AUTH_USER "didier"));
     try{
         test_initem_receive(ini,acl,AUTHID_AUTH_USER,"didier");
     } catch (const Error & e) {
