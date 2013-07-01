@@ -685,6 +685,70 @@ namespace SlowPath {
         }
     };
 
+
+// 2.2.9.1.1.3.1 Slow-Path Graphics Update (TS_GRAPHICS_UPDATE)
+// ============================================================
+
+// The TS_GRAPHICS_UPDATE structure is used to describe the type and
+//  encapsulate the data for a slow-path graphics update sent from server to
+//  client.<19> All slow-path graphic updates conform to this basic structure
+//  (section 2.2.9.1.1.3.1.1).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                        shareDataHeader                        |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +-------------------------------+-------------------------------+
+// |              ...              |           updateType          |
+// +-------------------------------+-------------------------------+
+// |                     updateData (variable)                     |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// shareDataHeader (18 bytes): Share Data Header (section 2.2.8.1.1.1.2)
+//  containing information about the packet. The type subfield of the pduType
+//  field of the Share Control Header (section 2.2.8.1.1.1.1) MUST be set to
+//  PDUTYPE_DATAPDU (7). The pduType2 field of the Share Data Header MUST be
+//  set to PDUTYPE2_UPDATE (2).
+
+// updateType (2 bytes): A 16-bit, unsigned integer. Type of the graphics
+//  update.
+
+// +------------------------+--------------------------------------------------+
+// | Value                  | Meaning                                          |
+// +------------------------+--------------------------------------------------+
+// | UPDATETYPE_ORDERS      | Indicates an Orders Update (see [MS-RDPEGDI]     |
+// | 0x0000                 | section 2.2.2.2).                                |
+// +------------------------+--------------------------------------------------+
+// | UPDATETYPE_BITMAP      | Indicates a Bitmap Graphics Update (see section  |
+// | 0x0001                 | 2.2.9.1.1.3.1.2).                                |
+// +------------------------+--------------------------------------------------+
+// | UPDATETYPE_PALETTE     | Indicates a Palette Update (see section          |
+// | 0x0002                 | 2.2.9.1.1.3.1.1).                                |
+// +------------------------+--------------------------------------------------+
+// | UPDATETYPE_SYNCHRONIZE | Indicates a Synchronize Update (see section      |
+// | 0x0003                 | 2.2.9.1.1.3.1.3).                                |
+// +------------------------+--------------------------------------------------+
+
+// updateData (variable): Variable-length data specific to the graphics
+//  update.
+
+struct GraphicsUpdate_Recv {
+    uint16_t update_type;
+
+    GraphicsUpdate_Recv(Stream & stream) {
+        update_type = stream.in_uint16_le();
+    }
+};
+
 // 2.2.9.1.1.3.1.1.1 Palette Update Data (TS_UPDATE_PALETTE_DATA)
 // ==============================================================
 
