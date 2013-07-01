@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername1)
     ini.parse_username(username_1);
 
     BOOST_CHECK_EQUAL("u", ini.globals.target_user);
-    BOOST_CHECK_EQUAL("d", ini.globals.target_device);
+    BOOST_CHECK_EQUAL("d", ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("p", ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("a", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername2)
     ini.parse_username(username_2);
 
     BOOST_CHECK_EQUAL("u@u1", ini.globals.target_user);
-    BOOST_CHECK_EQUAL("d",    ini.globals.target_device);
+    BOOST_CHECK_EQUAL("d",    ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("p",    ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("a",    ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername3)
     ini.parse_username(username_3);
 
     BOOST_CHECK_EQUAL("u@u1", ini.globals.target_user);
-    BOOST_CHECK_EQUAL("d",    ini.globals.target_device);
+    BOOST_CHECK_EQUAL("d",    ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP",  ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("a",    ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername4)
     ini.parse_username(username_4);
 
     BOOST_CHECK_EQUAL("u",    ini.globals.target_user);
-    BOOST_CHECK_EQUAL("d",    ini.globals.target_device);
+    BOOST_CHECK_EQUAL("d",    ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP",  ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("a",    ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername5)
     ini.parse_username(username_5);
 
     BOOST_CHECK_EQUAL("administrateur@qa", ini.globals.target_user);
-    BOOST_CHECK_EQUAL("devwin1",           ini.globals.target_device);
+    BOOST_CHECK_EQUAL("devwin1",           ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP_1",             ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("user12",            ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -126,7 +126,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername6)
     ini.parse_username(username_6);
 
     BOOST_CHECK_EQUAL("administrateur@qa", ini.globals.target_user);
-    BOOST_CHECK_EQUAL("devwin1",           ini.globals.target_device);
+    BOOST_CHECK_EQUAL("devwin1",           ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP_1",             ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("administrateur@qa", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername7)
     ini.parse_username(username);
 
     BOOST_CHECK_EQUAL("",      ini.globals.target_user);
-    BOOST_CHECK_EQUAL("",      ini.globals.target_device);
+    BOOST_CHECK_EQUAL("",      ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP",   ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("admin", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername8)
     ini.parse_username(username);
 
     BOOST_CHECK_EQUAL("",         ini.globals.target_user);
-    BOOST_CHECK_EQUAL("",         ini.globals.target_device);
+    BOOST_CHECK_EQUAL("",         ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP",      ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("admin@qa", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername9)
     ini.parse_username(username);
 
     BOOST_CHECK_EQUAL("",             ini.globals.target_user);
-    BOOST_CHECK_EQUAL("",             ini.globals.target_device);
+    BOOST_CHECK_EQUAL("",             ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP",          ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("admin@qa@win", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername10)
     ini.parse_username(username);
 
     BOOST_CHECK_EQUAL("admin", ini.globals.target_user);
-    BOOST_CHECK_EQUAL("win",   ini.globals.target_device);
+    BOOST_CHECK_EQUAL("win",   ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP",   ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("admin", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TestParseUsername11)
     ini.parse_username(username);
 
     BOOST_CHECK_EQUAL("admin@qa", ini.globals.target_user);
-    BOOST_CHECK_EQUAL("win",      ini.globals.target_device);
+    BOOST_CHECK_EQUAL("win",      ini.globals.target_device.get().c_str());
     BOOST_CHECK_EQUAL("RDP",      ini.context.target_protocol.c_str());
     BOOST_CHECK_EQUAL("admin@qa", ini.globals.auth_user);
 } // END FUNCTION - BOOST_AUTO_TEST_CASE(TestParseUsername)
