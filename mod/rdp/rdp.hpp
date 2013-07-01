@@ -1297,32 +1297,24 @@ struct mod_rdp : public mod_api {
 
                     switch (upd.updateCode) {
                         case FastPath::FASTPATH_UPDATETYPE_ORDERS:
-                            {
-                                int count = upd.payload.in_uint16_le();
-
-                                this->front.begin_update();
-                                this->orders.process_orders(this->bpp, upd.payload, count, this);
-                                this->front.end_update();
-                            }
+                            this->front.begin_update();
+                            this->orders.process_orders(this->bpp, upd.payload, true, this);
+                            this->front.end_update();
 
                             if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_BITMAP:
-                            upd.payload.in_skip_bytes(2); // updateType(2)
-
                             this->front.begin_update();
-                            this->process_bitmap_updates(upd.payload);
+                            this->process_bitmap_updates(upd.payload, true);
                             this->front.end_update();
 
                             if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_BITMAP"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_PALETTE:
-                            upd.payload.in_skip_bytes(2); // updateType(2)
-
                             this->front.begin_update();
-                            this->process_palette(upd.payload);
+                            this->process_palette(upd.payload, true);
                             this->front.end_update();
 
                             if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PALETTE"); }
@@ -1474,7 +1466,6 @@ struct mod_rdp : public mod_api {
                 sec.payload.p = sec.payload.end;
             }
             else {
-
                 uint8_t * next_packet = sec.payload.p;
                 while (next_packet < sec.payload.end) {
                     sec.payload.p = next_packet;
@@ -1545,29 +1536,24 @@ struct mod_rdp : public mod_api {
                                 // interact with the session running on the server. The global palette
                                 // information for a session is sent to the client in the Update Palette PDU.
 
-                                int update_type = sdata.payload.in_uint16_le();
-                                switch (update_type) {
+                                SlowPath::GraphicsUpdate_Recv gur(sdata.payload);
+                                switch (gur.update_type) {
                                 case RDP_UPDATE_ORDERS:
                                     if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS");}
-                                    {
-                                        sdata.payload.in_skip_bytes(2); /* pad */
-                                        int count = sdata.payload.in_uint16_le();
-                                        sdata.payload.in_skip_bytes(2); /* pad */
-                                        this->front.begin_update();
-                                        this->orders.process_orders(this->bpp, sdata.payload, count, this);
-                                        this->front.end_update();
-                                    }
+                                    this->front.begin_update();
+                                    this->orders.process_orders(this->bpp, sdata.payload, false, this);
+                                    this->front.end_update();
                                     break;
                                 case RDP_UPDATE_BITMAP:
                                     if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_BITMAP");}
                                     this->front.begin_update();
-                                    this->process_bitmap_updates(sdata.payload);
+                                    this->process_bitmap_updates(sdata.payload, false);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_PALETTE:
                                     if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_PALETTE");}
                                     this->front.begin_update();
-                                    this->process_palette(sdata.payload);
+                                    this->process_palette(sdata.payload, false);
                                     this->front.end_update();
                                     break;
                                 case RDP_UPDATE_SYNCHRONIZE:
@@ -2039,10 +2025,14 @@ struct mod_rdp : public mod_api {
             }
         }
 
-        void process_palette(Stream & stream)
+        void process_palette(Stream & stream, bool fast_path)
         {
             if (this->verbose & 4){
                 LOG(LOG_INFO, "mod_rdp::process_palette");
+            }
+
+            if (fast_path) {
+                stream.in_skip_bytes(2); // updateType(2)
             }
 
             stream.in_skip_bytes(2); /* pad */
@@ -3683,11 +3673,16 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    void process_bitmap_updates(Stream & stream)
+    void process_bitmap_updates(Stream & stream, bool fast_path)
     {
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
+
+        if (fast_path) {
+            stream.in_skip_bytes(2); // updateType(2)
+        }
+
         // RDP-BCGR: 2.2.9.1.1.3.1.2 Bitmap Update (TS_UPDATE_BITMAP)
         // ----------------------------------------------------------
         // The TS_UPDATE_BITMAP structure contains one or more rectangular

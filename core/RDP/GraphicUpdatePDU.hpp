@@ -226,21 +226,6 @@ protected:
                 BStream sctrl_header(256);
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
 
-/*
-                HStream target_stream(1024, 65536);
-                target_stream.out_copy_bytes(sctrl_header);
-                target_stream.out_copy_bytes(this->stream_orders);
-                target_stream.mark_end();
-
-                BStream x224_header(256);
-                BStream mcs_header(256);
-                BStream sec_header(256);
-
-                SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + target_stream.size());
-                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
-*/
                 this->buffer_stream_orders.copy_to_head(sctrl_header);
 
                 BStream x224_header(256);
@@ -305,35 +290,6 @@ protected:
                                  , this->userid + GCC::MCS_USERCHANNEL_BASE
                                  , this->stream_bitmaps.size());
 
-/*
-                HStream target_stream(1024, 65536);
-                target_stream.out_copy_bytes(sctrl_header);
-                target_stream.out_copy_bytes(this->stream_bitmaps);
-                target_stream.mark_end();
-
-                BStream x224_header(256);
-                BStream mcs_header(256);
-                BStream sec_header(256);
-
-                SEC::Sec_Send sec( sec_header
-                                 , target_stream
-                                 , 0
-                                 , this->encrypt
-                                 , this->encryptionLevel
-                                 );
-                MCS::SendDataIndication_Send mcs( mcs_header
-                                                , this->userid
-                                                , GCC::MCS_GLOBAL_CHANNEL
-                                                , 1
-                                                , 3
-                                                , sec_header.size() + target_stream.size()
-                                                , MCS::PER_ENCODING
-                                                );
-                X224::DT_TPDU_Send( x224_header
-                                  , mcs_header.size() + sec_header.size() + target_stream.size()
-                                  );
-                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
-*/
                 this->buffer_stream_bitmaps.copy_to_head(sctrl_header);
 
                 BStream x224_header(256);
