@@ -32,6 +32,7 @@
 #include "netutils.hpp"
 #include "sockettransport.hpp"
 #include "acl_serializer.hpp"
+#include "mod_api.hpp"
 
 typedef enum {
     INTERNAL_NONE,
@@ -243,6 +244,8 @@ class SessionManager {
         }
         return true;
     }
+    
+    
     bool keep_alive(long & keepalive_time, long & now, Transport * trans, bool read_auth)
     {
 //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
@@ -460,6 +463,13 @@ class SessionManager {
 //            assert(false);
         }
         return res;
+    }
+
+
+    void receive(){
+    }
+
+    void check(BackEvent_t & last_mod_draw_event){
     }
 
     int ask_next_module(long & keepalive_time,
