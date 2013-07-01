@@ -271,6 +271,18 @@ BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet)
     , stream.get_data(), 55));
 }
 
+
+BOOST_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet_forge)
+{
+    LOG(LOG_INFO, "===================================");
+    BStream stream(256);
+    X224::CR_TPDU_Send(stream, "", X224::RDP_NEG_REQ, 0, X224::PROTOCOL_TLS);
+    stream.mark_end();
+    hexdump_d(stream.get_data(), stream.size());
+    LOG(LOG_INFO, "===================================");
+}
+
+
 BOOST_AUTO_TEST_CASE(TestReceive_CC_TPDU_with_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xD0\x00\x00\x00\x00\x00", 11);

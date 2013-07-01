@@ -1120,8 +1120,10 @@ namespace MCS
                 LOG(LOG_ERR, "DisconnectProviderUltimatum PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
-            stream.out_uint8(MCS::MCSPDU_DisconnectProviderUltimatum << 2);
-            stream.out_uint8(reason << 5);
+            uint16_t data = ( (MCS::MCSPDU_DisconnectProviderUltimatum << 10)
+                            | (reason << 7)
+                            );
+            stream.out_uint16_be(data);
             stream.mark_end();
         }
     };
@@ -1144,14 +1146,14 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
 
-            uint8_t tag = stream.in_uint8();
-            if ((MCS::MCSPDU_DisconnectProviderUltimatum << 2) != tag){
+            uint16_t tag = stream.in_uint16_be();
+            if ((tag >> 10) != MCS::MCSPDU_DisconnectProviderUltimatum) {
                 LOG(LOG_ERR, "DisconnectProviderUltimatum tag (%u) expected, got %u",
-                   (MCS::MCSPDU_DisconnectProviderUltimatum << 2), tag);
+                   MCS::MCSPDU_DisconnectProviderUltimatum, (tag >> 10));
                 throw Error(ERR_MCS);
             }
-            this->type = MCS::MCSPDU_DisconnectProviderUltimatum;
-            this->reason = static_cast<t_reasons>(stream.in_uint8() >> 5);
+            this->type   = MCS::MCSPDU_DisconnectProviderUltimatum;
+            this->reason = static_cast<t_reasons>((tag & 0x0380) >> 7);
         }
     };
 

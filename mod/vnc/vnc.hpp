@@ -1379,7 +1379,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                         BStream dataU8(dataLenU16 + dataLenU16 / 2 + 1);
 
-                        size_t len_utf8 = UTF16toUTF8(stream.p, dataLenU16 / 2, dataU8.get_data(), dataU8.capacity);
+                        size_t len_utf8 = UTF16toUTF8( stream.p, dataLenU16 / 2, dataU8.get_data()
+                                                     , dataU8.get_capacity());
 
                         (dataU8.get_data())[len_utf8] = 0;
 
@@ -1443,7 +1444,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                         BStream dataU8(dataLenU16 + 2);
 
-                        size_t len_utf8 = UTF16toUTF8(this->large_virtual_channel_data.get_data(), dataLenU16 / 2, dataU8.p, dataU8.capacity);
+                        size_t len_utf8 = UTF16toUTF8( this->large_virtual_channel_data.get_data()
+                                                     , dataLenU16 / 2, dataU8.p, dataU8.get_capacity());
 
                         (dataU8.get_data())[len_utf8] = 0;
 

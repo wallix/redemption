@@ -375,9 +375,9 @@ namespace X224
             stream.in_skip_bytes(1);
             this->tpkt.len = stream.in_uint16_be();
 
-            if (stream.capacity < this->tpkt.len){
+            if (stream.get_capacity() < this->tpkt.len){
                 LOG(LOG_ERR, "TPKT too long: stream=%u tpkt=%u",
-                    stream.capacity, this->tpkt.len);
+                    stream.get_capacity(), this->tpkt.len);
                 throw Error(ERR_X224);
             }
 

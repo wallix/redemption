@@ -91,8 +91,6 @@ enum {
 };
 
 struct Session {
-    int * refreshconf;
-
     wait_obj & front_event;
 
     Inifile  * ini;
@@ -116,9 +114,8 @@ struct Session {
     SocketTransport * ptr_auth_trans;
     wait_obj        * ptr_auth_event;
 
-    Session(wait_obj & front_event, int sck, int * refreshconf, Inifile * ini)
-        : refreshconf(refreshconf)
-        , front_event(front_event)
+    Session(wait_obj & front_event, int sck, Inifile * ini)
+        : front_event(front_event)
         , ini(ini)
         , verbose(this->ini->debug.session)
         , nextmod(INTERNAL_NONE)
@@ -183,54 +180,6 @@ struct Session {
             int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
             while (1) {
-                if (*this->refreshconf){
-                    LOG(LOG_INFO, "refresh conf: reading directory %s", ini->globals.dynamic_conf_path);
-                    if (*this->refreshconf & 1){
-                        *this->refreshconf ^= 1;
-                        DIR * d = opendir(ini->globals.dynamic_conf_path);
-                        if (d){
-                            size_t path_len = strlen(ini->globals.dynamic_conf_path);
-                            size_t file_len = pathconf(ini->globals.dynamic_conf_path, _PC_NAME_MAX) + 1;
-                            char * buffer = (char*)malloc(file_len + path_len);
-                            strcpy(buffer, ini->globals.dynamic_conf_path);
-                            size_t len = offsetof(struct dirent, d_name) + file_len;
-                            struct dirent * entryp = (struct dirent *)malloc(len);
-                            struct dirent * result;
-                            for (readdir_r(d, entryp, &result) ; result ; readdir_r(d, entryp, &result)) {
-                                if ((0 == strcmp(entryp->d_name, ".")) || (0 == strcmp(entryp->d_name, ".."))){
-                                    continue;
-                                }
-                                strcpy(buffer + path_len, entryp->d_name);
-                                struct stat st;
-                                if (stat(buffer, &st) < 0){
-                                    LOG(LOG_INFO, "Failed to read dynamic configuration file %s [%u: %s]",
-                                        buffer, errno, strerror(errno));
-                                    continue;
-                                }
-                                try {
-                                    ini->cparse(buffer);
-                                    this->front->update_config(*ini);
-                                }
-                                catch(...){
-                                    LOG(LOG_INFO, "Error reading conf file %s", buffer);
-                                    continue;
-                                }
-                                LOG(LOG_INFO, "reading conf file %s", buffer);
-                                if (unlink(buffer) < 0){
-                                    LOG(LOG_INFO, "Failed to remove dynamic configuration file %s after parsing [%u: %s]",
-                                        buffer, errno, strerror(errno));
-                                }
-                            }
-                            closedir(d);
-                            free(entryp);
-                            free(buffer);
-                        }
-                        else {
-                            LOG(LOG_INFO, "Failed to open dynamic configuration directory %s [%u: %s]",
-                                ini->globals.dynamic_conf_path, errno, strerror(errno));
-                        }
-                    }
-                }
 
                 if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
                     time_mark.tv_sec = 0;

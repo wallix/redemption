@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(TestStreamInitWithSize)
     Stream * s = new BStream(1000);
     BOOST_CHECK(s);
 
-    BOOST_CHECK(s->capacity == 1000);
+    BOOST_CHECK(s->get_capacity() == 1000);
 
     delete s;
 }
@@ -50,10 +50,10 @@ BOOST_AUTO_TEST_CASE(TestStream)
     Stream * s = new BStream();
     BOOST_CHECK(s);
 
-    BOOST_CHECK(s->capacity == AUTOSIZE);
+    BOOST_CHECK(s->get_capacity() == AUTOSIZE);
 
     s->init(8192);
-    BOOST_CHECK(s->capacity == 8192);
+    BOOST_CHECK(s->get_capacity() == 8192);
     BOOST_CHECK(s->get_data());
     BOOST_CHECK(s->get_data() == s->p);
     BOOST_CHECK(s->get_data() == s->end);
@@ -98,7 +98,6 @@ BOOST_AUTO_TEST_CASE(TestStream_uint8)
     BOOST_CHECK(s->check_end());
 
     delete s;
-
 }
 
 BOOST_AUTO_TEST_CASE(TestStream_uint16)
@@ -337,16 +336,35 @@ BOOST_AUTO_TEST_CASE(TestStream_in_unistr_2)
     BOOST_CHECK_EQUAL(0, result[7]);
 }
 
+BOOST_AUTO_TEST_CASE(TestStream_BStream_Compatibility)
+{
+    BStream stream(512);
+
+    BOOST_CHECK_EQUAL(512,   stream.get_capacity());
+
+    stream.out_copy_bytes("0123456789", 10);
+
+    BOOST_CHECK_EQUAL(502,   stream.room());
+    BOOST_CHECK_EQUAL(true,  stream.has_room(502));
+    BOOST_CHECK_EQUAL(false, stream.has_room(503));
+}
+
 BOOST_AUTO_TEST_CASE(TestStream_HStream)
 {
     HStream stream(512, 1024);
 
+    BOOST_CHECK_EQUAL(512, stream.get_capacity());
     BOOST_CHECK_EQUAL(512, stream.room());
 
     stream.out_copy_bytes("0123456789", 10);
     stream.copy_to_head("abcdefg", 7);
     stream.copy_to_head("ABCDEFG", 7);
     stream.copy_to_head("#*?!+-_", 7);
+
+    BOOST_CHECK_EQUAL(481,   stream.room());
+    BOOST_CHECK_EQUAL(true,  stream.has_room(481));
+    BOOST_CHECK_EQUAL(false, stream.has_room(482));
+
     stream.mark_end();
 
     const char * data = "#*?!+-_ABCDEFGabcdefg0123456789";
@@ -358,4 +376,11 @@ BOOST_AUTO_TEST_CASE(TestStream_HStream)
     ct.send(stream);
 
     BOOST_CHECK_EQUAL(true, ct.get_status());
+
+
+    stream.init(2048);
+
+    BOOST_CHECK_EQUAL(2048,  stream.room());
+    BOOST_CHECK_EQUAL(true,  stream.has_room(2048));
+    BOOST_CHECK_EQUAL(false, stream.has_room(2049));
 }

@@ -48,9 +48,9 @@ public:
     uint8_t* end;
 protected:
     uint8_t* data;
-public:
     size_t capacity;
 
+public:
     virtual ~Stream() {}
 
     virtual void init(size_t capacity) = 0;
@@ -59,11 +59,19 @@ public:
         this->end = this->p = this->data;
     }
 
-    virtual bool has_room(unsigned n) const {
-        return this->get_offset() + n <= this->capacity;
+    bool has_room(unsigned n) const {
+        return this->get_offset() + n <= this->get_capacity();
+    }
+
+    virtual size_t get_capacity() const {
+        return this->capacity;
     }
 
     virtual uint8_t * get_data() const {
+        return this->data;
+    }
+
+    uint8_t * _get_buffer() const {
         return this->data;
     }
 
@@ -71,8 +79,8 @@ public:
         return this->p - this->get_data();
     }
 
-    virtual uint32_t room() const {
-        return this->capacity - this->get_offset();
+    uint32_t room() const {
+        return this->get_capacity() - this->get_offset();
     }
 
     bool in_check_rem(const unsigned n) const {
@@ -1601,11 +1609,11 @@ class BStream : public Stream {
     uint8_t autobuffer[AUTOSIZE];
 
     public:
-
     BStream(size_t size = AUTOSIZE) {
         this->capacity = 0;
         this->init(size);
     }
+
     virtual ~BStream() {
         // <this->data> is allocated dynamically.
         if (this->capacity > AUTOSIZE) {
@@ -1614,7 +1622,7 @@ class BStream : public Stream {
     }
 
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
-    void init(size_t v) {
+    virtual void init(size_t v) {
         if (v != this->capacity) {
             try {
                 // <this->data> is allocated dynamically.
@@ -1709,12 +1717,20 @@ public:
         }
     }
 
+    virtual size_t get_capacity() const {
+        return this->capacity - this->reserved_leading_space;
+    }
+
     virtual uint8_t * get_data() const {
         return this->data_start;
     }
 
-    virtual bool has_room(unsigned n) const {
-        return this->get_offset() + this->reserved_leading_space + n <= this->capacity;
+    virtual void init(size_t body_size) {
+        BStream::init(this->reserved_leading_space + body_size);
+
+        this->p          += this->reserved_leading_space;
+        this->data_start  = this->p;
+        this->end         = this->p;
     }
 
     virtual void reset() {
@@ -1729,10 +1745,6 @@ public:
         this->p          = this->data + this->reserved_leading_space;
         this->data_start = this->p;
     }
-
-    virtual uint32_t room() const {
-        return this->capacity -  this->reserved_leading_space - this->get_offset();
-    }
 };
 
 // SubStream does not allocate any buffer
@@ -1741,20 +1753,19 @@ public:
 // many at some future time)
 class SubStream : public Stream {
     public:
-
     SubStream(){}  // not yet initialized
 
     SubStream(const Stream & stream, size_t offset = 0, size_t new_size = 0)
     {
-        if ((offset + new_size) > stream.capacity){
+        if ((offset + new_size) > stream.get_capacity()){
             LOG(LOG_ERR, "Substream allocation overflow capacity=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.capacity),
+                static_cast<unsigned>(stream.get_capacity()),
                 static_cast<unsigned>(offset),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
         this->p = this->data = stream.get_data() + offset;
-        this->capacity = (new_size == 0)?(stream.capacity - offset):new_size;
+        this->capacity = (new_size == 0)?(stream.get_capacity() - offset):new_size;
         this->end = this->data + this->capacity;
     }
 
@@ -1762,7 +1773,7 @@ class SubStream : public Stream {
         this->data = this->p = stream.p;
         if (new_size > (stream.room())){
             LOG(LOG_ERR, "Substream resize overflow capacity=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.capacity),
+                static_cast<unsigned>(stream.get_capacity()),
                 static_cast<unsigned>(stream.get_offset()),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_RESIZE);
@@ -1774,7 +1785,7 @@ class SubStream : public Stream {
     virtual ~SubStream() {}
 
     // Not allowed on SubStreams
-    void init(size_t v) {}
+    virtual void init(size_t v) {}
 };
 
 // FixedSizeStream does not allocate/reallocate any buffer
@@ -1789,7 +1800,7 @@ class FixedSizeStream : public Stream {
     }
 
     // Not allowed on SubStreams
-    void init(size_t v) {}
+    virtual void init(size_t v) {}
 };
 
 // StaticStream does not allocate/reallocate any buffer
@@ -1811,7 +1822,7 @@ class StaticStream : public FixedSizeStream {
     }
 
     // Not allowed on SubStreams
-    void init(size_t v) {}
+    virtual void init(size_t v) {}
 };
 
 #endif

@@ -32,8 +32,6 @@
 #include "netutils.hpp"
 #include "sockettransport.hpp"
 
-
-
 class AclSerializer{
 
     typedef struct {
@@ -136,7 +134,7 @@ public:
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
             throw Error(ERR_ACL_MESSAGE_TOO_BIG);
         }
-        if (size > stream.capacity){
+        if (size > stream.get_capacity()){
             stream.init(size);
         }
         this->auth_trans.recv(&stream.end, size);
@@ -155,7 +153,6 @@ public:
 
         LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.c_str());
     }
-
 
     TODO("move that function to Inifile create specialized stream object InifileStream")
     TODO("maybe out_item should be in config , not here")
@@ -186,7 +183,7 @@ public:
             stream.out_uint8('\n');
         }
     }
-    
+
     TODO("We should not have any way to send only one value. Change the way it is done by calling code")
     void send(const authid_t authid)
     {
@@ -229,7 +226,6 @@ public:
         }
     }
 
-    
     void ask_next_module_remote()
     {
         
