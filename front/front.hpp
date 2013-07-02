@@ -422,7 +422,7 @@ public:
                 LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality);
                 LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user);
                 LOG(LOG_INFO, "host = %s\n",          ini.globals.host);
-                LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device);
+                LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
                 LOG(LOG_INFO, "target_user = %s\n",   ini.globals.target_user);
             }
 

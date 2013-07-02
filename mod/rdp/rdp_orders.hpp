@@ -190,11 +190,22 @@ public:
     }
 
     /*****************************************************************************/
-    int process_orders(uint8_t bpp, Stream & stream, int num_orders, mod_api * mod)
-    {
+    int process_orders(uint8_t bpp, Stream & stream, bool fast_path, mod_api * mod) {
+        int num_orders;
+
         if (this->verbose & 64){
             LOG(LOG_INFO, "process_orders bpp=%u", bpp);
         }
+
+        if (fast_path) {
+            num_orders = stream.in_uint16_le();
+        }
+        else {
+            stream.in_skip_bytes(2);    /* pad */
+            num_orders = stream.in_uint16_le();
+            stream.in_skip_bytes(2);    /* pad */
+        }
+
         using namespace RDP;
         int processed = 0;
         while (processed < num_orders) {
@@ -314,6 +325,7 @@ public:
         }
         return 0;
     }
+public:
 };
 
 #endif

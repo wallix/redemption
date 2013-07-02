@@ -44,7 +44,7 @@ private:
         {
             snprintf(text, sizeof(text), "%s@%s",
                      ini.globals.target_user,
-                     ini.globals.target_device);
+                     ini.globals.target_device.get().c_str());
         }
     };
 
