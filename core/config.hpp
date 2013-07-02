@@ -803,7 +803,6 @@ public:
         redemption::string auth_error_message;
         meta_state_t state_auth_error_message;
 
-
         BoolField             selector;                 // AUTHID_SELECTOR
         // bool               selector;                 // AUTHID_SELECTOR
         // meta_state_t state_selector;
@@ -821,7 +820,6 @@ public:
         // meta_state_t state_selector_lines_per_page;
         unsigned           selector_number_of_pages;
 
-
         StringField        target_password;          // AUTHID_TARGET_PASSWORD
         // redemption::string target_password;          // AUTHID_TARGET_PASSWORD
         // meta_state_t state_target_password;
@@ -830,8 +828,6 @@ public:
         StringField        target_protocol;          // AUTHID_TARGET_PROTOCOL
         // redemption::string target_protocol;          // AUTHID_TARGET_PROTOCOL
         // meta_state_t state_target_protocol;
-
-
 
         StringField        password;                 // AUTHID_PASSWORD
         // redemption::string password;                 // AUTHID_PASSWORD
@@ -859,7 +855,6 @@ public:
 
         bool               keepalive;
         meta_state_t state_keepalive;
-
         StringField proxy_type;               // AUTHID_PROXY_TYPE
         // redemption::string proxy_type;               // AUTHID_PROXY_TYPE
         // meta_state_t state_proxy_type;
@@ -910,6 +905,12 @@ public:
         this->globals.host.set_from_cstr("");
         this->globals.target_device.set_from_cstr("");
         this->globals.target_user.set_from_cstr("");
+
+        this->globals.auth_user.attach_ini(this);
+        this->globals.host.attach_ini(this);
+        this->globals.target.attach_ini(this);
+        this->globals.target_device.attach_ini(this);
+        this->globals.target_user.attach_ini(this);
 
         // this->globals.auth_user[0]     = 0;
         // this->globals.host[0]          = 0;
@@ -1203,6 +1204,29 @@ public:
         // this->context.state_real_target_device.modified              = true;
 
         this->context.authentication_challenge.empty();
+
+        // Attaching ini struct to values
+        this->context.opt_bpp.attach_ini(this);
+        this->context.opt_height.attach_ini(this);
+        this->context.opt_width.attach_ini(this);
+
+        this->context.selector.attach_ini(this);
+        this->context.selector_current_page.attach_ini(this);
+        this->context.selector_device_filter.attach_ini(this);
+        this->context.selector_group_filter.attach_ini(this);
+        this->context.selector_lines_per_page.attach_ini(this);
+
+        this->context.target_password.attach_ini(this);
+        this->context.target_protocol.attach_ini(this);
+
+        this->context.password.attach_ini(this);
+
+        this->context.accept_message.attach_ini(this);
+        this->context.display_message.attach_ini(this);
+
+        this->context.proxy_type.attach_ini(this);
+        this->context.real_target_device.attach_ini(this);
+
     };
 
     void cparse(istream & ifs){
