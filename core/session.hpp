@@ -210,19 +210,18 @@ struct Session {
                 }
 
                 if (this->front_event.is_set(rfds)) {
-                    this->front->incoming(*this->mod);
-//                    switch (){
-//                    case FRONT_DISCONNECTED:
-//                        throw Error(ERR_SOCKET_ERROR);
-//                    break;
-//                    case FRONT_CONNECTING:
-//                        LOG(LOG_INFO, "Front connecting");
-//                        continue;
-//                    break;
-//                    case FRONT_RUNNING:
-//                        LOG(LOG_INFO, "Front is up and running");
-//                    break;
-//                    }
+                    switch (this->front->incoming(*this->mod)){
+                    case FRONT_DISCONNECTED:
+                        throw Error(ERR_SOCKET_ERROR);
+                    break;
+                    case FRONT_CONNECTING:
+                        LOG(LOG_INFO, "Front connecting");
+                        continue;
+                    break;
+                    case FRONT_RUNNING:
+                        LOG(LOG_INFO, "Front is up and running");
+                    break;
+                    }
                 }
 
                 time_t timestamp = time(NULL);
