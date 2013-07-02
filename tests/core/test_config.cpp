@@ -43,14 +43,14 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -163,9 +163,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
     BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_opt_bpp.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_opt_height.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_opt_width.ask);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_opt_bpp.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_opt_height.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_opt_width.asked);
 
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width);
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height);
@@ -173,11 +173,11 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.auth_error_message.c_str()));
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector_current_page.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector_device_filter.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector_group_filter.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector_lines_per_page.ask);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector_current_page.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector_device_filter.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector_group_filter.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_selector_lines_per_page.asked);
 
     BOOST_CHECK_EQUAL(false,                            ini.context.selector);
     BOOST_CHECK_EQUAL(1,                                ini.context.selector_current_page);
@@ -186,34 +186,35 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(20,                               ini.context.selector_lines_per_page);
     BOOST_CHECK_EQUAL(1,                                ini.context.selector_number_of_pages);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.state_target_device.ask);
-    BOOST_CHECK_EQUAL(true,                             ini.context.state_target_password.ask);
-    BOOST_CHECK_EQUAL(true,                             ini.context.state_target_port.ask);
-    BOOST_CHECK_EQUAL(true,                             ini.context.state_target_protocol.ask);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.state_target_user.ask);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.target_device.is_asked());
+    //BOOST_CHECK_EQUAL(true,                             ini.globals.state_target_device.asked);
+    BOOST_CHECK_EQUAL(true,                             ini.context.state_target_password.asked);
+    BOOST_CHECK_EQUAL(true,                             ini.context.state_target_port.asked);
+    BOOST_CHECK_EQUAL(true,                             ini.context.state_target_protocol.asked);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.state_target_user.asked);
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.target_password.c_str()));
     BOOST_CHECK_EQUAL(3389,                             ini.context.target_port);
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.target_protocol.c_str()));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.state_host.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.state_target.ask);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.state_host.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.state_target.asked);
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.state_auth_user.ask);
-    BOOST_CHECK_EQUAL(true,                             ini.context.state_password.ask);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.state_auth_user.asked);
+    BOOST_CHECK_EQUAL(true,                             ini.context.state_password.asked);
 
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.password.c_str()));
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_authchannel_target.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_authchannel_result.ask);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_authchannel_target.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_authchannel_result.asked);
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_answer.c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_result.c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_target.c_str()));
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_accept_message.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_display_message.ask);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_accept_message.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_display_message.asked);
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.message.c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.accept_message.c_str()));
@@ -224,13 +225,13 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(false,                            ini.context.authenticated);
 
-    BOOST_CHECK_EQUAL(true,                             ini.context.state_keepalive.ask);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_proxy_type.ask);
+    BOOST_CHECK_EQUAL(true,                             ini.context.state_keepalive.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_proxy_type.asked);
 
     BOOST_CHECK_EQUAL(false,                            ini.context.keepalive);
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.proxy_type.c_str()));
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_trace_seal.ask);
+    BOOST_CHECK_EQUAL(false,                            ini.context.state_trace_seal.asked);
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.trace_seal.c_str()));
 
@@ -257,14 +258,14 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -483,14 +484,14 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -646,14 +647,14 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(true,                             ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -804,14 +805,14 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -956,14 +957,14 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1104,14 +1105,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1243,14 +1244,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1377,14 +1378,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1514,14 +1515,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1641,14 +1642,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1943,7 +1944,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_USER));
 
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.target_device));
+    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context.target_password.c_str()));
     BOOST_CHECK_EQUAL(3390,                             ini.context.target_port);
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.target_protocol.c_str()));
