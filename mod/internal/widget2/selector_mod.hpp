@@ -44,7 +44,7 @@ class SelectorMod : public InternalMod, public NotifyApi
         temporary_login(Inifile& ini) {
             this->buffer[0] = 0;
             snprintf(this->buffer, sizeof(this->buffer),
-                     "%s@%s", ini.globals.auth_user, ini.globals.host);
+                     "%s@%s", ini.globals.auth_user.get_cstr(), ini.globals.host.get_cstr());
         }
     };
 

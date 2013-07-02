@@ -405,160 +405,179 @@ static inline const char * string_from_authid(authid_t authid) {
     return authstr[(unsigned)authid - 1].c_str();
 }
 
-class BaseField {
-protected:
-    bool asked;
-    bool modified;
-    bool read;
-    BaseField()
-        : asked(false)
-        , modified(true)
-        , read(false)
-    {
-    }
 
-public:
-    void use() {
-        this->modified = false;
-    }
-    bool has_changed() {
-        bool res = this->modified;
-        //if (!this->asked)
-        //this->use();
-        return res;
-    }
-    void unask(){
-        this->asked = false;
-    }
-    void ask() {
-        this->asked = true;
-        this->modified = true;
-    }
-    bool is_asked() {
-        return this->asked;
-    }
-    bool has_been_read() {
-        return this->read;
-    }
-    
-};
-
-class StringField : public BaseField {
-protected:
-    redemption::string data;
-public:
-    StringField() : BaseField() 
-    {
-    }
-
-    void set(redemption::string & string) {
-        this->set_from_cstr(string.c_str());
-    }
-    void set_from_cstr(const char * cstr) {
-        this->asked = false;
-        if (strcmp(this->data.c_str(),cstr)) {
-            this->modified = true;
-            this->read = false;
-        }
-        this->data.copy_c_str(cstr);
-    }    
-    const redemption::string & get() {
-        this->read = true;
-        return this->data;
-    }
-};
-
-class UnsignedField : public BaseField {
-protected:
-    uint32_t data;
-public:
-    UnsignedField(): BaseField()
-                   , data(0) {
-    }
-
-    void set(uint32_t that) {
-        this->asked = false;
-        if (this->data != that) {
-            this->modified = true;
-            this->read = false;
-        }
-        this->data = that;
-    }
-
-    void set_from_cstr(const char * cstr) {
-        this->set(ulong_from_cstr(cstr));
-    }
-
-    void set_from_level_cstr(const char * cstr) {
-        this->set(level_from_cstr(cstr));
-    }
-
-    void set_from_logtype_cstr(const char * cstr) {
-        this->set(logtype_from_cstr(cstr));
-    }    
-
-    const uint32_t get() {
-        this->read = true;
-        return this->data;
-    }
-};
-
-class SignedField : public BaseField {
-protected:
-    signed data;
-public:
-    SignedField(): BaseField()
-                 , data(0) {
-    }
-
-    void set(signed that) {
-        this->asked = false;
-        if (this->data != that) {
-            this->modified = true;
-            this->read = false;
-        }
-        this->data = that;
-    }
-
-    void set_from_cstr(const char * cstr) {
-        this->set(_long_from_cstr(cstr));
-    }
-
-    const uint32_t get() {
-        this->read = true;
-        return this->data;
-    }
-};
-
-
-class BoolField : public BaseField {
-protected:
-    bool data;
-public:
-    BoolField(): BaseField()
-               , data(false) {
-    }
-
-    void set(bool that) {
-        this->asked = false;
-        if (this->data != that) {
-            this->modified = true;
-            this->read = false;
-        }
-        this->data = that;
-    }
-    void set_from_cstr(const char * cstr) {
-        this->set(bool_from_cstr(cstr));
-    }
-    
-    const bool get() {
-        this->read = true;
-        return this->data;
-    }
-};
 
 struct Inifile {
 private:
+
+    class BaseField {
+    protected:
+        bool asked;
+        bool modified;
+        bool read;
+        Inifile * ini;
+        BaseField()
+            : asked(false)
+            , modified(true)
+            , read(false)
+            , ini(NULL)
+        {
+        }
+
+    public:
+        void attach_ini(Inifile * p_ini) {
+            this->ini = p_ini;
+        }
+        void notify() {
+            if (this->ini)
+                this->ini->notify(this);
+        }
+        void use() {
+            this->modified = false;
+        }
+        bool has_changed() {
+            bool res = this->modified;
+            if (!this->asked)
+                this->use();
+            return res;
+        }
+        void unask(){
+            this->asked = false;
+        }
+        void ask() {
+            this->asked = true;
+            this->modified = true;
+        }
+        bool is_asked() {
+            return this->asked;
+        }
+        bool has_been_read() {
+            return this->read;
+        }
+    
+    };
+
+    class StringField : public BaseField {
+    protected:
+        redemption::string data;
+    public:
+        StringField() : BaseField() 
+        {
+        }
+
+        void set(redemption::string & string) {
+            this->set_from_cstr(string.c_str());
+        }
+        void set_from_cstr(const char * cstr) {
+            this->asked = false;
+            if (strcmp(this->data.c_str(),cstr)) {
+                this->modified = true;
+                this->read = false;
+                this->notify();
+            }
+            this->data.copy_c_str(cstr);
+        }    
+        const redemption::string & get() {
+            this->read = true;
+            return this->data;
+        }
+        const char * get_cstr() {
+            return this->get().c_str();
+        }
+    };
+
+    class UnsignedField : public BaseField {
+    protected:
+        uint32_t data;
+    public:
+        UnsignedField(): BaseField()
+                       , data(0) {
+        }
+
+        void set(uint32_t that) {
+            this->asked = false;
+            if (this->data != that) {
+                this->modified = true;
+                this->read = false;
+                this->notify();
+            }
+            this->data = that;
+        }
+
+        void set_from_cstr(const char * cstr) {
+            this->set(ulong_from_cstr(cstr));
+        }
+
+        void set_from_level_cstr(const char * cstr) {
+            this->set(level_from_cstr(cstr));
+        }
+
+        void set_from_logtype_cstr(const char * cstr) {
+            this->set(logtype_from_cstr(cstr));
+        }
+
+        const uint32_t get() {
+            this->read = true;
+            return this->data;
+        }
+    };
+
+    class SignedField : public BaseField {
+    protected:
+        signed data;
+    public:
+        SignedField(): BaseField()
+                     , data(0) {
+        }
+
+        void set(signed that) {
+            this->asked = false;
+            if (this->data != that) {
+                this->modified = true;
+                this->read = false;
+                this->notify();
+            }
+            this->data = that;
+        }
+
+        void set_from_cstr(const char * cstr) {
+            this->set(_long_from_cstr(cstr));
+        }
+
+        const signed get() {
+            this->read = true;
+            return this->data;
+        }
+    };
+
+
+    class BoolField : public BaseField {
+    protected:
+        bool data;
+    public:
+        BoolField(): BaseField()
+                   , data(false) {
+        }
+
+        void set(bool that) {
+            this->asked = false;
+            if (this->data != that) {
+                this->modified = true;
+                this->read = false;
+                this->notify();
+            }
+            this->data = that;
+        }
+        void set_from_cstr(const char * cstr) {
+            this->set(bool_from_cstr(cstr));
+        }
+    
+        const bool get() {
+            this->read = true;
+            return this->data;
+        }
+    };
+
     typedef struct {
         bool asked;
         bool modified;
@@ -577,270 +596,191 @@ private:
         }
     } meta_state_t;
     
+    bool something_changed;
+    std::list< BaseField * > changed_list;
 
 public:
+    void notify(BaseField * field) {
+        this->something_changed = true;
+        this->changed_list.push_back(field);
+    }
+    bool check() {
+        return this->something_changed;
+    }
+    std::list< BaseField * > get_changed_list() {
+        return changed_list;
+    }
+    void reset() {
+        this->something_changed = false;
+        changed_list.clear();
+    }
+
     struct Inifile_globals {
         BoolField capture_chunk;
         //bool capture_chunk;
         //meta_state_t state_capture_chunk;
 
-        char auth_user[512];                    // AUTHID_AUTH_USER
-        meta_state_t state_auth_user;
-        char host[512];                         // client_ip AUTHID_HOST
-        meta_state_t state_host;                // client_ip
-        char target[512];                       // target ip AUTHID_TARGET
-        meta_state_t state_target;              // target ip
+
+        StringField auth_user;                    // AUTHID_AUTH_USER
+        // char auth_user[512];                    // AUTHID_AUTH_USER
+        // meta_state_t state_auth_user;
+        StringField host;                         // client_ip AUTHID_HOST
+        // char host[512];                         // client_ip AUTHID_HOST
+        // meta_state_t state_host;                // client_ip
+        StringField target;                       // target ip AUTHID_TARGET
+        // char target[512];                       // target ip AUTHID_TARGET
+        // meta_state_t state_target;              // target ip
 
         StringField target_device;
         //char target_device[32768];              // AUTHID_TARGET_DEVICE
         //meta_state_t state_target_device;
-        char target_user[512];                  // AUTHID_TARGET_USER
-        meta_state_t state_target_user;
+        StringField target_user;                  // AUTHID_TARGET_USER
+        // char target_user[512];                  // AUTHID_TARGET_USER
+        // meta_state_t state_target_user;
 
         // BEGIN globals
         bool bitmap_cache;       // default true
-        meta_state_t state_bitmap_cache;       // default true
         bool bitmap_compression; // default true
-        meta_state_t state_bitmap_compression; // default true
         int port;                // default 3389
-        meta_state_t state_port;                // default 3389
         bool nomouse;
-        meta_state_t state_nomouse;
         bool notimestamp;
-        meta_state_t state_notimestamp;
         int encryptionLevel;     // 0=low, 1=medium, 2=high
-        meta_state_t state_encryptionLevel;     // 0=low, 1=medium, 2=high
         char authip[255];
-        meta_state_t state_authip;
         int authport;
-        meta_state_t state_authport;
         bool autovalidate;       // dialog autovalidation for test
-        meta_state_t state_autovalidate;       // dialog autovalidation for test
 
         // keepalive and no traffic auto deconnexion
         int max_tick;
-        meta_state_t state_max_tick;
         int keepalive_grace_delay;
-        meta_state_t state_keepalive_grace_delay;
 
         bool internal_domain;
-        meta_state_t state_internal_domain;
 
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
-        meta_state_t state_dynamic_conf_path; // directory where to look for dynamic configuration files
         char auth_channel[512];
-        meta_state_t state_auth_channel;
         bool enable_file_encryption;
-        meta_state_t state_enable_file_encryption;
         bool enable_tls;
-        meta_state_t state_enable_tls;
         char listen_address[256];
-        meta_state_t state_listen_address;
         bool enable_ip_transparent;
-        meta_state_t state_enable_ip_transparent;
         char certificate_password[256];
-        meta_state_t state_certificate_password;
 
         char png_path[1024];
-        meta_state_t state_png_path;
         char wrm_path[1024];
-        meta_state_t state_wrm_path;
 
         char alternate_shell[1024];
-        meta_state_t state_alternate_shell;
         char shell_working_directory[1024];
-        meta_state_t state_shell_working_directory;
 
         char codec_id[512];
-        meta_state_t state_codec_id;
         bool movie;
-        meta_state_t state_movie;
         char movie_path[512];
-        meta_state_t state_movie_path;
         char video_quality[512];
-        meta_state_t state_video_quality;
         bool enable_bitmap_update;
-        meta_state_t state_enable_bitmap_update;
         // END globals
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
-        meta_state_t state_flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval;
-        meta_state_t state_flv_frame_interval;
     } globals;
 
     // section "client"
     struct {
         bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default 
-        meta_state_t state_ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default false
 
         uint32_t performance_flags_default;
-        meta_state_t state_performance_flags_default;
         uint32_t performance_flags_force_present;
-        meta_state_t state_performance_flags_force_present;
         uint32_t performance_flags_force_not_present;
-        meta_state_t state_performance_flags_force_not_present;
 
         bool tls_fallback_legacy;
-        meta_state_t state_tls_fallback_legacy;
    
         bool clipboard;
-        meta_state_t state_clipboard;
         bool device_redirection;
-        meta_state_t state_device_redirection;
     } client;
 
     // Section "video"
     struct {
         unsigned capture_flags;  // 1 PNG capture, 2 WRM
-        meta_state_t state_capture_flags;  // 1 PNG capture, 2 WRM
         // video opt from capture_flags
         bool capture_png;
-        meta_state_t state_capture_png;
         bool capture_wrm;
-        meta_state_t state_capture_wrm;
         bool capture_flv;
-        meta_state_t state_capture_flv;
         bool capture_ocr;
-        meta_state_t state_capture_ocr;
 
         unsigned ocr_interval;
-        meta_state_t state_ocr_interval;
         unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
-        meta_state_t state_png_interval;   // time between 2 png captures (in 1/10 seconds)
         unsigned capture_groupid;
-        meta_state_t state_capture_groupid;
         unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
-        meta_state_t state_frame_interval; // time between 2 frame captures (in 1/100 seconds)
         unsigned break_interval; // time between 2 wrm movies (in seconds)
-        meta_state_t state_break_interval; // time between 2 wrm movies (in seconds)
         unsigned png_limit;    // number of png captures to keep
-        meta_state_t state_png_limit;    // number of png captures to keep
         char replay_path[1024];
-        meta_state_t state_replay_path;
 
         int l_bitrate;         // bitrate for low quality
-        meta_state_t state_l_bitrate;         // bitrate for low quality
         int l_framerate;       // framerate for low quality
-        meta_state_t state_l_framerate;       // framerate for low quality
         int l_height;          // height for low quality
-        meta_state_t state_l_height;          // height for low quality
         int l_width;           // width for low quality
-        meta_state_t state_l_width;           // width for low quality
         int l_qscale;          // qscale (parameter given to ffmpeg) for low quality
-        meta_state_t state_l_qscale;          // qscale (parameter given to ffmpeg) for low quality
 
         // Same for medium quality
         int m_bitrate;
-        meta_state_t state_m_bitrate;
         int m_framerate;
-        meta_state_t state_m_framerate;
         int m_height;
-        meta_state_t state_m_height;
         int m_width;
-        meta_state_t state_m_width;
         int m_qscale;
-        meta_state_t state_m_qscale;
 
         // Same for high quality
         int h_bitrate;
-        meta_state_t state_h_bitrate;
         int h_framerate;
-        meta_state_t state_h_framerate;
         int h_height;
-        meta_state_t state_h_height;
         int h_width;
-        meta_state_t state_h_width;
         int h_qscale;
-        meta_state_t state_h_qscale;
     } video;
 
     // Section "debug"
     struct {
         uint32_t x224;
-        meta_state_t state_x224;
         uint32_t mcs;
-        meta_state_t state_mcs;
         uint32_t sec;
-        meta_state_t state_sec;
         uint32_t rdp;
-        meta_state_t state_rdp;
         uint32_t primary_orders;
-        meta_state_t state_primary_orders;
         uint32_t secondary_orders;
-        meta_state_t state_secondary_orders;
         uint32_t bitmap;
-        meta_state_t state_bitmap;
         uint32_t capture;
-        meta_state_t state_capture;
         uint32_t auth;
-        meta_state_t state_auth;
         uint32_t session;
-        meta_state_t state_session;
         uint32_t front;
-        meta_state_t state_front;
         uint32_t mod_rdp;
-        meta_state_t state_mod_rdp;
         uint32_t mod_vnc;
-        meta_state_t state_mod_vnc;
         uint32_t mod_int;
-        meta_state_t state_mod_int;
         uint32_t mod_xup;
-        meta_state_t state_mod_xup;
         uint32_t widget;
-        meta_state_t state_widget;
         uint32_t input;
-        meta_state_t state_input;
-
 
         int log_type;
-        meta_state_t state_log_type;
         char log_file_path[1024]; // log file location
-        meta_state_t state_log_file_path; // log file location
 
     } debug;
 
     // section "translation"
     struct {
-        redemption::string button_ok;
-        meta_state_t state_button_ok;
-        redemption::string button_cancel;
-        meta_state_t state_button_cancel;
-        redemption::string button_help;
-        meta_state_t state_button_help;
-        redemption::string button_close;
-        meta_state_t state_button_close;
-        redemption::string button_refused;
-        meta_state_t state_button_refused;
-        redemption::string login;
-        meta_state_t state_login;
-        redemption::string username;
-        meta_state_t state_username;
-        redemption::string password;
-        meta_state_t state_password;
-        redemption::string target;
-        meta_state_t state_target;
-        redemption::string diagnostic;
-        meta_state_t state_diagnostic;
-        redemption::string connection_closed;
-        meta_state_t state_connection_closed;
-        redemption::string help_message;
-        meta_state_t state_help_message;
+        StringField button_ok;
+        StringField button_cancel;
+        StringField button_help;
+        StringField button_close;
+        StringField button_refused;
+        StringField login;
+        StringField username;
+        StringField password;
+        StringField target;
+        StringField diagnostic;
+        StringField connection_closed;
+        StringField help_message;
     } translation;
 
     // section "context"
     struct {
         unsigned           selector_focus;
-        meta_state_t state_selector_focus;
         char               movie[1024];
-        meta_state_t state_movie;
 
         unsigned           opt_bitrate;
-        meta_state_t state_opt_bitrate;
         unsigned           opt_framerate;
-        meta_state_t state_opt_framerate;
         unsigned           opt_qscale;
-        meta_state_t state_opt_qscale;
      
         unsigned           opt_bpp;                // AUTHID_OPT_BPP
         meta_state_t state_opt_bpp;
@@ -864,7 +804,6 @@ public:
         unsigned           selector_lines_per_page;  // AUTHID_SELECTOR_LINES_PER_PAGE
         meta_state_t state_selector_lines_per_page;
         unsigned           selector_number_of_pages;
-        meta_state_t state_selector_number_of_pages;
 
 
         redemption::string target_password;          // AUTHID_TARGET_PASSWORD
@@ -881,27 +820,20 @@ public:
 
 
         redemption::string authchannel_answer;
-        meta_state_t state_authchannel_answer;
         redemption::string authchannel_result;
         meta_state_t state_authchannel_result;
         redemption::string authchannel_target;
         meta_state_t state_authchannel_target;
 
-
         redemption::string message;
-        meta_state_t state_message;
         redemption::string accept_message;           // AUTHID_ACCEPT_MESSAGE
         meta_state_t state_accept_message;
         redemption::string display_message;          // AUTHID_DISPLAY_MESSAGE
         meta_state_t state_display_message;
 
         redemption::string rejected;
-        meta_state_t state_rejected;
 
         bool               authenticated;
-        meta_state_t state_authenticated;
-
-
 
         bool               keepalive;
         meta_state_t state_keepalive;
@@ -914,23 +846,17 @@ public:
         meta_state_t state_trace_seal;
 
         redemption::string session_id;
-        meta_state_t state_session_id;
 
         unsigned           end_date_cnx;
-        meta_state_t state_end_date_cnx;
         redemption::string end_time;
-        meta_state_t state_end_time;
 
         redemption::string mode_console;
-        meta_state_t state_mode_console;
         signed             timezone;
-        meta_state_t state_timezone;
 
         redemption::string real_target_device;       // AUHTID_REAL_TARGET_DEVICE
         meta_state_t state_real_target_device;
 
         redemption::string authentication_challenge;
-        meta_state_t state_authentication_challenge;
     } context;
 
     struct IniAccounts account;
@@ -955,11 +881,16 @@ public:
         //this->globals.capture_chunk = false;
         this->globals.capture_chunk.set(false);
 
-        this->globals.auth_user[0]     = 0;
-        this->globals.host[0]          = 0;
+
+        this->globals.auth_user.set_from_cstr("");
+        this->globals.host.set_from_cstr("");
         this->globals.target_device.set_from_cstr("");
-        //this->globals.target_device[0] = 0;
-        this->globals.target_user[0]   = 0;
+        this->globals.target_user.set_from_cstr("");
+
+        // this->globals.auth_user[0]     = 0;
+        // this->globals.host[0]          = 0;
+        // this->globals.target_device[0] = 0;
+        // this->globals.target_user[0]   = 0;
 
         // Init globals
         this->globals.bitmap_cache = true;
@@ -1074,18 +1005,18 @@ public:
         // End Section "debug"
 
         // Begin Section "translation"
-        this->translation.button_ok.copy_c_str("OK");
-        this->translation.button_cancel.copy_c_str("Cancel");
-        this->translation.button_help.copy_c_str("Help");
-        this->translation.button_close.copy_c_str("Close");
-        this->translation.button_refused.copy_c_str("Refused");
-        this->translation.login.copy_c_str("login");
-        this->translation.username.copy_c_str("username");
-        this->translation.password.copy_c_str("password");
-        this->translation.target.copy_c_str("target");
-        this->translation.diagnostic.copy_c_str("diagnostic");
-        this->translation.connection_closed.copy_c_str("Connection closed");
-        this->translation.help_message.copy_c_str("Help message");
+        this->translation.button_ok.set_from_cstr("OK");
+        this->translation.button_cancel.set_from_cstr("Cancel");
+        this->translation.button_help.set_from_cstr("Help");
+        this->translation.button_close.set_from_cstr("Close");
+        this->translation.button_refused.set_from_cstr("Refused");
+        this->translation.login.set_from_cstr("login");
+        this->translation.username.set_from_cstr("username");
+        this->translation.password.set_from_cstr("password");
+        this->translation.target.set_from_cstr("target");
+        this->translation.diagnostic.set_from_cstr("diagnostic");
+        this->translation.connection_closed.set_from_cstr("Connection closed");
+        this->translation.help_message.set_from_cstr("Help message");
         // End Section "translation"
 
         // Begin section "context"
@@ -1137,6 +1068,8 @@ public:
 
 
         this->globals.target_device.ask();
+        this->globals.target_user.ask();
+        this->globals.auth_user.ask();
 
         //this->globals.state_target_device.asked           = true;
         //this->globals.state_target_device.modified           = true;
@@ -1150,23 +1083,23 @@ public:
         this->context.state_target_protocol.asked         = true;
         this->context.state_target_protocol.modified         = true;
 
-        this->globals.state_target_user.asked             = true;
-        this->globals.state_target_user.modified             = true;
+        // this->globals.state_target_user.asked             = true;
+        // this->globals.state_target_user.modified             = true;
 
         this->context.target_password.empty();
         this->context.target_port                 = 3389;
         this->context.target_protocol.copy_c_str("RDP");
 
         
-        this->globals.state_host.asked                    = false;
-        this->globals.state_host.modified                    = true;
+        // this->globals.state_host.asked                    = false;
+        // this->globals.state_host.modified                    = true;
 
-        this->globals.state_target.asked                  = false;
-        this->globals.state_target.modified                  = true;
+        // this->globals.state_target.asked                  = false;
+        // this->globals.state_target.modified                  = true;
 
 
-        this->globals.state_auth_user.asked               = true;
-        this->globals.state_auth_user.modified               = true;
+        // this->globals.state_auth_user.asked               = true;
+        // this->globals.state_auth_user.modified               = true;
 
         this->context.state_password.asked                = true;
         this->context.state_password.modified                = true;
@@ -1594,40 +1527,40 @@ public:
         }
         else if (0 == strcmp(context, "translation")){
                  if (0 == strcmp(key, "button_ok")){
-                this->translation.button_ok.copy_c_str(value);
+                this->translation.button_ok.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "button_cancel")){
-                this->translation.button_cancel.copy_c_str(value);
+                this->translation.button_cancel.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "button_help")){
-                this->translation.button_help.copy_c_str(value);
+                this->translation.button_help.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "button_close")){
-                this->translation.button_close.copy_c_str(value);
+                this->translation.button_close.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "button_refused")){
-                this->translation.button_refused.copy_c_str(value);
+                this->translation.button_refused.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "login")){
-                this->translation.login.copy_c_str(value);
+                this->translation.login.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "username")){
-                this->translation.username.copy_c_str(value);
+                this->translation.username.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "password")){
-                this->translation.password.copy_c_str(value);
+                this->translation.password.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "target")){
-                this->translation.target.copy_c_str(value);
+                this->translation.target.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "diagnostic")){
-                this->translation.diagnostic.copy_c_str(value);
+                this->translation.diagnostic.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "connection_closed")){
-                this->translation.connection_closed.copy_c_str(value);
+                this->translation.connection_closed.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "help_message")){
-                this->translation.help_message.copy_c_str(value);
+                this->translation.help_message.set_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
@@ -1708,23 +1641,35 @@ public:
             break;
 
         case AUTHID_TARGET_USER:
-            changed = &this->globals.state_target_user.modified;
-            res = *changed;
+            res = this->globals.target_user.has_changed();
+            this->globals.target_user.use();
+            changed = NULL;
+            // changed = &this->globals.state_target_user.modified;
+            // res = *changed;
             break;
 
         case AUTHID_AUTH_USER:
-            changed = &this->globals.state_auth_user.modified;
-            res = *changed;
+            res = this->globals.auth_user.has_changed();
+            this->globals.auth_user.use();
+            changed = NULL;
+            // changed = &this->globals.state_auth_user.modified;
+            // res = *changed;
             break;
 
         case AUTHID_HOST:
-            changed = &this->globals.state_host.modified;
-            res = *changed;
+            res = this->globals.host.has_changed();
+            this->globals.host.use();
+            changed = NULL;
+            // changed = &this->globals.state_host.modified;
+            // res = *changed;
             break;
 
         case AUTHID_TARGET:
-            changed = &this->globals.state_target.modified;
-            res = *changed;
+            res = this->globals.target.has_changed();
+            this->globals.target.use();
+            changed = NULL;
+            // changed = &this->globals.state_target.modified;
+            // res = *changed;
             break;
 
         case AUTHID_PASSWORD:
@@ -1797,40 +1742,40 @@ public:
         switch (authid)
         {
         case AUTHID_TRANS_BUTTON_OK:
-            this->translation.button_ok.copy_c_str(value);
+            this->translation.button_ok.set_from_cstr(value);
             break;
         case AUTHID_TRANS_BUTTON_CANCEL:
-            this->translation.button_cancel.copy_c_str(value);
+            this->translation.button_cancel.set_from_cstr(value);
             break;
         case AUTHID_TRANS_BUTTON_HELP:
-            this->translation.button_help.copy_c_str(value);
+            this->translation.button_help.set_from_cstr(value);
             break;
         case AUTHID_TRANS_BUTTON_CLOSE:
-            this->translation.button_close.copy_c_str(value);
+            this->translation.button_close.set_from_cstr(value);
             break;
         case AUTHID_TRANS_BUTTON_REFUSED:
-            this->translation.button_refused.copy_c_str(value);
+            this->translation.button_refused.set_from_cstr(value);
             break;
         case AUTHID_TRANS_LOGIN:
-            this->translation.login.copy_c_str(value);
+            this->translation.login.set_from_cstr(value);
             break;
         case AUTHID_TRANS_USERNAME:
-            this->translation.username.copy_c_str(value);
+            this->translation.username.set_from_cstr(value);
             break;
         case AUTHID_TRANS_PASSWORD:
-            this->translation.password.copy_c_str(value);
+            this->translation.password.set_from_cstr(value);
             break;
         case AUTHID_TRANS_TARGET:
-            this->translation.target.copy_c_str(value);
+            this->translation.target.set_from_cstr(value);
             break;
         case AUTHID_TRANS_DIAGNOSTIC:
-            this->translation.diagnostic.copy_c_str(value);
+            this->translation.diagnostic.set_from_cstr(value);
             break;
         case AUTHID_TRANS_CONNECTION_CLOSED:
-            this->translation.connection_closed.copy_c_str(value);
+            this->translation.connection_closed.set_from_cstr(value);
             break;
         case AUTHID_TRANS_HELP_MESSAGE:
-            this->translation.help_message.copy_c_str(value);
+            this->translation.help_message.set_from_cstr(value);
             break;
 
         // Options
@@ -1966,34 +1911,38 @@ public:
             this->context.target_protocol.copy_c_str(value);
             break;
         case AUTHID_TARGET_USER:
-            this->globals.state_target_user.asked     = false;
-            if (strcmp(value, this->globals.target_user))
-                this->globals.state_target_user.modified     = true;
-            strncpy(this->globals.target_user,   value, sizeof(this->globals.target_user));
-            this->globals.target_user[sizeof(this->globals.target_user) - 1]     = 0;
+            this->globals.target_user.set_from_cstr(value);
+            // this->globals.state_target_user.asked     = false;
+            // if (strcmp(value, this->globals.target_user))
+            //     this->globals.state_target_user.modified     = true;
+            // strncpy(this->globals.target_user,   value, sizeof(this->globals.target_user));
+            // this->globals.target_user[sizeof(this->globals.target_user) - 1]     = 0;
             break;
 
         case AUTHID_AUTH_USER:
-            this->globals.state_auth_user.asked = false;
-            if (strcmp(value, this->globals.auth_user))
-                this->globals.state_auth_user.modified = true;
-            strncpy(this->globals.auth_user, value, sizeof(this->globals.auth_user));
-            this->globals.auth_user[sizeof(this->globals.auth_user) - 1]         = 0;
+            this->globals.auth_user.set_from_cstr(value);
+            // this->globals.state_auth_user.asked = false;
+            // if (strcmp(value, this->globals.auth_user))
+            //     this->globals.state_auth_user.modified = true;
+            // strncpy(this->globals.auth_user, value, sizeof(this->globals.auth_user));
+            // this->globals.auth_user[sizeof(this->globals.auth_user) - 1]         = 0;
             break;
         case AUTHID_HOST:
-            this->globals.state_host.asked      = false;
-            if (strcmp(value, this->globals.host))
-                this->globals.state_host.modified      = true;
-            strncpy(this->globals.host, value, sizeof(this->globals.host));
-            this->globals.host[sizeof(this->globals.host) - 1]                   = 0;
+            this->globals.host.set_from_cstr(value);
+            // this->globals.state_host.asked      = false;
+            // if (strcmp(value, this->globals.host))
+            //     this->globals.state_host.modified      = true;
+            // strncpy(this->globals.host, value, sizeof(this->globals.host));
+            // this->globals.host[sizeof(this->globals.host) - 1]                   = 0;
             break;
 
         case AUTHID_TARGET:
-            this->globals.state_target.asked      = false;
-            if (strcmp(value, this->globals.target))
-                this->globals.state_target.modified      = true;
-            strncpy(this->globals.target,        value, sizeof(this->globals.target));
-            this->globals.target[sizeof(this->globals.target) - 1]                 = 0;
+            this->globals.target.set_from_cstr(value);
+            // this->globals.state_target.asked      = false;
+            // if (strcmp(value, this->globals.target))
+            //     this->globals.state_target.modified      = true;
+            // strncpy(this->globals.target,        value, sizeof(this->globals.target));
+            // this->globals.target[sizeof(this->globals.target) - 1]                 = 0;
             break;
 
         case AUTHID_PASSWORD:
@@ -2116,40 +2065,40 @@ public:
         switch (authid)
         {
         case AUTHID_TRANS_BUTTON_OK:
-            pszReturn = this->translation.button_ok.c_str();
+            pszReturn = this->translation.button_ok.get().c_str();
             break;
         case AUTHID_TRANS_BUTTON_CANCEL:
-            pszReturn = this->translation.button_cancel.c_str();
+            pszReturn = this->translation.button_cancel.get().c_str();
             break;
         case AUTHID_TRANS_BUTTON_HELP:
-            pszReturn = this->translation.button_help.c_str();
+            pszReturn = this->translation.button_help.get().c_str();
             break;
         case AUTHID_TRANS_BUTTON_CLOSE:
-            pszReturn = this->translation.button_close.c_str();
+            pszReturn = this->translation.button_close.get().c_str();
             break;
         case AUTHID_TRANS_BUTTON_REFUSED:
-            pszReturn = this->translation.button_refused.c_str();
+            pszReturn = this->translation.button_refused.get().c_str();
             break;
         case AUTHID_TRANS_LOGIN:
-            pszReturn = this->translation.login.c_str();
+            pszReturn = this->translation.login.get().c_str();
             break;
         case AUTHID_TRANS_USERNAME:
-            pszReturn = this->translation.username.c_str();
+            pszReturn = this->translation.username.get().c_str();
             break;
         case AUTHID_TRANS_PASSWORD:
-            pszReturn = this->translation.password.c_str();
+            pszReturn = this->translation.password.get().c_str();
             break;
         case AUTHID_TRANS_TARGET:
-            pszReturn = this->translation.target.c_str();
+            pszReturn = this->translation.target.get().c_str();
             break;
         case AUTHID_TRANS_DIAGNOSTIC:
-            pszReturn = this->translation.diagnostic.c_str();
+            pszReturn = this->translation.diagnostic.get().c_str();
             break;
         case AUTHID_TRANS_CONNECTION_CLOSED:
-            pszReturn = this->translation.connection_closed.c_str();
+            pszReturn = this->translation.connection_closed.get().c_str();
             break;
         case AUTHID_TRANS_HELP_MESSAGE:
-            pszReturn = this->translation.help_message.c_str();
+            pszReturn = this->translation.help_message.get().c_str();
             break;
 
         case AUTHID_OPT_CLIPBOARD:
@@ -2296,7 +2245,7 @@ public:
 
         case AUTHID_TARGET_DEVICE:
             if (!this->globals.target_device.is_asked()) {
-                pszReturn = this->globals.target_device.get().c_str();
+                pszReturn = this->globals.target_device.get_cstr();
             }
             // if (!this->globals.state_target_device.asked) {
             //     pszReturn = this->globals.target_device;
@@ -2320,27 +2269,40 @@ public:
             }
             break;
         case AUTHID_TARGET_USER:
-            if (!this->globals.state_target_user.asked) {
-                pszReturn = this->globals.target_user;
+            if (!this->globals.target_user.is_asked()) {
+                pszReturn = this->globals.target_user.get_cstr();
             }
+            // if (!this->globals.state_target_user.asked) {
+            //     pszReturn = this->globals.target_user;
+            // }
             break;
 
         case AUTHID_AUTH_USER:
-            if (!this->globals.state_auth_user.asked) {
-                pszReturn = this->globals.auth_user;
+            if (!this->globals.auth_user.is_asked()) {
+                pszReturn = this->globals.auth_user.get_cstr();
             }
+            // if (!this->globals.state_auth_user.asked) {
+            //     pszReturn = this->globals.auth_user;
+            // }
             break;
         case AUTHID_HOST:
-            if ( !this->globals.state_host.asked) {
-                pszReturn = this->globals.host;
-            }
+            if (!this->globals.host.is_asked()) {
+                pszReturn = this->globals.host.get_cstr();
+            }            
+            // if ( !this->globals.state_host.asked) {
+            //     pszReturn = this->globals.host;
+            // }
             break;
 
         case AUTHID_TARGET:
             if (  size
-               && !this->globals.state_target.asked) {
-                pszReturn = this->globals.target;
+                  && !this->globals.target.is_asked()) {
+                pszReturn = this->globals.target.get_cstr();
             }
+            // if (  size
+            //    && !this->globals.state_target.asked) {
+            //     pszReturn = this->globals.target;
+            // }
             break;
         case AUTHID_PASSWORD:
             if (!this->context.state_password.asked) {
@@ -2522,23 +2484,27 @@ public:
             break;
 
         case AUTHID_TARGET_USER:
-            this->globals.state_target_user.asked             = true;
-            this->globals.state_target_user.modified             = true;
+            this->globals.target_user.ask();
+            // this->globals.state_target_user.asked             = true;
+            // this->globals.state_target_user.modified             = true;
             break;
 
         case AUTHID_AUTH_USER:
-            this->globals.state_auth_user.asked               = true;
-            this->globals.state_auth_user.modified               = true;
+            this->globals.auth_user.ask();
+            // this->globals.state_auth_user.asked               = true;
+            // this->globals.state_auth_user.modified               = true;
             break;
 
         case AUTHID_HOST:
-            this->globals.state_host.asked                    = true;
-            this->globals.state_host.modified                    = true;
+            this->globals.host.ask();
+            // this->globals.state_host.asked                    = true;
+            // this->globals.state_host.modified                    = true;
             break;
 
         case AUTHID_TARGET:
-            this->globals.state_target.asked                  = true;
-            this->globals.state_target.modified                  = true;
+            this->globals.target.ask();
+            // this->globals.state_target.asked                  = true;
+            // this->globals.state_target.modified                  = true;
             break;
 
         case AUTHID_PASSWORD:
@@ -2638,16 +2604,20 @@ public:
             return this->context.state_target_protocol.asked;
 
         case AUTHID_TARGET_USER:
-            return this->globals.state_target_user.asked;
+            return this->globals.target_user.is_asked();
+            // return this->globals.state_target_user.asked;
 
         case AUTHID_AUTH_USER:
-            return this->globals.state_auth_user.asked;
+            return this->globals.auth_user.is_asked();
+            // return this->globals.state_auth_user.asked;
 
         case AUTHID_HOST:
-            return this->globals.state_host.asked;
+            return this->globals.host.is_asked();
+            // return this->globals.state_host.asked;
 
         case AUTHID_TARGET:
-            return this->globals.state_target.asked;
+            return this->globals.target.is_asked();
+            // return this->globals.state_target.asked;
 
         case AUTHID_PASSWORD:
             return this->context.state_password.asked;

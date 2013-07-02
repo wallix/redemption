@@ -683,7 +683,7 @@ struct Session {
                         }
 
                         const char * message = this->ini->context.message.c_str();
-                        const char * button = this->ini->translation.button_refused.c_str();
+                        const char * button = this->ini->translation.button_refused.get().c_str();
                         const char * caption = "Information";
                         this->mod = new DialogMod(
                             *this->ini,
