@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                       , info
                                       , &gen
                                       , 7
-                                      , NULL
+//                                      , NULL
                                       , ""
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */

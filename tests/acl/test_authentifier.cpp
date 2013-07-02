@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestAuthentifier
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 #include "authentifier.hpp"
 #include "testtransport.hpp"
@@ -99,106 +99,90 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     // test get mod from protocol
     LogTransport get_mod_trans;
     Inifile ini;
-    SessionManager sesman(&ini, get_mod_trans, 30, 30, true, 0);
-    submodule_t nextmod;
+    SessionManager sesman(&ini, get_mod_trans, 30, 30, true, 4);
     int res;
 
     // no known protocol on target device yet (should be an error case)
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_EXIT == res);
-    BOOST_CHECK(INTERNAL_CARD == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK_EQUAL(static_cast<int>(MCTX_STATUS_EXIT), res);
 
 
     // auto test case
     ini.context_set_value(AUTHID_TARGET_DEVICE,"autotest");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_TEST == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK_EQUAL(static_cast<int>(MCTX_STATUS_INTERNAL_INTERNAL_TEST), res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"");
 
     // RDP protocol on target
     ini.context_set_value(AUTHID_TARGET_PROTOCOL, "RDP");
-    res = sesman.get_mod_from_protocol(nextmod);
+    res = sesman.get_mod_from_protocol();
     BOOST_CHECK(MCTX_STATUS_RDP == res);
 
     // VNC protocol on target
     ini.context_set_value(AUTHID_TARGET_PROTOCOL, "VNC");
-    res = sesman.get_mod_from_protocol(nextmod);
+    res = sesman.get_mod_from_protocol();
     BOOST_CHECK(MCTX_STATUS_VNC == res);
 
     // XUP protocol on target
     ini.context_set_value(AUTHID_TARGET_PROTOCOL, "XUP");
-    res = sesman.get_mod_from_protocol(nextmod);
+    res = sesman.get_mod_from_protocol();
     BOOST_CHECK(MCTX_STATUS_XUP == res);
 
     // INTERNAL STATUS
     // test nextmod value
     ini.context_set_value(AUTHID_TARGET_PROTOCOL,"INTERNAL");
     ini.context_set_value(AUTHID_TARGET_DEVICE,"selector");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_SELECTOR == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_SELECTOR == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"login");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_LOGIN == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"bouncer2");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_BOUNCER2 == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_BOUNCER2 == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_login");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_LOGIN == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"rwl_login");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_RWL_LOGIN == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL_LOGIN == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"rwl");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_RWL == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"close");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_CLOSE == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_CLOSE == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_close");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_CLOSE == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_CLOSE == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_dialog");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_DIALOG == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_DIALOG == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_message");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_MESSAGE == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_MESSAGE == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_rwl");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_RWL == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_rwl_login");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_WIDGET2_RWL_LOGIN == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL_LOGIN == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"card");
-    res = sesman.get_mod_from_protocol(nextmod);
-    BOOST_CHECK(MCTX_STATUS_INTERNAL == res);
-    BOOST_CHECK(INTERNAL_CARD == nextmod);
+    res = sesman.get_mod_from_protocol();
+    BOOST_CHECK(MCTX_STATUS_INTERNAL_INTERNAL_CARD == res);
 }
 
 TODO("Change scenario messages to send (now authentifier only send modified field)")

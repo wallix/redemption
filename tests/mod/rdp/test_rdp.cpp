@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
                                       , info
                                       , &gen
                                       , 7       /* key flags               */
-                                      , NULL    /* session manager         */
+//                                      , NULL    /* session manager         */
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -400,7 +400,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                       , info
                                       , &gen
                                       , 2       /* key flags               */
-                                      , NULL    /* session manager         */
+//                                      , NULL    /* session manager         */
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -480,7 +480,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
                                       , info
                                       , &gen
                                       , 2       /* key flags               */
-                                      , NULL    /* session manager         */
+//                                      , NULL    /* session manager         */
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -567,7 +567,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
                                       , info
                                       , &gen
                                       , 2       /* key flags               */
-                                      , NULL    /* session manager         */
+//                                      , NULL    /* session manager         */
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */

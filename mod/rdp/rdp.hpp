@@ -54,7 +54,7 @@
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/capabilities.hpp"
 #include "RDP/fastpath.hpp"
-#include "authentifier.hpp"
+//#include "authentifier.hpp"
 #include "RDP/RefreshRectPDU.hpp"
 
 #include "genrandom.hpp"
@@ -122,7 +122,7 @@ struct mod_rdp : public mod_api {
     Random * gen;
     uint32_t verbose;
 
-    SessionManager *sesman;
+//    SessionManager *sesman;
     char auth_channel[8];
     int auth_channel_flags;
     int auth_channel_chanid;
@@ -154,7 +154,7 @@ struct mod_rdp : public mod_api {
             const ClientInfo & info,
             Random * gen,
             int key_flags,
-            SessionManager * sesman,
+//            SessionManager * sesman,
             const char * auth_channel,
             const char * alternate_shell,
             const char * shell_working_directory,
@@ -184,7 +184,7 @@ struct mod_rdp : public mod_api {
         , front_bpp(info.bpp)
         , gen(gen)
         , verbose(verbose)
-        , sesman(sesman)
+//        , sesman(sesman)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
@@ -373,29 +373,29 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    // Method used by session to transmit sesman answer for auth_channel
-    virtual void send_auth_channel_data(const char * data) {
-        if (!this->sesman){ return; }
-        HStream stream(1024, 65536);
-        BStream x224_header(256);
-        BStream mcs_header(256);
-        BStream sec_header(256);
+//    // Method used by session to transmit sesman answer for auth_channel
+//    virtual void send_auth_channel_data(const char * data) {
+//        if (!this->sesman){ return; }
+//        HStream stream(1024, 65536);
+//        BStream x224_header(256);
+//        BStream mcs_header(256);
+//        BStream sec_header(256);
 
-        if (strncmp("Error:", data, 6)) {
-            this->auth_channel_state = 1; // session started
-        }
-        stream.out_uint32_le(strlen(data));
-        stream.out_uint32_le(this->auth_channel_flags);
-        stream.out_copy_bytes(data, strlen(data));
-        stream.mark_end();
+//        if (strncmp("Error:", data, 6)) {
+//            this->auth_channel_state = 1; // session started
+//        }
+//        stream.out_uint32_le(strlen(data));
+//        stream.out_uint32_le(this->auth_channel_flags);
+//        stream.out_copy_bytes(data, strlen(data));
+//        stream.mark_end();
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid,
-            this->auth_channel_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+//        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
+//        MCS::SendDataIndication_Send mcs(mcs_header, userid,
+//            this->auth_channel_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+//        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-        this->nego.trans->send(x224_header, mcs_header, sec_header, stream);
-    }
+//        this->nego.trans->send(x224_header, mcs_header, sec_header, stream);
+//    }
 
     void send_to_channel(
                 const CHANNELS::ChannelDef & channel,
@@ -556,19 +556,19 @@ struct mod_rdp : public mod_api {
                             this->mod_channel_list.push_back(def);
                         }
                         // Inject a new channel for auth_channel virtual channel
-                        if (this->auth_channel[0] && this->sesman){
-                            memcpy(cs_net.channelDefArray[num_channels].name, this->auth_channel, 8);
-                            TODO("CGR: We should figure out what value options should actually have, not just get any channel option and copy it")
-                            cs_net.channelDefArray[num_channels].options = cs_net.channelDefArray[num_channels-1].options;
-                            cs_net.channelCount++;
-                            CHANNELS::ChannelDef def;
-                            memcpy(def.name, this->auth_channel, 8);
-                            def.flags = cs_net.channelDefArray[num_channels].options;
-                            if (this->verbose & 16){
-                                def.log(num_channels);
-                            }
-                            this->mod_channel_list.push_back(def);
-                        }
+//                        if (this->auth_channel[0] && this->sesman){
+//                            memcpy(cs_net.channelDefArray[num_channels].name, this->auth_channel, 8);
+//                            TODO("CGR: We should figure out what value options should actually have, not just get any channel option and copy it")
+//                            cs_net.channelDefArray[num_channels].options = cs_net.channelDefArray[num_channels-1].options;
+//                            cs_net.channelCount++;
+//                            CHANNELS::ChannelDef def;
+//                            memcpy(def.name, this->auth_channel, 8);
+//                            def.flags = cs_net.channelDefArray[num_channels].options;
+//                            if (this->verbose & 16){
+//                                def.log(num_channels);
+//                            }
+//                            this->mod_channel_list.push_back(def);
+//                        }
 
                         if (this->verbose) {
                             cs_net.log("Sending to server");
@@ -1400,29 +1400,30 @@ struct mod_rdp : public mod_api {
                 size_t chunk_size = sec.payload.in_remain();
 
                 // If channel name is our virtual channel, then don't send data to front
-                if (this->auth_channel[0] && this->sesman && !strcmp(mod_channel.name, this->auth_channel)){
-                    const char * auth_channel_message = (const char *)sec.payload.p;
-                    if (this->auth_channel_state == 0) {
-                        this->auth_channel_flags = flags;
-                        this->auth_channel_chanid = mod_channel.chanid;
-                        if (strncmp("target:", auth_channel_message, 7)){
-                            LOG(LOG_ERR, "Invalid request (%s)", auth_channel_message);
-                            this->send_auth_channel_data("Error: Invalid request");
-                        } else {
-                            // Ask sesman for requested target
-                            this->sesman->ask_auth_channel_target(auth_channel_message + 7);
-                        }
-                    }
-                    else if (this->auth_channel_state == 1){
-                        if (strncmp("result:", auth_channel_message, 7)){
-                            LOG(LOG_ERR, "Invalid result (%s)", auth_channel_message);
-                            auth_channel_message = "result:Session interrupted";
-                        }
-                        this->auth_channel_state = 0;
-                        this->sesman->set_auth_channel_result(auth_channel_message + 7);
-                    }
-                }
-                else if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
+//                if (this->auth_channel[0] && this->sesman && !strcmp(mod_channel.name, this->auth_channel)){
+//                    const char * auth_channel_message = (const char *)sec.payload.p;
+//                    if (this->auth_channel_state == 0) {
+//                        this->auth_channel_flags = flags;
+//                        this->auth_channel_chanid = mod_channel.chanid;
+//                        if (strncmp("target:", auth_channel_message, 7)){
+//                            LOG(LOG_ERR, "Invalid request (%s)", auth_channel_message);
+//                            this->send_auth_channel_data("Error: Invalid request");
+//                        } else {
+//                            // Ask sesman for requested target
+//                            this->sesman->ask_auth_channel_target(auth_channel_message + 7);
+//                        }
+//                    }
+//                    else if (this->auth_channel_state == 1){
+//                        if (strncmp("result:", auth_channel_message, 7)){
+//                            LOG(LOG_ERR, "Invalid result (%s)", auth_channel_message);
+//                            auth_channel_message = "result:Session interrupted";
+//                        }
+//                        this->auth_channel_state = 0;
+//                        this->sesman->set_auth_channel_result(auth_channel_message + 7);
+//                    }
+//                }
+//                else 
+                if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
                     // Clipboard is unavailable and is a Clipboard PDU
 
                     TODO("RZ: Don't reject clipboard update, this can block rdesktop.")

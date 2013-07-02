@@ -48,23 +48,23 @@
 #include "bitmap.hpp"
 
 #include "authentifier.hpp"
-#include "front.hpp"
-#include "null/null.hpp"
-#include "rdp/rdp.hpp"
-#include "vnc/vnc.hpp"
-#include "xup/xup.hpp"
-#include "transitory/transitory.hpp"
-#include "cli/cli_mod.hpp"
+//#include "front.hpp"
+//#include "null/null.hpp"
+//#include "rdp/rdp.hpp"
+//#include "vnc/vnc.hpp"
+//#include "xup/xup.hpp"
+//#include "transitory/transitory.hpp"
+//#include "cli/cli_mod.hpp"
 
-#include "internal/widget2/bouncer2.hpp"
-#include "internal/widget2/test_card_mod.hpp"
-#include "internal/widget2/replay_mod.hpp"
-#include "internal/widget2/selector_mod.hpp"
-#include "internal/widget2/wab_close_mod.hpp"
-#include "internal/widget2/dialog_mod.hpp"
-#include "internal/widget2/login_mod.hpp"
-#include "internal/widget2/rwl_mod.hpp"
-#include "internal/widget2/rwl_login_mod.hpp"
+//#include "internal/widget2/bouncer2.hpp"
+//#include "internal/widget2/test_card_mod.hpp"
+//#include "internal/widget2/replay_mod.hpp"
+//#include "internal/widget2/selector_mod.hpp"
+//#include "internal/widget2/wab_close_mod.hpp"
+//#include "internal/widget2/dialog_mod.hpp"
+//#include "internal/widget2/login_mod.hpp"
+//#include "internal/widget2/rwl_mod.hpp"
+//#include "internal/widget2/rwl_login_mod.hpp"
 
 using namespace std;
 
@@ -142,7 +142,6 @@ struct Session {
                 ini, enable_fastpath, tls_support, mem3blt_support);
             this->no_mod = new null_mod(*(this->front));
             this->mod = this->no_mod;
-            this->session_setup_mod(MCTX_STATUS_CLI);
 
             /* module interface */
             this->keep_alive_time = 0;
@@ -162,7 +161,8 @@ struct Session {
 
             int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
-            BackEvent_t last_mod_draw_event = BACK_EVENT_NONE;
+            // We want to start a module
+            BackEvent_t last_mod_draw_event = BACK_EVENT_NEXT;
             while (1) {
 
                 if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
@@ -196,6 +196,7 @@ struct Session {
                 }
 
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+
                 if (num < 0){
                     if (errno == EINTR){
                         continue;
@@ -209,46 +210,52 @@ struct Session {
                     throw Error(ERR_SOCKET_ERROR);
                 }
 
+                time_t timestamp = time(NULL);
                 if (this->front_event.is_set(rfds)) {
                     switch (this->front->incoming(*this->mod)){
+                    default:
                     case FRONT_DISCONNECTED:
                         throw Error(ERR_SOCKET_ERROR);
                     break;
                     case FRONT_CONNECTING:
-                        LOG(LOG_INFO, "Front connecting");
                         continue;
                     break;
                     case FRONT_RUNNING:
-                        LOG(LOG_INFO, "Front is up and running");
                     break;
                     }
                 }
 
-                time_t timestamp = time(NULL);
-//                this->front->periodic_snapshot(this->mod->get_pointer_displayed());
-
-                // Process incoming module trafic
-                if (this->mod->event.is_set(rfds)){
-                    this->mod->event.reset();
-                    last_mod_draw_event = this->mod->draw_event();
-                }
+                TODO("We should have a first loop to wait for front to get up and running, then we will proceed with the standard loop")
+                if (this->front->up_and_running){                    
                 
-                // Incoming data from ACL, or opening acl
-                if (!this->acl){
-                    this->connect_authentifier(last_mod_draw_event);
-                }
-                else {
-                    if (this->ptr_auth_event->is_set(rfds)){
-                        // acl received updated values
-                        this->acl->receive();
+//                      this->front->periodic_snapshot(this->mod->get_pointer_displayed());
+
+                    // Process incoming module trafic
+                    if (this->mod != this->no_mod){
+                        if (this->mod->event.is_set(rfds)){
+                            this->mod->event.reset();
+                            last_mod_draw_event = this->mod->draw_event();
+                        }
                     }
-                    // take current state into account to:
-                    // - continue with same current module
-                    // - change current module
-                    // - refresh module that asked for it
-                    // - check keep alive or inactivity (may stop connection)
-                    this->acl->check(last_mod_draw_event);
+                    
+                    // Incoming data from ACL, or opening acl
+                    if (!this->acl){
+                        this->connect_authentifier(last_mod_draw_event);
+                    }
+                    else {
+                        if (this->ptr_auth_event->is_set(rfds)){
+                            // acl received updated values
+                            this->acl->receive();
+                        }
+                        // take current state into account to:
+                        // - continue with same current module
+                        // - change current module
+                        // - refresh module that asked for it
+                        // - check keep alive or inactivity (may stop connection)
+                        this->acl->check(last_mod_draw_event, this->mod, this->no_mod, this->mod_transport, this->front);
+                    }
                 }
+
             }
             this->front->disconnect();
         }
@@ -334,9 +341,6 @@ struct Session {
 //                                }
 //                               // end the current module and switch to new one
 //                                this->remove_mod();
-//                                this->ini->context.opt_width  = this->front->client_info.width;
-//                                this->ini->context.opt_height = this->front->client_info.height;
-//                                this->ini->context.opt_bpp    = this->front->client_info.bpp;
 //                                bool record_video = false;
 //                                bool keep_alive = false;
 
@@ -510,395 +514,6 @@ struct Session {
         }
     }
 
-    TODO("We shoudl be able to flatten MCTX_STATUS and this->nextmod, combining the two we get the desired target")
-    void session_setup_mod(int target_module)
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, this->nextmod);
-        }
-
-        if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
-            this->front->set_console_session(true);
-            LOG(LOG_INFO, "Session::mode console : force");
-        }
-        else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
-            this->front->set_console_session(false);
-            LOG(LOG_INFO, "Session::mode console : forbid");
-        }
-        else {
-            // default is "allow", do nothing special
-        }
-
-        this->remove_mod();
-
-        switch (target_module)
-        {
-            case MCTX_STATUS_CLI:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse'");
-                }
-                this->mod = new cli_mod(*(this->ini), *(this->front),
-                                        this->front->client_info,
-                                        this->front->client_info.width,
-                                        this->front->client_info.height);
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse' suceeded");
-                }
-            }
-            break;
-
-            case MCTX_STATUS_INTERNAL:
-            {
-                switch (this->nextmod){
-                    case INTERNAL_CLOSE:
-                    {
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Close'");
-                        }
-                        if (this->ini->context.auth_error_message.is_empty()) {
-                            this->ini->context.auth_error_message.copy_c_str("Connection to server ended");
-                        }
-                        this->mod = new WabCloseMod(*this->ini,
-                                                    *this->front,
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height);
-                        this->front->init_pointers();
-                    }
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Session::internal module Close ready");
-                    }
-                    break;
-                    case INTERNAL_BOUNCER2:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'bouncer2'");
-                        }
-                        this->mod = new Bouncer2Mod(*this->front,
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height
-                                                    );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'bouncer2' ready");
-                        }
-                    break;
-                    case INTERNAL_TEST:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'test'");
-                        }
-                        this->mod = new ReplayMod(
-                              *this->front
-                            , this->ini->video.replay_path
-                            , this->ini->context.movie
-                            , this->front->client_info.width
-                            , this->front->client_info.height
-                            , this->ini->context.auth_error_message
-                            );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'test' ready");
-                        }
-                    break;
-                    case INTERNAL_CARD:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'test_card'");
-                        }
-                        this->mod = new TestCardMod(*this->front,
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height
-                                                    );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'test_card' ready");
-                        }
-                    break;
-                    case INTERNAL_WIDGET2_SELECTOR:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
-                        }
-                        this->mod = new SelectorMod(*this->ini,
-                                                    *this->front,
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height
-                                                    );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'selector' ready");
-                        }
-                    break;
-                    case INTERNAL_WIDGET2_CLOSE:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'CloseMod'");
-                        }
-                        this->mod = new WabCloseMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height
-                        );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'CloseMod' ready");
-                        }
-                    break;
-                    case INTERNAL_DIALOG_VALID_MESSAGE:
-                    case INTERNAL_WIDGET2_DIALOG:
-                    {
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Accept Message'");
-                        }
-
-                        const char * message = this->ini->context.message.c_str();
-                        const char * button = this->ini->translation.button_refused.c_str();
-                        const char * caption = "Information";
-                        this->mod = new DialogMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height,
-                            caption,
-                            message,
-                            button
-                        );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'Dialog Accept Message' ready");
-                        }
-                    }
-                    break;
-                    case INTERNAL_DIALOG_DISPLAY_MESSAGE:
-                    case INTERNAL_WIDGET2_MESSAGE:
-                    {
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Display Message'");
-                        }
-
-                        const char * message = this->ini->context.message.c_str();
-                        const char * button = NULL;
-                        const char * caption = "Information";
-                        this->mod = new DialogMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height,
-                            caption,
-                            message,
-                            button
-                        );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'Dialog Display Message' ready");
-                        }
-                    }
-                    break;
-                    case INTERNAL_WIDGET2_LOGIN:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
-                        }
-                        this->mod = new LoginMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height);
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module Login ready");
-                        }
-                        break;
-                    case INTERNAL_WIDGET2_RWL:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
-                        }
-                        this->mod = new RwlMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height);
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module Login ready");
-                        }
-                        break;
-                    case INTERNAL_WIDGET2_RWL_LOGIN:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
-                        }
-                        this->mod = new RwlLoginMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height);
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module Login ready");
-                        }
-                        break;
-                    default:
-                    break;
-                }
-            }
-            break;
-
-            case MCTX_STATUS_XUP:
-            {
-                const char * name = "XUP Target";
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'XUP'\n");
-                }
-
-                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
-                                            4, 1000,
-                                            this->ini->debug.mod_xup);
-
-                if (client_sck == -1){
-                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                SocketTransport * t = new SocketTransport(
-                      name
-                    , client_sck
-                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
-                    , this->ini->debug.mod_xup);
-                this->mod_transport = t;
-
-                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote X host");
-                this->mod = new xup_mod( t
-                                       , *this->front
-                                       , this->front->client_info.width
-                                       , this->front->client_info.height
-                                       , this->ini->context.opt_width
-                                       , this->ini->context.opt_height
-                                       , this->ini->context.opt_bpp
-                                       );
-                this->mod->event.obj = client_sck;
-                this->mod->draw_event();
-//                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                this->ini->context.auth_error_message.empty();
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'XUP' suceeded\n");
-                }
-            }
-            break;
-
-            case MCTX_STATUS_RDP:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'RDP'");
-                }
-                REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
-                char hostname[255];
-                hostname[0] = 0;
-                if (this->front->client_info.hostname[0]){
-                    memcpy(hostname, this->front->client_info.hostname, 31);
-                    hostname[31] = 0;
-                }
-                static const char * name = "RDP Target";
-
-                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
-                                            3, 1000,
-                                            this->ini->debug.mod_rdp);
-
-                if (client_sck == -1){
-                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
-                SocketTransport * t = new SocketTransport(
-                      name
-                    , client_sck
-                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
-                    , this->ini->debug.mod_rdp
-                    , &this->ini->context.auth_error_message
-                    );
-                this->mod_transport = t;
-
-                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
-                this->mod = new mod_rdp( t
-                                       , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                       , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
-                                       , "0.0.0.0"  // client ip is silenced
-                                       , *this->front
-                                       , hostname
-                                       , true
-                                       , this->front->client_info
-                                       , &this->gen
-                                       , this->front->keymap.key_flags
-                                       , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
-                                       , this->ini->globals.auth_channel
-                                       , this->ini->globals.alternate_shell
-                                       , this->ini->globals.shell_working_directory
-                                       , this->ini->client.clipboard
-                                       , true   // support fast-path
-                                       , true   // support mem3blt
-                                       , this->ini->globals.enable_bitmap_update
-                                       , this->ini->debug.mod_rdp
-                                       , true   // support new pointer
-                                       );
-                this->mod->event.obj = client_sck;
-
-                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'RDP' suceeded\n");
-                }
-                this->ini->context.auth_error_message.empty();
-            }
-            break;
-
-            case MCTX_STATUS_VNC:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'VNC'\n");
-                }
-                static const char * name = "VNC Target";
-
-
-                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
-                                            3, 1000,
-                                            this->ini->debug.mod_vnc);
-
-                if (client_sck == -1){
-                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                SocketTransport * t = new SocketTransport(
-                      name
-                    , client_sck
-                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
-                    , this->ini->debug.mod_vnc);
-                this->mod_transport = t;
-
-                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
-
-                this->mod = new mod_vnc(
-                      t
-                    , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                    , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
-                    , *this->front
-                    , this->front->client_info.width
-                    , this->front->client_info.height
-                    , this->front->client_info.keylayout
-                    , this->front->keymap.key_flags
-                    , this->ini->client.clipboard
-                    , true /* RRE encoding */
-                    , this->ini->debug.mod_vnc);
-                this->mod->event.obj = client_sck;
-                this->mod->draw_event();
-
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'VNC' suceeded\n");
-                }
-                this->ini->context.auth_error_message.empty();
-            }
-            break;
-
-            default:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Unknown backend exception\n");
-                }
-                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
-            }
-        }
-    }
 };
 
 #endif

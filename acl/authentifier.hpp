@@ -33,6 +33,23 @@
 #include "sockettransport.hpp"
 #include "acl_serializer.hpp"
 #include "mod_api.hpp"
+#include "front.hpp"
+#include "null/null.hpp"
+#include "rdp/rdp.hpp"
+#include "vnc/vnc.hpp"
+#include "xup/xup.hpp"
+#include "transitory/transitory.hpp"
+#include "cli/cli_mod.hpp"
+
+#include "internal/widget2/bouncer2.hpp"
+#include "internal/widget2/test_card_mod.hpp"
+#include "internal/widget2/replay_mod.hpp"
+#include "internal/widget2/selector_mod.hpp"
+#include "internal/widget2/wab_close_mod.hpp"
+#include "internal/widget2/dialog_mod.hpp"
+#include "internal/widget2/login_mod.hpp"
+#include "internal/widget2/rwl_mod.hpp"
+#include "internal/widget2/rwl_login_mod.hpp"
 
 typedef enum {
     INTERNAL_NONE,
@@ -58,6 +75,20 @@ enum {
     MCTX_STATUS_RDP,
     MCTX_STATUS_XUP,
     MCTX_STATUS_INTERNAL,
+    MCTX_STATUS_INTERNAL_INTERNAL_CLOSE,
+    MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_CLOSE,
+    MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_DIALOG,
+    MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_MESSAGE,
+    MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN,
+    MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL,
+    MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL_LOGIN,
+    MCTX_STATUS_INTERNAL_INTERNAL_CARD,
+    MCTX_STATUS_INTERNAL_INTERNAL_DIALOG_DISPLAY_MESSAGE,
+    MCTX_STATUS_INTERNAL_INTERNAL_DIALOG_VALID_MESSAGE,
+    MCTX_STATUS_INTERNAL_INTERNAL_BOUNCER2,
+    MCTX_STATUS_INTERNAL_INTERNAL_TEST,
+    MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_SELECTOR,
+    MCTX_STATUS_EXIT_INTERNAL_CLOSE,
     MCTX_STATUS_TRANSITORY,
     MCTX_STATUS_AUTH,
     MCTX_STATUS_CLI,
@@ -327,7 +358,7 @@ class SessionManager {
         return true;
     }
 
-    int get_mod_from_protocol(submodule_t & nextmod)
+    int get_mod_from_protocol()
     {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::get_mod_from_protocol");
@@ -363,12 +394,11 @@ class SessionManager {
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
             }
-            res = MCTX_STATUS_INTERNAL;
             if (0 == strcmp(target, "bouncer2")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
                 }
-                nextmod = INTERNAL_BOUNCER2;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_BOUNCER2;
             }
             else if (0 == strncmp(target, "autotest", 8)){
                 if (this->verbose & 0x4){
@@ -381,85 +411,85 @@ class SessionManager {
                 if (0 != strcmp(".mwrm", user + len_user - 5)){
                     strcpy(this->ini->context.movie + len_user, ".mwrm");
                 }
-                nextmod = INTERNAL_TEST;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_TEST;
             }
             else if (0 == strcmp(target, "selector")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
                 }
-                nextmod = INTERNAL_WIDGET2_SELECTOR;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_SELECTOR;
             }
             else if (0 == strcmp(target, "login")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
                 }
-                nextmod = INTERNAL_WIDGET2_LOGIN;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN;
             }
             else if (0 == strcmp(target, "rwl_login")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
                 }
-                nextmod = INTERNAL_WIDGET2_RWL_LOGIN;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL_LOGIN;
             }
             else if (0 == strcmp(target, "rwl")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
                 }
-                nextmod = INTERNAL_WIDGET2_RWL;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL;
             }
             else if (0 == strcmp(target, "close")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
-                nextmod = INTERNAL_CLOSE;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_CLOSE;
             }
             else if (0 == strcmp(target, "widget2_close")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
                 }
-                nextmod = INTERNAL_WIDGET2_CLOSE;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_CLOSE;
             }
             else if (0 == strcmp(target, "widget2_dialog")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_dialog");
                 }
-                nextmod = INTERNAL_WIDGET2_DIALOG;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_DIALOG;
             }
             else if (0 == strcmp(target, "widget2_message")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
                 }
-                nextmod = INTERNAL_WIDGET2_MESSAGE;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_MESSAGE;
             }
             else if (0 == strcmp(target, "widget2_login")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_login");
                 }
-                nextmod = INTERNAL_WIDGET2_LOGIN;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN;
             }
             else if (0 == strcmp(target, "widget2_rwl")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL rwl_login");
                 }
-                nextmod = INTERNAL_WIDGET2_RWL;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL;
             }
             else if (0 == strcmp(target, "widget2_rwl_login")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_rwl_login");
                 }
-                nextmod = INTERNAL_WIDGET2_RWL_LOGIN;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL_LOGIN;
             }
             else {
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
                 }
-                nextmod = INTERNAL_CARD;
+                res = MCTX_STATUS_INTERNAL_INTERNAL_CARD;
             }
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
                 protocol[0], protocol[1], protocol[2], protocol[3]);
-            nextmod = INTERNAL_CARD;
+            res = MCTX_STATUS_EXIT;
 //            assert(false);
         }
         return res;
@@ -467,14 +497,366 @@ class SessionManager {
 
 
     void receive(){
+        LOG(LOG_INFO, "ACL Receive()");
+        this->receive_next_module();
+        
     }
 
-    void check(BackEvent_t & last_mod_draw_event){
+    void remove_mod(mod_api * & mod, mod_api * no_mod, Transport * & mod_transport)
+    {
+        if (mod != no_mod){
+            delete mod;
+            if (mod_transport) {
+                delete mod_transport;
+                mod_transport = NULL;
+            }
+            mod = no_mod;
+        }
     }
 
-    int ask_next_module(long & keepalive_time,
-                        bool & record_video, bool & keep_alive,
-                        submodule_t & nextmod)
+    void setup_mod(int target_module, mod_api * & mod, mod_api * no_mod, Transport * & mod_transport, Front * front)
+    {
+        LOG(LOG_INFO, "Authentifier::setup_mod(target_module=%u)", target_module);
+
+//        if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
+//            front->set_console_session(true);
+//            LOG(LOG_INFO, "Authentifier::mode console : force");
+//        }
+//        else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
+//            front->set_console_session(false);
+//            LOG(LOG_INFO, "Authentifier::mode console : forbid");
+//        }
+//        else {
+//            // default is "allow", do nothing special
+//        }
+
+        this->remove_mod(mod, no_mod, mod_transport);
+
+        switch (target_module)
+        {
+            case MCTX_STATUS_INTERNAL_INTERNAL_CLOSE:
+            {
+                LOG(LOG_INFO, "Authentifier::Creation of new mod 'INTERNAL::Close'");
+                if (this->ini->context.auth_error_message.is_empty()) {
+                    this->ini->context.auth_error_message.copy_c_str("Connection to server ended");
+                }
+                mod = new WabCloseMod(*this->ini,
+                                      *front,
+                                       front->client_info.width,
+                                       front->client_info.height);
+                front->init_pointers();
+            }
+            LOG(LOG_INFO, "Authentifier::internal module Close ready");
+            break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_BOUNCER2:
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'bouncer2'");
+                mod = new Bouncer2Mod(*front,
+                                       front->client_info.width,
+                                       front->client_info.height
+                                     );
+                if (this->verbose){
+                    LOG(LOG_INFO, "Authentifier::internal module 'bouncer2' ready");
+                }
+            break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_TEST:
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'test'");
+                mod = new ReplayMod(
+                      *front
+                    , this->ini->video.replay_path
+                    , this->ini->context.movie
+                    , front->client_info.width
+                    , front->client_info.height
+                    , this->ini->context.auth_error_message
+                    );
+                if (this->verbose){
+                    LOG(LOG_INFO, "Authentifier::internal module 'test' ready");
+                }
+            break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_CARD:
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'test_card'");
+                mod = new TestCardMod(*front,
+                                       front->client_info.width,
+                                       front->client_info.height
+                                            );
+                LOG(LOG_INFO, "Authentifier::internal module 'test_card' ready");
+            break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_SELECTOR:
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'selector'");
+                mod = new SelectorMod(*this->ini,
+                                      *front,
+                                       front->client_info.width,
+                                       front->client_info.height
+                                       );
+                if (this->verbose){
+                    LOG(LOG_INFO, "Authentifier::internal module 'selector' ready");
+                }
+            break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_CLOSE:
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'CloseMod'");
+                mod = new WabCloseMod(
+                    *this->ini,
+                    *front,
+                    front->client_info.width,
+                    front->client_info.height
+                );
+                LOG(LOG_INFO, "Authentifier::internal module 'CloseMod' ready");
+            break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_DIALOG_VALID_MESSAGE:
+            case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_DIALOG:
+            {
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'Dialog Accept Message'");
+                const char * message = this->ini->context.message.c_str();
+                const char * button = this->ini->translation.button_refused.c_str();
+                const char * caption = "Information";
+                mod = new DialogMod(
+                    *this->ini,
+                    *front,
+                    front->client_info.width,
+                    front->client_info.height,
+                    caption,
+                    message,
+                    button
+                );
+                LOG(LOG_INFO, "Authentifier::internal module 'Dialog Accept Message' ready");
+            }
+            break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_DIALOG_DISPLAY_MESSAGE:
+            case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_MESSAGE:
+            {
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'Dialog Display Message'");
+                const char * message = this->ini->context.message.c_str();
+                const char * button = NULL;
+                const char * caption = "Information";
+                mod = new DialogMod(
+                    *this->ini,
+                    *front,
+                    front->client_info.width,
+                    front->client_info.height,
+                    caption,
+                    message,
+                    button
+                );
+                LOG(LOG_INFO, "Authentifier::internal module 'Dialog Display Message' ready");
+            }
+            break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN:
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'Login'");
+                mod = new LoginMod(
+                    *this->ini,
+                    *front,
+                    front->client_info.width,
+                    front->client_info.height);
+                LOG(LOG_INFO, "Authentifier::internal module Login ready");
+                break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL:
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'Login'");
+                mod = new RwlMod(
+                    *this->ini,
+                    *front,
+                    front->client_info.width,
+                    front->client_info.height);
+                LOG(LOG_INFO, "Authentifier::internal module Login ready");
+                break;
+            case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_RWL_LOGIN:
+                LOG(LOG_INFO, "Authentifier::Creation of internal module 'Login'");
+                mod = new RwlLoginMod(
+                    *this->ini,
+                    *front,
+                    front->client_info.width,
+                    front->client_info.height);
+                    LOG(LOG_INFO, "Authentifier::internal module Login ready");
+                break;
+
+            case MCTX_STATUS_XUP:
+            {
+                const char * name = "XUP Target";
+                if (this->verbose){
+                    LOG(LOG_INFO, "Authentifier::Creation of new mod 'XUP'\n");
+                }
+
+                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                                            this->ini->context.target_port,
+                                            4, 1000,
+                                            this->ini->debug.mod_xup);
+
+                if (client_sck == -1){
+                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                SocketTransport * t = new SocketTransport(
+                      name
+                    , client_sck
+                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                    , this->ini->context.target_port
+                    , this->ini->debug.mod_xup);
+                mod_transport = t;
+
+                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote X host");
+                mod = new xup_mod( t
+                                   , *front
+                                   , front->client_info.width
+                                   , front->client_info.height
+                                   , this->ini->context.opt_width
+                                   , this->ini->context.opt_height
+                                   , this->ini->context.opt_bpp
+                                   );
+                mod->event.obj = client_sck;
+                mod->draw_event();
+//                this->mod->rdp_input_invalidate(Rect(0, 0, front->get_client_info().width, front->get_client_info().height));
+                this->ini->context.auth_error_message.empty();
+                LOG(LOG_INFO, "Authentifier::Creation of new mod 'XUP' suceeded\n");
+            }
+            break;
+
+            case MCTX_STATUS_RDP:
+            {
+                LOG(LOG_INFO, "Authentifier::Creation of new mod 'RDP'");
+                REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
+                char hostname[255];
+                hostname[0] = 0;
+                if (front->client_info.hostname[0]){
+                    memcpy(hostname, front->client_info.hostname, 31);
+                    hostname[31] = 0;
+                }
+                static const char * name = "RDP Target";
+
+                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                                            this->ini->context.target_port,
+                                            3, 1000,
+                                            this->ini->debug.mod_rdp);
+
+                if (client_sck == -1){
+                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
+                SocketTransport * t = new SocketTransport(
+                      name
+                    , client_sck
+                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                    , this->ini->context.target_port
+                    , this->ini->debug.mod_rdp
+                    , &this->ini->context.auth_error_message
+                    );
+                mod_transport = t;
+
+                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
+                UdevRandom gen;
+                mod = new mod_rdp( t
+                                       , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
+                                       , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
+                                       , "0.0.0.0"  // client ip is silenced
+                                       , *front
+                                       , hostname
+                                       , true
+                                       , front->client_info
+                                       , &gen
+                                       , front->keymap.key_flags
+//                                       , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
+                                       , this->ini->globals.auth_channel
+                                       , this->ini->globals.alternate_shell
+                                       , this->ini->globals.shell_working_directory
+                                       , this->ini->client.clipboard
+                                       , true   // support fast-path
+                                       , true   // support mem3blt
+                                       , this->ini->globals.enable_bitmap_update
+                                       , this->ini->debug.mod_rdp
+                                       , true   // support new pointer
+                                       );
+                mod->event.obj = client_sck;
+
+                mod->rdp_input_invalidate(Rect(0, 0, front->client_info.width, front->client_info.height));
+                LOG(LOG_INFO, "Authentifier::Creation of new mod 'RDP' suceeded\n");
+                this->ini->context.auth_error_message.empty();
+            }
+            break;
+
+            case MCTX_STATUS_VNC:
+            {
+                LOG(LOG_INFO, "Authentifier::Creation of new mod 'VNC'\n");
+                static const char * name = "VNC Target";
+
+
+                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                                            this->ini->context.target_port,
+                                            3, 1000,
+                                            this->ini->debug.mod_vnc);
+
+                if (client_sck == -1){
+                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+
+                SocketTransport * t = new SocketTransport(
+                      name
+                    , client_sck
+                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                    , this->ini->context.target_port
+                    , this->ini->debug.mod_vnc);
+                mod_transport = t;
+
+                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
+
+                mod = new mod_vnc(
+                      t
+                    , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
+                    , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
+                    , *front
+                    , front->client_info.width
+                    , front->client_info.height
+                    , front->client_info.keylayout
+                    , front->keymap.key_flags
+                    , this->ini->client.clipboard
+                    , true /* RRE encoding */
+                    , this->ini->debug.mod_vnc);
+                mod->event.obj = client_sck;
+                mod->draw_event();
+
+                LOG(LOG_INFO, "Authentifier::Creation of new mod 'VNC' suceeded\n");
+                this->ini->context.auth_error_message.empty();
+            }
+            break;
+
+            default:
+            {
+                LOG(LOG_INFO, "Authentifier::Unknown backend exception\n");
+                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+            }
+        }
+    }
+
+    void check(BackEvent_t & last_mod_draw_event, mod_api * & mod, mod_api * no_mod, Transport * & mod_transport, Front * front){
+        LOG(LOG_INFO, "ACL Check()");
+        switch (last_mod_draw_event) {
+        case BACK_EVENT_NONE:
+        LOG(LOG_INFO, "Back event none");
+        // continue with same module
+        break;
+        case BACK_EVENT_STOP:
+        LOG(LOG_INFO, "Back event stop");
+        // current module finished for some serious reason implying immediate exit
+        // without going to close box.
+        // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
+        break;
+        case BACK_EVENT_REFRESH:
+            LOG(LOG_INFO, "Back event refresh");
+        break;
+        case BACK_EVENT_NEXT:
+            LOG(LOG_INFO, "Back event next");
+            int next_state = this->ask_next_module();
+
+            if (next_state != MCTX_STATUS_WAITING){
+                this->setup_mod(next_state, mod, no_mod, mod_transport, front);
+            }
+        break;
+        }
+        
+        
+    }
+
+    int ask_next_module()
     {
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::ask_next_module");
@@ -525,16 +907,14 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER is asked");
                 }
                 this->mod_state = MOD_STATE_DONE_LOGIN;
-                nextmod = INTERNAL_WIDGET2_LOGIN;
-                return MCTX_STATUS_INTERNAL;
+                return MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN;
             }
             else if (this->ini->context_is_asked(AUTHID_PASSWORD)){
                 if (this->verbose & 0x20){
                     LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD is asked");
                 }
                 this->mod_state = MOD_STATE_DONE_LOGIN;
-                nextmod = INTERNAL_WIDGET2_LOGIN;
-                return MCTX_STATUS_INTERNAL;
+                return MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN;
             }
             else if (!this->ini->context_is_asked(AUTHID_SELECTOR)
                  &&   this->ini->context_get_bool(AUTHID_SELECTOR)
@@ -544,8 +924,7 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_SELECTOR is asked");
                 }
                 this->mod_state = MOD_STATE_DONE_SELECTOR;
-                nextmod = INTERNAL_WIDGET2_SELECTOR;
-                return MCTX_STATUS_INTERNAL;
+                return MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_SELECTOR;
             }
             else if (this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
                  ||  this->ini->context_is_asked(AUTHID_TARGET_USER)){
@@ -553,36 +932,33 @@ class SessionManager {
                         LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_TARGET_DEVICE is asked");
                     }
                     this->mod_state = MOD_STATE_DONE_LOGIN;
-                    nextmod = INTERNAL_WIDGET2_LOGIN;
-                    return MCTX_STATUS_INTERNAL;
+                    return MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_LOGIN;
             }
             else if (this->ini->context_is_asked(AUTHID_DISPLAY_MESSAGE)){
                 if (this->verbose & 0x20){
                     LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_DISPLAY_MESSAGE is asked");
                 }
-                nextmod = INTERNAL_DIALOG_DISPLAY_MESSAGE;
                 this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
-                return MCTX_STATUS_INTERNAL;
+                return MCTX_STATUS_INTERNAL_INTERNAL_DIALOG_DISPLAY_MESSAGE;
             }
             else if (this->ini->context_is_asked(AUTHID_ACCEPT_MESSAGE)){
                 if (this->verbose & 0x20){
                     LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_ACCEPT_MESSAGE is asked");
                 }
                 this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
-                nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
-                return MCTX_STATUS_INTERNAL;
+                return MCTX_STATUS_INTERNAL_INTERNAL_DIALOG_VALID_MESSAGE;
             }
             else if (this->ini->context.authenticated){
                 if (this->verbose & 0x20){
                     LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS authenticated is True");
                 }
-                record_video = this->ini->globals.movie;
-                keep_alive = true;
+//                record_video = this->ini->globals.movie;
+//                keep_alive = true;
                 if (this->ini->context.auth_error_message.is_empty()) {
                     this->ini->context.auth_error_message.copy_c_str("End of connection");
                 }
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
-                return this->get_mod_from_protocol(nextmod);
+                return this->get_mod_from_protocol();
             }
             else {
                 if (this->verbose & 0x20){
@@ -596,8 +972,7 @@ class SessionManager {
                     this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
                 }
                 this->mod_state = MOD_STATE_DONE_CONNECTED;
-                nextmod = INTERNAL_CLOSE;
-                return MCTX_STATUS_INTERNAL;
+                return MCTX_STATUS_INTERNAL_INTERNAL_CLOSE;
             }
         }
         break;
@@ -606,16 +981,14 @@ class SessionManager {
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
             }
             this->mod_state = MOD_STATE_DONE_CLOSE;
-            nextmod = INTERNAL_CLOSE;
-            return MCTX_STATUS_INTERNAL;
+            return MCTX_STATUS_INTERNAL_INTERNAL_CLOSE;
         break;
         case MOD_STATE_DONE_CLOSE:
             if (this->verbose & 0x10){
                 LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
             }
             this->mod_state = MOD_STATE_DONE_EXIT;
-            nextmod = INTERNAL_CLOSE;
-            return MCTX_STATUS_EXIT;
+            return MCTX_STATUS_EXIT_INTERNAL_CLOSE;
         break;
         case MOD_STATE_DONE_EXIT:
             if (this->verbose & 0x10){
@@ -623,8 +996,7 @@ class SessionManager {
             }
             // we should never goes here, the main loop should have stopped before
             LOG(LOG_WARNING, "unexpected forced exit");
-            nextmod = INTERNAL_CLOSE;
-            return MCTX_STATUS_EXIT;
+            return MCTX_STATUS_EXIT_INTERNAL_CLOSE;
         break;
         }
     }
