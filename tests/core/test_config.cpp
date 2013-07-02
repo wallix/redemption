@@ -189,12 +189,12 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.globals.target_device.is_asked());
     //BOOST_CHECK_EQUAL(true,                             ini.globals.state_target_device.asked);
     BOOST_CHECK_EQUAL(true,                             ini.context.target_password.is_asked());
-    BOOST_CHECK_EQUAL(true,                             ini.context.state_target_port.asked);
+    BOOST_CHECK_EQUAL(true,                             ini.context.target_port.is_asked());
     BOOST_CHECK_EQUAL(true,                             ini.context.target_protocol.is_asked());
     BOOST_CHECK_EQUAL(true,                             ini.globals.target_user.is_asked());
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.target_password.get_cstr()));
-    BOOST_CHECK_EQUAL(3389,                             ini.context.target_port);
+    BOOST_CHECK_EQUAL(3389,                             ini.context.target_port.get());
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.target_protocol.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.host.is_asked());
@@ -206,12 +206,12 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.password.get_cstr()));
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_authchannel_target.asked);
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_authchannel_result.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.authchannel_target.is_asked());
+    BOOST_CHECK_EQUAL(false,                            ini.context.authchannel_result.is_asked());
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_answer.c_str()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_result.c_str()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_target.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_result.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_target.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.context.accept_message.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.display_message.is_asked());
@@ -225,15 +225,15 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(false,                            ini.context.authenticated);
 
-    BOOST_CHECK_EQUAL(true,                             ini.context.state_keepalive.asked);
+    BOOST_CHECK_EQUAL(true,                             ini.context.keepalive.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.proxy_type.is_asked());
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.keepalive);
+    BOOST_CHECK_EQUAL(false,                            ini.context.keepalive.get());
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.proxy_type.get_cstr()));
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.state_trace_seal.asked);
+    BOOST_CHECK_EQUAL(false,                            ini.context.trace_seal.is_asked());
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.trace_seal.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.trace_seal.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.session_id.c_str()));
 
@@ -1946,7 +1946,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.target_device.get().c_str()));
     BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context.target_password.get_cstr()));
-    BOOST_CHECK_EQUAL(3390,                             ini.context.target_port);
+    BOOST_CHECK_EQUAL(3390,                             ini.context.target_port.get());
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.target_protocol.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.globals.target_user.get_cstr()));
 
@@ -2026,7 +2026,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTHCHANNEL_TARGET));
 
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.context.authchannel_target.c_str()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.context.authchannel_target.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.context_get_value(AUTHID_AUTHCHANNEL_TARGET, buffer, sizeof(buffer))));
 
@@ -2040,7 +2040,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_AUTHCHANNEL_RESULT));
 
-    BOOST_CHECK_EQUAL(std::string("result"),            std::string(ini.context.authchannel_result.c_str()));
+    BOOST_CHECK_EQUAL(std::string("result"),            std::string(ini.context.authchannel_result.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("result"),            std::string(ini.context_get_value(AUTHID_AUTHCHANNEL_RESULT, buffer, sizeof(buffer))));
 
@@ -2104,7 +2104,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_KEEPALIVE));
 
-    BOOST_CHECK_EQUAL(true,                             ini.context.keepalive);
+    BOOST_CHECK_EQUAL(true,                             ini.context.keepalive.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.context_get_bool(AUTHID_KEEPALIVE));
 
@@ -2134,7 +2134,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TRACE_SEAL));
 
-    BOOST_CHECK_EQUAL(std::string("trace_seal"),        std::string(ini.context.trace_seal.c_str()));
+    BOOST_CHECK_EQUAL(std::string("trace_seal"),        std::string(ini.context.trace_seal.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("trace_seal"),        std::string(ini.context_get_value(AUTHID_TRACE_SEAL, buffer, sizeof(buffer))));
 
@@ -2247,4 +2247,23 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 //}
 
 
-TODO("test meta state")
+
+BOOST_AUTO_TEST_CASE(TestConfigNotifications)
+{
+    Inifile ini;
+
+    // nothing has been changed initialy
+    BOOST_CHECK(!ini.check());
+
+    // auth_user has been changed, so check() method will notify that something changed
+    ini.globals.auth_user.set_from_cstr("someoneelse");
+    BOOST_CHECK(ini.check());
+    
+    // reset
+    ini.reset();
+    BOOST_CHECK(!ini.check());
+    
+    // setting a field without changing it should not notify that something changed
+    ini.globals.auth_user.set_from_cstr("someoneelse");
+    BOOST_CHECK(!ini.check());
+}

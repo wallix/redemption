@@ -585,25 +585,6 @@ private:
             return this->data;
         }
     };
-
-    typedef struct {
-        bool asked;
-        bool modified;
-        bool read;
-        bool has_changed() {
-            bool res = this->modified;
-            if (!this->asked)
-                this->modified = false;
-            return res;
-        }
-        void ask() {
-            this->asked = true;
-        }
-        bool is_asked() {
-            return this->asked;
-        }
-    } meta_state_t;
-    
     bool something_changed;
     std::list< BaseField * > changed_list;
 
@@ -625,26 +606,13 @@ public:
 
     struct Inifile_globals {
         BoolField capture_chunk;
-        //bool capture_chunk;
-        //meta_state_t state_capture_chunk;
-
 
         StringField auth_user;                    // AUTHID_AUTH_USER
-        // char auth_user[512];                    // AUTHID_AUTH_USER
-        // meta_state_t state_auth_user;
         StringField host;                         // client_ip AUTHID_HOST
-        // char host[512];                         // client_ip AUTHID_HOST
-        // meta_state_t state_host;                // client_ip
         StringField target;                       // target ip AUTHID_TARGET
-        // char target[512];                       // target ip AUTHID_TARGET
-        // meta_state_t state_target;              // target ip
 
         StringField target_device;
-        //char target_device[32768];              // AUTHID_TARGET_DEVICE
-        //meta_state_t state_target_device;
         StringField target_user;                  // AUTHID_TARGET_USER
-        // char target_user[512];                  // AUTHID_TARGET_USER
-        // meta_state_t state_target_user;
 
         // BEGIN globals
         bool bitmap_cache;       // default true
@@ -652,7 +620,7 @@ public:
         int port;                // default 3389
         bool nomouse;
         bool notimestamp;
-        int encryptionLevel;     // 0=low, 1=medium, 2=high
+        int encryptionLevel;     // 0=low, 1=medium, 2=high 
         char authip[255];
         int authport;
         bool autovalidate;       // dialog autovalidation for test
@@ -791,77 +759,42 @@ public:
         unsigned           opt_qscale;
         
         UnsignedField      opt_bpp;
-        // unsigned           opt_bpp;                // AUTHID_OPT_BPP
-        // meta_state_t state_opt_bpp;
         UnsignedField      opt_height;             // AUTHID_OPT_HEIGHT
-        // unsigned           opt_height;             // AUTHID_OPT_HEIGHT
-        // meta_state_t state_opt_height; 
         UnsignedField      opt_width;              // AUTHID_OPT_WIDTH
-        // unsigned           opt_width;              // AUTHID_OPT_WIDTH
-        // meta_state_t state_opt_width;
 
         redemption::string auth_error_message;
-        meta_state_t state_auth_error_message;
 
         BoolField             selector;                 // AUTHID_SELECTOR
-        // bool               selector;                 // AUTHID_SELECTOR
-        // meta_state_t state_selector;
         UnsignedField      selector_current_page;
-        // unsigned           selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE
-        // meta_state_t state_selector_current_page;
         StringField        selector_device_filter;
-        // redemption::string selector_device_filter;   // AUTHID_SELECTOR_DEVICE_FILTER
-        // meta_state_t state_selector_device_filter;
         StringField        selector_group_filter;    // AUTHID_SELECTOR_GROUP_FILTER
-        // redemption::string selector_group_filter;    // AUTHID_SELECTOR_GROUP_FILTER
-        // meta_state_t state_selector_group_filter;
         UnsignedField      selector_lines_per_page;  // AUTHID_SELECTOR_LINES_PER_PAGE
-        // unsigned           selector_lines_per_page;  // AUTHID_SELECTOR_LINES_PER_PAGE
-        // meta_state_t state_selector_lines_per_page;
         unsigned           selector_number_of_pages;
 
-        StringField        target_password;          // AUTHID_TARGET_PASSWORD
-        // redemption::string target_password;          // AUTHID_TARGET_PASSWORD
-        // meta_state_t state_target_password;
-        unsigned           target_port;
-        meta_state_t state_target_port;
-        StringField        target_protocol;          // AUTHID_TARGET_PROTOCOL
-        // redemption::string target_protocol;          // AUTHID_TARGET_PROTOCOL
-        // meta_state_t state_target_protocol;
+        StringField           target_password;          // AUTHID_TARGET_PASSWORD
+        UnsignedField         target_port;
+        StringField           target_protocol;          // AUTHID_TARGET_PROTOCOL
 
         StringField        password;                 // AUTHID_PASSWORD
-        // redemption::string password;                 // AUTHID_PASSWORD
-        // meta_state_t state_password;
 
 
         redemption::string authchannel_answer;
-        redemption::string authchannel_result;
-        meta_state_t state_authchannel_result;
-        redemption::string authchannel_target;
-        meta_state_t state_authchannel_target;
+        StringField authchannel_result;
+        StringField authchannel_target;
 
         redemption::string message;
 
         StringField        accept_message;           // AUTHID_ACCEPT_MESSAGE
-        // redemption::string accept_message;           // AUTHID_ACCEPT_MESSAGE
-        // meta_state_t state_accept_message;
         StringField        display_message;          // AUTHID_DISPLAY_MESSAGE
-        // redemption::string display_message;          // AUTHID_DISPLAY_MESSAGE
-        // meta_state_t state_display_message;
 
         redemption::string rejected;
 
         bool               authenticated;
 
-        bool               keepalive;
-        meta_state_t state_keepalive;
+        BoolField             keepalive;
         StringField proxy_type;               // AUTHID_PROXY_TYPE
-        // redemption::string proxy_type;               // AUTHID_PROXY_TYPE
-        // meta_state_t state_proxy_type;
 
-
-        redemption::string trace_seal;
-        meta_state_t state_trace_seal;
+        StringField trace_seal;
 
         redemption::string session_id;
 
@@ -872,8 +805,6 @@ public:
         signed             timezone;
 
         StringField           real_target_device;       // AUHTID_REAL_TARGET_DEVICE
-        // redemption::string real_target_device;       // AUHTID_REAL_TARGET_DEVICE
-        // meta_state_t state_real_target_device;
 
         redemption::string authentication_challenge;
     } context;
@@ -897,6 +828,8 @@ public:
     }
 
     void init(){
+        this->something_changed = false;
+        
         //this->globals.capture_chunk = false;
         this->globals.capture_chunk.set(false);
 
@@ -1048,22 +981,11 @@ public:
         this->context.selector_focus              = 0;
         this->context.movie[0]                    = 0;
 
-        // this->context.opt_bitrate.set(40000);
-        // this->context.opt_bitrate.set(5);
-        // this->context.opt_qscale.set(15);
         this->context.opt_bitrate                 = 40000;
         this->context.opt_framerate               = 5;
         this->context.opt_qscale                  = 15;
 
 
-        // this->context.state_opt_bpp.asked                 = false;
-        // this->context.state_opt_bpp.modified                 = true;
-
-        // this->context.state_opt_height.asked              = false;
-        // this->context.state_opt_height.modified              = true;
-
-        // this->context.state_opt_width.asked               = false;
-        // this->context.state_opt_width.modified               = true;
 
         this->context.opt_bpp.set(24);
         this->context.opt_height.set(600);
@@ -1074,21 +996,6 @@ public:
 
         this->context.auth_error_message.empty();
 
-
-        // this->context.state_selector.asked                = false;
-        // this->context.state_selector.modified                = true;
-
-        // this->context.state_selector_current_page.asked   = false;
-        // this->context.state_selector_current_page.modified   = true;
-
-        // this->context.state_selector_device_filter.asked  = false;
-        // this->context.state_selector_device_filter.modified  = true;
-
-        // this->context.state_selector_group_filter.asked   = false;
-        // this->context.state_selector_group_filter.modified   = true;
-
-        // this->context.state_selector_lines_per_page.asked = false;
-        // this->context.state_selector_lines_per_page.modified = true;
 
         this->context.selector.set(false);
         this->context.selector_current_page.set(1);
@@ -1107,29 +1014,20 @@ public:
         this->globals.target_user.ask();
         this->globals.auth_user.ask();
 
-        //this->globals.state_target_device.asked           = true;
-        //this->globals.state_target_device.modified           = true;
 
+        this->context.target_password.set_empty();
         this->context.target_password.ask();
-        // this->context.state_target_password.asked         = true;
-        // this->context.state_target_password.modified         = true;
 
-        this->context.state_target_port.asked             = true;
-        this->context.state_target_port.modified             = true;
+        this->context.target_port.set(3389);
+        this->context.target_port.ask();
 
 
         this->context.target_protocol.set_from_cstr("RDP");
         this->context.target_protocol.ask();
-        // this->context.state_target_protocol.asked         = true;
-        // this->context.state_target_protocol.modified         = true;
 
-        // this->globals.state_target_user.asked             = true;
-        // this->globals.state_target_user.modified             = true;
-
-
-        this->context.target_password.set_empty();
+        
         // this->context.target_password.empty();
-        this->context.target_port                 = 3389;
+        
         // this->context.target_protocol.copy_c_str("RDP");
         
         // this->globals.state_host.asked                    = false;
@@ -1151,8 +1049,8 @@ public:
 
 
         this->context.authchannel_answer.empty();
-        this->context.authchannel_result.empty();
-        this->context.authchannel_target.empty();
+        this->context.authchannel_result.set_empty();
+        this->context.authchannel_target.set_empty();
 
 
         // this->context.state_accept_message.asked          = false;
@@ -1172,23 +1070,24 @@ public:
 
         this->context.authenticated               = false;
 
-
-        this->context.state_keepalive.asked               = true;
-        this->context.state_keepalive.modified               = true;
+        this->context.keepalive.set(false);
+        this->context.keepalive.ask();
+        // this->context.state_keepalive.asked               = true;
+        // this->context.state_keepalive.modified               = true;
 
         // this->context.state_proxy_type.asked              = false;
         // this->context.state_proxy_type.modified              = true;
 
-        this->context.keepalive                   = false;
+
         
         this->context.proxy_type.set_from_cstr("RDP");
         // this->context.proxy_type.copy_c_str("RDP");
 
 
-        this->context.state_trace_seal.asked              = false;
-        this->context.state_trace_seal.modified              = true;
+        // this->context.state_trace_seal.asked              = false;
+        // this->context.state_trace_seal.modified              = true;
 
-        this->context.trace_seal.empty();
+        this->context.trace_seal.set_empty();
 
         this->context.session_id.empty();
 
@@ -1646,7 +1545,6 @@ public:
          "and set it to not modified if it is not asked ")
     bool context_has_changed(authid_t authid) {
         bool res;
-        bool * changed = NULL;
         switch (authid) {
         case AUTHID_OPT_BPP:
             res = this->context.opt_bpp.has_changed();
@@ -1691,8 +1589,6 @@ public:
         case AUTHID_TARGET_DEVICE:
             res = this->globals.target_device.has_changed();
             this->globals.target_device.use();
-            //changed = &this->globals.state_target_device.modified;
-            //res = *changed;
             break;
 
         case AUTHID_TARGET_PASSWORD:
@@ -1701,8 +1597,8 @@ public:
             break;
 
         case AUTHID_TARGET_PORT:
-            changed = &this->context.state_target_port.modified;
-            res = *changed;
+            res = this->context.target_port.has_changed();
+            this->context.target_port.use();
             break;
 
         case AUTHID_TARGET_PROTOCOL:
@@ -1713,29 +1609,21 @@ public:
         case AUTHID_TARGET_USER:
             res = this->globals.target_user.has_changed();
             this->globals.target_user.use();
-            // changed = &this->globals.state_target_user.modified;
-            // res = *changed;
             break;
 
         case AUTHID_AUTH_USER:
             res = this->globals.auth_user.has_changed();
             this->globals.auth_user.use();
-            // changed = &this->globals.state_auth_user.modified;
-            // res = *changed;
             break;
 
         case AUTHID_HOST:
             res = this->globals.host.has_changed();
             this->globals.host.use();
-            // changed = &this->globals.state_host.modified;
-            // res = *changed;
             break;
 
         case AUTHID_TARGET:
             res = this->globals.target.has_changed();
             this->globals.target.use();
-            // changed = &this->globals.state_target.modified;
-            // res = *changed;
             break;
 
         case AUTHID_PASSWORD:
@@ -1744,13 +1632,13 @@ public:
             break;
 
         case AUTHID_AUTHCHANNEL_RESULT:
-            changed = &this->context.state_authchannel_result.modified;
-            res = *changed;
+            res = this->context.authchannel_result.has_changed();
+            this->context.authchannel_result.use();
             break;
 
         case AUTHID_AUTHCHANNEL_TARGET:
-            changed = &this->context.state_authchannel_target.modified;
-            res = *changed;
+            res = this->context.authchannel_target.has_changed();
+            this->context.authchannel_target.use();
             break;
 
         case AUTHID_ACCEPT_MESSAGE:
@@ -1764,8 +1652,8 @@ public:
             break;
 
         case AUTHID_KEEPALIVE:
-            changed = &this->context.state_keepalive.modified;
-            res = *changed;
+            res = this->context.keepalive.has_changed();
+            this->context.keepalive.use();
             break;
 
         case AUTHID_PROXY_TYPE:
@@ -1774,8 +1662,8 @@ public:
             break;
 
         case AUTHID_TRACE_SEAL:
-            changed = &this->context.state_trace_seal.modified;
-            res = *changed;
+            res = this->context.trace_seal.has_changed();
+            this->context.trace_seal.use();
             break;
 
         case AUTHID_REAL_TARGET_DEVICE:
@@ -1786,9 +1674,6 @@ public:
         default:
             LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
             return false;
-        }
-        if(!this->context_is_asked(authid) && (changed != NULL)){
-            *changed = false;
         }
         return res;
         
@@ -1895,24 +1780,12 @@ public:
 
         case AUTHID_OPT_WIDTH:
             this->context.opt_width.set_from_cstr(value);
-            // this->context.state_opt_width.asked = false;
-            // if (this->context.opt_width != ulong_from_cstr(value))
-            //     this->context.state_opt_width.modified = true;
-            // this->context.opt_width      = ulong_from_cstr(value);
             break;
         case AUTHID_OPT_HEIGHT:
             this->context.opt_height.set_from_cstr(value);
-            // this->context.state_opt_height.asked = false;
-            // if (this->context.opt_height != ulong_from_cstr(value))
-            //     this->context.state_opt_height.modified = true;
-            // this->context.opt_height     = ulong_from_cstr(value);
             break;
         case AUTHID_OPT_BPP:
             this->context.opt_bpp.set_from_cstr(value);
-            // this->context.state_opt_bpp.asked    = false;
-            // if (this->context.opt_bpp != ulong_from_cstr(value))
-            //     this->context.state_opt_bpp.modified    = true;
-            // this->context.opt_bpp        = ulong_from_cstr(value);
             break;
 
         case AUTHID_AUTH_ERROR_MESSAGE:
@@ -1921,38 +1794,18 @@ public:
 
         case AUTHID_SELECTOR:
             this->context.selector.set_from_cstr(value);
-            // this->context.state_selector.asked                = false;
-            // if (this->context.selector != bool_from_cstr(value))
-            //     this->context.state_selector.modified                = true;
-            // this->context.selector                    = bool_from_cstr(value);
             break;
         case AUTHID_SELECTOR_CURRENT_PAGE:
             this->context.selector_current_page.set_from_cstr(value);
-            // this->context.state_selector_current_page.asked   = false;
-            // if (this->context.selector_current_page != ulong_from_cstr(value))
-            //     this->context.state_selector_current_page.modified   = true;
-            // this->context.selector_current_page   = ulong_from_cstr(value);
             break;
         case AUTHID_SELECTOR_DEVICE_FILTER:
             this->context.selector_device_filter.set_from_cstr(value);
-            // this->context.state_selector_device_filter.asked  = false;
-            // if (strcmp(value, this->context.selector_device_filter.c_str()))
-            //     this->context.state_selector_device_filter.modified  = true;
-            // this->context.selector_device_filter.copy_c_str(value);
             break;
         case AUTHID_SELECTOR_GROUP_FILTER:
             this->context.selector_group_filter.set_from_cstr(value);
-            // this->context.state_selector_group_filter.asked   = false;
-            // if (strcmp(value, this->context.selector_group_filter.c_str()))
-            //     this->context.state_selector_group_filter.modified   = true;
-            // this->context.selector_group_filter.copy_c_str(value);
             break;
         case AUTHID_SELECTOR_LINES_PER_PAGE:
             this->context.selector_lines_per_page.set_from_cstr(value);
-            // this->context.state_selector_lines_per_page.asked = false;
-            // if (this->context.selector_lines_per_page != ulong_from_cstr(value))
-            //     this->context.state_selector_lines_per_page.modified = true;
-            // this->context.selector_lines_per_page = ulong_from_cstr(value);
             break;
         case AUTHID_SELECTOR_NUMBER_OF_PAGES:
             this->context.selector_number_of_pages    = ulong_from_cstr(value);
@@ -1960,89 +1813,43 @@ public:
 
         case AUTHID_TARGET_DEVICE:
             this->globals.target_device.set_from_cstr(value);
-            // this->globals.state_target_device.asked   = false;
-            // if (strcmp(value, this->globals.target_device))
-            //     this->globals.state_target_device.modified   = true;
-            // strncpy(this->globals.target_device, value, sizeof(this->globals.target_device));
-            // this->globals.target_device[sizeof(this->globals.target_device) - 1] = 0;
             break;
         case AUTHID_TARGET_PASSWORD:
             this->context.target_password.set_from_cstr(value);
-            // this->context.state_target_password.asked = false;
-            // if (strcmp(value, this->context.target_password.c_str())) 
-            //     this->context.state_target_password.modified = true;
-            // this->context.target_password.copy_c_str(value);
             break;
         case AUTHID_TARGET_PORT:
-            this->context.state_target_port.asked     = false;
-            if (this->context.target_port != ulong_from_cstr(value)) 
-                this->context.state_target_port.modified     = true;
-            this->context.target_port         = ulong_from_cstr(value);
+            this->context.target_port.set_from_cstr(value);
             break;
         case AUTHID_TARGET_PROTOCOL:
             this->context.target_protocol.set_from_cstr(value);
-            // this->context.state_target_protocol.asked = false;
-            // if (strcmp(value, this->context.target_protocol.c_str()))
-            //     this->context.state_target_protocol.modified = true;
-            // this->context.target_protocol.copy_c_str(value);
             break;
         case AUTHID_TARGET_USER:
             this->globals.target_user.set_from_cstr(value);
-            // this->globals.state_target_user.asked     = false;
-            // if (strcmp(value, this->globals.target_user))
-            //     this->globals.state_target_user.modified     = true;
-            // strncpy(this->globals.target_user,   value, sizeof(this->globals.target_user));
-            // this->globals.target_user[sizeof(this->globals.target_user) - 1]     = 0;
             break;
 
         case AUTHID_AUTH_USER:
             this->globals.auth_user.set_from_cstr(value);
-            // this->globals.state_auth_user.asked = false;
-            // if (strcmp(value, this->globals.auth_user))
-            //     this->globals.state_auth_user.modified = true;
-            // strncpy(this->globals.auth_user, value, sizeof(this->globals.auth_user));
-            // this->globals.auth_user[sizeof(this->globals.auth_user) - 1]         = 0;
             break;
         case AUTHID_HOST:
             this->globals.host.set_from_cstr(value);
-            // this->globals.state_host.asked      = false;
-            // if (strcmp(value, this->globals.host))
-            //     this->globals.state_host.modified      = true;
-            // strncpy(this->globals.host, value, sizeof(this->globals.host));
-            // this->globals.host[sizeof(this->globals.host) - 1]                   = 0;
             break;
 
         case AUTHID_TARGET:
             this->globals.target.set_from_cstr(value);
-            // this->globals.state_target.asked      = false;
-            // if (strcmp(value, this->globals.target))
-            //     this->globals.state_target.modified      = true;
-            // strncpy(this->globals.target,        value, sizeof(this->globals.target));
-            // this->globals.target[sizeof(this->globals.target) - 1]                 = 0;
             break;
 
         case AUTHID_PASSWORD:
             this->context.password.set_from_cstr(value);
-            // this->context.state_password.asked = false;
-            // if (strcmp(value, this->context.password.c_str()))
-            //     this->context.state_password.modified = true;
-            // this->context.password.copy_c_str(value);
             break;
 
         case AUTHID_AUTHCHANNEL_ANSWER:
             this->context.authchannel_answer.copy_c_str(value);
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
-            this->context.state_authchannel_result.asked = false;
-            if (strcmp(value, this->context.authchannel_result.c_str()))
-                this->context.state_authchannel_result.modified = true;
-            this->context.authchannel_result.copy_c_str(value);
+            this->context.authchannel_result.set_from_cstr(value);
             break;
         case AUTHID_AUTHCHANNEL_TARGET:
-            this->context.state_authchannel_target.asked = false;
-            if (strcmp(value, this->context.authchannel_target.c_str()))
-                this->context.state_authchannel_target.modified = true;
-            this->context.authchannel_target.copy_c_str(value);
+            this->context.authchannel_target.set_from_cstr(value);
             break;
 
         case AUTHID_MESSAGE:
@@ -2051,17 +1858,9 @@ public:
 
         case AUTHID_ACCEPT_MESSAGE:
             this->context.accept_message.set_from_cstr(value);
-            // this->context.state_accept_message.asked  = false;
-            // if (strcmp(value, this->context.accept_message.c_str()))
-            //     this->context.state_accept_message.modified  = true;
-            // this->context.accept_message.copy_c_str(value);
             break;
         case AUTHID_DISPLAY_MESSAGE:
             this->context.display_message.set_from_cstr(value);
-            // this->context.state_display_message.asked = false;
-            // if (strcmp(value, this->context.display_message.c_str()))
-            //     this->context.state_display_message.modified = true;
-            // this->context.display_message.copy_c_str(value);
             break;
 
         case AUTHID_AUTHENTICATED:
@@ -2072,24 +1871,14 @@ public:
             break;
 
         case AUTHID_KEEPALIVE:
-            this->context.state_keepalive.asked  = false;
-            if (this->context.keepalive != bool_from_cstr(value))
-                this->context.state_keepalive.modified  = true;
-            this->context.keepalive      = bool_from_cstr(value);
+            this->context.keepalive.set_from_cstr(value);
             break;
         case AUTHID_PROXY_TYPE:
             this->context.proxy_type.set_from_cstr(value);
-            // this->context.state_proxy_type.asked = false;
-            // if (strcmp(value, this->context.proxy_type.c_str()))
-            //     this->context.state_proxy_type.modified = true;
-            // this->context.proxy_type.copy_c_str(value);
             break;
 
         case AUTHID_TRACE_SEAL:
-            this->context.state_trace_seal.asked = false;
-            if (strcmp(value, this->context.trace_seal.c_str()))
-                this->context.state_trace_seal.modified = true;
-            this->context.trace_seal.copy_c_str(value);
+            this->context.trace_seal.set_from_cstr(value);
             break;
 
         case AUTHID_SESSION_ID:
@@ -2112,9 +1901,6 @@ public:
 
         case AUTHID_REAL_TARGET_DEVICE:
             this->context.real_target_device.set_from_cstr(value);
-            // if (strcmp(value, this->context.real_target_device.c_str()))
-            //     this->context.state_real_target_device.modified = true;
-            // this->context.real_target_device.copy_c_str(value);
             break;
 
         case AUTHID_AUTHENTICATION_CHALLENGE:
@@ -2265,11 +2051,6 @@ public:
                 snprintf(buffer, size, "%u", this->context.opt_bpp.get());
                 pszReturn = buffer;
             }
-            // if (  size
-            //    && !this->context.state_opt_bpp.asked) {
-            //     snprintf(buffer, size, "%u", this->context.opt_bpp);
-            //     pszReturn = buffer;
-            // }
             break;
         case AUTHID_OPT_HEIGHT:
             if (  size
@@ -2277,11 +2058,6 @@ public:
                 snprintf(buffer, size, "%u", this->context.opt_height.get());
                 pszReturn = buffer;
             }
-            // if (  size
-            //    && !this->context.state_opt_height.asked) {
-            //     snprintf(buffer, size, "%u", this->context.opt_height);
-            //     pszReturn = buffer;
-            // }
             break;
         case AUTHID_OPT_WIDTH:
             if (  size
@@ -2289,11 +2065,6 @@ public:
                 snprintf(buffer, size, "%u", this->context.opt_width.get());
                 pszReturn = buffer;
             }
-            // if (  size
-            //    && !this->context.state_opt_width.asked) {
-            //     snprintf(buffer, size, "%u", this->context.opt_width);
-            //     pszReturn = buffer;
-            // }
             break;
 
         case AUTHID_AUTH_ERROR_MESSAGE:
@@ -2307,12 +2078,6 @@ public:
                 buffer[size - 1] = 0;
                 pszReturn = buffer;
             }
-            // if (  size
-            //    && !this->context.state_selector.asked) {
-            //     strncpy(buffer, (this->context.selector ? "True" : "False"), size);
-            //     buffer[size - 1] = 0;
-            //     pszReturn = buffer;
-            // }
             break;
         case AUTHID_SELECTOR_CURRENT_PAGE:
             if (  size
@@ -2320,27 +2085,16 @@ public:
                 snprintf(buffer, size, "%u", this->context.selector_current_page.get());
                 pszReturn = buffer;
             }
-            // if (  size
-            //    && !this->context.state_selector_current_page.asked) {
-            //     snprintf(buffer, size, "%u", this->context.selector_current_page);
-            //     pszReturn = buffer;
-            // }
             break;
         case AUTHID_SELECTOR_DEVICE_FILTER:
             if (!this->context.selector_device_filter.is_asked()) {
                 pszReturn = this->context.selector_device_filter.get_cstr();
             }
-            // if (!this->context.state_selector_device_filter.asked) {
-            //     pszReturn = this->context.selector_device_filter.c_str();
-            // }
             break;
         case AUTHID_SELECTOR_GROUP_FILTER:
             if (!this->context.selector_group_filter.is_asked()) {
                 pszReturn = this->context.selector_group_filter.get_cstr();
             }
-            // if ( !this->context.state_selector_group_filter.asked) {
-            //     pszReturn = this->context.selector_group_filter.c_str();
-            // }
             break;
         case AUTHID_SELECTOR_LINES_PER_PAGE:
             if (  size
@@ -2348,11 +2102,6 @@ public:
                 snprintf(buffer, size, "%u", this->context.selector_lines_per_page.get());
                 pszReturn = buffer;
             }
-            // if (  size
-            //    && !this->context.state_selector_group_filter.asked) {
-            //     snprintf(buffer, size, "%u", this->context.selector_lines_per_page);
-            //     pszReturn = buffer;
-            // }
             break;
         case AUTHID_SELECTOR_NUMBER_OF_PAGES:
             if (size) {
@@ -2365,22 +2114,16 @@ public:
             if (!this->globals.target_device.is_asked()) {
                 pszReturn = this->globals.target_device.get_cstr();
             }
-            // if (!this->globals.state_target_device.asked) {
-            //     pszReturn = this->globals.target_device;
-            // }
             break;
         case AUTHID_TARGET_PASSWORD:
             if (!this->context.target_password.is_asked()) {
                 pszReturn = this->context.target_password.get_cstr();
             }
-            // if (!this->context.state_target_password.asked) {
-            //     pszReturn = this->context.target_password.c_str();
-            // }
             break;
         case AUTHID_TARGET_PORT:
             if (  size
-               && !this->context.state_target_port.asked) {
-                snprintf(buffer, size, "%u", this->context.target_port);
+                  && !this->context.target_port.is_asked()) {
+                snprintf(buffer, size, "%u", this->context.target_port.get());
                 pszReturn = buffer;
             }
             break;
@@ -2388,34 +2131,22 @@ public:
             if (!this->context.target_protocol.is_asked()) {
                 pszReturn = this->context.target_protocol.get_cstr();
             }
-            // if (!this->context.state_target_protocol.asked) {
-            //     pszReturn = this->context.target_protocol.c_str();
-            // }
             break;
         case AUTHID_TARGET_USER:
             if (!this->globals.target_user.is_asked()) {
                 pszReturn = this->globals.target_user.get_cstr();
             }
-            // if (!this->globals.state_target_user.asked) {
-            //     pszReturn = this->globals.target_user;
-            // }
             break;
 
         case AUTHID_AUTH_USER:
             if (!this->globals.auth_user.is_asked()) {
                 pszReturn = this->globals.auth_user.get_cstr();
             }
-            // if (!this->globals.state_auth_user.asked) {
-            //     pszReturn = this->globals.auth_user;
-            // }
             break;
         case AUTHID_HOST:
             if (!this->globals.host.is_asked()) {
                 pszReturn = this->globals.host.get_cstr();
             }            
-            // if ( !this->globals.state_host.asked) {
-            //     pszReturn = this->globals.host;
-            // }
             break;
 
         case AUTHID_TARGET:
@@ -2423,31 +2154,24 @@ public:
                   && !this->globals.target.is_asked()) {
                 pszReturn = this->globals.target.get_cstr();
             }
-            // if (  size
-            //    && !this->globals.state_target.asked) {
-            //     pszReturn = this->globals.target;
-            // }
             break;
         case AUTHID_PASSWORD:
             if (!this->context.password.is_asked()) {
                 pszReturn = this->context.password.get_cstr();
             }
-            // if (!this->context.state_password.asked) {
-            //     pszReturn = this->context.password.c_str();
-            // }
             break;
 
         case AUTHID_AUTHCHANNEL_ANSWER:
             pszReturn = this->context.authchannel_answer.c_str();
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
-            if (!this->context.state_authchannel_result.asked) {
-                pszReturn = this->context.authchannel_result.c_str();
+            if (!this->context.authchannel_result.is_asked()) {
+                pszReturn = this->context.authchannel_result.get_cstr();
             }
             break;
         case AUTHID_AUTHCHANNEL_TARGET:
-            if (!this->context.state_authchannel_target.asked) {
-                pszReturn = this->context.authchannel_target.c_str();
+            if (!this->context.authchannel_target.is_asked()) {
+                pszReturn = this->context.authchannel_target.get_cstr();
             }
             break;
 
@@ -2458,17 +2182,11 @@ public:
             if (!this->context.accept_message.is_asked()) {
                 pszReturn = this->context.accept_message.get_cstr();
             }
-            // if (!this->context.state_accept_message.asked) {
-            //     pszReturn = this->context.accept_message.c_str();
-            // }
             break;
         case AUTHID_DISPLAY_MESSAGE:
             if (!this->context.display_message.is_asked()) {
                 pszReturn = this->context.display_message.get_cstr();
             }
-            // if (!this->context.state_display_message.asked) {
-            //     pszReturn = this->context.display_message.c_str();
-            // }
             break;
 
         case AUTHID_AUTHENTICATED:
@@ -2484,10 +2202,9 @@ public:
 
         case AUTHID_KEEPALIVE:
             if (  size
-               && !this->context.state_keepalive.asked) {
-                strncpy(buffer, (this->context.keepalive ? "True" : "False"), size);
+                  && !this->context.keepalive.is_asked()) {
+                strncpy(buffer, (this->context.keepalive.get() ? "True" : "False"), size);
                 buffer[size - 1] = 0;
-
                 pszReturn = buffer;
             }
             break;
@@ -2496,13 +2213,10 @@ public:
             if (!this->context.proxy_type.is_asked()) {
                 pszReturn = this->context.proxy_type.get_cstr();
             }
-            // if (!this->context.state_proxy_type.asked) {
-            //     pszReturn = this->context.proxy_type.c_str();
-            // }
             break;
         case AUTHID_TRACE_SEAL:
-            if (!this->context.state_trace_seal.asked) {
-                pszReturn = this->context.trace_seal.c_str();
+            if (!this->context.trace_seal.is_asked()) {
+                pszReturn = this->context.trace_seal.get_cstr();
             }
             break;
 
@@ -2532,7 +2246,6 @@ public:
 
         case AUTHID_REAL_TARGET_DEVICE:
             pszReturn = this->context.real_target_device.get_cstr();
-            // pszReturn = this->context.real_target_device.c_str();
             break;
 
         case AUTHID_AUTHENTICATION_CHALLENGE:
@@ -2561,85 +2274,58 @@ public:
         switch (authid) {
         case AUTHID_OPT_BPP:
             this->context.opt_bpp.ask();
-            // this->context.state_opt_bpp.asked                 = true;
-            // this->context.state_opt_bpp.modified                 = true;
             break;
 
         case AUTHID_OPT_HEIGHT:
             this->context.opt_height.ask();
-            // this->context.state_opt_height.asked              = true;
-            // this->context.state_opt_height.modified              = true;
             break;
 
         case AUTHID_OPT_WIDTH:
             this->context.opt_width.ask();
-            // this->context.state_opt_width.asked               = true;
-            // this->context.state_opt_width.modified               = true;
             break;
 
         case AUTHID_SELECTOR:
             this->context.selector.ask();
-            // this->context.state_selector.asked                = true;
-            // this->context.state_selector.modified                = true;
             break;
 
         case AUTHID_SELECTOR_CURRENT_PAGE:
             this->context.selector_current_page.ask();
-            // this->context.state_selector_current_page.asked   = true;
-            // this->context.state_selector_current_page.modified   = true;
             break;
 
         case AUTHID_SELECTOR_DEVICE_FILTER:
             this->context.selector_device_filter.ask();
-            // this->context.state_selector_device_filter.asked  = true;
-            // this->context.state_selector_device_filter.modified  = true;
             break;
 
         case AUTHID_SELECTOR_GROUP_FILTER:
             this->context.selector_group_filter.ask();
-            // this->context.state_selector_group_filter.asked   = true;
-            // this->context.state_selector_group_filter.modified   = true;
             break;
 
         case AUTHID_SELECTOR_LINES_PER_PAGE:
             this->context.selector_lines_per_page.ask();
-            // this->context.state_selector_lines_per_page.asked = true;
-            // this->context.state_selector_lines_per_page.modified = true;
             break;
 
         case AUTHID_TARGET_DEVICE:
             this->globals.target_device.ask();
-            // this->globals.state_target_device.asked           = true;
-            // this->globals.state_target_device.modified           = true;
             break;
 
         case AUTHID_TARGET_PASSWORD:
             this->context.target_password.ask();
-            // this->context.state_target_password.asked         = true;
-            // this->context.state_target_password.modified         = true;
             break;
 
         case AUTHID_TARGET_PORT:
-            this->context.state_target_port.asked             = true;
-            this->context.state_target_port.modified             = true;
+            this->context.target_port.is_asked();
             break;
 
         case AUTHID_TARGET_PROTOCOL:
             this->context.target_protocol.ask();
-            // this->context.state_target_protocol.asked         = true;
-            // this->context.state_target_protocol.modified         = true;
             break;
 
         case AUTHID_TARGET_USER:
             this->globals.target_user.ask();
-            // this->globals.state_target_user.asked             = true;
-            // this->globals.state_target_user.modified             = true;
             break;
 
         case AUTHID_AUTH_USER:
             this->globals.auth_user.ask();
-            // this->globals.state_auth_user.asked               = true;
-            // this->globals.state_auth_user.modified               = true;
             break;
 
         case AUTHID_HOST:
@@ -2650,53 +2336,38 @@ public:
 
         case AUTHID_TARGET:
             this->globals.target.ask();
-            // this->globals.state_target.asked                  = true;
-            // this->globals.state_target.modified                  = true;
             break;
 
         case AUTHID_PASSWORD:
             this->context.password.ask();
-            // this->context.state_password.asked                = true;
-            // this->context.state_password.modified                = true;
             break;
 
         case AUTHID_AUTHCHANNEL_RESULT:
-            this->context.state_authchannel_result.asked      = true;
-            this->context.state_authchannel_result.modified      = true;
+            this->context.authchannel_result.ask();
             break;
 
         case AUTHID_AUTHCHANNEL_TARGET:
-            this->context.state_authchannel_target.asked      = true;
-            this->context.state_authchannel_target.modified      = true;
+            this->context.authchannel_target.ask();
             break;
 
         case AUTHID_ACCEPT_MESSAGE:
             this->context.accept_message.ask();
-            // this->context.state_accept_message.asked          = true;
-            // this->context.state_accept_message.modified          = true;
             break;
 
         case AUTHID_DISPLAY_MESSAGE:
             this->context.display_message.ask();
-            // this->context.state_display_message.asked         = true;
-            // this->context.state_display_message.modified         = true;
             break;
 
         case AUTHID_KEEPALIVE:
-            this->context.state_keepalive.asked               = true;
-            this->context.state_keepalive.modified               = true;
+            this->context.keepalive.ask();
             break;
 
         case AUTHID_PROXY_TYPE:
             this->context.proxy_type.ask();
-            // this->context.state_proxy_type.asked              = true;
-            // this->context.state_proxy_type.modified              = true;
             break;
 
         case AUTHID_TRACE_SEAL:
-            // this->context.trace_seal.ask();
-            this->context.state_trace_seal.asked              = true;
-            this->context.state_trace_seal.modified              = true;
+            this->context.trace_seal.ask();
             break;
 
         default:
@@ -2720,94 +2391,75 @@ public:
         switch (authid) {
         case AUTHID_OPT_BPP:
             return this->context.opt_bpp.is_asked();
-            // return this->context.state_opt_bpp.asked;
 
         case AUTHID_OPT_HEIGHT:
             return this->context.opt_height.is_asked();
-            // return this->context.state_opt_height.asked;
 
         case AUTHID_OPT_WIDTH:
             return this->context.opt_width.is_asked();
-            // return this->context.state_opt_width.asked;
 
         case AUTHID_SELECTOR:
             return this->context.selector.is_asked();
-            // return this->context.state_selector.asked;
 
         case AUTHID_SELECTOR_CURRENT_PAGE:
             return this->context.selector_current_page.is_asked();
-            // return this->context.state_selector_current_page.asked;
 
         case AUTHID_SELECTOR_DEVICE_FILTER:
             return this->context.selector_device_filter.is_asked();
-            // return this->context.state_selector_device_filter.asked;
 
         case AUTHID_SELECTOR_GROUP_FILTER:
             return this->context.selector_group_filter.is_asked();
-            // return this->context.state_selector_group_filter.asked;
 
         case AUTHID_SELECTOR_LINES_PER_PAGE:
             return this->context.selector_lines_per_page.is_asked();
-            // return this->context.state_selector_lines_per_page.asked;
 
         case AUTHID_TARGET_DEVICE:
             return this->globals.target_device.is_asked();
-            //return this->globals.state_target_device.asked;
 
         case AUTHID_TARGET_PASSWORD:
             return this->context.target_password.is_asked();
-            // return this->context.state_target_password.asked;
 
         case AUTHID_TARGET_PORT:
-            return this->context.state_target_port.asked;
+            return this->context.target_port.is_asked();
 
         case AUTHID_TARGET_PROTOCOL:
             return this->context.target_protocol.is_asked();
-            // return this->context.state_target_protocol.asked;
 
         case AUTHID_TARGET_USER:
             return this->globals.target_user.is_asked();
-            // return this->globals.state_target_user.asked;
 
         case AUTHID_AUTH_USER:
             return this->globals.auth_user.is_asked();
-            // return this->globals.state_auth_user.asked;
 
         case AUTHID_HOST:
             return this->globals.host.is_asked();
-            // return this->globals.state_host.asked;
 
         case AUTHID_TARGET:
             return this->globals.target.is_asked();
-            // return this->globals.state_target.asked;
 
         case AUTHID_PASSWORD:
             return this->context.password.is_asked();
-            // return this->context.state_password.asked;
 
         case AUTHID_AUTHCHANNEL_RESULT:
-            return this->context.state_authchannel_result.asked;
+            return this->context.authchannel_result.is_asked();
 
         case AUTHID_AUTHCHANNEL_TARGET:
-            return this->context.state_authchannel_target.asked;
+            return this->context.authchannel_target.is_asked();
 
         case AUTHID_ACCEPT_MESSAGE:
             return this->context.accept_message.is_asked();
-            // return this->context.state_accept_message.asked;
 
         case AUTHID_DISPLAY_MESSAGE:
             return this->context.display_message.is_asked();
-            // return this->context.state_display_message.asked;
 
         case AUTHID_KEEPALIVE:
-            return this->context.state_keepalive.asked;
+            return this->context.keepalive.is_asked();
 
         case AUTHID_PROXY_TYPE:
             return this->context.proxy_type.is_asked();
-            // return this->context.state_proxy_type.asked;
 
         case AUTHID_TRACE_SEAL:
-            return this->context.state_trace_seal.asked;
+            return this->context.trace_seal.is_asked();
 
         case AUTHID_REAL_TARGET_DEVICE:
             return false;
@@ -2825,13 +2477,10 @@ public:
             if (!this->context.selector.is_asked()) {
                 return this->context.selector.get();
             }
-            // if (!this->context.state_selector.asked) {
-            //     return this->context.selector;
-            // }
             break;
         case AUTHID_KEEPALIVE:
-            if (!this->context.state_keepalive.asked) {
-                return this->context.keepalive;
+            if (!this->context.keepalive.is_asked()) {
+                return this->context.keepalive.get();
             }
             break;
         case AUTHID_AUTHENTICATED:

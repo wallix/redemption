@@ -779,7 +779,7 @@ struct Session {
                 }
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             4, 1000,
                                             this->ini->debug.mod_xup);
 
@@ -792,7 +792,7 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_xup);
                 this->mod_transport = t;
 
@@ -830,7 +830,7 @@ struct Session {
                 static const char * name = "RDP Target";
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             3, 1000,
                                             this->ini->debug.mod_rdp);
 
@@ -844,7 +844,7 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_rdp
                     , &this->ini->context.auth_error_message
                     );
@@ -891,7 +891,7 @@ struct Session {
 
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             3, 1000,
                                             this->ini->debug.mod_vnc);
 
@@ -904,7 +904,7 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_vnc);
                 this->mod_transport = t;
 
