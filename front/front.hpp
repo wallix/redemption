@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages, Raphael Zhou
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages, Raphael Zhou, Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Front object (server), used to communicate with RDP client

@@ -421,9 +421,12 @@ struct Session {
                                 }
                                // end the current module and switch to new one
                                 this->remove_mod();
-                                this->ini->context.opt_width  = this->front->client_info.width;
-                                this->ini->context.opt_height = this->front->client_info.height;
-                                this->ini->context.opt_bpp    = this->front->client_info.bpp;
+                                this->ini->context.opt_width.set(this->front->client_info.width);
+                                this->ini->context.opt_height.set(this->front->client_info.height);
+                                this->ini->context.opt_bpp.set(this->front->client_info.bpp);
+                                // this->ini->context.opt_width  = this->front->client_info.width;
+                                // this->ini->context.opt_height = this->front->client_info.height;
+                                // this->ini->context.opt_bpp    = this->front->client_info.bpp;
                                 bool record_video = false;
                                 bool keep_alive = false;
                                 if (!this->sesman){
@@ -795,13 +798,13 @@ struct Session {
 
                 this->ini->context.auth_error_message.copy_c_str("failed authentification on remote X host");
                 this->mod = new xup_mod( t
-                                       , *this->front
-                                       , this->front->client_info.width
-                                       , this->front->client_info.height
-                                       , this->ini->context.opt_width
-                                       , this->ini->context.opt_height
-                                       , this->ini->context.opt_bpp
-                                       );
+                                         , *this->front
+                                         , this->front->client_info.width
+                                         , this->front->client_info.height
+                                         , this->ini->context.opt_width.get()
+                                         , this->ini->context.opt_height.get()
+                                         , this->ini->context.opt_bpp.get()
+                                         );
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 //                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
