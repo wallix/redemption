@@ -21,7 +21,7 @@ sub dump_to_data
 
 
 print "const char outdata[] =\n{\n";
-dump_to_data  $ARGV[0], '^.*sending .* bytes.*$', '^.*Dump done' ;
+dump_to_data  $ARGV[0], '^.*Sending .* bytes.*$', '^.*Sent dumped on' ;
 print "} /* end outdata */;\n\n";
 
 print "const char indata[] =\n{\n";

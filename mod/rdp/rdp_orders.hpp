@@ -58,7 +58,6 @@ struct rdp_orders {
 
     BGRPalette cache_colormap[6];
     BGRPalette global_palette;
-    BGRPalette memblt_palette;
 
     TODO("CGR: this cache_bitmap here looks strange. At least it's size should be negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
     const Bitmap * cache_bitmap[3][10000];
@@ -80,7 +79,6 @@ struct rdp_orders {
         memset(this->cache_bitmap,   0, sizeof(this->cache_bitmap));
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
-        memset(this->memblt_palette, 0, sizeof(this->memblt_palette));
     }
 
     void reset()
@@ -98,10 +96,9 @@ struct rdp_orders {
 
         this->destory_cache_bitmap();
 
-        memset(this->cache_bitmap, 0, sizeof(this->cache_bitmap));
+        memset(this->cache_bitmap,   0, sizeof(this->cache_bitmap));
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
-        memset(this->memblt_palette, 0, sizeof(this->memblt_palette));
     }
 
     ~rdp_orders() {
