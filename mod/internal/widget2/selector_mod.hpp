@@ -15,7 +15,7 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_SELECTOR_MOD_HPP
@@ -44,7 +44,7 @@ class SelectorMod : public InternalMod, public NotifyApi
         temporary_login(Inifile& ini) {
             this->buffer[0] = 0;
             snprintf(this->buffer, sizeof(this->buffer),
-                     "%s@%s", ini.globals.auth_user, ini.globals.host);
+                     "%s@%s", ini.globals.auth_user.get_cstr(), ini.globals.host.get_cstr());
         }
     };
 
@@ -66,7 +66,8 @@ public:
         this->selector.set_widget_focus(&this->selector.device_lines);
         this->screen.set_widget_focus(&this->selector);
 
-        this->ini.context.selector_lines_per_page = (this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border);
+        this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border));
+        // this->ini.context.selector_lines_per_page = (this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border);
         this->ask_page();
 
         this->selector.refresh(this->selector.rect);
@@ -195,7 +196,7 @@ public:
         char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
         char * endtimes  = const_cast<char *>(this->ini.context.end_time.c_str());
 
-        for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page; index++) {
+        for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page.get(); index++) {
             size_t size_groups = proceed_item(groups);
             if (!size_groups)
                 break;

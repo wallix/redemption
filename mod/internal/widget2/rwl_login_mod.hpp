@@ -15,7 +15,7 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_RWL_LOGIN_MOD_HPP
@@ -391,11 +391,11 @@ public:
     : InternalMod(front, width, height)
     , definition("/tmp/login_mod.rwl")
     , window_login(this, 0, 0, &this->screen, this, VERSION, 0, 0, 0, BLACK, GREY,
-                   ini.translation.button_ok.c_str(),
-                   ini.translation.button_cancel.c_str(),
-                   ini.translation.button_help.c_str(),
-                   ini.translation.login.c_str(),
-                   ini.translation.password.c_str())
+                   ini.translation.button_ok.get().c_str(),
+                   ini.translation.button_cancel.get().c_str(),
+                   ini.translation.button_help.get().c_str(),
+                   ini.translation.login.get().c_str(),
+                   ini.translation.password.get().c_str())
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
     , ini(ini)
     {

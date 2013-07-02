@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages, Raphael Zhou
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages, Raphael Zhou, Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Front object (server), used to communicate with RDP client
@@ -420,10 +420,10 @@ public:
                 LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path);
                 LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id);
                 LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality);
-                LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user);
-                LOG(LOG_INFO, "host = %s\n",          ini.globals.host);
+                LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user.get_cstr());
+                LOG(LOG_INFO, "host = %s\n",          ini.globals.host.get_cstr());
                 LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
-                LOG(LOG_INFO, "target_user = %s\n",   ini.globals.target_user);
+                LOG(LOG_INFO, "target_user = %s\n",   ini.globals.target_user.get_cstr());
             }
 
             char path[1024];

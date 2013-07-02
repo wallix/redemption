@@ -421,9 +421,12 @@ struct Session {
                                 }
                                // end the current module and switch to new one
                                 this->remove_mod();
-                                this->ini->context.opt_width  = this->front->client_info.width;
-                                this->ini->context.opt_height = this->front->client_info.height;
-                                this->ini->context.opt_bpp    = this->front->client_info.bpp;
+                                this->ini->context.opt_width.set(this->front->client_info.width);
+                                this->ini->context.opt_height.set(this->front->client_info.height);
+                                this->ini->context.opt_bpp.set(this->front->client_info.bpp);
+                                // this->ini->context.opt_width  = this->front->client_info.width;
+                                // this->ini->context.opt_height = this->front->client_info.height;
+                                // this->ini->context.opt_bpp    = this->front->client_info.bpp;
                                 bool record_video = false;
                                 bool keep_alive = false;
                                 if (!this->sesman){
@@ -683,7 +686,7 @@ struct Session {
                         }
 
                         const char * message = this->ini->context.message.c_str();
-                        const char * button = this->ini->translation.button_refused.c_str();
+                        const char * button = this->ini->translation.button_refused.get().c_str();
                         const char * caption = "Information";
                         this->mod = new DialogMod(
                             *this->ini,
@@ -776,7 +779,7 @@ struct Session {
                 }
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             4, 1000,
                                             this->ini->debug.mod_xup);
 
@@ -789,19 +792,19 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_xup);
                 this->mod_transport = t;
 
                 this->ini->context.auth_error_message.copy_c_str("failed authentification on remote X host");
                 this->mod = new xup_mod( t
-                                       , *this->front
-                                       , this->front->client_info.width
-                                       , this->front->client_info.height
-                                       , this->ini->context.opt_width
-                                       , this->ini->context.opt_height
-                                       , this->ini->context.opt_bpp
-                                       );
+                                         , *this->front
+                                         , this->front->client_info.width
+                                         , this->front->client_info.height
+                                         , this->ini->context.opt_width.get()
+                                         , this->ini->context.opt_height.get()
+                                         , this->ini->context.opt_bpp.get()
+                                         );
                 this->mod->event.obj = client_sck;
                 this->mod->draw_event();
 //                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
@@ -827,7 +830,7 @@ struct Session {
                 static const char * name = "RDP Target";
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             3, 1000,
                                             this->ini->debug.mod_rdp);
 
@@ -841,7 +844,7 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_rdp
                     , &this->ini->context.auth_error_message
                     );
@@ -888,7 +891,7 @@ struct Session {
 
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             3, 1000,
                                             this->ini->debug.mod_vnc);
 
@@ -901,7 +904,7 @@ struct Session {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_vnc);
                 this->mod_transport = t;
 
