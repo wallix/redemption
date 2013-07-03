@@ -2270,7 +2270,6 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 
 
     // Using the list of changed fields:
-    // 
     ini.globals.auth_user.set_from_cstr("someuser");
     ini.globals.host.set_from_cstr("35.53.0.1");
     ini.context.opt_height.set(602);
@@ -2292,7 +2291,10 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
     
 
 
-
+}
+BOOST_AUTO_TEST_CASE(TestConfigFieldGetValue)
+{
+    Inifile ini;
     // Test get_value()
     ini.globals.target_user.ask();
     BOOST_CHECK_EQUAL(std::string("ASK"),       std::string(ini.globals.target_user.get_value()));
@@ -2323,5 +2325,147 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
     BOOST_CHECK_EQUAL(std::string("ASK"),       std::string(ini.context.selector_lines_per_page.get_value()));
     
 }
+BOOST_AUTO_TEST_CASE(TestConfigField)
+{
+    /*---------------------------------
+    // Testing StringField
+    -----------------------------------*/
+    Inifile::StringField stringf;
 
-TODO("More tests with Field Class")
+    // those are initial values
+    BOOST_CHECK_EQUAL(false, stringf.is_asked());
+    BOOST_CHECK_EQUAL(true, stringf.has_changed());
+    BOOST_CHECK_EQUAL(false, stringf.has_been_read());
+
+    // setting a string from initial value
+    redemption::string initialstring("astring");
+    stringf.set(initialstring);
+    BOOST_CHECK_EQUAL(false, stringf.is_asked());
+    BOOST_CHECK_EQUAL(true, stringf.has_changed());
+    BOOST_CHECK_EQUAL(false, stringf.has_been_read());
+
+    // using the field set it as unchanged
+    stringf.use();
+    BOOST_CHECK_EQUAL(false, stringf.has_changed());
+
+    // getting the string set it as read
+    BOOST_CHECK_EQUAL(std::string("astring"), std::string(stringf.get_cstr()));
+    BOOST_CHECK_EQUAL(true, stringf.has_been_read());
+
+    // asking for the field set it as changed
+    stringf.ask();
+    BOOST_CHECK_EQUAL(true, stringf.is_asked());
+    BOOST_CHECK_EQUAL(true, stringf.has_changed());
+
+    // setting another string set it as unasked
+    stringf.set_from_cstr("anotherstring");
+    BOOST_CHECK_EQUAL(false, stringf.is_asked());
+    BOOST_CHECK_EQUAL(true, stringf.has_changed());
+    BOOST_CHECK_EQUAL(false, stringf.has_been_read());
+    
+    redemption::string tmp = stringf.get();
+    BOOST_CHECK_EQUAL(std::string("anotherstring"), std::string(tmp.c_str()));
+    BOOST_CHECK_EQUAL(true, stringf.has_been_read());
+    BOOST_CHECK_EQUAL(true, stringf.has_changed());
+    
+    stringf.use();
+    BOOST_CHECK_EQUAL(false, stringf.has_changed());
+
+    // setting the same string changes only the ask flag (as not asked)
+    stringf.set_from_cstr("anotherstring");
+    BOOST_CHECK_EQUAL(true, stringf.has_been_read());
+    BOOST_CHECK_EQUAL(false, stringf.has_changed());
+
+
+    /*---------------------------------
+    // Testing UnsignedField Same scenario
+    -----------------------------------*/
+    Inifile::UnsignedField unsignedf;
+    BOOST_CHECK_EQUAL(false, unsignedf.is_asked());
+    BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
+    BOOST_CHECK_EQUAL(false, unsignedf.has_been_read());
+    // setting a unsigned from initial value
+    
+    unsignedf.set(321);
+    BOOST_CHECK_EQUAL(false, unsignedf.is_asked());
+    BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
+    BOOST_CHECK_EQUAL(false, unsignedf.has_been_read());
+
+    // using the field set it as unchanged
+    unsignedf.use();
+    BOOST_CHECK_EQUAL(false, unsignedf.has_changed());
+
+    // getting the integer set it as read
+    BOOST_CHECK_EQUAL(321, unsignedf.get());
+    BOOST_CHECK_EQUAL(true, unsignedf.has_been_read());
+
+    // asking for the field set it as changed
+    unsignedf.ask();
+    BOOST_CHECK_EQUAL(true, unsignedf.is_asked());
+    BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
+
+    // setting another integer set it as unasked
+    unsignedf.set(654321);
+    BOOST_CHECK_EQUAL(false, unsignedf.is_asked());
+    BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
+    BOOST_CHECK_EQUAL(false, unsignedf.has_been_read());
+    
+    BOOST_CHECK_EQUAL(654321, unsignedf.get());
+    BOOST_CHECK_EQUAL(true, unsignedf.has_been_read());
+    BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
+    
+    unsignedf.use();
+    BOOST_CHECK_EQUAL(false, unsignedf.has_changed());
+
+    // setting the same integer changes only the ask flag (as not asked)
+    unsignedf.set(654321);
+    BOOST_CHECK_EQUAL(true, unsignedf.has_been_read());
+    BOOST_CHECK_EQUAL(false, unsignedf.has_changed());
+
+
+    /*---------------------------------
+    // Testing BoolField Same Scenario
+    -----------------------------------*/
+    Inifile::BoolField boolf;
+    BOOST_CHECK_EQUAL(false, boolf.is_asked());
+    BOOST_CHECK_EQUAL(true, boolf.has_changed());
+    BOOST_CHECK_EQUAL(false, boolf.has_been_read());
+
+    boolf.set(true);
+    BOOST_CHECK_EQUAL(false, boolf.is_asked());
+    BOOST_CHECK_EQUAL(true, boolf.has_changed());
+    BOOST_CHECK_EQUAL(false, boolf.has_been_read());
+
+    // using the field set it as unchanged
+    boolf.use();
+    BOOST_CHECK_EQUAL(false, boolf.has_changed());
+
+    // getting the integer set it as read
+    BOOST_CHECK_EQUAL(true, boolf.get());
+    BOOST_CHECK_EQUAL(true, boolf.has_been_read());
+
+    // asking for the field set it as changed
+    boolf.ask();
+    BOOST_CHECK_EQUAL(true, boolf.is_asked());
+    BOOST_CHECK_EQUAL(true, boolf.has_changed());
+
+    // setting another integer set it as unasked
+    boolf.set(false);
+    BOOST_CHECK_EQUAL(false, boolf.is_asked());
+    BOOST_CHECK_EQUAL(true, boolf.has_changed());
+    BOOST_CHECK_EQUAL(false, boolf.has_been_read());
+    
+    BOOST_CHECK_EQUAL(false, boolf.get());
+    BOOST_CHECK_EQUAL(true, boolf.has_been_read());
+    BOOST_CHECK_EQUAL(true, boolf.has_changed());
+    
+    boolf.use();
+    BOOST_CHECK_EQUAL(false, boolf.has_changed());
+
+    // setting the same integer changes only the ask flag (as not asked)
+    boolf.set(false);
+    BOOST_CHECK_EQUAL(true, boolf.has_been_read());
+    BOOST_CHECK_EQUAL(false, boolf.has_changed());
+
+}
+

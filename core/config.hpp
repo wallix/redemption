@@ -483,8 +483,9 @@ struct Inifile {
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data.empty();
             }
-            this->data.empty();
+            
         }
         void set_from_cstr(const char * cstr) {
             this->asked = false;
@@ -492,8 +493,9 @@ struct Inifile {
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data.copy_c_str(cstr);
             }
-            this->data.copy_c_str(cstr);
+
         }    
         const redemption::string & get() {
             this->read = true;
@@ -531,8 +533,9 @@ struct Inifile {
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data = that;
             }
-            this->data = that;
+
         }
 
         void set_from_cstr(const char * cstr) {
@@ -579,8 +582,9 @@ struct Inifile {
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data = that;
             }
-            this->data = that;
+
         }
 
         void set_from_cstr(const char * cstr) {
@@ -618,8 +622,9 @@ struct Inifile {
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data = that;
             }
-            this->data = that;
+
         }
         void set_from_cstr(const char * cstr) {
             this->set(bool_from_cstr(cstr));
