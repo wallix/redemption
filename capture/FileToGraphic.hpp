@@ -256,7 +256,7 @@ struct FileToGraphic
             else if (control & RDP::SECONDARY) {
                 using namespace RDP;
                 RDPSecondaryOrderHeader header(this->stream);
-                uint8_t *next_order = this->stream.p + header.length + 7;
+                uint8_t *next_order = this->stream.p + header.order_data_length();
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:

@@ -30,6 +30,7 @@
 #include "stream.hpp"
 #include "log.hpp"
 #include "error.hpp"
+#include "fastpath.hpp"
 
 //##############################################################################
 namespace X224
@@ -305,36 +306,51 @@ namespace X224
     };
 
     // Factory just read enough data to know the type of packet we are dealing with
-    struct RecvFactory
-    {
-        int type;
+    struct RecvFactory {
+        int    type;
         size_t length;
+        bool   fast_path;
 
-        RecvFactory(Transport & t, Stream & stream)
-        {
-            /* 4 bytes */
-            uint16_t length = stream.size();
-            if (length < X224::TPKT_HEADER_LEN){
-                t.recv(&stream.end, X224::TPKT_HEADER_LEN - length);
+        RecvFactory(Transport & t, Stream & stream, bool support_fast_path = false)
+                : fast_path(false) {
+            /* 1 byte */
+            uint16_t stream_length = stream.size();
+            if (stream_length < 1) {
+                t.recv(&stream.end, 1);
             }
             stream.p = stream.get_data();
 
             uint8_t tpkt_version = stream.in_uint8();
-            if (tpkt_version != 3) {
-                LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
-                throw Error(ERR_X224);
+            if ((tpkt_version & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0) {
+                if (support_fast_path) {
+                    fast_path = true;
+
+                    return;
+                }
+                else {
+                    LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
+                    throw Error(ERR_X224);
+                }
             }
-            stream.in_skip_bytes(1);
+
+            /* 4 bytes */
+            stream_length = stream.size();
+            if (stream_length < X224::TPKT_HEADER_LEN) {
+                t.recv(&stream.end, X224::TPKT_HEADER_LEN - stream_length);
+            }
+            stream.p = stream.get_data();
+
+            stream.in_skip_bytes(2);
             uint16_t tpkt_len = stream.in_uint16_be();
             t.recv(&stream.end, 2);
-            if (tpkt_len < 6){
+            if (tpkt_len < 6) {
                 LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
                 throw Error(ERR_X224);
             }
             this->length = tpkt_len;
             stream.in_skip_bytes(1);
             uint8_t tpdu_type = stream.in_uint8();
-            switch (tpdu_type & 0xF0){
+            switch (tpdu_type & 0xF0) {
             case X224::CR_TPDU: // Connection Request 1110 xxxx
             case X224::CC_TPDU: // Connection Confirm 1101 xxxx
             case X224::DR_TPDU: // Disconnect Request 1000 0000
