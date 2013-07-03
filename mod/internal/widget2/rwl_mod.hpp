@@ -104,7 +104,7 @@ public:
     virtual BackEvent_t draw_event()
     {
         this->event.reset();
-        return this->signal;
+        return this->event.signal;
     }
 };
 

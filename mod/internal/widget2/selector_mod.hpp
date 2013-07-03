@@ -94,7 +94,7 @@ public:
         this->ini.context_ask(AUTHID_TARGET_USER);
         this->ini.context_ask(AUTHID_TARGET_DEVICE);
         this->ini.context_ask(AUTHID_SELECTOR);
-        this->signal = BACK_EVENT_REFRESH;
+        this->event.signal = BACK_EVENT_REFRESH;
         this->event.set();
     }
 
@@ -107,7 +107,7 @@ public:
             this->ini.context_ask(AUTHID_TARGET_USER);
             this->ini.context_ask(AUTHID_TARGET_DEVICE);
             this->ini.context_ask(AUTHID_SELECTOR);
-            this->signal = BACK_EVENT_NEXT;
+            this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
         }
         else if (NOTIFY_SUBMIT == event) {
@@ -118,7 +118,7 @@ public:
                         this->selector.target_lines.get_current_index(),
                         this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
                 this->ini.parse_username(buffer);
-                this->signal = BACK_EVENT_NEXT;
+                this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
             }
             else if (widget->group_id == this->selector.apply.group_id) {
@@ -298,9 +298,9 @@ public:
 
     virtual BackEvent_t draw_event()
     {
-        this->signal = BACK_EVENT_NONE;
+        this->event.signal = BACK_EVENT_NONE;
         this->event.reset();
-        return this->signal;
+        return this->event.signal;
     }
 };
 

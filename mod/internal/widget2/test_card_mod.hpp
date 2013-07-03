@@ -71,7 +71,7 @@ public:
     {
         this->draw();
         this->event.reset();
-        return this->signal;
+        return this->event.signal;
     }
 
     void draw()

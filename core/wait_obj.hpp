@@ -31,15 +31,25 @@
 #include <arpa/inet.h>
 #include "difftimeval.hpp"
 
+enum BackEvent_t {
+    BACK_EVENT_NONE = 0,
+    BACK_EVENT_NEXT,
+    BACK_EVENT_STOP = 4,
+    BACK_EVENT_REFRESH,
+};
+
+
 class wait_obj
 {
     public:
     int obj;
     bool set_state;
+    BackEvent_t signal;
     struct timeval trigger_time;
     wait_obj(int sck) 
     : obj(sck)
-    , set_state(false) 
+    , set_state(false)
+    , signal(BACK_EVENT_NONE) 
     {
         this->trigger_time = tvtime();
     }
@@ -61,6 +71,7 @@ class wait_obj
 
     void reset()
     {
+        this->signal = BACK_EVENT_NONE;
         this->set_state = false;
     }
 

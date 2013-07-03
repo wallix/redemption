@@ -840,9 +840,18 @@ class SessionManager {
         // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
         break;
         case BACK_EVENT_REFRESH:
-//            LOG(LOG_INFO, "Back event refresh");
+        {
+            LOG(LOG_INFO, "Back event refresh");
+            int next_state = this->ask_next_module();
+
+            if (next_state != MCTX_STATUS_WAITING){
+                mod->refresh_context(*this->ini);
+                mod->event.set();
+            }
+        }
         break;
         case BACK_EVENT_NEXT:
+        {
             LOG(LOG_INFO, "Back event next");
             
             int next_state = this->ask_next_module();
@@ -850,6 +859,7 @@ class SessionManager {
             if (next_state != MCTX_STATUS_WAITING){
                 this->setup_mod(next_state, mod, no_mod, mod_transport, front);
             }
+        }
         break;
         }
     }

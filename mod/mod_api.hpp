@@ -35,13 +35,6 @@ enum {
     BUTTON_STATE_DOWN = 1,
 };
 
-enum BackEvent_t {
-    BACK_EVENT_NONE = 0,
-    BACK_EVENT_NEXT,
-    BACK_EVENT_STOP = 4,
-    BACK_EVENT_REFRESH,
-};
-
 
 struct mod_api : public Callback, public DrawApi {
     wait_obj event;

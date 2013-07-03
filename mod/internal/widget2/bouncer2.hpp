@@ -138,7 +138,7 @@ public:
         // Final with setting next idle time
         this->event.set(33333); // 0.3s is 30fps
 
-        return this->signal;
+        return this->event.signal;
     }
 
     void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip) {

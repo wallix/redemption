@@ -27,7 +27,6 @@
 struct InternalMod : public mod_api {
 public:
     FrontAPI & front;
-    BackEvent_t signal;
 
     WidgetScreen screen;
 //     int dragging;
@@ -40,7 +39,6 @@ public:
     InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
     : mod_api(front_width, front_height)
     , front(front)
-    , signal(BACK_EVENT_NONE)
     , screen(this, front_width, front_height)
     {
         this->front.server_resize(front_width, front_height, 24);
@@ -71,7 +69,7 @@ public:
 
     virtual void mod_event(int event_id)
     {
-        this->signal = static_cast<BackEvent_t>(event_id);
+        this->event.signal = static_cast<BackEvent_t>(event_id);
         this->event.set();
     }
 
