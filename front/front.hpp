@@ -466,7 +466,7 @@ public:
 
     }
 
-    void update_config(const Inifile & ini){
+    void update_config(Inifile & ini){
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)){
             this->capture->update_config(ini);

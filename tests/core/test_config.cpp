@@ -2267,3 +2267,5 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
     ini.globals.auth_user.set_from_cstr("someoneelse");
     BOOST_CHECK(!ini.check());
 }
+
+TODO("More tests with Field Class")
