@@ -243,7 +243,7 @@ struct Session {
                             break;
                             case BACK_EVENT_NEXT:
                                 this->acl->ask_next_module_remote();
-                                this->acl->signal = BACK_EVENT_REFRESH; 
+                                this->acl->signal = BACK_EVENT_NEXT; 
                             break;
                             }
                         }

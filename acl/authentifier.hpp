@@ -431,9 +431,6 @@ class SessionManager {
         }
     }
 
-    void check(BackEvent_t & last_mod_draw_event, ModuleManager & mm){
-    }
-
     int next_module()
     {
         if (this->signal == BACK_EVENT_NONE) {
