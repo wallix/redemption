@@ -3523,9 +3523,9 @@ public:
                 cb.rdp_input_up_and_running();
                 this->up_and_running = 1;
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
-                this->ini->context.opt_width  = this->client_info.width;
-                this->ini->context.opt_height = this->client_info.height;
-                this->ini->context.opt_bpp    = this->client_info.bpp;
+                this->ini->context.opt_width.set(this->client_info.width);
+                this->ini->context.opt_height.set(this->client_info.height);
+                this->ini->context.opt_bpp.set(this->client_info.bpp);
                 this->ini->parse_username(this->client_info.username);
                 if (this->client_info.password[0]) {
                     this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);

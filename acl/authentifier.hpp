@@ -605,7 +605,7 @@ class SessionManager {
             case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_DIALOG:
             {
                 LOG(LOG_INFO, "Authentifier::Creation of internal module 'Dialog Accept Message'");
-                const char * message = this->ini->context.message.c_str();
+                const char * message = this->ini->context.message.get_cstr();
                 const char * button = this->ini->translation.button_refused.c_str();
                 const char * caption = "Information";
                 mod = new DialogMod(
