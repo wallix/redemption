@@ -47,7 +47,9 @@ struct transitory_mod : public mod_api {
     virtual BackEvent_t draw_event()
     {
         LOG(LOG_INFO, "signal in transitory mode\n");
-        return BACK_EVENT_NEXT;
+        this->event.signal = BACK_EVENT_NEXT;
+        this->event.set();
+        return this->event.signal;
     }
 
     virtual void begin_update() {}

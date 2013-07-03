@@ -71,7 +71,6 @@ class wait_obj
 
     void reset()
     {
-        this->signal = BACK_EVENT_NONE;
         this->set_state = false;
     }
 

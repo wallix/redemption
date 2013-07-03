@@ -96,7 +96,6 @@ struct Session {
     Inifile  * ini;
     uint32_t & verbose;
 
-    submodule_t nextmod;
     int internal_state;
     long id;                     // not used
     time_t keep_alive_time;
@@ -118,7 +117,6 @@ struct Session {
         : front_event(front_event)
         , ini(ini)
         , verbose(this->ini->debug.session)
-        , nextmod(INTERNAL_NONE)
         , mod_transport(NULL)
         , acl(NULL)
         , ptr_auth_trans(NULL)
@@ -142,6 +140,8 @@ struct Session {
                 ini, enable_fastpath, tls_support, mem3blt_support);
             this->no_mod = new null_mod(*(this->front));
             this->mod = this->no_mod;
+            
+            ModuleManager mm(*this->front, *this->ini);
 
             /* module interface */
             this->keep_alive_time = 0;
@@ -162,7 +162,6 @@ struct Session {
             int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
             // We want to start a module
-            BackEvent_t last_mod_draw_event = BACK_EVENT_NEXT;
             while (1) {
 
                 if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
@@ -234,28 +233,53 @@ struct Session {
                     if (this->mod != this->no_mod){
                         if (this->mod->event.is_set(rfds)){
                             this->mod->event.reset();
-                            last_mod_draw_event = this->mod->draw_event();
+                            switch (this->mod->draw_event()){
+                            case BACK_EVENT_STOP:
+                            case BACK_EVENT_NONE:
+                            break;
+                            case BACK_EVENT_REFRESH:
+                                this->acl->ask_next_module_remote();
+                                this->acl->signal = BACK_EVENT_REFRESH; 
+                            break;
+                            case BACK_EVENT_NEXT:
+                                this->acl->ask_next_module_remote();
+                                this->acl->signal = BACK_EVENT_REFRESH; 
+                            break;
+                            }
                         }
                     }
                     
                     // Incoming data from ACL, or opening acl
                     if (!this->acl){
-                        this->connect_authentifier(last_mod_draw_event);
+                        this->connect_authentifier();
+                        this->acl->signal = BACK_EVENT_NEXT;
+                        this->acl->ask_next_module_remote();
                     }
                     else {
                         if (this->ptr_auth_event->is_set(rfds)){
                             // acl received updated values
                             this->acl->receive();
+        
+                            int next_state = this->acl->next_module();
+                            if (this->mod->event.signal == MODULE_RUNNING){
+                            }
+                            else if (this->mod->event.signal == MODULE_REFRESH) {
+                                this->mod->refresh_context(*this->ini);
+                                this->mod->event.signal = BACK_EVENT_NONE;
+                                this->mod->event.set();
+                           }
+                           else {
+                                mod_api * tmp_mod = mm.new_mod(next_state);
+                                if (tmp_mod != NULL){
+                                    if (this->mod != this->no_mod){
+                                        this->remove_mod();
+                                    }
+                                }
+                                this->mod = tmp_mod;
+                            }
                         }
-                        // take current state into account to:
-                        // - continue with same current module
-                        // - change current module
-                        // - refresh module that asked for it
-                        // - check keep alive or inactivity (may stop connection)
-                        this->acl->check(last_mod_draw_event, this->mod, this->no_mod, this->mod_transport, this->front);
                     }
                 }
-
             }
             this->front->disconnect();
         }
@@ -268,185 +292,6 @@ struct Session {
         LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         this->front->stop_capture();
     }
-
-                    // Mod refresh context
-//                        this->mod->refresh_context(*this->ini);
-//                        this->mod->event.set();
-                    // or Mod next module
-
-                // Check keep alive not reached
-//                if (!this->acl->check_keep_alive(this->keep_alive_time, timestamp)){
-//                }
-
-                // Check inactivity not reached
-//                if (!this->acl->check_inactivity(this->keep_alive_time, timestamp)){
-//                }
-
-                // Check movie start/stop/pause
-//                if (!this->acl->check_inactivity(this->keep_alive_time, timestamp)){
-//                }
-
-//                        // Check if acl received an answer to auth_channel_target
-//                        if (this->ini->globals.auth_channel[0]) {
-//                            // Get acl answer to AUTHCHANNEL_TARGET
-//                            if (!this->ini->context.authchannel_answer.is_empty()) {
-//                                // If set, transmit to auth_channel channel
-//                                this->mod->send_auth_channel_data(
-//                                    this->ini->context.authchannel_answer.c_str());
-//                                // Erase the context variable
-//                                this->ini->context.authchannel_answer.empty();
-//                            }
-//                        }
-
-                        // data incoming from server module
-//                        if (this->mod->event.is_set(rfds)){
-//                            this->mod->event.reset();
-//                            if (this->verbose & 8){
-//                                LOG(LOG_INFO, "Session::back_event fired");
-//                            }
-//                            BackEvent_t signal = this->mod->draw_event();
-//                            switch (signal){
-//                            case BACK_EVENT_NONE:
-//                                // continue with same module
-//                            break;
-//                            case BACK_EVENT_STOP:
-//                                // current module finished for some serious reason implying immediate exit
-//                                // without going to close box.
-//                                // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
-//                                this->internal_state = SESSION_STATE_STOP;
-//                                break;
-//                            case BACK_EVENT_REFRESH:
-//                            {
-//                                if (this->verbose & 8){
-//                                    LOG(LOG_INFO, "Session::back event refresh");
-//                                }
-//                                bool record_video = false;
-//                                bool keep_alive = false;
-//                                int next_state = this->sesman->ask_next_module(
-//                                                                    this->keep_alive_time,
-//                                                                    record_video, keep_alive, this->nextmod);
-//                                if (next_state != MCTX_STATUS_WAITING){
-//                                    this->internal_state = SESSION_STATE_RUNNING;
-//                                }
-//                                else {
-//                                    this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
-//                                }
-//                            }
-//                            break;
-//                            case BACK_EVENT_NEXT:
-//                            default:
-//                            {
-//                                if (this->verbose & 8){
-//                                   LOG(LOG_INFO, "Session::back event end module");
-//                                }
-//                               // end the current module and switch to new one
-//                                this->remove_mod();
-//                                bool record_video = false;
-//                                bool keep_alive = false;
-
-//                                int next_state = this->sesman->ask_next_module(
-//                                                                    this->keep_alive_time,
-//                                                                    record_video, keep_alive,
-//                                                                    this->nextmod);
-//                                if (this->verbose & 8){
-//                                    LOG(LOG_INFO, "session::next_state %u", next_state);
-//                                }
-
-//                                if (next_state != MCTX_STATUS_WAITING){
-//                                    this->internal_state = SESSION_STATE_STOP;
-//                                    try {
-//                                        this->session_setup_mod(next_state);
-//                                        if (record_video) {
-//                                            this->front->start_capture(
-//                                                this->front->client_info.width,
-//                                                this->front->client_info.height,
-//                                                *this->ini
-//                                                );
-//                                        }
-//                                        else {
-//                                            this->front->stop_capture();
-//                                        }
-//                                        if (this->sesman && keep_alive){
-//                                            this->sesman->start_keep_alive(keep_alive_time);
-//                                        }
-//                                        this->internal_state = SESSION_STATE_RUNNING;
-//                                    }
-//                                    catch (const Error & e) {
-//                                        LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
-//                                        this->nextmod = INTERNAL_CLOSE;
-//                                        this->session_setup_mod(MCTX_STATUS_INTERNAL);
-//                                        this->keep_alive_time = 0;
-//                                        delete sesman;
-//                                        this->sesman = NULL;
-//                                        this->internal_state = SESSION_STATE_RUNNING;
-//                                        this->front->stop_capture();
-//                                        LOG(LOG_INFO, "Session::capture stopped, authentifier stopped");
-//                                    }
-//                                }
-//                            }
-//                            break;
-//                            }
-//                        }
-//                    }
-//                    break;
-//                    case SESSION_STATE_CLOSE_CONNECTION:
-//                    {
-//                        if (this->mod->event.is_set(rfds)) {
-//                            this->internal_state = SESSION_STATE_STOP;
-//                        }
-//                    }
-//                    break;
-//                }
-//                if (this->internal_state == SESSION_STATE_STOP){
-//                    break;
-//                }
-
-
-//    if (!this->acl) {
-//        LOG(LOG_INFO, "Session::no authentifier available, closing");
-//        this->ini->context.auth_error_message.copy_c_str("No authentifier available");
-//        this->internal_state  = SESSION_STATE_CLOSE_CONNECTION;
-//        this->nextmod         = INTERNAL_CLOSE;
-//        this->session_setup_mod(MCTX_STATUS_INTERNAL);
-//        this->keep_alive_time = 0;
-//        this->internal_state  = SESSION_STATE_RUNNING;
-//        this->front->stop_capture();
-//    }
-
-
-//    if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
-//        this->front->set_console_session(true);
-//        LOG(LOG_INFO, "Session::mode console : force");
-//    }
-//    else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
-//        this->front->set_console_session(false);
-//        LOG(LOG_INFO, "Session::mode console : forbid");
-//    }
-//    else {
-//        // default is "allow", do nothing special
-//    }
-
-// Check movie start/stop/pause
-//    if (this->ini->globals.movie) {
-//        if (this->front->capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-//            this->front->start_capture( this->front->client_info.width
-//                                      , this->front->client_info.height
-//                                      , *this->ini
-//                                      );
-//            this->mod->rdp_input_invalidate(
-//                Rect( 0, 0, this->front->client_info.width
-//                    , this->front->client_info.height));
-//        }
-//        else if (this->front->capture_state == Front::CAPTURE_STATE_PAUSED) {
-//            this->front->resume_capture();
-//            this->mod->rdp_input_invalidate(
-//                Rect( 0, 0, this->front->client_info.width
-//                    , this->front->client_info.height));
-//        }
-//    }
-//    else if (this->front->capture_state == Front::CAPTURE_STATE_STARTED) {
-//        this->front->pause_capture();
-//    }
 
 
 
@@ -474,7 +319,7 @@ struct Session {
     }
 
 
-    void connect_authentifier(BackEvent_t & last_mod_draw_event)
+    void connect_authentifier()
     {
         int client_sck = ip_connect(this->ini->globals.authip,
                                     this->ini->globals.authport,
