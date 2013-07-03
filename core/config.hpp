@@ -407,9 +407,11 @@ static inline const char * string_from_authid(authid_t authid) {
 
 
 
-struct Inifile {
-private:
 
+
+
+struct Inifile {
+    //private:
     class BaseField {
     protected:
         bool asked;
@@ -424,44 +426,51 @@ private:
         {
         }
 
-    public:
-        void attach_ini(Inifile * p_ini) {
-            this->ini = p_ini;
-        }
         void notify() {
             if (this->ini)
                 this->ini->notify(this);
         }
+        inline void unask(){
+            this->asked = false;
+        }
+
+    public:
+        void attach_ini(Inifile * p_ini) {
+            this->ini = p_ini;
+        }
+
         void use() {
             this->modified = false;
         }
+
         bool has_changed() {
-            bool res = this->modified;
-            if (!this->asked)
-                this->use();
-            return res;
+            // if (!this->asked)
+            //     this->use();
+            return this->modified;
         }
-        void unask(){
-            this->asked = false;
-        }
+
+
         void ask() {
             this->asked = true;
             this->modified = true;
         }
+
         bool is_asked() {
             return this->asked;
         }
+
         bool has_been_read() {
             return this->read;
         }
-    
+
+        virtual const char* get_value() = 0;
     };
 
     class StringField : public BaseField {
     protected:
         redemption::string data;
     public:
-        StringField() : BaseField() 
+        StringField() : BaseField()
         {
         }
 
@@ -492,11 +501,18 @@ private:
         const char * get_cstr() {
             return this->get().c_str();
         }
+        const char * get_value() {
+            if (this->is_asked()) {
+                return "ASK";
+            }
+            return this->get().c_str();
+        }
     };
 
     class UnsignedField : public BaseField {
     protected:
         uint32_t data;
+        char buff[20];
     public:
         UnsignedField(): BaseField()
                        , data(0) {
@@ -528,11 +544,19 @@ private:
             this->read = true;
             return this->data;
         }
+        const char * get_value() {
+            if (this->is_asked()) {
+                return "ASK";
+            }
+            snprintf(buff, sizeof(buff), "%u", this->data);
+            return buff;
+        }
     };
 
     class SignedField : public BaseField {
     protected:
         signed data;
+        char buff[20];
     public:
         SignedField(): BaseField()
                      , data(0) {
@@ -555,6 +579,13 @@ private:
         const signed get() {
             this->read = true;
             return this->data;
+        }
+        const char * get_value() {
+            if (this->is_asked()) {
+                return "ASK";
+            }
+            snprintf(buff, sizeof(buff), "%u", this->data);
+            return buff;
         }
     };
 
@@ -584,7 +615,15 @@ private:
             this->read = true;
             return this->data;
         }
+        const char * get_value() {
+            if (this->is_asked()) {
+                return "ASK";
+            }            
+            return this->data?"True":"False";
+        }
     };
+
+private:
     bool something_changed;
     std::list< BaseField * > changed_list;
 
