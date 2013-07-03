@@ -261,9 +261,9 @@ struct Session {
                             this->acl->receive();
         
                             int next_state = this->acl->next_module();
-                            if (this->mod->event.signal == MODULE_RUNNING){
+                            if (next_state == MODULE_RUNNING){
                             }
-                            else if (this->mod->event.signal == MODULE_REFRESH) {
+                            else if (next_state == MODULE_REFRESH) {
                                 this->mod->refresh_context(*this->ini);
                                 this->mod->event.signal = BACK_EVENT_NONE;
                                 this->mod->event.set();

@@ -34,23 +34,6 @@
 #include "module_manager.hpp"
 
 class SessionManager {
-    enum {
-        MOD_STATE_INIT,
-        MOD_STATE_DONE_RECEIVED_CREDENTIALS,
-        MOD_STATE_DONE_DISPLAY_MESSAGE,
-        MOD_STATE_DONE_VALID_MESSAGE,
-        MOD_STATE_DONE_LOGIN,
-        MOD_STATE_DONE_SELECTOR,
-        MOD_STATE_DONE_PASSWORD,
-        MOD_STATE_DONE_CONNECTED,
-        MOD_STATE_DONE_CLOSE,
-        MOD_STATE_DONE_EXIT,
-    } mod_state;
-
-    // running module
-    // change module
-    // refresh module
-
     Inifile * ini;
 
     int tick_count;
@@ -65,8 +48,7 @@ class SessionManager {
 
     SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay,
                    int _max_tick, bool _internal_domain, uint32_t _verbose)
-        : mod_state(MOD_STATE_INIT)
-        , ini(_ini)
+        : ini(_ini)
         , tick_count(0)
         , signal(BACK_EVENT_NONE)
         , acl_serial(AclSerializer(_ini,_auth_trans,_verbose))
@@ -122,186 +104,187 @@ class SessionManager {
         this->acl_serial.send(AUTHID_AUTHCHANNEL_RESULT);
     }
 
-    bool close_on_timestamp(long & timestamp)
-    {
-        bool res = false;
-        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
-            if (enddate != 0 && (timestamp > enddate)) {
-                if (this->verbose & 0x10){
-                    LOG(LOG_INFO, "auth::close_on_timestamp");
-                }
-                LOG(LOG_INFO, "Session is out of allowed timeframe : stopping");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                res = true;
-            }
-        }
-        return res;
-    }
+//    bool close_on_timestamp(long & timestamp)
+//    {
+//        bool res = false;
+//        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
+//            long enddate = this->ini->context.end_date_cnx;
+//            if (enddate != 0 && (timestamp > enddate)) {
+//                if (this->verbose & 0x10){
+//                    LOG(LOG_INFO, "auth::close_on_timestamp");
+//                }
+//                LOG(LOG_INFO, "Session is out of allowed timeframe : stopping");
+//                this->mod_state = MOD_STATE_DONE_CLOSE;
+//                res = true;
+//            }
+//        }
+//        return res;
+//    }
 
-    bool keep_alive_checking(long & keepalive_time, long & now, Transport & trans)
-    {
+//    bool keep_alive_checking(long & keepalive_time, long & now, Transport & trans)
+//    {
 
-        //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
-        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
-            //            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-            if (enddate != 0 && (now > enddate)) {
-                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
+//        //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
+//        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
+//            long enddate = this->ini->context.end_date_cnx;
+//            //            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
+//            if (enddate != 0 && (now > enddate)) {
+//                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+//                this->mod_state = MOD_STATE_DONE_CLOSE;
+//                return false;
+//            }
+//        }
 
-        if (keepalive_time == 0){
-            //            LOG(LOG_INFO, "keep_alive disabled");
-            return true;
-        }
+//        if (keepalive_time == 0){
+//            //            LOG(LOG_INFO, "keep_alive disabled");
+//            return true;
+//        }
 
-        TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
-            if (now > (keepalive_time + this->keepalive_grace_delay)){
-                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
-                return false;
-            }
+//        TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
+//            if (now > (keepalive_time + this->keepalive_grace_delay)){
+//                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+//                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
+//                return false;
+//            }
 
 
-        if (now > keepalive_time){
-            // ===================== check if no traffic =====================
-            if (this->verbose & 8){
-                LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
-                    trans.last_quantum_received, trans.total_received,
-                    this->tick_count);
-            }
-            if (trans.last_quantum_received == 0){
-                this->tick_count++;
-                if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
-                    this->ini->context.auth_error_message.copy_c_str("Connection closed on inactivity");
-                    LOG(LOG_INFO, "Session ACL inactivity : closing");
-                    this->mod_state = MOD_STATE_DONE_CLOSE;
-                    return false;
-                }
+//        if (now > keepalive_time){
+//            // ===================== check if no traffic =====================
+//            if (this->verbose & 8){
+//                LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
+//                    trans.last_quantum_received, trans.total_received,
+//                    this->tick_count);
+//            }
+//            if (trans.last_quantum_received == 0){
+//                this->tick_count++;
+//                if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
+//                    this->ini->context.auth_error_message.copy_c_str("Connection closed on inactivity");
+//                    LOG(LOG_INFO, "Session ACL inactivity : closing");
+//                    this->mod_state = MOD_STATE_DONE_CLOSE;
+//                    return false;
+//                }
 
-                keepalive_time = now + this->keepalive_grace_delay;
-            }
-            else {
-                this->tick_count = 0;
-            }
-            trans.tick();
+//                keepalive_time = now + this->keepalive_grace_delay;
+//            }
+//            else {
+//                this->tick_count = 0;
+//            }
+//            trans.tick();
 
-            // ===================== check if keepalive ======================
-            try {
-                this->acl_serial.send(AUTHID_KEEPALIVE);
-            }
-            catch (...){
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
-        return true;
-    }
-    bool keep_alive_response(long & keepalive_time, long & now)
-    {
-        if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-        }
-        try {
-            this->acl_serial.incoming();
-            if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                keepalive_time = now + this->keepalive_grace_delay;
-                this->ini->context_ask(AUTHID_KEEPALIVE);
-            }
-        }
-        catch (...){
-            this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
-            this->mod_state = MOD_STATE_DONE_CLOSE;
-            return false;
-        }
-        return true;
-    }
+//            // ===================== check if keepalive ======================
+//            try {
+//                this->acl_serial.send(AUTHID_KEEPALIVE);
+//            }
+//            catch (...){
+//                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
+//                this->mod_state = MOD_STATE_DONE_CLOSE;
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
+
+//    bool keep_alive_response(long & keepalive_time, long & now)
+//    {
+//        if (this->verbose & 0x10){
+//            LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+//        }
+//        try {
+//            this->acl_serial.incoming();
+//            if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
+//                keepalive_time = now + this->keepalive_grace_delay;
+//                this->ini->context_ask(AUTHID_KEEPALIVE);
+//            }
+//        }
+//        catch (...){
+//            this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
+//            this->mod_state = MOD_STATE_DONE_CLOSE;
+//            return false;
+//        }
+//        return true;
+//    }
     
     
-    bool keep_alive(long & keepalive_time, long & now, Transport * trans, bool read_auth)
-    {
-//        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
-        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
-//            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-            if (enddate != 0 && (now > enddate)) {
-                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
+//    bool keep_alive(long & keepalive_time, long & now, Transport * trans, bool read_auth)
+//    {
+////        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
+//        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
+//            long enddate = this->ini->context.end_date_cnx;
+////            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
+//            if (enddate != 0 && (now > enddate)) {
+//                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+//                this->mod_state = MOD_STATE_DONE_CLOSE;
+//                return false;
+//            }
+//        }
 
-        if (keepalive_time == 0){
-//            LOG(LOG_INFO, "keep_alive disabled");
-            return true;
-        }
+//        if (keepalive_time == 0){
+////            LOG(LOG_INFO, "keep_alive disabled");
+//            return true;
+//        }
 
-        TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
-        if (now > (keepalive_time + this->keepalive_grace_delay)){
-            LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-            this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
-            return false;
-        }
+//        TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
+//        if (now > (keepalive_time + this->keepalive_grace_delay)){
+//            LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+//            this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
+//            return false;
+//        }
 
 
-        if (now > keepalive_time){
-            // ===================== check if no traffic =====================
-            if (this->verbose & 8){
-                LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
-                          trans->last_quantum_received, trans->total_received,
-                          this->tick_count);
-            }
-            if (trans->last_quantum_received == 0){
-                this->tick_count++;
-                if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
-                    this->ini->context.auth_error_message.copy_c_str("Connection closed on inactivity");
-                    LOG(LOG_INFO, "Session ACL inactivity : closing");
-                    this->mod_state = MOD_STATE_DONE_CLOSE;
-                    return false;
-                }
+//        if (now > keepalive_time){
+//            // ===================== check if no traffic =====================
+//            if (this->verbose & 8){
+//                LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
+//                          trans->last_quantum_received, trans->total_received,
+//                          this->tick_count);
+//            }
+//            if (trans->last_quantum_received == 0){
+//                this->tick_count++;
+//                if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
+//                    this->ini->context.auth_error_message.copy_c_str("Connection closed on inactivity");
+//                    LOG(LOG_INFO, "Session ACL inactivity : closing");
+//                    this->mod_state = MOD_STATE_DONE_CLOSE;
+//                    return false;
+//                }
 
-                keepalive_time = now + this->keepalive_grace_delay;
-            }
-            else {
-                this->tick_count = 0;
-            }
-            trans->tick();
+//                keepalive_time = now + this->keepalive_grace_delay;
+//            }
+//            else {
+//                this->tick_count = 0;
+//            }
+//            trans->tick();
 
-            // ===================== check if keepalive ======================
-            try {
-                this->acl_serial.send(AUTHID_KEEPALIVE);
-            }
-            catch (...){
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
+//            // ===================== check if keepalive ======================
+//            try {
+//                this->acl_serial.send(AUTHID_KEEPALIVE);
+//            }
+//            catch (...){
+//                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
+//                this->mod_state = MOD_STATE_DONE_CLOSE;
+//                return false;
+//            }
+//        }
 
-        if (read_auth) {
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-            }
-            try {
-                this->acl_serial.incoming();
-                if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                    keepalive_time = now + this->keepalive_grace_delay;
-                    this->ini->context_ask(AUTHID_KEEPALIVE);
-                }
-            }
-            catch (...){
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
+//        if (read_auth) {
+//            if (this->verbose & 0x10){
+//                LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+//            }
+//            try {
+//                this->acl_serial.incoming();
+//                if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
+//                    keepalive_time = now + this->keepalive_grace_delay;
+//                    this->ini->context_ask(AUTHID_KEEPALIVE);
+//                }
+//            }
+//            catch (...){
+//                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
+//                this->mod_state = MOD_STATE_DONE_CLOSE;
+//                return false;
+//            }
+//        }
 
-        return true;
-    }
+//        return true;
+//    }
 
     int get_mod_from_protocol()
     {
@@ -435,15 +418,17 @@ class SessionManager {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
                 protocol[0], protocol[1], protocol[2], protocol[3]);
             res = MODULE_EXIT;
-//            assert(false);
         }
         return res;
     }
 
     void receive(){
-        LOG(LOG_INFO, "ACL Receive()");
-        this->receive_next_module();
-        
+        try {
+            this->acl_serial.incoming();
+        } catch (...) {
+            this->ini->context.authenticated = false;
+            this->ini->context.rejected.copy_c_str("Authentifier service failed");
+        }
     }
 
     void check(BackEvent_t & last_mod_draw_event, ModuleManager & mm){
@@ -521,17 +506,6 @@ class SessionManager {
         this->acl_serial.ask_next_module_remote();
     }
 
-    void receive_next_module()
-    {
-        LOG(LOG_INFO, "received next module");
-        try {
-            this->acl_serial.incoming();
-        } catch (...) {
-            this->ini->context.authenticated = false;
-            this->ini->context.rejected.copy_c_str("Authentifier service failed");
-        }
-        this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
-    }
 };
 
 #endif
