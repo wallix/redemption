@@ -496,12 +496,6 @@ class SessionManager {
     }
 
 
-    void receive(){
-        LOG(LOG_INFO, "ACL Receive()");
-        this->receive_next_module();
-        
-    }
-
     void remove_mod(mod_api * & mod, mod_api * no_mod, Transport * & mod_transport)
     {
         if (mod != no_mod){
@@ -827,11 +821,16 @@ class SessionManager {
         }
     }
 
+
+    void receive(){
+        LOG(LOG_INFO, "ACL Receive()");
+        this->receive_next_module();
+        
+    }
+
     void check(BackEvent_t & last_mod_draw_event, mod_api * & mod, mod_api * no_mod, Transport * & mod_transport, Front * front){
-        LOG(LOG_INFO, "ACL Check()");
         switch (last_mod_draw_event) {
         case BACK_EVENT_NONE:
-        LOG(LOG_INFO, "Back event none");
         // continue with same module
         break;
         case BACK_EVENT_STOP:
@@ -841,7 +840,7 @@ class SessionManager {
         // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
         break;
         case BACK_EVENT_REFRESH:
-            LOG(LOG_INFO, "Back event refresh");
+//            LOG(LOG_INFO, "Back event refresh");
         break;
         case BACK_EVENT_NEXT:
             LOG(LOG_INFO, "Back event next");
@@ -853,8 +852,6 @@ class SessionManager {
             }
         break;
         }
-        
-        
     }
 
     int ask_next_module()
