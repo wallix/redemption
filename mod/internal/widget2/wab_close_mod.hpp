@@ -15,7 +15,7 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_WAB_CLOSE_MOD_HPP
@@ -43,7 +43,7 @@ private:
         temporary_text(Inifile& ini)
         {
             snprintf(text, sizeof(text), "%s@%s",
-                     ini.globals.target_user,
+                     ini.globals.target_user.get_cstr(),
                      ini.globals.target_device.get().c_str());
         }
     };
@@ -52,7 +52,7 @@ public:
     WabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
     , window_close(this, 0, 0, &this->screen, this, ini.context.auth_error_message.c_str(), 0,
-                   ini.context_is_asked(AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user,
+                   ini.context_is_asked(AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user.get_cstr(),
                    (ini.context_is_asked(AUTHID_TARGET_USER) || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
                        NULL : temporary_text(ini).text,
                    BLACK, GREY

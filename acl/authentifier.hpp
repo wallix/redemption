@@ -845,6 +845,7 @@ class SessionManager {
         break;
         case BACK_EVENT_NEXT:
             LOG(LOG_INFO, "Back event next");
+            
             int next_state = this->ask_next_module();
 
             if (next_state != MCTX_STATUS_WAITING){
