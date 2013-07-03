@@ -210,16 +210,16 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     } front(info, verbose);
 
     const char * name       = "RDP W2008 TLS Target";
-//    int          client_sck = ip_connect("192.168.1.200", 3389, 3, 1000, verbose);
+//     int          client_sck = ip_connect("192.168.1.50", 3389, 3, 1000, verbose);
 
-//    redemption::string  error_message;
-//    SocketTransport     t( name
-//                         , client_sck
-//                         , "192.168.1.200"
-//                         , 3389
-//                         , verbose
-//                         , &error_message
-//                         );
+//     redemption::string  error_message;
+//     SocketTransport     t( name
+//                          , client_sck
+//                          , "192.168.1.50"
+//                          , 3389
+//                          , verbose
+//                          , &error_message
+//                          );
 
     #include "fixtures/dump_TLSw2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
@@ -233,8 +233,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     const bool tls = true;
 
     struct mod_api * mod = new mod_rdp( &t
-                                      , "Administrateur"
-                                      , "1234"
+                                      , "administrateur@qa"
+                                      , "S3cur3!1nux"
                                       , "192.168.1.100"
                                       , front
                                       , "192-168-1-100"
