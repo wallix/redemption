@@ -789,3 +789,4 @@ unit-test test_widget2_multiline : tests/mod/internal/widget2/test_widget2_multi
 # unit-test test_widget2_wab_close : tests/mod/internal/widget2/test_wab_close.cpp png z openssl crypto libboost_unit_test ;
 
 # unit-test test_widget2_selector : tests/mod/internal/widget2/test_selector.cpp png z openssl crypto libboost_unit_test ;
+

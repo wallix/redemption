@@ -407,9 +407,11 @@ static inline const char * string_from_authid(authid_t authid) {
 
 
 
-struct Inifile {
-private:
 
+
+
+struct Inifile {
+    //private:
     class BaseField {
     protected:
         bool asked;
@@ -424,44 +426,52 @@ private:
         {
         }
 
-    public:
-        void attach_ini(Inifile * p_ini) {
-            this->ini = p_ini;
-        }
         void notify() {
             if (this->ini)
                 this->ini->notify(this);
         }
+        inline void unask(){
+            this->asked = false;
+        }
+
+    public:
+        void attach_ini(Inifile * p_ini) {
+            this->ini = p_ini;
+        }
+
         void use() {
             this->modified = false;
         }
+
         bool has_changed() {
-            bool res = this->modified;
-            if (!this->asked)
-                this->use();
-            return res;
+            // if (!this->asked)
+            //     this->use();
+            return this->modified;
         }
-        void unask(){
-            this->asked = false;
-        }
+
+
         void ask() {
             this->asked = true;
             this->modified = true;
         }
+
         bool is_asked() {
             return this->asked;
         }
+
         bool has_been_read() {
             return this->read;
         }
-    
+
+        virtual const char* get_value() = 0;
+        virtual const char* get_serialized(char * buff, size_t size) = 0;
     };
 
     class StringField : public BaseField {
     protected:
         redemption::string data;
     public:
-        StringField() : BaseField() 
+        StringField() : BaseField()
         {
         }
 
@@ -473,8 +483,9 @@ private:
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data.empty();
             }
-            this->data.empty();
+            
         }
         void set_from_cstr(const char * cstr) {
             this->asked = false;
@@ -482,21 +493,35 @@ private:
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data.copy_c_str(cstr);
             }
-            this->data.copy_c_str(cstr);
+
         }    
         const redemption::string & get() {
             this->read = true;
             return this->data;
         }
+
         const char * get_cstr() {
             return this->get().c_str();
         }
+
+        const char * get_value() {
+            if (this->is_asked()) {
+                return "ASK";
+            }
+            return this->get().c_str();
+        }
+        const char* get_serialized(char * buff, size_t size){
+            return NULL;
+        };
+
     };
 
     class UnsignedField : public BaseField {
     protected:
         uint32_t data;
+        char buff[20];
     public:
         UnsignedField(): BaseField()
                        , data(0) {
@@ -508,8 +533,9 @@ private:
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data = that;
             }
-            this->data = that;
+
         }
 
         void set_from_cstr(const char * cstr) {
@@ -528,11 +554,23 @@ private:
             this->read = true;
             return this->data;
         }
+
+        const char * get_value() {
+            if (this->is_asked()) {
+                return "ASK";
+            }
+            snprintf(buff, sizeof(buff), "%u", this->data);
+            return buff;
+        }
+        const char* get_serialized(char * buff, size_t size){
+            return NULL;
+        };
     };
 
     class SignedField : public BaseField {
     protected:
         signed data;
+        char buff[20];
     public:
         SignedField(): BaseField()
                      , data(0) {
@@ -544,8 +582,9 @@ private:
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data = that;
             }
-            this->data = that;
+
         }
 
         void set_from_cstr(const char * cstr) {
@@ -556,6 +595,16 @@ private:
             this->read = true;
             return this->data;
         }
+        const char * get_value() {
+            if (this->is_asked()) {
+                return "ASK";
+            }
+            snprintf(buff, sizeof(buff), "%u", this->data);
+            return buff;
+        }
+        const char* get_serialized(char * buff, size_t size){
+            return NULL;
+        };
     };
 
 
@@ -573,8 +622,9 @@ private:
                 this->modified = true;
                 this->read = false;
                 this->notify();
+                this->data = that;
             }
-            this->data = that;
+
         }
         void set_from_cstr(const char * cstr) {
             this->set(bool_from_cstr(cstr));
@@ -584,7 +634,18 @@ private:
             this->read = true;
             return this->data;
         }
+        const char * get_value() {
+            if (this->is_asked()) {
+                return "ASK";
+            }            
+            return this->data?"True":"False";
+        }
+        const char* get_serialized(char * buff, size_t size){
+            return NULL;
+        };
     };
+
+private:
     bool something_changed;
     std::list< BaseField * > changed_list;
 

@@ -52,11 +52,11 @@
 #include "RDP/sec.hpp"
 #include "colors.hpp"
 #include "RDP/bitmapupdate.hpp"
-//#include "RDP/capabilities.hpp"
+#include "RDP/clipboard.hpp"
 #include "RDP/fastpath.hpp"
 //#include "authentifier.hpp"
-#include "RDP/RefreshRectPDU.hpp"
 #include "RDP/protocol.hpp"
+#include "RDP/RefreshRectPDU.hpp"
 
 #include "genrandom.hpp"
 
@@ -296,32 +296,30 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
-    {
+    virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
+                                      , size_t length, size_t chunk_size, int flags) {
         const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
-        if (front_channel){
+        if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
 
-    virtual void send_to_mod_channel(
-                const char * const front_channel_name,
-                Stream & chunk,
-                size_t length,
-                uint32_t flags)
-    {
-        if (this->verbose & 16){
+    virtual void send_to_mod_channel( const char * const front_channel_name
+                                    , Stream & chunk
+                                    , size_t length
+                                    , uint32_t flags) {
+        if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
             LOG(LOG_INFO, "sending to channel %s", front_channel_name);
         }
 
         // Clipboard is unavailable and is a Clipboard PDU
-        if (!this->opt_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
-            if ( this->verbose ){
-                LOG( LOG_INFO, "mod_rdp clipboard PDU" );
+        if (!this->opt_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+            if (this->verbose) {
+                LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
 
-            if (!chunk.in_check_rem(2)){
+            if (!chunk.in_check_rem(2)) {
                 LOG(LOG_INFO, "mod_vnc::send_to_mod_channel truncated msgType, need=2 remains=%u",
                     chunk.in_remain());
                 throw Error(ERR_VNC);
@@ -329,30 +327,29 @@ struct mod_rdp : public mod_api {
 
             uint16_t msgType = chunk.in_uint16_le();
 
-            if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST){
-                if ( this->verbose ){
-                    LOG( LOG_INFO, "mod_rdp clipboard is unavailable" );
+            if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST) {
+                if (this->verbose) {
+                    LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                 }
 
-                TODO("RZ: duplicate code")
+                bool response_ok = false;
 
                 // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                 // 03 00 02 00 00 00 00 00
+                RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
+                BStream                         out_s(256);
 
-                BStream out_s(256);
-                out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
-                out_s.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
-                out_s.out_uint32_le(0);                                     //  - remaining datalen of message
-                out_s.mark_end();
+                format_list_response_pdu.emit(out_s);
 
-                size_t length = out_s.size();
+                size_t length     = out_s.size();
+                size_t chunk_size = length;
 
-                this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                            , out_s.get_data()
                                            , length
-                                           , out_s.size()
-                                           , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                           | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                           , chunk_size
+                                           ,   CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
+                                             | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                            );
 
                 return;
@@ -361,15 +358,15 @@ struct mod_rdp : public mod_api {
 
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
-        if (mod_channel){
-            if (this->verbose & 16){
+        if (mod_channel) {
+            if (this->verbose & 16) {
                 int index = this->mod_channel_list.get_index(front_channel_name);
                 mod_channel->log(index);
             }
             this->send_to_channel(*mod_channel, chunk, length, flags);
         }
 
-        if (this->verbose & 16){
+        if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
         }
     }
@@ -1422,41 +1419,41 @@ struct mod_rdp : public mod_api {
 //                    }
 //                }
 //                else 
-                if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
+                if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                     // Clipboard is unavailable and is a Clipboard PDU
 
                     TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
 
-                    if ( this->verbose ){
-                        LOG( LOG_INFO, "mod_rdp clipboard PDU" );
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "mod_rdp clipboard PDU");
                     }
 
                     uint16_t msgType = sec.payload.in_uint16_le();
 
-                    if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST){
-                        if ( this->verbose ){
-                            LOG( LOG_INFO, "mod_rdp clipboard is unavailable" );
+                    if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST) {
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                         }
 
-                        TODO("RZ: duplicate code")
+                        bool response_ok = true;
 
                         // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                         // 03 00 02 00 00 00 00 00
+                        RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
+                        BStream                         out_s(256);
 
-                        BStream out_s(256);
-                        out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
-                        out_s.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
-                        out_s.out_uint32_le(0);                                     //  - remaining datalen of message
-                        out_s.mark_end();
+                        format_list_response_pdu.emit(out_s);
 
-                        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+                        const CHANNELS::ChannelDef * mod_channel =
+                            this->mod_channel_list.get(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
-                        if (mod_channel){
-                            this->send_to_channel(*mod_channel,
-                                                  out_s,
-                                                  out_s.size(),
-                                                    CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                                  | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST);
+                        if (mod_channel) {
+                            this->send_to_channel( *mod_channel
+                                                 , out_s
+                                                 , out_s.size()
+                                                 ,   CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
+                                                   | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                                 );
                         }
                     }
                 }

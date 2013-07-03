@@ -353,7 +353,7 @@ class RDPMem3Blt {
         lg  += snprintf(
             buffer+lg,
             sz-lg,
-            "memblt(cache_id=%d rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d "
+            "mem3blt(cache_id=%d rect(%d,%d,%d,%d) rop=%x srcx=%d srcy=%d "
                 "back_color=%.6x fore_color=%.6x "
                 "brush.(org_x=%.2x, org_y=%.2x, style=%d hatch=%d extra=[%.2x,%.2x,%.2x,%.2x,%.2x,%.2x,%.2x]) "
                 "cache_idx=%d)",
