@@ -50,11 +50,12 @@
 #include "channel_list.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
+#include "authentifier.hpp"
 #include "colors.hpp"
 #include "RDP/bitmapupdate.hpp"
-#include "RDP/capabilities.hpp"
+#include "RDP/clipboard.hpp"
 #include "RDP/fastpath.hpp"
-#include "authentifier.hpp"
+#include "RDP/protocol.hpp"
 #include "RDP/RefreshRectPDU.hpp"
 
 #include "genrandom.hpp"
@@ -295,32 +296,30 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
-    {
+    virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
+                                      , size_t length, size_t chunk_size, int flags) {
         const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
-        if (front_channel){
+        if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
 
-    virtual void send_to_mod_channel(
-                const char * const front_channel_name,
-                Stream & chunk,
-                size_t length,
-                uint32_t flags)
-    {
-        if (this->verbose & 16){
+    virtual void send_to_mod_channel( const char * const front_channel_name
+                                    , Stream & chunk
+                                    , size_t length
+                                    , uint32_t flags) {
+        if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
             LOG(LOG_INFO, "sending to channel %s", front_channel_name);
         }
 
         // Clipboard is unavailable and is a Clipboard PDU
-        if (!this->opt_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
-            if ( this->verbose ){
-                LOG( LOG_INFO, "mod_rdp clipboard PDU" );
+        if (!this->opt_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+            if (this->verbose) {
+                LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
 
-            if (!chunk.in_check_rem(2)){
+            if (!chunk.in_check_rem(2)) {
                 LOG(LOG_INFO, "mod_vnc::send_to_mod_channel truncated msgType, need=2 remains=%u",
                     chunk.in_remain());
                 throw Error(ERR_VNC);
@@ -328,30 +327,29 @@ struct mod_rdp : public mod_api {
 
             uint16_t msgType = chunk.in_uint16_le();
 
-            if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST){
-                if ( this->verbose ){
-                    LOG( LOG_INFO, "mod_rdp clipboard is unavailable" );
+            if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST) {
+                if (this->verbose) {
+                    LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                 }
 
-                TODO("RZ: duplicate code")
+                bool response_ok = false;
 
                 // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                 // 03 00 02 00 00 00 00 00
+                RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
+                BStream                         out_s(256);
 
-                BStream out_s(256);
-                out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
-                out_s.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
-                out_s.out_uint32_le(0);                                     //  - remaining datalen of message
-                out_s.mark_end();
+                format_list_response_pdu.emit(out_s);
 
-                size_t length = out_s.size();
+                size_t length     = out_s.size();
+                size_t chunk_size = length;
 
-                this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                            , out_s.get_data()
                                            , length
-                                           , out_s.size()
-                                           , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                           | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                           , chunk_size
+                                           ,   CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
+                                             | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                            );
 
                 return;
@@ -360,15 +358,15 @@ struct mod_rdp : public mod_api {
 
         const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
-        if (mod_channel){
-            if (this->verbose & 16){
+        if (mod_channel) {
+            if (this->verbose & 16) {
                 int index = this->mod_channel_list.get_index(front_channel_name);
                 mod_channel->log(index);
             }
             this->send_to_channel(*mod_channel, chunk, length, flags);
         }
 
-        if (this->verbose & 16){
+        if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel done");
         }
     }
@@ -1286,11 +1284,12 @@ struct mod_rdp : public mod_api {
             BStream stream(65536);
 
             // Detect fast-path PDU
-            this->nego.trans->recv(&stream.end, 1);
-            uint8_t byte = stream.in_uint8();
-            if ((byte & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0){
-///////////////
-///////////////
+            X224::RecvFactory f( *this->nego.trans
+                               , stream
+                               , true               /* Support Fast-Path. */
+                               );
+
+            if (f.fast_path) {
                 FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
                 while (su.payload.in_remain()) {
                     FastPath::Update_Recv upd(su.payload);
@@ -1301,7 +1300,7 @@ struct mod_rdp : public mod_api {
                             this->orders.process_orders(this->bpp, upd.payload, true, this);
                             this->front.end_update();
 
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_ORDERS"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_BITMAP:
@@ -1309,7 +1308,7 @@ struct mod_rdp : public mod_api {
                             this->process_bitmap_updates(upd.payload, true);
                             this->front.end_update();
 
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_BITMAP"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_BITMAP"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_PALETTE:
@@ -1317,50 +1316,47 @@ struct mod_rdp : public mod_api {
                             this->process_palette(upd.payload, true);
                             this->front.end_update();
 
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PALETTE"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PALETTE"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_SYNCHRONIZE, not yet supported"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_SYNCHRONIZE, not yet supported"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL, not yet supported"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_NULL, not yet supported"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT, not yet supported"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_DEFAULT, not yet supported"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_POINTER:
                             this->process_new_pointer_pdu(upd.payload);
 
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_POINTER"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_POINTER"); }
                         break;
 
                         case FastPath::FASTPATH_UPDATETYPE_CACHED:
                             this->process_cached_pointer_pdu(upd.payload);
 
-                            if (this->verbose & 8){ LOG(LOG_INFO, "FASTPATH_UPDATETYPE_CACHED"); }
+                            if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_CACHED"); }
                         break;
 
                         default:
-                            LOG(LOG_INFO, "mod::rdp: received unexpected fast-path PUD, updateCode = %u",
-                                upd.updateCode);
+                            LOG(LOG_INFO, "mod::rdp: received unexpected fast-path PUD, updateCode = %u"
+                               , upd.updateCode);
                             throw Error(ERR_RDP_FASTPATH);
                         break;
                     }
                 }
                 break;
-///////////////
-///////////////
             }
 
-            X224::RecvFactory f(*this->nego.trans, stream);
             X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
             SubStream & mcs_data = x224.payload;
             MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
@@ -1422,41 +1418,41 @@ struct mod_rdp : public mod_api {
                         this->sesman->set_auth_channel_result(auth_channel_message + 7);
                     }
                 }
-                else if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)){
+                else if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                     // Clipboard is unavailable and is a Clipboard PDU
 
                     TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
 
-                    if ( this->verbose ){
-                        LOG( LOG_INFO, "mod_rdp clipboard PDU" );
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "mod_rdp clipboard PDU");
                     }
 
                     uint16_t msgType = sec.payload.in_uint16_le();
 
-                    if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST){
-                        if ( this->verbose ){
-                            LOG( LOG_INFO, "mod_rdp clipboard is unavailable" );
+                    if (msgType == CHANNELS::ChannelDef::CB_FORMAT_LIST) {
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "mod_rdp clipboard is unavailable");
                         }
 
-                        TODO("RZ: duplicate code")
+                        bool response_ok = true;
 
                         // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                         // 03 00 02 00 00 00 00 00
+                        RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
+                        BStream                         out_s(256);
 
-                        BStream out_s(256);
-                        out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
-                        out_s.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
-                        out_s.out_uint32_le(0);                                     //  - remaining datalen of message
-                        out_s.mark_end();
+                        format_list_response_pdu.emit(out_s);
 
-                        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+                        const CHANNELS::ChannelDef * mod_channel =
+                            this->mod_channel_list.get(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
-                        if (mod_channel){
-                            this->send_to_channel(*mod_channel,
-                                                  out_s,
-                                                  out_s.size(),
-                                                    CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                                  | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST);
+                        if (mod_channel) {
+                            this->send_to_channel( *mod_channel
+                                                 , out_s
+                                                 , out_s.size()
+                                                 ,   CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
+                                                   | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                                 );
                         }
                     }
                 }
@@ -1726,103 +1722,68 @@ struct mod_rdp : public mod_api {
 
             BStream stream(65536);
 
-            // shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for
-            // the packet (see [T128] section 8.4.2 for more information regarding share IDs).
+            RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
 
-            // Payload
-            stream.out_uint32_le(this->share_id);
-            stream.out_uint16_le(1002);
-
-            // lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes
-            // of the sourceDescriptor field.
-            stream.out_uint16_le(5);
-
-            // lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined
-            // size in bytes of the numberCapabilities, pad2Octets, and capabilitySets fields.
-            uint16_t offset_caplen = stream.get_offset();
-            stream.out_uint16_le(0); // caplen
-
-            // sourceDescriptor (variable): A variable-length array of bytes containing a
-            // source descriptor (see [T128] section 8.4.1 for more information regarding
-            // source descriptors).
-            stream.out_copy_bytes("MSTSC", 5);
-
-            // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of
-            // capability sets include " in the Demand Active PDU.
-            uint16_t offset_capscount = stream.get_offset();
-            uint16_t capscount = 0;
-            stream.out_uint16_le(0); /* num_caps */
-
-            // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in
-            // this field MUST be ignored.
-            stream.out_clear_bytes(2); /* pad */
-
-            // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1)
-            // structures. The number of capability sets is specified by the numberCapabilities field.
-            uint16_t total_caplen = stream.get_offset();
+            confirm_active_pdu.emit_begin(this->share_id);
 
             GeneralCaps general_caps;
+            general_caps.extraflags  =
+                  this->use_rdp5
+                ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
+                : 0
+                ;
 // Slow/Fast-path
-            if (!this->server_fastpath_update_support) {
-                general_caps.extraflags = this->use_rdp5 ? NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:0;
-            }
-            else {
-                general_caps.extraflags = this->use_rdp5 ? FASTPATH_OUTPUT_SUPPORTED|NO_BITMAP_COMPRESSION_HDR|AUTORECONNECT_SUPPORTED|LONG_CREDENTIALS_SUPPORTED:FASTPATH_OUTPUT_SUPPORTED;
-            }
+            general_caps.extraflags |=
+                  this->server_fastpath_update_support
+                ? FASTPATH_OUTPUT_SUPPORTED
+                : 0
+                ;
             if (this->verbose) {
                 general_caps.log("Sending to server");
             }
-            general_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(general_caps);
 
             BitmapCaps bitmap_caps;
             bitmap_caps.preferredBitsPerPixel = this->bpp;
-            bitmap_caps.desktopWidth = this->front_width;
-            bitmap_caps.desktopHeight = this->front_height;
+            bitmap_caps.desktopWidth          = this->front_width;
+            bitmap_caps.desktopHeight         = this->front_height;
             bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
             if (this->verbose) {
                 bitmap_caps.log("Sending bitmap caps to server");
             }
-            bitmap_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(bitmap_caps);
 
             OrderCaps order_caps;
-            order_caps.numberFonts = 0x147;
-            order_caps.orderFlags = 0x2a;
-            order_caps.orderSupport[TS_NEG_DSTBLT_INDEX] = 1;
-            order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
-            order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
-            order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
-            order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] = (this->mem3blt_support ? 1 : 0);
-            order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
+            order_caps.numberFonts                                   = 0x147;
+            order_caps.orderFlags                                    = 0x2a;
+            order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
+            order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
+            order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
+            order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
+            order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
+            order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
             order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
-            order_caps.orderSupport[UnusedIndex3] = 1;
-            order_caps.orderSupport[UnusedIndex5] = 1;
-            order_caps.orderSupport[TS_NEG_INDEX_INDEX] = 1;
-            order_caps.textFlags = 0x06a1;
-            order_caps.textANSICodePage = 0x4e4; // Windows-1252 code"page is passed (latin-1)
+            order_caps.orderSupport[UnusedIndex3]                    = 1;
+            order_caps.orderSupport[UnusedIndex5]                    = 1;
+            order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
+            order_caps.textFlags                                     = 0x06a1;
+            order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
             if (this->verbose) {
                 order_caps.log("Sending order caps to server");
             }
-            order_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(order_caps);
 
-            BmpCacheCaps bmpcache_caps;
-            bmpcache_caps.cache0Entries = 0x258;
-            bmpcache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
-            bmpcache_caps.cache1Entries = 0x12c;
-            bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
-            bmpcache_caps.cache2Entries = 0x106;
-            bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
+            BmpCacheCaps bmp_cache_caps;
+            bmp_cache_caps.cache0Entries         = 0x258;
+            bmp_cache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
+            bmp_cache_caps.cache1Entries         = 0x12c;
+            bmp_cache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
+            bmp_cache_caps.cache2Entries         = 0x106;
+            bmp_cache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
             if (this->verbose) {
-                bmpcache_caps.log("Sending bmpcache caps to server");
+                bmp_cache_caps.log("Sending bmp cache caps to server");
             }
-            bmpcache_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(bmp_cache_caps);
 
 //            if(this->use_rdp5){
 //                BmpCache2Caps bmpcache2_caps;
@@ -1830,110 +1791,78 @@ struct mod_rdp : public mod_api {
 //                bmpcache2_caps.bitmapCache0CellInfo = 2000;
 //                bmpcache2_caps.bitmapCache1CellInfo = 2000;
 //                bmpcache2_caps.bitmapCache2CellInfo = 2000;
-//                bmpcache2_caps.emit(stream);
-//                stream.mark_end();
-//                capscount++;
+//                confirm_active_pdu.emit_capability_set(bmpcache2_caps);
 //            }
 
             ColorCacheCaps colorcache_caps;
             if (this->verbose) {
                 colorcache_caps.log("Sending colorcache caps to server");
             }
-            colorcache_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(colorcache_caps);
 
             ActivationCaps activation_caps;
             if (this->verbose) {
                 activation_caps.log("Sending activation caps to server");
             }
-            activation_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(activation_caps);
 
             ControlCaps control_caps;
             if (this->verbose) {
                 control_caps.log("Sending control caps to server");
             }
-            control_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(control_caps);
 
             PointerCaps pointer_caps;
-            pointer_caps.len = 10;
+            pointer_caps.len                       = 10;
             if (this->enable_new_pointer == false) {
-                pointer_caps.pointerCacheSize = 0;
+                pointer_caps.pointerCacheSize      = 0;
                 pointer_caps.colorPointerCacheSize = 20;
-                pointer_caps.len = 8;
+                pointer_caps.len                   = 8;
             }
             if (this->verbose) {
                 pointer_caps.log("Sending pointer caps to server");
             }
-            pointer_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(pointer_caps);
 
             ShareCaps share_caps;
             if (this->verbose) {
                 share_caps.log("Sending share caps to server");
             }
-            share_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(share_caps);
 
             InputCaps input_caps;
             if (this->verbose) {
                 input_caps.log("Sending input caps to server");
             }
-            input_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(input_caps);
 
             SoundCaps sound_caps;
             if (this->verbose) {
                 sound_caps.log("Sending sound caps to server");
             }
-            sound_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(sound_caps);
 
             FontCaps font_caps;
             if (this->verbose) {
                 font_caps.log("Sending font caps to server");
             }
-            font_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(font_caps);
 
             GlyphSupportCaps glyphsupport_caps;
             if (this->verbose) {
                 glyphsupport_caps.log("Sending glyphsupport caps to server");
             }
-            glyphsupport_caps.emit(stream);
-            stream.mark_end();
-            capscount++;
+            confirm_active_pdu.emit_capability_set(glyphsupport_caps);
 
 //            BrushCacheCaps brushcache_caps;
 //            brushcache_caps.log("Sending brushcache caps to server");
-//            brushcache_caps.emit(stream);
-//            stream.mark_end();
-//            capscount++;
+//            confirm_active_pdu.emit_capability_set(BrushCacheCaps);
 
 //            CompDeskCaps compdesk_caps;
 //            compdesk_caps.log("Sending compdesk caps to server");
-//            compdesk_caps.emit(stream);
-//            stream.mark_end();
-//            capscount++;
+//            confirm_active_pdu.emit_capability_set(CompDeskCaps);
 
-            TODO("CGR: Check caplen here")
-            total_caplen = stream.get_offset() - total_caplen;
-
-            // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
-            stream.out_uint32_le(0);
-            stream.mark_end();
-
-            stream.set_out_uint16_le(total_caplen + 4, offset_caplen); // caplen
-            stream.set_out_uint16_le(capscount, offset_capscount); // caplen
+            confirm_active_pdu.emit_end();
 
             BStream x224_header(256);
             BStream mcs_header(256);
@@ -2025,30 +1954,15 @@ struct mod_rdp : public mod_api {
             }
         }
 
-        void process_palette(Stream & stream, bool fast_path)
-        {
-            if (this->verbose & 4){
+        void process_palette(Stream & stream, bool fast_path) {
+            if (this->verbose & 4) {
                 LOG(LOG_INFO, "mod_rdp::process_palette");
             }
 
-            if (fast_path) {
-                stream.in_skip_bytes(2); // updateType(2)
-            }
-
-            stream.in_skip_bytes(2); /* pad */
-            TODO("CGR: check that : why am I reading 32 bits into 16 bits ?")
-            uint16_t numberColors = stream.in_uint32_le();
-            assert(numberColors == 256);
-            for (int i = 0; i < numberColors; i++) {
-                uint8_t r = stream.in_uint8();
-                uint8_t g = stream.in_uint8();
-                uint8_t b = stream.in_uint8();
-//                uint32_t color = stream.in_bytes_le(3);
-                this->orders.global_palette[i] = (r << 16)|(g << 8)|b;
-                this->orders.memblt_palette[i] = (b << 16)|(g << 8)|r;
-            }
+            RDP::UpdatePaletteData_Recv(stream, fast_path, this->orders.global_palette);
             this->front.set_mod_palette(this->orders.global_palette);
-            if (this->verbose & 4){
+
+            if (this->verbose & 4) {
                 LOG(LOG_INFO, "mod_rdp::process_palette done");
             }
         }

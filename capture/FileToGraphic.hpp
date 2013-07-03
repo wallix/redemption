@@ -256,7 +256,7 @@ struct FileToGraphic
             else if (control & RDP::SECONDARY) {
                 using namespace RDP;
                 RDPSecondaryOrderHeader header(this->stream);
-                uint8_t *next_order = this->stream.p + header.length + 7;
+                uint8_t *next_order = this->stream.p + header.order_data_length();
                 switch (header.type) {
                 case TS_CACHE_BITMAP_COMPRESSED:
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
@@ -728,6 +728,10 @@ struct FileToGraphic
                              , bitmap_data.bitmap_size()
                              , (bitmap_data.flags & BITMAP_COMPRESSION)
                              );
+
+                if (this->verbose > 32){
+                    bitmap_data.log(LOG_INFO, "         ");
+                }
 
                 for (size_t i = 0; i < this->nbconsumers ; i++) {
                     this->consumers[i]->draw( bitmap_data

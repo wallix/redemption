@@ -98,7 +98,7 @@ extern "C" {
             LOG(LOG_INFO, "=============== Common Part =======");
             hexdump_c(&(((const char *)data)[0]), differs);
             LOG(LOG_INFO, "=============== Expected ==========");
-            hexdump(&((const char *)self->data)[self->current+differs], available_len - differs);
+            hexdump_c(&((const char *)self->data)[self->current+differs], available_len - differs);
             LOG(LOG_INFO, "=============== Got ===============");
             hexdump_c(&(((const char *)data)[differs]), available_len - differs);
             rio_m_RIOCheck_destructor(self);

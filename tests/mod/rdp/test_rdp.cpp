@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Unit test to writing RDP orders to file and rereading them
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -274,7 +273,7 @@
 
             }
     };
-    
+
 BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 {
     ClientInfo info(1, true, true);
@@ -291,15 +290,15 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
     const char * name = "RDP XP Target";
 
-    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
-    // redemption::string error_message;
-    // SocketTransport t( name
-    //                  , client_sck
-    //                  , "10.10.47.175"
-    //                  , 3389
-    //                  , verbose
-    //                  , &error_message
-    //                  );
+//     int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
+//     redemption::string error_message;
+//     SocketTransport t( name
+//                      , client_sck
+//                      , "10.10.47.175"
+//                      , 3389
+//                      , verbose
+//                      , &error_message
+//                      );
 
 
     #include "fixtures/dump_xp_mem3blt.hpp"
@@ -358,7 +357,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     }
 
 //    front.dump_png("trace_xp_");
-}    
+}
 
 BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
@@ -377,8 +376,15 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     const char * name = "RDP W2008 Target";
 
-//    ClientSocketTransport t(name, "10.10.14.78", 3389, 3, 1000, verbose);
-//    t.connect();
+//    int client_sck = ip_connect("10.10.46.78", 3389, 3, 1000, verbose);
+//    redemption::string error_message;
+//    SocketTransport t( name
+//                     , client_sck
+//                     , "10.10.46.78"
+//                     , 3389
+//                     , verbose
+//                     , &error_message
+//                     );
 
     #include "fixtures/dump_w2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
@@ -415,7 +421,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
     BOOST_CHECK(t.get_status());
-
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
 
@@ -429,7 +434,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     }
 
 //    front.dump_png("trace_w2008_");
-
 }
 
 BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
@@ -545,7 +549,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 //                     , verbose
 //                     , &error_message
 //                     );
-
 
     #include "fixtures/dump_w2000_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
