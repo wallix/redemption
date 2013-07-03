@@ -464,6 +464,7 @@ struct Inifile {
         }
 
         virtual const char* get_value() = 0;
+        virtual const char* get_serialized(char * buff, size_t size) = 0;
     };
 
     class StringField : public BaseField {
@@ -498,15 +499,21 @@ struct Inifile {
             this->read = true;
             return this->data;
         }
+
         const char * get_cstr() {
             return this->get().c_str();
         }
+
         const char * get_value() {
             if (this->is_asked()) {
                 return "ASK";
             }
             return this->get().c_str();
         }
+        const char* get_serialized(char * buff, size_t size){
+            return NULL;
+        };
+
     };
 
     class UnsignedField : public BaseField {
@@ -544,6 +551,7 @@ struct Inifile {
             this->read = true;
             return this->data;
         }
+
         const char * get_value() {
             if (this->is_asked()) {
                 return "ASK";
@@ -551,6 +559,9 @@ struct Inifile {
             snprintf(buff, sizeof(buff), "%u", this->data);
             return buff;
         }
+        const char* get_serialized(char * buff, size_t size){
+            return NULL;
+        };
     };
 
     class SignedField : public BaseField {
@@ -587,6 +598,9 @@ struct Inifile {
             snprintf(buff, sizeof(buff), "%u", this->data);
             return buff;
         }
+        const char* get_serialized(char * buff, size_t size){
+            return NULL;
+        };
     };
 
 
@@ -621,6 +635,9 @@ struct Inifile {
             }            
             return this->data?"True":"False";
         }
+        const char* get_serialized(char * buff, size_t size){
+            return NULL;
+        };
     };
 
 private:
