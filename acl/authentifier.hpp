@@ -605,8 +605,8 @@ class SessionManager {
             case MCTX_STATUS_INTERNAL_INTERNAL_WIDGET2_DIALOG:
             {
                 LOG(LOG_INFO, "Authentifier::Creation of internal module 'Dialog Accept Message'");
-                const char * message = this->ini->context.message.get_cstr();
-                const char * button = this->ini->translation.button_refused.c_str();
+                const char * message = this->ini->context.message.c_str();
+                const char * button = this->ini->translation.button_refused.get().c_str();
                 const char * caption = "Information";
                 mod = new DialogMod(
                     *this->ini,
@@ -675,7 +675,7 @@ class SessionManager {
                 }
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             4, 1000,
                                             this->ini->debug.mod_xup);
 
@@ -688,7 +688,7 @@ class SessionManager {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_xup);
                 mod_transport = t;
 
@@ -697,9 +697,9 @@ class SessionManager {
                                    , *front
                                    , front->client_info.width
                                    , front->client_info.height
-                                   , this->ini->context.opt_width
-                                   , this->ini->context.opt_height
-                                   , this->ini->context.opt_bpp
+                                   , this->ini->context.opt_width.get()
+                                   , this->ini->context.opt_height.get()
+                                   , this->ini->context.opt_bpp.get()
                                    );
                 mod->event.obj = client_sck;
                 mod->draw_event();
@@ -722,7 +722,7 @@ class SessionManager {
                 static const char * name = "RDP Target";
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             3, 1000,
                                             this->ini->debug.mod_rdp);
 
@@ -736,7 +736,7 @@ class SessionManager {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_rdp
                     , &this->ini->context.auth_error_message
                     );
@@ -780,7 +780,7 @@ class SessionManager {
 
 
                 int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port,
+                                            this->ini->context.target_port.get(),
                                             3, 1000,
                                             this->ini->debug.mod_vnc);
 
@@ -793,7 +793,7 @@ class SessionManager {
                       name
                     , client_sck
                     , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port
+                    , this->ini->context.target_port.get()
                     , this->ini->debug.mod_vnc);
                 mod_transport = t;
 
@@ -1004,6 +1004,7 @@ class SessionManager {
 
     void receive_next_module()
     {
+        LOG(LOG_INFO, "received next module");
         try {
             this->acl_serial.incoming();
         } catch (...) {
