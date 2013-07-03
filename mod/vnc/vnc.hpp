@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Vnc module
-
 */
 
 #ifndef _REDEMPTION_MOD_VNC_VNC_HPP_
@@ -38,6 +37,8 @@
 #include "keymapSym.hpp"
 #include "mod_api.hpp"
 #include "channel_list.hpp"
+
+#include "RDP/clipboard.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -1118,14 +1119,14 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
     //==============================================================================================================
     void send_to_vnc( const CHANNELS::ChannelDef & channel
-                        , Stream & chunk
-                        , size_t length
-                        , uint32_t flags
-                        )
+                    , Stream & chunk
+                    , size_t length
+                    , uint32_t flags
+                    ) {
     //==============================================================================================================
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "mod_vnc::send_to_vnc length=%u chunk_size=%u flags=0x%08X", (unsigned)length, (unsigned)chunk.size(), flags);
+        if (this->verbose) {
+            LOG( LOG_INFO, "mod_vnc::send_to_vnc length=%u chunk_size=%u flags=0x%08X"
+               , (unsigned)length, (unsigned)chunk.size(), flags);
         }
 
         // specific treatement depending on msgType
@@ -1135,15 +1136,9 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         stream.mark_end();
         stream.rewind();
 
-        if (!stream.in_check_rem(2)){
-            LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated msgType, need=2 remains=%u",
-                stream.in_remain());
-            throw Error(ERR_VNC);
-        }
+        RDPECLIP::RecvFactory recv_factory(stream);
 
-        uint16_t msgType = stream.in_uint16_le();
-
-        switch (msgType) {
+        switch (recv_factory.msgType) {
             // Client notify that a copy operation have occured. Two operations should be done :
             //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
             //  - Only if clipboard content formats list include "NICODETEXT: send a request for it in that format
@@ -1151,88 +1146,49 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             {
                 // Always coming from front
                 LOG(LOG_INFO, "mod_vnc::send_to_vnc - receiving CB_FORMAT_LIST");
-                bool isTextCB = false;
 
-                unsigned expected = 6; /* msgFlags(2) + dataLen(4) */
-                if (!stream.in_check_rem(expected)){
-                    LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_LIST data, need=%u remains=%u",
-                        expected, stream.in_remain());
-                    throw Error(ERR_VNC);
-                }
+                RDPECLIP::FormatListPDU format_list_pdu;
 
-                uint16_t msgFlags = stream.in_uint16_le();
-                uint32_t dataLen = stream.in_uint32_le();
+                format_list_pdu.recv(stream, recv_factory);
 
-                // Parse PDU to find if clipboard data is available in a TEXT format for suitable VNC
-                for(uint32_t i = 0; i < (dataLen / 36); i++) {
-                    expected = 36; /* contentType(4) + ignored(32) */
-                    if (!stream.in_check_rem(expected)){
-                        LOG(LOG_INFO, "mod_vnc::send_to_vnc truncated CB_FORMAT_LIST clipboard data, need=%u remains=%u",
-                            expected, stream.in_remain());
-                        throw Error(ERR_VNC);
-                    }
-                    uint32_t contentType = stream.in_uint32_le();
-                    stream.in_skip_bytes(32); // skip format name
-                    if ((contentType == CHANNELS::CF_UNICODETEXT) || (contentType == CHANNELS::CF_TEXT)) {
-                        LOG(LOG_INFO, "mod_vnc::send_to_vnc contentType=%u", contentType);
-                        isTextCB = true;
-                    }
-                }
-
-                if (this->opt_clipboard && isTextCB) {
-                    // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
-
-                    // 03 00 01 00 00 00 00 00 00 00 00 00
-
+                if (this->opt_clipboard && format_list_pdu.contians_data_in_text_format) {
                     //--------------------------- Beginning of clipboard PDU Header ----------------------------
-
-                    // 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
-                    // =======================================================
-                    // The Format List Response PDU is sent as a reply to the Format List PDU. It is used to indicate
-                    // whether processing of the Format List PDU was successful.
-
-                    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU
-                    // Header MUST be set to CB_FORMAT_LIST_RESPONSE (0x0003). The CB_RESPONSE_OK
-                    // (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in the msgFlags field of the
-                    // Clipboard PDU Header.
 
                     TODO("Create a unit tested class for clipboard messages")
 
-                    BStream out_s(256);
-                    out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
-                    out_s.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_OK);            //  - MSG flags 2 bytes
-                    out_s.out_uint32_le(0);   //  - Datalen of the rest of the message
-                    //--------------------------- End of clipboard PDU Header ----------------------------------
-                    out_s.mark_end();
+                    bool response_ok = true;
 
-                    size_t length = out_s.size();
+                    // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
+                    // 03 00 01 00 00 00 00 00 00 00 00 00
+                    RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
+                    BStream                         out_s(256);
 
-                    this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                    format_list_response_pdu.emit(out_s);
+
+                    size_t length     = out_s.size();
+                    size_t chunk_size = length;
+
+                    this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s.get_data()
                                                , length
-                                               , out_s.size()
-                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                               | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                               , chunk_size
+                                               ,   CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
+                                                 | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                                );
 
 
                     // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
-                    BStream out_s2(8192);
-
                     // 04 00 00 00 04 00 00 00 0d 00 00 00
                     // 00 00 00 00
+                    RDPECLIP::FormatDataRequestPDU format_data_request_pdu(CHANNELS::CF_UNICODETEXT);
+                    BStream                        out_s2(256);
 
-                    out_s2.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_DATA_REQUEST);   //  - MSG Type 2 bytes
-                    out_s2.out_uint16_le(0);                                    //  - MSG flags 2 bytes
-                    out_s2.out_uint32_le(4);                                    //  - Remainign datalen of the message
-                    out_s2.out_uint32_le(CHANNELS::CF_UNICODETEXT);                       //  - Payload
-//                    out_s2.out_clear_bytes(4);
-                    out_s2.mark_end();
+                    format_data_request_pdu.emit(out_s2);
 
-                    length = out_s2.size();
-                    size_t chunk_size = length;
+                    length     = out_s2.size();
+                    chunk_size = length;
 
-                    this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                    this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s2.get_data()
                                                , length
                                                , chunk_size
@@ -1242,24 +1198,24 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 }
                 else {
                     TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
+                    TODO("RZ: Create a unit tested class for clipboard messages")
+
+                    bool response_ok = false;
 
                     // Build and send the CB_FORMAT_LIST_RESPONSE (with status = FAILED)
                     // 03 00 02 00 00 00 00 00
+                    RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
+                    BStream                         out_s(256);
 
-                    TODO("Create a unit tested class for clipboard messages")
+                    format_list_response_pdu.emit(out_s);
 
-                    BStream out_s(256);
-                    out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE);   //  - MSG Type 2 bytes
-                    out_s.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_FAIL);          //  - MSG flags 2 bytes
-                    out_s.out_uint32_le(0);                                     //  - remaining datalen of message
-                    out_s.mark_end();
+                    size_t length     = out_s.size();
+                    size_t chunk_size = length;
 
-                    size_t length = out_s.size();
-
-                    this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
+                    this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                                , out_s.get_data()
                                                , length
-                                               , out_s.size()
+                                               , chunk_size
                                                , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
                                                | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
                                                );
@@ -1435,7 +1391,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         this->large_virtual_channel_data.out_copy_bytes(stream.p, dataLenU16);
                     }
 
-                    if ((flags & CHANNELS::ChannelDef::CHANNEL_FLAG_LAST) != 0){
+                    if ((flags & CHANNELS::ChannelDef::CHANNEL_FLAG_LAST) != 0) {
                         // Last chunk
 
                         this->large_virtual_channel_data.mark_end();
@@ -1452,13 +1408,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
                     }
                 }
-                else{
-                    LOG( LOG_INFO, "mod_vnc::send_to_vnc: unknown message type %d", msgType );
+                else {
+                    LOG(LOG_INFO, "mod_vnc::send_to_vnc: unknown message type %d", recv_factory.msgType);
                 }
                 break;
         }
-        if ( this->verbose ){
-            LOG( LOG_INFO, "mod_vnc::send_to_vnc done" );
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_vnc::send_to_vnc done");
         }
     } // send_to_vnc
 
