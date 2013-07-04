@@ -249,7 +249,7 @@ public:
             {this->ini->context_has_changed(AUTHID_OPT_HEIGHT),                  AUTHID_OPT_HEIGHT},
             {this->ini->context_has_changed(AUTHID_OPT_BPP),                     AUTHID_OPT_BPP},
             {this->ini->context_has_changed(AUTHID_REAL_TARGET_DEVICE),          AUTHID_REAL_TARGET_DEVICE},
-            {(this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0)[0] != 0), AUTHID_TRACE_SEAL}
+            {0 == (this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0)[0] != 0), AUTHID_TRACE_SEAL}
         };
 
         this->send(tosend, sizeof(tosend) / sizeof(tosend[0]));

@@ -25,6 +25,36 @@
 
 namespace RDPECLIP {
 
+// Predefined Clipboard Formats (WinUser.h)
+enum {
+      CF_TEXT            = 1
+    , CF_BITMAP          = 2
+    , CF_METAFILEPICT    = 3
+    , CF_SYLK            = 4
+    , CF_DIF             = 5
+    , CF_TIFF            = 6
+    , CF_OEMTEXT         = 7
+    , CF_DIB             = 8
+    , CF_PALETTE         = 9
+    , CF_PENDATA         = 10
+    , CF_RIFF            = 11
+    , CF_WAVE            = 12
+    , CF_UNICODETEXT     = 13
+    , CF_ENHMETAFILE     = 14
+    , CF_HDROP           = 15
+    , CF_LOCALE          = 16
+    , CF_DIBV5           = 17
+    , CF_OWNERDISPLAY    = 128
+    , CF_DSPTEXT         = 129
+    , CF_DSPBITMAP       = 130
+    , CF_DSPMETAFILEPICT = 131
+    , CF_DSPENHMETAFILE  = 142
+    , CF_PRIVATEFIRST    = 512
+    , CF_PRIVATELAST     = 767
+    , CF_GDIOBJFIRST     = 768
+    , CF_GDIOBJLAST      = 1023
+};
+
 // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
 // =========================================================
 
@@ -169,6 +199,31 @@ struct CliprdrHeader {
     }
 };  // struct CliprdrHeader
 
+// [MS-RDPECLIP] 2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
+// ======================================================================
+
+// The Monitor Ready PDU is sent from the server to the client to indicate
+//  that the server is initialized and ready. This PDU is transmitted by the
+//  server after it has sent the Clipboard Capabilities PDU to the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           clipHeader                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+//  Clipboard PDU Header MUST be set to CB_MONITOR_READY (0x0001), while the
+//  msgFlags field MUST be set to 0x0000.
+
+struct ServerMonitorReadyPDU : public CliprdrHeader {
+    ServerMonitorReadyPDU() : CliprdrHeader(CB_MONITOR_READY, 0, 0) {
+    }   // ServerMonitorReadyPDU(bool response_ok)
+};  // struct ServerMonitorReadyPDU
+
 // [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
 // ===========================================================
 
@@ -208,7 +263,29 @@ struct CliprdrHeader {
 struct FormatListPDU : public CliprdrHeader {
     bool contians_data_in_text_format;
 
-    FormatListPDU() : CliprdrHeader(), contians_data_in_text_format(false) {}
+    FormatListPDU()
+        : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
+        , contians_data_in_text_format(false) {}
+
+    virtual void emit(Stream & stream) {
+        this->dataLen = 144;    /* (formatId(4) + formatName(32)) * 4 */
+        CliprdrHeader::emit(stream);
+
+        // 4 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        stream.out_uint32_le(CF_TEXT);
+        stream.out_clear_bytes(32); // formatName(32)
+
+        stream.out_uint32_le(CF_OEMTEXT);
+        stream.out_clear_bytes(32); // formatName(32)
+
+        stream.out_uint32_le(CF_UNICODETEXT);
+        stream.out_clear_bytes(32); // formatName(32)
+
+        stream.out_uint32_le(CF_LOCALE);
+        stream.out_clear_bytes(32); // formatName(32)
+
+        stream.mark_end();
+    }
 
     virtual void recv(Stream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
@@ -254,7 +331,7 @@ struct FormatListPDU : public CliprdrHeader {
             36; /* formatId(4) + formatName(32) */
 
         // Parse PDU to find if clipboard data is available in a TEXT format.
-        for(uint32_t i = 0; i < (dataLen / short_format_name_structure_size); i++) {
+        for (uint32_t i = 0; i < (dataLen / short_format_name_structure_size); i++) {
             if (!stream.in_check_rem(short_format_name_structure_size)) {
                 LOG( LOG_INFO
                    , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%u"
@@ -264,8 +341,8 @@ struct FormatListPDU : public CliprdrHeader {
 
             uint32_t formatId = stream.in_uint32_le();
 
-            if (   (formatId == CHANNELS::CF_UNICODETEXT)
-                || (formatId == CHANNELS::CF_TEXT)
+            if (   (formatId == CF_TEXT)
+                || (formatId == CF_UNICODETEXT)
                 ) {
                 LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
                 this->contians_data_in_text_format = true;
@@ -335,6 +412,11 @@ struct FormatListResponsePDU : public CliprdrHeader {
 struct FormatDataRequestPDU : public CliprdrHeader {
     uint32_t requestedFormatId;
 
+    FormatDataRequestPDU()
+            : CliprdrHeader(CB_FORMAT_DATA_REQUEST, 0, 4)
+            , requestedFormatId(0) {
+    }   // FormatDataRequestPDU()
+
     FormatDataRequestPDU(uint32_t requestedFormatId)
             : CliprdrHeader(CB_FORMAT_DATA_REQUEST, 0, 4)
             , requestedFormatId(requestedFormatId) {
@@ -346,7 +428,78 @@ struct FormatDataRequestPDU : public CliprdrHeader {
         stream.out_uint32_le(this->requestedFormatId);
         stream.mark_end();
     }   // void emit(Stream & stream)
+
+    virtual void recv(Stream & stream, const RecvFactory & recv_factory) {
+        CliprdrHeader::recv(stream, recv_factory);
+
+        this->requestedFormatId = stream.in_uint32_le();
+    }
 };  // struct FormatDataRequestPDU
+
+// [MS-RDPECLIP] 2.2.5.2 Format Data Response PDU (CLIPRDR_FORMAT_DATA_RESPONSE)
+// =============================================================================
+
+// The Format Data Response PDU is sent as a reply to the Format Data Request
+//  PDU. It is used to indicate whether processing of the Format Data Request
+//  PDU was successful. If the processing was successful, the Format Data
+//  Response PDU includes the contents of the requested clipboard data.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           clipHeader                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 requestedFormatData (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+//  Clipboard PDU Header MUST be set to CB_FORMAT_DATA_RESPONSE (0x0005). The
+//  CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in
+//  the msgFlags field of the Clipboard PDU Header structure.
+
+// requestedFormatData (variable): Variable length clipboard format data. The
+//  contents of this field MUST be one of the following types: generic, Packed
+//  Metafile Payload, or Packed Palette Payload.
+
+struct FormatDataResponsePDU : public CliprdrHeader {
+    FormatDataResponsePDU()
+        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
+                       , CB_RESPONSE_FAIL
+                       , 0) {
+    }
+
+    FormatDataResponsePDU(bool response_ok)
+        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
+                       , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
+                       , 0) {
+    }
+
+    virtual void emit(Stream & stream, const char * utf8_string) {
+        stream.out_uint16_le(this->msgType);
+        stream.out_uint16_le(this->msgFlags);
+
+        if (this->msgFlags == CB_RESPONSE_OK) {
+            uint16_t offset_dataLen;
+
+            offset_dataLen = stream.get_offset();
+            stream.out_uint32_le(0);
+
+            stream.out_unistr_crlf(utf8_string);
+
+            stream.set_out_uint32_le(   stream.get_offset()
+                                      - offset_dataLen
+                                      - 4                   /* dataLen(4) */
+                                    , offset_dataLen);
+
+            stream.mark_end();
+        }
+    }
+};
 
 }   // namespace RDPECLIP
 

@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
                                       , info
                                       , &gen
                                       , 7       /* key flags               */
-                                      , NULL    /* session manager         */
+//                                      , NULL    /* session manager         */
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -352,8 +352,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 //        if (count == 20){
 //            front.dump_png("trace_xp_20_");
 //        }
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+        mod->draw_event();
     }
 
 //    front.dump_png("trace_xp_");
@@ -406,7 +405,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                       , info
                                       , &gen
                                       , 2       /* key flags               */
-                                      , NULL    /* session manager         */
+//                                      , NULL    /* session manager         */
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -429,8 +428,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     while (res == BACK_EVENT_NONE){
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 38) break;
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+        mod->draw_event();
     }
 
 //    front.dump_png("trace_w2008_");
@@ -484,7 +482,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
                                       , info
                                       , &gen
                                       , 2       /* key flags               */
-                                      , NULL    /* session manager         */
+//                                      , NULL    /* session manager         */
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -516,8 +514,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2003_20_");
 //        }
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+        mod->draw_event();
     }
 
 //    front.dump_png("trace_w2003_");
@@ -570,7 +567,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
                                       , info
                                       , &gen
                                       , 2       /* key flags               */
-                                      , NULL    /* session manager         */
+//                                      , NULL    /* session manager         */
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -602,8 +599,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2000_20_");
 //        }
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+          mod->draw_event();
     }
 
 //    front.dump_png("trace_w2000_");

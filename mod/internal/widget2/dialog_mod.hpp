@@ -77,7 +77,7 @@ private:
             ? AUTHID_ACCEPT_MESSAGE
             : AUTHID_DISPLAY_MESSAGE),
             "True");
-        this->signal = BACK_EVENT_NEXT;
+        this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
@@ -88,15 +88,14 @@ private:
             ? AUTHID_ACCEPT_MESSAGE
             : AUTHID_DISPLAY_MESSAGE),
             "False");
-        this->signal = BACK_EVENT_NEXT;
+        this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }
 
 public:
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->event.reset();
-        return this->signal;
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)

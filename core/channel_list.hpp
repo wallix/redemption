@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,11 +19,17 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Channels descriptors
-
 */
 
 #ifndef _REDEMPTION_CORE_CHANNEL_LIST_HPP_
 #define _REDEMPTION_CORE_CHANNEL_LIST_HPP_
+
+#include "stream.hpp"
+#include "transport.hpp"
+
+#include "RDP/mcs.hpp"
+#include "RDP/sec.hpp"
+#include "RDP/x224.hpp"
 
 namespace CHANNELS {
 
@@ -31,36 +37,6 @@ namespace CHANNELS {
 
     enum {
         MAX_STATIC_VIRTUAL_CHANNELS = 16
-    };
-
-    /* Clipboard constants, "borrowed" from GCC system headers in the w32 cross compiler */
-    enum {
-        CF_TEXT                        = 1,
-        CF_BITMAP                      = 2,
-        CF_METAFILEPICT                = 3,
-        CF_SYLK                        = 4,
-        CF_DIF                         = 5,
-        CF_TIFF                        = 6,
-        CF_OEMTEXT                     = 7,
-        CF_DIB                         = 8,
-        CF_PALETTE                     = 9,
-        CF_PENDATA                     = 10,
-        CF_RIFF                        = 11,
-        CF_WAVE                        = 12,
-        CF_UNICODETEXT                 = 13,
-        CF_ENHMETAFILE                 = 14,
-        CF_HDROP                       = 15,
-        CF_LOCALE                      = 16,
-        CF_MAX                         = 17,
-        CF_OWNERDISPLAY                = 128,
-        CF_DSPTEXT                     = 129,
-        CF_DSPBITMAP                   = 130,
-        CF_DSPMETAFILEPICT             = 131,
-        CF_DSPENHMETAFILE              = 142,
-        CF_PRIVATEFIRST                = 512,
-        CF_PRIVATELAST                 = 767,
-        CF_GDIOBJFIRST                 = 768,
-        CF_GDIOBJLAST                  = 1023,
     };
 
     //    1.3.3 Static Virtual Channels
@@ -81,94 +57,16 @@ namespace CHANNELS {
     //    implementation can decide whether to pass on individual chunks of data as they are received, or to
     //    assemble the separate chunks of data into a complete block before passing it on to the endpoint.
 
-    //    2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
-    //    ===========================================
-
-    //    The CLIPRDR_HEADER structure is present in all clipboard PDUs. It is used to identify the PDU type,
-    //    specify the length of the PDU, and convey message flags.
-
-    // 0x0001 CB_MONITOR_READY Monitor Ready PDU
-    // 0x0002 CB_FORMAT_LIST Format List PDU
-    // 0x0003 CB_FORMAT_LIST_RESPONSE Format List Response PDU
-    // 0x0004 CB_FORMAT_DATA_REQUEST Format Data Request PDU
-    // 0x0005 CB_FORMAT_DATA_RESPONSE Format Data Response PDU
-    // 0x0006 CB_TEMP_DIRECTORY Temporary Directory PDU
-    // 0x0007 CB_CLIP_CAPS Clipboard Capabilities PDU
-    // 0x0008 CB_FILECONTENTS_REQUEST File Contents Request PDU
-    // 0x0009 CB_FILECONTENTS_RESPONSE File Contents Response PDU
-    // 0x000A CB_LOCK_CLIPDATA Lock Clipboard Data PDU
-    // 0x000B CB_UNLOCK_CLIPDATA Unlock Clipboard Data PDU
-
-    // dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data
-    // which follows the Clipboard PDU Header.
-
-
-    // 0x0001 CB_RESPONSE_OK   Used by the Format List Response PDU, Format Data Response PDU, and File Contents Response PDU
-    //                        to indicate that the associated request Format List PDU, Format Data Request PDU, and File
-    //                        Contents Request PDU were processed successfully.
-    //
-    // 0x0002 CB_RESPONSE_FAIL Used by the Format List Response PDU, Format Data Response PDU, and File Contents Response PDU
-    //                        to indicate that the associated Format List PDU, Format Data Request PDU, and File Contents
-    //                        Request PDU were not processed successfully.
-
-    // 0x0004 CB_ASCII_NAMES   Used by the Short Format Name variant of the Format List Response PDU to indicate the format
-    //                        names are in ASCII 8.
-
-
-
-
     struct ChannelDef {
         char name[MAX_STATIC_VIRTUAL_CHANNELS];
 
-        enum {
-            PACKET_COMPR_TYPE_8K    = 0x0, // RDP 4.0 bulk compression (see section 3.1.8.4.1).
-            PACKET_COMPR_TYPE_64K   = 0x1, // RDP 5.0 bulk compression (see section 3.1.8.4.2).
-            PACKET_COMPR_TYPE_RDP6  = 0x2, // 6.0 bulk compression (see [MS-RDPEGDI] section 3.1.8.1).
-            PACKET_COMPR_TYPE_RDP61 = 0x3, // 6.1 bulk compression (see [MS-RDPEGDI] section 3.1.8.2).
-        };
-
-        enum {
-            CHANNEL_CHUNK_LENGTH = 1600,
-        };
-
-        enum {
-            CHANNEL_FLAG_FIRST           = 0x00000001,
-            CHANNEL_FLAG_LAST            = 0x00000002,
-            CHANNEL_FLAG_SHOW_PROTOCOL   = 0x00000010,
-            CHANNEL_FLAG_SUSPEND         = 0x00000020,
-            CHANNEL_FLAG_RESUME          = 0x00000040,
-            CHANNEL_PACKET_COMPRESSED    = 0x00200000,
-            CHANNEL_PACKET_AT_FRONT      = 0x00400000,
-            CHANNEL_PACKET_FLUSHED       = 0x00800000,
-            CompressionTypeMask          = 0x000F0000,
-        };
-
-
-        enum { CB_MONITOR_READY         = 0x0001
-             , CB_FORMAT_LIST           = 0x0002
-             , CB_FORMAT_LIST_RESPONSE  = 0x0003
-             , CB_FORMAT_DATA_REQUEST   = 0x0004
-             , CB_FORMAT_DATA_RESPONSE  = 0x0005
-             , CB_TEMP_DIRECTORY        = 0x0006
-             , CB_CLIP_CAPS             = 0x0007
-             , CB_FILECONTENTS_REQUEST  = 0x0008
-             , CB_FILECONTENTS_RESPONSE = 0x0009
-             , CB_LOCK_CLIPDATA         = 0x000A
-             , CB_UNLOCK_CLIPDATA       = 0x000B
-        };
-
-
-        enum { CB_RESPONSE_OK   = 0x0001
-             , CB_RESPONSE_FAIL = 0x0002
-        };
-
         uint32_t flags;
-        int chanid;
+        int      chanid;
 
-        ChannelDef(){
+        ChannelDef() {
             this->name[0] = 0;
-            this->flags = 0;
-            this->chanid = 0;
+            this->flags   = 0;
+            this->chanid  = 0;
         }
 
         void log(unsigned index) const {
@@ -177,11 +75,10 @@ namespace CHANNELS {
         }
     };
 
-    class ChannelDefArray
-    {
+    class ChannelDefArray {
     public:
         // The number of requested static virtual channels (the maximum allowed is 31).
-        size_t channelCount;
+        size_t     channelCount;
         ChannelDef items[32];
 
         ChannelDefArray() : channelCount(0) {}
@@ -190,7 +87,7 @@ namespace CHANNELS {
             return this->items[index];
         }
 
-        void set_chanid(size_t index, int chanid){
+        void set_chanid(size_t index, int chanid) {
             this->items[index].chanid = chanid;
         }
 
@@ -198,17 +95,16 @@ namespace CHANNELS {
             return this->channelCount;
         }
 
-        void push_back(const ChannelDef & item){
+        void push_back(const ChannelDef & item) {
             this->items[this->channelCount] = item;
             this->channelCount++;
         }
 
-        const ChannelDef * get(const char * const name) const
-        {
+        const ChannelDef * get(const char * const name) const {
             const ChannelDef * channel = NULL;
-            for (size_t index = 0; index < this->size(); index++){
+            for (size_t index = 0; index < this->size(); index++) {
                 const ChannelDef & item = this->items[index];
-                if (strcmp(name, item.name) == 0){
+                if (strcmp(name, item.name) == 0) {
                     channel = &item;
                     break;
                 }
@@ -216,12 +112,11 @@ namespace CHANNELS {
             return channel;
         }
 
-        const ChannelDef * get(int chanid) const
-        {
+        const ChannelDef * get(int chanid) const {
             const ChannelDef * channel = NULL;
-            for (size_t index = 0; index < this->size(); index++){
+            for (size_t index = 0; index < this->size(); index++) {
                 const ChannelDef & item = this->items[index];
-                if (item.chanid == chanid){
+                if (item.chanid == chanid) {
                     channel = &item;
                     break;
                 }
@@ -229,11 +124,10 @@ namespace CHANNELS {
             return channel;
         }
 
-        int get_index(const char * const name) const
-        {
+        int get_index(const char * const name) const {
             int res = -1;
-            for (size_t index = 0; index < this->size(); index++){
-                if (strcmp(name, this->items[index].name) == 0){
+            for (size_t index = 0; index < this->size(); index++) {
+                if (strcmp(name, this->items[index].name) == 0) {
                     res = index;
                     break;
                 }
@@ -243,12 +137,288 @@ namespace CHANNELS {
 
         void log(char * name) const {
             LOG(LOG_INFO, "%s channels %u channels defined", name, this->channelCount);
-            for (unsigned index = 0 ; index < this->channelCount ; index++){
+            for (unsigned index = 0 ; index < this->channelCount ; index++) {
                 this->items[index].log(index);
             }
         }
     };
 
+// [MS-RDPBCGR] 2.2.6.1 Virtual Channel PDU
+// ========================================
+
+// The Virtual Channel PDU is sent from client to server or from server to
+//  client and is used to transport data between static virtual channel
+//  endpoints.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           tpktHeader                          |
+// +-----------------------------------------------+---------------+
+// |                    x224Data                   |     mcsPdu    |
+// |                                               |   (variable)  |
+// +-----------------------------------------------+---------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                   securityHeader (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                        channelPduHeader                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 virtualChannelData (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//  section 13.7.
+
+// mcsPdu (variable): If the PDU is being sent from client to server, this
+//  field MUST contain a variable-length, PER-encoded MCS Domain PDU
+//  (DomainMCSPDU) which encapsulates an MCS Send Data Request structure
+//  (SDrq, choice 25 from DomainMCSPDU), as specified in [T125] section 11.32
+//  (the ASN.1 structure definition is given in [T125] section 7, parts 7 and
+//  10). The userData field of the MCS Send Data Request contains a Security
+//  Header and the static virtual channel data.
+//
+// If the PDU is being sent from server to client, this field MUST contain a
+//  variable-length, PER-encoded MCS Domain PDU (DomainMCSPDU) which
+//  encapsulates an MCS Send Data Indication structure (SDin, choice 26 from
+//  DomainMCSPDU), as specified in [T125] section 11.33 (the ASN.1 structure
+//  definition is given in [T125] section 7, parts 7 and 10). The userData
+//  field of the MCS Send Data Indication contains a Security Header and the
+//  static virtual channel data.
+
+// securityHeader (variable): Optional security header. The presence and
+//  format of the security header depends on the Encryption Level and
+//  Encryption Method selected by the server (sections 5.3.2 and 2.2.1.4.3).
+//  If the Encryption Level selected by the server is greater than
+//  ENCRYPTION_LEVEL_NONE (0) and the Encryption Method selected by the server
+//  is greater than ENCRYPTION_METHOD_NONE (0), then this field MUST contain
+//  one of the security headers described in section 2.2.8.1.1.2.
+//
+// If the PDU is being sent from client to server:
+//
+// * The securityHeader field MUST contain a Non-FIPS Security Header (section
+//   2.2.8.1.1.2.2) if the Encryption Method selected by the server is
+//   ENCRYPTION_METHOD_40BIT (0x00000001), ENCRYPTION_METHOD_56BIT
+//   (0x00000008), or ENCRYPTION_METHOD_128BIT (0x00000002).
+//
+// If the PDU is being sent from server to client:
+//
+// * The securityHeader field MUST contain a Basic Security Header (section
+//   2.2.8.1.1.2.1) if the Encryption Level selected by the server is
+//   ENCRYPTION_LEVEL_LOW (1).
+//
+// * The securityHeader field MUST contain a Non-FIPS Security Header (section
+//   2.2.8.1.1.2.2) if the Encryption Method selected by the server is
+//   ENCRYPTION_METHOD_40BIT (0x00000001), ENCRYPTION_METHOD_56BIT
+//   (0x00000008), or ENCRYPTION_METHOD_128BIT (0x00000002).
+//
+// If the Encryption Method selected by the server is ENCRYPTION_METHOD_FIPS
+//  (0x00000010) the securityHeader field MUST contain a FIPS Security Header
+//  (section 2.2.8.1.1.2.3).
+//
+// If the Encryption Level selected by the server is ENCRYPTION_LEVEL_NONE (0)
+//  and the Encryption Method selected by the server is ENCRYPTION_METHOD_NONE
+//  (0), then this header MUST NOT be included in the PDU.
+
+// channelPduHeader (8 bytes): A Channel PDU Header (section 2.2.6.1.1)
+//  structure, which contains control flags and describes the size of the
+//  opaque channel data.
+
+// virtualChannelData (variable): Variable-length data to be processed by the
+//  static virtual channel protocol handler. This field MUST NOT be larger
+//  than CHANNEL_CHUNK_LENGTH (1600) bytes in size unless the maximum virtual
+//  channel chunk size is specified in the optional VCChunkSize field of the
+//  Virtual Channel Capability Set (section 2.2.7.1.10).
+
+enum {
+      CHANNEL_CHUNK_LENGTH = 1600
 };
+
+// [MS-RDPBCGR] 2.2.6.1.1 Channel PDU Header (CHANNEL_PDU_HEADER)
+// ==============================================================
+
+// The CHANNEL_PDU_HEADER MUST precede all opaque static virtual channel
+//  traffic chunks transmitted via RDP between a client and server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             length                            |
+// +---------------------------------------------------------------+
+// |                             flags                             |
+// +---------------------------------------------------------------+
+
+// length (4 bytes): A 32-bit, unsigned integer. The total length in bytes of
+//  the uncompressed channel data, excluding this header. The data can span
+//  multiple Virtual Channel PDUs and the individual chunks will need to be
+//  reassembled in that case (section 3.1.5.2.2).
+
+// flags (4 bytes): A 32-bit, unsigned integer. The channel control flags.
+
+// +----------------------------+----------------------------------------------+
+// | Flag                       | Meaning                                      |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_FIRST         | Indicates that the chunk is the first in a   |
+// | 0x00000001                 | sequence.                                    |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_LAST          | Indicates that the chunk is the last in a    |
+// | 0x00000002                 | sequence.                                    |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_SHOW_PROTOCOL | The Channel PDU Header MUST be visible to    |
+// | 0x00000010                 | the application endpoint (see section        |
+// |                            | 2.2.1.3.4.1).                                |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_SUSPEND       | All virtual channel traffic MUST be          |
+// | 0x00000020                 | suspended. This flag is only valid in        |
+// |                            | server-to-client virtual channel traffic. It |
+// |                            | MUST be ignored in client-to-server data.    |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_RESUME        | All virtual channel traffic MUST be resumed. |
+// | 0x00000040                 | This flag is only valid in server-to-client  |
+// |                            | virtual channel traffic. It MUST be ignored  |
+// |                            | in client-to-server data.                    |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_PACKET_COMPRESSED  | The virtual channel data is compressed. This |
+// | 0x00200000                 | flag is equivalent to MPPC bit C (for more   |
+// |                            | information see [RFC2118] section 3.1).      |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_PACKET_AT_FRONT    | The decompressed packet MUST be placed at    |
+// | 0x00400000                 | the beginning of the history buffer. This    |
+// |                            | flag is equivalent to MPPC bit B (for more   |
+// |                            | information see [RFC2118] section 3.1).      |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_PACKET_FLUSHED     | The decompressor MUST reinitialize the       |
+// | 0x00800000                 | history buffer (by filling it with zeros)    |
+// |                            | and reset the HistoryOffset to zero. After   |
+// |                            | it has been reinitialized, the entire        |
+// |                            | history buffer is immediately regarded as    |
+// |                            | valid. This flag is equivalent to MPPC bit A |
+// |                            | (for more information see [RFC2118] section  |
+// |                            | 3.1). If the CHANNEL_PACKET_COMPRESSED       |
+// |                            | (0x00200000) flag is also present, then the  |
+// |                            | CHANNEL_PACKET_FLUSHED flag MUST be          |
+// |                            | processed first.                             |
+// +----------------------------+----------------------------------------------+
+// | CompressionTypeMask        | Indicates the compression package which was  |
+// | 0x000F0000                 | used to compress the data. See the           |
+// |                            | discussion which follows this table for a    |
+// |                            | list of compression packages.                |
+// +----------------------------+----------------------------------------------+
+
+enum {
+      CHANNEL_FLAG_FIRST         = 0x00000001
+    , CHANNEL_FLAG_LAST          = 0x00000002
+    , CHANNEL_FLAG_SHOW_PROTOCOL = 0x00000010
+    , CHANNEL_FLAG_SUSPEND       = 0x00000020
+    , CHANNEL_FLAG_RESUME        = 0x00000040
+    , CHANNEL_PACKET_COMPRESSED  = 0x00200000
+    , CHANNEL_PACKET_AT_FRONT    = 0x00400000
+    , CHANNEL_PACKET_FLUSHED     = 0x00800000
+    , CompressionTypeMask        = 0x000F0000
+};
+
+// If neither the CHANNEL_FLAG_FIRST (0x00000001) nor the CHANNEL_FLAG_LAST
+//  (0x00000002) flag is present, the chunk is from the middle of a sequence.
+
+//  Instructions specifying how to set the compression flags can be found in
+//  section 3.1.8.2.1.
+
+// Possible compression types are as follows.
+
+// +-------------------------+-------------------------------------------------+
+// | Value                   | Meaning                                         |
+// +-------------------------+-------------------------------------------------+
+// | PACKET_COMPR_TYPE_8K    | RDP 4.0 bulk compression (see section           |
+// | 0x0                     | 3.1.8.4.1).                                     |
+// +-------------------------+-------------------------------------------------+
+// | PACKET_COMPR_TYPE_64K   | RDP 5.0 bulk compression (see section           |
+// | 0x1                     | 3.1.8.4.2).                                     |
+// +-------------------------+-------------------------------------------------+
+// | PACKET_COMPR_TYPE_RDP6  | RDP 6.0 bulk compression (see [MS-RDPEGDI]      |
+// | 0x2                     | section 3.1.8.1).                               |
+// +-------------------------+-------------------------------------------------+
+// | PACKET_COMPR_TYPE_RDP61 | RDP 6.1 bulk compression (see [MS-RDPEGDI]      |
+// | 0x3                     | section 3.1.8.2).                               |
+// +-------------------------+-------------------------------------------------+
+
+enum {
+      PACKET_COMPR_TYPE_8K    = 0x0
+    , PACKET_COMPR_TYPE_64K   = 0x1
+    , PACKET_COMPR_TYPE_RDP6  = 0x2
+    , PACKET_COMPR_TYPE_RDP61 = 0x3
+};
+
+// Instructions detailing how to compress a data stream are listed in section
+//  3.1.8.2, while decompression of a data stream is described in section
+//  3.1.8.3.
+
+struct VirtualChannelPDU {
+    uint32_t verbose;
+
+    VirtualChannelPDU(uint32_t verbose = 0) : verbose(verbose) {}
+
+    void send_to_server( Transport & trans, CryptContext & crypt_context, int encryptionLevel
+             , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
+             , Stream & chunk) {
+        HStream stream(1024, 65536);
+
+        stream.out_uint32_le(length);
+        stream.out_uint32_le(flags);
+        stream.out_copy_bytes(chunk.get_data(), chunk.size());
+        stream.mark_end();
+
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send             sec( sec_header, stream, 0, crypt_context, encryptionLevel);
+        MCS::SendDataRequest_Send mcs( mcs_header, userId, channelId, 1, 3
+                                     , sec_header.size() + stream.size(), MCS::PER_ENCODING);
+
+        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
+
+        trans.send(x224_header, mcs_header, sec_header, stream);
+    }
+
+    void send_to_client( Transport & trans, CryptContext & crypt_context, int encryptionLevel
+             , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
+             , Stream & chunk) {
+        HStream stream(1024, 65536);
+
+        stream.out_uint32_le(length);
+        stream.out_uint32_le(flags);
+        stream.out_copy_bytes(chunk.get_data(), chunk.size());
+        stream.mark_end();
+
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        if (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0)) {
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.get_data(), stream.size());
+        }
+
+        SEC::Sec_Send                sec( sec_header, stream, 0, crypt_context, encryptionLevel);
+        MCS::SendDataIndication_Send mcs( mcs_header, userId, channelId, 1, 3
+                                     , sec_header.size() + stream.size(), MCS::PER_ENCODING);
+
+        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
+
+        trans.send(x224_header, mcs_header, sec_header, stream);
+    }
+};
+
+}   // namespace CHANNELS
 
 #endif
