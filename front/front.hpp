@@ -601,22 +601,22 @@ public:
         return this->channel_list;
     }
 
-    virtual void send_to_channel(
-        const CHANNELS::ChannelDef & channel,
-        uint8_t* data,
-        size_t length,
-        size_t chunk_size,
-        int flags)
-    {
-        if (this->verbose & 16){
-            LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel
+                                , uint8_t * data
+                                , size_t length
+                                , size_t chunk_size
+                                , int flags) {
+        if (this->verbose & 16) {
+            LOG( LOG_INFO
+               , "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)"
+               , data, length, chunk_size, flags);
         }
 
         HStream stream(1024, 65536);
 
         stream.out_uint32_le(length);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNELS::ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
+            flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
         stream.out_uint32_le(flags);
         stream.out_copy_bytes(data, chunk_size);

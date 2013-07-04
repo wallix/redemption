@@ -935,8 +935,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                        , out_s.get_data()
                                        , length
                                        , chunk_size
-                                       ,   CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                         | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                       ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                         | CHANNELS::CHANNEL_FLAG_LAST
                                        );
         }
         else {
@@ -1023,16 +1023,16 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             format_list_pdu.emit(out_s);
 
             size_t length     = out_s.size();
-            size_t chunk_size =   (length < CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH)
+            size_t chunk_size =   (length < CHANNELS::CHANNEL_CHUNK_LENGTH)
                                 ? length
-                                : CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH;
+                                : CHANNELS::CHANNEL_CHUNK_LENGTH;
 
             this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                        , out_s.get_data()
                                        , length
                                        , chunk_size
-                                       ,   CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                         | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                       ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                         | CHANNELS::CHANNEL_FLAG_LAST
                                        );
         }
         else {
@@ -1086,7 +1086,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             // Client notify that a copy operation have occured. Two operations should be done :
             //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
             //  - Only if clipboard content formats list include "NICODETEXT: send a request for it in that format
-            case CHANNELS::ChannelDef::CB_FORMAT_LIST: {
+            case RDPECLIP::CB_FORMAT_LIST: {
                 // Always coming from front
                 LOG(LOG_INFO, "mod_vnc::send_to_vnc - receiving CB_FORMAT_LIST");
 
@@ -1115,15 +1115,15 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                                , out_s.get_data()
                                                , length
                                                , chunk_size
-                                               ,   CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                                 | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                               ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                                 | CHANNELS::CHANNEL_FLAG_LAST
                                                );
 
 
                     // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_UNICODETEXT)
                     // 04 00 00 00 04 00 00 00 0d 00 00 00
                     // 00 00 00 00
-                    RDPECLIP::FormatDataRequestPDU format_data_request_pdu(CHANNELS::CF_UNICODETEXT);
+                    RDPECLIP::FormatDataRequestPDU format_data_request_pdu(RDPECLIP::CF_UNICODETEXT);
                     BStream                        out_s2(256);
 
                     format_data_request_pdu.emit(out_s2);
@@ -1135,8 +1135,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                                , out_s2.get_data()
                                                , length
                                                , chunk_size
-                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                               | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                               , CHANNELS::CHANNEL_FLAG_FIRST
+                                               | CHANNELS::CHANNEL_FLAG_LAST
                                                );
                 }
                 else {
@@ -1159,22 +1159,22 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                                , out_s.get_data()
                                                , length
                                                , chunk_size
-                                               , CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST
-                                               | CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
+                                               , CHANNELS::CHANNEL_FLAG_FIRST
+                                               | CHANNELS::CHANNEL_FLAG_LAST
                                                );
                 }
                 break;
             }
 
-            case CHANNELS::ChannelDef::CB_FORMAT_LIST_RESPONSE: {
+            case RDPECLIP::CB_FORMAT_LIST_RESPONSE: {
                 // Always coming from front ; do nothing, should not happen
                 LOG(LOG_INFO, "mod_vnc::send_to_vnc - receiving CB_FORMAT_LIST_RESPONSE");
                 break;
             }
 
-            case CHANNELS::ChannelDef::CB_FORMAT_DATA_REQUEST: {
+            case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
                 // Always coming from front ; Send back the clipboard buffer content
-                LOG(LOG_INFO, "mod_vnc::send_to_vnc:CHANNELS::ChannelDef::CB_FORMAT_DATA_REQUEST");
+                LOG(LOG_INFO, "mod_vnc::send_to_vnc: CB_FORMAT_DATA_REQUEST");
 
                 const unsigned expected = 10; /* msgFlags(2) + datalen(4) + requestedFormatId(4) */
                 if (!stream.in_check_rem(expected)) {
@@ -1195,7 +1195,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                 if (this->verbose) {
                     LOG( LOG_INFO
-                       , "mod_vnc::send_to_vnc:CHANNELS::ChannelDef::CB_FORMAT_DATA_REQUEST msgFlags=0x%02x datalen=%u requestedFormatId=0x%02x"
+                       , "mod_vnc::send_to_vnc: CB_FORMAT_DATA_REQUEST msgFlags=0x%02x datalen=%u requestedFormatId=0x%02x"
                        , format_data_request_pdu.msgFlags
                        , format_data_request_pdu.dataLen
                        , format_data_request_pdu.requestedFormatId
@@ -1203,7 +1203,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 }
 
                 // only support CF_UNICODETEXT
-                if (format_data_request_pdu.requestedFormatId == CHANNELS::CF_UNICODETEXT) {
+                if (format_data_request_pdu.requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
                     // <this->to_rdp_clipboard_data> contains pre-formatted clipboard PDU.
 
                     size_t length     = this->to_rdp_clipboard_data.size(); /* Size of clipboard PDU header + clip data */
@@ -1212,16 +1212,16 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     uint8_t *chunk_data = this->to_rdp_clipboard_data.get_data();
                     uint32_t chunk_size;
 
-                    int send_flags = CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST;
+                    int send_flags = CHANNELS::CHANNEL_FLAG_FIRST;
 
                     do {
-                        chunk_size  = std::min<size_t>( CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH
+                        chunk_size  = std::min<size_t>( CHANNELS::CHANNEL_CHUNK_LENGTH
                                                       , PDU_remain);
                         PDU_remain -= chunk_size;
 
                         send_flags |= (   (chunk_size <= 0)
-                                        ? CHANNELS::ChannelDef::CHANNEL_FLAG_LAST
-                                        : CHANNELS::ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL
+                                        ? CHANNELS::CHANNEL_FLAG_LAST
+                                        : CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                       );
 
                         this->send_to_front_channel( CLIPBOARD_VIRTUAL_CHANNEL_NAME
@@ -1231,11 +1231,11 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                                    , send_flags
                                                    );
 
-                        if ((send_flags & CHANNELS::ChannelDef::CHANNEL_FLAG_LAST) != 0) {
+                        if ((send_flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                             break;
                         }
 
-                        send_flags &= ~CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST;
+                        send_flags &= ~CHANNELS::CHANNEL_FLAG_FIRST;
 
                         chunk_data += chunk_size;
                     }
@@ -1253,16 +1253,16 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 break;
             }
 
-            case CHANNELS::ChannelDef::CB_FORMAT_DATA_RESPONSE: {
+            case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 LOG(LOG_INFO, "mod_vnc::send_to_vnc - receiving CB_FORMAT_DATA_RESPONSE");
 
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
 
                 format_data_response_pdu.recv(stream, recv_factory);
 
-                if (format_data_response_pdu.msgFlags == CHANNELS::ChannelDef::CB_RESPONSE_OK) {
+                if (format_data_response_pdu.msgFlags == RDPECLIP::CB_RESPONSE_OK) {
 
-                    if ((flags & CHANNELS::ChannelDef::CHANNEL_FLAG_LAST) != 0) {
+                    if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.dataLen)) {
                             LOG( LOG_INFO
                                , "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
@@ -1287,7 +1287,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     else {
                         // Virtual channel data span in multiple Virtual Channel PDUs.
 
-                        if ((flags & CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST) == 0) {
+                        if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
                             LOG(LOG_INFO, "mod_vnc::send_to_vnc flag CHANNEL_FLAG_FIRST expected");
                             throw Error(ERR_VNC);
                         }
@@ -1321,7 +1321,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         LOG(LOG_INFO, "mod_vnc::send_to_vnc an other trunk");
                     }
 
-                    if ((flags & CHANNELS::ChannelDef::CHANNEL_FLAG_FIRST) != 0) {
+                    if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) != 0) {
                         LOG(LOG_INFO, "mod_vnc::send_to_vnc flag CHANNEL_FLAG_FIRST unexpected");
                         throw Error(ERR_VNC);
                     }
@@ -1338,7 +1338,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         this->to_vnc_large_clipboard_data.out_copy_bytes(stream.p, dataLenU16);
                     }
 
-                    if ((flags & CHANNELS::ChannelDef::CHANNEL_FLAG_LAST) != 0) {
+                    if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         // Last chunk
 
                         this->to_vnc_large_clipboard_data.mark_end();

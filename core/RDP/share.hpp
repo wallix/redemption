@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,9 +19,7 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    rdp module main header file
-
 */
-
 
 #ifndef _REDEMPTION_CORE_RDP_SHARE_HPP_
 #define _REDEMPTION_CORE_RDP_SHARE_HPP_
@@ -29,9 +27,7 @@
 #include <stdlib.h>
 
 #include "log.hpp"
-#include "channel_list.hpp"
 #include "stream.hpp"
-
 
 /* RDP PDU codes */
 enum {
@@ -100,7 +96,6 @@ enum {
 // PDUSource (2 bytes): A 16-bit, unsigned integer. The channel ID which is the
 //   transmission source of the PDU.
 
-
 enum {
     RDP_POINTER_SYSTEM             = 1,
     RDP_POINTER_MOVE               = 3,
@@ -108,7 +103,6 @@ enum {
     RDP_POINTER_CACHED             = 7,
     RDP_POINTER_NEW                = 8,
 };
-
 
 //##############################################################################
 struct ShareControl_Recv
@@ -166,10 +160,8 @@ struct ShareControl_Recv
         }
 
         this->payload.resize(stream, new_size);
-    } 
+    }
 }; // END CLASS ShareControl_Recv
-
-
 
 //##############################################################################
 struct ShareControl_Send
@@ -187,7 +179,6 @@ struct ShareControl_Send
         stream.mark_end();
     }
 }; // END CLASS ShareControl_Send
-
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)
 // =================================================================
@@ -324,7 +315,6 @@ enum {
                                                // (section 2.2.4.1.1)
 };
 
-
 // compressedType (1 byte): An 8-bit, unsigned integer. The compression type
 //   and flags specifying the data following the Share Data Header (section
 //   2.2.8.1.1.1.2).
@@ -368,8 +358,6 @@ enum {
 
 // compressedLength (2 bytes): A 16-bit, unsigned integer. The compressed length
 //   of the packet in bytes.
-
-
 
 //##############################################################################
 struct ShareData
@@ -451,17 +439,14 @@ struct ShareData
     } // END METHOD recv_begin
 
     //==============================================================================
-    void recv_end()
+    void recv_end() {
     //==============================================================================
-    {
-        if (!this->payload.check_end()){
+        if (!this->payload.check_end()) {
             LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u",
                 this->len, this->compressedLen, payload.in_remain(), stream.in_remain());
                 throw Error(ERR_SEC);
-      }
+        }
     } // END METHOD recv_end
-
-
 }; // END CLASS ShareData
 
 #endif
