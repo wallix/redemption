@@ -608,44 +608,27 @@ public:
         return this->channel_list;
     }
 
-    virtual void send_to_channel(
-        const CHANNELS::ChannelDef & channel,
-        uint8_t* data,
-        size_t length,
-        size_t chunk_size,
-        int flags)
-    {
-        if (this->verbose & 16){
-            LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel
+                                , uint8_t * data
+                                , size_t length
+                                , size_t chunk_size
+                                , int flags) {
+        if (this->verbose & 16) {
+            LOG( LOG_INFO
+               , "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)"
+               , data, length, chunk_size, flags);
         }
 
-        HStream stream(1024, 65536);
-
-        stream.out_uint32_le(length);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNELS::ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
-        }
-        stream.out_uint32_le(flags);
-        stream.out_copy_bytes(data, chunk_size);
-        stream.mark_end();
-
-        BStream x224_header(256);
-        BStream mcs_header(256);
-        BStream sec_header(256);
-
-        if (((this->verbose & 128) != 0)||((this->verbose & 16)!=0)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.get_data(), stream.size());
+            flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        CHANNELS::VirtualChannelPDU virtual_channel_pdu(this->verbose);
+        FixedSizeStream             chunk(data, chunk_size);
 
-        if (this->verbose & 16){
-            LOG(LOG_INFO, "Front::send_to_channel done");
-        }
+        virtual_channel_pdu.send_to_client( *this->trans, this->encrypt
+                                          , this->client_info.encryptionLevel, userid, channel.chanid
+                                          , length, flags, chunk);
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -707,19 +690,17 @@ public:
                 target_stream.out_copy_bytes(stream);
                 target_stream.mark_end();
 
-                BStream x224_header(256);
-                BStream mcs_header(256);
                 BStream sec_header(256);
 
-                if (this->verbose & 128){
+                if (this->verbose & 128) {
                     LOG(LOG_INFO, "Sec clear payload to send:");
                     hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
                 SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+                target_stream.copy_to_head(sec_header);
+
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
             }
             else {
                 HStream stream(1024, 65536);
@@ -971,14 +952,12 @@ public:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+            target_stream.copy_to_head(sec_header);
+
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
             HStream stream(1024, 65536);
@@ -1080,14 +1059,12 @@ public:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+            target_stream.copy_to_head(sec_header);
+
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
             HStream stream(1024, 65536);
@@ -1127,594 +1104,518 @@ public:
         }
     }
 
-    int incoming(Callback & cb)
+    void incoming(Callback & cb) throw(Error)
     {
-        try {
-            if (this->verbose & 4){
-                LOG(LOG_INFO, "Front::incoming()");
-            }
-
-            switch (this->state){
-            case CONNECTION_INITIATION:
-            {
-                // Connection Initiation
-                // ---------------------
-                LOG(LOG_INFO, "Front::incoming:CONNECTION_INITIATION");
-
-                // The client initiates the connection by sending the server an X.224 Connection
-                //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
-                // PDU (class 0). From this point, all subsequent data sent between client and
-                // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
-
-                // Client                                                     Server
-                //    |------------X224 Connection Request PDU----------------> |
-                //    | <----------X224 Connection Confirm PDU----------------- |
-
-                if (this->verbose & 1){
-                    LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
-                }
-
-                {
-                    BStream stream(65536);
-                    X224::RecvFactory fac_x224(*this->trans, stream);
-                    X224::CR_TPDU_Recv x224(*this->trans, stream);
-                    if (x224._header_size != (size_t)(stream.size())){
-                        LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
-                                     " %d bytes remains", stream.size() - x224._header_size);
-                    }
-                    this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
-
-                    if (
-                        // Proxy supports TLS.
-                        this->tls_support
-                        // RDP client doesn't support TLS.
-                        && !(this->clientRequestedProtocols & X224::PROTOCOL_TLS)
-                        // Fallback to legacy security protocol (RDP) is allowed.
-                        && this->ini->client.tls_fallback_legacy) {
-                        LOG(LOG_INFO, "Fallback to legacy security protocol");
-
-                        this->tls_support = false;
-                    }
-                }
-
-                if (this->verbose & 1){
-                    LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
-                }
-                {
-                    BStream stream(256);
-                    uint8_t rdp_neg_type = 0;
-                    uint8_t rdp_neg_flags = 0;
-                    uint32_t rdp_neg_code = 0;
-                    if (this->tls_support){
-                        LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
-                        if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
-                            rdp_neg_type = X224::RDP_NEG_RSP;
-                            rdp_neg_code = X224::PROTOCOL_TLS;
-                            this->client_info.encryptionLevel = 0;
-                        }
-                        else {
-                            rdp_neg_type = X224::RDP_NEG_FAILURE;
-                            rdp_neg_code = X224::SSL_REQUIRED_BY_SERVER;
-                        }
-                    }
-                    else {
-                        LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
-                    }
-
-                    X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
-                    this->trans->send(stream);
-
-                    if (this->tls_support){
-                        this->trans->enable_server_tls(this->ini->globals.certificate_password);
-
-                // 2.2.10.2 Early User Authorization Result PDU
-                // ============================================
-
-                // The Early User Authorization Result PDU is sent from server to client and is used
-                // to convey authorization information to the client. This PDU is only sent by the server
-                // if the client advertised support for it by specifying the PROTOCOL_HYBRID_EX (0x00000008)
-                // flag in the requestedProtocols field of the RDP Negotiation Request (section 2.2.1.1.1)
-                // structure and it MUST be sent immediately after the CredSSP handshake (section 5.4.5.2) has completed.
-
-                // authorizationResult (4 bytes): A 32-bit unsigned integer. Specifies the authorization result.
-
-                // +---------------------------------+--------------------------------------------------------+
-                // | AUTHZ_SUCCESS 0x00000000        | The user has permission to access the server.          |
-                // +---------------------------------+--------------------------------------------------------+
-                // | AUTHZ _ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
-                // +---------------------------------+--------------------------------------------------------+
-
-                    }
-                }
-                // Basic Settings Exchange
-                // -----------------------
-
-                // Basic Settings Exchange: Basic settings are exchanged between the client and
-                // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
-                // Connect Initial PDU contains a GCC Conference Create Request, while the
-                // Connect Response PDU contains a GCC Conference Create Response.
-
-                // These two Generic Conference Control (GCC) packets contain concatenated
-                // blocks of settings data (such as core data, security data and network data)
-                // which are read by client and server
-
-                // Client                                                     Server
-                //    |--------------MCS Connect Initial PDU with-------------> |
-                //                   GCC Conference Create Request
-                //    | <------------MCS Connect Response PDU with------------- |
-                //                   GCC conference Create Response
-
-                if (this->verbose & 1){
-                    LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
-                }
-
-                BStream x224_data(65536);
-                X224::RecvFactory f(*this->trans, x224_data);
-                X224::DT_TPDU_Recv x224(*this->trans, x224_data);
-                MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
-
-                // GCC User Data
-                // -------------
-                SubStream & gcc_data = mcs_ci.payload;
-                GCC::Create_Request_Recv gcc_cr(gcc_data);
-
-
-                while (gcc_cr.payload.in_check_rem(4)) {
-                    GCC::UserData::RecvFactory f(gcc_cr.payload);
-                    switch (f.tag){
-                        case CS_CORE:
-                        {
-                            GCC::UserData::CSCore cs_core;
-                            cs_core.recv(f.payload);
-                            if (this->verbose & 1) {
-                                cs_core.log("Received from Client");
-                            }
-
-                            client_info.width = cs_core.desktopWidth;
-                            client_info.height = cs_core.desktopHeight;
-                            client_info.keylayout = cs_core.keyboardLayout;
-                            client_info.build = cs_core.clientBuild;
-                            for (size_t i = 0; i < 16 ; i++){
-                                client_info.hostname[i] = cs_core.clientName[i];
-                            }
-                            client_info.bpp = 8;
-                            switch (cs_core.postBeta2ColorDepth){
-                            case 0xca01:
-                                client_info.bpp = (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
-                            break;
-                            case 0xca02:
-                                client_info.bpp = 15;
-                            break;
-                            case 0xca03:
-                                client_info.bpp = 16;
-                            break;
-                            case 0xca04:
-                                client_info.bpp = 24;
-                            break;
-                            default:
-                            break;
-                            }
-                        }
-                        break;
-                        case CS_SECURITY:
-                        {
-                            GCC::UserData::CSSecurity cs_sec;
-                            cs_sec.recv(f.payload);
-                            if (this->verbose & 1) {
-                                cs_sec.log("Received from Client");
-                            }
-                        }
-                        break;
-                        case CS_NET:
-                        {
-                            GCC::UserData::CSNet cs_net;
-                            cs_net.recv(f.payload);
-                            for (uint32_t index = 0; index < cs_net.channelCount; index++) {
-                                CHANNELS::ChannelDef channel_item;
-                                memcpy(channel_item.name, cs_net.channelDefArray[index].name, 8);
-                                channel_item.flags = cs_net.channelDefArray[index].options;
-                                channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
-                                this->channel_list.push_back(channel_item);
-                            }
-                            if (this->verbose & 1) {
-                                cs_net.log("Received from Client");
-                            }
-                        }
-                        break;
-                        case CS_CLUSTER:
-                        {
-                            GCC::UserData::CSCluster cs_cluster;
-                            cs_cluster.recv(f.payload);
-                            client_info.console_session =
-                                (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
-                            if (this->verbose & 1) {
-                                cs_cluster.log("Receiving from Client");
-                            }
-                        }
-                        break;
-                        case CS_MONITOR:
-                        {
-                            GCC::UserData::CSMonitor cs_monitor;
-                            cs_monitor.recv(f.payload);
-                            if (this->verbose & 1) {
-                                cs_monitor.log("Receiving from Client");
-                            }
-                        }
-                        break;
-                        default:
-                            LOG(LOG_WARNING, "Unexpected data block tag %x\n", f.tag);
-                        break;
-                    }
-                }
-                if (gcc_cr.payload.in_check_rem(1)) {
-                    LOG(LOG_ERR, "recv connect request parsing gcc data : short header");
-                    throw Error(ERR_MCS_DATA_SHORT_HEADER);
-                }
-
-                // ------------------------------------------------------------------
-                HStream stream(1024, 65536);
-                // ------------------------------------------------------------------
-    //            GCC::UserData::ServerToClient_Send(stream, this->clientRequestedProtocols, this->channel_list.size());
-
-                GCC::UserData::SCCore sc_core;
-                sc_core.version = 0x00080004;
-                if (this->tls_support){
-                    sc_core.length = 12;
-                    sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
-                }
-                if (this->verbose & 1) {
-                    sc_core.log("Sending to client");
-                }
-                sc_core.emit(stream);
-                // ------------------------------------------------------------------
-                GCC::UserData::SCNet sc_net;
-                const uint8_t num_channels = this->channel_list.size();
-                sc_net.MCSChannelId = GCC::MCS_GLOBAL_CHANNEL;
-                sc_net.channelCount = num_channels;
-                for (int index = 0; index < num_channels; index++) {
-                    sc_net.channelDefArray[index].id = GCC::MCS_GLOBAL_CHANNEL + index + 1;
-                }
-                if (this->verbose & 1) {
-                    sc_net.log("Sending to client");
-                }
-                sc_net.emit(stream);
-                // ------------------------------------------------------------------
-                if (this->tls_support){
-                    GCC::UserData::SCSecurity sc_sec1;
-                    sc_sec1.encryptionMethod = 0;
-                    sc_sec1.encryptionLevel = 0;
-                    sc_sec1.length = 12;
-                    sc_sec1.serverRandomLen = 0;
-                    sc_sec1.serverCertLen = 0;
-                    if (this->verbose & 1) {
-                        sc_sec1.log("Sending to client");
-                    }
-                    sc_sec1.emit(stream);
-                }
-                else {
-                    GCC::UserData::SCSecurity sc_sec1;
-                    /*
-                       For now rsa_keys are not in a configuration file any more, but as we were not changing keys
-                       the values have been embedded in code and the key generator file removed from source code.
-
-                       It will be put back at some later time using a clean parser/writer module and sll calls
-                       coherent with the remaining of ReDemPtion code. For reference to historical key generator code
-                       look for utils/keygen.cpp in old repository code.
-
-                       references for RSA Keys: http://www.securiteam.com/windowsntfocus/5EP010KG0G.html
-                    */
-                    uint8_t rsa_keys_pub_mod[64] = {
-                        0x67, 0xab, 0x0e, 0x6a, 0x9f, 0xd6, 0x2b, 0xa3, 0x32, 0x2f, 0x41, 0xd1, 0xce, 0xee, 0x61, 0xc3,
-                        0x76, 0x0b, 0x26, 0x11, 0x70, 0x48, 0x8a, 0x8d, 0x23, 0x81, 0x95, 0xa0, 0x39, 0xf7, 0x5b, 0xaa,
-                        0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f, 0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
-                        0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92, 0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
-                    };
-                    memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
-
-                    uint8_t rsa_keys_pri_exp[64] = {
-                        0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47, 0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
-                        0x0C, 0x8A, 0xB5, 0xAE, 0x61, 0x32, 0x72, 0xF5, 0x2B, 0xD1, 0x7B, 0x5F, 0x44, 0xC0, 0x7C, 0xBD,
-                        0x8A, 0x35, 0xFA, 0xAE, 0x30, 0xF6, 0xC4, 0x6B, 0x55, 0xA7, 0x65, 0xEF, 0xF4, 0xB2, 0xAB, 0x18,
-                        0x4E, 0xAA, 0xE6, 0xDC, 0x71, 0x17, 0x3B, 0x4C, 0xC2, 0x15, 0x4C, 0xF7, 0x81, 0xBB, 0xF0, 0x03
-                    };
-                    memcpy(sc_sec1.pri_exp, rsa_keys_pri_exp, 64);
-                    memcpy(this->pri_exp, sc_sec1.pri_exp, 64);
-
-                    uint8_t rsa_keys_pub_sig[64] = {
-                        0x6a, 0x41, 0xb1, 0x43, 0xcf, 0x47, 0x6f, 0xf1, 0xe6, 0xcc, 0xa1, 0x72, 0x97, 0xd9, 0xe1, 0x85,
-                        0x15, 0xb3, 0xc2, 0x39, 0xa0, 0xa6, 0x26, 0x1a, 0xb6, 0x49, 0x01, 0xfa, 0xa6, 0xda, 0x60, 0xd7,
-                        0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e, 0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
-                        0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41, 0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
-                    };
-
-                    uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
-
-                    sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
-                    sc_sec1.encryptionLevel = client_info.encryptionLevel;
-                    sc_sec1.serverRandomLen = 32;
-                    this->gen->random(this->server_random, 32);
-                    memcpy(sc_sec1.serverRandom, this->server_random, 32);
-                    sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
-                    sc_sec1.temporary = false;
-                    memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
-                    memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
-                    memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
-                        "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
-                    memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
-                    memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
-                        "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
-
-                    if (this->verbose & 1) {
-                        sc_sec1.log("Sending to client");
-                    }
-                    sc_sec1.emit(stream);
-                }
-                stream.mark_end();
-
-                // ------------------------------------------------------------------
-                BStream gcc_header(256);
-                BStream mcs_header(256);
-                BStream x224_header(256);
-
-                GCC::Create_Response_Send(gcc_header, stream.size());
-                MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
-                X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-                this->trans->send(x224_header, mcs_header, gcc_header, stream);
-
-                // Channel Connection
-                // ------------------
-
-                // Channel Connection: The client sends an MCS Erect Domain Request PDU,
-                // followed by an MCS Attach User Request PDU to attach the primary user
-                // identity to the MCS domain.
-
-                // The server responds with an MCS Attach User Response PDU containing the user
-                // channel ID.
-
-                // The client then proceeds to join the :
-                // - user channel,
-                // - the input/output (I/O) channel
-                // - and all of the static virtual channels
-
-                // (the I/O and static virtual channel IDs are obtained from the data embedded
-                //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
-
-                // The server confirms each channel with an MCS Channel Join Confirm PDU.
-                // (The client only sends a Channel Join Request after it has received the
-                // Channel Join Confirm for the previously sent request.)
-
-                // From this point, all subsequent data sent from the client to the server is
-                // wrapped in an MCS Send Data Request PDU, while data sent from the server to
-                //  the client is wrapped in an MCS Send Data Indication PDU. This is in
-                // addition to the data being wrapped by an X.224 Data PDU.
-
-                // Client                                                     Server
-                //    |-------MCS Erect Domain Request PDU--------------------> |
-                //    |-------MCS Attach User Request PDU---------------------> |
-
-                //    | <-----MCS Attach User Confirm PDU---------------------- |
-
-                //    |-------MCS Channel Join Request PDU--------------------> |
-                //    | <-----MCS Channel Join Confirm PDU--------------------- |
-
-                if (this->verbose & 16){
-                    LOG(LOG_INFO, "Front::incoming::Channel Connection");
-                }
-
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::Recv MCS::ErectDomainRequest");
-                }
-                {
-                    BStream x224_data(256);
-                    X224::RecvFactory f(*this->trans, x224_data);
-                    X224::DT_TPDU_Recv x224(*trans, x224_data);
-                    MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                }
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::Recv MCS::AttachUserRequest");
-                }
-                {
-                    BStream x224_data(256);
-                    X224::RecvFactory f(*this->trans, x224_data);
-                    X224::DT_TPDU_Recv x224(*trans, x224_data);
-                    MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                }
-                if (this->verbose){
-                    LOG(LOG_INFO, "Front::incoming::Send MCS::AttachUserConfirm", this->userid);
-                }
-                {
-                    BStream x224_header(256);
-                    HStream mcs_data(256, 512);
-                    MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
-                    X224::DT_TPDU_Send(x224_header, mcs_data.size());
-                    this->trans->send(x224_header, mcs_data);
-                }
-
-                {
-                    // read tpktHeader (4 bytes = 3 0 len)
-                    // TPDU class 0    (3 bytes = LI F0 PDU_DT)
-                    BStream x224_data(256);
-                    X224::RecvFactory f(*this->trans, x224_data);
-                    X224::DT_TPDU_Recv x224(*this->trans, x224_data);
-                    MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                    this->userid = mcs.initiator;
-
-                    BStream x224_header(256);
-                    HStream mcs_cjcf_data(256, 512);
-
-                    MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                                                 mcs.initiator,
-                                                 mcs.channelId,
-                                                 true, mcs.channelId,
-                                                 MCS::PER_ENCODING);
-                    X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                    this->trans->send(x224_header, mcs_cjcf_data);
-                }
-
-                {
-                    BStream x224_data(256);
-                    X224::RecvFactory f(*this->trans, x224_data);
-                    X224::DT_TPDU_Recv x224(*this->trans, x224_data);
-                    MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                    if (mcs.initiator != this->userid){
-                        LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
-                        throw Error(ERR_MCS_BAD_USERID);
-                    }
-
-                    BStream x224_header(256);
-                    HStream mcs_cjcf_data(256, 512);
-
-                    MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                                                 mcs.initiator,
-                                                 mcs.channelId,
-                                                 true, mcs.channelId,
-                                                 MCS::PER_ENCODING);
-                    X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                    this->trans->send(x224_header, mcs_cjcf_data);
-                }
-
-                for (size_t i = 0 ; i < this->channel_list.size() ; i++){
-                    BStream x224_data(256);
-                    X224::RecvFactory f(*this->trans, x224_data);
-                    X224::DT_TPDU_Recv x224(*this->trans, x224_data);
-                    MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
-                    if (this->verbose & 16){
-                        LOG(LOG_INFO, "cjrq[%u] = %u -> cjcf", i, mcs.channelId);
-                    }
-
-                    if (mcs.initiator != this->userid){
-                        LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
-                        throw Error(ERR_MCS_BAD_USERID);
-                    }
-
-                    BStream x224_header(256);
-                    HStream mcs_cjcf_data(256, 512);
-
-                    MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
-                                                 mcs.initiator,
-                                                 mcs.channelId,
-                                                 true, mcs.channelId,
-                                                 MCS::PER_ENCODING);
-                    X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
-                    this->trans->send(x224_header, mcs_cjcf_data);
-
-                    this->channel_list.set_chanid(i, mcs.channelId);
-                }
-
-                if (this->verbose & 1){
-                    LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
-                }
-
-                // RDP Security Commencement
-                // -------------------------
-
-                // RDP Security Commencement: If standard RDP security methods are being
-                // employed and encryption is in force (this is determined by examining the data
-                // embedded in the GCC Conference Create Response packet) then the client sends
-                // a Security Exchange PDU containing an encrypted 32-byte random number to the
-                // server. This random number is encrypted with the public key of the server
-                // (the server's public key, as well as a 32-byte server-generated random
-                // number, are both obtained from the data embedded in the GCC Conference Create
-                //  Response packet).
-
-                // The client and server then utilize the two 32-byte random numbers to generate
-                // session keys which are used to encrypt and validate the integrity of
-                // subsequent RDP traffic.
-
-                // From this point, all subsequent RDP traffic can be encrypted and a security
-                // header is include " with the data if encryption is in force (the Client Info
-                // and licensing PDUs are an exception in that they always have a security
-                // header). The Security Header follows the X.224 and MCS Headers and indicates
-                // whether the attached data is encrypted.
-
-                // Even if encryption is in force server-to-client traffic may not always be
-                // encrypted, while client-to-server traffic will always be encrypted by
-                // Microsoft RDP implementations (encryption of licensing PDUs is optional,
-                // however).
-
-                // Client                                                     Server
-                //    |------Security Exchange PDU ---------------------------> |
-                if (!this->tls_support)
-                {
-                    BStream pdu(65536);
-                    X224::RecvFactory f(*this->trans, pdu);
-                    X224::DT_TPDU_Recv x224(*this->trans, pdu);
-
-                    MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                    if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
-                        LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
-                        x224.payload.rewind();
-                        MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                        const char * reason = MCS::get_reason(mcs.reason);
-                        LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
-                        throw Error(ERR_MCS);
-                    }
-
-                    MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
-                    SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
-
-                    ssllib ssl;
-                    uint8_t client_random[64];
-                    memset(client_random, 0, 64);
-                    {
-                        uint8_t l_out[64]; memset(l_out, 0, 64);
-                        uint8_t l_in[64];  rmemcpy(l_in, sec.payload.get_data(), 64);
-                        uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
-                        uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
-
-                        BN_CTX* ctx = BN_CTX_new();
-                        BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, 64, &lmod);
-                        BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, 64, &lexp);
-                        BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, 64, &lin);
-                        BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
-
-                        int rv = BN_bn2bin(&lout, (uint8_t*)l_out);
-                        if (rv <= 64) {
-                            reverseit(l_out, rv);
-                            memcpy(client_random, l_out, 64);
-                        }
-                        BN_free(&lin);
-                        BN_free(&lout);
-                        BN_free(&lexp);
-                        BN_free(&lmod);
-                        BN_CTX_free(ctx);
-                    }
-
-                    // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
-                    SEC::KeyBlock key_block(client_random, this->server_random);
-                    memcpy(this->encrypt.sign_key, key_block.blob0, 16);
-                    if (this->encrypt.encryptionMethod == 1){
-                        ssl.sec_make_40bit(this->encrypt.sign_key);
-                    }
-
-                    this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
-                    this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
-                }
-                else {
-                    LOG(LOG_INFO, "TLS mode: exchange packet disabled");
-                }
-                this->state = WAITING_FOR_LOGON_INFO;
-            }
-            break;
-
-            case WAITING_FOR_LOGON_INFO:
-            // Secure Settings Exchange
-            // ------------------------
-
-            // Secure Settings Exchange: Secure client data (such as the username,
-            // password and auto-reconnect cookie) is sent to the server using the Client
-            // Info PDU.
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "Front::incoming()");
+        }
+
+        switch (this->state){
+        case CONNECTION_INITIATION:
+        {
+            // Connection Initiation
+            // ---------------------
+            LOG(LOG_INFO, "Front::incoming:CONNECTION_INITIATION");
+
+            // The client initiates the connection by sending the server an X.224 Connection
+            //  Request PDU (class 0). The server responds with an X.224 Connection Confirm
+            // PDU (class 0). From this point, all subsequent data sent between client and
+            // server is wrapped in an X.224 Data Protocol Data Unit (PDU).
 
             // Client                                                     Server
-            //    |------ Client Info PDU      ---------------------------> |
-            {
-                LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
+            //    |------------X224 Connection Request PDU----------------> |
+            //    | <----------X224 Connection Confirm PDU----------------- |
 
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "Front::incoming::receiving x224 request PDU");
+            }
+
+            {
                 BStream stream(65536);
-                X224::RecvFactory fx224(*this->trans, stream);
-                X224::DT_TPDU_Recv x224(*this->trans, stream);
+                X224::RecvFactory fac_x224(*this->trans, stream);
+                X224::CR_TPDU_Recv x224(*this->trans, stream);
+                if (x224._header_size != (size_t)(stream.size())){
+                    LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
+                                 " %d bytes remains", stream.size() - x224._header_size);
+                }
+                this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
+
+                if (
+                    // Proxy supports TLS.
+                    this->tls_support
+                    // RDP client doesn't support TLS.
+                    && !(this->clientRequestedProtocols & X224::PROTOCOL_TLS)
+                    // Fallback to legacy security protocol (RDP) is allowed.
+                    && this->ini->client.tls_fallback_legacy) {
+                    LOG(LOG_INFO, "Fallback to legacy security protocol");
+
+                    this->tls_support = false;
+                }
+            }
+
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "Front::incoming::sending x224 connection confirm PDU");
+            }
+            {
+                BStream stream(256);
+                uint8_t rdp_neg_type = 0;
+                uint8_t rdp_neg_flags = 0;
+                uint32_t rdp_neg_code = 0;
+                if (this->tls_support){
+                    LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
+                    if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
+                        rdp_neg_type = X224::RDP_NEG_RSP;
+                        rdp_neg_code = X224::PROTOCOL_TLS;
+                        this->client_info.encryptionLevel = 0;
+                    }
+                    else {
+                        rdp_neg_type = X224::RDP_NEG_FAILURE;
+                        rdp_neg_code = X224::SSL_REQUIRED_BY_SERVER;
+                    }
+                }
+                else {
+                    LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
+                }
+
+                X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
+                this->trans->send(stream);
+
+                if (this->tls_support){
+                    this->trans->enable_server_tls(this->ini->globals.certificate_password);
+
+            // 2.2.10.2 Early User Authorization Result PDU
+            // ============================================
+
+            // The Early User Authorization Result PDU is sent from server to client and is used
+            // to convey authorization information to the client. This PDU is only sent by the server
+            // if the client advertised support for it by specifying the PROTOCOL_HYBRID_EX (0x00000008)
+            // flag in the requestedProtocols field of the RDP Negotiation Request (section 2.2.1.1.1)
+            // structure and it MUST be sent immediately after the CredSSP handshake (section 5.4.5.2) has completed.
+
+            // authorizationResult (4 bytes): A 32-bit unsigned integer. Specifies the authorization result.
+
+            // +---------------------------------+--------------------------------------------------------+
+            // | AUTHZ_SUCCESS 0x00000000        | The user has permission to access the server.          |
+            // +---------------------------------+--------------------------------------------------------+
+            // | AUTHZ _ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
+            // +---------------------------------+--------------------------------------------------------+
+
+                }
+            }
+            // Basic Settings Exchange
+            // -----------------------
+
+            // Basic Settings Exchange: Basic settings are exchanged between the client and
+            // server by using the MCS Connect Initial and MCS Connect Response PDUs. The
+            // Connect Initial PDU contains a GCC Conference Create Request, while the
+            // Connect Response PDU contains a GCC Conference Create Response.
+
+            // These two Generic Conference Control (GCC) packets contain concatenated
+            // blocks of settings data (such as core data, security data and network data)
+            // which are read by client and server
+
+            // Client                                                     Server
+            //    |--------------MCS Connect Initial PDU with-------------> |
+            //                   GCC Conference Create Request
+            //    | <------------MCS Connect Response PDU with------------- |
+            //                   GCC conference Create Response
+
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "Front::incoming::Basic Settings Exchange");
+            }
+
+            BStream x224_data(65536);
+            X224::RecvFactory f(*this->trans, x224_data);
+            X224::DT_TPDU_Recv x224(*this->trans, x224_data);
+            MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
+
+            // GCC User Data
+            // -------------
+            SubStream & gcc_data = mcs_ci.payload;
+            GCC::Create_Request_Recv gcc_cr(gcc_data);
+
+
+            while (gcc_cr.payload.in_check_rem(4)) {
+                GCC::UserData::RecvFactory f(gcc_cr.payload);
+                switch (f.tag){
+                    case CS_CORE:
+                    {
+                        GCC::UserData::CSCore cs_core;
+                        cs_core.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_core.log("Received from Client");
+                        }
+
+                        client_info.width = cs_core.desktopWidth;
+                        client_info.height = cs_core.desktopHeight;
+                        client_info.keylayout = cs_core.keyboardLayout;
+                        client_info.build = cs_core.clientBuild;
+                        for (size_t i = 0; i < 16 ; i++){
+                            client_info.hostname[i] = cs_core.clientName[i];
+                        }
+                        client_info.bpp = 8;
+                        switch (cs_core.postBeta2ColorDepth){
+                        case 0xca01:
+                            client_info.bpp = (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                        break;
+                        case 0xca02:
+                            client_info.bpp = 15;
+                        break;
+                        case 0xca03:
+                            client_info.bpp = 16;
+                        break;
+                        case 0xca04:
+                            client_info.bpp = 24;
+                        break;
+                        default:
+                        break;
+                        }
+                    }
+                    break;
+                    case CS_SECURITY:
+                    {
+                        GCC::UserData::CSSecurity cs_sec;
+                        cs_sec.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_sec.log("Received from Client");
+                        }
+                    }
+                    break;
+                    case CS_NET:
+                    {
+                        GCC::UserData::CSNet cs_net;
+                        cs_net.recv(f.payload);
+                        for (uint32_t index = 0; index < cs_net.channelCount; index++) {
+                            CHANNELS::ChannelDef channel_item;
+                            memcpy(channel_item.name, cs_net.channelDefArray[index].name, 8);
+                            channel_item.flags = cs_net.channelDefArray[index].options;
+                            channel_item.chanid = GCC::MCS_GLOBAL_CHANNEL + (index + 1);
+                            this->channel_list.push_back(channel_item);
+                        }
+                        if (this->verbose & 1) {
+                            cs_net.log("Received from Client");
+                        }
+                    }
+                    break;
+                    case CS_CLUSTER:
+                    {
+                        GCC::UserData::CSCluster cs_cluster;
+                        cs_cluster.recv(f.payload);
+                        client_info.console_session =
+                            (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
+                        if (this->verbose & 1) {
+                            cs_cluster.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    case CS_MONITOR:
+                    {
+                        GCC::UserData::CSMonitor cs_monitor;
+                        cs_monitor.recv(f.payload);
+                        if (this->verbose & 1) {
+                            cs_monitor.log("Receiving from Client");
+                        }
+                    }
+                    break;
+                    default:
+                        LOG(LOG_WARNING, "Unexpected data block tag %x\n", f.tag);
+                    break;
+                }
+            }
+            if (gcc_cr.payload.in_check_rem(1)) {
+                LOG(LOG_ERR, "recv connect request parsing gcc data : short header");
+                throw Error(ERR_MCS_DATA_SHORT_HEADER);
+            }
+
+            // ------------------------------------------------------------------
+            HStream stream(1024, 65536);
+            // ------------------------------------------------------------------
+//            GCC::UserData::ServerToClient_Send(stream, this->clientRequestedProtocols, this->channel_list.size());
+
+            GCC::UserData::SCCore sc_core;
+            sc_core.version = 0x00080004;
+            if (this->tls_support){
+                sc_core.length = 12;
+                sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
+            }
+            if (this->verbose & 1) {
+                sc_core.log("Sending to client");
+            }
+            sc_core.emit(stream);
+            // ------------------------------------------------------------------
+            GCC::UserData::SCNet sc_net;
+            const uint8_t num_channels = this->channel_list.size();
+            sc_net.MCSChannelId = GCC::MCS_GLOBAL_CHANNEL;
+            sc_net.channelCount = num_channels;
+            for (int index = 0; index < num_channels; index++) {
+                sc_net.channelDefArray[index].id = GCC::MCS_GLOBAL_CHANNEL + index + 1;
+            }
+            if (this->verbose & 1) {
+                sc_net.log("Sending to client");
+            }
+            sc_net.emit(stream);
+            // ------------------------------------------------------------------
+            if (this->tls_support){
+                GCC::UserData::SCSecurity sc_sec1;
+                sc_sec1.encryptionMethod = 0;
+                sc_sec1.encryptionLevel = 0;
+                sc_sec1.length = 12;
+                sc_sec1.serverRandomLen = 0;
+                sc_sec1.serverCertLen = 0;
+                if (this->verbose & 1) {
+                    sc_sec1.log("Sending to client");
+                }
+                sc_sec1.emit(stream);
+            }
+            else {
+                GCC::UserData::SCSecurity sc_sec1;
+                /*
+                   For now rsa_keys are not in a configuration file any more, but as we were not changing keys
+                   the values have been embedded in code and the key generator file removed from source code.
+
+                   It will be put back at some later time using a clean parser/writer module and sll calls
+                   coherent with the remaining of ReDemPtion code. For reference to historical key generator code
+                   look for utils/keygen.cpp in old repository code.
+
+                   references for RSA Keys: http://www.securiteam.com/windowsntfocus/5EP010KG0G.html
+                */
+                uint8_t rsa_keys_pub_mod[64] = {
+                    0x67, 0xab, 0x0e, 0x6a, 0x9f, 0xd6, 0x2b, 0xa3, 0x32, 0x2f, 0x41, 0xd1, 0xce, 0xee, 0x61, 0xc3,
+                    0x76, 0x0b, 0x26, 0x11, 0x70, 0x48, 0x8a, 0x8d, 0x23, 0x81, 0x95, 0xa0, 0x39, 0xf7, 0x5b, 0xaa,
+                    0x3e, 0xf1, 0xed, 0xb8, 0xc4, 0xee, 0xce, 0x5f, 0x6a, 0xf5, 0x43, 0xce, 0x5f, 0x60, 0xca, 0x6c,
+                    0x06, 0x75, 0xae, 0xc0, 0xd6, 0xa4, 0x0c, 0x92, 0xa4, 0xc6, 0x75, 0xea, 0x64, 0xb2, 0x50, 0x5b
+                };
+                memcpy(this->pub_mod, rsa_keys_pub_mod, 64);
+
+                uint8_t rsa_keys_pri_exp[64] = {
+                    0x41, 0x93, 0x05, 0xB1, 0xF4, 0x38, 0xFC, 0x47, 0x88, 0xC4, 0x7F, 0x83, 0x8C, 0xEC, 0x90, 0xDA,
+                    0x0C, 0x8A, 0xB5, 0xAE, 0x61, 0x32, 0x72, 0xF5, 0x2B, 0xD1, 0x7B, 0x5F, 0x44, 0xC0, 0x7C, 0xBD,
+                    0x8A, 0x35, 0xFA, 0xAE, 0x30, 0xF6, 0xC4, 0x6B, 0x55, 0xA7, 0x65, 0xEF, 0xF4, 0xB2, 0xAB, 0x18,
+                    0x4E, 0xAA, 0xE6, 0xDC, 0x71, 0x17, 0x3B, 0x4C, 0xC2, 0x15, 0x4C, 0xF7, 0x81, 0xBB, 0xF0, 0x03
+                };
+                memcpy(sc_sec1.pri_exp, rsa_keys_pri_exp, 64);
+                memcpy(this->pri_exp, sc_sec1.pri_exp, 64);
+
+                uint8_t rsa_keys_pub_sig[64] = {
+                    0x6a, 0x41, 0xb1, 0x43, 0xcf, 0x47, 0x6f, 0xf1, 0xe6, 0xcc, 0xa1, 0x72, 0x97, 0xd9, 0xe1, 0x85,
+                    0x15, 0xb3, 0xc2, 0x39, 0xa0, 0xa6, 0x26, 0x1a, 0xb6, 0x49, 0x01, 0xfa, 0xa6, 0xda, 0x60, 0xd7,
+                    0x45, 0xf7, 0x2c, 0xee, 0xe4, 0x8e, 0x64, 0x2e, 0x37, 0x49, 0xf0, 0x4c, 0x94, 0x6f, 0x08, 0xf5,
+                    0x63, 0x4c, 0x56, 0x29, 0x55, 0x5a, 0x63, 0x41, 0x2c, 0x20, 0x65, 0x95, 0x99, 0xb1, 0x15, 0x7c
+                };
+
+                uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
+
+                sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
+                sc_sec1.encryptionLevel = client_info.encryptionLevel;
+                sc_sec1.serverRandomLen = 32;
+                this->gen->random(this->server_random, 32);
+                memcpy(sc_sec1.serverRandom, this->server_random, 32);
+                sc_sec1.dwVersion = GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1;
+                sc_sec1.temporary = false;
+                memcpy(sc_sec1.proprietaryCertificate.RSAPK.pubExp, rsa_keys_pub_exp, SEC_EXPONENT_SIZE);
+                memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus, this->pub_mod, 64);
+                memcpy(sc_sec1.proprietaryCertificate.RSAPK.modulus + 64,
+                    "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
+                memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob, rsa_keys_pub_sig, 64);
+                memcpy(sc_sec1.proprietaryCertificate.wSignatureBlob + 64,
+                    "\x00\x00\x00\x00\x00\x00\x00\x00", SEC_PADDING_SIZE);
+
+                if (this->verbose & 1) {
+                    sc_sec1.log("Sending to client");
+                }
+                sc_sec1.emit(stream);
+            }
+            stream.mark_end();
+
+            // ------------------------------------------------------------------
+            BStream gcc_header(256);
+            BStream mcs_header(256);
+            BStream x224_header(256);
+
+            GCC::Create_Response_Send(gcc_header, stream.size());
+            MCS::CONNECT_RESPONSE_Send mcs_cr(mcs_header, gcc_header.size() + stream.size(), MCS::BER_ENCODING);
+            X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
+            this->trans->send(x224_header, mcs_header, gcc_header, stream);
+
+            // Channel Connection
+            // ------------------
+
+            // Channel Connection: The client sends an MCS Erect Domain Request PDU,
+            // followed by an MCS Attach User Request PDU to attach the primary user
+            // identity to the MCS domain.
+
+            // The server responds with an MCS Attach User Response PDU containing the user
+            // channel ID.
+
+            // The client then proceeds to join the :
+            // - user channel,
+            // - the input/output (I/O) channel
+            // - and all of the static virtual channels
+
+            // (the I/O and static virtual channel IDs are obtained from the data embedded
+            //  in the GCC packets) by using multiple MCS Channel Join Request PDUs.
+
+            // The server confirms each channel with an MCS Channel Join Confirm PDU.
+            // (The client only sends a Channel Join Request after it has received the
+            // Channel Join Confirm for the previously sent request.)
+
+            // From this point, all subsequent data sent from the client to the server is
+            // wrapped in an MCS Send Data Request PDU, while data sent from the server to
+            //  the client is wrapped in an MCS Send Data Indication PDU. This is in
+            // addition to the data being wrapped by an X.224 Data PDU.
+
+            // Client                                                     Server
+            //    |-------MCS Erect Domain Request PDU--------------------> |
+            //    |-------MCS Attach User Request PDU---------------------> |
+
+            //    | <-----MCS Attach User Confirm PDU---------------------- |
+
+            //    |-------MCS Channel Join Request PDU--------------------> |
+            //    | <-----MCS Channel Join Confirm PDU--------------------- |
+
+            if (this->verbose & 16){
+                LOG(LOG_INFO, "Front::incoming::Channel Connection");
+            }
+
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Recv MCS::ErectDomainRequest");
+            }
+            {
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*trans, x224_data);
+                MCS::ErectDomainRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            }
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Recv MCS::AttachUserRequest");
+            }
+            {
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*trans, x224_data);
+                MCS::AttachUserRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+            }
+            if (this->verbose){
+                LOG(LOG_INFO, "Front::incoming::Send MCS::AttachUserConfirm", this->userid);
+            }
+            {
+                BStream x224_header(256);
+                HStream mcs_data(256, 512);
+                MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header, mcs_data.size());
+                this->trans->send(x224_header, mcs_data);
+            }
+
+            {
+                // read tpktHeader (4 bytes = 3 0 len)
+                // TPDU class 0    (3 bytes = LI F0 PDU_DT)
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data);
+                MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                this->userid = mcs.initiator;
+
+                BStream x224_header(256);
+                HStream mcs_cjcf_data(256, 512);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                                             mcs.initiator,
+                                             mcs.channelId,
+                                             true, mcs.channelId,
+                                             MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
+                this->trans->send(x224_header, mcs_cjcf_data);
+            }
+
+            {
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data);
+                MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                if (mcs.initiator != this->userid){
+                    LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                    throw Error(ERR_MCS_BAD_USERID);
+                }
+
+                BStream x224_header(256);
+                HStream mcs_cjcf_data(256, 512);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                                             mcs.initiator,
+                                             mcs.channelId,
+                                             true, mcs.channelId,
+                                             MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
+                this->trans->send(x224_header, mcs_cjcf_data);
+            }
+
+            for (size_t i = 0 ; i < this->channel_list.size() ; i++){
+                BStream x224_data(256);
+                X224::RecvFactory f(*this->trans, x224_data);
+                X224::DT_TPDU_Recv x224(*this->trans, x224_data);
+                MCS::ChannelJoinRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+
+                if (this->verbose & 16){
+                    LOG(LOG_INFO, "cjrq[%u] = %u -> cjcf", i, mcs.channelId);
+                }
+
+                if (mcs.initiator != this->userid){
+                    LOG(LOG_ERR, "MCS error bad userid, expecting %u got %u", this->userid, mcs.initiator);
+                    throw Error(ERR_MCS_BAD_USERID);
+                }
+
+                BStream x224_header(256);
+                HStream mcs_cjcf_data(256, 512);
+
+                MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
+                                             mcs.initiator,
+                                             mcs.channelId,
+                                             true, mcs.channelId,
+                                             MCS::PER_ENCODING);
+                X224::DT_TPDU_Send(x224_header, mcs_cjcf_data.size());
+                this->trans->send(x224_header, mcs_cjcf_data);
+
+                this->channel_list.set_chanid(i, mcs.channelId);
+            }
+
+            if (this->verbose & 1){
+                LOG(LOG_INFO, "Front::incoming::RDP Security Commencement");
+            }
+
+            // RDP Security Commencement
+            // -------------------------
+
+            // RDP Security Commencement: If standard RDP security methods are being
+            // employed and encryption is in force (this is determined by examining the data
+            // embedded in the GCC Conference Create Response packet) then the client sends
+            // a Security Exchange PDU containing an encrypted 32-byte random number to the
+            // server. This random number is encrypted with the public key of the server
+            // (the server's public key, as well as a 32-byte server-generated random
+            // number, are both obtained from the data embedded in the GCC Conference Create
+            //  Response packet).
+
+            // The client and server then utilize the two 32-byte random numbers to generate
+            // session keys which are used to encrypt and validate the integrity of
+            // subsequent RDP traffic.
+
+            // From this point, all subsequent RDP traffic can be encrypted and a security
+            // header is include " with the data if encryption is in force (the Client Info
+            // and licensing PDUs are an exception in that they always have a security
+            // header). The Security Header follows the X.224 and MCS Headers and indicates
+            // whether the attached data is encrypted.
+
+            // Even if encryption is in force server-to-client traffic may not always be
+            // encrypted, while client-to-server traffic will always be encrypted by
+            // Microsoft RDP implementations (encryption of licensing PDUs is optional,
+            // however).
+
+            // Client                                                     Server
+            //    |------Security Exchange PDU ---------------------------> |
+            if (!this->tls_support)
+            {
+                BStream pdu(65536);
+                X224::RecvFactory f(*this->trans, pdu);
+                X224::DT_TPDU_Recv x224(*this->trans, pdu);
 
                 MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
                 if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
@@ -1728,149 +1629,126 @@ public:
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
-                SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
-                if (this->verbose & 128){
-                    LOG(LOG_INFO, "sec decrypted payload:");
-                    hexdump_d(sec.payload.get_data(), sec.payload.size());
+                SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
+
+                ssllib ssl;
+                uint8_t client_random[64];
+                memset(client_random, 0, 64);
+                {
+                    uint8_t l_out[64]; memset(l_out, 0, 64);
+                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.get_data(), 64);
+                    uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
+                    uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
+
+                    BN_CTX* ctx = BN_CTX_new();
+                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, 64, &lmod);
+                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, 64, &lexp);
+                    BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, 64, &lin);
+                    BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
+
+                    int rv = BN_bn2bin(&lout, (uint8_t*)l_out);
+                    if (rv <= 64) {
+                        reverseit(l_out, rv);
+                        memcpy(client_random, l_out, 64);
+                    }
+                    BN_free(&lin);
+                    BN_free(&lout);
+                    BN_free(&lexp);
+                    BN_free(&lmod);
+                    BN_CTX_free(ctx);
                 }
 
-                if (!sec.flags & SEC::SEC_INFO_PKT) {
-                    throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+                // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
+                SEC::KeyBlock key_block(client_random, this->server_random);
+                memcpy(this->encrypt.sign_key, key_block.blob0, 16);
+                if (this->encrypt.encryptionMethod == 1){
+                    ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
 
-                /* this is the first test that the decrypt is working */
-                this->client_info.process_logon_info( sec.payload
-                                                    , ini->client.ignore_logon_password
-                                                    , ini->client.performance_flags_default
-                                                    , ini->client.performance_flags_force_present
-                                                    , ini->client.performance_flags_force_not_present
-                                                    , (this->verbose & 128)
-                                                    );
+                this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
+                this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
+            }
+            else {
+                LOG(LOG_INFO, "TLS mode: exchange packet disabled");
+            }
+            this->state = WAITING_FOR_LOGON_INFO;
+        }
+        break;
 
-                if (sec.payload.in_remain()){
-                    LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %u bytes trailing",
-                        (unsigned)sec.payload.in_remain());
+        case WAITING_FOR_LOGON_INFO:
+        // Secure Settings Exchange
+        // ------------------------
+
+        // Secure Settings Exchange: Secure client data (such as the username,
+        // password and auto-reconnect cookie) is sent to the server using the Client
+        // Info PDU.
+
+        // Client                                                     Server
+        //    |------ Client Info PDU      ---------------------------> |
+        {
+            LOG(LOG_INFO, "Front::incoming::Secure Settings Exchange");
+
+            BStream stream(65536);
+            X224::RecvFactory fx224(*this->trans, stream);
+            X224::DT_TPDU_Recv x224(*this->trans, stream);
+
+            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
+            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                x224.payload.rewind();
+                MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                const char * reason = MCS::get_reason(mcs.reason);
+                LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                throw Error(ERR_MCS);
+            }
+
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
+            if (this->verbose & 128){
+                LOG(LOG_INFO, "sec decrypted payload:");
+                hexdump_d(sec.payload.get_data(), sec.payload.size());
+            }
+
+            if (!sec.flags & SEC::SEC_INFO_PKT) {
+                throw Error(ERR_SEC_EXPECTED_LOGON_INFO);
+            }
+
+            /* this is the first test that the decrypt is working */
+            this->client_info.process_logon_info( sec.payload
+                                                , ini->client.ignore_logon_password
+                                                , ini->client.performance_flags_default
+                                                , ini->client.performance_flags_force_present
+                                                , ini->client.performance_flags_force_not_present
+                                                , (this->verbose & 128)
+                                                );
+
+            if (sec.payload.in_remain()){
+                LOG(LOG_ERR, "Front::incoming::process_logon all data should have been consumed %u bytes trailing",
+                    (unsigned)sec.payload.in_remain());
+            }
+
+            this->keymap.init_layout(this->client_info.keylayout);
+
+            if (this->client_info.is_mce) {
+                if (this->verbose & 2){
+                    LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
+                    LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
                 }
 
-                this->keymap.init_layout(this->client_info.keylayout);
-
-                if (this->client_info.is_mce) {
-                    if (this->verbose & 2){
-                        LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
-                        LOG(LOG_INFO, "Front::incoming::licencing send_media_lic_response");
-                    }
-
-                    {
-                        HStream stream(1024, 65535);
-
-                        /* mce */
-                        /* some compilers need unsigned char to avoid warnings */
-                        static uint8_t lic3[16] = { 0xff, 0x03, 0x10, 0x00,
-                                                 0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
-                                                 0xf3, 0x99, 0x00, 0x00
-                                                 };
-
-                        stream.out_copy_bytes((char*)lic3, 16);
-                        stream.mark_end();
-
-                        BStream x224_header(256);
-                        BStream mcs_header(256);
-                        BStream sec_header(256);
-
-                        if ((this->verbose & (128|2)) == (128|2)){
-                            LOG(LOG_INFO, "Sec clear payload to send:");
-                            hexdump_d(stream.get_data(), stream.size());
-                        }
-
-                        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
-                        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                        this->trans->send(x224_header, mcs_header, sec_header, stream);
-                    }
-                    // proceed with capabilities exchange
-
-                    // Capabilities Exchange
-                    // ---------------------
-
-                    // Capabilities Negotiation: The server sends the set of capabilities it
-                    // supports to the client in a Demand Active PDU. The client responds with its
-                    // capabilities by sending a Confirm Active PDU.
-
-                    // Client                                                     Server
-                    //    | <------- Demand Active PDU ---------------------------- |
-                    //    |--------- Confirm Active PDU --------------------------> |
-
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "Front::incoming::send_demand_active");
-                    }
-                    this->send_demand_active();
-
-                    LOG(LOG_INFO, "Front::incoming::ACTIVATED (mce)");
-                    this->state = ACTIVATE_AND_PROCESS_DATA;
-                }
-                else {
-                    if (this->verbose & 16){
-                        LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
-                        LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
-                    }
-
+                {
                     HStream stream(1024, 65535);
 
-                    stream.out_uint8(LIC::LICENSE_REQUEST);
-                    stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
-                    stream.out_uint16_le(318); // wMsgSize = 318 including preamble
-
+                    /* mce */
                     /* some compilers need unsigned char to avoid warnings */
-                    static uint8_t lic1[314] = {
-                        // SEC_RANDOM ?
-                        0x7b, 0x3c, 0x31, 0xa6, 0xae, 0xe8, 0x74, 0xf6,
-                        0xb4, 0xa5, 0x03, 0x90, 0xe7, 0xc2, 0xc7, 0x39,
-                        0xba, 0x53, 0x1c, 0x30, 0x54, 0x6e, 0x90, 0x05,
-                        0xd0, 0x05, 0xce, 0x44, 0x18, 0x91, 0x83, 0x81,
-                        //
-                        0x00, 0x00, 0x04, 0x00, 0x2c, 0x00, 0x00, 0x00,
-                        0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00,
-                        0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00, 0x66, 0x00,
-                        0x74, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00,
-                        0x72, 0x00, 0x70, 0x00, 0x6f, 0x00, 0x72, 0x00,
-                        0x61, 0x00, 0x74, 0x00, 0x69, 0x00, 0x6f, 0x00,
-                        0x6e, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
-                        0x32, 0x00, 0x33, 0x00, 0x36, 0x00, 0x00, 0x00,
-                        0x0d, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
-                        0x03, 0x00, 0xb8, 0x00, 0x01, 0x00, 0x00, 0x00,
-                        0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                        0x06, 0x00, 0x5c, 0x00, 0x52, 0x53, 0x41, 0x31,
-                        0x48, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
-                        0x3f, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
-                        0x01, 0xc7, 0xc9, 0xf7, 0x8e, 0x5a, 0x38, 0xe4,
-                        0x29, 0xc3, 0x00, 0x95, 0x2d, 0xdd, 0x4c, 0x3e,
-                        0x50, 0x45, 0x0b, 0x0d, 0x9e, 0x2a, 0x5d, 0x18,
-                        0x63, 0x64, 0xc4, 0x2c, 0xf7, 0x8f, 0x29, 0xd5,
-                        0x3f, 0xc5, 0x35, 0x22, 0x34, 0xff, 0xad, 0x3a,
-                        0xe6, 0xe3, 0x95, 0x06, 0xae, 0x55, 0x82, 0xe3,
-                        0xc8, 0xc7, 0xb4, 0xa8, 0x47, 0xc8, 0x50, 0x71,
-                        0x74, 0x29, 0x53, 0x89, 0x6d, 0x9c, 0xed, 0x70,
-                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                        0x08, 0x00, 0x48, 0x00, 0xa8, 0xf4, 0x31, 0xb9,
-                        0xab, 0x4b, 0xe6, 0xb4, 0xf4, 0x39, 0x89, 0xd6,
-                        0xb1, 0xda, 0xf6, 0x1e, 0xec, 0xb1, 0xf0, 0x54,
-                        0x3b, 0x5e, 0x3e, 0x6a, 0x71, 0xb4, 0xf7, 0x75,
-                        0xc8, 0x16, 0x2f, 0x24, 0x00, 0xde, 0xe9, 0x82,
-                        0x99, 0x5f, 0x33, 0x0b, 0xa9, 0xa6, 0x94, 0xaf,
-                        0xcb, 0x11, 0xc3, 0xf2, 0xdb, 0x09, 0x42, 0x68,
-                        0x29, 0x56, 0x58, 0x01, 0x56, 0xdb, 0x59, 0x03,
-                        0x69, 0xdb, 0x7d, 0x37, 0x00, 0x00, 0x00, 0x00,
-                        0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
-                        0x0e, 0x00, 0x0e, 0x00, 0x6d, 0x69, 0x63, 0x72,
-                        0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f,
-                        0x6d, 0x00
-                    };
+                    static uint8_t lic3[16] = { 0xff, 0x03, 0x10, 0x00,
+                                             0x07, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00,
+                                             0xf3, 0x99, 0x00, 0x00
+                                             };
 
-                    stream.out_copy_bytes((char*)lic1, 314);
+                    stream.out_copy_bytes((char*)lic3, 16);
                     stream.mark_end();
 
-                    BStream x224_header(256);
-                    BStream mcs_header(256);
                     BStream sec_header(256);
 
                     if ((this->verbose & (128|2)) == (128|2)){
@@ -1878,26 +1756,460 @@ public:
                         hexdump_d(stream.get_data(), stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
-                    MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                    X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                    this->trans->send(x224_header, mcs_header, sec_header, stream);
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
+                    stream.copy_to_head(sec_header);
 
-                    if (this->verbose & 2){
-                        LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
-                    }
-                    this->state = WAITING_FOR_ANSWER_TO_LICENCE;
+                    this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
+                // proceed with capabilities exchange
+
+                // Capabilities Exchange
+                // ---------------------
+
+                // Capabilities Negotiation: The server sends the set of capabilities it
+                // supports to the client in a Demand Active PDU. The client responds with its
+                // capabilities by sending a Confirm Active PDU.
+
+                // Client                                                     Server
+                //    | <------- Demand Active PDU ---------------------------- |
+                //    |--------- Confirm Active PDU --------------------------> |
+
+                if (this->verbose & 1){
+                    LOG(LOG_INFO, "Front::incoming::send_demand_active");
+                }
+                this->send_demand_active();
+
+                LOG(LOG_INFO, "Front::incoming::ACTIVATED (mce)");
+                this->state = ACTIVATE_AND_PROCESS_DATA;
             }
-            break;
-
-            case WAITING_FOR_ANSWER_TO_LICENCE:
-            {
-                if (this->verbose & 2){
-                    LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
+            else {
+                if (this->verbose & 16){
+                    LOG(LOG_INFO, "Front::incoming::licencing not client_info.is_mce");
+                    LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
                 }
-                BStream stream(65536);
+
+                HStream stream(1024, 65535);
+
+                stream.out_uint8(LIC::LICENSE_REQUEST);
+                stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
+                stream.out_uint16_le(318); // wMsgSize = 318 including preamble
+
+                /* some compilers need unsigned char to avoid warnings */
+                static uint8_t lic1[314] = {
+                    // SEC_RANDOM ?
+                    0x7b, 0x3c, 0x31, 0xa6, 0xae, 0xe8, 0x74, 0xf6,
+                    0xb4, 0xa5, 0x03, 0x90, 0xe7, 0xc2, 0xc7, 0x39,
+                    0xba, 0x53, 0x1c, 0x30, 0x54, 0x6e, 0x90, 0x05,
+                    0xd0, 0x05, 0xce, 0x44, 0x18, 0x91, 0x83, 0x81,
+                    //
+                    0x00, 0x00, 0x04, 0x00, 0x2c, 0x00, 0x00, 0x00,
+                    0x4d, 0x00, 0x69, 0x00, 0x63, 0x00, 0x72, 0x00,
+                    0x6f, 0x00, 0x73, 0x00, 0x6f, 0x00, 0x66, 0x00,
+                    0x74, 0x00, 0x20, 0x00, 0x43, 0x00, 0x6f, 0x00,
+                    0x72, 0x00, 0x70, 0x00, 0x6f, 0x00, 0x72, 0x00,
+                    0x61, 0x00, 0x74, 0x00, 0x69, 0x00, 0x6f, 0x00,
+                    0x6e, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+                    0x32, 0x00, 0x33, 0x00, 0x36, 0x00, 0x00, 0x00,
+                    0x0d, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00,
+                    0x03, 0x00, 0xb8, 0x00, 0x01, 0x00, 0x00, 0x00,
+                    0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                    0x06, 0x00, 0x5c, 0x00, 0x52, 0x53, 0x41, 0x31,
+                    0x48, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00,
+                    0x3f, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+                    0x01, 0xc7, 0xc9, 0xf7, 0x8e, 0x5a, 0x38, 0xe4,
+                    0x29, 0xc3, 0x00, 0x95, 0x2d, 0xdd, 0x4c, 0x3e,
+                    0x50, 0x45, 0x0b, 0x0d, 0x9e, 0x2a, 0x5d, 0x18,
+                    0x63, 0x64, 0xc4, 0x2c, 0xf7, 0x8f, 0x29, 0xd5,
+                    0x3f, 0xc5, 0x35, 0x22, 0x34, 0xff, 0xad, 0x3a,
+                    0xe6, 0xe3, 0x95, 0x06, 0xae, 0x55, 0x82, 0xe3,
+                    0xc8, 0xc7, 0xb4, 0xa8, 0x47, 0xc8, 0x50, 0x71,
+                    0x74, 0x29, 0x53, 0x89, 0x6d, 0x9c, 0xed, 0x70,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0x08, 0x00, 0x48, 0x00, 0xa8, 0xf4, 0x31, 0xb9,
+                    0xab, 0x4b, 0xe6, 0xb4, 0xf4, 0x39, 0x89, 0xd6,
+                    0xb1, 0xda, 0xf6, 0x1e, 0xec, 0xb1, 0xf0, 0x54,
+                    0x3b, 0x5e, 0x3e, 0x6a, 0x71, 0xb4, 0xf7, 0x75,
+                    0xc8, 0x16, 0x2f, 0x24, 0x00, 0xde, 0xe9, 0x82,
+                    0x99, 0x5f, 0x33, 0x0b, 0xa9, 0xa6, 0x94, 0xaf,
+                    0xcb, 0x11, 0xc3, 0xf2, 0xdb, 0x09, 0x42, 0x68,
+                    0x29, 0x56, 0x58, 0x01, 0x56, 0xdb, 0x59, 0x03,
+                    0x69, 0xdb, 0x7d, 0x37, 0x00, 0x00, 0x00, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+                    0x0e, 0x00, 0x0e, 0x00, 0x6d, 0x69, 0x63, 0x72,
+                    0x6f, 0x73, 0x6f, 0x66, 0x74, 0x2e, 0x63, 0x6f,
+                    0x6d, 0x00
+                };
+
+                stream.out_copy_bytes((char*)lic1, 314);
+                stream.mark_end();
+
+                BStream sec_header(256);
+
+                if ((this->verbose & (128|2)) == (128|2)){
+                    LOG(LOG_INFO, "Sec clear payload to send:");
+                    hexdump_d(stream.get_data(), stream.size());
+                }
+
+                SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
+                stream.copy_to_head(sec_header);
+
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
+
+                if (this->verbose & 2){
+                    LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
+                }
+                this->state = WAITING_FOR_ANSWER_TO_LICENCE;
+            }
+        }
+        break;
+
+        case WAITING_FOR_ANSWER_TO_LICENCE:
+        {
+            if (this->verbose & 2){
+                LOG(LOG_INFO, "Front::incoming::WAITING_FOR_ANSWER_TO_LICENCE");
+            }
+            BStream stream(65536);
+            X224::RecvFactory fx224(*this->trans, stream);
+            X224::DT_TPDU_Recv x224(*this->trans, stream);
+
+            MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
+            if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
+                LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
+                x224.payload.rewind();
+                MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                const char * reason = MCS::get_reason(mcs.reason);
+                LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                throw Error(ERR_MCS);
+            }
+
+            MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+
+            SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
+            if ((this->verbose & (128|2)) == (128|2)){
+                LOG(LOG_INFO, "sec decrypted payload:");
+                hexdump_d(sec.payload.get_data(), sec.payload.size());
+            }
+
+            // Licensing
+            // ---------
+
+            // Licensing: The goal of the licensing exchange is to transfer a
+            // license from the server to the client.
+
+            // The client should store this license and on subsequent
+            // connections send the license to the server for validation.
+            // However, in some situations the client may not be issued a
+            // license to store. In effect, the packets exchanged during this
+            // phase of the protocol depend on the licensing mechanisms
+            // employed by the server. Within the context of this document
+            // we will assume that the client will not be issued a license to
+            // store. For details regarding more advanced licensing scenarios
+            // that take place during the Licensing Phase, see [MS-RDPELE].
+
+            // Client                                                     Server
+            //    | <------ Licence Error PDU Valid Client ---------------- |
+
+            if (sec.flags & SEC::SEC_LICENSE_PKT) {
+                LIC::RecvFactory flic(sec.payload);
+                switch (flic.tag) {
+                case LIC::ERROR_ALERT:
+                {
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "Front::ERROR_ALERT");
+                    }
+                    TODO("We should check what is actually returned by this message, as it may be an error")
+                    LIC::ErrorAlert_Recv lic(sec.payload);
+                    LOG(LOG_ERR, "Front::License Alert: error=%u transition=%u",
+                        lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
+
+                }
+                break;
+                case LIC::NEW_LICENSE_REQUEST:
+                {
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
+                    }
+                    LIC::NewLicenseRequest_Recv lic(sec.payload);
+                    TODO("Instead of returning a license we return a message saying that no license is OK")
+                    HStream stream(1024, 65535);
+                    // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
+
+                    /* some compilers need unsigned char to avoid warnings */
+                    static uint8_t lic2[16] = {
+                        0xff,       // bMsgType : ERROR_ALERT
+                        0x02,       // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
+                        0x10, 0x00, // wMsgSize: 16 bytes including preamble
+                        0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
+                        0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
+                        0x28, 0x14, // wBlobType : ignored because wBlobLen is 0
+                        0x00, 0x00  // wBlobLen  : 0
+                    };
+                    stream.out_copy_bytes((char*)lic2, 16);
+                    stream.mark_end();
+
+                    BStream sec_header(256);
+
+                    if ((this->verbose & (128|2)) == (128|2)){
+                        LOG(LOG_INFO, "Sec clear payload to send:");
+                        hexdump_d(stream.get_data(), stream.size());
+                    }
+
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
+                    stream.copy_to_head(sec_header);
+
+                    this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
+                }
+                break;
+                case LIC::PLATFORM_CHALLENGE_RESPONSE:
+                    TODO("As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE")
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
+                    }
+                    break;
+                case LIC::LICENSE_INFO:
+                    TODO("As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO")
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "Front::LICENSE_INFO");
+                    }
+                    break;
+                default:
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "Front::LICENCE_TAG %u unknown or unsupported by server", flic.tag);
+                    }
+                    break;
+                }
+                // licence received, proceed with capabilities exchange
+
+                // Capabilities Exchange
+                // ---------------------
+
+                // Capabilities Negotiation: The server sends the set of capabilities it
+                // supports to the client in a Demand Active PDU. The client responds with its
+                // capabilities by sending a Confirm Active PDU.
+
+                // Client                                                     Server
+                //    | <------- Demand Active PDU ---------------------------- |
+                //    |--------- Confirm Active PDU --------------------------> |
+
+                if (this->verbose & 1){
+                    LOG(LOG_INFO, "Front::incoming::send_demand_active");
+                }
+                this->send_demand_active();
+
+                LOG(LOG_INFO, "Front::incoming::ACTIVATED (new license request)");
+                this->state = ACTIVATE_AND_PROCESS_DATA;
+            }
+            else {
+                if (this->verbose & 2){
+                    LOG(LOG_INFO, "non licence packet: still waiting for licence");
+                }
+                ShareControl_Recv sctrl(sec.payload);
+
+                switch (sctrl.pdu_type1) {
+                case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "unexpected DEMANDACTIVE PDU while in licence negociation");
+                    }
+                    break;
+                case PDUTYPE_CONFIRMACTIVEPDU:
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
+                    }
+                    {
+                        const unsigned expected = 6; /* share_id(4) + originatorId(2) */
+                        if (!sctrl.payload.in_check_rem(expected)){
+                            LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
+                                expected, sctrl.payload.in_remain());
+                            throw Error(ERR_MCS_PDU_TRUNCATED);
+                        }
+                        uint32_t share_id = sctrl.payload.in_uint32_le();
+                        uint16_t originatorId = sctrl.payload.in_uint16_le();
+                        this->process_confirm_active(sctrl.payload);
+                    }
+		    if (!sctrl.payload.check_end()){
+                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
+                        throw Error(ERR_MCS_PDU_TRAILINGDATA);
+		    }
+                    break;
+                case PDUTYPE_DATAPDU: /* 7 */
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "unexpected DATA PDU while in licence negociation");
+                    }
+                    // at this point licence negociation is still ongoing
+                    // most data packets should not be received
+                    // actually even input is dubious,
+                    // but rdesktop actually sends input data
+                    // also processing this is a problem because input data packets are broken
+//                    this->process_data(sctrl.payload, cb);
+
+                    TODO("check all payload data is consumed")
+                    break;
+                case PDUTYPE_DEACTIVATEALLPDU:
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
+                    }
+                    TODO("check all payload data is consumed")
+                    break;
+                case PDUTYPE_SERVER_REDIR_PKT:
+                    if (this->verbose & 2){
+                        LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
+                    }
+                    TODO("check all payload data is consumed")
+                    break;
+                default:
+                    LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pdu_type1);
+                    break;
+                }
+                TODO("Check why this is necessary when using loop connection ?")
+            }
+            sec.payload.p = sec.payload.end;
+        }
+        break;
+
+        case ACTIVATE_AND_PROCESS_DATA:
+        if (this->verbose & 8){
+            LOG(LOG_INFO, "Front::incoming::ACTIVATE_AND_PROCESS_DATA");
+        }
+        // Connection Finalization
+        // -----------------------
+
+        // Connection Finalization: The client and server send PDUs to finalize the
+        // connection details. The client-to-server and server-to-client PDUs exchanged
+        // during this phase may be sent concurrently as long as the sequencing in
+        // either direction is maintained (there are no cross-dependencies between any
+        // of the client-to-server and server-to-client PDUs). After the client receives
+        // the Font Map PDU it can start sending mouse and keyboard input to the server,
+        // and upon receipt of the Font List PDU the server can start sending graphics
+        // output to the client.
+
+        // Client                                                     Server
+        //    |----------Synchronize PDU------------------------------> |
+        //    |----------Control PDU Cooperate------------------------> |
+        //    |----------Control PDU Request Control------------------> |
+        //    |----------Persistent Key List PDU(s)-------------------> |
+        //    |----------Font List PDU--------------------------------> |
+
+        //    | <--------Synchronize PDU------------------------------- |
+        //    | <--------Control PDU Cooperate------------------------- |
+        //    | <--------Control PDU Granted Control------------------- |
+        //    | <--------Font Map PDU---------------------------------- |
+
+        // All PDU's in the client-to-server direction must be sent in the specified
+        // order and all PDU's in the server to client direction must be sent in the
+        // specified order. However, there is no requirement that client to server PDU's
+        // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
+        // as the sequencing in either direction is maintained.
+
+
+        // Besides input and graphics data, other data that can be exchanged between
+        // client and server after the connection has been finalized include "
+        // connection management information and virtual channel messages (exchanged
+        // between client-side plug-ins and server-side applications).
+        {
+            BStream stream(65536);
+
+            // Detect fast-path PDU
+            this->trans->recv(&stream.end, 1);
+            uint8_t byte = stream.in_uint8();
+
+
+            if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
+                FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
+
+                uint8_t byte;
+                uint8_t eventCode;
+
+                for (uint8_t i = 0; i < cfpie.numEvents; i++){
+                    byte = cfpie.payload.in_uint8();
+
+                    eventCode  = (byte & 0xE0) >> 5;
+
+                    switch (eventCode){
+                        case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
+                        {
+                            FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
+
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO,
+                                    "Front::Received fast-path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X",
+                                    ke.spKeyboardFlags, ke.keyCode);
+                            }
+
+                            BStream decoded_data(256);
+
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data);
+                            decoded_data.mark_end();
+
+                            if (  this->capture
+                               && (this->capture_state == CAPTURE_STATE_STARTED)
+                               && decoded_data.size()) {
+                                struct timeval now = tvtime();
+
+                                this->capture->input(now, decoded_data);
+                            }
+
+                            cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+
+                        }
+                        break;
+
+                        case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
+                        {
+                            FastPath::MouseEvent_Recv me(cfpie.payload, byte);
+
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO,
+                                    "Front::Received fast-path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
+                                    me.pointerFlags, me.xPos, me.yPos);
+                            }
+
+                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                        }
+                        break;
+
+                        case FastPath::FASTPATH_INPUT_EVENT_SYNC:
+                        {
+                            FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
+
+                            if (this->verbose & 4){
+                                LOG(LOG_INFO, "Front::Received fast-path PUD, sync eventFlags=0x%X",
+                                    se.eventFlags);
+                            }
+
+                            this->keymap.synchronize(se.eventFlags & 0xFFFF);
+                            cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                        }
+                        break;
+
+                        default:
+                            LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
+                            throw Error(ERR_RDP_FASTPATH);
+                        break;
+                    }
+                    if (this->verbose & 4){
+                        LOG(LOG_INFO, "Front::Received fast-path PUD done");
+                    }
+                }
+
+                if (cfpie.payload.in_remain() != 0) {
+                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u", cfpie.payload.in_remain());
+                }
+                break;
+            }
+            else {
                 X224::RecvFactory fx224(*this->trans, stream);
+                TODO("We shall put a specific case when we get Disconnect Request")
+                if (fx224.type == X224::DR_TPDU){
+                    TODO("What is the clean way to actually disconnect ?")
+                    X224::DR_TPDU_Recv x224(*this->trans, stream);
+                    LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
+                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                }
+                else if (fx224.type != X224::DT_TPDU){
+                    LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
+                    throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                }
+
                 X224::DT_TPDU_Recv x224(*this->trans, stream);
 
                 MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
@@ -1912,497 +2224,152 @@ public:
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
 
-                SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
-                if ((this->verbose & (128|2)) == (128|2)){
+                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
+                if (this->verbose & 128){
                     LOG(LOG_INFO, "sec decrypted payload:");
                     hexdump_d(sec.payload.get_data(), sec.payload.size());
                 }
 
-                // Licensing
-                // ---------
-
-                // Licensing: The goal of the licensing exchange is to transfer a
-                // license from the server to the client.
-
-                // The client should store this license and on subsequent
-                // connections send the license to the server for validation.
-                // However, in some situations the client may not be issued a
-                // license to store. In effect, the packets exchanged during this
-                // phase of the protocol depend on the licensing mechanisms
-                // employed by the server. Within the context of this document
-                // we will assume that the client will not be issued a license to
-                // store. For details regarding more advanced licensing scenarios
-                // that take place during the Licensing Phase, see [MS-RDPELE].
-
-                // Client                                                     Server
-                //    | <------ Licence Error PDU Valid Client ---------------- |
-
-                if (sec.flags & SEC::SEC_LICENSE_PKT) {
-                    LIC::RecvFactory flic(sec.payload);
-                    switch (flic.tag) {
-                    case LIC::ERROR_ALERT:
-                    {
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "Front::ERROR_ALERT");
-                        }
-                        TODO("We should check what is actually returned by this message, as it may be an error")
-                        LIC::ErrorAlert_Recv lic(sec.payload);
-                        LOG(LOG_ERR, "Front::License Alert: error=%u transition=%u",
-                            lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
-
-                    }
-                    break;
-                    case LIC::NEW_LICENSE_REQUEST:
-                    {
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "Front::NEW_LICENSE_REQUEST");
-                        }
-                        LIC::NewLicenseRequest_Recv lic(sec.payload);
-                        TODO("Instead of returning a license we return a message saying that no license is OK")
-                        HStream stream(1024, 65535);
-                        // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
-
-                        /* some compilers need unsigned char to avoid warnings */
-                        static uint8_t lic2[16] = {
-                            0xff,       // bMsgType : ERROR_ALERT
-                            0x02,       // NOT EXTENDED_ERROR_MSG_SUPPORTED, PREAMBLE_VERSION_2_0
-                            0x10, 0x00, // wMsgSize: 16 bytes including preamble
-                            0x07, 0x00, 0x00, 0x00, // dwErrorCode : STATUS_VALID_CLIENT
-                            0x02, 0x00, 0x00, 0x00, // dwStateTransition ST_NO_TRANSITION
-                            0x28, 0x14, // wBlobType : ignored because wBlobLen is 0
-                            0x00, 0x00  // wBlobLen  : 0
-                        };
-                        stream.out_copy_bytes((char*)lic2, 16);
-                        stream.mark_end();
-
-                        BStream x224_header(256);
-                        BStream mcs_header(256);
-                        BStream sec_header(256);
-
-                        if ((this->verbose & (128|2)) == (128|2)){
-                            LOG(LOG_INFO, "Sec clear payload to send:");
-                            hexdump_d(stream.get_data(), stream.size());
-                        }
-
-                        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
-                        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                        this->trans->send(x224_header, mcs_header, sec_header, stream);
-                    }
-                    break;
-                    case LIC::PLATFORM_CHALLENGE_RESPONSE:
-                        TODO("As we never send a platform challenge, it is unlikely we ever receive a PLATFORM_CHALLENGE_RESPONSE")
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "Front::PLATFORM_CHALLENGE_RESPONSE");
-                        }
-                        break;
-                    case LIC::LICENSE_INFO:
-                        TODO("As we never send a server license request, it is unlikely we ever receive a LICENSE_INFO")
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "Front::LICENSE_INFO");
-                        }
-                        break;
-                    default:
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "Front::LICENCE_TAG %u unknown or unsupported by server", flic.tag);
-                        }
-                        break;
-                    }
-                    // licence received, proceed with capabilities exchange
-
-                    // Capabilities Exchange
-                    // ---------------------
-
-                    // Capabilities Negotiation: The server sends the set of capabilities it
-                    // supports to the client in a Demand Active PDU. The client responds with its
-                    // capabilities by sending a Confirm Active PDU.
-
-                    // Client                                                     Server
-                    //    | <------- Demand Active PDU ---------------------------- |
-                    //    |--------- Confirm Active PDU --------------------------> |
-
-                    if (this->verbose & 1){
-                        LOG(LOG_INFO, "Front::incoming::send_demand_active");
-                    }
-                    this->send_demand_active();
-
-                    LOG(LOG_INFO, "Front::incoming::ACTIVATED (new license request)");
-                    this->state = ACTIVATE_AND_PROCESS_DATA;
+                if (this->verbose & 8){
+                    LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
                 }
-                else {
-                    if (this->verbose & 2){
-                        LOG(LOG_INFO, "non licence packet: still waiting for licence");
-                    }
-                    ShareControl_Recv sctrl(sec.payload);
 
-                    switch (sctrl.pdu_type1) {
-                    case PDUTYPE_DEMANDACTIVEPDU: /* 1 */
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "unexpected DEMANDACTIVE PDU while in licence negociation");
-                        }
-                        break;
-                    case PDUTYPE_CONFIRMACTIVEPDU:
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
-                        }
-                        {
-                            const unsigned expected = 6; /* share_id(4) + originatorId(2) */
-                            if (!sctrl.payload.in_check_rem(expected)){
-                                LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
-                                    expected, sctrl.payload.in_remain());
-                                throw Error(ERR_MCS_PDU_TRUNCATED);
-                            }
-                            uint32_t share_id = sctrl.payload.in_uint32_le();
-                            uint16_t originatorId = sctrl.payload.in_uint16_le();
-                            this->process_confirm_active(sctrl.payload);
-                        }
-		        if (!sctrl.payload.check_end()){
-                            LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
-                            throw Error(ERR_MCS_PDU_TRAILINGDATA);
-		        }
-                        break;
-                    case PDUTYPE_DATAPDU: /* 7 */
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "unexpected DATA PDU while in licence negociation");
-                        }
-                        // at this point licence negociation is still ongoing
-                        // most data packets should not be received
-                        // actually even input is dubious,
-                        // but rdesktop actually sends input data
-                        // also processing this is a problem because input data packets are broken
-    //                    this->process_data(sctrl.payload, cb);
-
-                        TODO("check all payload data is consumed")
-                        break;
-                    case PDUTYPE_DEACTIVATEALLPDU:
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "unexpected DEACTIVATEALL PDU while in licence negociation");
-                        }
-                        TODO("check all payload data is consumed")
-                        break;
-                    case PDUTYPE_SERVER_REDIR_PKT:
-                        if (this->verbose & 2){
-                            LOG(LOG_INFO, "unsupported SERVER_REDIR_PKT while in licence negociation");
-                        }
-                        TODO("check all payload data is consumed")
-                        break;
-                    default:
-                        LOG(LOG_WARNING, "unknown PDU type received while in licence negociation (%d)\n", sctrl.pdu_type1);
-                        break;
-                    }
-                    TODO("Check why this is necessary when using loop connection ?")
-                }
-                sec.payload.p = sec.payload.end;
-            }
-            break;
-
-            case ACTIVATE_AND_PROCESS_DATA:
-            if (this->verbose & 8){
-                LOG(LOG_INFO, "Front::incoming::ACTIVATE_AND_PROCESS_DATA");
-            }
-            // Connection Finalization
-            // -----------------------
-
-            // Connection Finalization: The client and server send PDUs to finalize the
-            // connection details. The client-to-server and server-to-client PDUs exchanged
-            // during this phase may be sent concurrently as long as the sequencing in
-            // either direction is maintained (there are no cross-dependencies between any
-            // of the client-to-server and server-to-client PDUs). After the client receives
-            // the Font Map PDU it can start sending mouse and keyboard input to the server,
-            // and upon receipt of the Font List PDU the server can start sending graphics
-            // output to the client.
-
-            // Client                                                     Server
-            //    |----------Synchronize PDU------------------------------> |
-            //    |----------Control PDU Cooperate------------------------> |
-            //    |----------Control PDU Request Control------------------> |
-            //    |----------Persistent Key List PDU(s)-------------------> |
-            //    |----------Font List PDU--------------------------------> |
-
-            //    | <--------Synchronize PDU------------------------------- |
-            //    | <--------Control PDU Cooperate------------------------- |
-            //    | <--------Control PDU Granted Control------------------- |
-            //    | <--------Font Map PDU---------------------------------- |
-
-            // All PDU's in the client-to-server direction must be sent in the specified
-            // order and all PDU's in the server to client direction must be sent in the
-            // specified order. However, there is no requirement that client to server PDU's
-            // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
-            // as the sequencing in either direction is maintained.
-
-
-            // Besides input and graphics data, other data that can be exchanged between
-            // client and server after the connection has been finalized include "
-            // connection management information and virtual channel messages (exchanged
-            // between client-side plug-ins and server-side applications).
-            {
-                BStream stream(65536);
-
-                // Detect fast-path PDU
-                this->trans->recv(&stream.end, 1);
-                uint8_t byte = stream.in_uint8();
-
-
-                if ((byte & FastPath::FASTPATH_INPUT_ACTION_X224) == 0){
-                    FastPath::ClientInputEventPDU_Recv cfpie(*this->trans, stream, this->decrypt);
-
-                    uint8_t byte;
-                    uint8_t eventCode;
-
-                    for (uint8_t i = 0; i < cfpie.numEvents; i++){
-                        byte = cfpie.payload.in_uint8();
-
-                        eventCode  = (byte & 0xE0) >> 5;
-
-                        switch (eventCode){
-                            case FastPath::FASTPATH_INPUT_EVENT_SCANCODE:
-                            {
-                                FastPath::KeyboardEvent_Recv ke(cfpie.payload, byte);
-
-                                if (this->verbose & 4){
-                                    LOG(LOG_INFO,
-                                        "Front::Received fast-path PUD, scancode keyboardFlags=0x%X, keyCode=0x%X",
-                                        ke.spKeyboardFlags, ke.keyCode);
-                                }
-
-                                BStream decoded_data(256);
-
-                                this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data);
-                                decoded_data.mark_end();
-
-                                if (  this->capture
-                                   && (this->capture_state == CAPTURE_STATE_STARTED)
-                                   && decoded_data.size()) {
-                                    struct timeval now = tvtime();
-
-                                    this->capture->input(now, decoded_data);
-                                }
-
-                                cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
-
-                            }
-                            break;
-
-                            case FastPath::FASTPATH_INPUT_EVENT_MOUSE:
-                            {
-                                FastPath::MouseEvent_Recv me(cfpie.payload, byte);
-
-                                if (this->verbose & 4){
-                                    LOG(LOG_INFO,
-                                        "Front::Received fast-path PUD, mouse pointerFlags=0x%X, xPos=0x%X, yPos=0x%X",
-                                        me.pointerFlags, me.xPos, me.yPos);
-                                }
-
-                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
-                            }
-                            break;
-
-                            case FastPath::FASTPATH_INPUT_EVENT_SYNC:
-                            {
-                                FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
-
-                                if (this->verbose & 4){
-                                    LOG(LOG_INFO, "Front::Received fast-path PUD, sync eventFlags=0x%X",
-                                        se.eventFlags);
-                                }
-
-                                this->keymap.synchronize(se.eventFlags & 0xFFFF);
-                                cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
-                            }
-                            break;
-
-                            default:
-                                LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
-                                throw Error(ERR_RDP_FASTPATH);
+                if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
+                    size_t num_channel_src = this->channel_list.size();
+                    for (size_t index = 0; index < this->channel_list.size(); index++){
+                        if (this->channel_list[index].chanid == mcs.channelId){
+                            num_channel_src = index;
                             break;
                         }
-                        if (this->verbose & 4){
-                            LOG(LOG_INFO, "Front::Received fast-path PUD done");
-                        }
                     }
 
-                    if (cfpie.payload.in_remain() != 0) {
-                        LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u", cfpie.payload.in_remain());
-                    }
-                    break;
-                }
-                else {
-                    X224::RecvFactory fx224(*this->trans, stream);
-                    TODO("We shall put a specific case when we get Disconnect Request")
-                    if (fx224.type == X224::DR_TPDU){
-                        TODO("What is the clean way to actually disconnect ?")
-                        X224::DR_TPDU_Recv x224(*this->trans, stream);
-                        LOG(LOG_INFO, "Front::Received Disconnect Request from RDP client");
-                        throw Error(ERR_X224_EXPECTED_DATA_PDU);
-                    }
-                    else if (fx224.type != X224::DT_TPDU){
-                        LOG(LOG_ERR, "Front::Unexpected non data PDU (got %u)", fx224.type);
-                        throw Error(ERR_X224_EXPECTED_DATA_PDU);
+                    if (this->verbose & 16){
+                        LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
                     }
 
-                    X224::DT_TPDU_Recv x224(*this->trans, stream);
+                    if (num_channel_src >= this->channel_list.size()) {
+                        LOG(LOG_ERR, "Front::incoming::Unknown Channel");
+                        throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                    }
 
-                    MCS::RecvFactory mcs_fac(x224.payload, MCS::PER_ENCODING);
-                    if (mcs_fac.type == MCS::MCSPDU_DisconnectProviderUltimatum){
-                        LOG(LOG_INFO, "Front::incoming::DisconnectProviderUltimatum received");
-                        x224.payload.rewind();
-                        MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
-                        const char * reason = MCS::get_reason(mcs.reason);
-                        LOG(LOG_INFO, "Front DisconnectProviderUltimatum: reason=%s [%d]", reason, mcs.reason);
+                    const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
+                    if (this->verbose & 16){
+                        channel.log(mcs.channelId);
+                    }
+
+                    const unsigned expected = 8; /* length(4) + flags(4) */
+                    if (!sec.payload.in_check_rem(expected)){
+                        LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
+                            expected, sec.payload.in_remain());
                         throw Error(ERR_MCS);
                     }
 
-                    MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
+                    int length = sec.payload.in_uint32_le();
+                    int flags  = sec.payload.in_uint32_le();
 
-                    SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
-                    if (this->verbose & 128){
-                        LOG(LOG_INFO, "sec decrypted payload:");
-                        hexdump_d(sec.payload.get_data(), sec.payload.size());
-                    }
+                    size_t chunk_size = sec.payload.in_remain();
 
-                    if (this->verbose & 8){
-                        LOG(LOG_INFO, "Front::incoming::sec_flags=%x", sec.flags);
-                    }
-
-                    if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
-                        size_t num_channel_src = this->channel_list.size();
-                        for (size_t index = 0; index < this->channel_list.size(); index++){
-                            if (this->channel_list[index].chanid == mcs.channelId){
-                                num_channel_src = index;
-                                break;
-                            }
-                        }
-
-                        if (this->verbose & 16){
-                            LOG(LOG_INFO, "Front::incoming::channel_data channelId=%u", mcs.channelId);
-                        }
-
-                        if (num_channel_src >= this->channel_list.size()) {
-                            LOG(LOG_ERR, "Front::incoming::Unknown Channel");
-                            throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
-                        }
-
-                        const CHANNELS::ChannelDef & channel = this->channel_list[num_channel_src];
-                        if (this->verbose & 16){
-                            channel.log(mcs.channelId);
-                        }
-
-                        const unsigned expected = 8; /* length(4) + flags(4) */
-                        if (!sec.payload.in_check_rem(expected)){
-                            LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
-                                expected, sec.payload.in_remain());
-                            throw Error(ERR_MCS);
-                        }
-
-                        int length = sec.payload.in_uint32_le();
-                        int flags  = sec.payload.in_uint32_le();
-
-                        size_t chunk_size = sec.payload.in_remain();
-
-                        if (this->up_and_running){
-                            if (  !this->ini->client.device_redirection
-                               && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
-                               ) {
-                                LOG(LOG_INFO, "Front::incoming::rdpdr channel disabed");
-                            }
-                            else {
-                                if (this->verbose & 16){
-                                    LOG(LOG_INFO, "Front::send_to_mod_channel");
-                                }
-                                SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
-
-                                cb.send_to_mod_channel(channel.name, chunk, length, flags);
-                            }
+                    if (this->up_and_running){
+                        if (  !this->ini->client.device_redirection
+                           && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
+                           ) {
+                            LOG(LOG_INFO, "Front::incoming::rdpdr channel disabed");
                         }
                         else {
                             if (this->verbose & 16){
-                                LOG(LOG_INFO, "Front::not up_and_running send_to_mod_channel dropped");
+                                LOG(LOG_INFO, "Front::send_to_mod_channel");
                             }
+                            SubStream chunk(sec.payload, sec.payload.get_offset(), chunk_size);
+
+                            cb.send_to_mod_channel(channel.name, chunk, length, flags);
                         }
-                        sec.payload.p += chunk_size;
                     }
                     else {
-                        while (sec.payload.p < sec.payload.end) {
-                            ShareControl_Recv sctrl(sec.payload);
-
-                            switch (sctrl.pdu_type1) {
-                            case PDUTYPE_DEMANDACTIVEPDU:
-                                if (this->verbose & 1){
-                                    LOG(LOG_INFO, "Front received DEMANDACTIVEPDU (unsupported)");
-                                }
-                                break;
-                            case PDUTYPE_CONFIRMACTIVEPDU:
-                                if (this->verbose & 1){
-                                    LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
-                                }
-                                {
-                                    uint32_t share_id = sctrl.payload.in_uint32_le();
-                                    uint16_t originatorId = sctrl.payload.in_uint16_le();
-                                    this->process_confirm_active(sctrl.payload);
-                                }
-                                // reset caches, etc.
-                                this->reset();
-                                // resizing done
-                                BGRPalette palette;
-                                init_palette332(palette);
-                                {
-                                    RDPColCache cmd(0, palette);
-                                    this->orders->draw(cmd);
-                                }
-                                this->init_pointers();
-                                if (this->verbose & 1){
-                                    LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
-                                }
-                                break;
-                            case PDUTYPE_DATAPDU: /* 7 */
-                                if (this->verbose & 8){
-                                    LOG(LOG_INFO, "Front received DATAPDU");
-                                }
-                                // this is rdp_process_data that will set up_and_running to 1
-                                // when fonts have been received
-                                // we will not exit this loop until we are in this state.
-    //                            LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
-                                this->process_data(sctrl.payload, cb);
-                                if (this->verbose & 8){
-                                    LOG(LOG_INFO, "Front received DATAPDU done");
-                                }
-                                TODO("check all received data consumed")
-                                break;
-                            case PDUTYPE_DEACTIVATEALLPDU:
-                                if (this->verbose & 1){
-                                    LOG(LOG_INFO, "Front received DEACTIVATEALLPDU (unsupported)");
-                                }
-                                break;
-                            case PDUTYPE_SERVER_REDIR_PKT:
-                                if (this->verbose & 1){
-                                    LOG(LOG_INFO, "Front received SERVER_REDIR_PKT (unsupported)");
-                                }
-                                break;
-                            default:
-                                LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
-                                break;
-                            }
-                            TODO("check all sctrl.payload data is consumed")
-                            sec.payload.p = sctrl.payload.p;
+                        if (this->verbose & 16){
+                            LOG(LOG_INFO, "Front::not up_and_running send_to_mod_channel dropped");
                         }
                     }
-                    TODO("check all data have been consumed")
+                    sec.payload.p += chunk_size;
                 }
+                else {
+                    while (sec.payload.p < sec.payload.end) {
+                        ShareControl_Recv sctrl(sec.payload);
+
+                        switch (sctrl.pdu_type1) {
+                        case PDUTYPE_DEMANDACTIVEPDU:
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received DEMANDACTIVEPDU (unsupported)");
+                            }
+                            break;
+                        case PDUTYPE_CONFIRMACTIVEPDU:
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
+                            }
+                            {
+                                uint32_t share_id = sctrl.payload.in_uint32_le();
+                                uint16_t originatorId = sctrl.payload.in_uint16_le();
+                                this->process_confirm_active(sctrl.payload);
+                            }
+                            // reset caches, etc.
+                            this->reset();
+                            // resizing done
+                            BGRPalette palette;
+                            init_palette332(palette);
+                            {
+                                RDPColCache cmd(0, palette);
+                                this->orders->draw(cmd);
+                            }
+                            this->init_pointers();
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
+                            }
+                            break;
+                        case PDUTYPE_DATAPDU: /* 7 */
+                            if (this->verbose & 8){
+                                LOG(LOG_INFO, "Front received DATAPDU");
+                            }
+                            // this is rdp_process_data that will set up_and_running to 1
+                            // when fonts have been received
+                            // we will not exit this loop until we are in this state.
+//                            LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                            this->process_data(sctrl.payload, cb);
+                            if (this->verbose & 8){
+                                LOG(LOG_INFO, "Front received DATAPDU done");
+                            }
+                            TODO("check all received data consumed")
+                            break;
+                        case PDUTYPE_DEACTIVATEALLPDU:
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received DEACTIVATEALLPDU (unsupported)");
+                            }
+                            break;
+                        case PDUTYPE_SERVER_REDIR_PKT:
+                            if (this->verbose & 1){
+                                LOG(LOG_INFO, "Front received SERVER_REDIR_PKT (unsupported)");
+                            }
+                            break;
+                        default:
+                            LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
+                            break;
+                        }
+                        TODO("check all sctrl.payload data is consumed")
+                        sec.payload.p = sctrl.payload.p;
+                    }
+                }
+                TODO("check all data have been consumed")
             }
-            break;
-            }
-        } catch (Error & e) {
-            return FRONT_DISCONNECTED;
-        };
-        return (this->up_and_running)?FRONT_RUNNING:FRONT_CONNECTING;
+        }
+        break;
+        }
     }
 
-    void send_data_indication(uint16_t channelId, HStream & stream)
-    {
+    void send_data_indication(uint16_t channelId, HStream & stream) {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
+                                        , stream.size(), MCS::PER_ENCODING);
+
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
         TODO("shouldn't there be sec layer here ? even if it's disabled when there is not encryption server to client ?")
 //        this->trans->send(x224_header, mcs_header, sec_header, stream);
@@ -2443,14 +2410,12 @@ public:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+            target_stream.copy_to_head(sec_header);
+
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
             if (this->verbose & 4){
@@ -2624,14 +2589,12 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
 
     /* store the number of client cursor cache in client_info */
@@ -3036,14 +2999,12 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_synchronize done");
@@ -3104,15 +3065,12 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_control action=%u", action);
@@ -3174,14 +3132,12 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_fontmap");
@@ -3441,15 +3397,12 @@ public:
                     hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
-                BStream x224_header(256);
-                BStream mcs_header(256);
                 BStream sec_header(256);
 
                 SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+                target_stream.copy_to_head(sec_header);
 
-                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -3522,14 +3475,6 @@ public:
                 }
                 cb.rdp_input_up_and_running();
                 this->up_and_running = 1;
-                TODO("we should use accessors to set that, also not sure it's the right place to set it")
-                this->ini->context.opt_width.set(this->client_info.width);
-                this->ini->context.opt_height.set(this->client_info.height);
-                this->ini->context.opt_bpp.set(this->client_info.bpp);
-                this->ini->parse_username(this->client_info.username);
-                if (this->client_info.password[0]) {
-                    this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);
-                }
             }
         }
         break;
@@ -3622,8 +3567,6 @@ public:
             LOG(LOG_INFO, "send_deactive");
         }
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
         HStream stream(1024, 1024 + 256);
         ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
@@ -3634,9 +3577,9 @@ public:
         }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_deactive done");

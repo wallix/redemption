@@ -210,17 +210,13 @@ struct Session {
 
                     time_t timestamp = time(NULL);
                     if (this->front_event.is_set(rfds)) {
-                        switch (this->front->incoming(*this->mod)){
-                        check_module_sequence = true;
-                        default:
-                        case FRONT_DISCONNECTED:
+                        try {
+                            this->front->incoming(*this->mod);
+                        } catch (...) {
                             run_session = false;
-                        break;
-                        case FRONT_CONNECTING:
+                        };
+                        if (!this->front->up_and_running){
                             continue;
-                        break;
-                        case FRONT_RUNNING:
-                        break;
                         }
                     }
 
