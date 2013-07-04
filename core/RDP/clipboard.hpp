@@ -178,6 +178,31 @@ struct CliprdrHeader {
     }
 };  // struct CliprdrHeader
 
+// [MS-RDPECLIP] 2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
+// ======================================================================
+
+// The Monitor Ready PDU is sent from the server to the client to indicate
+//  that the server is initialized and ready. This PDU is transmitted by the
+//  server after it has sent the Clipboard Capabilities PDU to the client.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           clipHeader                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+//  Clipboard PDU Header MUST be set to CB_MONITOR_READY (0x0001), while the
+//  msgFlags field MUST be set to 0x0000.
+
+struct ServerMonitorReadyPDU : public CliprdrHeader {
+    ServerMonitorReadyPDU() : CliprdrHeader(CB_MONITOR_READY, 0, 0) {
+    }   // ServerMonitorReadyPDU(bool response_ok)
+};  // struct ServerMonitorReadyPDU
+
 // [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
 // ===========================================================
 
@@ -237,8 +262,6 @@ struct FormatListPDU : public CliprdrHeader {
 
         stream.out_uint32_le(CF_LOCALE);
         stream.out_clear_bytes(32); // formatName(32)
-
-//        stream.out_clear_bytes(4);
 
         stream.mark_end();
     }
@@ -423,6 +446,12 @@ struct FormatDataRequestPDU : public CliprdrHeader {
 //  Metafile Payload, or Packed Palette Payload.
 
 struct FormatDataResponsePDU : public CliprdrHeader {
+    FormatDataResponsePDU()
+        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
+                       , CB_RESPONSE_FAIL
+                       , 0) {
+    }
+
     FormatDataResponsePDU(bool response_ok)
         : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
