@@ -468,12 +468,13 @@ class SessionManager {
             return MODULE_RUNNING;
         }
 
-        this->signal = BACK_EVENT_NONE;
-
         if (this->signal == BACK_EVENT_REFRESH) {
             LOG(LOG_INFO, "===========> MODULE_REFRESH");
+            this->signal = BACK_EVENT_NONE;
             return MODULE_REFRESH;
         }
+
+        this->signal = BACK_EVENT_NONE;
     
         if (this->ini->context_is_asked(AUTHID_AUTH_USER) 
         ||  this->ini->context_is_asked(AUTHID_PASSWORD)){

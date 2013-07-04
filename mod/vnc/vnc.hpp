@@ -596,7 +596,7 @@ struct mod_vnc : public mod_api {
 
     //==============================================================================================================
     virtual void draw_event(void)
-    virtual BackEvent_t draw_event(void) {
+    {
         if (this->verbose) {
             LOG(LOG_INFO, "vnc::draw_event");
         }

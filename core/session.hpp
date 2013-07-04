@@ -227,7 +227,6 @@ struct Session {
                     TODO("We should have a first loop to wait for front to get up and running, then we will proceed with the standard loop")
                     if (this->front->up_and_running){                    
                     
-    //                      this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
                         // Process incoming module trafic
                         if (this->mod->event.is_set(rfds)){
@@ -237,6 +236,7 @@ struct Session {
                                 this->acl->signal = this->mod->event.signal;
                                 check_module_sequence = true;
                             }
+                            this->front->periodic_snapshot(this->mod->get_pointer_displayed());
                         }
                         
                         // Incoming data from ACL, or opening acl
@@ -255,10 +255,12 @@ struct Session {
                                 }
                                 else if (next_state == MODULE_REFRESH) {
                                     this->mod->refresh_context(*this->ini);
+                                    this->acl->signal = BACK_EVENT_NONE;
                                     this->mod->event.signal = BACK_EVENT_NONE;
                                     this->mod->event.set();
                                }
                                else {
+                                    this->acl->signal = BACK_EVENT_NONE;
                                     mod_api * tmp_mod = mm.new_mod(next_state);
                                     if (tmp_mod != NULL){
                                         if (this->mod != this->no_mod){
@@ -266,6 +268,28 @@ struct Session {
                                         }
                                     }
                                     this->mod = tmp_mod;
+                                    if (this->acl->connected) {
+                                        if (this->ini->globals.movie) {
+                                            if (this->front->capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                                                this->front->start_capture(this->front->client_info.width
+                                                                   , this->front->client_info.height
+                                                                   , *this->ini
+                                                                   );
+                                                this->mod->rdp_input_invalidate(
+                                                    Rect( 0, 0, this->front->client_info.width
+                                                        , this->front->client_info.height));
+                                            }
+                                            else if (this->front->capture_state == Front::CAPTURE_STATE_PAUSED) {
+                                                this->front->resume_capture();
+                                                this->mod->rdp_input_invalidate(
+                                                    Rect(0, 0, this->front->client_info.width
+                                                        , this->front->client_info.height));
+                                            }
+                                        }
+                                        else if (this->front->capture_state == Front::CAPTURE_STATE_STARTED) {
+                                            this->front->pause_capture();
+                                        }
+                                    }
                                 }
                                 
                             }

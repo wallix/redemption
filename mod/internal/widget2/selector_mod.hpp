@@ -67,9 +67,7 @@ public:
         this->screen.set_widget_focus(&this->selector);
 
         this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border));
-        // this->ini.context.selector_lines_per_page = (this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border);
-//        this->ask_page();
-        this->refresh_context(ini);
+        this->ask_page();
         this->selector.refresh(this->selector.rect);
     }
 
@@ -187,6 +185,7 @@ public:
         ));
         this->selector.current_page.refresh(this->selector.current_page.rect);
         this->selector.number_page.refresh(this->selector.number_page.rect);
+        this->event.reset();
     }
 
     void refresh_device()

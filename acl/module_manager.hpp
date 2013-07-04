@@ -25,11 +25,6 @@
 #define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 
 
-                    // Mod refresh context
-//                        this->mod->refresh_context(this->ini);
-//                        this->mod->event.set();
-                    // or Mod next module
-
                 // Check keep alive not reached
 //                if (!this->acl->check_keep_alive(this->keep_alive_time, timestamp)){
 //                }
@@ -183,26 +178,6 @@
 //    }
 
 // Check movie start/stop/pause
-//    if (this->ini.globals.movie) {
-//        if (this->this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-//            this->this->front.start_capture( this->this->front.client_info.width
-//                                      , this->this->front.client_info.height
-//                                      , this->ini
-//                                      );
-//            this->mod->rdp_input_invalidate(
-//                Rect( 0, 0, this->this->front.client_info.width
-//                    , this->this->front.client_info.height));
-//        }
-//        else if (this->this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
-//            this->this->front.resume_capture();
-//            this->mod->rdp_input_invalidate(
-//                Rect( 0, 0, this->this->front.client_info.width
-//                    , this->this->front.client_info.height));
-//        }
-//    }
-//    else if (this->this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
-//        this->this->front.pause_capture();
-//    }
 
 #include "front.hpp"
 #include "sockettransport.hpp"
