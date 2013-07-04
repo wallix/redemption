@@ -3748,7 +3748,7 @@ struct mod_rdp : public mod_api {
                          , (bmpdata.flags & BITMAP_COMPRESSION)
                          );
 
-            if (     bmpdata.cb_scan_width
+            if (   bmpdata.cb_scan_width
                 && ((bmpdata.cb_scan_width - bitmap.line_size) >= nbbytes(bitmap.original_bpp))) {
                 LOG( LOG_WARNING
                    , "Bad line size: line_size=%u width=%u height=%u bpp=%u"
@@ -3759,7 +3759,7 @@ struct mod_rdp : public mod_api {
                    );
             }
 
-            if (    bmpdata.cb_uncompressed_size
+            if (   bmpdata.cb_uncompressed_size
                 && (bmpdata.cb_uncompressed_size != bitmap.bmp_size)) {
                 LOG( LOG_WARNING
                    , "final_size should be size of decompressed bitmap [%u != %u] width=%u height=%u bpp=%u"
@@ -3771,8 +3771,8 @@ struct mod_rdp : public mod_api {
                    );
             }
 
-            if (!this->bitmap_update_support
-            ||  ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
+            if (   !this->bitmap_update_support
+                || ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
                 this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
             }
             else {

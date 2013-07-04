@@ -25,6 +25,15 @@
 
 namespace RDPECLIP {
 
+// Predefined Clipboard Formats (WinUser.h)
+
+enum {
+      CF_TEXT        = 1
+    , CF_OEMTEXT     = 7
+    , CF_UNICODETEXT = 13
+    , CF_LOCALE      = 16
+};
+
 // [MS-RDPECLIP] 2.2.1 Clipboard PDU Header (CLIPRDR_HEADER)
 // =========================================================
 
@@ -208,7 +217,31 @@ struct CliprdrHeader {
 struct FormatListPDU : public CliprdrHeader {
     bool contians_data_in_text_format;
 
-    FormatListPDU() : CliprdrHeader(), contians_data_in_text_format(false) {}
+    FormatListPDU()
+        : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
+        , contians_data_in_text_format(false) {}
+
+    virtual void emit(Stream & stream) {
+        this->dataLen = 144;    /* (formatId(4) + formatName(32)) * 4 */
+        CliprdrHeader::emit(stream);
+
+        // 4 CLIPRDR_SHORT_FORMAT_NAMES structures.
+        stream.out_uint32_le(CF_TEXT);
+        stream.out_clear_bytes(32); // formatName(32)
+
+        stream.out_uint32_le(CF_OEMTEXT);
+        stream.out_clear_bytes(32); // formatName(32)
+
+        stream.out_uint32_le(CF_UNICODETEXT);
+        stream.out_clear_bytes(32); // formatName(32)
+
+        stream.out_uint32_le(CF_LOCALE);
+        stream.out_clear_bytes(32); // formatName(32)
+
+//        stream.out_clear_bytes(4);
+
+        stream.mark_end();
+    }
 
     virtual void recv(Stream & stream, const RecvFactory & recv_factory) {
         CliprdrHeader::recv(stream, recv_factory);
@@ -254,7 +287,7 @@ struct FormatListPDU : public CliprdrHeader {
             36; /* formatId(4) + formatName(32) */
 
         // Parse PDU to find if clipboard data is available in a TEXT format.
-        for(uint32_t i = 0; i < (dataLen / short_format_name_structure_size); i++) {
+        for (uint32_t i = 0; i < (dataLen / short_format_name_structure_size); i++) {
             if (!stream.in_check_rem(short_format_name_structure_size)) {
                 LOG( LOG_INFO
                    , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%u"
@@ -264,8 +297,8 @@ struct FormatListPDU : public CliprdrHeader {
 
             uint32_t formatId = stream.in_uint32_le();
 
-            if (   (formatId == CHANNELS::CF_UNICODETEXT)
-                || (formatId == CHANNELS::CF_TEXT)
+            if (   (formatId == CF_TEXT)
+                || (formatId == CF_UNICODETEXT)
                 ) {
                 LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
                 this->contians_data_in_text_format = true;
@@ -347,6 +380,65 @@ struct FormatDataRequestPDU : public CliprdrHeader {
         stream.mark_end();
     }   // void emit(Stream & stream)
 };  // struct FormatDataRequestPDU
+
+// [MS-RDPECLIP] 2.2.5.2 Format Data Response PDU (CLIPRDR_FORMAT_DATA_RESPONSE)
+// =============================================================================
+
+// The Format Data Response PDU is sent as a reply to the Format Data Request
+//  PDU. It is used to indicate whether processing of the Format Data Request
+//  PDU was successful. If the processing was successful, the Format Data
+//  Response PDU includes the contents of the requested clipboard data.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           clipHeader                          |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 requestedFormatData (variable)                |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+//  Clipboard PDU Header MUST be set to CB_FORMAT_DATA_RESPONSE (0x0005). The
+//  CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in
+//  the msgFlags field of the Clipboard PDU Header structure.
+
+// requestedFormatData (variable): Variable length clipboard format data. The
+//  contents of this field MUST be one of the following types: generic, Packed
+//  Metafile Payload, or Packed Palette Payload.
+
+struct FormatDataResponsePDU : public CliprdrHeader {
+    FormatDataResponsePDU(bool response_ok)
+        : CliprdrHeader( CB_FORMAT_DATA_RESPONSE
+                       , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
+                       , 0) {
+    }
+
+    virtual void emit(Stream & stream, const char * utf8_string) {
+        stream.out_uint16_le(this->msgType);
+        stream.out_uint16_le(this->msgFlags);
+
+        if (this->msgFlags == CB_RESPONSE_OK) {
+            uint16_t offset_dataLen;
+
+            offset_dataLen = stream.get_offset();
+            stream.out_uint32_le(0);
+
+            stream.out_unistr_crlf(utf8_string);
+
+            stream.set_out_uint32_le(   stream.get_offset()
+                                      - offset_dataLen
+                                      - 4                   /* dataLen(4) */
+                                    , offset_dataLen);
+
+            stream.mark_end();
+        }
+    }
+};
 
 }   // namespace RDPECLIP
 

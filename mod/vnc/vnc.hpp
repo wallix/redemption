@@ -986,11 +986,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     //    status has changed
     //******************************************************************************
     //==============================================================================================================
-    void lib_clip_data( void )
+    void lib_clip_data(void) {
     //==============================================================================================================
-    {
-        CHANNELS::ChannelDefArray chanlist = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * channel = chanlist.get((char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+        CHANNELS::ChannelDefArray    chanlist = this->front.get_channel_list();
+        const CHANNELS::ChannelDef * channel  = chanlist.get((char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         TODO("change code below. It will overflow for long VNC data to copy."
         " If clip_data_size is large is will also allocate an undecent amoutn of memory")
@@ -1004,35 +1003,28 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
         size_t chunk_size = 0;
 
-        if (this->opt_clipboard){
+        if (this->opt_clipboard) {
             chunk_size = std::min<size_t>(clip_data_size, MAX_VNC_2_RDP_CLIP_DATA_SIZE);
-            if ( this->verbose ){
+            if (this->verbose) {
                 LOG(LOG_INFO, "clip_data_size=%u chunk_size=%u", clip_data_size, chunk_size);
             }
 
             // The size of <stream> must be larger than MAX_VNC_2_RDP_CLIP_DATA_SIZE.
             this->t->recv(&stream.end, chunk_size); /* text */
             // Add two trailing zero if not already there to ensure we have UTF8sz content
-            if (stream.end[-1]){ *stream.end = 0; stream.end++; }
-            if (stream.end[-1]){ *stream.end = 0; stream.end++; }
+            if (stream.end[-1]) { *stream.end = 0; stream.end++; }
+            if (stream.end[-1]) { *stream.end = 0; stream.end++; }
 
             size_t clipboard_payload_size = UTF8Check(stream.p, chunk_size);
             stream.p[clipboard_payload_size] = 0;
 
             this->clip_data.init(4 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1) + 8 /*clipboard PDU Header*/);
 
-            //--------------------------- Beginning of clipboard PDU Header ----------------------------
-            this->clip_data.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_DATA_RESPONSE);   //  - MSG Type 2 bytes
-            this->clip_data.out_uint16_le(CHANNELS::ChannelDef::CB_RESPONSE_OK);            //  - MSG flags 2 bytes
+            bool response_ok = true;
 
-            size_t start_of_data = this->clip_data.get_offset();
-            this->clip_data.out_uint32_le(0);                                     //  - Datalen of the rest of the message
+            RDPECLIP::FormatDataResponsePDU format_data_response_pdu(response_ok);
 
-            // Convert utf-8 VNC buffer to utf-16 for RDP
-            this->clip_data.out_unistr_crlf(reinterpret_cast<const char *>(stream.p));
-            size_t end_of_data = this->clip_data.get_offset();
-            this->clip_data.set_out_uint32_le(end_of_data - start_of_data - 4, start_of_data);
-            this->clip_data.mark_end();
+            format_data_response_pdu.emit(this->clip_data, reinterpret_cast<const char *>(stream.p));
         }
 
         // drop remaining clipboard content if larger that about 8000 bytes
@@ -1051,7 +1043,9 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         if (this->opt_clipboard && channel) {
             LOG(LOG_INFO, "Clipboard Channel Redirection available");
 
-            BStream out_s(16384);
+            RDPECLIP::FormatListPDU format_list_pdu;
+            BStream                 out_s(16384);
+/*
             //- Beginning of clipboard PDU Header ----------------------------
             out_s.out_uint16_le(CHANNELS::ChannelDef::CB_FORMAT_LIST); // MSG Type 2 bytes, CB_FORMAT_LIST = 0x0002
             out_s.out_uint16_le(0); // MSG flags 2 bytes
@@ -1069,13 +1063,16 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             //- End of Format list PDU payload -------------------------------
             out_s.out_clear_bytes(4);
             out_s.mark_end();
+*/
 
-            size_t length = out_s.size();
+            format_list_pdu.emit(out_s);
 
-            size_t chunk_size = length < CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH
-                              ? length : CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH;
+            size_t length     = out_s.size();
+            size_t chunk_size =   (length < CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH)
+                                ? length
+                                : CHANNELS::ChannelDef::CHANNEL_CHUNK_LENGTH;
 
-            this->send_to_front_channel( (char *) CLIPBOARD_VIRTUAL_CHANNEL_NAME
+            this->send_to_front_channel( (char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME
                                        , out_s.get_data()
                                        , length
                                        , chunk_size
