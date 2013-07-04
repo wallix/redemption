@@ -612,33 +612,16 @@ public:
                , data, length, chunk_size, flags);
         }
 
-        HStream stream(1024, 65536);
-
-        stream.out_uint32_le(length);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
             flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
-        stream.out_uint32_le(flags);
-        stream.out_copy_bytes(data, chunk_size);
-        stream.mark_end();
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
-        BStream sec_header(256);
+        CHANNELS::VirtualChannelPDU virtual_channel_pdu(this->verbose);
+        FixedSizeStream             chunk(data, chunk_size);
 
-        if (((this->verbose & 128) != 0)||((this->verbose & 16)!=0)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.get_data(), stream.size());
-        }
-
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
-
-        if (this->verbose & 16){
-            LOG(LOG_INFO, "Front::send_to_channel done");
-        }
+        virtual_channel_pdu.send_to_client( *this->trans, this->encrypt
+                                          , this->client_info.encryptionLevel, userid, channel.chanid
+                                          , length, flags, chunk);
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -700,19 +683,25 @@ public:
                 target_stream.out_copy_bytes(stream);
                 target_stream.mark_end();
 
+/*
                 BStream x224_header(256);
                 BStream mcs_header(256);
+*/
                 BStream sec_header(256);
 
-                if (this->verbose & 128){
+                if (this->verbose & 128) {
                     LOG(LOG_INFO, "Sec clear payload to send:");
                     hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
                 SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+                target_stream.copy_to_head(sec_header);
+/*
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
                 this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
             }
             else {
                 HStream stream(1024, 65536);
@@ -964,14 +953,20 @@ public:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
+/*
             BStream x224_header(256);
             BStream mcs_header(256);
+*/
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+            target_stream.copy_to_head(sec_header);
+/*
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
             this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
             HStream stream(1024, 65536);
@@ -1073,14 +1068,20 @@ public:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
+/*
             BStream x224_header(256);
             BStream mcs_header(256);
+*/
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+            target_stream.copy_to_head(sec_header);
+/*
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
             this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
             HStream stream(1024, 65536);
@@ -1765,8 +1766,10 @@ public:
                     stream.out_copy_bytes((char*)lic3, 16);
                     stream.mark_end();
 
+/*
                     BStream x224_header(256);
                     BStream mcs_header(256);
+*/
                     BStream sec_header(256);
 
                     if ((this->verbose & (128|2)) == (128|2)){
@@ -1775,9 +1778,13 @@ public:
                     }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
+                    stream.copy_to_head(sec_header);
+/*
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
                     this->trans->send(x224_header, mcs_header, sec_header, stream);
+*/
+                    this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
                 // proceed with capabilities exchange
 
@@ -1861,8 +1868,10 @@ public:
                 stream.out_copy_bytes((char*)lic1, 314);
                 stream.mark_end();
 
+/*
                 BStream x224_header(256);
                 BStream mcs_header(256);
+*/
                 BStream sec_header(256);
 
                 if ((this->verbose & (128|2)) == (128|2)){
@@ -1871,9 +1880,13 @@ public:
                 }
 
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
+                stream.copy_to_head(sec_header);
+/*
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
                 this->trans->send(x224_header, mcs_header, sec_header, stream);
+*/
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
 
                 if (this->verbose & 2){
                     LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
@@ -1967,8 +1980,10 @@ public:
                     stream.out_copy_bytes((char*)lic2, 16);
                     stream.mark_end();
 
+/*
                     BStream x224_header(256);
                     BStream mcs_header(256);
+*/
                     BStream sec_header(256);
 
                     if ((this->verbose & (128|2)) == (128|2)){
@@ -1977,9 +1992,13 @@ public:
                     }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
+                    stream.copy_to_head(sec_header);
+/*
                     MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
                     X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
                     this->trans->send(x224_header, mcs_header, sec_header, stream);
+*/
+                    this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
@@ -2385,12 +2404,13 @@ public:
         }
     }
 
-    void send_data_indication(uint16_t channelId, HStream & stream)
-    {
+    void send_data_indication(uint16_t channelId, HStream & stream) {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
+                                        , stream.size(), MCS::PER_ENCODING);
+
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
         TODO("shouldn't there be sec layer here ? even if it's disabled when there is not encryption server to client ?")
 //        this->trans->send(x224_header, mcs_header, sec_header, stream);
@@ -2431,14 +2451,20 @@ public:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
+/*
             BStream x224_header(256);
             BStream mcs_header(256);
+*/
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+            target_stream.copy_to_head(sec_header);
+/*
             MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
             X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
             this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
             if (this->verbose & 4){
@@ -2612,14 +2638,20 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
+/*
         BStream x224_header(256);
         BStream mcs_header(256);
+*/
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+/*
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
         this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
 
     /* store the number of client cursor cache in client_info */
@@ -3024,14 +3056,20 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
+/*
         BStream x224_header(256);
         BStream mcs_header(256);
+*/
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+/*
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
         this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_synchronize done");
@@ -3093,14 +3131,20 @@ public:
         }
 
 
+/*
         BStream x224_header(256);
         BStream mcs_header(256);
+*/
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+/*
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
         this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_control action=%u", action);
@@ -3162,14 +3206,20 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
+/*
         BStream x224_header(256);
         BStream mcs_header(256);
+*/
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+/*
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
         this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_fontmap");
@@ -3429,15 +3479,21 @@ public:
                     hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
+/*
                 BStream x224_header(256);
                 BStream mcs_header(256);
+*/
                 BStream sec_header(256);
 
                 SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+                target_stream.copy_to_head(sec_header);
+/*
                 MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
 
                 this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+*/
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -3602,8 +3658,10 @@ public:
             LOG(LOG_INFO, "send_deactive");
         }
 
+/*
         BStream x224_header(256);
         BStream mcs_header(256);
+*/
         BStream sec_header(256);
         HStream stream(1024, 1024 + 256);
         ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
@@ -3614,9 +3672,13 @@ public:
         }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        stream.copy_to_head(sec_header);
+/*
         MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
         this->trans->send(x224_header, mcs_header, sec_header, stream);
+*/
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_deactive done");

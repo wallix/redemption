@@ -363,7 +363,11 @@ enum {
 //  3.1.8.3.
 
 struct VirtualChannelPDU {
-    void send( Transport & trans, CryptContext & crypt_context, int encryptionLevel
+    uint32_t verbose;
+
+    VirtualChannelPDU(uint32_t verbose = 0) : verbose(verbose) {}
+
+    void send_to_server( Transport & trans, CryptContext & crypt_context, int encryptionLevel
              , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
              , Stream & chunk) {
         HStream stream(1024, 65536);
@@ -379,7 +383,35 @@ struct VirtualChannelPDU {
 
         SEC::Sec_Send             sec( sec_header, stream, 0, crypt_context, encryptionLevel);
         MCS::SendDataRequest_Send mcs( mcs_header, userId, channelId, 1, 3
-                                     , sec_header.size() + stream.size() , MCS::PER_ENCODING);
+                                     , sec_header.size() + stream.size(), MCS::PER_ENCODING);
+
+        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
+
+        trans.send(x224_header, mcs_header, sec_header, stream);
+    }
+
+    void send_to_client( Transport & trans, CryptContext & crypt_context, int encryptionLevel
+             , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
+             , Stream & chunk) {
+        HStream stream(1024, 65536);
+
+        stream.out_uint32_le(length);
+        stream.out_uint32_le(flags);
+        stream.out_copy_bytes(chunk.get_data(), chunk.size());
+        stream.mark_end();
+
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        if (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0)) {
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(stream.get_data(), stream.size());
+        }
+
+        SEC::Sec_Send                sec( sec_header, stream, 0, crypt_context, encryptionLevel);
+        MCS::SendDataIndication_Send mcs( mcs_header, userId, channelId, 1, 3
+                                     , sec_header.size() + stream.size(), MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
