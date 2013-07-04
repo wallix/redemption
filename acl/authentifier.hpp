@@ -149,7 +149,7 @@ class SessionManager {
     {
         bool res = false;
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
+            long enddate = this->ini->context.end_date_cnx.get();
             if (enddate != 0 && (timestamp > enddate)) {
                 if (this->verbose & 0x10){
                     LOG(LOG_INFO, "auth::close_on_timestamp");
@@ -167,7 +167,7 @@ class SessionManager {
 
         //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
+            long enddate = this->ini->context.end_date_cnx.get();
             //            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
             if (enddate != 0 && (now > enddate)) {
                 LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
@@ -247,7 +247,7 @@ class SessionManager {
     {
 //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
         if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
+            long enddate = this->ini->context.end_date_cnx.get();
 //            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
             if (enddate != 0 && (now > enddate)) {
                 LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
@@ -562,7 +562,7 @@ class SessionManager {
                 nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
                 return MCTX_STATUS_INTERNAL;
             }
-            else if (this->ini->context.authenticated){
+            else if (this->ini->context.authenticated.get()){
                 if (this->verbose & 0x20){
                     LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS authenticated is True");
                 }
@@ -579,8 +579,8 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS else");
                 }
 
-                if (!this->ini->context.rejected.is_empty()) {
-                    this->ini->context.auth_error_message.copy_str(this->ini->context.rejected);
+                if (!this->ini->context.rejected.get().is_empty()) {
+                    this->ini->context.auth_error_message.copy_c_str(this->ini->context.rejected.get_cstr());
                 }
                 if (this->ini->context.auth_error_message.is_empty()) {
                     this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
@@ -624,8 +624,8 @@ class SessionManager {
         try {
             this->acl_serial.incoming();
         } catch (...) {
-            this->ini->context.authenticated = false;
-            this->ini->context.rejected.copy_c_str("Authentifier service failed");
+            this->ini->context.authenticated.set(false);
+            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
         this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
     }

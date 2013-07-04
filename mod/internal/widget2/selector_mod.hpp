@@ -194,7 +194,7 @@ public:
         char * groups    = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0));
         char * targets   = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
         char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
-        char * endtimes  = const_cast<char *>(this->ini.context.end_time.c_str());
+        char * endtimes  = const_cast<char *>(this->ini.context.end_time.get_cstr());
 
         for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page.get(); index++) {
             size_t size_groups = proceed_item(groups);

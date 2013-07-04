@@ -476,8 +476,8 @@ struct Inifile {
         virtual const char* get_value() = 0;
 
         const char* get_serialized(char * buff, size_t size) {
-            TODO("May be the buffer managing is not clear here, "
-                 "can segfault if buff not big enough");
+            TODO("The buffer managing is not clear here, "
+                 "can segfault if buff is not big enough");
             const char * key = string_from_authid(this->authid);
             char * p = buff;
             strncpy(p, key, size);
@@ -718,12 +718,12 @@ public:
     struct Inifile_globals {
         BoolField capture_chunk;
 
-        StringField auth_user;                    // AUTHID_AUTH_USER
-        StringField host;                         // client_ip AUTHID_HOST
-        StringField target;                       // target ip AUTHID_TARGET
+        StringField auth_user;                    // AUTHID_AUTH_USER //
+        StringField host;                         // client_ip AUTHID_HOST //
+        StringField target;                       // target ip AUTHID_TARGET //
 
-        StringField target_device;
-        StringField target_user;                  // AUTHID_TARGET_USER
+        StringField target_device;                // AUTHID_TARGET_DEVICE //
+        StringField target_user;                  // AUTHID_TARGET_USER //
 
         // BEGIN globals
         bool bitmap_cache;       // default true
@@ -744,7 +744,7 @@ public:
 
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
         char auth_channel[512];
-        bool enable_file_encryption;
+        bool enable_file_encryption; // AUTHID_OPT_FILE_ENCRYPTION --
         bool enable_tls;
         char listen_address[256];
         bool enable_ip_transparent;
@@ -756,10 +756,10 @@ public:
         char alternate_shell[1024];
         char shell_working_directory[1024];
 
-        char codec_id[512];
-        bool movie;
-        char movie_path[512];
-        char video_quality[512];
+        char codec_id[512];          // AUTHID_OPT_CODEC_ID --
+        bool movie;                  // AUTHID_OPT_MOVIE --
+        char movie_path[512];        // AUTHID_OPT_MOVIE_PATH --
+        char video_quality[512];     // AUTHID_VIDEO_QUALITY --
         bool enable_bitmap_update;
         // END globals
 
@@ -777,8 +777,8 @@ public:
 
         bool tls_fallback_legacy;
    
-        bool clipboard;
-        bool device_redirection;
+        bool clipboard;             // AUTHID_OPT_CLIPBOARD --
+        bool device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION --
     } client;
 
     // Section "video"
@@ -846,78 +846,82 @@ public:
 
     // section "translation"
     struct {
-        StringField button_ok;
-        StringField button_cancel;
-        StringField button_help;
-        StringField button_close;
-        StringField button_refused;
-        StringField login;
-        StringField username;
-        StringField password;
-        StringField target;
-        StringField diagnostic;
-        StringField connection_closed;
-        StringField help_message;
+        StringField button_ok;              // AUTHID_TRANS_BUTTON_OK
+        StringField button_cancel;          // AUTHID_TRANS_BUTTON_CANCEL
+        StringField button_help;            // AUTHID_TRANS_BUTTON_HELP
+        StringField button_close;           // AUTHID_TRANS_BUTTON_CLOSE
+        StringField button_refused;         // AUTHID_TRANS_BUTTON_REFUSED
+        StringField login;                  // AUTHID_TRANS_LOGIN
+        StringField username;               // AUTHID_TRANS_USERNAME
+        StringField password;               // AUTHID_TRANS_PASSWORD
+        StringField target;                 // AUTHID_TRANS_TARGET
+        StringField diagnostic;             // AUTHID_TRANS_DIAGNOSTIC
+        StringField connection_closed;      // AUTHID_TRANS_CONNECTION_CLOSED
+        StringField help_message;           // AUTHID_TRANS_HELP_MESSAGE
     } translation;
 
     // section "context"
     struct {
-        unsigned           selector_focus;
-        char               movie[1024];
+        unsigned           selector_focus;           //  --
+        char               movie[1024];              //  --
 
-        unsigned           opt_bitrate;
-        unsigned           opt_framerate;
-        unsigned           opt_qscale;
+        UnsignedField      opt_bitrate;              // AUTHID_OPT_BITRATE --
+        UnsignedField      opt_framerate;            // AUTHID_OPT_FRAMERATE --
+        UnsignedField      opt_qscale;               // AUTHID_OPT_QSCALE --
         
-        UnsignedField      opt_bpp;
-        UnsignedField      opt_height;             // AUTHID_OPT_HEIGHT
-        UnsignedField      opt_width;              // AUTHID_OPT_WIDTH
+        UnsignedField      opt_bpp;                  // AUTHID_OPT_BPP //
+        UnsignedField      opt_height;               // AUTHID_OPT_HEIGHT //
+        UnsignedField      opt_width;                // AUTHID_OPT_WIDTH //
 
-        redemption::string auth_error_message;
+        // auth_error_message is left as redemption::string type 
+        // because SocketTransport and ReplayMod take it as argument on 
+        // constructor and modifies it as a redemption::string
+        redemption::string auth_error_message;       // AUTHID_AUTH_ERROR_MESSAGE --
+        
 
-        BoolField             selector;                 // AUTHID_SELECTOR
-        UnsignedField      selector_current_page;
-        StringField        selector_device_filter;
-        StringField        selector_group_filter;    // AUTHID_SELECTOR_GROUP_FILTER
-        UnsignedField      selector_lines_per_page;  // AUTHID_SELECTOR_LINES_PER_PAGE
-        unsigned           selector_number_of_pages;
+        BoolField          selector;                 // AUTHID_SELECTOR //
+        UnsignedField      selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE //
+        StringField        selector_device_filter;   // AUTHID_DEVICE_FILTER  //
+        StringField        selector_group_filter;    // AUTHID_SELECTOR_GROUP_FILTER //
+        UnsignedField      selector_lines_per_page;  // AUTHID_SELECTOR_LINES_PER_PAGE //
+        UnsignedField      selector_number_of_pages; // AUTHID_SELECTOR_NUMBER_OF_PAGES --
 
-        StringField           target_password;          // AUTHID_TARGET_PASSWORD
-        UnsignedField         target_port;
-        StringField           target_protocol;          // AUTHID_TARGET_PROTOCOL
+        StringField        target_password;          // AUTHID_TARGET_PASSWORD //
+        UnsignedField      target_port;              // AUTHID_TARGET_PORT --
+        StringField        target_protocol;          // AUTHID_TARGET_PROTOCOL //
 
-        StringField        password;                 // AUTHID_PASSWORD
+        StringField        password;                 // AUTHID_PASSWORD --
 
 
-        redemption::string authchannel_answer;
-        StringField authchannel_result;
-        StringField authchannel_target;
+        StringField        authchannel_answer;       // AUTHID_AUTHCHANNEL_ANSWER --
+        StringField        authchannel_result;       // AUTHID_AUTHCHANNEL_RESULT //
+        StringField        authchannel_target;       // AUTHID_AUTHCHANNEL_TARGET //
 
-        redemption::string message;
+        StringField        message;                  // AUTHID_MESSAGE --
 
-        StringField        accept_message;           // AUTHID_ACCEPT_MESSAGE
-        StringField        display_message;          // AUTHID_DISPLAY_MESSAGE
+        StringField        accept_message;           // AUTHID_ACCEPT_MESSAGE --
+        StringField        display_message;          // AUTHID_DISPLAY_MESSAGE --
 
-        redemption::string rejected;
+        StringField        rejected;                 // AUTHID_REJECTED --        
 
-        bool               authenticated;
+        BoolField          authenticated;            // AUTHID_AUTHENTICATED --
 
-        BoolField             keepalive;
-        StringField proxy_type;               // AUTHID_PROXY_TYPE
+        BoolField          keepalive;                // AUTHID_KEEPALIVE //
+        StringField        proxy_type;               // AUTHID_PROXY_TYPE //
 
-        StringField trace_seal;
+        StringField        trace_seal;               // AUTHID_TRACE_SEAL //
 
-        redemption::string session_id;
+        StringField        session_id;               // AUTHID_SESSION_ID --
 
-        unsigned           end_date_cnx;
-        redemption::string end_time;
+        UnsignedField      end_date_cnx;             // AUTHID_END_DATE_CNX --
+        StringField        end_time;                 // AUTHID_END_TIME --
 
-        redemption::string mode_console;
-        signed             timezone;
+        StringField        mode_console;             // AUTHID_MODE_CONSOLE --
+        SignedField        timezone;                 // AUTHID_TIMEZONE --
 
-        StringField           real_target_device;       // AUHTID_REAL_TARGET_DEVICE
+        StringField        real_target_device;       // AUHTID_REAL_TARGET_DEVICE  //
 
-        redemption::string authentication_challenge;
+        StringField        authentication_challenge; // AUTHID_AUTHENTICATION_CHALLENGE --
     } context;
 
     struct IniAccounts account;
@@ -1102,12 +1106,21 @@ public:
         // End Section "translation"
 
         // Begin section "context"
+
         this->context.selector_focus              = 0;
         this->context.movie[0]                    = 0;
 
-        this->context.opt_bitrate                 = 40000;
-        this->context.opt_framerate               = 5;
-        this->context.opt_qscale                  = 15;
+
+        this->context.opt_bitrate.set(40000);
+        this->context.opt_framerate.set(5);
+        this->context.opt_qscale.set(15);
+        
+        this->context.opt_bitrate.attach_ini(this,AUTHID_OPT_BITRATE);
+        this->context.opt_framerate.attach_ini(this,AUTHID_OPT_FRAMERATE);
+        this->context.opt_qscale.attach_ini(this,AUTHID_OPT_QSCALE);
+        // this->context.opt_bitrate                 = 40000;
+        // this->context.opt_framerate               = 5;
+        // this->context.opt_qscale                  = 15;
 
 
 
@@ -1119,6 +1132,8 @@ public:
         // this->context.opt_width                   = 800;
 
         this->context.auth_error_message.empty();
+        // this->context.auth_error_message.attach_ini(this,AUTHID_AUTH_ERROR_MESSAGE);
+        // this->context.auth_error_message.empty();
 
 
         this->context.selector.set(false);
@@ -1126,13 +1141,9 @@ public:
         this->context.selector_device_filter.set_empty();
         this->context.selector_group_filter.set_empty();
         this->context.selector_lines_per_page.set(20);
-        // this->context.selector                    = false;
-        // this->context.selector_current_page       = 1;
-        // this->context.selector_device_filter.empty();
-        // this->context.selector_group_filter.empty();
-        // this->context.selector_lines_per_page     = 20;
-        this->context.selector_number_of_pages    = 1;
+        this->context.selector_number_of_pages.set(1);
 
+        this->context.selector_number_of_pages.attach_ini(this, AUTHID_SELECTOR_NUMBER_OF_PAGES);
 
         this->globals.target_device.ask();
         this->globals.target_user.ask();
@@ -1150,10 +1161,6 @@ public:
         this->context.target_protocol.ask();
 
         
-        // this->context.target_password.empty();
-        
-        // this->context.target_protocol.copy_c_str("RDP");
-        
         // this->globals.state_host.asked                    = false;
         // this->globals.state_host.modified                    = true;
 
@@ -1165,14 +1172,13 @@ public:
         // this->globals.state_auth_user.modified               = true;
 
         this->context.password.set_empty();
-        // this->context.password.empty();
 
         this->context.password.ask();
         // this->context.state_password.asked                = true;
         // this->context.state_password.modified                = true;
 
 
-        this->context.authchannel_answer.empty();
+        this->context.authchannel_answer.set_empty();
         this->context.authchannel_result.set_empty();
         this->context.authchannel_target.set_empty();
 
@@ -1183,17 +1189,18 @@ public:
         // this->context.state_display_message.asked         = false;
         // this->context.state_display_message.modified         = true;
 
-        this->context.message.empty();
+        this->context.message.set_empty();
+        this->context.message.attach_ini(this, AUTHID_MESSAGE);
 
         this->context.accept_message.set_empty();
         this->context.display_message.set_empty();
-        // this->context.accept_message.empty();
-        // this->context.display_message.empty();
 
-        this->context.rejected.copy_c_str("Connection refused by authentifier.");
+        this->context.rejected.set_from_cstr("Connection refused by authentifier.");
+        this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
-        this->context.authenticated               = false;
-
+        this->context.authenticated.set(false);
+        this->context.authenticated.attach_ini(this, AUTHID_AUTHENTICATED);
+       
         this->context.keepalive.set(false);
         this->context.keepalive.ask();
         // this->context.state_keepalive.asked               = true;
@@ -1205,7 +1212,6 @@ public:
 
         
         this->context.proxy_type.set_from_cstr("RDP");
-        // this->context.proxy_type.copy_c_str("RDP");
 
 
         // this->context.state_trace_seal.asked              = false;
@@ -1213,21 +1219,31 @@ public:
 
         this->context.trace_seal.set_empty();
 
-        this->context.session_id.empty();
+        this->context.session_id.set_empty();
+        this->context.session_id.attach_ini(this, AUTHID_SESSION_ID);
 
-        this->context.end_date_cnx                = 0;
-        this->context.end_time.empty();
+        this->context.end_date_cnx.set(0);
+        this->context.end_time.set_empty();
+        this->context.end_date_cnx.attach_ini(this, AUTHID_END_DATE_CNX);
+        this->context.end_time.attach_ini(this, AUTHID_END_TIME);
 
-        this->context.mode_console.copy_c_str("allow");
-        this->context.timezone                    = -3600;
+
+
+        this->context.mode_console.set_from_cstr("allow");
+        this->context.timezone.set(-3600);
+        this->context.mode_console.attach_ini(this, AUTHID_MODE_CONSOLE);
+        this->context.timezone.attach_ini(this, AUTHID_TIMEZONE);
+
+
 
         this->context.real_target_device.set_empty();
-        // this->context.real_target_device.empty();
+
         // this->context.state_real_target_device.asked              = false;
         // this->context.state_real_target_device.modified              = true;
 
-        this->context.authentication_challenge.empty();
 
+        this->context.authentication_challenge.set_empty();
+        this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
         // Attaching ini struct to values
         this->context.opt_bpp.attach_ini(this,AUTHID_OPT_BPP);
         this->context.opt_height.attach_ini(this,AUTHID_OPT_HEIGHT);
@@ -1251,6 +1267,7 @@ public:
         this->context.proxy_type.attach_ini(this,AUTHID_PROXY_TYPE);
         this->context.real_target_device.attach_ini(this,AUTHID_REAL_TARGET_DEVICE);
 
+        this->context.authchannel_answer.attach_ini(this,AUTHID_AUTHCHANNEL_ANSWER);
         this->context.authchannel_target.attach_ini(this,AUTHID_AUTHCHANNEL_TARGET);
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
@@ -1911,13 +1928,13 @@ public:
 
         // Context
         case AUTHID_OPT_BITRATE:
-            this->context.opt_bitrate   = ulong_from_cstr(value);
+            this->context.opt_bitrate.set_from_cstr(value);
             break;
         case AUTHID_OPT_FRAMERATE:
-            this->context.opt_framerate = ulong_from_cstr(value);
+            this->context.opt_framerate.set_from_cstr(value);
             break;
         case AUTHID_OPT_QSCALE:
-            this->context.opt_qscale    = ulong_from_cstr(value);
+            this->context.opt_qscale.set_from_cstr(value);
             break;
 
         case AUTHID_OPT_WIDTH:
@@ -1950,7 +1967,7 @@ public:
             this->context.selector_lines_per_page.set_from_cstr(value);
             break;
         case AUTHID_SELECTOR_NUMBER_OF_PAGES:
-            this->context.selector_number_of_pages    = ulong_from_cstr(value);
+            this->context.selector_number_of_pages.set_from_cstr(value);
             break;
 
         case AUTHID_TARGET_DEVICE:
@@ -1985,7 +2002,7 @@ public:
             break;
 
         case AUTHID_AUTHCHANNEL_ANSWER:
-            this->context.authchannel_answer.copy_c_str(value);
+            this->context.authchannel_answer.set_from_cstr(value);
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
             this->context.authchannel_result.set_from_cstr(value);
@@ -1995,7 +2012,7 @@ public:
             break;
 
         case AUTHID_MESSAGE:
-            this->context.message.copy_c_str(value);
+            this->context.message.set_from_cstr(value);
             break;
 
         case AUTHID_ACCEPT_MESSAGE:
@@ -2006,10 +2023,10 @@ public:
             break;
 
         case AUTHID_AUTHENTICATED:
-            this->context.authenticated  = bool_from_cstr(value);
+            this->context.authenticated.set_from_cstr(value);
             break;
         case AUTHID_REJECTED:
-            this->context.rejected.copy_c_str(value);
+            this->context.rejected.set_from_cstr(value);
             break;
 
         case AUTHID_KEEPALIVE:
@@ -2024,21 +2041,21 @@ public:
             break;
 
         case AUTHID_SESSION_ID:
-            this->context.session_id.copy_c_str(value);
+            this->context.session_id.set_from_cstr(value);
             break;
 
         case AUTHID_END_DATE_CNX:
-            this->context.end_date_cnx = ulong_from_cstr(value);
+            this->context.end_date_cnx.set_from_cstr(value);
             break;
         case AUTHID_END_TIME:
-            this->context.end_time.copy_c_str(value);
+            this->context.end_time.set_from_cstr(value);
             break;
 
         case AUTHID_MODE_CONSOLE:
-            this->context.mode_console.copy_c_str(value);
+            this->context.mode_console.set_from_cstr(value);
             break;
         case AUTHID_TIMEZONE:
-            this->context.timezone = _long_from_cstr(value);
+            this->context.timezone.set_from_cstr(value);
             break;
 
         case AUTHID_REAL_TARGET_DEVICE:
@@ -2046,7 +2063,7 @@ public:
             break;
 
         case AUTHID_AUTHENTICATION_CHALLENGE:
-            this->context.authentication_challenge.copy_c_str(value);
+            this->context.authentication_challenge.set_from_cstr(value);
             break;
 
         default:
@@ -2171,44 +2188,50 @@ public:
             break;
 
         case AUTHID_OPT_BITRATE:
-            if (size) {
-                snprintf(buffer, size, "%u", this->context.opt_bitrate);
-                pszReturn = buffer;
-            }
+            pszReturn = this->context.opt_bitrate.get_value();
+            // if (size) {
+            //     snprintf(buffer, size, "%u", this->context.opt_bitrate);
+            //     pszReturn = buffer;
+            // }
             break;
         case AUTHID_OPT_FRAMERATE:
-            if (size) {
-                snprintf(buffer, size, "%u", this->context.opt_framerate);
-                pszReturn = buffer;
-            }
+            pszReturn = this->context.opt_framerate.get_value();
+            // if (size) {
+            //     snprintf(buffer, size, "%u", this->context.opt_framerate);
+            //     pszReturn = buffer;
+            // }
             break;
         case AUTHID_OPT_QSCALE:
-            if (size) {
-                snprintf(buffer, size, "%u", this->context.opt_qscale);
-                pszReturn = buffer;
-            }
+            pszReturn = this->context.opt_qscale.get_value();
+            // if (size) {
+            //     snprintf(buffer, size, "%u", this->context.opt_qscale);
+            //     pszReturn = buffer;
+            // }
             break;
 
         case AUTHID_OPT_BPP:
-            if (  size
-                  && !this->context.opt_bpp.is_asked()) {
-                snprintf(buffer, size, "%u", this->context.opt_bpp.get());
-                pszReturn = buffer;
-            }
+            pszReturn = this->context.opt_bpp.get_value();
+            // if (  size
+            //       && !this->context.opt_bpp.is_asked()) {
+            //     snprintf(buffer, size, "%u", this->context.opt_bpp.get());
+            //     pszReturn = buffer;
+            // }
             break;
         case AUTHID_OPT_HEIGHT:
-            if (  size
-                  && !this->context.opt_height.is_asked()) {
-                snprintf(buffer, size, "%u", this->context.opt_height.get());
-                pszReturn = buffer;
-            }
+            pszReturn = this->context.opt_height.get_value();
+            // if (  size
+            //       && !this->context.opt_height.is_asked()) {
+            //     snprintf(buffer, size, "%u", this->context.opt_height.get());
+            //     pszReturn = buffer;
+            // }
             break;
         case AUTHID_OPT_WIDTH:
-            if (  size
-                  && !this->context.opt_width.is_asked()) {
-                snprintf(buffer, size, "%u", this->context.opt_width.get());
-                pszReturn = buffer;
-            }
+            pszReturn = this->context.opt_width.get_value();
+            // if (  size
+            //       && !this->context.opt_width.is_asked()) {
+            //     snprintf(buffer, size, "%u", this->context.opt_width.get());
+            //     pszReturn = buffer;
+            // }
             break;
 
         case AUTHID_AUTH_ERROR_MESSAGE:
@@ -2249,7 +2272,7 @@ public:
             break;
         case AUTHID_SELECTOR_NUMBER_OF_PAGES:
             if (size) {
-                snprintf(buffer, size, "%u", this->context.selector_number_of_pages);
+                snprintf(buffer, size, "%u", this->context.selector_number_of_pages.get());
                 pszReturn = buffer;
             }
             break;
@@ -2306,7 +2329,7 @@ public:
             break;
 
         case AUTHID_AUTHCHANNEL_ANSWER:
-            pszReturn = this->context.authchannel_answer.c_str();
+            pszReturn = this->context.authchannel_answer.get_cstr();
             break;
         case AUTHID_AUTHCHANNEL_RESULT:
             if (!this->context.authchannel_result.is_asked()) {
@@ -2320,7 +2343,7 @@ public:
             break;
 
         case AUTHID_MESSAGE:
-            pszReturn = this->context.message.c_str();
+            pszReturn = this->context.message.get_cstr();
             break;
         case AUTHID_ACCEPT_MESSAGE:
             if (!this->context.accept_message.is_asked()) {
@@ -2335,13 +2358,13 @@ public:
 
         case AUTHID_AUTHENTICATED:
             if (size) {
-                strncpy(buffer, (this->context.authenticated ? "True" : "False"), size);
+                strncpy(buffer, (this->context.authenticated.get() ? "True" : "False"), size);
                 buffer[size - 1] = 0;
                 pszReturn = buffer;
             }
             break;
         case AUTHID_REJECTED:
-            pszReturn = this->context.rejected.c_str();
+            pszReturn = this->context.rejected.get_cstr();
             break;
 
         case AUTHID_KEEPALIVE:
@@ -2365,25 +2388,25 @@ public:
             break;
 
         case AUTHID_SESSION_ID:
-            pszReturn = this->context.session_id.c_str();
+            pszReturn = this->context.session_id.get_cstr();
             break;
 
         case AUTHID_END_DATE_CNX:
             if (size) {
-                snprintf(buffer, size, "%u", this->context.end_date_cnx);
+                snprintf(buffer, size, "%u", this->context.end_date_cnx.get());
                 pszReturn = buffer;
             }
             break;
         case AUTHID_END_TIME:
-            pszReturn = this->context.end_time.c_str();
+            pszReturn = this->context.end_time.get_cstr();
             break;
 
         case AUTHID_MODE_CONSOLE:
-            pszReturn = this->context.mode_console.c_str();
+            pszReturn = this->context.mode_console.get_cstr();
             break;
         case AUTHID_TIMEZONE:
             if (size) {
-                snprintf(buffer, size, "%d", this->context.timezone);
+                snprintf(buffer, size, "%d", this->context.timezone.get());
                 pszReturn = buffer;
             }
             break;
@@ -2393,7 +2416,7 @@ public:
             break;
 
         case AUTHID_AUTHENTICATION_CHALLENGE:
-            pszReturn = this->context.authentication_challenge.c_str();
+            pszReturn = this->context.authentication_challenge.get_cstr();
             break;
 
         default:
@@ -2644,7 +2667,7 @@ public:
             }
             break;
         case AUTHID_AUTHENTICATED:
-            return this->context.authenticated;
+            return this->context.authenticated.get();
         default:
             LOG(LOG_WARNING, "Inifile::context_get_bool(id): unknown authid=\"%d\"", authid);
             break;

@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -142,26 +142,26 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(0,                                ini.context.selector_focus);
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.movie));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.context.opt_bpp.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.opt_height.is_asked());
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.selector_device_filter.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.selector_group_filter.get_cstr()));
     BOOST_CHECK_EQUAL(20,                               ini.context.selector_lines_per_page.get());
-    BOOST_CHECK_EQUAL(1,                                ini.context.selector_number_of_pages);
+    BOOST_CHECK_EQUAL(1,                                ini.context.selector_number_of_pages.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.target_device.is_asked());
     //BOOST_CHECK_EQUAL(true,                             ini.globals.state_target_device.asked);
@@ -209,21 +209,21 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.context.authchannel_target.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.authchannel_result.is_asked());
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_answer.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_answer.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_result.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authchannel_target.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.context.accept_message.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.display_message.is_asked());
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.message.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.message.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.accept_message.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.display_message.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("Connection refused by authentifier."),
-                      std::string(ini.context.rejected.c_str()));
+                      std::string(ini.context.rejected.get_cstr()));
 
-    BOOST_CHECK_EQUAL(false,                            ini.context.authenticated);
+    BOOST_CHECK_EQUAL(false,                            ini.context.authenticated.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.context.keepalive.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.proxy_type.is_asked());
@@ -235,17 +235,17 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.trace_seal.get_cstr()));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.session_id.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.session_id.get_cstr()));
 
-    BOOST_CHECK_EQUAL(0,                                ini.context.end_date_cnx);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.end_time.c_str()));
+    BOOST_CHECK_EQUAL(0,                                ini.context.end_date_cnx.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.end_time.get_cstr()));
 
-    BOOST_CHECK_EQUAL(std::string("allow"),             std::string(ini.context.mode_console.c_str()));
-    BOOST_CHECK_EQUAL(-3600,                            ini.context.timezone);
+    BOOST_CHECK_EQUAL(std::string("allow"),             std::string(ini.context.mode_console.get_cstr()));
+    BOOST_CHECK_EQUAL(-3600,                            ini.context.timezone.get());
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.real_target_device.get_cstr()));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authentication_challenge.c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authentication_challenge.get_cstr()));
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
@@ -265,7 +265,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -491,7 +491,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -583,22 +583,22 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -654,7 +654,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -750,22 +750,22 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.client.clipboard);
     BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -812,7 +812,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -906,22 +906,22 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -964,7 +964,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1060,22 +1060,22 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -1112,7 +1112,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1205,22 +1205,22 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -1251,7 +1251,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1344,22 +1344,22 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -1385,7 +1385,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1477,22 +1477,22 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -1522,7 +1522,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1614,22 +1614,22 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -1649,7 +1649,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
@@ -1741,22 +1741,22 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
 
-    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get().c_str()));
-    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(40000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(5,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(15,                               ini.context.opt_qscale.get());
     BOOST_CHECK_EQUAL(800,                              ini.context.opt_width.get());
     BOOST_CHECK_EQUAL(600,                              ini.context.opt_height.get());
     BOOST_CHECK_EQUAL(24,                               ini.context.opt_bpp.get());
@@ -1846,9 +1846,9 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ini.context_set_value(AUTHID_OPT_FRAMERATE,         "6");
     ini.context_set_value(AUTHID_OPT_QSCALE,            "16");
 
-    BOOST_CHECK_EQUAL(80000,                            ini.context.opt_bitrate);
-    BOOST_CHECK_EQUAL(6,                                ini.context.opt_framerate);
-    BOOST_CHECK_EQUAL(16,                               ini.context.opt_qscale);
+    BOOST_CHECK_EQUAL(80000,                            ini.context.opt_bitrate.get());
+    BOOST_CHECK_EQUAL(6,                                ini.context.opt_framerate.get());
+    BOOST_CHECK_EQUAL(16,                               ini.context.opt_qscale.get());
 
     BOOST_CHECK_EQUAL(std::string("80000"),             std::string(ini.context_get_value(AUTHID_OPT_BITRATE,   buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string("6"),                 std::string(ini.context_get_value(AUTHID_OPT_FRAMERATE, buffer, sizeof(buffer))));
@@ -1919,7 +1919,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("Windows"),           std::string(ini.context.selector_device_filter.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.selector_group_filter.get_cstr()));
     BOOST_CHECK_EQUAL(25,                               ini.context.selector_lines_per_page.get());
-    BOOST_CHECK_EQUAL(2,                                ini.context.selector_number_of_pages);
+    BOOST_CHECK_EQUAL(2,                                ini.context.selector_number_of_pages.get());
 
     BOOST_CHECK_EQUAL(std::string("True"),              std::string(ini.context_get_value(AUTHID_SELECTOR,                 buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string("2"),                 std::string(ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,    buffer, sizeof(buffer))));
@@ -1944,7 +1944,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_PROTOCOL));
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_USER));
 
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.target_device.get().c_str()));
+    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context.target_password.get_cstr()));
     BOOST_CHECK_EQUAL(3390,                             ini.context.target_port.get());
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.target_protocol.get_cstr()));
@@ -2012,7 +2012,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // answer
     ini.context_set_value(AUTHID_AUTHCHANNEL_ANSWER,    "answer");
 
-    BOOST_CHECK_EQUAL(std::string("answer"),            std::string(ini.context.authchannel_answer.c_str()));
+    BOOST_CHECK_EQUAL(std::string("answer"),            std::string(ini.context.authchannel_answer.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("answer"),            std::string(ini.context_get_value(AUTHID_AUTHCHANNEL_ANSWER, buffer, sizeof(buffer))));
 
@@ -2048,7 +2048,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // message
     ini.context_set_value(AUTHID_MESSAGE,               "message");
 
-    BOOST_CHECK_EQUAL(std::string("message"),           std::string(ini.context.message.c_str()));
+    BOOST_CHECK_EQUAL(std::string("message"),           std::string(ini.context.message.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("message"),           std::string(ini.context_get_value(AUTHID_MESSAGE, buffer, sizeof(buffer))));
 
@@ -2084,7 +2084,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // rejected
     ini.context_set_value(AUTHID_REJECTED,              "rejected");
 
-    BOOST_CHECK_EQUAL(std::string("rejected"),          std::string(ini.context.rejected.c_str()));
+    BOOST_CHECK_EQUAL(std::string("rejected"),          std::string(ini.context.rejected.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("rejected"),          std::string(ini.context_get_value(AUTHID_REJECTED, buffer, sizeof(buffer))));
 
@@ -2092,7 +2092,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // authenticated
     ini.context_set_value(AUTHID_AUTHENTICATED,         "True");
 
-    BOOST_CHECK_EQUAL(true,                             ini.context.authenticated);
+    BOOST_CHECK_EQUAL(true,                             ini.context.authenticated.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.context_get_bool(AUTHID_AUTHENTICATED));
 
@@ -2142,7 +2142,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // session_id
     ini.context_set_value(AUTHID_SESSION_ID,            "0123456789");
 
-    BOOST_CHECK_EQUAL(std::string("0123456789"),        std::string(ini.context.session_id.c_str()));
+    BOOST_CHECK_EQUAL(std::string("0123456789"),        std::string(ini.context.session_id.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("0123456789"),        std::string(ini.context_get_value(AUTHID_SESSION_ID, buffer, sizeof(buffer))));
 
@@ -2150,7 +2150,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // end_date_cnx
     ini.context_set_value(AUTHID_END_DATE_CNX,          "12345678");
 
-    BOOST_CHECK_EQUAL(12345678,                         ini.context.end_date_cnx);
+    BOOST_CHECK_EQUAL(12345678,                         ini.context.end_date_cnx.get());
 
     BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context_get_value(AUTHID_END_DATE_CNX, buffer, sizeof(buffer))));
 
@@ -2158,7 +2158,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // end_time
     ini.context_set_value(AUTHID_END_TIME,              "end_time");
 
-    BOOST_CHECK_EQUAL(std::string("end_time"),          std::string(ini.context.end_time.c_str()));
+    BOOST_CHECK_EQUAL(std::string("end_time"),          std::string(ini.context.end_time.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("end_time"),          std::string(ini.context_get_value(AUTHID_END_TIME, buffer, sizeof(buffer))));
 
@@ -2166,7 +2166,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // mode_console
     ini.context_set_value(AUTHID_MODE_CONSOLE,          "deny");
 
-    BOOST_CHECK_EQUAL(std::string("deny"),              std::string(ini.context.mode_console.c_str()));
+    BOOST_CHECK_EQUAL(std::string("deny"),              std::string(ini.context.mode_console.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("deny"),              std::string(ini.context_get_value(AUTHID_MODE_CONSOLE, buffer, sizeof(buffer))));
 
@@ -2174,7 +2174,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // timezone
     ini.context_set_value(AUTHID_TIMEZONE,              "-7200");
 
-    BOOST_CHECK_EQUAL(-7200,                            ini.context.timezone);
+    BOOST_CHECK_EQUAL(-7200,                            ini.context.timezone.get());
 
     BOOST_CHECK_EQUAL(std::string("-7200"),             std::string(ini.context_get_value(AUTHID_TIMEZONE, buffer, sizeof(buffer))));
 
@@ -2190,7 +2190,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     // authentication_challenge
     ini.context_set_value(AUTHID_AUTHENTICATION_CHALLENGE,     "authentication_challenge");
 
-    BOOST_CHECK_EQUAL(std::string("authentication_challenge"), std::string(ini.context.authentication_challenge.c_str()));
+    BOOST_CHECK_EQUAL(std::string("authentication_challenge"), std::string(ini.context.authentication_challenge.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("authentication_challenge"), std::string(ini.context_get_value(AUTHID_AUTHENTICATION_CHALLENGE, buffer, sizeof(buffer))));
 }

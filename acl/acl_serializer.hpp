@@ -139,19 +139,19 @@ public:
         }
         this->auth_trans.recv(&stream.end, size);
         LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
-        bool flag = this->ini->context.session_id.is_empty();
+        bool flag = this->ini->context.session_id.get().is_empty();
         this->in_items(stream);
-        if (flag && !this->ini->context.session_id.is_empty()) {
+        if (flag && !this->ini->context.session_id.get().is_empty()) {
             int child_pid = getpid();
             char old_session_file[256];
             sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
             char new_session_file[256];
             sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                this->ini->context.session_id.c_str());
+                this->ini->context.session_id.get_cstr());
             rename(old_session_file, new_session_file);
         }
 
-        LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.c_str());
+        LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.get_cstr());
     }
 
     TODO("move that function to Inifile create specialized stream object InifileStream")
@@ -204,8 +204,8 @@ public:
             stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
             this->auth_trans.send(stream.get_data(), total_length);
         } catch (Error e) {
-            this->ini->context.authenticated = false;
-            this->ini->context.rejected.copy_c_str("Authentifier service failed");
+            this->ini->context.authenticated.set(false);
+            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
 
@@ -228,8 +228,8 @@ public:
             stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
             this->auth_trans.send(stream.get_data(), total_length);
         } catch (Error e) {
-            this->ini->context.authenticated = false;
-            this->ini->context.rejected.copy_c_str("Authentifier service failed");
+            this->ini->context.authenticated.set(false);
+            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
 

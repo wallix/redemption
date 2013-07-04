@@ -255,11 +255,11 @@ struct Session {
                         else if (this->ptr_auth_event->is_set(rfds)) {
                             this->sesman->receive_next_module();
 
-                            if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
+                            if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0){
                                 this->front->set_console_session(true);
                                 LOG(LOG_INFO, "Session::mode console : force");
                             }
-                            else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
+                            else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0){
                                 this->front->set_console_session(false);
                                 LOG(LOG_INFO, "Session::mode console : forbid");
                             }
@@ -293,11 +293,11 @@ struct Session {
                         else if (this->ptr_auth_event->is_set(rfds)) {
                             this->sesman->receive_next_module();
 
-                            if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
+                            if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0){
                                 this->front->set_console_session(true);
                                 LOG(LOG_INFO, "Session::mode console : force");
                             }
-                            else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
+                            else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0){
                                 this->front->set_console_session(false);
                                 LOG(LOG_INFO, "Session::mode console : forbid");
                             }
@@ -356,12 +356,12 @@ struct Session {
                         // Check if sesman received an answer to auth_channel_target
                         if (this->ini->globals.auth_channel[0]) {
                             // Get sesman answer to AUTHCHANNEL_TARGET
-                            if (!this->ini->context.authchannel_answer.is_empty()) {
+                            if (!this->ini->context.authchannel_answer.get().is_empty()) {
                                 // If set, transmit to auth_channel channel
                                 this->mod->send_auth_channel_data(
-                                    this->ini->context.authchannel_answer.c_str());
+                                    this->ini->context.authchannel_answer.get_cstr());
                                 // Erase the context variable
-                                this->ini->context.authchannel_answer.empty();
+                                this->ini->context.authchannel_answer.set_empty();
                             }
                         }
 
@@ -526,10 +526,10 @@ struct Session {
         if (this->ptr_auth_event) { delete this->ptr_auth_event; }
         if (this->ptr_auth_trans) { delete this->ptr_auth_trans; }
         // Suppress Session file from disk (original name with PID or renamed with session_id)
-        if (!this->ini->context.session_id.is_empty()) {
+        if (!this->ini->context.session_id.get().is_empty()) {
             char new_session_file[256];
             sprintf(new_session_file, "%s/session_%s.pid", PID_PATH,
-                this->ini->context.session_id.c_str());
+                this->ini->context.session_id.get_cstr());
             unlink(new_session_file);
         }
         else {
@@ -559,11 +559,11 @@ struct Session {
             LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, this->nextmod);
         }
 
-        if (strcmp(this->ini->context.mode_console.c_str(), "force") == 0){
+        if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0){
             this->front->set_console_session(true);
             LOG(LOG_INFO, "Session::mode console : force");
         }
-        else if (strcmp(this->ini->context.mode_console.c_str(), "forbid") == 0){
+        else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0){
             this->front->set_console_session(false);
             LOG(LOG_INFO, "Session::mode console : forbid");
         }
@@ -633,7 +633,7 @@ struct Session {
                             , this->ini->context.movie
                             , this->front->client_info.width
                             , this->front->client_info.height
-                            , this->ini->context.auth_error_message
+                              , this->ini->context.auth_error_message
                             );
                         if (this->verbose){
                             LOG(LOG_INFO, "Session::internal module 'test' ready");
@@ -685,8 +685,8 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Accept Message'");
                         }
 
-                        const char * message = this->ini->context.message.c_str();
-                        const char * button = this->ini->translation.button_refused.get().c_str();
+                        const char * message = this->ini->context.message.get_cstr();
+                        const char * button = this->ini->translation.button_refused.get_cstr();
                         const char * caption = "Information";
                         this->mod = new DialogMod(
                             *this->ini,
@@ -709,7 +709,7 @@ struct Session {
                             LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Display Message'");
                         }
 
-                        const char * message = this->ini->context.message.c_str();
+                        const char * message = this->ini->context.message.get_cstr();
                         const char * button = NULL;
                         const char * caption = "Information";
                         this->mod = new DialogMod(
