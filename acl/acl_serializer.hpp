@@ -88,7 +88,7 @@ public:
                     *stream.p = 0;
                     value = stream.p+1;
                     state = STATE_VALUE;
-                }
+                } 
                 break;
             case STATE_VALUE:
                 if (*stream.p == '\n'){
@@ -158,6 +158,12 @@ public:
     TODO("maybe out_item should be in config , not here")
     void out_item(Stream & stream, authid_t authid)
     {
+        TODO("one field here has a limited size for his key and value serialized, "
+             "shouldn't be limited or may be initialize a bigger temporary buffer");
+        char tmp[256];
+        const char * serialized = this->ini->get_field_list().at(authid)->get_serialized(tmp,sizeof(tmp));
+        stream.out_copy_bytes(serialized,strlen(serialized));
+        /*
         const char * key = string_from_authid(authid);
         if (this->ini->context_is_asked(authid)){
             LOG(LOG_INFO, "sending (from authid) %s=ASK\n", key);
@@ -182,6 +188,7 @@ public:
             stream.out_copy_bytes(tmp, strlen(tmp));
             stream.out_uint8('\n');
         }
+        */        
     }
 
     TODO("We should not have any way to send only one value. Change the way it is done by calling code")

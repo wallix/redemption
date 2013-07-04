@@ -414,15 +414,17 @@ struct Inifile {
     //private:
     class BaseField {
     protected:
-        bool asked;
-        bool modified;
-        bool read;
-        Inifile * ini;
+        bool        asked;
+        bool        modified;
+        bool        read;
+        Inifile *   ini;
+        authid_t    authid;
         BaseField()
             : asked(false)
             , modified(true)
             , read(false)
             , ini(NULL)
+            , authid(AUTHID_UNKNOWN)
         {
         }
 
@@ -435,8 +437,12 @@ struct Inifile {
         }
 
     public:
-        void attach_ini(Inifile * p_ini) {
+        void attach_ini(Inifile * p_ini, authid_t authid = AUTHID_UNKNOWN) {
             this->ini = p_ini;
+            if (authid != AUTHID_UNKNOWN) {
+                this->authid = authid;
+                this->ini->attach_field(this,authid);
+            }
         }
 
         void use() {
@@ -462,9 +468,45 @@ struct Inifile {
         bool has_been_read() {
             return this->read;
         }
-
+        
+        authid_t get_authid() {
+            return this->authid;
+        }
+        virtual void set_from_cstr(const char * cstr) = 0;
         virtual const char* get_value() = 0;
-        virtual const char* get_serialized(char * buff, size_t size) = 0;
+
+        const char* get_serialized(char * buff, size_t size) {
+            TODO("May be the buffer managing is not clear here, "
+                 "can segfault if buff not big enough");
+            const char * key = string_from_authid(this->authid);
+            char * p = buff;
+            strncpy(p, key, size);
+            while (*p) 
+                p++;
+            *(p++) = '\n';
+            if (this->is_asked()) {
+                LOG(LOG_INFO, "get_serialized(): sending (from authid) %s=ASK\n", key);
+                strcpy(p, "ASK\n");
+            }
+            else {
+                const char * tmp = this->get_value();
+                if ((strncasecmp("password", (char*)key, 8) == 0)
+                    ||(strncasecmp("target_password", (char*)key, 15) == 0)){
+                    LOG(LOG_INFO, "get_serialized(): sending (from authid) %s=<hidden>\n", key);
+                }
+                else {
+                    LOG(LOG_INFO, "get_serialized(): sending (from authid) %s=%s\n", key, tmp);
+                }
+                *(p++) = '!';
+                strncpy(p, tmp, strlen(tmp));
+                while (*p) 
+                    p++;
+                *(p++) = '\n';
+                *p = '\0';
+            }
+            return buff;
+        }
+        
     };
 
     class StringField : public BaseField {
@@ -512,9 +554,9 @@ struct Inifile {
             }
             return this->get().c_str();
         }
-        const char* get_serialized(char * buff, size_t size){
-            return NULL;
-        };
+        // const char* get_serialized(char * buff, size_t size){
+        //     return NULL;
+        // };
 
     };
 
@@ -562,9 +604,9 @@ struct Inifile {
             snprintf(buff, sizeof(buff), "%u", this->data);
             return buff;
         }
-        const char* get_serialized(char * buff, size_t size){
-            return NULL;
-        };
+        // const char* get_serialized(char * buff, size_t size){
+        //     return NULL;
+        // };
     };
 
     class SignedField : public BaseField {
@@ -602,9 +644,9 @@ struct Inifile {
             snprintf(buff, sizeof(buff), "%u", this->data);
             return buff;
         }
-        const char* get_serialized(char * buff, size_t size){
-            return NULL;
-        };
+        // const char* get_serialized(char * buff, size_t size){
+        //     return NULL;
+        // };
     };
 
 
@@ -640,16 +682,21 @@ struct Inifile {
             }            
             return this->data?"True":"False";
         }
-        const char* get_serialized(char * buff, size_t size){
-            return NULL;
-        };
+        // const char* get_serialized(char * buff, size_t size){
+        //     return NULL;
+        // };
     };
 
 private:
     bool something_changed;
     std::list< BaseField * > changed_list;
+    std::map< authid_t, BaseField *> field_list;
 
 public:
+    const std::map< authid_t, BaseField *>& get_field_list() {
+        return this->field_list;
+    }
+
     void notify(BaseField * field) {
         this->something_changed = true;
         this->changed_list.push_back(field);
@@ -663,6 +710,9 @@ public:
     void reset() {
         this->something_changed = false;
         changed_list.clear();
+    }
+    void attach_field(BaseField* field, authid_t authid){
+        field_list[authid] = field;
     }
 
     struct Inifile_globals {
@@ -900,11 +950,11 @@ public:
         this->globals.target_device.set_from_cstr("");
         this->globals.target_user.set_from_cstr("");
 
-        this->globals.auth_user.attach_ini(this);
-        this->globals.host.attach_ini(this);
-        this->globals.target.attach_ini(this);
-        this->globals.target_device.attach_ini(this);
-        this->globals.target_user.attach_ini(this);
+        this->globals.auth_user.attach_ini(this,AUTHID_AUTH_USER);
+        this->globals.host.attach_ini(this,AUTHID_HOST);
+        this->globals.target.attach_ini(this,AUTHID_TARGET);
+        this->globals.target_device.attach_ini(this,AUTHID_TARGET_DEVICE);
+        this->globals.target_user.attach_ini(this,AUTHID_TARGET_USER);
 
         // this->globals.auth_user[0]     = 0;
         // this->globals.host[0]          = 0;
@@ -1036,6 +1086,19 @@ public:
         this->translation.diagnostic.set_from_cstr("diagnostic");
         this->translation.connection_closed.set_from_cstr("Connection closed");
         this->translation.help_message.set_from_cstr("Help message");
+
+        this->translation.button_ok.attach_ini(this,AUTHID_TRANS_BUTTON_OK);
+        this->translation.button_cancel.attach_ini(this,AUTHID_TRANS_BUTTON_CANCEL);
+        this->translation.button_help.attach_ini(this,AUTHID_TRANS_BUTTON_HELP);
+        this->translation.button_close.attach_ini(this,AUTHID_TRANS_BUTTON_CLOSE);
+        this->translation.button_refused.attach_ini(this,AUTHID_TRANS_BUTTON_REFUSED);
+        this->translation.login.attach_ini(this,AUTHID_TRANS_LOGIN);
+        this->translation.username.attach_ini(this,AUTHID_TRANS_USERNAME);
+        this->translation.password.attach_ini(this,AUTHID_TRANS_PASSWORD);
+        this->translation.target.attach_ini(this,AUTHID_TRANS_TARGET);
+        this->translation.diagnostic.attach_ini(this,AUTHID_TRANS_DIAGNOSTIC);
+        this->translation.connection_closed.attach_ini(this,AUTHID_TRANS_CONNECTION_CLOSED);
+        this->translation.help_message.attach_ini(this,AUTHID_TRANS_HELP_MESSAGE);
         // End Section "translation"
 
         // Begin section "context"
@@ -1166,27 +1229,32 @@ public:
         this->context.authentication_challenge.empty();
 
         // Attaching ini struct to values
-        this->context.opt_bpp.attach_ini(this);
-        this->context.opt_height.attach_ini(this);
-        this->context.opt_width.attach_ini(this);
+        this->context.opt_bpp.attach_ini(this,AUTHID_OPT_BPP);
+        this->context.opt_height.attach_ini(this,AUTHID_OPT_HEIGHT);
+        this->context.opt_width.attach_ini(this,AUTHID_OPT_WIDTH);
 
-        this->context.selector.attach_ini(this);
-        this->context.selector_current_page.attach_ini(this);
-        this->context.selector_device_filter.attach_ini(this);
-        this->context.selector_group_filter.attach_ini(this);
-        this->context.selector_lines_per_page.attach_ini(this);
+        this->context.selector.attach_ini(this,AUTHID_SELECTOR);
+        this->context.selector_current_page.attach_ini(this,AUTHID_SELECTOR_CURRENT_PAGE);
+        this->context.selector_device_filter.attach_ini(this,AUTHID_SELECTOR_DEVICE_FILTER);
+        this->context.selector_group_filter.attach_ini(this,AUTHID_SELECTOR_GROUP_FILTER);
+        this->context.selector_lines_per_page.attach_ini(this,AUTHID_SELECTOR_LINES_PER_PAGE);
 
-        this->context.target_password.attach_ini(this);
-        this->context.target_protocol.attach_ini(this);
+        this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);
+        this->context.target_protocol.attach_ini(this,AUTHID_TARGET_PROTOCOL);
+        this->context.target_port.attach_ini(this,AUTHID_TARGET_PORT);
 
-        this->context.password.attach_ini(this);
+        this->context.password.attach_ini(this,AUTHID_PASSWORD);
 
-        this->context.accept_message.attach_ini(this);
-        this->context.display_message.attach_ini(this);
+        this->context.accept_message.attach_ini(this,AUTHID_ACCEPT_MESSAGE);
+        this->context.display_message.attach_ini(this,AUTHID_DISPLAY_MESSAGE);
 
-        this->context.proxy_type.attach_ini(this);
-        this->context.real_target_device.attach_ini(this);
+        this->context.proxy_type.attach_ini(this,AUTHID_PROXY_TYPE);
+        this->context.real_target_device.attach_ini(this,AUTHID_REAL_TARGET_DEVICE);
 
+        this->context.authchannel_target.attach_ini(this,AUTHID_AUTHCHANNEL_TARGET);
+        this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
+        this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
+        this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
     };
 
     void cparse(istream & ifs){
@@ -1605,6 +1673,18 @@ public:
          "It currently ask if the field has been modified "
          "and set it to not modified if it is not asked ")
     bool context_has_changed(authid_t authid) {
+        bool res = false;
+        try {
+            BaseField * field = this->field_list.at(authid);
+            res = field->has_changed();
+            field->use();
+        }
+        catch (const std::out_of_range & oor){
+            LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
+            res = false;
+        }
+        return res;
+        /*
         bool res;
         switch (authid) {
         case AUTHID_OPT_BPP:
@@ -1737,7 +1817,7 @@ public:
             return false;
         }
         return res;
-        
+        */        
     }
 
     void context_set_value_by_string(const char * strauthid, const char * value) {
@@ -1751,6 +1831,7 @@ public:
     }
 
     void context_set_value(authid_t authid, const char * value) {
+        // this->field_list.at(authid)->set_from_cstr(value);
         switch (authid)
         {
         case AUTHID_TRANS_BUTTON_OK:
@@ -1986,6 +2067,8 @@ public:
     }
 
     const char * context_get_value(authid_t authid, char * buffer, size_t size) {
+        //return this->field_list.at(authid)->get_value();
+
         const char * pszReturn = "";
 
         if (size) { *buffer = 0; }
@@ -2332,6 +2415,13 @@ public:
     }
 
     void context_ask(authid_t authid) {
+        try{
+            this->field_list.at(authid)->ask();
+        }
+        catch (const std::out_of_range & oor){
+            LOG(LOG_WARNING, "Inifile::context_ask(id): unknown authid=%d", authid);
+        }
+        /*
         switch (authid) {
         case AUTHID_OPT_BPP:
             this->context.opt_bpp.ask();
@@ -2434,7 +2524,7 @@ public:
         default:
             LOG(LOG_WARNING, "Inifile::context_ask(id): unknown authid=%d", authid);
             break;
-        }
+        }*/
     }
 
     bool context_is_asked_by_string(const char *strauthid) {
@@ -2449,6 +2539,15 @@ public:
     }
 
     bool context_is_asked(authid_t authid) {
+        bool res = false;
+        try{
+        res = this->field_list.at(authid)->is_asked();
+        }
+        catch (const std::out_of_range & oor) {
+            LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
+        }
+        return res;
+        /*
         switch (authid) {
         case AUTHID_OPT_BPP:
             return this->context.opt_bpp.is_asked();
@@ -2528,7 +2627,7 @@ public:
         default:
             LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
             return false;
-        }
+        }*/
     }
 
     bool context_get_bool(authid_t authid) {

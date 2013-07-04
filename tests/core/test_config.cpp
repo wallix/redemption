@@ -2288,14 +2288,30 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
     BOOST_CHECK_EQUAL(std::string("someuser"),  std::string(list.back()->get_value()));
     ini.reset();
     BOOST_CHECK(!ini.check());
-    
-
-
 }
+
+BOOST_AUTO_TEST_CASE(TestConfigFieldAuthid)
+{
+    Inifile ini;
+    // Test get_serialized()
+    char tmp[256];
+    BOOST_CHECK_EQUAL(AUTHID_SELECTOR,          ini.get_field_list().at(AUTHID_SELECTOR)->get_authid());
+    BOOST_CHECK_EQUAL(std::string("login\nASK\n"),          
+                      std::string(ini.globals.auth_user.get_serialized(tmp,sizeof(tmp))));
+    ini.globals.auth_user.set_from_cstr("someuser");
+    BOOST_CHECK_EQUAL(std::string("login\n!someuser\n"),          
+                      std::string(ini.globals.auth_user.get_serialized(tmp,sizeof(tmp))));
+
+    ini.context.authchannel_target.set_from_cstr("TEST_TARGET");
+    BOOST_CHECK_EQUAL(std::string("auth_channel_target\n!TEST_TARGET\n"),          
+                      std::string(ini.context.authchannel_target.get_serialized(tmp,sizeof(tmp))));
+}
+
 BOOST_AUTO_TEST_CASE(TestConfigFieldGetValue)
 {
     Inifile ini;
     // Test get_value()
+
     ini.globals.target_user.ask();
     BOOST_CHECK_EQUAL(std::string("ASK"),       std::string(ini.globals.target_user.get_value()));
     ini.globals.target_user.set_from_cstr("linuxuser");
