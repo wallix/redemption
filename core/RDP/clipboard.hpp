@@ -368,6 +368,11 @@ struct FormatListResponsePDU : public CliprdrHeader {
 struct FormatDataRequestPDU : public CliprdrHeader {
     uint32_t requestedFormatId;
 
+    FormatDataRequestPDU()
+            : CliprdrHeader(CB_FORMAT_DATA_REQUEST, 0, 4)
+            , requestedFormatId(0) {
+    }   // FormatDataRequestPDU()
+
     FormatDataRequestPDU(uint32_t requestedFormatId)
             : CliprdrHeader(CB_FORMAT_DATA_REQUEST, 0, 4)
             , requestedFormatId(requestedFormatId) {
@@ -379,6 +384,12 @@ struct FormatDataRequestPDU : public CliprdrHeader {
         stream.out_uint32_le(this->requestedFormatId);
         stream.mark_end();
     }   // void emit(Stream & stream)
+
+    virtual void recv(Stream & stream, const RecvFactory & recv_factory) {
+        CliprdrHeader::recv(stream, recv_factory);
+
+        this->requestedFormatId = stream.in_uint32_le();
+    }
 };  // struct FormatDataRequestPDU
 
 // [MS-RDPECLIP] 2.2.5.2 Format Data Response PDU (CLIPRDR_FORMAT_DATA_RESPONSE)
