@@ -121,11 +121,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
 
     // VNC protocol on target
     ini.context_set_value(AUTHID_TARGET_PROTOCOL, "VNC");
+    sesman.connected = false;
     res = sesman.get_mod_from_protocol();
     BOOST_CHECK(MODULE_VNC == res);
 
     // XUP protocol on target
     ini.context_set_value(AUTHID_TARGET_PROTOCOL, "XUP");
+    sesman.connected = false;
     res = sesman.get_mod_from_protocol();
     BOOST_CHECK(MODULE_XUP == res);
 

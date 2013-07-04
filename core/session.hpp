@@ -160,127 +160,126 @@ struct Session {
             , "Stop required"                                       // SESSION_STATE_STOP
             };
 
-            int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
             // We want to start a module
-            while (1) {
-
-                if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
-                    time_mark.tv_sec = 0;
-                    time_mark.tv_usec = 50000;
-                }
-
-                if (this->internal_state != previous_state)
-                    LOG(LOG_INFO, "Session::-------------- %s -------------------", state_names[this->internal_state]);
-                previous_state = this->internal_state;
-
-                unsigned max = 0;
-                fd_set rfds;
-                fd_set wfds;
-
-                FD_ZERO(&rfds);
-                FD_ZERO(&wfds);
-                struct timeval timeout = time_mark;
-
-                this->front_event.add_to_fd_set(rfds, max);
-                
-                TODO("Looks like acl and mod can be unified into a common class, where events can happen")
-                TODO("move ptr_auth_event to acl") 
-                if (this->acl){
-                    this->ptr_auth_event->add_to_fd_set(rfds, max);
-                }
-                this->mod->event.add_to_fd_set(rfds, max);
-
-                if (this->mod->event.is_set(rfds)) {
-                    timeout.tv_sec  = 0;
-                    timeout.tv_usec = 0;
-                }
-
-                int num = select(max + 1, &rfds, &wfds, 0, &timeout);
-
-                if (num < 0){
-                    if (errno == EINTR){
-                        continue;
+            bool check_module_sequence = false;
+            bool run_session = true;
+            while (run_session) {
+                try {
+                    if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
+                        time_mark.tv_sec = 0;
+                        time_mark.tv_usec = 50000;
                     }
-                    // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
-                    // EBADF: means fd has been closed (my me) or as already returned an error on another call
-                    // EINVAL: invalid value in timeout (my fault again)
-                    // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
 
-                    LOG(LOG_ERR, "Proxy data wait loop raised error %u : %s", errno, strerror(errno));
-                    throw Error(ERR_SOCKET_ERROR);
-                }
+                    unsigned max = 0;
+                    fd_set rfds;
+                    fd_set wfds;
 
-                time_t timestamp = time(NULL);
-                if (this->front_event.is_set(rfds)) {
-                    switch (this->front->incoming(*this->mod)){
-                    default:
-                    case FRONT_DISCONNECTED:
-                        throw Error(ERR_SOCKET_ERROR);
-                    break;
-                    case FRONT_CONNECTING:
-                        continue;
-                    break;
-                    case FRONT_RUNNING:
-                    break;
-                    }
-                }
+                    FD_ZERO(&rfds);
+                    FD_ZERO(&wfds);
+                    struct timeval timeout = time_mark;
 
-                TODO("We should have a first loop to wait for front to get up and running, then we will proceed with the standard loop")
-                if (this->front->up_and_running){                    
-                
-//                      this->front->periodic_snapshot(this->mod->get_pointer_displayed());
-
-                    // Process incoming module trafic
-                    if (this->mod->event.is_set(rfds)){
-                        this->mod->event.reset();
-                        this->mod->draw_event();
-                        switch (this->mod->event.signal){
-                        case BACK_EVENT_STOP:
-                        case BACK_EVENT_NONE:
-                        break;
-                        case BACK_EVENT_REFRESH:
-                            this->acl->ask_next_module_remote();
-                            this->acl->signal = BACK_EVENT_REFRESH; 
-                        break;
-                        case BACK_EVENT_NEXT:
-                            this->acl->ask_next_module_remote();
-                            this->acl->signal = BACK_EVENT_NEXT; 
-                        break;
-                        }
-                    }
+                    this->front_event.add_to_fd_set(rfds, max);
                     
-                    // Incoming data from ACL, or opening acl
-                    if (!this->acl){
-                        this->connect_authentifier();
-                        this->acl->signal = BACK_EVENT_NEXT;
-                        this->acl->ask_next_module_remote();
+                    TODO("Looks like acl and mod can be unified into a common class, where events can happen")
+                    TODO("move ptr_auth_event to acl") 
+                    if (this->acl){
+                        this->ptr_auth_event->add_to_fd_set(rfds, max);
                     }
-                    else {
-                        if (this->ptr_auth_event->is_set(rfds)){
-                            // acl received updated values
-                            this->acl->receive();
-        
-                            int next_state = this->acl->next_module();
-                            if (next_state == MODULE_RUNNING){
-                            }
-                            else if (next_state == MODULE_REFRESH) {
-                                this->mod->refresh_context(*this->ini);
-                                this->mod->event.signal = BACK_EVENT_NONE;
-                                this->mod->event.set();
-                           }
-                           else {
-                                mod_api * tmp_mod = mm.new_mod(next_state);
-                                if (tmp_mod != NULL){
-                                    if (this->mod != this->no_mod){
-                                        this->remove_mod();
-                                    }
-                                }
-                                this->mod = tmp_mod;
-                            }
+                    this->mod->event.add_to_fd_set(rfds, max);
+
+                    if (this->mod->event.is_set(rfds)) {
+                        timeout.tv_sec  = 0;
+                        timeout.tv_usec = 0;
+                    }
+
+                    int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+
+                    if (num < 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
+                        // EBADF: means fd has been closed (my me) or as already returned an error on another call
+                        // EINVAL: invalid value in timeout (my fault again)
+                        // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
+
+                        LOG(LOG_ERR, "Proxy data wait loop raised error %u : %s", errno, strerror(errno));
+                        throw Error(ERR_SOCKET_ERROR);
+                    }
+
+                    time_t timestamp = time(NULL);
+                    if (this->front_event.is_set(rfds)) {
+                        switch (this->front->incoming(*this->mod)){
+                        check_module_sequence = true;
+                        default:
+                        case FRONT_DISCONNECTED:
+                            run_session = false;
+                        break;
+                        case FRONT_CONNECTING:
+                            continue;
+                        break;
+                        case FRONT_RUNNING:
+                        break;
                         }
                     }
-                }
+
+                    TODO("We should have a first loop to wait for front to get up and running, then we will proceed with the standard loop")
+                    if (this->front->up_and_running){                    
+                    
+    //                      this->front->periodic_snapshot(this->mod->get_pointer_displayed());
+
+                        // Process incoming module trafic
+                        if (this->mod->event.is_set(rfds)){
+                            this->mod->event.reset();
+                            this->mod->draw_event();
+                            if (this->mod->event.signal != BACK_EVENT_NONE){
+                                this->acl->signal = this->mod->event.signal;
+                                check_module_sequence = true;
+                            }
+                        }
+                        
+                        // Incoming data from ACL, or opening acl
+                        if (!this->acl){
+                            this->connect_authentifier();
+                            check_module_sequence = true;
+                            this->acl->signal = BACK_EVENT_NEXT;
+                            this->acl->ask_next_module_remote();
+                        }
+                        else {
+                            if (this->ptr_auth_event->is_set(rfds)){
+                                // acl received updated values
+                                this->acl->receive();
+                                int next_state = this->acl->next_module();
+                                if (next_state == MODULE_RUNNING){
+                                }
+                                else if (next_state == MODULE_REFRESH) {
+                                    this->mod->refresh_context(*this->ini);
+                                    this->mod->event.signal = BACK_EVENT_NONE;
+                                    this->mod->event.set();
+                               }
+                               else {
+                                    mod_api * tmp_mod = mm.new_mod(next_state);
+                                    if (tmp_mod != NULL){
+                                        if (this->mod != this->no_mod){
+                                            this->remove_mod();
+                                        }
+                                    }
+                                    this->mod = tmp_mod;
+                                }
+                                
+                            }
+                        }
+                        
+                        if (check_module_sequence){
+                            check_module_sequence = false;
+                            run_session = this->acl->check();
+                        }
+                    }
+                } catch (Error & e) {
+                    LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+                    run_session = false;                        
+                };
             }
             this->front->disconnect();
         }

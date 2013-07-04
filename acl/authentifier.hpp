@@ -44,6 +44,8 @@ class SessionManager {
     int keepalive_grace_delay;
     int max_tick;
     bool internal_domain;
+    bool connected;
+    bool last_module;
     uint32_t verbose;
 
     SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay,
@@ -55,6 +57,8 @@ class SessionManager {
         , keepalive_grace_delay(_keepalive_grace_delay)
         , max_tick(_max_tick)
         , internal_domain(_internal_domain)
+        , connected(false)
+        , last_module(false)
         , verbose(_verbose)
 
     {
@@ -299,23 +303,26 @@ class SessionManager {
             }
         }
         int res = MODULE_EXIT;
-        if (strncasecmp(protocol, "RDP", 4) == 0){
+        if (!this->connected && 0 == strncasecmp(protocol, "RDP", 4)){
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
             }
             res = MODULE_RDP;
+            this->connected = true;
         }
-        else if (strncasecmp(protocol, "VNC", 4) == 0){
+        else if (!this->connected && 0 == strncasecmp(protocol, "VNC", 4)){
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
             }
             res = MODULE_VNC;
+            this->connected = true;
         }
-        else if (strncasecmp(protocol, "XUP", 4) == 0){
+        else if (!this->connected && 0 == strncasecmp(protocol, "XUP", 4)){
             if (this->verbose & 0x4){
                 LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
             }
             res = MODULE_XUP;
+            this->connected = true;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
             const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
@@ -370,12 +377,14 @@ class SessionManager {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
                 res = MODULE_INTERNAL_CLOSE;
+                this->last_module = true;
             }
             else if (0 == strcmp(target, "widget2_close")){
                 if (this->verbose & 0x4){
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
                 }
                 res = MODULE_INTERNAL_WIDGET2_CLOSE;
+                this->last_module = true;
             }
             else if (0 == strcmp(target, "widget2_dialog")){
                 if (this->verbose & 0x4){
@@ -414,12 +423,33 @@ class SessionManager {
                 res = MODULE_INTERNAL_CARD;
             }
         }
+        else if (this->connected) {
+                if (this->verbose & 0x4){
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
+                }
+                res = MODULE_INTERNAL_WIDGET2_CLOSE;
+                this->last_module = true;
+        }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
                 protocol[0], protocol[1], protocol[2], protocol[3]);
             res = MODULE_EXIT;
         }
         return res;
+    }
+
+    bool check(){
+        switch (this->signal){
+        case BACK_EVENT_STOP:
+            return false;
+        case BACK_EVENT_NONE:
+        break;
+        case BACK_EVENT_REFRESH:
+        case BACK_EVENT_NEXT:
+            this->ask_next_module_remote();
+        break;
+        }
+        return true;
     }
 
     void receive(){
