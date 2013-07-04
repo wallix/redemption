@@ -139,6 +139,7 @@ struct Session {
             this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen,
                 ini, enable_fastpath, tls_support, mem3blt_support);
             this->no_mod = new null_mod(*(this->front));
+            this->no_mod->event.reset();
             this->mod = this->no_mod;
             
             ModuleManager mm(*this->front, *this->ini);
@@ -182,12 +183,13 @@ struct Session {
                 struct timeval timeout = time_mark;
 
                 this->front_event.add_to_fd_set(rfds, max);
+                
+                TODO("Looks like acl and mod can be unified into a common class, where events can happen")
+                TODO("move ptr_auth_event to acl") 
                 if (this->acl){
                     this->ptr_auth_event->add_to_fd_set(rfds, max);
                 }
-                if (this->mod != no_mod){
-                    this->mod->event.add_to_fd_set(rfds, max);
-                }
+                this->mod->event.add_to_fd_set(rfds, max);
 
                 if (this->mod->event.is_set(rfds)) {
                     timeout.tv_sec  = 0;
@@ -230,22 +232,21 @@ struct Session {
 //                      this->front->periodic_snapshot(this->mod->get_pointer_displayed());
 
                     // Process incoming module trafic
-                    if (this->mod != this->no_mod){
-                        if (this->mod->event.is_set(rfds)){
-                            this->mod->event.reset();
-                            switch (this->mod->draw_event()){
-                            case BACK_EVENT_STOP:
-                            case BACK_EVENT_NONE:
-                            break;
-                            case BACK_EVENT_REFRESH:
-                                this->acl->ask_next_module_remote();
-                                this->acl->signal = BACK_EVENT_REFRESH; 
-                            break;
-                            case BACK_EVENT_NEXT:
-                                this->acl->ask_next_module_remote();
-                                this->acl->signal = BACK_EVENT_NEXT; 
-                            break;
-                            }
+                    if (this->mod->event.is_set(rfds)){
+                        this->mod->event.reset();
+                        TODO("shouldn't draw_event change the signal of the mod event instead returning a value")
+                        switch (this->mod->draw_event()){
+                        case BACK_EVENT_STOP:
+                        case BACK_EVENT_NONE:
+                        break;
+                        case BACK_EVENT_REFRESH:
+                            this->acl->ask_next_module_remote();
+                            this->acl->signal = BACK_EVENT_REFRESH; 
+                        break;
+                        case BACK_EVENT_NEXT:
+                            this->acl->ask_next_module_remote();
+                            this->acl->signal = BACK_EVENT_NEXT; 
+                        break;
                         }
                     }
                     
