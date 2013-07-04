@@ -608,14 +608,12 @@ struct mod_vnc : public mod_api {
     } // rdp_input_invalidate
 
     //==============================================================================================================
-    virtual BackEvent_t draw_event( void )
+    virtual void draw_event(void)
     //==============================================================================================================
     {
         if (this->verbose){
             LOG(LOG_INFO, "vnc::draw_event");
         }
-        BackEvent_t rv = BACK_EVENT_NONE;
-
         if (this->event.can_recv()){
             BStream stream(1);
             try {
@@ -638,20 +636,19 @@ struct mod_vnc : public mod_api {
             }
             catch(const Error & e) {
                 LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
-                rv = BACK_EVENT_NEXT;
+                this->event.signal = BACK_EVENT_NEXT;
             }
             catch(...) {
                 LOG(LOG_INFO, "unexpected exception raised in VNC");
-                rv = BACK_EVENT_NEXT;
+                this->event.signal = BACK_EVENT_NEXT;
             }
-            if (rv != BACK_EVENT_NEXT){
+            if (this->event.signal != BACK_EVENT_NEXT){
                 this->event.set(1000);
             }
         }
         else {
             this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
         }
-        return rv;
 
     } // draw_event
 

@@ -263,8 +263,8 @@ struct mod_rdp : public mod_api {
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
-            BackEvent_t res = this->draw_event();
-            if (res != BACK_EVENT_NONE){
+            this->draw_event();
+            if (this->event.signal != BACK_EVENT_NONE){
                 LOG(LOG_INFO, "Creation of new mod 'RDP' failed");
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
@@ -442,7 +442,7 @@ struct mod_rdp : public mod_api {
         this->nego.trans->send(x224_header, mcs_header, stream);
     }
 
-    virtual BackEvent_t draw_event(void)
+    virtual void draw_event(void)
     {
         try{
         char * hostname = this->hostname;
@@ -1672,9 +1672,8 @@ struct mod_rdp : public mod_api {
             catch(Error e){
                 LOG(LOG_INFO, "Connection to server Already closed", e.id);
             };
-            return BACK_EVENT_NEXT;
+            this->event.signal = BACK_EVENT_NEXT;
         }
-        return BACK_EVENT_NONE;
     }
 
 

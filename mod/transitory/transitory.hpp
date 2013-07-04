@@ -44,12 +44,10 @@ struct transitory_mod : public mod_api {
     // management of module originated event ("data received from server")
     // return BACK_EVENT_NEXT if module is "finished", BACK_EVENT_NONE if it's still running
     // the transitory module finish immediately but accept any event from client
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
-        LOG(LOG_INFO, "signal in transitory mode\n");
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
-        return this->event.signal;
     }
 
     virtual void begin_update() {}

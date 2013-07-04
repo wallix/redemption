@@ -265,8 +265,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     while (res == BACK_EVENT_NONE) {
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 40) break;
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+        mod->draw_event();
     }
 
 //    front.dump_png("trace_w2008_tls_");

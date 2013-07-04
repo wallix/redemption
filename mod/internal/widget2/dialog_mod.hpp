@@ -93,10 +93,9 @@ private:
     }
 
 public:
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->event.reset();
-        return this->event.signal;
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)

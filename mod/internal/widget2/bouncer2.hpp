@@ -106,7 +106,7 @@ public:
     }
 
     // This should come from BACK!
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->interaction();
         // Calculating new speedx and speedy
@@ -138,8 +138,6 @@ public:
 
         // Final with setting next idle time
         this->event.set(33333); // 0.3s is 30fps
-
-        return this->event.signal;
     }
 
     void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip) {

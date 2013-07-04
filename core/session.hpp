@@ -234,8 +234,8 @@ struct Session {
                     // Process incoming module trafic
                     if (this->mod->event.is_set(rfds)){
                         this->mod->event.reset();
-                        TODO("shouldn't draw_event change the signal of the mod event instead returning a value")
-                        switch (this->mod->draw_event()){
+                        this->mod->draw_event();
+                        switch (this->mod->event.signal){
                         case BACK_EVENT_STOP:
                         case BACK_EVENT_NONE:
                         break;

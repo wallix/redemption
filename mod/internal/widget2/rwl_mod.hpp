@@ -102,10 +102,9 @@ public:
     virtual void notify(Widget2* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
     {}
 
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->event.reset();
-        return this->event.signal;
     }
 };
 

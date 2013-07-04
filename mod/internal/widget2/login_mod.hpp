@@ -131,10 +131,9 @@ public:
                                        int16_t /*param1*/, int16_t /*param2*/)
     {}
 
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->event.reset();
-        return this->event.signal;
     }
 };
 

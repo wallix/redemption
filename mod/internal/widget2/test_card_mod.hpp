@@ -68,11 +68,10 @@ public:
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->draw();
         this->event.reset();
-        return this->event.signal;
     }
 
     void draw()

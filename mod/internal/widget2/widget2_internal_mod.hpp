@@ -156,10 +156,7 @@ public:
     }
 
     // module got an internal event (like incoming data) and want to sent it outside
-    virtual BackEvent_t draw_event()
-    {
-        return BACK_EVENT_NONE;
-    }
+    virtual void draw_event() = 0;
 };
 
 #endif
