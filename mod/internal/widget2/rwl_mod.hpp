@@ -85,7 +85,8 @@ public:
             switch (keymap->top_kevent()){
                 case Keymap2::KEVENT_ESC:
                     keymap->get_kevent();
-                    this->mod_event(BACK_EVENT_STOP);
+                    this->event.signal = BACK_EVENT_STOP;
+                    this->event.set();
                     break;
                 default:
                     InternalMod::rdp_input_scancode(param1, param2, param3, param4, keymap);

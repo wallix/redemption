@@ -65,7 +65,8 @@ public:
     {
         if (keymap->nb_kevent_available() > 0
          && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-            this->mod_event(BACK_EVENT_STOP);
+            this->event.signal = BACK_EVENT_STOP;
+            this->event.set();
             return ;
         }
         this->interaction();

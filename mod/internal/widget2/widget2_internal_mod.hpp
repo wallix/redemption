@@ -67,12 +67,6 @@ public:
         }
     }
 
-    virtual void mod_event(int event_id)
-    {
-        this->event.signal = static_cast<BackEvent_t>(event_id);
-        this->event.set();
-    }
-
     virtual void begin_update()
     {
         this->front.begin_update();

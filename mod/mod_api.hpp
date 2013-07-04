@@ -57,9 +57,6 @@ struct mod_api : public Callback, public DrawApi {
     {
     }
 
-    TODO("remove event from mod api")
-    virtual void mod_event(int event_id) {}
-
     virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags) = 0;
 
     // draw_event is run when mod socket received some data (drawing order),
