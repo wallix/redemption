@@ -412,13 +412,20 @@ static inline const char * string_from_authid(authid_t authid) {
 
 struct Inifile {
     //private:
+    /******************************************************
+     * BaseField is an abstract class which carries:
+     * - some flags indicating some meta state of the field.
+     * - a pointer to a Inifile it is attached to.
+     * - an authid_t if it is attached to a Inifile. 
+     ******************************************************
+     */
     class BaseField {
     protected:
-        bool        asked;
-        bool        modified;
-        bool        read;
-        Inifile *   ini;
-        authid_t    authid;
+        bool        asked;         // the value is asked in the context
+        bool        modified;      // the value has been modified since last use
+        bool        read;          // the value has been read since last set (modified)
+        Inifile *   ini;           // Inifile to which the field is attached
+        authid_t    authid;        // Auth Id of the field in the Inifile
         BaseField()
             : asked(false)
             , modified(true)
@@ -427,52 +434,94 @@ struct Inifile {
             , authid(AUTHID_UNKNOWN)
         {
         }
-
+        virtual ~BaseField(){
+            if (this->ini){
+                this->ini->remove_field(authid);
+            }
+        }
+        /**********************
+         * notify the Inifile that the field has been changed
+         */
         void notify() {
             if (this->ini)
                 this->ini->notify(this);
+        }
+        void use_notify() {
+            if (this->ini)
+                this->ini->use_notify(this);
         }
         inline void unask(){
             this->asked = false;
         }
 
     public:
+        /*******************************
+         * link this field to an Inifile 
+         *******************************
+         */
         void attach_ini(Inifile * p_ini, authid_t authid = AUTHID_UNKNOWN) {
             this->ini = p_ini;
-            if (authid != AUTHID_UNKNOWN) {
+            if (authid != AUTHID_UNKNOWN
+                && this->ini) {
                 this->authid = authid;
                 this->ini->attach_field(this,authid);
             }
         }
-
+        
+        /**************************
+         * Use this field to mark it as modified
+         ***************************
+         */
         void use() {
+            if (this->modified){
+                this->use_notify();
+            }
             this->modified = false;
+            
         }
 
+        /**************************
+         * Check if the field has been modified (since last use)
+         ***************************
+         */
         bool has_changed() {
             // if (!this->asked)
             //     this->use();
             return this->modified;
         }
-
-
+        /**************************
+         * Set the field as asked.
+         **************************
+         */
         void ask() {
             this->asked = true;
             this->modified = true;
+            this->notify();
         }
+        /**************************
+         * Check if the field is asked
+         ***************************
+         */
 
         bool is_asked() {
             return this->asked;
         }
-
+        /**************************
+         * Check if the field has been read (since last effective set)
+         ***************************
+         */
         bool has_been_read() {
             return this->read;
         }
         
+        
         authid_t get_authid() {
             return this->authid;
         }
+        
+        
         virtual void set_from_cstr(const char * cstr) = 0;
+        
         virtual const char* get_value() = 0;
 
         const char* get_serialized(char * buff, size_t size) {
@@ -481,7 +530,7 @@ struct Inifile {
             const char * key = string_from_authid(this->authid);
             char * p = buff;
             strncpy(p, key, size);
-            while (*p) 
+            while (*p)
                 p++;
             *(p++) = '\n';
             if (this->is_asked()) {
@@ -508,7 +557,10 @@ struct Inifile {
         }
         
     };
-
+    /*************************************
+     * Field which contains a String type
+     *************************************
+     */
     class StringField : public BaseField {
     protected:
         redemption::string data;
@@ -556,7 +608,11 @@ struct Inifile {
         }
 
     };
-
+    /*************************************
+     * Field which contains an Unsigned Integer type
+     * implemented as a 32 bits data
+     *************************************
+     */
     class UnsignedField : public BaseField {
     protected:
         uint32_t data;
@@ -574,7 +630,6 @@ struct Inifile {
                 this->notify();
                 this->data = that;
             }
-
         }
 
         void set_from_cstr(const char * cstr) {
@@ -602,6 +657,11 @@ struct Inifile {
             return buff;
         }
     };
+    /*************************************
+     * Field which contains a Signed Integer type
+     * implementation according to compiler
+     *************************************
+     */
 
     class SignedField : public BaseField {
     protected:
@@ -640,7 +700,10 @@ struct Inifile {
         }
     };
 
-
+    /*************************************
+     * Field which contains a Boolean type
+     *************************************
+     */
     class BoolField : public BaseField {
     protected:
         bool data;
@@ -676,28 +739,46 @@ struct Inifile {
     };
 
 private:
+    // flag indicating if a Field attached to this inifile has been changed
     bool something_changed;
-    std::list< BaseField * > changed_list;
+
+    // list of Field which has been changed
+    std::set< BaseField * > changed_set;
+
+    // Map associating authid with a Field.
     std::map< authid_t, BaseField *> field_list;
 
+    
+
 public:
+    std::set< authid_t > to_send_set;
     const std::map< authid_t, BaseField *>& get_field_list() {
         return this->field_list;
+    }
+    void remove_field(authid_t authid) {
+        this->field_list.erase(authid);
     }
 
     void notify(BaseField * field) {
         this->something_changed = true;
-        this->changed_list.push_back(field);
+        this->changed_set.insert(field);
+    }
+    void use_notify(BaseField * field) {
+        this->changed_set.erase(field);
+        if (this->changed_set.empty()) {
+            this->something_changed = false;
+        }
     }
     bool check() {
         return this->something_changed;
     }
-    std::list< BaseField * > get_changed_list() {
-        return changed_list;
+    std::set< BaseField * > get_changed_set() {
+        return this->changed_set;
     }
+    
     void reset() {
         this->something_changed = false;
-        changed_list.clear();
+        changed_set.clear();
     }
     void attach_field(BaseField* field, authid_t authid){
         field_list[authid] = field;
@@ -1260,6 +1341,29 @@ public:
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
+
+
+        //init to_send_set of authid
+        this->to_send_set.insert(AUTHID_PROXY_TYPE);
+        this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
+        this->to_send_set.insert(AUTHID_ACCEPT_MESSAGE);
+        this->to_send_set.insert(AUTHID_HOST);
+        this->to_send_set.insert(AUTHID_TARGET);
+        this->to_send_set.insert(AUTHID_AUTH_USER);
+        this->to_send_set.insert(AUTHID_PASSWORD);
+        this->to_send_set.insert(AUTHID_TARGET_USER);
+        this->to_send_set.insert(AUTHID_TARGET_DEVICE);
+        this->to_send_set.insert(AUTHID_TARGET_PROTOCOL);
+        this->to_send_set.insert(AUTHID_SELECTOR);
+        this->to_send_set.insert(AUTHID_SELECTOR_GROUP_FILTER);
+        this->to_send_set.insert(AUTHID_SELECTOR_DEVICE_FILTER);
+        this->to_send_set.insert(AUTHID_SELECTOR_LINES_PER_PAGE);
+        this->to_send_set.insert(AUTHID_SELECTOR_CURRENT_PAGE);
+        this->to_send_set.insert(AUTHID_TARGET_PASSWORD);
+        this->to_send_set.insert(AUTHID_OPT_WIDTH);
+        this->to_send_set.insert(AUTHID_OPT_HEIGHT);
+        this->to_send_set.insert(AUTHID_OPT_BPP);
+        this->to_send_set.insert(AUTHID_REAL_TARGET_DEVICE);
     };
 
     void cparse(istream & ifs){
