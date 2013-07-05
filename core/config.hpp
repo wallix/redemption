@@ -929,7 +929,7 @@ public:
         strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
         memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
         this->globals.enable_file_encryption = false;
-        this->globals.enable_tls             = true;
+        this->globals.enable_tls             = false;
         strcpy(this->globals.listen_address, "0.0.0.0");
         this->globals.enable_ip_transparent  = false;
         strcpy(this->globals.certificate_password, "inquisition");
