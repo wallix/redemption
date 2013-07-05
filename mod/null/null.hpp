@@ -60,10 +60,7 @@ struct null_mod : public mod_api {
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running
     // the null module never finish and accept any incoming event
-    virtual BackEvent_t draw_event()
-    {
-        return BACK_EVENT_NONE;
-    }
+    virtual void draw_event(void) {}
 
     virtual void begin_update() {}
     virtual void end_update() {}

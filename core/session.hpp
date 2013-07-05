@@ -48,23 +48,23 @@
 #include "bitmap.hpp"
 
 #include "authentifier.hpp"
-#include "front.hpp"
-#include "null/null.hpp"
-#include "rdp/rdp.hpp"
-#include "vnc/vnc.hpp"
-#include "xup/xup.hpp"
-#include "transitory/transitory.hpp"
-#include "cli/cli_mod.hpp"
+//#include "front.hpp"
+//#include "null/null.hpp"
+//#include "rdp/rdp.hpp"
+//#include "vnc/vnc.hpp"
+//#include "xup/xup.hpp"
+//#include "transitory/transitory.hpp"
+//#include "cli/cli_mod.hpp"
 
-#include "internal/widget2/bouncer2.hpp"
-#include "internal/widget2/test_card_mod.hpp"
-#include "internal/widget2/replay_mod.hpp"
-#include "internal/widget2/selector_mod.hpp"
-#include "internal/widget2/wab_close_mod.hpp"
-#include "internal/widget2/dialog_mod.hpp"
-#include "internal/widget2/login_mod.hpp"
-#include "internal/widget2/rwl_mod.hpp"
-#include "internal/widget2/rwl_login_mod.hpp"
+//#include "internal/widget2/bouncer2.hpp"
+//#include "internal/widget2/test_card_mod.hpp"
+//#include "internal/widget2/replay_mod.hpp"
+//#include "internal/widget2/selector_mod.hpp"
+//#include "internal/widget2/wab_close_mod.hpp"
+//#include "internal/widget2/dialog_mod.hpp"
+//#include "internal/widget2/login_mod.hpp"
+//#include "internal/widget2/rwl_mod.hpp"
+//#include "internal/widget2/rwl_login_mod.hpp"
 
 using namespace std;
 
@@ -96,7 +96,6 @@ struct Session {
     Inifile  * ini;
     uint32_t & verbose;
 
-    submodule_t nextmod;
     int internal_state;
     long id;                     // not used
     time_t keep_alive_time;
@@ -108,7 +107,7 @@ struct Session {
 
     struct Front * front;
 
-    SessionManager * sesman;
+    SessionManager * acl;
     UdevRandom gen;
 
     SocketTransport * ptr_auth_trans;
@@ -118,9 +117,8 @@ struct Session {
         : front_event(front_event)
         , ini(ini)
         , verbose(this->ini->debug.session)
-        , nextmod(INTERNAL_NONE)
         , mod_transport(NULL)
-        , sesman(NULL)
+        , acl(NULL)
         , ptr_auth_trans(NULL)
         , ptr_auth_event(NULL)
     {
@@ -129,27 +127,9 @@ struct Session {
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
 
-            int client_sck = ip_connect(this->ini->globals.authip,
-                                        this->ini->globals.authport,
-                                        30,
-                                        1000,
-                                        this->ini->debug.auth);
-
-            if (client_sck != -1) {
-                this->ptr_auth_trans = new SocketTransport( "Authentifier"
-                                                          , client_sck
-                                                          , this->ini->globals.authip
-                                                          , this->ini->globals.authport
-                                                          , this->ini->debug.auth
-                                                          );
-                this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
-                this->sesman = new SessionManager( this->ini
-                                                 , *this->ptr_auth_trans
-                                                 , this->ini->globals.keepalive_grace_delay
-                                                 , this->ini->globals.max_tick
-                                                 , this->ini->globals.internal_domain
-                                                 , this->ini->debug.auth);
-            }
+            this->ptr_auth_trans = NULL;
+            this->ptr_auth_event = NULL;
+            this->acl = NULL;
 
             this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
@@ -159,7 +139,10 @@ struct Session {
             this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen,
                 ini, enable_fastpath, tls_support, mem3blt_support);
             this->no_mod = new null_mod(*(this->front));
+            this->no_mod->event.reset();
             this->mod = this->no_mod;
+            
+            ModuleManager mm(*this->front, *this->ini);
 
             /* module interface */
             this->keep_alive_time = 0;
@@ -177,333 +160,146 @@ struct Session {
             , "Stop required"                                       // SESSION_STATE_STOP
             };
 
-            int previous_state = SESSION_STATE_STOP;
             struct timeval time_mark = { 0, 0 };
-            while (1) {
-
-                if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
-                    time_mark.tv_sec = 0;
-                    time_mark.tv_usec = 50000;
-                }
-
-                if (this->internal_state != previous_state)
-                    LOG(LOG_INFO, "Session::-------------- %s -------------------", state_names[this->internal_state]);
-                previous_state = this->internal_state;
-
-                unsigned max = 0;
-                fd_set rfds;
-                fd_set wfds;
-
-                FD_ZERO(&rfds);
-                FD_ZERO(&wfds);
-                struct timeval timeout = time_mark;
-
-                this->front_event.add_to_fd_set(rfds, max);
-                if (this->front->up_and_running && this->sesman) {
-                    REDASSERT(this->ptr_auth_trans);
-//                    auth_event.add_to_fd_set(rfds, max);
-                    this->ptr_auth_event->add_to_fd_set(rfds, max);
-                    //this->sesman->add_to_fd_set(rfds, max);
-                    this->mod->event.add_to_fd_set(rfds, max);
-                }
-                if (this->mod->event.is_set(rfds)) {
-                    timeout.tv_sec  = 0;
-                    timeout.tv_usec = 0;
-                }
-                int num = select(max + 1, &rfds, &wfds, 0, &timeout);
-                if (num < 0){
-                    if (errno == EINTR){
-                        continue;
+            // We want to start a module
+            bool check_module_sequence = false;
+            bool run_session = true;
+            while (run_session) {
+                try {
+                    if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
+                        time_mark.tv_sec = 0;
+                        time_mark.tv_usec = 50000;
                     }
-                    LOG(LOG_ERR, "Proxy data wait loop raised error %u : %s", errno, strerror(errno));
-                    this->internal_state = previous_state = SESSION_STATE_STOP;
-                }
-                else {
+
+                    unsigned max = 0;
+                    fd_set rfds;
+                    fd_set wfds;
+
+                    FD_ZERO(&rfds);
+                    FD_ZERO(&wfds);
+                    struct timeval timeout = time_mark;
+
+                    this->front_event.add_to_fd_set(rfds, max);
+                    
+                    TODO("Looks like acl and mod can be unified into a common class, where events can happen")
+                    TODO("move ptr_auth_event to acl") 
+                    if (this->acl){
+                        this->ptr_auth_event->add_to_fd_set(rfds, max);
+                    }
+                    this->mod->event.add_to_fd_set(rfds, max);
+
+                    if (this->mod->event.is_set(rfds)) {
+                        timeout.tv_sec  = 0;
+                        timeout.tv_usec = 0;
+                    }
+
+                    int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+
+                    if (num < 0){
+                        if (errno == EINTR){
+                            continue;
+                        }
+                        // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
+                        // EBADF: means fd has been closed (my me) or as already returned an error on another call
+                        // EINVAL: invalid value in timeout (my fault again)
+                        // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
+
+                        LOG(LOG_ERR, "Proxy data wait loop raised error %u : %s", errno, strerror(errno));
+                        throw Error(ERR_SOCKET_ERROR);
+                    }
+
+                    time_t timestamp = time(NULL);
                     if (this->front_event.is_set(rfds)) {
                         try {
                             this->front->incoming(*this->mod);
-                        }
-                        catch(...){
-                            this->internal_state = previous_state = SESSION_STATE_STOP;
+                        } catch (...) {
+                            run_session = false;
                         };
-                    }
-                }
-                switch (previous_state)
-                {
-                    case SESSION_STATE_ENTRY:
-                    {
-                        if (this->front->up_and_running){
-                            this->session_setup_mod(MCTX_STATUS_CLI);
-                            this->mod->event.set();
-                            this->internal_state = SESSION_STATE_RUNNING;
+                        if (!this->front->up_and_running){
+                            continue;
                         }
                     }
-                    break;
-                    case SESSION_STATE_WAITING_FOR_NEXT_MODULE:
-                    {
-                        if (!this->sesman) {
-                            LOG(LOG_INFO, "Session::no authentifier available, closing");
-                            this->ini->context.auth_error_message.copy_c_str("No authentifier available");
-                            this->internal_state  = SESSION_STATE_CLOSE_CONNECTION;
-                            this->nextmod         = INTERNAL_CLOSE;
-                            this->session_setup_mod(MCTX_STATUS_INTERNAL);
-                            this->keep_alive_time = 0;
-                            this->internal_state  = SESSION_STATE_RUNNING;
-                            this->front->stop_capture();
-                        }
-//                        if (auth_event.is_set(rfds)){
-                        else if (this->ptr_auth_event->is_set(rfds)) {
-                            this->sesman->receive_next_module();
 
-                            if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0){
-                                this->front->set_console_session(true);
-                                LOG(LOG_INFO, "Session::mode console : force");
-                            }
-                            else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0){
-                                this->front->set_console_session(false);
-                                LOG(LOG_INFO, "Session::mode console : forbid");
-                            }
-                            else {
-                                // default is "allow", do nothing special
-                            }
+                    TODO("We should have a first loop to wait for front to get up and running, then we will proceed with the standard loop")
+                    if (this->front->up_and_running){                    
+                    
 
-                            this->remove_mod();
-                            this->mod = new transitory_mod(*(this->front),
-                                                           this->front->client_info.width,
-                                                           this->front->client_info.height);
-
-                            this->mod->event.set();
-                            this->internal_state = SESSION_STATE_RUNNING;
-                        }
-                    }
-                    break;
-                    case SESSION_STATE_WAITING_FOR_CONTEXT:
-                    {
-                        if (!this->sesman) {
-                            LOG(LOG_INFO, "Session::no authentifier available, closing");
-                            this->ini->context.auth_error_message.copy_c_str("No authentifier available");
-                            this->internal_state  = SESSION_STATE_CLOSE_CONNECTION;
-                            this->nextmod         = INTERNAL_CLOSE;
-                            this->session_setup_mod(MCTX_STATUS_INTERNAL);
-                            this->keep_alive_time = 0;
-                            this->internal_state  = SESSION_STATE_RUNNING;
-                            this->front->stop_capture();
-                        }
-//                        if (auth_event.is_set(rfds)){
-                        else if (this->ptr_auth_event->is_set(rfds)) {
-                            this->sesman->receive_next_module();
-
-                            if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0){
-                                this->front->set_console_session(true);
-                                LOG(LOG_INFO, "Session::mode console : force");
-                            }
-                            else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0){
-                                this->front->set_console_session(false);
-                                LOG(LOG_INFO, "Session::mode console : forbid");
-                            }
-                            else {
-                                // default is "allow", do nothing special
-                            }
-
-                            this->mod->refresh_context(*this->ini);
-
-                            this->mod->event.set();
-                            this->internal_state = SESSION_STATE_RUNNING;
-                        }
-                    }
-                    break;
-                    case SESSION_STATE_RUNNING:
-                    {
-                        time_t timestamp = time(NULL);
-                        this->front->periodic_snapshot(this->mod->get_pointer_displayed());
-
-                        if (this->sesman) {
-                            bool read_auth = this->ptr_auth_event->is_set(rfds);
-//                            bool read_auth = auth_event.is_set(rfds);
-                            if (!this->sesman->keep_alive(this->keep_alive_time
-                                                           , timestamp, &front_trans, read_auth)) {
-                                this->nextmod = INTERNAL_CLOSE;
-                                this->session_setup_mod(MCTX_STATUS_INTERNAL);
-                                this->keep_alive_time = 0;
-                                this->internal_state = SESSION_STATE_RUNNING;
-                                this->front->stop_capture();
-                                delete this->sesman;
-                                this->sesman = NULL;
-                            }
-                            else {
-                                if (this->ini->globals.movie) {
-                                    if (this->front->capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                                        this->front->start_capture( this->front->client_info.width
-                                                                  , this->front->client_info.height
-                                                                  , *this->ini
-                                                                  );
-                                        this->mod->rdp_input_invalidate(
-                                            Rect( 0, 0, this->front->client_info.width
-                                                , this->front->client_info.height));
-                                    }
-                                    else if (this->front->capture_state == Front::CAPTURE_STATE_PAUSED) {
-                                        this->front->resume_capture();
-                                        this->mod->rdp_input_invalidate(
-                                            Rect( 0, 0, this->front->client_info.width
-                                                , this->front->client_info.height));
-                                    }
-                                }
-                                else if (this->front->capture_state == Front::CAPTURE_STATE_STARTED) {
-                                    this->front->pause_capture();
-                                }
-                            }
-                        }
-                        // Check if sesman received an answer to auth_channel_target
-                        if (this->ini->globals.auth_channel[0]) {
-                            // Get sesman answer to AUTHCHANNEL_TARGET
-                            if (!this->ini->context.authchannel_answer.get().is_empty()) {
-                                // If set, transmit to auth_channel channel
-                                this->mod->send_auth_channel_data(
-                                    this->ini->context.authchannel_answer.get_cstr());
-                                // Erase the context variable
-                                this->ini->context.authchannel_answer.set_empty();
-                            }
-                        }
-
-                        // data incoming from server module
-                        if (this->front->up_and_running
-                        &&  this->mod->event.is_set(rfds)){
+                        // Process incoming module trafic
+                        if (this->mod->event.is_set(rfds)){
                             this->mod->event.reset();
-                            if (this->verbose & 8){
-                                LOG(LOG_INFO, "Session::back_event fired");
+                            this->mod->draw_event();
+                            if (this->mod->event.signal != BACK_EVENT_NONE){
+                                this->acl->signal = this->mod->event.signal;
+                                check_module_sequence = true;
                             }
-                            BackEvent_t signal = this->mod->draw_event();
-                            switch (signal){
-                            case BACK_EVENT_NONE:
-                                // continue with same module
-                            break;
-                            case BACK_EVENT_STOP:
-                                // current module finished for some serious reason implying immediate exit
-                                // without going to close box.
-                                // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
-                                this->internal_state = SESSION_STATE_STOP;
-                                break;
-                            case BACK_EVENT_REFRESH:
-                            {
-                                if (this->verbose & 8){
-                                    LOG(LOG_INFO, "Session::back event refresh");
+                            this->front->periodic_snapshot(this->mod->get_pointer_displayed());
+                        }
+                        
+                        // Incoming data from ACL, or opening acl
+                        if (!this->acl){
+                            this->connect_authentifier();
+                            check_module_sequence = true;
+                            this->acl->signal = BACK_EVENT_NEXT;
+                            this->acl->ask_next_module_remote();
+                        }
+                        else {
+                            if (this->ptr_auth_event->is_set(rfds)){
+                                // acl received updated values
+                                this->acl->receive();
+                                int next_state = this->acl->next_module();
+                                if (next_state == MODULE_RUNNING){
                                 }
-                                bool record_video = false;
-                                bool keep_alive = false;
-                                if (!this->sesman) {
-                                    LOG(LOG_INFO, "Session::no authentifier available, closing");
-                                    this->ini->context.auth_error_message.copy_c_str("No authentifier available");
-                                    this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
-                                    this->nextmod        = INTERNAL_CLOSE;
-                                    this->session_setup_mod(MCTX_STATUS_INTERNAL);
-                                    this->keep_alive_time = 0;
-                                    this->internal_state  = SESSION_STATE_RUNNING;
-                                    this->front->stop_capture();
-                                }
-                                else {
-                                    int next_state = this->sesman->ask_next_module(
-                                                                        this->keep_alive_time,
-                                                                        record_video, keep_alive, this->nextmod);
-                                    if (next_state != MCTX_STATUS_WAITING){
-                                        this->internal_state = SESSION_STATE_RUNNING;
-                                    }
-                                    else {
-                                        this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
-                                    }
-                                }
-                            }
-                            break;
-                            case BACK_EVENT_NEXT:
-                            default:
-                            {
-                                if (this->verbose & 8){
-                                   LOG(LOG_INFO, "Session::back event end module");
-                                }
-                               // end the current module and switch to new one
-                                this->remove_mod();
-                                this->ini->context.opt_width.set(this->front->client_info.width);
-                                this->ini->context.opt_height.set(this->front->client_info.height);
-                                this->ini->context.opt_bpp.set(this->front->client_info.bpp);
-                                // this->ini->context.opt_width  = this->front->client_info.width;
-                                // this->ini->context.opt_height = this->front->client_info.height;
-                                // this->ini->context.opt_bpp    = this->front->client_info.bpp;
-                                bool record_video = false;
-                                bool keep_alive = false;
-                                if (!this->sesman){
-                                    LOG(LOG_INFO, "Session::no authentifier available, closing");
-                                    this->ini->context.auth_error_message.copy_c_str("No authentifier available");
-                                    this->internal_state = SESSION_STATE_CLOSE_CONNECTION;
-                                    this->nextmod = INTERNAL_CLOSE;
-                                    this->session_setup_mod(MCTX_STATUS_INTERNAL);
-                                    this->keep_alive_time = 0;
-                                    this->internal_state = SESSION_STATE_RUNNING;
-                                    this->front->stop_capture();
-                                }
-                                else {
-                                    if (this->verbose & 8){
-                                        LOG(LOG_INFO, "Session::starting next module");
-                                    }
-
-                                    int next_state = this->sesman->ask_next_module(
-                                                                        this->keep_alive_time,
-                                                                        record_video, keep_alive,
-                                                                        this->nextmod);
-                                    if (this->verbose & 8){
-                                        LOG(LOG_INFO, "session::next_state %u", next_state);
-                                    }
-
-                                    if (next_state != MCTX_STATUS_WAITING){
-                                        this->internal_state = SESSION_STATE_STOP;
-                                        try {
-                                            this->session_setup_mod(next_state);
-                                            if (record_video) {
-                                                this->front->start_capture(
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height,
-                                                    *this->ini
-                                                    );
-                                            }
-                                            else {
-                                                this->front->stop_capture();
-                                            }
-                                            if (this->sesman && keep_alive){
-                                                this->sesman->start_keep_alive(keep_alive_time);
-                                            }
-                                            this->internal_state = SESSION_STATE_RUNNING;
-                                        }
-                                        catch (const Error & e) {
-                                            LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
-                                            this->nextmod = INTERNAL_CLOSE;
-                                            this->session_setup_mod(MCTX_STATUS_INTERNAL);
-                                            this->keep_alive_time = 0;
-                                            delete sesman;
-                                            this->sesman = NULL;
-                                            this->internal_state = SESSION_STATE_RUNNING;
-                                            this->front->stop_capture();
-                                            LOG(LOG_INFO, "Session::capture stopped, authentifier stopped");
+                                else if (next_state == MODULE_REFRESH) {
+                                    this->mod->refresh_context(*this->ini);
+                                    this->acl->signal = BACK_EVENT_NONE;
+                                    this->mod->event.signal = BACK_EVENT_NONE;
+                                    this->mod->event.set();
+                               }
+                               else {
+                                    this->acl->signal = BACK_EVENT_NONE;
+                                    mod_api * tmp_mod = mm.new_mod(next_state);
+                                    if (tmp_mod != NULL){
+                                        if (this->mod != this->no_mod){
+                                            this->remove_mod();
                                         }
                                     }
-                                    else {
-                                        this->internal_state = SESSION_STATE_WAITING_FOR_NEXT_MODULE;
+                                    this->mod = tmp_mod;
+                                    if (this->acl->connected) {
+                                        if (this->ini->globals.movie) {
+                                            if (this->front->capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                                                this->front->start_capture(this->front->client_info.width
+                                                                   , this->front->client_info.height
+                                                                   , *this->ini
+                                                                   );
+                                                this->mod->rdp_input_invalidate(
+                                                    Rect( 0, 0, this->front->client_info.width
+                                                        , this->front->client_info.height));
+                                            }
+                                            else if (this->front->capture_state == Front::CAPTURE_STATE_PAUSED) {
+                                                this->front->resume_capture();
+                                                this->mod->rdp_input_invalidate(
+                                                    Rect(0, 0, this->front->client_info.width
+                                                        , this->front->client_info.height));
+                                            }
+                                        }
+                                        else if (this->front->capture_state == Front::CAPTURE_STATE_STARTED) {
+                                            this->front->pause_capture();
+                                        }
                                     }
                                 }
-                            }
-                            break;
+                                
                             }
                         }
-                    }
-                    break;
-                    case SESSION_STATE_CLOSE_CONNECTION:
-                    {
-                        if (this->mod->event.is_set(rfds)) {
-                            this->internal_state = SESSION_STATE_STOP;
+                        
+                        if (check_module_sequence){
+                            check_module_sequence = false;
+                            run_session = this->acl->check();
                         }
                     }
-                    break;
-                }
-                if (this->internal_state == SESSION_STATE_STOP){
-                    break;
-                }
+                } catch (Error & e) {
+                    LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+                    run_session = false;                        
+                };
             }
             this->front->disconnect();
         }
@@ -517,12 +313,14 @@ struct Session {
         this->front->stop_capture();
     }
 
+
+
     ~Session()
     {
         delete this->front;
         this->remove_mod();
         delete this->no_mod;
-        if (this->sesman) { delete this->sesman; }
+        if (this->acl) { delete this->acl; }
         if (this->ptr_auth_event) { delete this->ptr_auth_event; }
         if (this->ptr_auth_trans) { delete this->ptr_auth_trans; }
         // Suppress Session file from disk (original name with PID or renamed with session_id)
@@ -540,6 +338,35 @@ struct Session {
         }
     }
 
+
+    void connect_authentifier()
+    {
+        int client_sck = ip_connect(this->ini->globals.authip,
+                                    this->ini->globals.authport,
+                                    30,
+                                    1000,
+                                    this->ini->debug.auth);
+
+        if (client_sck == -1) {
+            LOG(LOG_ERR, "Failed to connect to authentifieur");
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
+        }
+        
+        this->ptr_auth_trans = new SocketTransport( "Authentifier"
+                                                  , client_sck
+                                                  , this->ini->globals.authip
+                                                  , this->ini->globals.authport
+                                                  , this->ini->debug.auth
+                                                  );
+        this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
+        this->acl = new SessionManager( this->ini
+                                         , *this->ptr_auth_trans
+                                         , this->ini->globals.keepalive_grace_delay
+                                         , this->ini->globals.max_tick
+                                         , this->ini->globals.internal_domain
+                                         , this->ini->debug.auth);
+    }
+
     void remove_mod()
     {
         if (this->mod != this->no_mod){
@@ -552,395 +379,6 @@ struct Session {
         }
     }
 
-    TODO("We shoudl be able to flatten MCTX_STATUS and this->nextmod, combining the two we get the desired target")
-    void session_setup_mod(int target_module)
-    {
-        if (this->verbose){
-            LOG(LOG_INFO, "Session::session_setup_mod(target_module=%u, submodule=%u)", target_module, this->nextmod);
-        }
-
-        if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0){
-            this->front->set_console_session(true);
-            LOG(LOG_INFO, "Session::mode console : force");
-        }
-        else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0){
-            this->front->set_console_session(false);
-            LOG(LOG_INFO, "Session::mode console : forbid");
-        }
-        else {
-            // default is "allow", do nothing special
-        }
-
-        this->remove_mod();
-
-        switch (target_module)
-        {
-            case MCTX_STATUS_CLI:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse'");
-                }
-                this->mod = new cli_mod(*(this->ini), *(this->front),
-                                        this->front->client_info,
-                                        this->front->client_info.width,
-                                        this->front->client_info.height);
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'CLI parse' suceeded");
-                }
-            }
-            break;
-
-            case MCTX_STATUS_INTERNAL:
-            {
-                switch (this->nextmod){
-                    case INTERNAL_CLOSE:
-                    {
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of new mod 'INTERNAL::Close'");
-                        }
-                        if (this->ini->context.auth_error_message.is_empty()) {
-                            this->ini->context.auth_error_message.copy_c_str("Connection to server ended");
-                        }
-                        this->mod = new WabCloseMod(*this->ini,
-                                                    *this->front,
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height);
-                        this->front->init_pointers();
-                    }
-                    if (this->verbose){
-                        LOG(LOG_INFO, "Session::internal module Close ready");
-                    }
-                    break;
-                    case INTERNAL_BOUNCER2:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'bouncer2'");
-                        }
-                        this->mod = new Bouncer2Mod(*this->front,
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height
-                                                    );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'bouncer2' ready");
-                        }
-                    break;
-                    case INTERNAL_TEST:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'test'");
-                        }
-                        this->mod = new ReplayMod(
-                              *this->front
-                            , this->ini->video.replay_path
-                            , this->ini->context.movie
-                            , this->front->client_info.width
-                            , this->front->client_info.height
-                              , this->ini->context.auth_error_message
-                            );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'test' ready");
-                        }
-                    break;
-                    case INTERNAL_CARD:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'test_card'");
-                        }
-                        this->mod = new TestCardMod(*this->front,
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height
-                                                    );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'test_card' ready");
-                        }
-                    break;
-                    case INTERNAL_WIDGET2_SELECTOR:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'selector'");
-                        }
-                        this->mod = new SelectorMod(*this->ini,
-                                                    *this->front,
-                                                    this->front->client_info.width,
-                                                    this->front->client_info.height
-                                                    );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'selector' ready");
-                        }
-                    break;
-                    case INTERNAL_WIDGET2_CLOSE:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'CloseMod'");
-                        }
-                        this->mod = new WabCloseMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height
-                        );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'CloseMod' ready");
-                        }
-                    break;
-                    case INTERNAL_DIALOG_VALID_MESSAGE:
-                    case INTERNAL_WIDGET2_DIALOG:
-                    {
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Accept Message'");
-                        }
-
-                        const char * message = this->ini->context.message.get_cstr();
-                        const char * button = this->ini->translation.button_refused.get_cstr();
-                        const char * caption = "Information";
-                        this->mod = new DialogMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height,
-                            caption,
-                            message,
-                            button
-                        );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'Dialog Accept Message' ready");
-                        }
-                    }
-                    break;
-                    case INTERNAL_DIALOG_DISPLAY_MESSAGE:
-                    case INTERNAL_WIDGET2_MESSAGE:
-                    {
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Dialog Display Message'");
-                        }
-
-                        const char * message = this->ini->context.message.get_cstr();
-                        const char * button = NULL;
-                        const char * caption = "Information";
-                        this->mod = new DialogMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height,
-                            caption,
-                            message,
-                            button
-                        );
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module 'Dialog Display Message' ready");
-                        }
-                    }
-                    break;
-                    case INTERNAL_WIDGET2_LOGIN:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
-                        }
-                        this->mod = new LoginMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height);
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module Login ready");
-                        }
-                        break;
-                    case INTERNAL_WIDGET2_RWL:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
-                        }
-                        this->mod = new RwlMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height);
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module Login ready");
-                        }
-                        break;
-                    case INTERNAL_WIDGET2_RWL_LOGIN:
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::Creation of internal module 'Login'");
-                        }
-                        this->mod = new RwlLoginMod(
-                            *this->ini,
-                            *this->front,
-                            this->front->client_info.width,
-                            this->front->client_info.height);
-                        if (this->verbose){
-                            LOG(LOG_INFO, "Session::internal module Login ready");
-                        }
-                        break;
-                    default:
-                    break;
-                }
-            }
-            break;
-
-            case MCTX_STATUS_XUP:
-            {
-                const char * name = "XUP Target";
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'XUP'\n");
-                }
-
-                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port.get(),
-                                            4, 1000,
-                                            this->ini->debug.mod_xup);
-
-                if (client_sck == -1){
-                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                SocketTransport * t = new SocketTransport(
-                      name
-                    , client_sck
-                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port.get()
-                    , this->ini->debug.mod_xup);
-                this->mod_transport = t;
-
-                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote X host");
-                this->mod = new xup_mod( t
-                                         , *this->front
-                                         , this->front->client_info.width
-                                         , this->front->client_info.height
-                                         , this->ini->context.opt_width.get()
-                                         , this->ini->context.opt_height.get()
-                                         , this->ini->context.opt_bpp.get()
-                                         );
-                this->mod->event.obj = client_sck;
-                this->mod->draw_event();
-//                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->get_client_info().width, this->front->get_client_info().height));
-                this->ini->context.auth_error_message.empty();
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'XUP' suceeded\n");
-                }
-            }
-            break;
-
-            case MCTX_STATUS_RDP:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'RDP'");
-                }
-                REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
-                char hostname[255];
-                hostname[0] = 0;
-                if (this->front->client_info.hostname[0]){
-                    memcpy(hostname, this->front->client_info.hostname, 31);
-                    hostname[31] = 0;
-                }
-                static const char * name = "RDP Target";
-
-                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port.get(),
-                                            3, 1000,
-                                            this->ini->debug.mod_rdp);
-
-                if (client_sck == -1){
-                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
-                SocketTransport * t = new SocketTransport(
-                      name
-                    , client_sck
-                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port.get()
-                    , this->ini->debug.mod_rdp
-                    , &this->ini->context.auth_error_message
-                    );
-                this->mod_transport = t;
-
-                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
-                this->mod = new mod_rdp( t
-                                       , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                       , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
-                                       , "0.0.0.0"  // client ip is silenced
-                                       , *this->front
-                                       , hostname
-                                       , true
-                                       , this->front->client_info
-                                       , &this->gen
-                                       , this->front->keymap.key_flags
-                                       , this->sesman   // we give mod_rdp a direct access to sesman for auth_channel channel
-                                       , this->ini->globals.auth_channel
-                                       , this->ini->globals.alternate_shell
-                                       , this->ini->globals.shell_working_directory
-                                       , this->ini->client.clipboard
-                                       , true   // support fast-path
-                                       , true   // support mem3blt
-                                       , this->ini->globals.enable_bitmap_update
-                                       , this->ini->debug.mod_rdp
-                                       , true   // support new pointer
-                                       );
-                this->mod->event.obj = client_sck;
-
-                this->mod->rdp_input_invalidate(Rect(0, 0, this->front->client_info.width, this->front->client_info.height));
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'RDP' suceeded\n");
-                }
-                this->ini->context.auth_error_message.empty();
-            }
-            break;
-
-            case MCTX_STATUS_VNC:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'VNC'\n");
-                }
-                static const char * name = "VNC Target";
-
-
-                int client_sck = ip_connect(this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
-                                            this->ini->context.target_port.get(),
-                                            3, 1000,
-                                            this->ini->debug.mod_vnc);
-
-                if (client_sck == -1){
-                    this->ini->context.auth_error_message.copy_c_str("failed to connect to remote TCP host");
-                    throw Error(ERR_SOCKET_CONNECT_FAILED);
-                }
-
-                SocketTransport * t = new SocketTransport(
-                      name
-                    , client_sck
-                    , this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , this->ini->context.target_port.get()
-                    , this->ini->debug.mod_vnc);
-                this->mod_transport = t;
-
-                this->ini->context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
-
-                this->mod = new mod_vnc(
-                      t
-                    , this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                    , this->ini->context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
-                    , *this->front
-                    , this->front->client_info.width
-                    , this->front->client_info.height
-                    , this->front->client_info.keylayout
-                    , this->front->keymap.key_flags
-                    , this->ini->client.clipboard
-                    , true /* RRE encoding */
-                    , this->ini->debug.mod_vnc);
-                this->mod->event.obj = client_sck;
-                this->mod->draw_event();
-
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Creation of new mod 'VNC' suceeded\n");
-                }
-                this->ini->context.auth_error_message.empty();
-            }
-            break;
-
-            default:
-            {
-                if (this->verbose){
-                    LOG(LOG_INFO, "Session::Unknown backend exception\n");
-                }
-                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
-            }
-        }
-    }
 };
 
 #endif
