@@ -82,15 +82,14 @@ public:
                         long unsigned int param, long unsigned int param2)
     {
         if (NOTIFY_CANCEL == event) {
-            this->signal = BACK_EVENT_STOP;
+            this->event.signal = BACK_EVENT_STOP;
             this->event.set();
         }
     }
 
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->event.reset();
-        return this->signal;
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
@@ -112,7 +111,7 @@ public:
     {
         if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC){
             keymap->get_kevent();
-            this->signal = BACK_EVENT_STOP;
+            this->event.signal = BACK_EVENT_STOP;
             this->event.set();
         }
         else {

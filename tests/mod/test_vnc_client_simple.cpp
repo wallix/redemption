@@ -478,16 +478,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BOOST_CHECK_EQUAL(mod->front_width, 1024);
     BOOST_CHECK_EQUAL(mod->front_height, 768);
 
-//    BackEvent_t res = mod->draw_event();
-//    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+//    mod->draw_event();
 ////    BOOST_CHECK(t.status);
 
-//    res = mod->draw_event();
-//    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+//    mod->draw_event();
 ////    BOOST_CHECK(t.status);
 
-//    res = mod->draw_event();
-//    BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+//    mod->draw_event();
 ////    BOOST_CHECK(t.status);
 
 }

@@ -139,7 +139,7 @@ static int match_regex (regex_t * r, const char * to_match, std::string& vs)
     return nomatch;
 }
 
-void pcre_test(const char * str, const char * rgx,
+void posix_test(const char * str, const char * rgx,
                             std::string& vs, uint iteration = 1)
 {
     regex_t r;
@@ -158,14 +158,14 @@ void pcre_test(const char * str, const char * rgx,
 int main(int argc, char ** argv)
 {
     if (argc < 2) {
-        std::cout << argv[0] << "pcre|boost [iteration] [text]\n";
+        std::cout << argv[0] << "posix|boost [iteration] [text]\n";
     }
     uint iteration = argc >= 3 ? atoi(argv[2]) : 1;
     const char * text = argc == 4 ? argv[3] : "a{b{c{d}}e}";
     const char * regex = "([^\\{|\\}]*[\\{|\\}])";
     std::string vs;
     if (argc > 1 && argv[1][0] == 'p')
-        pcre_test(text, regex, vs, iteration);
+        posix_test(text, regex, vs, iteration);
     else
         boost_regex_test(text, regex, vs, iteration);
     std::cout << vs << "\n";

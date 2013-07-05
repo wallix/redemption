@@ -65,7 +65,8 @@ public:
     {
         if (keymap->nb_kevent_available() > 0
          && keymap->get_kevent() == Keymap2::KEVENT_ESC) {
-            this->mod_event(BACK_EVENT_STOP);
+            this->event.signal = BACK_EVENT_STOP;
+            this->event.set();
             return ;
         }
         this->interaction();
@@ -105,7 +106,7 @@ public:
     }
 
     // This should come from BACK!
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->interaction();
         // Calculating new speedx and speedy
@@ -137,8 +138,6 @@ public:
 
         // Final with setting next idle time
         this->event.set(33333); // 0.3s is 30fps
-
-        return this->signal;
     }
 
     void wipe(Rect oldrect, Rect newrect, int color, const Rect & clip) {

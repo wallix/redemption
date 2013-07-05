@@ -67,9 +67,7 @@ public:
         this->screen.set_widget_focus(&this->selector);
 
         this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border));
-        // this->ini.context.selector_lines_per_page = (this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border);
         this->ask_page();
-
         this->selector.refresh(this->selector.rect);
     }
 
@@ -94,7 +92,7 @@ public:
         this->ini.context_ask(AUTHID_TARGET_USER);
         this->ini.context_ask(AUTHID_TARGET_DEVICE);
         this->ini.context_ask(AUTHID_SELECTOR);
-        this->signal = BACK_EVENT_REFRESH;
+        this->event.signal = BACK_EVENT_REFRESH;
         this->event.set();
     }
 
@@ -107,7 +105,7 @@ public:
             this->ini.context_ask(AUTHID_TARGET_USER);
             this->ini.context_ask(AUTHID_TARGET_DEVICE);
             this->ini.context_ask(AUTHID_SELECTOR);
-            this->signal = BACK_EVENT_NEXT;
+            this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
         }
         else if (NOTIFY_SUBMIT == event) {
@@ -118,7 +116,7 @@ public:
                         this->selector.target_lines.get_current_index(),
                         this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
                 this->ini.parse_username(buffer);
-                this->signal = BACK_EVENT_NEXT;
+                this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
             }
             else if (widget->group_id == this->selector.apply.group_id) {
@@ -187,6 +185,7 @@ public:
         ));
         this->selector.current_page.refresh(this->selector.current_page.rect);
         this->selector.number_page.refresh(this->selector.number_page.rect);
+        this->event.reset();
     }
 
     void refresh_device()
@@ -296,10 +295,9 @@ public:
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
     {}
 
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->event.reset();
-        return this->signal;
     }
 };
 

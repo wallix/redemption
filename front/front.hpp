@@ -69,6 +69,13 @@
 #include "front_api.hpp"
 #include "genrandom.hpp"
 
+enum {
+    FRONT_DISCONNECTED,
+    FRONT_CONNECTING,
+    FRONT_RUNNING,
+};
+
+
 class Front : public FrontAPI {
     using FrontAPI::draw;
 public:
@@ -279,7 +286,7 @@ public:
                 /* this should do the actual resizing */
                 this->send_demand_active();
 
-                LOG(LOG_INFO, "Front::incoming::ACTIVATED (resize)");
+                LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
                 state = ACTIVATE_AND_PROCESS_DATA;
                 res = 1;
             }

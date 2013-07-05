@@ -124,14 +124,9 @@ public:
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
-        this->event.reset();
-        this->event.set(0);
         TODO("use system constants for sizes");
-
-        BackEvent_t back_event = BACK_EVENT_NONE;
-
         TODO("RZ: Support encrypted recorded file.")
         try
         {
@@ -144,20 +139,21 @@ public:
             }
             else {
                 this->front.flush();
-                back_event = BACK_EVENT_STOP;
+                this->event.signal = BACK_EVENT_STOP;
+                this->event.set(1);
             }
         }
         catch (Error & e) {
             if (e.id == ERR_TRANSPORT_OPEN_FAILED) {
                 this->auth_error_message.copy_c_str("The recorded file is inaccessible or corrupted!");
 
-                back_event = BACK_EVENT_NEXT;
+                this->event.signal = BACK_EVENT_NEXT;
+                this->event.set(1);
             }
             else {
                 throw;
             }
         }
-        return back_event;
     }
 };
 

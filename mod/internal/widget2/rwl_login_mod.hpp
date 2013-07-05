@@ -528,10 +528,12 @@ public:
             case NOTIFY_SUBMIT:
                 this->ini.parse_username(this->window_login.login_edit.label.buffer);
                 this->ini.context_set_value(AUTHID_PASSWORD, this->window_login.password_edit.buffer);
-                this->mod_event(BACK_EVENT_NEXT);
+                this->event.signal = BACK_EVENT_NEXT;
+                this->event.set();
                 break;
             case NOTIFY_CANCEL:
-                this->mod_event(BACK_EVENT_STOP);
+                this->event.signal = BACK_EVENT_STOP;
+                this->event.set();
                 break;
             default:
                 break;
@@ -542,10 +544,9 @@ public:
                                        int16_t /*param1*/, int16_t /*param2*/)
     {}
 
-    virtual BackEvent_t draw_event()
+    virtual void draw_event()
     {
         this->event.reset();
-        return this->signal;
     }
 };
 
