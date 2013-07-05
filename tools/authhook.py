@@ -243,6 +243,7 @@ class Authentifier(object):
 
         self.dic.update(answer)
         self.send()
+        self.dic['target_device'] = MAGICASK
         return True
 
     def send(self):
