@@ -554,9 +554,6 @@ struct Inifile {
             }
             return this->get().c_str();
         }
-        // const char* get_serialized(char * buff, size_t size){
-        //     return NULL;
-        // };
 
     };
 
@@ -604,9 +601,6 @@ struct Inifile {
             snprintf(buff, sizeof(buff), "%u", this->data);
             return buff;
         }
-        // const char* get_serialized(char * buff, size_t size){
-        //     return NULL;
-        // };
     };
 
     class SignedField : public BaseField {
@@ -644,9 +638,6 @@ struct Inifile {
             snprintf(buff, sizeof(buff), "%u", this->data);
             return buff;
         }
-        // const char* get_serialized(char * buff, size_t size){
-        //     return NULL;
-        // };
     };
 
 
@@ -682,9 +673,6 @@ struct Inifile {
             }            
             return this->data?"True":"False";
         }
-        // const char* get_serialized(char * buff, size_t size){
-        //     return NULL;
-        // };
     };
 
 private:
