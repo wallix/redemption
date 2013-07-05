@@ -43,13 +43,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
     SessionManager sesman(&ini, keepalivetrans, 30, 30, true, 0);
     long keepalivetime = 0;
 
-    BOOST_CHECK(keepalivetrans.get_status());
-    try{
-        sesman.start_keep_alive(keepalivetime);
-    } catch (const Error & e){
-        BOOST_CHECK(false);
-    };
-    BOOST_CHECK(keepalivetrans.get_status());
+//    BOOST_CHECK(keepalivetrans.get_status());
+//    try{
+//        sesman.start_keep_alive(keepalivetime);
+//    } catch (const Error & e){
+//        BOOST_CHECK(false);
+//    };
+//    BOOST_CHECK(keepalivetrans.get_status());
     stream.reset();
 
 }

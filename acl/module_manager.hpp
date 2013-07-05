@@ -24,161 +24,6 @@
 #ifndef _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 #define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 
-
-                // Check keep alive not reached
-//                if (!this->acl->check_keep_alive(this->keep_alive_time, timestamp)){
-//                }
-
-                // Check inactivity not reached
-//                if (!this->acl->check_inactivity(this->keep_alive_time, timestamp)){
-//                }
-
-                // Check movie start/stop/pause
-//                if (!this->acl->check_inactivity(this->keep_alive_time, timestamp)){
-//                }
-
-//                        // Check if acl received an answer to auth_channel_target
-//                        if (this->ini.globals.auth_channel[0]) {
-//                            // Get acl answer to AUTHCHANNEL_TARGET
-//                            if (!this->ini.context.authchannel_answer.is_empty()) {
-//                                // If set, transmit to auth_channel channel
-//                                this->mod->send_auth_channel_data(
-//                                    this->ini.context.authchannel_answer.c_str());
-//                                // Erase the context variable
-//                                this->ini.context.authchannel_answer.empty();
-//                            }
-//                        }
-
-                        // data incoming from server module
-//                        if (this->mod->event.is_set(rfds)){
-//                            this->mod->event.reset();
-//                            if (this->verbose & 8){
-//                                LOG(LOG_INFO, "Session::back_event fired");
-//                            }
-//                            BackEvent_t signal = this->mod->draw_event();
-//                            switch (signal){
-//                            case BACK_EVENT_NONE:
-//                                // continue with same module
-//                            break;
-//                            case BACK_EVENT_STOP:
-//                                // current module finished for some serious reason implying immediate exit
-//                                // without going to close box.
-//                                // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
-//                                this->internal_state = SESSION_STATE_STOP;
-//                                break;
-//                            case BACK_EVENT_REFRESH:
-//                            {
-//                                if (this->verbose & 8){
-//                                    LOG(LOG_INFO, "Session::back event refresh");
-//                                }
-//                                bool record_video = false;
-//                                bool keep_alive = false;
-//                                int next_state = this->sesman->ask_next_module(
-//                                                                    this->keep_alive_time,
-//                                                                    record_video, keep_alive, this->nextmod);
-//                                if (next_state != MODULE_WAITING){
-//                                    this->internal_state = SESSION_STATE_RUNNING;
-//                                }
-//                                else {
-//                                    this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
-//                                }
-//                            }
-//                            break;
-//                            case BACK_EVENT_NEXT:
-//                            default:
-//                            {
-//                                if (this->verbose & 8){
-//                                   LOG(LOG_INFO, "Session::back event end module");
-//                                }
-//                               // end the current module and switch to new one
-//                                this->remove_mod();
-//                                bool record_video = false;
-//                                bool keep_alive = false;
-
-//                                int next_state = this->sesman->ask_next_module(
-//                                                                    this->keep_alive_time,
-//                                                                    record_video, keep_alive,
-//                                                                    this->nextmod);
-//                                if (this->verbose & 8){
-//                                    LOG(LOG_INFO, "session::next_state %u", next_state);
-//                                }
-
-//                                if (next_state != MODULE_WAITING){
-//                                    this->internal_state = SESSION_STATE_STOP;
-//                                    try {
-//                                        this->session_setup_mod(next_state);
-//                                        if (record_video) {
-//                                            this->this->front.start_capture(
-//                                                this->this->front.client_info.width,
-//                                                this->this->front.client_info.height,
-//                                                this->ini
-//                                                );
-//                                        }
-//                                        else {
-//                                            this->this->front.stop_capture();
-//                                        }
-//                                        if (this->sesman && keep_alive){
-//                                            this->sesman->start_keep_alive(keep_alive_time);
-//                                        }
-//                                        this->internal_state = SESSION_STATE_RUNNING;
-//                                    }
-//                                    catch (const Error & e) {
-//                                        LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
-//                                        this->nextmod = INTERNAL_CLOSE;
-//                                        this->session_setup_mod(MODULE_INTERNAL);
-//                                        this->keep_alive_time = 0;
-//                                        delete sesman;
-//                                        this->sesman = NULL;
-//                                        this->internal_state = SESSION_STATE_RUNNING;
-//                                        this->this->front.stop_capture();
-//                                        LOG(LOG_INFO, "Session::capture stopped, authentifier stopped");
-//                                    }
-//                                }
-//                            }
-//                            break;
-//                            }
-//                        }
-//                    }
-//                    break;
-//                    case SESSION_STATE_CLOSE_CONNECTION:
-//                    {
-//                        if (this->mod->event.is_set(rfds)) {
-//                            this->internal_state = SESSION_STATE_STOP;
-//                        }
-//                    }
-//                    break;
-//                }
-//                if (this->internal_state == SESSION_STATE_STOP){
-//                    break;
-//                }
-
-
-//    if (!this->acl) {
-//        LOG(LOG_INFO, "Session::no authentifier available, closing");
-//        this->ini.context.auth_error_message.copy_c_str("No authentifier available");
-//        this->internal_state  = SESSION_STATE_CLOSE_CONNECTION;
-//        this->nextmod         = INTERNAL_CLOSE;
-//        this->session_setup_mod(MODULE_INTERNAL);
-//        this->keep_alive_time = 0;
-//        this->internal_state  = SESSION_STATE_RUNNING;
-//        this->this->front.stop_capture();
-//    }
-
-
-//    if (strcmp(this->ini.context.mode_console.c_str(), "force") == 0){
-//        this->this->front.set_console_session(true);
-//        LOG(LOG_INFO, "Session::mode console : force");
-//    }
-//    else if (strcmp(this->ini.context.mode_console.c_str(), "forbid") == 0){
-//        this->this->front.set_console_session(false);
-//        LOG(LOG_INFO, "Session::mode console : forbid");
-//    }
-//    else {
-//        // default is "allow", do nothing special
-//    }
-
-// Check movie start/stop/pause
-
 #include "front.hpp"
 #include "sockettransport.hpp"
 #include "config.hpp"
@@ -233,7 +78,8 @@ class ModuleManager
     public:
     Front & front;
     Inifile & ini;
-
+    mod_api * mod;
+    mod_api * no_mod;
     Transport * mod_transport;
     uint32_t verbose;
     
@@ -243,26 +89,33 @@ class ModuleManager
         , mod_transport(NULL)
         , verbose(0)
     {
+        this->no_mod = new null_mod(this->front);
+        this->no_mod->event.reset();
+        this->mod = this->no_mod;
     }
     
-    virtual mod_api * new_mod(int target_module)
+    void remove_mod()
+    {
+        if (this->mod != this->no_mod){
+            delete this->mod;
+            if (this->mod_transport) {
+                delete this->mod_transport;
+                this->mod_transport = NULL;
+            }
+            this->mod = this->no_mod;
+        }
+    }
+    
+    ~ModuleManager()
+    {
+        this->remove_mod();
+        delete this->no_mod;
+    }
+    
+    virtual void new_mod(int target_module)
     {
 
-//        if (strcmp(this->ini.context.mode_console.c_str(), "force") == 0){
-//            this->front.set_console_session(true);
-//            LOG(LOG_INFO, "ModuleManager::mode console : force");
-//        }
-//        else if (strcmp(this->ini.context.mode_console.c_str(), "forbid") == 0){
-//            this->front.set_console_session(false);
-//            LOG(LOG_INFO, "ModuleManager::mode console : forbid");
-//        }
-//        else {
-//            // default is "allow", do nothing special
-//        }
-
         LOG(LOG_INFO, "target_module=%u", target_module);
-
-        mod_api * mod = NULL;
 
         switch (target_module)
         {
@@ -272,7 +125,7 @@ class ModuleManager
                 if (this->ini.context.auth_error_message.is_empty()) {
                     this->ini.context.auth_error_message.copy_c_str("Connection to server ended");
                 }
-                mod = new WabCloseMod(this->ini,
+                this->mod = new WabCloseMod(this->ini,
                                       this->front,
                                       this->front.client_info.width,
                                       this->front.client_info.height);
@@ -282,7 +135,7 @@ class ModuleManager
             break;
             case MODULE_INTERNAL_BOUNCER2:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2'");
-                mod = new Bouncer2Mod(this->front,
+                this->mod = new Bouncer2Mod(this->front,
                                       this->front.client_info.width,
                                       this->front.client_info.height
                                      );
@@ -292,7 +145,7 @@ class ModuleManager
             break;
             case MODULE_INTERNAL_TEST:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
-                mod = new ReplayMod(
+                this->mod = new ReplayMod(
                       this->front
                     , this->ini.video.replay_path
                     , this->ini.context.movie
@@ -306,7 +159,7 @@ class ModuleManager
             break;
             case MODULE_INTERNAL_CARD:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
-                mod = new TestCardMod(this->front,
+                this->mod = new TestCardMod(this->front,
                                       this->front.client_info.width,
                                       this->front.client_info.height
                                      );
@@ -314,7 +167,7 @@ class ModuleManager
             break;
             case MODULE_INTERNAL_WIDGET2_SELECTOR:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
-                mod = new SelectorMod(this->ini,
+                this->mod = new SelectorMod(this->ini,
                                       this->front,
                                       this->front.client_info.width,
                                       this->front.client_info.height
@@ -325,7 +178,7 @@ class ModuleManager
             break;
             case MODULE_INTERNAL_WIDGET2_CLOSE:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'CloseMod'");
-                mod = new WabCloseMod(
+                this->mod = new WabCloseMod(
                     this->ini,
                     this->front,
                     this->front.client_info.width,
@@ -340,7 +193,7 @@ class ModuleManager
                 const char * message = this->ini.context.message.get_cstr();
                 const char * button = this->ini.translation.button_refused.get_cstr();
                 const char * caption = "Information";
-                mod = new DialogMod(
+                this->mod = new DialogMod(
                     this->ini,
                     this->front,
                     this->front.client_info.width,
@@ -359,7 +212,7 @@ class ModuleManager
                 const char * message = this->ini.context.message.get_cstr();
                 const char * button = NULL;
                 const char * caption = "Information";
-                mod = new DialogMod(
+                this->mod = new DialogMod(
                     this->ini,
                     this->front,
                     this->front.client_info.width,
@@ -373,7 +226,7 @@ class ModuleManager
             break;
             case MODULE_INTERNAL_WIDGET2_LOGIN:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-                mod = new LoginMod(
+                this->mod = new LoginMod(
                     this->ini,
                     this->front,
                     this->front.client_info.width,
@@ -382,7 +235,7 @@ class ModuleManager
                 break;
             case MODULE_INTERNAL_WIDGET2_RWL:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-                mod = new RwlMod(
+                this->mod = new RwlMod(
                     this->ini,
                     this->front,
                     this->front.client_info.width,
@@ -391,7 +244,7 @@ class ModuleManager
                 break;
             case MODULE_INTERNAL_WIDGET2_RWL_LOGIN:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-                mod = new RwlLoginMod(
+                this->mod = new RwlLoginMod(
                     this->ini,
                     this->front,
                     this->front.client_info.width,
@@ -422,10 +275,10 @@ class ModuleManager
                     , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                     , this->ini.context.target_port.get()
                     , this->ini.debug.mod_xup);
-                mod_transport = t;
+                this->mod_transport = t;
 
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote X host");
-                mod = new xup_mod( t
+                this->mod = new xup_mod( t
                                    , this->front
                                    , this->front.client_info.width
                                    , this->front.client_info.height
@@ -433,7 +286,7 @@ class ModuleManager
                                    , this->ini.context.opt_height.get()
                                    , this->ini.context.opt_bpp.get()
                                    );
-                mod->event.obj = client_sck;
+                this->mod->event.obj = client_sck;
                 this->ini.context.auth_error_message.empty();
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
             }
@@ -470,11 +323,11 @@ class ModuleManager
                     , this->ini.debug.mod_rdp
                     , &this->ini.context.auth_error_message
                     );
-                mod_transport = t;
+                this->mod_transport = t;
 
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
                 UdevRandom gen;
-                mod = new mod_rdp( t
+                this->mod = new mod_rdp( t
                                        , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
                                        , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
                                        , "0.0.0.0"  // client ip is silenced
@@ -495,9 +348,9 @@ class ModuleManager
                                        , this->ini.debug.mod_rdp
                                        , true   // support new pointer
                                        );
-                mod->event.obj = client_sck;
+                this->mod->event.obj = client_sck;
 
-                mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
+                this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                 this->ini.context.auth_error_message.empty();
             }
@@ -525,11 +378,11 @@ class ModuleManager
                     , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                     , this->ini.context.target_port.get()
                     , this->ini.debug.mod_vnc);
-                mod_transport = t;
+                this->mod_transport = t;
 
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
-                mod = new mod_vnc(
+                this->mod = new mod_vnc(
                       t
                     , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
                     , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
@@ -541,7 +394,7 @@ class ModuleManager
                     , this->ini.client.clipboard
                     , true /* RRE encoding */
                     , this->ini.debug.mod_vnc);
-                mod->event.obj = client_sck;
+                this->mod->event.obj = client_sck;
 
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
                 this->ini.context.auth_error_message.empty();
@@ -554,7 +407,6 @@ class ModuleManager
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
         }
-        return mod;
     }
 
 };
