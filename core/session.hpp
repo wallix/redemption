@@ -100,11 +100,6 @@ struct Session {
     long id;                     // not used
     time_t keep_alive_time;
 
-    struct mod_api * mod; /* module interface */
-    struct mod_api * no_mod;
-
-    Transport * mod_transport;
-
     struct Front * front;
 
     SessionManager * acl;
@@ -117,7 +112,6 @@ struct Session {
         : front_event(front_event)
         , ini(ini)
         , verbose(this->ini->debug.session)
-        , mod_transport(NULL)
         , acl(NULL)
         , ptr_auth_trans(NULL)
         , ptr_auth_event(NULL)
@@ -131,16 +125,12 @@ struct Session {
             this->ptr_auth_event = NULL;
             this->acl = NULL;
 
-            this->mod = 0;
             this->internal_state = SESSION_STATE_ENTRY;
             const bool enable_fastpath = true;
             const bool tls_support     = this->ini->globals.enable_tls;
             const bool mem3blt_support = true;
             this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen,
                 ini, enable_fastpath, tls_support, mem3blt_support);
-            this->no_mod = new null_mod(*(this->front));
-            this->no_mod->event.reset();
-            this->mod = this->no_mod;
             
             ModuleManager mm(*this->front, *this->ini);
 
@@ -151,18 +141,7 @@ struct Session {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
-            const char * state_names[] =
-            { "Initializing client session"                         // SESSION_STATE_ENTRY
-            , "Waiting for authentifier"                            // SESSION_STATE_WAITING_FOR_NEXT_MODULE
-            , "Waiting for authentifier (context refresh required)" // SESSION_STATE_WAITING_FOR_CONTEXT
-            , "Running"                                             // SESSION_STATE_RUNNING
-            , "Close connection"                                    // SESSION_STATE_CLOSE_CONNECTION
-            , "Stop required"                                       // SESSION_STATE_STOP
-            };
-
             struct timeval time_mark = { 0, 0 };
-            // We want to start a module
-            bool check_module_sequence = false;
             bool run_session = true;
             while (run_session) {
                 try {
@@ -186,9 +165,9 @@ struct Session {
                     if (this->acl){
                         this->ptr_auth_event->add_to_fd_set(rfds, max);
                     }
-                    this->mod->event.add_to_fd_set(rfds, max);
+                    mm.mod->event.add_to_fd_set(rfds, max);
 
-                    if (this->mod->event.is_set(rfds)) {
+                    if (mm.mod->event.is_set(rfds)) {
                         timeout.tv_sec  = 0;
                         timeout.tv_usec = 0;
                     }
@@ -211,90 +190,40 @@ struct Session {
                     time_t timestamp = time(NULL);
                     if (this->front_event.is_set(rfds)) {
                         try {
-                            this->front->incoming(*this->mod);
+                            this->front->incoming(*mm.mod);
                         } catch (...) {
                             run_session = false;
-                        };
-                        if (!this->front->up_and_running){
                             continue;
-                        }
+                        };
                     }
 
-                    TODO("We should have a first loop to wait for front to get up and running, then we will proceed with the standard loop")
-                    if (this->front->up_and_running){                    
-                    
+                    if (this->front->up_and_running){
 
                         // Process incoming module trafic
-                        if (this->mod->event.is_set(rfds)){
-                            this->mod->event.reset();
-                            this->mod->draw_event();
-                            if (this->mod->event.signal != BACK_EVENT_NONE){
-                                this->acl->signal = this->mod->event.signal;
-                                check_module_sequence = true;
+                        if (mm.mod->event.is_set(rfds)){
+
+                            mm.mod->draw_event();
+                            this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
+
+                            if (mm.mod->event.signal != BACK_EVENT_NONE){
+                                this->acl->signal = mm.mod->event.signal;
+                                mm.mod->event.reset();
                             }
-                            this->front->periodic_snapshot(this->mod->get_pointer_displayed());
                         }
                         
                         // Incoming data from ACL, or opening acl
                         if (!this->acl){
                             this->connect_authentifier();
-                            check_module_sequence = true;
                             this->acl->signal = BACK_EVENT_NEXT;
-                            this->acl->ask_next_module_remote();
                         }
                         else {
                             if (this->ptr_auth_event->is_set(rfds)){
                                 // acl received updated values
                                 this->acl->receive();
-                                int next_state = this->acl->next_module();
-                                if (next_state == MODULE_RUNNING){
-                                }
-                                else if (next_state == MODULE_REFRESH) {
-                                    this->mod->refresh_context(*this->ini);
-                                    this->acl->signal = BACK_EVENT_NONE;
-                                    this->mod->event.signal = BACK_EVENT_NONE;
-                                    this->mod->event.set();
-                               }
-                               else {
-                                    this->acl->signal = BACK_EVENT_NONE;
-                                    mod_api * tmp_mod = mm.new_mod(next_state);
-                                    if (tmp_mod != NULL){
-                                        if (this->mod != this->no_mod){
-                                            this->remove_mod();
-                                        }
-                                    }
-                                    this->mod = tmp_mod;
-                                    if (this->acl->connected) {
-                                        if (this->ini->globals.movie) {
-                                            if (this->front->capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                                                this->front->start_capture(this->front->client_info.width
-                                                                   , this->front->client_info.height
-                                                                   , *this->ini
-                                                                   );
-                                                this->mod->rdp_input_invalidate(
-                                                    Rect( 0, 0, this->front->client_info.width
-                                                        , this->front->client_info.height));
-                                            }
-                                            else if (this->front->capture_state == Front::CAPTURE_STATE_PAUSED) {
-                                                this->front->resume_capture();
-                                                this->mod->rdp_input_invalidate(
-                                                    Rect(0, 0, this->front->client_info.width
-                                                        , this->front->client_info.height));
-                                            }
-                                        }
-                                        else if (this->front->capture_state == Front::CAPTURE_STATE_STARTED) {
-                                            this->front->pause_capture();
-                                        }
-                                    }
-                                }
-                                
                             }
                         }
                         
-                        if (check_module_sequence){
-                            check_module_sequence = false;
-                            run_session = this->acl->check();
-                        }
+                        run_session = this->acl->check(*this->front, mm, rfds);
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
@@ -318,8 +247,6 @@ struct Session {
     ~Session()
     {
         delete this->front;
-        this->remove_mod();
-        delete this->no_mod;
         if (this->acl) { delete this->acl; }
         if (this->ptr_auth_event) { delete this->ptr_auth_event; }
         if (this->ptr_auth_trans) { delete this->ptr_auth_trans; }
@@ -366,19 +293,6 @@ struct Session {
                                          , this->ini->globals.internal_domain
                                          , this->ini->debug.auth);
     }
-
-    void remove_mod()
-    {
-        if (this->mod != this->no_mod){
-            delete this->mod;
-            if (this->mod_transport) {
-                delete this->mod_transport;
-                this->mod_transport = NULL;
-            }
-            this->mod = this->no_mod;
-        }
-    }
-
 };
 
 #endif

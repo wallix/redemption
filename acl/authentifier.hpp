@@ -46,6 +46,8 @@ class SessionManager {
     bool internal_domain;
     bool connected;
     bool last_module;
+    bool asked_remote_answer;
+    bool remote_answer;
     uint32_t verbose;
 
     SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay,
@@ -59,6 +61,8 @@ class SessionManager {
         , internal_domain(_internal_domain)
         , connected(false)
         , last_module(false)
+        , asked_remote_answer(false)
+        , remote_answer(false)
         , verbose(_verbose)
 
     {
@@ -438,16 +442,52 @@ class SessionManager {
         return res;
     }
 
-    bool check(){
-        switch (this->signal){
-        case BACK_EVENT_STOP:
-            return false;
-        case BACK_EVENT_NONE:
-        break;
-        case BACK_EVENT_REFRESH:
-        case BACK_EVENT_NEXT:
-            this->ask_next_module_remote();
-        break;
+    bool check(Front & front, ModuleManager & mm, fd_set &rfds)
+    {
+        if (!this->asked_remote_answer 
+        && (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT)) {
+                this->asked_remote_answer = true;
+                this->remote_answer = false;
+                this->ask_next_module_remote();
+        }
+
+        if (this->remote_answer && this->signal == BACK_EVENT_REFRESH) {
+            LOG(LOG_INFO, "===========> MODULE_REFRESH");
+            this->signal = BACK_EVENT_NONE;
+            mm.mod->refresh_context(*this->ini);
+            mm.mod->event.signal = BACK_EVENT_NONE;
+            mm.mod->event.set();
+            this->asked_remote_answer = false;
+       }
+       else if (this->remote_answer && this->signal == BACK_EVENT_NEXT){
+            LOG(LOG_INFO, "===========> MODULE_NEXT");
+            this->signal = BACK_EVENT_NONE;
+            this->asked_remote_answer = false;
+            int next_state = this->next_module();
+            mm.remove_mod();
+            mm.new_mod(next_state);
+            if (this->connected) {
+                if (this->ini->globals.movie) {
+                    if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                        front.start_capture(front.client_info.width
+                                           , front.client_info.height
+                                           , *this->ini
+                                           );
+                        mm.mod->rdp_input_invalidate(
+                            Rect( 0, 0, front.client_info.width
+                                , front.client_info.height));
+                    }
+                    else if (front.capture_state == Front::CAPTURE_STATE_PAUSED) {
+                        front.resume_capture();
+                        mm.mod->rdp_input_invalidate(
+                            Rect(0, 0, front.client_info.width
+                                , front.client_info.height));
+                    }
+                }
+                else if (front.capture_state == Front::CAPTURE_STATE_STARTED) {
+                    front.pause_capture();
+                }
+            }
         }
         return true;
     }
@@ -455,6 +495,7 @@ class SessionManager {
     void receive(){
         try {
             this->acl_serial.incoming();
+            this->remote_answer = true;
         } catch (...) {
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
@@ -463,19 +504,6 @@ class SessionManager {
 
     int next_module()
     {
-        if (this->signal == BACK_EVENT_NONE) {
-            LOG(LOG_INFO, "========> MODULE_RUNNING");
-            return MODULE_RUNNING;
-        }
-
-        if (this->signal == BACK_EVENT_REFRESH) {
-            LOG(LOG_INFO, "===========> MODULE_REFRESH");
-            this->signal = BACK_EVENT_NONE;
-            return MODULE_REFRESH;
-        }
-
-        this->signal = BACK_EVENT_NONE;
-    
         if (this->ini->context_is_asked(AUTHID_AUTH_USER) 
         ||  this->ini->context_is_asked(AUTHID_PASSWORD)){
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
