@@ -53,7 +53,7 @@ class SessionManager {
     uint32_t verbose;
 
     SessionManager(Inifile * _ini, Transport & _auth_trans,
-                   time_t start_time, time_t acl_start_time, 
+                   time_t start_time, time_t acl_start_time,
                    int _keepalive_grace_delay, int _max_tick,
                    bool _internal_domain, uint32_t _verbose)
         : ini(_ini)
@@ -217,8 +217,8 @@ class SessionManager {
 //        }
 //        return true;
 //    }
-    
-    
+
+
 //    bool keep_alive(long & keepalive_time, long & now, Transport * trans, bool read_auth)
 //    {
 ////        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
@@ -618,7 +618,7 @@ class SessionManager {
 
     bool check(Front & front, ModuleManager & mm, time_t now)
     {
-            
+
 //            long enddate = this->ini->context.end_date_cnx;
 //            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
 //            if (enddate != 0 && (now > enddate)) {
@@ -628,21 +628,23 @@ class SessionManager {
 //                mm.remove_mod();
 //                mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
 //            }
+        LOG(LOG_INFO, "last_module=%d asked_remote_answer=%d, signal=%d"
+           , this->last_module, this->asked_remote_answer, this->signal);
 
-//        if (!this->last_module && (now - this->acl_start_time) > 10){
-//            this->asked_remote_answer = false;
-//            this->last_module = true;
-//            mm.remove_mod();
-//            mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-//            return true;
-//        }
-    
+        if (!this->last_module && (now - this->acl_start_time) > 10){
+            this->asked_remote_answer = false;
+            this->last_module = true;
+            mm.remove_mod();
+            mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+            return true;
+        }
+
+        if (this->last_module && this->signal == BACK_EVENT_STOP){
+            return false;
+        }
+
         if (!this->asked_remote_answer){
             if (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT) {
-                if (this->last_module && this->signal == BACK_EVENT_NEXT){
-                    return false;
-                }
-
                 this->asked_remote_answer = true;
                 this->remote_answer = false;
                 this->ask_next_module_remote();
@@ -706,7 +708,7 @@ class SessionManager {
 
     int next_module()
     {
-        if (this->ini->context_is_asked(AUTHID_AUTH_USER) 
+        if (this->ini->context_is_asked(AUTHID_AUTH_USER)
         ||  this->ini->context_is_asked(AUTHID_PASSWORD)){
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET2_LOGIN;

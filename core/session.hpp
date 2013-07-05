@@ -114,7 +114,7 @@ struct Session {
             const bool mem3blt_support = true;
             this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen,
                 ini, enable_fastpath, tls_support, mem3blt_support);
-            
+
             ModuleManager mm(*this->front, *this->ini);
 
             if (this->verbose){
@@ -141,9 +141,9 @@ struct Session {
                     struct timeval timeout = time_mark;
 
                     this->front_event.add_to_fd_set(rfds, max);
-                    
+
                     TODO("Looks like acl and mod can be unified into a common class, where events can happen")
-                    TODO("move ptr_auth_event to acl") 
+                    TODO("move ptr_auth_event to acl")
                     if (this->acl){
                         this->ptr_auth_event->add_to_fd_set(rfds, max);
                     }
@@ -192,7 +192,7 @@ struct Session {
                                 mm.mod->event.reset();
                             }
                         }
-                        
+
                         // Incoming data from ACL, or opening acl
                         if (!this->acl){
                             this->connect_authentifier(start_time, now);
@@ -204,12 +204,12 @@ struct Session {
                                 this->acl->receive();
                             }
                         }
-                        
+
                         run_session = this->acl->check(*this->front, mm, now);
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
-                    run_session = false;                        
+                    run_session = false;
                 };
             }
             this->front->disconnect();
@@ -260,7 +260,7 @@ struct Session {
             LOG(LOG_ERR, "Failed to connect to authentifieur");
             throw Error(ERR_SOCKET_CONNECT_FAILED);
         }
-        
+
         this->ptr_auth_trans = new SocketTransport( "Authentifier"
                                                   , client_sck
                                                   , this->ini->globals.authip
