@@ -259,7 +259,7 @@ public:
         std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
         LOG(LOG_INFO, "ask_next_module_remote() NEW numbers of changed fields = %u",list.size());
         this->send_new(list);
-        //this->ini->reset();
+        this->ini->reset();
     }
 
     void ask_next_module_remote()
