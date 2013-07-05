@@ -187,7 +187,7 @@ struct Session {
                         throw Error(ERR_SOCKET_ERROR);
                     }
 
-                    time_t timestamp = time(NULL);
+                    time_t now = time(NULL);
                     if (this->front_event.is_set(rfds)) {
                         try {
                             this->front->incoming(*mm.mod);
@@ -223,7 +223,7 @@ struct Session {
                             }
                         }
                         
-                        run_session = this->acl->check(*this->front, mm, rfds);
+                        run_session = this->acl->check(*this->front, mm, now);
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);

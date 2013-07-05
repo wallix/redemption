@@ -78,17 +78,17 @@ class SessionManager {
         }
     }
 
-    void start_keep_alive(long & keepalive_time)
-    {
-        if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::start_keep_alive");
-        }
-        this->tick_count = 1;
+//    void start_keep_alive(long & keepalive_time)
+//    {
+//        if (this->verbose & 0x10){
+//            LOG(LOG_INFO, "auth::start_keep_alive");
+//        }
+//        this->tick_count = 1;
 
-        this->ini->context_ask(AUTHID_KEEPALIVE);
-        this->acl_serial.send(AUTHID_KEEPALIVE);
-        keepalive_time = ::time(NULL) + 30;
-    }
+//        this->ini->context_ask(AUTHID_KEEPALIVE);
+//        this->acl_serial.send(AUTHID_KEEPALIVE);
+//        keepalive_time = ::time(NULL) + 30;
+//    }
 
     // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
     void ask_auth_channel_target(const char * target)
@@ -294,6 +294,174 @@ class SessionManager {
 //        return true;
 //    }
 
+
+//        if (strcmp(this->ini.context.mode_console.c_str(), "force") == 0){
+//            this->front.set_console_session(true);
+//            LOG(LOG_INFO, "ModuleManager::mode console : force");
+//        }
+//        else if (strcmp(this->ini.context.mode_console.c_str(), "forbid") == 0){
+//            this->front.set_console_session(false);
+//            LOG(LOG_INFO, "ModuleManager::mode console : forbid");
+//        }
+//        else {
+//            // default is "allow", do nothing special
+//        }
+
+                // Check keep alive not reached
+//                if (!this->acl->check_keep_alive(this->keep_alive_time, timestamp)){
+//                }
+
+                // Check inactivity not reached
+//                if (!this->acl->check_inactivity(this->keep_alive_time, timestamp)){
+//                }
+
+                // Check movie start/stop/pause
+//                if (!this->acl->check_inactivity(this->keep_alive_time, timestamp)){
+//                }
+
+//                        // Check if acl received an answer to auth_channel_target
+//                        if (this->ini.globals.auth_channel[0]) {
+//                            // Get acl answer to AUTHCHANNEL_TARGET
+//                            if (!this->ini.context.authchannel_answer.is_empty()) {
+//                                // If set, transmit to auth_channel channel
+//                                this->mod->send_auth_channel_data(
+//                                    this->ini.context.authchannel_answer.c_str());
+//                                // Erase the context variable
+//                                this->ini.context.authchannel_answer.empty();
+//                            }
+//                        }
+
+                        // data incoming from server module
+//                        if (this->mod->event.is_set(rfds)){
+//                            this->mod->event.reset();
+//                            if (this->verbose & 8){
+//                                LOG(LOG_INFO, "Session::back_event fired");
+//                            }
+//                            BackEvent_t signal = this->mod->draw_event();
+//                            switch (signal){
+//                            case BACK_EVENT_NONE:
+//                                // continue with same module
+//                            break;
+//                            case BACK_EVENT_STOP:
+//                                // current module finished for some serious reason implying immediate exit
+//                                // without going to close box.
+//                                // the typical case (and only one used for now) is... we are coming from CLOSE_BOX
+//                                this->internal_state = SESSION_STATE_STOP;
+//                                break;
+//                            case BACK_EVENT_REFRESH:
+//                            {
+//                                if (this->verbose & 8){
+//                                    LOG(LOG_INFO, "Session::back event refresh");
+//                                }
+//                                bool record_video = false;
+//                                bool keep_alive = false;
+//                                int next_state = this->sesman->ask_next_module(
+//                                                                    this->keep_alive_time,
+//                                                                    record_video, keep_alive, this->nextmod);
+//                                if (next_state != MODULE_WAITING){
+//                                    this->internal_state = SESSION_STATE_RUNNING;
+//                                }
+//                                else {
+//                                    this->internal_state = SESSION_STATE_WAITING_FOR_CONTEXT;
+//                                }
+//                            }
+//                            break;
+//                            case BACK_EVENT_NEXT:
+//                            default:
+//                            {
+//                                if (this->verbose & 8){
+//                                   LOG(LOG_INFO, "Session::back event end module");
+//                                }
+//                               // end the current module and switch to new one
+//                                this->remove_mod();
+//                                bool record_video = false;
+//                                bool keep_alive = false;
+
+//                                int next_state = this->sesman->ask_next_module(
+//                                                                    this->keep_alive_time,
+//                                                                    record_video, keep_alive,
+//                                                                    this->nextmod);
+//                                if (this->verbose & 8){
+//                                    LOG(LOG_INFO, "session::next_state %u", next_state);
+//                                }
+
+//                                if (next_state != MODULE_WAITING){
+//                                    this->internal_state = SESSION_STATE_STOP;
+//                                    try {
+//                                        this->session_setup_mod(next_state);
+//                                        if (record_video) {
+//                                            this->this->front.start_capture(
+//                                                this->this->front.client_info.width,
+//                                                this->this->front.client_info.height,
+//                                                this->ini
+//                                                );
+//                                        }
+//                                        else {
+//                                            this->this->front.stop_capture();
+//                                        }
+//                                        if (this->sesman && keep_alive){
+//                                            this->sesman->start_keep_alive(keep_alive_time);
+//                                        }
+//                                        this->internal_state = SESSION_STATE_RUNNING;
+//                                    }
+//                                    catch (const Error & e) {
+//                                        LOG(LOG_INFO, "Session::connect failed Error=%u", e.id);
+//                                        this->nextmod = INTERNAL_CLOSE;
+//                                        this->session_setup_mod(MODULE_INTERNAL);
+//                                        this->keep_alive_time = 0;
+//                                        delete sesman;
+//                                        this->sesman = NULL;
+//                                        this->internal_state = SESSION_STATE_RUNNING;
+//                                        this->this->front.stop_capture();
+//                                        LOG(LOG_INFO, "Session::capture stopped, authentifier stopped");
+//                                    }
+//                                }
+//                            }
+//                            break;
+//                            }
+//                        }
+//                    }
+//                    break;
+//                    case SESSION_STATE_CLOSE_CONNECTION:
+//                    {
+//                        if (this->mod->event.is_set(rfds)) {
+//                            this->internal_state = SESSION_STATE_STOP;
+//                        }
+//                    }
+//                    break;
+//                }
+//                if (this->internal_state == SESSION_STATE_STOP){
+//                    break;
+//                }
+
+
+//    if (!this->acl) {
+//        LOG(LOG_INFO, "Session::no authentifier available, closing");
+//        this->ini.context.auth_error_message.copy_c_str("No authentifier available");
+//        this->internal_state  = SESSION_STATE_CLOSE_CONNECTION;
+//        this->nextmod         = INTERNAL_CLOSE;
+//        this->session_setup_mod(MODULE_INTERNAL);
+//        this->keep_alive_time = 0;
+//        this->internal_state  = SESSION_STATE_RUNNING;
+//        this->this->front.stop_capture();
+//    }
+
+
+//    if (strcmp(this->ini.context.mode_console.c_str(), "force") == 0){
+//        this->this->front.set_console_session(true);
+//        LOG(LOG_INFO, "Session::mode console : force");
+//    }
+//    else if (strcmp(this->ini.context.mode_console.c_str(), "forbid") == 0){
+//        this->this->front.set_console_session(false);
+//        LOG(LOG_INFO, "Session::mode console : forbid");
+//    }
+//    else {
+//        // default is "allow", do nothing special
+//    }
+
+// Check movie start/stop/pause
+
+
     int get_mod_from_protocol()
     {
         if (this->verbose & 0x10){
@@ -442,7 +610,7 @@ class SessionManager {
         return res;
     }
 
-    bool check(Front & front, ModuleManager & mm, fd_set &rfds)
+    bool check(Front & front, ModuleManager & mm, time_t now)
     {
         if (!this->asked_remote_answer 
         && (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT)) {
