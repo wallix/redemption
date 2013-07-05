@@ -137,7 +137,7 @@ struct Session {
             const bool tls_support     = this->ini->globals.enable_tls;
             const bool mem3blt_support = true;
             this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen,
-                ini, enable_fastpath, tls_support, mem3blt_support);
+                                    ini, enable_fastpath, tls_support, mem3blt_support);
             this->no_mod = new null_mod(*(this->front));
             this->no_mod->event.reset();
             this->mod = this->no_mod;
@@ -152,13 +152,13 @@ struct Session {
             }
 
             const char * state_names[] =
-            { "Initializing client session"                         // SESSION_STATE_ENTRY
-            , "Waiting for authentifier"                            // SESSION_STATE_WAITING_FOR_NEXT_MODULE
-            , "Waiting for authentifier (context refresh required)" // SESSION_STATE_WAITING_FOR_CONTEXT
-            , "Running"                                             // SESSION_STATE_RUNNING
-            , "Close connection"                                    // SESSION_STATE_CLOSE_CONNECTION
-            , "Stop required"                                       // SESSION_STATE_STOP
-            };
+                { "Initializing client session"                         // SESSION_STATE_ENTRY
+                  , "Waiting for authentifier"                            // SESSION_STATE_WAITING_FOR_NEXT_MODULE
+                  , "Waiting for authentifier (context refresh required)" // SESSION_STATE_WAITING_FOR_CONTEXT
+                  , "Running"                                             // SESSION_STATE_RUNNING
+                  , "Close connection"                                    // SESSION_STATE_CLOSE_CONNECTION
+                  , "Stop required"                                       // SESSION_STATE_STOP
+                };
 
             struct timeval time_mark = { 0, 0 };
             // We want to start a module

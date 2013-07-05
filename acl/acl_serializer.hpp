@@ -158,12 +158,6 @@ public:
     TODO("maybe out_item should be in config , not here")
     void out_item(Stream & stream, authid_t authid)
     {
-        TODO("one field here has a limited size for his key and value serialized, "
-             "shouldn't be limited or may be initialize a bigger temporary buffer");
-        char tmp[256];
-        const char * serialized = this->ini->get_field_list().at(authid)->get_serialized(tmp,sizeof(tmp));
-        stream.out_copy_bytes(serialized,strlen(serialized));
-        /*
         const char * key = string_from_authid(authid);
         if (this->ini->context_is_asked(authid)){
             LOG(LOG_INFO, "sending (from authid) %s=ASK\n", key);
@@ -187,8 +181,16 @@ public:
             stream.out_uint8('!');
             stream.out_copy_bytes(tmp, strlen(tmp));
             stream.out_uint8('\n');
-        }
-        */        
+        }                
+    }
+    void out_item_new(Stream & stream, Inifile::BaseField * bfield)
+    {
+        TODO("one field here has a limited size for his key and value serialized, "
+             "shouldn't be limited or may be initialize a bigger temporary buffer");
+        char tmp[256];
+        const char * serialized = bfield->get_serialized(tmp,sizeof(tmp));
+        bfield->use();
+        stream.out_copy_bytes(serialized,strlen(serialized));
     }
 
     TODO("We should not have any way to send only one value. Change the way it is done by calling code")
@@ -231,6 +233,33 @@ public:
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
+    }
+    void send_new(std::set<Inifile::BaseField *>& list)
+    {
+        try {
+            BStream stream(8192);
+            stream.out_uint32_be(0);
+
+            for (std::set<Inifile::BaseField *>::iterator it = list.begin(); it != list.end(); it++) {
+                if (this->ini->to_send_set.find((*it)->get_authid()) != this->ini->to_send_set.end())
+                    this->out_item_new(stream, *it);
+            }
+            stream.mark_end();
+            int total_length = stream.get_offset();
+            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
+            this->auth_trans.send(stream.get_data(), total_length);
+        } catch (Error e) {
+            this->ini->context.authenticated.set(false);
+            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
+        }
+    }
+    void ask_next_module_remote_new() {
+        LOG(LOG_INFO, "ask_next_module_remote() NEW by getting list of field which has been modified");
+        std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
+        LOG(LOG_INFO, "ask_next_module_remote() NEW numbers of changed fields = %u",list.size());
+        this->send_new(list);
+        //this->ini->reset();
     }
 
     void ask_next_module_remote()
