@@ -337,8 +337,8 @@ class ModuleManager
             case MODULE_INTERNAL_WIDGET2_DIALOG:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
-                const char * message = this->ini.context.message.c_str();
-                const char * button = this->ini.translation.button_refused.get().c_str();
+                const char * message = this->ini.context.message.get_cstr();
+                const char * button = this->ini.translation.button_refused.get_cstr();
                 const char * caption = "Information";
                 mod = new DialogMod(
                     this->ini,
@@ -356,7 +356,7 @@ class ModuleManager
             case MODULE_INTERNAL_WIDGET2_MESSAGE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
-                const char * message = this->ini.context.message.c_str();
+                const char * message = this->ini.context.message.get_cstr();
                 const char * button = NULL;
                 const char * caption = "Information";
                 mod = new DialogMod(

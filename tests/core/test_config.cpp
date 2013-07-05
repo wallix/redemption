@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -541,7 +541,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -1435,7 +1435,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -1572,7 +1572,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -1699,7 +1699,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));

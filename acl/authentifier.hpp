@@ -456,8 +456,8 @@ class SessionManager {
         try {
             this->acl_serial.incoming();
         } catch (...) {
-            this->ini->context.authenticated = false;
-            this->ini->context.rejected.copy_c_str("Authentifier service failed");
+            this->ini->context.authenticated.set(false);
+            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
 
@@ -507,7 +507,7 @@ class SessionManager {
         }
         // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
         // proceed with connection.
-        else if (this->ini->context.authenticated){
+        else if (this->ini->context.authenticated.get()){
 //                record_video = this->ini->globals.movie;
 //                keep_alive = true;
             if (this->ini->context.auth_error_message.is_empty()) {
@@ -518,8 +518,8 @@ class SessionManager {
         }
         // User authentication rejected : close message
         else {
-            if (!this->ini->context.rejected.is_empty()) {
-                this->ini->context.auth_error_message.copy_str(this->ini->context.rejected);
+            if (!this->ini->context.rejected.get().is_empty()) {
+                this->ini->context.auth_error_message.copy_str(this->ini->context.rejected.get());
             }
             if (this->ini->context.auth_error_message.is_empty()) {
                 this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
