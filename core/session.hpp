@@ -81,24 +81,23 @@ struct Session {
 
     int internal_state;
     long id;                     // not used
-    time_t keep_alive_time;
 
     struct Front * front;
 
     SessionManager * acl;
+
     UdevRandom gen;
 
     SocketTransport * ptr_auth_trans;
     wait_obj        * ptr_auth_event;
 
     Session(wait_obj & front_event, int sck, Inifile * ini)
-        : front_event(front_event)
-        , ini(ini)
-        , verbose(this->ini->debug.session)
-        , acl(NULL)
-        , ptr_auth_trans(NULL)
-        , ptr_auth_event(NULL)
-    {
+            : front_event(front_event)
+            , ini(ini)
+            , verbose(this->ini->debug.session)
+            , acl(NULL)
+            , ptr_auth_trans(NULL)
+            , ptr_auth_event(NULL) {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
@@ -106,18 +105,20 @@ struct Session {
 
             this->ptr_auth_trans = NULL;
             this->ptr_auth_event = NULL;
-            this->acl = NULL;
+            this->acl            = NULL;
 
             this->internal_state = SESSION_STATE_ENTRY;
+
             const bool enable_fastpath = true;
             const bool tls_support     = this->ini->globals.enable_tls;
             const bool mem3blt_support = true;
-            this->front = new Front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen,
-                ini, enable_fastpath, tls_support, mem3blt_support);
+
+            this->front = new Front( &front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen
+                                   , ini, enable_fastpath, tls_support, mem3blt_support);
 
             ModuleManager mm(*this->front, *this->ini);
 
-            if (this->verbose){
+            if (this->verbose) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
 
@@ -127,7 +128,7 @@ struct Session {
             bool run_session = true;
             while (run_session) {
                 try {
-                    if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500){
+                    if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500) {
                         time_mark.tv_sec = 0;
                         time_mark.tv_usec = 50000;
                     }
@@ -144,7 +145,7 @@ struct Session {
 
                     TODO("Looks like acl and mod can be unified into a common class, where events can happen")
                     TODO("move ptr_auth_event to acl")
-                    if (this->acl){
+                    if (this->acl) {
                         this->ptr_auth_event->add_to_fd_set(rfds, max);
                     }
                     mm.mod->event.add_to_fd_set(rfds, max);
@@ -156,8 +157,8 @@ struct Session {
 
                     int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 
-                    if (num < 0){
-                        if (errno == EINTR){
+                    if (num < 0) {
+                        if (errno == EINTR) {
                             continue;
                         }
                         // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
@@ -179,33 +180,36 @@ struct Session {
                         };
                     }
 
-                    if (this->front->up_and_running){
-
+                    if (this->front->up_and_running) {
                         // Process incoming module trafic
-                        if (mm.mod->event.is_set(rfds)){
+                        if (mm.mod->event.is_set(rfds)) {
 
                             mm.mod->draw_event();
                             this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
 
-                            if (mm.mod->event.signal != BACK_EVENT_NONE){
+                            if (mm.mod->event.signal != BACK_EVENT_NONE) {
                                 this->acl->signal = mm.mod->event.signal;
                                 mm.mod->event.reset();
                             }
                         }
 
+                        bool read_auth = false;
+
                         // Incoming data from ACL, or opening acl
-                        if (!this->acl){
+                        if (!this->acl) {
                             this->connect_authentifier(start_time, now);
                             this->acl->signal = BACK_EVENT_NEXT;
                         }
                         else {
-                            if (this->ptr_auth_event->is_set(rfds)){
+                            if (this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
                                 this->acl->receive();
+
+                                read_auth = true;
                             }
                         }
 
-                        run_session = this->acl->check(*this->front, mm, now);
+                        run_session = this->acl->check(*this->front, mm, now, front_trans, read_auth);
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
@@ -217,17 +221,14 @@ struct Session {
         catch (const Error & e) {
             LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
         }
-        catch(...){
+        catch(...) {
             LOG(LOG_INFO, "Session::Session other exception\n");
         }
         LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         this->front->stop_capture();
     }
 
-
-
-    ~Session()
-    {
+    ~Session() {
         delete this->front;
         if (this->acl) { delete this->acl; }
         if (this->ptr_auth_event) { delete this->ptr_auth_event; }
@@ -235,8 +236,8 @@ struct Session {
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         if (!this->ini->context.session_id.get().is_empty()) {
             char new_session_file[256];
-            sprintf(new_session_file, "%s/session_%s.pid", PID_PATH,
-                this->ini->context.session_id.get_cstr());
+            snprintf( new_session_file, sizeof(new_session_file), "%s/session_%s.pid"
+                    , PID_PATH , this->ini->context.session_id.get_cstr());
             unlink(new_session_file);
         }
         else {
@@ -247,9 +248,7 @@ struct Session {
         }
     }
 
-
-    void connect_authentifier(time_t start_time, time_t now)
-    {
+    void connect_authentifier(time_t start_time, time_t now) {
         int client_sck = ip_connect(this->ini->globals.authip,
                                     this->ini->globals.authport,
                                     30,
@@ -269,13 +268,13 @@ struct Session {
                                                   );
         this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
         this->acl = new SessionManager( this->ini
-                                         , *this->ptr_auth_trans
-                                         , start_time // proxy start time
-                                         , now        // acl start time
-                                         , this->ini->globals.keepalive_grace_delay
-                                         , this->ini->globals.max_tick
-                                         , this->ini->globals.internal_domain
-                                         , this->ini->debug.auth);
+                                      , *this->ptr_auth_trans
+                                      , start_time // proxy start time
+                                      , now        // acl start time
+                                      , this->ini->globals.keepalive_grace_delay
+                                      , this->ini->globals.max_tick
+                                      , this->ini->globals.internal_domain
+                                      , this->ini->debug.auth);
     }
 };
 
