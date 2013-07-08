@@ -786,6 +786,7 @@ class SessionManager {
             this->acl_serial.incoming();
             this->remote_answer = true;
         } catch (...) {
+            LOG(LOG_INFO, ">>>>>>>>>>>>>>>>> ACL receive failed");
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }

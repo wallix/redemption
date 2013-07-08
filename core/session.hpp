@@ -117,6 +117,9 @@ struct Session {
                                    , ini, enable_fastpath, tls_support, mem3blt_support);
 
             ModuleManager mm(*this->front, *this->ini);
+            bool          cant_create_acl(false);
+            BackEvent_t   no_acl_signal;
+
 
             if (this->verbose) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -188,7 +191,12 @@ struct Session {
                             this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
 
                             if (mm.mod->event.signal != BACK_EVENT_NONE) {
-                                this->acl->signal = mm.mod->event.signal;
+                                if (this->acl) {
+                                    this->acl->signal = mm.mod->event.signal;
+                                }
+                                else {
+                                    no_acl_signal     = mm.mod->event.signal;
+                                }
                                 mm.mod->event.reset();
                             }
                         }
@@ -197,8 +205,20 @@ struct Session {
 
                         // Incoming data from ACL, or opening acl
                         if (!this->acl) {
-                            this->connect_authentifier(start_time, now);
-                            this->acl->signal = BACK_EVENT_NEXT;
+                            if (!cant_create_acl) {
+                                try {
+                                    this->connect_authentifier(start_time, now);
+                                    this->acl->signal = BACK_EVENT_NEXT;
+                                }
+                                catch (...) {
+                                    cant_create_acl = true;
+
+                                    this->ini->context.auth_error_message.copy_c_str(
+                                        "No authentifier available");
+                                    mm.remove_mod();
+                                    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+                                }
+                            }
                         }
                         else {
                             if (this->ptr_auth_event->is_set(rfds)) {
@@ -209,7 +229,13 @@ struct Session {
                             }
                         }
 
-                        run_session = this->acl->check(*this->front, mm, now, front_trans, read_auth);
+                        if (this->acl) {
+                            run_session = this->acl->check(*this->front, mm, now, front_trans, read_auth);
+                        }
+                        else if (no_acl_signal == BACK_EVENT_STOP) {
+                            mm.mod->event.reset();
+                            run_session = false;
+                        }
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
