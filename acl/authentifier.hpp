@@ -46,6 +46,7 @@ class SessionManager {
     AclSerializer acl_serial;
 
 
+    bool lost_acl;
     bool internal_domain;
     bool connected;
     bool last_module;
@@ -65,6 +66,7 @@ class SessionManager {
         , keepalive_time(0)
         , signal(BACK_EVENT_NONE)
         , acl_serial(AclSerializer(_ini,_auth_trans,_verbose))
+	, lost_acl(false)
         , internal_domain(_internal_domain)
         , connected(false)
         , last_module(false)
@@ -638,6 +640,16 @@ class SessionManager {
             return false;
         }
 
+	// Check if acl connection is lost.
+	if (this->lost_acl && !this->last_module){
+	    this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
+	    this->asked_remote_answer = false;
+	    this->last_module         = true;
+	    mm.remove_mod();
+	    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+	    return true;
+	}
+
         if (this->keepalive_time) {
             if (now > (this->keepalive_time + this->keepalive_grace_delay)) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
@@ -781,20 +793,18 @@ class SessionManager {
         return true;
     }
 
-    bool receive() {
-        bool res = true;
-
-        try {
-            this->acl_serial.incoming();
-            this->remote_answer = true;
+    void receive() {
+	try {
+	    if (!this->lost_acl) {
+		this->acl_serial.incoming();
+		this->remote_answer = true;
+	    }
         } catch (...) {
+	    // acl connection lost
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
-
-            res = false;
-        }
-
-        return res;
+	    this->lost_acl = true;
+	}
     }
 
     int next_module() {
