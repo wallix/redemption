@@ -124,14 +124,6 @@ namespace rndfa {
             delete [] this->idx_trace_free;
         }
 
-        bool exact_match(const char * s)
-        {
-            if (!this->st_first) {
-                return false;
-            }
-            return Matching(*this).exact_match(s);
-        }
-
     private:
         struct Trace
         {
@@ -142,12 +134,76 @@ namespace rndfa {
         };
 
     public:
-        typedef std::pair<Trace*,Trace*> TraceRange;
+        typedef std::pair<const Trace *, const Trace *> TraceRange;
 
         TraceRange get_trace() const
         {
-            Trace * strace = this->traces + this->idx_trace * this->nb_context_state;
+            const Trace * strace = this->traces + this->idx_trace * this->nb_context_state;
             return TraceRange(strace, strace + this->nb_context_state);
+        }
+
+        typedef std::pair<unsigned, unsigned> range_t;
+        typedef std::vector<range_t> range_list;
+
+        range_list exact_match(const char * s)
+        {
+            range_list ranges;
+
+            if (this->st_first) {
+                if (Matching(*this).exact_match(s)) {
+                    this->append_match_result(ranges);
+                }
+            }
+
+            return ranges;
+        }
+
+        bool exact_search(const char * s)
+        {
+            if (!this->st_first) {
+                return false;
+            }
+            return Matching(*this).exact_match(s); ///TODO exact_search
+        }
+
+        bool exact_search_with_trace(const char * s)
+        {
+            if (!this->st_first) {
+                return false;
+            }
+            return Matching(*this).exact_match(s);
+        }
+
+        range_list match_result()
+        {
+            range_list ret;
+            this->append_match_result(ret);
+            return ret;
+        }
+
+        void append_match_result(range_list& ranges)
+        {
+            ranges.reserve(this->captures.size());
+
+            typedef std::vector<StateBase*>::reverse_iterator iterator;
+            iterator match_first = this->captures.rbegin();
+            iterator match_last = this->captures.rend();
+            unsigned pmatch = -1u;
+            unsigned n = 0;
+            unsigned p = 0;
+            for (TraceRange trace = this->get_trace(); trace.first < trace.second; ++trace.first, ++n) {
+                if (match_first != match_last && n == (*match_first)->num) {
+                    if (pmatch == -1u) {
+                        pmatch = p;
+                    }
+                    else {
+                        ranges.push_back(range_t(pmatch, p-pmatch));
+                        pmatch = -1u;
+                    }
+                    ++match_first;
+                }
+                p += trace.first->size;
+            }
         }
 
     private:
@@ -377,11 +433,12 @@ namespace rndfa {
 
         friend class Matching;
 
+        typedef std::vector<StateBase*> state_list;
+        typedef state_list::iterator state_iterator;
+
         unsigned nb_context_state;
         StateBase * st_first;
         StateBase * st_last;
-        typedef std::vector<StateBase*> state_list;
-        typedef state_list::iterator state_iterator;
         state_list vec;
     public:
         state_list captures;
@@ -512,44 +569,44 @@ int main(int argc, char **argv) {
 
     StateMachine sm(st);
 
-    bool ismatch1 = false;
-    bool ismatch2 = false;
+//     bool ismatch1 = false;
+//     bool ismatch2 = false;
     bool ismatch3 = false;
-    double d1, d2, d3;
+//     double d1, d2, d3;
     //std::streambuf * dbuf = std::cout.rdbuf(0);
     const char * str = argc == 2 ? argv[1] : "abcdef";
+//     {
+//         regex_t rgx;
+//         //if (0 != regcomp(&rgx, "^.*b(a*b?a|[uic].*s)[0-9].*$", REG_EXTENDED)){
+//         if (0 != regcomp(&rgx, "^.* .* .* .* .*a$", REG_EXTENDED)){
+//             std::cout << ("comp error") << std::endl;
+//         }
+//         std::clock_t start_time = std::clock();
+//         regmatch_t regmatch;
+//         for (size_t i = 0; i < 100000; ++i) {
+//             ismatch1 = 0 == regexec(&rgx, str, 1, &regmatch, 0);
+//         }
+//         d1 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
+//     }
+//     {
+//         regex_t rgx;
+//         //if (0 != regcomp(&rgx, "ba*b?a|b?a*b?", REG_EXTENDED)){
+//         if (0 != regcomp(&rgx, ".* .* .* .* .*a", REG_EXTENDED)){
+//             std::cout << ("comp error") << std::endl;
+//         }
+//         std::clock_t start_time = std::clock();
+//         regmatch_t regmatch;
+//         for (size_t i = 0; i < 100000; ++i) {
+//             ismatch2 = 0 == regexec(&rgx, str, 1, &regmatch, 0);
+//         }
+//         d2 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
+//     }
     {
-        regex_t rgx;
-        //if (0 != regcomp(&rgx, "^.*b(a*b?a|[uic].*s)[0-9].*$", REG_EXTENDED)){
-        if (0 != regcomp(&rgx, "^.* .* .* .* .*a$", REG_EXTENDED)){
-            std::cout << ("comp error") << std::endl;
+//         std::clock_t start_time = std::clock();
+        for (size_t i = 0; i < 1/*00000*/; ++i) {
+            ismatch3 = sm.exact_search_with_trace(str);
         }
-        std::clock_t start_time = std::clock();
-        regmatch_t regmatch;
-        for (size_t i = 0; i < 100000; ++i) {
-            ismatch1 = 0 == regexec(&rgx, str, 1, &regmatch, 0);
-        }
-        d1 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
-    }
-    {
-        regex_t rgx;
-        //if (0 != regcomp(&rgx, "ba*b?a|b?a*b?", REG_EXTENDED)){
-        if (0 != regcomp(&rgx, ".* .* .* .* .*a", REG_EXTENDED)){
-            std::cout << ("comp error") << std::endl;
-        }
-        std::clock_t start_time = std::clock();
-        regmatch_t regmatch;
-        for (size_t i = 0; i < 100000; ++i) {
-            ismatch2 = 0 == regexec(&rgx, str, 1, &regmatch, 0);
-        }
-        d2 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
-    }
-    {
-        std::clock_t start_time = std::clock();
-        for (size_t i = 0; i < 100000; ++i) {
-            ismatch3 = sm.exact_match(str);
-        }
-        d3 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
+//         d3 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
     }
     //std::cout.rdbuf(dbuf);
 
@@ -557,38 +614,22 @@ int main(int argc, char **argv) {
     std::cout.setf(std::ios::fixed);
     std::cout
     << "regex: '.* .* (.*) (.*) .*a'\n"
-    << (ismatch1 ? "good\n" : "fail\n")
-    << d1 << "\n"
-    << (ismatch2 ? "good\n" : "fail\n")
-    << d2 << "\n"
+//     << (ismatch1 ? "good\n" : "fail\n")
+//     << d1 << "\n"
+//     << (ismatch2 ? "good\n" : "fail\n")
+//     << d2 << "\n"
     << (ismatch3 ? "good\n" : "fail\n")
-    << d3 << "\n"
+//     << d3 << "\n"
     << std::endl;
 
     if (ismatch3) {
-        typedef std::vector<StateBase*>::reverse_iterator iterator;
-        iterator match_first = sm.captures.rbegin();
-        iterator match_last = sm.captures.rend();
-        unsigned pmatch = -1u;
-        unsigned n = 0;
-        unsigned p = 0;
-        for (StateMachine::TraceRange trace = sm.get_trace(); trace.first < trace.second; ++trace.first, ++n) {
-            if (match_first != match_last && n == (*match_first)->num) {
-                if (pmatch == -1u) {
-                    pmatch = p;
-                }
-                else {
-                    (std::cout << "  match: ").write(str+pmatch, p-pmatch) << "\n";
-                    pmatch = -1u;
-                }
-                ++match_first;
-            }
-            std::cout << "strace->size: " << (trace.first->size);
-            if (trace.first->size) {
-                (std::cout << "\t: \"").write(str+p, trace.first->size) << "\"";
-                p += trace.first->size;
-            }
-            std::cout << "\n";
+        typedef StateMachine::range_list range_list;
+        range_list ranges = sm.match_result();
+
+        std::cout << ("matches:\n");
+        unsigned n = 1;
+        for (range_list::iterator first = ranges.begin(), last = ranges.end(); first < last; ++first, ++n) {
+            (std::cout << n << ": \"").write(str+first->first, first->second) << "\"\n";
         }
     }
 }
