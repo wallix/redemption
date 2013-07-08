@@ -48,23 +48,6 @@
 #include "bitmap.hpp"
 
 #include "authentifier.hpp"
-//#include "front.hpp"
-//#include "null/null.hpp"
-//#include "rdp/rdp.hpp"
-//#include "vnc/vnc.hpp"
-//#include "xup/xup.hpp"
-//#include "transitory/transitory.hpp"
-//#include "cli/cli_mod.hpp"
-
-//#include "internal/widget2/bouncer2.hpp"
-//#include "internal/widget2/test_card_mod.hpp"
-//#include "internal/widget2/replay_mod.hpp"
-//#include "internal/widget2/selector_mod.hpp"
-//#include "internal/widget2/wab_close_mod.hpp"
-//#include "internal/widget2/dialog_mod.hpp"
-//#include "internal/widget2/login_mod.hpp"
-//#include "internal/widget2/rwl_mod.hpp"
-//#include "internal/widget2/rwl_login_mod.hpp"
 
 using namespace std;
 
@@ -134,12 +117,11 @@ struct Session {
 
             ModuleManager mm(*this->front, *this->ini);
 
-            /* module interface */
-            this->keep_alive_time = 0;
-
             if (this->verbose){
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
             }
+
+            time_t start_time = time(NULL);
 
             struct timeval time_mark = { 0, 0 };
             bool run_session = true;
@@ -213,7 +195,7 @@ struct Session {
 
                         // Incoming data from ACL, or opening acl
                         if (!this->acl){
-                            this->connect_authentifier();
+                            this->connect_authentifier(start_time, now);
                             this->acl->signal = BACK_EVENT_NEXT;
                         }
                         else {
@@ -266,7 +248,7 @@ struct Session {
     }
 
 
-    void connect_authentifier()
+    void connect_authentifier(time_t start_time, time_t now)
     {
         int client_sck = ip_connect(this->ini->globals.authip,
                                     this->ini->globals.authport,
@@ -288,6 +270,8 @@ struct Session {
         this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
         this->acl = new SessionManager( this->ini
                                          , *this->ptr_auth_trans
+                                         , start_time // proxy start time
+                                         , now        // acl start time
                                          , this->ini->globals.keepalive_grace_delay
                                          , this->ini->globals.max_tick
                                          , this->ini->globals.internal_domain

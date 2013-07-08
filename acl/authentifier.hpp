@@ -48,10 +48,14 @@ class SessionManager {
     bool last_module;
     bool asked_remote_answer;
     bool remote_answer;
+    time_t start_time;
+    time_t acl_start_time;
     uint32_t verbose;
 
-    SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay,
-                   int _max_tick, bool _internal_domain, uint32_t _verbose)
+    SessionManager(Inifile * _ini, Transport & _auth_trans,
+                   time_t start_time, time_t acl_start_time,
+                   int _keepalive_grace_delay, int _max_tick,
+                   bool _internal_domain, uint32_t _verbose)
         : ini(_ini)
         , tick_count(0)
         , signal(BACK_EVENT_NONE)
@@ -63,6 +67,8 @@ class SessionManager {
         , last_module(false)
         , asked_remote_answer(false)
         , remote_answer(false)
+        , start_time(start_time)
+        , acl_start_time(acl_start_time)
         , verbose(_verbose)
 
     {
@@ -211,8 +217,8 @@ class SessionManager {
 //        }
 //        return true;
 //    }
-    
-    
+
+
 //    bool keep_alive(long & keepalive_time, long & now, Transport * trans, bool read_auth)
 //    {
 ////        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
@@ -612,48 +618,78 @@ class SessionManager {
 
     bool check(Front & front, ModuleManager & mm, time_t now)
     {
-        if (!this->asked_remote_answer 
-        && (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT)) {
+
+//            long enddate = this->ini->context.end_date_cnx;
+//            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
+//            if (enddate != 0 && (now > enddate)) {
+//                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+//                this->last_module = true;
+//                this->ini.context.auth_error_message.set("Session is out of allowed timeframe")
+//                mm.remove_mod();
+//                mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+//            }
+        LOG(LOG_INFO, "last_module=%d asked_remote_answer=%d, signal=%d"
+           , this->last_module, this->asked_remote_answer, this->signal);
+
+        if (!this->last_module && (now - this->acl_start_time) > 10){
+            this->asked_remote_answer = false;
+            this->last_module = true;
+            mm.remove_mod();
+            mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+            return true;
+        }
+
+        if (this->last_module && this->signal == BACK_EVENT_STOP){
+            return false;
+        }
+
+        if (!this->asked_remote_answer){
+            if (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT) {
                 this->asked_remote_answer = true;
                 this->remote_answer = false;
                 this->ask_next_module_remote();
+            }
         }
+        else {
+            this->asked_remote_answer = false;
 
-        if (this->remote_answer && this->signal == BACK_EVENT_REFRESH) {
-            LOG(LOG_INFO, "===========> MODULE_REFRESH");
-            this->signal = BACK_EVENT_NONE;
-            mm.mod->refresh_context(*this->ini);
-            mm.mod->event.signal = BACK_EVENT_NONE;
-            mm.mod->event.set();
-            this->asked_remote_answer = false;
-       }
-       else if (this->remote_answer && this->signal == BACK_EVENT_NEXT){
-            LOG(LOG_INFO, "===========> MODULE_NEXT");
-            this->signal = BACK_EVENT_NONE;
-            this->asked_remote_answer = false;
-            int next_state = this->next_module();
-            mm.remove_mod();
-            mm.new_mod(next_state);
-            if (this->connected) {
-                if (this->ini->globals.movie) {
-                    if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                        front.start_capture(front.client_info.width
-                                           , front.client_info.height
-                                           , *this->ini
-                                           );
-                        mm.mod->rdp_input_invalidate(
-                            Rect( 0, 0, front.client_info.width
-                                , front.client_info.height));
-                    }
-                    else if (front.capture_state == Front::CAPTURE_STATE_PAUSED) {
-                        front.resume_capture();
-                        mm.mod->rdp_input_invalidate(
-                            Rect(0, 0, front.client_info.width
-                                , front.client_info.height));
-                    }
+            if (this->remote_answer && this->signal == BACK_EVENT_REFRESH) {
+                LOG(LOG_INFO, "===========> MODULE_REFRESH");
+                this->signal = BACK_EVENT_NONE;
+                mm.mod->refresh_context(*this->ini);
+                mm.mod->event.signal = BACK_EVENT_NONE;
+                mm.mod->event.set();
+           }
+           else if (this->remote_answer && this->signal == BACK_EVENT_NEXT){
+                LOG(LOG_INFO, "===========> MODULE_NEXT");
+                this->signal = BACK_EVENT_NONE;
+                if (this->last_module){
+                    return false;
                 }
-                else if (front.capture_state == Front::CAPTURE_STATE_STARTED) {
-                    front.pause_capture();
+                int next_state = this->next_module();
+                mm.remove_mod();
+                mm.new_mod(next_state);
+                if (this->connected) {
+                    if (this->ini->globals.movie) {
+                        if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                            front.start_capture(front.client_info.width
+                                               , front.client_info.height
+                                               , *this->ini
+                                               );
+                            mm.mod->rdp_input_invalidate(
+                                Rect( 0, 0, front.client_info.width
+                                    , front.client_info.height));
+                        }
+                        else if (front.capture_state == Front::CAPTURE_STATE_PAUSED) {
+                            front.resume_capture();
+                            mm.mod->rdp_input_invalidate(
+                                Rect(0, 0, front.client_info.width
+                                    , front.client_info.height));
+                        }
+                    }
+                    else if (front.capture_state == Front::CAPTURE_STATE_STARTED) {
+                        front.pause_capture();
+                    }
                 }
             }
         }
@@ -672,7 +708,7 @@ class SessionManager {
 
     int next_module()
     {
-        if (this->ini->context_is_asked(AUTHID_AUTH_USER) 
+        if (this->ini->context_is_asked(AUTHID_AUTH_USER)
         ||  this->ini->context_is_asked(AUTHID_PASSWORD)){
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET2_LOGIN;
