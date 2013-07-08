@@ -781,15 +781,20 @@ class SessionManager {
         return true;
     }
 
-    void receive() {
+    bool receive() {
+        bool res = true;
+
         try {
             this->acl_serial.incoming();
             this->remote_answer = true;
         } catch (...) {
-            LOG(LOG_INFO, ">>>>>>>>>>>>>>>>> ACL receive failed");
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
+
+            res = false;
         }
+
+        return res;
     }
 
     int next_module() {

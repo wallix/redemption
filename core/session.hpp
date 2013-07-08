@@ -118,6 +118,7 @@ struct Session {
 
             ModuleManager mm(*this->front, *this->ini);
             bool          cant_create_acl(false);
+            bool          acl_receive_error(false);
             BackEvent_t   no_acl_signal;
 
 
@@ -223,9 +224,17 @@ struct Session {
                         else {
                             if (this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
-                                this->acl->receive();
+                                if (!acl_receive_error && !this->acl->receive()) {
+                                    this->ini->context.auth_error_message.copy_c_str(
+                                        "Connection closed by manager (ACL closed)");
+                                    mm.remove_mod();
+                                    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
 
-                                read_auth = true;
+                                    acl_receive_error = true;
+                                }
+                                else {
+                                    read_auth = true;
+                                }
                             }
                         }
 
