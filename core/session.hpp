@@ -223,9 +223,9 @@ struct Session {
                         else {
                             if (this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
-				this->acl->receive();
-
-				read_auth = true;
+				if (this->acl->receive()){
+				    read_auth = true;
+				}
                             }
                         }
 

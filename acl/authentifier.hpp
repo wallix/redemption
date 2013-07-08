@@ -787,7 +787,7 @@ class SessionManager {
         return true;
     }
 
-    void receive() {
+    bool receive() {
 	try {
 	    if (!this->lost_acl) {
 		this->acl_serial.incoming();
@@ -799,6 +799,7 @@ class SessionManager {
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
 	    this->lost_acl = true;
 	}
+	return (!lost_acl);
     }
 
     int next_module() {
