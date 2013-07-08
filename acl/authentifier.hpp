@@ -40,6 +40,7 @@ class SessionManager {
     int  max_tick;
     int  keepalive_grace_delay;
     long keepalive_time;
+    long keepalive_renew_time;
 
     public:
     BackEvent_t signal;
@@ -64,6 +65,7 @@ class SessionManager {
         , max_tick(_max_tick)
         , keepalive_grace_delay(_keepalive_grace_delay)
         , keepalive_time(0)
+        , keepalive_renew_time(0)
         , signal(BACK_EVENT_NONE)
         , acl_serial(AclSerializer(_ini,_auth_trans,_verbose))
 	, lost_acl(false)
@@ -105,7 +107,8 @@ class SessionManager {
         this->tick_count = 1;
         this->ini->context_ask(AUTHID_KEEPALIVE);
         this->acl_serial.send(AUTHID_KEEPALIVE);
-        this->keepalive_time = ::time(NULL) + this->keepalive_grace_delay;
+        this->keepalive_time       =
+        this->keepalive_renew_time = ::time(NULL) + this->keepalive_grace_delay;
     }
 
     // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
@@ -653,7 +656,7 @@ class SessionManager {
         if (this->keepalive_time) {
             if (now > (this->keepalive_time + this->keepalive_grace_delay)) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
+                this->ini->context.auth_error_message.copy_c_str("Missed keepalive from ACL");
                 this->asked_remote_answer = false;
                 this->last_module         = true;
                 this->keepalive_time      = 0;
@@ -666,29 +669,21 @@ class SessionManager {
                 if (this->verbose & 0x10) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
-                try {
-                    if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                        keepalive_time = now + this->keepalive_grace_delay;
-                        this->ini->context_ask(AUTHID_KEEPALIVE);
-                    }
-                }
-                catch (...) {
-                    this->ini->context.auth_error_message.copy_c_str(
-                        "Connection closed by manager (ACL closed)");
-                    this->asked_remote_answer = false;
-                    this->last_module         = true;
-                    this->keepalive_time      = 0;
-                    mm.remove_mod();
-                    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-                    return true;
+
+                if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                    this->keepalive_time       =
+                    this->keepalive_renew_time = now + this->keepalive_grace_delay;
                 }
             }
 
-            if (now > this->keepalive_time) {
+            if (now > this->keepalive_renew_time) {
+                this->keepalive_renew_time = now + this->keepalive_grace_delay;
+
                 if (this->verbose & 8) {
                     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
                        , trans.last_quantum_received, trans.total_received, this->tick_count);
                 }
+
                 if (trans.last_quantum_received == 0) {
                     this->tick_count++;
                     // 15 minutes before closing on inactivity
@@ -703,8 +698,6 @@ class SessionManager {
                         mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
                         return true;
                     }
-
-                    this->keepalive_time = now + this->keepalive_grace_delay;
                 }
                 else {
                     this->tick_count = 0;
@@ -713,6 +706,7 @@ class SessionManager {
 
                 // ===================== check if keepalive ======================
                 try {
+                    this->ini->context_ask(AUTHID_KEEPALIVE);
                     this->acl_serial.send(AUTHID_KEEPALIVE);
                 }
                 catch (...) {
@@ -726,7 +720,7 @@ class SessionManager {
                     return true;
                 }
             }
-        }
+        }   // if (this->keepalive_time)
 
 /*
         if (!this->last_module && (now - this->acl_start_time) > 10) {
