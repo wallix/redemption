@@ -82,9 +82,10 @@ public:
     void ask_page()
     {
         this->ini.context_ask(AUTHID_SELECTOR);
-        char buffer[32];
-        sprintf(buffer, "%u", (unsigned int)this->current_page);
-        this->ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer);
+	this->ini.context.selector_current_page.set((uint32_t)this->current_page);
+        // char buffer[32];
+        // sprintf(buffer, "%u", (unsigned int)this->current_page);
+        // this->ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer);
         this->ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER,
                                     this->selector.filter_device.get_text());
         this->ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER,
@@ -160,13 +161,20 @@ public:
     {
         char buffer[16];
 
-        ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer, sizeof(buffer));
-        this->selector.current_page.set_text(buffer);
-        this->current_page = atoi(buffer);
+	// ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer, sizeof(buffer));
+        // this->selector.current_page.set_text(buffer);
+        // this->current_page = atoi(buffer);
+	this->current_page = ini.context.selector_current_page.get();
+	snprintf(buffer, sizeof(buffer), "%u", this->current_page);
+	this->selector.current_page.set_text(buffer);
 
-        ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer));
-        this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
-        this->number_page = atoi(buffer);
+        // ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer));
+        // this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
+        // this->number_page = atoi(buffer);
+	this->number_page = ini.context.selector_number_of_pages.get();
+	snprintf(buffer, sizeof(buffer), "%u", this->number_page);
+	this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
+
 
         uint16_t cy = this->selector.device_lines.cy();
 
