@@ -224,16 +224,31 @@ struct Session {
                         else {
                             if (this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
-                                if (!acl_receive_error && !this->acl->receive()) {
-                                    this->ini->context.auth_error_message.copy_c_str(
-                                        "Connection closed by manager (ACL closed)");
-                                    mm.remove_mod();
-                                    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+                                if (!acl_receive_error) {
+                                    if (!this->acl->receive()) {
+                                        this->ini->context.auth_error_message.copy_c_str(
+                                            "Connection closed by manager (ACL closed)");
+                                        mm.remove_mod();
+                                        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
 
-                                    acl_receive_error = true;
-                                }
-                                else {
-                                    read_auth = true;
+                                        acl_receive_error = true;
+                                    }
+                                    else {
+                                        read_auth = true;
+
+                                        if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0){
+                                            this->front->set_console_session(true);
+                                            LOG(LOG_INFO, "Session::mode console : force");
+LOG(LOG_INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>> Session::mode console : force <<<<<<<<<<<<<<<<<<<<<<<");
+                                        }
+                                        else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0){
+                                            this->front->set_console_session(false);
+                                            LOG(LOG_INFO, "Session::mode console : forbid");
+                                        }
+                                        else {
+                                            // default is "allow", do nothing special
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -527,6 +527,7 @@ struct Inifile {
             const char * key = string_from_authid(this->authid);
             char * p = buff;
             strncpy(p, key, size);
+            buff[size - 1] = 0;
             while (*p)
                 p++;
             *(p++) = '\n';

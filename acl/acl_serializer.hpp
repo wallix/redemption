@@ -187,7 +187,7 @@ public:
     {
         TODO("one field here has a limited size for his key and value serialized, "
              "shouldn't be limited or may be initialize a bigger temporary buffer");
-        char tmp[256];
+        char tmp[65536];
         const char * serialized = bfield->get_serialized(tmp,sizeof(tmp));
         bfield->use();
         stream.out_copy_bytes(serialized,strlen(serialized));
