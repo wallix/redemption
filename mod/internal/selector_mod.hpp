@@ -50,18 +50,18 @@ class SelectorMod : public InternalMod, public NotifyApi
 
 public:
     SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
-    : InternalMod(front, width, height)
-    , selector(this, temporary_login(ini).buffer, width, height, this,
-               ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,
-                                     temporary_buffer().buffer, sizeof(temporary_buffer)),
-               ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES,
-                                     temporary_buffer().buffer, sizeof(temporary_buffer)),
-               ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
-               ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0)
-              )
-    , current_page(atoi(this->selector.current_page.get_text()))
-    , number_page(atoi(this->selector.number_page.get_text()+1))
-    , ini(ini)
+        : InternalMod(front, width, height)
+        , selector(this, temporary_login(ini).buffer, width, height, this,
+                   ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,
+                                         temporary_buffer().buffer, sizeof(temporary_buffer)),
+                   ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES,
+                                         temporary_buffer().buffer, sizeof(temporary_buffer)),
+                   ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
+                   ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0)
+                   )
+        , current_page(atoi(this->selector.current_page.get_text()))
+        , number_page(atoi(this->selector.number_page.get_text()+1))
+        , ini(ini)
     {
         this->selector.set_widget_focus(&this->selector.device_lines);
         this->screen.set_widget_focus(&this->selector);
@@ -111,11 +111,11 @@ public:
         }
         else if (NOTIFY_SUBMIT == event) {
             if (widget == &this->selector.connect
-             || widget->group_id == this->selector.device_lines.group_id) {
+                || widget->group_id == this->selector.device_lines.group_id) {
                 char buffer[1024];
                 snprintf(buffer, sizeof(buffer), "%s:%s",
-                        this->selector.target_lines.get_current_index(),
-                        this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
+                         this->selector.target_lines.get_current_index(),
+                         this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
                 this->ini.parse_username(buffer);
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
@@ -186,11 +186,11 @@ public:
         this->refresh_device();
 
         this->selector.refresh(Rect(
-            this->selector.device_lines.dx(),
-            this->selector.device_lines.dy(),
-            this->selector.close_time_lines.dx() + this->selector.close_time_lines.cx() - this->selector.device_lines.dx(),
-            std::max(cy, this->selector.device_lines.cy())
-        ));
+                                    this->selector.device_lines.dx(),
+                                    this->selector.device_lines.dy(),
+                                    this->selector.close_time_lines.dx() + this->selector.close_time_lines.cx() - this->selector.device_lines.dx(),
+                                    std::max(cy, this->selector.device_lines.cy())
+                                    ));
         this->selector.current_page.refresh(this->selector.current_page.rect);
         this->selector.number_page.refresh(this->selector.number_page.rect);
         this->event.reset();
@@ -229,10 +229,10 @@ public:
             endtimes[size_endtimes] = c_endtime;
 
             if (c_group    == '\n' || !c_group
-            ||  c_target   == '\n' || !c_target
-            ||  c_protocol == '\n' || !c_protocol
-            ||  c_endtime  == '\n' || !c_endtime
-            ){
+                ||  c_target   == '\n' || !c_target
+                ||  c_protocol == '\n' || !c_protocol
+                ||  c_endtime  == '\n' || !c_endtime
+                ){
                 break;
             }
 
@@ -266,33 +266,33 @@ public:
                                     long int param4, Keymap2* keymap)
     {
         if (&this->selector.device_lines == this->selector.widget_with_focus
-         && keymap->nb_kevent_available() > 0) {
+            && keymap->nb_kevent_available() > 0) {
             switch (keymap->top_kevent()){
-                case Keymap2::KEVENT_LEFT_ARROW:
-                    keymap->get_kevent();
-                    if (this->current_page > 1) {
-                        --this->current_page;
-                        this->ask_page();
-                    }
-                    else if (this->current_page == 1 && this->number_page > 1) {
-                        this->current_page = this->number_page;
-                        this->ask_page();
-                    }
-                    break;
-                case Keymap2::KEVENT_RIGHT_ARROW:
-                    keymap->get_kevent();
-                    if (this->current_page < this->number_page) {
-                        ++this->current_page;
-                        this->ask_page();
-                    }
-                    else if (this->current_page == this->number_page && this->number_page > 1) {
-                        this->current_page = 1;
-                        this->ask_page();
-                    }
-                    break;
-                default:
-                    this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
-                    break;
+            case Keymap2::KEVENT_LEFT_ARROW:
+                keymap->get_kevent();
+                if (this->current_page > 1) {
+                    --this->current_page;
+                    this->ask_page();
+                }
+                else if (this->current_page == 1 && this->number_page > 1) {
+                    this->current_page = this->number_page;
+                    this->ask_page();
+                }
+                break;
+            case Keymap2::KEVENT_RIGHT_ARROW:
+                keymap->get_kevent();
+                if (this->current_page < this->number_page) {
+                    ++this->current_page;
+                    this->ask_page();
+                }
+                else if (this->current_page == this->number_page && this->number_page > 1) {
+                    this->current_page = 1;
+                    this->ask_page();
+                }
+                break;
+            default:
+                this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
+                break;
             }
         }
         else {
