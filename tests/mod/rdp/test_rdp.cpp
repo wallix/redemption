@@ -322,6 +322,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
                                       , &gen
                                       , 7       /* key flags               */
 //                                      , NULL    /* session manager         */
+					, NULL
+					, NULL
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -406,6 +408,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                       , &gen
                                       , 2       /* key flags               */
 //                                      , NULL    /* session manager         */
+					, NULL
+					, NULL
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -483,6 +487,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
                                       , &gen
                                       , 2       /* key flags               */
 //                                      , NULL    /* session manager         */
+					, NULL
+					, NULL
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */
@@ -568,6 +574,8 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
                                       , &gen
                                       , 2       /* key flags               */
 //                                      , NULL    /* session manager         */
+					, NULL
+					, NULL
                                       , ""      /* auth channel            */
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */

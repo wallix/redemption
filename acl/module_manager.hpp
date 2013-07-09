@@ -82,7 +82,7 @@ class ModuleManager
     mod_api * no_mod;
     Transport * mod_transport;
     uint32_t verbose;
-    
+
     ModuleManager(Front & front, Inifile & ini)
         : front(front)
         , ini(ini)
@@ -93,7 +93,7 @@ class ModuleManager
         this->no_mod->event.reset();
         this->mod = this->no_mod;
     }
-    
+
     void remove_mod()
     {
         if (this->mod != this->no_mod){
@@ -105,13 +105,13 @@ class ModuleManager
             this->mod = this->no_mod;
         }
     }
-    
+
     ~ModuleManager()
     {
         this->remove_mod();
         delete this->no_mod;
     }
-    
+
     virtual void new_mod(int target_module)
     {
 
@@ -328,26 +328,28 @@ class ModuleManager
                 this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
                 UdevRandom gen;
                 this->mod = new mod_rdp( t
-                                       , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                       , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
-                                       , "0.0.0.0"  // client ip is silenced
-                                       , this->front
-                                       , hostname
-                                       , true
-                                       , this->front.client_info
-                                       , &gen
-                                       , this->front.keymap.key_flags
-//                                       , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
-                                       , this->ini.globals.auth_channel
-                                       , this->ini.globals.alternate_shell
-                                       , this->ini.globals.shell_working_directory
-                                       , this->ini.client.clipboard
-                                       , true   // support fast-path
-                                       , true   // support mem3blt
-                                       , this->ini.globals.enable_bitmap_update
-                                       , this->ini.debug.mod_rdp
-                                       , true   // support new pointer
-                                       );
+					 , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
+					 , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
+					 , "0.0.0.0"  // client ip is silenced
+					 , this->front
+					 , hostname
+					 , true
+					 , this->front.client_info
+					 , &gen
+					 , this->front.keymap.key_flags
+					 //                                       , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
+					 , &this->ini.context.authchannel_target
+					 , &this->ini.context.authchannel_result
+					 , this->ini.globals.auth_channel
+					 , this->ini.globals.alternate_shell
+					 , this->ini.globals.shell_working_directory
+					 , this->ini.client.clipboard
+					 , true   // support fast-path
+					 , true   // support mem3blt
+					 , this->ini.globals.enable_bitmap_update
+					 , this->ini.debug.mod_rdp
+					 , true   // support new pointer
+					 );
                 this->mod->event.obj = client_sck;
 
                 this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
