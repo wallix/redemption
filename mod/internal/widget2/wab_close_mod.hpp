@@ -44,7 +44,7 @@ private:
         {
             snprintf(text, sizeof(text), "%s@%s",
                      ini.globals.target_user.get_cstr(),
-                     ini.globals.target_device.get().c_str());
+                     ini.globals.target_device.get_cstr());
         }
     };
 
@@ -54,7 +54,7 @@ public:
     , window_close(this, 0, 0, &this->screen, this, ini.context.auth_error_message.c_str(), 0,
                    ini.context_is_asked(AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user.get_cstr(),
                    (ini.context_is_asked(AUTHID_TARGET_USER) || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-                       NULL : temporary_text(ini).text,
+		    NULL : temporary_text(ini).text,
                    BLACK, GREY
     )
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)

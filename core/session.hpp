@@ -119,7 +119,7 @@ struct Session {
             ModuleManager mm(*this->front, *this->ini);
             bool          cant_create_acl(false);
             bool          acl_receive_error(false);
-            BackEvent_t   no_acl_signal;
+            BackEvent_t   no_acl_signal(BACK_EVENT_NONE);
 
 
             if (this->verbose) {
@@ -239,7 +239,6 @@ struct Session {
                                         if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0){
                                             this->front->set_console_session(true);
                                             LOG(LOG_INFO, "Session::mode console : force");
-LOG(LOG_INFO, ">>>>>>>>>>>>>>>>>>>>>>>>>>> Session::mode console : force <<<<<<<<<<<<<<<<<<<<<<<");
                                         }
                                         else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0){
                                             this->front->set_console_session(false);
