@@ -22,13 +22,13 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_LOGIN_HPP
 
 #include "version.hpp"
-#include "widget2_edit.hpp"
-#include "widget2_label.hpp"
-#include "widget2_button.hpp"
+#include "edit.hpp"
+#include "label.hpp"
+#include "button.hpp"
 #include "password.hpp"
 #include "window.hpp"
-#include "widget2_multiline.hpp"
-#include "widget2_image.hpp"
+#include "multiline.hpp"
+#include "image.hpp"
 #include "msgbox.hpp"
 
 class WindowLogin : public Window

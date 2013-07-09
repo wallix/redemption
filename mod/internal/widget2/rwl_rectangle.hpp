@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_RWL_RECTANGLE_HPP
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_RWL_RECTANGLE_HPP
 
-#include "widget2_composite.hpp"
+#include "composite.hpp"
 #include "draw_api.hpp"
 
 class RwlRectangle : public WidgetComposite

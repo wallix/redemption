@@ -23,7 +23,7 @@
 
 #include <vector>
 #include <algorithm>
-#include "widget2_widget.hpp"
+#include "widget.hpp"
 #include "keymap2.hpp"
 #include <region.hpp>
 

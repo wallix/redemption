@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP
 
-#include "widget2_widget.hpp"
+#include "widget.hpp"
 
 class WidgetMultiLine : public Widget2
 {

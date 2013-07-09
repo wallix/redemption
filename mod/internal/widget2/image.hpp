@@ -18,33 +18,47 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_RECT_HPP)
-#define REDEMPTION_MOD_WIDGET2_WIDGET_RECT_HPP
+#if !defined(REDEMPTION_MOD_WIDGET2_IMAGE_HPP)
+#define REDEMPTION_MOD_WIDGET2_IMAGE_HPP
 
-#include "widget2_widget.hpp"
+#include "widget.hpp"
 
-class WidgetRect : public Widget2
+class WidgetImage : public Widget2
 {
-public:
-    int color;
+    Bitmap bmp;
 
 public:
-    WidgetRect(DrawApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
-    : Widget2(drawable, rect, parent, notifier, group_id)
-    , color(color)
+    WidgetImage(DrawApi* drawable, int x, int y, const char * filename, Widget2* parent, NotifyApi* notifier, int group_id = 0)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    , bmp(filename)
     {
+        this->tab_flag = IGNORE_TAB;
+        this->focus_flag = IGNORE_FOCUS;
+
+        this->rect.cx = this->bmp.cx;
+        this->rect.cy = this->bmp.cy;
     }
+
+    virtual ~WidgetImage()
+    {}
 
     virtual void draw(const Rect& clip)
     {
+        int16_t mx = std::max<int16_t>(clip.x, 0);
+        int16_t my = std::max<int16_t>(clip.y, 0);
         this->drawable->draw(
-            RDPOpaqueRect(
-                clip,
-                this->color
-            ), this->rect
+            RDPMemBlt(
+                0,
+                Rect(mx, my, clip.cx, clip.cy),
+                0xCC,
+                mx - this->dx(),
+                my - this->dy(),
+                0
+            ),
+            this->rect,
+            this->bmp
         );
     }
 };
 
 #endif
-

@@ -21,13 +21,13 @@
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_REPLAY_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_REPLAY_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_REPLAY_MOD_HPP
 
 #include "FileToGraphic.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "inbymetasequencetransport.hpp"
-#include "widget2_internal_mod.hpp"
+#include "internal_mod.hpp"
 
 class ReplayMod : public InternalMod {
     char movie[1024];

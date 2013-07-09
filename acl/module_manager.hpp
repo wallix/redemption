@@ -35,15 +35,15 @@
 #include "xup/xup.hpp"
 #include "transitory/transitory.hpp"
 #include "cli/cli_mod.hpp"
-#include "internal/widget2/bouncer2.hpp"
-#include "internal/widget2/test_card_mod.hpp"
-#include "internal/widget2/replay_mod.hpp"
-#include "internal/widget2/selector_mod.hpp"
-#include "internal/widget2/wab_close_mod.hpp"
-#include "internal/widget2/dialog_mod.hpp"
-#include "internal/widget2/login_mod.hpp"
-#include "internal/widget2/rwl_mod.hpp"
-#include "internal/widget2/rwl_login_mod.hpp"
+#include "internal/bouncer2_mod.hpp"
+#include "internal/test_card_mod.hpp"
+#include "internal/replay_mod.hpp"
+#include "internal/selector_mod.hpp"
+#include "internal/wab_close_mod.hpp"
+#include "internal/dialog_mod.hpp"
+#include "internal/login_mod.hpp"
+#include "internal/rwl_mod.hpp"
+#include "internal/rwl_login_mod.hpp"
 
 enum {
     MODULE_EXIT,
@@ -134,13 +134,13 @@ class ModuleManager
             LOG(LOG_INFO, "ModuleManager::internal module Close ready");
             break;
             case MODULE_INTERNAL_BOUNCER2:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2'");
+                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
                 this->mod = new Bouncer2Mod(this->front,
                                       this->front.client_info.width,
                                       this->front.client_info.height
                                      );
                 if (this->verbose){
-                    LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2' ready");
+                    LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
                 }
             break;
             case MODULE_INTERNAL_TEST:

@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP
 
-#include "widget2_composite.hpp"
+#include "composite.hpp"
 
 #include <typeinfo>
 
