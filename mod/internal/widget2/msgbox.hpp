@@ -22,7 +22,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_MSGBOX_HPP
 
 #include "window.hpp"
-#include "widget2_multiline.hpp"
+#include "multiline.hpp"
 
 class MessageBox : public Window
 {

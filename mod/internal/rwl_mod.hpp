@@ -18,14 +18,14 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_RWL_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_RWL_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_RWL_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_RWL_MOD_HPP
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "msgbox.hpp"
-#include "rwl_rectangle.hpp"
-#include "widget2_internal_mod.hpp"
+#include "widget2/msgbox.hpp"
+#include "widget2/rwl_rectangle.hpp"
+#include "internal_mod.hpp"
 
 
 class RwlMod : public InternalMod, public NotifyApi

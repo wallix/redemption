@@ -18,15 +18,15 @@
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_LOGIN_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_LOGIN_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_LOGIN_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_LOGIN_MOD_HPP
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "window_login.hpp"
-#include "widget2_image.hpp"
-#include "widget2_internal_mod.hpp"
-#include "notify_api.hpp"
+#include "widget2/window_login.hpp"
+#include "widget2/image.hpp"
+#include "internal_mod.hpp"
+#include "widget2/notify_api.hpp"
 
 class LoginMod : public InternalMod, public NotifyApi
 {

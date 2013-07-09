@@ -35,15 +35,6 @@ class Keymap2;
 enum EventType {
     FOCUS_BEGIN,
     FOCUS_END,
-    KEYDOWN,
-    KEYUP,
-    CLIC_BUTTON1_UP,
-    CLIC_BUTTON1_DOWN,
-    CLIC_BUTTON2_UP,
-    CLIC_BUTTON2_DOWN,
-    CLIC_BUTTON3_UP,
-    CLIC_BUTTON3_DOWN,
-    WM_DRAW,
     TEXT_CHANGED,
     WIDGET_SUBMIT,
     WIDGET_CANCEL
@@ -65,14 +56,12 @@ public:
         IGNORE_TAB = 0,
         NORMAL_TAB = 1 << 1,
         DELEGATE_CONTROL_TAB = 1 << 2,
-        NO_DELEGATE_CHILD_TAB = 1 << 3,
         NO_DELEGATE_PARENT = 1 << 4
     };
 
     enum OptionFocus {
         IGNORE_FOCUS = 0 << 1,
         NORMAL_FOCUS = 1 << 1,
-        DELEGATE_CONTROL_FOCUS = 1 << 2,
         FORCE_FOCUS = 1 << 3
     };
 

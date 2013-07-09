@@ -7,6 +7,8 @@
 #include <regex.h>
 #include <cstdlib>
 #include <cassert>
+#include <algorithm>
+#include <boost/preprocessor/cat.hpp>
 
 namespace rndfa {
     const unsigned ANY_CHARACTER = 1 << 8;
@@ -101,10 +103,7 @@ namespace rndfa {
         , idx_trace_free(0)
         , pidx_trace_free(0)
         {
-            {
-                unsigned num = 0;
-                this->push_state(st, num);
-            }
+            this->push_state(st);
 
             if (!this->vec.empty())
             {
@@ -124,14 +123,6 @@ namespace rndfa {
             delete [] this->idx_trace_free;
         }
 
-        bool exact_match(const char * s)
-        {
-            if (!this->st_first) {
-                return false;
-            }
-            return Matching(*this).exact_match(s);
-        }
-
     private:
         struct Trace
         {
@@ -142,28 +133,91 @@ namespace rndfa {
         };
 
     public:
-        typedef std::pair<Trace*,Trace*> TraceRange;
+        typedef std::pair<const Trace *, const Trace *> TraceRange;
 
         TraceRange get_trace() const
         {
-            Trace * strace = this->traces + this->idx_trace * this->nb_context_state;
+            const Trace * strace = this->traces + this->idx_trace * this->nb_context_state;
             return TraceRange(strace, strace + this->nb_context_state);
         }
 
+        typedef std::pair<unsigned, unsigned> range_t;
+        typedef std::vector<range_t> range_list;
+
+        range_list exact_match(const char * s)
+        {
+            range_list ranges;
+
+            if (this->st_first) {
+                if (Matching(*this).exact_match(s)) {
+                    this->append_match_result(ranges);
+                }
+            }
+
+            return ranges;
+        }
+
+        bool exact_search(const char * s)
+        {
+            if (!this->st_first) {
+                return false;
+            }
+            return Matching(*this).exact_match(s); ///TODO exact_search
+        }
+
+        bool exact_search_with_trace(const char * s)
+        {
+            if (!this->st_first) {
+                return false;
+            }
+            return Matching(*this).exact_match(s);
+        }
+
+        range_list match_result()
+        {
+            range_list ret;
+            this->append_match_result(ret);
+            return ret;
+        }
+
+        void append_match_result(range_list& ranges)
+        {
+            ranges.reserve(this->captures.size());
+
+            typedef std::vector<StateBase*>::reverse_iterator iterator;
+            iterator match_first = this->captures.rbegin();
+            iterator match_last = this->captures.rend();
+            unsigned pmatch = -1u;
+            unsigned n = 0;
+            unsigned p = 0;
+            for (TraceRange trace = this->get_trace(); trace.first < trace.second; ++trace.first, ++n) {
+                if (match_first != match_last && n == (*match_first)->num) {
+                    if (pmatch == -1u) {
+                        pmatch = p;
+                    }
+                    else {
+                        ranges.push_back(range_t(pmatch, p-pmatch));
+                        pmatch = -1u;
+                    }
+                    ++match_first;
+                }
+                p += trace.first->size;
+            }
+        }
+
     private:
-        void push_state(StateBase * st, unsigned& num){
+        void push_state(StateBase * st){
             if (st && st->id == 0) {
                 st->id = -1u;
                 this->vec.push_back(st);
                 if (st->c != SPLIT) {
-                    st->num = num++;
+                    st->num = this->nb_context_state++;
                 }
-                this->push_state(st->out1, num);
+                this->push_state(st->out1);
                 if (st->c == SPLIT) {
-                    this->push_state(st->out2, num);
+                    this->push_state(st->out2);
                 }
                 else {
-                    ++this->nb_context_state;
                     if (st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
                         this->captures.push_back(st);
                     }
@@ -377,11 +431,596 @@ namespace rndfa {
 
         friend class Matching;
 
+        typedef std::vector<StateBase*> state_list;
+        typedef state_list::iterator state_iterator;
+
         unsigned nb_context_state;
         StateBase * st_first;
         StateBase * st_last;
+        state_list vec;
+    public:
+        state_list captures;
+    private:
+        Trace * traces;
+        unsigned idx_trace;
+        unsigned * idx_trace_free;
+        unsigned * pidx_trace_free;
+
+        StateListByStep l1;
+        StateListByStep l2;
+    };
+
+    //NOTE rename to Regex ?
+    class StateMachine2
+    {
+        class RangeList;
+
+        struct StateList
+        {
+            StateBase * st;
+            RangeList * next;
+        };
+
+        StateList * st_list;
+
+        struct RangeList
+        {
+            State * st;
+            StateList * first;
+            StateList * last;
+        };
+
+        RangeList * st_range_list;
+
+    public:
+        explicit StateMachine2(StateBase * st)
+        : nb_context_state(0)
+        , nb_capture(0)
+        , st_first(st)
+        , st_last(0)
+        , vec()
+        , captures()
+        , traces(0)
+        , idx_trace(-1u)
+        , idx_trace_free(0)
+        , pidx_trace_free(0)
+        {
+            unsigned nb_split = 0;
+            this->push_state(st, nb_split);
+
+            ///TODO this->nb_context_state + 1 ?
+            this->st_list = new StateList[this->nb_context_state*this->nb_context_state];
+            this->st_range_list = new RangeList[this->nb_context_state];
+            //this->captures = new const char * [this->nb_capture*2];
+            //std::memset(this->captures, 0, this->nb_capture * 2 * sizeof(char *));
+
+            for (unsigned n = 0; n < this->nb_context_state; ++n) {
+                RangeList& l = this->st_range_list[n];
+                l.st = 0;
+                l.first = this->st_list + n * this->nb_context_state;
+                l.last = l.first;
+            }
+
+            unsigned step = 0;
+            this->init_list(this->st_range_list, st, step);
+
+            if (!this->vec.empty())
+            {
+                if (this->nb_capture) {
+                    this->traces = new Trace[this->nb_context_state * this->nb_context_state * sizeof this->traces[0]];
+                    this->idx_trace_free = new unsigned[this->nb_context_state];
+                }
+
+                l1.reserve(this->nb_context_state);
+                l2.reserve(this->nb_context_state);
+            }
+        }
+
+        ~StateMachine2()
+        {
+            delete [] this->traces;
+            delete [] this->idx_trace_free;
+            //delete [] this->captures;
+        }
+
+        void reset_id()
+        {
+            for (state_iterator first = this->vec.begin(), last = this->vec.end(); first != last; ++first) {
+                (*first)->id = 0;
+            }
+        }
+
+        void push_state(RangeList* l, StateBase * st, unsigned& step)
+        {
+            /**///std::cout << (__FUNCTION__) << std::endl;
+            if (st && st->id != step) {
+                st->id = step;
+                if (st->c == SPLIT) {
+                    this->push_state(l, st->out1, step);
+                    this->push_state(l, st->out2, step);
+                }
+                else {
+                    if (st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
+                        this->captures.push_back(st);
+                    }
+                    l->last->st = st;
+                    ++l->last;
+                }
+            }
+        }
+
+    private:
+        unsigned pop_idx_trace(unsigned cp_idx)
+        {
+            --this->pidx_trace_free;
+            assert(this->pidx_trace_free >= this->idx_trace_free);
+            Trace * from = this->traces + cp_idx * this->nb_context_state;
+            Trace * to = this->traces + *this->pidx_trace_free * this->nb_context_state;
+            //memcpy
+            for (Trace * last = to + this->nb_context_state; to < last; ++to, ++from) {
+                *to = *from;
+            }
+            return *this->pidx_trace_free;
+        }
+
+        void push_idx_trace(unsigned n)
+        {
+            assert(this->pidx_trace_free <= this->idx_trace_free + this->nb_context_state);
+            *this->pidx_trace_free = n;
+            ++this->pidx_trace_free;
+        }
+
+        RangeList* find_range_list(StateBase * st)
+        {
+            /**///std::cout << (__FUNCTION__) << std::endl;
+            for (RangeList * l = this->st_range_list; l < this->st_range_list + this->nb_context_state && l->st; ++l) {
+                if (l->st == st) {
+                    return l;
+                }
+            }
+            return 0;
+        }
+
+        void init_list(RangeList* l, StateBase * st, unsigned& step)
+        {
+            /**///std::cout << (__FUNCTION__) << std::endl;
+            l->st = st;
+            this->push_state(l, st, step);
+            /**///std::cout << "-- " << (l) << std::endl;
+            for (StateList * first = l->first, * last = l->last; first < last; ++first) {
+                /**///std::cout << first->st->num << ("\t");
+                if (first->st->c & ANY_CHARACTER) {
+                    /**///std::cout << "any";
+                }
+                else {
+                    /**///std::cout << "'" << char(first->st->c & 0xff) << "'";
+                }
+                /**///std::cout << ("\t") << first->next << std::endl;
+                if (0 == first->st->out1) {
+                    continue ;
+                }
+                RangeList * luse = this->find_range_list(first->st->out1);
+                /**///std::cout << "[" << luse << "]" << std::endl;
+                if (luse) {
+                    first->next = luse;
+                }
+                else {
+                    RangeList * le = l+1;
+                    while (le < this->st_range_list + this->nb_context_state && le->st) {
+                        ++le;
+                    }
+                    first->next = le;
+                    init_list(le, first->st->out1, ++step);
+                }
+            }
+            /**///std::cout << std::endl;
+
+            struct sorting {
+                static bool cmp(const StateList&, const StateList& b) {
+                    return b.st->c & ANY_CHARACTER;
+                }
+            };
+            std::sort<>(l->first, l->last, &sorting::cmp);
+        }
+
+    private:
+        struct Trace
+        {
+            unsigned size;
+            Trace()
+            :size(0)
+            {}
+        };
+
+    public:
+        typedef std::pair<const Trace *, const Trace *> TraceRange;
+
+        TraceRange get_trace() const
+        {
+            const Trace * strace = this->traces + this->idx_trace * this->nb_context_state;
+            return TraceRange(strace, strace + this->nb_context_state);
+        }
+
+        typedef std::pair<unsigned, unsigned> range_t;
+        typedef std::vector<range_t> range_list;
+
+        range_list exact_match(const char * s)
+        {
+            range_list ranges;
+
+            if (this->st_first) {
+                if (Matching(*this).exact_match(s)) {
+                    this->append_match_result(ranges);
+                }
+            }
+
+            return ranges;
+        }
+
+        bool exact_search(const char * s)
+        {
+            if (!this->st_first) {
+                return false;
+            }
+            return Matching(*this).exact_match(s); ///TODO exact_search
+        }
+
+        bool exact_search_with_trace(const char * s)
+        {
+            if (!this->st_first) {
+                return false;
+            }
+            return Matching(*this).exact_match(s);
+        }
+
+        range_list match_result()
+        {
+            range_list ret;
+            this->append_match_result(ret);
+            return ret;
+        }
+
+        void append_match_result(range_list& ranges)
+        {
+            ranges.reserve(this->captures.size());
+
+            typedef std::vector<StateBase*>::reverse_iterator iterator;
+            iterator match_first = this->captures.rbegin();
+            iterator match_last = this->captures.rend();
+            unsigned pmatch = -1u;
+            unsigned n = 0;
+            unsigned p = 0;
+            for (TraceRange trace = this->get_trace(); trace.first < trace.second; ++trace.first, ++n) {
+                if (match_first != match_last && n == (*match_first)->num) {
+                    if (pmatch == -1u) {
+                        pmatch = p;
+                    }
+                    else {
+                        ranges.push_back(range_t(pmatch, p-pmatch));
+                        pmatch = -1u;
+                    }
+                    ++match_first;
+                }
+                p += trace.first->size;
+            }
+        }
+
+    private:
+        void push_state(StateBase * st, unsigned& nb_split){
+            if (st && st->id == 0) {
+                st->id = -1u;
+                this->vec.push_back(st);
+                if (st->c != SPLIT) {
+                    st->num = this->nb_context_state++;
+                }
+                this->push_state(st->out1, nb_split);
+                if (st->c == SPLIT) {
+                    ++nb_split;
+                    this->push_state(st->out2, nb_split);
+                }
+                else {
+                    if (st->c == CAPTURE_OPEN) {
+                        ++this->nb_capture;
+                    }
+                    if (0 == st->out1) {
+                        this->st_last = st;
+                    }
+                }
+            }
+        }
+
+    private:
+        struct StateListByStep
+        {
+            struct Info {
+                RangeList * rl;
+                unsigned idx;
+            };
+
+            StateListByStep()
+            : array(0)
+            {}
+
+            ~StateListByStep()
+            {
+                delete [] this->array;
+            }
+
+            void push_back(RangeList* val, unsigned idx)
+            {
+                this->parray->rl = val;
+                this->parray->idx = idx;
+                ++this->parray;
+            }
+
+            Info& operator[](int n) const
+            { return this->array[n]; }
+
+            Info * begin() const
+            { return this->array; }
+
+            Info * end() const
+            { return this->parray; }
+
+            void reserve(unsigned size)
+            {
+                this->array = new Info[size];
+                this->parray = this->array;
+            }
+
+            bool empty() const
+            { return this->array == this->parray; }
+
+            std::size_t size() const
+            { return this->parray - this->array; }
+
+            void clear()
+            { this->parray = this->array; }
+
+            Info * array;
+            Info * parray;
+        };
+
+
+        struct Searching
+        {
+            StateMachine2 &sm;
+            unsigned step_id;
+            StateListByStep *pl1;
+            StateListByStep *pl2;
+
+            Searching(StateMachine2& sm)
+            : sm(sm)
+            , step_id(1)
+            , pl1(&sm.l1)
+            , pl2(&sm.l1)
+            {
+                sm.l1.clear();
+                sm.l2.clear();
+                sm.reset_id();
+            }
+
+            typedef StateListByStep::Info Info;
+
+            RangeList * step(const char *s, RangeList * l)
+            {
+                for (StateList * first = l->first, * last = l->last; first != last; ++first) {
+                    if (first->st->check(*s)) {
+                        //std::cout << "\t" << first->st->c << "\t";
+                        //if (first->st->c & ANY_CHARACTER) {
+                        //    std::cout << "any\n";
+                        //}
+                        //else {
+                        //    std::cout << "'" << char(first->st->c & 0xff) << "'\n";
+                        //}
+                        std::cout << (first->next) << "\n";
+                        while (first->next && first->next->st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
+                            //*this->sm.pcaptures = s;
+                            //++this->sm.pcaptures;
+                            first = first->next->first;
+                            std::cout << (first->next) << "\n";
+                        }
+                        /**///std::cout << "\t" << first->next << std::endl;
+                        return first->next;
+                    }
+                }
+                return 0;
+            }
+
+            bool exact_match(const char * s)
+            {
+                {
+                    RangeList * l = this->sm.st_range_list;
+                    for (; l < this->sm.st_range_list + this->sm.nb_context_state && l->first != l->last; ++l) {
+                        std::cout << l << "\n";
+                        for (StateList * first = l->first, * last = l->last; first != last; ++first) {
+                            std::cout << "\t" << first->st->c << "\t";
+                            if (first->st->c & ANY_CHARACTER) {
+                                std::cout << "any";
+                            }
+                            else if (first->st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
+                                std::cout << (first->st->c == CAPTURE_OPEN ? "(" : ")");
+                            }
+                            else {
+                                std::cout << "'" << char(first->st->c & 0xff) << "'";
+                            }
+                            std::cout << "\t" << first->next << ("\n");
+                        }
+                    }
+                    std::cout << ("\n");
+                }
+
+                //this->sm.pcaptures = this->sm.captures;
+                RangeList * l = this->sm.st_range_list;
+                /**///std::cout << "l: " << (l) << std::endl;
+
+                for(; *s && l; ++s){
+                    /**/std::cout << "c: '" << *s << "'\n";
+                    l = this->step(s, l);
+                }
+
+
+                return 0 == l || (l->first->st->c == ANY_CHARACTER && 0 == l->first->next);
+            }
+        };
+
+
+        struct Matching
+        {
+            StateMachine2 &sm;
+            unsigned step_id;
+            StateListByStep *pl1;
+            StateListByStep *pl2;
+
+            Matching(StateMachine2& sm)
+            : sm(sm)
+            , step_id(1)
+            , pl1(&sm.l1)
+            , pl2(&sm.l1)
+            {
+                sm.l1.clear();
+                sm.l2.clear();
+                sm.reset_id();
+            }
+
+            typedef StateListByStep::Info Info;
+
+            bool step(const char *s, StateListByStep * l1, StateListByStep * l2,
+                      unsigned n, unsigned & num_cap)
+            {
+                unsigned new_cap = 0;
+                for (Info * ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
+                    //std::cout << (i++) << " " << *l1 << std::endl;
+                    StateList * first = ifirst->rl->first;
+                    StateList * last = ifirst->rl->last;
+                    for (; first != last; ++first) {
+                        if (first->st->id == n) {
+                            //std::cout << ("id == n") << std::endl;
+                            continue;
+                        }
+                        if (0 == first->next) {
+                            std::cout << "idx: " << (ifirst->idx) << std::endl;
+                            return 0;
+                        }
+                        first->st->id = n;
+                        if (first->next->st->id != n && first->st->check(*s)) {
+                            //std::cout << ("ok") << std::endl;
+                            //std::cout << "\t" << first->st->c << "\t";
+                            //if (first->st->c & ANY_CHARACTER) {
+                            //    std::cout << "any\n";
+                            //}
+                            //else {
+                            //    std::cout << "'" << char(first->st->c & 0xff) << "'\n";
+                            //}
+                            //std::cout << (first->next) << std::endl;
+                            StateList * p = first;
+                            while (p->next && p->next->st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
+                                if (p->next->st->c == CAPTURE_OPEN)
+                                    ++new_cap;
+                                //*this->sm.pcaptures = s;
+                                //++this->sm.pcaptures;
+                                p = p->next->first;
+                                //std::cout << (p->next) << "\n";
+                            }
+                            /**///std::cout << "\t" << first->next << std::endl;
+                            if (new_cap <= 1) {
+                                std::cout << ("pop") << std::endl;
+                                l2->push_back(p->next, ifirst->idx);
+                            }
+                            else {
+                                std::cout << ("new pop") << std::endl;
+                                l2->push_back(p->next, this->sm.pop_idx_trace(ifirst->idx));
+                                ++num_cap;
+                            }
+                            p->next->st->id = n;
+                        }
+                        else {
+                            std::cout << ("noop") << std::endl;
+                        }
+                    }
+                }
+
+                //BEGIN free id trace
+                for (Info * first = this->pl1->begin(), * last = this->pl1->end(); first != last; ++first) {
+                    bool b = false;
+                    for (Info * first2 = this->pl2->begin(), * last2 = this->pl2->end(); first2 != last2; ++first2) {
+                        if (first->idx == first2->idx) {
+                            b = true;
+                            break;
+                        }
+                    }
+                    if (!b) {
+                        std::cout << ("push") << std::endl;
+                        this->sm.push_idx_trace(first->idx);
+                    }
+                }
+                //END
+
+                //std::cout << std::endl;
+                return 1;
+            }
+
+            bool exact_match(const char * s)
+            {
+                //{
+                //    RangeList * l = this->sm.st_range_list;
+                //    for (; l < this->sm.st_range_list + this->sm.nb_context_state && l->first != l->last; ++l) {
+                //        //std::cout << l << " " << l->st << "\n";
+                //        for (StateList * first = l->first, * last = l->last; first != last; ++first) {
+                //            std::cout << "\t" << first->st->c << "\t";
+                //            if (first->st->c & ANY_CHARACTER) {
+                //                std::cout << "any";
+                //            }
+                //            else if (first->st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
+                //                std::cout << (first->st->c == CAPTURE_OPEN ? "(" : ")");
+                //            }
+                //            else {
+                //                std::cout << "'" << char(first->st->c & 0xff) << "'";
+                //            }
+                //            std::cout << "\t" << first->next << ("\n");
+                //        }
+                //    }
+                //    std::cout << std::endl;
+                //}
+
+                //BEGIN init/reset trace idx
+                this->sm.pidx_trace_free = this->sm.idx_trace_free;
+                for (unsigned i = 0; i < this->sm.nb_context_state; ++i, ++this->sm.pidx_trace_free) {
+                    *this->sm.pidx_trace_free = i;
+                }
+                std::memset(this->sm.traces, 0, this->sm.nb_context_state * this->sm.nb_context_state * sizeof this->sm.traces[0]);
+                //END
+
+                unsigned n = 0;
+                unsigned num_cap = 0;
+                sm.l1.clear();
+                sm.l2.clear();
+                StateListByStep * pal1 = &sm.l1;
+                StateListByStep * pal2 = &sm.l2;
+                pal1->push_back(this->sm.st_range_list, *--this->sm.pidx_trace_free);
+
+                //this->sm.pcaptures = this->sm.captures;
+                /**///std::cout << "l: " << (l) << std::endl;
+
+                for(; *s && this->step(s, pal1, pal2, ++n, num_cap); ++s){
+                    /**/std::cout << "c: '" << *s << "'\n";
+                    std::swap<>(pal1, pal2);
+                }
+
+                return pal1->empty() || (/*pal1->array[0].rl->first->st->c == ANY_CHARACTER &&*/ 0 == pal1->array[0].rl->first->next);
+            }
+        };
+
+        friend class Matching;
+        friend class Searching;
+
         typedef std::vector<StateBase*> state_list;
         typedef state_list::iterator state_iterator;
+
+        unsigned nb_context_state;
+        unsigned nb_capture;
+        StateBase * st_first;
+        StateBase * st_last;
         state_list vec;
     public:
         state_list captures;
@@ -469,6 +1108,10 @@ int main(int argc, char **argv) {
     State last(ANY_CHARACTER);
     State char_a('a', &last);
 
+#ifndef STATEMACHINE
+# define STATEMACHINE 1
+#endif
+
     State * st = zero_or_more(
         ANY_CHARACTER,
         single(
@@ -482,17 +1125,17 @@ int main(int argc, char **argv) {
                         zero_or_more(
                             ANY_CHARACTER,
                             single(
-                                CAPTURE_CLOSE,
+                                STATEMACHINE == 1 ? CAPTURE_CLOSE : ' ',
                                 single(
-                                    ' ',
+                                    STATEMACHINE == 1 ? ' ' : CAPTURE_CLOSE,
                                     single(
                                         CAPTURE_OPEN,
                                         zero_or_more(
                                             ANY_CHARACTER,
                                             single(
-                                                CAPTURE_CLOSE,
+                                                STATEMACHINE == 1 ? CAPTURE_CLOSE : ' ',
                                                 single(
-                                                    ' ',
+                                                    STATEMACHINE == 1 ? ' ' : CAPTURE_CLOSE,
                                                     zero_or_more(
                                                         ANY_CHARACTER,
                                                         &char_a
@@ -510,7 +1153,10 @@ int main(int argc, char **argv) {
         )
     );
 
-    StateMachine sm(st);
+    typedef StateMachine StateMachine1;
+    typedef BOOST_PP_CAT(StateMachine, STATEMACHINE) Regex;
+
+    Regex sm(st);
 
     bool ismatch1 = false;
     bool ismatch2 = false;
@@ -524,9 +1170,10 @@ int main(int argc, char **argv) {
         if (0 != regcomp(&rgx, "^.* .* .* .* .*a$", REG_EXTENDED)){
             std::cout << ("comp error") << std::endl;
         }
-        std::clock_t start_time = std::clock();
         regmatch_t regmatch;
-        for (size_t i = 0; i < 100000; ++i) {
+        regexec(&rgx, str, 1, &regmatch, 0);
+        std::clock_t start_time = std::clock();
+        for (size_t i = 0; i < 1/*00000*/; ++i) {
             ismatch1 = 0 == regexec(&rgx, str, 1, &regmatch, 0);
         }
         d1 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
@@ -537,17 +1184,17 @@ int main(int argc, char **argv) {
         if (0 != regcomp(&rgx, ".* .* .* .* .*a", REG_EXTENDED)){
             std::cout << ("comp error") << std::endl;
         }
-        std::clock_t start_time = std::clock();
         regmatch_t regmatch;
-        for (size_t i = 0; i < 100000; ++i) {
+        std::clock_t start_time = std::clock();
+        for (size_t i = 0; i < 1/*00000*/; ++i) {
             ismatch2 = 0 == regexec(&rgx, str, 1, &regmatch, 0);
         }
         d2 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
     }
     {
         std::clock_t start_time = std::clock();
-        for (size_t i = 0; i < 100000; ++i) {
-            ismatch3 = sm.exact_match(str);
+        for (size_t i = 0; i < 1/*00000*/; ++i) {
+            ismatch3 = sm.exact_search_with_trace(str);
         }
         d3 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
     }
@@ -566,29 +1213,10 @@ int main(int argc, char **argv) {
     << std::endl;
 
     if (ismatch3) {
-        typedef std::vector<StateBase*>::reverse_iterator iterator;
-        iterator match_first = sm.captures.rbegin();
-        iterator match_last = sm.captures.rend();
-        unsigned pmatch = -1u;
-        unsigned n = 0;
-        unsigned p = 0;
-        for (StateMachine::TraceRange trace = sm.get_trace(); trace.first < trace.second; ++trace.first, ++n) {
-            if (match_first != match_last && n == (*match_first)->num) {
-                if (pmatch == -1u) {
-                    pmatch = p;
-                }
-                else {
-                    (std::cout << "  match: ").write(str+pmatch, p-pmatch) << "\n";
-                    pmatch = -1u;
-                }
-                ++match_first;
-            }
-            std::cout << "strace->size: " << (trace.first->size);
-            if (trace.first->size) {
-                (std::cout << "\t: \"").write(str+p, trace.first->size) << "\"";
-                p += trace.first->size;
-            }
-            std::cout << "\n";
+        Regex::range_list match_result = sm.match_result();
+        typedef Regex::range_list::iterator iterator;
+        for (iterator first = match_result.begin(), last = match_result.end(); first != last; ++first) {
+            (std::cout << "match: ").write(str+first->first, first->second) << "\n";
         }
     }
 }

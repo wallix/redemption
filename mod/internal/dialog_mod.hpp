@@ -18,15 +18,15 @@
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_DIALOG_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_DIALOG_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_DIALOG_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_DIALOG_MOD_HPP
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "window_dialog.hpp"
-#include "msgbox.hpp"
-#include "widget2_screen.hpp"
-#include "widget2_internal_mod.hpp"
+#include "widget2/window_dialog.hpp"
+#include "widget2/msgbox.hpp"
+#include "widget2/screen.hpp"
+#include "internal_mod.hpp"
 
 class DialogMod : public InternalMod, public NotifyApi
 {

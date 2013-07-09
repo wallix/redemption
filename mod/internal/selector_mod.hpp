@@ -18,13 +18,13 @@
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_SELECTOR_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_SELECTOR_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_SELECTOR_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_SELECTOR_MOD_HPP
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "selector.hpp"
-#include "widget2_internal_mod.hpp"
+#include "widget2/selector.hpp"
+#include "internal_mod.hpp"
 
 class SelectorMod : public InternalMod, public NotifyApi
 {

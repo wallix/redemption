@@ -18,11 +18,11 @@
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_INTERNAL_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_INTERNAL_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_INTERNAL_MOD_HPP
 
 #include "../mod/mod_api.hpp"
-#include "widget2_screen.hpp"
+#include "widget2/screen.hpp"
 
 struct InternalMod : public mod_api {
 public:

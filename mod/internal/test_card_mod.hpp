@@ -24,7 +24,7 @@
 #ifndef _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
 #define _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
 
-#include "widget2_internal_mod.hpp"
+#include "internal_mod.hpp"
 #include "RDP/bitmapupdate.hpp"
 
 class TestCardMod : public InternalMod

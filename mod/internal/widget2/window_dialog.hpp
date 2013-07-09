@@ -21,8 +21,8 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_DIALOG_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_DIALOG_HPP
 
-#include "widget2_button.hpp"
-#include "widget2_multiline.hpp"
+#include "button.hpp"
+#include "multiline.hpp"
 #include "window.hpp"
 
 class WindowDialog : public Window

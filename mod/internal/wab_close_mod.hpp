@@ -18,15 +18,15 @@
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_WAB_CLOSE_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_WAB_CLOSE_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_WAB_CLOSE_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_WAB_CLOSE_MOD_HPP
 
 #include "front.hpp"
 #include "mod_api.hpp"
-#include "window_wab_close.hpp"
-#include "widget2_image.hpp"
-#include "widget2_screen.hpp"
-#include "widget2_internal_mod.hpp"
+#include "widget2/window_wab_close.hpp"
+#include "widget2/image.hpp"
+#include "widget2/screen.hpp"
+#include "internal_mod.hpp"
 
 
 class WabCloseMod : public InternalMod, public NotifyApi

@@ -21,8 +21,8 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_EDIT_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_EDIT_HPP
 
-#include "widget2_widget.hpp"
-#include "widget2_label.hpp"
+#include "widget.hpp"
+#include "label.hpp"
 #include <keymap2.hpp>
 
 class WidgetEdit : public Widget2 {
