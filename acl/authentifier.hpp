@@ -627,42 +627,40 @@ class SessionManager {
         return res;
     }
 
+protected:
+    bool invoke_mod_close(ModuleManager & mm, const char * auth_error_message) {
+        this->ini->context.auth_error_message.copy_c_str(auth_error_message);
+        this->asked_remote_answer = false;
+        this->last_module         = true;
+        this->keepalive_time      = 0;
+        mm.remove_mod();
+        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+        return true;
+    }
+
+public:
     bool check(Front & front, ModuleManager & mm, time_t now, Transport & trans, bool read_auth) {
-//            long enddate = this->ini->context.end_date_cnx;
-//            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-//            if (enddate != 0 && (now > enddate)) {
-//                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-//                this->last_module = true;
-//                this->ini.context.auth_error_message.set("Session is out of allowed timeframe")
-//                mm.remove_mod();
-//                mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-//            }
+        long enddate = this->ini->context.end_date_cnx.get();
+//        LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
+        if (enddate != 0 && (now > enddate)) {
+            LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+            return invoke_mod_close(mm, "Session is out of allowed timeframe");
+        }
 
         if (this->signal == BACK_EVENT_STOP) {
             mm.mod->event.reset();
             return false;
         }
 
-	// Check if acl connection is lost.
-	if (this->lost_acl && !this->last_module){
-	    this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
-	    this->asked_remote_answer = false;
-	    this->last_module         = true;
-	    mm.remove_mod();
-	    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-	    return true;
-	}
+        // Check if acl connection is lost.
+        if (this->lost_acl && !this->last_module) {
+            return invoke_mod_close(mm, "Connection closed by manager (ACL closed)");
+        }
 
         if (this->keepalive_time) {
             if (now > (this->keepalive_time + this->keepalive_grace_delay)) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                this->ini->context.auth_error_message.copy_c_str("Missed keepalive from ACL");
-                this->asked_remote_answer = false;
-                this->last_module         = true;
-                this->keepalive_time      = 0;
-                mm.remove_mod();
-                mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-                return true;
+                return invoke_mod_close(mm, "Missed keepalive from ACL");
             }
 
             if (read_auth) {
@@ -689,14 +687,7 @@ class SessionManager {
                     // 15 minutes before closing on inactivity
                     if (this->tick_count > this->max_tick) {
                         LOG(LOG_INFO, "Session ACL inactivity : closing");
-                        this->ini->context.auth_error_message.copy_c_str(
-                            "Connection closed on inactivity");
-                        this->asked_remote_answer = false;
-                        this->last_module         = true;
-                        this->keepalive_time      = 0;
-                        mm.remove_mod();
-                        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-                        return true;
+                        return invoke_mod_close(mm, "Connection closed on inactivity");
                     }
                 }
                 else {
@@ -710,14 +701,7 @@ class SessionManager {
                     this->acl_serial.send(AUTHID_KEEPALIVE);
                 }
                 catch (...) {
-                    this->ini->context.auth_error_message.copy_c_str(
-                        "Connection closed by manager (ACL closed).");
-                    this->asked_remote_answer = false;
-                    this->last_module         = true;
-                    this->keepalive_time      = 0;
-                    mm.remove_mod();
-                    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-                    return true;
+                    return invoke_mod_close(mm, "Connection closed by manager (ACL closed)");
                 }
             }
         }   // if (this->keepalive_time)
@@ -735,7 +719,7 @@ class SessionManager {
         if (!this->asked_remote_answer) {
             if (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT) {
                 this->asked_remote_answer = true;
-                this->remote_answer = false;
+                this->remote_answer       = false;
                 this->ask_next_module_remote();
             }
         }
@@ -763,7 +747,7 @@ class SessionManager {
 
                     if (this->ini->globals.movie) {
                         if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                            front.start_capture(front.client_info.width
+                            front.start_capture( front.client_info.width
                                                , front.client_info.height
                                                , *this->ini
                                                );
@@ -774,7 +758,7 @@ class SessionManager {
                         else if (front.capture_state == Front::CAPTURE_STATE_PAUSED) {
                             front.resume_capture();
                             mm.mod->rdp_input_invalidate(
-                                Rect(0, 0, front.client_info.width
+                                Rect( 0, 0, front.client_info.width
                                     , front.client_info.height));
                         }
                     }
@@ -787,19 +771,18 @@ class SessionManager {
         return true;
     }
 
-    bool receive() {
-	try {
-	    if (!this->lost_acl) {
-		this->acl_serial.incoming();
-		this->remote_answer = true;
-	    }
+    void receive() {
+        try {
+            if (!this->lost_acl) {
+                this->acl_serial.incoming();
+                this->remote_answer = true;
+            }
         } catch (...) {
-	    // acl connection lost
+           // acl connection lost
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
-	    this->lost_acl = true;
-	}
-	return (!lost_acl);
+            this->lost_acl = true;
+        }
     }
 
     int next_module() {
