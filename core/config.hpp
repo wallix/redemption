@@ -407,16 +407,13 @@ static inline const char * string_from_authid(authid_t authid) {
 
 
 
-
-
-
 struct Inifile {
     //private:
     /******************************************************
      * BaseField is an abstract class which carries:
      * - some flags indicating some meta state of the field.
      * - a pointer to a Inifile it is attached to.
-     * - an authid_t if it is attached to a Inifile. 
+     * - an authid_t if it is attached to a Inifile.
      ******************************************************
      */
     class BaseField {
@@ -456,7 +453,7 @@ struct Inifile {
 
     public:
         /*******************************
-         * link this field to an Inifile 
+         * link this field to an Inifile
          *******************************
          */
         void attach_ini(Inifile * p_ini, authid_t authid = AUTHID_UNKNOWN) {
@@ -467,7 +464,7 @@ struct Inifile {
                 this->ini->attach_field(this,authid);
             }
         }
-        
+
         /**************************
          * Use this field to mark it as modified
          ***************************
@@ -477,7 +474,7 @@ struct Inifile {
                 this->use_notify();
             }
             this->modified = false;
-            
+
         }
 
         /**************************
@@ -513,15 +510,15 @@ struct Inifile {
         bool has_been_read() {
             return this->read;
         }
-        
-        
+
+
         authid_t get_authid() {
             return this->authid;
         }
-        
-        
+
+
         virtual void set_from_cstr(const char * cstr) = 0;
-        
+
         virtual const char* get_value() = 0;
 
         const char* get_serialized(char * buff, size_t size) {
@@ -530,6 +527,7 @@ struct Inifile {
             const char * key = string_from_authid(this->authid);
             char * p = buff;
             strncpy(p, key, size);
+            buff[size - 1] = 0;
             while (*p)
                 p++;
             *(p++) = '\n';
@@ -548,14 +546,14 @@ struct Inifile {
                 }
                 *(p++) = '!';
                 strncpy(p, tmp, strlen(tmp));
-                while (*p) 
+                while (*p)
                     p++;
                 *(p++) = '\n';
                 *p = '\0';
             }
             return buff;
         }
-        
+
     };
     /*************************************
      * Field which contains a String type
@@ -579,7 +577,7 @@ struct Inifile {
                 this->notify();
                 this->data.empty();
             }
-            
+
         }
         void set_from_cstr(const char * cstr) {
             this->asked = false;
@@ -590,7 +588,7 @@ struct Inifile {
                 this->data.copy_c_str(cstr);
             }
 
-        }    
+        }
         const redemption::string & get() {
             this->read = true;
             return this->data;
@@ -695,7 +693,7 @@ struct Inifile {
             if (this->is_asked()) {
                 return "ASK";
             }
-            snprintf(buff, sizeof(buff), "%u", this->data);
+            snprintf(buff, sizeof(buff), "%d", this->data);
             return buff;
         }
     };
@@ -725,7 +723,7 @@ struct Inifile {
         void set_from_cstr(const char * cstr) {
             this->set(bool_from_cstr(cstr));
         }
-    
+
         const bool get() {
             this->read = true;
             return this->data;
@@ -733,7 +731,7 @@ struct Inifile {
         const char * get_value() {
             if (this->is_asked()) {
                 return "ASK";
-            }            
+            }
             return this->data?"True":"False";
         }
     };
@@ -748,7 +746,7 @@ private:
     // Map associating authid with a Field.
     std::map< authid_t, BaseField *> field_list;
 
-    
+
 
 public:
     std::set< authid_t > to_send_set;
@@ -775,7 +773,7 @@ public:
     std::set< BaseField * > get_changed_set() {
         return this->changed_set;
     }
-    
+
     void reset() {
         this->something_changed = false;
         changed_set.clear();
@@ -800,7 +798,7 @@ public:
         int port;                // default 3389
         bool nomouse;
         bool notimestamp;
-        int encryptionLevel;     // 0=low, 1=medium, 2=high 
+        int encryptionLevel;     // 0=low, 1=medium, 2=high
         char authip[255];
         int authport;
         bool autovalidate;       // dialog autovalidation for test
@@ -838,14 +836,14 @@ public:
 
     // section "client"
     struct {
-        bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default 
+        bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default
 
         uint32_t performance_flags_default;
         uint32_t performance_flags_force_present;
         uint32_t performance_flags_force_not_present;
 
         bool tls_fallback_legacy;
-   
+
         bool clipboard;             // AUTHID_OPT_CLIPBOARD --
         bool device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION --
     } client;
@@ -937,16 +935,16 @@ public:
         UnsignedField      opt_bitrate;              // AUTHID_OPT_BITRATE --
         UnsignedField      opt_framerate;            // AUTHID_OPT_FRAMERATE --
         UnsignedField      opt_qscale;               // AUTHID_OPT_QSCALE --
-        
+
         UnsignedField      opt_bpp;                  // AUTHID_OPT_BPP //
         UnsignedField      opt_height;               // AUTHID_OPT_HEIGHT //
         UnsignedField      opt_width;                // AUTHID_OPT_WIDTH //
 
-        // auth_error_message is left as redemption::string type 
-        // because SocketTransport and ReplayMod take it as argument on 
-        // constructor and modifies it as a redemption::string
+        // auth_error_message is left as redemption::string type
+        // because SocketTransport and ReplayMod take it as argument on
+        // constructor and modify it as a redemption::string
         redemption::string auth_error_message;       // AUTHID_AUTH_ERROR_MESSAGE --
-        
+
 
         BoolField          selector;                 // AUTHID_SELECTOR //
         UnsignedField      selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE //
@@ -971,7 +969,7 @@ public:
         StringField        accept_message;           // AUTHID_ACCEPT_MESSAGE --
         StringField        display_message;          // AUTHID_DISPLAY_MESSAGE --
 
-        StringField        rejected;                 // AUTHID_REJECTED --        
+        StringField        rejected;                 // AUTHID_REJECTED --
 
         BoolField          authenticated;            // AUTHID_AUTHENTICATED --
 
@@ -1013,7 +1011,7 @@ public:
 
     void init(){
         this->something_changed = false;
-        
+
         //this->globals.capture_chunk = false;
         this->globals.capture_chunk.set(false);
 
@@ -1183,7 +1181,7 @@ public:
         this->context.opt_bitrate.set(40000);
         this->context.opt_framerate.set(5);
         this->context.opt_qscale.set(15);
-        
+
         this->context.opt_bitrate.attach_ini(this,AUTHID_OPT_BITRATE);
         this->context.opt_framerate.attach_ini(this,AUTHID_OPT_FRAMERATE);
         this->context.opt_qscale.attach_ini(this,AUTHID_OPT_QSCALE);
@@ -1229,7 +1227,7 @@ public:
         this->context.target_protocol.set_from_cstr("RDP");
         this->context.target_protocol.ask();
 
-        
+
         // this->globals.state_host.asked                    = false;
         // this->globals.state_host.modified                    = true;
 
@@ -1269,7 +1267,7 @@ public:
 
         this->context.authenticated.set(false);
         this->context.authenticated.attach_ini(this, AUTHID_AUTHENTICATED);
-       
+
         this->context.keepalive.set(false);
         this->context.keepalive.ask();
         // this->context.state_keepalive.asked               = true;
@@ -1279,7 +1277,7 @@ public:
         // this->context.state_proxy_type.modified              = true;
 
 
-        
+
         this->context.proxy_type.set_from_cstr("RDP");
 
 
@@ -1926,7 +1924,7 @@ public:
             return false;
         }
         return res;
-        */        
+        */
     }
 
     void context_set_value_by_string(const char * strauthid, const char * value) {
@@ -1943,6 +1941,7 @@ public:
         // this->field_list.at(authid)->set_from_cstr(value);
         switch (authid)
         {
+	    /*
         case AUTHID_TRANS_BUTTON_OK:
             this->translation.button_ok.set_from_cstr(value);
             break;
@@ -1979,7 +1978,7 @@ public:
         case AUTHID_TRANS_HELP_MESSAGE:
             this->translation.help_message.set_from_cstr(value);
             break;
-
+	    */
         // Options
         case AUTHID_OPT_CLIPBOARD:
             this->client.clipboard = bool_from_cstr(value);
@@ -2019,6 +2018,7 @@ public:
             break;
 
         // Context
+	    /*
         case AUTHID_OPT_BITRATE:
             this->context.opt_bitrate.set_from_cstr(value);
             break;
@@ -2038,11 +2038,11 @@ public:
         case AUTHID_OPT_BPP:
             this->context.opt_bpp.set_from_cstr(value);
             break;
-
+	    */
         case AUTHID_AUTH_ERROR_MESSAGE:
             this->context.auth_error_message.copy_c_str(value);
             break;
-
+	    /*
         case AUTHID_SELECTOR:
             this->context.selector.set_from_cstr(value);
             break;
@@ -2157,9 +2157,16 @@ public:
         case AUTHID_AUTHENTICATION_CHALLENGE:
             this->context.authentication_challenge.set_from_cstr(value);
             break;
-
+	    */
         default:
-            LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
+	    try {
+		BaseField * field = this->field_list.at(authid);
+		field->set_from_cstr(value);
+	    }
+	    catch (const std::out_of_range & oor){
+		LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
+	    }
+            // LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
             break;
         }
     }
@@ -2184,6 +2191,7 @@ public:
 
         switch (authid)
         {
+	    /*
         case AUTHID_TRANS_BUTTON_OK:
             pszReturn = this->translation.button_ok.get_cstr();
             break;
@@ -2220,7 +2228,7 @@ public:
         case AUTHID_TRANS_HELP_MESSAGE:
             pszReturn = this->translation.help_message.get_cstr();
             break;
-
+	    */
         case AUTHID_OPT_CLIPBOARD:
             if (size) {
                 strncpy(buffer, (this->client.clipboard ? "True" : "False"), size);
@@ -2278,7 +2286,7 @@ public:
         case AUTHID_SHELL_WORKING_DIRECTORY:
             pszReturn = this->globals.shell_working_directory;
             break;
-
+	    /*
         case AUTHID_OPT_BITRATE:
             pszReturn = this->context.opt_bitrate.get_value();
             // if (size) {
@@ -2325,11 +2333,11 @@ public:
             //     pszReturn = buffer;
             // }
             break;
-
+	    */
         case AUTHID_AUTH_ERROR_MESSAGE:
             pszReturn = this->context.auth_error_message.c_str();
             break;
-
+	    /*
         case AUTHID_SELECTOR:
             if (  size
                   && !this->context.selector.is_asked()) {
@@ -2405,7 +2413,7 @@ public:
         case AUTHID_HOST:
             if (!this->globals.host.is_asked()) {
                 pszReturn = this->globals.host.get_cstr();
-            }            
+            }
             break;
 
         case AUTHID_TARGET:
@@ -2510,9 +2518,16 @@ public:
         case AUTHID_AUTHENTICATION_CHALLENGE:
             pszReturn = this->context.authentication_challenge.get_cstr();
             break;
-
+	    */
         default:
-            LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
+	    try{
+		BaseField * field = this->field_list.at(authid);
+		if (!field->is_asked())
+		    pszReturn = field->get_value();
+	    }
+	    catch (const std::out_of_range & oor){
+		LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
+	    }
             break;
         }
 
@@ -2905,7 +2920,7 @@ public:
             this->context_set_value(AUTHID_AUTH_USER, auth_user);
         }
     }
-    
+
 
 };
 

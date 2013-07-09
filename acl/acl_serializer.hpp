@@ -88,7 +88,7 @@ public:
                     *stream.p = 0;
                     value = stream.p+1;
                     state = STATE_VALUE;
-                } 
+                }
                 break;
             case STATE_VALUE:
                 if (*stream.p == '\n'){
@@ -181,13 +181,13 @@ public:
             stream.out_uint8('!');
             stream.out_copy_bytes(tmp, strlen(tmp));
             stream.out_uint8('\n');
-        }                
+        }
     }
     void out_item_new(Stream & stream, Inifile::BaseField * bfield)
     {
         TODO("one field here has a limited size for his key and value serialized, "
              "shouldn't be limited or may be initialize a bigger temporary buffer");
-        char tmp[256];
+        char tmp[65536];
         const char * serialized = bfield->get_serialized(tmp,sizeof(tmp));
         bfield->use();
         stream.out_copy_bytes(serialized,strlen(serialized));
@@ -254,7 +254,7 @@ public:
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
-    void ask_next_module_remote_new() {
+    void ask_next_module_remote() {
         LOG(LOG_INFO, "ask_next_module_remote() NEW by getting list of field which has been modified");
         std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
         LOG(LOG_INFO, "ask_next_module_remote() NEW numbers of changed fields = %u",list.size());
@@ -262,7 +262,7 @@ public:
         this->ini->reset();
     }
 
-    void ask_next_module_remote()
+    void ask_next_module_remote_old()
     {
         authid_to_send_t tosend[] = {
             {this->ini->context_has_changed(AUTHID_PROXY_TYPE),                  AUTHID_PROXY_TYPE},
