@@ -26,7 +26,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_BOUNCER2_HPP
 
 #include "front_api.hpp"
-#include "widget2_internal_mod.hpp"
+#include "internal_mod.hpp"
 
 class Bouncer2Mod : public InternalMod
 {

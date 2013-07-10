@@ -35,7 +35,7 @@
 #include "front_api.hpp"
 #include "wait_obj.hpp"
 
-#include "internal/widget2/test_card_mod.hpp"
+#include "internal/test_card_mod.hpp"
 
 BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {

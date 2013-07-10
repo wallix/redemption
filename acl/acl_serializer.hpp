@@ -1,24 +1,24 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Meng Tan
+  Product name: redemption, a FLOSS RDP proxy
+  Copyright (C) Wallix 2010
+  Author(s): Christophe Grosjean, Meng Tan
 
-   Protocol layer for communication with ACL
-   Updating context dictionnary from incoming acl traffic
+  Protocol layer for communication with ACL
+  Updating context dictionnary from incoming acl traffic
 */
 
 #ifndef _REDEMPTION_ACL_SERIALIZER_HPP_
@@ -100,11 +100,11 @@ public:
                     }
                     else {
                         this->ini->context_set_value_by_string((char *)keyword,
-                            (char *)value + (value[0] == '!' ? 1 : 0));
+                                                               (char *)value + (value[0] == '!' ? 1 : 0));
 
                         if (  (strncasecmp("password",        (char *)keyword, 9 ) == 0)
-                           || (strncasecmp("target_password", (char *)keyword, 16) == 0)
-                           ){
+                              || (strncasecmp("target_password", (char *)keyword, 16) == 0)
+                              ){
                             LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char *)keyword);
                         }
                         else{
@@ -147,7 +147,7 @@ public:
             sprintf(old_session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
             char new_session_file[256];
             sprintf(new_session_file, "%s/redemption/session_%s.pid", PID_PATH,
-                this->ini->context.session_id.get_cstr());
+                    this->ini->context.session_id.get_cstr());
             rename(old_session_file, new_session_file);
         }
 
@@ -170,7 +170,7 @@ public:
             const char * tmp = this->ini->context_get_value(authid, temp_buffer, sizeof(temp_buffer));
 
             if ((strncasecmp("password", (char*)key, 8) == 0)
-            ||(strncasecmp("target_password", (char*)key, 15) == 0)){
+                ||(strncasecmp("target_password", (char*)key, 15) == 0)){
                 LOG(LOG_INFO, "sending (from authid) %s=<hidden>\n", key);
             }
             else {

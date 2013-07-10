@@ -18,15 +18,15 @@
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_RWL_LOGIN_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_RWL_LOGIN_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_RWL_LOGIN_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_RWL_LOGIN_MOD_HPP
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "window_login.hpp"
-#include "widget2_image.hpp"
-#include "widget2_internal_mod.hpp"
-#include "notify_api.hpp"
+#include "widget2/window_login.hpp"
+#include "widget2/image.hpp"
+#include "internal_mod.hpp"
+#include "widget2/notify_api.hpp"
 
 #include <fstream>
 #include <boost/lexical_cast.hpp>
@@ -45,11 +45,11 @@ public:
 
         static const char * ignoretoken(const char * s){
             while (*s && (
-                ('a' <= *s && *s <= 'z')
-                || ('A' <= *s && *s <= 'Z')
-                || ('0' <= *s && *s <= '9')
-                || *s == '_' || *s == '-')
-            ) {
+                          ('a' <= *s && *s <= 'z')
+                          || ('A' <= *s && *s <= 'Z')
+                          || ('0' <= *s && *s <= '9')
+                          || *s == '_' || *s == '-')
+                   ) {
                 ++s;
             }
             return s;
@@ -83,75 +83,75 @@ public:
             }
             else if (last - first == 7) {
                 color = (utils::chex2i(first[1], err) << 20)
-                + (utils::chex2i(first[2], err) << 16)
-                + (utils::chex2i(first[3], err) << 12)
-                + (utils::chex2i(first[4], err) << 8)
-                + (utils::chex2i(first[5], err) << 4)
-                + utils::chex2i(first[6], err);
+                    + (utils::chex2i(first[2], err) << 16)
+                    + (utils::chex2i(first[3], err) << 12)
+                    + (utils::chex2i(first[4], err) << 8)
+                    + (utils::chex2i(first[5], err) << 4)
+                    + utils::chex2i(first[6], err);
             }
             else {
                 err = 1;
             }
         }
         else if (last - first >= 10
-            && first[0] == 'r'
-        && first[1] == 'g'
-        && first[2] == 'b'
-        && last[-1] == ')')
-        {
-            first = utils::ignorespace(first + 3);
-            if (*first != '(') {
-                err = 1;
-                return color;
-            }
+                 && first[0] == 'r'
+                 && first[1] == 'g'
+                 && first[2] == 'b'
+                 && last[-1] == ')')
+            {
+                first = utils::ignorespace(first + 3);
+                if (*first != '(') {
+                    err = 1;
+                    return color;
+                }
 
-            struct next_component {
-                static int next(const char *& p, bool& err){
-                    p = utils::ignorespace(p);
-                    const char * s = p;
-                    while ('0' <= *p && *p <= '9') {
-                        std::cout << "*p: " << (*p) << std::endl;
-                        ++p;
-                    }
+                struct next_component {
+                    static int next(const char *& p, bool& err){
+                        p = utils::ignorespace(p);
+                        const char * s = p;
+                        while ('0' <= *p && *p <= '9') {
+                            std::cout << "*p: " << (*p) << std::endl;
+                            ++p;
+                        }
 
-                    int component = 0;
-                    switch (p - s) {
+                        int component = 0;
+                        switch (p - s) {
                         case 3: component = (s[0]-'0') * 100 + (s[1]-'0') * 10 + s[2]-'0';
-                        break;
+                            break;
                         case 2: component = (s[0]-'0') * 10 + (s[1]-'0');
-                        break;
+                            break;
                         case 1: component = (s[0]-'0');
-                        break;
+                            break;
                         default:
                             err = 1;
+                        }
+                        p = utils::ignorespace(p);
+                        return component;
                     }
-                    p = utils::ignorespace(p);
-                    return component;
-                }
-            };
+                };
 
-            int component = next_component::next(++first, err);
-            std::cout << "component: " << (component) << std::endl;
-            if (*first != ',' && component > 255) {
-                err = 1;
-                return 0;
+                int component = next_component::next(++first, err);
+                std::cout << "component: " << (component) << std::endl;
+                if (*first != ',' && component > 255) {
+                    err = 1;
+                    return 0;
+                }
+                color = component << 16;
+                component = next_component::next(++first, err);
+                std::cout << "component: " << (component) << std::endl;
+                if (*first != ',' && component > 255) {
+                    err = 1;
+                    return 0;
+                }
+                color += component << 8;
+                component = next_component::next(++first, err);
+                std::cout << "component: " << (component) << std::endl;
+                if (first + 1 != last && component > 255) {
+                    err = 1;
+                    return 0;
+                }
+                color += component;
             }
-            color = component << 16;
-            component = next_component::next(++first, err);
-            std::cout << "component: " << (component) << std::endl;
-            if (*first != ',' && component > 255) {
-                err = 1;
-                return 0;
-            }
-            color += component << 8;
-            component = next_component::next(++first, err);
-            std::cout << "component: " << (component) << std::endl;
-            if (first + 1 != last && component > 255) {
-                err = 1;
-                return 0;
-            }
-            color += component;
-        }
         else {
             std::cout << "else *first: " << (*first) << std::endl;
             err = 1;
@@ -173,13 +173,13 @@ public:
         int type;
 
         Property()
-        : name()
-        , type(0)
+            : name()
+            , type(0)
         {}
 
         Property(const Property& other)
-        : name(other.name)
-        , type(other.type)
+            : name(other.name)
+            , type(other.type)
         {
             if ('i' == other.type) {
                 this->value.i = other.value.i;
@@ -249,9 +249,9 @@ public:
     const Target empty_target;
 
     RwlDefinition(const char * filename = 0)
-    : targets()
-    , boundary(0)
-    , empty_target()
+        : targets()
+        , boundary(0)
+        , empty_target()
     {
         if (filename) {
             std::ifstream ifs(filename);
@@ -292,14 +292,14 @@ public:
             }
             static const char * ignoretoken(const char * s){
                 while (*s && (
-                    ('a' <= *s && *s <= 'z')
-                    || ('A' <= *s && *s <= 'Z')
-                    || ('0' <= *s && *s <= '9')
-                    || *s == '_' || *s == '-')
-                    ) {
-                        ++s;
-                    }
-                    return s;
+                              ('a' <= *s && *s <= 'z')
+                              || ('A' <= *s && *s <= 'Z')
+                              || ('0' <= *s && *s <= '9')
+                              || *s == '_' || *s == '-')
+                       ) {
+                    ++s;
+                }
+                return s;
             }
         };
         size_t before_size = this->targets.size();
@@ -388,16 +388,16 @@ public:
 
 public:
     RwlLoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
-    : InternalMod(front, width, height)
-    , definition("/tmp/login_mod.rwl")
-    , window_login(this, 0, 0, &this->screen, this, VERSION, 0, 0, 0, BLACK, GREY,
-                   ini.translation.button_ok.get().c_str(),
-                   ini.translation.button_cancel.get().c_str(),
-                   ini.translation.button_help.get().c_str(),
-                   ini.translation.login.get().c_str(),
-                   ini.translation.password.get().c_str())
-    , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
-    , ini(ini)
+        : InternalMod(front, width, height)
+        , definition("/tmp/login_mod.rwl")
+        , window_login(this, 0, 0, &this->screen, this, VERSION, 0, 0, 0, BLACK, GREY,
+                       ini.translation.button_ok.get().c_str(),
+                       ini.translation.button_cancel.get().c_str(),
+                       ini.translation.button_help.get().c_str(),
+                       ini.translation.login.get().c_str(),
+                       ini.translation.password.get().c_str())
+        , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
+        , ini(ini)
     {
         this->screen.child_list.push_back(&this->image);
         this->screen.child_list.push_back(&this->window_login);
@@ -471,14 +471,14 @@ public:
         this->image.rect.y = height - this->image.cy();
 
         if (this->ini.context_is_asked(AUTHID_TARGET_USER)
-        ||  this->ini.context_is_asked(AUTHID_TARGET_DEVICE)){
+            ||  this->ini.context_is_asked(AUTHID_TARGET_DEVICE)){
             if (this->ini.context_is_asked(AUTHID_AUTH_USER)){
                 this->ini.account.username[0] = 0;
             }
             else {
                 strncpy(this->ini.account.username,
-                    this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0),
-                    sizeof(this->ini.account.username));
+                        this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0),
+                        sizeof(this->ini.account.username));
                 this->ini.account.username[sizeof(this->ini.account.username) - 1] = 0;
             }
         }
@@ -488,15 +488,15 @@ public:
         else {
             TODO("check this! Assembling parts to get user login with target is not obvious"
                  "method used below il likely to show @: if target fields are empty")
-            char buffer[256];
+                char buffer[256];
             snprintf( buffer, 256, "%s@%s:%s%s%s"
-                    , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                    , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    , (this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ?
-                           this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0) : "")
-                    , (this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
-                    , this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0)
-                    );
+                      , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
+                      , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                      , (this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ?
+                         this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0) : "")
+                      , (this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
+                      , this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0)
+                      );
             strcpy(this->ini.account.username, buffer);
         }
 
@@ -525,18 +525,18 @@ public:
                         long unsigned int param, long unsigned int param2)
     {
         switch (event) {
-            case NOTIFY_SUBMIT:
-                this->ini.parse_username(this->window_login.login_edit.label.buffer);
-                this->ini.context_set_value(AUTHID_PASSWORD, this->window_login.password_edit.buffer);
-                this->event.signal = BACK_EVENT_NEXT;
-                this->event.set();
-                break;
-            case NOTIFY_CANCEL:
-                this->event.signal = BACK_EVENT_STOP;
-                this->event.set();
-                break;
-            default:
-                break;
+        case NOTIFY_SUBMIT:
+            this->ini.parse_username(this->window_login.login_edit.label.buffer);
+            this->ini.context_set_value(AUTHID_PASSWORD, this->window_login.password_edit.buffer);
+            this->event.signal = BACK_EVENT_NEXT;
+            this->event.set();
+            break;
+        case NOTIFY_CANCEL:
+            this->event.signal = BACK_EVENT_STOP;
+            this->event.set();
+            break;
+        default:
+            break;
         }
     }
 
