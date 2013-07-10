@@ -34,9 +34,9 @@ class SelectorMod : public InternalMod, public NotifyApi
 
     Inifile & ini;
 
-    struct temporary_buffer {
-        char buffer[16];
-    };
+    // struct temporary_buffer {
+    //     char buffer[16];
+    // };
 
     struct temporary_login {
         char buffer[256];
@@ -51,13 +51,19 @@ class SelectorMod : public InternalMod, public NotifyApi
 public:
     SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height)
+        // , selector(this, temporary_login(ini).buffer, width, height, this,
+        //            ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,
+        //                                  temporary_buffer().buffer, sizeof(temporary_buffer)),
+        //            ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES,
+        //                                  temporary_buffer().buffer, sizeof(temporary_buffer)),
+        //            ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
+        //            ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0)
+        //            )
         , selector(this, temporary_login(ini).buffer, width, height, this,
-                   ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,
-                                         temporary_buffer().buffer, sizeof(temporary_buffer)),
-                   ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES,
-                                         temporary_buffer().buffer, sizeof(temporary_buffer)),
-                   ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
-                   ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0)
+                   ini.context.selector_current_page.get_value(),
+                   ini.context.selector_number_of_pages.get_value(),
+                   ini.context.selector_group_filter.get_cstr(),
+                   ini.context.selector_device_filter.get_cstr()
                    )
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
@@ -115,7 +121,8 @@ public:
                 char buffer[1024];
                 snprintf(buffer, sizeof(buffer), "%s:%s",
                          this->selector.target_lines.get_current_index(),
-                         this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
+                         this->ini.globals.auth_user.get_cstr());
+                         //this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
                 this->ini.parse_username(buffer);
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
@@ -198,9 +205,12 @@ public:
 
     void refresh_device()
     {
-        char * groups    = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0));
-        char * targets   = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
-        char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
+        // char * groups    = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0));
+        // char * targets   = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
+        // char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
+        char * groups    = const_cast<char *>(this->ini.globals.target_user.get_cstr());
+        char * targets   = const_cast<char *>(this->ini.globals.target_device.get_cstr());
+        char * protocols = const_cast<char *>(this->ini.context.target_protocol.get_cstr());
         char * endtimes  = const_cast<char *>(this->ini.context.end_time.get_cstr());
 
         for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page.get(); index++) {

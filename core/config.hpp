@@ -589,6 +589,9 @@ struct Inifile {
             }
 
         }
+        bool is_empty(){
+            return this->data.is_empty();
+        }
         const redemption::string & get() {
             this->read = true;
             return this->data;

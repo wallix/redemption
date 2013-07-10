@@ -484,9 +484,12 @@ public:
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::get_mod_from_protocol");
         }
-        const char * protocol = this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0);
+        // Initialy, it no protocol known and get_value should provide "ASK".
+        const char * protocol = this->ini->context.target_protocol.get_value();
+        //const char * protocol = this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0);
         if (this->internal_domain) {
-            const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
+            const char * target = this->ini->globals.target_device.get_cstr();
+            //const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
             if (0 == strncmp(target, "autotest", 8)) {
                 protocol = "INTERNAL";
             }
@@ -514,7 +517,8 @@ public:
             this->connected = true;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0) {
-            const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
+            const char * target = this->ini->globals.target_device.get_cstr();
+            // const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
             }
@@ -528,7 +532,8 @@ public:
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
                 }
-                const char * user = this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0);
+                const char * user = this->ini->globals.target_user.get_cstr();
+                // const char * user = this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0);
                 size_t len_user = strlen(user);
                 strncpy(this->ini->context.movie, user, sizeof(this->ini->context.movie));
                 this->ini->context.movie[sizeof(this->ini->context.movie) - 1] = 0;
