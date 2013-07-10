@@ -1,23 +1,23 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010 - 2012
-   Author(s): Christophe Grosjean, Raphael Zhou
+  Product name: redemption, a FLOSS RDP proxy
+  Copyright (C) Wallix 2010 - 2012
+  Author(s): Christophe Grosjean, Raphael Zhou
 
-   Main loop
+  Main loop
 */
 
 #include <unistd.h>
@@ -159,10 +159,10 @@ void redemption_new_session()
 
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+        struct sockaddr s;
+        struct sockaddr_storage ss;
+        struct sockaddr_in s4;
+        struct sockaddr_in6 s6;
     } u;
     int sock_len = sizeof(u);
 
@@ -176,10 +176,10 @@ void redemption_new_session()
 
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+        struct sockaddr s;
+        struct sockaddr_storage ss;
+        struct sockaddr_in s4;
+        struct sockaddr_in6 s6;
     } localAddress;
     socklen_t addressLength = sizeof(localAddress);
 
@@ -235,16 +235,16 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid)
     init_signals();
 
     SessionServer ss(uid, gid);
-//    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+    //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.globals.listen_address);
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     int port = ini.globals.port;
     Listen listener( ss
-                   , s_addr
-                   , port
-                   , false                              /* exit on timeout       */
-                   , 60                                 /* timeout sec           */
-                   , ini.globals.enable_ip_transparent
-                   );
+                     , s_addr
+                     , port
+                     , false                              /* exit on timeout       */
+                     , 60                                 /* timeout sec           */
+                     , ini.globals.enable_ip_transparent
+                     );
     listener.run();
 }

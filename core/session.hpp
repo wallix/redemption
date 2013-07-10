@@ -226,6 +226,21 @@ struct Session {
                                 this->acl->receive();
                                 read_auth = true;
 
+				// AuthCHANNEL CHECK (wablauncher)
+				// if an answer has been received, send it to
+				// rdp serveur via mod (should be rdp module)
+				if (this->ini->globals.auth_channel[0]) {
+				    // Get sesman answer to AUTHCHANNEL_TARGET
+				    if (this->ini->context.authchannel_answer.has_changed()
+					&& !this->ini->context.authchannel_answer.get().is_empty()) {
+					// If set, transmit to auth_channel channel
+					mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
+					this->ini->context.authchannel_answer.use();
+					// Erase the context variable
+					this->ini->context.authchannel_answer.set_empty();
+				    }
+				}
+
                                 if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0) {
                                     this->front->set_console_session(true);
                                     LOG(LOG_INFO, "Session::mode console : force");

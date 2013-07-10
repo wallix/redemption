@@ -242,6 +242,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                                       , &gen
                                       , 7
 //                                      , NULL
+					, NULL
+					, NULL
                                       , ""
                                       , ""      /* alternate_shell         */
                                       , ""      /* shell_working_directory */

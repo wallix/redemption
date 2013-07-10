@@ -2263,7 +2263,7 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 
     ini.reset();
     BOOST_CHECK(!ini.check());
-    
+
     // setting a field without changing it should not notify that something changed
     ini.globals.auth_user.set_from_cstr("someoneelse");
     BOOST_CHECK(!ini.check());
@@ -2297,14 +2297,14 @@ BOOST_AUTO_TEST_CASE(TestConfigFieldAuthid)
     // Test get_serialized()
     char tmp[256];
     BOOST_CHECK_EQUAL(AUTHID_SELECTOR,          ini.get_field_list().at(AUTHID_SELECTOR)->get_authid());
-    BOOST_CHECK_EQUAL(std::string("login\nASK\n"),          
+    BOOST_CHECK_EQUAL(std::string("login\nASK\n"),
                       std::string(ini.globals.auth_user.get_serialized(tmp,sizeof(tmp))));
     ini.globals.auth_user.set_from_cstr("someuser");
-    BOOST_CHECK_EQUAL(std::string("login\n!someuser\n"),          
+    BOOST_CHECK_EQUAL(std::string("login\n!someuser\n"),
                       std::string(ini.globals.auth_user.get_serialized(tmp,sizeof(tmp))));
 
     ini.context.authchannel_target.set_from_cstr("TEST_TARGET");
-    BOOST_CHECK_EQUAL(std::string("auth_channel_target\n!TEST_TARGET\n"),          
+    BOOST_CHECK_EQUAL(std::string("auth_channel_target\n!TEST_TARGET\n"),
                       std::string(ini.context.authchannel_target.get_serialized(tmp,sizeof(tmp))));
 }
 
@@ -2340,8 +2340,29 @@ BOOST_AUTO_TEST_CASE(TestConfigFieldGetValue)
     BOOST_CHECK_EQUAL(std::string("1111155555"),std::string(ini.context.selector_lines_per_page.get_value()));
     ini.context.selector_lines_per_page.ask();
     BOOST_CHECK_EQUAL(std::string("ASK"),       std::string(ini.context.selector_lines_per_page.get_value()));
-    
+
 }
+
+BOOST_AUTO_TEST_CASE(TestConfigUnsignedField)
+{
+
+}
+
+BOOST_AUTO_TEST_CASE(TestConfigStringField)
+{
+
+}
+
+BOOST_AUTO_TEST_CASE(TestConfigSignedField)
+{
+
+}
+
+BOOST_AUTO_TEST_CASE(TestConfigBoolField)
+{
+
+}
+
 BOOST_AUTO_TEST_CASE(TestConfigField)
 {
     /*---------------------------------
@@ -2379,12 +2400,12 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     BOOST_CHECK_EQUAL(false, stringf.is_asked());
     BOOST_CHECK_EQUAL(true, stringf.has_changed());
     BOOST_CHECK_EQUAL(false, stringf.has_been_read());
-    
+
     redemption::string tmp = stringf.get();
     BOOST_CHECK_EQUAL(std::string("anotherstring"), std::string(tmp.c_str()));
     BOOST_CHECK_EQUAL(true, stringf.has_been_read());
     BOOST_CHECK_EQUAL(true, stringf.has_changed());
-    
+
     stringf.use();
     BOOST_CHECK_EQUAL(false, stringf.has_changed());
 
@@ -2402,7 +2423,7 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
     BOOST_CHECK_EQUAL(false, unsignedf.has_been_read());
     // setting a unsigned from initial value
-    
+
     unsignedf.set(321);
     BOOST_CHECK_EQUAL(false, unsignedf.is_asked());
     BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
@@ -2426,11 +2447,11 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     BOOST_CHECK_EQUAL(false, unsignedf.is_asked());
     BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
     BOOST_CHECK_EQUAL(false, unsignedf.has_been_read());
-    
+
     BOOST_CHECK_EQUAL(654321, unsignedf.get());
     BOOST_CHECK_EQUAL(true, unsignedf.has_been_read());
     BOOST_CHECK_EQUAL(true, unsignedf.has_changed());
-    
+
     unsignedf.use();
     BOOST_CHECK_EQUAL(false, unsignedf.has_changed());
 
@@ -2471,11 +2492,11 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     BOOST_CHECK_EQUAL(false, boolf.is_asked());
     BOOST_CHECK_EQUAL(true, boolf.has_changed());
     BOOST_CHECK_EQUAL(false, boolf.has_been_read());
-    
+
     BOOST_CHECK_EQUAL(false, boolf.get());
     BOOST_CHECK_EQUAL(true, boolf.has_been_read());
     BOOST_CHECK_EQUAL(true, boolf.has_changed());
-    
+
     boolf.use();
     BOOST_CHECK_EQUAL(false, boolf.has_changed());
 
