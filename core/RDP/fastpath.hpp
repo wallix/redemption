@@ -243,22 +243,23 @@ namespace FastPath {
                     + ((this->numEvents == 0) ? 1 : 0) // numEvent
                     ;
                 if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%u",
-                        expected, stream.in_remain());
+                    LOG( LOG_ERR
+                       , "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%u"
+                       , expected, stream.in_remain());
                     throw Error(ERR_RDP_FASTPATH);
                 }
 
                 stream.in_copy_bytes(this->dataSignature, 8);
             }
 
-            if (this->numEvents == 0){
-                this->numEvents = stream.in_uint8();
-            }
-
             this->payload.resize(stream, stream.in_remain());
 
             if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
                 decrypt.decrypt(payload);
+            }
+
+            if (this->numEvents == 0) {
+                this->numEvents = payload.in_uint8();
             }
         }   // ClientInputEventPDU_Recv(Transport & trans, Stream & stream)
     };  // struct ClientInputEventPDU_Recv
@@ -274,8 +275,9 @@ namespace FastPath {
             stream.reset();
 
             if ((fipsInformation != NULL) && (fipsInformation->size() < 4)) {
-                LOG(LOG_ERR, "FastPath::ClientInputEventPDU_Send: fipsInformation too short, expected=4 got=%u",
-                    fipsInformation->size());
+                LOG( LOG_ERR
+                   , "FastPath::ClientInputEventPDU_Send: fipsInformation too short, expected=4 got=%u"
+                   , fipsInformation->size());
                 throw Error(ERR_RDP_FASTPATH);
             }
 
