@@ -439,11 +439,13 @@ struct Inifile {
         /**********************
          * notify the Inifile that the field has been changed
          */
-        void notify() {
+        void modify() {
+            this->modified = true;
             if (this->ini)
                 this->ini->notify(this);
         }
         void use_notify() {
+            this->modified = false;
             if (this->ini)
                 this->ini->use_notify(this);
         }
@@ -462,7 +464,7 @@ struct Inifile {
                 && this->ini) {
                 this->authid = authid;
                 this->ini->attach_field(this,authid);
-                this->notify();
+                this->modify();
             }
 
         }
@@ -475,8 +477,6 @@ struct Inifile {
             if (this->modified){
                 this->use_notify();
             }
-            this->modified = false;
-
         }
 
         /**************************
@@ -494,8 +494,7 @@ struct Inifile {
          */
         void ask() {
             this->asked = true;
-            this->modified = true;
-            this->notify();
+            this->modify();
         }
         /**************************
          * Check if the field is asked
@@ -520,6 +519,8 @@ struct Inifile {
 
 
         virtual void set_from_cstr(const char * cstr) = 0;
+        // set from acl is specified to not change the modified flag
+        virtual void set_from_acl(const char * cstr) = 0;
 
         virtual const char* get_value() = 0;
 
@@ -574,22 +575,23 @@ struct Inifile {
         }
         void set_empty() {
             if (!this->data.is_empty()){
-                this->modified = true;
+                this->modify();
                 this->read = false;
-                this->notify();
                 this->data.empty();
             }
 
         }
-        void set_from_cstr(const char * cstr) {
+        virtual void set_from_acl(const char * cstr) {
+            this->asked = false;
+            this->data.copy_c_str(cstr);
+        }
+        virtual void set_from_cstr(const char * cstr) {
             this->asked = false;
             if (strcmp(this->data.c_str(),cstr)) {
-                this->modified = true;
+                this->modify();
                 this->read = false;
-                this->notify();
                 this->data.copy_c_str(cstr);
             }
-
         }
         bool is_empty(){
             return this->data.is_empty();
@@ -603,7 +605,7 @@ struct Inifile {
             return this->get().c_str();
         }
 
-        const char * get_value() {
+        virtual const char * get_value() {
             if (this->is_asked()) {
                 return "ASK";
             }
@@ -628,14 +630,17 @@ struct Inifile {
         void set(uint32_t that) {
             this->asked = false;
             if (this->data != that) {
-                this->modified = true;
+                this->modify();
                 this->read = false;
-                this->notify();
                 this->data = that;
             }
         }
 
-        void set_from_cstr(const char * cstr) {
+        virtual void set_from_acl(const char * cstr) {
+            this->asked = false;
+            this->data = ulong_from_cstr(cstr);
+        }
+        virtual void set_from_cstr(const char * cstr) {
             this->set(ulong_from_cstr(cstr));
         }
 
@@ -652,7 +657,7 @@ struct Inifile {
             return this->data;
         }
 
-        const char * get_value() {
+        virtual const char * get_value() {
             if (this->is_asked()) {
                 return "ASK";
             }
@@ -678,15 +683,18 @@ struct Inifile {
         void set(signed that) {
             this->asked = false;
             if (this->data != that) {
-                this->modified = true;
+                this->modify();
                 this->read = false;
-                this->notify();
                 this->data = that;
             }
 
         }
+        virtual void set_from_acl(const char * cstr) {
+            this->asked = false;
+            this->data = _long_from_cstr(cstr);
+        }
 
-        void set_from_cstr(const char * cstr) {
+        virtual void set_from_cstr(const char * cstr) {
             this->set(_long_from_cstr(cstr));
         }
 
@@ -694,7 +702,7 @@ struct Inifile {
             this->read = true;
             return this->data;
         }
-        const char * get_value() {
+        virtual const char * get_value() {
             if (this->is_asked()) {
                 return "ASK";
             }
@@ -718,14 +726,17 @@ struct Inifile {
         void set(bool that) {
             this->asked = false;
             if (this->data != that) {
-                this->modified = true;
+                this->modify();
                 this->read = false;
-                this->notify();
                 this->data = that;
             }
 
         }
-        void set_from_cstr(const char * cstr) {
+        virtual void set_from_acl(const char * cstr) {
+            this->asked = false;
+            this->data = bool_from_cstr(cstr);
+        }
+        virtual void set_from_cstr(const char * cstr) {
             this->set(bool_from_cstr(cstr));
         }
 
@@ -733,7 +744,7 @@ struct Inifile {
             this->read = true;
             return this->data;
         }
-        const char * get_value() {
+        virtual const char * get_value() {
             if (this->is_asked()) {
                 return "ASK";
             }
@@ -1940,6 +1951,22 @@ public:
         */
     }
 
+    void set_from_acl(const char * strauthid, const char * value) {
+        authid_t authid = authid_from_string(strauthid);
+        if (authid != AUTHID_UNKNOWN) {
+            try {
+                BaseField * field = this->field_list.at(authid);
+                field->set_from_acl(value);
+            }
+            catch (const std::out_of_range & oor){
+                LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
+            }
+            // LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
+        }
+        else {
+            LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
+        }
+    }
     void context_set_value_by_string(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {

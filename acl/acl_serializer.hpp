@@ -99,8 +99,10 @@ public:
                         LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
                     }
                     else {
-                        this->ini->context_set_value_by_string((char *)keyword,
+                        this->ini->set_from_acl((char *)keyword,
                                                                (char *)value + (value[0] == '!' ? 1 : 0));
+                        // this->ini->context_set_value_by_string((char *)keyword,
+                        //                                        (char *)value + (value[0] == '!' ? 1 : 0));
 
                         if (  (strncasecmp("password",        (char *)keyword, 9 ) == 0)
                               || (strncasecmp("target_password", (char *)keyword, 16) == 0)
@@ -248,11 +250,9 @@ public:
             }
             stream.mark_end();
             int total_length = stream.get_offset();
-            if (total_length - HEADER_SIZE > 0) {
-                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
-                stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
-                this->auth_trans.send(stream.get_data(), total_length);
-            }
+            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
+            this->auth_trans.send(stream.get_data(), total_length);
         } catch (Error e) {
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
@@ -260,10 +260,11 @@ public:
     }
 
     void ask_next_module_remote() {
-        LOG(LOG_INFO, "ask_next_module_remote() NEW by getting list of field which has been modified");
+        LOG(LOG_INFO, "ask_next_module_remote() by getting list of modified field");
         std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
-        LOG(LOG_INFO, "ask_next_module_remote() NEW numbers of changed fields = %u",list.size());
-        this->send_new(list);
+        LOG(LOG_INFO, "ask_next_module_remote() numbers of changed fields = %u",list.size());
+        if (!list.empty())
+            this->send_new(list);
         this->ini->reset();
     }
 
