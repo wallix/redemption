@@ -44,10 +44,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
@@ -139,8 +139,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -259,10 +259,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
@@ -354,8 +354,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_OK,         buffer, sizeof(buffer))));
@@ -485,10 +485,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -540,7 +540,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
@@ -580,8 +580,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -648,10 +648,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(true,                             ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(true,                             ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -703,7 +703,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("192.168.1.1"),       std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
@@ -747,8 +747,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(false,                            ini.client.clipboard);
-    BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(false,                            ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.translation.button_cancel.get_cstr()));
@@ -806,10 +806,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -861,7 +861,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
@@ -903,8 +903,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -958,10 +958,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -1013,7 +1013,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
@@ -1057,8 +1057,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1106,10 +1106,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -1161,7 +1161,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
@@ -1202,8 +1202,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1245,10 +1245,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -1300,7 +1300,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("192.168.1.1"),       std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
@@ -1341,8 +1341,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1379,10 +1379,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -1434,7 +1434,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
@@ -1474,8 +1474,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1516,10 +1516,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -1571,7 +1571,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
@@ -1611,8 +1611,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1643,10 +1643,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_flv);
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.movie);
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path));
-    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id));
-    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality));
+    BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.auth_user.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
@@ -1698,7 +1698,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.internal_domain);
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption);
+    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
     BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
@@ -1738,8 +1738,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
-    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard);
-    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection);
+    BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));

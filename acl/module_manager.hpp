@@ -347,7 +347,7 @@ public:
                                             , this->ini.globals.auth_channel
                                             , this->ini.globals.alternate_shell
                                              , this->ini.globals.shell_working_directory
-                                            , this->ini.client.clipboard
+                                            , this->ini.client.clipboard.get()
                                             , true   // support fast-path
                                             , true   // support mem3blt
                                             , this->ini.globals.enable_bitmap_update
@@ -399,7 +399,7 @@ public:
                                             , this->front.client_info.height
                                             , this->front.client_info.keylayout
                                             , this->front.keymap.key_flags
-                                            , this->ini.client.clipboard
+                                            , this->ini.client.clipboard.get()
                                             , true /* RRE encoding */
                                             , this->ini.debug.mod_vnc);
                     this->mod->event.obj = client_sck;

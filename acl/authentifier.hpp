@@ -113,6 +113,8 @@ public:
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
 
         this->ini->context_ask(AUTHID_KEEPALIVE);
+        // this->asked_remote_answer = false;
+        // this->signal = BACK_EVENT_REFRESH;
         this->acl_serial.send(AUTHID_KEEPALIVE);
     }
 
@@ -713,6 +715,8 @@ public:
                 // ===================== check if keepalive ======================
                 try {
                     this->ini->context_ask(AUTHID_KEEPALIVE);
+                    // this->asked_remote_answer = false;
+                    // this->signal = BACK_EVENT_REFRESH;
                     this->acl_serial.send(AUTHID_KEEPALIVE);
                 }
                 catch (...) {
@@ -761,7 +765,7 @@ public:
                 if (this->connected) {
                     this->start_keepalive();
 
-                    if (this->ini->globals.movie) {
+                    if (this->ini->globals.movie.get()) {
                         if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
                             front.start_capture( front.client_info.width
                                                , front.client_info.height
@@ -833,7 +837,7 @@ public:
         // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
         // proceed with connection.
         else if (this->ini->context.authenticated.get()) {
-            //                record_video = this->ini->globals.movie;
+            //                record_video = this->ini->globals.movie.get();
             //                keep_alive = true;
             if (this->ini->context.auth_error_message.is_empty()) {
                 this->ini->context.auth_error_message.copy_c_str("End of connection");
