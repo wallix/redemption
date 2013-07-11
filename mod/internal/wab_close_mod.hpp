@@ -21,7 +21,7 @@
 #ifndef REDEMPTION_MOD_INTERNAL_WAB_CLOSE_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_WAB_CLOSE_MOD_HPP
 
-#include "front.hpp"
+#include "front_api.hpp"
 #include "mod_api.hpp"
 #include "widget2/window_wab_close.hpp"
 #include "widget2/image.hpp"
