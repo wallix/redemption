@@ -316,15 +316,15 @@ public:
                     }
 
                     TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
-                        SocketTransport * t = new SocketTransport(
-                                                                  name
-                                                                  , client_sck
-                                                                  , this->ini.globals.target_device.get_cstr()
-                                                                  //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                                                                  , this->ini.context.target_port.get()
-                                                                  , this->ini.debug.mod_rdp
-                                                                  , &this->ini.context.auth_error_message
-                                                                  );
+                    SocketTransport * t = new SocketTransport(
+                                                              name
+                                                              , client_sck
+                                                              , this->ini.globals.target_device.get_cstr()
+                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                                                              , this->ini.context.target_port.get()
+                                                              , this->ini.debug.mod_rdp
+                                                              , &this->ini.context.auth_error_message
+                                                              );
                     this->mod_transport = t;
 
                     this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");

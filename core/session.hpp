@@ -232,7 +232,7 @@ struct Session {
                                         && !this->ini->context.authchannel_answer.get().is_empty()) {
                                         // If set, transmit to auth_channel channel
                                         mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
-  					this->ini->context.authchannel_answer.use();
+                                        this->ini->context.authchannel_answer.use();
                                         // Erase the context variable
                                         this->ini->context.authchannel_answer.set_empty();
                                     }
