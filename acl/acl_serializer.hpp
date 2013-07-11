@@ -129,15 +129,19 @@ public:
     {
         BStream stream(HEADER_SIZE);
         this->auth_trans.recv(&stream.end, HEADER_SIZE);
+
         size_t size = stream.in_uint32_be();
+
         if (size > 65536){
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
             throw Error(ERR_ACL_MESSAGE_TOO_BIG);
         }
-        if (size > stream.get_capacity()){
+        if (size > stream.get_capacity()) {
             stream.init(size);
         }
+
         this->auth_trans.recv(&stream.end, size);
+
         LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
         bool flag = this->ini->context.session_id.get().is_empty();
         this->in_items(stream);
@@ -211,8 +215,6 @@ public:
         }
     }
 
-
-
     void send(authid_to_send_t * list, size_t len)
     {
         try {
@@ -234,6 +236,7 @@ public:
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
+
     void send_new(std::set<Inifile::BaseField *>& list)
     {
         try {
@@ -246,14 +249,17 @@ public:
             }
             stream.mark_end();
             int total_length = stream.get_offset();
-            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
-            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
-            this->auth_trans.send(stream.get_data(), total_length);
+            if (total_length - HEADER_SIZE > 0) {
+                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+                stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
+                this->auth_trans.send(stream.get_data(), total_length);
+            }
         } catch (Error e) {
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
+
     void ask_next_module_remote() {
         LOG(LOG_INFO, "ask_next_module_remote() NEW by getting list of field which has been modified");
         std::set<Inifile::BaseField *> list = this->ini->get_changed_set();

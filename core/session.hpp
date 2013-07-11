@@ -148,7 +148,7 @@ struct Session {
 
                     TODO("Looks like acl and mod can be unified into a common class, where events can happen")
                     TODO("move ptr_auth_event to acl")
-                    if (this->acl) {
+                    if (this->acl && !this->acl->lost_acl) {
                         this->ptr_auth_event->add_to_fd_set(rfds, max);
                     }
                     mm.mod->event.add_to_fd_set(rfds, max);
@@ -201,8 +201,6 @@ struct Session {
                             }
                         }
 
-                        bool read_auth = false;
-
                         // Incoming data from ACL, or opening acl
                         if (!this->acl) {
                             if (!cant_create_acl) {
@@ -221,10 +219,9 @@ struct Session {
                             }
                         }
                         else {
-                            if (this->ptr_auth_event->is_set(rfds)) {
+                            if (!this->acl->lost_acl && this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
                                 this->acl->receive();
-                                read_auth = true;
 
 				// AuthCHANNEL CHECK (wablauncher)
 				// if an answer has been received, send it to
@@ -256,7 +253,7 @@ struct Session {
                         }
 
                         if (this->acl) {
-                            run_session = this->acl->check(*this->front, mm, now, front_trans, read_auth);
+                            run_session = this->acl->check(*this->front, mm, now, front_trans);
                         }
                         else if (no_acl_signal == BACK_EVENT_STOP) {
                             mm.mod->event.reset();

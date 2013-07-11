@@ -56,6 +56,7 @@ public:
     time_t start_time;
     time_t acl_start_time;
     uint32_t verbose;
+    bool read_auth;
 
     SessionManager( Inifile * _ini, Transport & _auth_trans, time_t start_time
                     , time_t acl_start_time, int _keepalive_grace_delay, int _max_tick
@@ -68,7 +69,7 @@ public:
         , keepalive_renew_time(0)
         , signal(BACK_EVENT_NONE)
         , acl_serial(AclSerializer(_ini,_auth_trans,_verbose))
-	, lost_acl(false)
+        , lost_acl(false)
         , internal_domain(_internal_domain)
         , connected(false)
         , last_module(false)
@@ -76,7 +77,8 @@ public:
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
-        , verbose(_verbose) {
+        , verbose(_verbose)
+        , read_auth(false) {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
@@ -104,11 +106,14 @@ public:
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
 
-        this->tick_count = 1;
+        this->tick_count           = 1;
+        this->keepalive_time       =
+        this->keepalive_renew_time = ::time(NULL) + this->keepalive_grace_delay;
+
+        this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
+
         this->ini->context_ask(AUTHID_KEEPALIVE);
         this->acl_serial.send(AUTHID_KEEPALIVE);
-        this->keepalive_time       =
-            this->keepalive_renew_time = ::time(NULL) + this->keepalive_grace_delay;
     }
 
     // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
@@ -611,6 +616,7 @@ public:
                 }
                 res = MODULE_INTERNAL_CARD;
             }
+            this->connected = false;
         }
         else if (this->connected) {
             if (this->verbose & 0x4) {
@@ -618,6 +624,7 @@ public:
             }
             res = MODULE_INTERNAL_WIDGET2_CLOSE;
             this->last_module = true;
+            this->connected   = false;
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
@@ -639,9 +646,9 @@ protected:
     }
 
 public:
-    bool check(Front & front, ModuleManager & mm, time_t now, Transport & trans, bool read_auth) {
+    bool check(Front & front, ModuleManager & mm, time_t now, Transport & trans) {
         long enddate = this->ini->context.end_date_cnx.get();
-        //        LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
+//        LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe");
@@ -663,14 +670,17 @@ public:
                 return invoke_mod_close(mm, "Missed keepalive from ACL");
             }
 
-            if (read_auth) {
+            if (this->read_auth) {
                 if (this->verbose & 0x10) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
 
+                this->read_auth = false;
+
                 if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                    this->ini->context_ask(AUTHID_KEEPALIVE);
                     this->keepalive_time       =
-                        this->keepalive_renew_time = now + this->keepalive_grace_delay;
+                    this->keepalive_renew_time = now + this->keepalive_grace_delay;
                 }
             }
 
@@ -701,20 +711,20 @@ public:
                     this->acl_serial.send(AUTHID_KEEPALIVE);
                 }
                 catch (...) {
-                    return invoke_mod_close(mm, "Connection closed by manager (ACL closed)");
+                    return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
                 }
             }
         }   // if (this->keepalive_time)
 
-        /*
-          if (!this->last_module && (now - this->acl_start_time) > 10) {
-          this->asked_remote_answer = false;
-          this->last_module = true;
-          mm.remove_mod();
-          mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-          return true;
-          }
-        */
+/*
+        if (!this->last_module && (now - this->acl_start_time) > 10) {
+        this->asked_remote_answer = false;
+        this->last_module = true;
+        mm.remove_mod();
+        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+        return true;
+        }
+*/
 
         if (!this->asked_remote_answer) {
             if (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT) {
@@ -742,24 +752,23 @@ public:
                 int next_state = this->next_module();
                 mm.remove_mod();
                 mm.new_mod(next_state);
+                this->keepalive_time = 0;
                 if (this->connected) {
                     this->start_keepalive();
 
                     if (this->ini->globals.movie) {
                         if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
                             front.start_capture( front.client_info.width
-                                                 , front.client_info.height
-                                                 , *this->ini
-                                                 );
-                            mm.mod->rdp_input_invalidate(
-                                                         Rect( 0, 0, front.client_info.width
-                                                               , front.client_info.height));
+                                               , front.client_info.height
+                                               , *this->ini
+                                               );
+                            mm.mod->rdp_input_invalidate( Rect( 0, 0, front.client_info.width
+                                                        , front.client_info.height));
                         }
                         else if (front.capture_state == Front::CAPTURE_STATE_PAUSED) {
                             front.resume_capture();
-                            mm.mod->rdp_input_invalidate(
-                                                         Rect( 0, 0, front.client_info.width
-                                                               , front.client_info.height));
+                            mm.mod->rdp_input_invalidate( Rect( 0, 0, front.client_info.width
+                                                        , front.client_info.height));
                         }
                     }
                     else if (front.capture_state == Front::CAPTURE_STATE_STARTED) {
@@ -775,6 +784,7 @@ public:
         try {
             if (!this->lost_acl) {
                 this->acl_serial.incoming();
+                this->read_auth     = true;
                 this->remote_answer = true;
             }
         } catch (...) {

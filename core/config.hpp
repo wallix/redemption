@@ -462,7 +462,9 @@ struct Inifile {
                 && this->ini) {
                 this->authid = authid;
                 this->ini->attach_field(this,authid);
+                this->notify();
             }
+            
         }
 
         /**************************
@@ -1342,6 +1344,7 @@ public:
 
 
         //init to_send_set of authid
+        
         this->to_send_set.insert(AUTHID_PROXY_TYPE);
         this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
         this->to_send_set.insert(AUTHID_ACCEPT_MESSAGE);
