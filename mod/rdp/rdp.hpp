@@ -148,28 +148,28 @@ struct mod_rdp : public mod_api {
     bool client_fastpath_input_event_support; // choice of programmer + capability of server
     bool server_fastpath_update_support;      // = choice of programmer
 
-    mod_rdp(Transport * trans,
-            const char * target_user,
-            const char * target_password,
-            const char * clientIP,
-            struct FrontAPI & front,
-            const char * hostname,
-            const bool tls,
-            const ClientInfo & info,
-            Random * gen,
-            int key_flags,
-	    // SessionManager * acl,
-	    Inifile::StringField * auth_channel_target,
-	    Inifile::StringField * auth_channel_result,
-            const char * auth_channel,
-            const char * alternate_shell,
-            const char * shell_working_directory,
-            bool clipboard,
-            bool fp_support, // If true, fast-path must be supported
-            bool mem3blt_support,
-            bool bitmap_update_support,
-            uint32_t verbose = 0,
-            bool enable_new_pointer = false)
+    mod_rdp( Transport * trans
+           , const char * target_user
+           , const char * target_password
+           , const char * clientIP
+           , struct FrontAPI & front
+           , const char * hostname
+           , const bool tls
+           , const ClientInfo & info
+           , Random * gen
+           , int key_flags
+//           , SessionManager * acl
+           , Inifile::StringField * auth_channel_target
+           , Inifile::StringField * auth_channel_result
+           , const char * auth_channel
+           , const char * alternate_shell
+           , const char * shell_working_directory
+           , bool clipboard
+           , bool fp_support    // If true, fast-path must be supported
+           , bool mem3blt_support
+           , bool bitmap_update_support
+           , uint32_t verbose = 0
+           , bool enable_new_pointer = false)
         : mod_api(info.width, info.height)
         , front(front)
         , in_stream(65536)
@@ -190,12 +190,12 @@ struct mod_rdp : public mod_api {
         , front_bpp(info.bpp)
         , gen(gen)
         , verbose(verbose)
-          //        , acl(acl)
-	, auth_channel_target(auth_channel_target)
-	, auth_channel_result(auth_channel_result)
+//        , acl(acl)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
+        , auth_channel_target(auth_channel_target)
+        , auth_channel_result(auth_channel_result)
         , nego(tls, trans, target_user)
         , enable_new_pointer(enable_new_pointer)
         , opt_clipboard(clipboard)
@@ -311,9 +311,9 @@ struct mod_rdp : public mod_api {
     }
 
     virtual void send_to_mod_channel( const char * const front_channel_name
-                                      , Stream & chunk
-                                      , size_t length
-                                      , uint32_t flags) {
+                                    , Stream & chunk
+                                    , size_t length
+                                    , uint32_t flags) {
         if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_mod_channel");
             LOG(LOG_INFO, "sending to channel %s", front_channel_name);
