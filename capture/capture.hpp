@@ -45,18 +45,18 @@ public:
     RDPDrawable * drawable;
 
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
-    Capture(const timeval & now, int width, int height, const char * wrm_path, const char * png_path, const char * hash_path, const char * basename, bool clear_png, const Inifile & ini)
-      : capture_wrm(ini.video.capture_wrm)
-      , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
-      , capture_png(ini.video.png_limit > 0)
-      , enable_file_encryption(ini.globals.enable_file_encryption)
-      , png_trans(NULL)
-      , psc(NULL)
-      , wrm_trans(NULL)
-      , crypto_wrm_trans(NULL)
-      , pnc_bmp_cache(NULL)
-      , pnc(NULL)
-      , drawable(NULL)
+    Capture(const timeval & now, int width, int height, const char * wrm_path, const char * png_path, const char * hash_path, const char * basename, bool clear_png, Inifile & ini)
+        : capture_wrm(ini.video.capture_wrm)
+        , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
+        , capture_png(ini.video.png_limit > 0)
+        , enable_file_encryption(ini.globals.enable_file_encryption.get())
+        , png_trans(NULL)
+        , psc(NULL)
+        , wrm_trans(NULL)
+        , crypto_wrm_trans(NULL)
+        , pnc_bmp_cache(NULL)
+        , pnc(NULL)
+        , drawable(NULL)
     {
         if (this->capture_drawable){
             this->drawable = new RDPDrawable(width, height);

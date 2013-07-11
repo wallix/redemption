@@ -99,8 +99,10 @@ public:
                         LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
                     }
                     else {
-                        this->ini->context_set_value_by_string((char *)keyword,
+                        this->ini->set_from_acl((char *)keyword,
                                                                (char *)value + (value[0] == '!' ? 1 : 0));
+                        // this->ini->context_set_value_by_string((char *)keyword,
+                        //                                        (char *)value + (value[0] == '!' ? 1 : 0));
 
                         if (  (strncasecmp("password",        (char *)keyword, 9 ) == 0)
                               || (strncasecmp("target_password", (char *)keyword, 16) == 0)
@@ -129,15 +131,19 @@ public:
     {
         BStream stream(HEADER_SIZE);
         this->auth_trans.recv(&stream.end, HEADER_SIZE);
+
         size_t size = stream.in_uint32_be();
+
         if (size > 65536){
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
             throw Error(ERR_ACL_MESSAGE_TOO_BIG);
         }
-        if (size > stream.get_capacity()){
+        if (size > stream.get_capacity()) {
             stream.init(size);
         }
+
         this->auth_trans.recv(&stream.end, size);
+
         LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
         bool flag = this->ini->context.session_id.get().is_empty();
         this->in_items(stream);
@@ -211,8 +217,6 @@ public:
         }
     }
 
-
-
     void send(authid_to_send_t * list, size_t len)
     {
         try {
@@ -234,6 +238,7 @@ public:
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
+
     void send_new(std::set<Inifile::BaseField *>& list)
     {
         try {
@@ -241,8 +246,7 @@ public:
             stream.out_uint32_be(0);
 
             for (std::set<Inifile::BaseField *>::iterator it = list.begin(); it != list.end(); it++) {
-                if (this->ini->to_send_set.find((*it)->get_authid()) != this->ini->to_send_set.end())
-                    this->out_item_new(stream, *it);
+                this->out_item_new(stream, *it);
             }
             stream.mark_end();
             int total_length = stream.get_offset();
@@ -254,15 +258,17 @@ public:
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
+
     void ask_next_module_remote() {
-        LOG(LOG_INFO, "ask_next_module_remote() NEW by getting list of field which has been modified");
+        LOG(LOG_INFO, "ask_next_module_remote() by getting list of modified field");
         std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
-        LOG(LOG_INFO, "ask_next_module_remote() NEW numbers of changed fields = %u",list.size());
-        this->send_new(list);
+        LOG(LOG_INFO, "ask_next_module_remote() numbers of changed fields = %u",list.size());
+        if (!list.empty())
+            this->send_new(list);
         this->ini->reset();
     }
 
-    void ask_next_module_remote_old()
+    void ask_next_module_remote_new()
     {
         authid_to_send_t tosend[] = {
             {this->ini->context_has_changed(AUTHID_PROXY_TYPE),                  AUTHID_PROXY_TYPE},

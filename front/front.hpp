@@ -1,24 +1,25 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+    This program is free software; you can redistribute it and/or modify it
+     under the terms of the GNU General Public License as published by the
+     Free Software Foundation; either version 2 of the License, or (at your
+     option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+     Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+    You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages, Raphael Zhou, Meng Tan
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+    Product name: redemption, a FLOSS RDP proxy
+    Copyright (C) Wallix 2013
+    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+               Dominique Lafages, Raphael Zhou, Meng Tan
+    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   header file. Front object (server), used to communicate with RDP client
+    Front object (server), used to communicate with RDP client
 */
 
 #ifndef _REDEMPTION_FRONT_FRONT_HPP_
@@ -418,15 +419,15 @@ public:
             return;
         }
 
-        if (ini.globals.movie) {
+        if (ini.globals.movie.get()) {
 //            this->stop_capture();
             LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
             struct timeval now = tvtime();
 
             if (this->verbose & 1){
-                LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path);
-                LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id);
-                LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality);
+                LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path.get_cstr());
+                LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id.get_cstr());
+                LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
                 LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user.get_cstr());
                 LOG(LOG_INFO, "host = %s\n",          ini.globals.host.get_cstr());
                 LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
@@ -439,7 +440,7 @@ public:
             strcpy(path, WRM_PATH "/"); // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, ""); // extension is currently ignored
-            canonical_path(ini.globals.movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+            canonical_path(ini.globals.movie_path.get_cstr(), path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
             this->capture = new Capture(now, width, height,
                                         RECORD_PATH "/",
                                         RECORD_TMP_PATH "/",
@@ -2167,6 +2168,11 @@ public:
                         }
                         break;
 
+/*
+                        case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
+                        break;
+*/
+
                         case FastPath::FASTPATH_INPUT_EVENT_SYNC:
                         {
                             FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
@@ -2180,6 +2186,11 @@ public:
                             cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
                         }
                         break;
+
+/*
+                        case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
+                        break;
+*/
 
                         default:
                             LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
@@ -2270,7 +2281,7 @@ public:
                     size_t chunk_size = sec.payload.in_remain();
 
                     if (this->up_and_running){
-                        if (  !this->ini->client.device_redirection
+                        if (  !this->ini->client.device_redirection.get()
                            && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
                            ) {
                             LOG(LOG_INFO, "Front::incoming::rdpdr channel disabed");

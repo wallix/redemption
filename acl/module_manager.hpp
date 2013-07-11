@@ -24,7 +24,6 @@
 #ifndef _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 #define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 
-#include "front.hpp"
 #include "sockettransport.hpp"
 #include "config.hpp"
 #include "netutils.hpp"
@@ -259,7 +258,8 @@ public:
                         LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                     }
 
-                    int client_sck = ip_connect(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                    int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                                                //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                                 this->ini.context.target_port.get(),
                                                 4, 1000,
                                                 this->ini.debug.mod_xup);
@@ -269,10 +269,10 @@ public:
                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                     }
 
-                    SocketTransport * t = new SocketTransport(
-                                                              name
+                    SocketTransport * t = new SocketTransport(name
                                                               , client_sck
-                                                              , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                                                              , this->ini.globals.target_device.get_cstr()
+                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                                                               , this->ini.context.target_port.get()
                                                               , this->ini.debug.mod_xup);
                     this->mod_transport = t;
@@ -304,7 +304,8 @@ public:
                     }
                     static const char * name = "RDP Target";
 
-                    int client_sck = ip_connect(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                    int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                                                //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                                 this->ini.context.target_port.get(),
                                                 3, 1000,
                                                 this->ini.debug.mod_rdp);
@@ -315,41 +316,44 @@ public:
                     }
 
                     TODO("RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport")
-                        SocketTransport * t = new SocketTransport(
-                                                                  name
-                                                                  , client_sck
-                                                                  , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                                                                  , this->ini.context.target_port.get()
-                                                                  , this->ini.debug.mod_rdp
-                                                                  , &this->ini.context.auth_error_message
-                                                                  );
+                    SocketTransport * t = new SocketTransport(
+                                                              name
+                                                              , client_sck
+                                                              , this->ini.globals.target_device.get_cstr()
+                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                                                              , this->ini.context.target_port.get()
+                                                              , this->ini.debug.mod_rdp
+                                                              , &this->ini.context.auth_error_message
+                                                              );
                     this->mod_transport = t;
 
                     this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
                     UdevRandom gen;
-                    this->mod = new mod_rdp( t
-                                             , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                             , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
-                                             , "0.0.0.0"  // client ip is silenced
-                                             , this->front
-                                             , hostname
-                                             , true
-                                             , this->front.client_info
-                                             , &gen
-                                             , this->front.keymap.key_flags
-                                             //                                       , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
-                                             , &this->ini.context.authchannel_target
-                                             , &this->ini.context.authchannel_result
-                                             , this->ini.globals.auth_channel
-                                             , this->ini.globals.alternate_shell
+                    this->mod = new mod_rdp(t
+                                            , this->ini.globals.target_user.get_cstr()
+                                            , this->ini.context.target_password.get_cstr()
+                                            //, this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
+                                            //, this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
+                                            , "0.0.0.0"  // client ip is silenced
+                                            , this->front
+                                            , hostname
+                                            , true
+                                            , this->front.client_info
+                                            , &gen
+                                            , this->front.keymap.key_flags
+                                            //                                       , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
+                                            , &this->ini.context.authchannel_target
+                                            , &this->ini.context.authchannel_result
+                                            , this->ini.globals.auth_channel
+                                            , this->ini.globals.alternate_shell
                                              , this->ini.globals.shell_working_directory
-                                             , this->ini.client.clipboard
-                                             , true   // support fast-path
-                                             , true   // support mem3blt
-                                             , this->ini.globals.enable_bitmap_update
-                                             , this->ini.debug.mod_rdp
-                                             , true   // support new pointer
-                                             );
+                                            , this->ini.client.clipboard.get()
+                                            , true   // support fast-path
+                                            , true   // support mem3blt
+                                            , this->ini.globals.enable_bitmap_update
+                                            , this->ini.debug.mod_rdp
+                                            , true   // support new pointer
+                                            );
                     this->mod->event.obj = client_sck;
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
@@ -364,7 +368,8 @@ public:
                     static const char * name = "VNC Target";
 
 
-                    int client_sck = ip_connect(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
+                    int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
+                                                //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                                 this->ini.context.target_port.get(),
                                                 3, 1000,
                                                 this->ini.debug.mod_vnc);
@@ -374,26 +379,27 @@ public:
                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                     }
 
-                    SocketTransport * t = new SocketTransport(
-                                                              name
+                    SocketTransport * t = new SocketTransport(name
                                                               , client_sck
-                                                              , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
+                                                              , this->ini.globals.target_device.get_cstr()
+                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                                                               , this->ini.context.target_port.get()
                                                               , this->ini.debug.mod_vnc);
                     this->mod_transport = t;
 
                     this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
-                    this->mod = new mod_vnc(
-                                            t
-                                            , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                            , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
+                    this->mod = new mod_vnc(t
+                                            , this->ini.globals.target_user.get_cstr()
+                                            , this->ini.context.target_password.get_cstr()
+                                            // , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
+                                            // , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
                                             , this->front
                                             , this->front.client_info.width
                                             , this->front.client_info.height
                                             , this->front.client_info.keylayout
                                             , this->front.keymap.key_flags
-                                            , this->ini.client.clipboard
+                                            , this->ini.client.clipboard.get()
                                             , true /* RRE encoding */
                                             , this->ini.debug.mod_vnc);
                     this->mod->event.obj = client_sck;

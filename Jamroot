@@ -196,6 +196,21 @@ exe redrec
         <link>static
     ;
 
+exe rdptproxy
+    :
+        main/transparent.cpp
+
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        libboost_program_options
+    :
+        <link>static
+    ;
+
 #
 # Functional tests (run by hand)
 #
@@ -256,8 +271,8 @@ unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl l
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test openssl crypto png z dl ;
-unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test openssl crypto png z dl gcov : <variant>coverage ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test d3des openssl crypto png z dl ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test d3des openssl crypto png z dl gcov : <variant>coverage ;
 
 unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test openssl crypto png z dl ;
 unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test openssl crypto png z dl gcov : <variant>coverage ;
