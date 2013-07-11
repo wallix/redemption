@@ -293,7 +293,6 @@ public:
 #include "authentifier.hpp"
 #include "testtransport.hpp"
 
-/*
 BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
 {
     // test keep_alive functions
@@ -450,7 +449,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     res = sesman.get_mod_from_protocol();
     BOOST_CHECK(MODULE_INTERNAL_CARD == res);
 }
-*/
 
 /*
 TODO("Change scenario messages to send (now authentifier only send modified field)")
@@ -718,6 +716,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
 }
 */
 
+/*
 BOOST_AUTO_TEST_CASE(TestAuthentifier)
 {
     Inifile ini;
@@ -805,3 +804,4 @@ BOOST_AUTO_TEST_CASE(TestAuthentifier)
         }
     }
 }
+*/
