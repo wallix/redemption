@@ -188,9 +188,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     BOOST_CHECK(MODULE_INTERNAL_CARD == res);
 }
 
-
-TODO("Change scenario messages to send (now authentifier only send modified field)")
 /*
+TODO("Change scenario messages to send (now authentifier only send modified field)")
+
 BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
 {
 
@@ -233,10 +233,10 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
 
     BOOST_CHECK(trans.get_status());
     //SEND No 1
-    sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
+    sesman.next_module();
     BOOST_CHECK(trans.get_status());
     //RECEIVE No 1
-    sesman.receive_next_module();
+    sesman.receive();
 
     // Login (at login window, password is still asked)
     BOOST_CHECK(ini.context_is_asked(AUTHID_PASSWORD));
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     ini.context_set_value(AUTHID_PASSWORD, "x");
 
     //SEND No 2
-    sesman.ask_next_module(keepalive_time,record_video,keep_alive,nextmod);
+    sesman.next_module();
     BOOST_CHECK(trans.get_status());
     //RECEIVE No 2
     sesman.receive_next_module();
@@ -452,3 +452,4 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     BOOST_CHECK(ini.context_is_asked(AUTHID_TARGET_PASSWORD));
 
 }
+*/

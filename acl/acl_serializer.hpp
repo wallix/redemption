@@ -241,8 +241,7 @@ public:
             stream.out_uint32_be(0);
 
             for (std::set<Inifile::BaseField *>::iterator it = list.begin(); it != list.end(); it++) {
-                if (this->ini->to_send_set.find((*it)->get_authid()) != this->ini->to_send_set.end())
-                    this->out_item_new(stream, *it);
+                this->out_item_new(stream, *it);
             }
             stream.mark_end();
             int total_length = stream.get_offset();
