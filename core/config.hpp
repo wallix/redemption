@@ -464,7 +464,7 @@ struct Inifile {
                 this->ini->attach_field(this,authid);
                 this->notify();
             }
-            
+
         }
 
         /**************************
@@ -590,6 +590,9 @@ struct Inifile {
                 this->data.copy_c_str(cstr);
             }
 
+        }
+        bool is_empty(){
+            return this->data.is_empty();
         }
         const redemption::string & get() {
             this->read = true;
@@ -760,8 +763,10 @@ public:
     }
 
     void notify(BaseField * field) {
-        this->something_changed = true;
-        this->changed_set.insert(field);
+        if (this->to_send_set.find(field->get_authid()) != this->to_send_set.end()) {
+            this->something_changed = true;
+            this->changed_set.insert(field);
+        }
     }
     void use_notify(BaseField * field) {
         this->changed_set.erase(field);
@@ -1012,6 +1017,32 @@ public:
     }
 
     void init(){
+
+        //init to_send_set of authid
+        this->to_send_set.insert(AUTHID_PROXY_TYPE);
+        this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
+        this->to_send_set.insert(AUTHID_ACCEPT_MESSAGE);
+        this->to_send_set.insert(AUTHID_HOST);
+        this->to_send_set.insert(AUTHID_TARGET);
+        this->to_send_set.insert(AUTHID_AUTH_USER);
+        this->to_send_set.insert(AUTHID_PASSWORD);
+        this->to_send_set.insert(AUTHID_TARGET_USER);
+        this->to_send_set.insert(AUTHID_TARGET_DEVICE);
+        this->to_send_set.insert(AUTHID_TARGET_PROTOCOL);
+        this->to_send_set.insert(AUTHID_SELECTOR);
+        this->to_send_set.insert(AUTHID_SELECTOR_GROUP_FILTER);
+        this->to_send_set.insert(AUTHID_SELECTOR_DEVICE_FILTER);
+        this->to_send_set.insert(AUTHID_SELECTOR_LINES_PER_PAGE);
+        this->to_send_set.insert(AUTHID_SELECTOR_CURRENT_PAGE);
+        this->to_send_set.insert(AUTHID_TARGET_PASSWORD);
+        this->to_send_set.insert(AUTHID_OPT_WIDTH);
+        this->to_send_set.insert(AUTHID_OPT_HEIGHT);
+        this->to_send_set.insert(AUTHID_OPT_BPP);
+        this->to_send_set.insert(AUTHID_REAL_TARGET_DEVICE);
+
+        this->to_send_set.insert(AUTHID_AUTHCHANNEL_RESULT);
+        this->to_send_set.insert(AUTHID_AUTHCHANNEL_TARGET);
+
         this->something_changed = false;
 
         //this->globals.capture_chunk = false;
@@ -1343,28 +1374,7 @@ public:
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
 
 
-        //init to_send_set of authid
-        
-        this->to_send_set.insert(AUTHID_PROXY_TYPE);
-        this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
-        this->to_send_set.insert(AUTHID_ACCEPT_MESSAGE);
-        this->to_send_set.insert(AUTHID_HOST);
-        this->to_send_set.insert(AUTHID_TARGET);
-        this->to_send_set.insert(AUTHID_AUTH_USER);
-        this->to_send_set.insert(AUTHID_PASSWORD);
-        this->to_send_set.insert(AUTHID_TARGET_USER);
-        this->to_send_set.insert(AUTHID_TARGET_DEVICE);
-        this->to_send_set.insert(AUTHID_TARGET_PROTOCOL);
-        this->to_send_set.insert(AUTHID_SELECTOR);
-        this->to_send_set.insert(AUTHID_SELECTOR_GROUP_FILTER);
-        this->to_send_set.insert(AUTHID_SELECTOR_DEVICE_FILTER);
-        this->to_send_set.insert(AUTHID_SELECTOR_LINES_PER_PAGE);
-        this->to_send_set.insert(AUTHID_SELECTOR_CURRENT_PAGE);
-        this->to_send_set.insert(AUTHID_TARGET_PASSWORD);
-        this->to_send_set.insert(AUTHID_OPT_WIDTH);
-        this->to_send_set.insert(AUTHID_OPT_HEIGHT);
-        this->to_send_set.insert(AUTHID_OPT_BPP);
-        this->to_send_set.insert(AUTHID_REAL_TARGET_DEVICE);
+
     };
 
     void cparse(istream & ifs){

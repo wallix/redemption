@@ -212,8 +212,7 @@ struct Session {
                                 catch (...) {
                                     cant_create_acl = true;
 
-                                    this->ini->context.auth_error_message.copy_c_str(
-                                        "No authentifier available");
+                                    this->ini->context.auth_error_message.copy_c_str("No authentifier available");
                                     mm.remove_mod();
                                     mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
                                 }
@@ -224,22 +223,22 @@ struct Session {
                                 // acl received updated values
                                 this->acl->receive();
 
-				// AuthCHANNEL CHECK (wablauncher)
-				// if an answer has been received, send it to
-				// rdp serveur via mod (should be rdp module)
-				if (this->ini->globals.auth_channel[0]) {
-				    // Get sesman answer to AUTHCHANNEL_TARGET
-				    if (this->ini->context.authchannel_answer.has_changed()
-					&& !this->ini->context.authchannel_answer.get().is_empty()) {
-					// If set, transmit to auth_channel channel
-					mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
-					this->ini->context.authchannel_answer.use();
-					// Erase the context variable
-					this->ini->context.authchannel_answer.set_empty();
-				    }
-				}
+                                // AuthCHANNEL CHECK (wablauncher)
+                                // if an answer has been received, send it to
+                                // rdp serveur via mod (should be rdp module)
+                                if (this->ini->globals.auth_channel[0]) {
+                                    // Get sesman answer to AUTHCHANNEL_TARGET
+                                    if (this->ini->context.authchannel_answer.has_changed()
+                                        && !this->ini->context.authchannel_answer.get().is_empty()) {
+                                        // If set, transmit to auth_channel channel
+                                        mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
+  					this->ini->context.authchannel_answer.use();
+                                        // Erase the context variable
+                                        this->ini->context.authchannel_answer.set_empty();
+                                    }
+                                }
 
-                                if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0) {
+                                 if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0) {
                                     this->front->set_console_session(true);
                                     LOG(LOG_INFO, "Session::mode console : force");
                                 }
@@ -313,18 +312,18 @@ struct Session {
         this->ptr_auth_trans = new SocketTransport( "Authentifier"
                                                   , client_sck
                                                   , this->ini->globals.authip
-                                                  , this->ini->globals.authport
-                                                  , this->ini->debug.auth
-                                                  );
+                                                    , this->ini->globals.authport
+                                                    , this->ini->debug.auth
+                                                    );
         this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
         this->acl = new SessionManager( this->ini
-                                      , *this->ptr_auth_trans
-                                      , start_time // proxy start time
-                                      , now        // acl start time
-                                      , this->ini->globals.keepalive_grace_delay
-                                      , this->ini->globals.max_tick
-                                      , this->ini->globals.internal_domain
-                                      , this->ini->debug.auth);
+                                        , *this->ptr_auth_trans
+                                        , start_time // proxy start time
+                                        , now        // acl start time
+                                        , this->ini->globals.keepalive_grace_delay
+                                        , this->ini->globals.max_tick
+                                        , this->ini->globals.internal_domain
+                                        , this->ini->debug.auth);
     }
 };
 
