@@ -464,6 +464,7 @@ struct Inifile {
                 this->ini->attach_field(this,authid);
                 this->notify();
             }
+
         }
 
         /**************************
@@ -1371,7 +1372,6 @@ public:
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
-
 
 
     };
