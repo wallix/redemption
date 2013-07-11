@@ -24,7 +24,6 @@
 #ifndef _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 #define _REDEMPTION_ACL_MODULES_MANAGER_HPP_
 
-#include "front.hpp"
 #include "sockettransport.hpp"
 #include "config.hpp"
 #include "netutils.hpp"

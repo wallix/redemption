@@ -2167,6 +2167,11 @@ public:
                         }
                         break;
 
+/*
+                        case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
+                        break;
+*/
+
                         case FastPath::FASTPATH_INPUT_EVENT_SYNC:
                         {
                             FastPath::SynchronizeEvent_Recv se(cfpie.payload, byte);
@@ -2180,6 +2185,11 @@ public:
                             cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
                         }
                         break;
+
+/*
+                        case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
+                        break;
+*/
 
                         default:
                             LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);

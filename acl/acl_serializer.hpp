@@ -268,7 +268,7 @@ public:
         this->ini->reset();
     }
 
-    void ask_next_module_remote_old()
+    void ask_next_module_remote_new()
     {
         authid_to_send_t tosend[] = {
             {this->ini->context_has_changed(AUTHID_PROXY_TYPE),                  AUTHID_PROXY_TYPE},
