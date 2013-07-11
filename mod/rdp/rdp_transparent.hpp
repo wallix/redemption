@@ -39,6 +39,15 @@ struct mod_rdp_transparent : public mod_api {
         , UP_AND_RUNNING
     } connection_finalization_state;
 
+    enum {
+          MOD_RDP_NEGO
+        , MOD_RDP_BASIC_SETTINGS_EXCHANGE
+        , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
+        , MOD_RDP_GET_LICENSE
+        , MOD_RDP_WAITING_DEMAND_ACTIVE_PDU
+        , MOD_RDP_CONNECTED
+    } state;
+
     uint32_t verbose;
 
     RdpNego nego;
@@ -52,10 +61,19 @@ struct mod_rdp_transparent : public mod_api {
             : mod_api(0, 0)
             , front(front)
             , connection_finalization_state(EARLY)
+            , state(MOD_RDP_NEGO)
             , verbose(verbose)
             , nego(tls, &trans, target_user) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
+        }
+
+        while (this->connection_finalization_state != UP_AND_RUNNING) {
+            this->draw_event();
+            if (this->event.signal != BACK_EVENT_NONE) {
+                LOG(LOG_INFO, "Creation of new mod 'RDP' failed");
+                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
+            }
         }
     }
 
@@ -75,7 +93,7 @@ struct mod_rdp_transparent : public mod_api {
     // return non zero if module is "finished", 0 if it's still running
     // the null module never finish and accept any incoming event
     virtual void draw_event(void) {
-        
+
     }
 
     virtual void begin_update() {}
