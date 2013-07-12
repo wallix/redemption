@@ -684,7 +684,7 @@ namespace rndfa {
                         pmatch = p;
                     }
                     else {
-                        ranges.push_back(range_t(pmatch, p-pmatch));
+                        ranges.push_back(range_t(pmatch, p-pmatch-1));
                         pmatch = -1u;
                     }
                     ++match_first;
@@ -810,8 +810,8 @@ namespace rndfa {
     private:
         void reset_trace()
         {
-            for (state_iterator first = this->vec.begin(), last = this->vec.end(); first != last; ++first) {
-                (*first)->id = 0;
+            for (RangeList * l = this->st_range_list; l->st; ++l) {
+                l->st->id = 0;
             }
             this->pidx_trace_free = this->idx_trace_free;
             for (unsigned i = 0; i < this->vec.size(); ++i, ++this->pidx_trace_free) {
@@ -822,16 +822,16 @@ namespace rndfa {
         }
 
     public:
-        void display_elem_state_list(const StateList * first) const
+        void display_elem_state_list(const StateList& e, unsigned idx) const
         {
-            std::cout << "\t\033[33m" << first->st->c << "\t";
-            if (first->st->c & ANY_CHARACTER) {
+            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t" << e.st->c << "\t";
+            if (e.st->c & ANY_CHARACTER) {
                 std::cout << "any\t";
             }
             else {
-                std::cout << "'" << char(first->st->c & 0xff) << "'\t";
+                std::cout << "'" << char(e.st->c & 0xff) << "'\t";
             }
-            std::cout << (first->next) << "\033[0m\n";
+            std::cout << (e.next) << "\033[0m\n";
         }
 
         void display_dfa() const
@@ -840,7 +840,7 @@ namespace rndfa {
             for (; l < this->st_range_list + this->vec.size() && l->first != l->last; ++l) {
                 std::cout << l << "\n";
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    std::cout << "\t" << first->st->c << "\t";
+                    std::cout << "\t" << first->st->num << "\t" << first->st->c << "\t";
                     if (first->st->c & ANY_CHARACTER) {
                         std::cout << "any";
                     }
@@ -871,70 +871,59 @@ namespace rndfa {
 
             unsigned step(const char *s, StateListByStep * l1, StateListByStep * l2)
             {
-                unsigned new_trace = 0;
-                for (Info * ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
+                struct sorting {
+                    static bool info_id(const Info& a, const Info& b) {
+                        return a.rl->st->num >= b.rl->st->num;
+                    }
+                };
+                std::sort(l1->begin(), l1->end(), &sorting::info_id);
+
+                for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
                     if (ifirst->rl->st->id == this->step_id) {
+                        /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
+                        this->sm.push_idx_trace(ifirst->idx);
                         continue;
                     }
+                    unsigned new_trace = 0;
                     ifirst->rl->st->id = this->step_id;
                     StateList * first = ifirst->rl->first;
                     StateList * last = ifirst->rl->last;
+
                     for (; first != last; ++first) {
-                        if (first->st->id == this->step_id) {
-                            continue;
-                        }
-                        first->st->id = this->step_id;
                         if (first->st->check(*s)) {
 #if 0
-                            this->sm.display_elem_state_list(first);
+                            this->sm.display_elem_state_list(*first, ifirst->idx);
 #endif
 
                             if (0 == first->next) {
-                                //std::cout << "idx: " << (ifirst->idx) << std::endl;
+                                /**///std::cout << "idx: " << (ifirst->idx) << std::endl;
                                 return ifirst->idx;
                             }
 
                             StateList * p = first;
 
                             while (p->next && p->next->st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
+                                /**///std::cout << "\t-> " << p->next->first->st->num << (p->next->st->c == CAPTURE_OPEN ? "\t(open)\n" : "\t(close)\n");
                                 p = p->next->first;
                             }
 
-                            for (Info * x = l2->begin(), * e = l2->end(); x < e; ++x) {
-                                if (x->rl == p->next){
-                                    continue;
-                                }
-                            }
-
-                            /**///std::cout << "\t" << first->next << std::endl;
-                            const unsigned idx = (new_trace == 0)
+                            const unsigned idx = (0 == new_trace)
                                 ? ifirst->idx
                                 : this->sm.pop_idx_trace(ifirst->idx);
+                            /**///std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m\n";
+                            std::cout.flush();
                             l2->push_back(p->next, idx);
-                            ++this->sm.traces[idx * this->sm.vec.size() + first->st->num];
-                            ++new_trace;
-                            p->next->st->id = this->step_id;
-                        }
-                    }
-                }
-
-                //BEGIN free id trace
-                for (Info * first = l1->begin(), * last = l1->end(); first != last; ++first) {
-                    struct find {
-                        static bool impl(Info * first2, Info * last2, unsigned idx){
-                            for (; first2 != last2; ++first2) {
-                                if (idx == first2->idx) {
-                                    return true;
-                                }
+                            if (!new_trace) {
+                                ++this->sm.traces[idx * this->sm.vec.size() + first->st->num];
                             }
-                            return false;
+                            ++new_trace;
                         }
-                    };
-                    if (!find::impl(l2->begin(), l2->end(), first->idx)) {
-                        this->sm.push_idx_trace(first->idx);
+                    }
+                    if (0 == new_trace) {
+                        /**///std::cout << "\t\033[35mx " << ifirst->idx << std::endl;
+                        this->sm.push_idx_trace(ifirst->idx);
                     }
                 }
-                //END
 
                 return -1u;
             }
@@ -956,6 +945,7 @@ namespace rndfa {
                 for(; *s; ++s){
                     /**///std::cout << "\033[01;31mc: '" << *s << "'\033[0m\n";
                     if (-1u != (this->sm.idx_trace = this->step(s, pal1, pal2))) {
+                        //this->sm.idx_trace = 36;
                         return true;
                     }
                     ++this->step_id;
@@ -1012,12 +1002,173 @@ namespace rndfa {
     State * one_or_more(int c, State * out = 0) {
         return zero_or_more(c, out)->out1;
     }
+
+
+    struct Utils {
+        StateBase * st_begin;
+        StateBase * st_current;
+        StateBase ** o1;
+        StateBase ** o2;
+
+        void next_st(StateBase * st)
+        {
+            if (this->o1) {
+                *this->o1 = st;
+            }
+            if (this->o2) {
+                *this->o2 = st;
+            }
+        }
+
+        void out(StateBase *& out1, StateBase *& out2)
+        {
+            this->o1 = &out1;
+            this->o2 = &out2;
+        }
+
+        void out(int, StateBase *& out2)
+        {
+            this->o1 = 0;
+            this->o2 = &out2;
+        }
+
+        void out(StateBase *& out1, int = 0)
+        {
+            this->o1 = &out1;
+            this->o2 = 0;
+        }
+    } u;
+
+    StateBase* str2reg(const char * s, const char * last)
+    {
+        Utils u;
+        StateBase st(0);
+        u.o1=0;
+        u.o2=0;
+        StateBase * cur = 0;
+        StateBase * prev = &st;
+        StateBase ** pst = &st.out1;
+        StateBase * begin = 0;
+        StateBase * old = 0;
+        StateBase * st1 = 0;
+
+        while (s != last) {
+            const char * p = s;
+            while (p != last && !(*p == '*' || *p == '+' || *p == '?' || *p == '(' || *p == ')')) {
+                ++p;
+            }
+            if (p != s) {
+                cur = *pst = new State(*s);
+                while (++s != p) {
+                    pst = &(*pst)->out1;
+                    cur = *pst = new State(*s);
+                }
+                s = p;
+            }
+            else {
+                switch (*s) {
+                    case '?':
+                        /*cur = */*pst = new State(SPLIT, *pst);
+                        pst = &(*pst)->out2;
+                        break;
+                    case '*':
+                        /*cur = */*pst = new State(SPLIT, *pst);
+                        (*pst)->out1->out1 = *pst;
+                        pst = &(*pst)->out2;
+                        break;
+                    case '+':
+                        std::cout << (cur) << std::endl;
+                        cur->out1 = *pst = new State(SPLIT, cur);
+                        //cur = *pst;
+                        pst = &(*pst)->out2;
+                        break;
+                    default:
+                        break;
+                }
+                ++s;
+            }
+//             switch (*s) {
+//                 case '.':
+//                     old = cur;
+//                     cur = new State(ANY_CHARACTER);
+//                     u.next_st(cur);
+//                     u.out(cur->out1, 0);
+//                     break;
+//                 case '?':
+//                     cur = new State(SPLIT, old);
+//                     u.next_st(cur);
+//                     u.out(cur->out2, old->out2/*|st1->out2*/);
+//                     break;
+//                 case '+':
+//                     cur = new State(SPLIT, old);
+//                     u.next_st(cur);
+//                     u.out(cur->out2, 0);
+//                     break;
+//                 case '*':
+//                     cur = new State(SPLIT, old);
+//                     u.next_st(cur);
+//                     u.out(cur->out2, 0);
+//                     break;
+// //                 case '(':
+// //                     single(CAPTURE_OPEN);
+// //                     break;
+// //                 case ')':
+// //                     single(CAPTURE_CLOSE);
+// //                     break;
+// //                 case '|':
+// //                     state();
+// //                     break;
+//                 default:
+//                     old = cur;
+//                     cur = new State(*s);
+//                     u.next_st(cur);
+//                     u.out(cur->out1, 0);
+//                     break;
+//             }
+//             ++s;
+        }
+        return st.out1;
+    }
+
+    StateBase* str2reg(const char * s)
+    {
+        return str2reg(s, s + strlen(s));
+    }
+
+    void display_state(StateBase * st, unsigned depth = 0)
+    {
+        if (st && st->id != -1u) {
+            std::string s(depth, '\t');
+            std::cout
+            << s << "\033[33m" << st << "\t" << st->num << "\t" << st->c << "\t";
+            if (st->c & ANY_CHARACTER) {
+                std::cout << "any";
+            }
+            else if (st->c & (SPLIT|CAPTURE_CLOSE|CAPTURE_OPEN)){
+                std::cout << (st->c == SPLIT ? "(split)" : st->c == CAPTURE_OPEN ? "(open)" : "(close)");
+            }
+            else {
+                std::cout << "'" << char(st->c & 0xff) << "'";
+            }
+            std::cout << "\033[0m\n\t" << s << st->out1 << "\n\t" << s << st->out2 << "\n";
+            st->id = -1u;
+            display_state(st->out1, depth+1);
+            display_state(st->out2, depth+1);
+        }
+    }
 }
 
 int main(int argc, char **argv) {
     std::ios::sync_with_stdio(false);
 
     using namespace rndfa;
+
+    if (argc < 2) {
+        std::cerr << argv[0] << (" regex") << std::endl;
+    }
+    StateBase * stp = str2reg(argv[1]);
+    display_state(stp);
+    return 0;
 
     //State last('\0');
 //     State last(ANY_CHARACTER);
@@ -1114,6 +1265,9 @@ int main(int argc, char **argv) {
     typedef BOOST_PP_CAT(StateMachine, STATEMACHINE) Regex;
 
     Regex sm(st);
+
+    display_state(st);
+
     regex_t rgx;
     if (0 != regcomp(&rgx, ".* .* (.*) (.*) .*a.*", REG_EXTENDED)){
         std::cout << ("comp error") << std::endl;
@@ -1145,7 +1299,7 @@ int main(int argc, char **argv) {
         }
         d2 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
     }
-    std::streambuf * dbuf = std::cout.rdbuf(0);
+    //std::streambuf * dbuf = std::cout.rdbuf(0);
     {
         struct test {
             inline static bool
@@ -1158,7 +1312,7 @@ int main(int argc, char **argv) {
                         }
                         int start = m[i].rm_so + (s - str);
                         int finish = m[i].rm_eo + (s - str);
-                        std::cout.write(str+start, finish-start) << "\n";
+                        //std::cout.write(str+start, finish-start) << "\n";
                     }
                     s += m[0].rm_eo;
                 }
@@ -1181,12 +1335,12 @@ int main(int argc, char **argv) {
             Regex::range_list match_result = sm.match_result();
             typedef Regex::range_list::iterator iterator;
             for (iterator first = match_result.begin(), last = match_result.end(); first != last; ++first) {
-                std::cout.write(str+first->first, first->second) << "\n";
+                //std::cout.write(str+first->first, first->second) << "\n";
             }
         }
         d4 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
     }
-    std::cout.rdbuf(dbuf);
+    //std::cout.rdbuf(dbuf);
 
     std::cout.precision(2);
     std::cout.setf(std::ios::fixed);
@@ -1212,7 +1366,7 @@ int main(int argc, char **argv) {
             }
             int start = regmatch[i].rm_so;
             int finish = regmatch[i].rm_eo;
-            (std::cout << "\tmatch: ").write(str+start, finish-start) << "\n";
+            (std::cout << "\tmatch: '").write(str+start, finish-start) << "'\n";
         }
     }
     if (ismatch4) {
@@ -1220,8 +1374,9 @@ int main(int argc, char **argv) {
         Regex::range_list match_result = sm.match_result();
         typedef Regex::range_list::iterator iterator;
         for (iterator first = match_result.begin(), last = match_result.end(); first != last; ++first) {
-            (std::cout << "\tmatch: ").write(str+first->first, first->second) << "\n";
+            (std::cout << "\tmatch: '").write(str+first->first, first->second) << "'\n";
         }
+        std::cout.flush();
     }
     regfree(&rgx);
 }

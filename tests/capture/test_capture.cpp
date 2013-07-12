@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         ini.video.capture_wrm = true;
         ini.video.capture_png = true;
-        ini.globals.enable_file_encryption = false;
+        ini.globals.enable_file_encryption.set(false);
         Capture capture(now, scr.cx, scr.cy, "./", "./", "/tmp/", "capture", false, ini);
 
         bool ignore_frame_in_timeval = false;
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
     sq_outfilename_unlink(&meta_seq, 0);
 
-    if (ini.globals.enable_file_encryption){
+    if (ini.globals.enable_file_encryption.get()){
         sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
         BOOST_CHECK_EQUAL((unsigned)32, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
         sq_outfilename_unlink(&meta_seq, 0);
