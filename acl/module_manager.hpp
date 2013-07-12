@@ -341,12 +341,12 @@ public:
                                             , this->front.client_info
                                             , &gen
                                             , this->front.keymap.key_flags
-                                            //                                       , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
+//                                            , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
                                             , &this->ini.context.authchannel_target
                                             , &this->ini.context.authchannel_result
                                             , this->ini.globals.auth_channel
                                             , this->ini.globals.alternate_shell
-                                             , this->ini.globals.shell_working_directory
+                                            , this->ini.globals.shell_working_directory
                                             , this->ini.client.clipboard
                                             , true   // support fast-path
                                             , true   // support mem3blt

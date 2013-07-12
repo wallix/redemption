@@ -76,18 +76,27 @@ int main(int argc, char * argv[]) {
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-    const char     * target_device = "10.10.46.64";
-    unsigned   target_port   = 3389;
+    const char * target_device = "10.10.46.64";
+    unsigned     target_port   = 3389;
 
     int client_sck = ip_connect(target_device, 3389, 3, 1000, ini.debug.mod_rdp);
     SocketTransport mod_trans( "RDP Server", client_sck, target_device, target_port
                              , ini.debug.mod_rdp, &ini.context.auth_error_message);
 
+//    UdevRandom gen;
+
     mod_rdp_transparent mod( mod_trans
                            , "Administrateur"
                            , "SecureLinux$42"
+                           , "0.0.0.0"
                            , front
+                           , target_device
                            , false              // tls
+                           , front.client_info
+                           , gen
+                           , ini.globals.auth_channel
+                           , ini.globals.alternate_shell
+                           , ini.globals.shell_working_directory
                            , verbose);
 
     struct      timeval time_mark = { 0, 50000 };

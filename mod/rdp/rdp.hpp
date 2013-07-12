@@ -72,7 +72,7 @@ struct mod_rdp : public mod_api {
 
     uint8_t   lic_layer_license_key[16];
     uint8_t   lic_layer_license_sign_key[16];
-    int       lic_layer_license_issued;
+//    int       lic_layer_license_issued;
     uint8_t * lic_layer_license_data;
     size_t    lic_layer_license_size;
 
@@ -98,7 +98,7 @@ struct mod_rdp : public mod_api {
     CryptContext encrypt, decrypt;
 
     enum {
-        MOD_RDP_NEGO
+          MOD_RDP_NEGO
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
         , MOD_RDP_GET_LICENSE
@@ -135,12 +135,12 @@ struct mod_rdp : public mod_api {
     RdpNego nego;
 
     char clientAddr[512];
-    uint16_t cbClientAddr;
+//    uint16_t cbClientAddr;
 
     bool enable_new_pointer;
 
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
-    uint32_t performanceFlags;
+    const uint32_t performanceFlags;
 
     bool fastpath_support;                    // choice of programmer
     bool mem3blt_support;
@@ -210,35 +210,41 @@ struct mod_rdp : public mod_api {
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
         }
 
-        memset(this->auth_channel, 0, 8);
-        strncpy(this->auth_channel, auth_channel, 8);
-        this->cbClientAddr = strlen(clientIP)+1;
-        memcpy(this->clientAddr, clientIP, this->cbClientAddr);
+        memset(this->auth_channel, 0, sizeof(this->auth_channel));
+        strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel));
+
+//        this->cbClientAddr = strlen(clientIP)+1;
+//        memcpy(this->clientAddr, clientIP, this->cbClientAddr);
+        memset(this->clientAddr, 0, sizeof(this->clientAddr));
+        strncpy(this->clientAddr, clientIP, sizeof(this->clientAddr));
 
         this->key_flags = key_flags;
-        this->lic_layer_license_issued = 0;
+//        this->lic_layer_license_issued = 0;
 
+        this->lic_layer_license_data = 0;
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
         TODO("CGR: license loading should be done before creating protocol layers")
             struct stat st;
         char path[256];
-        sprintf(path, LICENSE_PATH "/license.%s", hostname);
+        snprintf(path, sizeof(path), LICENSE_PATH "/license.%s", hostname);
         int fd = open(path, O_RDONLY);
-        if (fd != -1 && fstat(fd, &st) != 0){
-            this->lic_layer_license_data = (uint8_t *)malloc(this->lic_layer_license_size);
-            if (this->lic_layer_license_data){
-                size_t lic_size = read(fd, this->lic_layer_license_data, this->lic_layer_license_size);
-                if (lic_size != this->lic_layer_license_size){
-                    LOG(LOG_ERR, "license file truncated : expected %u, got %u", this->lic_layer_license_size, lic_size);
+        if (fd != -1){
+            if (fstat(fd, &st) != 0){
+                this->lic_layer_license_data = (uint8_t *)malloc(this->lic_layer_license_size);
+                if (this->lic_layer_license_data){
+                    size_t lic_size = read(fd, this->lic_layer_license_data, this->lic_layer_license_size);
+                    if (lic_size != this->lic_layer_license_size){
+                        LOG(LOG_ERR, "license file truncated : expected %u, got %u", this->lic_layer_license_size, lic_size);
+                    }
                 }
             }
             close(fd);
         }
 
         // from rdp_sec
-        memset(this->client_crypt_random, 0, 512);
+        memset(this->client_crypt_random, 0, sizeof(this->client_crypt_random));
 
         // shared
         memset(this->decrypt.key, 0, 16);
@@ -249,23 +255,30 @@ struct mod_rdp : public mod_api {
         this->encrypt.encryptionMethod = 2; /* 128 bits */
 
         TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log")
-            strncpy(this->hostname, hostname, 15);
+        if (::strlen(hostname) >= sizeof(this->hostname)) {
+            LOG(LOG_INFO, "mod_rdp: hostname too long! %u > %u", ::strlen(hostname), sizeof(this->hostname));
+        }
+        strncpy(this->hostname, hostname, 15);
         this->hostname[15] = 0;
+
         TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log")
-            strncpy(this->username, target_user, 127);
+        if (::strlen(target_user) >= sizeof(this->username)) {
+            LOG(LOG_INFO, "mod_rdp: username too long! %u > %u", ::strlen(target_user), sizeof(this->username));
+        }
+        strncpy(this->username, target_user, 127);
         this->username[127] = 0;
 
         LOG(LOG_INFO, "Remote RDP Server login:%s host:%s", this->username, this->hostname);
 
-        memset(this->password, 0, 256);
-        strcpy(this->password, target_password);
+        strncpy(this->password, target_password, sizeof(this->password) - 1);
+        this->password[sizeof(this->password) - 1] = 0;
 
-        memset(this->domain, 0, 256);
+        memset(this->domain, 0, sizeof(this->domain));
 
         strncpy(this->program, alternate_shell, sizeof(this->program) - 1);
-        this->program[sizeof(this->program) - 1] = '\0';
+        this->program[sizeof(this->program) - 1] = 0;
         strncpy(this->directory, shell_working_directory, sizeof(this->directory) - 1);
-        this->directory[sizeof(this->directory) - 1] = '\0';
+        this->directory[sizeof(this->directory) - 1] = 0;
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 
@@ -278,7 +291,11 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    virtual ~mod_rdp() {}
+    virtual ~mod_rdp() {
+        if (this->lic_layer_license_data) {
+            free(this->lic_layer_license_data);
+        }
+    }
 
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
                                      , Keymap2 * keymap) {
@@ -438,7 +455,7 @@ struct mod_rdp : public mod_api {
         BStream mcs_header(256);
 
         MCS::SendDataRequest_Send mcs( mcs_header, this->userid, channelId, 1, 3, stream.size()
-                                       , MCS::PER_ENCODING);
+                                     , MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
@@ -489,7 +506,7 @@ struct mod_rdp : public mod_api {
                         cs_core.desktopWidth = this->front_width;
                         cs_core.desktopHeight = this->front_height;
                         cs_core.highColorDepth = this->front_bpp;
-                        cs_core.keyboardLayout = keylayout;
+                        cs_core.keyboardLayout = this->keylayout;
                         uint16_t hostlen = strlen(hostname);
                         uint16_t maxhostlen = std::min((uint16_t)15, hostlen);
                         for (size_t i = 0; i < maxhostlen ; i++){
