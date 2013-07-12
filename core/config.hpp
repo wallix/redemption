@@ -549,8 +549,6 @@ struct Inifile {
             }
             return buff;
         }
-
-
     };
     /*************************************
      * Field which contains a String type

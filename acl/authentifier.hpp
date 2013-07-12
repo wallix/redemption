@@ -717,6 +717,7 @@ public:
                 else {
                     this->tick_count = 0;
                 }
+                LOG(LOG_INFO, "Session ACL inactivity : tick count: %u, disconnect on %uth tick", this->tick_count,this->max_tick);
                 trans.tick();
 
                 // ===================== check if keepalive ======================
