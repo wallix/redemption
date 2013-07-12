@@ -341,7 +341,7 @@ public:
                                             , this->front.client_info
                                             , &gen
                                             , this->front.keymap.key_flags
-                                            //                                       , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
+//                                            , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
                                             , &this->ini.context.authchannel_target
                                             , &this->ini.context.authchannel_result
                                             , this->ini.globals.auth_channel
