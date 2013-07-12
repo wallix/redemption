@@ -108,8 +108,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
     BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -323,8 +323,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
     BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -549,8 +549,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
     BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -715,8 +715,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                       std::string(ini.globals.wrm_path));
 
     BOOST_CHECK_EQUAL(std::string("C:\\WINDOWS\\NOTEPAD.EXE"),
-                      std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string("C:\\WINDOWS\\"),     std::string(ini.globals.shell_working_directory));
+                      std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("C:\\WINDOWS\\"),     std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
 
@@ -872,8 +872,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string("/var/wab/recorded/rdp"),
                       std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -1026,8 +1026,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(
                       std::string("C:\\Program Files\\Microsoft Visual Studio\\Common\\MSDev98\\Bin\\MSDEV.EXE"),
-                      std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+                      std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -1170,9 +1170,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
     BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("%HOMEDRIVE%%HOMEPATH%"),
-                      std::string(ini.globals.shell_working_directory));
+                      std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -1309,9 +1309,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
     BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("%HOMEDRIVE%%HOMEPATH%"),
-                      std::string(ini.globals.shell_working_directory));
+                      std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -1443,8 +1443,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
     BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -1580,8 +1580,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
     BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 
@@ -1707,8 +1707,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(PNG_PATH),            std::string(ini.globals.png_path));
     BOOST_CHECK_EQUAL(std::string(WRM_PATH),            std::string(ini.globals.wrm_path));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell));
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.alternate_shell.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
 

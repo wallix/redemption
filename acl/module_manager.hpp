@@ -345,8 +345,8 @@ public:
                                             , &this->ini.context.authchannel_target
                                             , &this->ini.context.authchannel_result
                                             , this->ini.globals.auth_channel
-                                            , this->ini.globals.alternate_shell
-                                             , this->ini.globals.shell_working_directory
+                                            , this->ini.globals.alternate_shell.get_cstr()
+                                            , this->ini.globals.shell_working_directory.get_cstr()
                                             , this->ini.client.clipboard.get()
                                             , true   // support fast-path
                                             , true   // support mem3blt

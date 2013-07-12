@@ -509,6 +509,13 @@ public:
             res = MODULE_RDP;
             this->connected = true;
         }
+        else if (!this->connected && 0 == strncasecmp(protocol, "APPLICATION", 12)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol APPLICATION");
+            }
+            res = MODULE_RDP;
+            this->connected = true;
+        }
         else if (!this->connected && 0 == strncasecmp(protocol, "VNC", 4)) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
@@ -655,7 +662,7 @@ protected:
 public:
     bool check(Front & front, ModuleManager & mm, time_t now, Transport & trans) {
         long enddate = this->ini->context.end_date_cnx.get();
-//        LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
+        // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe");
@@ -685,7 +692,7 @@ public:
                 this->read_auth = false;
 
                 if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                    this->ini->context_ask(AUTHID_KEEPALIVE);
+                    // this->ini->context_ask(AUTHID_KEEPALIVE);
                     this->keepalive_time       =
                     this->keepalive_renew_time = now + this->keepalive_grace_delay;
                 }
@@ -734,6 +741,7 @@ public:
         return true;
         }
 */
+
 
         if (!this->asked_remote_answer) {
             if (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT) {
@@ -786,6 +794,15 @@ public:
                 }
             }
         }
+
+        // // send message to acl with changed values if connected to
+        // // a module (rdp, vnc, xup ...) and something changed
+        // // used for authchannel and keepalive.
+
+        // if (this->connected && this->ini->check()) {
+        //     this->ask_next_module_remote();
+        // }
+
         return true;
     }
 

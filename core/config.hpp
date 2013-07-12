@@ -772,15 +772,18 @@ public:
             this->changed_set.insert(field);
         }
     }
+
     void use_notify(BaseField * field) {
         this->changed_set.erase(field);
         if (this->changed_set.empty()) {
             this->something_changed = false;
         }
     }
+
     bool check() {
         return this->something_changed;
     }
+
     std::set< BaseField * > get_changed_set() {
         return this->changed_set;
     }
@@ -789,6 +792,7 @@ public:
         this->something_changed = false;
         changed_set.clear();
     }
+
     void attach_field(BaseField* field, authid_t authid){
         field_list[authid] = field;
     }
@@ -831,8 +835,11 @@ public:
         char png_path[1024];
         char wrm_path[1024];
 
-        char alternate_shell[1024];
-        char shell_working_directory[1024];
+
+        StringField alternate_shell;          // STRAUTHID_ALTERNATE_SHELL --
+        StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY --
+        // char alternate_shell[1024];          // STRAUTHID_ALTERNATE_SHELL --
+        // char shell_working_directory[1024];  // STRAUTHID_SHELL_WORKING_DIRECTORY --
 
         StringField codec_id;           // AUTHID_OPT_CODEC_ID //
         BoolField movie;                // AUTHID_OPT_MOVIE //
@@ -1093,8 +1100,13 @@ public:
         strcpy(this->globals.png_path, PNG_PATH);
         strcpy(this->globals.wrm_path, WRM_PATH);
 
-        this->globals.alternate_shell[0]         = 0;
-        this->globals.shell_working_directory[0] = 0;
+        this->globals.alternate_shell.attach_ini(this,AUTHID_ALTERNATE_SHELL);
+        this->globals.shell_working_directory.attach_ini(this,AUTHID_SHELL_WORKING_DIRECTORY);
+
+        this->globals.alternate_shell.set_empty();
+        this->globals.shell_working_directory.set_empty();
+        // this->globals.alternate_shell[0]         = 0;
+        // this->globals.shell_working_directory[0] = 0;
 
 
         this->globals.codec_id.attach_ini(this,AUTHID_OPT_CODEC_ID);
@@ -1302,6 +1314,7 @@ public:
 
         // this->context.state_display_message.asked         = false;
         // this->context.state_display_message.modified         = true;
+
 
         this->context.message.set_empty();
         this->context.message.attach_ini(this, AUTHID_MESSAGE);
@@ -1567,12 +1580,14 @@ public:
                 this->globals.wrm_path[sizeof(this->globals.wrm_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "alternate_shell")) {
-                strncpy(this->globals.alternate_shell, value, sizeof(this->globals.alternate_shell));
-                this->globals.alternate_shell[sizeof(this->globals.alternate_shell) - 1] = 0;
+                this->globals.alternate_shell.set_from_cstr(value);
+                // strncpy(this->globals.alternate_shell, value, sizeof(this->globals.alternate_shell));
+                // this->globals.alternate_shell[sizeof(this->globals.alternate_shell) - 1] = 0;
             }
             else if (0 == strcmp(key, "shell_working_directory")) {
-                strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
-                this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
+                this->globals.shell_working_directory.set_from_cstr(value);
+                // strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
+                // this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
             }
             else if (0 == strcmp(key, "codec_id")) {
                 this->globals.codec_id.set_from_cstr(value);
@@ -1854,6 +1869,7 @@ public:
         switch (authid)
             {
                 // Alternate shell
+                /*
             case AUTHID_ALTERNATE_SHELL:
                 strncpy(this->globals.alternate_shell, value, sizeof(this->globals.alternate_shell));
                 this->globals.alternate_shell[sizeof(this->globals.alternate_shell) - 1] = 0;
@@ -1862,7 +1878,7 @@ public:
                 strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
                 this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
                 break;
-
+                */
                 // Context
             case AUTHID_AUTH_ERROR_MESSAGE:
                 this->context.auth_error_message.copy_c_str(value);
@@ -1900,12 +1916,14 @@ public:
 
         switch (authid)
             {
+                /*
             case AUTHID_ALTERNATE_SHELL:
                 pszReturn = this->globals.alternate_shell;
                 break;
             case AUTHID_SHELL_WORKING_DIRECTORY:
                 pszReturn = this->globals.shell_working_directory;
                 break;
+                */
             case AUTHID_AUTH_ERROR_MESSAGE:
                 pszReturn = this->context.auth_error_message.c_str();
                 break;
