@@ -16,14 +16,13 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
    Author(s): Christophe Grosjean, Martin Potier, Jonathan Poelen
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Bouncer test, high level API
 
 */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_BOUNCER2_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_BOUNCER2_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_BOUNCER2_MOD_HPP
 
 #include "front_api.hpp"
 #include "internal_mod.hpp"

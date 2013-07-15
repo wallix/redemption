@@ -14,15 +14,14 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
+   Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Javier Caverni, JOnathan Poelen, Raphael Zhou
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
-#ifndef _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
-#define _REDEMPTION_MOD_INTERNAL_TEST_CARD_HPP_
+#ifndef _REDEMPTION_MOD_INTERNAL_TEST_CARD_MOD_HPP_
+#define _REDEMPTION_MOD_INTERNAL_TEST_CARD_MOD_HPP_
 
 #include "internal_mod.hpp"
 #include "RDP/bitmapupdate.hpp"
