@@ -47,14 +47,15 @@ public:
     AclSerializer acl_serial;
 
 
-    bool lost_acl;
+    bool lost_acl;            // false initialy, true when connection with acl is lost
     bool internal_domain;
     bool connected;
-    bool last_module;
-    bool asked_remote_answer;
-    bool remote_answer;
-    time_t start_time;
-    time_t acl_start_time;
+    bool last_module;         // indicating a last module (close modules)
+    bool asked_remote_answer; // false initialy, set to true when a msg is sent to acl
+    bool remote_answer;       // false initialy, set to true once response is received from acl
+                              // and asked_remote_answer is set to false
+    time_t start_time;        // never used ?
+    time_t acl_start_time;    // never used ?
     uint32_t verbose;
     bool read_auth;
 
@@ -115,7 +116,6 @@ public:
 
         this->ini->context_ask(AUTHID_KEEPALIVE);
 
-        // this->asked_remote_answer = false;
         // this->signal = BACK_EVENT_REFRESH;
         //this->acl_serial.send(AUTHID_KEEPALIVE);
     }
@@ -314,6 +314,7 @@ public:
             return invoke_mod_close(mm, "Connection closed by manager (ACL closed)");
         }
 
+        // Keep alive
         if (this->keepalive_time) {
             if (now > (this->keepalive_time + this->keepalive_grace_delay)) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
@@ -359,7 +360,6 @@ public:
                 // ===================== check if keepalive ======================
                 try {
                     this->ini->context_ask(AUTHID_KEEPALIVE);
-                    // this->asked_remote_answer = false;
                     // this->signal = BACK_EVENT_REFRESH;
                     //this->acl_serial.send(AUTHID_KEEPALIVE);
                 }
@@ -379,7 +379,9 @@ public:
         }
 */
 
-        TODO("Check the need and reference of this->asked_remote_answer");
+        // Manage module (refresh or next)
+        TODO("Check the needs and reference of this->asked_remote_answer. "
+             "Maybe could be replaced by ini->check() alone ?");
         if (!this->asked_remote_answer && this->ini->check()) {
             if (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT) {
                 this->asked_remote_answer = true;
@@ -432,7 +434,7 @@ public:
             }
         }
 
-        // // send message to acl with changed values if connected to
+        // // send message to acl with changed values when connected to
         // // a module (rdp, vnc, xup ...) and something changed
         // // used for authchannel and keepalive.
 
@@ -512,6 +514,8 @@ public:
         }
     }
 
+    TODO("May be we should rename this method since it does not only ask for next module "
+         "but it is also used for keep alive and auth channel messages acl");
     void ask_next_module_remote() {
         this->acl_serial.ask_next_module_remote();
     }

@@ -474,9 +474,9 @@ struct Inifile {
                 this->ini->to_send_set.insert(this->authid);
             }
         }
-        /**************************
+        /****************************************
          * Use this field to mark it as modified
-         ***************************
+         ****************************************
          */
         void use() {
             if (this->modified){
@@ -484,9 +484,9 @@ struct Inifile {
             }
         }
 
-        /**************************
+        /*******************************************************
          * Check if the field has been modified (since last use)
-         ***************************
+         *******************************************************
          */
         bool has_changed() {
             // if (!this->asked)
@@ -501,17 +501,17 @@ struct Inifile {
             this->asked = true;
             this->modify();
         }
-        /**************************
+        /******************************
          * Check if the field is asked
-         ***************************
+         ******************************
          */
 
         bool is_asked() {
             return this->asked;
         }
-        /**************************
+        /**************************************************************
          * Check if the field has been read (since last effective set)
-         ***************************
+         **************************************************************
          */
         bool has_been_read() {
             return this->read;
@@ -609,10 +609,10 @@ struct Inifile {
         }
 
     };
-    /*************************************
+    /************************************************
      * Field which contains an Unsigned Integer type
      * implemented as a 32 bits data
-     *************************************
+     ************************************************
      */
     class UnsignedField : public BaseField {
     protected:

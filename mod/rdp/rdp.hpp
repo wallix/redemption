@@ -371,7 +371,7 @@ struct mod_rdp : public mod_api {
                                              , out_s.get_data()
                                              , length
                                              , chunk_size
-                                             ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                             , CHANNELS::CHANNEL_FLAG_FIRST
                                              | CHANNELS::CHANNEL_FLAG_LAST
                                              );
 
