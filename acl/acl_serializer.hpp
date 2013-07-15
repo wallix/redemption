@@ -199,6 +199,7 @@ public:
         stream.out_copy_bytes(serialized,strlen(serialized));
     }
 
+    /*
     TODO("We should not have any way to send only one value. Change the way it is done by calling code")
     void send(const authid_t authid)
     {
@@ -209,13 +210,14 @@ public:
             stream.mark_end();
             int total_length = stream.get_offset();
             LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
-            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
+            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); // size in header
             this->auth_trans.send(stream.get_data(), total_length);
         } catch (Error e) {
             this->ini->context.authenticated.set(false);
             this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
+    */
 
     void send(authid_to_send_t * list, size_t len)
     {

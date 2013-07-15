@@ -70,6 +70,9 @@ struct ClientInfo {
                            2 = arbitrary dimensions */
     bool console_session;
 
+
+    TODO("as encryption_level, bitmap_compression and bitmap_cache are not really in client_info RDP structure we should probably not keep them here either")
+
     ClientInfo(const int encryptionLevel, const bool bitmap_compression, const bool bitmap_cache) {
         this->bpp = 0;
         this->width = 0;
