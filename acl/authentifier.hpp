@@ -136,6 +136,7 @@ public:
                 protocol = "INTERNAL";
             }
         }
+        TODO("connected information is known by module_manager, it should be module manager that change this state when opening some modules")
         int res = MODULE_EXIT;
         if (!this->connected && 0 == strncasecmp(protocol, "RDP", 4)) {
             if (this->verbose & 0x4) {
@@ -265,6 +266,7 @@ public:
                 }
                 res = MODULE_INTERNAL_CARD;
             }
+            TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
             this->connected = false;
         }
         else if (this->connected) {
@@ -273,6 +275,7 @@ public:
             }
             res = MODULE_INTERNAL_WIDGET2_CLOSE;
             this->last_module = true;
+            TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
             this->connected   = false;
         }
         else {
@@ -284,19 +287,20 @@ public:
     }
 
 protected:
-    bool invoke_mod_close(ModuleManager & mm, const char * auth_error_message) {
+    bool invoke_mod_close(MMApi & mm, const char * auth_error_message) {
         this->ini->context.auth_error_message.copy_c_str(auth_error_message);
         this->asked_remote_answer = false;
         this->last_module         = true;
         this->keepalive_time      = 0;
         mm.remove_mod();
+        TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")        
         this->connected           = false;
         mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
         return true;
     }
 
 public:
-    bool check(Front & front, ModuleManager & mm, time_t now, Transport & trans) {
+    bool check(Front & front, MMApi & mm, time_t now, Transport & trans) {
         long enddate = this->ini->context.end_date_cnx.get();
         // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
         if (enddate != 0 && (now > enddate)) {
@@ -393,6 +397,7 @@ public:
             if (this->remote_answer && this->signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 this->signal = BACK_EVENT_NONE;
+                TODO("signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening anothe one of the same kind")
                 mm.mod->refresh_context(*this->ini);
                 mm.mod->event.signal = BACK_EVENT_NONE;
                 mm.mod->event.set();
@@ -411,6 +416,7 @@ public:
                     this->start_keepalive();
 
                     if (this->ini->globals.movie.get()) {
+                        TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)")
                         if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
                             front.start_capture( front.client_info.width
                                                , front.client_info.height
