@@ -300,7 +300,7 @@ protected:
     }
 
 public:
-    bool check(Front & front, MMApi & mm, time_t now, Transport & trans) {
+    bool check(MMApi & mm, time_t now, Transport & trans) {
         long enddate = this->ini->context.end_date_cnx.get();
         // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
         if (enddate != 0 && (now > enddate)) {
@@ -415,25 +415,7 @@ public:
                 if (this->connected) {
                     this->start_keepalive();
 
-                    if (this->ini->globals.movie.get()) {
-                        TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)")
-                        if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                            front.start_capture( front.client_info.width
-                                               , front.client_info.height
-                                               , *this->ini
-                                               );
-                            mm.mod->rdp_input_invalidate( Rect( 0, 0, front.client_info.width
-                                                        , front.client_info.height));
-                        }
-                        else if (front.capture_state == Front::CAPTURE_STATE_PAUSED) {
-                            front.resume_capture();
-                            mm.mod->rdp_input_invalidate( Rect( 0, 0, front.client_info.width
-                                                        , front.client_info.height));
-                        }
-                    }
-                    else if (front.capture_state == Front::CAPTURE_STATE_STARTED) {
-                        front.pause_capture();
-                    }
+                    mm.record();
                 }
             }
         }

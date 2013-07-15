@@ -226,6 +226,7 @@ struct Session {
                                 // acl received updated values
                                 this->acl->receive();
 
+                                TODO("This (below to enclosing bracket) should be done inside ACLs, it is not responsibility of session to do that")
                                 // AuthCHANNEL CHECK
                                 // if an answer has been received, send it to
                                 // rdp serveur via mod (should be rdp module)
@@ -239,23 +240,11 @@ struct Session {
                                         this->ini->context.authchannel_answer.set_empty();
                                     }
                                 }
-
-                                 if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0) {
-                                    this->front->set_console_session(true);
-                                    LOG(LOG_INFO, "Session::mode console : force");
-                                }
-                                else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0) {
-                                    this->front->set_console_session(false);
-                                    LOG(LOG_INFO, "Session::mode console : forbid");
-                                }
-                                else {
-                                    // default is "allow", do nothing special
-                                }
                             }
                         }
 
                         if (this->acl) {
-                            run_session = this->acl->check(*this->front, mm, now, front_trans);
+                            run_session = this->acl->check(mm, now, front_trans);
                         }
                         else if (no_acl_signal == BACK_EVENT_STOP) {
                             mm.mod->event.reset();

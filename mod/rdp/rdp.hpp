@@ -208,7 +208,7 @@ struct mod_rdp : public mod_api {
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
-        }
+        }        
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel));

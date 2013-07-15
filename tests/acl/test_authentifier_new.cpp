@@ -32,9 +32,15 @@ BOOST_AUTO_TEST_CASE(TestAuthentifier)
 {
     class FakeModuleManager : public MMApi
     {
-    };
+        public:
+        FakeModuleManager() {}
+        ~FakeModuleManager() {}
+        virtual void remove_mod() {}
+        virtual void new_mod(int target_module) {}
+        virtual void record() {}
+    } mm;
 
-
+    
 
 }
 
