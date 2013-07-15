@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_HPP_)
-#define REDEMPTION_MOD_WIDGET2_WIDGET_HPP_
+#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_HPP_)
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_HPP_
 
 #include <vector>
 #include "notify_api.hpp"

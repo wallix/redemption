@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_RECT_HPP)
-#define REDEMPTION_MOD_WIDGET2_WIDGET_RECT_HPP
+#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_RECT_HPP)
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_RECT_HPP
 
 #include "widget.hpp"
 
