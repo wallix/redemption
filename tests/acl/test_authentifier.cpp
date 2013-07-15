@@ -31,7 +31,7 @@
 #include "keymap2.hpp"
 #include "RDP/RDPDrawable.hpp"
 
-class Front : public FrontAPI {
+class FakeFront : public FrontAPI {
 public:
     enum {
           CAPTURE_STATE_UNKNOWN
@@ -257,7 +257,7 @@ public:
 
     void init_pointers() {}
 
-    Front(const ClientInfo & info, uint32_t verbose)
+    FakeFront(const ClientInfo & info, uint32_t verbose)
         : capture_state(CAPTURE_STATE_UNKNOWN)
         , FrontAPI(false, false)
         , verbose(verbose)

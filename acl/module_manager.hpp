@@ -43,6 +43,7 @@
 #include "internal/login_mod.hpp"
 #include "internal/rwl_mod.hpp"
 #include "internal/rwl_login_mod.hpp"
+#include "front.hpp"
 
 enum {
     MODULE_EXIT,
@@ -72,12 +73,23 @@ enum {
     MODULE_CLI,
 };
 
-class ModuleManager
+class MMApi
+{
+    public:
+    mod_api * mod;
+
+    MMApi() {}
+    ~MMApi() {}
+    virtual void remove_mod() = 0;
+    virtual void new_mod(int target_module) = 0;
+
+};
+
+class ModuleManager : public MMApi
 {
 public:
     Front & front;
     Inifile & ini;
-    mod_api * mod;
     mod_api * no_mod;
     Transport * mod_transport;
     uint32_t verbose;
@@ -93,7 +105,7 @@ public:
         this->mod = this->no_mod;
     }
 
-    void remove_mod()
+    virtual void remove_mod()
     {
         if (this->mod != this->no_mod){
             delete this->mod;
@@ -105,7 +117,7 @@ public:
         }
     }
 
-    ~ModuleManager()
+    virtual ~ModuleManager()
     {
         this->remove_mod();
         delete this->no_mod;

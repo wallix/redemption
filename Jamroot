@@ -274,6 +274,9 @@ unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl l
 unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test d3des openssl crypto png z dl ;
 unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test d3des openssl crypto png z dl gcov : <variant>coverage ;
 
+unit-test test_authentifier_new : tests/acl/test_authentifier_new.cpp libboost_unit_test d3des openssl crypto png z dl ;
+
+
 unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test openssl crypto png z dl ;
 unit-test test_acl_serializer : tests/acl/test_acl_serializer.cpp libboost_unit_test openssl crypto png z dl gcov : <variant>coverage ;
 

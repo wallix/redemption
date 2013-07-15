@@ -210,6 +210,9 @@ struct Session {
                                     this->acl->signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
+                                    TODO("move that into connect_authentifier")
+                                    TODO("cant create acl shouldn't be necessary, as when on a close box we shouldn't try opening ACL")
+                                    TODO("maybe we shouldn't *connect* to ACL but create some acl context anyway to be able to call acl->check ")
                                     cant_create_acl = true;
 
                                     this->ini->context.auth_error_message.copy_c_str("No authentifier available");
