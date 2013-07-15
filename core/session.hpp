@@ -223,13 +223,12 @@ struct Session {
                                 // acl received updated values
                                 this->acl->receive();
 
-                                // AuthCHANNEL CHECK (wablauncher)
+                                // AuthCHANNEL CHECK
                                 // if an answer has been received, send it to
                                 // rdp serveur via mod (should be rdp module)
                                 if (this->ini->globals.auth_channel[0]) {
                                     // Get sesman answer to AUTHCHANNEL_TARGET
-                                    if (this->ini->context.authchannel_answer.has_changed()
-                                        && !this->ini->context.authchannel_answer.get().is_empty()) {
+                                    if (!this->ini->context.authchannel_answer.get().is_empty()) {
                                         // If set, transmit to auth_channel channel
                                         mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
                                         this->ini->context.authchannel_answer.use();
