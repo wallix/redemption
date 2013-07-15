@@ -111,13 +111,413 @@ public:
         this->keepalive_renew_time = ::time(NULL) + this->keepalive_grace_delay;
 
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
+        // this->ini->context.keep_alive.set_to_send_field();
 
         this->ini->context_ask(AUTHID_KEEPALIVE);
+
         // this->asked_remote_answer = false;
         // this->signal = BACK_EVENT_REFRESH;
-        this->acl_serial.send(AUTHID_KEEPALIVE);
+        //this->acl_serial.send(AUTHID_KEEPALIVE);
     }
 
+    // Check movie start/stop/pause
+
+    int get_mod_from_protocol() {
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "auth::get_mod_from_protocol");
+        }
+        // Initialy, it no protocol known and get_value should provide "ASK".
+        const char * protocol = this->ini->context.target_protocol.get_value();
+        //const char * protocol = this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0);
+        if (this->internal_domain) {
+            const char * target = this->ini->globals.target_device.get_cstr();
+            //const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
+            if (0 == strncmp(target, "autotest", 8)) {
+                protocol = "INTERNAL";
+            }
+        }
+        int res = MODULE_EXIT;
+        if (!this->connected && 0 == strncasecmp(protocol, "RDP", 4)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
+            }
+            res = MODULE_RDP;
+            this->connected = true;
+        }
+        else if (!this->connected && 0 == strncasecmp(protocol, "APPLICATION", 12)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol APPLICATION");
+            }
+            res = MODULE_RDP;
+            this->connected = true;
+        }
+        else if (!this->connected && 0 == strncasecmp(protocol, "VNC", 4)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
+            }
+            res = MODULE_VNC;
+            this->connected = true;
+        }
+        else if (!this->connected && 0 == strncasecmp(protocol, "XUP", 4)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
+            }
+            res = MODULE_XUP;
+            this->connected = true;
+        }
+        else if (strncasecmp(protocol, "INTERNAL", 8) == 0) {
+            const char * target = this->ini->globals.target_device.get_cstr();
+            // const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
+            }
+            if (0 == strcmp(target, "bouncer2")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
+                }
+                res = MODULE_INTERNAL_BOUNCER2;
+            }
+            else if (0 == strncmp(target, "autotest", 8)) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
+                }
+                const char * user = this->ini->globals.target_user.get_cstr();
+                // const char * user = this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0);
+                size_t len_user = strlen(user);
+                strncpy(this->ini->context.movie, user, sizeof(this->ini->context.movie));
+                this->ini->context.movie[sizeof(this->ini->context.movie) - 1] = 0;
+                if (0 != strcmp(".mwrm", user + len_user - 5)) {
+                    strcpy(this->ini->context.movie + len_user, ".mwrm");
+                }
+                res = MODULE_INTERNAL_TEST;
+            }
+            else if (0 == strcmp(target, "selector")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
+                }
+                res = MODULE_INTERNAL_WIDGET2_SELECTOR;
+            }
+            else if (0 == strcmp(target, "login")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_LOGIN;
+            }
+            else if (0 == strcmp(target, "rwl_login")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
+            }
+            else if (0 == strcmp(target, "rwl")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_RWL;
+            }
+            else if (0 == strcmp(target, "close")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
+                }
+                res = MODULE_INTERNAL_CLOSE;
+                this->last_module = true;
+            }
+            else if (0 == strcmp(target, "widget2_close")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
+                }
+                res = MODULE_INTERNAL_WIDGET2_CLOSE;
+                this->last_module = true;
+            }
+            else if (0 == strcmp(target, "widget2_dialog")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_dialog");
+                }
+                res = MODULE_INTERNAL_WIDGET2_DIALOG;
+            }
+            else if (0 == strcmp(target, "widget2_message")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
+                }
+                res = MODULE_INTERNAL_WIDGET2_MESSAGE;
+            }
+            else if (0 == strcmp(target, "widget2_login")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_LOGIN;
+            }
+            else if (0 == strcmp(target, "widget2_rwl")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL rwl_login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_RWL;
+            }
+            else if (0 == strcmp(target, "widget2_rwl_login")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_rwl_login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
+            }
+            else {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
+                }
+                res = MODULE_INTERNAL_CARD;
+            }
+            this->connected = false;
+        }
+        else if (this->connected) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
+            }
+            res = MODULE_INTERNAL_WIDGET2_CLOSE;
+            this->last_module = true;
+            this->connected   = false;
+        }
+        else {
+            LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
+                protocol[0], protocol[1], protocol[2], protocol[3]);
+            res = MODULE_EXIT;
+        }
+        return res;
+    }
+
+protected:
+    bool invoke_mod_close(ModuleManager & mm, const char * auth_error_message) {
+        this->ini->context.auth_error_message.copy_c_str(auth_error_message);
+        this->asked_remote_answer = false;
+        this->last_module         = true;
+        this->keepalive_time      = 0;
+        mm.remove_mod();
+        this->connected           = false;
+        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+        return true;
+    }
+
+public:
+    bool check(Front & front, ModuleManager & mm, time_t now, Transport & trans) {
+        long enddate = this->ini->context.end_date_cnx.get();
+        // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
+        if (enddate != 0 && (now > enddate)) {
+            LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+            return invoke_mod_close(mm, "Session is out of allowed timeframe");
+        }
+
+        if (this->signal == BACK_EVENT_STOP) {
+            mm.mod->event.reset();
+            return false;
+        }
+
+        // Check if acl connection is lost.
+        if (this->lost_acl && !this->last_module) {
+            return invoke_mod_close(mm, "Connection closed by manager (ACL closed)");
+        }
+
+        if (this->keepalive_time) {
+            if (now > (this->keepalive_time + this->keepalive_grace_delay)) {
+                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+                return invoke_mod_close(mm, "Missed keepalive from ACL");
+            }
+
+            if (this->read_auth) {
+                if (this->verbose & 0x10) {
+                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+                }
+
+                this->read_auth = false;
+
+                if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                    // this->ini->context_ask(AUTHID_KEEPALIVE);
+                    this->keepalive_time       =
+                    this->keepalive_renew_time = now + this->keepalive_grace_delay;
+                }
+            }
+
+            if (now > this->keepalive_renew_time) {
+                this->keepalive_renew_time = now + this->keepalive_grace_delay;
+
+                if (this->verbose & 8) {
+                    LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
+                         , trans.last_quantum_received, trans.total_received, this->tick_count);
+                }
+
+                if (trans.last_quantum_received == 0) {
+                    this->tick_count++;
+                    // 15 minutes before closing on inactivity
+                    if (this->tick_count > this->max_tick) {
+                        LOG(LOG_INFO, "Session ACL inactivity : closing");
+                        return invoke_mod_close(mm, "Connection closed on inactivity");
+                    }
+                }
+                else {
+                    this->tick_count = 0;
+                }
+                LOG(LOG_INFO, "Session ACL inactivity : tick count: %u, disconnect on %uth tick", this->tick_count,this->max_tick);
+                trans.tick();
+
+                // ===================== check if keepalive ======================
+                try {
+                    this->ini->context_ask(AUTHID_KEEPALIVE);
+                    // this->asked_remote_answer = false;
+                    // this->signal = BACK_EVENT_REFRESH;
+                    //this->acl_serial.send(AUTHID_KEEPALIVE);
+                }
+                catch (...) {
+                    return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
+                }
+            }
+        }   // if (this->keepalive_time)
+
+/*
+        if (!this->last_module && (now - this->acl_start_time) > 10) {
+        this->asked_remote_answer = false;
+        this->last_module = true;
+        mm.remove_mod();
+        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+        return true;
+        }
+*/
+
+        TODO("Check the need and reference of this->asked_remote_answer");
+        if (!this->asked_remote_answer && this->ini->check()) {
+            if (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT) {
+                this->asked_remote_answer = true;
+                this->remote_answer       = false;
+                this->ask_next_module_remote();
+            }
+        }
+        else {
+            this->asked_remote_answer = false;
+
+            if (this->remote_answer && this->signal == BACK_EVENT_REFRESH) {
+                LOG(LOG_INFO, "===========> MODULE_REFRESH");
+                this->signal = BACK_EVENT_NONE;
+                mm.mod->refresh_context(*this->ini);
+                mm.mod->event.signal = BACK_EVENT_NONE;
+                mm.mod->event.set();
+            }
+            else if (this->remote_answer && this->signal == BACK_EVENT_NEXT) {
+                LOG(LOG_INFO, "===========> MODULE_NEXT");
+                this->signal = BACK_EVENT_NONE;
+                if (this->last_module) {
+                    return false;
+                }
+                int next_state = this->next_module();
+                mm.remove_mod();
+                mm.new_mod(next_state);
+                this->keepalive_time = 0;
+                if (this->connected) {
+                    this->start_keepalive();
+
+                    if (this->ini->globals.movie.get()) {
+                        if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                            front.start_capture( front.client_info.width
+                                               , front.client_info.height
+                                               , *this->ini
+                                               );
+                            mm.mod->rdp_input_invalidate( Rect( 0, 0, front.client_info.width
+                                                        , front.client_info.height));
+                        }
+                        else if (front.capture_state == Front::CAPTURE_STATE_PAUSED) {
+                            front.resume_capture();
+                            mm.mod->rdp_input_invalidate( Rect( 0, 0, front.client_info.width
+                                                        , front.client_info.height));
+                        }
+                    }
+                    else if (front.capture_state == Front::CAPTURE_STATE_STARTED) {
+                        front.pause_capture();
+                    }
+                }
+            }
+        }
+
+        // // send message to acl with changed values if connected to
+        // // a module (rdp, vnc, xup ...) and something changed
+        // // used for authchannel and keepalive.
+
+        if (this->connected && this->ini->check()) {
+            this->ask_next_module_remote();
+        }
+
+        return true;
+    }
+
+    void receive() {
+        try {
+            if (!this->lost_acl) {
+                this->acl_serial.incoming();
+                this->read_auth     = true;
+                this->remote_answer = true;
+            }
+        } catch (...) {
+            // acl connection lost
+            this->ini->context.authenticated.set(false);
+            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
+            this->lost_acl = true;
+        }
+    }
+
+    int next_module() {
+        if (this->ini->context_is_asked(AUTHID_AUTH_USER)
+            ||  this->ini->context_is_asked(AUTHID_PASSWORD)) {
+            LOG(LOG_INFO, "===========> MODULE_LOGIN");
+            return MODULE_INTERNAL_WIDGET2_LOGIN;
+        }
+        // Selector Target device and Target user contains list or possible targets
+        else if (!this->ini->context_is_asked(AUTHID_SELECTOR)
+                 &&   this->ini->context_get_bool(AUTHID_SELECTOR)
+                 &&  !this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
+                 &&  !this->ini->context_is_asked(AUTHID_TARGET_USER)) {
+            LOG(LOG_INFO, "===============> MODULE_SELECTOR");
+            return MODULE_INTERNAL_WIDGET2_SELECTOR;
+        }
+        // Target User or Device asked and not in selector : back to login
+        else if (this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
+                 ||  this->ini->context_is_asked(AUTHID_TARGET_USER)) {
+            LOG(LOG_INFO, "===============> MODULE_LOGIN (2)");
+            return MODULE_INTERNAL_WIDGET2_LOGIN;
+        }
+        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show message
+        else if (this->ini->context_is_asked(AUTHID_DISPLAY_MESSAGE)) {
+            LOG(LOG_INFO, "==================> MODULE_DISPLAY");
+            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
+        }
+        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show confirmation message
+        else if (this->ini->context_is_asked(AUTHID_ACCEPT_MESSAGE)) {
+            LOG(LOG_INFO, "=================> MODULE_ACCEPT");
+            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
+        }
+        // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
+        // proceed with connection.
+        else if (this->ini->context.authenticated.get()) {
+            //                record_video = this->ini->globals.movie.get();
+            //                keep_alive = true;
+            if (this->ini->context.auth_error_message.is_empty()) {
+                this->ini->context.auth_error_message.copy_c_str("End of connection");
+            }
+            LOG(LOG_INFO, "=================> MODULE_FROM_PROTOCOL");
+            return this->get_mod_from_protocol();
+        }
+        // User authentication rejected : close message
+        else {
+            if (!this->ini->context.rejected.get().is_empty()) {
+                this->ini->context.auth_error_message.copy_str(this->ini->context.rejected.get());
+            }
+            if (this->ini->context.auth_error_message.is_empty()) {
+                this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
+            }
+            LOG(LOG_INFO, "MODULE_INTERNAL_CLOSE");
+            return MODULE_INTERNAL_CLOSE;
+        }
+    }
+
+    void ask_next_module_remote() {
+        this->acl_serial.ask_next_module_remote();
+    }
+
+
+    /*
     // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
     void ask_auth_channel_target(const char * target) {
         if (this->verbose) {
@@ -137,6 +537,8 @@ public:
         this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
         this->acl_serial.send(AUTHID_AUTHCHANNEL_RESULT);
     }
+
+    */
 
     //    bool close_on_timestamp(long & timestamp)
     //    {
@@ -485,400 +887,8 @@ public:
     //        // default is "allow", do nothing special
     //    }
 
-    // Check movie start/stop/pause
-
-    int get_mod_from_protocol() {
-        if (this->verbose & 0x10) {
-            LOG(LOG_INFO, "auth::get_mod_from_protocol");
-        }
-        // Initialy, it no protocol known and get_value should provide "ASK".
-        const char * protocol = this->ini->context.target_protocol.get_value();
-        //const char * protocol = this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0);
-        if (this->internal_domain) {
-            const char * target = this->ini->globals.target_device.get_cstr();
-            //const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
-            if (0 == strncmp(target, "autotest", 8)) {
-                protocol = "INTERNAL";
-            }
-        }
-        int res = MODULE_EXIT;
-        if (!this->connected && 0 == strncasecmp(protocol, "RDP", 4)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
-            }
-            res = MODULE_RDP;
-            this->connected = true;
-        }
-        else if (!this->connected && 0 == strncasecmp(protocol, "APPLICATION", 12)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol APPLICATION");
-            }
-            res = MODULE_RDP;
-            this->connected = true;
-        }
-        else if (!this->connected && 0 == strncasecmp(protocol, "VNC", 4)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
-            }
-            res = MODULE_VNC;
-            this->connected = true;
-        }
-        else if (!this->connected && 0 == strncasecmp(protocol, "XUP", 4)) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
-            }
-            res = MODULE_XUP;
-            this->connected = true;
-        }
-        else if (strncasecmp(protocol, "INTERNAL", 8) == 0) {
-            const char * target = this->ini->globals.target_device.get_cstr();
-            // const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
-            }
-            if (0 == strcmp(target, "bouncer2")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
-                }
-                res = MODULE_INTERNAL_BOUNCER2;
-            }
-            else if (0 == strncmp(target, "autotest", 8)) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
-                }
-                const char * user = this->ini->globals.target_user.get_cstr();
-                // const char * user = this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0);
-                size_t len_user = strlen(user);
-                strncpy(this->ini->context.movie, user, sizeof(this->ini->context.movie));
-                this->ini->context.movie[sizeof(this->ini->context.movie) - 1] = 0;
-                if (0 != strcmp(".mwrm", user + len_user - 5)) {
-                    strcpy(this->ini->context.movie + len_user, ".mwrm");
-                }
-                res = MODULE_INTERNAL_TEST;
-            }
-            else if (0 == strcmp(target, "selector")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
-                }
-                res = MODULE_INTERNAL_WIDGET2_SELECTOR;
-            }
-            else if (0 == strcmp(target, "login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_LOGIN;
-            }
-            else if (0 == strcmp(target, "rwl_login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
-            }
-            else if (0 == strcmp(target, "rwl")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL;
-            }
-            else if (0 == strcmp(target, "close")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
-                }
-                res = MODULE_INTERNAL_CLOSE;
-                this->last_module = true;
-            }
-            else if (0 == strcmp(target, "widget2_close")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
-                }
-                res = MODULE_INTERNAL_WIDGET2_CLOSE;
-                this->last_module = true;
-            }
-            else if (0 == strcmp(target, "widget2_dialog")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_dialog");
-                }
-                res = MODULE_INTERNAL_WIDGET2_DIALOG;
-            }
-            else if (0 == strcmp(target, "widget2_message")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
-                }
-                res = MODULE_INTERNAL_WIDGET2_MESSAGE;
-            }
-            else if (0 == strcmp(target, "widget2_login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_LOGIN;
-            }
-            else if (0 == strcmp(target, "widget2_rwl")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL rwl_login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL;
-            }
-            else if (0 == strcmp(target, "widget2_rwl_login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_rwl_login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
-            }
-            else {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
-                }
-                res = MODULE_INTERNAL_CARD;
-            }
-            this->connected = false;
-        }
-        else if (this->connected) {
-            if (this->verbose & 0x4) {
-                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
-            }
-            res = MODULE_INTERNAL_WIDGET2_CLOSE;
-            this->last_module = true;
-            this->connected   = false;
-        }
-        else {
-            LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
-                protocol[0], protocol[1], protocol[2], protocol[3]);
-            res = MODULE_EXIT;
-        }
-        return res;
-    }
-
-protected:
-    bool invoke_mod_close(ModuleManager & mm, const char * auth_error_message) {
-        this->ini->context.auth_error_message.copy_c_str(auth_error_message);
-        this->asked_remote_answer = false;
-        this->last_module         = true;
-        this->keepalive_time      = 0;
-        mm.remove_mod();
-        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-        return true;
-    }
-
-public:
-    bool check(Front & front, ModuleManager & mm, time_t now, Transport & trans) {
-        long enddate = this->ini->context.end_date_cnx.get();
-        // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-        if (enddate != 0 && (now > enddate)) {
-            LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-            return invoke_mod_close(mm, "Session is out of allowed timeframe");
-        }
-
-        if (this->signal == BACK_EVENT_STOP) {
-            mm.mod->event.reset();
-            return false;
-        }
-
-        // Check if acl connection is lost.
-        if (this->lost_acl && !this->last_module) {
-            return invoke_mod_close(mm, "Connection closed by manager (ACL closed)");
-        }
-
-        if (this->keepalive_time) {
-            if (now > (this->keepalive_time + this->keepalive_grace_delay)) {
-                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                return invoke_mod_close(mm, "Missed keepalive from ACL");
-            }
-
-            if (this->read_auth) {
-                if (this->verbose & 0x10) {
-                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-                }
-
-                this->read_auth = false;
-
-                if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                    // this->ini->context_ask(AUTHID_KEEPALIVE);
-                    this->keepalive_time       =
-                    this->keepalive_renew_time = now + this->keepalive_grace_delay;
-                }
-            }
-
-            if (now > this->keepalive_renew_time) {
-                this->keepalive_renew_time = now + this->keepalive_grace_delay;
-
-                if (this->verbose & 8) {
-                    LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
-                         , trans.last_quantum_received, trans.total_received, this->tick_count);
-                }
-
-                if (trans.last_quantum_received == 0) {
-                    this->tick_count++;
-                    // 15 minutes before closing on inactivity
-                    if (this->tick_count > this->max_tick) {
-                        LOG(LOG_INFO, "Session ACL inactivity : closing");
-                        return invoke_mod_close(mm, "Connection closed on inactivity");
-                    }
-                }
-                else {
-                    this->tick_count = 0;
-                }
-                LOG(LOG_INFO, "Session ACL inactivity : tick count: %u, disconnect on %uth tick", this->tick_count,this->max_tick);
-                trans.tick();
-
-                // ===================== check if keepalive ======================
-                try {
-                    this->ini->context_ask(AUTHID_KEEPALIVE);
-                    // this->asked_remote_answer = false;
-                    // this->signal = BACK_EVENT_REFRESH;
-                    this->acl_serial.send(AUTHID_KEEPALIVE);
-                }
-                catch (...) {
-                    return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
-                }
-            }
-        }   // if (this->keepalive_time)
-
-/*
-        if (!this->last_module && (now - this->acl_start_time) > 10) {
-        this->asked_remote_answer = false;
-        this->last_module = true;
-        mm.remove_mod();
-        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
-        return true;
-        }
-*/
-
-
-        if (!this->asked_remote_answer) {
-            if (this->signal == BACK_EVENT_REFRESH || this->signal == BACK_EVENT_NEXT) {
-                this->asked_remote_answer = true;
-                this->remote_answer       = false;
-                this->ask_next_module_remote();
-            }
-        }
-        else {
-            this->asked_remote_answer = false;
-
-            if (this->remote_answer && this->signal == BACK_EVENT_REFRESH) {
-                LOG(LOG_INFO, "===========> MODULE_REFRESH");
-                this->signal = BACK_EVENT_NONE;
-                mm.mod->refresh_context(*this->ini);
-                mm.mod->event.signal = BACK_EVENT_NONE;
-                mm.mod->event.set();
-            }
-            else if (this->remote_answer && this->signal == BACK_EVENT_NEXT) {
-                LOG(LOG_INFO, "===========> MODULE_NEXT");
-                this->signal = BACK_EVENT_NONE;
-                if (this->last_module) {
-                    return false;
-                }
-                int next_state = this->next_module();
-                mm.remove_mod();
-                mm.new_mod(next_state);
-                this->keepalive_time = 0;
-                if (this->connected) {
-                    this->start_keepalive();
-
-                    if (this->ini->globals.movie.get()) {
-                        if (front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                            front.start_capture( front.client_info.width
-                                               , front.client_info.height
-                                               , *this->ini
-                                               );
-                            mm.mod->rdp_input_invalidate( Rect( 0, 0, front.client_info.width
-                                                        , front.client_info.height));
-                        }
-                        else if (front.capture_state == Front::CAPTURE_STATE_PAUSED) {
-                            front.resume_capture();
-                            mm.mod->rdp_input_invalidate( Rect( 0, 0, front.client_info.width
-                                                        , front.client_info.height));
-                        }
-                    }
-                    else if (front.capture_state == Front::CAPTURE_STATE_STARTED) {
-                        front.pause_capture();
-                    }
-                }
-            }
-        }
-
-        // // send message to acl with changed values if connected to
-        // // a module (rdp, vnc, xup ...) and something changed
-        // // used for authchannel and keepalive.
-
-        // if (this->connected && this->ini->check()) {
-        //     this->ask_next_module_remote();
-        // }
-
-        return true;
-    }
-
-    void receive() {
-        try {
-            if (!this->lost_acl) {
-                this->acl_serial.incoming();
-                this->read_auth     = true;
-                this->remote_answer = true;
-            }
-        } catch (...) {
-            // acl connection lost
-            this->ini->context.authenticated.set(false);
-            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
-            this->lost_acl = true;
-        }
-    }
-
-    int next_module() {
-        if (this->ini->context_is_asked(AUTHID_AUTH_USER)
-            ||  this->ini->context_is_asked(AUTHID_PASSWORD)) {
-            LOG(LOG_INFO, "===========> MODULE_LOGIN");
-            return MODULE_INTERNAL_WIDGET2_LOGIN;
-        }
-        // Selector Target device and Target user contains list or possible targets
-        else if (!this->ini->context_is_asked(AUTHID_SELECTOR)
-                 &&   this->ini->context_get_bool(AUTHID_SELECTOR)
-                 &&  !this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
-                 &&  !this->ini->context_is_asked(AUTHID_TARGET_USER)) {
-            LOG(LOG_INFO, "===============> MODULE_SELECTOR");
-            return MODULE_INTERNAL_WIDGET2_SELECTOR;
-        }
-        // Target User or Device asked and not in selector : back to login
-        else if (this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
-                 ||  this->ini->context_is_asked(AUTHID_TARGET_USER)) {
-            LOG(LOG_INFO, "===============> MODULE_LOGIN (2)");
-            return MODULE_INTERNAL_WIDGET2_LOGIN;
-        }
-        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show message
-        else if (this->ini->context_is_asked(AUTHID_DISPLAY_MESSAGE)) {
-            LOG(LOG_INFO, "==================> MODULE_DISPLAY");
-            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
-        }
-        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show confirmation message
-        else if (this->ini->context_is_asked(AUTHID_ACCEPT_MESSAGE)) {
-            LOG(LOG_INFO, "=================> MODULE_ACCEPT");
-            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
-        }
-        // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
-        // proceed with connection.
-        else if (this->ini->context.authenticated.get()) {
-            //                record_video = this->ini->globals.movie.get();
-            //                keep_alive = true;
-            if (this->ini->context.auth_error_message.is_empty()) {
-                this->ini->context.auth_error_message.copy_c_str("End of connection");
-            }
-            LOG(LOG_INFO, "=================> MODULE_FROM_PROTOCOL");
-            return this->get_mod_from_protocol();
-        }
-        // User authentication rejected : close message
-        else {
-            if (!this->ini->context.rejected.get().is_empty()) {
-                this->ini->context.auth_error_message.copy_str(this->ini->context.rejected.get());
-            }
-            if (this->ini->context.auth_error_message.is_empty()) {
-                this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
-            }
-            LOG(LOG_INFO, "MODULE_INTERNAL_CLOSE");
-            return MODULE_INTERNAL_CLOSE;
-        }
-    }
-
-    void ask_next_module_remote() {
-        this->acl_serial.ask_next_module_remote();
-    }
 };
+
+
 
 #endif

@@ -468,7 +468,12 @@ struct Inifile {
             }
 
         }
-
+        void set_to_send_field() {
+            if (this->authid != AUTHID_UNKNOWN
+                && this->ini) {
+                this->ini->to_send_set.insert(this->authid);
+            }
+        }
         /**************************
          * Use this field to mark it as modified
          ***************************
@@ -834,15 +839,13 @@ public:
         char wrm_path[1024];
 
 
-        StringField alternate_shell;          // STRAUTHID_ALTERNATE_SHELL --
-        StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY --
-        // char alternate_shell[1024];          // STRAUTHID_ALTERNATE_SHELL --
-        // char shell_working_directory[1024];  // STRAUTHID_SHELL_WORKING_DIRECTORY --
+        StringField alternate_shell;          // STRAUTHID_ALTERNATE_SHELL //
+        StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY //
 
-        StringField codec_id;           // AUTHID_OPT_CODEC_ID //
-        BoolField movie;                // AUTHID_OPT_MOVIE //
-        StringField movie_path;         // AUTHID_OPT_MOVIE_PATH //
-        StringField video_quality;      // AUTHID_VIDEO_QUALITY //
+        StringField codec_id;                 // AUTHID_OPT_CODEC_ID //
+        BoolField movie;                      // AUTHID_OPT_MOVIE //
+        StringField movie_path;               // AUTHID_OPT_MOVIE_PATH //
+        StringField video_quality;            // AUTHID_VIDEO_QUALITY //
         bool enable_bitmap_update;
         // END globals
 
@@ -1579,31 +1582,21 @@ public:
             }
             else if (0 == strcmp(key, "alternate_shell")) {
                 this->globals.alternate_shell.set_from_cstr(value);
-                // strncpy(this->globals.alternate_shell, value, sizeof(this->globals.alternate_shell));
-                // this->globals.alternate_shell[sizeof(this->globals.alternate_shell) - 1] = 0;
             }
             else if (0 == strcmp(key, "shell_working_directory")) {
                 this->globals.shell_working_directory.set_from_cstr(value);
-                // strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
-                // this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
             }
             else if (0 == strcmp(key, "codec_id")) {
                 this->globals.codec_id.set_from_cstr(value);
-                // strncpy(this->globals.codec_id, value, sizeof(this->globals.codec_id));
-                // this->globals.codec_id[sizeof(this->globals.codec_id) - 1] = 0;
             }
             else if (0 == strcmp(key, "movie")){
                 this->globals.movie.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "movie_path")) {
                 this->globals.movie_path.set_from_cstr(value);
-                // strncpy(this->globals.movie_path, value, sizeof(this->globals.movie_path));
-                // this->globals.movie_path[sizeof(this->globals.movie_path) - 1] = 0;
             }
             else if (0 == strcmp(key, "video_quality")) {
                 this->globals.video_quality.set_from_cstr(value);
-                // strncpy(this->globals.video_quality, value, sizeof(this->globals.video_quality));
-                // this->globals.video_quality[sizeof(this->globals.video_quality) - 1] = 0;
             }
             else if (0 == strcmp(key, "enable_bitmap_update")){
                 this->globals.enable_bitmap_update = bool_from_cstr(value);
@@ -1819,6 +1812,7 @@ public:
             LOG(LOG_ERR, "unknown section [%s]", context);
         }
     }
+
     TODO("Should only be used by Authentifier "
          "It currently ask if the field has been modified "
          "and set it to not modified if it is not asked ")
@@ -1836,6 +1830,9 @@ public:
         return res;
     }
 
+    /******************
+     * Set_from_acl sets a value to corresponding field but does not mark it as changed
+     */
     void set_from_acl(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
@@ -1846,7 +1843,6 @@ public:
             catch (const std::out_of_range & oor){
                 LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
             }
-            // LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
         }
         else {
             LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
@@ -1866,17 +1862,6 @@ public:
         // this->field_list.at(authid)->set_from_cstr(value);
         switch (authid)
             {
-                // Alternate shell
-                /*
-            case AUTHID_ALTERNATE_SHELL:
-                strncpy(this->globals.alternate_shell, value, sizeof(this->globals.alternate_shell));
-                this->globals.alternate_shell[sizeof(this->globals.alternate_shell) - 1] = 0;
-                break;
-            case AUTHID_SHELL_WORKING_DIRECTORY:
-                strncpy(this->globals.shell_working_directory, value, sizeof(this->globals.shell_working_directory));
-                this->globals.shell_working_directory[sizeof(this->globals.shell_working_directory) - 1] = 0;
-                break;
-                */
                 // Context
             case AUTHID_AUTH_ERROR_MESSAGE:
                 this->context.auth_error_message.copy_c_str(value);
@@ -1889,7 +1874,6 @@ public:
                 catch (const std::out_of_range & oor){
                     LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
                 }
-                // LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
                 break;
             }
     }
@@ -1906,22 +1890,12 @@ public:
     }
 
     const char * context_get_value(authid_t authid, char * buffer, size_t size) {
-        //return this->field_list.at(authid)->get_value();
-
         const char * pszReturn = "";
 
         if (size) { *buffer = 0; }
 
         switch (authid)
             {
-                /*
-            case AUTHID_ALTERNATE_SHELL:
-                pszReturn = this->globals.alternate_shell;
-                break;
-            case AUTHID_SHELL_WORKING_DIRECTORY:
-                pszReturn = this->globals.shell_working_directory;
-                break;
-                */
             case AUTHID_AUTH_ERROR_MESSAGE:
                 pszReturn = this->context.auth_error_message.c_str();
                 break;

@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
     //    BOOST_CHECK(keepalivetrans.get_status());
     stream.reset();
 }
-
+/*
 BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
 {
     BStream stream(1024);
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
     };
     BOOST_CHECK(auth_channel_trans2.get_status());
 }
-
+*/
 BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
 {
     // test get mod from protocol

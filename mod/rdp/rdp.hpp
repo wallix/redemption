@@ -1416,7 +1416,7 @@ struct mod_rdp : public mod_api {
                                 if (strncmp("target:", auth_channel_message, 7)){
                                     LOG(LOG_ERR, "Invalid request (%s)", auth_channel_message);
                                     this->send_auth_channel_data("Error: Invalid request");
-                                } else {
+                                } else if (this->auth_channel_target) {
                                     // Ask sesman for requested target
                                     this->auth_channel_target->set_from_cstr(auth_channel_message + 7);
                                     // this->acl->ask_auth_channel_target(auth_channel_message + 7);
@@ -1428,8 +1428,10 @@ struct mod_rdp : public mod_api {
                                     auth_channel_message = "result:Session interrupted";
                                 }
                                 this->auth_channel_state = 0;
-                                this->auth_channel_result->set_from_cstr(auth_channel_message + 7);
-                                // this->acl->set_auth_channel_result(auth_channel_message + 7);
+                                if (this->auth_channel_result) {
+                                    this->auth_channel_result->set_from_cstr(auth_channel_message + 7);
+                                    // this->acl->set_auth_channel_result(auth_channel_message + 7);
+                                }
                             }
                         }
                         else if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
