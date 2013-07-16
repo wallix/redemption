@@ -293,8 +293,8 @@ protected:
         this->last_module         = true;
         this->keepalive_time      = 0;
         mm.remove_mod();
-        TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")        
-        this->connected           = false;
+        // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
+        // this->connected           = false;
         mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
         return true;
     }
@@ -412,7 +412,20 @@ public:
                 }
                 int next_state = this->next_module();
                 mm.remove_mod();
-                mm.new_mod(next_state);
+                try {
+                    mm.new_mod(next_state);
+                }
+                catch (Error & e) {
+                    if (e.id == ERR_SOCKET_CONNECT_FAILED) {
+                        return invoke_mod_close(mm, "Failed to connect to remote TCP host");
+                    }
+                    else if (e.id == ERR_SESSION_UNKNOWN_BACKEND) {
+                        return invoke_mod_close(mm, "Unknown BackEnd.");
+                    }
+                    else {
+                        throw e;
+                    }
+                }
                 this->keepalive_time = 0;
                 if (this->connected) {
                     this->start_keepalive();
