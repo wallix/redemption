@@ -241,15 +241,36 @@ public:
         }
     }
 
-    void send_new(std::set<Inifile::BaseField *>& list)
+    class OutItemFunctor {
+        BStream & stream;
+        AclSerializer * acl;
+    public:
+        OutItemFunctor(AclSerializer * acl, BStream & stream)
+            : stream(stream)
+            , acl(acl) {
+            LOG(LOG_INFO, "OutItemFunctor Creation");
+        }
+        ~OutItemFunctor() {
+            LOG(LOG_INFO, "OutItemFunctor Destruction");
+        }
+        void operator()(Inifile::BaseField * bfield) {
+            this->acl->out_item_new(this->stream,bfield);
+        }
+    };
+
+    //void send_new(std::set<Inifile::BaseField *>& list)
+    void send_new(Inifile::SetField & list)
     {
         try {
             BStream stream(8192);
             stream.out_uint32_be(0);
 
-            for (std::set<Inifile::BaseField *>::iterator it = list.begin(); it != list.end(); it++) {
-                this->out_item_new(stream, *it);
-            }
+            // for (std::set<Inifile::BaseField *>::iterator it = list.begin(); it != list.end(); it++) {
+            //     this->out_item_new(stream, *it);
+            // }
+
+            list.foreach(OutItemFunctor(this,stream));
+
             stream.mark_end();
             int total_length = stream.get_offset();
             LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
@@ -263,7 +284,8 @@ public:
 
     void ask_next_module_remote() {
         LOG(LOG_INFO, "ask_next_module_remote() by getting list of modified field");
-        std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
+        Inifile::SetField list = this->ini->get_changed_set();
+        //std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
         LOG(LOG_INFO, "ask_next_module_remote() numbers of changed fields = %u",list.size());
         if (!list.empty())
             this->send_new(list);
