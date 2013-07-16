@@ -210,6 +210,9 @@ struct Session {
                                     this->acl->signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
+                                    TODO("move that into connect_authentifier")
+                                    TODO("cant create acl shouldn't be necessary, as when on a close box we shouldn't try opening ACL")
+                                    TODO("maybe we shouldn't *connect* to ACL but create some acl context anyway to be able to call acl->check ")
                                     cant_create_acl = true;
 
                                     this->ini->context.auth_error_message.copy_c_str("No authentifier available");
@@ -223,13 +226,13 @@ struct Session {
                                 // acl received updated values
                                 this->acl->receive();
 
-                                // AuthCHANNEL CHECK (wablauncher)
+                                TODO("This (below to enclosing bracket) should be done inside ACLs, it is not responsibility of session to do that")
+                                // AuthCHANNEL CHECK
                                 // if an answer has been received, send it to
                                 // rdp serveur via mod (should be rdp module)
                                 if (this->ini->globals.auth_channel[0]) {
                                     // Get sesman answer to AUTHCHANNEL_TARGET
-                                    if (this->ini->context.authchannel_answer.has_changed()
-                                        && !this->ini->context.authchannel_answer.get().is_empty()) {
+                                    if (!this->ini->context.authchannel_answer.get().is_empty()) {
                                         // If set, transmit to auth_channel channel
                                         mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
                                         this->ini->context.authchannel_answer.use();
@@ -237,23 +240,11 @@ struct Session {
                                         this->ini->context.authchannel_answer.set_empty();
                                     }
                                 }
-
-                                 if (strcmp(this->ini->context.mode_console.get_cstr(), "force") == 0) {
-                                    this->front->set_console_session(true);
-                                    LOG(LOG_INFO, "Session::mode console : force");
-                                }
-                                else if (strcmp(this->ini->context.mode_console.get_cstr(), "forbid") == 0) {
-                                    this->front->set_console_session(false);
-                                    LOG(LOG_INFO, "Session::mode console : forbid");
-                                }
-                                else {
-                                    // default is "allow", do nothing special
-                                }
                             }
                         }
 
                         if (this->acl) {
-                            run_session = this->acl->check(*this->front, mm, now, front_trans);
+                            run_session = this->acl->check(mm, now, front_trans);
                         }
                         else if (no_acl_signal == BACK_EVENT_STOP) {
                             mm.mod->event.reset();

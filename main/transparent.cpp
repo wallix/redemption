@@ -100,8 +100,8 @@ int main(int argc, char * argv[]) {
                                , gen
                                , front.keymap.key_flags
                                , ini.globals.auth_channel
-                               , ini.globals.alternate_shell
-                               , ini.globals.shell_working_directory
+                               , ini.globals.alternate_shell.get_cstr()
+                               , ini.globals.shell_working_directory.get_cstr()
                                , false  // fast-path
                                , true   // mem3blt
                                , false  // bitmap update

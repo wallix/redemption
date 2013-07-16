@@ -43,6 +43,7 @@
 #include "internal/login_mod.hpp"
 #include "internal/rwl_mod.hpp"
 #include "internal/rwl_login_mod.hpp"
+#include "front.hpp"
 
 enum {
     MODULE_EXIT,
@@ -72,12 +73,24 @@ enum {
     MODULE_CLI,
 };
 
-class ModuleManager
+class MMApi
+{
+    public:
+    mod_api * mod;
+
+    MMApi() {}
+    ~MMApi() {}
+    virtual void remove_mod() = 0;
+    virtual void new_mod(int target_module) = 0;
+    virtual void record() = 0;
+
+};
+
+class ModuleManager : public MMApi
 {
 public:
     Front & front;
     Inifile & ini;
-    mod_api * mod;
     mod_api * no_mod;
     Transport * mod_transport;
     uint32_t verbose;
@@ -93,7 +106,7 @@ public:
         this->mod = this->no_mod;
     }
 
-    void remove_mod()
+    virtual void remove_mod()
     {
         if (this->mod != this->no_mod){
             delete this->mod;
@@ -105,15 +118,35 @@ public:
         }
     }
 
-    ~ModuleManager()
+    virtual ~ModuleManager()
     {
         this->remove_mod();
         delete this->no_mod;
     }
 
+    void record()
+    {
+        if (this->ini.globals.movie.get()) {
+        TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)")
+            if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                this->front.start_capture(this->front.client_info.width
+                                   , this->front.client_info.height
+                                   , this->ini
+                                   );
+                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+            }
+            else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
+                this->front.resume_capture();
+                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+            }
+        }
+        else if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
+            this->front.pause_capture();
+        }
+    }
+
     virtual void new_mod(int target_module)
     {
-
         LOG(LOG_INFO, "target_module=%u", target_module);
 
         switch (target_module)
@@ -297,11 +330,28 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
                     REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
                         char hostname[255];
+                        
+                    TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
                     hostname[0] = 0;
                     if (this->front.client_info.hostname[0]){
                         memcpy(hostname, this->front.client_info.hostname, 31);
                         hostname[31] = 0;
                     }
+                    
+                    ClientInfo client_info = this->front.client_info;
+                    
+                     if (strcmp(ini.context.mode_console.get_cstr(), "force") == 0) {
+                        client_info.console_session = true;
+                        LOG(LOG_INFO, "Session::mode console : force");
+                    }
+                    else if (strcmp(ini.context.mode_console.get_cstr(), "forbid") == 0) {
+                        client_info.console_session = false;
+                        LOG(LOG_INFO, "Session::mode console : forbid");
+                    }
+                    else {
+                        // default is "allow", do nothing special
+                    }
+                    
                     static const char * name = "RDP Target";
 
                     int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
@@ -338,15 +388,15 @@ public:
                                             , this->front
                                             , hostname
                                             , true
-                                            , this->front.client_info
+                                            , client_info
                                             , &gen
                                             , this->front.keymap.key_flags
 //                                            , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
                                             , &this->ini.context.authchannel_target
                                             , &this->ini.context.authchannel_result
                                             , this->ini.globals.auth_channel
-                                            , this->ini.globals.alternate_shell
-                                            , this->ini.globals.shell_working_directory
+                                            , this->ini.globals.alternate_shell.get_cstr()
+                                            , this->ini.globals.shell_working_directory.get_cstr()
                                             , this->ini.client.clipboard.get()
                                             , true   // support fast-path
                                             , true   // support mem3blt

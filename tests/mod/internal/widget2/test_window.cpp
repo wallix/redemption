@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include "internal/widget2/widget_rect.hpp"
+#include "internal/widget2/widget2_rect.hpp"
 #include "internal/widget2/window.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"

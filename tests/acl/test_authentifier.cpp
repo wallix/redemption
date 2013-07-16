@@ -31,7 +31,7 @@
 #include "keymap2.hpp"
 #include "RDP/RDPDrawable.hpp"
 
-class Front : public FrontAPI {
+class FakeFront : public FrontAPI {
 public:
     enum {
           CAPTURE_STATE_UNKNOWN
@@ -257,9 +257,9 @@ public:
 
     void init_pointers() {}
 
-    Front(const ClientInfo & info, uint32_t verbose)
-        : FrontAPI(false, false)
-        , capture_state(CAPTURE_STATE_UNKNOWN)
+    FakeFront(const ClientInfo & info, uint32_t verbose)
+        : capture_state(CAPTURE_STATE_UNKNOWN)
+        , FrontAPI(false, false)
         , verbose(verbose)
         , client_info(info)
         , mouse_x(0)
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
     //    BOOST_CHECK(keepalivetrans.get_status());
     stream.reset();
 }
-
+/*
 BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
 {
     BStream stream(1024);
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
     };
     BOOST_CHECK(auth_channel_trans2.get_status());
 }
-
+*/
 BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
 {
     // test get mod from protocol

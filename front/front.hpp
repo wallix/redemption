@@ -596,14 +596,6 @@ public:
         this->trans->send(x224_header, mcs_data);
     }
 
-    void set_console_session(bool b)
-    {
-        if (this->verbose & 1){
-            LOG(LOG_INFO, "Front::set_console_session(%u)", b);
-        }
-        this->client_info.console_session = b;
-    }
-
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const
     {
         return this->channel_list;
