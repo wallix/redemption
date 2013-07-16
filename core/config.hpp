@@ -507,7 +507,6 @@ struct Inifile : public FieldObserver {
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
         char auth_channel[512];
         BoolField enable_file_encryption; // AUTHID_OPT_FILE_ENCRYPTION //
-        bool enable_tls;
         char listen_address[256];
         bool enable_ip_transparent;
         char certificate_password[256];
@@ -539,6 +538,7 @@ struct Inifile : public FieldObserver {
         uint32_t performance_flags_force_not_present;
 
         bool tls_fallback_legacy;
+        bool tls_support;
 
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
@@ -770,7 +770,6 @@ public:
         strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
         memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
         // this->globals.enable_file_encryption = false;
-        this->globals.enable_tls             = false;
         strcpy(this->globals.listen_address, "0.0.0.0");
         this->globals.enable_ip_transparent  = false;
         strcpy(this->globals.certificate_password, "inquisition");
@@ -809,8 +808,6 @@ public:
         strcpy(this->account.password,    "");
 
         // Begin Section "client".
-
-
         this->client.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         this->client.device_redirection.attach_ini(this,AUTHID_OPT_DEVICEREDIRECTION);
         this->client.clipboard.set(true);
@@ -822,6 +819,7 @@ public:
         this->client.performance_flags_force_present     = 0;
         this->client.performance_flags_force_not_present = 0;
         this->client.tls_fallback_legacy                 = false;
+        this->client.tls_support                         = true;
 
         // End Section "client"
 
@@ -1235,9 +1233,6 @@ public:
             else if (0 == strcmp(key, "enable_file_encryption")){
                 this->globals.enable_file_encryption.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "enable_tls")){
-                this->globals.enable_tls = bool_from_cstr(value);
-            }
             else if (0 == strcmp(key, "listen_address")){
                 strncpy(this->globals.listen_address, value, sizeof(this->globals.listen_address));
                 this->globals.listen_address[sizeof(this->globals.listen_address) - 1] = 0;
@@ -1294,6 +1289,9 @@ public:
             }
             else if (0 == strcmp(key, "tls_fallback_legacy")){
                 this->client.tls_fallback_legacy = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "tls_support")){
+                this->client.tls_support = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "clipboard")){
                 this->client.clipboard.set_from_cstr(value);
