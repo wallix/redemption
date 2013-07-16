@@ -73,6 +73,10 @@ class User(object):
             answer['timeclose'] = str(service.timeclose)
             answer['is_rec'] = service.is_rec
             answer['rec_path'] = service.rec_path
+            if service.alternate_shell:
+                answer['alternate_shell'] = service.alternate_shell
+            if service.shell_working_directory:
+                answer['shell_working_directory'] = service.shell_working_directory
             if service.display_message:
                 answer['display_message'] = service.display_message
                 answer['message'] = service.message
@@ -94,6 +98,10 @@ class User(object):
                         answer['timeclose'] = str(service.timeclose)
                         answer['is_rec'] = service.is_rec
                         answer['rec_path'] = service.rec_path
+                        if service.alternate_shell:
+                            answer['alternate_shell'] = service.alternate_shell
+                        if service.shell_working_directory:
+                            answer['shell_working_directory'] = service.shell_working_directory
                         if service.display_message:
                             answer['display_message'] = service.display_message
                             answer['message'] = service.message
@@ -136,7 +144,7 @@ class User(object):
         if _device_filter.startswith('!'):
             _device_filter = _device_filter[1:]
         answer['selector'] = 'true'
-        
+
         all_services = []
         all_groups = []
         all_protos = []
@@ -168,7 +176,7 @@ class User(object):
 
 
 class Service(object):
-    def __init__(self, name, device, login, password, protocol, port, is_rec = 'False', rec_path = '/tmp/testxxx.png', alive=720000):
+    def __init__(self, name, device, login, password, protocol, port, is_rec = 'False', rec_path = '/tmp/testxxx.png', alive=720000, clipboard = 'true', file_encryption = 'true', alternate_shell = '', shell_working_directory = ''):
         import time
         import datetime
         self.name = name
@@ -183,6 +191,10 @@ class Service(object):
         self.rec_path = rec_path
         self.display_message = None
         self.message = None
+        self.clipboard = clipboard
+        self.file_encryption = file_encryption
+        self.alternate_shell = alternate_shell
+        self.shell_working_directory = shell_working_directory
 
         if self.device == 'display_message':
             self.display_message = MAGICASK
@@ -223,7 +235,7 @@ class Authentifier(object):
                 pass
         self.dic.update(_data)
 
-        answer = {'authenticated': 'false'}
+        answer = {'authenticated': 'false', 'clipboard' : 'true', 'file_encryption' : 'true', 'trans_cancel' : 'Annuler', 'trans_ok' : 'Oui', 'width' : '1280', 'height' : '1024', 'bpp' : '8'}
         _login = self.dic.get('login')
         if _login != MAGICASK:
             for user in self.users:
@@ -243,7 +255,6 @@ class Authentifier(object):
 
         self.dic.update(answer)
         self.send()
-        self.dic['target_device'] = MAGICASK
         return True
 
     def send(self):
