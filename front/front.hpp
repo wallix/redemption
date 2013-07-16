@@ -2378,6 +2378,23 @@ public:
         this->trans->send(x224_header, mcs_header, stream);
     }
 
+    void send_data_indication_ex(uint16_t channelId, HStream & stream) {
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec( sec_header, stream, 0, this->encrypt
+                         , this->client_info.encryptionLevel);
+        stream.copy_to_head(sec_header);
+
+        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
+                                        , stream.size(), MCS::PER_ENCODING);
+
+        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
+
+        this->trans->send(x224_header, mcs_header, stream);
+    }
+
     /*****************************************************************************/
     void send_data_update_sync() throw (Error)
     {

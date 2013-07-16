@@ -90,7 +90,7 @@ struct mod_rdp : public mod_api {
 
     int          encryptionLevel;
     int          encryptionMethod;
-    int          key_flags;
+    const int    key_flags;
     uint32_t     server_public_key_len;
     uint8_t      client_crypt_random[512];
     CryptContext encrypt, decrypt;
@@ -100,7 +100,7 @@ struct mod_rdp : public mod_api {
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
         , MOD_RDP_GET_LICENSE
-        , MOD_RDP_WAITING_DEMAND_ACTIVE_PDU
+//        , MOD_RDP_WAITING_DEMAND_ACTIVE_PDU
         , MOD_RDP_CONNECTED
     };
 
@@ -118,14 +118,16 @@ struct mod_rdp : public mod_api {
     const bool console_session;
     const int brush_cache_code;
     const uint8_t front_bpp;
+    const uint32_t performanceFlags;
     Random * gen;
     uint32_t verbose;
 
-    //    SessionManager *acl;
+//    SessionManager *acl;
+
     char auth_channel[8];
-    int auth_channel_flags;
-    int auth_channel_chanid;
-    int auth_channel_state; // 0 means unused, 1 means session running
+    int  auth_channel_flags;
+    int  auth_channel_chanid;
+    int  auth_channel_state;    // 0 means unused, 1 means session running
 
     Inifile::StringField * auth_channel_target;
     Inifile::StringField * auth_channel_result;
@@ -138,7 +140,6 @@ struct mod_rdp : public mod_api {
     bool enable_new_pointer;
 
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
-    const uint32_t performanceFlags;
 
     bool fastpath_support;                    // choice of programmer
     bool mem3blt_support;
@@ -178,14 +179,16 @@ struct mod_rdp : public mod_api {
         , bitmap_compression(1)
         , version(0)
         , userid(0)
-        , bpp(bpp)
+        , bpp(0)
         , encryptionLevel(0)
+        , key_flags(key_flags)
         , server_public_key_len(0)
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO)
         , console_session(info.console_session)
         , brush_cache_code(info.brush_cache_code)
         , front_bpp(info.bpp)
+        , performanceFlags(info.rdp5_performanceflags)
         , gen(gen)
         , verbose(verbose)
 //        , acl(acl)
@@ -197,7 +200,6 @@ struct mod_rdp : public mod_api {
         , nego(tls, trans, target_user)
         , enable_new_pointer(enable_new_pointer)
         , opt_clipboard(clipboard)
-        , performanceFlags(info.rdp5_performanceflags)
         , fastpath_support(fp_support)
         , mem3blt_support(mem3blt_support)
         , bitmap_update_support(bitmap_update_support)
@@ -216,7 +218,7 @@ struct mod_rdp : public mod_api {
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
         strncpy(this->clientAddr, clientIP, sizeof(this->clientAddr));
 
-        this->key_flags = key_flags;
+//        this->key_flags = key_flags;
 //        this->lic_layer_license_issued = 0;
 
         this->lic_layer_license_data = 0;
@@ -319,7 +321,8 @@ struct mod_rdp : public mod_api {
 
     virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
                                         , size_t length, size_t chunk_size, int flags) {
-        const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
+        const CHANNELS::ChannelDef * front_channel =
+            this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
@@ -369,7 +372,7 @@ struct mod_rdp : public mod_api {
                                              , out_s.get_data()
                                              , length
                                              , chunk_size
-                                             ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                             , CHANNELS::CHANNEL_FLAG_FIRST
                                              | CHANNELS::CHANNEL_FLAG_LAST
                                              );
 
@@ -377,11 +380,12 @@ struct mod_rdp : public mod_api {
             }
         }
 
-        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get(front_channel_name);
+        const CHANNELS::ChannelDef * mod_channel =
+            this->mod_channel_list.get_by_name(front_channel_name);
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel) {
             if (this->verbose & 16) {
-                int index = this->mod_channel_list.get_index(front_channel_name);
+                int index = this->mod_channel_list.get_index_by_name(front_channel_name);
                 mod_channel->log(index);
             }
             this->send_to_channel(*mod_channel, chunk, length, flags);
@@ -1295,9 +1299,9 @@ struct mod_rdp : public mod_api {
 
                     // Detect fast-path PDU
                     X224::RecvFactory f( *this->nego.trans
-                                         , stream
-                                         , true               /* Support Fast-Path. */
-                                         );
+                                       , stream
+                                       , true               /* Support Fast-Path. */
+                                       );
 
                     if (f.fast_path) {
                         FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
@@ -1382,17 +1386,11 @@ struct mod_rdp : public mod_api {
                         if (this->verbose & 16){
                             LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
                         }
-                        TODO("CGR: move this to channel_list.hpp")
-                            size_t num_channel_src = this->mod_channel_list.size();
-                        for (size_t index = 0; index < num_channel_src; index++){
-                            const CHANNELS::ChannelDef & mod_channel_item = this->mod_channel_list[index];
-                            if (mcs.channelId == mod_channel_item.chanid){
-                                num_channel_src = index;
-                                break;
-                            }
-                        }
-                        if (num_channel_src >= this->mod_channel_list.size()) {
-                            LOG(LOG_WARNING, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel");
+
+                        int num_channel_src =
+                            this->mod_channel_list.get_index_by_id(mcs.channelId);
+                        if (num_channel_src == -1) {
+                            LOG(LOG_WARNING, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel id=%d", mcs.channelId);
                             throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
                         }
 
@@ -1458,15 +1456,16 @@ struct mod_rdp : public mod_api {
                                 format_list_response_pdu.emit(out_s);
 
                                 const CHANNELS::ChannelDef * mod_channel =
-                                    this->mod_channel_list.get(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+                                    this->mod_channel_list.get_by_name(
+                                        CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
                                 if (mod_channel) {
                                     this->send_to_channel( *mod_channel
-                                                           , out_s
-                                                           , out_s.size()
-                                                           ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                                         , out_s
+                                                         , out_s.size()
+                                                         ,   CHANNELS::CHANNEL_FLAG_FIRST
                                                            | CHANNELS::CHANNEL_FLAG_LAST
-                                                           );
+                                                         );
                                 }
                             }
                         }
@@ -3065,7 +3064,6 @@ struct mod_rdp : public mod_api {
             break;
         }
     }
-
 
     TODO("CGR: this can probably be unified with process_confirm_active in front");
     void process_server_caps(Stream & stream, uint16_t len)

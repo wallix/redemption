@@ -26,9 +26,22 @@
 #include "front_api.hpp"
 #include "genrandom.hpp"
 #include "mod_api.hpp"
+#include "RDP/capabilities/activate.hpp"
+#include "RDP/capabilities/cap_bitmap.hpp"
+#include "RDP/capabilities/cap_bmpcache.hpp"
+#include "RDP/capabilities/cap_font.hpp"
+#include "RDP/capabilities/cap_share.hpp"
+#include "RDP/capabilities/cap_sound.hpp"
+#include "RDP/capabilities/control.hpp"
+#include "RDP/capabilities/colcache.hpp"
+#include "RDP/capabilities/glyphcache.hpp"
+#include "RDP/capabilities/input.hpp"
+#include "RDP/capabilities/order.hpp"
+#include "RDP/capabilities/pointer.hpp"
 #include "RDP/gcc.hpp"
 #include "RDP/lic.hpp"
 #include "RDP/nego.hpp"
+#include "RDP/protocol.hpp"
 
 struct mod_rdp_transparent : public mod_api {
     FrontAPI & front;
@@ -43,6 +56,7 @@ struct mod_rdp_transparent : public mod_api {
     size_t    lic_layer_license_size;
 
     uint16_t userid;
+    int      share_id;
 
     char hostname[16];
     char username[128];
@@ -51,8 +65,13 @@ struct mod_rdp_transparent : public mod_api {
     char program[512];
     char directory[512];
 
-    int          encryptionLevel;
-    int          encryptionMethod;
+    uint8_t bpp;
+
+    int encryptionLevel;
+    int encryptionMethod;
+
+    const int key_flags;
+
     uint32_t     server_public_key_len;
     uint8_t      client_crypt_random[512];
     CryptContext encrypt, decrypt;
@@ -71,7 +90,7 @@ struct mod_rdp_transparent : public mod_api {
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
         , MOD_RDP_GET_LICENSE
-        , MOD_RDP_WAITING_DEMAND_ACTIVE_PDU
+//        , MOD_RDP_WAITING_DEMAND_ACTIVE_PDU
         , MOD_RDP_CONNECTED
     } state;
 
@@ -90,6 +109,14 @@ struct mod_rdp_transparent : public mod_api {
 
     char client_addr[512];
 
+    bool bitmap_compression;
+    bool bitmap_update_support;
+    bool fastpath_support;                      // choice of programmer
+    bool client_fastpath_input_event_support;   // choice of programmer + capability of server
+    bool server_fastpath_update_support;        // = choice of programmer
+    bool mem3blt_support;
+    bool enable_new_pointer;
+
     mod_rdp_transparent( Transport & trans
                        , const char * target_user
                        , const char * target_password
@@ -99,16 +126,24 @@ struct mod_rdp_transparent : public mod_api {
                        , const bool tls
                        , const ClientInfo & info
                        , Random & gen
+                       , int key_flags
                        , const char * auth_channel
                        , const char * alternate_shell
                        , const char * shell_working_directory
-                       , uint32_t verbose = 0)
-            : mod_api(0, 0)
+                       , bool fp_support    // If true, fast-path must be supported
+                       , bool mem3blt_support
+                       , bool bitmap_update_support
+                       , uint32_t verbose = 0
+                       , bool enable_new_pointer = false)
+            : mod_api(info.width, info.height)
             , front(front)
             , use_rdp5(true)
             , userid(0)
+            , share_id(0)
+            , bpp(0)
             , encryptionLevel(0)
             , encryptionMethod(0)
+            , key_flags(key_flags)
             , server_public_key_len(0)
             , connection_finalization_state(EARLY)
             , state(MOD_RDP_NEGO)
@@ -118,7 +153,14 @@ struct mod_rdp_transparent : public mod_api {
             , performanceFlags(info.rdp5_performanceflags)
             , gen(gen)
             , verbose(verbose)
-            , nego(tls, &trans, target_user) {
+            , nego(tls, &trans, target_user)
+            , bitmap_compression(true)
+            , bitmap_update_support(bitmap_update_support)
+            , fastpath_support(fp_support)
+            , client_fastpath_input_event_support(false)
+            , server_fastpath_update_support(fp_support)
+            , mem3blt_support(mem3blt_support)
+            , enable_new_pointer(enable_new_pointer) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
         }
@@ -210,7 +252,7 @@ struct mod_rdp_transparent : public mod_api {
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
         }
-    }
+    }   // mod_rdp_transparent( Transport & trans
 
     virtual ~mod_rdp_transparent() {
         if (this->lic_layer_license_data) {
@@ -847,7 +889,9 @@ struct mod_rdp_transparent : public mod_api {
                 // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
                 BStream stream(65536);
+LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing RecvFactory");
                 X224::RecvFactory  f(*this->nego.trans, stream);
+LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing RecvFactory done");
                 X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
                 SubStream & mcs_data = x224.payload;
                 MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
@@ -856,6 +900,7 @@ struct mod_rdp_transparent : public mod_api {
                                               , this->encryptionLevel);
 
                 if (sec.flags & SEC::SEC_LICENSE_PKT) {
+LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_LICENSE_PKT");
                     LIC::RecvFactory flic(sec.payload);
 
                     switch (flic.tag) {
@@ -918,6 +963,8 @@ struct mod_rdp_transparent : public mod_api {
                             lic_data.copy_to_head(sec_header);
 
                             this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
+
+                            LOG(LOG_INFO, "mod_rdp_transparent::draw_event: ClientLicenseInfo_Send done");
                         }
                         break;  // case LIC::LICENSE_REQUEST:
                     case LIC::PLATFORM_CHALLENGE:
@@ -983,6 +1030,8 @@ struct mod_rdp_transparent : public mod_api {
                                              , this->encrypt, 0);
                             lic_data.copy_to_head(sec_header);
                             this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
+
+                            LOG(LOG_INFO, "mod_rdp_transparent::draw_event: ClientPlatformChallengeResponse_Send done");
                         }
                         break;
                     case LIC::NEW_LICENSE:
@@ -1021,6 +1070,7 @@ struct mod_rdp_transparent : public mod_api {
                                 && (lic.validClientMessage.dwStateTransition ==
                                     LIC::ST_NO_TRANSITION)) {
                                 this->state = MOD_RDP_CONNECTED;
+                                LOG( LOG_ERR, "mod_rdp_transparent::draw_event: LIC::STATUS_VALID_CLIENT");
                             }
                             else {
                                 LOG( LOG_ERR, "mod_rdp_transparent::draw_event: License Alert: error=%u transition=%u"
@@ -1056,6 +1106,252 @@ struct mod_rdp_transparent : public mod_api {
                 }   // if (sec.flags & SEC::SEC_LICENSE_PKT)
             }
             break;  // case MOD_RDP_GET_LICENSE:
+
+        // Capabilities Exchange
+        // ---------------------
+
+        // Capabilities Negotiation: The server sends the set of capabilities it
+        // supports to the client in a Demand Active PDU. The client responds with its
+        // capabilities by sending a Confirm Active PDU.
+
+        // Client                                                     Server
+        //    | <------- Demand Active PDU ---------------------------- |
+        //    |--------- Confirm Active PDU --------------------------> |
+
+        // Connection Finalization
+        // -----------------------
+
+        // Connection Finalization: The client and server send PDUs to finalize the
+        // connection details. The client-to-server and server-to-client PDUs exchanged
+        // during this phase may be sent concurrently as long as the sequencing in
+        // either direction is maintained (there are no cross-dependencies between any
+        // of the client-to-server and server-to-client PDUs). After the client receives
+        // the Font Map PDU it can start sending mouse and keyboard input to the server,
+        // and upon receipt of the Font List PDU the server can start sending graphics
+        // output to the client.
+
+        // Client                                                     Server
+        //    |----------Synchronize PDU------------------------------> |
+        //    |----------Control PDU Cooperate------------------------> |
+        //    |----------Control PDU Request Control------------------> |
+        //    |----------Persistent Key List PDU(s)-------------------> |
+        //    |----------Font List PDU--------------------------------> |
+
+        //    | <--------Synchronize PDU------------------------------- |
+        //    | <--------Control PDU Cooperate------------------------- |
+        //    | <--------Control PDU Granted Control------------------- |
+        //    | <--------Font Map PDU---------------------------------- |
+
+        // All PDU's in the client-to-server direction must be sent in the specified
+        // order and all PDU's in the server to client direction must be sent in the
+        // specified order. However, there is no requirement that client to server PDU's
+        // be sent before server-to-client PDU's. PDU's may be sent concurrently as long
+        // as the sequencing in either direction is maintained.
+
+
+        // Besides input and graphics data, other data that can be exchanged between
+        // client and server after the connection has been finalized include "
+        // connection management information and virtual channel messages (exchanged
+        // between client-side plug-ins and server-side applications).
+
+        case MOD_RDP_CONNECTED:
+            {
+                BStream stream(65536);
+
+                // Detect fast-path PDU
+                X224::RecvFactory f( *this->nego.trans
+                                   , stream
+                                   , true               /* Support Fast-Path. */
+                                   );
+
+                if (f.fast_path) {
+                    LOG( LOG_ERR, "Fast-path");
+                    break;
+                }
+
+                X224::DT_TPDU_Recv x224(*this->nego.trans, stream);
+                SubStream & mcs_data = x224.payload;
+                MCS::SendDataIndication_Recv mcs(mcs_data, MCS::PER_ENCODING);
+
+                if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum) {
+                    LOG( LOG_ERR
+                       , "mod_rdp_transparent::draw_event: got MCS DisconnectProviderUltimatum");
+                    throw Error(ERR_MCS);
+                }
+
+                SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
+
+                if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL) {
+                    if (this->verbose & 16) {
+                        LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
+                    }
+
+                    int num_channel_src =
+                        this->mod_channel_list.get_index_by_id(mcs.channelId);
+                    if (num_channel_src == -1) {
+                        LOG( LOG_WARNING
+                           , "mod_rdp_transparent::draw_event MOD_RDP_CONNECTED: Unknown Channel id=%d"
+                           , mcs.channelId);
+                        throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
+                    }
+
+                    const CHANNELS::ChannelDef & mod_channel =
+                        this->mod_channel_list[num_channel_src];
+                    if (this->verbose & 16) {
+                        mod_channel.log(num_channel_src);
+                    }
+
+                    uint32_t length     = sec.payload.in_uint32_le();
+                    int      flags      = sec.payload.in_uint32_le();
+                    size_t   chunk_size = sec.payload.in_remain();
+
+                    this->send_to_front_channel( mod_channel.name, sec.payload.p, length
+                                               , chunk_size, flags);
+                    sec.payload.p = sec.payload.end;
+                }   // if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL)
+                else {
+                    uint8_t * next_packet = sec.payload.p;
+                    while (next_packet < sec.payload.end) {
+                        sec.payload.p = next_packet;
+                        uint8_t * current_packet = next_packet;
+                        ShareControl_Recv sctrl(sec.payload);
+                        next_packet += sctrl.totalLength;
+
+                        if (this->verbose & 128) {
+                            LOG( LOG_WARNING, "LOOPING on PDUs: %u"
+                               , (unsigned)sctrl.totalLength);
+                        }
+
+                        switch (sctrl.pdu_type1) {
+                        case PDUTYPE_DATAPDU:
+                            if (this->verbose & 128) {
+                                LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
+                            }
+                            switch (this->connection_finalization_state) {
+                            case EARLY:
+                                LOG(LOG_WARNING, "Rdp::finalization is early");
+                                throw Error(ERR_SEC);
+                                break;
+                            case WAITING_SYNCHRONIZE:
+                                if (this->verbose & 1) {
+                                    LOG(LOG_WARNING, "WAITING_SYNCHRONIZE");
+                                }
+//                                this->check_data_pdu(PDUTYPE2_SYNCHRONIZE);
+                                this->connection_finalization_state =
+                                    WAITING_CTL_COOPERATE;
+                                break;
+                            case WAITING_CTL_COOPERATE:
+                                if (this->verbose & 1) {
+                                    LOG(LOG_WARNING, "WAITING_CTL_COOPERATE");
+                                }
+//                                this->check_data_pdu(PDUTYPE2_CONTROL);
+                                this->connection_finalization_state =
+                                    WAITING_GRANT_CONTROL_COOPERATE;
+                                break;
+                            case WAITING_GRANT_CONTROL_COOPERATE:
+                                if (this->verbose & 1) {
+                                    LOG(LOG_WARNING, "WAITING_GRANT_CONTROL_COOPERATE");
+                                }
+//                                this->check_data_pdu(PDUTYPE2_CONTROL);
+                                this->connection_finalization_state = WAITING_FONT_MAP;
+                                break;
+                            case WAITING_FONT_MAP:
+                                if (this->verbose & 1) {
+                                    LOG(LOG_WARNING, "PDUTYPE2_FONTMAP");
+                                }
+//                                this->check_data_pdu(PDUTYPE2_FONTMAP);
+                                this->connection_finalization_state = UP_AND_RUNNING;
+
+                                // Synchronize sent to indicate server the state of sticky keys (x-locks)
+                                // Must be sent at this point of the protocol (sent before, it xwould be ignored or replaced)
+                                rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
+                                break;
+                            case UP_AND_RUNNING:
+
+                                sec.payload.p = current_packet;
+
+                                HStream copy_stream(1024, 65535);
+
+                                copy_stream.out_copy_bytes(sec.payload.p, sec.payload.in_remain());
+                                copy_stream.mark_end();
+
+                                this->front.send_data_indication_ex(mcs.channelId, copy_stream);
+
+                                next_packet = sec.payload.end;
+
+                                break;
+                            }   // switch (this->connection_finalization_state)
+                            break;
+                        case PDUTYPE_DEMANDACTIVEPDU:
+                            {
+                                if (this->verbose & 128) {
+                                    LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
+                                }
+                                this->share_id = sctrl.payload.in_uint32_le();
+                                uint16_t lengthSourceDescriptor     =
+                                    sctrl.payload.in_uint16_le();
+                                uint16_t lengthCombinedCapabilities =
+                                    sctrl.payload.in_uint16_le();
+                                sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
+                                this->process_server_caps( sctrl.payload
+                                                         , lengthCombinedCapabilities);
+                                uint32_t sessionId = sctrl.payload.in_uint32_le();
+
+                                this->send_confirm_active(this);
+                                this->send_synchronise();
+                                this->send_control(RDP_CTL_COOPERATE);
+                                this->send_control(RDP_CTL_REQUEST_CONTROL);
+
+                                this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+
+                                /* Including RDP 5.0 capabilities */
+                                if (this->use_rdp5) {
+                                    LOG(LOG_INFO, "use rdp5");
+                                    this->enum_bmpcache2();
+                                    this->send_fonts(3);
+                                }
+                                else {
+                                    LOG(LOG_INFO, "not using rdp5");
+                                    this->send_fonts(1);
+                                    this->send_fonts(2);
+                                }
+                                LOG( LOG_INFO, "Resizing to %ux%ux%u", this->front_width
+                                   , this->front_height, this->bpp);
+                                if (-1 == this->front.server_resize( this->front_width
+                                                                   , this->front_height
+                                                                   , this->bpp)) {
+                                    LOG( LOG_WARNING
+                                       , "Resize not available on older clients,"
+                                         " change client resolution to match server "
+                                         "resolution");
+                                    throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
+                                }
+//                                this->orders.reset();
+                                this->connection_finalization_state = WAITING_SYNCHRONIZE;
+                            }
+                            break;  // case PDUTYPE_DEMANDACTIVEPDU:
+                        case PDUTYPE_DEACTIVATEALLPDU:
+                            if (this->verbose & 128) {
+                                LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU");
+                            }
+                            LOG(LOG_INFO, "Deactivate All PDU");
+                            TODO("CGR: Data should actually be consumed")
+                            TODO("CGR: Check we are indeed expecting Synchronize... dubious")
+                            this->connection_finalization_state = WAITING_SYNCHRONIZE;
+                            break;
+                        case PDUTYPE_SERVER_REDIR_PKT:
+                            if (this->verbose & 128) {
+                                LOG(LOG_INFO, "PDUTYPE_SERVER_REDIR_PKT");
+                            }
+                            break;
+                        default:
+                            LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
+                            break;
+                        }   // switch (sctrl.pdu_type1)
+                    }   // while (next_packet < sec.payload.end) {
+                }   // if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL)
+            }
+            break;  // case MOD_RDP_CONNECTED:
         }   // switch (this->state)
     }   // virtual void draw_event(void)
 
@@ -1121,6 +1417,454 @@ struct mod_rdp_transparent : public mod_api {
         if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp_transparent::send_to_mod_channel");
             LOG(LOG_INFO, "sending to channel %s", front_channel_name);
+        }
+    }
+
+    TODO("CGR: this can probably be unified with process_confirm_active in front");
+    void process_server_caps(Stream & stream, uint16_t len) {
+        if (this->verbose & 32) {
+            LOG(LOG_INFO, "mod_rdp_transparent::process_server_caps");
+        }
+        uint16_t ncapsets = stream.in_uint16_le();
+        stream.in_skip_bytes(2); /* pad */
+        for (uint16_t n = 0; n < ncapsets; n++) {
+            uint16_t   capset_type   = stream.in_uint16_le();
+            uint16_t   capset_length = stream.in_uint16_le();
+            uint8_t  * next          = (stream.p + capset_length) - 4;
+            switch (capset_type) {
+            case CAPSTYPE_GENERAL:
+                {
+                    GeneralCaps general_caps;
+                    general_caps.recv(stream, capset_length);
+                    if (this->verbose) {
+                        general_caps.log("Received from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_BITMAP:
+                {
+                    BitmapCaps bitmap_caps;
+                    bitmap_caps.recv(stream, capset_length);
+                    if (this->verbose) {
+                        bitmap_caps.log("Received from server");
+                    }
+                    this->bpp          = bitmap_caps.preferredBitsPerPixel;
+                    this->front_width = bitmap_caps.desktopWidth;
+                    this->front_height = bitmap_caps.desktopHeight;
+                }
+                break;
+            case CAPSTYPE_ORDER:
+                {
+                    OrderCaps order_caps;
+                    order_caps.recv(stream, capset_length);
+                    if (this->verbose) {
+                        order_caps.log("Received from server");
+                    }
+                }
+                break;
+            case CAPSTYPE_INPUT:
+                {
+                    InputCaps input_caps;
+                    input_caps.recv(stream, capset_length);
+                    if (this->verbose) {
+                        input_caps.log("Received from server");
+                    }
+
+                    this->client_fastpath_input_event_support =
+                        (this->fastpath_support && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
+                }
+                break;
+            }   // switch (capset_type)
+            stream.p = next;
+        }   // for (uint16_t n = 0; n < ncapsets; n++)
+        if (this->verbose & 32){
+            LOG(LOG_INFO, "mod_rdp::process_server_caps done");
+        }
+    }   // void process_server_caps(Stream & stream, uint16_t len)
+
+
+    void send_confirm_active(mod_api * mod) throw(Error) {
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::send_confirm_active");
+        }
+
+        BStream stream(65536);
+
+        RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
+
+        confirm_active_pdu.emit_begin(this->share_id);
+
+        GeneralCaps general_caps;
+        general_caps.extraflags  =
+            this->use_rdp5
+            ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
+            : 0
+            ;
+        // Slow/Fast-path
+        general_caps.extraflags |=
+            this->server_fastpath_update_support
+            ? FASTPATH_OUTPUT_SUPPORTED
+            : 0
+            ;
+        if (this->verbose) {
+            general_caps.log("Sending to server");
+        }
+        confirm_active_pdu.emit_capability_set(general_caps);
+
+        BitmapCaps bitmap_caps;
+        bitmap_caps.preferredBitsPerPixel = this->bpp;
+        bitmap_caps.desktopWidth          = this->front_width;
+        bitmap_caps.desktopHeight         = this->front_height;
+        bitmap_caps.bitmapCompressionFlag = this->bitmap_compression ? 1 : 0;
+        if (this->verbose) {
+            bitmap_caps.log("Sending bitmap caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(bitmap_caps);
+
+        OrderCaps order_caps;
+        order_caps.numberFonts                                   = 0x147;
+        order_caps.orderFlags                                    = 0x2a;
+        order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
+        order_caps.orderSupport[UnusedIndex3]                    = 1;
+        order_caps.orderSupport[UnusedIndex5]                    = 1;
+        order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
+        order_caps.textFlags                                     = 0x06a1;
+        order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
+        if (this->verbose) {
+            order_caps.log("Sending order caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(order_caps);
+
+        BmpCacheCaps bmp_cache_caps;
+        bmp_cache_caps.cache0Entries         = 0x258;
+        bmp_cache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
+        bmp_cache_caps.cache1Entries         = 0x12c;
+        bmp_cache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
+        bmp_cache_caps.cache2Entries         = 0x106;
+        bmp_cache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
+        if (this->verbose) {
+            bmp_cache_caps.log("Sending bmp cache caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(bmp_cache_caps);
+
+        //            if(this->use_rdp5){
+        //                BmpCache2Caps bmpcache2_caps;
+        //                bmpcache2_caps.numCellCaches = 3;
+        //                bmpcache2_caps.bitmapCache0CellInfo = 2000;
+        //                bmpcache2_caps.bitmapCache1CellInfo = 2000;
+        //                bmpcache2_caps.bitmapCache2CellInfo = 2000;
+        //                confirm_active_pdu.emit_capability_set(bmpcache2_caps);
+        //            }
+
+        ColorCacheCaps colorcache_caps;
+        if (this->verbose) {
+            colorcache_caps.log("Sending colorcache caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(colorcache_caps);
+
+        ActivationCaps activation_caps;
+        if (this->verbose) {
+            activation_caps.log("Sending activation caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(activation_caps);
+
+        ControlCaps control_caps;
+        if (this->verbose) {
+            control_caps.log("Sending control caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(control_caps);
+
+        PointerCaps pointer_caps;
+        pointer_caps.len                       = 10;
+        if (this->enable_new_pointer == false) {
+            pointer_caps.pointerCacheSize      = 0;
+            pointer_caps.colorPointerCacheSize = 20;
+            pointer_caps.len                   = 8;
+        }
+        if (this->verbose) {
+            pointer_caps.log("Sending pointer caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(pointer_caps);
+
+        ShareCaps share_caps;
+        if (this->verbose) {
+            share_caps.log("Sending share caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(share_caps);
+
+        InputCaps input_caps;
+        if (this->verbose) {
+            input_caps.log("Sending input caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(input_caps);
+
+        SoundCaps sound_caps;
+        if (this->verbose) {
+            sound_caps.log("Sending sound caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(sound_caps);
+
+        FontCaps font_caps;
+        if (this->verbose) {
+            font_caps.log("Sending font caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(font_caps);
+
+        GlyphSupportCaps glyphsupport_caps;
+        if (this->verbose) {
+            glyphsupport_caps.log("Sending glyphsupport caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(glyphsupport_caps);
+
+        //            BrushCacheCaps brushcache_caps;
+        //            brushcache_caps.log("Sending brushcache caps to server");
+        //            confirm_active_pdu.emit_capability_set(BrushCacheCaps);
+
+        //            CompDeskCaps compdesk_caps;
+        //            compdesk_caps.log("Sending compdesk caps to server");
+        //            confirm_active_pdu.emit_capability_set(CompDeskCaps);
+
+        confirm_active_pdu.emit_end();
+
+        BStream sec_header(256);
+        // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
+        // containing information about the packet. The type subfield of the pduType
+        // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
+            LOG(LOG_INFO, "Waiting for answer to confirm active");
+        }
+    }
+
+    void send_control(int action) throw(Error) {
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::send_control");
+        }
+
+        BStream sec_header(256);
+        BStream stream(256);
+
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
+
+        // Payload
+        stream.out_uint16_le(action);
+        stream.out_uint16_le(0); /* userid */
+        stream.out_uint32_le(0); /* control id */
+        stream.mark_end();
+
+        // Packet trailer
+        sdata.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::send_control done");
+        }
+    }
+
+    TODO("CGR: duplicated code in front")
+    void send_synchronise() throw (Error)
+    {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::send_synchronise");
+        }
+        BStream stream(65536);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
+
+        // Payload
+        stream.out_uint16_le(1); /* type */
+        stream.out_uint16_le(1002);
+        stream.mark_end();
+
+        // Packet trailer
+        sdata.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        BStream sec_header(256);
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::send_synchronise done");
+        }
+    }
+
+    void send_fonts(int seq) throw(Error)
+    {
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::send_fonts");
+        }
+        BStream stream(65536);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_FONTLIST, this->share_id, RDP::STREAM_MED);
+
+        // Payload
+        stream.out_uint16_le(0); /* number of fonts */
+        stream.out_uint16_le(0); /* pad? */
+        stream.out_uint16_le(seq); /* unknown */
+        stream.out_uint16_le(0x32); /* entry size */
+        stream.mark_end();
+
+        // Packet trailer
+        sdata.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        BStream sec_header(256);
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+
+        if (this->verbose & 1){
+            LOG(LOG_INFO, "mod_rdp::send_fonts done");
+        }
+    }
+
+    /* Send persistent bitmap cache enumeration PDU's
+       Not implemented yet because it should be implemented
+       before in process_data case. The problem is that
+       we don't save the bitmap key list attached with rdp_bmpcache2 capability
+       message so we can't develop this function yet */
+
+    void enum_bmpcache2() {}
+
+    void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error)
+    {
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
+        }
+        BStream stream(65536);
+        ShareData sdata(stream);
+        sdata.emit_begin(PDUTYPE2_INPUT, this->share_id, RDP::STREAM_HI);
+
+        // Payload
+        stream.out_uint16_le(1); /* number of events */
+        stream.out_uint16_le(0);
+        stream.out_uint32_le(time);
+        stream.out_uint16_le(message_type);
+        stream.out_uint16_le(device_flags);
+        stream.out_uint16_le(param1);
+        stream.out_uint16_le(param2);
+        stream.mark_end();
+
+        // Packet trailer
+        sdata.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        BStream sec_header(256);
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+
+        if (this->verbose & 4){
+            LOG(LOG_INFO, "mod_rdp::send_input_slowpath done");
+        }
+    }
+
+    void send_input_fastpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
+        }
+
+        BStream fastpath_header(256);
+        HStream stream(256, 512);
+
+        switch (message_type) {
+        case RDP_INPUT_SCANCODE:
+            {
+                FastPath::KeyboardEvent_Send ke(stream, (uint16_t)device_flags, param1);
+            }
+            break;
+
+        case RDP_INPUT_SYNCHRONIZE:
+            {
+                FastPath::SynchronizeEvent_Send se(stream, param1);
+            }
+            break;
+
+        case RDP_INPUT_MOUSE:
+            {
+                FastPath::MouseEvent_Send me(stream, (uint16_t)device_flags, param1, param2);
+            }
+            break;
+
+        default:
+            LOG(LOG_WARNING, "unsupported fast-path input message type 0x%x", message_type);
+            throw Error(ERR_RDP_FASTPATH);
+            break;
+        }
+
+        FastPath::ClientInputEventPDU_Send out_cie(fastpath_header, stream, 1, this->encrypt, this->encryptionLevel, this->encryptionMethod);
+
+        this->nego.trans->send(fastpath_header, stream);
+
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
+        }
+    }
+
+    void send_input(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
+        if (this->client_fastpath_input_event_support == false) {
+            send_input_slowpath(time, message_type, device_flags, param1, param2);
+        }
+        else {
+            send_input_fastpath(time, message_type, device_flags, param1, param2);
         }
     }
 };  // struct mod_rdp_transparent

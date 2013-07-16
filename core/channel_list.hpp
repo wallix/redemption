@@ -100,7 +100,7 @@ namespace CHANNELS {
             this->channelCount++;
         }
 
-        const ChannelDef * get(const char * const name) const {
+        const ChannelDef * get_by_name(const char * const name) const {
             const ChannelDef * channel = NULL;
             for (size_t index = 0; index < this->size(); index++) {
                 const ChannelDef & item = this->items[index];
@@ -112,7 +112,7 @@ namespace CHANNELS {
             return channel;
         }
 
-        const ChannelDef * get(int chanid) const {
+        const ChannelDef * get_by_id(int chanid) const {
             const ChannelDef * channel = NULL;
             for (size_t index = 0; index < this->size(); index++) {
                 const ChannelDef & item = this->items[index];
@@ -124,10 +124,21 @@ namespace CHANNELS {
             return channel;
         }
 
-        int get_index(const char * const name) const {
+        int get_index_by_name(const char * const name) const {
             int res = -1;
             for (size_t index = 0; index < this->size(); index++) {
                 if (strcmp(name, this->items[index].name) == 0) {
+                    res = index;
+                    break;
+                }
+            }
+            return res;
+        }
+
+        int get_index_by_id(int chanid) const {
+            int res = -1;
+            for (size_t index = 0; index < this->size(); index++) {
+                if (this->items[index].chanid == chanid) {
                     res = index;
                     break;
                 }
@@ -240,7 +251,7 @@ namespace CHANNELS {
     //  Virtual Channel Capability Set (section 2.2.7.1.10).
 
     enum {
-        CHANNEL_CHUNK_LENGTH = 1600
+          CHANNEL_CHUNK_LENGTH = 1600
     };
 
     // [MS-RDPBCGR] 2.2.6.1.1 Channel PDU Header (CHANNEL_PDU_HEADER)
@@ -316,7 +327,7 @@ namespace CHANNELS {
     // +----------------------------+----------------------------------------------+
 
     enum {
-        CHANNEL_FLAG_FIRST         = 0x00000001
+          CHANNEL_FLAG_FIRST         = 0x00000001
         , CHANNEL_FLAG_LAST          = 0x00000002
         , CHANNEL_FLAG_SHOW_PROTOCOL = 0x00000010
         , CHANNEL_FLAG_SUSPEND       = 0x00000020
@@ -352,7 +363,7 @@ namespace CHANNELS {
     // +-------------------------+-------------------------------------------------+
 
     enum {
-        PACKET_COMPR_TYPE_8K    = 0x0
+          PACKET_COMPR_TYPE_8K    = 0x0
         , PACKET_COMPR_TYPE_64K   = 0x1
         , PACKET_COMPR_TYPE_RDP6  = 0x2
         , PACKET_COMPR_TYPE_RDP61 = 0x3
@@ -368,8 +379,8 @@ namespace CHANNELS {
         VirtualChannelPDU(uint32_t verbose = 0) : verbose(verbose) {}
 
         void send_to_server( Transport & trans, CryptContext & crypt_context, int encryptionLevel
-                             , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-                             , Stream & chunk) {
+                           , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
+                           , Stream & chunk) {
             HStream stream(1024, 65536);
 
             stream.out_uint32_le(length);
@@ -383,7 +394,7 @@ namespace CHANNELS {
 
             SEC::Sec_Send             sec( sec_header, stream, 0, crypt_context, encryptionLevel);
             MCS::SendDataRequest_Send mcs( mcs_header, userId, channelId, 1, 3
-                                           , sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                                         , sec_header.size() + stream.size(), MCS::PER_ENCODING);
 
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
@@ -391,8 +402,8 @@ namespace CHANNELS {
         }
 
         void send_to_client( Transport & trans, CryptContext & crypt_context, int encryptionLevel
-                             , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-                             , Stream & chunk) {
+                           , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
+                           , Stream & chunk) {
             HStream stream(1024, 65536);
 
             stream.out_uint32_le(length);
@@ -411,14 +422,13 @@ namespace CHANNELS {
 
             SEC::Sec_Send                sec( sec_header, stream, 0, crypt_context, encryptionLevel);
             MCS::SendDataIndication_Send mcs( mcs_header, userId, channelId, 1, 3
-                                              , sec_header.size() + stream.size(), MCS::PER_ENCODING);
+                                            , sec_header.size() + stream.size(), MCS::PER_ENCODING);
 
             X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
 
             trans.send(x224_header, mcs_header, sec_header, stream);
         }
-    };
-
+    };  // struct VirtualChannelPDU
 }   // namespace CHANNELS
 
 #endif
