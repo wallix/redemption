@@ -41,6 +41,75 @@
 
 #include <string.hpp>
 
+
+TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
+#if !defined(SHARE_PATH)
+#define SHARE_PATH "/usr/local/share/rdpproxy"
+#endif
+
+TODO("move CFG_PATH to configuration (still used in main and sockettransport)")
+#if !defined(CFG_PATH)
+#define CFG_PATH "/etc/rdpproxy"
+#endif
+
+TODO("move PID_PATH to configuration")
+#if !defined(PID_PATH)
+#define PID_PATH "/var/run"
+#endif
+
+TODO("move LICENSE_PATH to configuration (still used in mod/rdp and mod/rdp_transparent)")
+#if !defined(LICENSE_PATH)
+#define LICENSE_PATH "/var/certs/redemption"
+#endif
+
+#if !defined(FLV_PATH)
+#define FLV_PATH "/tmp"
+#endif
+
+#if !defined(OCR_PATH)
+#define OCR_PATH "/tmp"
+#endif
+
+#if !defined(PNG_PATH)
+#define PNG_PATH "/tmp"
+#endif
+
+#if !defined(WRM_PATH)
+#define WRM_PATH "/tmp"
+#endif
+
+TODO("move LICENSE_PATH to configuration (still used in front and recorder)")
+#if !defined(HASH_PATH)
+#define HASH_PATH "/tmp/hash"
+#endif
+
+TODO("move LICENSE_PATH to configuration (still used in sockettransport)")
+#if !defined(CERTIF_PATH)
+#define CERTIF_PATH "/etc/rdpproxy/certificate"
+#endif
+
+TODO("move RECORD_PATH is still used in front, value should come from configuration")
+#if !defined(RECORD_PATH)
+#define RECORD_PATH "/var/rdpproxy/recorded"
+#endif
+
+TODO("move RECORD_TMP_PATH is still used in front, value should come from configuration")
+#if !defined(RECORD_TMP_PATH)
+#define RECORD_TMP_PATH "/var/rdpproxy/tmp"
+#endif
+
+TODO("move these into configuration")
+#define LOGIN_LOGO24 "ad24b.bmp"
+#define CURSOR0 "cursor0.cur"
+#define CURSOR1 "cursor1.cur"
+#define FONT1 "sans-10.fv1"
+#define REDEMPTION_LOGO24 "xrdp24b-redemption.bmp"
+#define LOCKFILE "rdpproxy.pid"
+
+#define RSAKEYS_INI "rsakeys.ini"
+#define RDPPROXY_INI "rdpproxy.ini"
+
+
 using namespace std;
 
 /*

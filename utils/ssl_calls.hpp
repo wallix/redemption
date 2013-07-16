@@ -39,7 +39,6 @@
 #include <openssl/x509v3.h>
 
 #include <string.h>
-#include "constants.hpp"
 #include "log.hpp"
 #include "stream.hpp"
 

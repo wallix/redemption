@@ -36,7 +36,6 @@
 #include "server.hpp"
 #include "colors.hpp"
 #include "stream.hpp"
-#include "constants.hpp"
 #include "front.hpp"
 #include "ssl_calls.hpp"
 #include "rect.hpp"

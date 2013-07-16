@@ -31,7 +31,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
-#include "constants.hpp"
 
 TODO("merge that with find and unlink")
 

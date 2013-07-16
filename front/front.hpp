@@ -30,7 +30,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "constants.hpp"
 #include "stream.hpp"
 #include "transport.hpp"
 #include "RDP/x224.hpp"

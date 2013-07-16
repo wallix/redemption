@@ -39,7 +39,6 @@
 /* include "ther h files */
 #include "stream.hpp"
 #include "ssl_calls.hpp"
-#include "constants.hpp"
 #include "mod_api.hpp"
 
 #include "RDP/x224.hpp"
@@ -54,7 +53,6 @@
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/clipboard.hpp"
 #include "RDP/fastpath.hpp"
-//#include "authentifier.hpp"
 #include "RDP/protocol.hpp"
 #include "RDP/RefreshRectPDU.hpp"
 

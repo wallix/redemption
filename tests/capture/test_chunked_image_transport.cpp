@@ -34,7 +34,6 @@
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
-#include "constants.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestImageChunk)

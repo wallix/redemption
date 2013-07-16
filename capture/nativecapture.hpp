@@ -24,7 +24,6 @@
 #include <errno.h>
 #include "bitmap.hpp"
 #include "rect.hpp"
-#include "constants.hpp"
 #include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"

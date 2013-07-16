@@ -33,7 +33,6 @@
 #include "stream.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"
-#include "constants.hpp"
 #include "wait_obj.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "channel_list.hpp"

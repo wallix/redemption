@@ -36,8 +36,6 @@
 
 #include "version.hpp"
 
-#include "constants.hpp"
-
 #include "config.hpp"
 #include "check_files.hpp"
 #include "mainloop.hpp"

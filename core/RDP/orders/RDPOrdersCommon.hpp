@@ -23,7 +23,6 @@
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_RDPORDERSCOMMON_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_RDPORDERSCOMMON_HPP_
 
-#include "constants.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
 #include "bitfu.hpp"

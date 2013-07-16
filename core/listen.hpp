@@ -36,9 +36,10 @@
 
 #include "log.hpp"
 #include "server.hpp"
-#include "constants.hpp"
 
-//using namespace std;
+#if !defined(IP_TRANSPARENT)
+#define IP_TRANSPARENT 19
+#endif
 
 struct Listen {
     Server & server;

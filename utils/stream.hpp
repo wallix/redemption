@@ -31,8 +31,6 @@
 #include <string.h> // for memcpy, memset
 #include <algorithm>
 
-#include "constants.hpp"
-//#include "ssl_calls.hpp"
 #include "error.hpp"
 #include "bitfu.hpp"
 #include "utf.hpp"
