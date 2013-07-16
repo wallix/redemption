@@ -127,7 +127,9 @@ struct ClientInfo {
     {
         InfoPacket infoPacket;
         infoPacket.recv(stream);
-        infoPacket.log("Receiving from client");
+        if (verbose) {
+            infoPacket.log("Receiving from client");
+        }
 
         memcpy(this->domain, infoPacket.Domain, sizeof(infoPacket.Domain));
         memcpy(this->username, infoPacket.UserName, sizeof(infoPacket.UserName));
