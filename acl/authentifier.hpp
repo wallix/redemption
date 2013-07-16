@@ -303,7 +303,7 @@ public:
     bool check(MMApi & mm, time_t now, Transport & trans) {
         long enddate = this->ini->context.end_date_cnx.get();
         // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-        if (enddate != 0 && (now > enddate)) {
+        if (enddate != 0 && (now > enddate) && !this->last_module) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe");
         }
@@ -362,14 +362,14 @@ public:
                 trans.tick();
 
                 // ===================== check if keepalive ======================
-                try {
-                    this->ini->context_ask(AUTHID_KEEPALIVE);
-                    // this->signal = BACK_EVENT_REFRESH;
-                    //this->acl_serial.send(AUTHID_KEEPALIVE);
-                }
-                catch (...) {
-                    return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
-                }
+                // try {
+                this->ini->context_ask(AUTHID_KEEPALIVE);
+                //     // this->signal = BACK_EVENT_REFRESH;
+                //     //this->acl_serial.send(AUTHID_KEEPALIVE);
+                // }
+                // catch (...) {
+                //     return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
+                // }
             }
         }   // if (this->keepalive_time)
 
