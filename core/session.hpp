@@ -110,11 +110,10 @@ struct Session {
             this->internal_state = SESSION_STATE_ENTRY;
 
             const bool enable_fastpath = true;
-            const bool tls_support     = this->ini->globals.enable_tls;
             const bool mem3blt_support = true;
 
             this->front = new Front( &front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen
-                                   , ini, enable_fastpath, tls_support, mem3blt_support);
+                                   , ini, enable_fastpath, mem3blt_support);
 
             ModuleManager mm(*this->front, *this->ini);
             bool          cant_create_acl(false);

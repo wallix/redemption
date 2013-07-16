@@ -69,10 +69,9 @@ int main(int argc, char * argv[]) {
     LCGRandom gen(0);
 
     const bool fastpath_support = true;
-    const bool tls_support      = false;
     const bool mem3blt_support  = false;
     Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
-        fastpath_support, tls_support, mem3blt_support);
+        fastpath_support, mem3blt_support);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {

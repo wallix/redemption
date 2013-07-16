@@ -131,7 +131,7 @@ public:
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
-    bool tls_support;                         // choice of programmer, front support tls
+    bool tls_client_active;
     bool mem3blt_support;
     int clientRequestedProtocols;
 
@@ -142,7 +142,6 @@ public:
           , Random * gen
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
-          , bool tls_support // If true, tls must be supported
           , bool mem3blt_support
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
@@ -168,7 +167,7 @@ public:
         , fastpath_support(fp_support)
         , client_fastpath_input_event_support(fp_support)
         , server_fastpath_update_support(false)
-        , tls_support(tls_support)
+        , tls_client_active(true)
         , mem3blt_support(mem3blt_support)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
@@ -1132,16 +1131,12 @@ public:
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
-                if (
-                    // Proxy supports TLS.
-                    this->tls_support
-                    // RDP client doesn't support TLS.
-                    && !(this->clientRequestedProtocols & X224::PROTOCOL_TLS)
+                if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
+                    (!this->ini->client.tls_support || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
                     // Fallback to legacy security protocol (RDP) is allowed.
                     && this->ini->client.tls_fallback_legacy) {
                     LOG(LOG_INFO, "Fallback to legacy security protocol");
-
-                    this->tls_support = false;
+                    this->tls_client_active = false;
                 }
             }
 
@@ -1153,7 +1148,7 @@ public:
                 uint8_t rdp_neg_type = 0;
                 uint8_t rdp_neg_flags = 0;
                 uint32_t rdp_neg_code = 0;
-                if (this->tls_support){
+                if (this->tls_client_active){
                     LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
                     if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
                         rdp_neg_type = X224::RDP_NEG_RSP;
@@ -1172,7 +1167,7 @@ public:
                 X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
                 this->trans->send(stream);
 
-                if (this->tls_support){
+                if (this->tls_client_active){
                     this->trans->enable_server_tls(this->ini->globals.certificate_password);
 
             // 2.2.10.2 Early User Authorization Result PDU
@@ -1326,7 +1321,7 @@ public:
 
             GCC::UserData::SCCore sc_core;
             sc_core.version = 0x00080004;
-            if (this->tls_support){
+            if (this->tls_client_active){
                 sc_core.length = 12;
                 sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
             }
@@ -1347,7 +1342,7 @@ public:
             }
             sc_net.emit(stream);
             // ------------------------------------------------------------------
-            if (this->tls_support){
+            if (this->tls_client_active){
                 GCC::UserData::SCSecurity sc_sec1;
                 sc_sec1.encryptionMethod = 0;
                 sc_sec1.encryptionLevel = 0;
@@ -1603,8 +1598,12 @@ public:
 
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
-            if (!this->tls_support)
+            if (this->tls_client_active){
+                LOG(LOG_INFO, "TLS mode: exchange packet disabled");
+            }
+            else
             {
+                LOG(LOG_INFO, "Legacy RDP mode: expecting exchange packet");
                 BStream pdu(65536);
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(*this->trans, pdu);
@@ -1620,7 +1619,6 @@ public:
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
                 SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
                 ssllib ssl;
@@ -1659,9 +1657,6 @@ public:
 
                 this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
                 this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
-            }
-            else {
-                LOG(LOG_INFO, "TLS mode: exchange packet disabled");
             }
             this->state = WAITING_FOR_LOGON_INFO;
         }
@@ -2272,10 +2267,10 @@ public:
                     size_t chunk_size = sec.payload.in_remain();
 
                     if (this->up_and_running){
-                        if (  !this->ini->client.device_redirection.get()
+                        if (!this->ini->client.device_redirection.get()
                            && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
                            ) {
-                            LOG(LOG_INFO, "Front::incoming::rdpdr channel disabed");
+                            LOG(LOG_INFO, "Front::incoming::rdpdr channel disabled");
                         }
                         else {
                             if (this->verbose & 16){

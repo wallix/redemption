@@ -100,10 +100,10 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
         verbose);
 
     const bool fastpath_support = false;
-    const bool tls_support      = false;
     const bool mem3blt_support  = false;
-    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
-        fastpath_support, tls_support, mem3blt_support);
+    ini.client.tls_support = false;
+    ini.client.tls_fallback_legacy = true;
+    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini, fastpath_support, mem3blt_support);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0){
