@@ -260,13 +260,25 @@ struct mod_rdp_transparent : public mod_api {
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {}
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
+        }
+    }
 
-    virtual void rdp_input_scancode( long param1, long param2, long param3, long param4
-                                   , Keymap2 * keymap) {}
+    virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
+                                   , Keymap2 * keymap) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
+        }
+    }
 
     virtual void rdp_input_synchronize( uint32_t time, uint16_t device_flags, int16_t param1
-                                      , int16_t param2) {}
+                                      , int16_t param2) {
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->send_input(0, RDP_INPUT_SYNCHRONIZE, device_flags, param1, 0);
+        }
+    }
 
     virtual void rdp_input_invalidate(const Rect & r) {}
 

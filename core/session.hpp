@@ -131,8 +131,8 @@ struct Session {
             while (run_session) {
                 try {
                     if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500) {
-                        time_mark.tv_sec = 0;
-                        time_mark.tv_usec = 50000;
+                    time_mark.tv_sec = 0;
+                    time_mark.tv_usec = 50000;
                     }
 
                     unsigned max = 0;
@@ -152,7 +152,8 @@ struct Session {
                     }
                     mm.mod->event.add_to_fd_set(rfds, max);
 
-                    if (mm.mod->event.is_set(rfds)) {
+                    TODO("fix that: timeout should be updated by add_to_fd_set")
+                    if (mm.mod->event.obj == 0 && mm.mod->event.is_set(rfds)) {
                         timeout.tv_sec  = 0;
                         timeout.tv_usec = 0;
                     }

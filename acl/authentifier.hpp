@@ -266,8 +266,8 @@ public:
                 }
                 res = MODULE_INTERNAL_CARD;
             }
-            TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
-            this->connected = false;
+            // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
+            // this->connected = false;
         }
         else if (this->connected) {
             if (this->verbose & 0x4) {
@@ -275,8 +275,8 @@ public:
             }
             res = MODULE_INTERNAL_WIDGET2_CLOSE;
             this->last_module = true;
-            TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
-            this->connected   = false;
+            // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
+            // this->connected   = false;
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
@@ -303,7 +303,7 @@ public:
     bool check(MMApi & mm, time_t now, Transport & trans) {
         long enddate = this->ini->context.end_date_cnx.get();
         // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-        if (enddate != 0 && (now > enddate)) {
+        if (enddate != 0 && (now > enddate) && !this->last_module) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe");
         }
@@ -362,14 +362,14 @@ public:
                 trans.tick();
 
                 // ===================== check if keepalive ======================
-                try {
-                    this->ini->context_ask(AUTHID_KEEPALIVE);
-                    // this->signal = BACK_EVENT_REFRESH;
-                    //this->acl_serial.send(AUTHID_KEEPALIVE);
-                }
-                catch (...) {
-                    return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
-                }
+                // try {
+                this->ini->context_ask(AUTHID_KEEPALIVE);
+                //     // this->signal = BACK_EVENT_REFRESH;
+                //     //this->acl_serial.send(AUTHID_KEEPALIVE);
+                // }
+                // catch (...) {
+                //     return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
+                // }
             }
         }   // if (this->keepalive_time)
 
@@ -407,9 +407,9 @@ public:
             else if (this->remote_answer && this->signal == BACK_EVENT_NEXT) {
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 this->signal = BACK_EVENT_NONE;
-                if (this->last_module) {
-                    return false;
-                }
+                // if (this->last_module) {
+                //     return false;
+                // }
                 int next_state = this->next_module();
                 mm.remove_mod();
                 try {

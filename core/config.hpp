@@ -237,6 +237,7 @@ typedef enum
         AUTHID_SELECTOR_CURRENT_PAGE,       // current page
         AUTHID_SELECTOR_DEVICE_FILTER,      // device filter text
         AUTHID_SELECTOR_GROUP_FILTER,       // group filter text
+        AUTHID_SELECTOR_PROTO_FILTER,       // protocol filter text
         AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
         AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
 
@@ -322,6 +323,7 @@ typedef enum
 #define STRAUTHID_SELECTOR_CURRENT_PAGE    "selector_current_page"
 #define STRAUTHID_SELECTOR_DEVICE_FILTER   "selector_device_filter"
 #define STRAUTHID_SELECTOR_GROUP_FILTER    "selector_group_filter"
+#define STRAUTHID_SELECTOR_PROTO_FILTER    "selector_proto_filter"
 #define STRAUTHID_SELECTOR_LINES_PER_PAGE  "selector_lines_per_page"
 #define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
 
@@ -411,6 +413,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_SELECTOR_CURRENT_PAGE,    // current page
     STRAUTHID_SELECTOR_DEVICE_FILTER,   // device filter text
     STRAUTHID_SELECTOR_GROUP_FILTER,    // group filter text
+    STRAUTHID_SELECTOR_PROTO_FILTER,    // protocol filter text
     STRAUTHID_SELECTOR_LINES_PER_PAGE,  // number of lines per page
     STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
 
@@ -644,8 +647,9 @@ struct Inifile : public FieldObserver {
 
         BoolField          selector;                 // AUTHID_SELECTOR //
         UnsignedField      selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE //
-        StringField        selector_device_filter;   // AUTHID_DEVICE_FILTER  //
+        StringField        selector_device_filter;   // AUTHID_SELECTOR_DEVICE_FILTER //
         StringField        selector_group_filter;    // AUTHID_SELECTOR_GROUP_FILTER //
+        StringField        selector_proto_filter;    // AUTHID_SELECTOR_PROTO_FILTER //
         UnsignedField      selector_lines_per_page;  // AUTHID_SELECTOR_LINES_PER_PAGE //
         UnsignedField      selector_number_of_pages; // AUTHID_SELECTOR_NUMBER_OF_PAGES //
 
@@ -721,6 +725,7 @@ public:
         this->to_send_set.insert(AUTHID_SELECTOR);
         this->to_send_set.insert(AUTHID_SELECTOR_GROUP_FILTER);
         this->to_send_set.insert(AUTHID_SELECTOR_DEVICE_FILTER);
+        this->to_send_set.insert(AUTHID_SELECTOR_PROTO_FILTER);
         this->to_send_set.insert(AUTHID_SELECTOR_LINES_PER_PAGE);
         this->to_send_set.insert(AUTHID_SELECTOR_CURRENT_PAGE);
         this->to_send_set.insert(AUTHID_TARGET_PASSWORD);
@@ -942,6 +947,7 @@ public:
         this->context.selector_current_page.set(1);
         this->context.selector_device_filter.set_empty();
         this->context.selector_group_filter.set_empty();
+        this->context.selector_proto_filter.set_empty();
         this->context.selector_lines_per_page.set(20);
         this->context.selector_number_of_pages.set(1);
 
@@ -1056,6 +1062,7 @@ public:
         this->context.selector_current_page.attach_ini(this,AUTHID_SELECTOR_CURRENT_PAGE);
         this->context.selector_device_filter.attach_ini(this,AUTHID_SELECTOR_DEVICE_FILTER);
         this->context.selector_group_filter.attach_ini(this,AUTHID_SELECTOR_GROUP_FILTER);
+        this->context.selector_proto_filter.attach_ini(this,AUTHID_SELECTOR_PROTO_FILTER);
         this->context.selector_lines_per_page.attach_ini(this,AUTHID_SELECTOR_LINES_PER_PAGE);
 
         this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);

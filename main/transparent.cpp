@@ -52,8 +52,10 @@ int main(int argc, char * argv[]) {
     listener.run();
 
     Inifile ini;
-    ini.debug.front = 511;
-    int verbose = 511;
+//    ini.debug.front = 511;
+    ini.debug.front = 0;
+//    int verbose = 511;
+    int verbose = 0;
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay
@@ -61,7 +63,8 @@ int main(int argc, char * argv[]) {
         LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     }
     wait_obj front_event(one_shot_server.sck);
-    SocketTransport front_trans("RDP Client", one_shot_server.sck, "0.0.0.0", 0, ini.debug.front, 0);
+    SocketTransport front_trans("RDP Client", one_shot_server.sck, "0.0.0.0", 0
+                               , ini.debug.front, 0);
 
     LCGRandom gen(0);
 
@@ -71,14 +74,20 @@ int main(int argc, char * argv[]) {
         fastpath_support, mem3blt_support);
     null_mod no_mod(front);
 
-    while (front.up_and_running == 0){
+    while (front.up_and_running == 0) {
         front.incoming(no_mod);
     }
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-    const char * target_device = "10.10.46.64";
+//    const char * target_device = "10.10.46.78";
+//    unsigned     target_port   = 3389;
+//    const char * username      = "Administrateur@qa";
+//    const char * password      = "S3cur3!1nux";
+    const char * target_device = "10.10.47.205";
     unsigned     target_port   = 3389;
+    const char * username      = "Administrateur";
+    const char * password      = "SecureLinux";
 
     int client_sck = ip_connect(target_device, target_port, 3, 1000, ini.debug.mod_rdp);
     SocketTransport mod_trans( "RDP Server", client_sck, target_device, target_port
@@ -88,9 +97,8 @@ int main(int argc, char * argv[]) {
 
     try {
         mod_rdp_transparent mod( mod_trans
-                               , "Administrateur"
-                               , "SecureLinux$42"
-//                               , ""
+                               , username
+                               , password
                                , "0.0.0.0"
                                , front
                                , target_device
@@ -105,30 +113,7 @@ int main(int argc, char * argv[]) {
                                , true   // mem3blt
                                , false  // bitmap update
                                , verbose);
-/*
-        mod_rdp mod( &mod_trans
-                   , "Administrateur"
-                   , "SecureLinux$42"
-                   , "0.0.0.0"      // client ip is silenced
-                   , front
-                   , target_device
-                   , false          // tls
-                   , front.client_info
-                   , &gen
-                   , front.keymap.key_flags
-                   , &ini.context.authchannel_target
-                   , &ini.context.authchannel_result
-                   , ini.globals.auth_channel
-                   , ini.globals.alternate_shell
-                   , ini.globals.shell_working_directory
-                   , ini.client.clipboard.get()
-                   , true           // support fast-path
-                   , true           // support mem3blt
-                   , ini.globals.enable_bitmap_update
-                   , verbose
-                   , true           // support new pointer
-                   );
-*/
+        mod.event.obj = client_sck;
 
         struct      timeval time_mark = { 0, 50000 };
         bool        run_session       = true;
@@ -146,6 +131,11 @@ int main(int argc, char * argv[]) {
 
                 front_event.add_to_fd_set(rfds, max);
                 mod.event.add_to_fd_set(rfds, max);
+
+                    if (mod.event.is_set(rfds)) {
+                        timeout.tv_sec  = 0;
+                        timeout.tv_usec = 0;
+                    }
 
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 
@@ -167,16 +157,19 @@ int main(int argc, char * argv[]) {
                     };
                 }
 
-                if (mod.event.is_set(rfds)) {
-                    mod.draw_event();
-                    if (mod.event.signal != BACK_EVENT_NONE) {
-                        mod_event_signal = mod.event.signal;
+                if (front.up_and_running) {
+                    if (mod.event.is_set(rfds)) {
+                        mod.draw_event();
+                        if (mod.event.signal != BACK_EVENT_NONE) {
+                            mod_event_signal = mod.event.signal;
 
+                            mod.event.reset();
+                        }
                         mod.event.reset();
-                    }
 
-                    if (mod_event_signal == BACK_EVENT_NEXT) {
-                        run_session = false;
+                        if (mod_event_signal == BACK_EVENT_NEXT) {
+                            run_session = false;
+                        }
                     }
                 }
             } catch (Error & e) {
