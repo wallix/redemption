@@ -905,7 +905,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     /******************************************************************************/
     void lib_open_clip_channel(void) {
         CHANNELS::ChannelDefArray chanlist   = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * channel = chanlist.get((char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+        const CHANNELS::ChannelDef * channel =
+            chanlist.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         if (channel) {
             // Monitor ready PDU send to front
@@ -945,7 +946,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     const CHANNELS::ChannelDef * get_channel_from_front_by_name(char * channel_name) {
     //==============================================================================================================
         CHANNELS::ChannelDefArray    channel_list = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * channel      = channel_list.get(channel_name);
+        const CHANNELS::ChannelDef * channel      = channel_list.get_by_name(channel_name);
         return channel;
     } // get_channel_from_front_by_name
 
@@ -960,7 +961,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     void lib_clip_data(void) {
     //==============================================================================================================
         CHANNELS::ChannelDefArray    chanlist = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * channel  = chanlist.get((char *)CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+        const CHANNELS::ChannelDef * channel  = chanlist.get_by_name(CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
         TODO("change code below. It will overflow for long VNC data to copy."
         " If clip_data_size is large is will also allocate an undecent amoutn of memory")
@@ -1048,7 +1049,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         }
 
         CHANNELS::ChannelDefArray    chanlist    = this->front.get_channel_list();
-        const CHANNELS::ChannelDef * mod_channel = chanlist.get(front_channel_name);
+        const CHANNELS::ChannelDef * mod_channel = chanlist.get_by_name(front_channel_name);
 
         // send it if module has a matching channel, if no matching channel is found just forget it
         if (mod_channel) {
@@ -1364,7 +1365,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
     virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
                                       , size_t length, size_t chunk_size, int flags) {
-        const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get(mod_channel_name);
+        const CHANNELS::ChannelDef * front_channel =
+            this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }

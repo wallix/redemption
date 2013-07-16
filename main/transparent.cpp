@@ -20,6 +20,8 @@
     rdp transparent module main header file
 */
 
+#define LOGPRINT
+
 #include "listen.hpp"
 #include "rdp/rdp_transparent.hpp"
 #include "session.hpp"
@@ -64,7 +66,7 @@ int main(int argc, char * argv[]) {
     LCGRandom gen(0);
 
     const bool fastpath_support = true;
-    const bool tls_support      = true;
+    const bool tls_support      = false;
     const bool mem3blt_support  = false;
     Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
         fastpath_support, tls_support, mem3blt_support);
@@ -79,79 +81,113 @@ int main(int argc, char * argv[]) {
     const char * target_device = "10.10.46.64";
     unsigned     target_port   = 3389;
 
-    int client_sck = ip_connect(target_device, 3389, 3, 1000, ini.debug.mod_rdp);
+    int client_sck = ip_connect(target_device, target_port, 3, 1000, ini.debug.mod_rdp);
     SocketTransport mod_trans( "RDP Server", client_sck, target_device, target_port
                              , ini.debug.mod_rdp, &ini.context.auth_error_message);
 
 //    UdevRandom gen;
 
-    mod_rdp_transparent mod( mod_trans
-                           , "Administrateur"
-                           , "SecureLinux$42"
-                           , "0.0.0.0"
-                           , front
-                           , target_device
-                           , false              // tls
-                           , front.client_info
-                           , gen
-                           , ini.globals.auth_channel
-                           , ini.globals.alternate_shell
-                           , ini.globals.shell_working_directory
-                           , verbose);
+    try {
+        mod_rdp_transparent mod( mod_trans
+                               , "Administrateur"
+                               , "SecureLinux$42"
+//                               , ""
+                               , "0.0.0.0"
+                               , front
+                               , target_device
+                               , false              // tls
+                               , front.client_info
+                               , gen
+                               , front.keymap.key_flags
+                               , ini.globals.auth_channel
+                               , ini.globals.alternate_shell
+                               , ini.globals.shell_working_directory
+                               , false  // fast-path
+                               , true   // mem3blt
+                               , false  // bitmap update
+                               , verbose);
+/*
+        mod_rdp mod( &mod_trans
+                   , "Administrateur"
+                   , "SecureLinux$42"
+                   , "0.0.0.0"      // client ip is silenced
+                   , front
+                   , target_device
+                   , false          // tls
+                   , front.client_info
+                   , &gen
+                   , front.keymap.key_flags
+                   , &ini.context.authchannel_target
+                   , &ini.context.authchannel_result
+                   , ini.globals.auth_channel
+                   , ini.globals.alternate_shell
+                   , ini.globals.shell_working_directory
+                   , ini.client.clipboard.get()
+                   , true           // support fast-path
+                   , true           // support mem3blt
+                   , ini.globals.enable_bitmap_update
+                   , verbose
+                   , true           // support new pointer
+                   );
+*/
 
-    struct      timeval time_mark = { 0, 50000 };
-    bool        run_session       = true;
-    BackEvent_t mod_event_signal  = BACK_EVENT_NONE;
+        struct      timeval time_mark = { 0, 50000 };
+        bool        run_session       = true;
+        BackEvent_t mod_event_signal  = BACK_EVENT_NONE;
 
-    while (run_session) {
-        try {
-            unsigned max = 0;
-            fd_set   rfds;
-            fd_set   wfds;
+        while (run_session) {
+            try {
+                unsigned max = 0;
+                fd_set   rfds;
+                fd_set   wfds;
 
-            FD_ZERO(&rfds);
-            FD_ZERO(&wfds);
-            struct timeval timeout = time_mark;
+                FD_ZERO(&rfds);
+                FD_ZERO(&wfds);
+                struct timeval timeout = time_mark;
 
-            front_event.add_to_fd_set(rfds, max);
-            mod.event.add_to_fd_set(rfds, max);
+                front_event.add_to_fd_set(rfds, max);
+                mod.event.add_to_fd_set(rfds, max);
 
-            int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+                int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 
-            if (num < 0) {
-                if (errno == EINTR) {
-                    continue;
+                if (num < 0) {
+                    if (errno == EINTR) {
+                        continue;
+                    }
+
+                    // Socket error
+                    break;
                 }
 
-                // Socket error
-                break;
-            }
-
-            if (front_event.is_set(rfds)) {
-                try {
-                    front.incoming(mod);
-                } catch (...) {
-                    run_session = false;
-                    continue;
-                };
-            }
-
-            if (mod.event.is_set(rfds)) {
-                mod.draw_event();
-                if (mod.event.signal != BACK_EVENT_NONE) {
-                    mod_event_signal = mod.event.signal;
-
-                    mod.event.reset();
+                if (front_event.is_set(rfds)) {
+                    try {
+                        front.incoming(mod);
+                    } catch (...) {
+                        run_session = false;
+                        continue;
+                    };
                 }
-            }
 
-            if (mod_event_signal == BACK_EVENT_NEXT) {
+                if (mod.event.is_set(rfds)) {
+                    mod.draw_event();
+                    if (mod.event.signal != BACK_EVENT_NONE) {
+                        mod_event_signal = mod.event.signal;
+
+                        mod.event.reset();
+                    }
+
+                    if (mod_event_signal == BACK_EVENT_NEXT) {
+                        run_session = false;
+                    }
+                }
+            } catch (Error & e) {
+                LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
                 run_session = false;
-            }
-        } catch (Error & e) {
-            LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
-            run_session = false;
-        };
+            };
+        }   // while (run_session)
+    }   // try
+    catch (Error & e) {
+        LOG(LOG_ERR, "errid = %d", e.id);
     }
 
     front.disconnect();

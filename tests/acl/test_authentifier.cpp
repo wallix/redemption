@@ -258,8 +258,8 @@ public:
     void init_pointers() {}
 
     Front(const ClientInfo & info, uint32_t verbose)
-        : capture_state(CAPTURE_STATE_UNKNOWN)
-        , FrontAPI(false, false)
+        : FrontAPI(false, false)
+        , capture_state(CAPTURE_STATE_UNKNOWN)
         , verbose(verbose)
         , client_info(info)
         , mouse_x(0)
