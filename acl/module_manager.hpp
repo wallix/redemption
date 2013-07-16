@@ -82,6 +82,7 @@ class MMApi
     ~MMApi() {}
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module) = 0;
+    virtual void record() = 0;
 
 };
 
@@ -123,9 +124,29 @@ public:
         delete this->no_mod;
     }
 
+    void record()
+    {
+        if (this->ini.globals.movie.get()) {
+        TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)")
+            if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                this->front.start_capture(this->front.client_info.width
+                                   , this->front.client_info.height
+                                   , this->ini
+                                   );
+                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+            }
+            else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
+                this->front.resume_capture();
+                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+            }
+        }
+        else if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
+            this->front.pause_capture();
+        }
+    }
+
     virtual void new_mod(int target_module)
     {
-
         LOG(LOG_INFO, "target_module=%u", target_module);
 
         switch (target_module)
@@ -309,11 +330,28 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
                     REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
                         char hostname[255];
+                        
+                    TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
                     hostname[0] = 0;
                     if (this->front.client_info.hostname[0]){
                         memcpy(hostname, this->front.client_info.hostname, 31);
                         hostname[31] = 0;
                     }
+                    
+                    ClientInfo client_info = this->front.client_info;
+                    
+                     if (strcmp(ini.context.mode_console.get_cstr(), "force") == 0) {
+                        client_info.console_session = true;
+                        LOG(LOG_INFO, "Session::mode console : force");
+                    }
+                    else if (strcmp(ini.context.mode_console.get_cstr(), "forbid") == 0) {
+                        client_info.console_session = false;
+                        LOG(LOG_INFO, "Session::mode console : forbid");
+                    }
+                    else {
+                        // default is "allow", do nothing special
+                    }
+                    
                     static const char * name = "RDP Target";
 
                     int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
@@ -350,7 +388,7 @@ public:
                                             , this->front
                                             , hostname
                                             , true
-                                            , this->front.client_info
+                                            , client_info
                                             , &gen
                                             , this->front.keymap.key_flags
 //                                            , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel

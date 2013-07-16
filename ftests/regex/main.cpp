@@ -15,6 +15,7 @@ namespace rndfa {
     const unsigned SPLIT = 1 << 9;
     const unsigned CAPTURE_OPEN = 1 << 10;
     const unsigned CAPTURE_CLOSE = 1 << 11;
+    const unsigned SPECIAL_CHECK = 1 << 12;
 
     struct StateBase
     {
@@ -28,10 +29,23 @@ namespace rndfa {
 
         virtual ~StateBase(){}
 
-        virtual bool check(int c) const
+        virtual bool check(int c)
         {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return (this->c & ANY_CHARACTER) || (this->c&0xFF) == c;
+        }
+
+        virtual void display(std::ostream& os)
+        {
+            if (this->c & ANY_CHARACTER) {
+                os << "any";
+            }
+            else if (this->c & (SPLIT|CAPTURE_CLOSE|CAPTURE_OPEN)){
+                os << (this->c == SPLIT ? "(split)" : this->c == CAPTURE_OPEN ? "(open)" : "(close)");
+            }
+            else {
+                os << "'" << char(this->c & 0xff) << "'";
+            }
         }
 
         unsigned c;
@@ -42,6 +56,12 @@ namespace rndfa {
         StateBase *out2;
     };
 
+    std::ostream& operator<<(std::ostream& os, StateBase& st)
+    {
+        st.display(os);
+        return os;
+    }
+
     typedef StateBase State;
 
     struct StateRange : StateBase
@@ -51,12 +71,18 @@ namespace rndfa {
         , rend(r2)
         {}
 
-        virtual ~StateRange(){}
+        virtual ~StateRange()
+        {}
 
-        virtual bool check(int c) const
+        virtual bool check(int c)
         {
             /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
             return (this->c&0xFF) <= c && c <= rend;
+        }
+
+        virtual void display(std::ostream& os)
+        {
+            os << "[" << char(this->c) << "-" << char(this->rend) << "]";
         }
 
         int rend;
@@ -68,20 +94,124 @@ namespace rndfa {
 
     struct StateCharacters : StateBase
     {
-        StateCharacters(const char * s, StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(*s, out1, out2)
+        StateCharacters(const std::string& s, StateBase* out1 = 0, StateBase* out2 = 0)
+        : StateBase(s[0], out1, out2)
         , str(s)
         {}
 
-        virtual ~StateCharacters(){}
+        virtual ~StateCharacters()
+        {}
 
-        virtual bool check(int c) const
+        virtual bool check(int c)
         {
             /**///std::cout << str;
-            return strchr(this->str, c) != 0;
+            return this->str.find(c) != std::string::npos;
         }
 
-        const char * str;
+        virtual void display(std::ostream& os)
+        {
+            os << "[" << this->str << "]";
+        }
+
+        std::string str;
+    };
+
+    struct StateMultiTest : StateBase
+    {
+        struct Checker {
+            virtual bool check(int c) = 0;
+            virtual void display(std::ostream& os) = 0;
+        };
+
+        std::vector<Checker*> checkers;
+        typedef std::vector<Checker*>::iterator checker_iterator;
+
+
+        StateMultiTest(StateBase* out1 = 0, StateBase* out2 = 0)
+        : StateBase(SPECIAL_CHECK, out1, out2)
+        , checkers()
+        {}
+
+        virtual ~StateMultiTest()
+        {
+            for (checker_iterator first = this->checkers.begin(), last = this->checkers.end(); first != last; ++first) {
+                delete *first;
+            }
+        }
+
+        virtual bool check(int c)
+        {
+            for (checker_iterator first = this->checkers.begin(), last = this->checkers.end(); first != last; ++first) {
+                if ((*first)->check(c)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        virtual void display(std::ostream& os)
+        {
+            checker_iterator first = this->checkers.begin();
+            checker_iterator last = this->checkers.end();
+            if (first != last) {
+                (*first)->display(os);
+                while (++first != last) {
+                    os << "|";
+                    (*first)->display(os);
+                }
+            }
+        }
+
+        void push_checker(Checker * checker)
+        {
+            this->checkers.push_back(checker);
+        }
+    };
+
+    struct CheckerString : StateMultiTest::Checker
+    {
+        CheckerString(const std::string& s)
+        : str(s)
+        {}
+
+        virtual ~CheckerString()
+        {}
+
+        virtual bool check(int c)
+        {
+            return this->str.find(c) != std::string::npos;
+        }
+
+        virtual void display(std::ostream& os)
+        {
+            os << "[" << this->str << "]";
+        }
+
+        std::string str;
+    };
+
+    struct CheckerInterval : StateMultiTest::Checker
+    {
+        CheckerInterval(int first, int last)
+        : begin(first)
+        , end(last)
+        {}
+
+        virtual ~CheckerInterval()
+        {}
+
+        virtual bool check(int c)
+        {
+            return this->begin <= c && c <= this->end;
+        }
+
+        virtual void display(std::ostream& os)
+        {
+            os << "[" << char(this->begin) << "-" << char(this->end) << "]";
+        }
+
+        int begin;
+        int end;
     };
 
     State * characters(const char * s, StateBase* out = 0) {
@@ -551,6 +681,7 @@ namespace rndfa {
         {
             /**///std::cout << (__FUNCTION__) << std::endl;
             if (st && st->id != step) {
+                bool savcap = st->id == -1u;
                 st->id = step;
                 if (st->c == SPLIT) {
                     this->push_state(l, st->out1, step);
@@ -558,11 +689,17 @@ namespace rndfa {
                 }
                 else {
                     if (st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
-                        *this->pcaptures = st;
-                        ++this->pcaptures;
+                        if (savcap) {
+                            *this->pcaptures = st;
+                            ++this->pcaptures;
+                        }
+                        this->push_state(l, st->out1, step);
+                        this->push_state(l, st->out2, step);
                     }
-                    l->last->st = st;
-                    ++l->last;
+                    else {
+                        l->last->st = st;
+                        ++l->last;
+                    }
                 }
             }
         }
@@ -684,7 +821,7 @@ namespace rndfa {
                         pmatch = p;
                     }
                     else {
-                        ranges.push_back(range_t(pmatch, p-pmatch-1));
+                        ranges.push_back(range_t(pmatch, p-pmatch));
                         pmatch = -1u;
                     }
                     ++match_first;
@@ -824,14 +961,8 @@ namespace rndfa {
     public:
         void display_elem_state_list(const StateList& e, unsigned idx) const
         {
-            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t" << e.st->c << "\t";
-            if (e.st->c & ANY_CHARACTER) {
-                std::cout << "any\t";
-            }
-            else {
-                std::cout << "'" << char(e.st->c & 0xff) << "'\t";
-            }
-            std::cout << (e.next) << "\033[0m\n";
+            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t" << e.st->c << "\t"
+            << *e.st << (e.next) << "\033[0m\n";
         }
 
         void display_dfa() const
@@ -840,17 +971,8 @@ namespace rndfa {
             for (; l < this->st_range_list + this->vec.size() && l->first != l->last; ++l) {
                 std::cout << l << "\n";
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    std::cout << "\t" << first->st->num << "\t" << first->st->c << "\t";
-                    if (first->st->c & ANY_CHARACTER) {
-                        std::cout << "any";
-                    }
-                    else if (first->st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
-                        std::cout << (first->st->c == CAPTURE_OPEN ? "(" : ")");
-                    }
-                    else {
-                        std::cout << "'" << char(first->st->c & 0xff) << "'";
-                    }
-                    std::cout << "\t" << first->next << ("\n");
+                    std::cout << "\t" << first->st->num << "\t" << first->st->c << "\t"
+                    << *first->st << "\t" << first->next << ("\n");
                 }
             }
             std::cout << std::endl;
@@ -890,31 +1012,30 @@ namespace rndfa {
                     StateList * last = ifirst->rl->last;
 
                     for (; first != last; ++first) {
-                        if (first->st->check(*s)) {
+                        StateList * p = first;
+//                         while (p->st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
+//                             std::cout << (p->next->last - p->next->first) << std::endl;
+//                             if (!(p = p->next->first)) {
+//                                 return ifirst->idx;
+//                             }
+//                         }
+                        if (p->st->check(*s)) {
 #if 0
                             this->sm.display_elem_state_list(*first, ifirst->idx);
 #endif
 
-                            if (0 == first->next) {
+                            if (0 == p->next) {
                                 /**///std::cout << "idx: " << (ifirst->idx) << std::endl;
                                 return ifirst->idx;
-                            }
-
-                            StateList * p = first;
-
-                            while (p->next && p->next->st->c & (CAPTURE_OPEN|CAPTURE_CLOSE)) {
-                                /**///std::cout << "\t-> " << p->next->first->st->num << (p->next->st->c == CAPTURE_OPEN ? "\t(open)\n" : "\t(close)\n");
-                                p = p->next->first;
                             }
 
                             const unsigned idx = (0 == new_trace)
                                 ? ifirst->idx
                                 : this->sm.pop_idx_trace(ifirst->idx);
                             /**///std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m\n";
-                            std::cout.flush();
                             l2->push_back(p->next, idx);
                             if (!new_trace) {
-                                ++this->sm.traces[idx * this->sm.vec.size() + first->st->num];
+                                ++this->sm.traces[idx * this->sm.vec.size() + p->st->num];
                             }
                             ++new_trace;
                         }
@@ -1003,131 +1124,147 @@ namespace rndfa {
         return zero_or_more(c, out)->out1;
     }
 
+    int c2rgxc(int c)
+    {
+        switch (c) {
+            case 'n': return '\n';
+            case 't': return '\t';
+            case 'r': return '\r';
+            case 'v': return '\v';
+            default : return c;
+        }
+    }
 
-    struct Utils {
-        StateBase * st_begin;
-        StateBase * st_current;
-        StateBase ** o1;
-        StateBase ** o2;
+    StateBase * str2stchar(const char *& s, const char * last)
+    {
+        if (*s == '\\' && s+1 != last) {
+            return new State(c2rgxc(*++s));
+        }
 
-        void next_st(StateBase * st)
-        {
-            if (this->o1) {
-                *this->o1 = st;
+        if (*s == '[') {
+            StateMultiTest * st = new StateMultiTest;
+            std::string str;
+            if (++s != last && *s != ']') {
+                if (*s == '-') {
+                    str += '-';
+                    ++s;
+                }
+                const char * c = s;
+                while (s != last && *s != ']') {
+                    const char * p = s;
+                    while (++s != last && *s != ']' && *s != '-') {
+                        if (*s == '\\' && s+1 != last) {
+                            str += c2rgxc(*++s);
+                        }
+                        else {
+                            str += *s;
+                        }
+                    }
+
+                    if (*s == '-') {
+                        if (c == s) {
+                            str += '-';
+                        }
+                        else if (s+1 == last) {
+                            std::cerr << "missing terminating ]" << std::endl; _exit(0); //TODO
+                        }
+                        else if (*(s+1) == ']') {
+                            str += '-';
+                            ++s;
+                        }
+                        else if (s == p) {
+                            str += '-';
+                        }
+                        else {
+                            if (str.size() > 1) {
+                                str.erase(str.size()-1);
+                            }
+                            //TODO CHECK *(se-1) <= *se
+                            //TODO std::cerr << "range out of order in character" << std::endl;
+                            st->push_checker(new CheckerInterval(*(s-1), *(s+1)));
+                            c = ++s + 1;
+                        }
+                    }
+                }
             }
-            if (this->o2) {
-                *this->o2 = st;
+
+            if (!str.empty()) {
+                st->push_checker(new CheckerString(str));
             }
+
+            if (*s != ']') {
+                std::cerr << "missing terminating ]" << std::endl; _exit(0); //TODO
+                delete st;
+                st = 0;
+            }
+
+            return st;
         }
 
-        void out(StateBase *& out1, StateBase *& out2)
-        {
-            this->o1 = &out1;
-            this->o2 = &out2;
-        }
+        return new State(
+            *s == '.' ? ANY_CHARACTER :
+            *s == '(' ? CAPTURE_OPEN :
+            *s == ')' ? CAPTURE_CLOSE :
+            *s
+        );
+    }
 
-        void out(int, StateBase *& out2)
-        {
-            this->o1 = 0;
-            this->o2 = &out2;
-        }
-
-        void out(StateBase *& out1, int = 0)
-        {
-            this->o1 = &out1;
-            this->o2 = 0;
-        }
-    } u;
+    bool is_meta_char(int c)
+    {
+        return c == '*' || c == '+' || c == '?' || c == '|';
+    }
 
     StateBase* str2reg(const char * s, const char * last)
     {
-        Utils u;
         StateBase st(0);
-        u.o1=0;
-        u.o2=0;
         StateBase * cur = 0;
         StateBase * prev = &st;
-        StateBase ** pst = &st.out1;
+        StateBase ** pst = &st.out2;
         StateBase * begin = 0;
         StateBase * old = 0;
         StateBase * st1 = 0;
+        StateBase * bst = &st;
 
         while (s != last) {
-            const char * p = s;
-            while (p != last && !(*p == '*' || *p == '+' || *p == '?' || *p == '(' || *p == ')')) {
-                ++p;
-            }
-            if (p != s) {
-                cur = *pst = new State(*s);
-                while (++s != p) {
+            if (!is_meta_char(*s)) {
+                *pst = str2stchar(s, last);
+                while (++s != last && !is_meta_char(*s)) {
                     pst = &(*pst)->out1;
-                    cur = *pst = new State(*s);
+                    *pst = str2stchar(s, last);
                 }
-                s = p;
             }
             else {
                 switch (*s) {
                     case '?':
-                        /*cur = */*pst = new State(SPLIT, *pst);
+                        *pst = new State(SPLIT, *pst);
                         pst = &(*pst)->out2;
                         break;
                     case '*':
-                        /*cur = */*pst = new State(SPLIT, *pst);
+                        *pst = new State(SPLIT, *pst);
                         (*pst)->out1->out1 = *pst;
                         pst = &(*pst)->out2;
                         break;
                     case '+':
-                        std::cout << (cur) << std::endl;
-                        cur->out1 = *pst = new State(SPLIT, cur);
-                        //cur = *pst;
-                        pst = &(*pst)->out2;
+                        (*pst)->out1 = new State(SPLIT, *pst);
+                        pst = &(*pst)->out1->out2;
                         break;
+                    case '|':
+                        bst->out2 = new State(SPLIT, bst->out2);
+                        bst = bst->out2;
+                        pst = &bst->out2;
+                        break;
+//                     case '(':
+//                         break;
+//                     case ')':
+//                         break;
                     default:
+                        std::cout << ("error") << std::endl;
                         break;
                 }
                 ++s;
             }
-//             switch (*s) {
-//                 case '.':
-//                     old = cur;
-//                     cur = new State(ANY_CHARACTER);
-//                     u.next_st(cur);
-//                     u.out(cur->out1, 0);
-//                     break;
-//                 case '?':
-//                     cur = new State(SPLIT, old);
-//                     u.next_st(cur);
-//                     u.out(cur->out2, old->out2/*|st1->out2*/);
-//                     break;
-//                 case '+':
-//                     cur = new State(SPLIT, old);
-//                     u.next_st(cur);
-//                     u.out(cur->out2, 0);
-//                     break;
-//                 case '*':
-//                     cur = new State(SPLIT, old);
-//                     u.next_st(cur);
-//                     u.out(cur->out2, 0);
-//                     break;
-// //                 case '(':
-// //                     single(CAPTURE_OPEN);
-// //                     break;
-// //                 case ')':
-// //                     single(CAPTURE_CLOSE);
-// //                     break;
-// //                 case '|':
-// //                     state();
-// //                     break;
-//                 default:
-//                     old = cur;
-//                     cur = new State(*s);
-//                     u.next_st(cur);
-//                     u.out(cur->out1, 0);
-//                     break;
-//             }
-//             ++s;
         }
-        return st.out1;
+        return st.out2;
     }
 
     StateBase* str2reg(const char * s)
@@ -1140,17 +1277,8 @@ namespace rndfa {
         if (st && st->id != -1u) {
             std::string s(depth, '\t');
             std::cout
-            << s << "\033[33m" << st << "\t" << st->num << "\t" << st->c << "\t";
-            if (st->c & ANY_CHARACTER) {
-                std::cout << "any";
-            }
-            else if (st->c & (SPLIT|CAPTURE_CLOSE|CAPTURE_OPEN)){
-                std::cout << (st->c == SPLIT ? "(split)" : st->c == CAPTURE_OPEN ? "(open)" : "(close)");
-            }
-            else {
-                std::cout << "'" << char(st->c & 0xff) << "'";
-            }
-            std::cout << "\033[0m\n\t" << s << st->out1 << "\n\t" << s << st->out2 << "\n";
+            << s << "\033[33m" << st << "\t" << st->num << "\t" << st->c << "\t"
+            << *st << "\033[0m\n\t" << s << st->out1 << "\n\t" << s << st->out2 << "\n";
             st->id = -1u;
             display_state(st->out1, depth+1);
             display_state(st->out2, depth+1);
@@ -1233,17 +1361,21 @@ int main(int argc, char **argv) {
                         zero_or_more(
                             ANY_CHARACTER,
                             single(
-                                STATEMACHINE == 1 ? CAPTURE_CLOSE : ' ',
+                                //STATEMACHINE == 1 ? CAPTURE_CLOSE : ' ',
+                                CAPTURE_CLOSE,
                                 single(
-                                    STATEMACHINE == 1 ? ' ' : CAPTURE_CLOSE,
+                                    //STATEMACHINE == 1 ? ' ' : CAPTURE_CLOSE,
+                                    ' ',
                                     single(
                                         CAPTURE_OPEN,
                                         zero_or_more(
                                             ANY_CHARACTER,
                                             single(
-                                                STATEMACHINE == 1 ? CAPTURE_CLOSE : ' ',
+                                                //STATEMACHINE == 1 ? CAPTURE_CLOSE : ' ',
+                                                CAPTURE_CLOSE,
                                                 single(
-                                                    STATEMACHINE == 1 ? ' ' : CAPTURE_CLOSE,
+                                                    //STATEMACHINE == 1 ? ' ' : CAPTURE_CLOSE,
+                                                    ' ',
                                                     zero_or_more(
                                                         ANY_CHARACTER,
                                                         &char_a
@@ -1282,11 +1414,14 @@ int main(int argc, char **argv) {
 
     const char * str = argc == 2 ? argv[1] : "abcdef";
 
+#ifndef ITERATION
+# define ITERATION 100000
+#endif
     {
         regexec(&rgx, str, 1, regmatch, 0); //NOTE preload
         //BEGIN
         std::clock_t start_time = std::clock();
-        for (size_t i = 0; i < 100000; ++i) {
+        for (size_t i = 0; i < ITERATION; ++i) {
             ismatch1 = 0 == regexec(&rgx, str, 1, regmatch, 0);
         }
         d1 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
@@ -1294,7 +1429,7 @@ int main(int argc, char **argv) {
     }
     {
         std::clock_t start_time = std::clock();
-        for (size_t i = 0; i < 100000; ++i) {
+        for (size_t i = 0; i < ITERATION; ++i) {
             ismatch2 = sm.exact_search(str);
         }
         d2 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
@@ -1322,7 +1457,7 @@ int main(int argc, char **argv) {
         test::impl(rgx, str, regmatch, sizeof(regmatch)/sizeof(regmatch[0])); //NOTE preload
         //BEGIN
         std::clock_t start_time = std::clock();
-        for (size_t i = 0; i < 100000; ++i) {
+        for (size_t i = 0; i < ITERATION; ++i) {
             ismatch3 = test::impl(rgx, str, regmatch, sizeof(regmatch)/sizeof(regmatch[0]));
         }
         d3 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
@@ -1330,7 +1465,7 @@ int main(int argc, char **argv) {
     }
     {
         std::clock_t start_time = std::clock();
-        for (size_t i = 0; i < 100000; ++i) {
+        for (size_t i = 0; i < ITERATION; ++i) {
             ismatch4 = sm.exact_search_with_trace(str);
             Regex::range_list match_result = sm.match_result();
             typedef Regex::range_list::iterator iterator;

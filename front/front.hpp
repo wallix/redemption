@@ -596,14 +596,6 @@ public:
         this->trans->send(x224_header, mcs_data);
     }
 
-    void set_console_session(bool b)
-    {
-        if (this->verbose & 1){
-            LOG(LOG_INFO, "Front::set_console_session(%u)", b);
-        }
-        this->client_info.console_session = b;
-    }
-
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const
     {
         return this->channel_list;
@@ -2384,6 +2376,23 @@ public:
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
         TODO("shouldn't there be sec layer here ? even if it's disabled when there is not encryption server to client ?")
 //        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        this->trans->send(x224_header, mcs_header, stream);
+    }
+
+    void send_data_indication_ex(uint16_t channelId, HStream & stream) {
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec( sec_header, stream, 0, this->encrypt
+                         , this->client_info.encryptionLevel);
+        stream.copy_to_head(sec_header);
+
+        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
+                                        , stream.size(), MCS::PER_ENCODING);
+
+        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
+
         this->trans->send(x224_header, mcs_header, stream);
     }
 
