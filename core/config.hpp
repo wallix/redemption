@@ -771,7 +771,7 @@ public:
 
         this->globals.max_tick              = 30;
         this->globals.keepalive_grace_delay = 30;
-        this->globals.close_timeout         = 60;       // timeout of close box set to 10 minutes
+        this->globals.close_timeout         = 600;       // timeout of close box set to 10 minutes
 
         this->globals.internal_domain = false;
         strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
