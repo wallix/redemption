@@ -594,6 +594,9 @@ unit-test test_outmetatransport : tests/transport/test_outmetatransport.cpp open
 unit-test test_testtransport : tests/transport/test_testtransport.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_testtransport : tests/transport/test_testtransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_counttransport : tests/transport/test_counttransport.cpp openssl crypto z dl libboost_unit_test ;
+unit-test test_counttransport : tests/transport/test_counttransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_outfiletransport : tests/transport/test_outfiletransport.cpp openssl crypto z dl libboost_unit_test ;
 unit-test test_outfiletransport : tests/transport/test_outfiletransport.cpp openssl crypto z dl libboost_unit_test gcov : <variant>coverage ;
 

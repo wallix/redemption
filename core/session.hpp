@@ -234,7 +234,7 @@ struct Session {
 
                                     this->ini->context.auth_error_message.copy_c_str("No authentifier available");
                                     mm.remove_mod();
-                                    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+                                    mm.new_mod(MODULE_INTERNAL_CLOSE);
                                 }
                             }
                         }

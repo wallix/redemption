@@ -1117,6 +1117,7 @@ class SocketTransport : public Transport {
             LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, len);
         }
 
+        TODO("move that to base class : accounting_recv(len)");
         this->total_received += len;
         this->last_quantum_received += len;
     }
@@ -1140,6 +1141,7 @@ class SocketTransport : public Transport {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
 
+        TODO("move that to base class : accounting_send(len)");
         this->total_sent += len;
         this->last_quantum_sent += len;
     }
