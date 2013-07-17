@@ -54,6 +54,8 @@ int main(int argc, char * argv[]) {
     Inifile ini;
 //    ini.debug.front = 511;
     ini.debug.front = 0;
+//    ini.debug.mod_rdp = 511;
+    ini.debug.mod_rdp = 0;
 //    int verbose = 511;
     int verbose = 0;
 
@@ -92,7 +94,7 @@ int main(int argc, char * argv[]) {
 
     int client_sck = ip_connect(target_device, target_port, 3, 1000, ini.debug.mod_rdp);
     SocketTransport mod_trans( "RDP Server", client_sck, target_device, target_port
-                             , ini.debug.mod_rdp, &ini.context.auth_error_message);
+                             , /*ini.debug.mod_rdp*/0, &ini.context.auth_error_message);
 
 //    UdevRandom gen;
 
@@ -113,7 +115,7 @@ int main(int argc, char * argv[]) {
                                , false  // fast-path
                                , true   // mem3blt
                                , false  // bitmap update
-                               , verbose);
+                               , ini.debug.mod_rdp);
         mod.event.obj = client_sck;
 
         struct      timeval time_mark = { 0, 50000 };

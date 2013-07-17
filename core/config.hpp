@@ -41,7 +41,6 @@
 
 #include <string.hpp>
 
-
 TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
 #if !defined(SHARE_PATH)
 #define SHARE_PATH "/usr/local/share/rdpproxy"

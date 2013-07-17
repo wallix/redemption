@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_BASE_FIELD_HPP_
 #define _REDEMPTION_BASE_FIELD_HPP_
 
+#include "cfgloader.hpp"
+
 struct FieldObserver {
 
     /******************************************************
