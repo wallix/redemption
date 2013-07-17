@@ -373,7 +373,7 @@ public:
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
                 int next_state = this->next_module();
-                if (next_state == MODULE_INTERNAL_WIDGET2_CLOSE || next_state == MODULE_INTERNAL_CLOSE) {
+                if (next_state == MODULE_INTERNAL_CLOSE) {
                     return invoke_mod_close(mm,NULL,signal);
                 }
                 mm.remove_mod();
