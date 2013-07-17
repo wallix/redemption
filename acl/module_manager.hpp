@@ -83,6 +83,10 @@ class MMApi
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module) = 0;
     virtual void record() = 0;
+    TODO("ModuleManager should know it's state (the module currently connected)"
+         "At least if it's some target module (RDP, VNC, XUP, replay)"
+         "some other internal module, or the close box")
+//    virtual bool is_close_box() { return false; }
 
 };
 
