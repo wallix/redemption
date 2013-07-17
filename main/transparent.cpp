@@ -20,7 +20,8 @@
     rdp transparent module main header file
 */
 
-#define LOGPRINT
+#include <boost/program_options/options_description.hpp>
+#include <string>
 
 #include "listen.hpp"
 #include "rdp/rdp_transparent.hpp"
@@ -28,6 +29,90 @@
 #include "sockettransport.hpp"
 
 int main(int argc, char * argv[]) {
+    openlog("transparent", LOG_CONS | LOG_PERROR, LOG_USER);
+
+    const char * copyright_notice =
+        "\n"
+        "ReDemPtion Transparent Proxy " VERSION ".\n"
+        "Copyright (C) Wallix 2010-2013.\n"
+        "Christophe Grosjean, Raphael Zhou.\n"
+        "\n"
+        ;
+
+    std::string input_filename;
+    std::string output_filename;
+    std::string target_device;
+    uint32_t    target_port;
+    std::string username;
+    std::string password;
+
+    target_port = 3389;
+
+    boost::program_options::options_description desc("Options");
+    desc.add_options()
+    ("help,h",    "produce help message")
+    ("version,v", "show software version")
+
+    ("input-file,i",    boost::program_options::value(&input_filename),  "input ini file name")
+    ("output-file,o",   boost::program_options::value(&output_filename), "output int file name")
+    ("target-device,t", boost::program_options::value(&target_device),   "target device[:port]")
+    ("username,u",      boost::program_options::value(&username),        "username")
+    ("password,p",      boost::program_options::value(&password),        "password")
+    ;
+
+    boost::program_options::variables_map options;
+    boost::program_options::store(
+        boost::program_options::command_line_parser(argc, argv).options(desc).run(),
+        options
+    );
+    boost::program_options::notify(options);
+
+    if (options.count("help") > 0) {
+        cout << copyright_notice;
+        cout << "Usage: redver [options]\n\n";
+        cout << desc << endl;
+        exit(-1);
+    }
+
+    if (options.count("version") > 0) {
+        cout << copyright_notice;
+        exit(-1);
+    }
+
+    if (   (input_filename.c_str()[0] == 0)
+        && (output_filename.c_str()[0] == 0)) {
+        cout << "Missing input or output ini file name : use -i filename or -o filename\n\n";
+        exit(-1);
+    }
+
+    if (   (input_filename.c_str()[0] != 0)
+        && (output_filename.c_str()[0] != 0)) {
+        cout << "use -i filename or -o filename\n\n";
+        exit(-1);
+    }
+
+    if (target_device.c_str()[0] == 0) {
+        cout << "Missing target device : use -t target_device[:port]\n\n";
+        exit(-1);
+    }
+
+    size_t pos = target_device.find(':');
+    if (pos != string::npos) {
+        target_port = ::atoi(target_device.substr(pos + 1).c_str());
+        target_device.resize(pos);
+    }
+
+    if (username.c_str()[0] == 0) {
+        cout << "Missing username : use -u username\n\n";
+        exit(-1);
+    }
+
+    if (password.c_str()[0] == 0) {
+        cout << "Missing password : use -u password\n\n";
+        exit(-1);
+    }
+
+
     // This server only support one incoming connection before closing listener
     class ServerOnce : public Server {
     public:
@@ -39,11 +124,17 @@ int main(int argc, char * argv[]) {
         }
 
         virtual Server_status start(int incoming_sck) {
-            struct sockaddr_in sin;
-            unsigned int sin_size = sizeof(struct sockaddr_in);
-            ::memset(&sin, 0, sin_size);
-            this->sck = ::accept(incoming_sck, (struct sockaddr *)&sin, &sin_size);
-            ::strcpy(this->ip_source, ::inet_ntoa(sin.sin_addr));
+            union
+            {
+                struct sockaddr s;
+                struct sockaddr_storage ss;
+                struct sockaddr_in s4;
+                struct sockaddr_in6 s6;
+            } u;
+            unsigned int sin_size = sizeof(u);
+            memset(&u, 0, sin_size);
+            this->sck = ::accept(incoming_sck, &u.s, &sin_size);
+            ::strcpy(this->ip_source, ::inet_ntoa(u.s4.sin_addr));
             LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", this->sck, this->ip_source);
             return START_WANT_STOP;
         }
@@ -82,28 +173,17 @@ int main(int argc, char * argv[]) {
 
     LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
-//    const char * target_device = "10.10.46.78";
-//    unsigned     target_port   = 3389;
-//    const char * username      = "Administrateur@qa";
-//    const char * password      = "S3cur3!1nux";
-    const char * target_device = "10.10.47.205";
-    unsigned     target_port   = 3389;
-    const char * username      = "Administrateur";
-    const char * password      = "SecureLinux";
-
-    int client_sck = ip_connect(target_device, target_port, 3, 1000, ini.debug.mod_rdp);
-    SocketTransport mod_trans( "RDP Server", client_sck, target_device, target_port
-                             , /*ini.debug.mod_rdp*/0, &ini.context.auth_error_message);
-
-//    UdevRandom gen;
+    int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.debug.mod_rdp);
+    SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
+                             , ini.debug.mod_rdp, &ini.context.auth_error_message);
 
     try {
         mod_rdp_transparent mod( mod_trans
-                               , username
-                               , password
+                               , username.c_str()
+                               , password.c_str()
                                , "0.0.0.0"
                                , front
-                               , target_device
+                               , target_device.c_str()
                                , false              // tls
                                , front.client_info
                                , gen
