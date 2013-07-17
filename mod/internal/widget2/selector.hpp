@@ -407,6 +407,7 @@ public:
     WidgetSelectLine close_time_lines;
     WidgetEdit filter_device;
     WidgetEdit filter_target;
+    WidgetEdit filter_proto;
     //BEGIN WidgetPager
     WidgetSelectorImageButton first_page;
     WidgetSelectorImageButton prev_page;
@@ -3698,7 +3699,8 @@ public:
     WidgetSelector(DrawApi* drawable, const char * device_name,
                    uint16_t width, uint16_t height, NotifyApi* notifier,
                    const char * current_page, const char * number_of_page,
-                   const char * filter_device = 0, const char * filter_target = 0)
+                   const char * filter_device = 0, const char * filter_target = 0,
+                   const char * filter_proto = 0)
         : WidgetComposite(drawable, Rect(0,0,width,height), NULL, notifier)
         , device_label(drawable, 20, 10, this, NULL, device_name, true, -10, BLACK, GREY)
         , device_target_label(drawable, 20, 0, this, NULL, "Device Group", true, -10, BLACK, GREY)
@@ -3715,6 +3717,7 @@ public:
                            BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
         , filter_device(drawable, 20, 0, 120, this, this, filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
         , filter_target(drawable, 150, 0, 340, this, this, filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
+        , filter_proto(drawable, 500, 0, 110, this, this, filter_proto?filter_proto:0, -12, BLACK, WHITE, -1, 1, 1)
           //BEGIN WidgetPager
         , first_page(drawable, 0, 0, this, notifier,
                      raw_first_page().cx, raw_first_page().cy, raw_first_page().size,
@@ -3752,6 +3755,7 @@ public:
         this->child_list.push_back(&this->close_time_label);
         this->child_list.push_back(&this->filter_device);
         this->child_list.push_back(&this->filter_target);
+        this->child_list.push_back(&this->filter_proto);
         this->child_list.push_back(&this->device_lines);
         this->child_list.push_back(&this->target_lines);
         this->child_list.push_back(&this->protocol_lines);
@@ -3789,6 +3793,8 @@ public:
             this->close_time_label.rect.x = this->close_time_lines.dx() + 5;
             this->protocol_lines.rect.x = this->close_time_lines.dx() - this->protocol_lines.cx();
             this->protocol_label.rect.x = this->protocol_lines.dx() + 5;
+            this->filter_proto.set_edit_x(this->protocol_label.dx());
+            this->filter_proto.set_edit_cx(this->protocol_lines.cx() - 10);
 
             this->target_lines.rect.cx = this->protocol_lines.dx() - this->device_lines.lx();
             this->target_lines.rect.x = this->device_lines.lx();
@@ -3799,6 +3805,7 @@ public:
         else if (dw > 0) {
             this->target_lines.rect.cx += dw;
             this->filter_target.set_edit_cx(this->filter_target.cx() + dw);
+            this->filter_proto.set_edit_cx(this->filter_proto.cx() + dw);
             this->protocol_label.rect.x += dw;
             this->close_time_label.rect.x += dw;
             this->protocol_lines.rect.x += dw;
@@ -3811,6 +3818,7 @@ public:
         this->close_time_label.rect.y = this->device_target_label.dy();
         this->filter_device.set_edit_y(this->device_target_label.dy() + this->device_target_label.cy() + 5);
         this->filter_target.set_edit_y(this->filter_device.dy());
+        this->filter_proto.set_edit_y(this->filter_device.dy());
         this->device_lines.rect.y = this->filter_device.dy() + this->filter_device.cy() + 5;
         this->target_lines.rect.y = this->device_lines.dy();
         this->protocol_lines.rect.y = this->device_lines.dy();

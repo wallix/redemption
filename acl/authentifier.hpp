@@ -54,6 +54,7 @@ public:
                               // and asked_remote_answer is set to false
     time_t start_time;        // never used ?
     time_t acl_start_time;    // never used ?
+    time_t close_timeout;
     uint32_t verbose;
     bool read_auth;
 
@@ -73,6 +74,7 @@ public:
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
+        , close_timeout(0)
         , verbose(ini->debug.auth)
         , read_auth(false) {
         if (this->verbose & 0x10) {
@@ -122,7 +124,7 @@ public:
             res = MODULE_RDP;
             this->connected = true;
         }
-        else if (!this->connected && 0 == strncasecmp(protocol, "APPLICATION", 12)) {
+        else if (!this->connected && 0 == strncasecmp(protocol, "APP", 4)) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol APPLICATION");
             }
@@ -253,12 +255,20 @@ protected:
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message, BackEvent_t & signal) {
     
         if (this->last_module) {
+            mm.mod->event.reset();
             return false;
         }
-        this->ini->context.auth_error_message.copy_c_str(auth_error_message);
+        if (auth_error_message) {
+            this->ini->context.auth_error_message.copy_c_str(auth_error_message);
+        }
         this->asked_remote_answer = false;
         this->last_module         = true;
         this->keepalive_time      = 0;
+        TODO("Maybe the timeout of close box should be in the close box module itself");
+        if (this->ini->globals.close_timeout > 0) {
+            this->close_timeout   = time(NULL) + this->ini->globals.close_timeout;
+            LOG(LOG_INFO, "invoke_mod_close: Ending session in %u seconds", this->ini->globals.close_timeout);
+        }
         mm.remove_mod();
         mm.new_mod(MODULE_INTERNAL_CLOSE);
         signal = BACK_EVENT_NONE;
@@ -266,11 +276,16 @@ protected:
     }
 
 public:
+
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
-        TODO("Should only check enddate if it has been changed by acl");
-        long enddate = this->ini->context.end_date_cnx.get();
-        // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-        if (enddate != 0 && (now > enddate) && !this->last_module) {
+        long enddate;
+        if (!this->last_module) {
+            enddate = this->ini->context.end_date_cnx.get();
+        }
+        else {
+            enddate = this->close_timeout;
+        }
+        if (enddate != 0 && (now > enddate)/* && !this->last_module*/) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe", signal);
         }
@@ -358,6 +373,9 @@ public:
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
                 int next_state = this->next_module();
+                if (next_state == MODULE_INTERNAL_WIDGET2_CLOSE || next_state == MODULE_INTERNAL_CLOSE) {
+                    return invoke_mod_close(mm,NULL,signal);
+                }
                 mm.remove_mod();
                 try {
                     mm.new_mod(next_state);
@@ -389,6 +407,21 @@ public:
 
         if (this->connected && this->ini->check()) {
             this->ask_next_module_remote();
+        }
+
+        // AuthCHANNEL CHECK
+        // if an answer has been received, send it to
+        // rdp serveur via mod (should be rdp module)
+        TODO("Check if this->mod is RDP MODULE");
+        if (this->connected && this->ini->globals.auth_channel[0]) {
+            // Get sesman answer to AUTHCHANNEL_TARGET
+            if (!this->ini->context.authchannel_answer.get().is_empty()) {
+                // If set, transmit to auth_channel channel
+                mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
+                this->ini->context.authchannel_answer.use();
+                // Erase the context variable
+                this->ini->context.authchannel_answer.set_empty();
+            }
         }
 
         return true;
