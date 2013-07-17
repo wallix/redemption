@@ -117,6 +117,8 @@ struct mod_rdp_transparent : public mod_api {
     bool mem3blt_support;
     bool enable_new_pointer;
 
+    const ClientInfo & client_info;
+
     mod_rdp_transparent( Transport & trans
                        , const char * target_user
                        , const char * target_password
@@ -160,7 +162,8 @@ struct mod_rdp_transparent : public mod_api {
             , client_fastpath_input_event_support(false)
             , server_fastpath_update_support(fp_support)
             , mem3blt_support(mem3blt_support)
-            , enable_new_pointer(enable_new_pointer) {
+            , enable_new_pointer(enable_new_pointer)
+            , client_info(info) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
         }
@@ -1383,9 +1386,12 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                              , this->client_addr
                              );
 
+        infoPacket.flags = client_info.infoPacket.flags;
+
         if (this->verbose) {
             infoPacket.log("Sending to server: ");
         }
+
         infoPacket.emit(stream);
         stream.mark_end();
 

@@ -166,7 +166,8 @@ void redemption_new_session()
     } u;
     int sock_len = sizeof(u);
 
-    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+    Inifile ini;
+    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", getpid());

@@ -338,9 +338,10 @@ class SocketTransport : public Transport {
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
 
-        LOG(LOG_INFO, "RIO *::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
+//        LOG(LOG_INFO, "RIO *::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
 //        SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
-        SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
+// Not compatible with MSTSC 6.1 on XP and W2K3
+//        SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
 
