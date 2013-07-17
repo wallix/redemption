@@ -158,7 +158,7 @@ class User(object):
                 continue
             if service.protocol.lower().find(_group_filter) == -1:
                 continue
-            if service.protocol.find(_proto_filter) == -1:
+            if service.protocol.find(_proto_filter.upper()) == -1:
                 continue
             # multiply number of entries by 15 to test pagination
             all_services.append(target)
