@@ -63,7 +63,8 @@ public:
                    ini.context.selector_current_page.get_value(),
                    ini.context.selector_number_of_pages.get_value(),
                    ini.context.selector_group_filter.get_cstr(),
-                   ini.context.selector_device_filter.get_cstr()
+                   ini.context.selector_device_filter.get_cstr(),
+                   ini.context.selector_proto_filter.get_cstr()
                    )
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
@@ -96,6 +97,8 @@ public:
                                     this->selector.filter_device.get_text());
         this->ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER,
                                     this->selector.filter_target.get_text());
+        this->ini.context_set_value(AUTHID_SELECTOR_PROTO_FILTER,
+                                    this->selector.filter_proto.get_text());
         this->ini.context_ask(AUTHID_TARGET_USER);
         this->ini.context_ask(AUTHID_TARGET_DEVICE);
         this->ini.context_ask(AUTHID_SELECTOR);
