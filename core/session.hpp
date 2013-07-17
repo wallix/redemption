@@ -242,22 +242,6 @@ struct Session {
                             if (!this->acl->lost_acl && this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
                                 this->acl->receive();
-
-                                TODO("This (below to enclosing bracket) should be done inside ACLs, it is not responsibility of session to do that")
-                                // AuthCHANNEL CHECK
-                                // if an answer has been received, send it to
-                                // rdp serveur via mod (should be rdp module)
-                                TODO("Check if this->mod is RDP MODULE");
-                                if (this->ini->globals.auth_channel[0]) {
-                                    // Get sesman answer to AUTHCHANNEL_TARGET
-                                    if (!this->ini->context.authchannel_answer.get().is_empty()) {
-                                        // If set, transmit to auth_channel channel
-                                        mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
-                                        this->ini->context.authchannel_answer.use();
-                                        // Erase the context variable
-                                        this->ini->context.authchannel_answer.set_empty();
-                                    }
-                                }
                             }
                         }
 
