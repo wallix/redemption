@@ -236,6 +236,7 @@ typedef enum
         AUTHID_SELECTOR_CURRENT_PAGE,       // current page
         AUTHID_SELECTOR_DEVICE_FILTER,      // device filter text
         AUTHID_SELECTOR_GROUP_FILTER,       // group filter text
+        AUTHID_SELECTOR_PROTO_FILTER,       // protocol filter text
         AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
         AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
 
@@ -321,6 +322,7 @@ typedef enum
 #define STRAUTHID_SELECTOR_CURRENT_PAGE    "selector_current_page"
 #define STRAUTHID_SELECTOR_DEVICE_FILTER   "selector_device_filter"
 #define STRAUTHID_SELECTOR_GROUP_FILTER    "selector_group_filter"
+#define STRAUTHID_SELECTOR_PROTO_FILTER    "selector_proto_filter"
 #define STRAUTHID_SELECTOR_LINES_PER_PAGE  "selector_lines_per_page"
 #define STRAUTHID_SELECTOR_NUMBER_OF_PAGES "selector_number_of_pages"
 
@@ -410,6 +412,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_SELECTOR_CURRENT_PAGE,    // current page
     STRAUTHID_SELECTOR_DEVICE_FILTER,   // device filter text
     STRAUTHID_SELECTOR_GROUP_FILTER,    // group filter text
+    STRAUTHID_SELECTOR_PROTO_FILTER,    // protocol filter text
     STRAUTHID_SELECTOR_LINES_PER_PAGE,  // number of lines per page
     STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
 
@@ -506,7 +509,6 @@ struct Inifile : public FieldObserver {
         char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
         char auth_channel[512];
         BoolField enable_file_encryption; // AUTHID_OPT_FILE_ENCRYPTION //
-        bool enable_tls;
         char listen_address[256];
         bool enable_ip_transparent;
         char certificate_password[256];
@@ -538,6 +540,7 @@ struct Inifile : public FieldObserver {
         uint32_t performance_flags_force_not_present;
 
         bool tls_fallback_legacy;
+        bool tls_support;
 
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
@@ -643,8 +646,9 @@ struct Inifile : public FieldObserver {
 
         BoolField          selector;                 // AUTHID_SELECTOR //
         UnsignedField      selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE //
-        StringField        selector_device_filter;   // AUTHID_DEVICE_FILTER  //
+        StringField        selector_device_filter;   // AUTHID_SELECTOR_DEVICE_FILTER //
         StringField        selector_group_filter;    // AUTHID_SELECTOR_GROUP_FILTER //
+        StringField        selector_proto_filter;    // AUTHID_SELECTOR_PROTO_FILTER //
         UnsignedField      selector_lines_per_page;  // AUTHID_SELECTOR_LINES_PER_PAGE //
         UnsignedField      selector_number_of_pages; // AUTHID_SELECTOR_NUMBER_OF_PAGES //
 
@@ -720,6 +724,7 @@ public:
         this->to_send_set.insert(AUTHID_SELECTOR);
         this->to_send_set.insert(AUTHID_SELECTOR_GROUP_FILTER);
         this->to_send_set.insert(AUTHID_SELECTOR_DEVICE_FILTER);
+        this->to_send_set.insert(AUTHID_SELECTOR_PROTO_FILTER);
         this->to_send_set.insert(AUTHID_SELECTOR_LINES_PER_PAGE);
         this->to_send_set.insert(AUTHID_SELECTOR_CURRENT_PAGE);
         this->to_send_set.insert(AUTHID_TARGET_PASSWORD);
@@ -769,7 +774,6 @@ public:
         strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
         memcpy(this->globals.auth_channel, "\0\0\0\0\0\0\0\0", 8);
         // this->globals.enable_file_encryption = false;
-        this->globals.enable_tls             = false;
         strcpy(this->globals.listen_address, "0.0.0.0");
         this->globals.enable_ip_transparent  = false;
         strcpy(this->globals.certificate_password, "inquisition");
@@ -808,8 +812,6 @@ public:
         strcpy(this->account.password,    "");
 
         // Begin Section "client".
-
-
         this->client.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         this->client.device_redirection.attach_ini(this,AUTHID_OPT_DEVICEREDIRECTION);
         this->client.clipboard.set(true);
@@ -821,6 +823,7 @@ public:
         this->client.performance_flags_force_present     = 0;
         this->client.performance_flags_force_not_present = 0;
         this->client.tls_fallback_legacy                 = false;
+        this->client.tls_support                         = true;
 
         // End Section "client"
 
@@ -943,6 +946,7 @@ public:
         this->context.selector_current_page.set(1);
         this->context.selector_device_filter.set_empty();
         this->context.selector_group_filter.set_empty();
+        this->context.selector_proto_filter.set_empty();
         this->context.selector_lines_per_page.set(20);
         this->context.selector_number_of_pages.set(1);
 
@@ -1057,6 +1061,7 @@ public:
         this->context.selector_current_page.attach_ini(this,AUTHID_SELECTOR_CURRENT_PAGE);
         this->context.selector_device_filter.attach_ini(this,AUTHID_SELECTOR_DEVICE_FILTER);
         this->context.selector_group_filter.attach_ini(this,AUTHID_SELECTOR_GROUP_FILTER);
+        this->context.selector_proto_filter.attach_ini(this,AUTHID_SELECTOR_PROTO_FILTER);
         this->context.selector_lines_per_page.attach_ini(this,AUTHID_SELECTOR_LINES_PER_PAGE);
 
         this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);
@@ -1234,9 +1239,6 @@ public:
             else if (0 == strcmp(key, "enable_file_encryption")){
                 this->globals.enable_file_encryption.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "enable_tls")){
-                this->globals.enable_tls = bool_from_cstr(value);
-            }
             else if (0 == strcmp(key, "listen_address")){
                 strncpy(this->globals.listen_address, value, sizeof(this->globals.listen_address));
                 this->globals.listen_address[sizeof(this->globals.listen_address) - 1] = 0;
@@ -1293,6 +1295,9 @@ public:
             }
             else if (0 == strcmp(key, "tls_fallback_legacy")){
                 this->client.tls_fallback_legacy = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "tls_support")){
+                this->client.tls_support = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "clipboard")){
                 this->client.clipboard.set_from_cstr(value);

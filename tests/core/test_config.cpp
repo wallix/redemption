@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                            ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -315,7 +315,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -541,7 +541,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -615,7 +615,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "port=3390\n"
                           "encryptionLevel=low\n"
                           "enable_file_encryption=yes\n"
-                          "enable_tls=no\n"
                           "listen_address=192.168.1.1\n"
                           "enable_ip_transparent=yes\n"
                           "certificate_password=redemption\n"
@@ -633,6 +632,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "tls_fallback_legacy=yes\n"
                           "clipboard=no\n"
                           "device_redirection=no\n"
+                          "tls_support=no\n"
+
                           "[debug]\n"
                           "log_type=file\n"
                           "log_file_path=/var/log/redemption.log\n"
@@ -704,7 +705,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("192.168.1.1"),       std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("redemption"),        std::string(ini.globals.certificate_password));
@@ -781,7 +782,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "bitmap_compression=on\n"
                           "encryptionLevel=medium\n"
                           "enable_file_encryption=no\n"
-                          "enable_tls=yes\n"
                           "listen_address=0.0.0.0\n"
                           "enable_ip_transparent=no\n"
                           "certificate_password=\n"
@@ -794,6 +794,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "performance_flags_default=7\n"
                           "performance_flags_force_present=1\n"
                           "performance_flags_force_not_present=0\n"
+                          "tls_support=yes\n"
                           "[translation]\n"
                           "connection_closed=Connexion\\ fermée\n"
                           "\n"
@@ -862,7 +863,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.certificate_password));
@@ -936,7 +937,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "bitmap_compression=false\n"
                           "encryptionLevel=high\n"
                           "enable_file_encryption=true\n"
-                          "enable_tls=yes\n"
                           "listen_address=127.0.0.1\n"
                           "certificate_password=rdpproxy\n"
                           "enable_ip_transparent=true\n"
@@ -945,6 +945,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "alternate_shell=C:\\\\Program\\ Files\\\\Microsoft\\ Visual\\ Studio\\\\Common\\\\MSDev98\\\\Bin\\\\MSDEV.EXE\n"
                           "shell_working_directory=\n"
                           "[client]\n"
+                          "tls_support=yes\n"
                           "performance_flags_default=07\n"
                           "performance_flags_force_present=1\n"
                           "performance_flags_force_not_present=0x\n"
@@ -1014,7 +1015,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("rdpproxy"),          std::string(ini.globals.certificate_password));
@@ -1091,7 +1092,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           "port=3390\n"
                           "encryptionLevel=low\n"
                           "enable_file_encryption=False\n"
-                          "enable_tls=False\n"
                           "listen_address=0.0.0.0\n"
                           "certificate_password=redemption\n"
                           "enable_ip_transparent=False\n"
@@ -1162,7 +1162,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                            ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("redemption"),        std::string(ini.globals.certificate_password));
@@ -1231,7 +1232,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "[globals]\n"
                            "bitmap_compression=no\n"
                            "enable_file_encryption=yes\n"
-                           "enable_tls=yes\n"
                            "listen_address=192.168.1.1\n"
                            "certificate_password=\n"
                            "enable_ip_transparent=yes\n"
@@ -1301,7 +1301,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(std::string("192.168.1.1"),       std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.certificate_password));
@@ -1380,6 +1381,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
+    
+    
+    TODO("video related values should go to [video] section")
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("medium"),            std::string(ini.globals.video_quality.get_cstr()));
@@ -1435,7 +1439,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -1572,7 +1575,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -1699,7 +1702,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                             ini.globals.enable_tls);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));

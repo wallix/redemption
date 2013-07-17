@@ -221,14 +221,14 @@ public:
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
                 res = MODULE_INTERNAL_CLOSE;
-                this->last_module = true;
+                // this->last_module = true;
             }
             else if (0 == strcmp(target, "widget2_close")) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
                 }
                 res = MODULE_INTERNAL_WIDGET2_CLOSE;
-                this->last_module = true;
+                // this->last_module = true;
             }
             else if (0 == strcmp(target, "widget2_dialog")) {
                 if (this->verbose & 0x4) {
@@ -266,17 +266,17 @@ public:
                 }
                 res = MODULE_INTERNAL_CARD;
             }
-            TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
-            this->connected = false;
+            // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
+            // this->connected = false;
         }
         else if (this->connected) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
             }
             res = MODULE_INTERNAL_WIDGET2_CLOSE;
-            this->last_module = true;
-            TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
-            this->connected   = false;
+            // this->last_module = true;
+            // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
+            // this->connected   = false;
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
@@ -288,6 +288,10 @@ public:
 
 protected:
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message) {
+        LOG(LOG_INFO, "invoke_mod_close");
+        if (this->last_module) {
+            return false;
+        }
         this->ini->context.auth_error_message.copy_c_str(auth_error_message);
         this->asked_remote_answer = false;
         this->last_module         = true;
@@ -296,14 +300,16 @@ protected:
         // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
         // this->connected           = false;
         mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+        this->signal = BACK_EVENT_NONE;
         return true;
     }
 
 public:
     bool check(MMApi & mm, time_t now, Transport & trans) {
+        TODO("Should only check enddate if it has been changed by acl");
         long enddate = this->ini->context.end_date_cnx.get();
         // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-        if (enddate != 0 && (now > enddate)) {
+        if (enddate != 0 && (now > enddate) && !this->last_module) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe");
         }
@@ -362,14 +368,14 @@ public:
                 trans.tick();
 
                 // ===================== check if keepalive ======================
-                try {
-                    this->ini->context_ask(AUTHID_KEEPALIVE);
-                    // this->signal = BACK_EVENT_REFRESH;
-                    //this->acl_serial.send(AUTHID_KEEPALIVE);
-                }
-                catch (...) {
-                    return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
-                }
+                // try {
+                this->ini->context_ask(AUTHID_KEEPALIVE);
+                //     // this->signal = BACK_EVENT_REFRESH;
+                //     //this->acl_serial.send(AUTHID_KEEPALIVE);
+                // }
+                // catch (...) {
+                //     return invoke_mod_close(mm, "Connection closed by manager (ACL closed).");
+                // }
             }
         }   // if (this->keepalive_time)
 
@@ -407,9 +413,6 @@ public:
             else if (this->remote_answer && this->signal == BACK_EVENT_NEXT) {
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 this->signal = BACK_EVENT_NONE;
-                if (this->last_module) {
-                    return false;
-                }
                 int next_state = this->next_module();
                 mm.remove_mod();
                 try {
@@ -435,9 +438,9 @@ public:
             }
         }
 
-        // // send message to acl with changed values when connected to
-        // // a module (rdp, vnc, xup ...) and something changed
-        // // used for authchannel and keepalive.
+        // send message to acl with changed values when connected to
+        // a module (rdp, vnc, xup ...) and something changed
+        // used for authchannel and keepalive.
 
         if (this->connected && this->ini->check()) {
             this->ask_next_module_remote();

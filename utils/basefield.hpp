@@ -115,8 +115,10 @@ struct FieldObserver {
          **************************
          */
         void ask() {
-            this->asked = true;
-            this->modify();
+            if (!this->asked) {
+                this->asked = true;
+                this->modify();
+            }
         }
         /******************************
          * Check if the field is asked

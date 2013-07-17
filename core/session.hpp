@@ -110,11 +110,10 @@ struct Session {
             this->internal_state = SESSION_STATE_ENTRY;
 
             const bool enable_fastpath = true;
-            const bool tls_support     = this->ini->globals.enable_tls;
             const bool mem3blt_support = true;
 
             this->front = new Front( &front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen
-                                   , ini, enable_fastpath, tls_support, mem3blt_support);
+                                   , ini, enable_fastpath, mem3blt_support);
 
             ModuleManager mm(*this->front, *this->ini);
             bool          cant_create_acl(false);
@@ -132,8 +131,8 @@ struct Session {
             while (run_session) {
                 try {
                     if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500) {
-                        time_mark.tv_sec = 0;
-                        time_mark.tv_usec = 50000;
+                    time_mark.tv_sec = 0;
+                    time_mark.tv_usec = 50000;
                     }
 
                     unsigned max = 0;
@@ -153,7 +152,8 @@ struct Session {
                     }
                     mm.mod->event.add_to_fd_set(rfds, max);
 
-                    if (mm.mod->event.is_set(rfds)) {
+                    TODO("fix that: timeout should be updated by add_to_fd_set")
+                    if (mm.mod->event.obj == 0 && mm.mod->event.is_set(rfds)) {
                         timeout.tv_sec  = 0;
                         timeout.tv_usec = 0;
                     }
