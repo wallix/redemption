@@ -86,25 +86,14 @@ public:
         }
     }
 
-    //    void start_keep_alive(long & keepalive_time)
-    //    {
-    //        if (this->verbose & 0x10) {
-    //            LOG(LOG_INFO, "auth::start_keep_alive");
-    //        }
-    //        this->tick_count = 1;
-
-    //        this->ini->context_ask(AUTHID_KEEPALIVE);
-    //        this->acl_serial.send(AUTHID_KEEPALIVE);
-    //        keepalive_time = ::time(NULL) + 30;
-    //    }
-    void start_keepalive() {
+    void start_keepalive(time_t now) {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
 
         this->tick_count           = 1;
         this->keepalive_time       =
-        this->keepalive_renew_time = ::time(NULL) + this->keepalive_grace_delay;
+        this->keepalive_renew_time = now + this->keepalive_grace_delay;
 
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
         this->ini->context_ask(AUTHID_KEEPALIVE);
@@ -202,18 +191,11 @@ public:
                 }
                 res = MODULE_INTERNAL_WIDGET2_RWL;
             }
-            else if (0 == strcmp(target, "close")) {
+            else if (0 == strcmp(target, "close") || 0 == strcmp(target, "widget2_close")) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
                 res = MODULE_INTERNAL_CLOSE;
-                // this->last_module = true;
-            }
-            else if (0 == strcmp(target, "widget2_close")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
-                }
-                res = MODULE_INTERNAL_WIDGET2_CLOSE;
                 // this->last_module = true;
             }
             else if (0 == strcmp(target, "widget2_dialog")) {
@@ -257,7 +239,7 @@ public:
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
             }
-            res = MODULE_INTERNAL_WIDGET2_CLOSE;
+            res = MODULE_INTERNAL_CLOSE;
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
@@ -269,6 +251,7 @@ public:
 
 protected:
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message, BackEvent_t & signal) {
+    
         if (this->last_module) {
             return false;
         }
@@ -277,7 +260,7 @@ protected:
         this->last_module         = true;
         this->keepalive_time      = 0;
         mm.remove_mod();
-        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+        mm.new_mod(MODULE_INTERNAL_CLOSE);
         signal = BACK_EVENT_NONE;
         return true;
     }
@@ -335,14 +318,14 @@ public:
                     this->tick_count++;
                     // 15 minutes before closing on inactivity
                     if (this->tick_count > this->max_tick) {
-                        LOG(LOG_INFO, "Session ACL inactivity : closing");
+                        LOG(LOG_INFO, "Session User inactivity : closing");
                         return invoke_mod_close(mm, "Connection closed on inactivity", signal);
                     }
                 }
                 else {
                     this->tick_count = 0;
                 }
-                LOG(LOG_INFO, "Session ACL inactivity : tick count: %u, disconnect on %uth tick", this->tick_count,this->max_tick);
+                LOG(LOG_INFO, "Session User inactivity : tick count: %u, disconnect on %uth tick", this->tick_count, this->max_tick);
                 trans.tick();
 
                 this->ini->context_ask(AUTHID_KEEPALIVE);
@@ -371,6 +354,7 @@ public:
                 mm.mod->event.set();
             }
             else if (this->remote_answer && signal == BACK_EVENT_NEXT) {
+            
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
                 int next_state = this->next_module();
@@ -392,7 +376,7 @@ public:
                 }
                 this->keepalive_time = 0;
                 if (this->connected) {
-                    this->start_keepalive();
+                    this->start_keepalive(now);
 
                     mm.record();
                 }
