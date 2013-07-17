@@ -72,7 +72,8 @@ public:
             {
                 close(incoming_sck);
 
-                Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+                Inifile ini;
+                ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
                 if (ini.debug.session){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
                 }

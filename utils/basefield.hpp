@@ -21,7 +21,9 @@
 #ifndef _REDEMPTION_BASE_FIELD_HPP_
 #define _REDEMPTION_BASE_FIELD_HPP_
 
-struct FieldObserver {
+#include "cfgloader.hpp"
+
+struct FieldObserver : public ConfigurationHolder {
 
     /******************************************************
      * BaseField is an abstract class which carries:

@@ -41,7 +41,6 @@
 
 #include <string.hpp>
 
-
 TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
 #if !defined(SHARE_PATH)
 #define SHARE_PATH "/usr/local/share/rdpproxy"
@@ -479,8 +478,6 @@ static inline const char * string_from_authid(authid_t authid) {
 #include "basefield.hpp"
 
 struct Inifile : public FieldObserver {
-
-
     struct Inifile_globals {
         BoolField capture_chunk;
 
@@ -693,24 +690,11 @@ struct Inifile : public FieldObserver {
 
     struct IniAccounts account;
 public:
-    Inifile() {
-        std::stringstream oss("");
+    Inifile() : FieldObserver() {
         this->init();
-        this->cparse(oss);
     }
 
-    Inifile(const char * filename) {
-        this->init();
-        this->cparse(filename);
-    }
-
-    Inifile(istream & Inifile_stream) {
-        this->init();
-        this->cparse(Inifile_stream);
-    }
-
-    void init(){
-
+    void init() {
         //init to_send_set of authid
         this->to_send_set.insert(AUTHID_PROXY_TYPE);
         this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
@@ -1082,11 +1066,9 @@ public:
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
-
-
-
     };
 
+/*
     void cparse(istream & ifs){
         const size_t maxlen = 256;
         char line[maxlen];
@@ -1147,6 +1129,7 @@ public:
                         }
                     }
                     const char * endvalue;
+*/
                     /*
                       for (endvalue = startvalue; *endvalue ; endvalue++) {
                       TODO("RZ: Support space in value")
@@ -1158,6 +1141,7 @@ public:
                       memcpy(value, startvalue, endvalue - startvalue + 1);
                       value[endvalue - startvalue + 1] = 0;
                     */
+/*
                     char *curvalue = value;
                     for (endvalue = startvalue; *endvalue ; endvalue++) {
                         if (isspace(*endvalue) || *endvalue == '#'){
@@ -1188,8 +1172,9 @@ public:
             }
         }
     }
+*/
 
-    void setglobal_from_file(const char * key, const char * value, const char * context)
+    virtual void set_value(const char * context, const char * key, const char * value)
     {
         if (0 == strcmp(context, "globals")){
             if (0 == strcmp(key, "bitmap_cache")){
@@ -1493,7 +1478,7 @@ public:
         else {
             LOG(LOG_ERR, "unknown section [%s]", context);
         }
-    }
+    }   // void set_value(const char * context, const char * key, const char * value)
 
     TODO("Should only be used by Authentifier "
          "It currently ask if the field has been modified "
@@ -1660,10 +1645,12 @@ public:
         return false;
     }
 
+/*
     void cparse(const char * filename) {
         ifstream inifile(filename);
         this->cparse(inifile);
     }
+*/
 
     void parse_username(const char * username)
     {
@@ -1797,10 +1784,6 @@ public:
             this->context_set_value(AUTHID_AUTH_USER, auth_user);
         }
     }
-
-
 };
-
-
 
 #endif

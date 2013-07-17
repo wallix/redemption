@@ -37,7 +37,8 @@
 BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 {
     // test we can read from a file (and not only from a stream)
-    Inifile ini(FIXTURES_PATH "/rdpproxy.ini");
+    Inifile ini;
+    ConfigurationLoader cfg_loader(ini, FIXTURES_PATH "/rdpproxy.ini");
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -251,8 +252,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 {
     // default config
-    Inifile ini;
-    char    buffer[128];
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini);
+    char                buffer[128];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -476,9 +478,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
 {
     // test we can read a config file with a global section
-    std::stringstream oss("");
-
-    Inifile ini(oss);
+    std::stringstream   oss("");
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini, oss);
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -642,7 +644,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "\n"
                           );
 
-    Inifile ini(oss);
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini, oss);
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -800,7 +803,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "\n"
                           );
 
-    Inifile ini(oss);
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini, oss);
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -952,7 +956,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "\n"
                           );
 
-    Inifile ini(oss);
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini, oss);
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1099,7 +1104,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           "\n"
                           );
 
-    Inifile ini(oss);
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini, oss);
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1238,7 +1244,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                            "[debug]\n"
                            "log_type=encryptedfile\n"
                            );
-    ini.cparse(oss2);
+    cfg_loader.cparse(ini, oss2);
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1373,7 +1379,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     // - options with multiple occurences get the last value
     // - unrecognized lines are ignored
     // - every characters following # are ignored until end of line (comments)
-    Inifile ini;
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini);
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1381,8 +1388,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.video.capture_ocr);
     BOOST_CHECK_EQUAL(false,                            ini.globals.capture_chunk.get());
     BOOST_CHECK_EQUAL(false,                            ini.globals.movie.get());
-    
-    
+
+
     TODO("video related values should go to [video] section")
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.movie_path.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("flv"),               std::string(ini.globals.codec_id.get_cstr()));
@@ -1512,7 +1519,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
                            "yyy=1\n"
                            );
 
-    ini.cparse(ifs2);
+    cfg_loader.cparse(ini, ifs2);
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1811,8 +1818,9 @@ BOOST_AUTO_TEST_CASE(TestConfigTools)
 
 BOOST_AUTO_TEST_CASE(TestContextSetValue)
 {
-    Inifile ini;
-    char    buffer[128];
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini);
+    char                buffer[128];
 
     // Translation
     ini.context_set_value(AUTHID_TRANS_BUTTON_OK,       "Ok");
@@ -2253,7 +2261,8 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
 BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 {
-    Inifile ini;
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini);
     /*
     // nothing has been changed initialy
     //    BOOST_CHECK(!ini.check());
@@ -2296,7 +2305,8 @@ BOOST_AUTO_TEST_CASE(TestConfigNotifications)
 
 BOOST_AUTO_TEST_CASE(TestConfigFieldAuthid)
 {
-    Inifile ini;
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini);
     // Test get_serialized()
     char tmp[256];
     BOOST_CHECK_EQUAL(AUTHID_SELECTOR,          ini.get_field_list().at(AUTHID_SELECTOR)->get_authid());
@@ -2313,7 +2323,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFieldAuthid)
 
 BOOST_AUTO_TEST_CASE(TestConfigFieldGetValue)
 {
-    Inifile ini;
+    Inifile             ini;
+    ConfigurationLoader cfg_loader(ini);
     // Test get_value()
 
     ini.globals.target_user.ask();
