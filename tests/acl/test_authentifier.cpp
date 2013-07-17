@@ -305,7 +305,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepAlive)
 
     CheckTransport keepalivetrans((char *)stream.get_data(), stream.get_offset());
     Inifile ini;
-    SessionManager sesman(&ini, keepalivetrans, 10000, 10010, 30, 30, true, 0);
+    ini.globals.keepalive_grace_delay = 30;
+    ini.globals.max_tick = 30;
+    ini.globals.internal_domain = true;
+    ini.debug.auth = 0;
+    SessionManager sesman(&ini, keepalivetrans, 10000, 10010);
     long keepalivetime = 0;
 
     //    BOOST_CHECK(keepalivetrans.get_status());
@@ -328,7 +332,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
                           strlen(STRAUTHID_AUTHCHANNEL_TARGET "\n!TEST_TARGET\n"));
     CheckTransport auth_channel_trans((char *)stream.get_data(), stream.get_offset());
     Inifile ini;
-    SessionManager sesman(&ini, auth_channel_trans, 10000, 10010, 30, 30, true, 0);
+    ini.globals.keep_alive_grace_delay = 30;
+    ini.globals.max_tick = 30;
+    ini.globals.internal_domain = true;
+    ini.debug.auth = 0;
+    SessionManager sesman(&ini, auth_channel_trans, 10000, 10010);
 
     BOOST_CHECK(auth_channel_trans.get_status());
     try{
@@ -345,7 +353,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierAuthChannel)
                           strlen(STRAUTHID_AUTHCHANNEL_RESULT "\n!TEST_RESULT\n"));
     CheckTransport auth_channel_trans2((char *)stream.get_data(), stream.get_offset());
     Inifile ini2;
-    SessionManager sesman2(&ini2, auth_channel_trans2, 10000, 10010, 30, 30, true, 0);
+    ini2.globals.keep_alive_grace_delay = 30;
+    ini2.globals.max_tick = 30;
+    ini2.globals.internal_domain = true;
+    ini2.debug.auth = 0;
+    SessionManager sesman2(&ini2, auth_channel_trans2, 10000, 10010);
 
     BOOST_CHECK(auth_channel_trans2.get_status());
     try{
@@ -361,7 +373,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
     // test get mod from protocol
     LogTransport get_mod_trans;
     Inifile ini;
-    SessionManager sesman(&ini, get_mod_trans, 10000, 10010, 30, 30, true, 4);
+    ini.globals.keepalive_grace_delay = 30;
+    ini.globals.max_tick = 30;
+    ini.globals.internal_domain = true;
+    ini.debug.auth = 4;    
+    SessionManager sesman(&ini, get_mod_trans, 10000, 10010);
     int res;
 
     // no known protocol on target device yet (should be an error case)
@@ -469,7 +485,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNormalCase)
     int verbose = 256;
 
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
-    SessionManager sesman(&ini, trans, 30, 30, false, 0);
+    ini.globals.keepalive_grace_delay = 30;
+    ini.globals.max_tick = 30;
+    ini.globals.internal_domain = false;
+    ini.debug.auth = 0;
+    SessionManager sesman(&ini, trans);
 
     ini.context_set_value(AUTHID_PROXY_TYPE,"RDP");
     ini.context_set_value(AUTHID_DISPLAY_MESSAGE,"");
@@ -562,7 +582,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierWrongPassword)
     int verbose = 256;
 
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
-    SessionManager sesman(&ini, trans, 30, 30, false, 0);
+    ini.globals.keepalive_grace_delay = 30;
+    ini.globals.max_tick = 30;
+    ini.globals.internal_domain = false;
+    ini.debug.auth = 0;
+    SessionManager sesman(&ini, trans);
 
     ini.context_set_value(AUTHID_PROXY_TYPE,"RDP");
     ini.context_set_value(AUTHID_DISPLAY_MESSAGE,"");
@@ -633,7 +657,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierSelectorLogout)
     int verbose = 256;
 
     TestTransport trans(name, indata, sizeof(indata), outdata, sizeof(outdata),verbose);
-    SessionManager sesman(&ini, trans, 30, 30, false, 0);
+    ini.globals.keepalive_grace_delay = 30;
+    ini.globals.max_tick = 30;
+    ini.globals.internal_domain = false;
+    ini.debug.auth = 0;
+    SessionManager sesman(&ini, trans);
 
     ini.context_set_value(AUTHID_PROXY_TYPE,"RDP");
     ini.context_set_value(AUTHID_DISPLAY_MESSAGE,"");
@@ -745,11 +773,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifier)
         SessionManager acl( &ini
                           , t
                           , start_time // proxy start time
-                          , start_time // acl start time
-                          , ini.globals.keepalive_grace_delay
-                          , ini.globals.max_tick
-                          , ini.globals.internal_domain
-                          , ini.debug.auth);
+                          , start_time // acl start time);
         acl.signal = BACK_EVENT_NEXT;
 
         ClientInfo info(1, true, true);
