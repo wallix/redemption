@@ -3793,8 +3793,8 @@ public:
             this->close_time_label.rect.x = this->close_time_lines.dx() + 5;
             this->protocol_lines.rect.x = this->close_time_lines.dx() - this->protocol_lines.cx();
             this->protocol_label.rect.x = this->protocol_lines.dx() + 5;
-            this->filter_proto.set_edit_x(this->protocol_label.dx());
-            this->filter_proto.set_edit_cx(this->protocol_lines.cx() - 10);
+            //this->filter_proto.set_edit_x(this->protocol_label.dx());
+            //this->filter_proto.set_edit_cx(this->protocol_lines.cx() - 10);
 
             this->target_lines.rect.cx = this->protocol_lines.dx() - this->device_lines.lx();
             this->target_lines.rect.x = this->device_lines.lx();
@@ -3805,7 +3805,7 @@ public:
         else if (dw > 0) {
             this->target_lines.rect.cx += dw;
             this->filter_target.set_edit_cx(this->filter_target.cx() + dw);
-            this->filter_proto.set_edit_cx(this->filter_proto.cx() + dw);
+            //this->filter_proto.set_edit_cx(this->filter_proto.cx() + dw);
             this->protocol_label.rect.x += dw;
             this->close_time_label.rect.x += dw;
             this->protocol_lines.rect.x += dw;
