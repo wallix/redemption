@@ -23,7 +23,7 @@
 
 #include "cfgloader.hpp"
 
-struct FieldObserver {
+struct FieldObserver : public ConfigurationHolder {
 
     /******************************************************
      * BaseField is an abstract class which carries:
