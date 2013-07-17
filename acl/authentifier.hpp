@@ -56,6 +56,7 @@ public:
                               // and asked_remote_answer is set to false
     time_t start_time;        // never used ?
     time_t acl_start_time;    // never used ?
+    time_t close_timeout;
     uint32_t verbose;
     bool read_auth;
 
@@ -78,6 +79,7 @@ public:
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
+        , close_timeout(0)
         , verbose(_verbose)
         , read_auth(false) {
         if (this->verbose & 0x10) {
@@ -145,7 +147,7 @@ public:
             res = MODULE_RDP;
             this->connected = true;
         }
-        else if (!this->connected && 0 == strncasecmp(protocol, "APPLICATION", 12)) {
+        else if (!this->connected && 0 == strncasecmp(protocol, "APP", 4)) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol APPLICATION");
             }
@@ -266,8 +268,6 @@ public:
                 }
                 res = MODULE_INTERNAL_CARD;
             }
-            // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
-            // this->connected = false;
         }
         else if (this->connected) {
             if (this->verbose & 0x4) {
@@ -275,8 +275,6 @@ public:
             }
             res = MODULE_INTERNAL_WIDGET2_CLOSE;
             // this->last_module = true;
-            // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
-            // this->connected   = false;
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
@@ -290,15 +288,21 @@ protected:
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message) {
         LOG(LOG_INFO, "invoke_mod_close");
         if (this->last_module) {
+            mm.mod->event.reset();
             return false;
         }
-        this->ini->context.auth_error_message.copy_c_str(auth_error_message);
+        if (auth_error_message) {
+            this->ini->context.auth_error_message.copy_c_str(auth_error_message);
+        }
         this->asked_remote_answer = false;
         this->last_module         = true;
         this->keepalive_time      = 0;
+        TODO("Maybe the timeout of close box should be in the close box module itself");
+        if (this->ini->globals.close_timeout > 0) {
+            this->close_timeout   = time(NULL) + this->ini->globals.close_timeout;
+            LOG(LOG_INFO, "invoke_mod_close: Ending session in %u seconds", this->ini->globals.close_timeout);
+        }
         mm.remove_mod();
-        // TODO("it looks strange we have to reset connect to false. Once connected is true it should stay so until the end of the session")
-        // this->connected           = false;
         mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
         this->signal = BACK_EVENT_NONE;
         return true;
@@ -306,10 +310,14 @@ protected:
 
 public:
     bool check(MMApi & mm, time_t now, Transport & trans) {
-        TODO("Should only check enddate if it has been changed by acl");
-        long enddate = this->ini->context.end_date_cnx.get();
-        // LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-        if (enddate != 0 && (now > enddate) && !this->last_module) {
+        long enddate;
+        if (!this->last_module) {
+            enddate = this->ini->context.end_date_cnx.get();
+        }
+        else {
+            enddate = this->close_timeout;
+        }
+        if (enddate != 0 && (now > enddate)/* && !this->last_module*/) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe");
         }
@@ -414,6 +422,9 @@ public:
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 this->signal = BACK_EVENT_NONE;
                 int next_state = this->next_module();
+                if (next_state == MODULE_INTERNAL_WIDGET2_CLOSE || next_state == MODULE_INTERNAL_CLOSE) {
+                    return invoke_mod_close(mm,NULL);
+                }
                 mm.remove_mod();
                 try {
                     mm.new_mod(next_state);

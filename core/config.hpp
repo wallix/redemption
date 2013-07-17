@@ -504,6 +504,7 @@ struct Inifile : public FieldObserver {
         // keepalive and no traffic auto deconnexion
         int max_tick;
         int keepalive_grace_delay;
+        int close_timeout;                // timeout of close box in seconds (0 to desactivate)
 
         bool internal_domain;
 
@@ -768,8 +769,9 @@ public:
         this->globals.authport = 3350;
         this->globals.autovalidate = false;
 
-        this->globals.max_tick    = 30;
+        this->globals.max_tick              = 30;
         this->globals.keepalive_grace_delay = 30;
+        this->globals.close_timeout         = 60;       // timeout of close box set to 10 minutes
 
         this->globals.internal_domain = false;
         strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");

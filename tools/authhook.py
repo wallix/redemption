@@ -143,6 +143,9 @@ class User(object):
         _device_filter = dic.get('selector_device_filter', '')
         if _device_filter.startswith('!'):
             _device_filter = _device_filter[1:]
+        _proto_filter = dic.get('selector_proto_filter', '')
+        if _proto_filter.startswith('!'):
+            _proto_filter = _proto_filter[1:]
         answer['selector'] = 'true'
 
         all_services = []
@@ -154,6 +157,8 @@ class User(object):
             if target.find(_device_filter) == -1:
                 continue
             if service.protocol.lower().find(_group_filter) == -1:
+                continue
+            if service.protocol.find(_proto_filter) == -1:
                 continue
             # multiply number of entries by 15 to test pagination
             all_services.append(target)
