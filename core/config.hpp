@@ -1657,8 +1657,8 @@ public:
     void parse_username(const char * username)
     {
         //        LOG(LOG_INFO, "parse_username(%s)", username);
-        TODO("These should be results of the parsing function, not storing it away immediately in context. Mixing context management and parsing is not right")
-            char target_user[256];
+        TODO("These should be results of the parsing function, not storing it away immediately in context. Mixing context management and parsing is not right");
+        char target_user[256];
         char target_device[256];
         char target_protocol[256];
         char auth_user[256];
