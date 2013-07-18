@@ -443,7 +443,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierGetMod)
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_close");
     res = sesman.get_mod_from_protocol();
-    BOOST_CHECK(MODULE_INTERNAL_WIDGET2_CLOSE == res);
+    BOOST_CHECK(MODULE_INTERNAL_CLOSE == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_dialog");
     res = sesman.get_mod_from_protocol();

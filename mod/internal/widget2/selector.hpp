@@ -3805,11 +3805,13 @@ public:
         else if (dw > 0) {
             this->target_lines.rect.cx += dw;
             this->filter_target.set_edit_cx(this->filter_target.cx() + dw);
-            this->filter_proto.set_edit_cx(this->filter_proto.cx() + dw);
             this->protocol_label.rect.x += dw;
             this->close_time_label.rect.x += dw;
             this->protocol_lines.rect.x += dw;
             this->close_time_lines.rect.x += dw;
+
+            this->filter_proto.set_edit_x(this->protocol_label.dx());
+            this->filter_proto.set_edit_cx(this->protocol_lines.cx() - 10);
         }
 
         this->device_target_label.rect.y = this->device_label.cy() + this->device_label.dy() + 5;

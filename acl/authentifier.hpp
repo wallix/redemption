@@ -54,7 +54,7 @@ public:
                               // and asked_remote_answer is set to false
     time_t start_time;        // never used ?
     time_t acl_start_time;    // never used ?
-    time_t close_timeout;
+
     uint32_t verbose;
     bool read_auth;
 
@@ -74,7 +74,6 @@ public:
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
-        , close_timeout(0)
         , verbose(ini->debug.auth)
         , read_auth(false) {
         if (this->verbose & 0x10) {
@@ -88,25 +87,14 @@ public:
         }
     }
 
-    //    void start_keep_alive(long & keepalive_time)
-    //    {
-    //        if (this->verbose & 0x10) {
-    //            LOG(LOG_INFO, "auth::start_keep_alive");
-    //        }
-    //        this->tick_count = 1;
-
-    //        this->ini->context_ask(AUTHID_KEEPALIVE);
-    //        this->acl_serial.send(AUTHID_KEEPALIVE);
-    //        keepalive_time = ::time(NULL) + 30;
-    //    }
-    void start_keepalive() {
+    void start_keepalive(time_t now) {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
 
         this->tick_count           = 1;
         this->keepalive_time       =
-        this->keepalive_renew_time = ::time(NULL) + this->keepalive_grace_delay;
+        this->keepalive_renew_time = now + this->keepalive_grace_delay;
 
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
         this->ini->context_ask(AUTHID_KEEPALIVE);
@@ -204,18 +192,11 @@ public:
                 }
                 res = MODULE_INTERNAL_WIDGET2_RWL;
             }
-            else if (0 == strcmp(target, "close")) {
+            else if (0 == strcmp(target, "close") || 0 == strcmp(target, "widget2_close")) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
                 res = MODULE_INTERNAL_CLOSE;
-                // this->last_module = true;
-            }
-            else if (0 == strcmp(target, "widget2_close")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
-                }
-                res = MODULE_INTERNAL_WIDGET2_CLOSE;
                 // this->last_module = true;
             }
             else if (0 == strcmp(target, "widget2_dialog")) {
@@ -259,7 +240,7 @@ public:
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
             }
-            res = MODULE_INTERNAL_WIDGET2_CLOSE;
+            res = MODULE_INTERNAL_CLOSE;
         }
         else {
             LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
@@ -271,6 +252,7 @@ public:
 
 protected:
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message, BackEvent_t & signal) {
+
         if (this->last_module) {
             mm.mod->event.reset();
             return false;
@@ -281,13 +263,8 @@ protected:
         this->asked_remote_answer = false;
         this->last_module         = true;
         this->keepalive_time      = 0;
-        TODO("Maybe the timeout of close box should be in the close box module itself");
-        if (this->ini->globals.close_timeout > 0) {
-            this->close_timeout   = time(NULL) + this->ini->globals.close_timeout;
-            LOG(LOG_INFO, "invoke_mod_close: Ending session in %u seconds", this->ini->globals.close_timeout);
-        }
         mm.remove_mod();
-        mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+        mm.new_mod(MODULE_INTERNAL_CLOSE);
         signal = BACK_EVENT_NONE;
         return true;
     }
@@ -295,14 +272,8 @@ protected:
 public:
 
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
-        long enddate;
-        if (!this->last_module) {
-            enddate = this->ini->context.end_date_cnx.get();
-        }
-        else {
-            enddate = this->close_timeout;
-        }
-        if (enddate != 0 && (now > enddate)/* && !this->last_module*/) {
+        long enddate = this->ini->context.end_date_cnx.get();
+        if (enddate != 0 && (now > enddate) && !this->last_module) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe", signal);
         }
@@ -350,14 +321,14 @@ public:
                     this->tick_count++;
                     // 15 minutes before closing on inactivity
                     if (this->tick_count > this->max_tick) {
-                        LOG(LOG_INFO, "Session ACL inactivity : closing");
+                        LOG(LOG_INFO, "Session User inactivity : closing");
                         return invoke_mod_close(mm, "Connection closed on inactivity", signal);
                     }
                 }
                 else {
                     this->tick_count = 0;
                 }
-                LOG(LOG_INFO, "Session ACL inactivity : tick count: %u, disconnect on %uth tick", this->tick_count,this->max_tick);
+                LOG(LOG_INFO, "Session User inactivity : tick count: %u, disconnect on %uth tick", this->tick_count, this->max_tick);
                 trans.tick();
 
                 this->ini->context_ask(AUTHID_KEEPALIVE);
@@ -386,10 +357,11 @@ public:
                 mm.mod->event.set();
             }
             else if (this->remote_answer && signal == BACK_EVENT_NEXT) {
+
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
                 int next_state = this->next_module();
-                if (next_state == MODULE_INTERNAL_WIDGET2_CLOSE || next_state == MODULE_INTERNAL_CLOSE) {
+                if (next_state == MODULE_INTERNAL_CLOSE) {
                     return invoke_mod_close(mm,NULL,signal);
                 }
                 mm.remove_mod();
@@ -410,7 +382,7 @@ public:
                 }
                 this->keepalive_time = 0;
                 if (this->connected) {
-                    this->start_keepalive();
+                    this->start_keepalive(now);
 
                     mm.record();
                 }
@@ -423,6 +395,21 @@ public:
 
         if (this->connected && this->ini->check()) {
             this->ask_next_module_remote();
+        }
+
+        // AuthCHANNEL CHECK
+        // if an answer has been received, send it to
+        // rdp serveur via mod (should be rdp module)
+        TODO("Check if this->mod is RDP MODULE");
+        if (this->connected && this->ini->globals.auth_channel[0]) {
+            // Get sesman answer to AUTHCHANNEL_TARGET
+            if (!this->ini->context.authchannel_answer.get().is_empty()) {
+                // If set, transmit to auth_channel channel
+                mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
+                this->ini->context.authchannel_answer.use();
+                // Erase the context variable
+                this->ini->context.authchannel_answer.set_empty();
+            }
         }
 
         return true;

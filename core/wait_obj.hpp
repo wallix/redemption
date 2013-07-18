@@ -46,10 +46,10 @@ class wait_obj
     bool set_state;
     BackEvent_t signal;
     struct timeval trigger_time;
-    wait_obj(int sck) 
+    wait_obj(int sck)
     : obj(sck)
     , set_state(false)
-    , signal(BACK_EVENT_NONE) 
+    , signal(BACK_EVENT_NONE)
     {
         this->trigger_time = tvtime();
     }
@@ -61,11 +61,32 @@ class wait_obj
         }
     }
 
-    void add_to_fd_set(fd_set & rfds, unsigned & max)
+    void add_to_fd_set(fd_set & rfds, unsigned & max, timeval * timeout = NULL)
     {
         if (this->obj > 0){
             FD_SET(this->obj, &rfds);
             max = ((unsigned)this->obj > max)?this->obj:max;
+        }
+        // else if (timeout && this->is_set(rfds)){
+        //     timeout->tv_sec  = 0;
+        //     timeout->tv_usec = 0;
+        // }
+        else if (timeout && this->set_state) {
+            struct timeval now;
+            now = tvtime();
+            if (  (now.tv_sec > this->trigger_time.tv_sec)
+                ||( (now.tv_sec == this->trigger_time.tv_sec)
+                  &&(now.tv_usec > this->trigger_time.tv_usec))) {
+                timeout->tv_sec  = 0;
+                timeout->tv_usec = 0;
+                // LOG(LOG_INFO, "TIMEOUT RESET");
+            }
+            else {
+                // LOG(LOG_INFO, "TIMEOUT ADJUSTED TO DIFF TRIGGER TIME");
+                uint64_t carry = (this->trigger_time.tv_usec < now.tv_usec)?1:0;
+                timeout->tv_usec = carry*1000000 + this->trigger_time.tv_usec - now.tv_usec;
+                timeout->tv_sec  = this->trigger_time.tv_sec - (now.tv_sec + carry);
+            }
         }
     }
 
@@ -83,7 +104,7 @@ class wait_obj
             if (this->set_state){
                 struct timeval now;
                 now = tvtime();
-                if ((now.tv_sec > this->trigger_time.tv_sec) 
+                if ((now.tv_sec > this->trigger_time.tv_sec)
                 ||  ( (now.tv_sec == this->trigger_time.tv_sec)
                     &&(now.tv_usec > this->trigger_time.tv_usec))){
                     return true;
@@ -98,7 +119,7 @@ class wait_obj
     {
         this->set_state = true;
         struct timeval now = tvtime();
-        
+
         uint64_t sum_usec = (now.tv_usec + idle_usec);
         this->trigger_time.tv_sec = (sum_usec / 1000000) + now.tv_sec;
         this->trigger_time.tv_usec = sum_usec % 1000000;

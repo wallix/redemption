@@ -129,11 +129,12 @@ struct Session {
 
             struct timeval time_mark = { 0, 0 };
             bool run_session = true;
+
             while (run_session) {
                 try {
                     if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500) {
-                    time_mark.tv_sec = 0;
-                    time_mark.tv_usec = 50000;
+                        time_mark.tv_sec = 0;
+                        time_mark.tv_usec = 5000000;
                     }
 
                     unsigned max = 0;
@@ -151,13 +152,13 @@ struct Session {
                     if (this->acl && !this->acl->lost_acl) {
                         this->ptr_auth_event->add_to_fd_set(rfds, max);
                     }
-                    mm.mod->event.add_to_fd_set(rfds, max);
+                    mm.mod->event.add_to_fd_set(rfds, max, &timeout);
 
-                    TODO("fix that: timeout should be updated by add_to_fd_set")
-                    if (mm.mod->event.obj == 0 && mm.mod->event.is_set(rfds)) {
-                        timeout.tv_sec  = 0;
-                        timeout.tv_usec = 0;
-                    }
+                    // TODO("fix that: timeout should be updated by add_to_fd_set")
+                    // if (mm.mod->event.obj == 0 && mm.mod->event.is_set(rfds)) {
+                    //     timeout.tv_sec  = 0;
+                    //     timeout.tv_usec = 0;
+                    // }
 
                     int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 
@@ -234,7 +235,7 @@ struct Session {
 
                                     this->ini->context.auth_error_message.copy_c_str("No authentifier available");
                                     mm.remove_mod();
-                                    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+                                    mm.new_mod(MODULE_INTERNAL_CLOSE);
                                 }
                             }
                         }
@@ -242,22 +243,6 @@ struct Session {
                             if (!this->acl->lost_acl && this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
                                 this->acl->receive();
-
-                                TODO("This (below to enclosing bracket) should be done inside ACLs, it is not responsibility of session to do that")
-                                // AuthCHANNEL CHECK
-                                // if an answer has been received, send it to
-                                // rdp serveur via mod (should be rdp module)
-                                TODO("Check if this->mod is RDP MODULE");
-                                if (this->ini->globals.auth_channel[0]) {
-                                    // Get sesman answer to AUTHCHANNEL_TARGET
-                                    if (!this->ini->context.authchannel_answer.get().is_empty()) {
-                                        // If set, transmit to auth_channel channel
-                                        mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
-                                        this->ini->context.authchannel_answer.use();
-                                        // Erase the context variable
-                                        this->ini->context.authchannel_answer.set_empty();
-                                    }
-                                }
                             }
                         }
 
