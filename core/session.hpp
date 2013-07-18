@@ -90,6 +90,7 @@ struct Session {
 
     SocketTransport * ptr_auth_trans;
     wait_obj        * ptr_auth_event;
+    bool cant_create_acl;
 
     Session(wait_obj & front_event, int sck, Inifile * ini)
             : front_event(front_event)
@@ -97,7 +98,8 @@ struct Session {
             , verbose(this->ini->debug.session)
             , acl(NULL)
             , ptr_auth_trans(NULL)
-            , ptr_auth_event(NULL) {
+            , ptr_auth_event(NULL)
+            , cant_create_acl(false) {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
@@ -116,8 +118,7 @@ struct Session {
                                    , ini, enable_fastpath, mem3blt_support);
 
             ModuleManager mm(*this->front, *this->ini);
-            bool          cant_create_acl(false);
-            BackEvent_t   no_acl_signal(BACK_EVENT_NONE);
+            BackEvent_t signal = BACK_EVENT_NONE;
 
 
             if (this->verbose) {
@@ -191,32 +192,49 @@ struct Session {
                             this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
 
                             if (mm.mod->event.signal != BACK_EVENT_NONE) {
-                                if (this->acl) {
-                                    this->acl->signal = mm.mod->event.signal;
-                                }
-                                else {
-                                    no_acl_signal     = mm.mod->event.signal;
-                                }
+                                signal = mm.mod->event.signal;
                                 mm.mod->event.reset();
                             }
                         }
 
                         // Incoming data from ACL, or opening acl
+                        TODO("instead of this can't create ACL boolean, we could rely on knowing if we are on a close box or not")
                         if (!this->acl) {
                             if (!cant_create_acl) {
                                 try {
-                                    this->connect_authentifier(start_time, now);
-                                    this->acl->signal = BACK_EVENT_NEXT;
+                                    int client_sck = ip_connect(this->ini->globals.authip,
+                                                                this->ini->globals.authport,
+                                                                30,
+                                                                1000,
+                                                                this->ini->debug.auth);
+
+                                    if (client_sck == -1) {
+                                        LOG(LOG_ERR, "Failed to connect to authentifieur");
+                                        throw Error(ERR_SOCKET_CONNECT_FAILED);
+                                    }
+
+                                    this->ptr_auth_trans = new SocketTransport( "Authentifier"
+                                                                              , client_sck
+                                                                              , this->ini->globals.authip
+                                                                                , this->ini->globals.authport
+                                                                                , this->ini->debug.auth
+                                                                                );
+                                    this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
+                                    this->acl = new SessionManager( this->ini
+                                                                    , *this->ptr_auth_trans
+                                                                    , start_time // proxy start time
+                                                                    , now        // acl start time
+                                                                   );
+                                    signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
-                                    TODO("move that into connect_authentifier")
                                     TODO("cant create acl shouldn't be necessary, as when on a close box we shouldn't try opening ACL")
                                     TODO("maybe we shouldn't *connect* to ACL but create some acl context anyway to be able to call acl->check ")
                                     cant_create_acl = true;
 
                                     this->ini->context.auth_error_message.copy_c_str("No authentifier available");
                                     mm.remove_mod();
-                                    mm.new_mod(MODULE_INTERNAL_WIDGET2_CLOSE);
+                                    mm.new_mod(MODULE_INTERNAL_CLOSE);
                                 }
                             }
                         }
@@ -224,29 +242,13 @@ struct Session {
                             if (!this->acl->lost_acl && this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
                                 this->acl->receive();
-
-                                TODO("This (below to enclosing bracket) should be done inside ACLs, it is not responsibility of session to do that")
-                                // AuthCHANNEL CHECK
-                                // if an answer has been received, send it to
-                                // rdp serveur via mod (should be rdp module)
-                                TODO("Check if this->mod is RDP MODULE");
-                                if (this->ini->globals.auth_channel[0]) {
-                                    // Get sesman answer to AUTHCHANNEL_TARGET
-                                    if (!this->ini->context.authchannel_answer.get().is_empty()) {
-                                        // If set, transmit to auth_channel channel
-                                        mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
-                                        this->ini->context.authchannel_answer.use();
-                                        // Erase the context variable
-                                        this->ini->context.authchannel_answer.set_empty();
-                                    }
-                                }
                             }
                         }
 
                         if (this->acl) {
-                            run_session = this->acl->check(mm, now, front_trans);
+                            run_session = this->acl->check(mm, now, front_trans, signal);
                         }
-                        else if (no_acl_signal == BACK_EVENT_STOP) {
+                        else if (signal == BACK_EVENT_STOP) {
                             mm.mod->event.reset();
                             run_session = false;
                         }
@@ -286,35 +288,6 @@ struct Session {
             sprintf(old_session_file, "%s/session_%d.pid", PID_PATH, child_pid);
             unlink(old_session_file);
         }
-    }
-
-    void connect_authentifier(time_t start_time, time_t now) {
-        int client_sck = ip_connect(this->ini->globals.authip,
-                                    this->ini->globals.authport,
-                                    30,
-                                    1000,
-                                    this->ini->debug.auth);
-
-        if (client_sck == -1) {
-            LOG(LOG_ERR, "Failed to connect to authentifieur");
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
-        }
-
-        this->ptr_auth_trans = new SocketTransport( "Authentifier"
-                                                  , client_sck
-                                                  , this->ini->globals.authip
-                                                    , this->ini->globals.authport
-                                                    , this->ini->debug.auth
-                                                    );
-        this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
-        this->acl = new SessionManager( this->ini
-                                        , *this->ptr_auth_trans
-                                        , start_time // proxy start time
-                                        , now        // acl start time
-                                        , this->ini->globals.keepalive_grace_delay
-                                        , this->ini->globals.max_tick
-                                        , this->ini->globals.internal_domain
-                                        , this->ini->debug.auth);
     }
 };
 

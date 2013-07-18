@@ -501,6 +501,7 @@ struct Inifile : public FieldObserver {
         // keepalive and no traffic auto deconnexion
         int max_tick;
         int keepalive_grace_delay;
+        int close_timeout;                // timeout of close box in seconds (0 to desactivate)
 
         bool internal_domain;
 
@@ -752,8 +753,9 @@ public:
         this->globals.authport = 3350;
         this->globals.autovalidate = false;
 
-        this->globals.max_tick    = 30;
+        this->globals.max_tick              = 30;
         this->globals.keepalive_grace_delay = 30;
+        this->globals.close_timeout         = 600;       // timeout of close box set to 10 minutes
 
         this->globals.internal_domain = false;
         strcpy(this->globals.dynamic_conf_path, "/tmp/rdpproxy/");
@@ -1655,8 +1657,8 @@ public:
     void parse_username(const char * username)
     {
         //        LOG(LOG_INFO, "parse_username(%s)", username);
-        TODO("These should be results of the parsing function, not storing it away immediately in context. Mixing context management and parsing is not right")
-            char target_user[256];
+        TODO("These should be results of the parsing function, not storing it away immediately in context. Mixing context management and parsing is not right");
+        char target_user[256];
         char target_device[256];
         char target_protocol[256];
         char auth_user[256];

@@ -55,7 +55,6 @@ enum {
     MODULE_XUP,
     MODULE_INTERNAL,
     MODULE_INTERNAL_CLOSE,
-    MODULE_INTERNAL_WIDGET2_CLOSE,
     MODULE_INTERNAL_WIDGET2_DIALOG,
     MODULE_INTERNAL_WIDGET2_MESSAGE,
     MODULE_INTERNAL_WIDGET2_LOGIN,
@@ -83,6 +82,10 @@ class MMApi
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module) = 0;
     virtual void record() = 0;
+    TODO("ModuleManager should know it's state (the module currently connected)"
+         "At least if it's some target module (RDP, VNC, XUP, replay)"
+         "some other internal module, or the close box")
+//    virtual bool is_close_box() { return false; }
 
 };
 
@@ -151,20 +154,6 @@ public:
 
         switch (target_module)
             {
-            case MODULE_INTERNAL_CLOSE:
-                {
-                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
-                    if (this->ini.context.auth_error_message.is_empty()) {
-                        this->ini.context.auth_error_message.copy_c_str("Connection to server ended");
-                    }
-                    this->mod = new WabCloseMod(this->ini,
-                                                this->front,
-                                                this->front.client_info.width,
-                                                this->front.client_info.height);
-                    this->front.init_pointers();
-                }
-                LOG(LOG_INFO, "ModuleManager::internal module Close ready");
-                break;
             case MODULE_INTERNAL_BOUNCER2:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
                 this->mod = new Bouncer2Mod(this->front,
@@ -208,16 +197,21 @@ public:
                     LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
                 }
                 break;
-            case MODULE_INTERNAL_WIDGET2_CLOSE:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'CloseMod'");
-                this->mod = new WabCloseMod(
-                                            this->ini,
-                                            this->front,
-                                            this->front.client_info.width,
-                                            this->front.client_info.height
-                                            );
-                LOG(LOG_INFO, "ModuleManager::internal module 'CloseMod' ready");
+            case MODULE_INTERNAL_CLOSE:
+                {
+                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
+                    if (this->ini.context.auth_error_message.is_empty()) {
+                        this->ini.context.auth_error_message.copy_c_str("Connection to server ended");
+                    }
+                    this->mod = new WabCloseMod(this->ini,
+                                                this->front,
+                                                this->front.client_info.width,
+                                                this->front.client_info.height);
+                    this->front.init_pointers();
+                }
+                LOG(LOG_INFO, "ModuleManager::internal module Close ready");
                 break;
+
             case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
             case MODULE_INTERNAL_WIDGET2_DIALOG:
                 {

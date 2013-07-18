@@ -201,12 +201,12 @@ struct FieldObserver : public ConfigurationHolder {
             this->data.copy_c_str(cstr);
         }
         virtual void set_from_cstr(const char * cstr) {
-            this->asked = false;
-            if (strcmp(this->data.c_str(),cstr)) {
+            if (strcmp(this->data.c_str(),cstr) || this->asked) {
                 this->modify();
                 this->read = false;
                 this->data.copy_c_str(cstr);
             }
+            this->asked = false;
         }
         bool is_empty(){
             return this->data.is_empty();
@@ -243,12 +243,12 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         void set(uint32_t that) {
-            this->asked = false;
-            if (this->data != that) {
+            if (this->data != that || this->asked) {
                 this->modify();
                 this->read = false;
                 this->data = that;
             }
+            this->asked = false;
         }
 
         virtual void set_from_acl(const char * cstr) {
@@ -296,13 +296,12 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         void set(signed that) {
-            this->asked = false;
-            if (this->data != that) {
+            if (this->data != that || this->asked) {
                 this->modify();
                 this->read = false;
                 this->data = that;
             }
-
+            this->asked = false;
         }
         virtual void set_from_acl(const char * cstr) {
             this->asked = false;
@@ -339,13 +338,12 @@ struct FieldObserver : public ConfigurationHolder {
         }
 
         void set(bool that) {
-            this->asked = false;
-            if (this->data != that) {
+            if (this->data != that || this->asked) {
                 this->modify();
                 this->read = false;
                 this->data = that;
             }
-
+            this->asked = false;
         }
         virtual void set_from_acl(const char * cstr) {
             this->asked = false;
