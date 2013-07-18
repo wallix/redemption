@@ -137,6 +137,8 @@ public:
 
     uint32_t bitmap_update_count;
 
+    GeneralCaps client_general_cap;
+
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random * gen
@@ -2390,6 +2392,18 @@ public:
         this->trans->send(x224_header, mcs_header, stream);
     }
 
+    void send_server_update(HStream & data) {
+        BStream fastpath_header(256);
+
+        FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+              fastpath_header
+            , data
+            , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+            , this->encrypt
+            );
+        this->trans->send(fastpath_header, data);
+    }
+
     /*****************************************************************************/
     void send_data_update_sync() throw (Error)
     {
@@ -2688,15 +2702,18 @@ public:
 
             switch (capset_type) {
             case CAPSTYPE_GENERAL: {
-                    GeneralCaps general;
-                    general.recv(stream, capset_length);
+                    this->client_general_cap.recv(stream, capset_length);
                     if (this->verbose) {
-                        general.log("Receiving from client");
+                        this->client_general_cap.log("Receiving from client");
                     }
-                    this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
+                    this->client_info.use_compact_packets =
+                        (this->client_general_cap.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
+                        1 : 0;
 
                     this->server_fastpath_update_support =
-                        (this->fastpath_support && ((general.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0));
+                        (   this->fastpath_support
+                         && ((this->client_general_cap.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0)
+                        );
                 }
                 break;
             case CAPSTYPE_BITMAP: {

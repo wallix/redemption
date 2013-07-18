@@ -124,8 +124,7 @@ int main(int argc, char * argv[]) {
         }
 
         virtual Server_status start(int incoming_sck) {
-            union
-            {
+            union {
                 struct sockaddr s;
                 struct sockaddr_storage ss;
                 struct sockaddr_in s4;
@@ -156,7 +155,7 @@ int main(int argc, char * argv[]) {
         LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     }
     wait_obj front_event(one_shot_server.sck);
-    SocketTransport front_trans("RDP Client", one_shot_server.sck, "0.0.0.0", 0
+    SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
                                , ini.debug.front, 0);
 
     LCGRandom gen(0);
@@ -194,6 +193,7 @@ int main(int argc, char * argv[]) {
                                , false  // fast-path
                                , true   // mem3blt
                                , false  // bitmap update
+                               , output_filename.c_str()
                                , ini.debug.mod_rdp);
         mod.event.obj = client_sck;
 
@@ -214,10 +214,10 @@ int main(int argc, char * argv[]) {
                 front_event.add_to_fd_set(rfds, max);
                 mod.event.add_to_fd_set(rfds, max);
 
-                    if (mod.event.is_set(rfds)) {
-                        timeout.tv_sec  = 0;
-                        timeout.tv_usec = 0;
-                    }
+                if (mod.event.is_set(rfds)) {
+                    timeout.tv_sec  = 0;
+                    timeout.tv_usec = 0;
+                }
 
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 
@@ -233,7 +233,8 @@ int main(int argc, char * argv[]) {
                 if (front_event.is_set(rfds)) {
                     try {
                         front.incoming(mod);
-                    } catch (...) {
+                    }
+                    catch (...) {
                         run_session = false;
                         continue;
                     };

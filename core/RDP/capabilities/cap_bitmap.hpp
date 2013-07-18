@@ -228,6 +228,10 @@ struct BitmapCaps : public Capability {
         LOG(LOG_INFO, "Bitmap caps::multipleRectangleSupport %u", this->multipleRectangleSupport);
         LOG(LOG_INFO, "Bitmap caps::pad2octetsB %u", this->pad2octetsB);
     }
+
+    void dump(File * f) {
+        
+    }
 };
 
 #endif
