@@ -129,11 +129,12 @@ struct Session {
 
             struct timeval time_mark = { 0, 0 };
             bool run_session = true;
+
             while (run_session) {
                 try {
                     if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500) {
-                    time_mark.tv_sec = 0;
-                    time_mark.tv_usec = 50000;
+                        time_mark.tv_sec = 0;
+                        time_mark.tv_usec = 5000000;
                     }
 
                     unsigned max = 0;
