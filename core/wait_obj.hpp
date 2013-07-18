@@ -61,7 +61,7 @@ class wait_obj
         }
     }
 
-    void add_to_fd_set(fd_set & rfds, unsigned & max, timeval * timeout = NULL)
+    void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout)
     {
         if (this->obj > 0){
             FD_SET(this->obj, &rfds);
@@ -70,24 +70,37 @@ class wait_obj
         // else if (timeout && this->is_set(rfds)){
         //     timeout->tv_sec  = 0;
         //     timeout->tv_usec = 0;
-        // }
-        else if (timeout && this->set_state) {
+        // } //case 1
+        // else if (this->set_state) {
+        //     struct timeval now;
+        //     now = tvtime();
+        //     if (  (now.tv_sec > this->trigger_time.tv_sec)
+        //         ||( (now.tv_sec == this->trigger_time.tv_sec)
+        //           &&(now.tv_usec > this->trigger_time.tv_usec))) {
+        //         timeout.tv_sec  = 0;
+        //         timeout.tv_usec = 0;
+        //         // LOG(LOG_INFO, "TIMEOUT RESET");
+        //     }
+        //     else {
+        //         // LOG(LOG_INFO, "TIMEOUT ADJUSTED TO DIFF TRIGGER TIME");
+        //         bool carry = (this->trigger_time.tv_usec < now.tv_usec);
+        //         timeout.tv_usec = carry*1000000 + this->trigger_time.tv_usec - now.tv_usec;
+        //         timeout.tv_sec  = this->trigger_time.tv_sec - (now.tv_sec + carry);
+        //     }
+        // } //case 2
+        else if (this->set_state) {
             struct timeval now;
             now = tvtime();
-            if (  (now.tv_sec > this->trigger_time.tv_sec)
-                ||( (now.tv_sec == this->trigger_time.tv_sec)
-                  &&(now.tv_usec > this->trigger_time.tv_usec))) {
-                timeout->tv_sec  = 0;
-                timeout->tv_usec = 0;
-                // LOG(LOG_INFO, "TIMEOUT RESET");
+            if (lessthantimeval(this->trigger_time,now)) {
+                timeout.tv_sec  = 0;
+                timeout.tv_usec = 0;
             }
             else {
-                // LOG(LOG_INFO, "TIMEOUT ADJUSTED TO DIFF TRIGGER TIME");
-                uint64_t carry = (this->trigger_time.tv_usec < now.tv_usec)?1:0;
-                timeout->tv_usec = carry*1000000 + this->trigger_time.tv_usec - now.tv_usec;
-                timeout->tv_sec  = this->trigger_time.tv_sec - (now.tv_sec + carry);
+                timeval remain;
+                remain  = absdifftimeval(this->trigger_time,now);
+                timeout = mintimeval(timeout,remain);
             }
-        }
+        } //case 3
     }
 
     void reset()

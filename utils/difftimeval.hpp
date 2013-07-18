@@ -47,4 +47,30 @@ REDOC("as gettimeofday is not monotonic we may get surprising results (overflow)
     return (d > 0x100000000LL)?0:d;
 }
 
+static inline bool lessthantimeval(const timeval & before, const timeval & after) {
+    // return before < after
+    return (    (after.tv_sec > before.tv_sec)
+             || (   (after.tv_sec == before.tv_sec)
+                 && (after.tv_usec > before.tv_usec)));
+}
+
+static inline timeval absdifftimeval(const timeval & endtime, const timeval & starttime) {
+    // return | endtime - starttime |
+    timeval res;
+    if (!lessthantimeval(endtime,starttime)) {
+        bool carry = endtime.tv_usec < starttime.tv_usec;
+        res.tv_usec = carry*1000000 + endtime.tv_usec - starttime.tv_usec;
+        res.tv_sec  = endtime.tv_sec - (starttime.tv_sec + carry);
+    }
+    else {
+        res = absdifftimeval(starttime,endtime);
+    }
+    return res;
+}
+
+static inline timeval mintimeval(const timeval & time1, const timeval & time2) {
+    // return min(time1,time2)
+    return lessthantimeval(time1,time2)?time1:time2;
+}
+
 #endif

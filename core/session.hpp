@@ -145,14 +145,14 @@ struct Session {
                     FD_ZERO(&wfds);
                     struct timeval timeout = time_mark;
 
-                    this->front_event.add_to_fd_set(rfds, max);
+                    this->front_event.add_to_fd_set(rfds, max, timeout);
 
                     TODO("Looks like acl and mod can be unified into a common class, where events can happen")
                     TODO("move ptr_auth_event to acl")
                     if (this->acl && !this->acl->lost_acl) {
-                        this->ptr_auth_event->add_to_fd_set(rfds, max);
+                        this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
                     }
-                    mm.mod->event.add_to_fd_set(rfds, max, &timeout);
+                    mm.mod->event.add_to_fd_set(rfds, max, timeout);
 
                     // TODO("fix that: timeout should be updated by add_to_fd_set")
                     // if (mm.mod->event.obj == 0 && mm.mod->event.is_set(rfds)) {
