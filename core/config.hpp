@@ -997,9 +997,6 @@ public:
         this->context.authenticated.attach_ini(this, AUTHID_AUTHENTICATED);
 
         this->context.keepalive.set(false);
-        this->context.keepalive.ask();
-        // this->context.state_keepalive.asked               = true;
-        // this->context.state_keepalive.modified               = true;
 
         // this->context.state_proxy_type.asked              = false;
         // this->context.state_proxy_type.modified              = true;
@@ -1625,6 +1622,7 @@ public:
     }
 
     bool context_get_bool(authid_t authid) {
+        TODO("ask related behavior is a problem. How do we make the difference between a False value and asked ?")
         switch (authid)
             {
             case AUTHID_SELECTOR:
