@@ -61,11 +61,15 @@ class wait_obj
         }
     }
 
-    void add_to_fd_set(fd_set & rfds, unsigned & max)
+    void add_to_fd_set(fd_set & rfds, unsigned & max, timeval * timeout = NULL)
     {
         if (this->obj > 0){
             FD_SET(this->obj, &rfds);
             max = ((unsigned)this->obj > max)?this->obj:max;
+        }
+        else if (timeout && this->is_set(rfds)) {
+            timeout->tv_sec  = 0;
+            timeout->tv_usec = 0;
         }
     }
 
