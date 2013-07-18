@@ -54,7 +54,7 @@ public:
                               // and asked_remote_answer is set to false
     time_t start_time;        // never used ?
     time_t acl_start_time;    // never used ?
-    time_t close_timeout;
+
     uint32_t verbose;
     bool read_auth;
 
@@ -74,7 +74,6 @@ public:
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
-        , close_timeout(0)
         , verbose(ini->debug.auth)
         , read_auth(false) {
         if (this->verbose & 0x10) {
@@ -251,7 +250,7 @@ public:
 
 protected:
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message, BackEvent_t & signal) {
-    
+
         if (this->last_module) {
             mm.mod->event.reset();
             return false;
@@ -262,11 +261,6 @@ protected:
         this->asked_remote_answer = false;
         this->last_module         = true;
         this->keepalive_time      = 0;
-        TODO("Maybe the timeout of close box should be in the close box module itself");
-        if (this->ini->globals.close_timeout > 0) {
-            this->close_timeout   = time(NULL) + this->ini->globals.close_timeout;
-            LOG(LOG_INFO, "invoke_mod_close: Ending session in %u seconds", this->ini->globals.close_timeout);
-        }
         mm.remove_mod();
         mm.new_mod(MODULE_INTERNAL_CLOSE);
         signal = BACK_EVENT_NONE;
@@ -277,14 +271,8 @@ public:
 
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
         LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
-        long enddate;
-        if (!this->last_module) {
-            enddate = this->ini->context.end_date_cnx.get();
-        }
-        else {
-            enddate = this->close_timeout;
-        }
-        if (enddate != 0 && (now > enddate)/* && !this->last_module*/) {
+        long enddate = this->ini->context.end_date_cnx.get();
+        if (enddate != 0 && (now > enddate) && !this->last_module) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe", signal);
         }
@@ -375,7 +363,7 @@ public:
                 mm.mod->event.set();
             }
             else if (this->remote_answer && signal == BACK_EVENT_NEXT) {
-            
+
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
                 int next_state = this->next_module();
