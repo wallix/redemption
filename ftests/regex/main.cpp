@@ -10,10 +10,8 @@
 #include <algorithm>
 #include <boost/preprocessor/cat.hpp>
 
-///TODO callback when capture (open, close and fail)
 ///TODO transition multi-characters
 ///TODO regex compiler ("..." -> C++)
-///TODO
 
 namespace rndfa {
     const unsigned ANY_CHARACTER = 1 << 8;
@@ -313,7 +311,17 @@ namespace rndfa {
                 }
 
                 if (this->nb_capture) {
-                    this->captures = new StateBase *[this->nb_capture*2];
+                    l1.set_parray(new StateListByStep::Info[this->vec.size() * 2]);
+                    l2.set_parray(l1.array + this->vec.size());
+
+                    const unsigned col = this->vec.size() - this->nb_capture * 2;
+                    const unsigned matrix_size = col * this->nb_capture * 2;
+
+                    this->captures = new StateBase const *[this->nb_capture * 2 + matrix_size];
+                    this->traces = reinterpret_cast<const char **>(this->captures + this->nb_capture * 2);
+
+                    this->idx_trace_free = new unsigned[col];
+
                     this->pcaptures = this->captures;
 
                     for (state_iterator first = this->vec.begin(), last = this->vec.end(); first != last; ++first) {
@@ -322,11 +330,6 @@ namespace rndfa {
                             ++this->pcaptures;
                         }
                     }
-
-                    const unsigned col = this->vec.size() - this->nb_capture * 2;
-                    const unsigned matrix_size = col * this->nb_capture * 2;
-                    this->traces = new char const *[matrix_size];
-                    this->idx_trace_free = new unsigned[col];
                 }
 
                 {
@@ -386,9 +389,6 @@ namespace rndfa {
 //                     }
 //                     //END clear capture
                 }
-
-                l1.set_parray(new StateListByStep::Info[this->vec.size() * 2]);
-                l2.set_parray(l1.array + this->vec.size());
             }
         }
 
@@ -396,7 +396,6 @@ namespace rndfa {
         {
             delete [] this->st_list;
             delete [] this->st_range_list;
-            delete [] this->traces;
             delete [] this->captures;
             delete [] this->idx_trace_free;
             delete [] this->captures_for_list;
@@ -505,12 +504,49 @@ namespace rndfa {
         typedef std::pair<const char *, const char *> range_t;
         typedef std::vector<range_t> range_list;
 
+    private:
+        struct DefaultMatchTracer
+        {
+            void start(unsigned /*idx*/) const
+            {}
+
+            void new_id(unsigned /*old_id*/, unsigned /*new_id*/) const
+            {}
+
+            bool open(unsigned /*idx*/, const char *, unsigned /*num_cap*/) const
+            { return true; }
+
+            bool close(unsigned /*idx*/, const char *, unsigned /*num_cap*/) const
+            { return true; }
+
+            void fail(unsigned /*idx*/) const
+            {}
+
+            void good(unsigned /*idx*/) const
+            {}
+        };
+
+    public:
         range_list exact_match(const char * s)
         {
             range_list ranges;
 
             if (this->nb_capture) {
-                if (Matching(*this).exact_match(s)) {
+                if (Matching(*this).exact_match(s, DefaultMatchTracer())) {
+                    this->append_match_result(ranges);
+                }
+            }
+
+            return ranges;
+        }
+
+        template<typename Tracer>
+        range_list exact_match(const char * s, Tracer tracer)
+        {
+            range_list ranges;
+
+            if (this->nb_capture) {
+                if (Matching(*this).exact_match<Tracer&>(s, tracer)) {
                     this->append_match_result(ranges);
                 }
             }
@@ -531,7 +567,16 @@ namespace rndfa {
             if (this->nb_capture == 0) {
                 return exact_search(s);
             }
-            return Matching(*this).exact_match(s);
+            return Matching(*this).exact_match(s, DefaultMatchTracer());
+        }
+
+        template<typename Tracer>
+        bool exact_search_with_trace(const char * s, Tracer tracer)
+        {
+            if (this->nb_capture == 0) {
+                return exact_search(s);
+            }
+            return Matching(*this).exact_match<Tracer&>(s, tracer);
         }
 
         range_list match_result()
@@ -546,14 +591,14 @@ namespace rndfa {
             ranges.reserve(this->nb_capture);
             TraceRange trace = this->get_trace();
 
-            StateBase ** pst = this->captures;
+            const StateBase ** pst = this->captures;
             while (pst < this->pcaptures) {
                 while ((*pst)->is_cap_close()) {
                     if (++pst >= this->pcaptures) {
                         return ;
                     }
                 }
-                StateBase ** pbst = pst;
+                const StateBase ** pbst = pst;
                 unsigned n = 1;
                 while (++pst < this->pcaptures && ((*pst)->is_cap_open() ? ++n : --n)) {
                 }
@@ -726,13 +771,16 @@ namespace rndfa {
                 }
             };
 
-            unsigned step(const char *s, StateListByStep * l1, StateListByStep * l2)
+            template<typename Tracer>
+            unsigned step(const char *s, StateListByStep * l1, StateListByStep * l2,
+                          Tracer& tracer)
             {
                 std::sort(l1->begin(), l1->end(), CompareInfoId());
 
                 for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
                     if (ifirst->rl->st->id == this->step_id) {
                         /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
+                        tracer.fail(ifirst->idx);
                         this->sm.push_idx_trace(ifirst->idx);
                         continue;
                     }
@@ -744,7 +792,7 @@ namespace rndfa {
 
                     for (; first != last; ++first) {
                         if (first->st->is_cap_open()) {
-                            if (!this->sm.traces[ifirst->idx * (this->sm.nb_capture * 2) + first->st->num]) {
+                            if (!this->sm.traces[ifirst->idx * (this->sm.nb_capture * 2) + first->st->num] && tracer.open(ifirst->idx, s, first->st->num)) {
 #ifdef DISPLAY_TRACE
                                 std::cout << ifirst->idx << "  " << *first->st << "  " << first->st->num << std::endl;
 #endif
@@ -755,10 +803,12 @@ namespace rndfa {
                         }
 
                         if (first->st->is_cap_close()) {
+                            if (tracer.close(ifirst->idx, s, first->st->num)) {
 #ifdef DISPLAY_TRACE
-                            std::cout << ifirst->idx << "  " << *first->st << "  " << first->st->num << std::endl;
+                                std::cout << ifirst->idx << "  " << *first->st << "  " << first->st->num << std::endl;
 #endif
-                            ++this->sm.traces[ifirst->idx * (this->sm.nb_capture * 2) + first->st->num] = s;
+                                ++this->sm.traces[ifirst->idx * (this->sm.nb_capture * 2) + first->st->num] = s;
+                            }
                             continue ;
                         }
 
@@ -772,9 +822,11 @@ namespace rndfa {
                                 return ifirst->idx;
                             }
 
-                            const unsigned idx = (0 == new_trace)
-                                ? ifirst->idx
-                                : this->sm.pop_idx_trace(ifirst->idx);
+                            unsigned idx = ifirst->idx;
+                            if (new_trace) {
+                                idx = this->sm.pop_idx_trace(ifirst->idx);
+                                tracer.new_id(ifirst->idx, idx);
+                            }
 #ifdef DISPLAY_TRACE
                             std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m" << std::endl;
 #endif
@@ -786,6 +838,7 @@ namespace rndfa {
 #ifdef DISPLAY_TRACE
                         std::cout << "\t\033[35mx " << ifirst->idx << std::endl;
 #endif
+                        tracer.fail(ifirst->idx);
                         this->sm.push_idx_trace(ifirst->idx);
                     }
                 }
@@ -793,7 +846,8 @@ namespace rndfa {
                 return -1u;
             }
 
-            bool exact_match(const char * s)
+            template<typename Tracer>
+            bool exact_match(const char * s, Tracer tracer)
             {
 #ifdef DISPLAY_TRACE
                 this->sm.display_dfa();
@@ -806,13 +860,14 @@ namespace rndfa {
                 StateListByStep * pal1 = &this->sm.l1;
                 StateListByStep * pal2 = &this->sm.l2;
                 pal1->push_back(this->sm.st_range_list, *--this->sm.pidx_trace_free);
+                tracer.start(*this->sm.pidx_trace_free);
 
                 for(; *s; ++s){
 #ifdef DISPLAY_TRACE
                     std::cout << "\033[01;31mc: '" << *s << "'\033[0m" << std::endl;
 #endif
-                    if (-1u != (this->sm.idx_trace = this->step(s, pal1, pal2))) {
-                        //this->sm.idx_trace = 36;
+                    if (-1u != (this->sm.idx_trace = this->step(s, pal1, pal2, tracer))) {
+                        tracer.good(this->sm.idx_trace);
                         return !*(s+1);
                     }
                     ++this->step_id;
@@ -835,8 +890,8 @@ namespace rndfa {
         unsigned * idx_trace_free;
         unsigned * pidx_trace_free;
         StateBase * st_first;
-        StateBase ** captures;
-        StateBase ** pcaptures;
+        const StateBase ** captures;
+        const StateBase ** pcaptures;
         StateBase ** captures_for_list;
         StateBase ** pcaptures_for_list;
         const char ** traces;
@@ -1068,6 +1123,41 @@ namespace rndfa {
     }
 }
 
+
+struct Tracer {
+    void start(unsigned idx) const
+    {
+        std::cout << ("start:\tidx: ") << idx << "\n";
+    }
+
+    void new_id(unsigned old_id, unsigned new_id) const
+    {
+        std::cout << ("new_id:\told: ") << old_id << "\tnew: " << new_id << "\n";
+    }
+
+    bool open(unsigned idx, const char * s, unsigned num_cap) const
+    {
+        std::cout << "open:\tidx: " << idx << "\tc: " << *s << "\tcap: " << num_cap << "\n";
+        return true;
+    }
+
+    bool close(unsigned idx, const char * s, unsigned num_cap) const
+    {
+        std::cout << "close:\tidx: " << idx << "\tc: " << *s << "\tcap: " << num_cap << "\n";
+        return true;
+    }
+
+    void fail(unsigned idx) const
+    {
+        std::cout << ("fail:\tidx: ") << idx << "\n";
+    }
+
+    void good(unsigned idx) const
+    {
+        std::cout << ("good:\tidx: ") << idx << "\n";
+    }
+};
+
 int main(int argc, char **argv) {
     std::ios::sync_with_stdio(false);
 
@@ -1181,10 +1271,11 @@ int main(int argc, char **argv) {
 
     regex_t rgx;
 #ifdef GENERATE_ST
-    if (0 != regcomp(&rgx, rgxstr, REG_EXTENDED)){
+    if (0 != regcomp(&rgx, rgxstr, REG_EXTENDED))
 #else
-    if (0 != regcomp(&rgx, ".* .* (.*) (.*) .*a.*", REG_EXTENDED)){
+    if (0 != regcomp(&rgx, ".* .* (.*) (.*) .*a.*", REG_EXTENDED))
 #endif
+    {
         std::cout << ("comp error") << std::endl;
     }
     regmatch_t regmatch[3];
@@ -1257,6 +1348,9 @@ int main(int argc, char **argv) {
             }
         }
         d4 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
+    }
+    {
+        sm.exact_search_with_trace(str, Tracer());
     }
     //std::cout.rdbuf(dbuf);
 
