@@ -211,8 +211,8 @@ int main(int argc, char * argv[]) {
                 FD_ZERO(&wfds);
                 struct timeval timeout = time_mark;
 
-                front_event.add_to_fd_set(rfds, max);
-                mod.event.add_to_fd_set(rfds, max);
+                front_event.add_to_fd_set(rfds, max, timeout);
+                mod.event.add_to_fd_set(rfds, max, timeout);
 
                     if (mod.event.is_set(rfds)) {
                         timeout.tv_sec  = 0;
