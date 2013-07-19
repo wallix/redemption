@@ -16,7 +16,7 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2012
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
-   Martin Potier, Jonathan Poelen
+   Martin Potier, Jonathan Poelen, Meng Tan
 */
 
 #ifndef _REDEMPTION_UTILS_DIFFTIMEVAL_HPP_
@@ -47,6 +47,9 @@ REDOC("as gettimeofday is not monotonic we may get surprising results (overflow)
     return (d > 0x100000000LL)?0:d;
 }
 
+
+// All these operations assume that any timeval.tv_usec is < 1000000L
+// Otherwise, the timeval is not well formated
 static inline bool lessthantimeval(const timeval & before, const timeval & after) {
     // return before < after
     return (    (after.tv_sec > before.tv_sec)
@@ -54,12 +57,22 @@ static inline bool lessthantimeval(const timeval & before, const timeval & after
                  && (after.tv_usec > before.tv_usec)));
 }
 
+static inline timeval addtimeval(const timeval & time1, const timeval & time2) {
+    // return time1 + time2
+    timeval res;
+    bool carry = (time1.tv_usec + time2.tv_usec >= 1000000L);
+    res.tv_usec = time1.tv_usec + time2.tv_usec - carry*1000000L;
+    res.tv_sec = time1.tv_sec + time2.tv_sec + carry;
+
+    return res;
+}
+
 static inline timeval absdifftimeval(const timeval & endtime, const timeval & starttime) {
     // return | endtime - starttime |
     timeval res;
     if (!lessthantimeval(endtime,starttime)) {
         bool carry = endtime.tv_usec < starttime.tv_usec;
-        res.tv_usec = carry*1000000 + endtime.tv_usec - starttime.tv_usec;
+        res.tv_usec = carry*1000000L + endtime.tv_usec - starttime.tv_usec;
         res.tv_sec  = endtime.tv_sec - (starttime.tv_sec + carry);
     }
     else {
