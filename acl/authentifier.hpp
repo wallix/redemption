@@ -58,7 +58,7 @@ public:
     time_t acl_start_time;    // never used ?
 
     uint32_t verbose;
-    bool read_auth;
+    // bool read_auth;
 
     SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
@@ -77,7 +77,8 @@ public:
         , start_time(start_time)
         , acl_start_time(acl_start_time)
         , verbose(ini->debug.auth)
-        , read_auth(false) {
+          //, read_auth(false)
+    {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
@@ -402,7 +403,7 @@ public:
                 }
                 if ((this->keepalive_time == 0) && this->connected) {
                     this->start_keepalive(now);
-                    this->read_auth = false;
+                    // this->read_auth = false;
 
                     mm.record();
                 }
@@ -442,7 +443,7 @@ public:
         try {
             if (!this->lost_acl) {
                 this->acl_serial.incoming();
-                this->read_auth     = true;
+                // this->read_auth     = true;
                 this->remote_answer = true;
             }
         } catch (...) {
