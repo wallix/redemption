@@ -33,6 +33,7 @@ class WabCloseMod : public InternalMod, public NotifyApi
 {
     WindowWabClose window_close;
     WidgetImage image;
+    time_t timeout;
 
     Inifile & ini;
 
@@ -59,7 +60,9 @@ public:
     )
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
     , ini(ini)
+    , timeout(time(NULL) + ini.globals.close_timeout)
     {
+        LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
         this->screen.child_list.push_back(&this->image);
         this->screen.child_list.push_back(&this->window_close);
 
@@ -89,7 +92,13 @@ public:
 
     virtual void draw_event()
     {
-        this->event.reset();
+        time_t now = time(NULL);
+        if (now > this->timeout) {
+            this->event.signal = BACK_EVENT_STOP;
+            this->event.set();
+        }
+        this->event.set(1000000);
+        // this->event.reset();
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)

@@ -70,7 +70,6 @@ class GeneratorTransport : public Transport {
 };
 
 class CheckTransport : public Transport {
-
     public:
     RIO rio;
 
@@ -115,24 +114,30 @@ class CheckTransport : public Transport {
 
 class TestTransport : public Transport {
     public:
-    RIO rio;
+    RIO rio_check;
+    RIO rio_gen;
 
     TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
     {
-        RIO_ERROR res = rio_init_test(&this->rio, indata, inlen, outdata, outlen);
-        if (res != RIO_ERROR_OK){ 
+        RIO_ERROR res1 = rio_init_check(&this->rio_check, indata, inlen);
+        if (res1 != RIO_ERROR_OK){ 
+            throw Error(ERR_TRANSPORT, 0);
+        }
+        RIO_ERROR res2 = rio_init_generator(&this->rio_gen, outdata, outlen);
+        if (res2 != RIO_ERROR_OK){ 
             throw Error(ERR_TRANSPORT, 0);
         }
     }
 
     ~TestTransport()
     {
-        rio_clear(&this->rio);
+        rio_clear(&this->rio_check);
+        rio_clear(&this->rio_gen);
     }
 
     using Transport::recv;
     virtual void recv(char ** pbuffer, size_t len) throw (Error) {
-        ssize_t res = rio_recv(&this->rio, *pbuffer, len);
+        ssize_t res = rio_recv(&this->rio_gen, *pbuffer, len);
         if (res < 0){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
@@ -144,7 +149,7 @@ class TestTransport : public Transport {
 
     using Transport::send;
     virtual void send(const char * const buffer, size_t len) throw (Error) {
-        ssize_t res = rio_send(&this->rio, buffer, len);
+        ssize_t res = rio_send(&this->rio_check, buffer, len);
         if (res < 0) {
             throw Error(ERR_TRANSPORT_DIFFERS);
         }
@@ -156,7 +161,7 @@ class TestTransport : public Transport {
 
     virtual bool get_status()
     {
-        return rio_get_status(&this->rio) == RIO_ERROR_OK;
+        return (rio_get_status(&this->rio_check) == RIO_ERROR_OK) && (rio_get_status(&this->rio_gen) == RIO_ERROR_OK);
     }
 };
 

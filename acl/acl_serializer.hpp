@@ -96,7 +96,7 @@ public:
 
                     if ((0 == strncasecmp((char*)value, "ask", 3))) {
                         this->ini->context_ask_by_string((char *)keyword);
-                        LOG(LOG_INFO, "receiving %s '%s'\n", value, keyword);
+                        LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
                     }
                     else {
                         this->ini->set_from_acl((char *)keyword,
@@ -107,11 +107,11 @@ public:
                         if (  (strncasecmp("password",        (char *)keyword, 9 ) == 0)
                               || (strncasecmp("target_password", (char *)keyword, 16) == 0)
                               ){
-                            LOG(LOG_INFO, "receiving '%s'=<hidden>\n", (char *)keyword);
+                            LOG(LOG_INFO, "receiving '%s'=<hidden>", (char *)keyword);
                         }
                         else{
                             char buffer[128];
-                            LOG(LOG_INFO, "receiving '%s'='%s'\n", keyword,
+                            LOG(LOG_INFO, "receiving '%s'='%s'", keyword,
                                 this->ini->context_get_value_by_string((char *)keyword, buffer, sizeof(buffer)));
                         }
                     }
@@ -166,7 +166,7 @@ public:
     {
         const char * key = string_from_authid(authid);
         if (this->ini->context_is_asked(authid)){
-            LOG(LOG_INFO, "sending (from authid) %s=ASK\n", key);
+            LOG(LOG_INFO, "sending (from authid) %s=ASK", key);
             stream.out_copy_bytes(key, strlen(key));
             stream.out_copy_bytes("\nASK\n",5);
         }
@@ -177,10 +177,10 @@ public:
 
             if ((strncasecmp("password", (char*)key, 8) == 0)
                 ||(strncasecmp("target_password", (char*)key, 15) == 0)){
-                LOG(LOG_INFO, "sending (from authid) %s=<hidden>\n", key);
+                LOG(LOG_INFO, "sending (from authid) %s=<hidden>", key);
             }
             else {
-                LOG(LOG_INFO, "sending (from authid) %s=%s\n", key, tmp);
+                LOG(LOG_INFO, "sending (from authid) %s=%s", key, tmp);
             }
             stream.out_copy_bytes(key, strlen(key));
             stream.out_uint8('\n');
@@ -248,10 +248,15 @@ public:
         OutItemFunctor(AclSerializer * acl, BStream & stream)
             : stream(stream)
             , acl(acl) {
-            LOG(LOG_INFO, "OutItemFunctor Creation");
+//            LOG(LOG_INFO, "OutItemFunctor Creation %p", this);
+        }
+        OutItemFunctor(const OutItemFunctor & other)
+            : stream(other.stream)
+            , acl(other.acl) {
+//            LOG(LOG_INFO, "OutItemFunctor Creation (copy) %p", this);
         }
         ~OutItemFunctor() {
-            LOG(LOG_INFO, "OutItemFunctor Destruction");
+//            LOG(LOG_INFO, "OutItemFunctor Destruction %p", this);
         }
         void operator()(Inifile::BaseField * bfield) {
             this->acl->out_item_new(this->stream,bfield);
@@ -269,7 +274,8 @@ public:
             //     this->out_item_new(stream, *it);
             // }
 
-            list.foreach(OutItemFunctor(this,stream));
+            TODO("This involve copy of functor, find a simpler way")
+            list.foreach(OutItemFunctor(this, stream));
 
             stream.mark_end();
             int total_length = stream.get_offset();

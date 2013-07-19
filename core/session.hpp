@@ -129,11 +129,12 @@ struct Session {
 
             struct timeval time_mark = { 0, 0 };
             bool run_session = true;
+
             while (run_session) {
                 try {
                     if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500) {
-                    time_mark.tv_sec = 0;
-                    time_mark.tv_usec = 50000;
+                        time_mark.tv_sec = 5;
+                        time_mark.tv_usec = 0;
                     }
 
                     unsigned max = 0;
@@ -144,20 +145,20 @@ struct Session {
                     FD_ZERO(&wfds);
                     struct timeval timeout = time_mark;
 
-                    this->front_event.add_to_fd_set(rfds, max);
+                    this->front_event.add_to_fd_set(rfds, max, timeout);
 
                     TODO("Looks like acl and mod can be unified into a common class, where events can happen")
                     TODO("move ptr_auth_event to acl")
                     if (this->acl && !this->acl->lost_acl) {
-                        this->ptr_auth_event->add_to_fd_set(rfds, max);
+                        this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
                     }
-                    mm.mod->event.add_to_fd_set(rfds, max);
+                    mm.mod->event.add_to_fd_set(rfds, max, timeout);
 
-                    TODO("fix that: timeout should be updated by add_to_fd_set")
-                    if (mm.mod->event.obj == 0 && mm.mod->event.is_set(rfds)) {
-                        timeout.tv_sec  = 0;
-                        timeout.tv_usec = 0;
-                    }
+                    // TODO("fix that: timeout should be updated by add_to_fd_set")
+                    // if (mm.mod->event.obj == 0 && mm.mod->event.is_set(rfds)) {
+                    //     timeout.tv_sec  = 0;
+                    //     timeout.tv_usec = 0;
+                    // }
 
                     int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 

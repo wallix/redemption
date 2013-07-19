@@ -54,7 +54,7 @@ public:
                               // and asked_remote_answer is set to false
     time_t start_time;        // never used ?
     time_t acl_start_time;    // never used ?
-    time_t close_timeout;
+
     uint32_t verbose;
     bool read_auth;
 
@@ -74,12 +74,12 @@ public:
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
-        , close_timeout(0)
         , verbose(ini->debug.auth)
         , read_auth(false) {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
+        this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
     ~SessionManager() {
@@ -94,11 +94,8 @@ public:
         }
 
         this->tick_count           = 1;
-        this->keepalive_time       =
+        this->keepalive_time       = now + 2*this->keepalive_grace_delay;
         this->keepalive_renew_time = now + this->keepalive_grace_delay;
-
-        this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
-        this->ini->context_ask(AUTHID_KEEPALIVE);
     }
 
     // Check movie start/stop/pause
@@ -253,7 +250,7 @@ public:
 
 protected:
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message, BackEvent_t & signal) {
-    
+
         if (this->last_module) {
             mm.mod->event.reset();
             return false;
@@ -264,11 +261,6 @@ protected:
         this->asked_remote_answer = false;
         this->last_module         = true;
         this->keepalive_time      = 0;
-        TODO("Maybe the timeout of close box should be in the close box module itself");
-        if (this->ini->globals.close_timeout > 0) {
-            this->close_timeout   = time(NULL) + this->ini->globals.close_timeout;
-            LOG(LOG_INFO, "invoke_mod_close: Ending session in %u seconds", this->ini->globals.close_timeout);
-        }
         mm.remove_mod();
         mm.new_mod(MODULE_INTERNAL_CLOSE);
         signal = BACK_EVENT_NONE;
@@ -278,14 +270,9 @@ protected:
 public:
 
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
-        long enddate;
-        if (!this->last_module) {
-            enddate = this->ini->context.end_date_cnx.get();
-        }
-        else {
-            enddate = this->close_timeout;
-        }
-        if (enddate != 0 && (now > enddate)/* && !this->last_module*/) {
+        LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
+        long enddate = this->ini->context.end_date_cnx.get();
+        if (enddate != 0 && (now > enddate) && !this->last_module) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe", signal);
         }
@@ -302,10 +289,15 @@ public:
 
         // Keep alive
         if (this->keepalive_time) {
-            if (now > (this->keepalive_time + this->keepalive_grace_delay)) {
+            LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u read_auth=%s", now, this->keepalive_time, this->keepalive_renew_time, this->read_auth?"Y":"N");
+            if (now > this->keepalive_time) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
                 return invoke_mod_close(mm, "Missed keepalive from ACL", signal);
             }
+
+            LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n", 
+                this->ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
+                this->ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
 
             if (this->read_auth) {
                 if (this->verbose & 0x10) {
@@ -314,16 +306,17 @@ public:
 
                 this->read_auth = false;
 
-                if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                    // this->ini->context_ask(AUTHID_KEEPALIVE);
-                    this->keepalive_time       =
+                if (!this->ini->context_is_asked(AUTHID_KEEPALIVE) 
+                && this->ini->context_get_bool(AUTHID_KEEPALIVE)
+                && now > (this->keepalive_time - this->keepalive_grace_delay)) {
+                    this->keepalive_time       = now + 2*this->keepalive_grace_delay;
                     this->keepalive_renew_time = now + this->keepalive_grace_delay;
                 }
             }
 
             if (now > this->keepalive_renew_time) {
-                this->keepalive_renew_time = now + this->keepalive_grace_delay;
-
+                // Dirty: add 10 minutes, this is to get renew_time out of the way
+                this->keepalive_renew_time += 600;
                 if (this->verbose & 8) {
                     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
                          , trans.last_quantum_received, trans.total_received, this->tick_count);
@@ -344,6 +337,7 @@ public:
                 trans.tick();
 
                 this->ini->context_ask(AUTHID_KEEPALIVE);
+                LOG(LOG_INFO, "asked_remote_answer=%s", this->asked_remote_answer?"Y":"N");
             }
         }   // if (this->keepalive_time)
 
@@ -369,7 +363,7 @@ public:
                 mm.mod->event.set();
             }
             else if (this->remote_answer && signal == BACK_EVENT_NEXT) {
-            
+
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
                 int next_state = this->next_module();
@@ -392,9 +386,9 @@ public:
                         throw e;
                     }
                 }
-                this->keepalive_time = 0;
-                if (this->connected) {
+                if ((this->keepalive_time == 0) && this->connected) {
                     this->start_keepalive(now);
+                    this->read_auth = false;
 
                     mm.record();
                 }
@@ -404,6 +398,8 @@ public:
         // send message to acl with changed values when connected to
         // a module (rdp, vnc, xup ...) and something changed
         // used for authchannel and keepalive.
+
+        LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
 
         if (this->connected && this->ini->check()) {
             this->ask_next_module_remote();
@@ -428,6 +424,7 @@ public:
     }
 
     void receive() {
+        LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
         try {
             if (!this->lost_acl) {
                 this->acl_serial.incoming();
@@ -443,6 +440,7 @@ public:
     }
 
     int next_module() {
+        LOG(LOG_INFO, "----------> ACL next_module <--------");
         if (this->ini->context_is_asked(AUTHID_AUTH_USER)
             ||  this->ini->context_is_asked(AUTHID_PASSWORD)) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
@@ -499,6 +497,7 @@ public:
     TODO("May be we should rename this method since it does not only ask for next module "
          "but it is also used for keep alive and auth channel messages acl");
     void ask_next_module_remote() {
+        printf("Ask next module remote\n");
         this->acl_serial.ask_next_module_remote();
     }
 
