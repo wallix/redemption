@@ -153,16 +153,16 @@ struct FieldObserver : public ConfigurationHolder {
             int n;
             if (this->is_asked()) {
                 n = snprintf(buff, size, "%s\nASK\n",key);
-                LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=ASK\n", key);
+                LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=ASK", key);
             }
             else {
                 const char * tmp = this->get_value();
                 if ((strncasecmp("password", (char*)key, 8) == 0)
                     ||(strncasecmp("target_password", (char*)key, 15) == 0)){
-                    LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=<hidden>\n", key);
+                    LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=<hidden>", key);
                 }
                 else {
-                    LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=%s\n", key, tmp);
+                    LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=%s", key, tmp);
                 }
                 n = snprintf(buff, size, "%s\n!%s\n",key,tmp);
             }
@@ -395,9 +395,10 @@ struct FieldObserver : public ConfigurationHolder {
         size_t size() {
             return this->set_field.size();
         }
+
         template<class Function>
         void foreach(Function funct) {
-            std::for_each(set_field.begin(), set_field.end(),funct);
+            std::for_each<std::set<BaseField * >::iterator, Function & >(set_field.begin(), set_field.end(), funct);
         }
     };
 

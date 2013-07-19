@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(false,                            ini.context.authenticated.get());
 
-    BOOST_CHECK_EQUAL(true,                             ini.context.keepalive.is_asked());
+    BOOST_CHECK_EQUAL(false,                             ini.context.keepalive.is_asked());
     BOOST_CHECK_EQUAL(false,                            ini.context.proxy_type.is_asked());
 
     BOOST_CHECK_EQUAL(false,                            ini.context.keepalive.get());
@@ -449,10 +449,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.context_get_bool(AUTHID_AUTHENTICATED));
 
 
-    BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_KEEPALIVE));
+    BOOST_CHECK_EQUAL(false,                             ini.context_is_asked(AUTHID_KEEPALIVE));
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_PROXY_TYPE));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_KEEPALIVE,  buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("False"),             std::string(ini.context_get_value(AUTHID_KEEPALIVE,  buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context_get_value(AUTHID_PROXY_TYPE, buffer, sizeof(buffer))));
 
 

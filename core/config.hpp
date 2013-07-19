@@ -146,20 +146,6 @@ static inline unsigned logtype_from_cstr(const char * str)
     return res;
 }
 
-static inline unsigned ulong_from_cstr(const char * str)
-{ // 10 = 10, 0x10 = 16
-    if ((*str == '0') && (*(str + 1) == 'x')){
-        return strtol(str + 2, 0, 16);
-    }
-
-    return atol(str);
-}
-
-static inline signed _long_from_cstr(const char * str)
-{
-    return atol(str);
-}
-
 static inline bool check_name(const char * str)
 {
     return ((strlen(str) > 0) && (strlen(str) < 250));
@@ -997,9 +983,6 @@ public:
         this->context.authenticated.attach_ini(this, AUTHID_AUTHENTICATED);
 
         this->context.keepalive.set(false);
-        this->context.keepalive.ask();
-        // this->context.state_keepalive.asked               = true;
-        // this->context.state_keepalive.modified               = true;
 
         // this->context.state_proxy_type.asked              = false;
         // this->context.state_proxy_type.modified              = true;
@@ -1212,6 +1195,9 @@ public:
             }
             else if (0 == strcmp(key, "keepalive_grace_delay")){
                 this->globals.keepalive_grace_delay = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "close_timeout")){
+                this->globals.close_timeout = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "internal_domain")){
                 this->globals.internal_domain = bool_from_cstr(value);
@@ -1625,6 +1611,7 @@ public:
     }
 
     bool context_get_bool(authid_t authid) {
+        TODO("ask related behavior is a problem. How do we make the difference between a False value and asked ?")
         switch (authid)
             {
             case AUTHID_SELECTOR:
