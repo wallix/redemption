@@ -19,6 +19,7 @@ namespace rndfa {
     const unsigned CAPTURE_OPEN = 1 << 10;
     const unsigned CAPTURE_CLOSE = 1 << 11;
     const unsigned SPECIAL_CHECK = 1 << 12;
+    const unsigned EPSILONE = 1 << 13;
 
     struct StateBase
     {
@@ -62,6 +63,9 @@ namespace rndfa {
 
         bool is_split() const
         { return this->c == SPLIT; }
+
+        bool is_epsilone() const
+        { return this->c == EPSILONE; }
 
         unsigned c;
         unsigned id;
@@ -287,6 +291,8 @@ namespace rndfa {
             {
                 this->push_state(st);
                 this->nb_capture /= 2;
+                l1.set_parray(new StateListByStep::Info[this->vec.size() * 2]);
+                l2.set_parray(l1.array + this->vec.size());
             }
 
             if (!this->vec.empty())
@@ -311,9 +317,6 @@ namespace rndfa {
                 }
 
                 if (this->nb_capture) {
-                    l1.set_parray(new StateListByStep::Info[this->vec.size() * 2]);
-                    l2.set_parray(l1.array + this->vec.size());
-
                     const unsigned col = this->vec.size() - this->nb_capture * 2;
                     const unsigned matrix_size = col * this->nb_capture * 2;
 
@@ -452,13 +455,6 @@ namespace rndfa {
             return 0;
         }
 
-        struct CompareStateList
-        {
-            bool operator()(const StateList&, const StateList& b) const {
-                return b.st->c & ANY_CHARACTER;
-            }
-        };
-
         void init_list(RangeList* l, StateBase * st, unsigned& step)
         {
             /**///std::cout << (__FUNCTION__) << std::endl;
@@ -488,8 +484,6 @@ namespace rndfa {
                     init_list(le, first->st->out1, ++step);
                 }
             }
-
-            std::sort<>(l->first, l->last, CompareStateList());
         }
 
     public:
@@ -647,6 +641,12 @@ namespace rndfa {
                 ++this->parray;
             }
 
+            void push_back(RangeList* val)
+            {
+                this->parray->rl = val;
+                ++this->parray;
+            }
+
             Info& operator[](int n) const
             { return this->array[n]; }
 
@@ -678,24 +678,42 @@ namespace rndfa {
         struct Searching
         {
             StateMachine2 &sm;
+            unsigned step_id;
 
             Searching(StateMachine2& sm)
             : sm(sm)
+            , step_id(1)
             {}
 
             typedef StateListByStep::Info Info;
 
-            RangeList * step(const char *s, RangeList * l)
+            unsigned step(const char *s, StateListByStep * l1, StateListByStep * l2)
             {
-                for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (!first->st->is_cap() && first->st->check(*s)) {
+                for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
+                    if (ifirst->rl->st->id == this->step_id) {
+                        /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
+                        continue;
+                    }
+
+                    ifirst->rl->st->id = this->step_id;
+
+                    for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
+                        if (!first->st->is_cap() && first->st->check(*s)) {
 #ifdef DISPLAY_TRACE
-                        this->sm.display_elem_state_list(*first, 0);
+                            this->sm.display_elem_state_list(*first, 0);
 #endif
-                        return first->next;
+
+                            if (0 == first->next) {
+                                /**///std::cout << "idx: " << (ifirst->idx) << std::endl;
+                                return 0;
+                            }
+
+                            l2->push_back(first->next);
+                        }
                     }
                 }
-                return (RangeList*)1;
+
+                return -1u;
             }
 
             bool exact_match(const char * s)
@@ -704,25 +722,45 @@ namespace rndfa {
                 this->sm.display_dfa();
 #endif
 
+                this->sm.l1.clear();
+                this->sm.l2.clear();
+                this->sm.reset_id();
+
+                StateListByStep * pal1 = &this->sm.l1;
+                StateListByStep * pal2 = &this->sm.l2;
+                this->sm.l1.push_back(this->sm.st_range_list);
+
                 RangeList * l = this->sm.st_range_list;
 
-                for(; *s && l > (void*)1; ++s){
+                for(; *s; ++s){
 #ifdef DISPLAY_TRACE
                     std::cout << "\033[01;31mc: '" << *s << "'\033[0m\n";
 #endif
-                    l = this->step(s, l);
+                    if (0 == this->step(s, pal1, pal2)) {
+                        return true;
+                    }
+                    if (pal2->empty()) {
+                        break;
+                    }
+                    ++this->step_id;
+                    std::swap(pal1, pal2);
+                    pal2->clear();
                 }
 
-                return 0 == l;
+                return false;
             }
         };
 
     private:
-        void reset_trace()
+        void reset_id()
         {
             for (RangeList * l = this->st_range_list; l < this->st_range_list_last; ++l) {
                 l->st->id = 0;
             }
+        }
+
+        void reset_trace()
+        {
             this->pidx_trace_free = this->idx_trace_free;
             const unsigned size = this->vec.size() - this->nb_capture * 2;
             for (unsigned i = 0; i < size; ++i, ++this->pidx_trace_free) {
@@ -736,7 +774,7 @@ namespace rndfa {
         void display_elem_state_list(const StateList& e, unsigned idx) const
         {
             std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t" << e.st->c << "\t"
-            << *e.st << "\t" << (e.next) << "\033[0m\n";
+            << *e.st << "\t" << (e.next) << "\033[0m" << std::endl;
         }
 
         void display_dfa() const
@@ -765,18 +803,10 @@ namespace rndfa {
 
             typedef StateListByStep::Info Info;
 
-            struct CompareInfoId {
-                bool operator()(const Info& a, const Info& b) const {
-                    return a.rl->st->num >= b.rl->st->num;
-                }
-            };
-
             template<typename Tracer>
             unsigned step(const char *s, StateListByStep * l1, StateListByStep * l2,
                           Tracer& tracer)
             {
-                std::sort(l1->begin(), l1->end(), CompareInfoId());
-
                 for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
                     if (ifirst->rl->st->id == this->step_id) {
                         /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
@@ -836,7 +866,7 @@ namespace rndfa {
                     }
                     if (0 == new_trace) {
 #ifdef DISPLAY_TRACE
-                        std::cout << "\t\033[35mx " << ifirst->idx << std::endl;
+                        std::cout << "\t\033[35mx " << ifirst->idx << "\033[0m" << std::endl;
 #endif
                         tracer.fail(ifirst->idx);
                         this->sm.push_idx_trace(ifirst->idx);
@@ -855,11 +885,12 @@ namespace rndfa {
 
                 this->sm.l1.clear();
                 this->sm.l2.clear();
+                this->sm.reset_id();
                 this->sm.reset_trace();
 
                 StateListByStep * pal1 = &this->sm.l1;
                 StateListByStep * pal2 = &this->sm.l2;
-                pal1->push_back(this->sm.st_range_list, *--this->sm.pidx_trace_free);
+                this->sm.l1.push_back(this->sm.st_range_list, *--this->sm.pidx_trace_free);
                 tracer.start(*this->sm.pidx_trace_free);
 
                 for(; *s; ++s){
@@ -870,8 +901,11 @@ namespace rndfa {
                         tracer.good(this->sm.idx_trace);
                         return !*(s+1);
                     }
+                    if (pal2->empty()) {
+                        break;
+                    }
                     ++this->step_id;
-                    std::swap<>(pal1, pal2);
+                    std::swap(pal1, pal2);
                     pal2->clear();
                 }
 
@@ -1023,14 +1057,16 @@ namespace rndfa {
 
     typedef std::pair<StateBase*, StateBase**> IntermendaryState;
 
-    IntermendaryState intermendary_str2reg(const char *& s, const char * last, int recusive = 0)
+    IntermendaryState intermendary_str2reg(const char *& s, const char * last,
+                                           bool & has_epsilone,
+                                           int recusive = 0, bool ismatch = true)
     {
         StateBase st(0);
         StateBase ** pst = &st.out2;
         StateBase * bst = &st;
 
-        StateBase ** besplit[50] = {0};
-        StateBase *** pesplit = besplit;
+        StateBase * besplit[50] = {0};
+        StateBase ** pesplit = besplit;
 
         while (s != last) {
             if (!is_meta_char(*s)) {
@@ -1056,7 +1092,7 @@ namespace rndfa {
                         pst = &(*pst)->out1->out2;
                         break;
                     case '|':
-                        *pesplit = pst;
+                        *pesplit = *pst;
                         ++pesplit;
                         bst->out2 = new State(SPLIT, bst->out2);
                         bst = bst->out2;
@@ -1066,21 +1102,40 @@ namespace rndfa {
                         if (0 == recusive) {
                             std::cerr << "unmatched parentheses" << std::endl; _exit(0); //TODO
                         }
-                        if (*pst) {
-                            pst = &(*pst)->out1;
+                        if (besplit != pesplit) {
+                            if (*pst) {
+                                pst = &(*pst)->out1;
+                            }
+                            if (!ismatch) {
+                                has_epsilone = true;
+                            }
+                            *pst = new State(ismatch ? CAPTURE_CLOSE : EPSILONE);
+                            for (StateBase ** first = besplit; first != pesplit; ++first) {
+                                (*first)->out1 = *pst;
+                            }
                         }
-                        *pst = new State(CAPTURE_CLOSE);
-                        for (StateBase *** first = besplit; first != pesplit; ++first) {
-                            (**first)->out1 = *pst;
-                        }
-                        return IntermendaryState(st.out2, &(*pst)->out1);
+                        return IntermendaryState(st.out2, *pst ? &(*pst)->out1 : pst);
                         break;
                     default:
                         //TODO impossible
                         std::cout << ("error") << std::endl;
                         break;
                     case '(':
-                        IntermendaryState intermendary = intermendary_str2reg(++s, last, recusive+1);
+                        if (*(s+1) == '?' && *(s+2) == ':') {
+                            if (s+2 >= last) {
+                                std::cerr << "unmatched parentheses" << std::endl; _exit(0); //TODO
+                            }
+                            IntermendaryState intermendary = intermendary_str2reg(s+=3, last, has_epsilone, recusive+1, false);
+                            if (intermendary.first) {
+                                if (*pst) {
+                                    pst = &(*pst)->out1;
+                                }
+                                *pst= intermendary.first;
+                                pst = intermendary.second;
+                            }
+                            break;
+                        }
+                        IntermendaryState intermendary = intermendary_str2reg(++s, last, has_epsilone, recusive+1);
                         if (intermendary.first) {
                             if (*pst) {
                                 pst = &(*pst)->out1;
@@ -1099,9 +1154,38 @@ namespace rndfa {
         return IntermendaryState(st.out2, pst);
     }
 
+    void remove_epsilone(StateBase * st, std::vector<StateBase*>& epsilone_sts)
+    {
+        if (st && st->id != -3u) {
+            st->id = -3u;
+            StateBase * nst = st->out1;
+            while (nst && nst->is_epsilone()) {
+                if (nst->id != -3u) {
+                    epsilone_sts.push_back(nst);
+                    nst->id = -3u;
+                }
+                nst = nst->out1;
+            }
+            st->out1 = nst;
+            remove_epsilone(st->out1, epsilone_sts);
+            remove_epsilone(st->out2, epsilone_sts);
+        }
+    }
+
     StateBase* str2reg(const char * s, const char * last)
     {
-        return intermendary_str2reg(s, last).first;
+        bool has_epsilone = false;
+        StateBase * st = intermendary_str2reg(s, last, has_epsilone).first;
+        if (has_epsilone) {
+            typedef std::vector<StateBase*> states_t;
+            states_t removed;
+            remove_epsilone(st, removed);
+            std::cout << "removed: " << (removed.size()) << std::endl;
+            for (states_t::iterator first = removed.begin(), last = removed.end(); first != last; ++first) {
+                delete *first;
+            }
+        }
+        return st;
     }
 
     StateBase* str2reg(const char * s)
@@ -1277,6 +1361,7 @@ int main(int argc, char **argv) {
 #endif
     {
         std::cout << ("comp error") << std::endl;
+        return 1;
     }
     regmatch_t regmatch[3];
 
@@ -1315,6 +1400,9 @@ int main(int argc, char **argv) {
             impl(regex_t& rgx, const char * s, regmatch_t * m, unsigned size) {
                 const char * str = s;
                 while (0 == regexec(&rgx, s, size, m, 0)) {
+                    if (!m[0].rm_eo) {
+                        break;
+                    }
                     for (unsigned i = 1; i < size; i++) {
                         if (m[i].rm_so == -1) {
                             break;
