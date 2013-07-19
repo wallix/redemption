@@ -97,7 +97,7 @@ public:
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
         }
-        this->event.set(500000);
+        this->event.set(1000000);
         // this->event.reset();
     }
 

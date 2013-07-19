@@ -67,31 +67,11 @@ class wait_obj
             FD_SET(this->obj, &rfds);
             max = ((unsigned)this->obj > max)?this->obj:max;
         }
-        // else if (timeout && this->is_set(rfds)){
-        //     timeout->tv_sec  = 0;
-        //     timeout->tv_usec = 0;
-        // } //case 1
-        // else if (this->set_state) {
-        //     struct timeval now;
-        //     now = tvtime();
-        //     if (  (now.tv_sec > this->trigger_time.tv_sec)
-        //         ||( (now.tv_sec == this->trigger_time.tv_sec)
-        //           &&(now.tv_usec > this->trigger_time.tv_usec))) {
-        //         timeout.tv_sec  = 0;
-        //         timeout.tv_usec = 0;
-        //         // LOG(LOG_INFO, "TIMEOUT RESET");
-        //     }
-        //     else {
-        //         // LOG(LOG_INFO, "TIMEOUT ADJUSTED TO DIFF TRIGGER TIME");
-        //         bool carry = (this->trigger_time.tv_usec < now.tv_usec);
-        //         timeout.tv_usec = carry*1000000 + this->trigger_time.tv_usec - now.tv_usec;
-        //         timeout.tv_sec  = this->trigger_time.tv_sec - (now.tv_sec + carry);
-        //     }
-        // } //case 2
         else if (this->set_state) {
             struct timeval now;
             now = tvtime();
             if (lessthantimeval(this->trigger_time,now)) {
+                LOG(LOG_INFO, "TIMEOUT RESET");
                 timeout.tv_sec  = 0;
                 timeout.tv_usec = 0;
             }
@@ -99,6 +79,7 @@ class wait_obj
                 timeval remain;
                 remain  = absdifftimeval(this->trigger_time,now);
                 timeout = mintimeval(timeout,remain);
+                LOG(LOG_INFO, "TIMEOUT ADJUSTED TO DIFF TRIGGER TIME: %u sec, %u usec", timeout.tv_sec, timeout.tv_usec);
             }
         } //case 3
     }
@@ -119,7 +100,7 @@ class wait_obj
                 now = tvtime();
                 if ((now.tv_sec > this->trigger_time.tv_sec)
                 ||  ( (now.tv_sec == this->trigger_time.tv_sec)
-                    &&(now.tv_usec > this->trigger_time.tv_usec))){
+                    &&(now.tv_usec >= this->trigger_time.tv_usec))){
                     return true;
                 }
             }

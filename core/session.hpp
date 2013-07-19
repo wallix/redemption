@@ -133,8 +133,8 @@ struct Session {
             while (run_session) {
                 try {
                     if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500) {
-                        time_mark.tv_sec = 0;
-                        time_mark.tv_usec = 5000000;
+                        time_mark.tv_sec = 5;
+                        time_mark.tv_usec = 0;
                     }
 
                     unsigned max = 0;
