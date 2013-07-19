@@ -42,7 +42,9 @@ class SessionManager {
     long keepalive_time;
     long keepalive_renew_time;
 
-    bool checkkeepalive;
+    bool checkkeepalive;      // true when we are waiting for a positive response
+                              // false when positive response has been received and
+                              // timers have been set to new timers.
 
 public:
     AclSerializer acl_serial;
@@ -293,7 +295,7 @@ public:
 
         // Keep alive
         if (this->keepalive_time) {
-            // LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u read_auth=%s", now, this->keepalive_time, this->keepalive_renew_time, this->read_auth?"Y":"N");
+            LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u checkkeepalive=%s", now, this->keepalive_time, this->keepalive_renew_time, this->checkkeepalive?"Y":"N");
             if (now > this->keepalive_time) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
                 return invoke_mod_close(mm, "Missed keepalive from ACL", signal);
@@ -323,14 +325,19 @@ public:
             if (this->checkkeepalive
                 && !this->ini->context_is_asked(AUTHID_KEEPALIVE)
                 && this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                // Here we got a positive response
                 this->keepalive_time       = now + 2*this->keepalive_grace_delay;
                 this->keepalive_renew_time = now + this->keepalive_grace_delay;
                 this->checkkeepalive = false;
             }
 
-            if (now > this->keepalive_renew_time && !this->checkkeepalive) {
+            if (!this->checkkeepalive
+                && now > this->keepalive_renew_time) {
+
                 // Dirty: add 10 minutes, this is to get renew_time out of the way
                 // this->keepalive_renew_time += 600;
+
+                // Here, we ask for an answer from ACL about keepalive
                 this->checkkeepalive = true;
                 if (this->verbose & 8) {
                     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"

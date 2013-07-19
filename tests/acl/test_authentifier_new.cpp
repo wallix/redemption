@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 }
 
 
-/*
+
 BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 {
     class FakeModuleManager : public MMApi
@@ -472,14 +472,13 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     // Renew Keepalive time:
     // Send keepalive=ASK
-    sesman.receive();
     res = sesman.check(mm, 10076, keepalivetrans, signal);
-    res = sesman.check(mm, 10105, keepalivetrans, signal);
+    sesman.receive();
+    res = sesman.check(mm, 10079, keepalivetrans, signal);
     BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
 
 
     // Send keepalive=ASK
-    sesman.receive();
     res = sesman.check(mm, 10106, keepalivetrans, signal);
     res = sesman.check(mm, 10135, keepalivetrans, signal);
     BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
@@ -490,8 +489,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
 
-    sesman.receive();
+
     res = sesman.check(mm, 10166, keepalivetrans, signal);
+    sesman.receive();
     res = sesman.check(mm, 10195, keepalivetrans, signal);
     BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
 
@@ -502,21 +502,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
 
     sesman.receive();
-    res = sesman.check(mm, 10226, keepalivetrans, signal);
+    res = sesman.check(mm, 10227, keepalivetrans, signal);
     res = sesman.check(mm, 10255, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
-
-    sesman.receive();
-    res = sesman.check(mm, 10256, keepalivetrans, signal);
-    res = sesman.check(mm, 10285, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
-
-    sesman.receive();
-    res = sesman.check(mm, 10286, keepalivetrans, signal);
-    res = sesman.check(mm, 10315, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, true); // Inactivity
-
+    BOOST_CHECK_EQUAL(sesman.last_module, true); // still connected
 
 
 }
-*/
