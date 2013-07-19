@@ -229,8 +229,20 @@ struct BitmapCaps : public Capability {
         LOG(LOG_INFO, "Bitmap caps::pad2octetsB %u", this->pad2octetsB);
     }
 
-    void dump(File * f) {
-        
+    void dump(FILE * f) {
+        fprintf(f, "[Bitmap Capability Set]\n");
+
+        fprintf(f, "preferredBitsPerPixel=%u\n",    this->preferredBitsPerPixel);
+        fprintf(f, "receive1BitPerPixel=%u\n",      this->receive1BitPerPixel);
+        fprintf(f, "receive4BitsPerPixel=%u\n",     this->receive4BitsPerPixel);
+        fprintf(f, "receive8BitsPerPixel=%u\n",     this->receive8BitsPerPixel);
+        fprintf(f, "desktopWidth=%u\n",             this->desktopWidth);
+        fprintf(f, "desktopHeight=%u\n",            this->desktopHeight);
+        fprintf(f, "desktopResizeFlag=%u\n",        this->desktopResizeFlag);
+        fprintf(f, "bitmapCompressionFlag=%u\n",    this->bitmapCompressionFlag);
+        fprintf(f, "highColorFlags=%u\n",           this->highColorFlags);
+        fprintf(f, "drawingFlags=%u\n",             this->drawingFlags);
+        fprintf(f, "multipleRectangleSupport=%u\n\n", this->multipleRectangleSupport);
     }
 };
 

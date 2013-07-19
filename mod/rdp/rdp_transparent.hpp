@@ -1486,6 +1486,9 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                     if (this->verbose) {
                         bitmap_caps.log("Received from server");
                     }
+                    if (output_file) {
+                        bitmap_caps.dump(output_file);
+                    }
                     this->bpp          = bitmap_caps.preferredBitsPerPixel;
                     this->front_width  = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
@@ -1497,6 +1500,9 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                     order_caps.recv(stream, capset_length);
                     if (this->verbose) {
                         order_caps.log("Received from server");
+                    }
+                    if (output_file) {
+                        order_caps.dump(output_file);
                     }
                 }
                 break;
@@ -1535,22 +1541,24 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
 
         confirm_active_pdu.emit_begin(this->share_id);
 
-        if (this->verbose) {
-            this->front.client_general_cap.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(this->front.client_general_cap);
+        this->front.client_general_caps.extraflags &= ~0x0004;
+LOG(LOG_INFO, "mod_rdp_transparent::send_confirm_active(): General Capability set->extraFlags=0x%04x", this->front.client_general_caps.extraflags);
 
-        BitmapCaps bitmap_caps;
-        bitmap_caps.preferredBitsPerPixel = this->bpp;
-        bitmap_caps.desktopWidth          = this->front_width;
-        bitmap_caps.desktopHeight         = this->front_height;
-        bitmap_caps.bitmapCompressionFlag = this->bitmap_compression ? 1 : 0;
         if (this->verbose) {
-            bitmap_caps.log("Sending bitmap caps to server");
+            this->front.client_general_caps.log("Sending to server");
         }
-        confirm_active_pdu.emit_capability_set(bitmap_caps);
+        confirm_active_pdu.emit_capability_set(this->front.client_general_caps);
 
-        OrderCaps order_caps;
+        this->front.client_bitmap_caps.preferredBitsPerPixel = this->bpp;
+        this->front.client_bitmap_caps.desktopWidth          = this->front_width;
+        this->front.client_bitmap_caps.desktopHeight         = this->front_height;
+//        this->front.client_bitmap_caps.bitmapCompressionFlag = this->bitmap_compression ? 1 : 0;
+        if (this->verbose) {
+            this->front.client_bitmap_caps.log("Sending bitmap caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(this->front.client_bitmap_caps);
+
+/*
         order_caps.numberFonts                                   = 0x147;
         order_caps.orderFlags                                    = 0x2a;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
@@ -1565,10 +1573,11 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
         order_caps.textFlags                                     = 0x06a1;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
+*/
         if (this->verbose) {
-            order_caps.log("Sending order caps to server");
+            this->front.client_order_caps.log("Sending order caps to server");
         }
-        confirm_active_pdu.emit_capability_set(order_caps);
+        confirm_active_pdu.emit_capability_set(this->front.client_order_caps);
 
         BmpCacheCaps bmp_cache_caps;
         bmp_cache_caps.cache0Entries         = 0x258;

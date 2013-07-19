@@ -137,7 +137,11 @@ public:
 
     uint32_t bitmap_update_count;
 
-    GeneralCaps client_general_cap;
+    GeneralCaps client_general_caps;
+    BitmapCaps  client_bitmap_caps;
+    OrderCaps   client_order_caps;
+
+    redemption::string server_capabilities_filename;
 
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -145,6 +149,7 @@ public:
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
+          , const char * server_capabilities_filename = ""
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture_state(CAPTURE_STATE_UNKNOWN)
@@ -173,6 +178,7 @@ public:
         , mem3blt_support(mem3blt_support)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
+        , server_capabilities_filename(server_capabilities_filename)
     {
         // init TLS
         // --------------------------------------------------------
@@ -2498,9 +2504,18 @@ public:
 
         uint8_t * caps_ptr = stream.p;
 
+        CapabilitySets cap_sets;
+
+        if (!this->server_capabilities_filename.is_empty()) {
+            ConfigurationLoader cfg_loader(cap_sets, this->server_capabilities_filename.c_str());
+        }
+
         GeneralCaps general_caps;
         if (this->server_fastpath_update_support) {
             general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
+        }
+        if (!this->server_capabilities_filename.is_empty()) {
+            general_caps = cap_sets.general_caps;
         }
         if (this->verbose) {
             general_caps.log("Sending to client");
@@ -2512,6 +2527,9 @@ public:
         bitmap_caps.preferredBitsPerPixel = this->client_info.bpp;
         bitmap_caps.desktopWidth = this->client_info.width;
         bitmap_caps.desktopHeight = this->client_info.height;
+        if (!this->server_capabilities_filename.is_empty()) {
+            bitmap_caps = cap_sets.bitmap_caps;
+        }
         if (this->verbose) {
             bitmap_caps.log("Sending to client");
         }
@@ -2540,6 +2558,9 @@ public:
         order_caps.pad4octetsB = 0x0f4240;
         order_caps.desktopSaveSize = 0x0f4240;
         order_caps.pad2octetsC = 1;
+        if (!this->server_capabilities_filename.is_empty()) {
+            order_caps = cap_sets.order_caps;
+        }
         if (this->verbose) {
             order_caps.log("Sending to client");
         }
@@ -2702,36 +2723,36 @@ public:
 
             switch (capset_type) {
             case CAPSTYPE_GENERAL: {
-                    this->client_general_cap.recv(stream, capset_length);
+                    this->client_general_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        this->client_general_cap.log("Receiving from client");
+                        this->client_general_caps.log("Receiving from client");
                     }
                     this->client_info.use_compact_packets =
-                        (this->client_general_cap.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
+                        (this->client_general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
                         1 : 0;
 
                     this->server_fastpath_update_support =
                         (   this->fastpath_support
-                         && ((this->client_general_cap.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0)
+                         && ((this->client_general_caps.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0)
                         );
                 }
                 break;
             case CAPSTYPE_BITMAP: {
-                    BitmapCaps bitmap_caps;
-                    bitmap_caps.recv(stream, capset_length);
+                    this->client_bitmap_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        bitmap_caps.log("Receiving from client");
+                        this->client_bitmap_caps.log("Receiving from client");
                     }
-                    this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
-                    this->client_info.width = bitmap_caps.desktopWidth;
-                    this->client_info.height = bitmap_caps.desktopHeight;
+                    this->client_info.bpp    =
+                          (this->client_bitmap_caps.preferredBitsPerPixel >= 24)
+                        ? 24 : this->client_bitmap_caps.preferredBitsPerPixel;
+                    this->client_info.width  = this->client_bitmap_caps.desktopWidth;
+                    this->client_info.height = this->client_bitmap_caps.desktopHeight;
                 }
                 break;
             case CAPSTYPE_ORDER: { /* 3 */
-                    OrderCaps order_caps;
-                    order_caps.recv(stream, capset_length);
+                    this->client_order_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        order_caps.log("Receiving from client");
+                        this->client_order_caps.log("Receiving from client");
                     }
                 }
                 break;

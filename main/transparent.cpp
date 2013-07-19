@@ -142,6 +142,7 @@ int main(int argc, char * argv[]) {
     listener.run();
 
     Inifile ini;
+    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 //    ini.debug.front = 511;
     ini.debug.front = 0;
 //    ini.debug.mod_rdp = 511;
@@ -163,7 +164,7 @@ int main(int argc, char * argv[]) {
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
     Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
-        fastpath_support, mem3blt_support);
+        fastpath_support, mem3blt_support, input_filename.c_str());
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
@@ -183,7 +184,7 @@ int main(int argc, char * argv[]) {
                                , "0.0.0.0"
                                , front
                                , target_device.c_str()
-                               , false              // tls
+                               , true               // tls
                                , front.client_info
                                , gen
                                , front.keymap.key_flags
