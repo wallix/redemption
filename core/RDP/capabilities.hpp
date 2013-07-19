@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    RDP Capabilities :
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_HPP_
@@ -55,5 +54,6 @@
 #include "capabilities/virchan.hpp"
 #include "capabilities/window.hpp"
 
+#include "capabilities/capability_sets.hpp"
 
 #endif

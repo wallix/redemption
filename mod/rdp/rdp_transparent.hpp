@@ -23,7 +23,7 @@
 #ifndef _REDEMPTION_MOD_RDP_TRANSPARENT_HPP_
 #define _REDEMPTION_MOD_RDP_TRANSPARENT_HPP_
 
-#include "front_api.hpp"
+#include "front.hpp"
 #include "genrandom.hpp"
 #include "mod_api.hpp"
 #include "RDP/capabilities/activate.hpp"
@@ -42,9 +42,10 @@
 #include "RDP/lic.hpp"
 #include "RDP/nego.hpp"
 #include "RDP/protocol.hpp"
+#include "string.hpp"
 
 struct mod_rdp_transparent : public mod_api {
-    FrontAPI & front;
+    Front & front;
 
     CHANNELS::ChannelDefArray mod_channel_list;
 
@@ -119,11 +120,13 @@ struct mod_rdp_transparent : public mod_api {
 
     const ClientInfo & client_info;
 
+    redemption::string output_filename;
+
     mod_rdp_transparent( Transport & trans
                        , const char * target_user
                        , const char * target_password
                        , const char * client_ip
-                       , FrontAPI & front
+                       , Front & front
                        , const char * hostname
                        , const bool tls
                        , const ClientInfo & info
@@ -135,6 +138,7 @@ struct mod_rdp_transparent : public mod_api {
                        , bool fp_support    // If true, fast-path must be supported
                        , bool mem3blt_support
                        , bool bitmap_update_support
+                       , const char * output_filename
                        , uint32_t verbose = 0
                        , bool enable_new_pointer = false)
             : mod_api(info.width, info.height)
@@ -163,7 +167,8 @@ struct mod_rdp_transparent : public mod_api {
             , server_fastpath_update_support(fp_support)
             , mem3blt_support(mem3blt_support)
             , enable_new_pointer(enable_new_pointer)
-            , client_info(info) {
+            , client_info(info)
+            , output_filename(output_filename) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
         }
@@ -1180,7 +1185,14 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                                    );
 
                 if (f.fast_path) {
-                    LOG( LOG_ERR, "Fast-path");
+                    HStream data(1024, 65535);
+
+                    FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
+
+                    data.out_copy_bytes(su.payload.get_data(), su.payload.get_capacity());
+                    data.mark_end();
+
+                    this->front.send_server_update(data);
                     break;
                 }
 
@@ -1443,7 +1455,12 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
         if (this->verbose & 32) {
             LOG(LOG_INFO, "mod_rdp_transparent::process_server_caps");
         }
-        uint16_t ncapsets = stream.in_uint16_le();
+        uint16_t   ncapsets    = stream.in_uint16_le();
+        FILE     * output_file = 0;
+
+        if (!this->output_filename.is_empty()) {
+            output_file = fopen(this->output_filename.c_str(), "w");
+        }
         stream.in_skip_bytes(2); /* pad */
         for (uint16_t n = 0; n < ncapsets; n++) {
             uint16_t   capset_type   = stream.in_uint16_le();
@@ -1457,6 +1474,9 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                     if (this->verbose) {
                         general_caps.log("Received from server");
                     }
+                    if (output_file) {
+                        general_caps.dump(output_file);
+                    }
                 }
                 break;
             case CAPSTYPE_BITMAP:
@@ -1466,8 +1486,11 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                     if (this->verbose) {
                         bitmap_caps.log("Received from server");
                     }
+                    if (output_file) {
+                        bitmap_caps.dump(output_file);
+                    }
                     this->bpp          = bitmap_caps.preferredBitsPerPixel;
-                    this->front_width = bitmap_caps.desktopWidth;
+                    this->front_width  = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
                 }
                 break;
@@ -1477,6 +1500,9 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                     order_caps.recv(stream, capset_length);
                     if (this->verbose) {
                         order_caps.log("Received from server");
+                    }
+                    if (output_file) {
+                        order_caps.dump(output_file);
                     }
                 }
                 break;
@@ -1495,6 +1521,9 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
             }   // switch (capset_type)
             stream.p = next;
         }   // for (uint16_t n = 0; n < ncapsets; n++)
+        if (output_file) {
+            fclose(output_file);
+        }
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps done");
         }
@@ -1512,34 +1541,24 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
 
         confirm_active_pdu.emit_begin(this->share_id);
 
-        GeneralCaps general_caps;
-        general_caps.extraflags  =
-            this->use_rdp5
-            ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
-            : 0
-            ;
-        // Slow/Fast-path
-        general_caps.extraflags |=
-            this->server_fastpath_update_support
-            ? FASTPATH_OUTPUT_SUPPORTED
-            : 0
-            ;
-        if (this->verbose) {
-            general_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(general_caps);
+        this->front.client_general_caps.extraflags &= ~0x0004;
+LOG(LOG_INFO, "mod_rdp_transparent::send_confirm_active(): General Capability set->extraFlags=0x%04x", this->front.client_general_caps.extraflags);
 
-        BitmapCaps bitmap_caps;
-        bitmap_caps.preferredBitsPerPixel = this->bpp;
-        bitmap_caps.desktopWidth          = this->front_width;
-        bitmap_caps.desktopHeight         = this->front_height;
-        bitmap_caps.bitmapCompressionFlag = this->bitmap_compression ? 1 : 0;
         if (this->verbose) {
-            bitmap_caps.log("Sending bitmap caps to server");
+            this->front.client_general_caps.log("Sending to server");
         }
-        confirm_active_pdu.emit_capability_set(bitmap_caps);
+        confirm_active_pdu.emit_capability_set(this->front.client_general_caps);
 
-        OrderCaps order_caps;
+        this->front.client_bitmap_caps.preferredBitsPerPixel = this->bpp;
+        this->front.client_bitmap_caps.desktopWidth          = this->front_width;
+        this->front.client_bitmap_caps.desktopHeight         = this->front_height;
+//        this->front.client_bitmap_caps.bitmapCompressionFlag = this->bitmap_compression ? 1 : 0;
+        if (this->verbose) {
+            this->front.client_bitmap_caps.log("Sending bitmap caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(this->front.client_bitmap_caps);
+
+/*
         order_caps.numberFonts                                   = 0x147;
         order_caps.orderFlags                                    = 0x2a;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
@@ -1554,10 +1573,11 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
         order_caps.textFlags                                     = 0x06a1;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
+*/
         if (this->verbose) {
-            order_caps.log("Sending order caps to server");
+            this->front.client_order_caps.log("Sending order caps to server");
         }
-        confirm_active_pdu.emit_capability_set(order_caps);
+        confirm_active_pdu.emit_capability_set(this->front.client_order_caps);
 
         BmpCacheCaps bmp_cache_caps;
         bmp_cache_caps.cache0Entries         = 0x258;

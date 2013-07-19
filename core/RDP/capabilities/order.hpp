@@ -501,6 +501,40 @@ struct OrderCaps : public Capability {
         LOG(LOG_INFO, "Order caps::textANSICodePage %u", this->textANSICodePage);
         LOG(LOG_INFO, "Order caps::pad2octetsE %u", this->pad2octetsE);
     }
+
+    void dump(FILE * f) {
+        fprintf(f, "[Order Capability Set]\n");
+
+        fprintf(f, "desktopSaveXGranularity=%u\n",         this->desktopSaveXGranularity);
+        fprintf(f, "desktopSaveYGranularity=%u\n",         this->desktopSaveYGranularity);
+        fprintf(f, "maximumOrderLevel=%u\n",               this->maximumOrderLevel);
+        fprintf(f, "numberFonts=%u\n",                     this->numberFonts);
+        fprintf(f, "orderFlags=%u\n",                      this->orderFlags);
+        fprintf(f, "TS_NEG_DSTBLT_INDEX=%u\n",             this->orderSupport[TS_NEG_DSTBLT_INDEX]);
+        fprintf(f, "TS_NEG_PATBLT_INDEX=%u\n",             this->orderSupport[TS_NEG_PATBLT_INDEX]);
+        fprintf(f, "TS_NEG_SCRBLT_INDEX=%u\n",             this->orderSupport[TS_NEG_SCRBLT_INDEX]);
+        fprintf(f, "TS_NEG_MEMBLT_INDEX=%u\n",             this->orderSupport[TS_NEG_MEMBLT_INDEX]);
+        fprintf(f, "TS_NEG_MEM3BLT_INDEX=%u\n",            this->orderSupport[TS_NEG_MEM3BLT_INDEX]);
+        fprintf(f, "TS_NEG_DRAWNINEGRID_INDEX=%u\n",       this->orderSupport[TS_NEG_DRAWNINEGRID_INDEX]);
+        fprintf(f, "TS_NEG_LINETO_INDEX=%u\n",             this->orderSupport[TS_NEG_LINETO_INDEX]);
+        fprintf(f, "TS_NEG_MULTI_DRAWNINEGRID_INDEX=%u\n", this->orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX]);
+        fprintf(f, "TS_NEG_SAVEBITMAP_INDEX=%u\n",         this->orderSupport[TS_NEG_SAVEBITMAP_INDEX]);
+        fprintf(f, "TS_NEG_MULTIDSTBLT_INDEX=%u\n",        this->orderSupport[TS_NEG_MULTIDSTBLT_INDEX]);
+        fprintf(f, "TS_NEG_MULTIPATBLT_INDEX=%u\n",        this->orderSupport[TS_NEG_MULTIPATBLT_INDEX]);
+        fprintf(f, "TS_NEG_MULTISCRBLT_INDEX=%u\n",        this->orderSupport[TS_NEG_MULTISCRBLT_INDEX]);
+        fprintf(f, "TS_NEG_MULTIOPAQUERECT_INDEX=%u\n",    this->orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]);
+        fprintf(f, "TS_NEG_FAST_INDEX_INDEX=%u\n",         this->orderSupport[TS_NEG_FAST_INDEX_INDEX]);
+        fprintf(f, "TS_NEG_POLYGON_SC_INDEX=%u\n",         this->orderSupport[TS_NEG_POLYGON_SC_INDEX]);
+        fprintf(f, "TS_NEG_POLYGON_CB_INDEX=%u\n",         this->orderSupport[TS_NEG_POLYGON_CB_INDEX]);
+        fprintf(f, "TS_NEG_POLYLINE_INDEX=%u\n",           this->orderSupport[TS_NEG_POLYLINE_INDEX]);
+        fprintf(f, "TS_NEG_FAST_GLYPH_INDEX=%u\n",         this->orderSupport[TS_NEG_FAST_GLYPH_INDEX]);
+        fprintf(f, "TS_NEG_ELLIPSE_SC_INDEX=%u\n",         this->orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
+        fprintf(f, "TS_NEG_ELLIPSE_CB_INDEX=%u\n",         this->orderSupport[TS_NEG_ELLIPSE_CB_INDEX]);
+        fprintf(f, "TS_NEG_INDEX_INDEX=%u\n",              this->orderSupport[TS_NEG_INDEX_INDEX]);
+        fprintf(f, "orderSupportExFlags=%u\n",             this->orderSupportExFlags);
+        fprintf(f, "desktopSaveSize=%u\n",                 this->desktopSaveSize);
+        fprintf(f, "textANSICodePage=%u\n\n",                this->textANSICodePage);
+       }
 };
 
 #endif

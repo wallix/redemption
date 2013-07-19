@@ -146,20 +146,6 @@ static inline unsigned logtype_from_cstr(const char * str)
     return res;
 }
 
-static inline unsigned ulong_from_cstr(const char * str)
-{ // 10 = 10, 0x10 = 16
-    if ((*str == '0') && (*(str + 1) == 'x')){
-        return strtol(str + 2, 0, 16);
-    }
-
-    return atol(str);
-}
-
-static inline signed _long_from_cstr(const char * str)
-{
-    return atol(str);
-}
-
 static inline bool check_name(const char * str)
 {
     return ((strlen(str) > 0) && (strlen(str) < 250));

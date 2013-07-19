@@ -133,6 +133,8 @@ class SocketTransport : public Transport {
         if (!this->sck_closed){
             this->disconnect();
         }
+
+LOG(LOG_INFO, "%s: total_received = %llu, total_sent=%llu", this->name, this->total_received, this->total_sent);
     }
 
     virtual void enable_server_tls(const char * certificate_password) throw (Error)
