@@ -295,7 +295,7 @@ public:
 
         // Keep alive
         if (this->keepalive_time) {
-            LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u checkkeepalive=%s", now, this->keepalive_time, this->keepalive_renew_time, this->checkkeepalive?"Y":"N");
+            // LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u checkkeepalive=%s", now, this->keepalive_time, this->keepalive_renew_time, this->checkkeepalive?"Y":"N");
             if (now > this->keepalive_time) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
                 return invoke_mod_close(mm, "Missed keepalive from ACL", signal);

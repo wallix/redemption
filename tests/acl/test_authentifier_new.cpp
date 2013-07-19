@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     sesman.receive();
     res = sesman.check(mm, 10227, keepalivetrans, signal);
     res = sesman.check(mm, 10255, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, true); // still connected
+    BOOST_CHECK_EQUAL(sesman.last_module, true); // disconnected on inactivity
 
 
 }
