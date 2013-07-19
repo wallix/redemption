@@ -42,6 +42,8 @@ class SessionManager {
     long keepalive_time;
     long keepalive_renew_time;
 
+    bool checkkeepalive;
+
 public:
     AclSerializer acl_serial;
 
@@ -79,6 +81,7 @@ public:
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
+        this->checkkeepalive = false;
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
@@ -270,7 +273,7 @@ protected:
 public:
 
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
-        LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
+        // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
         long enddate = this->ini->context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate) && !this->last_module) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
@@ -289,34 +292,45 @@ public:
 
         // Keep alive
         if (this->keepalive_time) {
-            LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u read_auth=%s", now, this->keepalive_time, this->keepalive_renew_time, this->read_auth?"Y":"N");
+            // LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u read_auth=%s", now, this->keepalive_time, this->keepalive_renew_time, this->read_auth?"Y":"N");
             if (now > this->keepalive_time) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
                 return invoke_mod_close(mm, "Missed keepalive from ACL", signal);
             }
 
-            LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n", 
-                this->ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
-                this->ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
+            // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
+            //     this->ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
+            //     this->ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
 
-            if (this->read_auth) {
-                if (this->verbose & 0x10) {
-                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-                }
+            // if (this->read_auth) {
+            //     if (this->verbose & 0x10) {
+            //         LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+            //     }
 
-                this->read_auth = false;
+            //     this->read_auth = false;
 
-                if (!this->ini->context_is_asked(AUTHID_KEEPALIVE) 
-                && this->ini->context_get_bool(AUTHID_KEEPALIVE)
-                && now > (this->keepalive_time - this->keepalive_grace_delay)) {
-                    this->keepalive_time       = now + 2*this->keepalive_grace_delay;
-                    this->keepalive_renew_time = now + this->keepalive_grace_delay;
-                }
+
+            //     if (!this->ini->context_is_asked(AUTHID_KEEPALIVE)
+            //         && this->ini->context_get_bool(AUTHID_KEEPALIVE)
+            //         && now > (this->keepalive_time - this->keepalive_grace_delay)) {
+            //         this->keepalive_time       = now + 2*this->keepalive_grace_delay;
+            //         this->keepalive_renew_time = now + this->keepalive_grace_delay;
+            //     }
+
+            // }
+
+            if (this->checkkeepalive
+                && !this->ini->context_is_asked(AUTHID_KEEPALIVE)
+                && this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                this->keepalive_time       = now + 2*this->keepalive_grace_delay;
+                this->keepalive_renew_time = now + this->keepalive_grace_delay;
+                this->checkkeepalive = false;
             }
 
-            if (now > this->keepalive_renew_time) {
+            if (now > this->keepalive_renew_time && !this->checkkeepalive) {
                 // Dirty: add 10 minutes, this is to get renew_time out of the way
-                this->keepalive_renew_time += 600;
+                // this->keepalive_renew_time += 600;
+                this->checkkeepalive = true;
                 if (this->verbose & 8) {
                     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
                          , trans.last_quantum_received, trans.total_received, this->tick_count);
@@ -333,7 +347,7 @@ public:
                 else {
                     this->tick_count = 0;
                 }
-                LOG(LOG_INFO, "Session User inactivity : tick count: %u, disconnect on %uth tick", this->tick_count, this->max_tick);
+                LOG(LOG_INFO, "Session User inactivity : tick count: %u, disconnect on %uth tick", this->tick_count, this->max_tick + 1);
                 trans.tick();
 
                 this->ini->context_ask(AUTHID_KEEPALIVE);
@@ -358,7 +372,7 @@ public:
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
                 TODO("signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening anothe one of the same kind")
-                mm.mod->refresh_context(*this->ini);
+                    mm.mod->refresh_context(*this->ini);
                 mm.mod->event.signal = BACK_EVENT_NONE;
                 mm.mod->event.set();
             }
@@ -383,7 +397,7 @@ public:
                     }
                     else {
                         TODO("is there any exception thrown by mm that should not implies opening a close box ?")
-                        throw e;
+                            throw e;
                     }
                 }
                 if ((this->keepalive_time == 0) && this->connected) {
@@ -399,7 +413,7 @@ public:
         // a module (rdp, vnc, xup ...) and something changed
         // used for authchannel and keepalive.
 
-        LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
+        // LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
 
         if (this->connected && this->ini->check()) {
             this->ask_next_module_remote();

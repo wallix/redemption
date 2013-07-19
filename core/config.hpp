@@ -1210,6 +1210,9 @@ public:
             else if (0 == strcmp(key, "keepalive_grace_delay")){
                 this->globals.keepalive_grace_delay = ulong_from_cstr(value);
             }
+            else if (0 == strcmp(key, "close_timeout")){
+                this->globals.close_timeout = ulong_from_cstr(value);
+            }
             else if (0 == strcmp(key, "internal_domain")){
                 this->globals.internal_domain = bool_from_cstr(value);
             }
