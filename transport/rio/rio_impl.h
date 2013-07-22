@@ -966,6 +966,69 @@ RIO * rio_new_cryptoinmeta(RIO_ERROR * error, SQ ** seq, const char * prefix, co
 }
 
 
+RIO_ERROR rio_seek(RIO * rt, int64_t offset, int whence)
+{
+    /* if transport goes into error state it should be immediately flushed and closed (if it means something)
+       hence no need to close it again calling close
+    */
+    if (rt->err != RIO_ERROR_OK){
+        return rt->err;
+    }
+    switch(rt->rt_type){
+        case RIO_TYPE_GENERATOR:
+            rt->err = rio_m_RIOGenerator_seek(&(rt->u.generator), offset, whence);
+        break;
+        case RIO_TYPE_CHECK:
+            rt->err = rio_m_RIOCheck_seek(&(rt->u.check), offset, whence);
+        break;
+        case RIO_TYPE_TEST:
+            rt->err = rio_m_RIOTest_seek(&(rt->u.test), offset, whence);
+        break;
+        case RIO_TYPE_OUTFILE:
+            rt->err = rio_m_RIOOutfile_seek(&(rt->u.outfile), offset, whence);
+        break;
+        case RIO_TYPE_INFILE:
+            rt->err = rio_m_RIOInfile_seek(&(rt->u.infile), offset, whence);
+        break;
+        case RIO_TYPE_SOCKET:
+            rt->err = rio_m_RIOSocket_seek(&(rt->u.socket), offset, whence);
+        break;
+        case RIO_TYPE_SOCKET_TLS:
+            rt->err = rio_m_RIOSocketTLS_seek(&(rt->u.socket_tls), offset, whence);
+        break;
+        case RIO_TYPE_OUTSEQUENCE:
+            rt->err = rio_m_RIOOutsequence_seek(&(rt->u.outsequence), offset, whence);
+        break;
+        case RIO_TYPE_INSEQUENCE:
+            rt->err = rio_m_RIOInsequence_seek(&(rt->u.insequence), offset, whence);
+        break;
+        case RIO_TYPE_OUTMETA:
+            rt->err = rio_m_RIOOutmeta_seek(&(rt->u.outmeta), offset, whence);
+        break;
+        case RIO_TYPE_INMETA:
+            rt->err = rio_m_RIOInmeta_seek(&(rt->u.inmeta), offset, whence);
+        break;
+        case RIO_TYPE_CRYPTO:
+            rt->err = rio_m_RIOCrypto_seek(&(rt->u.crypto), offset, whence);
+        break;
+        case RIO_TYPE_CRYPTOOUTMETA:
+            rt->err = rio_m_RIOCryptoOutmeta_seek(&(rt->u.cryptooutmeta), offset, whence);
+        break;
+        case RIO_TYPE_CRYPTOINMETA:
+            rt->err = rio_m_RIOCryptoInmeta_seek(&(rt->u.cryptoinmeta), offset, whence);
+        break;
+        case RIO_TYPE_CRYPTOOUTFILENAME:
+            rt->err = rio_m_RIOCryptoOutfilename_seek(&(rt->u.cryptooutfilename), offset, whence);
+        break;
+        case RIO_TYPE_CRYPTOINFILENAME:
+            rt->err = rio_m_RIOCryptoInfilename_seek(&(rt->u.cryptoinfilename), offset, whence);
+        break;
+        default:
+            rt->err = RIO_ERROR_UNKNOWN_TYPE;
+    }
+    return rt->err;
+}
+
 RIO_ERROR rio_get_status(RIO * rt)
 {
     /* if transport goes into error state it should be immediately flushed and closed (if it means something)

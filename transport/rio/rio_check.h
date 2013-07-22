@@ -117,6 +117,11 @@ extern "C" {
         return available_len;
     }
 
+    static inline RIO_ERROR rio_m_RIOCheck_seek(RIOCheck * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOCheck_get_status(RIOCheck * self)
     {
         return RIO_ERROR_OK;

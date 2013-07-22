@@ -127,6 +127,11 @@ extern "C" {
         return total_sent;
     }
 
+    static inline RIO_ERROR rio_m_RIOOutfile_seek(RIOOutfile * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOOutfile_get_status(RIOOutfile * self)
     {
         return RIO_ERROR_OK;

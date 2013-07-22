@@ -26,7 +26,6 @@
 #include "transport.hpp"
 #include "rio/rio.h"
 
-TODO("there seems there is some common base between OutFilename and OutMeta = create some common OutRIO ?")
 class OutFilenameTransport : public Transport {
 public:
     SQ seq;
@@ -79,7 +78,13 @@ public:
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+    virtual void seek(int64_t offset, int whence) throw (Error)
+    {
+        ssize_t res = rio_seek(&this->rio, offset, whence);
+        if (res < 0){
+            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+        }    
+    }
 
     virtual bool next()
     {
