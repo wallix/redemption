@@ -53,12 +53,12 @@ public:
     bool lost_acl;            // false initialy, true when connection with acl is lost
     bool internal_domain;
     bool connected;
-    bool last_module;         // indicating a last module (close modules)
+    // bool last_module;         // indicating a last module (close modules)
     bool asked_remote_answer; // false initialy, set to true when a msg is sent to acl
     bool remote_answer;       // false initialy, set to true once response is received from acl
                               // and asked_remote_answer is set to false
-    time_t start_time;        // never used ?
-    time_t acl_start_time;    // never used ?
+    time_t start_time;
+    time_t acl_start_time;
     time_t inactivity_timeout;
     time_t last_activity_time;
 
@@ -76,7 +76,7 @@ public:
         , lost_acl(false)
         , internal_domain(ini->globals.internal_domain)
         , connected(false)
-        , last_module(false)
+          //, last_module(false)
         , asked_remote_answer(false)
         , remote_answer(false)
         , start_time(start_time)
@@ -206,7 +206,6 @@ public:
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
                 res = MODULE_INTERNAL_CLOSE;
-                // this->last_module = true;
             }
             else if (0 == strcmp(target, "widget2_dialog")) {
                 if (this->verbose & 0x4) {
@@ -260,22 +259,17 @@ public:
     }
 
 protected:
-    TODO("this method should belongs to ModuleManager");
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message, BackEvent_t & signal) {
 
-        if (this->last_module) {
+        if (mm.last_module) {
             mm.mod->event.reset();
             return false;
         }
-        if (auth_error_message) {
-            this->ini->context.auth_error_message.copy_c_str(auth_error_message);
-        }
         this->asked_remote_answer = false;
-        this->last_module         = true;
+        // this->last_module         = true;
         this->keepalive_time      = 0;
-        mm.remove_mod();
-        mm.new_mod(MODULE_INTERNAL_CLOSE);
-        signal = BACK_EVENT_NONE;
+
+        mm.invoke_close_box(auth_error_message, signal);
         return true;
     }
 
@@ -284,7 +278,7 @@ public:
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
         // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
         long enddate = this->ini->context.end_date_cnx.get();
-        if (enddate != 0 && (now > enddate) && !this->last_module) {
+        if (enddate != 0 && (now > enddate) && !mm.last_module) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe", signal);
         }
@@ -295,13 +289,15 @@ public:
         }
 
         // Check if acl connection is lost.
-        if (this->lost_acl && !this->last_module) {
+        if (this->lost_acl && !mm.last_module) {
             return invoke_mod_close(mm, "Connection closed by manager (ACL closed)", signal);
         }
 
         // Keep alive
         if (this->keepalive_time) {
+
             // LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u check_keepalive=%s", now, this->keepalive_time, this->keepalive_renew_time, this->check_keepalive?"Y":"N");
+            // Keep alive timeout
             if (now > this->keepalive_time) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
                 return invoke_mod_close(mm, "Missed keepalive from ACL", signal);
@@ -311,11 +307,10 @@ public:
             //     this->ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
             //     this->ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
 
-
+            //Keepalive received positive response
             if (this->check_keepalive
                 && !this->ini->context_is_asked(AUTHID_KEEPALIVE)
                 && this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                // Here we got a positive response
                 if (this->verbose & 0x10) {
                     LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
                 }
@@ -324,10 +319,10 @@ public:
                 this->check_keepalive = false;
             }
 
+            // Keep alive asking for an answer from ACL
             if (!this->check_keepalive
                 && now > this->keepalive_renew_time) {
 
-                // Here, we ask for an answer from ACL about keepalive
                 this->check_keepalive = true;
 
                 this->ini->context_ask(AUTHID_KEEPALIVE);
@@ -343,7 +338,7 @@ public:
         // hence we should have t << inactivity_timeout.
         // for now, check_inactivity is not necessary but it
         // indicate that this part of code is about inactivity management
-        if (this->check_inactivity && !this->last_module) {
+        if (this->check_inactivity && !mm.last_module) {
             // if (this->verbose & 8) {
             //     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
             //          , trans.last_quantum_received, trans.total_received, this->tick_count);
