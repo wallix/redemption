@@ -42,9 +42,10 @@ class SessionManager {
     long keepalive_time;
     long keepalive_renew_time;
 
-    bool checkkeepalive;      // true when we are waiting for a positive response
+    bool check_keepalive;      // true when we are waiting for a positive response
                               // false when positive response has been received and
                               // timers have been set to new timers.
+    bool check_inactivity;
 
 public:
     AclSerializer acl_serial;
@@ -58,9 +59,11 @@ public:
                               // and asked_remote_answer is set to false
     time_t start_time;        // never used ?
     time_t acl_start_time;    // never used ?
+    time_t inactivity_timeout;
+    time_t last_activity_time;
 
     uint32_t verbose;
-    // bool read_auth;
+
 
     SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
@@ -78,13 +81,15 @@ public:
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
+        , inactivity_timeout(30*ini->globals.max_tick)
+        , last_activity_time(acl_start_time)
         , verbose(ini->debug.auth)
-          //, read_auth(false)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
-        this->checkkeepalive = false;
+        this->check_inactivity = true;
+        this->check_keepalive = false;
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
@@ -255,6 +260,7 @@ public:
     }
 
 protected:
+    TODO("this method should belongs to ModuleManager");
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message, BackEvent_t & signal) {
 
         if (this->last_module) {
@@ -295,7 +301,7 @@ public:
 
         // Keep alive
         if (this->keepalive_time) {
-            // LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u checkkeepalive=%s", now, this->keepalive_time, this->keepalive_renew_time, this->checkkeepalive?"Y":"N");
+            // LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u check_keepalive=%s", now, this->keepalive_time, this->keepalive_renew_time, this->check_keepalive?"Y":"N");
             if (now > this->keepalive_time) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
                 return invoke_mod_close(mm, "Missed keepalive from ACL", signal);
@@ -305,63 +311,55 @@ public:
             //     this->ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
             //     this->ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
 
-            // if (this->read_auth) {
-            //     if (this->verbose & 0x10) {
-            //         LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-            //     }
 
-            //     this->read_auth = false;
-
-
-            //     if (!this->ini->context_is_asked(AUTHID_KEEPALIVE)
-            //         && this->ini->context_get_bool(AUTHID_KEEPALIVE)
-            //         && now > (this->keepalive_time - this->keepalive_grace_delay)) {
-            //         this->keepalive_time       = now + 2*this->keepalive_grace_delay;
-            //         this->keepalive_renew_time = now + this->keepalive_grace_delay;
-            //     }
-
-            // }
-
-            if (this->checkkeepalive
+            if (this->check_keepalive
                 && !this->ini->context_is_asked(AUTHID_KEEPALIVE)
                 && this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
                 // Here we got a positive response
+                if (this->verbose & 0x10) {
+                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+                }
                 this->keepalive_time       = now + 2*this->keepalive_grace_delay;
                 this->keepalive_renew_time = now + this->keepalive_grace_delay;
-                this->checkkeepalive = false;
+                this->check_keepalive = false;
             }
 
-            if (!this->checkkeepalive
+            if (!this->check_keepalive
                 && now > this->keepalive_renew_time) {
 
-                // Dirty: add 10 minutes, this is to get renew_time out of the way
-                // this->keepalive_renew_time += 600;
-
                 // Here, we ask for an answer from ACL about keepalive
-                this->checkkeepalive = true;
-                if (this->verbose & 8) {
-                    LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
-                         , trans.last_quantum_received, trans.total_received, this->tick_count);
-                }
-
-                if (trans.last_quantum_received == 0) {
-                    this->tick_count++;
-                    // 15 minutes before closing on inactivity
-                    if (this->tick_count > this->max_tick) {
-                        LOG(LOG_INFO, "Session User inactivity : closing");
-                        return invoke_mod_close(mm, "Connection closed on inactivity", signal);
-                    }
-                }
-                else {
-                    this->tick_count = 0;
-                }
-                LOG(LOG_INFO, "Session User inactivity : tick count: %u, disconnect on %uth tick", this->tick_count, this->max_tick + 1);
-                trans.tick();
+                this->check_keepalive = true;
 
                 this->ini->context_ask(AUTHID_KEEPALIVE);
                 LOG(LOG_INFO, "asked_remote_answer=%s", this->asked_remote_answer?"Y":"N");
             }
         }   // if (this->keepalive_time)
+
+
+        //Inactivity management
+        // let t be the timeout of the blocking select in session loop,
+        // the effective inactivity timeout detection will be between
+        // inactivity_timeout and inactivity_timeout + 2*t.
+        // hence we should have t << inactivity_timeout.
+        // for now, check_inactivity is not necessary but it
+        // indicate that this part of code is about inactivity management
+        if (this->check_inactivity && !this->last_module) {
+            // if (this->verbose & 8) {
+            //     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
+            //          , trans.last_quantum_received, trans.total_received, this->tick_count);
+            // }
+
+            if (trans.last_quantum_received == 0) {
+                if (now > this->last_activity_time + this->inactivity_timeout) {
+                    LOG(LOG_INFO, "Session User inactivity : closing");
+                    return invoke_mod_close(mm, "Connection closed on inactivity", signal);
+                }
+            }
+            else {
+                this->last_activity_time = now;
+                trans.tick();
+            }
+        }
 
         // Manage module (refresh or next)
         TODO("Check the needs and reference of this->asked_remote_answer. "
@@ -379,8 +377,8 @@ public:
             if (this->remote_answer && signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
-                TODO("signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening anothe one of the same kind")
-                    mm.mod->refresh_context(*this->ini);
+                TODO("signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind");
+                mm.mod->refresh_context(*this->ini);
                 mm.mod->event.signal = BACK_EVENT_NONE;
                 mm.mod->event.set();
             }
@@ -404,13 +402,16 @@ public:
                         return invoke_mod_close(mm, "Unknown BackEnd.", signal);
                     }
                     else {
-                        TODO("is there any exception thrown by mm that should not implies opening a close box ?")
-                            throw e;
+                        TODO("Not human understanding message"
+                             "We should associate an explicit message "
+                             "to a thrown error");
+                        char errormsg[256];
+                        snprintf(errormsg, sizeof(errormsg), "Exception thrown id: %u", e.id);
+                        return invoke_mod_close(mm, errormsg, signal);
                     }
                 }
                 if ((this->keepalive_time == 0) && this->connected) {
                     this->start_keepalive(now);
-                    // this->read_auth = false;
 
                     mm.record();
                 }
@@ -450,7 +451,6 @@ public:
         try {
             if (!this->lost_acl) {
                 this->acl_serial.incoming();
-                // this->read_auth     = true;
                 this->remote_answer = true;
             }
         } catch (...) {

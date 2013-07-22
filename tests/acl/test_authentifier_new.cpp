@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     Inifile ini;
     ini.globals.keepalive_grace_delay = 30;
-    ini.globals.max_tick = 5;
+    ini.globals.max_tick = 8; // => 8*30 = 240secs inactivity
     ini.globals.internal_domain = true;
     ini.debug.auth = 255;
 
