@@ -253,11 +253,13 @@ struct Session {
                         }
                     }
                 } catch (Error & e) {
+                    TODO("Not human understanding message"
+                         "We should associate an explicit message "
+                         "to a thrown error");
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
                     char errormsg[256];
                     snprintf(errormsg,sizeof(errormsg),"Session exception = %d!",e.id);
                     mm.invoke_close_box(errormsg,signal);
-                    run_session = false;
                 };
             }
             this->front->disconnect();

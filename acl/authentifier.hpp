@@ -53,7 +53,7 @@ public:
     bool lost_acl;            // false initialy, true when connection with acl is lost
     bool internal_domain;
     bool connected;
-    // bool last_module;         // indicating a last module (close modules)
+
     bool asked_remote_answer; // false initialy, set to true when a msg is sent to acl
     bool remote_answer;       // false initialy, set to true once response is received from acl
                               // and asked_remote_answer is set to false
@@ -76,7 +76,6 @@ public:
         , lost_acl(false)
         , internal_domain(ini->globals.internal_domain)
         , connected(false)
-          //, last_module(false)
         , asked_remote_answer(false)
         , remote_answer(false)
         , start_time(start_time)
@@ -266,7 +265,6 @@ protected:
             return false;
         }
         this->asked_remote_answer = false;
-        // this->last_module         = true;
         this->keepalive_time      = 0;
 
         mm.invoke_close_box(auth_error_message, signal);
@@ -397,12 +395,7 @@ public:
                         return invoke_mod_close(mm, "Unknown BackEnd.", signal);
                     }
                     else {
-                        TODO("Not human understanding message"
-                             "We should associate an explicit message "
-                             "to a thrown error");
-                        char errormsg[256];
-                        snprintf(errormsg, sizeof(errormsg), "Exception thrown id: %u", e.id);
-                        return invoke_mod_close(mm, errormsg, signal);
+                        throw e;
                     }
                 }
                 if ((this->keepalive_time == 0) && this->connected) {
