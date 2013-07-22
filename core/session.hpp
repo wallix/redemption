@@ -248,6 +248,9 @@ struct Session {
                             mm.mod->event.reset();
                             run_session = false;
                         }
+                        if (mm.last_module) {
+                            this->front->stop_capture();
+                        }
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
