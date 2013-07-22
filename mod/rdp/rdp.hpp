@@ -147,6 +147,8 @@ struct mod_rdp : public mod_api {
     bool client_fastpath_input_event_support; // choice of programmer + capability of server
     bool server_fastpath_update_support;      // = choice of programmer
 
+    size_t recv_bmp_update;
+
     mod_rdp( Transport * trans
            , const char * target_user
            , const char * target_password
@@ -205,10 +207,11 @@ struct mod_rdp : public mod_api {
         , bitmap_update_support(bitmap_update_support)
         , client_fastpath_input_event_support(false)
         , server_fastpath_update_support(fp_support)
+        , recv_bmp_update(0)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
-        }        
+        }
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel));
@@ -295,6 +298,10 @@ struct mod_rdp : public mod_api {
         if (this->lic_layer_license_data) {
             free(this->lic_layer_license_data);
         }
+
+        LOG(LOG_INFO, ">>>> Recv bmp cache count  = %llu", this->orders.recv_bmp_cache_count);
+        LOG(LOG_INFO, ">>>> Recv order count      = %llu", this->orders.recv_order_count);
+        LOG(LOG_INFO, ">>>> Recv bmp update count = %llu", this->recv_bmp_update);
     }
 
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
@@ -1731,6 +1738,30 @@ struct mod_rdp : public mod_api {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
+if (this->use_rdp5) {
+LOG(LOG_INFO, "Using rdp5");
+}
+else {
+LOG(LOG_INFO, "Not using rdp5");
+}
+if (this->server_fastpath_update_support) {
+LOG(LOG_INFO, "Using fast-past");
+}
+else {
+LOG(LOG_INFO, "Not using fast-past");
+}
+if (this->mem3blt_support) {
+LOG(LOG_INFO, "Using mem3blt");
+}
+else {
+LOG(LOG_INFO, "Not using mem3blt");
+}
+if (this->enable_new_pointer) {
+LOG(LOG_INFO, "Using new point");
+}
+else {
+LOG(LOG_INFO, "Not using new point");
+}
 
         BStream stream(65536);
 
@@ -1875,6 +1906,9 @@ struct mod_rdp : public mod_api {
         //            confirm_active_pdu.emit_capability_set(CompDeskCaps);
 
         confirm_active_pdu.emit_end();
+
+LOG(LOG_INFO, ">>>>> CONFIRM ACTIVE");
+hexdump_d(stream.get_data(), stream.size());
 
         BStream sec_header(256);
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
@@ -3346,6 +3380,7 @@ public:
 
     virtual void rdp_input_invalidate(const Rect & r)
     {
+LOG(LOG_INFO, ">>>>> mod_rdp::rdp_input_invalidate");
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }
@@ -3579,6 +3614,8 @@ public:
         if (this->verbose & 64){
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
+
+        this->recv_bmp_update++;
 
         if (fast_path) {
             stream.in_skip_bytes(2); // updateType(2)
