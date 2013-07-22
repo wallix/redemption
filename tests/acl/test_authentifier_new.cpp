@@ -129,10 +129,10 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     res = sesman.check(mm, 10043, keepalivetrans, signal);
     res = sesman.check(mm, 10072, keepalivetrans, signal);
     // still connected
-    BOOST_CHECK_EQUAL(sesman.last_module, false);
+    BOOST_CHECK_EQUAL(mm.last_module, false);
     // If no keepalive is received after 30 seconds => disconnection
     res = sesman.check(mm, 10073, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, true);
+    BOOST_CHECK_EQUAL(mm.last_module, true);
 }
 
 
@@ -252,17 +252,17 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     sesman.receive();
     res = sesman.check(mm, 10072, keepalivetrans, signal);
     res = sesman.check(mm, 10075, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false);  // still connected
+    BOOST_CHECK_EQUAL(mm.last_module, false);  // still connected
 
     // Renew Keepalive time:
     // Send keepalive=ASK
     res = sesman.check(mm, 10076, keepalivetrans, signal);
     res = sesman.check(mm, 10105, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
+    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     // Keep alive not received, disconnection
     res = sesman.check(mm, 10106, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, true);  // close box
+    BOOST_CHECK_EQUAL(mm.last_module, true);  // close box
 
 
 }
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
     Inifile ini;
     ini.globals.keepalive_grace_delay = 30;
-    ini.globals.max_tick = 5;
+    ini.globals.max_tick = 8; // => 8*30 = 240secs inactivity
     ini.globals.internal_domain = true;
     ini.debug.auth = 255;
 
@@ -468,43 +468,43 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     sesman.receive();
     res = sesman.check(mm, 10072, keepalivetrans, signal);
     res = sesman.check(mm, 10075, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false);  // still connected
+    BOOST_CHECK_EQUAL(mm.last_module, false);  // still connected
 
     // Renew Keepalive time:
     // Send keepalive=ASK
     res = sesman.check(mm, 10076, keepalivetrans, signal);
     sesman.receive();
     res = sesman.check(mm, 10079, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
+    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
     // Send keepalive=ASK
     res = sesman.check(mm, 10106, keepalivetrans, signal);
     res = sesman.check(mm, 10135, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
+    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
     res = sesman.check(mm, 10136, keepalivetrans, signal);
     res = sesman.check(mm, 10165, keepalivetrans, signal);
 
-    BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
+    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
     res = sesman.check(mm, 10166, keepalivetrans, signal);
     sesman.receive();
     res = sesman.check(mm, 10195, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
+    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
     sesman.receive();
     res = sesman.check(mm, 10196, keepalivetrans, signal);
     res = sesman.check(mm, 10225, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, false); // still connected
+    BOOST_CHECK_EQUAL(mm.last_module, false); // still connected
 
 
     sesman.receive();
     res = sesman.check(mm, 10227, keepalivetrans, signal);
     res = sesman.check(mm, 10255, keepalivetrans, signal);
-    BOOST_CHECK_EQUAL(sesman.last_module, true); // disconnected on inactivity
+    BOOST_CHECK_EQUAL(mm.last_module, true); // disconnected on inactivity
 
 
 }

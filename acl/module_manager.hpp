@@ -76,8 +76,9 @@ class MMApi
 {
     public:
     mod_api * mod;
+    bool last_module;
 
-    MMApi() {}
+    MMApi() : last_module(false) {}
     ~MMApi() {}
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module) = 0;
@@ -85,6 +86,9 @@ class MMApi
     TODO("ModuleManager should know it's state (the module currently connected)"
          "At least if it's some target module (RDP, VNC, XUP, replay)"
          "some other internal module, or the close box")
+    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal) {
+        this->last_module = true;
+    };
 //    virtual bool is_close_box() { return false; }
 
 };
@@ -119,6 +123,16 @@ public:
             }
             this->mod = this->no_mod;
         }
+    }
+
+    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal) {
+        this->last_module = true;
+        if (auth_error_message) {
+            this->ini.context.auth_error_message.copy_c_str(auth_error_message);
+        }
+        this->remove_mod();
+        this->new_mod(MODULE_INTERNAL_CLOSE);
+        signal = BACK_EVENT_NONE;
     }
 
     virtual ~ModuleManager()
@@ -324,16 +338,16 @@ public:
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
                     REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
                         char hostname[255];
-                        
+
                     TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
                     hostname[0] = 0;
                     if (this->front.client_info.hostname[0]){
                         memcpy(hostname, this->front.client_info.hostname, 31);
                         hostname[31] = 0;
                     }
-                    
+
                     ClientInfo client_info = this->front.client_info;
-                    
+
                      if (strcmp(ini.context.mode_console.get_cstr(), "force") == 0) {
                         client_info.console_session = true;
                         LOG(LOG_INFO, "Session::mode console : force");
@@ -345,7 +359,7 @@ public:
                     else {
                         // default is "allow", do nothing special
                     }
-                    
+
                     static const char * name = "RDP Target";
 
                     int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
