@@ -62,6 +62,8 @@ class GeneratorTransport : public Transport {
         // send perform like a /dev/null and does nothing in generator transport
     }
 
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+
     virtual bool get_status()
     {
         return rio_get_status(&this->rio) == RIO_ERROR_OK;
@@ -104,6 +106,8 @@ class CheckTransport : public Transport {
         }
         return;
     }
+
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
 
     virtual bool get_status()
     {
@@ -159,6 +163,8 @@ class TestTransport : public Transport {
         return;
     }
 
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+
     virtual bool get_status()
     {
         return (rio_get_status(&this->rio_check) == RIO_ERROR_OK) && (rio_get_status(&this->rio_gen) == RIO_ERROR_OK);
@@ -184,6 +190,8 @@ class LogTransport : public Transport {
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         hexdump_c(buffer, len);
     }
+
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
 
     virtual bool get_status()
     {

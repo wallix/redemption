@@ -118,6 +118,11 @@ extern "C" {
         return rio_send(self->check, data, len);
     }
 
+    static inline RIO_ERROR rio_m_RIOTest_seek(RIOTest * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOTest_get_status(RIOTest * self)
     {
         return rio_get_status(self->check);

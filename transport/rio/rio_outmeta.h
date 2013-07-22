@@ -128,6 +128,11 @@ extern "C" {
         return rio_send(self->out, data, len);
     }
 
+    static inline RIO_ERROR rio_m_RIOOutmeta_seek(RIOOutmeta * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOOutmeta_get_status(RIOOutmeta * self)
     {
         return rio_get_status(self->out);

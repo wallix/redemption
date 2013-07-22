@@ -56,6 +56,8 @@ public:
         this->seq = seq;
     }
 
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+
     ~InByMetaSequenceTransport()
     {
         if (this->rio){

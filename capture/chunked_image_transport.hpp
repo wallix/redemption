@@ -89,6 +89,9 @@ public:
     {
         throw Error(ERR_TRANSPORT_INPUT_ONLY_USED_FOR_RECV);
     }
+    
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+    
 };
 
 #endif

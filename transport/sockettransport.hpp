@@ -1148,6 +1148,8 @@ LOG(LOG_INFO, "%s: total_received = %llu, total_sent=%llu", this->name, this->to
         this->last_quantum_sent += len;
     }
 
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+
     virtual bool get_status()
     {
         return rio_get_status(&this->rio) == RIO_ERROR_OK;

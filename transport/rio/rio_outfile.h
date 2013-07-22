@@ -127,6 +127,19 @@ extern "C" {
         return total_sent;
     }
 
+    static inline RIO_ERROR rio_m_RIOOutfile_seek(RIOOutfile * self, int64_t offset, int whence)
+    {
+        if (lseek(self->fd, offset, whence) < 0){
+        // EBADF  fd is not an open file descriptor
+        // EINVAL whence  is neither SEEK_SET, nor SEEK_CUR, nor SEEK_END
+        // or asked position would be negative or after the end of device
+        // EOVERFLOW asked offset can't be represented in an off_t
+        // ESPIPE fd is some non seekable peripheral, like a pipe, a socket or a FIFO.
+            return RIO_ERROR_SEEK_NOT_AVAILABLE;
+        }
+        return RIO_ERROR_OK;
+    }
+
     static inline RIO_ERROR rio_m_RIOOutfile_get_status(RIOOutfile * self)
     {
         return RIO_ERROR_OK;
