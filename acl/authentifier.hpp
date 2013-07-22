@@ -46,6 +46,7 @@ class SessionManager {
                               // false when positive response has been received and
                               // timers have been set to new timers.
     bool check_inactivity;
+    long prev_remain;
 
 public:
     AclSerializer acl_serial;
@@ -89,6 +90,7 @@ public:
         }
         this->check_inactivity = true;
         this->check_keepalive = false;
+        this->prev_remain = 0;
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
@@ -260,7 +262,9 @@ public:
 protected:
     bool invoke_mod_close(MMApi & mm, const char * auth_error_message, BackEvent_t & signal) {
 
+
         if (mm.last_module) {
+            TODO("should never be executed");
             mm.mod->event.reset();
             return false;
         }
@@ -275,19 +279,26 @@ public:
 
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
         // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
+        // if the current module is the close box,
+        // authentifier only wait for a stop signal
+        // and does not do anything else
+        if (mm.last_module) {
+            if (signal == BACK_EVENT_STOP) {
+                mm.mod->event.reset();
+                return false;
+            }
+            return true;
+        }
+
         long enddate = this->ini->context.end_date_cnx.get();
-        if (enddate != 0 && (now > enddate) && !mm.last_module) {
+        if (enddate != 0 && (now > enddate)/* && !mm.last_module*/) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             return invoke_mod_close(mm, "Session is out of allowed timeframe", signal);
         }
 
-        if (signal == BACK_EVENT_STOP) {
-            mm.mod->event.reset();
-            return false;
-        }
 
         // Check if acl connection is lost.
-        if (this->lost_acl && !mm.last_module) {
+        if (this->lost_acl/* && !mm.last_module*/) {
             return invoke_mod_close(mm, "Connection closed by manager (ACL closed)", signal);
         }
 
@@ -336,7 +347,7 @@ public:
         // hence we should have t << inactivity_timeout.
         // for now, check_inactivity is not necessary but it
         // indicate that this part of code is about inactivity management
-        if (this->check_inactivity && !mm.last_module) {
+        if (this->check_inactivity/* && !mm.last_module*/) {
             // if (this->verbose & 8) {
             //     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
             //          , trans.last_quantum_received, trans.total_received, this->tick_count);
@@ -347,10 +358,20 @@ public:
                     LOG(LOG_INFO, "Session User inactivity : closing");
                     return invoke_mod_close(mm, "Connection closed on inactivity", signal);
                 }
+                long remain = this->last_activity_time + this->inactivity_timeout - now;
+                if ((remain / 10) != this->prev_remain
+                    && (remain != this->inactivity_timeout)) {
+                    this->prev_remain = remain / 10;
+                    LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
+                }
             }
             else {
                 this->last_activity_time = now;
                 trans.tick();
+                if (this->prev_remain != 0) {
+                    LOG(LOG_INFO, "Session User inactivity : Timer reset");
+                    this->prev_remain = 0;
+                }
             }
         }
 
