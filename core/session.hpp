@@ -154,12 +154,6 @@ struct Session {
                     }
                     mm.mod->event.add_to_fd_set(rfds, max, timeout);
 
-                    // TODO("fix that: timeout should be updated by add_to_fd_set")
-                    // if (mm.mod->event.obj == 0 && mm.mod->event.is_set(rfds)) {
-                    //     timeout.tv_sec  = 0;
-                    //     timeout.tv_usec = 0;
-                    // }
-
                     int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 
                     if (num < 0) {
@@ -233,9 +227,10 @@ struct Session {
                                     TODO("maybe we shouldn't *connect* to ACL but create some acl context anyway to be able to call acl->check ")
                                     cant_create_acl = true;
 
-                                    this->ini->context.auth_error_message.copy_c_str("No authentifier available");
-                                    mm.remove_mod();
-                                    mm.new_mod(MODULE_INTERNAL_CLOSE);
+                                    mm.invoke_close_box("No authentifier available",signal);
+                                    // this->ini->context.auth_error_message.copy_c_str("No authentifier available");
+                                    // mm.remove_mod();
+                                    // mm.new_mod(MODULE_INTERNAL_CLOSE);
                                 }
                             }
                         }
@@ -253,9 +248,15 @@ struct Session {
                             mm.mod->event.reset();
                             run_session = false;
                         }
+                        if (mm.last_module) {
+                            this->front->stop_capture();
+                        }
                     }
                 } catch (Error & e) {
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+                    char errormsg[256];
+                    snprintf(errormsg,sizeof(errormsg),"Session exception = %d!",e.id);
+                    mm.invoke_close_box(errormsg,signal);
                     run_session = false;
                 };
             }

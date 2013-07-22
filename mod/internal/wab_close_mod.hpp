@@ -31,11 +31,12 @@
 
 class WabCloseMod : public InternalMod, public NotifyApi
 {
+    Inifile & ini;
     WindowWabClose window_close;
     WidgetImage image;
     time_t timeout;
 
-    Inifile & ini;
+
 
 private:
     struct temporary_text {
@@ -43,23 +44,28 @@ private:
 
         temporary_text(Inifile& ini)
         {
-            snprintf(text, sizeof(text), "%s@%s",
-                     ini.globals.target_user.get_cstr(),
-                     ini.globals.target_device.get_cstr());
+            if (ini.context.selector.get()) {
+                snprintf(text,sizeof(text),"Selector");
+            }
+            else {
+                snprintf(text, sizeof(text), "%s@%s",
+                         ini.globals.target_user.get_cstr(),
+                         ini.globals.target_device.get_cstr());
+            }
         }
     };
 
 public:
     WabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
     : InternalMod(front, width, height)
+    , ini(ini)
     , window_close(this, 0, 0, &this->screen, this, ini.context.auth_error_message.c_str(), 0,
                    ini.context_is_asked(AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user.get_cstr(),
                    (ini.context_is_asked(AUTHID_TARGET_USER) || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-		    NULL : temporary_text(ini).text,
+		    "Internal" : temporary_text(ini).text,
                    BLACK, GREY
     )
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
-    , ini(ini)
     , timeout(time(NULL) + ini.globals.close_timeout)
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
@@ -97,7 +103,9 @@ public:
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
         }
-        this->event.set(1000000);
+        else {
+            this->event.set(1000000);
+        }
         // this->event.reset();
     }
 
