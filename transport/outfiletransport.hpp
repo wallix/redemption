@@ -65,7 +65,7 @@ class OutFileTransport : public Transport {
     virtual void seek(int64_t offset, int whence) throw (Error) 
     {
         RIO_ERROR res = rio_seek(&this->rio, offset, whence);
-        if (res < 0){
+        if (res != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }

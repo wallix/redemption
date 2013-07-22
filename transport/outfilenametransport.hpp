@@ -81,7 +81,7 @@ public:
     virtual void seek(int64_t offset, int whence) throw (Error)
     {
         ssize_t res = rio_seek(&this->rio, offset, whence);
-        if (res < 0){
+        if (res != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }    
     }
