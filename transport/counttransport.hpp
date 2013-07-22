@@ -46,6 +46,8 @@ class CountTransport : public Transport {
         this->last_quantum_sent += len;
     }
 
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+
     virtual bool get_status()
     {
         return true;

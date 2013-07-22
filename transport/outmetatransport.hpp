@@ -73,6 +73,8 @@ public:
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+
     virtual void timestamp(timeval now)
     {
         sq_timestamp(this->seq, &now);
@@ -136,6 +138,8 @@ public:
         LOG(LOG_INFO, "CryptoOutmetaTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
+
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
 
     virtual void timestamp(timeval now)
     {
