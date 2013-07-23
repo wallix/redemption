@@ -38,7 +38,7 @@ public:
     DialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
               const char * caption, const char * message, const char * cancel_text)
     : InternalMod(front, width, height)
-    , window_dialog(this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, GREY)
+    , window_dialog(*this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, GREY)
     , ini(ini)
     {
         this->screen.child_list.push_back(&this->window_dialog);

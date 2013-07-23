@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     int16_t y = 0;
     int id = 0;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test1", id, "rec", "rec");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test1", id, "rec", "rec");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(window_login.rect);
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test2");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test2");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test3");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test3");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test4");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test4");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test5");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test5");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test6");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test6");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -314,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test6");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test6");
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     window_login.rdp_input_invalidate(Rect(20 + window_login.dx(),
@@ -342,7 +342,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test6");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test6");
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     window_login.rdp_input_invalidate(Rect(20 + window_login.dx(),
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     int16_t x = 10;
     int16_t y = 10;
 
-    WindowLogin window_login(&drawable, x, y, parent, &notifier, "test6");
+    WindowLogin window_login(drawable, x, y, parent, &notifier, "test6");
 
 
     BOOST_CHECK(notifier.sender == 0);
@@ -438,7 +438,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     int16_t x = 10;
     int16_t y = 10;
 
-    WindowLogin window_login(&drawable, x, y, &parent, 0, "test6");
+    WindowLogin window_login(drawable, x, y, &parent, 0, "test6");
     parent.child_list.push_back(&window_login);
 
     parent.rdp_input_invalidate(parent.rect);

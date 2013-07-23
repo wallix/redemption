@@ -151,17 +151,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     int id = 0;
 
     WidgetCompositeRect wcomposite(drawable);
-    WidgetRect wrect1(&drawable, Rect(0,0,100,100),
+    WidgetRect wrect1(drawable, Rect(0,0,100,100),
                       &wcomposite, notifier, id++, CYAN);
-    WidgetRect wrect2(&drawable, Rect(0,100,100,100),
+    WidgetRect wrect2(drawable, Rect(0,100,100,100),
                       &wcomposite, notifier, id++, RED);
-    WidgetRect wrect3(&drawable, Rect(100,100,100,100),
+    WidgetRect wrect3(drawable, Rect(100,100,100,100),
                       &wcomposite, notifier, id++, BLUE);
-    WidgetRect wrect4(&drawable, Rect(300,300,100,100),
+    WidgetRect wrect4(drawable, Rect(300,300,100,100),
                       &wcomposite, notifier, id++, GREEN);
-    WidgetRect wrect5(&drawable, Rect(700,-50,100,100),
+    WidgetRect wrect5(drawable, Rect(700,-50,100,100),
                       &wcomposite, notifier, id++, WHITE);
-    WidgetRect wrect6(&drawable, Rect(-50,550,100,100),
+    WidgetRect wrect6(drawable, Rect(-50,550,100,100),
                       &wcomposite, notifier, id++, GREY);
     wcomposite.child_list.push_back(&wrect1);
     wcomposite.child_list.push_back(&wrect2);

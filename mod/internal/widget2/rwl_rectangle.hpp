@@ -49,9 +49,9 @@ public:
     Style style;
 
 public:
-    RwlRectangle(DrawApi* drawable, Widget2* parent, NotifyApi* notifier,
+    RwlRectangle(DrawApi& drawable, Widget2* parent, NotifyApi* notifier,
                  const Style& basestyle, int group_id = 0)
-    : WidgetComposite(drawable, Rect(), parent, notifier, group_id)
+    : WidgetComposite(&drawable, Rect(), parent, notifier, group_id)
     , style(basestyle)
     {}
 
@@ -93,7 +93,7 @@ class RwlImage : public RwlRectangle
     Bitmap bmp;
 
 public:
-    RwlImage(DrawApi* drawable, Widget2* parent, NotifyApi* notifier,
+    RwlImage(DrawApi& drawable, Widget2* parent, NotifyApi* notifier,
              const char * filename, const Style& basestyle, int group_id = 0)
     : RwlRectangle(drawable, parent, notifier, basestyle, group_id)
     , bmp(filename)

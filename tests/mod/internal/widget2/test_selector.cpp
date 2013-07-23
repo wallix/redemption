@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(&drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP", "2013-04-20 19:56:50");
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector2)
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(&drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(&drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -247,7 +247,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(&drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(&drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP", "2013-04-20 19:56:50");

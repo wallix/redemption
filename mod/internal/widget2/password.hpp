@@ -47,11 +47,11 @@ public:
     int border_right_bottom_color;
     int border_right_bottom_color_inner;
 
-    WidgetPassword(DrawApi* drawable, int16_t x, int16_t y, uint16_t cx,
+    WidgetPassword(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                    Widget2* parent, NotifyApi* notifier, const char * text,
                    int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
+    : Widget2(&drawable, Rect(x,y,cx,1), parent, notifier, group_id)
     , buf_size(0)
     , buf_pos(0)
     , num_chars(0)
@@ -82,13 +82,11 @@ public:
             this->display_pass[this->num_chars] = 0;
         }
         this->rect.cy = 0;
-        if (this->drawable) {
-            this->drawable->text_metrics("*", this->w_char, this->h_char);
-            this->rect.cy = this->y_text * 2 + this->h_char;
-            this->rect.cy += 2;
-            this->rect.cx += 2;
-            --this->h_char;
-        }
+        this->drawable->text_metrics("*", this->w_char, this->h_char);
+        this->rect.cy = this->y_text * 2 + this->h_char;
+        this->rect.cy += 2;
+        this->rect.cx += 2;
+        --this->h_char;
     }
 
     virtual ~WidgetPassword()
@@ -133,21 +131,17 @@ public:
 
     virtual bool focus(Widget2* old_focused, int policy = 0)
     {
-        if (this->drawable) {
-            this->drawable->begin_update();
-            this->draw_cursor(this->get_cursor_rect());
-            this->drawable->end_update();
-        }
+        this->drawable->begin_update();
+        this->draw_cursor(this->get_cursor_rect());
+        this->drawable->end_update();
         return Widget2::focus(old_focused, policy);
     }
 
     virtual void blur()
     {
-        if (this->drawable) {
-            this->drawable->begin_update();
-            this->draw_text(this->get_cursor_rect());
-            this->drawable->end_update();
-        }
+        this->drawable->begin_update();
+        this->draw_text(this->get_cursor_rect());
+        this->drawable->end_update();
         return Widget2::blur();
     }
 
@@ -260,12 +254,10 @@ public:
 
     void update_draw_cursor(Rect old_cursor)
     {
-        if (this->drawable) {
-            this->drawable->begin_update();
-            this->draw_cursor(this->get_cursor_rect());
-            this->draw(old_cursor);
-            this->drawable->end_update();
-        }
+        this->drawable->begin_update();
+        this->draw_cursor(this->get_cursor_rect());
+        this->draw(old_cursor);
+        this->drawable->end_update();
     }
 
     void move_to_last_character()
@@ -288,19 +280,17 @@ public:
     {
         --this->num_chars;
         this->display_pass[this->num_chars] = 0;
-        if (this->drawable) {
-            this->drawable->begin_update();
-            this->drawable->draw(
-                RDPOpaqueRect(this->rect, this->bg_color),
-                Rect(
-                    this->dx() + this->num_chars * this->w_char + this->x_text,
-                    this->dy() + this->y_text + 1,
-                    this->w_char,
-                    this->h_char
-                )
-            );
-            this->drawable->end_update();
-        }
+        this->drawable->begin_update();
+        this->drawable->draw(
+            RDPOpaqueRect(this->rect, this->bg_color),
+            Rect(
+                this->dx() + this->num_chars * this->w_char + this->x_text,
+                this->dy() + this->y_text + 1,
+                this->w_char,
+                this->h_char
+            )
+        );
+        this->drawable->end_update();
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
@@ -375,17 +365,15 @@ public:
                         this->buf_size += d;
                         this->buf_pos += d;
                         this->send_notify(NOTIFY_TEXT_CHANGED);
-                        if (this->drawable) {
-                            this->drawable->begin_update();
-                            this->draw_text(Rect(
-                                this->dx() + this->x_text + (this->edit_pos - 1) * this->w_char,
-                                this->dy() + this->y_text + 1,
-                                this->w_char,
-                                this->h_char
-                            ));
-                            this->draw_cursor(this->get_cursor_rect());
-                            this->drawable->end_update();
-                        }
+                        this->drawable->begin_update();
+                        this->draw_text(Rect(
+                            this->dx() + this->x_text + (this->edit_pos - 1) * this->w_char,
+                            this->dy() + this->y_text + 1,
+                            this->w_char,
+                            this->h_char
+                        ));
+                        this->draw_cursor(this->get_cursor_rect());
+                        this->drawable->end_update();
                     }
                     keymap->get_kevent();
                     break;

@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
     int ytext = 1;
     size_t password_pos = 2;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test1", id,
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test1", id,
                      fg_color, bg_color, password_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -220,7 +220,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -252,7 +252,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wpassword.rdp_input_invalidate(Rect(0 + wpassword.dx(),
@@ -348,7 +348,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wpassword.rdp_input_invalidate(Rect(20 + wpassword.dx(),
@@ -380,7 +380,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wpassword.rdp_input_invalidate(Rect(20 + wpassword.dx(),
@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF);
     wpassword.focus(0);
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e1.png");
@@ -618,17 +618,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 
     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
 
-    WidgetPassword wpassword1(&drawable, 0,0, 50, &wcomposite, notifier,
+    WidgetPassword wpassword1(drawable, 0,0, 50, &wcomposite, notifier,
                         "abababab", 4, YELLOW, BLACK);
-    WidgetPassword wpassword2(&drawable, 0,100, 50, &wcomposite, notifier,
+    WidgetPassword wpassword2(drawable, 0,100, 50, &wcomposite, notifier,
                         "ggghdgh", 2, WHITE, RED);
-    WidgetPassword wpassword3(&drawable, 100,100, 50, &wcomposite, notifier,
+    WidgetPassword wpassword3(drawable, 100,100, 50, &wcomposite, notifier,
                         "lldlslql", 1, BLUE, RED);
-    WidgetPassword wpassword4(&drawable, 300,300, 50, &wcomposite, notifier,
+    WidgetPassword wpassword4(drawable, 300,300, 50, &wcomposite, notifier,
                         "LLLLMLLM", 20, PINK, DARK_GREEN);
-    WidgetPassword wpassword5(&drawable, 700,-10, 50, &wcomposite, notifier,
+    WidgetPassword wpassword5(drawable, 700,-10, 50, &wcomposite, notifier,
                         "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE);
-    WidgetPassword wpassword6(&drawable, -10,550, 50, &wcomposite, notifier,
+    WidgetPassword wpassword6(drawable, -10,550, 50, &wcomposite, notifier,
                         "xxwwp", 2, DARK_GREY, PALE_GREEN);
 
     wcomposite.child_list.push_back(&wpassword1);

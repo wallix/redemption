@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
     int16_t y = 0;
     int id = 0;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def", id, "rec", "rec");
 
     // ask to widget to redraw at it's current position
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
         "Lorem ipsum dolor sit amet, consectetur<br>"
         "adipiscing elit. Nam purus lacus, luctus sit<br>"
         "amet suscipit vel, posuere quis turpis. Sed<br>"
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
@@ -344,7 +344,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at position 30,12 and of size 30x10.

@@ -41,9 +41,9 @@ public:
     int inactive_border_right_bottom_color;
     int inactive_border_right_bottom_color_inner;
 
-    Window(DrawApi* drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
+    Window(DrawApi& drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
-    : WidgetComposite(drawable, rect, parent, notifier, group_id)
+    : WidgetComposite(&drawable, rect, parent, notifier, group_id)
     , titlebar(drawable, 2, 2, this, NULL, caption, false, -1, WHITE, WABGREEN, 5)
     , button_close(drawable, 2, 2, this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1, NOTIFY_CANCEL)
     , bg_color(bgcolor)
@@ -69,11 +69,9 @@ public:
         this->button_close.set_button_cx(this->button_close.label.cx()*2);
         this->button_close.set_button_cy(this->button_close.cy() - 2);
 
-        if (this->drawable) {
-            int w,h;
-            this->drawable->text_metrics(this->titlebar.buffer, w,h);
-            this->titlebar.rect.cy = std::max<int>(h - 2, this->button_close.cy()) + this->titlebar.y_text * 2;
-        }
+        int w,h;
+        this->drawable->text_metrics(this->titlebar.buffer, w,h);
+        this->titlebar.rect.cy = std::max<int>(h - 2, this->button_close.cy()) + this->titlebar.y_text * 2;
     }
 
     virtual ~Window()

@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog)
     int16_t x = 0;
     int16_t y = 0;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test1",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test1",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test2",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test2",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test3",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test3",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test4",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test4",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test5",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test5",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -310,7 +310,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test6",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -343,7 +343,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test6",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test6",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     int16_t x = 10;
     int16_t y = 10;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, &notifier, "test6",
+    WindowDialog window_dialog(drawable, x, y, parent, &notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
