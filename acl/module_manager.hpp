@@ -81,12 +81,13 @@ class MMApi
     MMApi() : last_module(false) {}
     ~MMApi() {}
     virtual void remove_mod() = 0;
-    virtual void new_mod(int target_module) = 0;
+    virtual void new_mod(int target_module, time_t now) = 0;
     virtual void record() = 0;
     TODO("ModuleManager should know it's state (the module currently connected)"
          "At least if it's some target module (RDP, VNC, XUP, replay)"
          "some other internal module, or the close box")
-    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal) {
+    virtual void invoke_close_box(const char * auth_error_message,
+                                  BackEvent_t & signal, time_t now) {
         this->last_module = true;
     };
 //    virtual bool is_close_box() { return false; }
@@ -125,13 +126,14 @@ public:
         }
     }
 
-    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal) {
+    virtual void invoke_close_box(const char * auth_error_message,
+                                  BackEvent_t & signal, time_t now) {
         this->last_module = true;
         if (auth_error_message) {
             this->ini.context.auth_error_message.copy_c_str(auth_error_message);
         }
         this->remove_mod();
-        this->new_mod(MODULE_INTERNAL_CLOSE);
+        this->new_mod(MODULE_INTERNAL_CLOSE, now);
         signal = BACK_EVENT_NONE;
     }
 
@@ -162,7 +164,7 @@ public:
         }
     }
 
-    virtual void new_mod(int target_module)
+    virtual void new_mod(int target_module, time_t now)
     {
         LOG(LOG_INFO, "target_module=%u", target_module);
 
@@ -220,7 +222,8 @@ public:
                     this->mod = new WabCloseMod(this->ini,
                                                 this->front,
                                                 this->front.client_info.width,
-                                                this->front.client_info.height);
+                                                this->front.client_info.height,
+                                                now);
                     this->front.init_pointers();
                 }
                 LOG(LOG_INFO, "ModuleManager::internal module Close ready");

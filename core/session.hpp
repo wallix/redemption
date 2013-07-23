@@ -227,7 +227,7 @@ struct Session {
                                     TODO("maybe we shouldn't *connect* to ACL but create some acl context anyway to be able to call acl->check ")
                                     cant_create_acl = true;
 
-                                    mm.invoke_close_box("No authentifier available",signal);
+                                    mm.invoke_close_box("No authentifier available",signal, now);
                                     // this->ini->context.auth_error_message.copy_c_str("No authentifier available");
                                     // mm.remove_mod();
                                     // mm.new_mod(MODULE_INTERNAL_CLOSE);
@@ -257,9 +257,10 @@ struct Session {
                          "We should associate an explicit message "
                          "to a thrown error");
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+                    time_t now = time(NULL);
                     char errormsg[256];
-                    snprintf(errormsg,sizeof(errormsg),"Session exception = %d!",e.id);
-                    mm.invoke_close_box(errormsg,signal);
+                    snprintf(errormsg, sizeof(errormsg), "Session exception = %d!", e.id);
+                    mm.invoke_close_box(errormsg, signal, now);
                 };
             }
             this->front->disconnect();
