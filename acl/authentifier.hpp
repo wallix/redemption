@@ -276,7 +276,7 @@ public:
         }
 
         long enddate = this->ini->context.end_date_cnx.get();
-        if (enddate != 0 && (now > enddate)/* && !mm.last_module*/) {
+        if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
             mm.invoke_close_box("Session is out of allowed timeframe", signal, now);
             return true;
@@ -284,7 +284,7 @@ public:
 
 
         // Check if acl connection is lost.
-        if (this->lost_acl/* && !mm.last_module*/) {
+        if (this->lost_acl) {
             LOG(LOG_INFO, "Connection with ACL is lost");
             mm.invoke_close_box("Connection closed by manager (ACL closed)", signal, now);
             return true;
@@ -334,11 +334,11 @@ public:
         //Inactivity management
         // let t be the timeout of the blocking select in session loop,
         // the effective inactivity timeout detection will be between
-        // inactivity_timeout and inactivity_timeout + 2*t.
+        // inactivity_timeout and inactivity_timeout + t.
         // hence we should have t << inactivity_timeout.
         // for now, check_inactivity is not necessary but it
         // indicate that this part of code is about inactivity management
-        if (this->check_inactivity/* && !mm.last_module*/) {
+        if (this->check_inactivity) {
             // if (this->verbose & 8) {
             //     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
             //          , trans.last_quantum_received, trans.total_received, this->tick_count);
@@ -350,8 +350,8 @@ public:
                     mm.invoke_close_box("Connection closed on inactivity", signal, now);
                     return true;
                 }
-                long remain = this->last_activity_time + this->inactivity_timeout - now;
                 if (this->verbose & 0x10) {
+                    long remain = this->last_activity_time + this->inactivity_timeout - now;
                     if ((remain / 10) != this->prev_remain
                         && (remain != this->inactivity_timeout)) {
                         this->prev_remain = remain / 10;

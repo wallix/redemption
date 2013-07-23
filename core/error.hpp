@@ -278,6 +278,9 @@ class Error {
         case ERR_SESSION_UNKNOWN_BACKEND :
             snprintf(errstr, sizeof(errstr), "Unknown Backend");
             break;
+        case ERR_VNC_CONNECTION_ERROR:
+            snprintf(errstr, sizeof(errstr), "VNC connection error.");
+            break;
         default:
             snprintf(errstr, sizeof(errstr), "Exception Error no : %d", this->id);
         }

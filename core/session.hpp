@@ -251,10 +251,10 @@ struct Session {
             this->front->disconnect();
         }
         catch (const Error & e) {
-            LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+            LOG(LOG_INFO, "Session::Session Init exception = %d!\n", e.id);
         }
         catch(...) {
-            LOG(LOG_INFO, "Session::Session other exception\n");
+            LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         this->front->stop_capture();
