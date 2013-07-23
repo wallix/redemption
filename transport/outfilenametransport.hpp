@@ -154,8 +154,7 @@ public:
     }
 
     virtual void seek(int64_t offset, int whence) throw (Error) {
-        print("Crypto outfilename seek offset=%u whence=%u\n", (unsigned)offset, (unsigned)whence);
-         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); 
+         return rio_seek(&this->rio, offset, whence);
     }
 
     virtual bool next()
