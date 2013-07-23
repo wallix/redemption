@@ -23,6 +23,7 @@
 
 #include "window.hpp"
 #include "multiline.hpp"
+#include "button.hpp"
 
 class MessageBox : public Window
 {
@@ -36,7 +37,7 @@ public:
                int fgcolor = BLACK, int bgcolor = GREY)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , msg(drawable, 0, 0, this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
-    , ok(drawable, 0,0, this, this, "Ok", true, -11, fgcolor, bgcolor, 6, 2, NOTIFY_CANCEL)
+    , ok(drawable, 0,0, this, this, ok_text ? ok_text : "Ok", true, -11, fgcolor, bgcolor, 6, 2, NOTIFY_CANCEL)
     {
         this->child_list.push_back(&this->msg);
         this->child_list.push_back(&this->ok);

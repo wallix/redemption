@@ -27,11 +27,16 @@
 #include "log.hpp"
 
 #include "internal/widget2/button.hpp"
+#include "internal/widget2/composite.hpp"
 // #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
+
+#ifndef FIXTURES_PATH
+# define FIXTURES_PATH
+#endif
 
 struct TestDraw : DrawApi
 {
@@ -39,7 +44,7 @@ struct TestDraw : DrawApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, false)
+    : gd(w, h)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -58,9 +63,9 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPPatBlt&, const Rect&)
+    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, rect);
     }
 
     virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
@@ -104,9 +109,9 @@ struct TestDraw : DrawApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, const Rect& clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
-        this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
+        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
 
     virtual void text_metrics(const char* text, int& width, int& height)
@@ -129,7 +134,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -160,8 +165,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x85\x4e\x2f\x59\xa8\xf4\xfe\x23\xdd\xf1"
-        "\x62\xb0\x07\x9b\xca\x67\xeb\x6a\x2f\xc3")){
+        "\x7d\xfe\xb4\x41\x31\x06\x68\xe8\xbb\x75"
+        "\x8c\x35\x11\x19\x97\x2a\x16\x0f\x65\x28")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -192,8 +197,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x33\x72\xd3\x07\xe1\x74\x72\xd2\xbc\x3d"
-        "\xc7\xdb\x7b\x2d\xb0\x00\xca\x72\xeb\xa2")){
+        "\x2f\xea\x44\x73\x16\x6d\xea\xcf\xa0\xf6"
+        "\xc2\x89\x1f\xec\xf3\xb4\xb7\xba\x92\x1b")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -224,8 +229,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc3\xf9\x7b\x0f\x0a\x84\x56\x35\x2c\x1f"
-        "\x78\xb3\x6a\xbc\x8c\x80\xb4\x0c\x26\x2c")){
+        "\xe2\x04\x73\x0e\x1b\xa8\xb9\x28\x5b\x31"
+        "\x50\x60\x43\x67\x2c\x71\xbe\xc3\x7d\x4a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -256,8 +261,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x4a\xea\x03\x9a\xcd\xb1\xed\x8b\xb2\x37"
-        "\x2a\xdf\x87\xb7\xd4\x23\xc9\xe2\xc8\x95")){
+        "\x0e\x13\x6c\x6a\x14\x0b\x5b\x1a\x51\x01"
+        "\x17\xff\x5a\xf3\xd5\x09\x2c\xc1\x78\x75")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -288,8 +293,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xab\xcf\xd5\x7b\x56\x9e\x9f\x78\x94\xd8"
-        "\xa3\xe6\xe5\xaa\x97\x5b\x90\xed\xf6\x57")){
+        "\x5b\xb1\x08\xa2\x09\xd1\x50\x87\x24\xc1"
+        "\x5e\xfb\x62\x51\x47\x93\xaa\xc7\x92\xb2")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -320,8 +325,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa1\x79\x08\x2f\x10\xa4\x61\x16\xe5\x54"
-        "\x77\xb7\xbc\x57\xf0\x05\xa8\x5a\x62\xf7")){
+        "\xed\x10\xc4\xa5\x1a\x55\x26\x9d\xca\x2e"
+        "\x78\x21\x2a\x38\x83\x16\x44\x9d\x0d\xad")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -352,8 +357,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x91\x29\x0b\xc1\xe8\xa8\xd8\xd5\xe7\xfa"
-        "\x8f\x03\xae\x0a\x28\xaf\x8f\xbf\x16\x9f")){
+        "\x42\xe2\xf6\xef\xb6\x1d\xbf\x59\x8a\x39"
+        "\x55\x39\x23\x66\x1b\xee\x85\xe6\x0f\xe9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -384,8 +389,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc9\x6a\xc3\x39\x5b\xcc\xd6\x67\xbc\xb9"
-        "\x20\xac\x42\x2b\xd6\x6a\x07\xaa\xa1\x80")){
+        "\x11\x66\x8f\x68\x02\x7d\xb5\xa7\xec\xcd"
+        "\xdf\x0d\x32\xd0\x68\x9f\x25\x35\x07\xc9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -413,142 +418,150 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd8\xfe\x97\x63\xe2\x1d\x94\xdb\xa1\xa7"
-        "\x2c\xbf\x68\x2e\xf6\x6c\x96\xcd\xb7\x8a")){
+        "\x96\x86\xc7\x47\xc4\x9d\x08\xbd\xf1\x6e"
+        "\x81\xaf\xc3\xcb\xeb\xfa\x31\x4d\x02\x71")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wbutton.rdp_input_mouse(CLIC_BUTTON1_DOWN, 15, 15, NULL);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
     wbutton.rdp_input_invalidate(wbutton.rect);
 
     //drawable.save_to_png("/tmp/button10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x38\x0a\xc1\x87\x68\x1b\x4a\xc7\x2f\x94"
-        "\x14\x6f\x5e\xc5\x21\xbf\xd0\xbd\xac\xff")){
+        "\xab\x46\x94\xad\xdb\xce\xb1\x30\xc1\x1c"
+        "\x7d\xb4\xa3\x00\x08\xf5\x1c\x69\x77\x34")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wbutton.rdp_input_mouse(CLIC_BUTTON1_UP, 15, 15, NULL);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15, NULL);
     wbutton.rdp_input_invalidate(wbutton.rect);
 
     //drawable.save_to_png("/tmp/button11.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd8\xfe\x97\x63\xe2\x1d\x94\xdb\xa1\xa7"
-        "\x2c\xbf\x68\x2e\xf6\x6c\x96\xcd\xb7\x8a")){
+        "\xe5\x7a\x73\x85\x6a\xce\x0f\x0f\x02\xab"
+        "\xbe\xbc\x1c\xc3\x30\xfd\x9c\x7c\xeb\x80")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
-// {
-//     struct WidgetReceiveEvent : public Widget {
-//         Widget2* sender;
-//         NotifyApi::notify_event_t event;
-//
-//         WidgetReceiveEvent()
-//         : Widget(NULL, Rect(), NULL, NULL)
-//         {}
-//
-//         virtual void draw(const Rect&)
-//         {}
-//
-//         virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
-//                             unsigned long, unsigned long)
-//         {
-//             this->sender = sender;
-//             this->event = event;
-//         }
-//     } widget_for_receive_event;
-//
-//     struct Notify : public NotifyApi {
-//         Widget2* sender;
-//         notify_event_t event;
-//         virtual void notify(Widget2* sender, notify_event_t event,
-//                             long unsigned int, long unsigned int)
-//         {
-//             this->sender = sender;
-//             this->event = event;
-//         }
-//     } notifier;
-//
-//     Widget2* parent = &widget_for_receive_event;
-//     DrawApi * drawable = NULL;
-//     bool auto_resize = false;
-//     int16_t x = 0;
-//     int16_t y = 0;
-//
-//     WidgetButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize);
-//
-//     wbutton.rdp_input_mouse(CLIC_BUTTON1_UP, 0, 0, 0);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//     wbutton.rdp_input_mouse(CLIC_BUTTON1_DOWN, 0, 0, 0);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//     wbutton.rdp_input_mouse(CLIC_BUTTON1_UP, 0, 0, 0);
-//     BOOST_CHECK(widget_for_receive_event.sender == &wbutton);
-//     BOOST_CHECK(widget_for_receive_event.event == NOTIFY_SUBMIT);
-//     BOOST_CHECK(notifier.sender == &wbutton);
-//     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
-// }
+BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
+{
+    TestDraw drawable(800, 600);
 
-// BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
-// {
-//     TestDraw drawable(800, 600);
-//
-//     // WidgetButton is a button widget of size 256x125 at position 0,0 in it's parent context
-//     Widget2* parent = NULL;
-//     NotifyApi * notifier = NULL;
-//
-//     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
-//
-//     WidgetButton wbutton1(&drawable, 0,0, &wcomposite, notifier,
-//                         "abababab", true, 0, YELLOW, BLACK);
-//     WidgetButton wbutton2(&drawable, 0,100, &wcomposite, notifier,
-//                         "ggghdgh", true, 0, WHITE, RED);
-//     WidgetButton wbutton3(&drawable, 100,100, &wcomposite, notifier,
-//                         "lldlslql", true, 0, BLUE, RED);
-//     WidgetButton wbutton4(&drawable, 300,300, &wcomposite, notifier,
-//                         "LLLLMLLM", true, 0, PINK, DARK_GREEN);
-//     WidgetButton wbutton5(&drawable, 700,-10, &wcomposite, notifier,
-//                         "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
-//     WidgetButton wbutton6(&drawable, -10,550, &wcomposite, notifier,
-//                         "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
-//
-//     wcomposite.child_list.push_back(&wbutton1);
-//     wcomposite.child_list.push_back(&wbutton2);
-//     wcomposite.child_list.push_back(&wbutton3);
-//     wcomposite.child_list.push_back(&wbutton4);
-//     wcomposite.child_list.push_back(&wbutton5);
-//     wcomposite.child_list.push_back(&wbutton6);
-//
-//     // ask to widget to redraw at position 100,25 and of size 100x100.
-//     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
-//
-//     //drawable.save_to_png("/tmp/button9.png");
-//
-//     char message[1024];
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     // ask to widget to redraw at it's current position
-//     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
-//
-//     //drawable.save_to_png("/tmp/button10.png");
-//
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x85\x0a\x9c\x09\x57\xd9\x99\x52\xed\xa8"
-//         "\x25\x71\x91\x6c\xf4\xf4\x21\x9a\xe5\x1a")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-// }
+    struct WidgetReceiveEvent : public Widget2 {
+        Widget2* sender;
+        NotifyApi::notify_event_t event;
+
+        WidgetReceiveEvent(TestDraw& drawable)
+        : Widget2(&drawable, Rect(), NULL, NULL)
+        {}
+
+        virtual void draw(const Rect&)
+        {}
+
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
+                            unsigned long, unsigned long)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } widget_for_receive_event(drawable);
+
+    struct Notify : public NotifyApi {
+        Widget2* sender;
+        notify_event_t event;
+        virtual void notify(Widget2* sender, notify_event_t event,
+                            long unsigned int, long unsigned int)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
+    Widget2* parent = &widget_for_receive_event;
+    bool auto_resize = false;
+    int16_t x = 0;
+    int16_t y = 0;
+
+    WidgetButton wbutton(&drawable, x, y, parent, &notifier, "", auto_resize);
+
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == &wbutton);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+    notifier.sender = 0;
+    notifier.event = 0;
+    wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetButton is a button widget of size 256x125 at position 0,0 in it's parent context
+    Widget2* parent = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
+
+    WidgetButton wbutton1(&drawable, 0,0, &wcomposite, notifier,
+                        "abababab", true, 0, YELLOW, BLACK);
+    WidgetButton wbutton2(&drawable, 0,100, &wcomposite, notifier,
+                        "ggghdgh", true, 0, WHITE, RED);
+    WidgetButton wbutton3(&drawable, 100,100, &wcomposite, notifier,
+                        "lldlslql", true, 0, BLUE, RED);
+    WidgetButton wbutton4(&drawable, 300,300, &wcomposite, notifier,
+                        "LLLLMLLM", true, 0, PINK, DARK_GREEN);
+    WidgetButton wbutton5(&drawable, 700,-10, &wcomposite, notifier,
+                        "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
+    WidgetButton wbutton6(&drawable, -10,550, &wcomposite, notifier,
+                        "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
+
+    wcomposite.child_list.push_back(&wbutton1);
+    wcomposite.child_list.push_back(&wbutton2);
+    wcomposite.child_list.push_back(&wbutton3);
+    wcomposite.child_list.push_back(&wbutton4);
+    wcomposite.child_list.push_back(&wbutton5);
+    wcomposite.child_list.push_back(&wbutton6);
+
+    // ask to widget to redraw at position 100,25 and of size 100x100.
+    wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
+
+    //drawable.save_to_png("/tmp/button12.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x27\xaa\x91\x51\x0b\x39\xf7\xf1\xfd\x55"
+        "\x4f\xb0\x33\xac\x7a\x45\x56\x16\x69\x12")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // ask to widget to redraw at it's current position
+    wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
+
+    //drawable.save_to_png("/tmp/button13.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x6b\x18\x4b\x47\x59\xd9\xca\xe7\xe4\xd1"
+        "\x57\x26\x23\x8d\x10\x48\x26\x8e\x6d\xcf")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
 

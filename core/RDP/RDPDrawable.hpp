@@ -236,7 +236,7 @@ public:
         return font_item;
     }
 
-    void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, const Rect& clip, Font& font)
+    void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip, Font& font)
     {
         if (text[0] != 0) {
             Rect screen_rect = clip.intersect(this->drawable.width, this->drawable.height);
@@ -282,16 +282,16 @@ public:
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-                     
+
         this->drawable.draw_bitmap(Rect( bitmap_data.dest_left
                                         , bitmap_data.dest_top
                                         , bitmap_data.width
                                         , bitmap_data.height)
-                                  , bmp, 
+                                  , bmp,
                                   false);
     }
-    
-    
+
+
     virtual void dump_png24(Transport * trans, bool bgr){
             ::transport_dump_png24(trans, this->drawable.data,
                      this->drawable.width, this->drawable.height,

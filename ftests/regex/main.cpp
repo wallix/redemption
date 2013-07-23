@@ -1161,9 +1161,26 @@ namespace rndfa {
         return new StateBase(*s == '.' ? ANY_CHARACTER : *s);
     }
 
-    bool is_meta_char(int c)
+    bool is_range_repetition(const char * s, const char * last)
     {
-        return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$';
+        const char * begin = s;
+        while (s != last && '0' <= *s && *s <= '9') {
+            ++s;
+        }
+        if (begin == s || ++s == last || *s != ',') {
+            return false;
+        }
+        begin = ++s;
+        while (s != last && '0' <= *s && *s <= '9') {
+            ++s;
+        }
+        return s != last && *s == '}';
+    }
+
+    bool is_meta_char(const char * s, const char * last)
+    {
+        const int c = *s;
+        return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(s, last));
     }
 
     struct StateDeleter
@@ -1219,17 +1236,17 @@ namespace rndfa {
                 }
                 *pst = new StateBorder(*s == '^');
                 ++s;
-                if (s != last && !is_meta_char(*s)) {
+                if (s != last && !is_meta_char(s, last)) {
                     pst = &(*pst)->out1;
                 }
                 continue;
             }
 
-            if (!is_meta_char(*s)) {
+            if (!is_meta_char(s, last)) {
                 if (!(*pst = str2stchar(s, last, msg_err))) {
                     return FreeState::invalide(st);
                 }
-                while (++s != last && !is_meta_char(*s)) {
+                while (++s != last && !is_meta_char(s, last)) {
                     pst = &(*pst)->out1;
                     if (!(*pst = str2stchar(s, last, msg_err))) {
                         return FreeState::invalide(st);
@@ -1262,6 +1279,12 @@ namespace rndfa {
                         bst = bst->out2;
                         pst = &bst->out2;
                         break;
+                    case '{': {
+                        char * end;
+                        unsigned m = strtoul(s, &end, 10);
+                        unsigned n = strtoul(end+1, &end, 10);
+                        s = end + 1;
+                    }
                     case ')':
                         if (0 == recusive) {
                             msg_err = "unmatched parentheses";
