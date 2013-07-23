@@ -387,7 +387,9 @@ public:
             if (this->remote_answer && signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
-                TODO("signal management (refresh/next) should go to ModuleManager, it's basically the same behavior. It could be implemented by closing module then opening another one of the same kind");
+                TODO("signal management (refresh/next) should go to ModuleManager, "
+                     "it's basically the same behavior. It could be implemented by "
+                     "closing module then opening another one of the same kind");
                 mm.mod->refresh_context(*this->ini);
                 mm.mod->event.signal = BACK_EVENT_NONE;
                 mm.mod->event.set();
@@ -396,7 +398,8 @@ public:
 
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
-                int next_state = this->next_module();
+                // int next_state = this->next_module();
+                int next_state = /*this->next_module()*/mm.next_module();
                 if (next_state == MODULE_INTERNAL_CLOSE) {
                     mm.invoke_close_box(NULL, signal, now);
                     return true;
@@ -414,7 +417,7 @@ public:
                         throw e;
                     }
                 }
-                if ((this->keepalive_time == 0) && this->connected) {
+                if ((this->keepalive_time == 0) && /*this->connected*/ mm.connected) {
                     this->start_keepalive(now);
 
                     mm.record();
@@ -428,7 +431,7 @@ public:
 
         // LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
 
-        if (this->connected && this->ini->check()) {
+        if (/*this->connected*/mm.connected && this->ini->check()) {
             this->ask_acl();
         }
 
@@ -436,7 +439,7 @@ public:
         // if an answer has been received, send it to
         // rdp serveur via mod (should be rdp module)
         TODO("Check if this->mod is RDP MODULE");
-        if (this->connected && this->ini->globals.auth_channel[0]) {
+        if (/*this->connected*/mm.connected && this->ini->globals.auth_channel[0]) {
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini->context.authchannel_answer.get().is_empty()) {
                 // If set, transmit to auth_channel channel

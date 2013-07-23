@@ -36,7 +36,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     class FakeModuleManager : public MMApi
     {
         public:
-        FakeModuleManager() {}
+        FakeModuleManager() {
+            this->connected = true;
+        }
         ~FakeModuleManager() {}
         virtual void remove_mod() {}
         virtual void new_mod(int target_module, time_t now) {
@@ -141,7 +143,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     class FakeModuleManager : public MMApi
     {
         public:
-        FakeModuleManager() {}
+        FakeModuleManager() {
+            this->connected = true;
+        }
         ~FakeModuleManager() {}
         virtual void remove_mod() {}
         virtual void new_mod(int target_module, time_t now) {
