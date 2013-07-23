@@ -160,8 +160,8 @@ public:
         LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.get_cstr());
     }
 
-    TODO("move that function to Inifile create specialized stream object InifileStream")
-    TODO("maybe out_item should be in config , not here")
+    TODO("move that function to Inifile create specialized stream object InifileStream "
+         "maybe out_item should be in config , not here");
     void out_item(Stream & stream, authid_t authid)
     {
         const char * key = string_from_authid(authid);
@@ -191,33 +191,11 @@ public:
     }
     void out_item_new(Stream & stream, Inifile::BaseField * bfield)
     {
-        TODO("one field here has a limited size for his key and value serialized, "
-             "shouldn't be limited or may be initialize a bigger temporary buffer");
         char tmp[65536];
         const char * serialized = bfield->get_serialized(tmp,sizeof(tmp));
         bfield->use();
         stream.out_copy_bytes(serialized,strlen(serialized));
     }
-
-    /*
-    TODO("We should not have any way to send only one value. Change the way it is done by calling code")
-    void send(const authid_t authid)
-    {
-        try {
-            BStream stream(8192);
-            stream.out_uint32_be(0);
-            this->out_item(stream, authid);
-            stream.mark_end();
-            int total_length = stream.get_offset();
-            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
-            stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); // size in header
-            this->auth_trans.send(stream.get_data(), total_length);
-        } catch (Error e) {
-            this->ini->context.authenticated.set(false);
-            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
-        }
-    }
-    */
 
     void send(authid_to_send_t * list, size_t len)
     {

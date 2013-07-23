@@ -78,19 +78,29 @@ class MMApi
     public:
     mod_api * mod;
     bool last_module;
+    bool connected;
 
-    MMApi() : last_module(false) {}
+    MMApi() : last_module(false)
+            , connected(false) {}
     ~MMApi() {}
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now) = 0;
     virtual void record() = 0;
+    virtual int next_module() { return 0; };
     TODO("ModuleManager should know it's state (the module currently connected)"
          "At least if it's some target module (RDP, VNC, XUP, replay)"
          "some other internal module, or the close box")
+    virtual int get_mod_from_protocol() { return 0; };
     virtual void invoke_close_box(const char * auth_error_message,
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
     };
+    virtual bool is_last_module() {
+        return this->last_module;
+    }
+    virtual bool is_connected() {
+        return this->connected;
+    }
 //    virtual bool is_close_box() { return false; }
 
 };
@@ -102,13 +112,15 @@ public:
     Inifile & ini;
     mod_api * no_mod;
     Transport * mod_transport;
+    bool internal_domain;
     uint32_t verbose;
 
     ModuleManager(Front & front, Inifile & ini)
         : front(front)
         , ini(ini)
         , mod_transport(NULL)
-        , verbose(0)
+        , internal_domain(ini.globals.internal_domain)
+        , verbose(ini.debug.auth)
     {
         this->no_mod = new null_mod(this->front);
         this->no_mod->event.reset();
@@ -334,6 +346,7 @@ public:
                     this->mod->event.obj = client_sck;
                     this->ini.context.auth_error_message.empty();
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
+                    this->connected = true;
                 }
                 break;
 
@@ -422,6 +435,7 @@ public:
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
                     this->ini.context.auth_error_message.empty();
+                    this->connected = true;
                 }
                 break;
 
@@ -469,6 +483,7 @@ public:
 
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
                     this->ini.context.auth_error_message.empty();
+                    this->connected = true;
                 }
                 break;
 
@@ -478,6 +493,206 @@ public:
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
             }
+    }
+
+    // Check movie start/stop/pause
+
+    int get_mod_from_protocol() {
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "auth::get_mod_from_protocol");
+        }
+        // Initialy, it no protocol known and get_value should provide "ASK".
+        const char * protocol = this->ini.context.target_protocol.get_value();
+        if (this->internal_domain) {
+            const char * target = this->ini.globals.target_device.get_cstr();
+            if (0 == strncmp(target, "autotest", 8)) {
+                protocol = "INTERNAL";
+            }
+        }
+        TODO("connected information is known by module_manager, it should be module manager that change this state when opening some modules")
+        int res = MODULE_EXIT;
+        if (!this->connected && 0 == strncasecmp(protocol, "RDP", 4)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
+            }
+            res = MODULE_RDP;
+        }
+        else if (!this->connected && 0 == strncasecmp(protocol, "APP", 4)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol APPLICATION");
+            }
+            res = MODULE_RDP;
+        }
+        else if (!this->connected && 0 == strncasecmp(protocol, "VNC", 4)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
+            }
+            res = MODULE_VNC;
+        }
+        else if (!this->connected && 0 == strncasecmp(protocol, "XUP", 4)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
+            }
+            res = MODULE_XUP;
+        }
+        else if (strncasecmp(protocol, "INTERNAL", 8) == 0) {
+            const char * target = this->ini.globals.target_device.get_cstr();
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
+            }
+            if (0 == strcmp(target, "bouncer2")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
+                }
+                res = MODULE_INTERNAL_BOUNCER2;
+            }
+            else if (0 == strncmp(target, "autotest", 8)) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
+                }
+                const char * user = this->ini.globals.target_user.get_cstr();
+                size_t len_user = strlen(user);
+                strncpy(this->ini.context.movie, user, sizeof(this->ini.context.movie));
+                this->ini.context.movie[sizeof(this->ini.context.movie) - 1] = 0;
+                if (0 != strcmp(".mwrm", user + len_user - 5)) {
+                    strcpy(this->ini.context.movie + len_user, ".mwrm");
+                }
+                res = MODULE_INTERNAL_TEST;
+            }
+            else if (0 == strcmp(target, "selector")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
+                }
+                res = MODULE_INTERNAL_WIDGET2_SELECTOR;
+            }
+            else if (0 == strcmp(target, "login")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_LOGIN;
+            }
+            else if (0 == strcmp(target, "rwl_login")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
+            }
+            else if (0 == strcmp(target, "rwl")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_RWL;
+            }
+            else if (0 == strcmp(target, "close") || 0 == strcmp(target, "widget2_close")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
+                }
+                res = MODULE_INTERNAL_CLOSE;
+            }
+            else if (0 == strcmp(target, "widget2_dialog")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_dialog");
+                }
+                res = MODULE_INTERNAL_WIDGET2_DIALOG;
+            }
+            else if (0 == strcmp(target, "widget2_message")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
+                }
+                res = MODULE_INTERNAL_WIDGET2_MESSAGE;
+            }
+            else if (0 == strcmp(target, "widget2_login")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_LOGIN;
+            }
+            else if (0 == strcmp(target, "widget2_rwl")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL rwl_login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_RWL;
+            }
+            else if (0 == strcmp(target, "widget2_rwl_login")) {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_rwl_login");
+                }
+                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
+            }
+            else {
+                if (this->verbose & 0x4) {
+                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
+                }
+                res = MODULE_INTERNAL_CARD;
+            }
+        }
+        else if (this->connected) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
+            }
+            res = MODULE_INTERNAL_CLOSE;
+        }
+        else {
+            LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
+                protocol[0], protocol[1], protocol[2], protocol[3]);
+            res = MODULE_EXIT;
+        }
+        return res;
+    }
+
+    int next_module() {
+        LOG(LOG_INFO, "----------> ACL next_module <--------");
+        if (this->ini.context_is_asked(AUTHID_AUTH_USER)
+            ||  this->ini.context_is_asked(AUTHID_PASSWORD)) {
+            LOG(LOG_INFO, "===========> MODULE_LOGIN");
+            return MODULE_INTERNAL_WIDGET2_LOGIN;
+        }
+        // Selector Target device and Target user contains list or possible targets
+        else if (!this->ini.context_is_asked(AUTHID_SELECTOR)
+                 &&   this->ini.context_get_bool(AUTHID_SELECTOR)
+                 &&  !this->ini.context_is_asked(AUTHID_TARGET_DEVICE)
+                 &&  !this->ini.context_is_asked(AUTHID_TARGET_USER)) {
+            LOG(LOG_INFO, "===============> MODULE_SELECTOR");
+            return MODULE_INTERNAL_WIDGET2_SELECTOR;
+        }
+        // Target User or Device asked and not in selector : back to login
+        else if (this->ini.context_is_asked(AUTHID_TARGET_DEVICE)
+                 ||  this->ini.context_is_asked(AUTHID_TARGET_USER)) {
+            LOG(LOG_INFO, "===============> MODULE_LOGIN (2)");
+            return MODULE_INTERNAL_WIDGET2_LOGIN;
+        }
+        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show message
+        else if (this->ini.context_is_asked(AUTHID_DISPLAY_MESSAGE)) {
+            LOG(LOG_INFO, "==================> MODULE_DISPLAY");
+            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
+        }
+        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show confirmation message
+        else if (this->ini.context_is_asked(AUTHID_ACCEPT_MESSAGE)) {
+            LOG(LOG_INFO, "=================> MODULE_ACCEPT");
+            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
+        }
+        // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
+        // proceed with connection.
+        else if (this->ini.context.authenticated.get()) {
+            //                record_video = this->ini.globals.movie.get();
+            //                keep_alive = true;
+            if (this->ini.context.auth_error_message.is_empty()) {
+                this->ini.context.auth_error_message.copy_c_str("End of connection");
+            }
+            LOG(LOG_INFO, "=================> MODULE_FROM_PROTOCOL");
+            return this->get_mod_from_protocol();
+        }
+        // User authentication rejected : close message
+        else {
+            if (!this->ini.context.rejected.get().is_empty()) {
+                this->ini.context.auth_error_message.copy_str(this->ini.context.rejected.get());
+            }
+            if (this->ini.context.auth_error_message.is_empty()) {
+                this->ini.context.auth_error_message.copy_c_str("Authentifier service failed");
+            }
+            LOG(LOG_INFO, "MODULE_INTERNAL_CLOSE");
+            return MODULE_INTERNAL_CLOSE;
+        }
     }
 
 };
