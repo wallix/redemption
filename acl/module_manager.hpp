@@ -15,7 +15,8 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010
-  Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou, Meng Tan
+  Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+             Raphael Zhou, Meng Tan
 
   Manage Modules Life cycle : creation, destruction and chaining
   find out the next module to run from context reading
@@ -339,15 +340,16 @@ public:
             case MODULE_RDP:
                 {
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
-                    REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
-                        char hostname[255];
 
-                    TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
-                    hostname[0] = 0;
-                    if (this->front.client_info.hostname[0]){
-                        memcpy(hostname, this->front.client_info.hostname, 31);
-                        hostname[31] = 0;
-                    }
+                    // REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.");
+                    // char hostname[255];
+
+                    // TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
+                    // hostname[0] = 0;
+                    // if (this->front.client_info.hostname[0]){
+                    //     memcpy(hostname, this->front.client_info.hostname, 31);
+                    //     hostname[31] = 0;
+                    // }
 
                     ClientInfo client_info = this->front.client_info;
 
@@ -397,7 +399,7 @@ public:
                                             //, this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
                                             , "0.0.0.0"  // client ip is silenced
                                             , this->front
-                                            , hostname
+                                            // , hostname
                                             , true
                                             , client_info
                                             , &gen

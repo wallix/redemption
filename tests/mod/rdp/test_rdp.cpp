@@ -283,6 +283,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 511;
 
     Front front(info, verbose);
@@ -315,7 +316,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
                                       , "SecureLinux"
                                       , "10.10.9.161"
                                       , front
-                                      , "test"
+                                        //, "test"
                                       , false   /* tls                     */
                                       , info
                                       , &gen
@@ -370,6 +371,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 256;
 
     Front front(info, verbose);
@@ -401,7 +403,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                       , "S3cur3!1nux"
                                       , "10.10.9.161"
                                       , front
-                                      , "test"
+                                        //, "test"
                                       , false   /* tls                     */
                                       , info
                                       , &gen
@@ -448,6 +450,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 256;
 
     Front front(info, verbose);
@@ -480,7 +483,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
                                       , "SecureLinux"
                                       , "0.0.0.0"
                                       , front
-                                      , "test"
+                                        //, "test"
                                       , false   /* tls                     */
                                       , info
                                       , &gen
@@ -536,6 +539,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 256;
 
     Front front(info, verbose);
@@ -567,7 +571,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
                                       , "SecureLinux$42"
                                       , "0.0.0.0"
                                       , front
-                                      , "test"
+                                      // , "test"
                                       , false   /* tls                     */
                                       , info
                                       , &gen
