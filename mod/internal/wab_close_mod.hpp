@@ -56,7 +56,7 @@ private:
     };
 
 public:
-    WabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
+    WabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height, time_t now)
     : InternalMod(front, width, height)
     , ini(ini)
     , window_close(this, 0, 0, &this->screen, this, ini.context.auth_error_message.c_str(), 0,
@@ -66,7 +66,7 @@ public:
                    BLACK, GREY
     )
     , image(this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
-    , timeout(time(NULL) + ini.globals.close_timeout)
+    , timeout(now + ini.globals.close_timeout)
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
         this->screen.child_list.push_back(&this->image);

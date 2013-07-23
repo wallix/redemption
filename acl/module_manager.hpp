@@ -15,7 +15,8 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010
-  Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou, Meng Tan
+  Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+             Raphael Zhou, Meng Tan
 
   Manage Modules Life cycle : creation, destruction and chaining
   find out the next module to run from context reading
@@ -81,12 +82,13 @@ class MMApi
     MMApi() : last_module(false) {}
     ~MMApi() {}
     virtual void remove_mod() = 0;
-    virtual void new_mod(int target_module) = 0;
+    virtual void new_mod(int target_module, time_t now) = 0;
     virtual void record() = 0;
     TODO("ModuleManager should know it's state (the module currently connected)"
          "At least if it's some target module (RDP, VNC, XUP, replay)"
          "some other internal module, or the close box")
-    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal) {
+    virtual void invoke_close_box(const char * auth_error_message,
+                                  BackEvent_t & signal, time_t now) {
         this->last_module = true;
     };
 //    virtual bool is_close_box() { return false; }
@@ -125,13 +127,14 @@ public:
         }
     }
 
-    virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal) {
+    virtual void invoke_close_box(const char * auth_error_message,
+                                  BackEvent_t & signal, time_t now) {
         this->last_module = true;
         if (auth_error_message) {
             this->ini.context.auth_error_message.copy_c_str(auth_error_message);
         }
         this->remove_mod();
-        this->new_mod(MODULE_INTERNAL_CLOSE);
+        this->new_mod(MODULE_INTERNAL_CLOSE, now);
         signal = BACK_EVENT_NONE;
     }
 
@@ -162,7 +165,7 @@ public:
         }
     }
 
-    virtual void new_mod(int target_module)
+    virtual void new_mod(int target_module, time_t now)
     {
         LOG(LOG_INFO, "target_module=%u", target_module);
 
@@ -220,7 +223,8 @@ public:
                     this->mod = new WabCloseMod(this->ini,
                                                 this->front,
                                                 this->front.client_info.width,
-                                                this->front.client_info.height);
+                                                this->front.client_info.height,
+                                                now);
                     this->front.init_pointers();
                 }
                 LOG(LOG_INFO, "ModuleManager::internal module Close ready");
@@ -336,15 +340,16 @@ public:
             case MODULE_RDP:
                 {
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
-                    REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.")
-                        char hostname[255];
 
-                    TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
-                    hostname[0] = 0;
-                    if (this->front.client_info.hostname[0]){
-                        memcpy(hostname, this->front.client_info.hostname, 31);
-                        hostname[31] = 0;
-                    }
+                    // REDOC("hostname is the name of the RDP host ('windows' hostname) it is **not** used to get an ip address.");
+                    // char hostname[255];
+
+                    // TODO("as we now provide a client_info copy, we could extract hostname from in in mod_rdp, no need to use a separate field any more")
+                    // hostname[0] = 0;
+                    // if (this->front.client_info.hostname[0]){
+                    //     memcpy(hostname, this->front.client_info.hostname, 31);
+                    //     hostname[31] = 0;
+                    // }
 
                     ClientInfo client_info = this->front.client_info;
 
@@ -394,7 +399,7 @@ public:
                                             //, this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
                                             , "0.0.0.0"  // client ip is silenced
                                             , this->front
-                                            , hostname
+                                            // , hostname
                                             , true
                                             , client_info
                                             , &gen

@@ -15,7 +15,8 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010
-  Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages, Raphael Zhou
+  Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages,
+             Raphael Zhou, Meng Tan
   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
   rdp module main header file
@@ -152,7 +153,7 @@ struct mod_rdp : public mod_api {
            , const char * target_password
            , const char * clientIP
            , struct FrontAPI & front
-           , const char * hostname
+             //, const char * hostname
            , const bool tls
            , const ClientInfo & info
            , Random * gen
@@ -208,7 +209,7 @@ struct mod_rdp : public mod_api {
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
-        }        
+        }
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
         strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel));
@@ -225,10 +226,10 @@ struct mod_rdp : public mod_api {
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
         memset(this->lic_layer_license_sign_key, 0, 16);
-        TODO("CGR: license loading should be done before creating protocol layers")
-            struct stat st;
+        TODO("CGR: license loading should be done before creating protocol layers");
+        struct stat st;
         char path[256];
-        snprintf(path, sizeof(path), LICENSE_PATH "/license.%s", hostname);
+        snprintf(path, sizeof(path), LICENSE_PATH "/license.%s", info.hostname);
         int fd = open(path, O_RDONLY);
         if (fd != -1){
             if (fstat(fd, &st) != 0){
@@ -255,10 +256,10 @@ struct mod_rdp : public mod_api {
         this->encrypt.encryptionMethod = 2; /* 128 bits */
 
         TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log")
-        if (::strlen(hostname) >= sizeof(this->hostname)) {
-            LOG(LOG_INFO, "mod_rdp: hostname too long! %u > %u", ::strlen(hostname), sizeof(this->hostname));
+        if (::strlen(info.hostname) >= sizeof(this->hostname)) {
+            LOG(LOG_INFO, "mod_rdp: hostname too long! %u > %u", ::strlen(info.hostname), sizeof(this->hostname));
         }
-        strncpy(this->hostname, hostname, 15);
+        strncpy(this->hostname, info.hostname, 15);
         this->hostname[15] = 0;
 
         TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log")
