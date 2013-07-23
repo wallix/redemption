@@ -74,16 +74,15 @@ public:
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
     {  
-        LOG(LOG_INFO, "OutFilenameTransport used for recv");
+        LOG(LOG_ERR, "OutFilenameTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
     virtual void seek(int64_t offset, int whence) throw (Error)
     {
-        print("outfilename seek offset=%u whence=%u\n", (unsigned)offset, (unsigned)whence);
         ssize_t res = rio_seek(&this->rio, offset, whence);
-        print("outfilename seek res=%u\n", (unsigned)res);
         if (res != RIO_ERROR_OK){
+            LOG(LOG_WARNING, "OutFilenameTransport used for recv");
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }    
     }
@@ -154,8 +153,7 @@ public:
     }
 
     virtual void seek(int64_t offset, int whence) throw (Error) {
-        print("Crypto outfilename seek offset=%u whence=%u\n", (unsigned)offset, (unsigned)whence);
-         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); 
+        throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE, errno);
     }
 
     virtual bool next()
