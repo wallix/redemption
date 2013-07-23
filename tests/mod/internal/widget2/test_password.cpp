@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
     // WidgetPassword is a password widget at position 0,0 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
     // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 10;
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
     // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = -10;
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
     // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 770;
@@ -277,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
     // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = -20;
@@ -309,7 +309,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 760;
@@ -373,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
-    int fg_color = 0xFF0000; //red
+    int fg_color = BLUE;
     int bg_color = YELLOW;
     int id = 0;
     int16_t x = 0;
@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, 0x00FFFF, 0x0000FF);
+    WidgetPassword wpassword(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF);
     wpassword.focus(0);
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e1.png");
@@ -634,7 +634,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     wcomposite.child_list.push_back(&wpassword1);
     wcomposite.child_list.push_back(&wpassword2);
     wcomposite.child_list.push_back(&wpassword3);
-    wcomposite.child_list.push_back(&wpassword4);
+        wcomposite.child_list.push_back(&wpassword4);
     wcomposite.child_list.push_back(&wpassword5);
     wcomposite.child_list.push_back(&wpassword6);
 

@@ -27,11 +27,15 @@
 #include "log.hpp"
 
 #include "internal/widget2/number_edit.hpp"
-// #include "internal/widget2/widget_composite.hpp"
+#include "internal/widget2/composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
+
+#ifndef FIXTURES_PATH
+# define FIXTURES_PATH
+#endif
 
 struct TestDraw : DrawApi
 {
@@ -129,7 +133,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -164,8 +168,8 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     //drawable.save_to_png("/tmp/number_edit-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfe\x9b\x44\x91\xc5\x7c\x67\x8a\x16\x76"
-        "\x44\x14\x9e\x88\xba\xf5\xd1\x39\x36\xe1")){
+        "\x66\xb1\x75\x71\x9c\x6c\x7a\xde\xff\xdd"
+        "\x63\x41\x04\x7e\x1a\xf2\x04\xee\x19\x9c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -177,8 +181,8 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
     //drawable.save_to_png("/tmp/number_edit-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfe\x9b\x44\x91\xc5\x7c\x67\x8a\x16\x76"
-        "\x44\x14\x9e\x88\xba\xf5\xd1\x39\x36\xe1")){
+        "\x66\xb1\x75\x71\x9c\x6c\x7a\xde\xff\xdd"
+        "\x63\x41\x04\x7e\x1a\xf2\x04\xee\x19\x9c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == 0);
@@ -189,8 +193,8 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
     //drawable.save_to_png("/tmp/number_edit-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x49\xe3\x17\x70\xf8\x5c\xab\xce\xa2\x94"
-        "\xeb\xea\xde\xa4\x83\x44\x12\x24\x55\x2e")){
+        "\x27\x63\x8c\xf4\x37\x25\xca\xcd\xa2\x90"
+        "\x60\x4e\xaa\x22\xe9\x23\x66\x30\x39\xa3")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wnumber_edit);
