@@ -82,7 +82,7 @@ public:
     {
         ssize_t res = rio_seek(&this->rio, offset, whence);
         if (res != RIO_ERROR_OK){
-            LOG(LOG_WARNING, "OutFilenameTransport used for recv");
+            LOG(LOG_WARNING, "OutFilenameTransport::seek failed");
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }    
     }
