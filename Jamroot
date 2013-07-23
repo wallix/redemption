@@ -463,8 +463,8 @@ unit-test test_wab_close_mod : tests/mod/internal/test_wab_close_mod.cpp libboos
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp libboost_unit_test ;
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z openssl crypto  libboost_unit_test ;
-unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+#unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z openssl crypto  libboost_unit_test ;
+#unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp libboost_unit_test ;
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp libboost_unit_test gcov : <variant>coverage ;
