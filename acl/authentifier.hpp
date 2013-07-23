@@ -259,23 +259,6 @@ public:
         return res;
     }
 
-protected:
-    bool invoke_mod_close(MMApi & mm, const char * auth_error_message,
-                          BackEvent_t & signal, time_t now) {
-        if (mm.last_module) {
-            TODO("should never be executed");
-            mm.mod->event.reset();
-            return false;
-        }
-        TODO("We don't need to set these variables anymore since "
-             "once we reach a close box, no others connexion "
-             "is supposed to exist");
-        this->asked_remote_answer = false;
-        this->keepalive_time      = 0;
-
-        mm.invoke_close_box(auth_error_message, signal, now);
-        return true;
-    }
 
 public:
 
@@ -295,14 +278,16 @@ public:
         long enddate = this->ini->context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate)/* && !mm.last_module*/) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-            return invoke_mod_close(mm, "Session is out of allowed timeframe", signal, now);
+            mm.invoke_close_box("Session is out of allowed timeframe", signal, now);
+            return true;
         }
 
 
         // Check if acl connection is lost.
         if (this->lost_acl/* && !mm.last_module*/) {
             LOG(LOG_INFO, "Connection with ACL is lost");
-            return invoke_mod_close(mm, "Connection closed by manager (ACL closed)", signal, now);
+            mm.invoke_close_box("Connection closed by manager (ACL closed)", signal, now);
+            return true;
         }
 
         // Keep alive
@@ -312,7 +297,8 @@ public:
             // Keep alive timeout
             if (now > this->keepalive_time) {
                 LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                return invoke_mod_close(mm, "Missed keepalive from ACL", signal, now);
+                mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+                return true;
             }
 
             // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
@@ -361,7 +347,8 @@ public:
             if (trans.last_quantum_received == 0) {
                 if (now > this->last_activity_time + this->inactivity_timeout) {
                     LOG(LOG_INFO, "Session User inactivity : closing");
-                    return invoke_mod_close(mm, "Connection closed on inactivity", signal, now);
+                    mm.invoke_close_box("Connection closed on inactivity", signal, now);
+                    return true;
                 }
                 long remain = this->last_activity_time + this->inactivity_timeout - now;
                 if (this->verbose & 0x10) {
@@ -391,7 +378,7 @@ public:
             if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
                 this->asked_remote_answer = true;
                 this->remote_answer       = false;
-                this->ask_next_module_remote();
+                this->ask_acl();
             }
         }
         else {
@@ -411,7 +398,8 @@ public:
                 signal = BACK_EVENT_NONE;
                 int next_state = this->next_module();
                 if (next_state == MODULE_INTERNAL_CLOSE) {
-                    return invoke_mod_close(mm,NULL,signal, now);
+                    mm.invoke_close_box(NULL, signal, now);
+                    return true;
                 }
                 mm.remove_mod();
                 try {
@@ -419,7 +407,8 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        return invoke_mod_close(mm, "Failed to connect to remote TCP host", signal, now);
+                        mm.invoke_close_box("Failed to connect to remote TCP host", signal, now);
+                        return true;
                     }
                     else {
                         throw e;
@@ -440,7 +429,7 @@ public:
         // LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
 
         if (this->connected && this->ini->check()) {
-            this->ask_next_module_remote();
+            this->ask_acl();
         }
 
         // AuthCHANNEL CHECK
@@ -531,9 +520,7 @@ public:
         }
     }
 
-    TODO("May be we should rename this method since it does not only ask for next module "
-         "but it is also used for keep alive and auth channel messages acl");
-    void ask_next_module_remote() {
+    void ask_acl() {
         LOG(LOG_INFO, "Ask next module remote\n");
         this->acl_serial.ask_next_module_remote();
     }
