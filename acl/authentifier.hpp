@@ -421,9 +421,6 @@ public:
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
                         return invoke_mod_close(mm, "Failed to connect to remote TCP host", signal, now);
                     }
-                    else if (e.id == ERR_SESSION_UNKNOWN_BACKEND) {
-                        return invoke_mod_close(mm, "Unknown BackEnd.", signal, now);
-                    }
                     else {
                         throw e;
                     }
