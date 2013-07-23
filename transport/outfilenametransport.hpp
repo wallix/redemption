@@ -74,7 +74,7 @@ public:
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
     {  
-        LOG(LOG_INFO, "OutFilenameTransport used for recv");
+        LOG(LOG_ERR, "OutFilenameTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
@@ -82,6 +82,7 @@ public:
     {
         ssize_t res = rio_seek(&this->rio, offset, whence);
         if (res != RIO_ERROR_OK){
+            LOG(LOG_WARNING, "OutFilenameTransport used for recv");
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }    
     }
@@ -151,7 +152,9 @@ public:
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+    virtual void seek(int64_t offset, int whence) throw (Error) {
+         return rio_seek(&this->rio, offset, whence);
+    }
 
     virtual bool next()
     {
