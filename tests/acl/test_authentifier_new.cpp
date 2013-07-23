@@ -39,8 +39,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
         FakeModuleManager() {}
         ~FakeModuleManager() {}
         virtual void remove_mod() {}
-        virtual void new_mod(int target_module) {
-            printf("new mod %d\n", target_module);
+        virtual void new_mod(int target_module, time_t now) {
+            printf("new mod %d at time: %d\n", target_module, now);
         }
         virtual void record() {}
     } mm;
@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
         FakeModuleManager() {}
         ~FakeModuleManager() {}
         virtual void remove_mod() {}
-        virtual void new_mod(int target_module) {
-            printf("new mod %d\n", target_module);
+        virtual void new_mod(int target_module, time_t now) {
+            printf("new mod %d at time: %d\n", target_module, now);
         }
         virtual void record() {}
     } mm;
@@ -277,8 +277,8 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
         FakeModuleManager() {}
         ~FakeModuleManager() {}
         virtual void remove_mod() {}
-        virtual void new_mod(int target_module) {
-            printf("new mod %d\n", target_module);
+        virtual void new_mod(int target_module, time_t now) {
+            printf("new mod %d at time: %d\n", target_module, now);
         }
         virtual void record() {}
     } mm;
