@@ -90,6 +90,7 @@ public:
     }
     virtual void recv(char ** pbuffer, size_t len) throw (Error) = 0;
     virtual void send(const char * const buffer, size_t len) throw (Error) = 0;
+    virtual void seek(int64_t offset, int whence) throw (Error) = 0; // { throw Error(TRANSPORT_SEEK_NOT_AVAILABLE); }
 
     void send(Stream & header1, Stream & header2, Stream & header3, HStream & stream) {
         stream.copy_to_head(header3);

@@ -61,6 +61,14 @@ class OutFileTransport : public Transport {
         LOG(LOG_INFO, "OutFileTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
+    
+    virtual void seek(int64_t offset, int whence) throw (Error) 
+    {
+        RIO_ERROR res = rio_seek(&this->rio, offset, whence);
+        if (res != RIO_ERROR_OK){
+            throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
+        }
+    }
 };
 
 #endif

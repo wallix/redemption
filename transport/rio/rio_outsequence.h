@@ -100,6 +100,11 @@ extern "C" {
          return RIO_ERROR_OK;
     }
 
+    static inline RIO_ERROR rio_m_RIOOutsequence_seek(RIOOutsequence * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOOutsequence_get_status(RIOOutsequence * self)
     {
         return RIO_ERROR_OK;

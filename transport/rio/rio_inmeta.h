@@ -95,6 +95,11 @@ extern "C" {
         return -RIO_ERROR_RECV_ONLY;
     }
 
+    static inline RIO_ERROR rio_m_RIOInmeta_seek(RIOInmeta * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOInmeta_get_status(RIOInmeta * self)
     {
         return rio_get_status(self->insequence);
@@ -174,6 +179,11 @@ extern "C" {
     {
         rio_m_RIOCryptoInmeta_destructor(self);
         return -RIO_ERROR_RECV_ONLY;
+    }
+
+    static inline RIO_ERROR rio_m_RIOCryptoInmeta_seek(RIOCryptoInmeta * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
     }
 
     static inline RIO_ERROR rio_m_RIOCryptoInmeta_get_status(RIOCryptoInmeta * self)

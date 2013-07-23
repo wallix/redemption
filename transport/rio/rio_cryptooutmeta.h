@@ -176,6 +176,11 @@ extern "C" {
         return rio_send(self->out, data, len);
     }
 
+    static inline RIO_ERROR rio_m_RIOCryptoOutmeta_seek(RIOCryptoOutmeta * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOCryptoOutmeta_get_status(RIOCryptoOutmeta * self)
     {
         return rio_get_status(self->out);
