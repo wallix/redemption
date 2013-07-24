@@ -61,6 +61,7 @@ struct ClientInfo {
     char directory[512];
 
     int rdp_compression;
+    int rdp_compression_type;
     int rdp_autologin;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
     int sound_code; /* 1 = leave sound at server */
@@ -104,6 +105,7 @@ struct ClientInfo {
         memset(this->program, 0, sizeof(this->program));
         memset(this->directory, 0, sizeof(this->directory));
         this->rdp_compression = 0;
+        this->rdp_compression_type = 0;
         this->rdp_autologin = 0;
         this->sound_code = 0; /* 1 = leave sound at server */
         this->is_mce = 0;
@@ -176,9 +178,11 @@ struct ClientInfo {
             this->rdp_autologin = 1;
         }
         if (this->infoPacket.flags & INFO_COMPRESSION){
-            this->rdp_compression = 1;
+            this->rdp_compression      = 1;
+            this->rdp_compression_type =
+                ((this->infoPacket.flags & CompressionTypeMask) >> 9);
         }
     }
-
 };
+
 #endif

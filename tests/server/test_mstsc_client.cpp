@@ -46,6 +46,7 @@
 
 BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 {
+/*
     // This server only support one incoming connection before closing listener
 //    class ServerOnce : public Server
 //    {
@@ -123,4 +124,5 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
 //    LOG(LOG_INFO, "Listener closed\n");
 //    LOG(LOG_INFO, "Incoming socket %d (ip=%s)\n", one_shot_server.sck, one_shot_server.ip_source);
+*/
 }

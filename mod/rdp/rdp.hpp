@@ -59,6 +59,10 @@
 
 #include "genrandom.hpp"
 
+extern "C" {
+#include "freerdp/codec/mppc_dec.h"
+};
+
 struct mod_rdp : public mod_api {
     /* mod data */
     FrontAPI                  & front;
@@ -148,6 +152,10 @@ struct mod_rdp : public mod_api {
     bool client_fastpath_input_event_support; // choice of programmer + capability of server
     bool server_fastpath_update_support;      // = choice of programmer
 
+    size_t recv_bmp_update;
+
+    rdp_mppc_dec * mppc_dec;
+
     mod_rdp( Transport * trans
            , const char * target_user
            , const char * target_password
@@ -206,6 +214,7 @@ struct mod_rdp : public mod_api {
         , bitmap_update_support(bitmap_update_support)
         , client_fastpath_input_event_support(false)
         , server_fastpath_update_support(fp_support)
+        , recv_bmp_update(0)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -283,6 +292,8 @@ struct mod_rdp : public mod_api {
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 
+        this->mppc_dec = mppc_dec_new();
+
         while (UP_AND_RUNNING != this->connection_finalization_state){
             this->draw_event();
             if (this->event.signal != BACK_EVENT_NONE){
@@ -293,8 +304,16 @@ struct mod_rdp : public mod_api {
     }
 
     virtual ~mod_rdp() {
+        mppc_dec_free(this->mppc_dec);
+
         if (this->lic_layer_license_data) {
             free(this->lic_layer_license_data);
+        }
+
+        if (this->verbose) {
+            LOG(LOG_INFO, ">>>> Recv bmp cache count  = %llu", this->orders.recv_bmp_cache_count);
+            LOG(LOG_INFO, ">>>> Recv order count      = %llu", this->orders.recv_order_count);
+            LOG(LOG_INFO, ">>>> Recv bmp update count = %llu", this->recv_bmp_update);
         }
     }
 
@@ -1307,7 +1326,7 @@ struct mod_rdp : public mod_api {
                     if (f.fast_path) {
                         FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
                         while (su.payload.in_remain()) {
-                            FastPath::Update_Recv upd(su.payload);
+                            FastPath::Update_Recv upd(su.payload, this->mppc_dec);
 
                             switch (upd.updateCode) {
                             case FastPath::FASTPATH_UPDATETYPE_ORDERS:
@@ -1732,6 +1751,30 @@ struct mod_rdp : public mod_api {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
+if (this->use_rdp5) {
+LOG(LOG_INFO, "Using rdp5");
+}
+else {
+LOG(LOG_INFO, "Not using rdp5");
+}
+if (this->server_fastpath_update_support) {
+LOG(LOG_INFO, "Using fast-past");
+}
+else {
+LOG(LOG_INFO, "Not using fast-past");
+}
+if (this->mem3blt_support) {
+LOG(LOG_INFO, "Using mem3blt");
+}
+else {
+LOG(LOG_INFO, "Not using mem3blt");
+}
+if (this->enable_new_pointer) {
+LOG(LOG_INFO, "Using new point");
+}
+else {
+LOG(LOG_INFO, "Not using new point");
+}
 
         BStream stream(65536);
 
@@ -3347,6 +3390,7 @@ public:
 
     virtual void rdp_input_invalidate(const Rect & r)
     {
+LOG(LOG_INFO, ">>>>> mod_rdp::rdp_input_invalidate");
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }
@@ -3581,6 +3625,8 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_bitmap_updates");
         }
 
+        this->recv_bmp_update++;
+
         if (fast_path) {
             stream.in_skip_bytes(2); // updateType(2)
         }
@@ -3788,6 +3834,10 @@ public:
                                , this->performanceFlags
                                , this->clientAddr
                                );
+
+        infoPacket.flags |= INFO_COMPRESSION;
+        infoPacket.flags &= ~CompressionTypeMask;
+        infoPacket.flags |= (PACKET_COMPR_TYPE_64K << 9);
 
         if (this->verbose) {
             infoPacket.log("Sending to server: ");

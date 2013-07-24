@@ -147,8 +147,6 @@ int main(int argc, char * argv[]) {
     ini.debug.front = 0;
 //    ini.debug.mod_rdp = 511;
     ini.debug.mod_rdp = 0;
-//    int verbose = 511;
-    int verbose = 0;
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay
@@ -191,11 +189,12 @@ int main(int argc, char * argv[]) {
                                , ini.globals.auth_channel
                                , ini.globals.alternate_shell.get_cstr()
                                , ini.globals.shell_working_directory.get_cstr()
-                               , false  // fast-path
+                               , true   // fast-path
                                , true   // mem3blt
                                , false  // bitmap update
                                , output_filename.c_str()
-                               , ini.debug.mod_rdp);
+                               , ini.debug.mod_rdp
+                               , true);
         mod.event.obj = client_sck;
 
         struct      timeval time_mark = { 0, 50000 };

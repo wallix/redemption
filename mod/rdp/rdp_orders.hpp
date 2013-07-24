@@ -64,6 +64,9 @@ struct rdp_orders {
 
     uint32_t verbose;
 
+    size_t recv_bmp_cache_count;
+    size_t recv_order_count;
+
     rdp_orders(uint32_t verbose)
             : common(RDP::PATBLT, Rect(0, 0, 1, 1))
             , memblt(0, Rect(), 0, 0, 0, 0)
@@ -75,7 +78,9 @@ struct rdp_orders {
             , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
             , glyph_index( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
                          , (uint8_t *)"")
-            , verbose(verbose) {
+            , verbose(verbose)
+            , recv_bmp_cache_count(0)
+            , recv_order_count(0) {
         memset(this->cache_bitmap,   0, sizeof(this->cache_bitmap));
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
@@ -125,6 +130,8 @@ public:
         }
         RDPBmpCache bmp;
         bmp.receive(stream, control, header, this->global_palette);
+
+        this->recv_bmp_cache_count++;
 
         TODO("CGR: add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size")
         if (this->cache_bitmap[bmp.id][bmp.idx]) {
@@ -197,6 +204,8 @@ public:
         using namespace RDP;
 
         OrdersUpdate_Recv orders_update(stream, fast_path);
+
+        this->recv_order_count += orders_update.number_orders;
 
         int processed = 0;
         while (processed < orders_update.number_orders) {

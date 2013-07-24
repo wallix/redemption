@@ -69,6 +69,10 @@
 #include "front_api.hpp"
 #include "genrandom.hpp"
 
+extern "C" {
+#include "freerdp/codec/mppc_enc.h"
+};
+
 enum {
     FRONT_DISCONNECTED,
     FRONT_CONNECTING,
@@ -137,11 +141,15 @@ public:
 
     uint32_t bitmap_update_count;
 
-    GeneralCaps client_general_caps;
-    BitmapCaps  client_bitmap_caps;
-    OrderCaps   client_order_caps;
+    GeneralCaps        client_general_caps;
+    BitmapCaps         client_bitmap_caps;
+    OrderCaps          client_order_caps;
+    BmpCacheCaps       client_bmpcache_caps;
+    OffScreenCacheCaps client_offscreencache_caps;
 
     redemption::string server_capabilities_filename;
+
+    rdp_mppc_enc * mppc_enc;
 
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
@@ -179,6 +187,7 @@ public:
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
         , server_capabilities_filename(server_capabilities_filename)
+        , mppc_enc(0)
     {
         // init TLS
         // --------------------------------------------------------
@@ -246,6 +255,10 @@ public:
     }
 
     ~Front(){
+        if (this->mppc_enc) {
+            mppc_enc_free(this->mppc_enc);
+        }
+
         if (this->bmp_cache) {
             delete this->bmp_cache;
         }
@@ -520,6 +533,18 @@ public:
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
         }
 
+        if (this->mppc_enc) {
+            mppc_enc_free(this->mppc_enc);
+        }
+        if (this->client_info.rdp_compression) {
+            if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
+                this->mppc_enc = mppc_enc_new(PROTO_RDP_50);
+            }
+            else {
+                this->mppc_enc = mppc_enc_new(PROTO_RDP_40);
+            }
+        }
+
         // reset outgoing orders and reset caches
         delete this->bmp_cache;
         this->bmp_cache = new BmpCache(
@@ -543,7 +568,10 @@ public:
                         this->client_info.bitmap_cache_version,
                         this->client_info.use_bitmap_comp,
                         this->client_info.use_compact_packets,
-                        this->server_fastpath_update_support);
+                        this->server_fastpath_update_support,
+                        this->mppc_enc,
+                        this->client_info.rdp_compression,
+                        this->client_info.rdp_compression_type);
 
         this->pointer_cache.reset(this->client_info);
         this->brush_cache.reset(this->client_info);
@@ -708,16 +736,20 @@ public:
                     LOG(LOG_INFO, "Front::send_global_palette: fast-path");
                 }
 
-                stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+                size_t header_size = FastPath::Update_Send::GetSize(0);
+
+                stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
                 GeneratePaletteUpdateData(stream);
 
-                SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+                SubStream Upd_s(stream, 0, header_size);
 
                 FastPath::Update_Send Upd( Upd_s
-                                         , stream.size() - FastPath::Update_Send::GetSize()
+                                         , stream.size() - header_size
                                          , FastPath::FASTPATH_UPDATETYPE_PALETTE
                                          , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                         , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                         , 0
                                          );
 
                 BStream SvrUpdPDU_s(256);
@@ -965,16 +997,20 @@ public:
                 LOG(LOG_INFO, "Front::send_pointer: fast-path");
             }
 
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
             GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_COLOR
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);
@@ -1072,18 +1108,22 @@ public:
                 LOG(LOG_INFO, "Front::set_pointer: fast-path");
             }
 
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
             // Payload
             stream.out_uint16_le(cache_idx);
             stream.mark_end();
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_CACHED
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);
@@ -2456,15 +2496,20 @@ public:
                 LOG(LOG_INFO, "Front::send_data_update_sync: fast-path");
             }
             HStream stream(256, 65536);
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
             stream.mark_end();
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);
@@ -2757,17 +2802,16 @@ public:
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: {
-                    BmpCacheCaps bmpcache_caps;
-                    bmpcache_caps.recv(stream, capset_length);
+                    this->client_bmpcache_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        bmpcache_caps.log("Receiving from client");
+                        this->client_bmpcache_caps.log("Receiving from client");
                     }
-                    this->client_info.cache1_entries = bmpcache_caps.cache0Entries;
-                    this->client_info.cache1_size = bmpcache_caps.cache0MaximumCellSize;
-                    this->client_info.cache2_entries = bmpcache_caps.cache1Entries;
-                    this->client_info.cache2_size = bmpcache_caps.cache1MaximumCellSize;
-                    this->client_info.cache3_entries = bmpcache_caps.cache2Entries;
-                    this->client_info.cache3_size = bmpcache_caps.cache2MaximumCellSize;
+                    this->client_info.cache1_entries = this->client_bmpcache_caps.cache0Entries;
+                    this->client_info.cache1_size    = this->client_bmpcache_caps.cache0MaximumCellSize;
+                    this->client_info.cache2_entries = this->client_bmpcache_caps.cache1Entries;
+                    this->client_info.cache2_size    = this->client_bmpcache_caps.cache1MaximumCellSize;
+                    this->client_info.cache3_entries = this->client_bmpcache_caps.cache2Entries;
+                    this->client_info.cache3_size    = this->client_bmpcache_caps.cache2MaximumCellSize;
                 }
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
@@ -2832,19 +2876,23 @@ public:
                 }
                 break;
             case CAPSTYPE_GLYPHCACHE: /* 16 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
+                }
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
+                }
+                this->client_offscreencache_caps.recv(stream, capset_length);
+                if (this->verbose) {
+                    this->client_offscreencache_caps.log("Receiving from client");
+                }
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
+                }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
 //                    BmpCache2Caps bmpcache2_caps;
@@ -2880,29 +2928,29 @@ public:
                 }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_VIRTUALCHANNEL");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_VIRTUALCHANNEL");
+                }
                 break;
             case CAPSTYPE_DRAWNINEGRIDCACHE: /* 21 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
+                }
                 break;
             case CAPSTYPE_DRAWGDIPLUS: /* 22 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
+                }
                 break;
             case CAPSTYPE_RAIL: /* 23 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_RAIL");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_RAIL");
+                }
                 break;
             case CAPSTYPE_WINDOW: /* 24 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_WINDOW");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_WINDOW");
+                }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps compdesk_caps;
@@ -2913,34 +2961,34 @@ public:
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
+                }
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_LARGE_POINTER");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_LARGE_POINTER");
+                }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
+                }
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_BITMAP_CODECS");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_BITMAP_CODECS");
+                }
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE: /* 30 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
+                }
                 break;
             default:
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client unknown caps %u", capset_type);
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client unknown caps %u", capset_type);
+                }
                 break;
             }
             if (stream.p > next){
