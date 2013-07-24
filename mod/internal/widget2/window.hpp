@@ -40,6 +40,7 @@ public:
     int inactive_border_top_left_color_inner;
     int inactive_border_right_bottom_color;
     int inactive_border_right_bottom_color_inner;
+    int titlebar_base_width;
 
     Window(DrawApi& drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
@@ -69,8 +70,8 @@ public:
         this->button_close.set_button_cx(this->button_close.label.cx()*2);
         this->button_close.set_button_cy(this->button_close.cy() - 2);
 
-        int w,h;
-        this->drawable->text_metrics(this->titlebar.buffer, w,h);
+        int h;
+        this->drawable->text_metrics(this->titlebar.buffer, this->titlebar_base_width, h);
         this->titlebar.rect.cy = std::max<int>(h - 2, this->button_close.cy()) + this->titlebar.y_text * 2;
     }
 
