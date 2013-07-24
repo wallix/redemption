@@ -1120,7 +1120,7 @@ namespace FastPath {
             this->payload.resize(stream, this->size);
 
             if (   (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED)
-                && (this->compressionFlags & /*PACKET_COMPRESSED*/0x20)) {
+                && (this->compressionFlags & PACKET_COMPRESSED)) {
                 uint32_t  roff;
                 uint32_t  rlen;
 

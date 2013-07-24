@@ -186,7 +186,9 @@ struct GraphicsUpdatePDU : public RDPSerializer {
         }
         else {
             if (!this->compression) {
-                this->stream_orders.out_clear_bytes(FastPath::Update_Send::GetSize(this->compression)); // Fast-Path Update (TS_FP_UPDATE structure) size
+                this->stream_orders.out_clear_bytes(
+                    // Fast-Path Update (TS_FP_UPDATE structure) size
+                    FastPath::Update_Send::GetSize(this->compression));
             }
             this->offset_order_count = this->stream_orders.get_offset();
             this->stream_orders.out_clear_bytes(2);  // number of orders, set later
@@ -211,7 +213,11 @@ struct GraphicsUpdatePDU : public RDPSerializer {
             this->stream_bitmaps.out_clear_bytes(2); /* number of bitmaps, set later */
         }
         else {
-            this->stream_bitmaps.out_clear_bytes(FastPath::Update_Send::GetSize(/*this->compression*/0)); // Fast-Path Update (TS_FP_UPDATE structure) size
+            if (!this->compression) {
+                this->stream_bitmaps.out_clear_bytes(
+                    // Fast-Path Update (TS_FP_UPDATE structure) size
+                    FastPath::Update_Send::GetSize(this->compression));
+            }
             this->stream_bitmaps.out_uint16_le(RDP_UPDATE_BITMAP);  // updateType (2 bytes)
             this->offset_bitmap_count = this->stream_bitmaps.get_offset();
             this->stream_bitmaps.out_clear_bytes(2);  // number of bitmap, set later
@@ -249,13 +255,23 @@ protected:
                 BStream mcs_header(256);
                 BStream sec_header(256);
 
-                SEC::Sec_Send sec(sec_header, this->buffer_stream_orders, 0, this->encrypt, this->encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, this->userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + this->buffer_stream_orders.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + this->buffer_stream_orders.size());
-                this->trans->send(x224_header, mcs_header, sec_header, this->buffer_stream_orders);
+                SEC::Sec_Send sec( sec_header, this->buffer_stream_orders, 0, this->encrypt
+                                 , this->encryptionLevel);
+                MCS::SendDataIndication_Send mcs( mcs_header, this->userid
+                                                , GCC::MCS_GLOBAL_CHANNEL, 1, 3
+                                                ,   sec_header.size()
+                                                  + this->buffer_stream_orders.size()
+                                                , MCS::PER_ENCODING
+                                                );
+                X224::DT_TPDU_Send( x224_header
+                                  ,   mcs_header.size() + sec_header.size()
+                                    + this->buffer_stream_orders.size()
+                                  );
+                this->trans->send( x224_header, mcs_header, sec_header
+                                 , this->buffer_stream_orders);
             }
             else {
-                if (this->ini.debug.primary_orders > 3){
+                if (this->ini.debug.primary_orders > 3) {
                     LOG(LOG_INFO, "GraphicsUpdatePDU::flush_orders: fast-path");
                 }
 
@@ -270,8 +286,8 @@ protected:
                                              , this->stream_orders.size() - header_size
                                              , FastPath::FASTPATH_UPDATETYPE_ORDERS
                                              , FastPath::FASTPATH_FRAGMENT_SINGLE
-                                             , 0/*this->compression*/
-                                             , 0/*((this->compression_type >= PACKET_COMPR_TYPE_8K) ? PACKET_COMPR_TYPE_64K : PACKET_COMPR_TYPE_8K)*/
+                                             , 0
+                                             , 0
                                              );
 
                     BStream fastpath_header(256);
@@ -279,32 +295,28 @@ protected:
                     FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                           fastpath_header
                         , this->stream_orders
-                        , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                        , (  (this->encryptionLevel > 1)
+                           ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                         , this->encrypt
                         );
 
                     this->trans->send(fastpath_header, this->buffer_stream_orders);
                 }
                 else {
-//LOG(LOG_INFO, ">>>>> flush orders (compress) ... header_size=%u", header_size);
                     HStream compressed_buffer_stream_orders(1024, 65565);
 
-                    compress_rdp( this->mppc_enc, buffer_stream_orders.get_data()
-                                , buffer_stream_orders.size());
+                    compress_rdp( this->mppc_enc, this->buffer_stream_orders.get_data()
+                                , this->buffer_stream_orders.size());
 
                     if (!(this->mppc_enc->flags & PACKET_COMPRESSED)) {
                         header_size = FastPath::Update_Send::GetSize(0);
                     }
 
-//LOG(LOG_INFO, ">>>>> flush orders (compress) ... uncompress=%llu, compress=%llu", buffer_stream_orders.size(), this->mppc_enc->bytes_in_opb);
-
                     SubStream Upd_s(compressed_buffer_stream_orders, 0, header_size);
-
-//LOG(LOG_INFO, "bytes_in_opb=%llu, flags=0x%X", this->mppc_enc->bytes_in_opb, this->mppc_enc->flags);
 
                     uint16_t datalen          =   (this->mppc_enc->flags & PACKET_COMPRESSED)
                                                 ? this->mppc_enc->bytes_in_opb
-                                                : buffer_stream_orders.size();
+                                                : this->buffer_stream_orders.size();
                     uint8_t  compression      = (this->mppc_enc->flags & PACKET_COMPRESSED)
                                                 ? FastPath::FASTPATH_OUTPUT_COMPRESSION_USED
                                                 : 0 ;
@@ -327,7 +339,8 @@ protected:
                     }
                     else {
                         compressed_buffer_stream_orders.out_copy_bytes(
-                            buffer_stream_orders.get_data(), buffer_stream_orders.size());
+                              this->buffer_stream_orders.get_data()
+                            , this->buffer_stream_orders.size());
                     }
 
                     compressed_buffer_stream_orders.mark_end();
@@ -337,12 +350,12 @@ protected:
                     FastPath::ServerUpdatePDU_Send SvrUpdPDU(
                           fastpath_header
                         , compressed_buffer_stream_orders
-                        , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                        , (  (this->encryptionLevel > 1)
+                           ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                         , this->encrypt
                         );
 
                     this->trans->send(fastpath_header, compressed_buffer_stream_orders);
-//LOG(LOG_INFO, ">>>>> flush orders (compress) done");
                 }
             }
 
@@ -391,13 +404,16 @@ protected:
                                                 , GCC::MCS_GLOBAL_CHANNEL
                                                 , 1
                                                 , 3
-                                                , sec_header.size() + this->buffer_stream_bitmaps.size()
+                                                ,   sec_header.size()
+                                                  + this->buffer_stream_bitmaps.size()
                                                 , MCS::PER_ENCODING
                                                 );
                 X224::DT_TPDU_Send( x224_header
-                                  , mcs_header.size() + sec_header.size() + this->buffer_stream_bitmaps.size()
+                                  ,   mcs_header.size() + sec_header.size()
+                                    + this->buffer_stream_bitmaps.size()
                                   );
-                this->trans->send(x224_header, mcs_header, sec_header, this->buffer_stream_bitmaps);
+                this->trans->send( x224_header, mcs_header, sec_header
+                                 , this->buffer_stream_bitmaps);
             }
             else {
                 if (this->ini.debug.primary_orders > 3){
@@ -406,28 +422,85 @@ protected:
 
                 this->stream_bitmaps.mark_end();
 
-                size_t header_size = FastPath::Update_Send::GetSize(/*this->compression*/0);
+                size_t header_size = FastPath::Update_Send::GetSize(this->compression);
 
-                SubStream Upd_s(this->stream_bitmaps, 0, header_size);
+                if (!this->compression) {
+                    SubStream Upd_s(this->stream_bitmaps, 0, header_size);
 
-                FastPath::Update_Send Upd( Upd_s
-                                         , this->stream_bitmaps.size() - header_size
-                                         , FastPath::FASTPATH_UPDATETYPE_BITMAP
-                                         , FastPath::FASTPATH_FRAGMENT_SINGLE
-                                         , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
-                                         , 0
-                                         );
+                    FastPath::Update_Send Upd( Upd_s
+                                             , this->stream_bitmaps.size() - header_size
+                                             , FastPath::FASTPATH_UPDATETYPE_BITMAP
+                                             , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                             , 0
+                                             , 0
+                                             );
 
-                BStream fastpath_header(256);
+                    BStream fastpath_header(256);
 
-                FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                      fastpath_header
-                    , this->stream_bitmaps
-                    , ((this->encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
-                    , this->encrypt
-                    );
+                    FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+                          fastpath_header
+                        , this->stream_bitmaps
+                        , (  (this->encryptionLevel > 1)
+                           ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                        , this->encrypt
+                        );
 
-                this->trans->send(fastpath_header, this->buffer_stream_bitmaps);
+                    this->trans->send(fastpath_header, this->buffer_stream_bitmaps);
+                }
+                else {
+                    HStream compressed_buffer_stream_bitmaps(1024, 65565);
+
+                    compress_rdp( this->mppc_enc, this->buffer_stream_bitmaps.get_data()
+                                , this->buffer_stream_bitmaps.size());
+
+                    if (!(this->mppc_enc->flags & PACKET_COMPRESSED)) {
+                        header_size = FastPath::Update_Send::GetSize(0);
+                    }
+
+                    SubStream Upd_s(compressed_buffer_stream_bitmaps, 0, header_size);
+
+                    uint16_t datalen          =   (this->mppc_enc->flags & PACKET_COMPRESSED)
+                                                ? this->mppc_enc->bytes_in_opb
+                                                : buffer_stream_bitmaps.size();
+                    uint8_t  compression      = (this->mppc_enc->flags & PACKET_COMPRESSED)
+                                                ? FastPath::FASTPATH_OUTPUT_COMPRESSION_USED
+                                                : 0 ;
+                    uint8_t  compressionFlags =   (this->mppc_enc->flags & PACKET_COMPRESSED)
+                                                ? this->mppc_enc->flags : 0;
+
+                    FastPath::Update_Send Upd( Upd_s
+                                             , datalen
+                                             , FastPath::FASTPATH_UPDATETYPE_BITMAP
+                                             , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                             , compression
+                                             , compressionFlags
+                                            );
+
+                    compressed_buffer_stream_bitmaps.p += header_size;
+
+                    if (this->mppc_enc->flags & PACKET_COMPRESSED) {
+                        compressed_buffer_stream_bitmaps.out_copy_bytes(
+                            this->mppc_enc->outputBuffer, this->mppc_enc->bytes_in_opb);
+                    }
+                    else {
+                        compressed_buffer_stream_bitmaps.out_copy_bytes(
+                            buffer_stream_bitmaps.get_data(), buffer_stream_bitmaps.size());
+                    }
+
+                    compressed_buffer_stream_bitmaps.mark_end();
+
+                    BStream fastpath_header(256);
+
+                    FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+                          fastpath_header
+                        , compressed_buffer_stream_bitmaps
+                        , (  (this->encryptionLevel > 1)
+                           ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+                        , this->encrypt
+                        );
+
+                    this->trans->send(fastpath_header, compressed_buffer_stream_bitmaps);
+                }
             }
 
             this->bitmap_count = 0;
