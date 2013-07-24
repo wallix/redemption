@@ -576,6 +576,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
 
         WidgetReceiveEvent(TestDraw& drawable)
         : Widget2(&drawable, Rect(), NULL, NULL)
+        , sender(NULL)
+        , event(0)
         {}
 
         virtual void draw(const Rect&)

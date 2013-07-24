@@ -353,6 +353,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
 
         WidgetReceiveEvent()
         : Widget2(NULL, Rect(), NULL, NULL)
+        , sender(NULL)
+        , event(0)
         {}
 
         virtual void draw(const Rect&)

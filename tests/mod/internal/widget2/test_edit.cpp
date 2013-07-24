@@ -409,6 +409,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
         WidgetReceiveEvent(TestDraw& drawable)
         : Widget2(&drawable, Rect(), NULL, NULL)
+        , sender(0)
+        , event(0)
         {}
 
         virtual void draw(const Rect&)
