@@ -111,7 +111,7 @@ public:
     virtual ~MMIni() {}
     virtual void remove_mod() {};
     virtual void new_mod(int target_module, time_t now) {
-        printf("new mod %d at time: %d\n", target_module, now);
+        printf("new mod %d at time: %d\n", (int)target_module, (int)now);
         switch(target_module) {
         case MODULE_VNC:
         case MODULE_XUP:
