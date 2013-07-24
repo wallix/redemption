@@ -37,30 +37,15 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
     BackEvent_t signal = BACK_EVENT_NONE;
 
-    class FakeModuleManager : public MMApi
-    {
 
-        public:
-        Inifile ini;
-        FakeModuleManager() {
-            ini.globals.keepalive_grace_delay = 30;
-            ini.globals.max_tick = 30;
-            ini.globals.internal_domain = true;
-            ini.debug.auth = 255;
-        }
-        ~FakeModuleManager() {}
-        virtual void remove_mod() {}
-        virtual void new_mod(int target_module, time_t now) {
-            printf("new mod %d at time: %d\n", target_module, now);
-        }
-        virtual void record() {}
-        virtual int next_module() {
-            if (this->ini.context.authenticated.get()) {
-                this->connected = true;
-            }
-            return MODULE_RDP;
-        }
-    } mm;
+    Inifile ini;
+
+    ini.globals.keepalive_grace_delay = 30;
+    ini.globals.max_tick = 30;
+    ini.globals.internal_domain = true;
+    ini.debug.auth = 255;
+
+    MMIni mm(ini);
 
     char outdata[] =
         // Time: 10011
@@ -147,51 +132,18 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 {
-    // class FakeModuleManager : public MMApi
-    // {
-    //     public:
-    //     FakeModuleManager() {
-    //         this->connected = true;
-    //     }
-    //     ~FakeModuleManager() {}
-    //     virtual void remove_mod() {}
-    //     virtual void new_mod(int target_module, time_t now) {
-    //         printf("new mod %d at time: %d\n", target_module, now);
-    //     }
-    //     virtual void record() {}
-    // } mm;
-
-
-    // Inifile ini;
-    // ini.globals.keepalive_grace_delay = 30;
-    // ini.globals.max_tick = 30;
-    // ini.globals.internal_domain = true;
-    // ini.debug.auth = 255;
 
     BackEvent_t signal = BACK_EVENT_NONE;
-    class FakeModuleManager : public MMApi
-    {
-        public:
-        Inifile ini;
-        FakeModuleManager() {
-            ini.globals.keepalive_grace_delay = 30;
-            ini.globals.max_tick = 30;
-            ini.globals.internal_domain = true;
-            ini.debug.auth = 255;
-        }
-        ~FakeModuleManager() {}
-        virtual void remove_mod() {}
-        virtual void new_mod(int target_module, time_t now) {
-            printf("new mod %d at time: %d\n", target_module, now);
-        }
-        virtual void record() {}
-        virtual int next_module() {
-            if (this->ini.context.authenticated.get()) {
-                this->connected = true;
-            }
-            return MODULE_RDP;
-        }
-    } mm;
+
+    Inifile ini;
+
+    ini.globals.keepalive_grace_delay = 30;
+    ini.globals.max_tick = 30;
+    ini.globals.internal_domain = true;
+    ini.debug.auth = 255;
+
+    MMIni mm(ini);
+
 
     char outdata[] =
         // Time 10011
@@ -306,17 +258,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 {
-    class FakeModuleManager : public MMApi
-    {
-        public:
-        FakeModuleManager() {}
-        ~FakeModuleManager() {}
-        virtual void remove_mod() {}
-        virtual void new_mod(int target_module, time_t now) {
-            printf("new mod %d at time: %d\n", target_module, now);
-        }
-        virtual void record() {}
-    } mm;
 
     BackEvent_t signal = BACK_EVENT_NONE;
 
@@ -325,8 +266,9 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     ini.globals.max_tick = 8; // => 8*30 = 240secs inactivity
     ini.globals.internal_domain = true;
     ini.debug.auth = 255;
+    MMIni mm(ini);
 
-   char outdata[] =
+    char outdata[] =
         // Time 10011
            "\x00\x00\x01\x96"
            "login\nASK\n"

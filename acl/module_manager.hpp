@@ -86,8 +86,8 @@ class MMApi
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now) = 0;
     virtual void record() = 0;
-    virtual int next_module() { return 0; };
-    virtual int get_mod_from_protocol() { return 0; };
+    virtual int next_module() = 0;
+    virtual int get_mod_from_protocol() = 0;
     virtual void invoke_close_box(const char * auth_error_message,
                                   BackEvent_t & signal, time_t now) {
         this->last_module = true;
@@ -110,7 +110,18 @@ public:
                           , verbose(ini.debug.auth) {}
     virtual ~MMIni() {}
     virtual void remove_mod() {};
-    virtual void new_mod(int target_module, time_t now) {};
+    virtual void new_mod(int target_module, time_t now) {
+        printf("new mod %d at time: %d\n", target_module, now);
+        switch(target_module) {
+        case MODULE_VNC:
+        case MODULE_XUP:
+        case MODULE_RDP:
+            this->connected = true;
+            break;
+        default:
+            break;
+        };
+    };
     virtual void record() {};
 
     virtual void invoke_close_box(const char * auth_error_message,
