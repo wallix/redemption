@@ -146,11 +146,12 @@ struct mod_rdp : public mod_api {
 
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
 
-    bool fastpath_support;                    // choice of programmer
     bool mem3blt_support;
     bool bitmap_update_support;
+    bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // choice of programmer + capability of server
     bool server_fastpath_update_support;      // = choice of programmer
+    bool rdp_50_bulk_compression_support;
 
     size_t recv_bmp_update;
 
@@ -177,7 +178,8 @@ struct mod_rdp : public mod_api {
            , bool mem3blt_support
            , bool bitmap_update_support
            , uint32_t verbose = 0
-           , bool enable_new_pointer = false)
+           , bool enable_new_pointer = false
+           , bool rdp_50_bulk_compression_support = false)
         : mod_api(info.width, info.height)
         , front(front)
         , in_stream(65536)
@@ -209,11 +211,12 @@ struct mod_rdp : public mod_api {
         , nego(tls, trans, target_user)
         , enable_new_pointer(enable_new_pointer)
         , opt_clipboard(clipboard)
-        , fastpath_support(fp_support)
         , mem3blt_support(mem3blt_support)
         , bitmap_update_support(bitmap_update_support)
+        , fastpath_support(fp_support)
         , client_fastpath_input_event_support(false)
         , server_fastpath_update_support(fp_support)
+        , rdp_50_bulk_compression_support(rdp_50_bulk_compression_support)
         , recv_bmp_update(0)
     {
         if (this->verbose & 1){
@@ -3835,9 +3838,11 @@ LOG(LOG_INFO, ">>>>> mod_rdp::rdp_input_invalidate");
                                , this->clientAddr
                                );
 
-        infoPacket.flags |= INFO_COMPRESSION;
-        infoPacket.flags &= ~CompressionTypeMask;
-        infoPacket.flags |= (PACKET_COMPR_TYPE_64K << 9);
+        if (this->rdp_50_bulk_compression_support) {
+            infoPacket.flags |= INFO_COMPRESSION;
+            infoPacket.flags &= ~CompressionTypeMask;
+            infoPacket.flags |= (PACKET_COMPR_TYPE_64K << 9);
+        }
 
         if (this->verbose) {
             infoPacket.log("Sending to server: ");

@@ -137,6 +137,7 @@ public:
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_client_active;
     bool mem3blt_support;
+    bool rdp_50_bulk_compression_support;
     int clientRequestedProtocols;
 
     uint32_t bitmap_update_count;
@@ -157,6 +158,7 @@ public:
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
+          , bool rdp_50_bulk_compression_support = false
           , const char * server_capabilities_filename = ""
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
@@ -184,6 +186,7 @@ public:
         , server_fastpath_update_support(false)
         , tls_client_active(true)
         , mem3blt_support(mem3blt_support)
+        , rdp_50_bulk_compression_support(rdp_50_bulk_compression_support)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
         , server_capabilities_filename(server_capabilities_filename)
@@ -557,21 +560,23 @@ public:
                         this->client_info.cache3_size);
 
         delete this->orders;
-        this->orders = new GraphicsUpdatePDU(trans,
-                        this->userid,
-                        this->share_id,
-                        this->client_info.encryptionLevel,
-                        this->encrypt,
-                        *this->ini,
-                        this->client_info.bpp,
-                        *this->bmp_cache,
-                        this->client_info.bitmap_cache_version,
-                        this->client_info.use_bitmap_comp,
-                        this->client_info.use_compact_packets,
-                        this->server_fastpath_update_support,
-                        this->mppc_enc,
-                        this->client_info.rdp_compression,
-                        this->client_info.rdp_compression_type);
+        this->orders = new GraphicsUpdatePDU(
+              trans
+            , this->userid
+            , this->share_id
+            , this->client_info.encryptionLevel
+            , this->encrypt
+            , *this->ini
+            , this->client_info.bpp
+            , *this->bmp_cache
+            , this->client_info.bitmap_cache_version
+            , this->client_info.use_bitmap_comp
+            , this->client_info.use_compact_packets
+            , this->server_fastpath_update_support
+            , this->mppc_enc
+            , this->rdp_50_bulk_compression_support ? this->client_info.rdp_compression : 0
+            , this->rdp_50_bulk_compression_support ? this->client_info.rdp_compression_type : 0
+            );
 
         this->pointer_cache.reset(this->client_info);
         this->brush_cache.reset(this->client_info);
