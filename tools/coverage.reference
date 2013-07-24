@@ -108,7 +108,6 @@ mod/internal/internal_mod 100 100
 mod/internal/widget2/label 100 100
 mod/internal/widget2/msgbox 100 100
 mod/internal/widget2/multiline 100 100
-mod/internal/widget2/notify_api 100 100
 mod/internal/widget2/number_edit 100 100
 mod/internal/widget2/password 100 100
 mod/internal/widget2/screen 100 100

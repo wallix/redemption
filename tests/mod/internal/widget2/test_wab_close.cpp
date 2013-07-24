@@ -23,8 +23,6 @@
 #define BOOST_TEST_MODULE TestWindowWabClose
 #include <boost/test/auto_unit_test.hpp>
 
-#define SHARE_PATH "./tests/fixtures"
-
 #define LOGNULL
 #include "log.hpp"
 
@@ -34,13 +32,17 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
+#ifndef FIXTURES_PATH
+# define FIXTURES_PATH
+#endif
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, true)
+    : gd(w, h)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -107,7 +109,7 @@ struct TestDraw : DrawApi
 
     virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
-        this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
+        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
 
     virtual void text_metrics(const char* text, int& width, int& height)
@@ -122,7 +124,7 @@ struct TestDraw : DrawApi
                 width += font_item->width + 2;
                 height = std::max(height, font_item->height);
             }
-            width -= 2;
+            width -= 1;
         }
     }
 
@@ -130,7 +132,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -146,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
     int16_t y = 0;
     int id = 0;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def", id, "rec", "rec");
 
     // ask to widget to redraw at it's current position
@@ -156,8 +158,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf2\x26\x84\x58\x51\x98\xf1\xf9\x8e\x84"
-        "\x80\xcc\x70\xa2\xf9\x90\x68\xce\x5b\x74")){
+        "\x47\xde\x18\x14\x9b\x59\xf9\xb0\x98\xd9"
+        "\x38\xab\xa8\xe6\xec\xa6\xca\x0c\x47\xc8")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -172,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
         "Lorem ipsum dolor sit amet, consectetur<br>"
         "adipiscing elit. Nam purus lacus, luctus sit<br>"
         "amet suscipit vel, posuere quis turpis. Sed<br>"
@@ -196,8 +198,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x63\xa5\xba\x27\x5b\x29\x4d\xd0\xdd\x4d"
-        "\x96\x13\x62\xdc\x2e\x39\x7c\x3d\x35\xfd")){
+        "\xf4\x69\x47\x81\xc8\xf8\x49\xbb\xbd\xd1"
+        "\x3f\x73\x33\x87\x34\x7f\x14\x79\xb6\xc8")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -212,7 +214,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
@@ -222,8 +224,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xb3\x20\x82\x6a\x77\xbd\xe9\x51\x06\x1c"
-        "\x98\x04\x03\x3b\xfd\x5d\x89\x9f\x6d\x03")){
+        "\x60\x89\x44\x36\xf0\x10\xe5\x80\x2a\x90"
+        "\xf5\x42\xfd\x75\xbc\x55\xe1\x6a\xc9\xd4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -238,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
@@ -248,8 +250,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7d\x2b\xac\x12\x29\xed\xb6\x55\x13\x10"
-        "\xd6\xe5\x69\xd8\x03\x7a\x7b\xa7\xe3\x2f")){
+        "\x8a\x32\xc4\x5c\x86\xd3\xd0\xbf\x16\x3b"
+        "\xef\x03\xbb\x27\xf7\xd6\xa3\x4d\x2e\x40")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -264,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
@@ -274,8 +276,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfc\x31\x21\x0e\x6b\xfe\xc7\x84\x64\x77"
-        "\xaa\xcf\xd7\xec\xfd\xea\x8d\x5a\x15\x04")){
+        "\xd4\x7c\x88\x20\x0c\xa2\x51\x42\x43\x01"
+        "\x92\x16\x17\x36\x74\x43\xd8\x44\x5f\x93")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -290,7 +292,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
@@ -300,8 +302,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x38\xdc\xd0\x01\x3d\x25\x77\xe8\xe5\xea"
-        "\x5e\x46\x85\xf3\xda\xdf\x49\x3c\xc9\xa2")){
+        "\xf2\x57\xf1\x5c\x1b\x12\x16\x05\x4c\x76"
+        "\x3a\xeb\x78\x83\x10\xfc\xce\xfd\x4a\x2b")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -316,7 +318,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
@@ -326,8 +328,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe5\x71\x2d\xbb\x25\xc5\x04\xe0\x2f\x9c"
-        "\x52\x59\xa0\xbf\x8c\x75\x77\x81\x7a\x45")){
+        "\xd1\x64\x9a\x20\xe1\x84\xca\x7a\x3a\xb7"
+        "\x55\x59\x14\x86\x3d\x42\xf8\x9c\xe3\xd9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -342,7 +344,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WindowWabClose window_wab_close(&drawable, x, y, parent, notifier,
+    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
@@ -355,8 +357,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xab\xc0\xb8\xff\x4f\xd0\x3b\x60\x22\x8b"
-        "\x9e\x38\x11\xff\xbd\x81\xf3\x81\x62\x5d")){
+        "\x63\x57\xbf\x01\x37\xb5\x68\xd4\x65\xc8"
+        "\x75\xb1\x94\x9c\x2e\xbd\x77\x50\x5b\xa0")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

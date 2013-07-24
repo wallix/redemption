@@ -59,7 +59,7 @@ public:
         //            ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
         //            ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0)
         //            )
-        , selector(this, temporary_login(ini).buffer, width, height, this,
+        , selector(*this, temporary_login(ini).buffer, width, height, this,
                    ini.context.selector_current_page.get_value(),
                    ini.context.selector_number_of_pages.get_value(),
                    ini.context.selector_group_filter.get_cstr(),

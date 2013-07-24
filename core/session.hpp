@@ -90,7 +90,6 @@ struct Session {
 
     SocketTransport * ptr_auth_trans;
     wait_obj        * ptr_auth_event;
-    bool cant_create_acl;
 
     Session(wait_obj & front_event, int sck, Inifile * ini)
             : front_event(front_event)
@@ -98,8 +97,7 @@ struct Session {
             , verbose(this->ini->debug.session)
             , acl(NULL)
             , ptr_auth_trans(NULL)
-            , ptr_auth_event(NULL)
-            , cant_create_acl(false) {
+            , ptr_auth_event(NULL) {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
@@ -193,9 +191,8 @@ struct Session {
                         }
 
                         // Incoming data from ACL, or opening acl
-                        TODO("instead of this can't create ACL boolean, we could rely on knowing if we are on a close box or not")
                         if (!this->acl) {
-                            if (!cant_create_acl) {
+                            if (!mm.last_module) {
                                 try {
                                     int client_sck = ip_connect(this->ini->globals.authip,
                                                                 this->ini->globals.authport,
@@ -209,8 +206,8 @@ struct Session {
                                     }
 
                                     this->ptr_auth_trans = new SocketTransport( "Authentifier"
-                                                                              , client_sck
-                                                                              , this->ini->globals.authip
+                                                                                , client_sck
+                                                                                , this->ini->globals.authip
                                                                                 , this->ini->globals.authport
                                                                                 , this->ini->debug.auth
                                                                                 );
@@ -223,14 +220,7 @@ struct Session {
                                     signal = BACK_EVENT_NEXT;
                                 }
                                 catch (...) {
-                                    TODO("cant create acl shouldn't be necessary, as when on a close box we shouldn't try opening ACL")
-                                    TODO("maybe we shouldn't *connect* to ACL but create some acl context anyway to be able to call acl->check ")
-                                    cant_create_acl = true;
-
-                                    mm.invoke_close_box("No authentifier available",signal);
-                                    // this->ini->context.auth_error_message.copy_c_str("No authentifier available");
-                                    // mm.remove_mod();
-                                    // mm.new_mod(MODULE_INTERNAL_CLOSE);
+                                    mm.invoke_close_box("No authentifier available",signal, now);
                                 }
                             }
                         }
@@ -253,22 +243,18 @@ struct Session {
                         }
                     }
                 } catch (Error & e) {
-                    TODO("Not human understanding message"
-                         "We should associate an explicit message "
-                         "to a thrown error");
                     LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
-                    char errormsg[256];
-                    snprintf(errormsg,sizeof(errormsg),"Session exception = %d!",e.id);
-                    mm.invoke_close_box(errormsg,signal);
+                    time_t now = time(NULL);
+                    mm.invoke_close_box(e.errmsg(), signal, now);
                 };
             }
             this->front->disconnect();
         }
         catch (const Error & e) {
-            LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+            LOG(LOG_INFO, "Session::Session Init exception = %d!\n", e.id);
         }
         catch(...) {
-            LOG(LOG_INFO, "Session::Session other exception\n");
+            LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         this->front->stop_capture();

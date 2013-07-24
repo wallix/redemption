@@ -1190,7 +1190,8 @@ public:
             else if (0 == strcmp(key, "autovalidate")){
                 this->globals.autovalidate = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "max_tick")){
+            else if (0 == strcmp(key, "max_tick") ||
+                     0 == strcmp(key, "inactivity_time")){
                 this->globals.max_tick = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "keepalive_grace_delay")){

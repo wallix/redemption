@@ -230,12 +230,14 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     }
     const bool tls = true;
 
+    snprintf(info.hostname,sizeof(info.hostname),"192-168-1-100");
+
     struct mod_api * mod = new mod_rdp( &t
                                       , "administrateur@qa"
                                       , "S3cur3!1nux"
                                       , "192.168.1.100"
                                       , front
-                                      , "192-168-1-100"
+                                        //, "192-168-1-100"
                                       , tls
                                       , info
                                       , &gen

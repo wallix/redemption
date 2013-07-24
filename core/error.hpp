@@ -257,12 +257,34 @@ class Error {
     public:
     int id;
     int errnum;
+    char errstr[256];
+
     Error(int id, int errnum = 0)
     {
         this->id = id;
         this->errnum = errnum;
 //        LOG(LOG_ERR, "error=%u", this->id);
 //        exit(0);
+    }
+
+    const char * errmsg() {
+        switch(this->id) {
+        case NO_ERROR :
+            snprintf(errstr, sizeof(errstr), "No error");
+            break;
+        case ERR_TRANSPORT_OPEN_FAILED :
+            snprintf(errstr, sizeof(errstr), "Open file failed");
+            break;
+        case ERR_SESSION_UNKNOWN_BACKEND :
+            snprintf(errstr, sizeof(errstr), "Unknown Backend");
+            break;
+        case ERR_VNC_CONNECTION_ERROR:
+            snprintf(errstr, sizeof(errstr), "VNC connection error.");
+            break;
+        default:
+            snprintf(errstr, sizeof(errstr), "Exception Error no : %d", this->id);
+        }
+        return this->errstr;
     }
 };
 

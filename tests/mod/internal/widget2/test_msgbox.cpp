@@ -32,13 +32,17 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
+#ifndef FIXTURES_PATH
+# define FIXTURES_PATH
+#endif
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, false)
+    : gd(w, h)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -57,9 +61,9 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPPatBlt&, const Rect&)
+    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, rect);
     }
 
     virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
@@ -103,9 +107,9 @@ struct TestDraw : DrawApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, const Rect& clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
-        this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
+        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
 
     virtual void text_metrics(const char* text, int& width, int& height)
@@ -128,7 +132,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -146,14 +150,14 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox)
     int16_t x = 0;
     int16_t y = 0;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test1",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test1",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0, 0, wmsgbox.cx(), wmsgbox.cy()));
@@ -163,8 +167,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x4e\x4c\x10\x52\x29\x59\x29\x04\xf1\x43"
-        "\xfe\x01\xc7\x45\x7a\xbd\x8c\x3b\x9d\x69")){
+        "\x77\x0d\x6b\xcd\xda\xe1\xaf\x6e\xe8\x36"
+        "\xca\x91\x93\x45\x32\x56\x9b\xce\x3c\x89")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -182,14 +186,14 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox2)
     int16_t x = 10;
     int16_t y = 100;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test2",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test2",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -201,8 +205,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xb1\x3e\xff\xc9\xde\x55\xcb\x5c\x58\xf6"
-        "\xee\x48\x4a\x51\xdd\x80\xdf\x3c\x18\x0c")){
+        "\x49\x34\x83\xb7\x07\xdc\x32\x89\xef\x09"
+        "\x8c\xe1\xc8\xaa\xc6\xb5\x13\x7f\x99\x01")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -220,14 +224,14 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox3)
     int16_t x = -10;
     int16_t y = 500;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test3",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test3",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -239,8 +243,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x75\x70\x42\x23\x50\x22\xba\xf6\xfa\x3b"
-        "\x7f\x7e\x54\x4c\xee\xea\x82\x80\x72\x16")){
+        "\x1d\xc2\x6b\x72\x14\x5f\xeb\x64\xfc\x1a"
+        "\x69\x4f\xce\x55\xef\xef\xd1\x53\x66\xc7")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -258,14 +262,14 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox4)
     int16_t x = 770;
     int16_t y = 500;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test4",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test4",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -277,8 +281,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x29\x0d\xa9\x2d\x89\x68\x0a\x55\x66\x7f"
-        "\x49\x70\x7d\x0a\xef\xeb\x8e\x3c\xfb\xdb")){
+        "\xf7\x26\x94\xdb\x18\x6a\x9b\xfd\xb6\x22"
+        "\x53\xe2\x9e\x06\x51\xff\xc7\x91\xeb\x7d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -296,14 +300,14 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox5)
     int16_t x = -20;
     int16_t y = -7;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test5",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test5",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -315,8 +319,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe4\xa7\x83\x3a\x37\x90\xa2\xaf\xe0\x98"
-        "\xfe\xba\x08\x75\x08\x9c\xa7\xc7\xef\x3d")){
+        "\xfe\x1d\x59\xa6\xe9\x9b\xba\xdd\xda\x81"
+        "\x71\xba\x9f\xe4\x41\x5e\x8b\x9b\x25\x0d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -334,14 +338,14 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox6)
     int16_t x = 760;
     int16_t y = -7;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wmsgbox.rdp_input_invalidate(Rect(0 + wmsgbox.dx(),
@@ -353,8 +357,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7a\x88\x3b\xa9\x83\x8b\xca\x07\xb4\x9e"
-        "\x1a\x69\x4e\x9b\x81\x96\xce\xbf\xca\xb3")){
+        "\x4f\x32\x4d\x0c\x8a\x93\xf9\xbc\x9c\x9b"
+        "\xe2\x85\x40\xd4\x44\x03\x60\x8e\x39\x94")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -372,14 +376,14 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wmsgbox.rdp_input_invalidate(Rect(20 + wmsgbox.dx(),
@@ -391,8 +395,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfa\x86\xa9\x1a\x2f\x5f\xa0\x54\xa2\x4d"
-        "\x39\x45\x80\xc1\xc7\x34\x6a\xf4\xf9\x95")){
+        "\x8c\x2e\x1d\x0c\x9f\x00\x39\xcc\x1e\xae"
+        "\x29\x36\x8a\xf7\xf1\xc6\xe2\x81\xf8\x2d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -410,14 +414,14 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmsgbox.rdp_input_invalidate(Rect(20 + wmsgbox.dx(),
@@ -429,8 +433,8 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
-        "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
+        "\x41\x37\xe3\x2f\xb2\xfb\x1e\x6f\x6c\x9a"
+        "\x93\x72\x4f\x8c\x7c\x90\xf3\x9d\x0d\xa4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -461,22 +465,24 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     int16_t x = 10;
     int16_t y = 10;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, &notifier, "test6",
+    MessageBox wmsgbox(drawable, x, y, parent, &notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
                          "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                          "Nam lacinia purus luctus ante congue facilisis.<br>"
                          "Donec sodales mauris luctus ante ultrices blandit.",
-                         id, fg_color, bg_color);
+                         id, "Ok", fg_color, bg_color);
 
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    wmsgbox.ok.rdp_input_mouse(CLIC_BUTTON1_DOWN, 15, 15, NULL);
+    wmsgbox.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                               wmsgbox.ok.dx(), wmsgbox.ok.dy(), NULL);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    wmsgbox.ok.rdp_input_mouse(CLIC_BUTTON1_UP, 15, 15, NULL);
+    wmsgbox.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                               wmsgbox.ok.dx(), wmsgbox.ok.dy(), NULL);
     BOOST_CHECK(notifier.sender == &wmsgbox);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 }

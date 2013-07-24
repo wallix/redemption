@@ -27,11 +27,16 @@
 #include "log.hpp"
 
 #include "internal/widget2/edit.hpp"
+#include "internal/widget2/composite.hpp"
 // #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
+
+#ifndef FIXTURES_PATH
+# define FIXTURES_PATH
+#endif
 
 struct TestDraw : DrawApi
 {
@@ -39,7 +44,7 @@ struct TestDraw : DrawApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, false)
+    : gd(w, h)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -104,9 +109,9 @@ struct TestDraw : DrawApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, const Rect& clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
-        this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
+        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
 
     virtual void text_metrics(const char* text, int& width, int& height)
@@ -121,7 +126,7 @@ struct TestDraw : DrawApi
                 width += font_item->width + 2;
                 height = std::max(height, font_item->height);
             }
-            width -= 2;
+            width -= 1;
         }
     }
 
@@ -129,7 +134,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -151,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     int ytext = 1;
     size_t edit_pos = 2;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test1", id,
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test1", id,
                      fg_color, bg_color, edit_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
@@ -160,12 +165,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    //drawable.save_to_png("/tmp/edit.png");
+    //drawable.save_to_png("/tmp/edit1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x5c\x81\x3e\xbd\x24\xf0\xa2\x56\xb0\x21"
-        "\x60\xb2\x1d\xf8\x0d\xcc\x3b\x71\x73\x3d")){
+        "\x2f\x3c\xc6\x6e\x95\xda\xe3\x40\x8a\xdb"
+        "\xf2\xf3\x86\xe6\xf1\x43\x53\x56\x1d\x3e")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -184,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -196,8 +201,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x4e\x45\x7d\x3d\xca\xa5\xb0\x13\x78\xc0"
-        "\xea\x3c\x6c\xae\x82\x43\xa3\xce\xbe\x99")){
+        "\x01\x1a\x13\xec\x87\x60\x43\x1c\xa4\x3f"
+        "\xb4\x10\x89\x97\x5f\x60\x30\xfc\x92\x52")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -216,7 +221,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -228,8 +233,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x96\x06\x6f\x58\x6e\x6e\xae\x7b\x5c\x60"
-        "\x93\xd5\x9d\xb7\x8d\x50\x60\xd3\x31\x0a")){
+        "\xd2\x43\x8f\x1c\x3e\xcf\xeb\xbe\x4e\xdc"
+        "\x78\x81\x48\x2d\x70\x1d\x28\x48\xda\x64")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -248,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -260,8 +265,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa2\x0a\xe6\x84\xb1\xda\x63\xe0\x34\xa2"
-        "\x75\x0b\xb0\xc7\x10\xcc\x28\xc8\x4b\x3d")){
+        "\x4f\x94\x66\x08\x1a\xe5\xc0\xa5\x1b\x5f"
+        "\x6b\x9c\x6d\x5b\xcc\x57\x4b\x55\x50\x7d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -280,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -292,8 +297,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x30\x1f\xa4\x66\x0f\xff\x14\x56\xad\xf3"
-        "\xa5\x3b\x90\x4a\x3b\x15\x38\xbe\x87\xf5")){
+        "\x3e\xe5\xb4\x09\x8a\x68\x28\x85\xe4\x3b"
+        "\x0d\x9b\x64\xc9\x21\xfa\xb0\xed\x39\x78")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -312,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -324,8 +329,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x75\xcc\xdd\x2a\x6b\xfa\xff\x61\xcb\x7f"
-        "\xe4\xfe\x63\x06\xb4\x62\x4d\x0c\xac\x2c")){
+        "\xed\x68\xb5\x5c\x2d\x26\xcc\x43\xb8\x25"
+        "\xef\xd7\x4f\x83\x75\xf5\x7b\x69\x3a\x06")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -344,7 +349,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
@@ -356,8 +361,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x13\x67\x4c\xf5\xd4\xfc\xda\x77\x16\x29"
-        "\x11\x0b\x91\x45\x00\x4b\xb4\x12\x5a\x78")){
+        "\x78\xf5\xe4\x38\x47\xc8\x9b\x3e\x87\x18"
+        "\x20\x5b\xb9\x1f\x24\xeb\x31\x3d\x7d\xc7")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -376,7 +381,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
@@ -388,8 +393,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe9\xf8\xf0\xe0\x9a\x10\x25\x0c\x02\x3f"
-        "\xae\x05\xf6\xd0\x23\xde\x2f\xf6\xf4\xba")){
+        "\x22\xb4\x05\xf5\x69\x0d\x69\x30\x13\x11"
+        "\x01\xd2\xfc\x20\x59\xac\xad\x9e\x11\xf4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -397,6 +402,27 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
 BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 {
     TestDraw drawable(800, 600);
+
+    struct WidgetReceiveEvent : public Widget2 {
+        Widget2* sender;
+        NotifyApi::notify_event_t event;
+
+        WidgetReceiveEvent(TestDraw& drawable)
+        : Widget2(&drawable, Rect(), NULL, NULL)
+        , sender(0)
+        , event(0)
+        {}
+
+        virtual void draw(const Rect&)
+        {}
+
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
+                            unsigned long, unsigned long)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } widget_for_receive_event(drawable);
 
     struct Notify : public NotifyApi {
         Widget2* sender;
@@ -418,14 +444,15 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED);
+    WidgetEdit wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED);
+    wedit.focus(0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x59\x41\xdf\x6e\x2c\x8d\x84\xbf\x94\x91"
-        "\x4d\xda\x2b\x1f\xce\x2d\x3d\xd7\xa0\x26")){
+        "\xb7\xac\xcd\x09\x45\x2e\x92\x80\x35\xf1"
+        "\xdb\x38\xd5\x24\x4c\x7b\xed\x44\x85\x7d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -440,8 +467,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x5e\x92\x36\xf9\x4d\x3d\x81\x8b\x06\x3e"
-        "\xdd\x83\x04\x11\x95\xb8\xc6\xa2\x06\x3b")){
+        "\x4c\xf8\x17\x33\xff\x14\xd3\xc7\xe0\xce"
+        "\xfb\x5e\x46\xe5\x90\xab\x9d\xa5\x92\xe7")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wedit);
@@ -455,8 +482,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x75\xcc\x9d\xca\x1e\x52\x9f\x7a\x52\x3c"
-        "\x76\xf2\xe3\x4d\xc4\x21\x60\xa4\x13\xfb")){
+        "\xc6\x4b\xf6\xb2\x76\xd9\xef\xe2\xe3\x66"
+        "\x09\x94\x39\x50\x46\xb5\xae\xd4\xdf\x4f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == &wedit);
@@ -469,8 +496,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e3.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x50\x38\x4d\x21\x1d\x86\xc2\x58\xa9\x19"
-        "\x69\x00\x45\xc9\xcd\xbe\x9e\xb6\x78\x9b")){
+        "\x7d\xf2\xc6\x0e\xc9\x4e\x07\xd0\x11\x84"
+        "\x19\xd5\x98\xba\x6e\x6a\x6a\x03\x95\x5d"
+        )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     BOOST_CHECK(notifier.sender == 0);
@@ -482,8 +510,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e4.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x75\xcc\x9d\xca\x1e\x52\x9f\x7a\x52\x3c"
-        "\x76\xf2\xe3\x4d\xc4\x21\x60\xa4\x13\xfb")){
+        "\xc6\x4b\xf6\xb2\x76\xd9\xef\xe2\xe3\x66"
+        "\x09\x94\x39\x50\x46\xb5\xae\xd4\xdf\x4f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -493,8 +521,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e5.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x5e\x92\x36\xf9\x4d\x3d\x81\x8b\x06\x3e"
-        "\xdd\x83\x04\x11\x95\xb8\xc6\xa2\x06\x3b")){
+        "\x4c\xf8\x17\x33\xff\x14\xd3\xc7\xe0\xce"
+        "\xfb\x5e\x46\xe5\x90\xab\x9d\xa5\x92\xe7")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -503,8 +531,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e6.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa1\xa7\x3f\xa7\x5d\xa4\x42\x7f\x61\x59"
-        "\xde\xe5\x97\x7a\x4f\x43\x66\x3d\x3d\xf0")){
+        "\xff\x0c\x43\xde\xa2\x4c\x22\xbe\xfc\x98"
+        "\x63\xe3\x10\x9e\x7e\x49\x45\x78\x83\x61")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -513,8 +541,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e7.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x77\x2e\xdd\xbd\x2c\x59\x44\xec\xdb\xcc"
-        "\x17\xe7\x0b\x33\x7c\x10\x98\x6f\xa5\x32")){
+        "\x92\xe3\x46\x0e\x91\x55\xb1\xca\x80\xad"
+        "\x3d\xe5\x09\xb1\x68\xcc\x31\xeb\x75\xa4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -526,8 +554,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e8.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf6\x72\xe4\x2d\xba\x5e\xa3\x38\x20\xc1"
-        "\x68\x5f\xab\x5c\x10\xa0\xe4\xb7\xb0\xf2")){
+        "\xd4\x6a\x59\xd1\x20\xc1\x50\xac\x40\x52"
+        "\xf6\x39\x37\x11\x4d\x2f\x25\x7a\x90\x0f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -539,8 +567,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e9.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x20\xd3\x26\xdc\x20\x6c\x8f\x74\xbb\xcc"
-        "\x3b\xf3\x50\x38\x46\x3d\x31\x5d\x20\x82")){
+        "\x02\x8b\x52\x84\xe0\xd9\x58\x89\xdb\x0f"
+        "\x25\x7d\x46\xa5\x62\xb4\x4e\x4b\x5a\x01")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -552,8 +580,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e10.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x53\xd3\x2c\x25\x22\xe4\x9c\x6c\x18\x37"
-        "\xf8\xe0\x14\x65\x14\xc5\x9a\x69\x4e\xab")){
+        "\xc4\xd8\x39\x91\xd1\x42\x68\x2f\x65\xec"
+        "\x9c\xa7\xad\xf1\x81\xce\x5e\x14\x35\x7a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -563,77 +591,77 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     BOOST_CHECK(notifier.sender == &wedit);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+    notifier.sender = 0;
+    notifier.event = 0;
 
-//     wedit.send_event(CLIC_BUTTON1_DOWN, 10, 3, 0);
-//     BOOST_CHECK(widget_for_receive_event.sender == 0);
-//     BOOST_CHECK(widget_for_receive_event.event == 0);
-//     BOOST_CHECK(notifier.sender == 0);
-//     BOOST_CHECK(notifier.event == 0);
-//     notifier.sender = 0;
-//     notifier.event = 0;
-//     widget_for_receive_event.sender = 0;
-//     widget_for_receive_event.event = 0;
-//
-//     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-//     //drawable.save_to_png("/tmp/edit-e10.png");
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
+    wedit.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x+10, y+3, 0);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+
+    wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
+
+    //drawable.save_to_png("/tmp/edit-e10.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x56\xad\x48\xb5\xfc\x61\xcc\xad\x3c\xc7"
+        "\x0c\xa8\xa3\xb3\x71\x7c\x06\x2e\xdf\x87")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
-//
-// BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
-// {
-//     TestDraw drawable(800, 600);
-//
-//     // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
-//     Widget2* parent = NULL;
-//     NotifyApi * notifier = NULL;
-//
-//     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
-//
-//     WidgetEdit wedit1(&drawable, 0,0, 50, &wcomposite, notifier,
-//                         "abababab", 4, YELLOW, BLACK);
-//     WidgetEdit wedit2(&drawable, 0,100, 50, &wcomposite, notifier,
-//                         "ggghdgh", 2, WHITE, RED);
-//     WidgetEdit wedit3(&drawable, 100,100, 50, &wcomposite, notifier,
-//                         "lldlslql", 1, BLUE, RED);
-//     WidgetEdit wedit4(&drawable, 300,300, 50, &wcomposite, notifier,
-//                         "LLLLMLLM", 20, PINK, DARK_GREEN);
-//     WidgetEdit wedit5(&drawable, 700,-10, 50, &wcomposite, notifier,
-//                         "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE);
-//     WidgetEdit wedit6(&drawable, -10,550, 50, &wcomposite, notifier,
-//                         "xxwwp", 2, DARK_GREY, PALE_GREEN);
-//
-//     wcomposite.child_list.push_back(&wedit1);
-//     wcomposite.child_list.push_back(&wedit2);
-//     wcomposite.child_list.push_back(&wedit3);
-//     wcomposite.child_list.push_back(&wedit4);
-//     wcomposite.child_list.push_back(&wedit5);
-//     wcomposite.child_list.push_back(&wedit6);
-//
-//     // ask to widget to redraw at position 100,25 and of size 100x100.
-//     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
-//
-//     //drawable.save_to_png("/tmp/edit9.png");
-//
-//     char message[1024];
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x3f\x02\x08\xad\xbd\xd8\xf2\xc7\x1b\xf8"
-//         "\x32\x58\x67\x66\x5d\xdb\xe5\x75\xe4\xda")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-//
-//     // ask to widget to redraw at it's current position
-//     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
-//
-//     //drawable.save_to_png("/tmp/edit10.png");
-//
-//     if (!check_sig(drawable.gd.drawable, message,
-//         "\x85\x0a\x9c\x09\x57\xd9\x99\x52\xed\xa8"
-//         "\x25\x71\x91\x6c\xf4\xf4\x21\x9a\xe5\x1a")){
-//         BOOST_CHECK_MESSAGE(false, message);
-//     }
-// }
+
+BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetEdit is a edit widget of size 256x125 at position 0,0 in it's parent context
+    Widget2* parent = NULL;
+    NotifyApi * notifier = NULL;
+
+    WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
+
+    WidgetEdit wedit1(drawable, 0,0, 50, &wcomposite, notifier,
+                        "abababab", 4, YELLOW, BLACK);
+    WidgetEdit wedit2(drawable, 0,100, 50, &wcomposite, notifier,
+                        "ggghdgh", 2, WHITE, RED);
+    WidgetEdit wedit3(drawable, 100,100, 50, &wcomposite, notifier,
+                        "lldlslql", 1, BLUE, RED);
+    WidgetEdit wedit4(drawable, 300,300, 50, &wcomposite, notifier,
+                        "LLLLMLLM", 20, PINK, DARK_GREEN);
+    WidgetEdit wedit5(drawable, 700,-10, 50, &wcomposite, notifier,
+                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE);
+    WidgetEdit wedit6(drawable, -10,550, 50, &wcomposite, notifier,
+                        "xxwwp", 2, DARK_GREY, PALE_GREEN);
+
+    wcomposite.child_list.push_back(&wedit1);
+    wcomposite.child_list.push_back(&wedit2);
+    wcomposite.child_list.push_back(&wedit3);
+    wcomposite.child_list.push_back(&wedit4);
+    wcomposite.child_list.push_back(&wedit5);
+    wcomposite.child_list.push_back(&wedit6);
+
+    // ask to widget to redraw at position 100,25 and of size 100x100.
+    wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
+
+    //drawable.save_to_png("/tmp/edit9.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x2e\xdd\x45\x63\x07\x2e\x81\xdf\xff\xa2"
+        "\x07\xb5\x85\xac\x5b\x31\x91\x61\x36\x6d")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // ask to widget to redraw at it's current position
+    wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
+
+    //drawable.save_to_png("/tmp/edit10.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\x3f\xcb\x49\xfe\x0f\xe0\xc6\xbc\x53\x0b"
+        "\xd7\xd5\x5f\xe7\xbe\x08\xc8\x5b\xad\xbf")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
 

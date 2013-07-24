@@ -40,11 +40,11 @@ public:
     int border_right_bottom_color;
     int border_right_bottom_color_inner;
 
-    WidgetEdit(DrawApi* drawable, int16_t x, int16_t y, uint16_t cx,
+    WidgetEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                Widget2* parent, NotifyApi* notifier, const char * text,
                int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
+    : Widget2(&drawable, Rect(x,y,cx,1), parent, notifier, group_id)
     , label(drawable, 0, 0, this, 0, text, false, 0, fgcolor, bgcolor, xtext, ytext)
     , w_text(0)
     , h_text(0)
@@ -59,16 +59,14 @@ public:
             this->edit_pos = std::min(this->num_chars, edit_position);
             this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
             this->cursor_px_pos = 0;
-            if (this->drawable) {
-                char c = this->label.buffer[this->edit_buffer_pos];
-                this->label.buffer[this->edit_buffer_pos] = 0;
-                this->drawable->text_metrics(this->label.buffer, this->w_text, this->h_text);
-                this->cursor_px_pos = this->w_text;
-                this->label.buffer[this->edit_buffer_pos] = c;
-                int w, h;
-                this->drawable->text_metrics(&this->label.buffer[this->edit_buffer_pos], w, h);
-                this->w_text += w;
-            }
+            char c = this->label.buffer[this->edit_buffer_pos];
+            this->label.buffer[this->edit_buffer_pos] = 0;
+            this->drawable->text_metrics(this->label.buffer, this->w_text, this->h_text);
+            this->cursor_px_pos = this->w_text;
+            this->label.buffer[this->edit_buffer_pos] = c;
+            int w, h;
+            this->drawable->text_metrics(&this->label.buffer[this->edit_buffer_pos], w, h);
+            this->w_text += w;
         } else {
             this->buffer_size = 0;
             this->num_chars = 0;
@@ -76,10 +74,9 @@ public:
             this->edit_pos = 0;
             this->cursor_px_pos = 0;
         }
-        if (this->drawable) {
-            int w;
-            this->drawable->text_metrics("Lp", w, this->h_text);
-        }
+
+        int w;
+        this->drawable->text_metrics("Lp", w, this->h_text);
         this->rect.cy = this->h_text + this->label.y_text * 2;
         this->label.rect.cx = this->rect.cx;
         this->label.rect.cy = this->rect.cy;
@@ -104,9 +101,7 @@ public:
             this->buffer_size = std::min(WidgetLabel::buffer_size - 1, strlen(text));
             memcpy(this->label.buffer, text, this->buffer_size);
             this->label.buffer[this->buffer_size] = 0;
-            if (this->drawable) {
-                this->drawable->text_metrics(this->label.buffer, this->w_text, this->h_text);
-            }
+            this->drawable->text_metrics(this->label.buffer, this->w_text, this->h_text);
             if (this->label.auto_resize) {
                 this->rect.cx = this->label.x_text * 2 + this->w_text;
                 this->rect.cy = this->label.y_text * 2 + this->h_text;
@@ -164,21 +159,17 @@ public:
 
     virtual bool focus(Widget2* old_focused, int policy = 0)
     {
-        if (this->drawable) {
-            this->drawable->begin_update();
-            this->draw_cursor(this->get_cursor_rect());
-            this->drawable->end_update();
-        }
+        this->drawable->begin_update();
+        this->draw_cursor(this->get_cursor_rect());
+        this->drawable->end_update();
         return Widget2::focus(old_focused, policy);
     }
 
     virtual void blur()
     {
-        if (this->drawable) {
-            this->drawable->begin_update();
-            this->label.draw(this->get_cursor_rect());
-            this->drawable->end_update();
-        }
+        this->drawable->begin_update();
+        this->label.draw(this->get_cursor_rect());
+        this->drawable->end_update();
         return Widget2::blur();
     }
 
@@ -232,14 +223,12 @@ public:
     {
         this->edit_pos++;
         size_t n = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 1);
-        if (this->drawable) {
-            char c = this->label.buffer[this->edit_buffer_pos + n];
-            this->label.buffer[this->edit_buffer_pos + n] = 0;
-            int w;
-            this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
-            this->cursor_px_pos += w;
-            this->label.buffer[this->edit_buffer_pos + n] = c;
-        }
+        char c = this->label.buffer[this->edit_buffer_pos + n];
+        this->label.buffer[this->edit_buffer_pos + n] = 0;
+        int w;
+        this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
+        this->cursor_px_pos += w;
+        this->label.buffer[this->edit_buffer_pos + n] = c;
         this->edit_buffer_pos += n;
     }
 
@@ -259,25 +248,21 @@ public:
             ++len;
         }
         this->edit_pos--;
-        if (this->drawable) {
-            char c = this->label.buffer[this->edit_buffer_pos];
-            this->label.buffer[this->edit_buffer_pos] = 0;
-            int w;
-            this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos - len, w, this->h_text);
-            this->cursor_px_pos -= w;
-            this->label.buffer[this->edit_buffer_pos] = c;
-        }
+        char c = this->label.buffer[this->edit_buffer_pos];
+        this->label.buffer[this->edit_buffer_pos] = 0;
+        int w;
+        this->drawable->text_metrics(this->label.buffer + this->edit_buffer_pos - len, w, this->h_text);
+        this->cursor_px_pos -= w;
+        this->label.buffer[this->edit_buffer_pos] = c;
         this->edit_buffer_pos -= len;
     }
 
     void update_draw_cursor(Rect old_cursor)
     {
-        if (this->drawable) {
-            this->drawable->begin_update();
-            this->draw_cursor(this->get_cursor_rect());
-            this->label.draw(old_cursor);
-            this->drawable->end_update();
-        }
+        this->drawable->begin_update();
+        this->draw_cursor(this->get_cursor_rect());
+        this->label.draw(old_cursor);
+        this->drawable->end_update();
     }
 
     void move_to_last_character()
@@ -375,18 +360,16 @@ public:
                         this->decrement_edit_pos();
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
                         this->buffer_size += this->edit_buffer_pos - ebpos;
-                        if (this->drawable) {
-                            this->drawable->begin_update();
-                            this->drawable->draw(RDPOpaqueRect(crect, 0x888888), this->rect);
-                            this->draw_cursor(this->get_cursor_rect());
-                            this->label.draw(Rect(
-                                this->dx() + this->cursor_px_pos + this->label.x_text + 3,
-                                this->dy() + this->label.y_text + 1,
-                                this->w_text - this->cursor_px_pos,
-                                this->h_text
-                            ));
-                            this->drawable->end_update();
-                        }
+                        this->drawable->begin_update();
+                        this->drawable->draw(RDPOpaqueRect(crect, 0x888888), this->rect);
+                        this->draw_cursor(this->get_cursor_rect());
+                        this->label.draw(Rect(
+                            this->dx() + this->cursor_px_pos + this->label.x_text + 3,
+                            this->dy() + this->label.y_text + 1,
+                            this->w_text - this->cursor_px_pos,
+                            this->h_text
+                        ));
+                        this->drawable->end_update();
                         this->w_text -= pxtmp - this->cursor_px_pos;
                     }
                     break;
@@ -402,17 +385,15 @@ public:
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
                         this->buffer_size -= len;
                         this->num_chars--;
-                        if (this->drawable) {
-                            this->drawable->begin_update();
-                            this->label.draw(Rect(
-                                this->dx() + this->cursor_px_pos + this->label.x_text + 3,
-                                this->dy() + this->label.y_text + 1,
-                                this->w_text - this->cursor_px_pos,
-                                this->h_text
-                            ));
-                            this->draw_cursor(this->get_cursor_rect());
-                            this->drawable->end_update();
-                        }
+                        this->drawable->begin_update();
+                        this->label.draw(Rect(
+                            this->dx() + this->cursor_px_pos + this->label.x_text + 3,
+                            this->dy() + this->label.y_text + 1,
+                            this->w_text - this->cursor_px_pos,
+                            this->h_text
+                        ));
+                        this->draw_cursor(this->get_cursor_rect());
+                        this->drawable->end_update();
                         this->w_text -= w;
                     }
                     break;

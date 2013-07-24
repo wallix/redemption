@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean, Raphael Zhou
+   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 
    Transport layer abstraction, socket implementation with TLS support
 */
@@ -914,9 +914,13 @@ class SocketTransport : public Transport {
                 }
 */
                 if (error_message) {
-                    snprintf(const_cast<char *>(error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
-                        "The certificate for host %s:%d has changed!",
-                        this->ip_address, this->port);
+                    char buff[256];
+                    snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
+                             this->ip_address, this->port);
+                    error_message->copy_c_str(buff);
+                    // snprintf(const_cast<char *>(error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
+                    //     "The certificate for host %s:%d has changed!",
+                    //     this->ip_address, this->port);
                 }
                 LOG(LOG_ERR, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                     this->ip_address, this->port,

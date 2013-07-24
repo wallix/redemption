@@ -32,13 +32,18 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
+#ifndef FIXTURES_PATH
+# define FIXTURES_PATH
+#endif
+
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, false)
+    : gd(w, h)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -57,9 +62,9 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPPatBlt&, const Rect&)
+    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, rect);
     }
 
     virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
@@ -103,9 +108,9 @@ struct TestDraw : DrawApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, const Rect& clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
-        this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
+        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
 
     virtual void text_metrics(const char* text, int& width, int& height)
@@ -128,7 +133,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -144,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     int16_t y = 0;
     int id = 0;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test1", id, "rec", "rec");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test1", id, "rec", "rec");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(window_login.rect);
@@ -153,8 +158,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x98\x2d\x22\x02\xaf\xb3\xc8\xbd\xa7\xfe"
-        "\xec\x08\x5e\xc9\x1d\xb3\xd5\x31\x79\x42")){
+        "\xfc\x43\xd3\xf2\x92\x41\xe9\x6b\x27\x95"
+        "\xd4\xe2\x20\x27\x52\xbe\xa8\xd9\xc3\x0a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -169,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test2");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test2");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -181,8 +186,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9e\xac\x80\xf3\x1d\x89\xf9\x71\x51\x66"
-        "\xe8\xf7\x49\x0b\x48\xb1\xde\xfb\x2d\x86")){
+        "\x80\xcd\xfa\xc5\x68\x32\x32\xf3\xf3\xab"
+        "\x3e\x58\xa1\x62\x73\xd7\x17\x25\x84\xb4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -197,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test3");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test3");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -209,8 +214,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe6\xda\x0e\x1b\x73\x5a\x38\x70\x5a\x57"
-        "\xfa\x53\xa5\x88\x34\x59\xdb\xc5\xba\xe7")){
+        "\x78\xca\x63\x89\x75\xbe\x83\x3f\x65\xa7"
+        "\xcc\x77\x57\xf5\x17\xb3\x04\xed\x36\x9f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -225,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test4");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test4");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -237,8 +242,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x6d\x8a\x48\xc8\x71\xfe\x8c\x32\x65\x1e"
-        "\x6f\xdc\x5c\x2e\x67\xa1\x0e\x07\xce\x12")){
+        "\xe2\x15\x7f\x77\x79\xcc\x77\x71\x67\xcb"
+        "\x28\x4a\x29\x73\x16\x8e\xe1\xa3\xb7\xdb")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -253,7 +258,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test5");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test5");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -265,8 +270,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x44\x34\x14\x95\x17\x0a\x4f\x26\xcb\x90"
-        "\x8e\xa3\xd6\xcc\x62\x5e\x72\x16\xc4\x1d")){
+        "\x1d\xd5\xde\xb4\x6c\xfb\x48\xf8\x23\xba"
+        "\x8a\x88\x39\xbc\x72\xad\xc0\x33\x37\x69")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -281,7 +286,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test6");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test6");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(Rect(0 + window_login.dx(),
@@ -293,8 +298,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf0\x62\xab\x54\x12\xac\xc7\x00\x35\xb6"
-        "\x0c\xb3\x29\xe7\x56\xea\x7c\xa1\x4e\xa4")){
+        "\x66\xc2\x0e\x79\x4d\x30\xf3\x81\x35\x38"
+        "\x96\x6e\x4f\x47\x0a\xe2\xd7\x45\x91\x3e")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -309,7 +314,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test6");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test6");
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     window_login.rdp_input_invalidate(Rect(20 + window_login.dx(),
@@ -321,8 +326,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xdb\x23\x33\xa8\x7a\xa6\xc3\x9c\xc0\x9c"
-        "\xf1\xd6\x99\xd5\xd9\x46\x6f\xa6\x7c\x1a")){
+        "\x17\x57\xb2\xc8\x32\xf1\x63\x5b\x19\x8a"
+        "\x19\xc5\xa6\x8c\x71\x90\xb4\x81\x5b\xf9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -337,7 +342,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WindowLogin window_login(&drawable, x, y, parent, notifier, "test6");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test6");
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     window_login.rdp_input_invalidate(Rect(20 + window_login.dx(),
@@ -349,8 +354,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
-        "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
+        "\x41\x37\xe3\x2f\xb2\xfb\x1e\x6f\x6c\x9a"
+        "\x93\x72\x4f\x8c\x7c\x90\xf3\x9d\x0d\xa4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -378,15 +383,17 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     int16_t x = 10;
     int16_t y = 10;
 
-    WindowLogin window_login(&drawable, x, y, parent, &notifier, "test6");
+    WindowLogin window_login(drawable, x, y, parent, &notifier, "test6");
 
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    window_login.ok.rdp_input_mouse(CLIC_BUTTON1_DOWN, 15, 15, NULL);
+    window_login.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                                    window_login.ok.dx(), window_login.ok.dy(), NULL);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    window_login.ok.rdp_input_mouse(CLIC_BUTTON1_UP, 15, 15, NULL);
+    window_login.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                                    window_login.ok.dx(), window_login.ok.dy(), NULL);
     BOOST_CHECK(notifier.sender == &window_login);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 }
@@ -431,7 +438,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     int16_t x = 10;
     int16_t y = 10;
 
-    WindowLogin window_login(&drawable, x, y, &parent, 0, "test6");
+    WindowLogin window_login(drawable, x, y, &parent, 0, "test6");
     parent.child_list.push_back(&window_login);
 
     parent.rdp_input_invalidate(parent.rect);
@@ -443,19 +450,19 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x34\x39\x02\x46\xc3\x33\xbc\x57\x64\x22"
-        "\xe0\x35\xe1\x01\x06\xac\x80\x20\xc4\xb4")){
+        "\xfd\xea\x6e\xac\x4c\x62\xe6\xb8\x72\x36"
+        "\x71\x3d\xc8\x02\xba\x0d\x8a\x3b\xba\xf2")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     //close window_help and redraw
-    window_login.window_help->button_close.send_notify(NOTIFY_SUBMIT);
+    window_login.window_help->button_close.send_notify(NOTIFY_CANCEL);
 
     //drawable.save_to_png("/tmp/window_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe1\x6c\xf8\x2d\x6d\x0a\x13\x92\x02\xf3"
-        "\x58\x53\x1f\xe2\x6c\x05\xb1\x6a\x9e\x67")){
+        "\xc8\xd8\x06\xc1\xcd\x95\x34\xf5\xb3\x52"
+        "\xc9\x68\x3e\x14\x21\x56\xc4\xb9\x44\x25")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

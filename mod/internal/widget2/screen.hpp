@@ -103,8 +103,8 @@ class WidgetScreen : public WidgetComposite
     FocusPropagation focus_propagation;
 
 public:
-    WidgetScreen(DrawApi * drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
-    : WidgetComposite(drawable, Rect(0, 0, width, height), NULL, notifier)
+    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
+    : WidgetComposite(&drawable, Rect(0, 0, width, height), NULL, notifier)
     , widget_pressed(0)
     {
     }
