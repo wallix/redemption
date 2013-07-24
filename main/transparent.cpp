@@ -162,7 +162,7 @@ int main(int argc, char * argv[]) {
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
     Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
-        fastpath_support, mem3blt_support, input_filename.c_str());
+        fastpath_support, mem3blt_support, true, input_filename.c_str());
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {

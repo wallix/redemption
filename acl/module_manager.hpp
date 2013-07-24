@@ -640,11 +640,12 @@ public:
                                             , this->ini.globals.alternate_shell.get_cstr()
                                             , this->ini.globals.shell_working_directory.get_cstr()
                                             , this->ini.client.clipboard.get()
-                                            , true   // support fast-path
-                                            , true   // support mem3blt
+                                            , true          // support fast-path
+                                            , true          // support mem3blt
                                             , this->ini.globals.enable_bitmap_update
                                             , this->ini.debug.mod_rdp
-                                            , true   // support new pointer
+                                            , true          // support new pointer
+                                            , true          // support RDP 5.0 bulk compression
                                             );
                     this->mod->event.obj = client_sck;
 
