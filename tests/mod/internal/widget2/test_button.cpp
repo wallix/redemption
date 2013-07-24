@@ -456,6 +456,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
 
         WidgetReceiveEvent(TestDraw& drawable)
         : Widget2(&drawable, Rect(), NULL, NULL)
+        , sender(0)
+        , event(0)
         {}
 
         virtual void draw(const Rect&)
@@ -472,6 +474,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
     struct Notify : public NotifyApi {
         Widget2* sender;
         notify_event_t event;
+
+        Notify() 
+        : sender(0)
+        , event(0)
+        {
+        }
         virtual void notify(Widget2* sender, notify_event_t event,
                             long unsigned int, long unsigned int)
         {
