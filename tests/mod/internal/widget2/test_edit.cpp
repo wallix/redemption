@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     int ytext = 1;
     size_t edit_pos = 2;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test1", id,
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test1", id,
                      fg_color, bg_color, edit_pos, xtext, ytext);
 
     // ask to widget to redraw at it's current position
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     int16_t y = 100;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test2", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test3", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
     int16_t y = 500;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test4", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test5", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at it's current position
     wedit.rdp_input_invalidate(Rect(0 + wedit.dx(),
@@ -349,7 +349,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
     int16_t y = -7;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
@@ -381,7 +381,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
     int16_t y = 0;
     uint16_t cx = 50;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
+    WidgetEdit wedit(drawable, x, y, cx, parent, notifier, "test6", id, fg_color, bg_color, 0);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wedit.rdp_input_invalidate(Rect(20 + wedit.dx(),
@@ -442,7 +442,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEdit wedit(&drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED);
+    WidgetEdit wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED);
     wedit.focus(0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
@@ -619,17 +619,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
 
     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
 
-    WidgetEdit wedit1(&drawable, 0,0, 50, &wcomposite, notifier,
+    WidgetEdit wedit1(drawable, 0,0, 50, &wcomposite, notifier,
                         "abababab", 4, YELLOW, BLACK);
-    WidgetEdit wedit2(&drawable, 0,100, 50, &wcomposite, notifier,
+    WidgetEdit wedit2(drawable, 0,100, 50, &wcomposite, notifier,
                         "ggghdgh", 2, WHITE, RED);
-    WidgetEdit wedit3(&drawable, 100,100, 50, &wcomposite, notifier,
+    WidgetEdit wedit3(drawable, 100,100, 50, &wcomposite, notifier,
                         "lldlslql", 1, BLUE, RED);
-    WidgetEdit wedit4(&drawable, 300,300, 50, &wcomposite, notifier,
+    WidgetEdit wedit4(drawable, 300,300, 50, &wcomposite, notifier,
                         "LLLLMLLM", 20, PINK, DARK_GREEN);
-    WidgetEdit wedit5(&drawable, 700,-10, 50, &wcomposite, notifier,
+    WidgetEdit wedit5(drawable, 700,-10, 50, &wcomposite, notifier,
                         "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE);
-    WidgetEdit wedit6(&drawable, -10,550, 50, &wcomposite, notifier,
+    WidgetEdit wedit6(drawable, -10,550, 50, &wcomposite, notifier,
                         "xxwwp", 2, DARK_GREY, PALE_GREEN);
 
     wcomposite.child_list.push_back(&wedit1);

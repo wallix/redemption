@@ -44,7 +44,7 @@ public:
     WidgetButton help;
     MessageBox * window_help;
 
-    WindowLogin(DrawApi* drawable, int16_t x, int16_t y, Widget2* parent,
+    WindowLogin(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
                 NotifyApi* notifier, const char* caption, int group_id = 0,
                 const char * login = 0, const char * password = 0,
                 int fgcolor = BLACK, int bgcolor = GREY,
@@ -139,7 +139,7 @@ public:
                 while (p->parent)
                     p = p->parent;
                 this->window_help = new MessageBox(
-                    this->drawable, 0, 0, p, this, "Help",
+                    *this->drawable, 0, 0, p, this, "Help",
                     "You must be authenticated before using this<br>"
                     "session.<br>"
                     "<br>"

@@ -32,6 +32,11 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
+#ifndef FIXTURES_PATH
+# define FIXTURES_PATH
+#endif
+
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -57,9 +62,9 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPPatBlt&, const Rect&)
+    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, rect);
     }
 
     virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
@@ -128,7 +133,7 @@ struct TestDraw : DrawApi
     {
         std::FILE * file = fopen(filename, "w+");
         dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize);
+                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
         fclose(file);
     }
 };
@@ -143,7 +148,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog)
     int16_t x = 0;
     int16_t y = 0;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test1",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test1",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -157,8 +162,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd6\xfd\x08\x65\x27\xb9\x6b\xde\xf9\x17"
-        "\x70\xe2\xa0\xdd\xc8\x2a\x1d\x52\x97\x15")){
+        "\xe5\x62\xb8\x3d\x8e\x5b\x08\x30\xca\xac"
+        "\xe2\x80\x2e\xc7\x43\x08\x00\x48\x3f\x74")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -173,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test2",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test2",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -190,8 +195,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc9\xfa\xf0\xfc\xbd\xa5\x54\xb2\xe4\x75"
-        "\x83\x2f\x4f\x44\x75\xfc\xb3\x9a\x9c\xbf")){
+        "\x23\xc4\x23\x5f\xae\x9f\x05\x50\x4a\xdf"
+        "\x49\x68\x93\x2c\xd6\x5d\x73\x49\xef\xe4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -206,7 +211,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test3",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test3",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -223,8 +228,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x37\xd4\xdc\xc7\x91\xf0\x8b\x96\xd2\x33"
-        "\x38\xab\x44\x1d\x34\x67\x43\xaf\x87\x89")){
+        "\x0e\x87\xc7\x07\x96\x5c\x04\x9e\x9c\xee"
+        "\x57\xfd\x80\xc3\x76\x43\x9d\xf0\xd6\xe6")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -239,7 +244,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test4",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test4",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -256,8 +261,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x21\x88\x35\x5b\x88\xf8\x79\xc8\xc5\x16"
-        "\xac\x21\xac\xd0\x56\x27\xff\xaf\x15\x38")){
+        "\xbb\x41\xb2\x44\xeb\x72\x00\xb9\xdf\x4f"
+        "\x4b\xe0\x01\x3e\x21\x48\x39\xfb\x49\xd2")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -272,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test5",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test5",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -289,8 +294,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7e\x83\x3f\x0e\x06\x19\xd9\x07\xf9\xe4"
-        "\x89\x40\x6a\x76\xf9\x1a\xb4\x10\xa6\x05")){
+        "\x79\xdc\xfe\x77\x14\xae\x16\x29\x52\x9a"
+        "\xd2\xe5\xe6\x3d\x85\x52\x1c\xc2\xb7\x1f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -305,7 +310,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test6",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -322,8 +327,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa6\x1a\x85\xb8\x24\xdb\x65\xdc\xa0\x16"
-        "\x02\x4e\x94\x62\x8e\x30\x14\x76\x8c\x03")){
+        "\x28\x2a\xaa\xc7\x98\x97\x81\xf4\x97\x6f"
+        "\x4c\x49\xc2\xe9\xaf\xbd\xec\x2d\xf4\x5b")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -338,7 +343,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test6",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -355,8 +360,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc2\xf7\xfb\x8a\x92\xa8\x47\xe3\x5d\xdd"
-        "\xba\x11\x87\x9e\x2c\xd0\x6d\x24\xc6\x8e")){
+        "\x54\xe8\xcf\xef\xdc\x04\x96\x0b\x92\xf9"
+        "\xec\x18\x85\x4c\xdf\x36\xf7\x94\x3d\xdf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -371,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, notifier, "test6",
+    WindowDialog window_dialog(drawable, x, y, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -388,8 +393,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x75\xbd\xe4\x8e\xb6\x24\x84\x0a\xc1\xc8"
-        "\x49\x43\x66\x4a\x90\x47\x8b\xc5\xea\x9e")){
+        "\x41\x37\xe3\x2f\xb2\xfb\x1e\x6f\x6c\x9a"
+        "\x93\x72\x4f\x8c\x7c\x90\xf3\x9d\x0d\xa4")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -417,7 +422,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     int16_t x = 10;
     int16_t y = 10;
 
-    WindowDialog window_dialog(&drawable, x, y, parent, &notifier, "test6",
+    WindowDialog window_dialog(drawable, x, y, parent, &notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -426,7 +431,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    window_dialog.ok.rdp_input_mouse(CLIC_BUTTON1_DOWN, 15, 15, NULL);
+    window_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
 
@@ -435,17 +440,18 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe1\xf9\xa0\xc4\xc4\x14\x19\x0c\x71\x5d"
-        "\x68\xbf\x92\x6a\x42\x50\x04\x14\x59\xd9")){
+        "\x09\xf5\xd2\xd1\xe5\x28\x1a\x7a\x53\xb0"
+        "\xc4\xca\xb7\x0d\xfc\x9e\x82\x3a\xfb\xd9")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    window_dialog.ok.rdp_input_mouse(CLIC_BUTTON1_UP, 15, 15, NULL);
+    window_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                                     window_dialog.ok.dx(), window_dialog.ok.dy(), NULL);
     BOOST_CHECK(notifier.sender == &window_dialog);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
     notifier.sender = 0;
     notifier.event = 0;
-    window_dialog.cancel.rdp_input_mouse(CLIC_BUTTON1_DOWN, 15, 15, NULL);
+    window_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
 
@@ -453,12 +459,13 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     //drawable.save_to_png("/tmp/window_dialog-clic-button-cancel.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xba\x59\x10\xe7\x0b\x18\x5e\x53\x7c\x4c"
-        "\x18\xae\xd8\x92\xfe\xd2\xc0\x62\xd6\xbf")){
+        "\x6c\x65\xdb\xf8\xc7\xbd\xf4\xd5\x08\x5f"
+        "\xd1\x16\x78\xae\x55\x1c\x79\x94\x99\x20")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    window_dialog.cancel.rdp_input_mouse(CLIC_BUTTON1_UP, 15, 15, NULL);
+    window_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1, window_dialog.cancel->dx(),
+                                          window_dialog.cancel->dy(), NULL);
     BOOST_CHECK(notifier.sender == &window_dialog);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 }

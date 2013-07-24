@@ -43,12 +43,12 @@ public:
     int fg_color;
 
 public:
-    WidgetMultiLine(DrawApi* drawable, int16_t x, int16_t y, Widget2* parent,
+    WidgetMultiLine(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize = true,
                     int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                     int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    : Widget2(&drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , x_text(xtext)
     , y_text(ytext)
     , cy_text(0)
@@ -82,17 +82,15 @@ public:
             text += size + 4;
             *pbuf = '\0';
             ++pbuf;
-            if (this->drawable) {
-                int h;
-                this->drawable->text_metrics(line->str, line->cx, h);
-                if (h > this->cy_text)
-                    this->cy_text = h;
-                if (this->auto_resize) {
-                    if (line->cx > this->rect.cx)
-                        this->rect.cx = line->cx;
-                    if (h > this->rect.cy)
-                        this->rect.cy = h;
-                }
+            int h;
+            this->drawable->text_metrics(line->str, line->cx, h);
+            if (h > this->cy_text)
+                this->cy_text = h;
+            if (this->auto_resize) {
+                if (line->cx > this->rect.cx)
+                    this->rect.cx = line->cx;
+                if (h > this->rect.cy)
+                    this->rect.cy = h;
             }
             ++line;
         } while (str && pbuf < &this->buffer[this->buffer_size] && line != &this->lines[this->max_line-1]);

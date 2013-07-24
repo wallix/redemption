@@ -70,7 +70,7 @@ public:
         }
     } click_interval;
 
-    WidgetSelectLine(DrawApi* drawable, const Rect& rect,
+    WidgetSelectLine(DrawApi& drawable, const Rect& rect,
                      Widget2* parent, NotifyApi* notifier, int group_id = 0,
                      int fgcolor1 = BLACK, int fgcolor2 = BLACK,
                      int current_fgcolor = BLACK,
@@ -78,7 +78,7 @@ public:
                      int current_bgcolor = DARK_GREEN,
                      int xtext = 0, int ytext = 0,
                      int bgcolor = GREY, uint border_height = 1)
-        : Widget2(drawable, rect, parent, notifier, group_id)
+        : Widget2(&drawable, rect, parent, notifier, group_id)
         , current_index(-1u)
         , current_bg_color(current_bgcolor)
         , bg_color(bgcolor)
@@ -94,10 +94,8 @@ public:
         , labels()
         , click_interval()
     {
-        if (this->drawable) {
-            int w;
-            this->drawable->text_metrics("Lp", w, this->h_text);
-        }
+        int w;
+        this->drawable->text_metrics("Lp", w, this->h_text);
     }
 
     virtual ~WidgetSelectLine()
@@ -120,7 +118,7 @@ public:
         uint16_t lcy = this->h_text + this->y_text * 2;
         bool b = this->labels.size() & 1;
         WidgetLabel * label = new WidgetLabel(
-                                              this->drawable,
+                                              *this->drawable,
                                               0,
                                               this->labels.size() * (lcy + this->h_border),
                                               this, NULL, line, false, 0,
@@ -291,12 +289,12 @@ class WidgetSelectorImageButton : public Widget2
     notify_event_t event;
 
 public:
-    WidgetSelectorImageButton(DrawApi* drawable, int x, int y, Widget2* parent,
+    WidgetSelectorImageButton(DrawApi& drawable, int x, int y, Widget2* parent,
                               NotifyApi* notifier,
                               uint16_t img_cx, uint16_t img_cy, size_t img_size,
                               const uint8_t * img_data1, const uint8_t * img_data2,
                               int group_id = 0, notify_event_t notify_event = NOTIFY_SUBMIT)
-        : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+        : Widget2(&drawable, Rect(x,y,1,1), parent, notifier, group_id)
         , image_inactive(24, NULL, img_cx, img_cy, img_data1, img_size)
         , image_active(24, NULL, img_cx, img_cy, img_data2, img_size)
         , current_image(&image_inactive)
@@ -3696,12 +3694,12 @@ public:
     };
 
 public:
-    WidgetSelector(DrawApi* drawable, const char * device_name,
+    WidgetSelector(DrawApi& drawable, const char * device_name,
                    uint16_t width, uint16_t height, NotifyApi* notifier,
                    const char * current_page, const char * number_of_page,
                    const char * filter_device = 0, const char * filter_target = 0,
                    const char * filter_proto = 0)
-        : WidgetComposite(drawable, Rect(0,0,width,height), NULL, notifier)
+        : WidgetComposite(&drawable, Rect(0,0,width,height), NULL, notifier)
         , device_label(drawable, 20, 10, this, NULL, device_name, true, -10, BLACK, GREY)
         , device_target_label(drawable, 20, 0, this, NULL, "Device Group", true, -10, BLACK, GREY)
         , target_label(drawable, 150, 0, this, NULL, "Account Device", true, -10, BLACK, GREY)

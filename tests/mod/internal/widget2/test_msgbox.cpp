@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox)
     int16_t x = 0;
     int16_t y = 0;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test1",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test1",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox2)
     int16_t x = 10;
     int16_t y = 100;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test2",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test2",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox3)
     int16_t x = -10;
     int16_t y = 500;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test3",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test3",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox4)
     int16_t x = 770;
     int16_t y = 500;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test4",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test4",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -300,7 +300,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox5)
     int16_t x = -20;
     int16_t y = -7;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test5",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test5",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox6)
     int16_t x = 760;
     int16_t y = -7;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -376,7 +376,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -414,7 +414,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, notifier, "test6",
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"
@@ -465,7 +465,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     int16_t x = 10;
     int16_t y = 10;
 
-    MessageBox wmsgbox(&drawable, x, y, parent, &notifier, "test6",
+    MessageBox wmsgbox(drawable, x, y, parent, &notifier, "test6",
                          "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                          "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                          "Nam non magna sit amet dui vestibulum feugiat.<br>"

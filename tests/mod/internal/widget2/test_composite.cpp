@@ -151,17 +151,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     int id = 0;
 
     WidgetCompositeRect wcomposite(drawable);
-    WidgetRect wrect1(&drawable, Rect(0,0,100,100),
-                      &wcomposite, notifier, id++, YELLOW);
-    WidgetRect wrect2(&drawable, Rect(0,100,100,100),
+    WidgetRect wrect1(drawable, Rect(0,0,100,100),
+                      &wcomposite, notifier, id++, CYAN);
+    WidgetRect wrect2(drawable, Rect(0,100,100,100),
                       &wcomposite, notifier, id++, RED);
-    WidgetRect wrect3(&drawable, Rect(100,100,100,100),
+    WidgetRect wrect3(drawable, Rect(100,100,100,100),
                       &wcomposite, notifier, id++, BLUE);
-    WidgetRect wrect4(&drawable, Rect(300,300,100,100),
+    WidgetRect wrect4(drawable, Rect(300,300,100,100),
                       &wcomposite, notifier, id++, GREEN);
-    WidgetRect wrect5(&drawable, Rect(700,-50,100,100),
+    WidgetRect wrect5(drawable, Rect(700,-50,100,100),
                       &wcomposite, notifier, id++, WHITE);
-    WidgetRect wrect6(&drawable, Rect(-50,550,100,100),
+    WidgetRect wrect6(drawable, Rect(-50,550,100,100),
                       &wcomposite, notifier, id++, GREY);
     wcomposite.child_list.push_back(&wrect1);
     wcomposite.child_list.push_back(&wrect2);
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
                                          wcomposite.cx(),
                                          wcomposite.cy()));
 
-    //drawable.save_to_png("/tmp/composite.png");
+    drawable.save_to_png("/tmp/composite.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
                                          100,
                                          100));
 
-    //drawable.save_to_png("/tmp/composite2.png");
+    drawable.save_to_png("/tmp/composite2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
     "\xdf\x6a\xf5\x43\xba\x3f\xf7\xce\xeb\x2e\x8c\xe7\xa9\xf0\x3c\x1b\x78\x9f\x58\x20"
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
                                          wcomposite.cx(),
                                          wcomposite.cy()));
 
-    //drawable.save_to_png("/tmp/composite3.png");
+    drawable.save_to_png("/tmp/composite3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
     "\xc8\x83\xe3\x4b\xe2\xd8\x39\x0c\xbe\x07\x93\x2f\x36\x24\x2e\xc1\x85\xae\x1a\x61"

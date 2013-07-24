@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, xtext, ytext);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.cx(), wbutton.cy()));
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -345,7 +345,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
@@ -377,7 +377,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
@@ -410,7 +410,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetButton wbutton(&drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, xtext, ytext);
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, xtext, ytext);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
@@ -485,7 +485,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetButton wbutton(&drawable, x, y, parent, &notifier, "", auto_resize);
+    WidgetButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize);
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, 0);
     BOOST_CHECK(widget_for_receive_event.sender == 0);
@@ -521,17 +521,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
 
     WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
 
-    WidgetButton wbutton1(&drawable, 0,0, &wcomposite, notifier,
+    WidgetButton wbutton1(drawable, 0,0, &wcomposite, notifier,
                         "abababab", true, 0, YELLOW, BLACK);
-    WidgetButton wbutton2(&drawable, 0,100, &wcomposite, notifier,
+    WidgetButton wbutton2(drawable, 0,100, &wcomposite, notifier,
                         "ggghdgh", true, 0, WHITE, RED);
-    WidgetButton wbutton3(&drawable, 100,100, &wcomposite, notifier,
+    WidgetButton wbutton3(drawable, 100,100, &wcomposite, notifier,
                         "lldlslql", true, 0, BLUE, RED);
-    WidgetButton wbutton4(&drawable, 300,300, &wcomposite, notifier,
+    WidgetButton wbutton4(drawable, 300,300, &wcomposite, notifier,
                         "LLLLMLLM", true, 0, PINK, DARK_GREEN);
-    WidgetButton wbutton5(&drawable, 700,-10, &wcomposite, notifier,
+    WidgetButton wbutton5(drawable, 700,-10, &wcomposite, notifier,
                         "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
-    WidgetButton wbutton6(&drawable, -10,550, &wcomposite, notifier,
+    WidgetButton wbutton6(drawable, -10,550, &wcomposite, notifier,
                         "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
 
     wcomposite.child_list.push_back(&wbutton1);

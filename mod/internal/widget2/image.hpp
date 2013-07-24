@@ -28,8 +28,8 @@ class WidgetImage : public Widget2
     Bitmap bmp;
 
 public:
-    WidgetImage(DrawApi* drawable, int x, int y, const char * filename, Widget2* parent, NotifyApi* notifier, int group_id = 0)
-    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    WidgetImage(DrawApi& drawable, int x, int y, const char * filename, Widget2* parent, NotifyApi* notifier, int group_id = 0)
+    : Widget2(&drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , bmp(filename)
     {
         this->tab_flag = IGNORE_TAB;

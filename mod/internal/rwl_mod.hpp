@@ -47,17 +47,17 @@ public:
         style.borders.left = style.borders.right = style.borders.bottom = style.borders.top;
         style.focus_borders = style.inactive_focus_borders = style.inactive_borders = style.borders;
 
-        RwlRectangle * img = new RwlImage(this, 0, 0, SHARE_PATH"/"REDEMPTION_LOGO24, style);
+        RwlRectangle * img = new RwlImage(*this, 0, 0, SHARE_PATH"/"REDEMPTION_LOGO24, style);
         img->rect.x = width - img->cx();
         img->rect.y = height - img->cy();
         this->screen.child_list.push_back(img);
 
-        RwlRectangle * zone = new RwlRectangle(this, 0, 0, style);
+        RwlRectangle * zone = new RwlRectangle(*this, 0, 0, style);
         zone->rect.cx = 100;
         zone->rect.cy = 100;
         this->screen.child_list.push_back(zone);
 
-        zone = new RwlRectangle(this, 0, 0, style);
+        zone = new RwlRectangle(*this, 0, 0, style);
         zone->rect.x = 100;
         zone->rect.y = 100;
         zone->rect.cx = 100;
@@ -65,7 +65,7 @@ public:
         this->screen.child_list.push_back(zone);
 
         style.color = YELLOW;
-        zone = new RwlRectangle(this, 0, 0, style);
+        zone = new RwlRectangle(*this, 0, 0, style);
         zone->rect.y = 100;
         zone->rect.cx = 100;
         zone->rect.cy = 100;
