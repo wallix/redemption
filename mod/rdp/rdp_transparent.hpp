@@ -1415,7 +1415,7 @@ LOG(LOG_INFO, "[S] CompressionTypeMask = 0x%X",   ((infoPacket.flags & Compressi
         uint32_t compression  = (client_info.infoPacket.flags & (INFO_COMPRESSION | CompressionTypeMask));
 
         uint32_t mask         = ((compression & CompressionTypeMask) >> 9);
-                 mask         = 0x0;
+                 mask         = 0x1;
 
                  compression &= ~CompressionTypeMask;
                  compression |= (mask << 9);

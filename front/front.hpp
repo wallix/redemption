@@ -69,6 +69,10 @@
 #include "front_api.hpp"
 #include "genrandom.hpp"
 
+extern "C" {
+#include "freerdp/codec/mppc_enc.h"
+};
+
 enum {
     FRONT_DISCONNECTED,
     FRONT_CONNECTING,
@@ -145,6 +149,8 @@ public:
 
     redemption::string server_capabilities_filename;
 
+    rdp_mppc_enc * mppc_enc;
+
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random * gen
@@ -181,6 +187,7 @@ public:
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
         , server_capabilities_filename(server_capabilities_filename)
+        , mppc_enc(0)
     {
         // init TLS
         // --------------------------------------------------------
@@ -248,6 +255,10 @@ public:
     }
 
     ~Front(){
+        if (this->mppc_enc) {
+            mppc_enc_free(this->mppc_enc);
+        }
+
         if (this->bmp_cache) {
             delete this->bmp_cache;
         }
@@ -522,6 +533,18 @@ public:
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
         }
 
+        if (this->mppc_enc) {
+            mppc_enc_free(this->mppc_enc);
+        }
+        if (this->client_info.rdp_compression) {
+            if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
+                this->mppc_enc = mppc_enc_new(PROTO_RDP_50);
+            }
+            else {
+                this->mppc_enc = mppc_enc_new(PROTO_RDP_40);
+            }
+        }
+
         // reset outgoing orders and reset caches
         delete this->bmp_cache;
         this->bmp_cache = new BmpCache(
@@ -545,7 +568,10 @@ public:
                         this->client_info.bitmap_cache_version,
                         this->client_info.use_bitmap_comp,
                         this->client_info.use_compact_packets,
-                        this->server_fastpath_update_support);
+                        this->server_fastpath_update_support,
+                        this->mppc_enc,
+                        this->client_info.rdp_compression,
+                        this->client_info.rdp_compression_type);
 
         this->pointer_cache.reset(this->client_info);
         this->brush_cache.reset(this->client_info);
@@ -710,16 +736,20 @@ public:
                     LOG(LOG_INFO, "Front::send_global_palette: fast-path");
                 }
 
-                stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+                size_t header_size = FastPath::Update_Send::GetSize(0);
+
+                stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
                 GeneratePaletteUpdateData(stream);
 
-                SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+                SubStream Upd_s(stream, 0, header_size);
 
                 FastPath::Update_Send Upd( Upd_s
-                                         , stream.size() - FastPath::Update_Send::GetSize()
+                                         , stream.size() - header_size
                                          , FastPath::FASTPATH_UPDATETYPE_PALETTE
                                          , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                         , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                         , 0
                                          );
 
                 BStream SvrUpdPDU_s(256);
@@ -967,16 +997,20 @@ public:
                 LOG(LOG_INFO, "Front::send_pointer: fast-path");
             }
 
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
             GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_COLOR
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);
@@ -1074,18 +1108,22 @@ public:
                 LOG(LOG_INFO, "Front::set_pointer: fast-path");
             }
 
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
             // Payload
             stream.out_uint16_le(cache_idx);
             stream.mark_end();
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_CACHED
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);
@@ -2458,15 +2496,20 @@ public:
                 LOG(LOG_INFO, "Front::send_data_update_sync: fast-path");
             }
             HStream stream(256, 65536);
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
             stream.mark_end();
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);

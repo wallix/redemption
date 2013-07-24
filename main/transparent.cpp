@@ -147,8 +147,6 @@ int main(int argc, char * argv[]) {
     ini.debug.front = 0;
 //    ini.debug.mod_rdp = 511;
     ini.debug.mod_rdp = 0;
-//    int verbose = 511;
-    int verbose = 0;
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay

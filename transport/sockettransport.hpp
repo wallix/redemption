@@ -134,7 +134,11 @@ class SocketTransport : public Transport {
             this->disconnect();
         }
 
-LOG(LOG_INFO, "%s: total_received = %llu, total_sent=%llu", this->name, this->total_received, this->total_sent);
+        if (verbose) {
+            LOG( LOG_INFO
+               , "%s (%d): total_received=%llu, total_sent=%llu"
+               , this->name, this->sck, this->total_received, this->total_sent);
+        }
     }
 
     virtual void enable_server_tls(const char * certificate_password) throw (Error)

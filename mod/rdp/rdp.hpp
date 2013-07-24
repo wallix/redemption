@@ -58,6 +58,10 @@
 
 #include "genrandom.hpp"
 
+extern "C" {
+#include "freerdp/codec/mppc_dec.h"
+};
+
 struct mod_rdp : public mod_api {
     /* mod data */
     FrontAPI                  & front;
@@ -148,6 +152,8 @@ struct mod_rdp : public mod_api {
     bool server_fastpath_update_support;      // = choice of programmer
 
     size_t recv_bmp_update;
+
+    rdp_mppc_dec * mppc_dec;
 
     mod_rdp( Transport * trans
            , const char * target_user
@@ -285,6 +291,8 @@ struct mod_rdp : public mod_api {
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 
+        this->mppc_dec = mppc_dec_new();
+
         while (UP_AND_RUNNING != this->connection_finalization_state){
             this->draw_event();
             if (this->event.signal != BACK_EVENT_NONE){
@@ -295,13 +303,17 @@ struct mod_rdp : public mod_api {
     }
 
     virtual ~mod_rdp() {
+        mppc_dec_free(this->mppc_dec);
+
         if (this->lic_layer_license_data) {
             free(this->lic_layer_license_data);
         }
 
-        LOG(LOG_INFO, ">>>> Recv bmp cache count  = %llu", this->orders.recv_bmp_cache_count);
-        LOG(LOG_INFO, ">>>> Recv order count      = %llu", this->orders.recv_order_count);
-        LOG(LOG_INFO, ">>>> Recv bmp update count = %llu", this->recv_bmp_update);
+        if (this->verbose) {
+            LOG(LOG_INFO, ">>>> Recv bmp cache count  = %llu", this->orders.recv_bmp_cache_count);
+            LOG(LOG_INFO, ">>>> Recv order count      = %llu", this->orders.recv_order_count);
+            LOG(LOG_INFO, ">>>> Recv bmp update count = %llu", this->recv_bmp_update);
+        }
     }
 
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
@@ -1313,7 +1325,7 @@ struct mod_rdp : public mod_api {
                     if (f.fast_path) {
                         FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
                         while (su.payload.in_remain()) {
-                            FastPath::Update_Recv upd(su.payload);
+                            FastPath::Update_Recv upd(su.payload, this->mppc_dec);
 
                             switch (upd.updateCode) {
                             case FastPath::FASTPATH_UPDATETYPE_ORDERS:
@@ -1906,9 +1918,6 @@ LOG(LOG_INFO, "Not using new point");
         //            confirm_active_pdu.emit_capability_set(CompDeskCaps);
 
         confirm_active_pdu.emit_end();
-
-LOG(LOG_INFO, ">>>>> CONFIRM ACTIVE");
-hexdump_d(stream.get_data(), stream.size());
 
         BStream sec_header(256);
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
@@ -3824,6 +3833,10 @@ LOG(LOG_INFO, ">>>>> mod_rdp::rdp_input_invalidate");
                                , this->performanceFlags
                                , this->clientAddr
                                );
+
+        infoPacket.flags |= INFO_COMPRESSION;
+        infoPacket.flags &= ~CompressionTypeMask;
+        infoPacket.flags |= (PACKET_COMPR_TYPE_64K << 9);
 
         if (this->verbose) {
             infoPacket.log("Sending to server: ");

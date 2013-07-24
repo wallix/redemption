@@ -85,6 +85,7 @@ project redemption
     <include>keyboard
     <include>transport
     <include>/usr/include
+    <include>FreeRDP/include
     <conditional>@defines
 #    <cxxflags>-pedantic
 #     <cxxflags>-Wconversion
@@ -154,6 +155,9 @@ lib icuuc : : <name>icuuc ;
 # nm -C --defined-only -g bin/*/*/librio.so
 lib rio : transport/rio/rio.cpp : ;
 
+lib libfreerdp : FreeRDP/libfreerdp/codec/mppc_dec.c FreeRDP/libfreerdp/codec/mppc_enc.c : ;
+
+
 obj mainloop : core/mainloop.cpp ;
 obj d3des : utils/d3des.cpp ;
 
@@ -177,6 +181,7 @@ exe rdpproxy
 
         libboost_program_options
 
+        libfreerdp
     :
         <link>static
     ;
@@ -207,6 +212,8 @@ exe rdptproxy
         dl
 
         libboost_program_options
+
+        libfreerdp
     :
         <link>static
     ;
