@@ -172,6 +172,12 @@ struct mod_rdp_transparent : public mod_api {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
         }
+            if (this->output_filename.is_empty()) {
+                LOG(LOG_INFO, ">>>>> Transparent capabilities!!!");
+            }
+            else {
+                LOG(LOG_INFO, ">>>>> Proxy default capabilities!!!");
+            }
 
         ::memset(this->auth_channel, 0, sizeof(this->auth_channel));
         ::strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel));
@@ -1398,7 +1404,28 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                              , this->client_addr
                              );
 
-        infoPacket.flags = client_info.infoPacket.flags;
+LOG(LOG_INFO, "[C] infoPacket.flags    = 0x%08X", client_info.infoPacket.flags);
+LOG(LOG_INFO, "[C] INFO_COMPRESSION    = %s",     ((client_info.infoPacket.flags & INFO_COMPRESSION) ? "True" : "False"));
+LOG(LOG_INFO, "[C] CompressionTypeMask = 0x%X",   ((client_info.infoPacket.flags & CompressionTypeMask) >> 9));
+
+LOG(LOG_INFO, "[S] infoPacket.flags    = 0x%08X", infoPacket.flags);
+LOG(LOG_INFO, "[S] INFO_COMPRESSION    = %s",     ((infoPacket.flags & INFO_COMPRESSION) ? "True" : "False"));
+LOG(LOG_INFO, "[S] CompressionTypeMask = 0x%X",   ((infoPacket.flags & CompressionTypeMask) >> 9));
+
+        uint32_t compression  = (client_info.infoPacket.flags & (INFO_COMPRESSION | CompressionTypeMask));
+
+        uint32_t mask         = ((compression & CompressionTypeMask) >> 9);
+                 mask         = 0x1;
+
+                 compression &= ~CompressionTypeMask;
+                 compression |= (mask << 9);
+
+        infoPacket.flags     &= ~(INFO_COMPRESSION | CompressionTypeMask);
+        infoPacket.flags     |= compression;
+
+LOG(LOG_INFO, "[M] infoPacket.flags    = 0x%08X", infoPacket.flags);
+LOG(LOG_INFO, "[M] INFO_COMPRESSION    = %s",     ((infoPacket.flags & INFO_COMPRESSION) ? "True" : "False"));
+LOG(LOG_INFO, "[M] CompressionTypeMask = 0x%X",   ((infoPacket.flags & CompressionTypeMask) >> 9));
 
         if (this->verbose) {
             infoPacket.log("Sending to server: ");
@@ -1534,6 +1561,30 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
+if (this->use_rdp5) {
+LOG(LOG_INFO, "Using rdp5");
+}
+else {
+LOG(LOG_INFO, "Not using rdp5");
+}
+if (this->server_fastpath_update_support) {
+LOG(LOG_INFO, "Using fast-past");
+}
+else {
+LOG(LOG_INFO, "Not using fast-past");
+}
+if (this->mem3blt_support) {
+LOG(LOG_INFO, "Using mem3blt");
+}
+else {
+LOG(LOG_INFO, "Not using mem3blt");
+}
+if (this->enable_new_pointer) {
+LOG(LOG_INFO, "Using new point");
+}
+else {
+LOG(LOG_INFO, "Not using new point");
+}
 
         BStream stream(65536);
 
@@ -1541,24 +1592,46 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
 
         confirm_active_pdu.emit_begin(this->share_id);
 
-        this->front.client_general_caps.extraflags &= ~0x0004;
-LOG(LOG_INFO, "mod_rdp_transparent::send_confirm_active(): General Capability set->extraFlags=0x%04x", this->front.client_general_caps.extraflags);
 
-        if (this->verbose) {
-            this->front.client_general_caps.log("Sending to server");
-        }
-        confirm_active_pdu.emit_capability_set(this->front.client_general_caps);
-
-        this->front.client_bitmap_caps.preferredBitsPerPixel = this->bpp;
-        this->front.client_bitmap_caps.desktopWidth          = this->front_width;
-        this->front.client_bitmap_caps.desktopHeight         = this->front_height;
-//        this->front.client_bitmap_caps.bitmapCompressionFlag = this->bitmap_compression ? 1 : 0;
-        if (this->verbose) {
-            this->front.client_bitmap_caps.log("Sending bitmap caps to server");
-        }
-        confirm_active_pdu.emit_capability_set(this->front.client_bitmap_caps);
-
+        GeneralCaps general_caps;
+        general_caps.extraflags  =
+            this->use_rdp5
+            ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
+            : 0
+            ;
+        // Slow/Fast-path
+        general_caps.extraflags |=
+            this->server_fastpath_update_support
+            ? FASTPATH_OUTPUT_SUPPORTED
+            : 0
+            ;
 /*
+        if (this->output_filename.is_empty()) {
+            general_caps = this->front.client_general_caps;
+        }
+*/
+        if (this->verbose) {
+            general_caps.log("Sending to server");
+        }
+        confirm_active_pdu.emit_capability_set(general_caps);
+
+
+        BitmapCaps bitmap_caps;
+        bitmap_caps.preferredBitsPerPixel = this->bpp;
+        bitmap_caps.desktopWidth          = this->front_width;
+        bitmap_caps.desktopHeight         = this->front_height;
+        bitmap_caps.bitmapCompressionFlag = this->bitmap_compression ? 1 : 0;
+/*
+        if (this->output_filename.is_empty()) {
+            bitmap_caps = this->front.client_bitmap_caps;
+        }
+*/
+        if (this->verbose) {
+            bitmap_caps.log("Sending bitmap caps to server");
+        }
+        confirm_active_pdu.emit_capability_set(bitmap_caps);
+
+        OrderCaps order_caps;
         order_caps.numberFonts                                   = 0x147;
         order_caps.orderFlags                                    = 0x2a;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
@@ -1573,11 +1646,15 @@ LOG(LOG_INFO, "mod_rdp_transparent::send_confirm_active(): General Capability se
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
         order_caps.textFlags                                     = 0x06a1;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
+/*
+        if (this->output_filename.is_empty()) {
+            order_caps = this->front.client_order_caps;
+        }
 */
         if (this->verbose) {
-            this->front.client_order_caps.log("Sending order caps to server");
+            order_caps.log("Sending order caps to server");
         }
-        confirm_active_pdu.emit_capability_set(this->front.client_order_caps);
+        confirm_active_pdu.emit_capability_set(order_caps);
 
         BmpCacheCaps bmp_cache_caps;
         bmp_cache_caps.cache0Entries         = 0x258;
@@ -1586,6 +1663,11 @@ LOG(LOG_INFO, "mod_rdp_transparent::send_confirm_active(): General Capability se
         bmp_cache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
         bmp_cache_caps.cache2Entries         = 0x106;
         bmp_cache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
+/*
+        if (this->output_filename.is_empty()) {
+            bmp_cache_caps = this->front.client_bmpcache_caps;
+        }
+*/
         if (this->verbose) {
             bmp_cache_caps.log("Sending bmp cache caps to server");
         }
@@ -1668,7 +1750,18 @@ LOG(LOG_INFO, "mod_rdp_transparent::send_confirm_active(): General Capability se
         //            compdesk_caps.log("Sending compdesk caps to server");
         //            confirm_active_pdu.emit_capability_set(CompDeskCaps);
 
+/*
+        if (this->output_filename.is_empty()) {
+            if (this->verbose) {
+                this->front.client_offscreencache_caps.log("Sending offscreen cache caps to server");
+            }
+            confirm_active_pdu.emit_capability_set(this->front.client_offscreencache_caps);
+        }
+*/
         confirm_active_pdu.emit_end();
+
+LOG(LOG_INFO, ">>>>> CONFIRM ACTIVE");
+hexdump_d(stream.get_data(), stream.size());
 
         BStream sec_header(256);
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)

@@ -295,6 +295,50 @@ public:
 
 BOOST_AUTO_TEST_CASE(TestModuleManagerNextMod)
 {
+    Inifile ini;
+
+    MMIni mm(ini);
+    int res;
+
+    res = mm.next_module();
+    BOOST_CHECK(res == MODULE_INTERNAL_WIDGET2_LOGIN);
+
+    ini.globals.auth_user.set_from_cstr("user");
+    ini.context.password.set_from_cstr("securepassword");
+
+    ini.context.selector.set(true);
+    ini.globals.target_device.set_from_cstr("redjenkins-vbox@127.0.0.1 internal@display_message replay@autotest");
+    ini.globals.target_user.set_from_cstr("rdp internal internal");
+    res = mm.next_module();
+    BOOST_CHECK(res == MODULE_INTERNAL_WIDGET2_SELECTOR);
+
+    ini.globals.target_user.ask();
+    res = mm.next_module();
+    BOOST_CHECK(res == MODULE_INTERNAL_WIDGET2_LOGIN);
+
+    ini.globals.auth_user.set_from_cstr("user");
+    ini.context.password.set_from_cstr("securepassword");
+    ini.globals.target_device.set_from_cstr("redjenkins-vbox@127.0.0.1 internal@display_message replay@autotest");
+    ini.globals.target_user.set_from_cstr("rdp internal internal");
+    ini.context.selector.set(false);
+    ini.context.display_message.ask();
+
+    res = mm.next_module();
+    BOOST_CHECK(res == MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE);
+
+    ini.context.display_message.set_from_cstr("message");
+    ini.context.accept_message.ask();
+    res = mm.next_module();
+    BOOST_CHECK(res == MODULE_INTERNAL_DIALOG_VALID_MESSAGE);
+    ini.context.accept_message.set_from_cstr("message");
+
+    res = mm.next_module();
+    BOOST_CHECK(res == MODULE_INTERNAL_CLOSE);
+
+    ini.context.authenticated.set(true);
+    ini.context.target_protocol.set_from_cstr("RDP");
+    res = mm.next_module();
+    BOOST_CHECK(res == MODULE_RDP);
 
 }
 
