@@ -28,7 +28,6 @@
 
 #include "internal/widget2/button.hpp"
 #include "internal/widget2/composite.hpp"
-// #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
