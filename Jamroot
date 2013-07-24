@@ -85,6 +85,7 @@ project redemption
     <include>keyboard
     <include>transport
     <include>/usr/include
+    <include>FreeRDP/include
     <conditional>@defines
 #    <cxxflags>-pedantic
 #     <cxxflags>-Wconversion
@@ -154,6 +155,9 @@ lib icuuc : : <name>icuuc ;
 # nm -C --defined-only -g bin/*/*/librio.so
 lib rio : transport/rio/rio.cpp : ;
 
+lib libfreerdp : FreeRDP/libfreerdp/codec/mppc_dec.c FreeRDP/libfreerdp/codec/mppc_enc.c : ;
+
+
 obj mainloop : core/mainloop.cpp ;
 obj d3des : utils/d3des.cpp ;
 
@@ -177,6 +181,7 @@ exe rdpproxy
 
         libboost_program_options
 
+        libfreerdp
     :
         <link>static
     ;
@@ -207,6 +212,8 @@ exe rdptproxy
         dl
 
         libboost_program_options
+
+        libfreerdp
     :
         <link>static
     ;
@@ -265,8 +272,8 @@ unit-test test_lic : tests/core/RDP/test_lic.cpp z openssl crypto dl libboost_un
 unit-test test_share : tests/core/RDP/test_share.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_share : tests/core/RDP/test_share.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl libboost_unit_test ;
-unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl libboost_unit_test libfreerdp ;
+unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl libboost_unit_test gcov libfreerdp : <variant>coverage ;
 
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
@@ -606,15 +613,15 @@ unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test ;
 
 #unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z openssl crypto libboost_unit_test ;
 
-unit-test test_rdp : tests/mod/rdp/test_rdp.cpp png openssl crypto d3des z dl libboost_unit_test ;
-unit-test test_rdp : tests/mod/rdp/test_rdp.cpp png openssl crypto d3des z dl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp png openssl crypto d3des z dl libboost_unit_test libfreerdp ;
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp png openssl crypto d3des z dl libboost_unit_test gcov libfreerdp : <variant>coverage ;
 
 
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z openssl crypto libboost_unit_test ;
-unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp png openssl crypto d3des z dl libboost_unit_test ;
+unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp png openssl crypto d3des z dl libboost_unit_test libfreerdp ;
 unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp openssl crypto d3des z dl libboost_unit_test ;
-unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
-unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
+unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp d3des openssl crypto z dl png libboost_unit_test libfreerdp ;
+unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp d3des openssl crypto z dl png libboost_unit_test libfreerdp ;
 
 unit-test test_activate : tests/core/RDP/capabilities/test_activate.cpp libboost_unit_test ;
 unit-test test_activate : tests/core/RDP/capabilities/test_activate.cpp libboost_unit_test gcov : <variant>coverage ;

@@ -316,23 +316,21 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
                                       , "SecureLinux"
                                       , "10.10.9.161"
                                       , front
-                                        //, "test"
-                                      , false   /* tls                     */
+                                      , false   // tls
                                       , info
                                       , &gen
-                                      , 7       /* key flags               */
-//                                      , NULL    /* session manager         */
-					, NULL
-					, NULL
-                                      , ""      /* auth channel            */
-                                      , ""      /* alternate_shell         */
-                                      , ""      /* shell_working_directory */
-                                      , true    /* clipboard               */
-                                      , false   /* fast-path support       */
-                                      , true    /* mem3blt support         */
-                                      , false   /* bitmap update support   */
+                                      , 7       // key flags
+                                      , NULL
+                                      , NULL
+                                      , ""      // auth channel
+                                      , ""      // alternate_shell
+                                      , ""      // shell_working_directory
+                                      , true    // clipboard
+                                      , false   // fast-path support
+                                      , true    // mem3blt support
+                                      , false   // bitmap update support
                                       , verbose
-                                      , false   /* enable new pointer      */
+                                      , false   // enable new pointer
                                       );
 
     if (verbose > 2){
@@ -403,22 +401,20 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                       , "S3cur3!1nux"
                                       , "10.10.9.161"
                                       , front
-                                        //, "test"
-                                      , false   /* tls                     */
+                                      , false   // tls
                                       , info
                                       , &gen
-                                      , 2       /* key flags               */
-//                                      , NULL    /* session manager         */
-					, NULL
-					, NULL
-                                      , ""      /* auth channel            */
-                                      , ""      /* alternate_shell         */
-                                      , ""      /* shell_working_directory */
-                                      , true    /* clipboard               */
-                                      , false   /* fast-path support       */
-                                      , false   /* bitmap update support   */
-                                      , 0       /* verbose                 */
-                                      , false   /* enable new pointer      */
+                                      , 2       // key flags
+                                      , NULL
+                                      , NULL
+                                      , ""      // auth channel
+                                      , ""      // alternate_shell
+                                      , ""      // shell_working_directory
+                                      , true    // clipboard
+                                      , false   // fast-path support
+                                      , false   // bitmap update support
+                                      , 0       // verbose
+                                      , false   // enable new pointer
                                       );
 
     if (verbose > 2){
@@ -483,23 +479,21 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
                                       , "SecureLinux"
                                       , "0.0.0.0"
                                       , front
-                                        //, "test"
-                                      , false   /* tls                     */
+                                      , false   // tls
                                       , info
                                       , &gen
-                                      , 2       /* key flags               */
-//                                      , NULL    /* session manager         */
-					, NULL
-					, NULL
-                                      , ""      /* auth channel            */
-                                      , ""      /* alternate_shell         */
-                                      , ""      /* shell_working_directory */
-                                      , true    /* clipbaord               */
-                                      , false   /* fast-path support       */
-                                      , true    /* mem3blt support         */
-                                      , false   /* bitmap update support   */
-                                      , 0       /* verbose                 */
-                                      , false   /* enable new pointer      */
+                                      , 2       // key flags
+                                      , NULL
+                                      , NULL
+                                      , ""      // auth channel
+                                      , ""      // alternate_shell
+                                      , ""      // shell_working_directory
+                                      , true    // clipbaord
+                                      , false   // fast-path support
+                                      , true    // mem3blt support
+                                      , false   // bitmap update support
+                                      , 0       // verbose
+                                      , false   // enable new pointer
                                       );
 
     if (verbose > 2){
@@ -571,23 +565,21 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
                                       , "SecureLinux$42"
                                       , "0.0.0.0"
                                       , front
-                                      // , "test"
-                                      , false   /* tls                     */
+                                      , false   // tls
                                       , info
                                       , &gen
-                                      , 2       /* key flags               */
-//                                      , NULL    /* session manager         */
-					, NULL
-					, NULL
-                                      , ""      /* auth channel            */
-                                      , ""      /* alternate_shell         */
-                                      , ""      /* shell_working_directory */
-                                      , true    /* clipbaord               */
-                                      , false   /* fast-path support       */
-                                      , true    /* mem3blt support         */
-                                      , false   /* bitmap update support   */
-                                      , 0       /* verbose                 */
-                                      , false   /* enable new pointer      */
+                                      , 2       // key flags
+                                      , NULL
+                                      , NULL
+                                      , ""      // auth channel
+                                      , ""      // alternate_shell
+                                      , ""      // shell_working_directory
+                                      , true    // clipbaord
+                                      , false   // fast-path support
+                                      , true    // mem3blt support
+                                      , false   // bitmap update support
+                                      , 0       // verbose
+                                      , false   // enable new pointer
                                       );
 
     if (verbose > 2){
