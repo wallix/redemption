@@ -67,16 +67,31 @@ static inline timeval addtimeval(const timeval & time1, const timeval & time2) {
     return res;
 }
 
+
+static inline timeval how_long_to_wait(const timeval & alarm, const timeval & now) {
+    // return number of usec to wait: 
+    // alarm - now if alarm is in the future 
+    // or 0 if alarm time is past
+    timeval res = {};
+    if (!lessthantimeval(alarm, now)) {
+        bool carry = alarm.tv_usec < now.tv_usec;
+        res.tv_usec = alarm.tv_usec - now.tv_usec + carry*1000000L;
+        res.tv_sec  = alarm.tv_sec  - now.tv_sec  - carry;
+    }
+    return res;
+}
+
+
 static inline timeval absdifftimeval(const timeval & endtime, const timeval & starttime) {
     // return | endtime - starttime |
     timeval res;
-    if (!lessthantimeval(endtime,starttime)) {
+    if (!lessthantimeval(endtime, starttime)) {
         bool carry = endtime.tv_usec < starttime.tv_usec;
-        res.tv_usec = carry*1000000L + endtime.tv_usec - starttime.tv_usec;
-        res.tv_sec  = endtime.tv_sec - (starttime.tv_sec + carry);
+        res.tv_usec = endtime.tv_usec - starttime.tv_usec + carry*1000000L;
+        res.tv_sec  = endtime.tv_sec  - starttime.tv_sec  - carry;
     }
     else {
-        res = absdifftimeval(starttime,endtime);
+        res = absdifftimeval(starttime, endtime);
     }
     return res;
 }
