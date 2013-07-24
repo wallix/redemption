@@ -87,9 +87,6 @@ class MMApi
     virtual void new_mod(int target_module, time_t now) = 0;
     virtual void record() = 0;
     virtual int next_module() { return 0; };
-    TODO("ModuleManager should know it's state (the module currently connected)"
-         "At least if it's some target module (RDP, VNC, XUP, replay)"
-         "some other internal module, or the close box")
     virtual int get_mod_from_protocol() { return 0; };
     virtual void invoke_close_box(const char * auth_error_message,
                                   BackEvent_t & signal, time_t now) {
@@ -509,7 +506,6 @@ public:
                 protocol = "INTERNAL";
             }
         }
-        TODO("connected information is known by module_manager, it should be module manager that change this state when opening some modules")
         int res = MODULE_EXIT;
         if (!this->connected && 0 == strncasecmp(protocol, "RDP", 4)) {
             if (this->verbose & 0x4) {
@@ -678,7 +674,7 @@ public:
             //                keep_alive = true;
             if (this->ini.context.auth_error_message.is_empty()) {
                 this->ini.context.auth_error_message.copy_c_str("End of connection");
-            }
+            }// seems strange ?
             LOG(LOG_INFO, "=================> MODULE_FROM_PROTOCOL");
             return this->get_mod_from_protocol();
         }

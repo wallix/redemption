@@ -267,11 +267,13 @@ public:
         // if the current module is the close box,
         // authentifier only wait for a stop signal
         // and does not do anything else
-        if (mm.last_module) {
-            if (signal == BACK_EVENT_STOP) {
+
+        if (signal == BACK_EVENT_STOP) {
+            // here, mm.last_module == false, only when we are in login box
                 mm.mod->event.reset();
                 return false;
-            }
+        }
+        if (mm.last_module) {
             return true;
         }
 
