@@ -264,16 +264,15 @@ public:
 
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
         // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
-        // if the current module is the close box,
-        // authentifier only wait for a stop signal
-        // and does not do anything else
 
         if (signal == BACK_EVENT_STOP) {
-            // here, mm.last_module == false, only when we are in login box
+            // here, mm.last_module should be false only when we are in login box
                 mm.mod->event.reset();
                 return false;
         }
         if (mm.last_module) {
+            // at a close box (mm.last_module is true),
+            // we are only waiting for a stop signal
             return true;
         }
 
@@ -451,7 +450,6 @@ public:
                 this->ini->context.authchannel_answer.set_empty();
             }
         }
-
         return true;
     }
 
