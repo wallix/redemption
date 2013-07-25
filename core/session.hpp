@@ -190,35 +190,37 @@ struct Session {
                         this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
 
                         // Incoming data from ACL, or opening acl
-                        if (!this->acl && !mm.last_module) { // acl never opened or closed by me (close box)
-                            try {
-                                int client_sck = ip_connect(this->ini->globals.authip,
-                                                            this->ini->globals.authport,
-                                                            30,
-                                                            1000,
-                                                            this->ini->debug.auth);
+                        if (!this->acl) {
+                            if(!mm.last_module) { // acl never opened or closed by me (close box)
+                                try {
+                                    int client_sck = ip_connect(this->ini->globals.authip,
+                                                                this->ini->globals.authport,
+                                                                30,
+                                                                1000,
+                                                                this->ini->debug.auth);
 
-                                if (client_sck == -1) {
-                                    LOG(LOG_ERR, "Failed to connect to authentifieur");
-                                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                                    if (client_sck == -1) {
+                                        LOG(LOG_ERR, "Failed to connect to authentifieur");
+                                        throw Error(ERR_SOCKET_CONNECT_FAILED);
+                                    }
+
+                                    this->ptr_auth_trans = new SocketTransport( "Authentifier"
+                                                                                , client_sck
+                                                                                , this->ini->globals.authip
+                                                                                , this->ini->globals.authport
+                                                                                , this->ini->debug.auth
+                                                                                );
+                                    this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
+                                    this->acl = new SessionManager( this->ini
+                                                                    , *this->ptr_auth_trans
+                                                                    , start_time // proxy start time
+                                                                    , now        // acl start time
+                                                                   );
+                                    signal = BACK_EVENT_NEXT;
                                 }
-
-                                this->ptr_auth_trans = new SocketTransport( "Authentifier"
-                                                                            , client_sck
-                                                                            , this->ini->globals.authip
-                                                                            , this->ini->globals.authport
-                                                                            , this->ini->debug.auth
-                                                                            );
-                                this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
-                                this->acl = new SessionManager( this->ini
-                                                                , *this->ptr_auth_trans
-                                                                , start_time // proxy start time
-                                                                , now        // acl start time
-                                                               );
-                                signal = BACK_EVENT_NEXT;
-                            }
-                            catch (...) {
-                                mm.invoke_close_box("No authentifier available",signal, now);
+                                catch (...) {
+                                    mm.invoke_close_box("No authentifier available",signal, now);
+                                }
                             }
                         }
                         else {
