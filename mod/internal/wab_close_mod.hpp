@@ -117,11 +117,6 @@ public:
         return;
     }
 
-    virtual void rdp_input_invalidate(const Rect& r)
-    {
-        this->window_close.rdp_input_invalidate(r);
-    }
-
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
         this->screen.rdp_input_mouse(device_flags, x, y, keymap);
