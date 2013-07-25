@@ -267,10 +267,9 @@ public:
     }
 
     void ask_next_module_remote() {
-        LOG(LOG_INFO, "ask_next_module_remote() by getting list of modified field");
         Inifile::SetField list = this->ini->get_changed_set();
         //std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
-        LOG(LOG_INFO, "ask_next_module_remote() numbers of changed fields = %u",list.size());
+        LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u",list.size());
         if (!list.empty())
             this->send_new(list);
         this->ini->reset();

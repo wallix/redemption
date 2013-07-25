@@ -807,11 +807,11 @@ public:
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
-        this->video.ocr_interval    = 100; // 1 every second
+        this->video.ocr_interval    = 100;        // 1 every second
         this->video.png_interval    = 3000;
         this->video.capture_groupid = 33;
-        this->video.frame_interval  = 40;
-        this->video.break_interval  = 600;
+        this->video.frame_interval  = 40;         // 2,5 frame per second
+        this->video.break_interval  = 600;        // 10 minutes interval
         this->video.png_limit       = 3;
         strcpy(this->video.replay_path, "/tmp/");
 
@@ -976,7 +976,8 @@ public:
         this->context.accept_message.set_empty();
         this->context.display_message.set_empty();
 
-        this->context.rejected.set_from_cstr("Connection refused by authentifier.");
+        this->context.rejected.set_empty();
+        // this->context.rejected.set_from_cstr("Connection refused by authentifier.");
         this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
         this->context.authenticated.set(false);

@@ -42,7 +42,8 @@ private:
 
         temporary_text(Inifile& ini)
         {
-            if (ini.context.selector.get()) {
+            if (ini.context.selector.get()
+                && !ini.context.selector.is_asked()) {
                 snprintf(text,sizeof(text),"Selector");
             }
             else {
@@ -59,9 +60,12 @@ public:
     , ini(ini)
     , window_close(*this, 0, 0, &this->screen, this,
                    ini.context.auth_error_message.c_str(), 0,
-                   ini.context_is_asked(AUTHID_AUTH_USER) ? NULL : ini.globals.auth_user.get_cstr(),
-                   (ini.context_is_asked(AUTHID_TARGET_USER) || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-		    "Internal" : temporary_text(ini).text,
+                   (ini.context_is_asked(AUTHID_AUTH_USER)
+                    || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
+                    NULL : ini.globals.auth_user.get_cstr(),
+                   (ini.context_is_asked(AUTHID_TARGET_USER)
+                    || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
+                    NULL : temporary_text(ini).text,
                    BLACK, GREY
     )
     , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)

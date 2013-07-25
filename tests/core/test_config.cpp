@@ -221,7 +221,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.accept_message.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.display_message.get_cstr()));
 
-    BOOST_CHECK_EQUAL(std::string("Connection refused by authentifier."),
+    // BOOST_CHECK_EQUAL(std::string("Connection refused by authentifier."),
+    //                   std::string(ini.context.rejected.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),
                       std::string(ini.context.rejected.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.context.authenticated.get());
@@ -440,8 +442,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_ACCEPT_MESSAGE,  buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_DISPLAY_MESSAGE, buffer, sizeof(buffer))));
 
-    BOOST_CHECK_EQUAL(std::string("Connection refused by authentifier."),
+    BOOST_CHECK_EQUAL(std::string(""),
                       std::string(ini.context_get_value(AUTHID_REJECTED, buffer, sizeof(buffer))));
+    // BOOST_CHECK_EQUAL(std::string("Connection refused by authentifier."),
+    //                   std::string(ini.context_get_value(AUTHID_REJECTED, buffer, sizeof(buffer))));
 
 
     BOOST_CHECK_EQUAL(std::string("False"),             std::string(ini.context_get_value(AUTHID_AUTHENTICATED, buffer, sizeof(buffer))));
