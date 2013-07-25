@@ -976,7 +976,8 @@ public:
         this->context.accept_message.set_empty();
         this->context.display_message.set_empty();
 
-        this->context.rejected.set_from_cstr("Connection refused by authentifier.");
+        this->context.rejected.set_empty();
+        // this->context.rejected.set_from_cstr("Connection refused by authentifier.");
         this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
         this->context.authenticated.set(false);
