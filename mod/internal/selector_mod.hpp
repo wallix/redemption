@@ -51,14 +51,6 @@ class SelectorMod : public InternalMod, public NotifyApi
 public:
     SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height)
-        // , selector(this, temporary_login(ini).buffer, width, height, this,
-        //            ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,
-        //                                  temporary_buffer().buffer, sizeof(temporary_buffer)),
-        //            ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES,
-        //                                  temporary_buffer().buffer, sizeof(temporary_buffer)),
-        //            ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER, NULL, 0),
-        //            ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER, NULL, 0)
-        //            )
         , selector(*this, temporary_login(ini).buffer, width, height, this,
                    ini.context.selector_current_page.get_value(),
                    ini.context.selector_number_of_pages.get_value(),
@@ -89,7 +81,7 @@ public:
     void ask_page()
     {
         this->ini.context_ask(AUTHID_SELECTOR);
-	this->ini.context.selector_current_page.set((uint32_t)this->current_page);
+    	this->ini.context.selector_current_page.set((uint32_t)this->current_page);
         // char buffer[32];
         // sprintf(buffer, "%u", (unsigned int)this->current_page);
         // this->ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer);

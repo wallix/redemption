@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(1,                                ini.context.selector_current_page.get());
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.selector_device_filter.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.selector_group_filter.get_cstr()));
-    BOOST_CHECK_EQUAL(20,                               ini.context.selector_lines_per_page.get());
+    BOOST_CHECK_EQUAL(0,                               ini.context.selector_lines_per_page.get());
     BOOST_CHECK_EQUAL(1,                                ini.context.selector_number_of_pages.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.target_device.is_asked());
@@ -401,7 +401,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("1"),                 std::string(ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,    buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER,   buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER,    buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("20"),                std::string(ini.context_get_value(AUTHID_SELECTOR_LINES_PER_PAGE,  buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("0"),                std::string(ini.context_get_value(AUTHID_SELECTOR_LINES_PER_PAGE,  buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string("1"),                 std::string(ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer))));
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_TARGET_DEVICE));

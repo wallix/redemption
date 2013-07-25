@@ -920,7 +920,7 @@ public:
         this->context.selector_device_filter.set_empty();
         this->context.selector_group_filter.set_empty();
         this->context.selector_proto_filter.set_empty();
-        this->context.selector_lines_per_page.set(20);
+        this->context.selector_lines_per_page.set(0);
         this->context.selector_number_of_pages.set(1);
 
         this->context.selector_number_of_pages.attach_ini(this, AUTHID_SELECTOR_NUMBER_OF_PAGES);
