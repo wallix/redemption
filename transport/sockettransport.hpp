@@ -1145,7 +1145,8 @@ class SocketTransport : public Transport {
 
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0) {
-            throw Error(ERR_TRANSPORT_DIFFERS);
+            LOG(LOG_WARNING, "SocketTransport::Send failed errno=%u [%s]", errno, strerror(errno));        
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         if (res < (ssize_t)len) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
