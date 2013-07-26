@@ -120,6 +120,13 @@ struct FieldObserver : public ConfigurationHolder {
                 this->modify();
             }
         }
+        /***************************************************
+         * Set the field as asked.but not mark it as changed
+         ***************************************************
+         */
+        void ask_from_acl() {
+            this->asked = true;
+        }
         /******************************
          * Check if the field is asked
          ******************************

@@ -95,7 +95,8 @@ public:
                     *stream.p = 0;
 
                     if ((0 == strncasecmp((char*)value, "ask", 3))) {
-                        this->ini->context_ask_by_string((char *)keyword);
+                        this->ini->ask_from_acl((char *)keyword);
+                        // this->ini->context_ask_by_string((char *)keyword);
                         LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
                     }
                     else {

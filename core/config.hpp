@@ -1523,6 +1523,26 @@ public:
             LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
         }
     }
+    
+    /******************
+     * ask_from_acl sets a value to corresponding field but does not mark it as changed
+     */
+    void ask_from_acl(const char * strauthid) {
+        authid_t authid = authid_from_string(strauthid);
+        if (authid != AUTHID_UNKNOWN) {
+            try {
+                BaseField * field = this->field_list.at(authid);
+                field->ask_from_acl();
+            }
+            catch (const std::out_of_range & oor){
+                LOG(LOG_WARNING, "Inifile::ask_from_acl(id): unknown authid=%d", authid);
+            }
+        }
+        else {
+            LOG(LOG_WARNING, "Inifile::ask_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
+        }
+    }
+    
     void context_set_value_by_string(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
