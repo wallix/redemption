@@ -1007,7 +1007,7 @@ class SocketTransport : public Transport {
         uint8_t * tmp = public_key_data;
         i2d_PublicKey(pkey, &tmp);
 
-        delete public_key_data;
+        free(public_key_data);
         public_key_data =
         tmp             = 0;
 

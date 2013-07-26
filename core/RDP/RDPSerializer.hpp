@@ -142,6 +142,8 @@ struct RDPSerializer : public RDPGraphicDevice
 
     size_t emit_cache_count;
 
+    uint32_t verbose;
+
     RDPSerializer( Transport * trans
                  , Stream & stream_orders
                  , Stream & stream_bitmaps
@@ -150,7 +152,8 @@ struct RDPSerializer : public RDPGraphicDevice
                  , const int bitmap_cache_version
                  , const int use_bitmap_comp
                  , const int op2
-                 , const Inifile & ini)
+                 , const Inifile & ini
+                 , uint32_t verbose = 0)
     : RDPGraphicDevice()
     , stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
@@ -175,10 +178,13 @@ struct RDPSerializer : public RDPGraphicDevice
     , order_count(0)
     , bmp_cache(bmp_cache)
     , bitmap_count(0)
-    , emit_cache_count(0) {}
+    , emit_cache_count(0)
+    , verbose(verbose) {}
 
     ~RDPSerializer() {
-        LOG(LOG_INFO, ">>>> Emit cache count = %llu", this->emit_cache_count);
+        if (this->verbose) {
+            LOG(LOG_INFO, "~RDPSerializer(): Emit cache count = %llu", this->emit_cache_count);
+        }
     }
 
 protected:

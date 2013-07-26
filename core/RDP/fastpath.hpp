@@ -1106,7 +1106,6 @@ namespace FastPath {
 
             if (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED) {
                 this->compressionFlags = stream.in_uint8();
-//LOG(LOG_INFO, ">>>>> compressionFlags = 0x%X", this->compressionFlags);
             }
 
             this->size = stream.in_uint16_le();

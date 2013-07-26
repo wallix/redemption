@@ -591,7 +591,6 @@ struct Inifile : public FieldObserver {
 
         int log_type;
         char log_file_path[1024]; // log file location
-
     } debug;
 
     // section "translation"
