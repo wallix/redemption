@@ -127,64 +127,59 @@ struct Session {
 
             time_t start_time = time(NULL);
 
-            struct timeval time_mark = { 0, 0 };
+            struct timeval time_mark = { 0, 10000 };
+
             bool run_session = true;
 
             while (run_session) {
+                unsigned max = 0;
+                fd_set rfds;
+                fd_set wfds;
+
+                FD_ZERO(&rfds);
+                FD_ZERO(&wfds);
+                struct timeval timeout = time_mark;
+
+                this->front_event.add_to_fd_set(rfds, max, timeout);
+
+                TODO("Looks like acl and mod can be unified into a common class, where events can happen")
+                TODO("move ptr_auth_event to acl")
+                if (this->acl && !this->acl->lost_acl) {
+                    this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
+                }
+                mm.mod->event.add_to_fd_set(rfds, max, timeout);
+
+                int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+
+                if (num < 0) {
+                    if (errno == EINTR) {
+                        continue;
+                    }
+                    // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
+                    // EBADF: means fd has been closed (by me) or as already returned an error on another call
+                    // EINVAL: invalid value in timeout (my fault again)
+                    // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
+
+                    LOG(LOG_ERR, "Proxy data wait loop raised error %u : %s", errno, strerror(errno));
+                    run_session = false;
+                    continue;
+                }
+
+                time_t now = time(NULL);
+                if (this->front_event.is_set(rfds)) {
+                    try {
+                        this->front->incoming(*mm.mod);
+                    } catch (...) {
+                        run_session = false;
+                        continue;
+                    };
+                }
+
                 try {
-                    if (time_mark.tv_sec == 0 && time_mark.tv_usec < 500) {
-                        time_mark.tv_sec = 5;
-                        time_mark.tv_usec = 0;
-                    }
-
-                    unsigned max = 0;
-                    fd_set rfds;
-                    fd_set wfds;
-
-                    FD_ZERO(&rfds);
-                    FD_ZERO(&wfds);
-                    struct timeval timeout = time_mark;
-
-                    this->front_event.add_to_fd_set(rfds, max, timeout);
-
-                    TODO("Looks like acl and mod can be unified into a common class, where events can happen")
-                    TODO("move ptr_auth_event to acl")
-                    if (this->acl && !this->acl->lost_acl) {
-                        this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
-                    }
-                    mm.mod->event.add_to_fd_set(rfds, max, timeout);
-
-                    int num = select(max + 1, &rfds, &wfds, 0, &timeout);
-
-                    if (num < 0) {
-                        if (errno == EINTR) {
-                            continue;
-                        }
-                        // Cope with EBADF, EINVAL, ENOMEM : none of these should ever happen
-                        // EBADF: means fd has been closed (my me) or as already returned an error on another call
-                        // EINVAL: invalid value in timeout (my fault again)
-                        // ENOMEM: no enough memory in kernel (unlikely fort 3 sockets)
-
-                        LOG(LOG_ERR, "Proxy data wait loop raised error %u : %s", errno, strerror(errno));
-                        throw Error(ERR_SOCKET_ERROR);
-                    }
-
-                    time_t now = time(NULL);
-                    if (this->front_event.is_set(rfds)) {
-                        try {
-                            this->front->incoming(*mm.mod);
-                        } catch (...) {
-                            run_session = false;
-                            continue;
-                        };
-                    }
-
                     if (this->front->up_and_running) {
                         // Process incoming module trafic
                         if (mm.mod->event.is_set(rfds)) {
-
                             mm.mod->draw_event();
-                            this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
 
                             if (mm.mod->event.signal != BACK_EVENT_NONE) {
                                 signal = mm.mod->event.signal;
@@ -192,9 +187,11 @@ struct Session {
                             }
                         }
 
+                        this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
+
                         // Incoming data from ACL, or opening acl
                         if (!this->acl) {
-                            if (!mm.last_module) {
+                            if(!mm.last_module) { // acl never opened or closed by me (close box)
                                 try {
                                     int client_sck = ip_connect(this->ini->globals.authip,
                                                                 this->ini->globals.authport,

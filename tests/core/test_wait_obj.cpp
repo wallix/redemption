@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
 
     // add to fd set does not change anything on
     // timeout if the wait obj is not set
-    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    nonsocketobj.add_to_fd_set(rfds, max, timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 2L);
     BOOST_CHECK_EQUAL(timeout.tv_usec, 0L);
 
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
     BOOST_CHECK_EQUAL(res, true);
 
     // adding it to fd set change the time out
-    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    nonsocketobj.add_to_fd_set(rfds, max, timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
     BOOST_CHECK_EQUAL(timeout.tv_usec, 0L);
     timeout.tv_sec = 2L;

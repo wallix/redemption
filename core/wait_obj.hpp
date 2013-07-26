@@ -70,15 +70,9 @@ class wait_obj
         else if (this->set_state) {
             struct timeval now;
             now = tvtime();
-            if (lessthantimeval(this->trigger_time,now)) {
-                // LOG(LOG_INFO, "TIMEOUT RESET");
-                timeout.tv_sec  = 0;
-                timeout.tv_usec = 0;
-            }
-            else {
-                timeval remain;
-                remain  = absdifftimeval(this->trigger_time,now);
-                timeout = mintimeval(timeout,remain);
+            timeval remain = how_long_to_wait(this->trigger_time, now);
+            if (lessthantimeval(remain, timeout)){
+                timeout = remain;
                 // LOG(LOG_INFO, "TIMEOUT ADJUSTED TO DIFF TRIGGER TIME: %u sec, %u usec", timeout.tv_sec, timeout.tv_usec);
             }
         } //case 3

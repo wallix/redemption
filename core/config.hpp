@@ -529,6 +529,8 @@ struct Inifile : public FieldObserver {
 
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
+
+        bool rdp_compression;
     } client;
 
     // Section "video"
@@ -796,6 +798,7 @@ public:
         this->client.performance_flags_force_not_present = 0;
         this->client.tls_fallback_legacy                 = false;
         this->client.tls_support                         = true;
+        this->client.rdp_compression                     = false;
 
         // End Section "client"
 
@@ -806,11 +809,11 @@ public:
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
-        this->video.ocr_interval    = 100; // 1 every second
+        this->video.ocr_interval    = 100;        // 1 every second
         this->video.png_interval    = 3000;
         this->video.capture_groupid = 33;
-        this->video.frame_interval  = 40;
-        this->video.break_interval  = 600;
+        this->video.frame_interval  = 40;         // 2,5 frame per second
+        this->video.break_interval  = 600;        // 10 minutes interval
         this->video.png_limit       = 3;
         strcpy(this->video.replay_path, "/tmp/");
 
@@ -919,7 +922,7 @@ public:
         this->context.selector_device_filter.set_empty();
         this->context.selector_group_filter.set_empty();
         this->context.selector_proto_filter.set_empty();
-        this->context.selector_lines_per_page.set(20);
+        this->context.selector_lines_per_page.set(0);
         this->context.selector_number_of_pages.set(1);
 
         this->context.selector_number_of_pages.attach_ini(this, AUTHID_SELECTOR_NUMBER_OF_PAGES);
@@ -975,7 +978,8 @@ public:
         this->context.accept_message.set_empty();
         this->context.display_message.set_empty();
 
-        this->context.rejected.set_from_cstr("Connection refused by authentifier.");
+        this->context.rejected.set_empty();
+        // this->context.rejected.set_from_cstr("Connection refused by authentifier.");
         this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
         this->context.authenticated.set(false);
@@ -1278,6 +1282,9 @@ public:
             }
             else if (0 == strcmp(key, "device_redirection")){
                 this->client.device_redirection.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "rdp_compression")){
+                this->client.rdp_compression = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "video")){
