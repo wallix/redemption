@@ -101,7 +101,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                            ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -139,9 +138,13 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -319,7 +322,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -357,10 +359,13 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_OK,         buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL,     buffer, sizeof(buffer))));
@@ -547,7 +552,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -585,9 +589,13 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -639,7 +647,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "clipboard=no\n"
                           "device_redirection=no\n"
                           "tls_support=no\n"
-
+                          "rdp_compression=yes\n"
+                          "\n"
                           "[debug]\n"
                           "log_type=file\n"
                           "log_file_path=/var/log/redemption.log\n"
@@ -712,7 +721,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(false,                            ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("192.168.1.1"),       std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("redemption"),        std::string(ini.globals.certificate_password));
@@ -754,9 +762,13 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(false,                            ini.client.tls_support);
     BOOST_CHECK_EQUAL(true,                             ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(false,                            ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.translation.button_cancel.get_cstr()));
@@ -802,8 +814,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "performance_flags_force_present=1\n"
                           "performance_flags_force_not_present=0\n"
                           "tls_support=yes\n"
+                          "rdp_compression=no\n"
                           "[translation]\n"
                           "connection_closed=Connexion\\ fermée\n"
+                          "[mod_rdp]\n"
+                          "rdp_compression=yes\n"
                           "\n"
                           );
 
@@ -871,7 +886,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.certificate_password));
@@ -911,9 +925,13 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -957,6 +975,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "performance_flags_default=07\n"
                           "performance_flags_force_present=1\n"
                           "performance_flags_force_not_present=0x\n"
+                          "[mod_rdp]\n"
+                          "rdp_compression=no\n"
                           "\n"
                           );
 
@@ -1024,7 +1044,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("rdpproxy"),          std::string(ini.globals.certificate_password));
@@ -1066,9 +1085,13 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1172,8 +1195,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
-    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("redemption"),        std::string(ini.globals.certificate_password));
@@ -1212,9 +1233,13 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1311,8 +1336,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
-    BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(std::string("192.168.1.1"),       std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.certificate_password));
@@ -1351,9 +1374,13 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1487,9 +1514,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1586,7 +1617,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -1624,9 +1654,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1713,7 +1747,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("/tmp/"),             std::string(ini.video.replay_path));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_file_encryption.get());
-    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(std::string("0.0.0.0"),           std::string(ini.globals.listen_address));
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_ip_transparent);
     BOOST_CHECK_EQUAL(std::string("inquisition"),       std::string(ini.globals.certificate_password));
@@ -1751,9 +1784,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_not_present);
+    BOOST_CHECK_EQUAL(true,                             ini.client.tls_support);
     BOOST_CHECK_EQUAL(false,                            ini.client.tls_fallback_legacy);
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));

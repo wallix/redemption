@@ -652,7 +652,7 @@ public:
                                             , this->ini.globals.enable_bitmap_update
                                             , this->ini.debug.mod_rdp
                                             , true          // support new pointer
-                                            , true          // support RDP 5.0 bulk compression
+                                            , this->ini.mod_rdp.rdp_compression
                                             );
                     this->mod->event.obj = client_sck;
 

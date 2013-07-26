@@ -165,7 +165,7 @@ class User(object):
             all_groups.append(service.protocol.lower())
             all_protos.append(service.protocol)
             all_endtimes.append(service.endtime)
-        _number_of_pages = 1 + len(all_protos) / _lines_per_page
+        _number_of_pages = 1 + (len(all_protos) - 1) / _lines_per_page
         if _current_page >= _number_of_pages:
             _current_page = _number_of_pages - 1
         if _current_page < 0:

@@ -109,13 +109,12 @@ struct Session {
 
             this->internal_state = SESSION_STATE_ENTRY;
 
-            const bool enable_fastpath                 = true;
-            const bool mem3blt_support                 = true;
-            const bool rdp_50_bulk_compression_support = true;
+            const bool enable_fastpath = true;
+            const bool mem3blt_support = true;
 
             this->front = new Front( &front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &this->gen
                                    , ini, enable_fastpath, mem3blt_support
-                                   , rdp_50_bulk_compression_support);
+                                   , ini->client.rdp_compression);
 
             ModuleManager mm(*this->front, *this->ini);
             BackEvent_t signal = BACK_EVENT_NONE;

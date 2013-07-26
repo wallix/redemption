@@ -533,6 +533,10 @@ struct Inifile : public FieldObserver {
         bool rdp_compression;
     } client;
 
+    struct {
+        bool rdp_compression;
+    } mod_rdp;
+
     // Section "video"
     struct {
         unsigned capture_flags;  // 1 PNG capture, 2 WRM
@@ -799,8 +803,11 @@ public:
         this->client.tls_fallback_legacy                 = false;
         this->client.tls_support                         = true;
         this->client.rdp_compression                     = false;
-
         // End Section "client"
+
+        // Begin section "mod_rdp"
+        this->mod_rdp.rdp_compression = false;
+        // End Section "mod_rdp"
 
         // Begin section video
         this->video.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
@@ -1036,6 +1043,7 @@ public:
         this->context.selector_group_filter.attach_ini(this,AUTHID_SELECTOR_GROUP_FILTER);
         this->context.selector_proto_filter.attach_ini(this,AUTHID_SELECTOR_PROTO_FILTER);
         this->context.selector_lines_per_page.attach_ini(this,AUTHID_SELECTOR_LINES_PER_PAGE);
+        this->context.selector_lines_per_page.use();
 
         this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);
         this->context.target_protocol.attach_ini(this,AUTHID_TARGET_PROTOCOL);
@@ -1285,6 +1293,11 @@ public:
             }
             else if (0 == strcmp(key, "rdp_compression")){
                 this->client.rdp_compression = bool_from_cstr(value);
+            }
+        }
+        else if (0 == strcmp(context, "mod_rdp")){
+            if (0 == strcmp(key, "rdp_compression")) {
+                this->mod_rdp.rdp_compression = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "video")){
