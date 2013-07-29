@@ -47,9 +47,15 @@ private:
                 snprintf(text,sizeof(text),"Selector");
             }
             else {
-                snprintf(text, sizeof(text), "%s@%s",
-                         ini.globals.target_user.get_cstr(),
-                         ini.globals.target_device.get_cstr());
+                if (::strlen(ini.globals.target_application.get_cstr())) {
+                    snprintf(text, sizeof(text), "%s",
+                             ini.globals.target_application.get_cstr());
+                }
+                else {
+                    snprintf(text, sizeof(text), "%s@%s",
+                             ini.globals.target_user.get_cstr(),
+                             ini.globals.target_device.get_cstr());
+                }
             }
         }
     };

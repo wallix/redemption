@@ -53,6 +53,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
@@ -274,6 +275,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
@@ -408,7 +410,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("1"),                 std::string(ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE,    buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_SELECTOR_DEVICE_FILTER,   buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_SELECTOR_GROUP_FILTER,    buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("0"),                std::string(ini.context_get_value(AUTHID_SELECTOR_LINES_PER_PAGE,  buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("0"),                 std::string(ini.context_get_value(AUTHID_SELECTOR_LINES_PER_PAGE,  buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string("1"),                 std::string(ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer))));
 
     BOOST_CHECK_EQUAL(true,                             ini.context_is_asked(AUTHID_TARGET_DEVICE));
@@ -422,6 +424,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_TARGET_PORT,     buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_TARGET_PROTOCOL, buffer, sizeof(buffer))));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_TARGET_USER,     buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_TARGET_APPLICATION,     buffer, sizeof(buffer))));
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_HOST));
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET));
@@ -504,6 +507,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
@@ -673,6 +677,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
@@ -838,6 +843,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
@@ -996,6 +1002,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
@@ -1147,6 +1154,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
@@ -1288,6 +1296,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
@@ -1429,6 +1438,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
@@ -1569,6 +1579,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
@@ -1699,6 +1710,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.host.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_device.get_cstr()));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.target_application.get_cstr()));
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
@@ -1989,6 +2001,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ini.context_set_value(AUTHID_TARGET_PORT,           "3390");
     ini.context_set_value(AUTHID_TARGET_PROTOCOL,       "RDP");
     ini.context_set_value(AUTHID_TARGET_USER,           "admin");
+    ini.context_set_value(AUTHID_TARGET_APPLICATION,    "wallix@putty");
 
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_DEVICE));
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_TARGET_PASSWORD));
@@ -2001,12 +2014,14 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(3390,                             ini.context.target_port.get());
     BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context.target_protocol.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.globals.target_user.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("wallix@putty"),      std::string(ini.globals.target_application.get_cstr()));
 
-    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.context_get_value(AUTHID_TARGET_DEVICE,   buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context_get_value(AUTHID_TARGET_PASSWORD, buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("3390"),              std::string(ini.context_get_value(AUTHID_TARGET_PORT,     buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context_get_value(AUTHID_TARGET_PROTOCOL, buffer, sizeof(buffer))));
-    BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.context_get_value(AUTHID_TARGET_USER,     buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.context_get_value(AUTHID_TARGET_DEVICE,      buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("12345678"),          std::string(ini.context_get_value(AUTHID_TARGET_PASSWORD,    buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("3390"),              std::string(ini.context_get_value(AUTHID_TARGET_PORT,        buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("RDP"),               std::string(ini.context_get_value(AUTHID_TARGET_PROTOCOL,    buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("admin"),             std::string(ini.context_get_value(AUTHID_TARGET_USER,        buffer, sizeof(buffer))));
+    BOOST_CHECK_EQUAL(std::string("wallix@putty"),      std::string(ini.context_get_value(AUTHID_TARGET_APPLICATION, buffer, sizeof(buffer))));
 
 
     // host

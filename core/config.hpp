@@ -226,11 +226,12 @@ typedef enum
         AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
         AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
 
-        AUTHID_TARGET_DEVICE,   // target_device
-        AUTHID_TARGET_PASSWORD, // target_password
-        AUTHID_TARGET_PORT,     // target_port
-        AUTHID_TARGET_PROTOCOL, // proto_dest
-        AUTHID_TARGET_USER,     // target_login
+        AUTHID_TARGET_DEVICE,       // target_device
+        AUTHID_TARGET_PASSWORD,     // target_password
+        AUTHID_TARGET_PORT,         // target_port
+        AUTHID_TARGET_PROTOCOL,     // proto_dest
+        AUTHID_TARGET_USER,         // target_login
+        AUTHID_TARGET_APPLICATION,  // target_application
 
         AUTHID_AUTH_USER,       // login
         AUTHID_HOST,            // ip_client
@@ -317,6 +318,7 @@ typedef enum
 #define STRAUTHID_TARGET_PORT              "target_port"
 #define STRAUTHID_TARGET_PROTOCOL          "proto_dest"
 #define STRAUTHID_TARGET_USER              "target_login"
+#define STRAUTHID_TARGET_APPLICATION       "target_application"
 
 #define STRAUTHID_AUTH_USER                "login"
 #define STRAUTHID_HOST                     "ip_client"
@@ -402,11 +404,12 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_SELECTOR_LINES_PER_PAGE,  // number of lines per page
     STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
 
-    STRAUTHID_TARGET_DEVICE,    // target_device
-    STRAUTHID_TARGET_PASSWORD,  // target_password
-    STRAUTHID_TARGET_PORT,      // target_port
-    STRAUTHID_TARGET_PROTOCOL,  // proto_dest
-    STRAUTHID_TARGET_USER,      // target_login
+    STRAUTHID_TARGET_DEVICE,        // target_device
+    STRAUTHID_TARGET_PASSWORD,      // target_password
+    STRAUTHID_TARGET_PORT,          // target_port
+    STRAUTHID_TARGET_PROTOCOL,      // proto_dest
+    STRAUTHID_TARGET_USER,          // target_login
+    STRAUTHID_TARGET_APPLICATION,   // target_application
 
     STRAUTHID_AUTH_USER,        // login
     STRAUTHID_HOST,             // ip_client
@@ -467,11 +470,12 @@ struct Inifile : public FieldObserver {
     struct Inifile_globals {
         BoolField capture_chunk;
 
-        StringField auth_user;           // AUTHID_AUTH_USER //
-        StringField host;                // client_ip AUTHID_HOST //
-        StringField target;              // target ip AUTHID_TARGET //
-        StringField target_device;       // AUTHID_TARGET_DEVICE //
-        StringField target_user;         // AUTHID_TARGET_USER //
+        StringField auth_user;           // AUTHID_AUTH_USER
+        StringField host;                // client_ip AUTHID_HOST
+        StringField target;              // target ip AUTHID_TARGET
+        StringField target_device;       // AUTHID_TARGET_DEVICE
+        StringField target_user;         // AUTHID_TARGET_USER
+        StringField target_application;  // AUTHID_TARGET_APPLICATION
 
         // BEGIN globals
         bool bitmap_cache;                // default true
@@ -723,12 +727,14 @@ public:
         this->globals.host.set_from_cstr("");
         this->globals.target_device.set_from_cstr("");
         this->globals.target_user.set_from_cstr("");
+        this->globals.target_application.set_from_cstr("");
 
         this->globals.auth_user.attach_ini(this,AUTHID_AUTH_USER);
         this->globals.host.attach_ini(this,AUTHID_HOST);
         this->globals.target.attach_ini(this,AUTHID_TARGET);
         this->globals.target_device.attach_ini(this,AUTHID_TARGET_DEVICE);
         this->globals.target_user.attach_ini(this,AUTHID_TARGET_USER);
+        this->globals.target_application.attach_ini(this,AUTHID_TARGET_APPLICATION);
 
         this->globals.enable_file_encryption.attach_ini(this,AUTHID_OPT_FILE_ENCRYPTION);
         this->globals.enable_file_encryption.set(false);
