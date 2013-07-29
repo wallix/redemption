@@ -829,3 +829,6 @@ unit-test test_selector_mod : tests/mod/internal/test_selector_mod.cpp libboost_
 
 unit-test test_wab_close_mod : tests/mod/internal/test_wab_close_mod.cpp libboost_unit_test ;
 unit-test test_wab_close_mod : tests/mod/internal/test_wab_close_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test ;
+unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test gcov : <variant>coverage ;
