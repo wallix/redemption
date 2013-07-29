@@ -314,9 +314,9 @@ struct mod_rdp : public mod_api {
         }
 
         if (this->verbose) {
-            LOG(LOG_INFO, ">>>> Recv bmp cache count  = %llu", this->orders.recv_bmp_cache_count);
-            LOG(LOG_INFO, ">>>> Recv order count      = %llu", this->orders.recv_order_count);
-            LOG(LOG_INFO, ">>>> Recv bmp update count = %llu", this->recv_bmp_update);
+            LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %llu", this->orders.recv_bmp_cache_count);
+            LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %llu", this->orders.recv_order_count);
+            LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %llu", this->recv_bmp_update);
         }
     }
 
@@ -1385,8 +1385,9 @@ struct mod_rdp : public mod_api {
                                 break;
 
                             default:
-                                LOG(LOG_INFO, "mod::rdp: received unexpected fast-path PUD, updateCode = %u"
-                                    , upd.updateCode);
+                                LOG( LOG_INFO
+                                   , "mod::rdp: received unexpected fast-path PUD, updateCode = %u"
+                                   , upd.updateCode);
                                 throw Error(ERR_RDP_FASTPATH);
                                 break;
                             }
@@ -1555,7 +1556,7 @@ struct mod_rdp : public mod_api {
                                 case UP_AND_RUNNING:
                                     {
                                         ShareData sdata(sctrl.payload);
-                                        sdata.recv_begin();
+                                        sdata.recv_begin(this->mppc_dec);
                                         switch (sdata.pdutype2) {
                                         case PDUTYPE2_UPDATE:
                                             {
@@ -3393,7 +3394,6 @@ public:
 
     virtual void rdp_input_invalidate(const Rect & r)
     {
-LOG(LOG_INFO, ">>>>> mod_rdp::rdp_input_invalidate");
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
         }

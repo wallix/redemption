@@ -171,13 +171,14 @@ struct mod_rdp_transparent : public mod_api {
             , output_filename(output_filename) {
         if (this->verbose & 1) {
             LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
-        }
+
             if (this->output_filename.is_empty()) {
-                LOG(LOG_INFO, ">>>>> Transparent capabilities!!!");
+                LOG(LOG_INFO, "Use transparent capabilities.");
             }
             else {
-                LOG(LOG_INFO, ">>>>> Proxy default capabilities!!!");
+                LOG(LOG_INFO, "Use proxy default capabilities.");
             }
+        }
 
         ::memset(this->auth_channel, 0, sizeof(this->auth_channel));
         ::strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel));
@@ -1750,18 +1751,19 @@ LOG(LOG_INFO, "Not using new point");
         //            compdesk_caps.log("Sending compdesk caps to server");
         //            confirm_active_pdu.emit_capability_set(CompDeskCaps);
 
-/*
-        if (this->output_filename.is_empty()) {
-            if (this->verbose) {
-                this->front.client_offscreencache_caps.log("Sending offscreen cache caps to server");
-            }
-            confirm_active_pdu.emit_capability_set(this->front.client_offscreencache_caps);
-        }
-*/
+//        if (this->output_filename.is_empty()) {
+//            if (this->verbose) {
+//                this->front.client_offscreencache_caps.log("Sending offscreen cache caps to server");
+//            }
+//            confirm_active_pdu.emit_capability_set(this->front.client_offscreencache_caps);
+//        }
+
         confirm_active_pdu.emit_end();
 
-LOG(LOG_INFO, ">>>>> CONFIRM ACTIVE");
-hexdump_d(stream.get_data(), stream.size());
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "Confirm active PDU:");
+            hexdump_d(stream.get_data(), stream.size());
+        }
 
         BStream sec_header(256);
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)

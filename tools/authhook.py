@@ -127,7 +127,7 @@ class User(object):
                 _x = _x[1:]
             _current_page = int(_x) - 1
         except:
-            _current_page = 1
+            _current_page = 0
 
         try:
             _x = dic.get('selector_lines_per_page', '10')
@@ -165,7 +165,9 @@ class User(object):
             all_groups.append(service.protocol.lower())
             all_protos.append(service.protocol)
             all_endtimes.append(service.endtime)
-        _number_of_pages = 1 + len(all_protos) / _lines_per_page
+        _number_of_pages = 1
+        if _lines_per_page != 0:
+            _number_of_pages = 1 + (len(all_protos) - 1) / _lines_per_page
         if _current_page >= _number_of_pages:
             _current_page = _number_of_pages - 1
         if _current_page < 0:
@@ -178,6 +180,7 @@ class User(object):
         answer['target_login'] = " ".join(all_groups[_start_of_page:_end_of_page])
         answer['target_device'] = " ".join(all_services[_start_of_page:_end_of_page])
         answer['selector_number_of_pages'] = str(_number_of_pages)
+        answer['selector_current_page'] = _current_page + 1
 
 
 class Service(object):
@@ -215,6 +218,7 @@ class Authentifier(object):
         self.sck = sck
         self.users = users
         self.dic = {'login':MAGICASK, 'password':MAGICASK}
+        self.tries = 5
 
     def read(self):
         print("Reading")
@@ -255,8 +259,14 @@ class Authentifier(object):
                         print("Wrong Password for user %s" % user.name)
                     break
 
+
         if answer['authenticated'] == 'true':
+            self.tries = 5
             answer.update(user.get_service(self.dic))
+        else:
+            self.tries = self.tries - 1
+            if self.tries == 0:
+                answer['rejected'] = "Too many login failures"
 
         self.dic.update(answer)
         self.send()

@@ -143,6 +143,15 @@ public:
             return true;
         }
 
+        // Close by rejeted message received
+        if (!this->ini->context.rejected.is_empty()) {
+            this->ini->context.auth_error_message.copy_str(this->ini->context.rejected.get());
+            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini->context.rejected.get_cstr());
+            this->ini->context.rejected.set_empty();
+            mm.invoke_close_box(NULL, signal, now);
+            return true;
+        }
+
         // Keep alive
         if (this->keepalive_time) {
 

@@ -95,7 +95,8 @@ public:
                     *stream.p = 0;
 
                     if ((0 == strncasecmp((char*)value, "ask", 3))) {
-                        this->ini->context_ask_by_string((char *)keyword);
+                        this->ini->ask_from_acl((char *)keyword);
+                        // this->ini->context_ask_by_string((char *)keyword);
                         LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
                     }
                     else {
@@ -267,10 +268,9 @@ public:
     }
 
     void ask_next_module_remote() {
-        LOG(LOG_INFO, "ask_next_module_remote() by getting list of modified field");
         Inifile::SetField list = this->ini->get_changed_set();
         //std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
-        LOG(LOG_INFO, "ask_next_module_remote() numbers of changed fields = %u",list.size());
+        LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u",list.size());
         if (!list.empty())
             this->send_new(list);
         this->ini->reset();

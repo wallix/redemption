@@ -120,6 +120,13 @@ struct FieldObserver : public ConfigurationHolder {
                 this->modify();
             }
         }
+        /***************************************************
+         * Set the field as asked.but not mark it as changed
+         ***************************************************
+         */
+        void ask_from_acl() {
+            this->asked = true;
+        }
         /******************************
          * Check if the field is asked
          ******************************
@@ -153,21 +160,21 @@ struct FieldObserver : public ConfigurationHolder {
             int n;
             if (this->is_asked()) {
                 n = snprintf(buff, size, "%s\nASK\n",key);
-                LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=ASK", key);
+                LOG(LOG_INFO, "sending %s=ASK", key);
             }
             else {
                 const char * tmp = this->get_value();
                 if ((strncasecmp("password", (char*)key, 8) == 0)
                     ||(strncasecmp("target_password", (char*)key, 15) == 0)){
-                    LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=<hidden>", key);
+                    LOG(LOG_INFO, "sending %s=<hidden>", key);
                 }
                 else {
-                    LOG(LOG_INFO, "get_serialized():(snpf) sending (from authid) %s=%s", key, tmp);
+                    LOG(LOG_INFO, "sending %s=%s", key, tmp);
                 }
                 n = snprintf(buff, size, "%s\n!%s\n",key,tmp);
             }
             if (n >= (int)size || n < 0) {
-                LOG(LOG_ERR, "get_serialized: Buffer overflow,"
+                LOG(LOG_ERR, "Sending Data to ACL Error: Buffer overflow,"
                     " should have write %u bytes but buffer size is %u bytes", n, size);
                 throw Error(ERR_ACL_MESSAGE_TOO_BIG);
             }

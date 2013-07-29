@@ -226,11 +226,12 @@ typedef enum
         AUTHID_SELECTOR_LINES_PER_PAGE,     // number of lines per page
         AUTHID_SELECTOR_NUMBER_OF_PAGES,    // number of pages
 
-        AUTHID_TARGET_DEVICE,   // target_device
-        AUTHID_TARGET_PASSWORD, // target_password
-        AUTHID_TARGET_PORT,     // target_port
-        AUTHID_TARGET_PROTOCOL, // proto_dest
-        AUTHID_TARGET_USER,     // target_login
+        AUTHID_TARGET_DEVICE,       // target_device
+        AUTHID_TARGET_PASSWORD,     // target_password
+        AUTHID_TARGET_PORT,         // target_port
+        AUTHID_TARGET_PROTOCOL,     // proto_dest
+        AUTHID_TARGET_USER,         // target_login
+        AUTHID_TARGET_APPLICATION,  // target_application
 
         AUTHID_AUTH_USER,       // login
         AUTHID_HOST,            // ip_client
@@ -317,6 +318,7 @@ typedef enum
 #define STRAUTHID_TARGET_PORT              "target_port"
 #define STRAUTHID_TARGET_PROTOCOL          "proto_dest"
 #define STRAUTHID_TARGET_USER              "target_login"
+#define STRAUTHID_TARGET_APPLICATION       "target_application"
 
 #define STRAUTHID_AUTH_USER                "login"
 #define STRAUTHID_HOST                     "ip_client"
@@ -402,11 +404,12 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_SELECTOR_LINES_PER_PAGE,  // number of lines per page
     STRAUTHID_SELECTOR_NUMBER_OF_PAGES, // number of pages
 
-    STRAUTHID_TARGET_DEVICE,    // target_device
-    STRAUTHID_TARGET_PASSWORD,  // target_password
-    STRAUTHID_TARGET_PORT,      // target_port
-    STRAUTHID_TARGET_PROTOCOL,  // proto_dest
-    STRAUTHID_TARGET_USER,      // target_login
+    STRAUTHID_TARGET_DEVICE,        // target_device
+    STRAUTHID_TARGET_PASSWORD,      // target_password
+    STRAUTHID_TARGET_PORT,          // target_port
+    STRAUTHID_TARGET_PROTOCOL,      // proto_dest
+    STRAUTHID_TARGET_USER,          // target_login
+    STRAUTHID_TARGET_APPLICATION,   // target_application
 
     STRAUTHID_AUTH_USER,        // login
     STRAUTHID_HOST,             // ip_client
@@ -467,11 +470,12 @@ struct Inifile : public FieldObserver {
     struct Inifile_globals {
         BoolField capture_chunk;
 
-        StringField auth_user;           // AUTHID_AUTH_USER //
-        StringField host;                // client_ip AUTHID_HOST //
-        StringField target;              // target ip AUTHID_TARGET //
-        StringField target_device;       // AUTHID_TARGET_DEVICE //
-        StringField target_user;         // AUTHID_TARGET_USER //
+        StringField auth_user;           // AUTHID_AUTH_USER
+        StringField host;                // client_ip AUTHID_HOST
+        StringField target;              // target ip AUTHID_TARGET
+        StringField target_device;       // AUTHID_TARGET_DEVICE
+        StringField target_user;         // AUTHID_TARGET_USER
+        StringField target_application;  // AUTHID_TARGET_APPLICATION
 
         // BEGIN globals
         bool bitmap_cache;                // default true
@@ -529,7 +533,13 @@ struct Inifile : public FieldObserver {
 
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
+
+        bool rdp_compression;
     } client;
+
+    struct {
+        bool rdp_compression;
+    } mod_rdp;
 
     // Section "video"
     struct {
@@ -591,7 +601,6 @@ struct Inifile : public FieldObserver {
 
         int log_type;
         char log_file_path[1024]; // log file location
-
     } debug;
 
     // section "translation"
@@ -718,12 +727,14 @@ public:
         this->globals.host.set_from_cstr("");
         this->globals.target_device.set_from_cstr("");
         this->globals.target_user.set_from_cstr("");
+        this->globals.target_application.set_from_cstr("");
 
         this->globals.auth_user.attach_ini(this,AUTHID_AUTH_USER);
         this->globals.host.attach_ini(this,AUTHID_HOST);
         this->globals.target.attach_ini(this,AUTHID_TARGET);
         this->globals.target_device.attach_ini(this,AUTHID_TARGET_DEVICE);
         this->globals.target_user.attach_ini(this,AUTHID_TARGET_USER);
+        this->globals.target_application.attach_ini(this,AUTHID_TARGET_APPLICATION);
 
         this->globals.enable_file_encryption.attach_ini(this,AUTHID_OPT_FILE_ENCRYPTION);
         this->globals.enable_file_encryption.set(false);
@@ -797,8 +808,12 @@ public:
         this->client.performance_flags_force_not_present = 0;
         this->client.tls_fallback_legacy                 = false;
         this->client.tls_support                         = true;
-
+        this->client.rdp_compression                     = false;
         // End Section "client"
+
+        // Begin section "mod_rdp"
+        this->mod_rdp.rdp_compression = false;
+        // End Section "mod_rdp"
 
         // Begin section video
         this->video.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
@@ -807,11 +822,11 @@ public:
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
-        this->video.ocr_interval    = 100; // 1 every second
+        this->video.ocr_interval    = 100;        // 1 every second
         this->video.png_interval    = 3000;
         this->video.capture_groupid = 33;
-        this->video.frame_interval  = 40;
-        this->video.break_interval  = 600;
+        this->video.frame_interval  = 40;         // 2,5 frame per second
+        this->video.break_interval  = 600;        // 10 minutes interval
         this->video.png_limit       = 3;
         strcpy(this->video.replay_path, "/tmp/");
 
@@ -920,7 +935,7 @@ public:
         this->context.selector_device_filter.set_empty();
         this->context.selector_group_filter.set_empty();
         this->context.selector_proto_filter.set_empty();
-        this->context.selector_lines_per_page.set(20);
+        this->context.selector_lines_per_page.set(0);
         this->context.selector_number_of_pages.set(1);
 
         this->context.selector_number_of_pages.attach_ini(this, AUTHID_SELECTOR_NUMBER_OF_PAGES);
@@ -976,7 +991,8 @@ public:
         this->context.accept_message.set_empty();
         this->context.display_message.set_empty();
 
-        this->context.rejected.set_from_cstr("Connection refused by authentifier.");
+        this->context.rejected.set_empty();
+        // this->context.rejected.set_from_cstr("Connection refused by authentifier.");
         this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
         this->context.authenticated.set(false);
@@ -1033,6 +1049,7 @@ public:
         this->context.selector_group_filter.attach_ini(this,AUTHID_SELECTOR_GROUP_FILTER);
         this->context.selector_proto_filter.attach_ini(this,AUTHID_SELECTOR_PROTO_FILTER);
         this->context.selector_lines_per_page.attach_ini(this,AUTHID_SELECTOR_LINES_PER_PAGE);
+        //this->context.selector_lines_per_page.use();
 
         this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);
         this->context.target_protocol.attach_ini(this,AUTHID_TARGET_PROTOCOL);
@@ -1280,6 +1297,14 @@ public:
             else if (0 == strcmp(key, "device_redirection")){
                 this->client.device_redirection.set_from_cstr(value);
             }
+            else if (0 == strcmp(key, "rdp_compression")){
+                this->client.rdp_compression = bool_from_cstr(value);
+            }
+        }
+        else if (0 == strcmp(context, "mod_rdp")){
+            if (0 == strcmp(key, "rdp_compression")) {
+                this->mod_rdp.rdp_compression = bool_from_cstr(value);
+            }
         }
         else if (0 == strcmp(context, "video")){
             if (0 == strcmp(key, "capture_flags")){
@@ -1504,6 +1529,26 @@ public:
             LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
         }
     }
+    
+    /******************
+     * ask_from_acl sets a value to corresponding field but does not mark it as changed
+     */
+    void ask_from_acl(const char * strauthid) {
+        authid_t authid = authid_from_string(strauthid);
+        if (authid != AUTHID_UNKNOWN) {
+            try {
+                BaseField * field = this->field_list.at(authid);
+                field->ask_from_acl();
+            }
+            catch (const std::out_of_range & oor){
+                LOG(LOG_WARNING, "Inifile::ask_from_acl(id): unknown authid=%d", authid);
+            }
+        }
+        else {
+            LOG(LOG_WARNING, "Inifile::ask_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
+        }
+    }
+    
     void context_set_value_by_string(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {

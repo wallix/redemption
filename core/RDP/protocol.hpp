@@ -476,6 +476,203 @@ struct ConfirmActivePDU_Send {
     }
 };  // struct ConfirmActivePDU_Send
 
+// 2.2.6.1 Virtual Channel PDU
+// ===========================
+
+// The Virtual Channel PDU is sent from client to server or from server to
+//  client and is used to transport data between static virtual channel
+//  endpoints.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                           tpktHeader                          |
+// +-----------------------------------------------+---------------+
+// |                    x224Data                   |    mcsSDrq    |
+// |                                               |   (variable)  |
+// +-----------------------------------------------+---------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                   securityHeader (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                        channelPduHeader                       |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                 virtualChannelData (variable)                 |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+
+// tpktHeader (4 bytes): A TPKT Header, as specified in [T123] section 8.
+
+// x224Data (3 bytes): An X.224 Class 0 Data TPDU, as specified in [X224]
+//  section 13.7.
+
+// mcsPdu (variable): If the PDU is being sent from client to server, this
+//  field MUST contain a variable-length, PER-encoded MCS Domain PDU
+//  (DomainMCSPDU) which encapsulates an MCS Send Data Request structure
+//  (SDrq, choice 25 from DomainMCSPDU), as specified in [T125] section 11.32
+//  (the ASN.1 structure definition is given in [T125] section 7, parts 7 and
+//  10). The userData field of the MCS Send Data Request contains a Security
+//  Header and the static virtual channel data.
+//
+//  If the PDU is being sent from server to client, this field MUST contain a
+//   variable-length, PER-encoded MCS Domain PDU (DomainMCSPDU) which
+//   encapsulates an MCS Send Data Indication structure (SDin, choice 26 from
+//   DomainMCSPDU), as specified in [T125] section 11.33 (the ASN.1 structure
+//   definition is given in [T125] section 7, parts 7 and 10). The userData
+//   field of the MCS Send Data Indication contains a Security Header and the
+//   static virtual channel data.
+
+// securityHeader (variable): Optional security header. The presence and
+//  format of the security header depends on the Encryption Level and
+//  Encryption Method selected by the server (sections 5.3.2 and 2.2.1.4.3).
+//  If the Encryption Level selected by the server is greater than
+//  ENCRYPTION_LEVEL_NONE (0) and the Encryption Method selected by the
+//  server is greater than ENCRYPTION_METHOD_NONE (0), then this field MUST
+//  contain one of the security headers described in section 2.2.8.1.1.2.
+//
+//  If the PDU is being sent from client to server:
+//
+//  * The securityHeader field MUST contain a Non-FIPS Security Header
+//    (section 2.2.8.1.1.2.2) if the Encryption Method selected by the server
+//    is ENCRYPTION_METHOD_40BIT (0x00000001), ENCRYPTION_METHOD_56BIT
+//    (0x00000008), or ENCRYPTION_METHOD_128BIT (0x00000002).
+//
+//  If the PDU is being sent from server to client:
+//
+//  * The securityHeader field MUST contain a Basic Security Header (section
+//    2.2.8.1.1.2.1) if the Encryption Level selected by the server is
+//    ENCRYPTION_LEVEL_LOW (1).
+//
+//  * The securityHeader field MUST contain a Non-FIPS Security Header
+//    (section 2.2.8.1.1.2.2) if the Encryption Method selected by the server
+//    is ENCRYPTION_METHOD_40BIT (0x00000001), ENCRYPTION_METHOD_56BIT
+//    (0x00000008), or ENCRYPTION_METHOD_128BIT (0x00000002).
+//
+//  If the Encryption Method selected by the server is ENCRYPTION_METHOD_FIPS
+//   (0x00000010) the securityHeader field MUST contain a FIPS Security Header
+//   (section 2.2.8.1.1.2.3).
+//
+//  If the Encryption Level selected by the server is ENCRYPTION_LEVEL_NONE
+//   (0) and the Encryption Method selected by the server is
+//   ENCRYPTION_METHOD_NONE (0), then this header MUST NOT be included in the
+//   PDU.
+
+// channelPduHeader (8 bytes): A Channel PDU Header (section 2.2.6.1.1)
+//  structure, which contains control flags and describes the size of the
+//  opaque channel data.
+
+// virtualChannelData (variable): Variable-length data to be processed by the
+//  static virtual channel protocol handler. This field MUST NOT be larger
+//  than CHANNEL_CHUNK_LENGTH (1600) bytes in size unless the maximum virtual
+//  channel chunk size is specified in the optional VCChunkSize field of the
+//  Virtual Channel Capability Set (section 2.2.7.1.10).
+
+// 2.2.6.1.1 Channel PDU Header (CHANNEL_PDU_HEADER)
+// =================================================
+
+// The CHANNEL_PDU_HEADER MUST precede all opaque static virtual channel
+//  traffic chunks transmitted via RDP between a client and server.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                             length                            |
+// +---------------------------------------------------------------+
+// |                             flags                             |
+// +---------------------------------------------------------------+
+
+// length (4 bytes): A 32-bit, unsigned integer. The total length in bytes of
+//  the uncompressed channel data, excluding this header. The data can span
+//  multiple Virtual Channel PDUs and the individual chunks will need to be
+//  reassembled in that case (section 3.1.5.2.2).
+
+// flags (4 bytes): A 32-bit, unsigned integer. The channel control flags.
+
+// +----------------------------+----------------------------------------------+
+// | Flag                       | Meaning                                      |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_FIRST         | Indicates that the chunk is the first in a   |
+// | 0x00000001                 | sequence.                                    |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_LAST          | Indicates that the chunk is the last in a    |
+// | 0x00000002                 | sequence.                                    |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_SHOW_PROTOCOL | The Channel PDU Header MUST be visible to    |
+// | 0x00000010                 | the application endpoint (see section        |
+// |                            | 2.2.1.3.4.1).                                |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_SUSPEND       | All virtual channel traffic MUST be          |
+// | 0x00000020 suspended.      | This flag is only valid in server-to-client  |
+// |                            | virtual channel traffic. It MUST be ignored  |
+// |                            | in client-to-server data.                    |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_FLAG_RESUME        | All virtual channel traffic MUST be resumed. |
+// | 0x00000040                 | This flag is only valid in server-to-client  |
+// |                            | virtual channel traffic. It MUST be ignored  |
+// |                            | in client-to-server data.                    |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_PACKET_COMPRESSED  | The virtual channel data is compressed. This |
+// | 0x00200000                 | flag is equivalent to MPPC bit C (for more   |
+// |                            | information see [RFC2118] section 3.1).      |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_PACKET_AT_FRONT    | The decompressed packet MUST be placed at    |
+// | 0x00400000                 | the beginning of the history buffer. This    |
+// |                            | flag is equivalent to MPPC bit B (for more   |
+// |                            | information see [RFC2118] section 3.1).      |
+// +----------------------------+----------------------------------------------+
+// | CHANNEL_PACKET_FLUSHED     | The decompressor MUST reinitialize the       |
+// | 0x00800000                 | history buffer (by filling it with zeros)    |
+// |                            | and reset the HistoryOffset to zero. After   |
+// |                            | it has been reinitialized, the entire        |
+// |                            | history buffer is immediately regarded as    |
+// |                            | valid. This flag is equivalent to MPPC bit A |
+// |                            | (for more information see [RFC2118] section  |
+// |                            | 3.1). If the CHANNEL_PACKET_COMPRESSED       |
+// |                            | (0x00200000) flag is also present, then the  |
+// |                            | CHANNEL_PACKET_FLUSHED flag MUST be          |
+// |                            | processed first.                             |
+// +----------------------------+----------------------------------------------+
+// | CompressionTypeMask        | Indicates the compression package which was  |
+// | 0x000F0000                 | used to compress the data. See the           |
+// |                            | discussion which follows this table for a    |
+// |                            | list of compression packages.                |
+// +----------------------------+----------------------------------------------+
+
+// If neither the CHANNEL_FLAG_FIRST (0x00000001) nor the CHANNEL_FLAG_LAST
+//  (0x00000002) flag is present, the chunk is from the middle of a sequence.
+
+// Instructions specifying how to set the compression flags can be found in
+//  section 3.1.8.2.1.
+
+// Possible compression types are as follows.
+
+// +-------------------------+-------------------------------------------------+
+// | Value                   | Meaning                                         |
+// +-------------------------+-------------------------------------------------+
+// | PACKET_COMPR_TYPE_8K    | RDP 4.0 bulk compression (see section           |
+// | 0x0                     | 3.1.8.4.1).                                     |
+// +-------------------------+-------------------------------------------------+
+// | PACKET_COMPR_TYPE_64K   | RDP 5.0 bulk compression (see section           |
+// | 0x1                     | 3.1.8.4.2).                                     |
+// +-------------------------+-------------------------------------------------+
+// | PACKET_COMPR_TYPE_RDP6  | RDP 6.0 bulk compression (see [MS-RDPEGDI]      |
+// | 0x2                     | section 3.1.8.1).                               |
+// +-------------------------+-------------------------------------------------+
+// | PACKET_COMPR_TYPE_RDP61 | RDP 6.1 bulk compression (see [MS-RDPEGDI]      |
+// | 0x3                     | section 3.1.8.2).                               |
+// +-------------------------+-------------------------------------------------+
+
+// Instructions detailing how to compress a data stream are listed in section
+//  3.1.8.2, while decompression of a data stream is described in section
+//  3.1.8.3.
+
 }   // namespace RDP
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_PROTOCOL_HPP_
