@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
     nonsocketobj.add_to_fd_set(rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 500000L) &&
-                      (timeout.tv_usec > 0L), true);
+                      (timeout.tv_usec > 200000L), true);
 
     timeout.tv_sec = 2L;
     // adding two non socket waitobj to fd set
@@ -109,7 +109,6 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
 
     // set a wait obj twice but with different timers:
     // only the last timer will be considered
-    // (may be it should be the closest ?)
     timeout.tv_sec = 2L;
     nonsocketobj.set(300000);
     res = nonsocketobj.is_set(rfds);
@@ -121,6 +120,60 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
     nonsocketobj.add_to_fd_set(rfds,max,timeout);
     BOOST_CHECK_EQUAL(timeout.tv_sec, 1L);
     BOOST_CHECK_EQUAL((timeout.tv_usec <= 500000L) &&
+                      (timeout.tv_usec > 200000L), true);
+
+
+    // update a wait obj twice (or many times) will consider the closest timer.
+    // test1
+    timeout.tv_sec = 2L;
+    timeout.tv_usec = 0L;
+
+    nonsocketobj.reset();
+    nonsocketobj.update(300000);
+    res = nonsocketobj.is_set(rfds);
+    BOOST_CHECK_EQUAL(res, false);
+    nonsocketobj.update(1400000);
+    res = nonsocketobj.is_set(rfds);
+    BOOST_CHECK_EQUAL(res, false);
+
+    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
+    BOOST_CHECK_EQUAL((timeout.tv_usec <= 300000L) &&
                       (timeout.tv_usec > 0L), true);
 
+    // test2
+    timeout.tv_sec = 2L;
+    timeout.tv_usec = 0L;
+
+    nonsocketobj.reset();
+    nonsocketobj.update(1400000);
+    res = nonsocketobj.is_set(rfds);
+    BOOST_CHECK_EQUAL(res, false);
+    nonsocketobj.update(800000);
+    res = nonsocketobj.is_set(rfds);
+    BOOST_CHECK_EQUAL(res, false);
+
+
+    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    BOOST_CHECK_EQUAL(timeout.tv_sec, 0L);
+    BOOST_CHECK_EQUAL((timeout.tv_usec <= 800000L) &&
+                      (timeout.tv_usec > 500000L), true);
+
+    // test 3
+    timeout.tv_sec = 3L;
+    timeout.tv_usec = 0L;
+
+    nonsocketobj.reset();
+    nonsocketobj.update(1400000);
+    res = nonsocketobj.is_set(rfds);
+    BOOST_CHECK_EQUAL(res, false);
+    nonsocketobj.update(2800000);
+    res = nonsocketobj.is_set(rfds);
+    BOOST_CHECK_EQUAL(res, false);
+
+
+    nonsocketobj.add_to_fd_set(rfds,max,timeout);
+    BOOST_CHECK_EQUAL(timeout.tv_sec, 1L);
+    BOOST_CHECK_EQUAL((timeout.tv_usec <= 400000L) &&
+                      (timeout.tv_usec > 100000L), true);
 }

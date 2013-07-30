@@ -126,7 +126,7 @@ struct Session {
 
             time_t start_time = time(NULL);
 
-            struct timeval time_mark = { 0, 10000 };
+            struct timeval time_mark = { 5, 0 };
 
             bool run_session = true;
 
@@ -140,7 +140,9 @@ struct Session {
                 struct timeval timeout = time_mark;
 
                 this->front_event.add_to_fd_set(rfds, max, timeout);
-
+                if (this->front->capture) {
+                    this->front->capture->capture_event.add_to_fd_set(rfds, max, timeout);
+                }
                 TODO("Looks like acl and mod can be unified into a common class, where events can happen")
                 TODO("move ptr_auth_event to acl")
                 if (this->acl && !this->acl->lost_acl) {
@@ -185,9 +187,10 @@ struct Session {
                                 mm.mod->event.reset();
                             }
                         }
-
-                        this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
-
+                        if (this->front->capture
+                            && this->front->capture->capture_event.is_set(rfds)) {
+                            this->front->periodic_snapshot(mm.mod->get_pointer_displayed());
+                        }
                         // Incoming data from ACL, or opening acl
                         if (!this->acl) {
                             if(!mm.last_module) { // acl never opened or closed by me (close box)
@@ -199,7 +202,7 @@ struct Session {
                                                                 this->ini->debug.auth);
 
                                     if (client_sck == -1) {
-                                        LOG(LOG_ERR, "Failed to connect to authentifieur");
+                                        LOG(LOG_ERR, "Failed to connect to authentifier");
                                         throw Error(ERR_SOCKET_CONNECT_FAILED);
                                     }
 
