@@ -31,6 +31,45 @@
 ///TODO regex compiler ("..." -> C++)
 
 namespace rndfa {
+    using std::size_t;
+
+    struct utf_char
+    {
+        utf_char(size_t c)
+        : utfc(c)
+        {}
+
+        size_t utfc;
+    };
+
+    std::ostream& operator<<(std::ostream& os, utf_char c)
+    {
+        size_t len = 1;
+        while ( c.utfc >>= __CHAR_BIT__ ) {
+            ++len;
+        }
+        return os.write(reinterpret_cast<const char *>(&c.utfc), len);
+    }
+
+    template<typename ForwardIterator>
+    bool utf_contains(ForwardIterator first, ForwardIterator last, size_t c)
+    {
+        for (; first != last; ) {
+            size_t cc = *first;
+            ++first;
+            while (first != last && (*first >> 6) == 2) {
+                cc <<= __CHAR_BIT__;
+                cc |= *first;
+                ++first;
+            }
+            if (cc == c) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    const unsigned NORMAL = 0;
     const unsigned ANY_CHARACTER = 1 << 8;
     const unsigned SPLIT = 1 << 9;
     const unsigned CAPTURE_OPEN = 1 << 10;
@@ -42,59 +81,63 @@ namespace rndfa {
 
     struct StateBase
     {
-        StateBase(unsigned c, StateBase * out1 = 0, StateBase * out2 = 0)
-        : c(c)
+        StateBase(unsigned type, size_t c = 0, StateBase * out1 = 0, StateBase * out2 = 0)
+        : utfc(c)
+        , type(type)
         , id(0)
         , num(0)
         , out1(out1)
         , out2(out2)
         {}
 
-        virtual ~StateBase(){}
+        virtual ~StateBase()
+        {}
 
-        virtual bool check(int c)
+        virtual bool check(size_t c)
         {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
-            return (this->c & ANY_CHARACTER) || (this->c&0xFF) == c;
+            return (this->type == ANY_CHARACTER || this->utfc == c);
         }
 
         virtual StateBase * clone() const
         {
-            return new StateBase(this->c);
+            return new StateBase(this->type, this->utfc);
         }
 
-        virtual void display(std::ostream& os)
+        virtual void display(std::ostream& os) const
         {
-            if (this->c & ANY_CHARACTER) {
+            if (this->type == ANY_CHARACTER) {
                 os << "any";
             }
-            else if (this->c & (SPLIT|CAPTURE_CLOSE|CAPTURE_OPEN)){
-                os << (this->is_split() ? "(split)" : this->c == CAPTURE_OPEN ? "(open)" : "(close)");
+            else if (this->type & (SPLIT|CAPTURE_CLOSE|CAPTURE_OPEN)){
+                os << (this->is_split() ? "(split)" : this->type == CAPTURE_OPEN ? "(open)" : "(close)");
             }
             else {
-                os << "'" << char(this->c & 0xff) << "'";
+                os << "'" << utf_char(this->utfc) << "'";
             }
         }
 
         bool is_border() const
-        { return this->c & (FIRST|LAST); }
+        { return this->type & (FIRST|LAST); }
 
         bool is_cap() const
-        { return this->c & (CAPTURE_OPEN|CAPTURE_CLOSE); }
+        { return this->type & (CAPTURE_OPEN|CAPTURE_CLOSE); }
 
         bool is_cap_open() const
-        { return this->c == CAPTURE_OPEN; }
+        { return this->type == CAPTURE_OPEN; }
 
         bool is_cap_close() const
-        { return this->c == CAPTURE_CLOSE; }
+        { return this->type == CAPTURE_CLOSE; }
 
         bool is_split() const
-        { return this->c == SPLIT; }
+        { return this->type == SPLIT; }
 
         bool is_epsilone() const
-        { return this->c == EPSILONE; }
+        { return this->type == EPSILONE; }
 
-        unsigned c;
+        size_t utfc;
+
+        unsigned type;
         unsigned id;
         unsigned num;
 
@@ -112,49 +155,55 @@ namespace rndfa {
 
     struct StateRange : StateBase
     {
-        StateRange(int r1, int r2, StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(r1, out1, out2)
+        StateRange(size_t r1, size_t r2, StateBase* out1 = 0, StateBase* out2 = 0)
+        : StateBase(NORMAL, r1, out1, out2)
         , rend(r2)
         {}
 
         virtual ~StateRange()
         {}
 
-        virtual bool check(int c)
+        virtual bool check(size_t c)
         {
             /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
-            return (this->c&0xFF) <= c && c <= rend;
+            return this->utfc <= c && c <= rend;
         }
 
-        virtual void display(std::ostream& os)
+        virtual StateBase * clone() const
         {
-            os << "[" << char(this->c) << "-" << char(this->rend) << "]";
+            return new StateRange(this->utfc, this->rend);
         }
 
-        int rend;
-    };
+        virtual void display(std::ostream& os) const
+        {
+            os << "[" << utf_char(this->utfc) << "-" << utf_char(this->rend) << "]";
+        }
 
-    State * range(char c1, char c2, StateBase* out = 0) {
-        return new StateRange(c1, c2, out);
-    }
+        size_t rend;
+    };
 
     struct StateCharacters : StateBase
     {
         StateCharacters(const std::string& s, StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(s[0], out1, out2)
+        : StateBase(NORMAL, 0, out1, out2)
         , str(s)
         {}
 
         virtual ~StateCharacters()
         {}
 
-        virtual bool check(int c)
+        virtual bool check(size_t c)
         {
             /**///std::cout << str;
-            return this->str.find(c) != std::string::npos;
+            return utf_contains(this->str.begin(), this->str.end(), c);
         }
 
-        virtual void display(std::ostream& os)
+        virtual StateBase * clone() const
+        {
+            return new StateCharacters(this->str);
+        }
+
+        virtual void display(std::ostream& os) const
         {
             os << "[" << this->str << "]";
         }
@@ -171,32 +220,39 @@ namespace rndfa {
         virtual ~StateBorder()
         {}
 
-        virtual bool check(int /*c*/)
+        virtual bool check(size_t /*c*/)
         {
             /**///std::cout << (this->c == FIRST ? "^" : "$");
             return false;
         }
 
-        virtual void display(std::ostream& os)
+        virtual StateBase * clone() const
         {
-            os << (this->c == FIRST ? "^" : "$");
+            return new StateBorder(this->type == FIRST);
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << (this->type == FIRST ? "^" : "$");
         }
     };
 
     struct StateMultiTest : StateBase
     {
         struct Checker {
-            virtual bool check(int c) = 0;
-            virtual void display(std::ostream& os) = 0;
+            virtual bool check(size_t c) = 0;
+            virtual Checker * clone() const = 0;
+            virtual void display(std::ostream& os) const = 0;
         };
 
         std::vector<Checker*> checkers;
         typedef std::vector<Checker*>::iterator checker_iterator;
+        typedef std::vector<Checker*>::const_iterator checker_const_iterator;
         bool result_true_check;
 
 
         StateMultiTest(StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(SPECIAL_CHECK, out1, out2)
+        : StateBase(SPECIAL_CHECK, 0, out1, out2)
         , checkers()
         , result_true_check(true)
         {}
@@ -208,7 +264,7 @@ namespace rndfa {
             }
         }
 
-        virtual bool check(int c)
+        virtual bool check(size_t c)
         {
             for (checker_iterator first = this->checkers.begin(), last = this->checkers.end(); first != last; ++first) {
                 if ((*first)->check(c)) {
@@ -218,10 +274,20 @@ namespace rndfa {
             return !this->result_true_check;
         }
 
-        virtual void display(std::ostream& os)
+        virtual StateBase * clone() const
         {
-            checker_iterator first = this->checkers.begin();
-            checker_iterator last = this->checkers.end();
+            StateMultiTest * ret = new StateMultiTest;
+            ret->result_true_check = this->result_true_check;
+            for (checker_const_iterator first = this->checkers.begin(), last = this->checkers.end(); first != last; ++first) {
+                ret->push_checker((*first)->clone());
+            }
+            return ret;
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            checker_const_iterator first = this->checkers.begin();
+            checker_const_iterator last = this->checkers.end();
             if (first != last) {
                 (*first)->display(os);
                 while (++first != last) {
@@ -246,12 +312,17 @@ namespace rndfa {
         virtual ~CheckerString()
         {}
 
-        virtual bool check(int c)
+        virtual bool check(size_t c)
         {
-            return this->str.find(c) != std::string::npos;
+            return utf_contains(this->str.begin(), this->str.end(), c);
         }
 
-        virtual void display(std::ostream& os)
+        virtual Checker * clone() const
+        {
+            return new CheckerString(this->str);
+        }
+
+        virtual void display(std::ostream& os) const
         {
             os << "[" << this->str << "]";
         }
@@ -269,18 +340,23 @@ namespace rndfa {
         virtual ~CheckerInterval()
         {}
 
-        virtual bool check(int c)
+        virtual bool check(size_t c)
         {
             return this->begin <= c && c <= this->end;
         }
 
-        virtual void display(std::ostream& os)
+        virtual Checker* clone() const
         {
-            os << "[" << char(this->begin) << "-" << char(this->end) << "]";
+            return new CheckerInterval(this->begin, this->end);
         }
 
-        int begin;
-        int end;
+        virtual void display(std::ostream& os) const
+        {
+            os << "[" << utf_char(this->begin) << "-" << utf_char(this->end) << "]";
+        }
+
+        size_t begin;
+        size_t end;
     };
 
 
@@ -292,7 +368,7 @@ namespace rndfa {
         struct is_begin_state {
             bool operator()(const StateList& stl) const
             {
-                return stl.st->c == FIRST;
+                return stl.st->type == FIRST;
             }
         };
 
@@ -672,7 +748,7 @@ namespace rndfa {
             bool empty() const
             { return this->array == this->parray; }
 
-            std::size_t size() const
+            size_t size() const
             { return this->parray - this->array; }
 
             void clear()
@@ -697,7 +773,7 @@ namespace rndfa {
             RangeList * step(const char *s, RangeList * l)
             {
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (first->st->c == LAST && !(s+1)) {
+                    if (first->st->type == LAST && !(s+1)) {
                         return (RangeList*)2;
                     }
                     if (!first->st->is_cap() && first->st->check(*s)) {
@@ -738,7 +814,7 @@ namespace rndfa {
                 }
 
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (first->st->c == LAST) {
+                    if (first->st->type == LAST) {
                         return true;
                     }
                 }
@@ -756,7 +832,7 @@ namespace rndfa {
                     ifirst->rl->st->id = this->step_id;
 
                     for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
-                        if (first->st->c == LAST && !(s+1)) {
+                        if (first->st->type == LAST && !(s+1)) {
                             return 0;
                         }
                         if (!first->st->is_cap() && first->st->check(*s)) {
@@ -802,7 +878,7 @@ namespace rndfa {
 
                 for (Info* ifirst = pal1->begin(), * ilast = pal1->end(); ifirst != ilast ; ++ifirst) {
                     for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
-                        if (first->st->c == LAST) {
+                        if (first->st->type == LAST) {
                             return true;
                         }
                     }
@@ -834,7 +910,7 @@ namespace rndfa {
     public:
         void display_elem_state_list(const StateList& e, unsigned idx) const
         {
-            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t" << e.st->c << "\t"
+            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t" << e.st->utfc << "\t"
             << *e.st << "\t" << (e.next) << "\033[0m" << std::endl;
         }
 
@@ -843,7 +919,7 @@ namespace rndfa {
             for (; l < last && l->first != l->last; ++l) {
                 std::cout << l << "  st: " << l->st->num << (l->st->is_cap() ? " (cap)\n" : "\n");
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    std::cout << "\t" << first->st->num << "\t" << first->st->c << "\t"
+                    std::cout << "\t" << first->st->num << "\t" << first->st->utfc << "\t"
                     << *first->st << "\t" << first->next << ("\n");
                 }
             }
@@ -914,7 +990,7 @@ namespace rndfa {
                             continue ;
                         }
 
-                        if (first->st->c == LAST && !(s+1)) {
+                        if (first->st->type == LAST && !(s+1)) {
                             return ifirst->idx;
                         }
 
@@ -1024,7 +1100,7 @@ namespace rndfa {
                                 continue ;
                             }
 
-                            if (first->st->c == LAST) {
+                            if (first->st->type == LAST) {
                                 this->sm.idx_trace = ifirst->idx;
                                 return true;
                             }
@@ -1073,31 +1149,19 @@ namespace rndfa {
         RangeList st_range_beginning;
     };
 
-
-    State * state(State * out1, State * out2 = 0) {
-        return new StateBase(SPLIT, out1, out2);
+    StateBase * new_character(size_t c, StateBase * out1 = 0)
+    {
+        return new StateBase(NORMAL, c, out1);
     }
 
-    State * single(int c, State * out = 0) {
-        return new StateBase(c, out);
+    StateBase * new_any(StateBase * out1 = 0)
+    {
+        return new StateBase(ANY_CHARACTER, 0, out1);
     }
 
-    State * any(State * out = 0) {
-        return new StateBase(ANY_CHARACTER, out);
-    }
-
-    State * zero_or_more(int c, State * out = 0) {
-        State * ret = state(single(c), out);
-        ret->out1->out1 = ret;
-        return ret;
-    }
-
-    State * zero_or_one(int c, State * out = 0) {
-        return state(single(c, out), out);
-    }
-
-    State * one_or_more(int c, State * out = 0) {
-        return zero_or_more(c, out)->out1;
+    StateBase * new_split(StateBase * out1 = 0, StateBase * out2 = 0)
+    {
+        return new StateBase(SPLIT, 0, out1, out2);
     }
 
     int c2rgxc(int c)
@@ -1122,7 +1186,7 @@ namespace rndfa {
     StateBase * str2stchar(const char *& s, const char * last, const char * & msg_err)
     {
         if (*s == '\\' && s+1 != last) {
-            return new StateBase(c2rgxc(*++s));
+            return new_character(c2rgxc(*++s));
         }
 
         if (*s == '[') {
@@ -1191,7 +1255,7 @@ namespace rndfa {
             return st;
         }
 
-        return new StateBase(*s == '.' ? ANY_CHARACTER : *s);
+        return *s == '.' ? new_any() : new_character(*s);
     }
 
     bool is_range_repetition(const char * s, const char * last)
@@ -1231,9 +1295,9 @@ namespace rndfa {
     {
         if (st && st->id != -4u) {
             st->id = -4u;
+            sts.push_back(st);
             append_state(st->out1, sts);
             append_state(st->out2, sts);
-            sts.push_back(st);
         }
     }
 
@@ -1243,6 +1307,64 @@ namespace rndfa {
         append_state(st, sts);
         std::for_each(sts.begin(), sts.end(), StateDeleter());
     }
+
+    struct ContextClone {
+        std::vector<StateBase*> sts;
+        std::vector<StateBase*> sts2;
+        const StateBase * st;
+        StateBase * replicant;
+        size_t p1;
+        size_t p2;
+        bool definied_out1;
+        bool definied_out2;
+
+        ContextClone(const StateBase * st_base)
+        : sts()
+        , sts2()
+        , st(st_base)
+        , replicant(0)
+        , p1(0)
+        , definied_out1(st->out1)
+        , definied_out2(st->out2)
+        {
+            if (this->definied_out1) {
+                append_state(st->out1, this->sts);
+            }
+            if (this->definied_out2) {
+                this->p2 = this->sts.size();
+                append_state(st->out2, this->sts);
+            }
+            this->sts2.reserve(this->sts.size());
+        }
+
+        StateBase * clone()
+        {
+            this->replicant = this->st->clone();
+            if (!(!this->definied_out1 && !this->definied_out2)) {
+                typedef std::vector<StateBase*>::iterator iterator;
+                iterator last = this->sts.end();
+                for (iterator first = this->sts.begin(), first2 = sts2.begin(); last != this->sts.end(); ++first, ++first2) {
+                    *first2 = (*first)->clone();
+                    (*first)->id = 0;
+                }
+                for (iterator first = this->sts.begin(), first2 = sts2.begin(); last != this->sts.end(); ++first, ++first2) {
+                    if ((*first)->out1) {
+                        (*first2)->out1 = this->sts2[std::find(this->sts.begin(), this->sts.end(), (*first)->out1) - this->sts.begin()];
+                    }
+                    if ((*first)->out2) {
+                        (*first2)->out2 = this->sts2[std::find(this->sts.begin(), this->sts.end(), (*first)->out2) - this->sts.begin()];
+                    }
+                }
+                if (this->definied_out1) {
+                    this->replicant->out1 = this->sts2[p1];
+                }
+                if (this->definied_out2) {
+                    this->replicant->out2 = this->sts2[p2];
+                }
+            }
+            return this->replicant;
+        }
+    };
 
     typedef std::pair<StateBase*, StateBase**> IntermendaryState;
 
@@ -1313,7 +1435,7 @@ namespace rndfa {
                     case '?': {
                         StateBase ** tmp = st_one;
                         st_one = &(*pst)->out1;
-                        *pst = new StateBase(SPLIT, 0, *pst);
+                        *pst = new_split(0, *pst);
                         if (prev_st_one) {
                             *prev_st_one = *pst;
                             prev_st_one = tmp;
@@ -1322,7 +1444,7 @@ namespace rndfa {
                         break;
                     }
                     case '*':
-                        *pst = new StateBase(SPLIT, 0, *pst);
+                        *pst = new_split(0, *pst);
                         if (prev_st_one) {
                             *prev_st_one = *pst;
                             prev_st_one = 0;
@@ -1331,13 +1453,13 @@ namespace rndfa {
                         pst = &(*pst)->out1;
                         break;
                     case '+':
-                        (*pst)->out1 = new StateBase(SPLIT, 0, *pst);
+                        (*pst)->out1 = new_split(0, *pst);
                         pst = &(*pst)->out1->out1;
                         break;
                     case '|':
                         *pesplit = *pst ? &(*pst)->out1 : pst;
                         ++pesplit;
-                        bst->out1 = new StateBase(SPLIT, 0, bst->out1);
+                        bst->out1 = new_split(0, bst->out1);
                         bst = bst->out1;
                         if (st_one) {
                             *pesplit = st_one;
@@ -1350,7 +1472,6 @@ namespace rndfa {
                         /**///std::cout << ("{") << std::endl;
                         char * end = 0;
                         unsigned m = strtoul(s+1, &end, 10);
-                        StateBase * tmpst = *pst;
                         /**///std::cout << ("end ") << *end << std::endl;
                         /**///std::cout << "m: " << (m) << std::endl;
                         if (*end != '}') {
@@ -1358,23 +1479,24 @@ namespace rndfa {
                             if (*(end+1) == '}') {
                                 /**///std::cout << ("infini") << std::endl;
                                 if (m == 1) {
-                                    (*pst)->out1 = new StateBase(SPLIT, 0, *pst);
+                                    (*pst)->out1 = new_split(0, *pst);
                                     pst = &(*pst)->out1->out1;
                                 }
                                 else if (m) {
+                                    ContextClone cloner(*pst);
                                     if (*pst) {
                                         pst = &(*pst)->out1;
                                     }
                                     while (--m) {
-                                        *pst = tmpst->clone();
+                                        *pst = cloner.clone();
                                         pst = &(*pst)->out1;
                                     }
-                                    *pst = new StateBase(SPLIT, 0, tmpst->clone());
+                                    *pst = new_split(0, cloner.clone());
                                     (*pst)->out2->out1 = *pst;
                                     pst = &(*pst)->out1;
                                 }
                                 else {
-                                    *pst = new StateBase(SPLIT, 0, *pst);
+                                    *pst = new_split(0, *pst);
                                     if (prev_st_one) {
                                         *prev_st_one = *pst;
                                         prev_st_one = 0;
@@ -1399,9 +1521,10 @@ namespace rndfa {
                                 if (0 == m) {
                                     --end;
                                     if (n != 1) {
+                                        ContextClone cloner(*pst);
                                         StateBase ** tmp = st_one;
                                         st_one = &(*pst)->out1;
-                                        *pst = new StateBase(SPLIT, 0, *pst);
+                                        *pst = new_split(0, *pst);
                                         if (prev_st_one) {
                                             *prev_st_one = *pst;
                                             prev_st_one = tmp;
@@ -1410,12 +1533,12 @@ namespace rndfa {
 
                                         //TODO complexe
                                         while (--n) {
-                                            *pst = tmpst->clone();
+                                            *pst = cloner.clone();
                                             tmp = st_one;
                                             *st_one = *pst;
                                             prev_st_one = st_one;
                                             st_one = &(*pst)->out1;
-                                            *pst = new StateBase(SPLIT, 0, *pst);
+                                            *pst = new_split(0, *pst);
                                             *prev_st_one = *pst;
                                             prev_st_one = tmp;
                                             pst = &(*pst)->out1;
@@ -1424,18 +1547,19 @@ namespace rndfa {
                                 }
                                 else {
                                     --end;
+                                    ContextClone cloner(*pst);
                                     if (*pst) {
                                         pst = &(*pst)->out1;
                                     }
                                     while (--m) {
-                                        *pst = tmpst->clone();
+                                        *pst = cloner.clone();
                                         pst = &(*pst)->out1;
                                     }
 
-                                    StateBase * split = new StateBase(SPLIT,0,0);
+                                    StateBase * split = new_split();
                                     while (n--) {
-                                        *pst = new StateBase(SPLIT, 0, split);
-                                        (*pst)->out1 = tmpst->clone();
+                                        *pst = new_split(0, split);
+                                        (*pst)->out1 = cloner.clone();
                                         (*pst)->out1->out1 = split;
                                         pst = &(*pst)->out2;
                                     }
@@ -1449,12 +1573,13 @@ namespace rndfa {
                         }
                         else {
                             /**///std::cout << ("fixe ") << m << std::endl;
+                            ContextClone cloner(*pst);
                             if (*pst) {
                                 pst = &(*pst)->out1;
                             }
                             while (--m) {
                                 /**///std::cout << ("clone") << std::endl;
-                                *pst = tmpst->clone();
+                                *pst = cloner.clone();
                                 pst = &(*pst)->out1;
                             }
                             end -= 1;
@@ -1536,7 +1661,7 @@ namespace rndfa {
                             if (*pst) {
                                 pst = &(*pst)->out1;
                             }
-                            *pst = new StateBase(CAPTURE_OPEN, intermendary.first);
+                            *pst = new StateBase(CAPTURE_OPEN, 0, intermendary.first);
                             if (st_one) {
                                 *st_one = *pst;
                                 prev_st_one = st_one;
@@ -1607,7 +1732,7 @@ namespace rndfa {
         if (st && st->id != -1u-1u) {
             std::string s(depth, '\t');
             std::cout
-            << s << "\033[33m" << st << "\t" << st->num << "\t" << st->c << "\t"
+            << s << "\033[33m" << st << "\t" << st->num << "\t" << st->utfc << "\t"
             << *st << "\033[0m\n\t" << s << st->out1 << "\n\t" << s << st->out2 << "\n";
             st->id = -1u-1u;
             display_state(st->out1, depth+1);
