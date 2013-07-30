@@ -21,9 +21,9 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_DIALOG_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_DIALOG_HPP
 
+#include "window.hpp"
 #include "button.hpp"
 #include "multiline.hpp"
-#include "window.hpp"
 
 class WindowDialog : public Window
 {
@@ -40,15 +40,13 @@ public:
                  int fgcolorbtn = BLACK, int bgcolorbtn = WHITE)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , dialog(drawable, 0, 0, this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
-    , ok(drawable, 0, 0, this, this, ok_text, true, -12, fgcolorbtn, bgcolorbtn, 6, 2)
+    , ok(drawable, 0, 0, this, this, ok_text ? ok_text : "Ok", true, -12, fgcolorbtn, bgcolorbtn, 6, 2)
     , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2, NOTIFY_CANCEL) : NULL)
     {
         this->child_list.push_back(&this->dialog);
         this->child_list.push_back(&this->ok);
 
-        int w,h;
-        this->drawable->text_metrics(this->titlebar.buffer, w,h);
-        int window_size = std::max<int>(w + this->titlebar.x_text + 5 + this->button_close.cx(), this->dialog.cx());
+        const int window_size = std::max<int>(this->titlebar_base_width + this->titlebar.x_text + 5 + this->button_close.cx(), this->dialog.cx());
 
         if (this->cancel) {
             this->child_list.push_back(this->cancel);
@@ -66,10 +64,10 @@ public:
         else {
             this->set_window_cx(std::max<int>(window_size, this->ok.cx() + 20));
             this->dialog.rect.x += (this->cx() - this->dialog.cx()) / 2;
-            this->ok.set_button_x(this->dx() + this->cx() - (this->ok.cx() + 10));
 
-            this->set_window_cy(this->dialog.cy() + this->titlebar.cy() + 15 + this->ok.cy());
+            this->set_window_cy(this->titlebar.cy() + this->dialog.cy() + this->ok.cy() + 15);
             this->dialog.rect.y += this->titlebar.cy() + 5;
+            this->ok.set_button_x(this->dx() + this->cx() - (this->ok.cx() + 10));
             this->ok.set_button_y(this->dialog.dy() + this->dialog.cy() + 5);
         }
     }
