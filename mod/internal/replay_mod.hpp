@@ -47,8 +47,8 @@ public:
     : InternalMod(front, width, height)
     , auth_error_message(auth_error_message)
     {
-        strcpy(this->movie, replay_path);
-        strcat(this->movie, movie);
+        strncpy(this->movie, replay_path, sizeof(this->movie)-1);
+        strncat(this->movie, movie, sizeof(this->movie)-1);
         LOG(LOG_INFO, "Playing %s", this->movie);
 
         char path[1024];
@@ -59,7 +59,11 @@ public:
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
 
-        canonical_path(this->movie, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+        canonical_path( this->movie
+                      , path, sizeof(path)
+                      , basename, sizeof(basename)
+                      , extension, sizeof(extension)
+                      );
         sprintf(prefix, "%s%s", path, basename);
 
         this->in_trans = new InByMetaSequenceTransport(prefix, extension);

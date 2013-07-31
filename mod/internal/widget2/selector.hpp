@@ -425,7 +425,7 @@ public:
 
         temporary_number_of_page(const char * s)
         {
-            size_t len = std::min(size_t(15 - 2), strlen(s));
+            size_t len = std::min(sizeof(this->buffer) - 3, strlen(s));
             this->buffer[0] = '/';
             memcpy(&this->buffer[1], s, len);
             this->buffer[len + 1] = '\0';

@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
 
     if (argc < 2) {
         std::cerr << argv[0] << (" regex") << std::endl;
+        return 1;
     }
     const char * rgxstr = argv[1];
     const char * msg = 0;
@@ -161,11 +162,7 @@ int main(int argc, char **argv) {
     std::cout.precision(2);
     std::cout.setf(std::ios::fixed);
     std::cout
-#if GENERATE_ST
     << "regex: " << rgxstr << "\n"
-#else
-    << "regex: '.* .* (.*) (.*) .*a'\n"
-#endif
     << "search:\n"
     << (ismatch1 ? "good\n" : "fail\n")
     << d1 << " sec\n"
