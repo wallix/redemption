@@ -54,6 +54,14 @@ static inline timeval usectotimeval(const uint64_t time) {
     return res;
 }
 
+static inline timeval addusectimeval(const timeval & tv, const uint64_t usec) {
+    timeval res;
+    uint64_t sum_usec = tv.tv_usec + usec;
+    res.tv_usec = sum_usec % 1000000;
+    res.tv_sec  = sum_usec / 1000000 + tv.tv_sec;
+    return res;
+}
+
 // All these operations assume that any timeval.tv_usec is < 1000000L
 // Otherwise, the timeval is not well formated
 static inline bool lessthantimeval(const timeval & before, const timeval & after) {

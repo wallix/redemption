@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+              Martin Potier, Meng Tan
 */
 
 #ifndef _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
@@ -64,7 +65,6 @@ public:
     BmpCache & bmp_cache;
     GraphicToFile recorder;
     uint32_t nb_file;
-
     uint64_t time_to_wait;
 
     NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable, const Inifile & ini)

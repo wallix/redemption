@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Synchronisation objects
@@ -111,6 +111,7 @@ class wait_obj
         uint64_t sum_usec = (now.tv_usec + idle_usec);
         this->trigger_time.tv_sec = (sum_usec / 1000000) + now.tv_sec;
         this->trigger_time.tv_usec = sum_usec % 1000000;
+        // this-trigger_time = addusectimeval(now, idle_usec);
     }
 
     void update(uint64_t idle_usec)
