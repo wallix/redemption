@@ -1823,4 +1823,68 @@ class StaticStream : public FixedSizeStream {
     virtual void init(size_t v) {}
 };
 
+
+/*
+namespace redemption {
+
+class Stream {
+public:
+    Stream() {
+        this->buffer_ptr    = 0;
+        this->capacity      = 0;
+        this->data_ptr      = this->buffer_ptr;
+        this->leading_space = 0;
+        this->read_ptr      = this->data_ptr;
+        this->write_ptr     = this->data_ptr;
+    }
+
+    virtual const uint8_t * get_data() const {
+        return this->data_ptr;
+    }
+
+protected:
+    uint8_t * buffer_ptr;
+    size_t    capacity;
+    uint8_t * data_ptr;
+    size_t    leading_space;
+    uint8_t * read_ptr;
+    uint8_t * write_ptr;
+};  // class Stream
+
+class InStream : public virtual Stream {
+public:
+    InStream() : Stream() {}
+
+    virtual size_t get_size() const {
+        return this->write_ptr - this->data_ptr;
+    }
+
+protected:
+};  // class InStream
+
+class OutStream : public virtual Stream {
+public:
+    OutStream() : Stream() {}
+
+    virtual size_t get_capacity() const {
+        return this->capacity - this->leading_space;
+    }
+
+protected:
+};  // class OutStream
+
+class BStream : public InStream, public OutStream {
+public:
+    BStream() : InStream(), OutStream() {}
+
+    void init(size_t size) {
+    }
+
+protected:
+    uint8_t autob_uffer[AUTOSIZE];
+};
+
+}  // namespace redemption
+*/
+
 #endif

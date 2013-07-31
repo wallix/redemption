@@ -384,3 +384,10 @@ BOOST_AUTO_TEST_CASE(TestStream_HStream)
     BOOST_CHECK_EQUAL(true,  stream.has_room(2048));
     BOOST_CHECK_EQUAL(false, stream.has_room(2049));
 }
+
+/*
+BOOST_AUTO_TEST_CASE(TestStream_New)
+{
+    redemption::BStream bstream;
+}
+*/
