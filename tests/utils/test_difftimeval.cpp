@@ -28,6 +28,75 @@
 #include "log.hpp"
 #include "difftimeval.hpp"
 
+BOOST_AUTO_TEST_CASE(TestUsecToTimeval)
+{
+    uint64_t usec = 0L;
+    timeval res;
+    res = usectotimeval(usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 0);
+
+    usec = 459327L;
+    res = usectotimeval(usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 459327);
+
+    usec = 5476000000L;
+    res = usectotimeval(usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  5476);
+    BOOST_CHECK_EQUAL(res.tv_usec, 0);
+
+    usec = 751379115L;
+    res = usectotimeval(usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  751);
+    BOOST_CHECK_EQUAL(res.tv_usec, 379115);
+
+}
+
+BOOST_AUTO_TEST_CASE(TestAddUsecTimeval)
+{
+    uint64_t usec = 0L;
+    struct timeval init = { 0, 0 };
+    timeval res;
+
+    res = addusectimeval(init, usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 0);
+
+
+    usec = 654322;
+    res = addusectimeval(init, usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 654322);
+
+    usec = 42737465L;
+    res = addusectimeval(init, usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  42);
+    BOOST_CHECK_EQUAL(res.tv_usec, 737465);
+
+    usec = 0;
+    init.tv_sec =  78;
+    init.tv_usec = 426891;
+    res = addusectimeval(init, usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  78);
+    BOOST_CHECK_EQUAL(res.tv_usec, 426891);
+
+    init.tv_sec =  78;
+    init.tv_usec = 0;
+    usec = 91234;
+    res = addusectimeval(init, usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  78);
+    BOOST_CHECK_EQUAL(res.tv_usec, 91234);
+
+    init.tv_sec =  815;
+    init.tv_usec = 945862;
+    usec = 457369421;
+    res = addusectimeval(init, usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  1273);
+    BOOST_CHECK_EQUAL(res.tv_usec, 315283);
+
+
+}
 
 BOOST_AUTO_TEST_CASE(TestLessThanTimeVal)
 {

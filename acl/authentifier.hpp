@@ -199,7 +199,7 @@ public:
         // inactivity_timeout and inactivity_timeout + t.
         // hence we should have t << inactivity_timeout.
         // for now, check_inactivity is not necessary but it
-        // indicate that this part of code is about inactivity management
+        // indicates that this part of code is about inactivity management
         if (this->check_inactivity) {
             // if (this->verbose & 8) {
             //     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"

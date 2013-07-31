@@ -47,6 +47,20 @@ REDOC("as gettimeofday is not monotonic we may get surprising results (overflow)
     return (d > 0x100000000LL)?0:d;
 }
 
+static inline timeval usectotimeval(const uint64_t time) {
+    timeval res;
+    res.tv_sec  = time / 1000000L;
+    res.tv_usec = time % 1000000L;
+    return res;
+}
+
+static inline timeval addusectimeval(const timeval & tv, const uint64_t usec) {
+    timeval res;
+    uint64_t sum_usec = tv.tv_usec + usec;
+    res.tv_usec = sum_usec % 1000000;
+    res.tv_sec  = sum_usec / 1000000 + tv.tv_sec;
+    return res;
+}
 
 // All these operations assume that any timeval.tv_usec is < 1000000L
 // Otherwise, the timeval is not well formated
@@ -69,8 +83,8 @@ static inline timeval addtimeval(const timeval & time1, const timeval & time2) {
 
 
 static inline timeval how_long_to_wait(const timeval & alarm, const timeval & now) {
-    // return number of usec to wait: 
-    // alarm - now if alarm is in the future 
+    // return number of usec to wait:
+    // alarm - now if alarm is in the future
     // or 0 if alarm time is past
     timeval res = {};
     if (!lessthantimeval(alarm, now)) {
