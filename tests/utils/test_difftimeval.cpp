@@ -28,6 +28,31 @@
 #include "log.hpp"
 #include "difftimeval.hpp"
 
+BOOST_AUTO_TEST_CASE(TestusecToTimeval)
+{
+    uint64_t usec = 0L;
+    timeval res;
+    res = usectotimeval(usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 0);
+
+    usec = 459327L;
+    res = usectotimeval(usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 459327);
+
+    usec = 5476000000L;
+    res = usectotimeval(usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  5476);
+    BOOST_CHECK_EQUAL(res.tv_usec, 0);
+
+    usec = 751379115L;
+    res = usectotimeval(usec);
+    BOOST_CHECK_EQUAL(res.tv_sec,  751);
+    BOOST_CHECK_EQUAL(res.tv_usec, 379115);
+
+}
+
 
 BOOST_AUTO_TEST_CASE(TestLessThanTimeVal)
 {
