@@ -126,7 +126,7 @@ struct Session {
 
             time_t start_time = time(NULL);
 
-            struct timeval time_mark = { 5, 0 };
+            struct timeval time_mark = { 3, 0 };
 
             bool run_session = true;
 
