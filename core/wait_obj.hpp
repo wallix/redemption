@@ -113,6 +113,21 @@ class wait_obj
         this->trigger_time.tv_usec = sum_usec % 1000000;
     }
 
+    void update(uint64_t idle_usec)
+    {
+        if (this->set_state) {
+            timeval idle = usectotimeval(idle_usec);
+            struct timeval now = tvtime();
+            timeval new_trigger = addtimeval(now,idle);
+            if (lessthantimeval(new_trigger,this->trigger_time)) {
+                this->trigger_time = new_trigger;
+            }
+        }
+        else {
+            this->set(idle_usec);
+        }
+    }
+
     bool can_recv()
     {
         fd_set rfds;

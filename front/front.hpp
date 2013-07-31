@@ -469,6 +469,7 @@ public:
                                         HASH_PATH "/", basename,
                                         true, ini);
 
+            this->capture->capture_event.set();
             this->capture_state = CAPTURE_STATE_STARTED;
         }
     }

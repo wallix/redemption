@@ -25,6 +25,9 @@
 #include "nativecapture.hpp"
 #include "outmetatransport.hpp"
 #include "outfilenametransport.hpp"
+
+#include "wait_obj.hpp"
+
 class Capture : public RDPGraphicDevice
 {
 public:
@@ -44,6 +47,8 @@ public:
 
     RDPDrawable * drawable;
 
+    wait_obj capture_event;
+
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
     Capture(const timeval & now, int width, int height, const char * wrm_path, const char * png_path, const char * hash_path, const char * basename, bool clear_png, Inifile & ini)
         : capture_wrm(ini.video.capture_wrm)
@@ -57,6 +62,7 @@ public:
         , pnc_bmp_cache(NULL)
         , pnc(NULL)
         , drawable(NULL)
+        , capture_event(wait_obj(0))
     {
         if (this->capture_drawable){
             this->drawable = new RDPDrawable(width, height);
@@ -147,6 +153,7 @@ public:
 
     void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
                  , bool no_timestamp, bool ignore_frame_in_timeval) {
+        this->capture_event.reset();
         if (this->capture_drawable) {
             this->drawable->snapshot( now, x, y, pointer_already_displayed, no_timestamp
                                     , ignore_frame_in_timeval);
@@ -154,10 +161,12 @@ public:
         if (this->capture_png) {
             this->psc->snapshot( now, x, y, pointer_already_displayed, no_timestamp
                                , ignore_frame_in_timeval);
+            this->capture_event.update(this->psc->time_to_wait);
         }
         if (this->capture_wrm){
             this->pnc->snapshot( now, x, y, pointer_already_displayed, no_timestamp
                                , ignore_frame_in_timeval);
+            this->capture_event.update(this->pnc->time_to_wait);
         }
     }
 
