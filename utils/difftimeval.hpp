@@ -50,15 +50,19 @@ REDOC("as gettimeofday is not monotonic we may get surprising results (overflow)
 static inline timeval usectotimeval(const uint64_t time) {
     timeval res;
     res.tv_sec  = time / 1000000L;
-    res.tv_usec = time % 1000000L;
+    res.tv_usec = time - (res.tv_sec * 1000000L);
+    // res.tv_usec = time % 1000000L;
     return res;
 }
 
-static inline timeval addusectimeval(const timeval & tv, const uint64_t usec) {
+static inline timeval addusectimeval(const uint64_t usec, const timeval & tv) {
     timeval res;
     uint64_t sum_usec = tv.tv_usec + usec;
-    res.tv_usec = sum_usec % 1000000;
-    res.tv_sec  = sum_usec / 1000000 + tv.tv_sec;
+    res.tv_sec  = sum_usec / 1000000;
+    res.tv_usec = sum_usec - (res.tv_sec * 1000000L);
+    res.tv_sec += tv.tv_sec;
+    // res.tv_usec = sum_usec % 1000000;
+    // res.tv_sec  = sum_usec / 1000000 + tv.tv_sec;
     return res;
 }
 
@@ -74,9 +78,9 @@ static inline bool lessthantimeval(const timeval & before, const timeval & after
 static inline timeval addtimeval(const timeval & time1, const timeval & time2) {
     // return time1 + time2
     timeval res;
-    bool carry = (time1.tv_usec + time2.tv_usec >= 1000000L);
+    bool carry = (time1.tv_usec + time2.tv_usec) >= 1000000L;
     res.tv_usec = time1.tv_usec + time2.tv_usec - carry*1000000L;
-    res.tv_sec = time1.tv_sec + time2.tv_sec + carry;
+    res.tv_sec  = time1.tv_sec  + time2.tv_sec  + carry;
 
     return res;
 }
@@ -110,9 +114,18 @@ static inline timeval absdifftimeval(const timeval & endtime, const timeval & st
     return res;
 }
 
+static inline timeval multtimeval(uint64_t mult, const timeval & tv) {
+    timeval res;
+    uint64_t total_usec = tv.tv_usec * mult;
+    res.tv_sec  = total_usec / 1000000L;
+    res.tv_usec = total_usec - (res.tv_sec * 1000000L);
+    res.tv_sec += tv.tv_sec * mult;
+    return res;
+}
+
 static inline timeval mintimeval(const timeval & time1, const timeval & time2) {
     // return min(time1,time2)
-    return lessthantimeval(time1,time2)?time1:time2;
+    return lessthantimeval(time1, time2)?time1:time2;
 }
 
 #endif
