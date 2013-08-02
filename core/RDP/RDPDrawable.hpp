@@ -283,14 +283,14 @@ public:
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
 
-        this->drawable.draw_bitmap(Rect( bitmap_data.dest_left
-                                        , bitmap_data.dest_top
-                                        , bitmap_data.width
-                                        , bitmap_data.height)
-                                  , bmp,
-                                  false);
-    }
+        Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
+                    , bitmap_data.dest_right - bitmap_data.dest_left + 1
+                    , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
 
+        const Rect & trect = rectBmp.intersect(this->drawable.width, this->drawable.height);
+
+        this->drawable.draw_bitmap(trect, bmp, false);
+    }
 
     virtual void dump_png24(Transport * trans, bool bgr){
             ::transport_dump_png24(trans, this->drawable.data,

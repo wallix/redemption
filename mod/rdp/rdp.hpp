@@ -581,7 +581,7 @@ struct mod_rdp : public mod_api {
 
                         const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                         size_t num_channels = channel_list.size();
-                        if (num_channels > 0) {
+                        if ((num_channels > 0) || this->auth_channel[0]) {
                             /* Here we need to put channel information in order to redirect channel data
                                from client to server passing through the "proxy" */
                             GCC::UserData::CSNet cs_net;
@@ -600,10 +600,13 @@ struct mod_rdp : public mod_api {
                             }
 
                             // Inject a new channel for auth_channel virtual channel (wablauncher)
-                            if (this->auth_channel[0]/* && this->acl*/){
+                            if (this->auth_channel[0]) {
                                 memcpy(cs_net.channelDefArray[num_channels].name, this->auth_channel, 8);
-                                TODO("CGR: We should figure out what value options should actually have, not just get any channel option and copy it");
-                                cs_net.channelDefArray[num_channels].options = cs_net.channelDefArray[num_channels-1].options;
+                                cs_net.channelDefArray[num_channels].options =
+                                      GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED/*
+                                    | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
+                                    | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+                                    | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL*/;
                                 cs_net.channelCount++;
                                 CHANNELS::ChannelDef def;
                                 memcpy(def.name, this->auth_channel, 8);
@@ -1436,7 +1439,12 @@ struct mod_rdp : public mod_api {
                                 if (strncmp("target:", auth_channel_message, 7)){
                                     LOG(LOG_ERR, "Invalid request (%s)", auth_channel_message);
                                     this->send_auth_channel_data("Error: Invalid request");
-                                } else if (this->auth_channel_target) {
+                                }
+                                else if (this->program[0]) {
+//                                    LOG(LOG_ERR, "WabLauncher send program (%s)", this->program);
+                                    this->send_auth_channel_data(this->program);
+                                }
+                                else if (this->auth_channel_target) {
                                     // Ask sesman for requested target
                                     this->auth_channel_target->set_from_cstr(auth_channel_message + 7);
                                     // this->acl->ask_auth_channel_target(auth_channel_message + 7);
@@ -1755,30 +1763,6 @@ struct mod_rdp : public mod_api {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
-if (this->use_rdp5) {
-LOG(LOG_INFO, "Using rdp5");
-}
-else {
-LOG(LOG_INFO, "Not using rdp5");
-}
-if (this->server_fastpath_update_support) {
-LOG(LOG_INFO, "Using fast-past");
-}
-else {
-LOG(LOG_INFO, "Not using fast-past");
-}
-if (this->mem3blt_support) {
-LOG(LOG_INFO, "Using mem3blt");
-}
-else {
-LOG(LOG_INFO, "Not using mem3blt");
-}
-if (this->enable_new_pointer) {
-LOG(LOG_INFO, "Using new point");
-}
-else {
-LOG(LOG_INFO, "Not using new point");
-}
 
         BStream stream(65536);
 

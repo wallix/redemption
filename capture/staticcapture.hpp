@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+              Martin Potier, Meng Tan
 */
 
 #ifndef _REDEMPTION_CAPTURE_STATICCAPTURE_HPP_
@@ -68,7 +69,6 @@ public:
 
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
-
     uint64_t time_to_wait;
 
     StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, bool clear_png, const Inifile & ini, Drawable & drawable)

@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Raphael Zhou
+   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
 #ifndef _REDEMPTION_CAPTURE_CAPTURE_HPP_
@@ -154,10 +154,12 @@ public:
     void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
                  , bool no_timestamp, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
+/*
         if (this->capture_drawable) {
             this->drawable->snapshot( now, x, y, pointer_already_displayed, no_timestamp
                                     , ignore_frame_in_timeval);
         }
+*/
         if (this->capture_png) {
             this->psc->snapshot( now, x, y, pointer_already_displayed, no_timestamp
                                , ignore_frame_in_timeval);
@@ -172,9 +174,11 @@ public:
 
     void flush()
     {
+/*
         if (this->capture_drawable){
             this->drawable->flush();
         }
+*/
         if (this->capture_png){
             this->psc->flush();
         }
@@ -191,71 +195,71 @@ public:
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
-        if (this->capture_drawable){
-            this->drawable->draw(cmd, clip);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
         }
     }
 
     void draw(const RDPDestBlt & cmd, const Rect &clip)
     {
-        if (this->capture_drawable){
-            this->drawable->draw(cmd, clip);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
         }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
-        if (this->capture_drawable){
-            this->drawable->draw(cmd, clip);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
         }
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        if (this->capture_drawable){
-            this->drawable->draw(cmd, clip, bmp);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip, bmp);
+        }
+        else if (this->capture_drawable){
+            this->drawable->draw(cmd, clip, bmp);
         }
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-        if (this->capture_drawable){
-            this->drawable->draw(cmd, clip, bmp);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip, bmp);
+        }
+        else if (this->capture_drawable){
+            this->drawable->draw(cmd, clip, bmp);
         }
     }
 
     void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-        if (this->capture_drawable){
-            this->drawable->draw(cmd, clip);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
         }
     }
 
     void draw(const RDPLineTo & cmd, const Rect & clip)
     {
-        if (this->capture_drawable){
-            this->drawable->draw(cmd, clip);
-        }
         if (this->capture_wrm){
             this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable){
+            this->drawable->draw(cmd, clip);
         }
     }
 
@@ -264,11 +268,11 @@ public:
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-        if (this->capture_drawable) {
-            this->drawable->draw(bitmap_data, data, size, bmp);
-        }
         if (this->capture_wrm) {
             this->pnc->draw(bitmap_data, data, size, bmp);
+        }
+        else if (this->capture_drawable) {
+            this->drawable->draw(bitmap_data, data, size, bmp);
         }
     }
 };
