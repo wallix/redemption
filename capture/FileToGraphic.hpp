@@ -739,6 +739,9 @@ struct FileToGraphic
                                             , bitmap_data.bitmap_size()
                                             , bitmap);
                 }
+                for (size_t i = 0; i < this->nbconsumers ; i++) {
+                    this->consumers[i]->flush();
+                }
             }
             break;
             default:
