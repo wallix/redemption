@@ -33,10 +33,7 @@
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
 {
-
-
     BackEvent_t signal = BACK_EVENT_NONE;
-
 
     Inifile ini;
 
@@ -110,7 +107,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierNoKeepalive)
     signal = BACK_EVENT_NEXT;
 
     CountTransport keepalivetrans;
-    bool res = false;
+    bool res/* = false*/;
 
     // Ask next_module, send inital data to ACL
     res = sesman.check(mm, 10011, keepalivetrans, signal);
@@ -219,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     signal = BACK_EVENT_NEXT;
 
     CountTransport keepalivetrans;
-    bool res = false;
+    bool res/* = false*/;
 
     // Ask next_module, send inital data to ACL
     res = sesman.check(mm, 10011, keepalivetrans, signal);
@@ -250,11 +247,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierKeepalive)
     // Keep alive not received, disconnection
     res = sesman.check(mm, 10106, keepalivetrans, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true);  // close box
-
-
 }
-
-
 
 BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 {
@@ -348,9 +341,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
            "\x00\x00\x00\x0E"
             "keepalive\nASK\n"
-
-
-
     ;
 
 //    printf("len=%x\n",
@@ -417,7 +407,6 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
 
         "\x00\x00\x00\x10"
         "keepalive\n!True\n"
-
     ;
 
     TestTransport acl_trans("test", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -425,7 +414,7 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     signal = BACK_EVENT_NEXT;
 
     CountTransport keepalivetrans;
-    bool res = false;
+    bool res/* = false*/;
 
 // Ask next_module, send inital data to ACL
     res = sesman.check(mm, 10011, keepalivetrans, signal);
@@ -482,6 +471,4 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     res = sesman.check(mm, 10227, keepalivetrans, signal);
     res = sesman.check(mm, 10255, keepalivetrans, signal);
     BOOST_CHECK_EQUAL(mm.last_module, true); // disconnected on inactivity
-
-
 }
