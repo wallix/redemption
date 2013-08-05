@@ -34,6 +34,8 @@ class Base64 {
 
     unsigned char decoding_table[256];
 
+    bool use_filler;
+
     void build_encoding_table() {
         unsigned char code = 'A';
         unsigned int i = 0;
@@ -63,82 +65,137 @@ class Base64 {
     }
 
 public:
-    Base64() {
+    Base64() : use_filler(true) {
         build_encoding_table();
         build_decoding_table();
     }
     ~Base64() {}
 
-    size_t encode(unsigned char * output, size_t output_size, const unsigned char *input,
-                  size_t input_length) {
+    size_t encode(unsigned char * output, size_t output_size,
+                  const unsigned char *input, size_t input_length) {
 
         size_t output_length = 0;
+        unsigned int remain = input_length % 3;
 
         output_length = 4 * ((input_length + 2) / 3);
         if (output_size < output_length)
             return 0;
 
-        for (unsigned int i = 0, j = 0; i < input_length;) {
 
-            uint32_t octet_a = i < input_length ? input[i++] : 0;
-            uint32_t octet_b = i < input_length ? input[i++] : 0;
-            uint32_t octet_c = i < input_length ? input[i++] : 0;
+        unsigned int i, j;
+
+        for (i = 0, j = 0; i < input_length - remain;) {
+
+            uint32_t octet_a = input[i++];
+            uint32_t octet_b = input[i++];
+            uint32_t octet_c = input[i++];
 
             uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
 
-            output[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
-            output[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
-            output[j++] = encoding_table[(triple >> 6) & 0x3F];
-            output[j++] = encoding_table[(triple >> 0) & 0x3F];
+            output[j++] = this->encoding_table[(triple >> 3 * 6) & 0x3F];
+            output[j++] = this->encoding_table[(triple >> 2 * 6) & 0x3F];
+            output[j++] = this->encoding_table[(triple >> 6) & 0x3F];
+            output[j++] = this->encoding_table[triple & 0x3F];
         }
 
-        switch (input_length % 3) {
-        case 1:
-            output[output_length - 2] = '=';
-        case 2:
-            output[output_length - 1] = '=';
+
+        if (remain != 0) {
+            uint32_t octet_a = input[i++];
+            uint32_t octet_b = (remain == 1) ? 0 : input[i];
+            uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08);
+            output[j++] = this->encoding_table[(triple >> 3 * 6) & 0x3F];
+            output[j++] = this->encoding_table[(triple >> 2 * 6) & 0x3F];
+            if (this->use_filler) {
+                output[j++] = (remain == 1) ? '=' : this->encoding_table[(triple >> 6) & 0x3F];
+                output[j++] = '=';
+            }
+            else {
+                output_length--;
+                if (remain == 1) {
+                    output_length--;
+                }
+                else {
+                    output[j++] = this->encoding_table[(triple >> 6) & 0x3F];
+                }
+            }
+        }
+
+        return output_length;
+    }
+
+    size_t decode(unsigned char * output, size_t output_size,
+                  const unsigned char *input, size_t input_length) {
+
+        size_t output_length = 0;
+
+        unsigned int remain = input_length % 4;
+
+        if (input_length == 0)
+            return 0;
+        if (remain == 1) // even if ignoring '=', this case is not possible.
+            return 0;
+
+        output_length = (input_length / 4)  * 3;
+
+        bool filler = false;
+        if (input[input_length - 2] == '=') {
+            output_length--;
+            filler = true;
+        }
+        if (input[input_length - 1] == '=') {
+            output_length--;
+            filler = true;
+        }
+        if (remain > 1) output_length++;
+        if (remain > 2) output_length++;
+
+        if (output_size < output_length)
+            return 0;
+        unsigned int i, j;
+        for (i = 0, j = 0; i < input_length - remain - filler*4;) {
+
+            uint32_t sextet_a = this->decoding_table[input[i++]];
+            uint32_t sextet_b = this->decoding_table[input[i++]];
+            uint32_t sextet_c = this->decoding_table[input[i++]];
+            uint32_t sextet_d = this->decoding_table[input[i++]];
+
+            uint32_t triple = ((sextet_a & 0x3F) << 3 * 6)
+                            + ((sextet_b & 0x3F) << 2 * 6)
+                            + ((sextet_c & 0x3F) << 6)
+                            + ( sextet_d & 0x3F);
+
+            output[j++] = (triple >> 2 * 8) & 0xFF;
+            output[j++] = (triple >> 8) & 0xFF;
+            output[j++] = triple & 0xFF;
+        }
+
+        if ((remain != 0) || filler) {
+            uint32_t sextet_a = this->decoding_table[input[i++]];
+            uint32_t sextet_b = this->decoding_table[input[i++]];
+            uint32_t sextet_c = ((input[i] == '=') || (remain == 2)) ? 0 : this->decoding_table[input[i]];
+            uint32_t triple = ((sextet_a & 0x3F) << 3 * 6)
+                            + ((sextet_b & 0x3F) << 2 * 6)
+                            + ((sextet_c & 0x3F) << 6);
+
+            output[j++] = (triple >> 2 * 8) & 0xFF;
+            if (j < output_length) output[j] = (triple >> 8) & 0xFF;
         }
 
         return output_length;
     }
 
 
-    size_t decode(unsigned char * output, size_t output_size, const unsigned char *input,
-                         size_t input_length) {
 
-        size_t output_length = 0;
+    void set_filler() {
+        this->use_filler = true;
+    }
 
-        if (input_length % 4 != 0)
-            return 0;
+    void remove_filler() {
+        this->use_filler = false;
+    }
 
-        output_length = input_length / 4 * 3;
-
-        if (input[input_length - 1] == '=')
-            output_length--;
-        if (input[input_length - 2] == '=')
-            output_length--;
-
-        if (output_size < output_length)
-            return 0;
-
-        for (unsigned int i = 0, j = 0; i < input_length;) {
-
-            uint32_t sextet_a = input[i] == '=' ? 0 & i++ : decoding_table[input[i++]];
-            uint32_t sextet_b = input[i] == '=' ? 0 & i++ : decoding_table[input[i++]];
-            uint32_t sextet_c = input[i] == '=' ? 0 & i++ : decoding_table[input[i++]];
-            uint32_t sextet_d = input[i] == '=' ? 0 & i++ : decoding_table[input[i++]];
-
-            uint32_t triple = ((sextet_a & 0x3F) << 3 * 6)
-                            + ((sextet_b & 0x3F) << 2 * 6)
-                            + ((sextet_c & 0x3F) << 6)
-                            + ((sextet_d & 0x3F) << 0);
-
-            if (j < output_length) output[j++] = (triple >> 2 * 8) & 0xFF;
-            if (j < output_length) output[j++] = (triple >> 8) & 0xFF;
-            if (j < output_length) output[j++] = (triple >> 0) & 0xFF;
-        }
-
-        return output_length;
+    bool is_use_filler() {
+        return this->use_filler;
     }
 
     void mode_url() {
