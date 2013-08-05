@@ -249,6 +249,23 @@ struct Session {
                     mm.invoke_close_box(e.errmsg(), signal, now);
                 };
             }
+
+            {
+                char path[1024];
+                char basename[1024];
+                char extension[128];
+
+                strcpy(path,      WRM_PATH "/"); // default value, actual one should come from movie_path
+                strcpy(basename,  "redemption"); // default value actual one should come from movie_path
+                strcpy(extension, ""          ); // extension is currently ignored
+
+                canonical_path( this->ini->globals.movie_path.get_cstr(), path
+                              , sizeof(path), basename, sizeof(basename), extension
+                              , sizeof(extension));
+
+                clear_files_flv_meta_png(path, basename);
+            }
+
             this->front->disconnect();
         }
         catch (const Error & e) {
