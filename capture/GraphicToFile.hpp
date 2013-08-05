@@ -418,8 +418,6 @@ protected:
     virtual void flush_orders()
     {
         if (this->order_count > 0){
-LOG(LOG_INFO, "bitmap count=%llu, order count=%llu", this->bitmap_count, this->order_count);
-REDASSERT(!this->bitmap_count);
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0){
                 this->send_timestamp_chunk();
             }
@@ -490,8 +488,6 @@ public:
 protected:
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {
-LOG(LOG_INFO, "bitmap count=%llu, order count=%llu", this->bitmap_count, this->order_count);
-REDASSERT(!this->order_count);
             if (this->timer.tv_sec - this->last_sent_timer.tv_sec > 0) {
                 this->send_timestamp_chunk();
             }

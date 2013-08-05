@@ -609,7 +609,6 @@ public:
             LOG(LOG_INFO, "Front::begin_update()");
         }
         this->order_level++;
-LOG(LOG_INFO, "begin_update: order_level=%u", this->order_level);
     }
 
     virtual void end_update()
@@ -618,9 +617,7 @@ LOG(LOG_INFO, "begin_update: order_level=%u", this->order_level);
             LOG(LOG_INFO, "Front::end_update()");
         }
         this->order_level--;
-LOG(LOG_INFO, "end_update: order_level=%u", this->order_level);
         if (this->order_level == 0){
-//            this->orders->flush();
             this->flush();
         }
     }

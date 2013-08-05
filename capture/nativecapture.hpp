@@ -130,7 +130,6 @@ public:
 
     virtual void flush()
     {
-LOG(LOG_INFO, "flush");
         this->recorder.flush();
     }
 
@@ -140,55 +139,46 @@ LOG(LOG_INFO, "flush");
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
-LOG(LOG_INFO, "ScrBlt");
         this->recorder.draw(cmd, clip);
     }
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-LOG(LOG_INFO, "MemBlt");
         this->recorder.draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp)
     {
-LOG(LOG_INFO, "Mem3Blt");
         this->recorder.draw(cmd, clip, bmp);
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-LOG(LOG_INFO, "OpaqueRect");
         this->recorder.draw(cmd, clip);
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
     {
-LOG(LOG_INFO, "DestBlt");
         this->recorder.draw(cmd, clip);
     }
 
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
-LOG(LOG_INFO, "PatBlt");
         this->recorder.draw(cmd, clip);
     }
 
     virtual void draw(const RDPLineTo & cmd, const Rect & clip)
     {
-LOG(LOG_INFO, "LineTo");
         this->recorder.draw(cmd, clip);
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
     {
-LOG(LOG_INFO, "GlyphIndex");
         this->recorder.draw(cmd, clip);
     }
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
-LOG(LOG_INFO, "Bitmap update");
         this->recorder.draw(bitmap_data, data, size, bmp);
     }
 
