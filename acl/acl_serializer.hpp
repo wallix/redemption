@@ -91,29 +91,27 @@ public:
                 }
                 break;
             case STATE_VALUE:
-                if (*stream.p == '\n'){
+                if (*stream.p == '\n') {
                     *stream.p = 0;
 
                     if ((0 == strncasecmp((char*)value, "ask", 3))) {
                         this->ini->ask_from_acl((char *)keyword);
-                        // this->ini->context_ask_by_string((char *)keyword);
                         LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
                     }
                     else {
                         this->ini->set_from_acl((char *)keyword,
-                                                               (char *)value + (value[0] == '!' ? 1 : 0));
-                        // this->ini->context_set_value_by_string((char *)keyword,
-                        //                                        (char *)value + (value[0] == '!' ? 1 : 0));
-
-                        if (  (strncasecmp("password",        (char *)keyword, 9 ) == 0)
-                              || (strncasecmp("target_password", (char *)keyword, 16) == 0)
-                              ){
+                                                (char *)value + (value[0] == '!' ? 1 : 0));
+                        if ((strncasecmp("password",        (char *)keyword, 9 ) == 0) ||
+                            (strncasecmp("target_password", (char *)keyword, 16) == 0)) {
                             LOG(LOG_INFO, "receiving '%s'=<hidden>", (char *)keyword);
                         }
-                        else{
+                        else {
                             char buffer[128];
-                            LOG(LOG_INFO, "receiving '%s'='%s'", keyword,
-                                this->ini->context_get_value_by_string((char *)keyword, buffer, sizeof(buffer)));
+                            LOG(LOG_INFO, "receiving '%s'='%s'",
+                                keyword,
+                                this->ini->context_get_value_by_string((char *)keyword,
+                                                                       buffer,
+                                                                       sizeof(buffer)));
                         }
                     }
 
