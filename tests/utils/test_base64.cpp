@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean, Meng Tan
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Tests on Base64 Converter
 
@@ -152,7 +151,8 @@ void testrandom(uint32_t seed) {
 
 BOOST_AUTO_TEST_CASE(TestManyRandom)
 {
+    LCGRandom rand(0x123ABC);
     for (unsigned i = 0xF; i < 0xFFFF; i++) {
-        testrandom(3*i);
+        testrandom(rand.rand32()*i);
     }
 }
