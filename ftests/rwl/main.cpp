@@ -26,7 +26,7 @@
 
 namespace tokens {
 
-    struct Identifier {
+    struct StringLower {
         const char * operator()(const char * s) const
         {
             while (*s && std::islower(*s)) {
@@ -36,7 +36,7 @@ namespace tokens {
         }
     };
 
-    struct Target {
+    struct Name {
         const char * operator()(const char * s) const
         {
             if (std::isupper(*s)) {
@@ -46,8 +46,6 @@ namespace tokens {
             return s;
         }
     };
-
-    typedef Target FunctionName;
 
     struct Integer {
         const char * operator()(const char * s) const
@@ -59,7 +57,7 @@ namespace tokens {
         }
     };
 
-    struct HexaColor {
+    struct HexColor {
         const char * operator()(const char * s) const
         {
             const char * begin = s;
@@ -70,7 +68,7 @@ namespace tokens {
         }
     };
 
-    struct Operator {
+    struct MathOperator {
         const char * operator()(const char * s) const
         {
             if (*s == '/' || *s == '*' || *s == '-' || *s == '+' || *s == '%') {
@@ -91,16 +89,16 @@ namespace tokens {
         }
     };
 
-    typedef CharSeparator<'.'> Linker;
+    typedef CharSeparator<'.'> Dot;
     typedef CharSeparator<'{'> OpenBlock;
     typedef CharSeparator<'}'> CloseBlock;
-    typedef CharSeparator<';'> Separator;
-    typedef CharSeparator<'('> OpenExpression;
-    typedef CharSeparator<')'> CloseExpression;
-    typedef CharSeparator<'"'> StringDelimiter;
-    typedef CharSeparator<':'> IdentifierDelimiter;
+    typedef CharSeparator<';'> Semicolon;
+    typedef CharSeparator<'('> OpenParenthesis;
+    typedef CharSeparator<')'> CloseParenthesis;
+    typedef CharSeparator<'"'> Quote;
+    typedef CharSeparator<':'> TwoPoint;
     typedef CharSeparator<','> Comma;
-    typedef CharSeparator<'#'> DefiniedColor;
+    typedef CharSeparator<'#'> Pound;
     typedef CharSeparator<' '> Space;
     typedef CharSeparator<'\n'> Newline;
 
@@ -115,15 +113,14 @@ namespace tokens {
         }
     };
 
-    typedef DoubleCharSeparator<'/', '/'> Commentaire;
-
-    struct ContentString {
+    template<char Delimiter, char AntiDelimiter = '\\'>
+    struct ContainsWithDelimiter {
         const char * operator()(const char * s) const
         {
-            if (*s && *s != '"') {
+            if (*s && *s != Delimiter) {
                 ++s;
-                while (*s && *s != '"') {
-                    if (*s == '\\' && *(s+1)) {
+                while (*s && *s != Delimiter) {
+                    if (*s == AntiDelimiter && *(s+1)) {
                         ++s;
                     }
                     ++s;
@@ -132,6 +129,8 @@ namespace tokens {
             return s;
         }
     };
+
+    typedef ContainsWithDelimiter<'"'> String;
 
     template<typename Consumer>
     struct FullConsumer {
@@ -172,13 +171,15 @@ namespace tokens {
 
 }
 
-
+#define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
+#define BOOST_MPL_LIMIT_VECTOR_SIZE 30
 #include <boost/type_traits/conditional.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/mpl/int.hpp>
 #include <boost/mpl/at.hpp>
 #include <boost/mpl/size.hpp>
+#include <boost/mpl/push_back.hpp>
 
 using std::size_t;
 
@@ -246,6 +247,21 @@ struct state_machine_transition
         >::type row;
         typedef typename row::check check;
         typedef typename row::action action;
+
+        if (boost::is_same<typename row::base_consumer, void>::value
+         || boost::is_same<typename row::base_check, void>::value) {
+            action()(sm, event, s, s);
+        }
+
+        if (boost::is_same<check, typename SM::null_check>::value) {
+            return state_machine_index_transition<
+                0,
+                boost::mpl::size<RangeTransition>::value,
+                typename row::next,
+                TableTransition,
+                RangeTransition
+            >::value;
+        }
 
         const char * p = check()(s);
 
@@ -326,6 +342,49 @@ struct state_machine_transition<N,N,TableTransition, RangeTransition>
     }
 };
 
+
+template<unsigned N1, unsigned N2>
+struct state_machine_range
+{
+    static const std::size_t begin = N1;
+    static const std::size_t end = N2;
+};
+
+
+template<typename Base, size_t P, size_t N, size_t Max, typename TableTransition>
+class state_machine_defined_range_dispatch;
+
+template<typename Base, size_t P, size_t N, size_t Max, typename TableTransition,
+    typename U = typename boost::mpl::at<TableTransition, boost::mpl::int_<P> >::type::event,
+    bool is_same = boost::is_same<
+        typename boost::mpl::at<TableTransition, boost::mpl::int_<N> >::type::event,
+        U
+    >::value
+>
+struct state_machine_defined_range
+: state_machine_defined_range_dispatch<Base, P, N+1, Max, TableTransition>::type
+{};
+
+template<typename Base, size_t P, size_t N, size_t Max, typename TableTransition>
+struct state_machine_defined_range_dispatch
+: state_machine_defined_range<Base, P, N, Max, TableTransition>::type
+{};
+
+template<typename Base, size_t P, size_t Max, typename TableTransition>
+struct state_machine_defined_range_dispatch<Base, P, Max, Max, TableTransition>
+{
+    typedef typename boost::mpl::push_back<Base, state_machine_range<P, Max> >::type type;
+};
+
+template<typename Base, size_t P, size_t N, size_t Max, typename TableTransition, typename U>
+struct state_machine_defined_range<Base, P, N, Max, TableTransition, U, false>
+: state_machine_defined_range_dispatch<
+    typename boost::mpl::push_back<Base, state_machine_range<P, N> >::type,
+    N, N+1, Max, TableTransition
+>::type
+{};
+
+
 template<typename Derived>
 struct state_machine_def
 {
@@ -347,6 +406,31 @@ struct state_machine_def
 
     struct null_transition {};
 
+
+    template<typename TableTransition>
+    struct defined_range_transition
+    : state_machine_defined_range<
+        boost::mpl::vector<>,
+        0,
+        1,
+        boost::mpl::size<TableTransition>::value,
+        TableTransition
+    >::type
+    {};
+
+    template<typename TableTransition, typename Event>
+    struct defined_index_transition
+    {
+        static const size_t value = state_machine_index_transition<
+            0,
+            boost::mpl::size<TableTransition>::value,
+            Event,
+            TableTransition,
+            defined_range_transition<TableTransition>
+        >::value;
+    };
+
+
     template<
         typename Start,
         typename Check,
@@ -359,6 +443,8 @@ struct state_machine_def
         typedef Start event;
         typedef typename default_if<Check, void, null_check>::type check;
         typedef Next next;
+        typedef Check base_check;
+        typedef Consumer base_consumer;
         typedef typename default_if<Consumer, void, null_consumer>::type consumer;
         typedef typename default_if<Ignore, void, null_consumer>::type ignore;
         typedef void (Derived::*action_type)(const Start&);
@@ -374,7 +460,10 @@ struct state_machine_def
     };
 
     state_machine_def()
-    : state_num(0)
+    : state_num(defined_index_transition<
+        typename Derived::table_transition,
+        typename Derived::start_event
+    >::value)
     {}
 
     void start(const char * s)
@@ -388,19 +477,14 @@ struct state_machine_def
     {
         typedef typename Derived::table_transition table_transition;
 
-        typedef typename Derived::range_transition range_transition;
+        typedef defined_range_transition<table_transition> range_transition;
 
         typedef typename boost::mpl::at<
             range_transition,
-            boost::mpl::int_<
-                state_machine_index_transition<
-                    0,
-                    boost::mpl::size<range_transition>::value,
-                    Event,
-                    table_transition,
-                    range_transition
-                >::value
-            >
+            boost::mpl::int_<defined_index_transition<
+                table_transition,
+                Event
+            >::value>
         >::type range_type;
 
         this->state_num = state_machine_transition<
@@ -416,7 +500,7 @@ struct state_machine_def
     {
         typedef typename Derived::table_transition table_transition;
 
-        typedef typename Derived::range_transition range_transition;
+        typedef defined_range_transition<table_transition> range_transition;
 
         using boost::mpl::int_;
 
@@ -450,124 +534,244 @@ struct rwlparser : state_machine_def<rwlparser>
     struct PropSep {};
     struct PropName {};
     struct DefinedProp {};
+    struct Target {};
+    struct DefinedTarget {};
+    struct ClosingTarget {};
     //END State
 
 
-    //BEGIN action
-    void string(const Value&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void name(const Value&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void hex_color(const Value&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void link_prop(const PropOrFunc&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void open_expr(const PropOrFunc&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void property_get(const LinkProp&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void link_prop(const Prop&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void close_expr(const Parameter&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void prop_name(const PropName&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void link_prop(const DefinedProp&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void defined_prop(const DefinedProp&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
-    void confirmed_string(const EndString&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; };
+    unsigned tab;
+    std::string rwl;
+    std::string property_name;
+    rwlparser()
+    : tab()
+    , rwl()
+    , property_name()
+    {}
 
-    void not_action(const Parameter&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; }
-    void not_action(const PropSep&, const char * p, const char * e)
-    { (std::cout << __PRETTY_FUNCTION__ << "\n\033[31m").write(p, e-p) << "\033[00m\n"; }
+    //BEGIN action
+    template<typename Event>
+    void target(const Event&, const char * p, const char * e)
+    {
+        this->rwl.append(this->tab, '\t');
+        this->rwl.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void confirmed_target(const DefinedTarget&, const char * p, const char * e)
+    {
+        this->rwl += " {\n";
+        ++this->tab;
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void empty_target(const DefinedTarget&, const char * p, const char * e)
+    {
+        this->rwl.append(this->tab, '\t');
+        this->rwl += "}\n";
+        --this->tab;
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    template<typename Event>
+    void close_target(const Event&, const char * p, const char * e)
+    {
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += '\n';
+        --this->tab;
+        this->rwl.append(this->tab, '\t');
+        this->rwl += "}\n";
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void string(const Value&, const char * p, const char * e)
+    {
+        this->rwl += '"';
+        this->rwl.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void name(const Value&, const char * p, const char * e)
+    {
+        this->property_name.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void hex_color(const Value&, const char * p, const char * e)
+    {
+        this->rwl += '#';
+        this->rwl.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void integer(const Value&, const char * p, const char * e)
+    {
+        this->rwl.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void prop_value(const Prop&, const char * p, const char * e)
+    {
+        this->rwl.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void value_separator(const PropSep&, const char * p, const char * e)
+    {
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += ", ";
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void open_expr(const PropOrFunc&, const char * p, const char * e)
+    {
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += '(';
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void property_get(const LinkProp&, const char * p, const char * e)
+    {
+        this->property_name.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void close_expr(const PropSep&, const char * p, const char * e)
+    {
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += ')';
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void prop_name(const PropName&, const char * p, const char * e)
+    {
+        this->property_name.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    template<typename Event>
+    void link_prop(const Event&, const char * p, const char * e)
+    {
+        this->property_name += '.';
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void defined_prop(const DefinedProp&, const char * p, const char * e)
+    {
+        this->rwl.append(this->tab, '\t');
+        this->rwl += this->property_name;
+        property_name.clear();
+        this->rwl += ": ";
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void confirmed_string(const EndString&, const char * p, const char * e)
+    {
+        this->rwl += '"';
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void property_separator(const PropSep&, const char * p, const char * e)
+    {
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += ";\n";
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+
+    template<typename Event>
+    void not_action(const Event&, const char * p, const char * e)
+    { (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n"; }
     //END action
 
 
     //BEGIN cheker and consumer
-    typedef tokens::StringDelimiter Quote;
-    typedef tokens::Identifier Identifier;
-    typedef tokens::DefiniedColor DefinedColor;
-    typedef tokens::Linker Dot;
-    typedef tokens::OpenExpression OpenExpr;
-    typedef tokens::CloseExpression CloseExpr;
-    typedef tokens::IdentifierDelimiter TwoPoint;
-    typedef tokens::Separator Semicolon;
+    typedef tokens::Quote Quote;
+    typedef tokens::StringLower Identifier;
+    typedef tokens::Pound DefinedColor;
+    typedef tokens::Dot Dot;
+    typedef tokens::OpenParenthesis OpenExpr;
+    typedef tokens::CloseParenthesis CloseExpr;
+    typedef tokens::TwoPoint TwoPoint;
+    typedef tokens::Semicolon Semicolon;
+    typedef tokens::Comma Comma;
+    typedef tokens::Integer Integer;
+    typedef tokens::Name TargetName;
+    typedef tokens::OpenBlock OpenBlock;
+    typedef tokens::CloseBlock CloseBlock;
 
-    typedef tokens::ContentString String;
-    typedef tokens::HexaColor HexColor;
+    typedef tokens::String String;
+    typedef tokens::HexColor HexColor;
     //END cheker and consumer
 
 
-    typedef Value start_event;
+    typedef Target start_event;
 
     typedef rwlparser p;
 
     struct table_transition : boost::mpl::vector<
-        row< Value,        Quote,          EndString,    String,       &p::string       >,
-        row< Value,        Identifier,     PropOrFunc,   Identifier,   &p::name         >,
-        row< Value,        DefinedColor,   PropSep,      HexColor,     &p::hex_color    >,
-        row< PropOrFunc,   Dot,            LinkProp,     Dot,          &p::link_prop    >,
-        row< PropOrFunc,   OpenExpr,       Parameter,    OpenExpr,     &p::open_expr    >,
-        row< LinkProp,     Identifier,     Prop,         Identifier,   &p::property_get >,
-        row< Prop,         Dot,            LinkProp,     Dot,          &p::link_prop    >,
-        row< Parameter,    CloseExpr,      PropSep,      CloseExpr,    &p::close_expr   >,
-        row< Parameter,    void,           Value,        void,         &p::not_action   >,
-        row< PropSep,      Semicolon,      PropName,     Semicolon,    &p::not_action   >,
-        row< PropName,     Identifier,     DefinedProp,  Identifier,   &p::prop_name    >,
-        row< DefinedProp,  Dot,            PropName,     Dot,          &p::link_prop    >,
-        row< DefinedProp,  TwoPoint,       Value,        TwoPoint,     &p::defined_prop >,
-        row< EndString,    Quote,          PropSep,      Quote,        &p::confirmed_string>
+        //-+- event ------+ check --------+ event next --+ consumer ---+ action --------+
+        row< Target,       TargetName,     DefinedTarget, TargetName,   &p::target       >,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< DefinedTarget,OpenBlock,      PropName,      OpenBlock,    &p::confirmed_target>,
+        row< DefinedTarget,CloseBlock,     ClosingTarget, CloseBlock,   &p::empty_target>,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< ClosingTarget,CloseBlock,     ClosingTarget, CloseBlock,   &p::close_target>,
+        row< ClosingTarget,Semicolon,      PropName,      Semicolon,    &p::not_action>,
+        row< ClosingTarget,void,           Target,        void,         &p::not_action>,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< PropName,     CloseBlock,     ClosingTarget, CloseBlock,   &p::close_target >,
+        row< PropName,     TargetName,     DefinedTarget, TargetName,   &p::target       >,
+        row< PropName,     Identifier,     DefinedProp,   Identifier,   &p::prop_name    >,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< DefinedProp,  Dot,            PropName,      Dot,          &p::link_prop    >,
+        row< DefinedProp,  TwoPoint,       Value,         TwoPoint,     &p::defined_prop >,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< Value,        Quote,          EndString,     String,       &p::string       >,
+        row< Value,        Identifier,     PropOrFunc,    Identifier,   &p::name         >,
+        row< Value,        DefinedColor,   PropSep,       HexColor,     &p::hex_color    >,
+        row< Value,        Integer,        PropSep,       Integer,      &p::integer      >,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< EndString,    Quote,          PropSep,       Quote,        &p::confirmed_string>,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< PropOrFunc,   Dot,            LinkProp,      Dot,          &p::link_prop    >,
+        row< PropOrFunc,   OpenExpr,       Value,         OpenExpr,     &p::open_expr    >,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< PropSep,      Comma,          Value,         Comma,        &p::value_separator>,
+        row< PropSep,      CloseExpr,      PropSep,       CloseExpr,    &p::close_expr   >,
+        row< PropSep,      Semicolon,      PropName,      Semicolon,    &p::property_separator>,
+        row< PropSep,      CloseBlock,     ClosingTarget, CloseBlock,   &p::close_target >,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< LinkProp,     Identifier,     Prop,          Identifier,   &p::property_get >,
+        //-+--------------+---------------+--------------+-------------+----------------+
+        row< Prop,         Dot,            LinkProp,      Dot,          &p::link_prop    >,
+        row< Prop,         void,           PropSep,       void,         &p::prop_value   >
     > {};
-
-
-    ///TODO in state_machine_def
-    template<unsigned N1, unsigned N2>
-    struct range
-    {
-        static const std::size_t begin = N1;
-        static const std::size_t end = N2;
-    };
-
-    ///TODO deduced in state_machine_def
-    struct range_transition : boost::mpl::vector<
-        range<0, 3>,
-        range<3, 5>,
-        range<5, 6>,
-        range<6, 7>,
-        range<7, 9>,
-        range<9, 10>,
-        range<10, 11>,
-        range<11, 13>,
-        range<13, 14>
-    > {};
-
-
 };
 
 int main()
 {
     rwlparser parser;
 
-    const char * str = "#122 ; color: #239 ; color:\"plop\" ; color:#ffffff ; color:#23G";
+    const char * str = "Rect {"
+        " bgcolor: #122 ;"
+        " color: rgb( #239, \"l\" ) ;"
+        " x: label.w ;"
+        " a.s: 2 ;"
+        " Rect { color: 20 }"
+        " Rect { Rect { color: 20 ;} }"
+        " Rect { Rect { color: 20 } ; }"
+    " }";
 
     const char * states[] = {
+        "target",
+        "closing_target",
+        "confirmed_target",
         "value",
         "property_or_function",
         "link_property",
         "property",
-        "parameter",
         "property_separator",
         "property_name",
         "defined_property",
         "confirmed_string",
     };
 
-    while (parser.valid()) {
-        std::cout << (states[parser.state_num]) << "\n";
+    while (parser.valid() && *str) {
+        std::cout << "\033[37m" << (states[parser.state_num]) << "\033[00m\n";
         str = parser.next_event(str);
-        std::cout << (str) << std::endl;
+        std::cout << "\033[36m" << (str) << "\033[00m\n";
     }
+    if (*str) {
+        std::cout << ("parsing error\n");
+    }
+
+    std::cout << (parser.rwl) << std::endl;
 }
