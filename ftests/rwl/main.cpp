@@ -172,7 +172,7 @@ namespace tokens {
 }
 
 #define BOOST_MPL_CFG_NO_PREPROCESSED_HEADERS
-#define BOOST_MPL_LIMIT_VECTOR_SIZE 30
+#define BOOST_MPL_LIMIT_VECTOR_SIZE 40
 #include <boost/type_traits/conditional.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/mpl/vector.hpp>
@@ -183,11 +183,11 @@ namespace tokens {
 
 using std::size_t;
 
-template<typename T, typename U, typename Default>
-struct default_if
+template<typename T, typename Default>
+struct value_or
 {
     typedef typename boost::conditional<
-        boost::is_same<T, U>::value,
+        boost::is_same<T, void>::value,
         Default,
         T
     >::type type;
@@ -441,12 +441,12 @@ struct state_machine_def
     >
     struct row {
         typedef Start event;
-        typedef typename default_if<Check, void, null_check>::type check;
+        typedef typename value_or<Check, null_check>::type check;
         typedef Next next;
         typedef Check base_check;
         typedef Consumer base_consumer;
-        typedef typename default_if<Consumer, void, null_consumer>::type consumer;
-        typedef typename default_if<Ignore, void, null_consumer>::type ignore;
+        typedef typename value_or<Consumer, null_consumer>::type consumer;
+        typedef typename value_or<Ignore, null_consumer>::type ignore;
         typedef void (Derived::*action_type)(const Start&);
 
         struct action
@@ -525,18 +525,20 @@ struct state_machine_def
 struct rwlparser : state_machine_def<rwlparser>
 {
     //BEGIN State
-    struct Value {};
-    struct EndString {};
-    struct PropOrFunc {};
-    struct LinkProp {};
-    struct Prop {};
-    struct Parameter {};
-    struct PropSep {};
-    struct PropName {};
-    struct DefinedProp {};
     struct Target {};
     struct DefinedTarget {};
     struct ClosingTarget {};
+    struct PropName {};
+    struct DefinedProp {};
+    struct Value {};
+    struct EndString {};
+    struct PropOrFunc {};
+    struct PropSep {};
+    struct LinkProp {};
+    struct Prop {};
+    struct Expression {};
+    struct Operation {};
+    struct ValueBlock {};
     //END State
 
 
@@ -658,11 +660,34 @@ struct rwlparser : state_machine_def<rwlparser>
         this->rwl += '"';
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
-    void property_separator(const PropSep&, const char * p, const char * e)
+    void prop_separator(const PropSep&, const char * p, const char * e)
     {
         this->rwl += this->property_name;
         this->property_name.clear();
         this->rwl += ";\n";
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    template<typename Event>
+    void math_operator(const Event&, const char * p, const char * e)
+    {
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += ' ';
+        this->rwl.append(p, e-p);
+        this->rwl += ' ';
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void group_value(const Operation&, const char * p, const char * e)
+    {
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+    void value_block(const ValueBlock&, const char * p, const char * e)
+    {
+        this->rwl += "{\n";
+        ++this->tab;
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
@@ -686,6 +711,7 @@ struct rwlparser : state_machine_def<rwlparser>
     typedef tokens::Name TargetName;
     typedef tokens::OpenBlock OpenBlock;
     typedef tokens::CloseBlock CloseBlock;
+    typedef tokens::MathOperator MathOperator;
 
     typedef tokens::String String;
     typedef tokens::HexColor HexColor;
@@ -697,42 +723,53 @@ struct rwlparser : state_machine_def<rwlparser>
     typedef rwlparser p;
 
     struct table_transition : boost::mpl::vector<
-        //-+- event ------+ check --------+ event next --+ consumer ---+ action --------+
-        row< Target,       TargetName,     DefinedTarget, TargetName,   &p::target       >,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< DefinedTarget,OpenBlock,      PropName,      OpenBlock,    &p::confirmed_target>,
-        row< DefinedTarget,CloseBlock,     ClosingTarget, CloseBlock,   &p::empty_target>,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< ClosingTarget,CloseBlock,     ClosingTarget, CloseBlock,   &p::close_target>,
-        row< ClosingTarget,Semicolon,      PropName,      Semicolon,    &p::not_action>,
-        row< ClosingTarget,void,           Target,        void,         &p::not_action>,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< PropName,     CloseBlock,     ClosingTarget, CloseBlock,   &p::close_target >,
-        row< PropName,     TargetName,     DefinedTarget, TargetName,   &p::target       >,
-        row< PropName,     Identifier,     DefinedProp,   Identifier,   &p::prop_name    >,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< DefinedProp,  Dot,            PropName,      Dot,          &p::link_prop    >,
-        row< DefinedProp,  TwoPoint,       Value,         TwoPoint,     &p::defined_prop >,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< Value,        Quote,          EndString,     String,       &p::string       >,
-        row< Value,        Identifier,     PropOrFunc,    Identifier,   &p::name         >,
-        row< Value,        DefinedColor,   PropSep,       HexColor,     &p::hex_color    >,
-        row< Value,        Integer,        PropSep,       Integer,      &p::integer      >,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< EndString,    Quote,          PropSep,       Quote,        &p::confirmed_string>,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< PropOrFunc,   Dot,            LinkProp,      Dot,          &p::link_prop    >,
-        row< PropOrFunc,   OpenExpr,       Value,         OpenExpr,     &p::open_expr    >,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< PropSep,      Comma,          Value,         Comma,        &p::value_separator>,
-        row< PropSep,      CloseExpr,      PropSep,       CloseExpr,    &p::close_expr   >,
-        row< PropSep,      Semicolon,      PropName,      Semicolon,    &p::property_separator>,
-        row< PropSep,      CloseBlock,     ClosingTarget, CloseBlock,   &p::close_target >,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< LinkProp,     Identifier,     Prop,          Identifier,   &p::property_get >,
-        //-+--------------+---------------+--------------+-------------+----------------+
-        row< Prop,         Dot,            LinkProp,      Dot,          &p::link_prop    >,
-        row< Prop,         void,           PropSep,       void,         &p::prop_value   >
+        //-+- event -------+ check -------+ event next --+ consumer ---+ action --------+
+        row< Target,        TargetName,    DefinedTarget, TargetName,   &p::target       >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< DefinedTarget, OpenBlock,     PropName,      OpenBlock,    &p::confirmed_target>,
+        row< DefinedTarget, CloseBlock,    ClosingTarget, CloseBlock,   &p::empty_target >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< ClosingTarget, CloseBlock,    ClosingTarget, CloseBlock,   &p::close_target >,
+        row< ClosingTarget, Semicolon,     PropName,      Semicolon,    &p::not_action   >,
+        row< ClosingTarget, TargetName,    DefinedTarget, TargetName,   &p::target       >,
+        row< ClosingTarget, void,          PropName,      void,         &p::not_action   >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< PropName,      CloseBlock,    ClosingTarget, CloseBlock,   &p::close_target >,
+        row< PropName,      TargetName,    DefinedTarget, TargetName,   &p::target       >,
+        row< PropName,      Identifier,    DefinedProp,   Identifier,   &p::prop_name    >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< DefinedProp,   Dot,           PropName,      Dot,          &p::link_prop    >,
+        row< DefinedProp,   TwoPoint,      ValueBlock,    TwoPoint,     &p::defined_prop >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< ValueBlock,    OpenBlock,     PropName,      OpenBlock,    &p::value_block  >,
+        row< ValueBlock,    void,          Value,         void,         &p::not_action   >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< Value,         Quote,         EndString,     String,       &p::string       >,
+        row< Value,         Identifier,    PropOrFunc,    Identifier,   &p::name         >,
+        row< Value,         DefinedColor,  PropSep,       HexColor,     &p::hex_color    >,
+        row< Value,         Integer,       Expression,    Integer,      &p::integer      >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< EndString,     Quote,         PropSep,       Quote,        &p::confirmed_string>,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< PropOrFunc,    Dot,           LinkProp,      Dot,          &p::link_prop    >,
+        row< PropOrFunc,    OpenExpr,      Value,         OpenExpr,     &p::open_expr    >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< PropSep,       Comma,         Value,         Comma,        &p::value_separator>,
+        row< PropSep,       CloseExpr,     Expression,    CloseExpr,    &p::close_expr   >,
+        row< PropSep,       Semicolon,     PropName,      Semicolon,    &p::prop_separator>,
+        row< PropSep,       CloseBlock,    ClosingTarget, CloseBlock,   &p::close_target >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< LinkProp,      Identifier,    Prop,          Identifier,   &p::property_get >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< Prop,          Dot,           LinkProp,      Dot,          &p::link_prop    >,
+        row< Prop,          MathOperator,  Operation,     MathOperator, &p::math_operator>,
+        row< Prop,          void,          PropSep,       void,         &p::prop_value   >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< Expression,    MathOperator,  Operation,     MathOperator, &p::math_operator>,
+        row< Expression,    void,          PropSep,       void,         &p::not_action   >,
+        //-+---------------+--------------+--------------+-------------+----------------+
+        row< Operation,     OpenBlock,     Value,         OpenBlock,    &p::group_value  >,
+        row< Operation,     void,          Value,         void,         &p::not_action   >
     > {};
 };
 
@@ -744,24 +781,29 @@ int main()
         " bgcolor: #122 ;"
         " color: rgb( #239, \"l\" ) ;"
         " x: label.w ;"
-        " a.s: 2 ;"
-        " Rect { color: 20 }"
-        " Rect { Rect { color: 20 ;} }"
-        " Rect { Rect { color: 20 } ; }"
+        " border.top: 2 ;"
+        " Rect { x: 20+2 }"
+        " Rect { Rect { x: 20 ;} }"
+        " Rect { Rect { x: 20 } ; }"
+        " text: \"plop\" ;"
+        " border: { left: 2 ; right: 2}"
     " }";
 
     const char * states[] = {
         "target",
-        "closing_target",
         "confirmed_target",
-        "value",
-        "property_or_function",
-        "link_property",
+        "closing_target",
         "property",
-        "property_separator",
-        "property_name",
         "defined_property",
+        "value_block",
+        "value",
         "confirmed_string",
+        "property_or_function",
+        "property_separator",
+        "link_property",
+        "property_name",
+        "expression",
+        "operation",
     };
 
     while (parser.valid() && *str) {
