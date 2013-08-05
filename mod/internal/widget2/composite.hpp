@@ -50,7 +50,6 @@ public:
         }
     }
 
-public:
     virtual void set_xy(int16_t x, int16_t y)
     {
         int16_t xx = x - this->dx();
@@ -77,18 +76,6 @@ public:
             return 0;
         Widget2 * ret = this->child_at_pos(x, y);
         return ret ? ret : this;
-    }
-
-    virtual Widget2 * widget_focused()
-    {
-        Widget2 * ret = this->direct_child_focused();
-        if (ret)
-        {
-            Widget2 * tmp = ret->widget_focused();
-            if (tmp)
-                ret = tmp;
-        }
-        return ret;
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
@@ -306,16 +293,6 @@ public:
     }
 
 protected:
-    Widget2 * direct_child_focused() const
-    {
-        for (std::size_t i = 0; i < this->child_list.size(); ++i)
-        {
-            if (this->child_list[i]->has_focus)
-                return this->child_list[i];
-        }
-        return 0;
-    }
-
     size_t direct_idx_focused() const
     {
         for (std::size_t i = 0; i < this->child_list.size(); ++i)

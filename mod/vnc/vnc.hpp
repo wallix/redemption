@@ -123,8 +123,10 @@ struct mod_vnc : public mod_api {
 
 //        this->clip_chanid = 0;
 
-        strcpy(this->username, username);
-        strcpy(this->password, password);
+        memcpy(this->username, username, sizeof(this->username)-1);
+        this->username[sizeof(this->username)-1] = 0;
+        memcpy(this->password, password, sizeof(this->password)-1);
+        this->password[sizeof(this->password)-1] = 0;
 
         int error = 0;
 

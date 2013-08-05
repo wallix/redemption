@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     BOOST_CHECK_EQUAL((unsigned)1352304810, (unsigned)player.record_now.tv_sec);
     player.play();
-    
+
     png_recorder.flush();
     BOOST_CHECK_EQUAL((unsigned)1352304870, (unsigned)player.record_now.tv_sec);
 

@@ -474,7 +474,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
         Widget2* sender;
         notify_event_t event;
 
-        Notify() 
+        Notify()
         : sender(0)
         , event(0)
         {
@@ -516,6 +516,36 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
     BOOST_CHECK(widget_for_receive_event.event == 0);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
+
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+
+    keymap.push_kevent(Keymap2::KEVENT_KEY);
+    keymap.push_char('a');
+    wbutton.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+
+    keymap.push_kevent(Keymap2::KEVENT_KEY);
+    keymap.push_char(' ');
+    wbutton.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == &wbutton);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+    notifier.sender = 0;
+    notifier.event = 0;
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    wbutton.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    BOOST_CHECK(widget_for_receive_event.sender == 0);
+    BOOST_CHECK(widget_for_receive_event.event == 0);
+    BOOST_CHECK(notifier.sender == &wbutton);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+    notifier.sender = 0;
+    notifier.event = 0;
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
@@ -572,3 +602,143 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     }
 }
 
+
+BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
+{
+    TestDraw drawable(70, 40);
+
+    Widget2* parent = NULL;
+    NotifyApi * notifier = NULL;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
+    bool auto_resize = true;
+    int16_t x = 10;
+    int16_t y = 10;
+    int xtext = 4;
+    int ytext = 1;
+
+    WidgetButton wbutton(drawable, x, y, parent, notifier, "test7", auto_resize, id, fg_color, bg_color, xtext, ytext);
+
+    wbutton.rdp_input_invalidate(wbutton.rect);
+
+    //drawable.save_to_png("/tmp/button10.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xc5\x83\xfc\x1a\x58\xc0\xc7\xfb\xcd\x10\x54\x90\xf0\xd4\x7d\x4b\x2d\x88\x40\x5f")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wbutton.focus(0);
+
+    wbutton.rdp_input_invalidate(wbutton.rect);
+
+    //drawable.save_to_png("/tmp/button11.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xe7\x3c\x7e\xbf\x0e\xaa\xb3\x12\xdd\xc9\x38\xb3\x77\x38\xf4\x34\x2b\xa4\x20\xf2")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wbutton.blur();
+
+    wbutton.rdp_input_invalidate(wbutton.rect);
+
+    //drawable.save_to_png("/tmp/button12.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xc5\x83\xfc\x1a\x58\xc0\xc7\xfb\xcd\x10\x54\x90\xf0\xd4\x7d\x4b\x2d\x88\x40\x5f")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wbutton.focus(0);
+
+    wbutton.rdp_input_invalidate(wbutton.rect);
+
+    //drawable.save_to_png("/tmp/button13.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+        "\xe7\x3c\x7e\xbf\x0e\xaa\xb3\x12\xdd\xc9\x38\xb3\x77\x38\xf4\x34\x2b\xa4\x20\xf2")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+// BOOST_AUTO_TEST_CASE(TraceWidgetButtonResizeAndMove)
+// {
+//     TestDraw drawable(80, 50);
+//
+//     Widget2* parent = NULL;
+//     NotifyApi * notifier = NULL;
+//     int fg_color = RED;
+//     int bg_color = YELLOW;
+//     int id = 0;
+//     bool auto_resize = true;
+//     int16_t x = 10;
+//     int16_t y = 10;
+//     int xtext = 4;
+//     int ytext = 1;
+//
+//     WidgetComposite wcomposite(&drawable,
+//                                Rect(0, 0,
+//                                     drawable.gd.drawable.width,
+//                                     drawable.gd.drawable.height),
+//                                parent, notifier);
+//
+//     WidgetButton wbutton(drawable, x, y, &wcomposite, notifier, "test8", auto_resize, id, fg_color, bg_color, xtext, ytext);
+//
+//     wcomposite.child_list.push_back(&wbutton);
+//
+//     wcomposite.rdp_input_invalidate(wcomposite.rect);
+//
+//     uint16_t cx = wbutton.cx();
+//     uint16_t cy = wbutton.cy();
+//
+//     drawable.save_to_png("/tmp/button14.png");
+//
+//     char message[1024];
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\x02\xd3\x77\x3e\x89\x10\x4b\x85\x95\x2d\x5f\xe7\x50\x35\x5a\x9f\x89\x64\xb8\x9a")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+//
+//     wbutton.set_wh(cx + 5, cy + 2);
+//     wcomposite.rdp_input_invalidate(wcomposite.rect);
+//
+//     drawable.save_to_png("/tmp/button15.png");
+//
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\x8a\x8d\xf8\xbd\xea\x8a\x5c\x16\x6c\x2d\xeb\x96\x0d\x7b\x4f\x0d\x01\x9c\x3f\x5d")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+//
+//     wbutton.set_xy(5, 5);
+//     wcomposite.rdp_input_invalidate(wcomposite.rect);
+//
+//     drawable.save_to_png("/tmp/button16.png");
+//
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\xc5\x83\xfc\x1a\x58\xc0\xc7\xfb\xcd\x10\x54\x90\xf0\xd4\x7d\x4b\x2d\x88\x40\x5f")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+//
+//     wbutton.set_wh(cx, cy);
+//     wcomposite.rdp_input_invalidate(wcomposite.rect);
+//
+//     drawable.save_to_png("/tmp/button17.png");
+//
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\xc5\x83\xfc\x1a\x58\xc0\xc7\xfb\xcd\x10\x54\x90\xf0\xd4\x7d\x4b\x2d\x88\x40\x5f")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+//
+//     wbutton.set_xy(x, y);
+//     wcomposite.rdp_input_invalidate(wcomposite.rect);
+//
+//     drawable.save_to_png("/tmp/button18.png");
+//
+//     if (!check_sig(drawable.gd.drawable, message,
+//         "\x02\xd3\x77\x3e\x89\x10\x4b\x85\x95\x2d\x5f\xe7\x50\x35\x5a\x9f\x89\x64\xb8\x9a")){
+//         BOOST_CHECK_MESSAGE(false, message);
+//     }
+// }

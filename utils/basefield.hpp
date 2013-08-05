@@ -66,7 +66,7 @@ struct FieldObserver : public ConfigurationHolder {
             if (this->ini)
                 this->ini->use_notify(this);
         }
-        inline void unask(){
+        inline void unask() {
             this->asked = false;
         }
 

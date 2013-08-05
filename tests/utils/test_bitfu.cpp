@@ -108,4 +108,3 @@ BOOST_AUTO_TEST_CASE(TestCompactToAlignedSizeComputing)
     BOOST_CHECK_EQUAL(2388, row_size(796, 24));
     BOOST_CHECK_EQUAL(3184, row_size(796, 32));
 }
-
