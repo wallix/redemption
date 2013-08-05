@@ -42,27 +42,59 @@ namespace rndfa {
         size_t utfc;
     };
 
-    std::ostream& operator<<(std::ostream& os, utf_char c)
+    std::ostream& operator<<(std::ostream& os, utf_char utf_c)
     {
+        char c[sizeof(size_t)] = {utf_c.utfc & 0XFF};
+        char * p = c + 1;
         size_t len = 1;
-        while ( c.utfc >>= __CHAR_BIT__ ) {
+        while ( utf_c.utfc >>= __CHAR_BIT__ ) {
             ++len;
+            ++p;
         }
-        return os.write(reinterpret_cast<const char *>(&c.utfc), len);
+        std::reverse(c, p);
+        return os.write(c, len);
     }
 
-    template<typename ForwardIterator>
-    bool utf_contains(ForwardIterator first, ForwardIterator last, size_t c)
+    class utf_consumer
     {
-        for (; first != last; ) {
-            size_t cc = *first;
-            ++first;
-            while (first != last && (*first >> 6) == 2) {
+    public:
+        utf_consumer(const char * str)
+        : s(str)
+        {}
+
+        size_t bumpc()
+        {
+            size_t cc = *this->s;
+            ++this->s;
+            while ((*this->s >> 6) == 2) {
                 cc <<= __CHAR_BIT__;
-                cc |= *first;
-                ++first;
+                cc |= *this->s;
+                ++this->s;
             }
-            if (cc == c) {
+            return cc;
+        }
+
+        size_t getc()
+        {
+            const char * tmp = this->s;
+            size_t c = this->bumpc();
+            this->s = tmp;
+            return c;
+        }
+
+        bool valid() const
+        {
+            return *this->s;
+        }
+
+        const char * s;
+    };
+
+    bool utf_contains(const char * str, size_t c)
+    {
+        utf_consumer consumer(str);
+        while (consumer.valid()) {
+            if (consumer.bumpc() == c) {
                 return true;
             }
         }
@@ -195,7 +227,7 @@ namespace rndfa {
         virtual bool check(size_t c)
         {
             /**///std::cout << str;
-            return utf_contains(this->str.begin(), this->str.end(), c);
+            return utf_contains(this->str.c_str(), c);
         }
 
         virtual StateBase * clone() const
@@ -314,7 +346,7 @@ namespace rndfa {
 
         virtual bool check(size_t c)
         {
-            return utf_contains(this->str.begin(), this->str.end(), c);
+            return utf_contains(this->str.c_str(), c);
         }
 
         virtual Checker * clone() const
@@ -770,13 +802,10 @@ namespace rndfa {
 
             typedef StateListByStep::Info Info;
 
-            RangeList * step(const char *s, RangeList * l)
+            RangeList * step(size_t c, RangeList * l)
             {
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (first->st->type == LAST && !(s+1)) {
-                        return (RangeList*)2;
-                    }
-                    if (!first->st->is_cap() && first->st->check(*s)) {
+                    if (!first->st->is_cap() && first->st->check(c)) {
 #ifdef DISPLAY_TRACE
                         this->sm.display_elem_state_list(*first, 0);
 #endif
@@ -797,19 +826,21 @@ namespace rndfa {
 
                 RangeList * l = &this->sm.st_range_beginning;
 
-                for(; *s && l > (void*)2; ++s){
+                utf_consumer consumer(s);
+
+                while (consumer.valid() && l > (void*)2){
 #ifdef DISPLAY_TRACE
-                    std::cout << "\033[01;31mc: '" << *s << "'\033[0m\n";
+                    std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
 #endif
-                    l = this->step(s, l);
+                    l = this->step(consumer.bumpc(), l);
                     ++this->step_id;
                 }
 
-                if ((0 == l && (check_end ? !*s : 1)) || l == (RangeList*)2) {
+                if ((0 == l && (check_end ? !consumer.valid() : 1)) || l == (RangeList*)2) {
                     return true;
                 }
 
-                if ((RangeList*)1 == l || *s) {
+                if ((RangeList*)1 == l || consumer.valid()) {
                     return false;
                 }
 
@@ -822,7 +853,7 @@ namespace rndfa {
                 return false;
             }
 
-            unsigned step(const char *s, StateListByStep * l1, StateListByStep * l2)
+            unsigned step(size_t c, StateListByStep * l1, StateListByStep * l2)
             {
                 for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
                     if (ifirst->rl->st->id == this->step_id) {
@@ -832,10 +863,7 @@ namespace rndfa {
                     ifirst->rl->st->id = this->step_id;
 
                     for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
-                        if (first->st->type == LAST && !(s+1)) {
-                            return 0;
-                        }
-                        if (!first->st->is_cap() && first->st->check(*s)) {
+                        if (!first->st->is_cap() && first->st->check(c)) {
 #ifdef DISPLAY_TRACE
                             this->sm.display_elem_state_list(*first, 0);
 #endif
@@ -863,11 +891,13 @@ namespace rndfa {
                 StateListByStep * pal2 = &this->sm.l2;
                 this->sm.l1.push_back(&this->sm.st_range_beginning);
 
-                for(; *s; ++s){
+                utf_consumer consumer(s);
+
+                while (consumer.valid()) {
 #ifdef DISPLAY_TRACE
-                    std::cout << "\033[01;31mc: '" << *s << "'\033[0m\n";
+                    std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
 #endif
-                    if (0 == this->step(s, pal1, pal2)) {
+                    if (0 == this->step(consumer.bumpc(), pal1, pal2)) {
                         return true;
                     }
                     ++this->step_id;
@@ -951,7 +981,8 @@ namespace rndfa {
             typedef StateListByStep::Info Info;
 
             template<typename Tracer>
-            unsigned step(const char *s, StateListByStep * l1, StateListByStep * l2,
+            unsigned step(const char * s, size_t c,
+                          StateListByStep * l1, StateListByStep * l2,
                           Tracer& tracer)
             {
                 for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
@@ -990,11 +1021,7 @@ namespace rndfa {
                             continue ;
                         }
 
-                        if (first->st->type == LAST && !(s+1)) {
-                            return ifirst->idx;
-                        }
-
-                        if (first->st->check(*s)) {
+                        if (first->st->check(c)) {
 #ifdef DISPLAY_TRACE
                             this->sm.display_elem_state_list(*first, ifirst->idx);
 #endif
@@ -1048,13 +1075,15 @@ namespace rndfa {
                 this->sm.l1.push_back(&this->sm.st_range_beginning, *--this->sm.pidx_trace_free);
                 tracer.start(*this->sm.pidx_trace_free);
 
-                for(; *s; ++s) {
+                utf_consumer consumer(s);
+
+                while (consumer.valid()) {
 #ifdef DISPLAY_TRACE
-                    std::cout << "\033[01;31mc: '" << *s << "'\033[0m" << std::endl;
+                    std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m" << std::endl;
 #endif
-                    if (-1u != (this->sm.idx_trace = this->step(s, pal1, pal2, tracer))) {
+                    if (-1u != (this->sm.idx_trace = this->step(s, consumer.bumpc(), pal1, pal2, tracer))) {
                         tracer.good(this->sm.idx_trace);
-                        return false == ExactMatch::value || !*(s+1);
+                        return false == ExactMatch::value || !consumer.getc();
                     }
                     if (pal2->empty()) {
                         break;
@@ -1070,9 +1099,10 @@ namespace rndfa {
 #endif
                         pal1->push_back(this->sm.st_range_list, *this->sm.pidx_trace_free);
                     }
+                    s = consumer.s;
                 }
 
-                if (!*s) {
+                if (!consumer.valid()) {
                     for (Info* ifirst = pal1->begin(), * ilast = pal1->end(); ifirst != ilast ; ++ifirst) {
                         if (ifirst->rl->st->id == this->step_id) {
                             /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
@@ -1164,7 +1194,7 @@ namespace rndfa {
         return new StateBase(SPLIT, 0, out1, out2);
     }
 
-    int c2rgxc(int c)
+    size_t c2rgxc(size_t c)
     {
         switch (c) {
             case 'n': return '\n';
@@ -1175,7 +1205,7 @@ namespace rndfa {
         }
     }
 
-    const char * check_interval(int a, int b)
+    const char * check_interval(size_t a, size_t b)
     {
         bool valid = ('0' <= a && a <= '9' && '0' <= b && b <= '9')
         || ('a' <= a && a <= 'z' && 'a' <= b && b <= 'z')
@@ -1183,60 +1213,72 @@ namespace rndfa {
         return (valid && a <= b) ? 0 : "range out of order in character class";
     }
 
-    StateBase * str2stchar(const char *& s, const char * last, const char * & msg_err)
+    StateBase * str2stchar(utf_consumer & consumer, size_t c, const char * & msg_err)
     {
-        if (*s == '\\' && s+1 != last) {
-            return new_character(c2rgxc(*++s));
+        if (c == '\\' && consumer.valid()) {
+            return new_character(c2rgxc(consumer.bumpc()));
         }
 
-        if (*s == '[') {
+        if (c == '[') {
             StateMultiTest * st = new StateMultiTest;
             std::string str;
-            if (++s != last && *s != ']') {
-                if (*s == '^') {
+            if (consumer.valid() && (c = consumer.bumpc()) != ']') {
+                if (c == '^') {
                     st->result_true_check = false;
-                    ++s;
+                    c = consumer.bumpc();
                 }
-                if (*s == '-') {
+                if (c == '-') {
                     str += '-';
-                    ++s;
+                    c = consumer.bumpc();
                 }
-                const char * c = s;
-                while (s != last && *s != ']') {
-                    const char * p = s;
-                    while (++s != last && *s != ']' && *s != '-') {
-                        if (*s == '\\' && s+1 != last) {
-                            str += c2rgxc(*++s);
+                const char * cs = consumer.s;
+                while (consumer.valid() && c != ']') {
+                    const char * p = consumer.s;
+                    size_t prev_c = c;
+                    while (c != ']' && c != '-') {
+                        if (c == '\\') {
+                            str += c2rgxc(consumer.bumpc());
                         }
                         else {
-                            str += *s;
+                            str += c;
                         }
+
+                        if ( ! consumer.valid()) {
+                            break;
+                        }
+
+                        prev_c = c;
+                        c = consumer.bumpc();
                     }
 
-                    if (*s == '-') {
-                        if (c == s) {
+                    if (c == '-') {
+                        if (cs == consumer.s) {
                             str += '-';
                         }
-                        else if (s+1 == last) {
+                        else if (!consumer.valid()) {
                             msg_err = "missing terminating ]";
                             return 0;
                         }
-                        else if (*(s+1) == ']') {
+                        else if (consumer.getc() == ']') {
                             str += '-';
-                            ++s;
+                            consumer.bumpc();
                         }
-                        else if (s == p) {
+                        else if (consumer.s == p) {
                             str += '-';
                         }
                         else {
-                            if ((msg_err = check_interval(*(s-1), *(s+1)))) {
+                            c = consumer.bumpc();
+                            if ((msg_err = check_interval(prev_c, c))) {
                                 return 0;
                             }
                             if (str.size() > 1) {
                                 str.erase(str.size()-1);
                             }
-                            st->push_checker(new CheckerInterval(*(s-1), *(s+1)));
-                            c = ++s + 1;
+                            st->push_checker(new CheckerInterval(prev_c, c));
+                            cs = consumer.s;
+                            if (consumer.valid()) {
+                                c = consumer.bumpc();
+                            }
                         }
                     }
                 }
@@ -1246,7 +1288,7 @@ namespace rndfa {
                 st->push_checker(new CheckerString(str));
             }
 
-            if (*s != ']') {
+            if (c != ']') {
                 msg_err = "missing terminating ]";
                 delete st;
                 st = 0;
@@ -1255,32 +1297,31 @@ namespace rndfa {
             return st;
         }
 
-        return *s == '.' ? new_any() : new_character(*s);
+        return c == '.' ? new_any() : new_character(c);
     }
 
-    bool is_range_repetition(const char * s, const char * last)
+    bool is_range_repetition(const char * s)
     {
         const char * begin = s;
-        while (s != last && '0' <= *s && *s <= '9') {
+        while (*s && '0' <= *s && *s <= '9') {
             ++s;
         }
-        if (begin == s || s == last || (*s != ',' && *s != '}')) {
+        if (begin == s || !*s || (*s != ',' && *s != '}')) {
             return false;
         }
         if (*s == '}') {
             return true;
         }
         begin = ++s;
-        while (s != last && '0' <= *s && *s <= '9') {
+        while (*s && '0' <= *s && *s <= '9') {
             ++s;
         }
-        return s != last && *s == '}';
+        return *s && *s == '}';
     }
 
-    bool is_meta_char(const char * s, const char * last)
+    bool is_meta_char(utf_consumer & consumer, size_t c)
     {
-        const int c = *s;
-        return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(s+1, last));
+        return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.s));
     }
 
     struct StateDeleter
@@ -1368,7 +1409,7 @@ namespace rndfa {
 
     typedef std::pair<StateBase*, StateBase**> IntermendaryState;
 
-    IntermendaryState intermendary_str2reg(const char *& s, const char * last,
+    IntermendaryState intermendary_str2reg(utf_consumer & consumer,
                                            bool & has_epsilone, const char * & msg_err,
                                            int recusive = 0, bool ismatch = true)
     {
@@ -1389,49 +1430,54 @@ namespace rndfa {
         StateBase ** besplit[50] = {0};
         StateBase *** pesplit = besplit;
 
-        while (s != last) {
-            if (*s == '^' || *s == '$') {
+        size_t c = consumer.bumpc();
+
+        while (c) {
+            /**///std::cout << "c: " << (c) << std::endl;
+            if (c == '^' || c == '$') {
                 if (*pst) {
                     pst = &(*pst)->out1;
                 }
-                *pst = new StateBorder(*s == '^');
+                *pst = new StateBorder(c == '^');
                 if (st_one) {
                     *st_one = *pst;
                     prev_st_one = st_one;
                     st_one = 0;
                 }
-                ++s;
-                if (s != last && !is_meta_char(s, last)) {
+
+                if ((c = consumer.bumpc()) && !is_meta_char(consumer, c)) {
                     pst = &(*pst)->out1;
                 }
                 continue;
             }
 
-            if (!is_meta_char(s, last)) {
+            if (!is_meta_char(consumer, c)) {
                 if (*pst) {
                     pst = &(*pst)->out1;
                 }
-                if (!(*pst = str2stchar(s, last, msg_err))) {
+                if (!(*pst = str2stchar(consumer, c, msg_err))) {
                     return FreeState::invalide(st);
                 }
+
                 if (st_one) {
                     *st_one = *pst;
                     prev_st_one = st_one;
                     st_one = 0;
                 }
-                while (++s != last && !is_meta_char(s, last)) {
+
+                while ((c = consumer.bumpc()) && !is_meta_char(consumer, c)) {
                     pst = &(*pst)->out1;
-                    if (!(*pst = str2stchar(s, last, msg_err))) {
+                    if (!(*pst = str2stchar(consumer, c, msg_err))) {
                         return FreeState::invalide(st);
                     }
                 }
             }
             else {
-                if (*s != '(' && *s != ')' && (bst->out1 == 0 || bst->out1->is_border())) {
+                if (c != '(' && c != ')' && (bst->out1 == 0 || bst->out1->is_border())) {
                     msg_err = "nothing to repeat";
                     return FreeState::invalide(st);
                 }
-                switch (*s) {
+                switch (c) {
                     case '?': {
                         StateBase ** tmp = st_one;
                         st_one = &(*pst)->out1;
@@ -1471,7 +1517,7 @@ namespace rndfa {
                     case '{': {
                         /**///std::cout << ("{") << std::endl;
                         char * end = 0;
-                        unsigned m = strtoul(s+1, &end, 10);
+                        unsigned m = strtoul(consumer.s, &end, 10);
                         /**///std::cout << ("end ") << *end << std::endl;
                         /**///std::cout << "m: " << (m) << std::endl;
                         if (*end != '}') {
@@ -1520,7 +1566,9 @@ namespace rndfa {
                                 }
                                 if (0 == m) {
                                     --end;
+                                    /**///std::cout << ("m = 0") << std::endl;
                                     if (n != 1) {
+                                        /**///std::cout << ("n != 1") << std::endl;
                                         ContextClone cloner(*pst);
                                         StateBase ** tmp = st_one;
                                         st_one = &(*pst)->out1;
@@ -1584,8 +1632,8 @@ namespace rndfa {
                             }
                             end -= 1;
                         }
-                        s = end + 1;
-                        /**///std::cout << "'" << (*s) << "'" << std::endl;
+                        consumer.s = end + 1 + 1;
+                        /**///std::cout << "'" << (*consumer.s) << "'" << std::endl;
                         break;
                     }
                     case ')':
@@ -1633,12 +1681,13 @@ namespace rndfa {
                         std::cout << ("error") << std::endl;
                         break;
                     case '(':
-                        if (*(s+1) == '?' && *(s+2) == ':') {
-                            if (s+2 >= last) {
+                        if (*consumer.s == '?' && *(consumer.s+1) == ':') {
+                            if (!*consumer.s || !(*consumer.s+1) || !(*consumer.s+2)) {
                                 msg_err = "unmatched parentheses";
                                 return FreeState::invalide(st);
                             }
-                            IntermendaryState intermendary = intermendary_str2reg(s+=3, last, has_epsilone, msg_err, recusive+1, false);
+                            consumer.s += 2;
+                            IntermendaryState intermendary = intermendary_str2reg(consumer, has_epsilone, msg_err, recusive+1, false);
                             if (intermendary.first) {
                                 if (*pst) {
                                     pst = &(*pst)->out1;
@@ -1656,7 +1705,7 @@ namespace rndfa {
                             }
                             break;
                         }
-                        IntermendaryState intermendary = intermendary_str2reg(++s, last, has_epsilone, msg_err, recusive+1);
+                        IntermendaryState intermendary = intermendary_str2reg(consumer, has_epsilone, msg_err, recusive+1);
                         if (intermendary.first) {
                             if (*pst) {
                                 pst = &(*pst)->out1;
@@ -1674,9 +1723,10 @@ namespace rndfa {
                         }
                         break;
                 }
-                ++s;
+                c = consumer.bumpc();
             }
         }
+
         if (0 != recusive) {
             msg_err = "unmatched parentheses";
             return FreeState::invalide(st);
@@ -1702,11 +1752,12 @@ namespace rndfa {
         }
     }
 
-    StateBase* str2reg(const char * s, const char * last, const char * * msg_err = 0)
+    StateBase* str2reg(const char * s, const char * * msg_err = 0)
     {
         bool has_epsilone = false;
         const char * err = 0;
-        StateBase * st = intermendary_str2reg(s, last, has_epsilone, err).first;
+        utf_consumer consumer(s);
+        StateBase * st = intermendary_str2reg(consumer, has_epsilone, err).first;
         if (err) {
             if (msg_err) {
                 *msg_err = err;
@@ -1720,11 +1771,6 @@ namespace rndfa {
             std::for_each(removed.begin(), removed.end(), StateDeleter());
         }
         return st;
-    }
-
-    StateBase* str2reg(const char * s, const char * * msg_err = 0)
-    {
-        return str2reg(s, s + strlen(s), msg_err);
     }
 
     void display_state(StateBase * st, unsigned depth = 0)
@@ -1753,16 +1799,16 @@ namespace rndfa {
             , st(st)
             {}
 
-            Parser(const char * s, const char * last)
+            Parser(const char * s)
             : err(0)
             , pos_err(0)
             , st(0)
             {
                 bool has_epsilone = false;
-                const char * tmp = s;
-                this->st = intermendary_str2reg(s, last, has_epsilone, this->err).first;
+                utf_consumer consumer(s);
+                this->st = intermendary_str2reg(consumer, has_epsilone, this->err).first;
                 if (this->err) {
-                    this->pos_err = s - tmp;
+                    this->pos_err = consumer.s - s;
                 }
                 else if (has_epsilone) {
                     typedef std::vector<StateBase*> states_t;
@@ -1777,7 +1823,7 @@ namespace rndfa {
 
     public:
         Regex(const char * s)
-        : parser(s, s + strlen(s))
+        : parser(s)
         , sm(this->parser.st)
         {}
 
@@ -1795,7 +1841,7 @@ namespace rndfa {
         {
             this->sm.~StateMachine2();
             free_st(this->parser.st);
-            new (&this->parser) Parser(s, s + strlen(s));
+            new (&this->parser) Parser(s);
             new (&this->sm) StateMachine2(this->parser.st);
         }
 

@@ -28,7 +28,7 @@
 #include <rect.hpp>
 #include <callback.hpp>
 
-#include <typeinfo>
+//#include <typeinfo>
 
 class Keymap2;
 
@@ -130,14 +130,14 @@ public:
         if (keymap->nb_kevent_available() > 0) {
             switch (keymap->top_kevent()) {
                 case Keymap2::KEVENT_TAB:
-//                    std::cout << ("tab") << '\n';
+                    //std::cout << ("tab") << '\n';
                     keymap->get_kevent();
                     if (this->parent) {
                         this->parent->next_focus(1);
                     }
                     break;
                 case Keymap2::KEVENT_BACKTAB:
-//                    std::cout << ("backtab") << '\n';
+                    //std::cout << ("backtab") << '\n';
                     keymap->get_kevent();
                     if (this->parent) {
                         this->parent->previous_focus(1);
@@ -220,11 +220,11 @@ public:
     {
         this->old_widget_with_focus = this->widget_with_focus;
         if (this->old_widget_with_focus) {
-//            std::cout << "blur: " << (typeid(*this->old_widget_with_focus).name()) << '\n';
+            //std::cout << "blur: " << (typeid(*this->old_widget_with_focus).name()) << '\n';
             this->old_widget_with_focus->blur();
         }
         this->widget_with_focus = new_focused;
-//        std::cout << "focus: " << (typeid(*new_focused).name()) << " " << new_focused << '\n';
+        //std::cout << "focus: " << (typeid(*new_focused).name()) << " " << new_focused << '\n';
         this->widget_with_focus->focus(this->old_widget_with_focus, policy);
     }
 
@@ -286,10 +286,7 @@ public:
         return this->parent ? this->dy() - this->parent->dy() : this->dy();
     }
 
-    virtual Widget2 * widget_focused()
-    {
-        return this->has_focus ? this : 0;
-    }
+    //static std::vecor<Widget2*> widgets_focused();
 };
 
 #endif

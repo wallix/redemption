@@ -76,7 +76,7 @@ public:
         else {
             TODO("check this! Assembling parts to get user login with target is not obvious"
                  "method used below il likely to show @: if target fields are empty")
-                char buffer[256];
+            char buffer[255];
             // snprintf( buffer, 256, "%s@%s:%s%s%s"
             //           , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
             //           , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
@@ -85,13 +85,13 @@ public:
             //           , (this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
             //           , this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0)
             //           );
-            snprintf( buffer, 256, "%s@%s:%s%s%s"
-                      , this->ini.globals.target_user.get_cstr()
-                      , this->ini.globals.target_device.get_cstr()
-                      , this->ini.context.target_protocol.get_cstr()
-                      , (!this->ini.context.target_protocol.is_empty() ? ":" : "")
-                      , this->ini.globals.auth_user.get_cstr()
-                      );
+            snprintf( buffer, sizeof(buffer), "%s@%s:%s%s%s"
+                    , this->ini.globals.target_user.get_cstr()
+                    , this->ini.globals.target_device.get_cstr()
+                    , this->ini.context.target_protocol.get_cstr()
+                    , (!this->ini.context.target_protocol.is_empty() ? ":" : "")
+                    , this->ini.globals.auth_user.get_cstr()
+                    );
             strcpy(this->ini.account.username, buffer);
         }
 

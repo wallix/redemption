@@ -185,6 +185,7 @@ struct Definition {
             }
         }
     };
+
     struct Target {
         std::string name;
         std::vector<Property> properties;
@@ -195,6 +196,7 @@ struct Definition {
             return this->name < other.name;
         }
     };
+
     std::vector<Target> targets;
     size_t boundary;
 

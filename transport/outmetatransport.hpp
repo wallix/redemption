@@ -42,8 +42,8 @@ public:
     , seq(NULL)
     {
         char filename[1024];
-        sprintf(filename, "%s-%06u", basename, getpid());
-        char header1[1024];
+        snprintf(filename, sizeof(filename), "%s-%06u", basename, getpid());
+        char header1[64];
         sprintf(header1, "%u %u", width, height);
         RIO_ERROR status = rio_init_outmeta(&this->rio, &this->seq, path, filename, ".mwrm", header1, "0", "", &now, groupid);
         if (status < 0){
@@ -66,12 +66,12 @@ public:
 
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
-    {  
+    {
         LOG(LOG_INFO, "OutmetaTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
 
-    virtual void seek(int64_t offset, int whence) throw (Error) 
+    virtual void seek(int64_t offset, int whence) throw (Error)
     {
         RIO_ERROR res = rio_seek(&this->rio, offset, whence);
         if (res != RIO_ERROR_OK){
@@ -112,8 +112,8 @@ public:
     , seq(NULL)
     {
         char filename[1024];
-        sprintf(filename, "%s-%06u", basename, getpid());
-        char header1[1024];
+        snprintf(filename, sizeof(filename), "%s-%06u", basename, getpid());
+        char header1[64];
         sprintf(header1, "%u %u", width, height);
         RIO_ERROR status = rio_init_cryptooutmeta(&this->rio, &this->seq, path, hash_path, filename, ".mwrm", header1, "0", "", &now, groupid);
         if (status < 0){
@@ -136,7 +136,7 @@ public:
 
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
-    {  
+    {
         LOG(LOG_INFO, "CryptoOutmetaTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
