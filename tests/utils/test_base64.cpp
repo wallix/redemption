@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
    Author(s): Christophe Grosjean, Meng Tan
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Tests on Base64 Converter
 
@@ -40,16 +39,33 @@ BOOST_AUTO_TEST_CASE(TestEncoding)
 
     Base64 b64converter;
 
-    unsigned char input[] = "Hi!";
+    unsigned char input[] = "Hi!Hi!";
     unsigned char output[64];
 
-    size_t res = b64converter.encode(output, 64, input, sizeof(input)-1);
+    size_t res = b64converter.encode(output, sizeof(output), input, sizeof(input)-1);
+
+    BOOST_CHECK_EQUAL(res, 8);
+    output[res] = 0;
+    BOOST_CHECK_EQUAL(std::string("SGkhSGkh"), std::string((const char *)output));
 
 
-    LOG(LOG_INFO, "input: %s, output:%s\n", input, output);
-    BOOST_CHECK_EQUAL(res, 4);
-    BOOST_CHECK_EQUAL(std::string("SGkh"), std::string((const char*)output));
+    unsigned char input2[] = "test un texte";
+    unsigned char output2[64];
+    size_t res2 = b64converter.encode(output2, sizeof(output2), input2, sizeof(input2)-1);
 
+    BOOST_CHECK_EQUAL(res2, 20);
+    output2[res2] = 0;
+    BOOST_CHECK_EQUAL(std::string("dGVzdCB1biB0ZXh0ZQ=="),
+                      std::string((const char *)output2));
+
+    unsigned char input3[] = "test some text";
+    unsigned char output3[64];
+    size_t res3 = b64converter.encode(output3, sizeof(output3), input3, sizeof(input3)-1);
+
+    BOOST_CHECK_EQUAL(res3, 20);
+    output3[res2] = 0;
+    BOOST_CHECK_EQUAL(std::string("dGVzdCBzb21lIHRleHQ="),
+                      std::string((const char *)output3));
 }
 
 BOOST_AUTO_TEST_CASE(TestDecoding)
@@ -61,52 +77,36 @@ BOOST_AUTO_TEST_CASE(TestDecoding)
 
     size_t res = b64converter.decode(output, 64, input, sizeof(input)-1);
     BOOST_CHECK_EQUAL(res, 14);
+    output[res] = 0;
     BOOST_CHECK_EQUAL(std::string("test some text"),
                       std::string((const char*)output));
 
+    unsigned char input2[] = "dGVzdCB1biB0ZXh0ZQ==";
+    unsigned char output2[64];
 
-    BStream streamin(256);
+    size_t res2 = b64converter.decode(output2, 64, input2, sizeof(input2)-1);
+    BOOST_CHECK_EQUAL(res2, 13);
+    output2[res2] = 0;
+    BOOST_CHECK_EQUAL(std::string("test un texte"),
+                      std::string((const char*)output2));
 
-    streamin.out_uint8(0xFF);
-    streamin.out_uint8(0xFD);
-    streamin.out_uint8(0X15);
-    streamin.out_uint8(0x12);
-    streamin.out_uint8(0x00);
-    streamin.out_uint8(0x91);
-    streamin.out_uint8(0x44);
-    streamin.out_uint8(0x4A);
+    unsigned char input3[] = "SGkhSGkh";
+    unsigned char output3[64];
 
-    unsigned char output2[512];
-    res = b64converter.encode(output2, sizeof(output2), streamin.get_data(), streamin.get_offset());
-    BOOST_CHECK_EQUAL(res, 12);
-    int i = 0;
-    BOOST_CHECK_EQUAL(output2[i++], '/');
-    BOOST_CHECK_EQUAL(output2[i++], '/');
+    size_t res3 = b64converter.decode(output3, 64, input3, sizeof(input3)-1);
+    BOOST_CHECK_EQUAL(res2, 13);
+    output3[res3] = 0;
+    BOOST_CHECK_EQUAL(std::string("Hi!Hi!"),
+                      std::string((const char*)output3));
 
-
-    unsigned char output3[256];
-    res = b64converter.decode(output3, sizeof(output3), output2, res);
-
-    BOOST_CHECK_EQUAL(res, 8);
-    i = 0;
-    unsigned char * p = streamin.get_data();
-    BOOST_CHECK_EQUAL(output3[i++], *p++);
-    BOOST_CHECK_EQUAL(output3[i++], *p++);
-    BOOST_CHECK_EQUAL(output3[i++], *p++);
-    BOOST_CHECK_EQUAL(output3[i++], *p++);
-    BOOST_CHECK_EQUAL(output3[i++], *p++);
-    BOOST_CHECK_EQUAL(output3[i++], *p++);
-    BOOST_CHECK_EQUAL(output3[i++], *p++);
-    BOOST_CHECK_EQUAL(output3[i++], *p++);
 
 }
-
 
 BOOST_AUTO_TEST_CASE(TestRandom)
 {
     Base64 b64converter;
 
-    LCGRandom rand(0xA3F45);
+    LCGRandom rand(0xA3F451);
     BStream streamin(256);
 
     uint32_t randsize = rand.rand32() % 64;
@@ -124,4 +124,35 @@ BOOST_AUTO_TEST_CASE(TestRandom)
     unsigned char * p = streamin.get_data();
     for (i = 0; i < randsize;)
         BOOST_CHECK_EQUAL(output2[i++], *p++);
+}
+
+void testrandom(uint32_t seed) {
+    Base64 b64converter;
+
+    LCGRandom rand(seed);
+    BStream streamin(256);
+
+    uint32_t randsize = rand.rand32() % 64;
+    unsigned int i = 0;
+    for (i = 0; i < randsize; i++)
+        streamin.out_uint32_le(rand.rand32());
+
+    size_t res;
+    unsigned char output[512];
+    res = b64converter.encode(output, sizeof(output), streamin.get_data(), streamin.get_offset());
+
+    unsigned char output2[256];
+    res = b64converter.decode(output2, sizeof(output2), output, res);
+    BOOST_CHECK_EQUAL(res, randsize * 4);
+    unsigned char * p = streamin.get_data();
+    for (i = 0; i < randsize;)
+        BOOST_CHECK_EQUAL(output2[i++], *p++);
+}
+
+BOOST_AUTO_TEST_CASE(TestManyRandom)
+{
+    LCGRandom rand(0x123ABC);
+    for (unsigned i = 0xF; i < 0xFFFF; i++) {
+        testrandom(rand.rand32()*i);
+    }
 }

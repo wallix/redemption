@@ -721,7 +721,7 @@ struct FileToGraphic
                 const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
 
                 Bitmap bitmap( bitmap_data.bits_per_pixel
-                             , 0
+                             , /*0*/&this->palette
                              , bitmap_data.width
                              , bitmap_data.height
                              , data
@@ -733,17 +733,12 @@ struct FileToGraphic
                     bitmap_data.log(LOG_INFO, "         ");
                 }
 
-                for (size_t i = 0; i < this->nbconsumers ; i++) {
+                for (size_t i = 0; i < this->nbconsumers; i++) {
                     this->consumers[i]->draw( bitmap_data
                                             , data
                                             , bitmap_data.bitmap_size()
                                             , bitmap);
                 }
-/*
-                for (size_t i = 0; i < this->nbconsumers ; i++) {
-                    this->consumers[i]->flush();
-                }
-*/
             }
             break;
             default:
