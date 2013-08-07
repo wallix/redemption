@@ -38,8 +38,6 @@
 #include "log.hpp"
 
 
-
-
 static inline int filesize(const char * path)
 {
     struct stat sb;
@@ -106,7 +104,37 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
     }
 }
 
-void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
+static inline char * pathncpy(char * dest, const char * src, size_t n) {
+    size_t       i;
+    size_t       n_adjusted;
+    char       * dest_char;
+    const char * src_char;
+
+    if (n >= 1) {
+        for (  i = 0, dest_char = dest, src_char = src, n_adjusted = n - 1
+             ; (i < n_adjusted) && (*src_char != '\0')
+             ; i++, dest_char++, src_char++) {
+            *dest_char = *src_char;
+        }
+
+        if (   (i > 0)
+            && (*(dest_char - 1) != '/')
+            && (i < n_adjusted)) {
+            *dest_char = '/';
+
+            i++;
+            dest_char++;
+        }
+
+        for (; i < n; i++, dest_char++) {
+            *dest_char = '\0';
+        }
+    }
+
+   return dest;
+}
+
+static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
 {
     DIR * d = opendir(path);
     if (d){
@@ -727,11 +755,10 @@ struct LineBuffer
         }
         return 0;
     }
-
 };
 
 // return 0 if found, -1 not found or error
-int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, int sz_transparent_dest, uint32_t verbose = 0)
+static inline int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, int sz_transparent_dest, uint32_t verbose = 0)
 {
     LineBuffer line(fd);
     char src_port[6];
