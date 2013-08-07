@@ -269,6 +269,10 @@ public:
         if (this->orders) {
             delete this->orders;
         }
+
+        if (this->capture){
+            delete this->capture;
+        }
     }
 
     int server_resize(int width, int height, int bpp)

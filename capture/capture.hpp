@@ -49,8 +49,13 @@ public:
 
     wait_obj capture_event;
 
+    redemption::string png_path;
+    redemption::string basename;
+
     TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
-    Capture(const timeval & now, int width, int height, const char * wrm_path, const char * png_path, const char * hash_path, const char * basename, bool clear_png, Inifile & ini)
+    Capture( const timeval & now, int width, int height, const char * wrm_path
+           , const char * png_path, const char * hash_path, const char * basename
+           , bool clear_png, Inifile & ini)
         : capture_wrm(ini.video.capture_wrm)
         , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
         , capture_png(ini.video.png_limit > 0)
@@ -63,6 +68,8 @@ public:
         , pnc(NULL)
         , drawable(NULL)
         , capture_event(wait_obj(0))
+        , png_path(png_path)
+        , basename(basename)
     {
         if (this->capture_drawable){
             this->drawable = new RDPDrawable(width, height);
@@ -120,6 +127,8 @@ public:
 
         delete this->pnc_bmp_cache;
         delete this->drawable;
+
+        clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
     }
 
     void pause() {
