@@ -34,11 +34,14 @@
 #include <sstream>
 #include <string>
 
+#include "fileutils.hpp"
+
 BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 {
     // test we can read from a file (and not only from a stream)
-    Inifile ini;
+    Inifile             ini;
     ConfigurationLoader cfg_loader(ini, FIXTURES_PATH "/rdpproxy.ini");
+    char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -94,6 +97,12 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -316,6 +325,14 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+/*
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
+*/
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -548,6 +565,14 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+/*
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
+*/
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -653,6 +678,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "tls_support=no\n"
                           "rdp_compression=yes\n"
                           "\n"
+                          "[video]\n"
+                          "hash_path=/mnt/wab/hash\n"
+                          "record_path=/mnt/wab/recorded/rdp\n"
+                          "record_tmp_path=/mnt/tmp/wab/recorded/rdp\n"
+                          "\n"
                           "[debug]\n"
                           "log_type=file\n"
                           "log_file_path=/var/log/redemption.log\n"
@@ -718,6 +748,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+    BOOST_CHECK_EQUAL(std::string("/mnt/wab/hash/"),    std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string("/mnt/wab/recorded/rdp/"),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string("/mnt/tmp/wab/recorded/rdp/"),
+                                                        std::string(ini.video.record_tmp_path));
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -824,6 +859,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "connection_closed=Connexion\\ fermée\n"
                           "[mod_rdp]\n"
                           "rdp_compression=yes\n"
+                          "[video]\n"
+                          "hash_path=/mnt/wab/hash/\n"
+                          "record_path=/mnt/wab/recorded/rdp/\n"
+                          "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
                           "\n"
                           );
 
@@ -884,6 +923,11 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+    BOOST_CHECK_EQUAL(std::string("/mnt/wab/hash/"),    std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string("/mnt/wab/recorded/rdp/"),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string("/mnt/tmp/wab/recorded/rdp/"),
+                                                        std::string(ini.video.record_tmp_path));
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1043,6 +1087,14 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+/*
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
+*/
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1195,6 +1247,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+/*
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
+*/
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1337,6 +1397,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+/*
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
+*/
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1479,6 +1547,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+/*
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
+*/
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1620,6 +1696,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+/*
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
+*/
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1751,6 +1835,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+/*
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
+                                                        std::string(ini.video.hash_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
+                                                        std::string(ini.video.record_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
+                                                        std::string(ini.video.record_tmp_path));
+*/
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -2574,6 +2666,5 @@ BOOST_AUTO_TEST_CASE(TestConfigField)
     boolf.set(false);
     BOOST_CHECK_EQUAL(true, boolf.has_been_read());
     BOOST_CHECK_EQUAL(false, boolf.has_changed());
-
 }
 

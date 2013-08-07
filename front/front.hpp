@@ -266,6 +266,10 @@ public:
         if (this->orders) {
             delete this->orders;
         }
+
+        if (this->capture){
+            delete this->capture;
+        }
     }
 
     int server_resize(int width, int height, int bpp)
@@ -443,7 +447,7 @@ public:
             LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
             struct timeval now = tvtime();
 
-            if (this->verbose & 1){
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path.get_cstr());
                 LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id.get_cstr());
                 LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
@@ -460,11 +464,13 @@ public:
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, ""); // extension is currently ignored
             canonical_path(ini.globals.movie_path.get_cstr(), path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
-            this->capture = new Capture(now, width, height,
-                                        RECORD_PATH "/",
-                                        RECORD_TMP_PATH "/",
-                                        HASH_PATH "/", basename,
-                                        true, ini);
+            this->capture = new Capture( now, width, height
+                                       , ini.video.record_path
+                                       , ini.video.record_tmp_path
+                                       , ini.video.hash_path, basename
+                                       , true
+                                       , ini
+                                       );
 
             this->capture->capture_event.set();
             this->capture_state = CAPTURE_STATE_STARTED;
@@ -2064,10 +2070,10 @@ public:
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
                     }
-		    if (!sctrl.payload.check_end()){
+                    if (!sctrl.payload.check_end()){
                         LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
                         throw Error(ERR_MCS_PDU_TRAILINGDATA);
-		    }
+                    }
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     if (this->verbose & 2){
@@ -2186,7 +2192,9 @@ public:
                                 this->capture->input(now, decoded_data);
                             }
 
-                            cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                            if (this->up_and_running) {
+                                cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                            }
 
                         }
                         break;
@@ -2201,7 +2209,11 @@ public:
                                     me.pointerFlags, me.xPos, me.yPos);
                             }
 
-                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            this->mouse_x = me.xPos;
+                            this->mouse_y = me.yPos;
+                            if (this->up_and_running) {
+                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            }
                         }
                         break;
 
@@ -2220,7 +2232,9 @@ public:
                             }
 
                             this->keymap.synchronize(se.eventFlags & 0xFFFF);
-                            cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                            if (this->up_and_running) {
+                                cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                            }
                         }
                         break;
 

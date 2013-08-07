@@ -126,8 +126,7 @@ BOOST_AUTO_TEST_CASE(TestRandom)
         BOOST_CHECK_EQUAL(output2[i++], *p++);
 }
 
-void testrandom(uint32_t seed) {
-    Base64 b64converter;
+void testrandom(uint32_t seed, Base64 & b64converter) {
 
     LCGRandom rand(seed);
     BStream streamin(256);
@@ -151,8 +150,22 @@ void testrandom(uint32_t seed) {
 
 BOOST_AUTO_TEST_CASE(TestManyRandom)
 {
+    Base64 b64converter;
+
     LCGRandom rand(0x123ABC);
     for (unsigned i = 0xF; i < 0xFFFF; i++) {
-        testrandom(rand.rand32()*i);
+        testrandom(rand.rand32()*i, b64converter);
+    }
+}
+
+BOOST_AUTO_TEST_CASE(TestManyRandomWithoutFiller)
+{
+    Base64 b64converter;
+
+    b64converter.remove_filler();
+
+    LCGRandom rand(0x123ABC);
+    for (unsigned i = 0xF; i < 0xFFFF; i++) {
+        testrandom(rand.rand32()*i, b64converter);
     }
 }
