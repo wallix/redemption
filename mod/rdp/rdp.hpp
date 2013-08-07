@@ -59,10 +59,6 @@
 
 #include "genrandom.hpp"
 
-extern "C" {
-#include "freerdp/codec/mppc_dec.h"
-};
-
 struct mod_rdp : public mod_api {
     /* mod data */
     FrontAPI                  & front;
