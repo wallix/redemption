@@ -75,6 +75,10 @@ public:
         last_quantum_sent = 0;
     }
 
+    void reset_quantum_sent() {
+        this->last_quantum_sent = 0;
+    }
+
     virtual void enable_client_tls()
     {
         // default enable_tls do nothing

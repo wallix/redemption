@@ -36,10 +36,6 @@
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/fastpath.hpp"
 
-extern "C" {
-#include "freerdp/codec/mppc_enc.h"
-};
-
 // MS-RDPEGDI 2.2.2.2 Fast-Path Orders Update (TS_FP_UPDATE_ORDERS)
 // ================================================================
 // The TS_FP_UPDATE_ORDERS structure contains primary, secondary, and alternate

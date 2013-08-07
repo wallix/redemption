@@ -73,9 +73,8 @@ class wait_obj
             timeval remain = how_long_to_wait(this->trigger_time, now);
             if (lessthantimeval(remain, timeout)){
                 timeout = remain;
-                // LOG(LOG_INFO, "TIMEOUT ADJUSTED TO DIFF TRIGGER TIME: %u sec, %u usec", timeout.tv_sec, timeout.tv_usec);
             }
-        } //case 3
+        }
     }
 
     void reset()

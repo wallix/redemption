@@ -29,9 +29,8 @@
 #include "log.hpp"
 #include "stream.hpp"
 
-extern "C" {
-#include "freerdp/codec/mppc_dec.h"
-};
+#include "RDP/mppc.hpp"
+
 
 /* RDP PDU codes */
 enum {

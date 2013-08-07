@@ -36,9 +36,9 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
         char tmpdirname[128];
         sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
         BOOST_CHECK(NULL != mkdtemp(tmpdirname));
-        
+
 //        int fd = ::mkostemp(tmpdirname, O_WRONLY|O_CREAT);
-        
+
         char toto_mwrm[512]; sprintf(toto_mwrm, "%s/%s", tmpdirname, "toto.mwrm");
         { int fd = ::creat(toto_mwrm, 0777); BOOST_CHECK_EQUAL(10, write(fd, "toto_mwrm", sizeof("toto_mwrm"))); close(fd); }
 
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
         char tititi_1_png[512]; sprintf(tititi_1_png, "%s/%s", tmpdirname, "tititi_1.png");
         { int fd = ::creat(tititi_1_png, 0777); BOOST_CHECK_EQUAL(13, write(fd, "tititi_1_png", sizeof("tititi_1_png"))); close(fd); }
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));       
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_flv));
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
         BOOST_CHECK_EQUAL(10, filesize(toto_meta));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_png));
         BOOST_CHECK_EQUAL(11, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));       
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
 
         clear_files_flv_meta_png(tmpdirname, "ddd");
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));       
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_flv));
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
         BOOST_CHECK_EQUAL(10, filesize(toto_meta));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_png));
         BOOST_CHECK_EQUAL(11, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));       
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
 
         clear_files_flv_meta_png(tmpdirname, "toto");
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));       
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
         BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
         BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
         BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
         BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));       
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
 
         clear_files_flv_meta_png(tmpdirname, "titititi");
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));       
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
         BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
         BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
         BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
         BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));       
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_flv));
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
 
         clear_files_flv_meta_png(tmpdirname, "tititi");
 
-        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));       
+        BOOST_CHECK_EQUAL(10, filesize(toto_mwrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_0_wrm));
         BOOST_CHECK_EQUAL(11, filesize(toto_1_wrm));
         BOOST_CHECK_EQUAL(-1, filesize(toto_0_flv));
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(TestClearTargetFiles)
         BOOST_CHECK_EQUAL(-1, filesize(toto_meta));
         BOOST_CHECK_EQUAL(-1, filesize(toto_0_png));
         BOOST_CHECK_EQUAL(-1, filesize(toto_1_png));
-        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));       
+        BOOST_CHECK_EQUAL(12, filesize(tititi_mwrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_0_wrm));
         BOOST_CHECK_EQUAL(13, filesize(tititi_1_wrm));
         BOOST_CHECK_EQUAL(-1, filesize(tititi_0_flv));
@@ -203,9 +203,9 @@ BOOST_AUTO_TEST_CASE(CanonicalPath)
   char path[4096];
   char basename[4096];
   char extension[128];
-  strcpy(path, "no path");  
-  strcpy(basename, "no basename");  
-  strcpy(extension, "no extension");  
+  strcpy(path, "no path");
+  strcpy(basename, "no basename");
+  strcpy(extension, "no extension");
 
   canonical_path("./titi/result.tmp", path, 4096, basename, 4096, extension, 128);
   BOOST_CHECK_EQUAL("./titi/", path);
@@ -213,49 +213,49 @@ BOOST_AUTO_TEST_CASE(CanonicalPath)
   BOOST_CHECK_EQUAL(".tmp", extension);
 
 
-  strcpy(path, "no path");  
-  strcpy(basename, "no basename");  
-  strcpy(extension, "no extension");  
+  strcpy(path, "no path");
+  strcpy(basename, "no basename");
+  strcpy(extension, "no extension");
   canonical_path("result", path, 4096, basename, 4096, extension, 128);
   BOOST_CHECK_EQUAL("no path", path);
   BOOST_CHECK_EQUAL("result", basename);
   BOOST_CHECK_EQUAL("no extension", extension);
 
-  strcpy(path, "no path");  
-  strcpy(basename, "no basename");  
-  strcpy(extension, "no extension");  
+  strcpy(path, "no path");
+  strcpy(basename, "no basename");
+  strcpy(extension, "no extension");
   canonical_path("result/", path, 4096, basename, 4096, extension, 128);
   BOOST_CHECK_EQUAL("result/", path);
   BOOST_CHECK_EQUAL("no basename", basename);
   BOOST_CHECK_EQUAL("no extension", extension);
 
-  strcpy(path, "no path");  
-  strcpy(basename, "no basename");  
-  strcpy(extension, "no extension");  
+  strcpy(path, "no path");
+  strcpy(basename, "no basename");
+  strcpy(extension, "no extension");
   canonical_path("result.tmp", path, 4096, basename, 4096, extension, 128);
   BOOST_CHECK_EQUAL("no path", path);
   BOOST_CHECK_EQUAL("result", basename);
   BOOST_CHECK_EQUAL(".tmp", extension);
 
-  strcpy(path, "no extension");  
-  strcpy(basename, "no basename");  
-  strcpy(extension, "no extension");  
+  strcpy(path, "no extension");
+  strcpy(basename, "no basename");
+  strcpy(extension, "no extension");
   canonical_path("tmp/.tmp", path, 4096, basename, 4096, extension, 128);
   BOOST_CHECK_EQUAL("tmp/", path);
   BOOST_CHECK_EQUAL("no basename", basename);
   BOOST_CHECK_EQUAL(".tmp", extension);
 
-  strcpy(path, "no path");  
-  strcpy(basename, "no basename");  
-  strcpy(extension, "no extension");  
+  strcpy(path, "no path");
+  strcpy(basename, "no basename");
+  strcpy(extension, "no extension");
   canonical_path(".tmp", path, 4096, basename, 4096, extension, 128);
   BOOST_CHECK_EQUAL("no path", path);
   BOOST_CHECK_EQUAL("no basename", basename);
   BOOST_CHECK_EQUAL(".tmp", extension);
 
-  strcpy(path, "no path");  
-  strcpy(basename, "no basename");  
-  strcpy(extension, "no extension");  
+  strcpy(path, "no path");
+  strcpy(basename, "no basename");
+  strcpy(extension, "no extension");
   canonical_path("", path, 4096, basename, 4096, extension, 128);
   BOOST_CHECK_EQUAL("no path", path);
   BOOST_CHECK_EQUAL("no basename", basename);
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
 {
     char tmpname[] = "/tmp/test_conntrack_XXXXXX";
     int fd = ::mkostemp(tmpname, O_RDWR|O_CREAT);
-    char conntrack[] = 
+    char conntrack[] =
 "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 packets=0 bytes=0 mark=0 secmark=0 use=2\n"
 "udp      17 28 src=10.10.43.30 dst=255.255.255.255 sport=17500 dport=17500 packets=1102 bytes=154280 [UNREPLIED] src=255.255.255.255 dst=10.10.43.30 sport=17500 dport=17500 packets=0 bytes=0 mark=0 secmark=0 use=2\n"
 "unknown  2 205 src=10.10.47.124 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.47.124 packets=0 bytes=0 mark=0 secmark=0 use=2\n"
@@ -289,14 +289,14 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
 "udp      17 0 src=10.10.43.31 dst=10.10.47.255 sport=57621 dport=57621 packets=1139 bytes=82008 [UNREPLIED] src=10.10.47.255 dst=10.10.43.31 sport=57621 dport=57621 packets=0 bytes=0 mark=0 secmark=0 use=2\n";
     int res = write(fd, conntrack, sizeof(conntrack)-1);
     BOOST_CHECK_EQUAL(res, sizeof(conntrack)-1);
-    
+
     // ----------------------------------------------------
     BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
-       
+
     const char first[] = "unknown  2 580 src=10.10.43.13 dst=224.0.0.251 packets=2 bytes=64 [UNREPLIED] src=224.0.0.251 dst=10.10.43.13 packets=0 bytes=0 mark=0 secmark=0 use=2\n";
 
     // Read first line
-    
+
     LineBuffer line(fd);
     int status = line.readline();
     BOOST_CHECK_EQUAL(status, 1);
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     BOOST_CHECK_EQUAL(status, 0);
     BOOST_CHECK_EQUAL(7, line.eow - line.begin_word);
     BOOST_CHECK_EQUAL(0, memcmp("unknown", &line.buffer[line.begin_word], line.eow - line.begin_word));
-    
+
     line.begin_word = line.eow;
     status = line.get_space();
     BOOST_CHECK_EQUAL(status, 0);
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     res = parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, transparent_target, sizeof(transparent_target));
     BOOST_CHECK_EQUAL(res, 0);
     BOOST_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.46.78"));
-    
+
     BOOST_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     transparent_target[0] = 0;
     res = parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, transparent_target, sizeof(transparent_target));
@@ -514,3 +514,51 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
     close(fd);
 }
 
+BOOST_AUTO_TEST_CASE(TestPathNCopy)
+{
+    char dest[16];
+
+    memset(dest, 'A', sizeof(dest));
+
+    pathncpy(dest, "", sizeof(dest));
+
+    BOOST_CHECK_EQUAL(std::string(""),                std::string(dest));
+
+
+    memset(dest, 'A', sizeof(dest));
+
+    pathncpy(dest, "/tmp", sizeof(dest));
+
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),           std::string(dest));
+
+
+    memset(dest, 'A', sizeof(dest));
+
+    pathncpy(dest, "/tmp/", sizeof(dest));
+
+    BOOST_CHECK_EQUAL(std::string("/tmp/"),           std::string(dest));
+
+
+    memset(dest, 'A', sizeof(dest));
+
+    pathncpy(dest, "/var/rdpproxy/tmp", sizeof(dest));
+
+    BOOST_CHECK_EQUAL(15,                             strlen(dest));
+    BOOST_CHECK_EQUAL(std::string("/var/rdpproxy/t"), std::string(dest));
+
+
+    memset(dest, 'A', sizeof(dest));
+
+    pathncpy(dest, "/usr/local/tmp", sizeof(dest));
+
+    BOOST_CHECK_EQUAL(15,                             strlen(dest));
+    BOOST_CHECK_EQUAL(std::string("/usr/local/tmp/"), std::string(dest));
+
+
+    memset(dest, 'A', sizeof(dest));
+
+    pathncpy(dest, "/usr/local/temp", sizeof(dest));
+
+    BOOST_CHECK_EQUAL(15,                             strlen(dest));
+    BOOST_CHECK_EQUAL(std::string("/usr/local/temp"), std::string(dest));
+}

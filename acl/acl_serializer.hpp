@@ -60,6 +60,7 @@ public:
 
     ~AclSerializer()
     {
+        this->auth_trans.disconnect();
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::~AclSerializer");
         }
@@ -91,29 +92,35 @@ public:
                 }
                 break;
             case STATE_VALUE:
-                if (*stream.p == '\n'){
+                if (*stream.p == '\n') {
                     *stream.p = 0;
 
                     if ((0 == strncasecmp((char*)value, "ask", 3))) {
                         this->ini->ask_from_acl((char *)keyword);
-                        // this->ini->context_ask_by_string((char *)keyword);
                         LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
                     }
                     else {
+                        // BASE64 TRY
+                        // unsigned char output[32000];
+                        // if (value[0] == '!') value++;
+                        // size_t value_len = strlen((const char*)value);
+                        // size_t out_len = this->ini->b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
+                        // output[out_len] = 0;
+                        // this->ini->set_from_acl((char *)keyword,
+                        //                         (char *)output);
                         this->ini->set_from_acl((char *)keyword,
-                                                               (char *)value + (value[0] == '!' ? 1 : 0));
-                        // this->ini->context_set_value_by_string((char *)keyword,
-                        //                                        (char *)value + (value[0] == '!' ? 1 : 0));
-
-                        if (  (strncasecmp("password",        (char *)keyword, 9 ) == 0)
-                              || (strncasecmp("target_password", (char *)keyword, 16) == 0)
-                              ){
+                                                (char *)value + (value[0] == '!' ? 1 : 0));
+                        if ((strncasecmp("password",        (char *)keyword, 9 ) == 0) ||
+                            (strncasecmp("target_password", (char *)keyword, 16) == 0)) {
                             LOG(LOG_INFO, "receiving '%s'=<hidden>", (char *)keyword);
                         }
-                        else{
+                        else {
                             char buffer[128];
-                            LOG(LOG_INFO, "receiving '%s'='%s'", keyword,
-                                this->ini->context_get_value_by_string((char *)keyword, buffer, sizeof(buffer)));
+                            LOG(LOG_INFO, "receiving '%s'='%s'",
+                                keyword,
+                                this->ini->context_get_value_by_string((char *)keyword,
+                                                                       buffer,
+                                                                       sizeof(buffer)));
                         }
                     }
 
@@ -227,15 +234,12 @@ public:
         OutItemFunctor(AclSerializer * acl, BStream & stream)
             : stream(stream)
             , acl(acl) {
-//            LOG(LOG_INFO, "OutItemFunctor Creation %p", this);
         }
         OutItemFunctor(const OutItemFunctor & other)
             : stream(other.stream)
             , acl(other.acl) {
-//            LOG(LOG_INFO, "OutItemFunctor Creation (copy) %p", this);
         }
         ~OutItemFunctor() {
-//            LOG(LOG_INFO, "OutItemFunctor Destruction %p", this);
         }
         void operator()(Inifile::BaseField * bfield) {
             this->acl->out_item_new(this->stream,bfield);
