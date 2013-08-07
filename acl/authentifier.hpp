@@ -48,6 +48,8 @@ class SessionManager {
     bool check_inactivity;
     long prev_remain;
 
+    Transport & auth_trans;
+
 public:
     AclSerializer acl_serial;
 
@@ -73,6 +75,7 @@ public:
         , keepalive_grace_delay(ini->globals.keepalive_grace_delay)
         , keepalive_time(0)
         , keepalive_renew_time(0)
+        , auth_trans(_auth_trans)
         , acl_serial(AclSerializer(ini, _auth_trans, ini->debug.auth))
         , lost_acl(false)
         , internal_domain(ini->globals.internal_domain)
@@ -123,6 +126,11 @@ public:
                 return false;
         }
         if (mm.last_module) {
+            if (!this->lost_acl) {
+                this->auth_trans.disconnect();
+
+                this->lost_acl = true;
+            }
             // at a close box (mm.last_module is true),
             // we are only waiting for a stop signal
             return true;
