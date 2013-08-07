@@ -49,7 +49,7 @@ struct Listen {
     bool exit_on_timeout;
     int timeout_sec;
 
-    Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60, bool enable_ip_transparent = false) 
+    Listen(Server & server, uint32_t s_addr, int port, bool exit_on_timeout = false, int timeout_sec = 60, bool enable_ip_transparent = false)
         : server(server)
         , s_addr(s_addr)
         , port(port)
@@ -93,7 +93,7 @@ struct Listen {
         u.s4.sin_addr.s_addr = this->s_addr;
 
         LOG(LOG_INFO, "Listen: binding socket %d on %s:%d", this->sck, ::inet_ntoa(u.s4.sin_addr), this->port);
-        if (0 != bind(this->sck, &u.s, sizeof(u))) {
+        if (0 != ::bind(this->sck, &u.s, sizeof(u))) {
             LOG(LOG_ERR, "Listen: error binding socket [errno=%u] %s", errno, strerror(errno));
             ((this->sck) && (shutdown(this->sck, 2), close(this->sck)));
             goto end_of_listener;
@@ -118,11 +118,11 @@ struct Listen {
 
         TODO("We should find a way to generalize the select loop concept "
              "say select is waiting on a bunch of transport objects or such "
-             "and whenever of of those wake-up it should get a chance to act " 
+             "and whenever of of those wake-up it should get a chance to act "
              "read data, write data, accept incoming connections, perform some task, etc.")
 
         return;
-        
+
         end_of_listener:;
         if (this->sck){
             shutdown(this->sck, 2);
@@ -130,7 +130,7 @@ struct Listen {
         }
         // throw some exception to signal to outside world listen failed
     }
-    
+
     TODO("Some values (server, timeout) become only necessary when calling check")
     void run() {
         while (1) {
@@ -159,7 +159,7 @@ struct Listen {
                     close(this->sck);
                     goto end_of_listener;
                 }
-            break; 
+            break;
             }
         }
         end_of_listener:;
