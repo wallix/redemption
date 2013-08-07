@@ -269,6 +269,10 @@ public:
         if (this->orders) {
             delete this->orders;
         }
+
+        if (this->capture){
+            delete this->capture;
+        }
     }
 
     int server_resize(int width, int height, int bpp)
@@ -463,11 +467,13 @@ public:
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, ""); // extension is currently ignored
             canonical_path(ini.globals.movie_path.get_cstr(), path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
-            this->capture = new Capture(now, width, height,
-                                        RECORD_PATH "/",
-                                        RECORD_TMP_PATH "/",
-                                        HASH_PATH "/", basename,
-                                        true, ini);
+            this->capture = new Capture( now, width, height
+                                       , ini.video.record_path
+                                       , ini.video.record_tmp_path
+                                       , ini.video.hash_path, basename
+                                       , true
+                                       , ini
+                                       );
 
             this->capture->capture_event.set();
             this->capture_state = CAPTURE_STATE_STARTED;
@@ -2067,10 +2073,10 @@ public:
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
                     }
-		    if (!sctrl.payload.check_end()){
+                    if (!sctrl.payload.check_end()){
                         LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
                         throw Error(ERR_MCS_PDU_TRAILINGDATA);
-		    }
+                    }
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     if (this->verbose & 2){

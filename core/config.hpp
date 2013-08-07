@@ -39,6 +39,7 @@
 #include <sstream>
 #include <map>
 
+#include <fileutils.hpp>
 #include <string.hpp>
 
 TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
@@ -77,22 +78,20 @@ TODO("move LICENSE_PATH to configuration (still used in mod/rdp and mod/rdp_tran
 #define WRM_PATH "/tmp"
 #endif
 
-TODO("move LICENSE_PATH to configuration (still used in front and recorder)")
+TODO("move HASH_PATH to configuration (still used in front and recorder)")
 #if !defined(HASH_PATH)
 #define HASH_PATH "/tmp/hash"
 #endif
 
-TODO("move LICENSE_PATH to configuration (still used in sockettransport)")
+TODO("move CERTIF_PATH to configuration (still used in sockettransport)")
 #if !defined(CERTIF_PATH)
 #define CERTIF_PATH "/etc/rdpproxy/certificate"
 #endif
 
-TODO("move RECORD_PATH is still used in front, value should come from configuration")
 #if !defined(RECORD_PATH)
 #define RECORD_PATH "/var/rdpproxy/recorded"
 #endif
 
-TODO("move RECORD_TMP_PATH is still used in front, value should come from configuration")
 #if !defined(RECORD_TMP_PATH)
 #define RECORD_TMP_PATH "/var/rdpproxy/tmp"
 #endif
@@ -577,6 +576,10 @@ struct Inifile : public FieldObserver {
         int h_height;
         int h_width;
         int h_qscale;
+
+        char hash_path[1024];
+        char record_tmp_path[1024];
+        char record_path[1024];
     } video;
 
     // Section "debug"
@@ -845,6 +848,10 @@ public:
         this->video.h_height    = 1024;
         this->video.h_width     = 1280;
         this->video.h_qscale    = 15;
+
+        pathncpy(this->video.hash_path,       HASH_PATH,       sizeof(this->video.hash_path));
+        pathncpy(this->video.record_path,     RECORD_PATH,     sizeof(this->video.record_path));
+        pathncpy(this->video.record_tmp_path, RECORD_TMP_PATH, sizeof(this->video.record_tmp_path));
         // End section "video"
 
 
@@ -1381,6 +1388,18 @@ public:
             else if (0 == strcmp(key, "h_qscale")){
                 this->video.h_qscale    = ulong_from_cstr(value);
             }
+            else if (0 == strcmp(key, "movie_path")) {
+                this->globals.movie_path.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "hash_path")){
+                pathncpy(this->video.hash_path,       value, sizeof(this->video.hash_path));
+            }
+            else if (0 == strcmp(key, "record_path")){
+                pathncpy(this->video.record_path,     value, sizeof(this->video.record_path));
+            }
+            else if (0 == strcmp(key, "record_tmp_path")){
+                pathncpy(this->video.record_tmp_path, value, sizeof(this->video.record_tmp_path));
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1529,7 +1548,7 @@ public:
             LOG(LOG_WARNING, "Inifile::set_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
         }
     }
-    
+
     /******************
      * ask_from_acl sets a value to corresponding field but does not mark it as changed
      */
@@ -1548,7 +1567,7 @@ public:
             LOG(LOG_WARNING, "Inifile::ask_from_acl(strid): unknown strauthid=\"%s\"", strauthid);
         }
     }
-    
+
     void context_set_value_by_string(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {

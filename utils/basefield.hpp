@@ -392,6 +392,19 @@ struct FieldObserver : public ConfigurationHolder {
     class SetField {
         std::set<BaseField * > set_field;
 
+        template<typename Functor>
+        struct FuncRef {
+            Functor& func;
+
+            FuncRef(Functor& fun)
+            : func(fun)
+            {}
+
+            void operator()(BaseField * bf) {
+                this->func(bf);
+            }
+        };
+
     public:
         SetField() {
         }
@@ -421,7 +434,7 @@ struct FieldObserver : public ConfigurationHolder {
 
         template<class Function>
         void foreach(Function funct) {
-            std::for_each<std::set<BaseField * >::iterator, Function & >(set_field.begin(), set_field.end(), funct);
+            std::for_each(set_field.begin(), set_field.end(), FuncRef<Function>(funct));
         }
     };
 
