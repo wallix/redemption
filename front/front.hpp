@@ -2195,7 +2195,9 @@ public:
                                 this->capture->input(now, decoded_data);
                             }
 
-                            cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                            if (this->up_and_running) {
+                                cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                            }
 
                         }
                         break;
@@ -2210,7 +2212,11 @@ public:
                                     me.pointerFlags, me.xPos, me.yPos);
                             }
 
-                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            this->mouse_x = me.xPos;
+                            this->mouse_y = me.yPos;
+                            if (this->up_and_running) {
+                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            }
                         }
                         break;
 
@@ -2229,7 +2235,9 @@ public:
                             }
 
                             this->keymap.synchronize(se.eventFlags & 0xFFFF);
-                            cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                            if (this->up_and_running) {
+                                cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                            }
                         }
                         break;
 
