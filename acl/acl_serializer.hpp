@@ -60,6 +60,7 @@ public:
 
     ~AclSerializer()
     {
+        this->auth_trans.disconnect();
         if (this->verbose & 0x10){
             LOG(LOG_INFO, "auth::~AclSerializer");
         }

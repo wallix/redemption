@@ -36,60 +36,51 @@
 class SessionManager {
     Inifile * ini;
 
-    int  tick_count;
-    int  max_tick;
+    // Keep alive Variables
     int  keepalive_grace_delay;
     long keepalive_time;
     long keepalive_renew_time;
-
     bool check_keepalive;     // true when we are waiting for a positive response
                               // false when positive response has been received and
                               // timers have been set to new timers.
+    // Inactivity detection variables
     bool check_inactivity;
     long prev_remain;
+    time_t inactivity_timeout;
+    time_t last_activity_time;
 
 public:
     AclSerializer acl_serial;
 
     bool lost_acl;            // false initialy, true when connection with acl is lost
-    bool internal_domain;
-    bool connected;
-
     bool asked_remote_answer; // false initialy, set to true when a msg is sent to acl
     bool remote_answer;       // false initialy, set to true once response is received from acl
                               // and asked_remote_answer is set to false
     time_t start_time;
     time_t acl_start_time;
-    time_t inactivity_timeout;
-    time_t last_activity_time;
 
     uint32_t verbose;
 
-
     SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
-        , tick_count(0)
-        , max_tick(ini->globals.max_tick)
         , keepalive_grace_delay(ini->globals.keepalive_grace_delay)
         , keepalive_time(0)
         , keepalive_renew_time(0)
+        , check_keepalive(false)
+        , check_inactivity(true)
+        , inactivity_timeout(ini->globals.max_tick?30*ini->globals.max_tick:10)
+        , last_activity_time(acl_start_time)
         , acl_serial(AclSerializer(ini, _auth_trans, ini->debug.auth))
         , lost_acl(false)
-        , internal_domain(ini->globals.internal_domain)
-        , connected(false)
         , asked_remote_answer(false)
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
-        , inactivity_timeout(ini->globals.max_tick?30*ini->globals.max_tick:10)
-        , last_activity_time(acl_start_time)
         , verbose(ini->debug.auth)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
-        this->check_inactivity = true;
-        this->check_keepalive = false;
         this->prev_remain = 0;
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
     }
@@ -104,8 +95,6 @@ public:
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
-
-        this->tick_count           = 1;
         this->keepalive_time       = now + 2*this->keepalive_grace_delay;
         this->keepalive_renew_time = now + this->keepalive_grace_delay;
     }
@@ -119,8 +108,8 @@ public:
 
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
-                mm.mod->event.reset();
-                return false;
+            mm.mod->event.reset();
+            return false;
         }
         if (mm.last_module) {
             // at a close box (mm.last_module is true),
@@ -181,7 +170,7 @@ public:
 
             // Keep alive asking for an answer from ACL
             if (!this->check_keepalive
-                && now > this->keepalive_renew_time) {
+                && (now > this->keepalive_renew_time)) {
 
                 this->check_keepalive = true;
 
@@ -201,11 +190,6 @@ public:
         // for now, check_inactivity is not necessary but it
         // indicates that this part of code is about inactivity management
         if (this->check_inactivity) {
-            // if (this->verbose & 8) {
-            //     LOG( LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d"
-            //          , trans.last_quantum_received, trans.total_received, this->tick_count);
-            // }
-
             if (trans.last_quantum_received == 0) {
                 if (now > this->last_activity_time + this->inactivity_timeout) {
                     LOG(LOG_INFO, "Session User inactivity : closing");
@@ -232,6 +216,7 @@ public:
                 }
             }
         }
+
 
         // Manage module (refresh or next)
         TODO("Check the needs and reference of this->asked_remote_answer. "
@@ -260,8 +245,7 @@ public:
 
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
-                // int next_state = this->next_module();
-                int next_state = /*this->next_module()*/mm.next_module();
+                int next_state = mm.next_module();
                 if (next_state == MODULE_INTERNAL_CLOSE) {
                     mm.invoke_close_box(NULL, signal, now);
                     return true;
@@ -279,7 +263,7 @@ public:
                         throw e;
                     }
                 }
-                if ((this->keepalive_time == 0) && /*this->connected*/ mm.connected) {
+                if ((this->keepalive_time == 0) && mm.connected) {
                     this->start_keepalive(now);
 
                     mm.record();
@@ -293,7 +277,7 @@ public:
 
         // LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
 
-        if (/*this->connected*/mm.connected && this->ini->check()) {
+        if (mm.connected && this->ini->check()) {
             this->ask_acl();
         }
 
@@ -301,7 +285,7 @@ public:
         // if an answer has been received, send it to
         // rdp serveur via mod (should be rdp module)
         TODO("Check if this->mod is RDP MODULE");
-        if (/*this->connected*/mm.connected && this->ini->globals.auth_channel[0]) {
+        if (mm.connected && this->ini->globals.auth_channel[0]) {
             // Get sesman answer to AUTHCHANNEL_TARGET
             if (!this->ini->context.authchannel_answer.get().is_empty()) {
                 // If set, transmit to auth_channel channel
@@ -336,6 +320,47 @@ public:
 
 };
 
+class PauseRecordFunctor {
+    // Stop record on inactivity Variables
+    bool stop_record_inactivity;
+    time_t stop_record_time;
+    time_t last_record_activity_time;
 
+public:
+
+    PauseRecordFunctor()
+        : stop_record_inactivity(false)
+        , stop_record_time(30)               // stop recording on 30 seconds of inactivity
+        , last_record_activity_time(0)
+    {
+    }
+    ~PauseRecordFunctor() {}
+
+    bool operator()(time_t now, Front & front) {
+        // Procedure which stops the recording on inactivity
+        if (this->last_record_activity_time == 0) this->last_record_activity_time = now;
+        if ((front.trans->last_quantum_received == 0)
+            && (front.trans->last_quantum_sent == 0)) {
+            if (!this->stop_record_inactivity &&
+                (now > this->last_record_activity_time + this->stop_record_time)) {
+                this->stop_record_inactivity = true;
+                front.pause_capture();
+            }
+        }
+        else {
+            this->last_record_activity_time = now;
+            front.trans->reset_quantum_sent();
+            // Here we only reset the quantum sent
+            // because Check will already reset the
+            // quantum received when checking for inactivity
+            if (this->stop_record_inactivity) {
+                this->stop_record_inactivity = false;
+                front.resume_capture();
+                // resume capture
+            }
+        }
+        return true;
+    }
+};
 
 #endif

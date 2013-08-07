@@ -119,6 +119,8 @@ struct Session {
             ModuleManager mm(*this->front, *this->ini);
             BackEvent_t signal = BACK_EVENT_NONE;
 
+            // Under conditions
+            // PauseRecordFunctor pause_record;
 
             if (this->verbose) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -193,7 +195,7 @@ struct Session {
                         }
                         // Incoming data from ACL, or opening acl
                         if (!this->acl) {
-                            if(!mm.last_module) { // acl never opened or closed by me (close box)
+                            if (!mm.last_module) { // acl never opened or closed by me (close box)
                                 try {
                                     int client_sck = ip_connect(this->ini->globals.authip,
                                                                 this->ini->globals.authport,
@@ -232,6 +234,11 @@ struct Session {
                             }
                         }
 
+
+                        // if (this->front->capture && mm.connected) {
+                        //     pause_record(now, *this->front);
+                        // }
+
                         if (this->acl) {
                             run_session = this->acl->check(mm, now, front_trans, signal);
                         }
@@ -240,6 +247,10 @@ struct Session {
                             run_session = false;
                         }
                         if (mm.last_module) {
+                            if (this->acl) {
+                                delete this->acl;
+                                this->acl = NULL;
+                            }
                             this->front->stop_capture();
                         }
                     }

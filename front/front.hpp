@@ -446,7 +446,7 @@ public:
             LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
             struct timeval now = tvtime();
 
-            if (this->verbose & 1){
+            if (this->verbose & 1) {
                 LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path.get_cstr());
                 LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id.get_cstr());
                 LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
