@@ -7,6 +7,7 @@ from socket import error
 from struct    import unpack
 from struct    import pack
 import datetime
+# import base64
 
 from password import PASSWORD1, PASSWORD2, PASSWORD3, PASSWORD4, PASSWORD5, PASSWORD6, PASSWORD7, PASSWORD8
 
@@ -238,8 +239,12 @@ class Authentifier(object):
             if (_data[key][:3] == 'ASK'):
                 _data[key] = MAGICASK
             elif (_data[key][:1] == '!'):
+                # BASE64 TRY
+                # _data[key] = base64.b64decode(_data[key][1:])
                 _data[key] = _data[key][1:]
             else:
+                # BASE64 TRY
+                # _data[key] = base64.b64decode(_data[key])
                 # _data[key] unchanged
                 pass
         self.dic.update(_data)
@@ -274,6 +279,8 @@ class Authentifier(object):
 
     def send(self):
         self.dic['keepalive'] = 'true'
+        # BASE64 TRY
+        # _list = ["%s\n%s\n" % (key, ("!%s" % base64.b64encode(("%s" % value))) if value != MAGICASK else "ASK") for key, value in self.dic.iteritems()]
         _list = ["%s\n%s\n" % (key, ("!%s" % value) if value != MAGICASK else "ASK") for key, value in self.dic.iteritems()]
 
         for s in _list:

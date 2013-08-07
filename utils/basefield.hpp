@@ -22,6 +22,8 @@
 #define _REDEMPTION_BASE_FIELD_HPP_
 
 #include "cfgloader.hpp"
+// BASE64 TRY
+// #include "base64.hpp"
 
 struct FieldObserver : public ConfigurationHolder {
 
@@ -163,17 +165,31 @@ struct FieldObserver : public ConfigurationHolder {
                 LOG(LOG_INFO, "sending %s=ASK", key);
             }
             else {
+                // BASE64 TRY
                 const char * tmp = this->get_value();
+                // size_t tmp_len = strlen(tmp);
+                // unsigned char output[1024];
+                // size_t encoded_len;
+                // if (this->ini) {
+                //     encoded_len = this->ini->b64.encode(output, sizeof(output), (const unsigned char*)tmp, tmp_len);
+                //     output[encoded_len] = 0;
+                // }
+                // if (this->ini) {
+                //     n = snprintf(buff, size, "%s\n!%s\n",key,output);
+                // }
+                // else {
+                n = snprintf(buff, size, "%s\n!%s\n",key,tmp);
+                // }
                 if ((strncasecmp("password", (char*)key, 8) == 0)
                     ||(strncasecmp("target_password", (char*)key, 15) == 0)){
                     LOG(LOG_INFO, "sending %s=<hidden>", key);
                 }
                 else {
+                    // LOG(LOG_INFO, "sending %s=%s", key, output);
                     LOG(LOG_INFO, "sending %s=%s", key, tmp);
                 }
-                n = snprintf(buff, size, "%s\n!%s\n",key,tmp);
             }
-            if (n >= (int)size || n < 0) {
+            if (n < 0 || static_cast<size_t>(n) >= size ) {
                 LOG(LOG_ERR, "Sending Data to ACL Error: Buffer overflow,"
                     " should have write %u bytes but buffer size is %u bytes", n, size);
                 throw Error(ERR_ACL_MESSAGE_TOO_BIG);
@@ -424,6 +440,9 @@ protected:
 
 
 public:
+    // BASE64 TRY
+    // Base64 b64;
+
     std::set< authid_t > to_send_set;
 
     const std::map< authid_t, BaseField *>& get_field_list() {

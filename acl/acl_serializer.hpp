@@ -99,6 +99,14 @@ public:
                         LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
                     }
                     else {
+                        // BASE64 TRY
+                        // unsigned char output[32000];
+                        // if (value[0] == '!') value++;
+                        // size_t value_len = strlen((const char*)value);
+                        // size_t out_len = this->ini->b64.decode(output, sizeof(output), (const unsigned char *)value, value_len);
+                        // output[out_len] = 0;
+                        // this->ini->set_from_acl((char *)keyword,
+                        //                         (char *)output);
                         this->ini->set_from_acl((char *)keyword,
                                                 (char *)value + (value[0] == '!' ? 1 : 0));
                         if ((strncasecmp("password",        (char *)keyword, 9 ) == 0) ||
@@ -225,15 +233,12 @@ public:
         OutItemFunctor(AclSerializer * acl, BStream & stream)
             : stream(stream)
             , acl(acl) {
-//            LOG(LOG_INFO, "OutItemFunctor Creation %p", this);
         }
         OutItemFunctor(const OutItemFunctor & other)
             : stream(other.stream)
             , acl(other.acl) {
-//            LOG(LOG_INFO, "OutItemFunctor Creation (copy) %p", this);
         }
         ~OutItemFunctor() {
-//            LOG(LOG_INFO, "OutItemFunctor Destruction %p", this);
         }
         void operator()(Inifile::BaseField * bfield) {
             this->acl->out_item_new(this->stream,bfield);

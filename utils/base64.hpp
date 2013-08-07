@@ -65,10 +65,13 @@ class Base64 {
     }
 
 public:
-    Base64() : use_filler(true) {
+    Base64()
+        : use_filler(true)
+    {
         build_encoding_table();
         build_decoding_table();
     }
+
     ~Base64() {}
 
     size_t encode(unsigned char * output, size_t output_size,
@@ -78,6 +81,7 @@ public:
         unsigned int remain = input_length % 3;
 
         output_length = 4 * ((input_length + 2) / 3);
+
         if (output_size < output_length)
             return 0;
 
@@ -119,7 +123,7 @@ public:
                 }
             }
         }
-
+        if (output_length < output_size) output[output_length] = 0;
         return output_length;
     }
 
@@ -138,11 +142,11 @@ public:
         output_length = (input_length / 4)  * 3;
 
         bool filler = false;
-        if (input[input_length - 2] == '=') {
+        if ((remain == 0) && (input[input_length - 2] == '=')) {
             output_length--;
             filler = true;
         }
-        if (input[input_length - 1] == '=') {
+        if ((remain == 0) && (input[input_length - 1] == '=')) {
             output_length--;
             filler = true;
         }
@@ -180,7 +184,7 @@ public:
             output[j++] = (triple >> 2 * 8) & 0xFF;
             if (j < output_length) output[j] = (triple >> 8) & 0xFF;
         }
-
+        if (output_length < output_size) output[output_length] = 0;
         return output_length;
     }
 
