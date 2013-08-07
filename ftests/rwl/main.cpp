@@ -23,7 +23,9 @@
 #include <vector>
 #include <iostream>
 #include <new>
+#include <cstring>
 #include <stdexcept>
+#include <algorithm>
 
 namespace tokens {
 
@@ -235,7 +237,6 @@ struct state_machine_index_transition<Max, Max, T, TableTransition, RangeTransit
 };
 
 
-
 template<size_t N, size_t Max, typename TableTransition, typename RangeTransition>
 struct state_machine_transition
 {
@@ -247,46 +248,41 @@ struct state_machine_transition
             boost::mpl::int_<N>
         >::type row;
         typedef typename row::check check;
+        typedef typename row::base_check base_check;
+        typedef typename row::base_consumer base_consumer;
+        typedef typename row::consumer consumer;
         typedef typename row::action action;
+        typedef typename row::confirmed confirmed;
 
-        if (boost::is_same<typename row::base_consumer, void>::value
-         || boost::is_same<typename row::base_check, void>::value) {
-            action()(sm, event, s, s);
-        }
+        const char * p = boost::is_same<base_check, void>::value ? s : check()(s);
 
-        if (boost::is_same<check, typename SM::null_check>::value) {
-            return state_machine_index_transition<
-                0,
-                boost::mpl::size<RangeTransition>::value,
-                typename row::next,
-                TableTransition,
-                RangeTransition
-            >::value;
-        }
+        if (boost::is_same<base_check, void>::value || p != s) {
+            if (confirmed()(sm, event)) {
+                if (boost::is_same<consumer, check>::value) {
+                    action()(sm, event, s, p);
+                    if (!boost::is_same<base_consumer, void>::value) {
+                        s = p;
+                    }
+                }
+                else {
+                    s = consumer()(p);
+                    action()(sm, event, p, s);
+                }
 
-        const char * p = check()(s);
 
-        if (p != s) {
-            typedef typename row::consumer consumer;
-            if (boost::is_same<consumer, check>::value) {
-                action()(sm, event, s, p);
-                s = p;
+                if (!boost::is_same<typename row::base_ignore, void>::value) {
+                    typedef typename row::ignore ignore;
+                    s = ignore()(s);
+                }
+
+                return state_machine_index_transition<
+                    0,
+                    boost::mpl::size<RangeTransition>::value,
+                    typename row::next,
+                    TableTransition,
+                    RangeTransition
+                >::value;
             }
-            else {
-                s = consumer()(p);
-                action()(sm, event, p, s);
-            }
-
-            typedef typename row::ignore ignore;
-            s = ignore()(s);
-
-            return state_machine_index_transition<
-                0,
-                boost::mpl::size<RangeTransition>::value,
-                typename row::next,
-                TableTransition,
-                RangeTransition
-            >::value;
         }
 
         return state_machine_transition<
@@ -431,13 +427,13 @@ struct state_machine_def
         >::value;
     };
 
-
+public:
     template<
         typename Start,
         typename Check,
         typename Next,
-        typename Consumer ,
-        void (Derived::* Action)(const Start &, const char *, const char *),
+        typename Consumer,
+        void (Derived::*Action)(const Start &, const char *, const char *),
         typename Ignore = tokens::Whitespaces
     >
     struct row {
@@ -446,6 +442,7 @@ struct state_machine_def
         typedef Next next;
         typedef Check base_check;
         typedef Consumer base_consumer;
+        typedef Ignore base_ignore;
         typedef typename value_or<Consumer, null_consumer>::type consumer;
         typedef typename value_or<Ignore, null_consumer>::type ignore;
         typedef void (Derived::*action_type)(const Start&);
@@ -458,7 +455,15 @@ struct state_machine_def
                 (static_cast<Derived&>(sm).*Action)(event, b, e);
             }
         };
+
+        struct confirmed {
+            bool operator()(state_machine_def&, const Start&)
+            {
+                return true;
+            }
+        };
     };
+
 
     state_machine_def()
     : state_num(defined_index_transition<
@@ -624,73 +629,68 @@ struct rwl_value
     : type(0)
     {}
 
-    rwl_value(int n)
-    : type('i')
-    {
-        value.i = n;
-    }
+private:
+//     rwl_value(const rwl_value& other)
+//     : type(other.type)
+//     {
+//         switch (this->type) {
+//             case 'i':
+//             case 'c':
+//                 this->value.i = other.value.i;
+//                 break;
+//             case 'l': {
+//                 this->value.linked.size = other.value.linked.size;
+//                 const unsigned size = other.value.linked.size * 2;
+//                 this->value.linked.pair_strings = new const char *[size];
+//                 std::copy(other.value.linked.pair_strings,
+//                           other.value.linked.pair_strings + size,
+//                           this->value.linked.pair_strings);
+//                 this->value.linked.first = other.value.linked.first;
+//                 this->value.linked.last = other.value.linked.last;
+//             }   break;
+//             case 'f':{
+//                 this->value.func.size = other.value.func.size;
+//                 const unsigned size = other.value.func.size;
+//                 this->value.func.params = static_cast<rwl_value*>(::operator new (size * sizeof(rwl_value)));
+//                 std::uninitialized_copy(other.value.func.params,
+//                                         other.value.func.params + size,
+//                                         this->value.func.params);
+//             } //no break
+//             case 's':
+//             case 't':
+//                 this->value.s.first = other.value.s.first;
+//                 this->value.s.last = other.value.s.last;
+//                 break;
+//             default:
+//                 break;
+//             case 'o':
+//                 this->value.operation.l = new rwl_value(*other.value.operation.l);
+//                 this->value.operation.r = new rwl_value(*other.value.operation.r);
+//                 this->value.operation.op = other.value.operation.op;
+//                 break;
+//         }
+//     }
 
-    rwl_value(const char * first, const char * last, int type = 's')
-    : type(type)
-    {
-        value.s.first = first;
-        value.s.last = last;
-    }
+    struct deleter { void operator()(rwl_value* val) const {
+        delete val;
+    } };
 
-    rwl_value(const rwl_value& other)
-    : type(other.type)
-    {
-        switch (this->type) {
-            case 'i':
-            case 'c':
-                this->value.i = other.value.i;
-                break;
-            case 'l': {
-                this->value.linked.size = other.value.linked.size;
-                const unsigned size = other.value.linked.size * 2;
-                this->value.linked.pair_strings = new const char *[size];
-                std::uninitialized_copy(other.value.linked.pair_strings,
-                                        other.value.linked.pair_strings + size,
-                                        this->value.linked.pair_strings);
-                this->value.linked.first = other.value.linked.first;
-                this->value.linked.last = other.value.linked.last;
-            }   break;
-            case 'f':{
-                this->value.func.size = other.value.func.size;
-                const unsigned size = other.value.func.size * 2;
-                this->value.func.params = new rwl_value[size];
-                std::uninitialized_copy(other.value.func.params,
-                                        other.value.func.params + size,
-                                        this->value.func.params);
-            }
-            case 's':
-            case 't':
-                this->value.s.first = other.value.s.first;
-                this->value.s.last = other.value.s.last;
-                break;
-            default:
-                break;
-            case 'g':
-                void * mem = ::operator new (sizeof(rwl_value) * 2);
-                this->value.g.l = new (mem) rwl_value(*other.value.g.l);
-                this->value.g.r = new (this->value.g.l+1) rwl_value(*other.value.g.r);
-                this->value.g.op = other.value.g.op;
-                break;
-        }
-    }
-
+public:
     ~rwl_value()
     {
         switch (this->type) {
-            case 'g':
-                this->value.g.r->~rwl_value();
-                ::operator delete (this->value.g.l);
+            case 'o':
+                delete this->value.operation.l;
+                delete this->value.operation.r;
                 break;
             case 'l':
                 delete[] this->value.linked.pair_strings;
                 break;
             case 'f':
-                delete[] this->value.func.params;
+                std::for_each(this->value.func.params + 0,
+                              this->value.func.params + this->value.func.size,
+                              deleter());
+                delete [] this->value.func.params;
                 break;
             default:
                 break;
@@ -742,11 +742,12 @@ struct rwl_value
 
     void add_operator(const char * p, const char * /*e*/)
     {
-        void * mem = ::operator new (sizeof(rwl_value) * 2);
-        this->value.g.l = new (mem) rwl_value(*this);
-        this->value.g.r = new (this->value.g.l+1) rwl_value;
-        this->value.g.op = *p;
-        this->type = 'g';
+        rwl_value * val = new rwl_value;
+        std::memcpy(val, this, sizeof(rwl_value));
+        this->value.operation.l = val;
+        this->value.operation.r = new rwl_value;
+        this->value.operation.op = *p;
+        this->type = 'o';
     }
 
     void add_linked(const char * p, const char * e)
@@ -754,9 +755,9 @@ struct rwl_value
         if (this->type == 'l') {
             const unsigned size = this->value.linked.size * 2;
             const char * * values = new const char *[size + 2];
-            std::uninitialized_copy(this->value.linked.pair_strings,
-                                    this->value.linked.pair_strings + size,
-                                    values);
+            std::copy(this->value.linked.pair_strings,
+                      this->value.linked.pair_strings + size,
+                      values);
             values[size] = p;
             values[size+1] = e;
             ++this->value.linked.size;
@@ -771,6 +772,29 @@ struct rwl_value
         }
     }
 
+    rwl_value* to_function()
+    {
+        this->type = 'f';
+        this->value.func.size = 1;
+        this->value.func.params = new rwl_value * [1];
+        this->value.func.params[1] = new rwl_value;
+        return *this->value.func.params;
+    }
+
+    rwl_value* next_parameter()
+    {
+        const unsigned size = this->value.func.size;
+        rwl_value ** values = new rwl_value * [size+1];
+        std::copy(this->value.func.params,
+                  this->value.func.params + size,
+                  values);
+        new (values + size) rwl_value;
+        ++this->value.func.size;
+        delete [] this->value.func.params;
+        this->value.func.params = values;
+        return this->value.func.params[size];
+    }
+
     union {
         struct {
             const char * first;
@@ -779,7 +803,7 @@ struct rwl_value
         struct {
             const char * first;
             const char * last;
-            rwl_value * params;
+            rwl_value ** params;
             unsigned size;
         } func;
         struct {
@@ -788,11 +812,12 @@ struct rwl_value
             const char * * pair_strings;
             unsigned size;
         } linked;
+        rwl_value * g;
         struct {
             rwl_value * l;
             rwl_value * r;
             int op;
-        } g;
+        } operation;
         unsigned color;
         int i;
 //         unsigned u;
@@ -804,10 +829,10 @@ struct rwl_value
      * 'f': function
      * 's': string
      * 't': identifier
-     * 'g': group operator
+     * 'o': group operator
      * 'c': color
      * 'l': linked
-     * ',': parameter
+     * 'g': group
      */
     int type;
 };
@@ -815,21 +840,27 @@ struct rwl_value
 struct rwl_property
 {
     rwl_property()
+    : root_value(&value)
     {}
 
     rwl_property(const const_cstring& name)
     : name(name)
+    , root_value(&value)
     {}
 
     rwl_property& new_property(const const_cstring& name)
     {
-        this->properties.push_back(rwl_property(name));
-        return this->properties.back();
+        this->properties.push_back(new rwl_property(name));
+        return *this->properties.back();
     }
 
     const_cstring name;
     rwl_value value;
-    std::vector<rwl_property> properties;
+    rwl_value * root_value;
+    std::vector<rwl_property*> properties;
+
+private:
+    rwl_property(const rwl_property&);
 };
 
 struct rwl_target
@@ -843,19 +874,22 @@ struct rwl_target
 
     rwl_target& new_target(const const_cstring& name)
     {
-        this->targets.push_back(rwl_target(name));
-        return this->targets.back();
+        this->targets.push_back(new rwl_target(name));
+        return *this->targets.back();
     }
 
     rwl_property& new_property(const const_cstring& name)
     {
-        this->properties.push_back(rwl_property(name));
-        return this->properties.back();
+        this->properties.push_back(new rwl_property(name));
+        return *this->properties.back();
     }
 
     const_cstring name;
-    std::vector<rwl_property> properties;
-    std::vector<rwl_target> targets;
+    std::vector<rwl_property*> properties;
+    std::vector<rwl_target*> targets;
+
+private:
+    rwl_target(const rwl_target&);
 };
 
 struct rwlparser : state_machine_def<rwlparser>
@@ -898,8 +932,11 @@ struct rwlparser : state_machine_def<rwlparser>
     std::vector<rwl_target*> target_depth;
     std::vector<rwl_property*> property_depth;
     std::vector<rwl_value*> value_depth;
+    std::vector<rwl_value*> group_value_depth;
+    std::vector<char> states;
     size_t open_target;
     size_t open_property;
+    size_t open_value;
     bool linked_prop;
 
     //BEGIN action
@@ -924,12 +961,8 @@ struct rwlparser : state_machine_def<rwlparser>
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
-    void close_target()
+    void close_block()
     {
-        if (!this->open_target) {
-            throw std::runtime_error("expected '}'");
-        }
-        --this->open_target;
         this->target_depth.pop_back();
         if (this->target_depth.empty()) {
             this->current_target = &this->screen;
@@ -937,46 +970,31 @@ struct rwlparser : state_machine_def<rwlparser>
         else {
             this->current_target = this->target_depth.back();
         }
+        --this->open_target;
     }
 
     void empty_target(const DefinedTarget&, const char * p, const char * e)
     {
         this->current_target->targets.pop_back();
-        this->close_target();
+        this->close_block();
+        --this->open_target;
 
 
 
         this->rwl.append(this->tab, '\t');
         this->rwl += "}\n";
         --this->tab;
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-
-    template<typename Event>
-    void close_target(const Event&, const char * p, const char * e)
-    {
-        this->close_target();
-
-
-
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += '\n';
-        --this->tab;
-        this->rwl.append(this->tab, '\t');
-        this->rwl += "}\n";
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     void prop_name(const PropName&, const char * p, const char * e)
     {
-        if (this->linked_prop) {
-            this->current_property = &this->current_property->new_property(const_cstring(p, e));
+        if ( ! this->property_depth.empty()) {
+            this->current_property = &this->property_depth.back()->new_property(const_cstring(p, e));
         }
         else {
             this->current_property = &this->current_target->new_property(const_cstring(p, e));
         }
-        this->property_depth.push_back(this->current_property);
         ++this->open_property;
 
 
@@ -989,7 +1007,7 @@ struct rwlparser : state_machine_def<rwlparser>
     {
         this->linked_prop = false;
         this->current_value = &this->current_property->value;
-
+        this->value_depth.clear();
 
 
         this->rwl.append(this->tab, '\t');
@@ -1023,7 +1041,6 @@ struct rwlparser : state_machine_def<rwlparser>
 
 
 
-
         this->rwl += '"';
         this->rwl.append(p, e-p);
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
@@ -1036,18 +1053,6 @@ struct rwlparser : state_machine_def<rwlparser>
 
 
         this->property_name.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-
-    void open_expr(const PropOrFunc&, const char * p, const char * e)
-    {
-        this->current_property->value.type = 'f';
-
-
-
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += '(';
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
@@ -1075,9 +1080,27 @@ struct rwlparser : state_machine_def<rwlparser>
     template<typename Event>
     void math_operator(const Event&, const char * p, const char * e)
     {
-        this->current_value->add_operator(p, e);
-        this->value_depth.push_back(this->current_value->value.g.r);
-        this->current_value = this->current_value->value.g.r;
+        if (!this->value_depth.empty()) {
+            rwl_value * val = this->value_depth.back();
+            if ((val->type != 'o' || (val->value.operation.op != '+' && val->value.operation.op != '-')) && (*p == '+' || *p == '-')) {
+                rwl_value * new_val = new rwl_value;
+                new_val->type = 'o';
+                new_val->value.operation.l = val;
+                new_val->value.operation.r = new rwl_value;
+                new_val->value.operation.op = *p;
+                this->current_value = new_val->value.operation.r;
+                this->value_depth.back() = new_val;
+            }
+            else {
+                this->current_value->add_operator(p, e);
+                this->current_value = this->current_value->value.operation.r;
+            }
+        }
+        else {
+            this->value_depth.push_back(this->current_value);
+            this->current_value->add_operator(p, e);
+            this->current_value = this->current_value->value.operation.r;
+        }
 
 
 
@@ -1091,7 +1114,6 @@ struct rwlparser : state_machine_def<rwlparser>
 
     void property_get(const LinkProp&, const char * p, const char * e)
     {
-        std::cout << (const_cstring(p,e)) << std::endl;
         this->current_value->add_linked(p, e);
 
 
@@ -1100,9 +1122,118 @@ struct rwlparser : state_machine_def<rwlparser>
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
+    void open_expr(const PropOrFunc&, const char * p, const char * e)
+    {
+        this->value_depth.push_back(this->current_value);
+        this->current_value = this->current_value->to_function();
 
 
 
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += '(';
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+
+    void value_separator(const PropSep&, const char * p, const char * e)
+    {
+        this->current_value = this->value_depth.back()->next_parameter();
+
+
+
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += ", ";
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+
+    void value_block(const ValueBlock&, const char * p, const char * e)
+    {
+        this->linked_prop = true;
+        this->property_depth.push_back(this->current_property);
+
+
+
+        this->rwl += "{\n";
+        ++this->tab;
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+
+    template<typename Event>
+    void close_block(const Event&, const char * p, const char * e)
+    {
+        if (!this->property_depth.empty()) {
+            this->property_depth.pop_back();
+        }
+        else {
+            this->close_block();
+        }
+
+
+
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += '\n';
+        --this->tab;
+        this->rwl.append(this->tab, '\t');
+        this->rwl += "}\n";
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+
+    void group_value(const Operation&, const char * p, const char * e)
+    {
+        ++this->open_value;
+
+
+
+        this->rwl += '(';
+        this->property_name.clear();
+        this->rwl.append(p, e-p);
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+
+    void prop_separator(const PropSep&, const char * p, const char * e)
+    {
+        if (!this->value_depth.empty()) {
+            rwl_value * val = this->value_depth.back();
+            if (&this->current_property->value != val) {
+                this->current_property->root_value = val;
+            }
+        }
+
+
+
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += ";\n";
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+
+    void group_value(const Value&, const char * p, const char * e)
+    {
+        this->current_value->type = 'g';
+        this->current_value->value.g = new rwl_value;
+        this->group_value_depth.push_back(this->current_value);
+        this->current_value = this->current_value->value.g;
+
+
+
+        this->rwl += '(';
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
+
+    void close_expr(const PropSep&, const char * p, const char * e)
+    {
+        this->current_value = this->group_value_depth.back();
+        this->value_depth.push_back(this->current_value);
+        this->group_value_depth.pop_back();
+
+
+        this->rwl += this->property_name;
+        this->property_name.clear();
+        this->rwl += ')';
+        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+    }
 
 
 
@@ -1113,48 +1244,9 @@ struct rwlparser : state_machine_def<rwlparser>
         this->rwl.append(p, e-p);
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
-    void value_block(const ValueBlock&, const char * p, const char * e)
-    {
-        this->rwl += "{\n";
-        ++this->tab;
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-    void value_separator(const PropSep&, const char * p, const char * e)
-    {
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += ", ";
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-    void close_expr(const PropSep&, const char * p, const char * e)
-    {
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += ')';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
     void confirmed_string(const EndString&, const char * p, const char * e)
     {
         this->rwl += '"';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-    void prop_separator(const PropSep&, const char * p, const char * e)
-    {
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += ";\n";
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-    void group_value(const Operation&, const char * p, const char * e)
-    {
-        this->rwl += '(';
-        this->property_name.clear();
-        this->rwl.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-    void group_value(const Value&, const char * p, const char * e)
-    {
-        this->rwl += '(';
         (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
@@ -1196,12 +1288,12 @@ struct rwlparser : state_machine_def<rwlparser>
         row< DefinedTarget, OpenBlock,     PropName,      OpenBlock,    &p::confirmed_target>,
         row< DefinedTarget, CloseBlock,    ClosingTarget, CloseBlock,   &p::empty_target >,
         //-+---------------+--------------+--------------+-------------+----------------+
-        row< ClosingTarget, CloseBlock,    ClosingTarget, CloseBlock,   &p::close_target >,
+        row< ClosingTarget, CloseBlock,    ClosingTarget, CloseBlock,   &p::close_block >,
         row< ClosingTarget, Semicolon,     PropName,      Semicolon,    &p::not_action   >,
         row< ClosingTarget, TargetName,    DefinedTarget, TargetName,   &p::target       >,
         row< ClosingTarget, void,          PropName,      void,         &p::not_action   >,
         //-+---------------+--------------+--------------+-------------+----------------+
-        row< PropName,      CloseBlock,    ClosingTarget, CloseBlock,   &p::close_target >,
+        row< PropName,      CloseBlock,    ClosingTarget, CloseBlock,   &p::close_block >,
         row< PropName,      TargetName,    DefinedTarget, TargetName,   &p::target       >,
         row< PropName,      Identifier,    DefinedProp,   Identifier,   &p::prop_name    >,
         //-+---------------+--------------+--------------+-------------+----------------+
@@ -1225,7 +1317,7 @@ struct rwlparser : state_machine_def<rwlparser>
         row< PropSep,       Comma,         Value,         Comma,        &p::value_separator>,
         row< PropSep,       CloseExpr,     Expression,    CloseExpr,    &p::close_expr   >,
         row< PropSep,       Semicolon,     PropName,      Semicolon,    &p::prop_separator>,
-        row< PropSep,       CloseBlock,    ClosingTarget, CloseBlock,   &p::close_target >,
+        row< PropSep,       CloseBlock,    ClosingTarget, CloseBlock,   &p::close_block >,
         //-+---------------+--------------+--------------+-------------+----------------+
         row< LinkProp,      Identifier,    Prop,          Identifier,   &p::property_get >,
         //-+---------------+--------------+--------------+-------------+----------------+
@@ -1267,15 +1359,20 @@ void display_value(const rwl_value& value, unsigned tab = 0)
         case 'f':
             std::cout << tb(tab) << "function " << const_cstring(value.value.func.first, value.value.func.last) << "\n";
             for (unsigned i = 0; i < value.value.func.size; ++i) {
-                display_value(value.value.func.params[i], tab+1);
-                std::cout << ",\n";
+                std::cout << tb(tab) << i << "\n";
+                display_value(*value.value.func.params[i], tab+1);
             }
             break;
-        case 'g':
+        case 'o':
             std::cout << tb(tab) << "group\n";
-            display_value(*value.value.g.l, tab+1);
-            std::cout << tb(tab+1) << char(value.value.g.op) << "\n";
-            display_value(*value.value.g.r, tab+1);
+            display_value(*value.value.operation.l, tab+1);
+            std::cout << tb(tab+1) << char(value.value.operation.op) << "\n";
+            display_value(*value.value.operation.r, tab+1);
+            break;
+        case 'g':
+            std::cout << tb(tab) << "(\n";
+            display_value(*value.value.g, tab+1);
+            std::cout << tb(tab) << ")\n";
             break;
         case 'l':
             std::cout << tb(tab) << "identity " << const_cstring(value.value.linked.first, value.value.linked.last);
@@ -1296,26 +1393,26 @@ void display_property(const rwl_property& property, unsigned tab = 0)
     std::cout << tb(tab) << "Property " << property.name << ":\n";
 
     if (property.properties.empty() ? 1 : (property.value.type != 0)) {
-        display_value(property.value, tab+1);
+        display_value(*property.root_value, tab+1);
     }
 
-    typedef std::vector<rwl_property>::const_iterator prop_iterator;
+    typedef std::vector<rwl_property*>::const_iterator prop_iterator;
     for (prop_iterator first = property.properties.begin(), last = property.properties.end(); first != last ; ++first) {
-        display_property(*first, tab+1);
+        display_property(**first, tab+1);
     }
 }
 
 void display_target(const rwl_target& target, unsigned tab = 0)
 {
     std::cout << tb(tab) << "Target " << target.name << ":\n";
-    typedef std::vector<rwl_property>::const_iterator prop_iterator;
+    typedef std::vector<rwl_property*>::const_iterator prop_iterator;
     for (prop_iterator first = target.properties.begin(), last = target.properties.end(); first != last ; ++first) {
-        display_property(*first, tab+1);
+        display_property(**first, tab+1);
     }
 
-    typedef std::vector<rwl_target>::const_iterator target_iterator;
+    typedef std::vector<rwl_target*>::const_iterator target_iterator;
     for (target_iterator first = target.targets.begin(), last = target.targets.end(); first != last ; ++first) {
-        display_target(*first, tab+1);
+        display_target(**first, tab+1);
     }
 }
 
@@ -1328,7 +1425,9 @@ int main()
 
     const char * str = "Rect {"
 //         " bgcolor: #122 ;"
-        " color: rgb( #239, \"l\" ) ;"
+//         " color: rgb( #239, \"l\" ) ;"
+//         " color: rgb( #239 ) ;"
+//         " color: rgb( (#239) , \"l\", 234 ) ;"
 //         " x: label.w ;"
 //         " x: label.w + 2 ;"
 //         " border.top: 2 ;"
@@ -1338,8 +1437,12 @@ int main()
 //         " Rect { Rect { x: 20 ;} }"
 //         " Rect { Rect { x: 20 } ; }"
 //         " text: \"plop\" ;"
-        //" border: { left: 2 ; right: 2}"
-        //" x: (screen.w - this.w) / 2"
+//         " border: { left: 2 ; right: 2 ; top: 2}"
+//         " border: { left: 2 ; color: { top:3 ; bottom: 1; } ; right: 2 ; top: 2}"
+        " x: (screen.w - this.w) / 2 ;"
+//         " y: screen.w - this.w / 2 ;"
+//         " n: 1 * 2 + 3 ;"
+//         " n: 1 + 2 * 3 ;"
     " }"
 //     " Rect { x: 202 }"
     ;
