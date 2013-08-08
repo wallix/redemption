@@ -40,8 +40,8 @@ class KeepAlive {
     long timeout;
     long renew_time;
     bool wait_answer;     // true when we are waiting for a positive response
-                    // false when positive response has been received and
-                    // timers have been set to new timers.
+                          // false when positive response has been received and
+                          // timers have been set to new timers.
     uint32_t verbose;
     bool connected;
 
@@ -378,7 +378,7 @@ public:
 
     PauseRecord(time_t timeout)
         : stop_record_inactivity(false)
-        , stop_record_time(timeout)
+        , stop_record_time((timeout > 30)?timeout:30)
         , last_record_activity_time(0)
     {
     }

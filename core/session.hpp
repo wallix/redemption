@@ -119,8 +119,8 @@ struct Session {
             ModuleManager mm(*this->front, *this->ini);
             BackEvent_t signal = BACK_EVENT_NONE;
 
-            // Under conditions
-            // PauseRecord pause_record(30);
+            // Under conditions (if this->ini->video.inactivity_pause == true)
+            PauseRecord pause_record(this->ini->video.inactivity_timeout);
 
             if (this->verbose) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -181,9 +181,11 @@ struct Session {
                 try {
 
                     if (this->front->up_and_running) {
-                        // if (this->front->capture && mm.connected) {
-                        //     pause_record.check(now, *this->front);
-                        // }
+                        if (this->ini->video.inactivity_pause
+                            && mm.connected
+                            && this->front->capture) {
+                            pause_record.check(now, *this->front);
+                        }
 
                         // Process incoming module trafic
                         if (mm.mod->event.is_set(rfds)) {
