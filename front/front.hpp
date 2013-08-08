@@ -69,9 +69,6 @@
 #include "front_api.hpp"
 #include "genrandom.hpp"
 
-extern "C" {
-#include "freerdp/codec/mppc_enc.h"
-};
 
 enum {
     FRONT_DISCONNECTED,
