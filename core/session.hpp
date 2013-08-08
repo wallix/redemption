@@ -120,7 +120,7 @@ struct Session {
             BackEvent_t signal = BACK_EVENT_NONE;
 
             // Under conditions
-            // PauseRecordFunctor pause_record;
+            // PauseRecord pause_record(30);
 
             if (this->verbose) {
                 LOG(LOG_INFO, "Session::session_main_loop() starting");
@@ -179,7 +179,12 @@ struct Session {
                 }
 
                 try {
+
                     if (this->front->up_and_running) {
+                        // if (this->front->capture && mm.connected) {
+                        //     pause_record.check(now, *this->front);
+                        // }
+
                         // Process incoming module trafic
                         if (mm.mod->event.is_set(rfds)) {
                             mm.mod->draw_event();
@@ -234,10 +239,6 @@ struct Session {
                             }
                         }
 
-
-                        // if (this->front->capture && mm.connected) {
-                        //     pause_record(now, *this->front);
-                        // }
 
                         if (this->acl) {
                             run_session = this->acl->check(mm, now, front_trans, signal);
