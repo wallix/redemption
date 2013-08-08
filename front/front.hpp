@@ -484,7 +484,7 @@ public:
         }
 
         this->capture->pause();
-
+        this->capture->capture_event.reset();
         this->capture_state = CAPTURE_STATE_PAUSED;
     }
 
@@ -495,7 +495,7 @@ public:
         }
 
         this->capture->resume();
-
+        this->capture->capture_event.set();
         this->capture_state = CAPTURE_STATE_STARTED;
 
     }
