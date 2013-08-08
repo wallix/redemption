@@ -630,7 +630,7 @@ struct rwl_value
     {}
 
 private:
-//     rwl_value(const rwl_value& other)
+    rwl_value(const rwl_value& other);
 //     : type(other.type)
 //     {
 //         switch (this->type) {
@@ -777,8 +777,8 @@ public:
         this->type = 'f';
         this->value.func.size = 1;
         this->value.func.params = new rwl_value * [1];
-        this->value.func.params[1] = new rwl_value;
-        return *this->value.func.params;
+        this->value.func.params[0] = new rwl_value;
+        return this->value.func.params[0];
     }
 
     rwl_value* next_parameter()
@@ -788,7 +788,7 @@ public:
         std::copy(this->value.func.params,
                   this->value.func.params + size,
                   values);
-        new (values + size) rwl_value;
+        values[size] = new rwl_value;
         ++this->value.func.size;
         delete [] this->value.func.params;
         this->value.func.params = values;
@@ -912,18 +912,15 @@ struct rwlparser : state_machine_def<rwlparser>
     //END Event
 
 
-    unsigned tab;
-    std::string rwl;
-    std::string property_name;
     rwlparser()
-    : tab()
-    , rwl()
-    , property_name()
-    , current_target(&this->screen)
-    , open_target(0)
-    , open_property(0)
+    : current_target(&this->screen)
     , linked_prop(false)
-    {}
+    {
+        this->states.reserve(32);
+        this->target_depth.reserve(8);
+        this->property_depth.reserve(3);
+        this->value_depth.reserve(8);
+    }
 
     rwl_target screen;
     rwl_target * current_target;
@@ -932,11 +929,7 @@ struct rwlparser : state_machine_def<rwlparser>
     std::vector<rwl_target*> target_depth;
     std::vector<rwl_property*> property_depth;
     std::vector<rwl_value*> value_depth;
-    std::vector<rwl_value*> group_value_depth;
     std::vector<char> states;
-    size_t open_target;
-    size_t open_property;
-    size_t open_value;
     bool linked_prop;
 
     //BEGIN action
@@ -945,20 +938,11 @@ struct rwlparser : state_machine_def<rwlparser>
     {
         this->current_target = &this->current_target->new_target(const_cstring(p, e));
         this->target_depth.push_back(this->current_target);
-        ++this->open_target;
-
-
-
-        this->rwl.append(this->tab, '\t');
-        this->rwl.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
-    void confirmed_target(const DefinedTarget&, const char * p, const char * e)
+    void confirmed_target(const DefinedTarget&, const char * /*p*/, const char * /*e*/)
     {
-        this->rwl += " {\n";
-        ++this->tab;
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+        this->states.push_back('t');
     }
 
     void close_block()
@@ -970,21 +954,12 @@ struct rwlparser : state_machine_def<rwlparser>
         else {
             this->current_target = this->target_depth.back();
         }
-        --this->open_target;
     }
 
-    void empty_target(const DefinedTarget&, const char * p, const char * e)
+    void empty_target(const DefinedTarget&, const char * /*p*/, const char * /*e*/)
     {
         this->current_target->targets.pop_back();
         this->close_block();
-        --this->open_target;
-
-
-
-        this->rwl.append(this->tab, '\t');
-        this->rwl += "}\n";
-        --this->tab;
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     void prop_name(const PropName&, const char * p, const char * e)
@@ -995,86 +970,43 @@ struct rwlparser : state_machine_def<rwlparser>
         else {
             this->current_property = &this->current_target->new_property(const_cstring(p, e));
         }
-        ++this->open_property;
-
-
-
-        this->property_name.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
-    void defined_prop(const DefinedProp&, const char * p, const char * e)
+    void defined_prop(const DefinedProp&, const char * /*p*/, const char * /*e*/)
     {
         this->linked_prop = false;
         this->current_value = &this->current_property->value;
-        this->value_depth.clear();
-
-
-        this->rwl.append(this->tab, '\t');
-        this->rwl += this->property_name;
-        property_name.clear();
-        this->rwl += ": ";
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
-    void link_prop(const DefinedProp&, const char * p, const char * e)
+    void link_prop(const DefinedProp&, const char * /*p*/, const char * /*e*/)
     {
         this->linked_prop = true;
-
-
-
-        this->property_name += '.';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     template<typename Event>
-    void link_prop(const Event&, const char * p, const char * e)
+    void link_prop(const Event&, const char * /*p*/, const char * /*e*/)
     {
-        this->property_name += '.';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+
     }
 
     void string(const Value&, const char * p, const char * e)
     {
         this->current_value->add_string(p, e);
-        //throw std::runtime_error("incompatible value");
-
-
-
-        this->rwl += '"';
-        this->rwl.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     void name(const Value&, const char * p, const char * e)
     {
         this->current_value->add_identifier(p, e);
-
-
-
-        this->property_name.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     void hex_color(const Value&, const char * p, const char * e)
     {
         this->current_value->add_color(p, e);
-
-
-
-        this->rwl += '#';
-        this->rwl.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     void integer(const Value&, const char * p, const char * e)
     {
         this->current_value->add_integer(p, e);
-
-
-
-        this->rwl.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     template<typename Event>
@@ -1101,158 +1033,94 @@ struct rwlparser : state_machine_def<rwlparser>
             this->current_value->add_operator(p, e);
             this->current_value = this->current_value->value.operation.r;
         }
-
-
-
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += ' ';
-        this->rwl += *p;
-        this->rwl += ' ';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     void property_get(const LinkProp&, const char * p, const char * e)
     {
         this->current_value->add_linked(p, e);
-
-
-
-        this->property_name.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
-    void open_expr(const PropOrFunc&, const char * p, const char * e)
+    void open_expr(const PropOrFunc&, const char * /*p*/, const char * /*e*/)
     {
         this->value_depth.push_back(this->current_value);
         this->current_value = this->current_value->to_function();
-
-
-
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += '(';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
-    void value_separator(const PropSep&, const char * p, const char * e)
+    void value_separator(const PropSep&, const char * /*p*/, const char * /*e*/)
     {
         this->current_value = this->value_depth.back()->next_parameter();
-
-
-
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += ", ";
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+        this->value_depth.back() = this->current_value;
     }
 
-    void value_block(const ValueBlock&, const char * p, const char * e)
+    void value_block(const ValueBlock&, const char * /*p*/, const char * /*e*/)
     {
+        this->states.push_back('p');
         this->linked_prop = true;
         this->property_depth.push_back(this->current_property);
-
-
-
-        this->rwl += "{\n";
-        ++this->tab;
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
     template<typename Event>
-    void close_block(const Event&, const char * p, const char * e)
+    void close_block(const Event&, const char * /*p*/, const char * /*e*/)
     {
-        if (!this->property_depth.empty()) {
-            this->property_depth.pop_back();
+        if (this->states.empty()) {
+            throw std::runtime_error("expected declaration before '}' token");
+        }
+
+        if (this->states.back() == 't') {
+            if (this->target_depth.empty()) {
+                throw std::runtime_error("expected declaration before '}' token");
+            }
+            this->close_block();
+
         }
         else {
-            this->close_block();
+            this->property_depth.pop_back();
+            this->value_depth.clear();
         }
 
-
-
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += '\n';
-        --this->tab;
-        this->rwl.append(this->tab, '\t');
-        this->rwl += "}\n";
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+        this->states.pop_back();
     }
 
-    void group_value(const Operation&, const char * p, const char * e)
-    {
-        ++this->open_value;
+    void group_value(const Operation&, const char * /*p*/, const char * /*e*/)
+    {}
 
-
-
-        this->rwl += '(';
-        this->property_name.clear();
-        this->rwl.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-
-    void prop_separator(const PropSep&, const char * p, const char * e)
+    void prop_separator(const PropSep&, const char * /*p*/, const char * /*e*/)
     {
         if (!this->value_depth.empty()) {
             rwl_value * val = this->value_depth.back();
             if (&this->current_property->value != val) {
                 this->current_property->root_value = val;
             }
+            this->value_depth.clear();
         }
-
-
-
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += ";\n";
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
     }
 
-    void group_value(const Value&, const char * p, const char * e)
+    void group_value(const Value&, const char * /*p*/, const char * /*e*/)
     {
         this->current_value->type = 'g';
         this->current_value->value.g = new rwl_value;
-        this->group_value_depth.push_back(this->current_value);
-        this->current_value = this->current_value->value.g;
-
-
-
-        this->rwl += '(';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
-
-    void close_expr(const PropSep&, const char * p, const char * e)
-    {
-        this->current_value = this->group_value_depth.back();
         this->value_depth.push_back(this->current_value);
-        this->group_value_depth.pop_back();
-
-
-        this->rwl += this->property_name;
-        this->property_name.clear();
-        this->rwl += ')';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+        this->current_value = this->current_value->value.g;
     }
 
-
-
-
-
-    void prop_value(const Prop&, const char * p, const char * e)
+    void close_expr(const PropSep&, const char * /*p*/, const char * /*e*/)
     {
-        this->rwl.append(p, e-p);
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
+        this->current_value = this->value_depth.back();
+        this->value_depth.pop_back();
     }
-    void confirmed_string(const EndString&, const char * p, const char * e)
-    {
-        this->rwl += '"';
-        (std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n";
-    }
+
+
+
+
+
+    void prop_value(const Prop&, const char * /*p*/, const char * /*e*/)
+    {}
+    void confirmed_string(const EndString&, const char * /*p*/, const char * /*e*/)
+    {}
 
     template<typename Event>
-    void not_action(const Event&, const char * p, const char * e)
-    {(std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n"; }
+    void not_action(const Event&, const char * /*p*/, const char * /*e*/)
+    {/*(std::cout << __PRETTY_FUNCTION__ << "\n'\033[31m").write(p, e-p) << "\033[00m'\n"; */}
     //END action
 
 
@@ -1424,27 +1292,27 @@ int main()
     rwlparser parser;
 
     const char * str = "Rect {"
-//         " bgcolor: #122 ;"
-//         " color: rgb( #239, \"l\" ) ;"
-//         " color: rgb( #239 ) ;"
-//         " color: rgb( (#239) , \"l\", 234 ) ;"
-//         " x: label.w ;"
-//         " x: label.w + 2 ;"
-//         " border.top: 2 ;"
-//         " border.top.color: #233 ;"
-//         " Rect { x: 20+2 }"
-//         " x: 20+2 ;"
-//         " Rect { Rect { x: 20 ;} }"
-//         " Rect { Rect { x: 20 } ; }"
-//         " text: \"plop\" ;"
-//         " border: { left: 2 ; right: 2 ; top: 2}"
-//         " border: { left: 2 ; color: { top:3 ; bottom: 1; } ; right: 2 ; top: 2}"
+        " bgcolor: #122 ;"
+        " color: rgb( #239, \"l\" ) ;"
+        " color: rgb( #239 ) ;"
+        " color: rgb( (#239) , \"l\", 234 ) ;"
+        " x: label.w ;"
+        " x: label.w + 2 ;"
+        " border.top: 2 ;"
+        " border.top.color: #233 ;"
+        " Rect { x: 20+2 }"
+        " x: 20+2 ;"
+        " Rect { Rect { x: 20 ;} }"
+        " Rect { Rect { x: 20 } ; }"
+        " text: \"plop\" ;"
+        " border: { left: 2 ; right: 2 ; top: 2}"
+        " border: { left: 2 ; color: { top:3 ; bottom: 1; } ; right: 2 ; top: 2}"
         " x: (screen.w - this.w) / 2 ;"
-//         " y: screen.w - this.w / 2 ;"
-//         " n: 1 * 2 + 3 ;"
-//         " n: 1 + 2 * 3 ;"
+        " y: screen.w - this.w / 2 ;"
+        " n: 1 * 2 + 3 ;"
+        " n: 1 + 2 * 3 ;"
     " }"
-//     " Rect { x: 202 }"
+    " Rect { x: 202 }"
     ;
 
     const char * states[] = {
@@ -1465,15 +1333,11 @@ int main()
     };
 
     while (parser.valid() && *str) {
-        //std::cout << "\033[37m" << (states[parser.state_num]) << "\033[00m" << std::endl;
         str = parser.next_event(str);
-        //std::cout << "\033[36m" << (str) << "\033[00m" << std::endl;
     }
     if (*str) {
         std::cout << ("parsing error\n");
     }
-
-    std::cout << (parser.rwl) << std::endl;
 
     display_target(parser.screen);
 }
