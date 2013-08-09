@@ -132,6 +132,10 @@ public:
     }
 
     void pause() {
+        if (this->capture_png){
+            struct timeval now = tvtime();
+            this->psc->pause_snapshot(now);
+        }
     }
 
     void resume() {

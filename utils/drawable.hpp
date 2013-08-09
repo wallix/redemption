@@ -48,6 +48,10 @@ struct Drawable
     uint8_t timestamp_data[ts_width * ts_height * 3];
     char previous_timestamp[size_str_timestamp];
 
+    uint8_t pausetimestamp_save[ts_width * ts_height * 3];
+    uint8_t pausetimestamp_data[ts_width * ts_height * 3];
+    char previous_pausetimestamp[size_str_timestamp];
+
     Drawable(int width, int height)
     : width(width)
     , height(height)
@@ -1285,6 +1289,41 @@ struct Drawable
             memcpy(tsave, buf, ts_width*3);
             tsave += ts_width*3;
             memcpy(buf, this->timestamp_data + y*ts_width*3, ts_width*3);
+        }
+    }
+
+    void trace_pausetimestamp(tm & now)
+    {
+        char rawdate[size_str_timestamp];
+        snprintf(rawdate, size_str_timestamp, "%4d-%02d-%02d %02d:%02d:%02d",
+                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
+                 now.tm_hour, now.tm_min, now.tm_sec);
+
+        this->draw_11x7_digits(this->pausetimestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_pausetimestamp);
+        memcpy(this->previous_pausetimestamp, rawdate, size_str_timestamp);
+
+        uint8_t * tsave = this->pausetimestamp_save;
+        uint8_t* buf = this->data
+            + (this->width * 3) * (this->height / 2)
+            + ((this->width - ts_width)*3) / 2 ;
+        int step = this->width * 3;
+        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+            memcpy(tsave, buf, ts_width*3);
+            tsave += ts_width*3;
+            memcpy(buf, this->pausetimestamp_data + y*ts_width*3, ts_width*3);
+        }
+    }
+
+    void clear_pausetimestamp()
+    {
+        const uint8_t * tsave = this->pausetimestamp_save;
+        int step = this->width * 3;
+        uint8_t* buf = this->data
+            + (this->width * 3) * (this->height / 2)
+            + ((this->width - ts_width)*3) / 2 ;
+        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+            memcpy(buf, tsave, ts_width*3);
+            tsave += ts_width*3;
         }
     }
 
