@@ -55,10 +55,14 @@ public:
         , verbose(verbose)
         , connected(false)
     {
-        LOG(LOG_INFO, "KEEP ALIVE FUNCTOR CONSTRUCTOR");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
+        }
     }
     ~KeepAlive() {
-        LOG(LOG_INFO, "KEEP ALIVE FUNCTOR DESTRUCTOR");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
+        }
     }
 
     bool is_started() {
@@ -132,10 +136,14 @@ public:
         , last_activity_time(start)
         , verbose(verbose)
     {
-        LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
+        }
     }
     ~Inactivity() {
-        LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
+        }
     }
 
     bool check(time_t now, Transport & trans) {
@@ -174,8 +182,6 @@ class SessionManager {
 public:
     AclSerializer acl_serial;
 
-    bool lost_acl;            // false initialy, true when connection with acl is lost
-    bool asked_remote_answer; // false initialy, set to true when a msg is sent to acl
     bool remote_answer;       // false initialy, set to true once response is received from acl
                               // and asked_remote_answer is set to false
     time_t start_time;
@@ -190,8 +196,6 @@ public:
     SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
         , acl_serial(AclSerializer(ini, _auth_trans, ini->debug.auth))
-        , lost_acl(false)
-        , asked_remote_answer(false)
         , remote_answer(false)
         , start_time(start_time)
         , acl_start_time(acl_start_time)
@@ -210,8 +214,6 @@ public:
             LOG(LOG_INFO, "auth::~SessionManager");
         }
     }
-
-
 
 public:
 
@@ -237,14 +239,6 @@ public:
             return true;
         }
 
-
-        // Check if acl connection is lost.
-        if (this->lost_acl) {
-            LOG(LOG_INFO, "Connection with ACL is lost");
-            mm.invoke_close_box("Connection closed by manager (ACL closed)", signal, now);
-            return true;
-        }
-
         // Close by rejeted message received
         if (!this->ini->context.rejected.is_empty()) {
             this->ini->context.auth_error_message.copy_str(this->ini->context.rejected.get());
@@ -266,19 +260,22 @@ public:
         }
 
         // Manage module (refresh or next)
-        TODO("Check the needs and reference of this->asked_remote_answer. "
-             "Maybe could be replaced by ini->check() alone ?");
-        if (!this->asked_remote_answer && this->ini->check()) {
-            if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
-                this->asked_remote_answer = true;
+        if (this->ini->check()) {
+            if (mm.connected) {
+                // send message to acl with changed values when connected to
+                // a module (rdp, vnc, xup ...) and something changed.
+                // used for authchannel and keepalive.
+                this->ask_acl();
+            }
+            else if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
                 this->remote_answer       = false;
                 this->ask_acl();
             }
-        }
-        else {
-            this->asked_remote_answer = false;
 
-            if (this->remote_answer && signal == BACK_EVENT_REFRESH) {
+        }
+        else if (this->remote_answer) {
+
+            if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
                 TODO("signal management (refresh/next) should go to ModuleManager, "
@@ -288,7 +285,7 @@ public:
                 mm.mod->event.signal = BACK_EVENT_NONE;
                 mm.mod->event.set();
             }
-            else if (this->remote_answer && signal == BACK_EVENT_NEXT) {
+            else if (signal == BACK_EVENT_NEXT) {
 
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
                 signal = BACK_EVENT_NONE;
@@ -312,21 +309,11 @@ public:
                 }
                 if (!this->keepalive.is_started() && mm.connected) {
                     this->keepalive.start(now);
-
-                    mm.record();
                 }
             }
         }
 
-        // send message to acl with changed values when connected to
-        // a module (rdp, vnc, xup ...) and something changed
-        // used for authchannel and keepalive.
-
         // LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
-
-        if (mm.connected && this->ini->check()) {
-            this->ask_acl();
-        }
 
         // AuthCHANNEL CHECK
         // if an answer has been received, send it to
@@ -348,15 +335,12 @@ public:
     void receive() {
         LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
         try {
-            if (!this->lost_acl) {
-                this->acl_serial.incoming();
-                this->remote_answer = true;
-            }
+            this->acl_serial.incoming();
+            this->remote_answer = true;
         } catch (...) {
             // acl connection lost
             this->ini->context.authenticated.set(false);
-            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
-            this->lost_acl = true;
+            this->ini->context.rejected.set_from_cstr("Connection closed by manager (ACL closed)");
         }
     }
 
