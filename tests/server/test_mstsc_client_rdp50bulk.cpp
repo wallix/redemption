@@ -38,7 +38,7 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "listen.hpp"
