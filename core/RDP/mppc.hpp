@@ -2370,7 +2370,6 @@ static inline uint32_t signature(const uint8_t v1, const uint8_t v2, const uint8
 static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, int len)
 {
     uint32_t ctr;
-    uint32_t saved_ctr;
     uint32_t data_end;
 
     int opb_index = 0;                      /* index into outputBuffer */
@@ -2435,9 +2434,6 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     /* point to last uint8_t in new data */
     char* const hptr_end = &(enc->historyBuffer[enc->historyOffset - 1]); /* points to end of history data */
 
-    /* do not compute CRC beyond this */
-    const int last_crc_index = enc->historyOffset - 3;
-
     /* do not search for pattern match beyond this */
     data_end = len - 2;
 
@@ -2472,33 +2468,25 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         }
 
         /* we have a match - compute Length of Match */
-        int lom0 = 3;
-        for (; lom0 < hptr_end - cptr1 ; lom0++){
-            if (cptr1[lom0] != cptr2[lom0]){
+        int lom = 3;
+        for (; lom <= hptr_end - cptr1 ; lom++){
+            if (cptr1[lom] != cptr2[lom]){
                 break;
             }
         }
-        const uint32_t & lom = lom0; /* ...and matches this many uint8_ts */
-        saved_ctr = ctr + lom;
 
-        /* compute CRC for matching segment and store in hash table */
+        /* compute CRCs for matching segment and store in hash table */
 
-        char * const cptr1b = historyPointer + ctr;
-        /* if we have gone beyond last_crc_index - go back */
-        const int j = (cptr1b + lom > hbuf_start + last_crc_index) ? last_crc_index - (cptr1b - hbuf_start)
-                                                                   : lom - 1;
-        ctr++;
+        /* if we have gone beyond enc->historyOffset - 3, go back */
+        const int j = (historyPointer + ctr + lom > hbuf_start + enc->historyOffset - 3) 
+                    ? enc->historyOffset - 3 - (historyPointer + ctr - hbuf_start)
+                    : lom - 1;
+        // for all triplets in matching part
         for (int i = 0; i < j; i++){
-            char * const cptr1a = historyPointer + ctr;
-
-            uint32_t crc3 = signature(cptr1a[0], cptr1a[1], cptr1a[2], crc_table);
-            /* save current entry */
-            hash_table[crc3] = cptr1a - hbuf_start;
-
-            /* point to next triplet */
-            ctr++;
+            uint32_t crc3 = signature(historyPointer[ctr+i+1], historyPointer[ctr+i+2], historyPointer[ctr+i+3], crc_table);
+            hash_table[crc3] = historyPointer + ctr + i + 1 - hbuf_start;
         }
-        ctr = saved_ctr;
+        ctr += lom;
 
         /* encode copy_offset and insert into output buffer */
 
