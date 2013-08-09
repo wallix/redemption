@@ -206,9 +206,7 @@ namespace FastPath {
             if (stream.size() < 1)
                 trans.recv(&stream.end, 1);
 
-            uint8_t byte;
-
-            byte = stream.in_uint8();
+            uint8_t byte = stream.in_uint8();
 
             int action = byte & 0x03;
             if (action != 0) {
@@ -221,18 +219,19 @@ namespace FastPath {
 
             trans.recv(&stream.end, 1);
 
-             uint16_t length;
-             byte = stream.in_uint8();
-             if (byte & 0x80){
-                 length = (byte & 0x7F) << 8;
-
+             uint16_t length = stream.in_uint8();
+             if (length & 0x80){
                  trans.recv(&stream.end, 1);
                  byte = stream.in_uint8();
-                 length += byte;
+                 length = (length & 0x7F) << 8 | byte;
              }
-             else{
-                 length = byte;
-             }
+
+            if (length < stream.size()){
+                LOG( LOG_ERR
+                   , "FastPath::ClientInputEventPDU_Recv: inconsistent length in header (length=%u)"
+                   , length);
+                throw Error(ERR_RDP_FASTPATH);
+            }
 
             trans.recv(&stream.end, length - stream.size());
 
