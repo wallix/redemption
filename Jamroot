@@ -259,6 +259,9 @@ unit-test test_x224 : tests/core/RDP/test_x224.cpp z openssl crypto dl libboost_
 unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_mppc_2 : tests/core/RDP/test_mppc_2.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_mppc_2 : tests/core/RDP/test_mppc_2.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_gcc : tests/core/RDP/test_gcc.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_gcc : tests/core/RDP/test_gcc.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
