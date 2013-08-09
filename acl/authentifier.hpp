@@ -15,7 +15,8 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010
-  Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou, Meng Tan
+  Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+             Raphael Zhou, Meng Tan
 
   Session related with ACL
   find out the next module to run from context reading
@@ -33,21 +34,142 @@
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"
 
-class SessionManager {
-    Inifile * ini;
-
+class KeepAlive {
     // Keep alive Variables
-    int  keepalive_grace_delay;
-    long keepalive_time;
-    long keepalive_renew_time;
-    bool check_keepalive;     // true when we are waiting for a positive response
-                              // false when positive response has been received and
-                              // timers have been set to new timers.
-    // Inactivity detection variables
-    bool check_inactivity;
+    int  grace_delay;
+    long timeout;
+    long renew_time;
+    bool wait_answer;     // true when we are waiting for a positive response
+                          // false when positive response has been received and
+                          // timers have been set to new timers.
+    uint32_t verbose;
+    bool connected;
+
+public:
+
+    KeepAlive(int _grace_delay, uint32_t verbose)
+        : grace_delay(_grace_delay)
+        , timeout(0)
+        , renew_time(0)
+        , wait_answer(false)
+        , verbose(verbose)
+        , connected(false)
+    {
+        LOG(LOG_INFO, "KEEP ALIVE FUNCTOR CONSTRUCTOR");
+    }
+    ~KeepAlive() {
+        LOG(LOG_INFO, "KEEP ALIVE FUNCTOR DESTRUCTOR");
+    }
+
+    bool is_started() {
+        return this->connected;
+    }
+    void start(time_t now) {
+        this->connected = true;
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "auth::start_keep_alive");
+        }
+        this->timeout    = now + 2*this->grace_delay;
+        this->renew_time = now + this->grace_delay;
+    }
+
+    bool check(time_t now, Inifile * ini) {
+        if (this->connected) {
+
+            // LOG(LOG_INFO, "now=%u timeout=%u  renew_time=%u wait_answer=%s grace_delay=%u", now, this->timeout, this->renew_time, this->wait_answer?"Y":"N", this->grace_delay);
+            // Keep alive timeout
+            if (now > this->timeout) {
+                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+                // mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+                return true;
+            }
+
+            // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
+            //     ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
+            //     ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
+
+            //Keepalive received positive response
+            if (this->wait_answer
+                && !ini->context_is_asked(AUTHID_KEEPALIVE)
+                && ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                if (this->verbose & 0x10) {
+                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+                }
+                this->timeout    = now + 2*this->grace_delay;
+                this->renew_time = now + this->grace_delay;
+                this->wait_answer = false;
+            }
+
+            // Keep alive asking for an answer from ACL
+            if (!this->wait_answer
+                && (now > this->renew_time)) {
+
+                this->wait_answer = true;
+
+                ini->context_ask(AUTHID_KEEPALIVE);
+            }
+        }
+        return false;
+    }
+
+};
+
+class Inactivity {
+    // Inactivity management
+    // let t be the timeout of the blocking select in session loop,
+    // the effective inactivity timeout detection will be between
+    // inactivity_timeout and inactivity_timeout + t.
+    // hence we should have t << inactivity_timeout.
     long prev_remain;
     time_t inactivity_timeout;
     time_t last_activity_time;
+
+    uint32_t verbose;
+public:
+    Inactivity(uint32_t max_tick, time_t start, uint32_t verbose)
+        : prev_remain(0)
+        , inactivity_timeout(max_tick?30*max_tick:10)
+        , last_activity_time(start)
+        , verbose(verbose)
+    {
+        LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
+    }
+    ~Inactivity() {
+        LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
+    }
+
+    bool check(time_t now, Transport & trans) {
+        if (trans.last_quantum_received == 0) {
+            if (now > this->last_activity_time + this->inactivity_timeout) {
+                LOG(LOG_INFO, "Session User inactivity : closing");
+                // mm.invoke_close_box("Connection closed on inactivity", signal, now);
+                return true;
+            }
+            // if (this->verbose & 0x10) {
+            //     long remain = this->last_activity_time + this->inactivity_timeout - now;
+            //     if ((remain / 10) != this->prev_remain
+            //         && (remain != this->inactivity_timeout)) {
+            //         this->prev_remain = remain / 10;
+            //         LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
+            //     }
+            // }
+        }
+        else {
+            this->last_activity_time = now;
+            trans.tick();
+            // if (this->verbose & 0x10) {
+            //     if (this->prev_remain != 0) {
+            //         LOG(LOG_INFO, "Session User inactivity : Timer reset");
+            //         this->prev_remain = 0;
+            //     }
+            // }
+        }
+        return false;
+    }
+};
+
+class SessionManager {
+    Inifile * ini;
 
 public:
     AclSerializer acl_serial;
@@ -61,15 +183,12 @@ public:
 
     uint32_t verbose;
 
+private:
+    KeepAlive keepalive;
+    Inactivity inactivity;
+public:
     SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
-        , keepalive_grace_delay(ini->globals.keepalive_grace_delay)
-        , keepalive_time(0)
-        , keepalive_renew_time(0)
-        , check_keepalive(false)
-        , check_inactivity(true)
-        , inactivity_timeout(ini->globals.max_tick?30*ini->globals.max_tick:10)
-        , last_activity_time(acl_start_time)
         , acl_serial(AclSerializer(ini, _auth_trans, ini->debug.auth))
         , lost_acl(false)
         , asked_remote_answer(false)
@@ -77,11 +196,12 @@ public:
         , start_time(start_time)
         , acl_start_time(acl_start_time)
         , verbose(ini->debug.auth)
+        , keepalive(KeepAlive(ini->globals.keepalive_grace_delay, ini->debug.auth))
+        , inactivity(Inactivity(ini->globals.max_tick, acl_start_time, ini->debug.auth))
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
         }
-        this->prev_remain = 0;
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
@@ -89,14 +209,6 @@ public:
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::~SessionManager");
         }
-    }
-
-    void start_keepalive(time_t now) {
-        if (this->verbose & 0x10) {
-            LOG(LOG_INFO, "auth::start_keep_alive");
-        }
-        this->keepalive_time       = now + 2*this->keepalive_grace_delay;
-        this->keepalive_renew_time = now + this->keepalive_grace_delay;
     }
 
 
@@ -114,6 +226,7 @@ public:
         if (mm.last_module) {
             // at a close box (mm.last_module is true),
             // we are only waiting for a stop signal
+            // and Authentifier should not exist anymore.
             return true;
         }
 
@@ -141,82 +254,16 @@ public:
             return true;
         }
 
-        // Keep alive
-        if (this->keepalive_time) {
-
-            // LOG(LOG_INFO, "now=%u keepalive_time=%u  keepalive_renew_time=%u check_keepalive=%s", now, this->keepalive_time, this->keepalive_renew_time, this->check_keepalive?"Y":"N");
-            // Keep alive timeout
-            if (now > this->keepalive_time) {
-                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                mm.invoke_close_box("Missed keepalive from ACL", signal, now);
-                return true;
-            }
-
-            // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
-            //     this->ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
-            //     this->ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
-
-            //Keepalive received positive response
-            if (this->check_keepalive
-                && !this->ini->context_is_asked(AUTHID_KEEPALIVE)
-                && this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                if (this->verbose & 0x10) {
-                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-                }
-                this->keepalive_time       = now + 2*this->keepalive_grace_delay;
-                this->keepalive_renew_time = now + this->keepalive_grace_delay;
-                this->check_keepalive = false;
-            }
-
-            // Keep alive asking for an answer from ACL
-            if (!this->check_keepalive
-                && (now > this->keepalive_renew_time)) {
-
-                this->check_keepalive = true;
-
-                this->ini->context_ask(AUTHID_KEEPALIVE);
-                if (this->verbose & 0x10) {
-                    LOG(LOG_INFO, "asked_remote_answer=%s", this->asked_remote_answer?"Y":"N");
-                }
-            }
-        }   // if (this->keepalive_time)
-
-
-        //Inactivity management
-        // let t be the timeout of the blocking select in session loop,
-        // the effective inactivity timeout detection will be between
-        // inactivity_timeout and inactivity_timeout + t.
-        // hence we should have t << inactivity_timeout.
-        // for now, check_inactivity is not necessary but it
-        // indicates that this part of code is about inactivity management
-        if (this->check_inactivity) {
-            if (trans.last_quantum_received == 0) {
-                if (now > this->last_activity_time + this->inactivity_timeout) {
-                    LOG(LOG_INFO, "Session User inactivity : closing");
-                    mm.invoke_close_box("Connection closed on inactivity", signal, now);
-                    return true;
-                }
-                if (this->verbose & 0x10) {
-                    long remain = this->last_activity_time + this->inactivity_timeout - now;
-                    if ((remain / 10) != this->prev_remain
-                        && (remain != this->inactivity_timeout)) {
-                        this->prev_remain = remain / 10;
-                        LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
-                    }
-                }
-            }
-            else {
-                this->last_activity_time = now;
-                trans.tick();
-                if (this->verbose & 0x10) {
-                    if (this->prev_remain != 0) {
-                        LOG(LOG_INFO, "Session User inactivity : Timer reset");
-                        this->prev_remain = 0;
-                    }
-                }
-            }
+        // Keep Alive
+        if (this->keepalive.check(now, this->ini)) {
+            mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+            return true;
         }
-
+        // Inactivity management
+        if (this->inactivity.check(now, trans)) {
+            mm.invoke_close_box("Connection closed on inactivity", signal, now);
+            return true;
+        }
 
         // Manage module (refresh or next)
         TODO("Check the needs and reference of this->asked_remote_answer. "
@@ -263,8 +310,8 @@ public:
                         throw e;
                     }
                 }
-                if ((this->keepalive_time == 0) && mm.connected) {
-                    this->start_keepalive(now);
+                if (!this->keepalive.is_started() && mm.connected) {
+                    this->keepalive.start(now);
 
                     mm.record();
                 }
@@ -320,7 +367,8 @@ public:
 
 };
 
-class PauseRecordFunctor {
+
+class PauseRecord {
     // Stop record on inactivity Variables
     bool stop_record_inactivity;
     time_t stop_record_time;
@@ -328,15 +376,15 @@ class PauseRecordFunctor {
 
 public:
 
-    PauseRecordFunctor()
+    PauseRecord(time_t timeout)
         : stop_record_inactivity(false)
-        , stop_record_time(30)               // stop recording on 30 seconds of inactivity
+        , stop_record_time((timeout > 30)?timeout:30)
         , last_record_activity_time(0)
     {
     }
-    ~PauseRecordFunctor() {}
+    ~PauseRecord() {}
 
-    bool operator()(time_t now, Front & front) {
+    void check(time_t now, Front & front) {
         // Procedure which stops the recording on inactivity
         if (this->last_record_activity_time == 0) this->last_record_activity_time = now;
         if ((front.trans->last_quantum_received == 0)
@@ -351,7 +399,7 @@ public:
             this->last_record_activity_time = now;
             front.trans->reset_quantum_sent();
             // Here we only reset the quantum sent
-            // because Check will already reset the
+            // because Check() will already reset the
             // quantum received when checking for inactivity
             if (this->stop_record_inactivity) {
                 this->stop_record_inactivity = false;
@@ -359,7 +407,6 @@ public:
                 // resume capture
             }
         }
-        return true;
     }
 };
 

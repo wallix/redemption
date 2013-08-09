@@ -542,7 +542,7 @@ struct Inifile : public FieldObserver {
 
     // Section "video"
     struct {
-        unsigned capture_flags;  // 1 PNG capture, 2 WRM
+        unsigned capture_flags;   // 1 PNG capture, 2 WRM
         // video opt from capture_flags
         bool capture_png;
         bool capture_wrm;
@@ -550,18 +550,18 @@ struct Inifile : public FieldObserver {
         bool capture_ocr;
 
         unsigned ocr_interval;
-        unsigned png_interval;   // time between 2 png captures (in 1/10 seconds)
+        unsigned png_interval;    // time between 2 png captures (in 1/10 seconds)
         unsigned capture_groupid;
-        unsigned frame_interval; // time between 2 frame captures (in 1/100 seconds)
-        unsigned break_interval; // time between 2 wrm movies (in seconds)
-        unsigned png_limit;    // number of png captures to keep
+        unsigned frame_interval;  // time between 2 frame captures (in 1/100 seconds)
+        unsigned break_interval;  // time between 2 wrm movies (in seconds)
+        unsigned png_limit;       // number of png captures to keep
         char replay_path[1024];
 
-        int l_bitrate;         // bitrate for low quality
-        int l_framerate;       // framerate for low quality
-        int l_height;          // height for low quality
-        int l_width;           // width for low quality
-        int l_qscale;          // qscale (parameter given to ffmpeg) for low quality
+        int l_bitrate;            // bitrate for low quality
+        int l_framerate;          // framerate for low quality
+        int l_height;             // height for low quality
+        int l_width;              // width for low quality
+        int l_qscale;             // qscale (parameter given to ffmpeg) for low quality
 
         // Same for medium quality
         int m_bitrate;
@@ -580,6 +580,9 @@ struct Inifile : public FieldObserver {
         char hash_path[1024];
         char record_tmp_path[1024];
         char record_path[1024];
+
+        bool     inactivity_pause;
+        unsigned inactivity_timeout;
     } video;
 
     // Section "debug"
@@ -852,6 +855,9 @@ public:
         pathncpy(this->video.hash_path,       HASH_PATH,       sizeof(this->video.hash_path));
         pathncpy(this->video.record_path,     RECORD_PATH,     sizeof(this->video.record_path));
         pathncpy(this->video.record_tmp_path, RECORD_TMP_PATH, sizeof(this->video.record_tmp_path));
+
+        this->video.inactivity_pause   = false;
+        this->video.inactivity_timeout = 300;
         // End section "video"
 
 

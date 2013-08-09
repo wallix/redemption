@@ -64,7 +64,30 @@ struct rdp_mppc_dec
 
 
 static uint8_t HuffLenLEC[] = {
-0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x8, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x8, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x8, 0x9, 0x9, 0xa, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0x9, 0xa, 0x9, 0xa, 0x9, 0x9, 0x9, 0xa, 0xa, 0x9, 0xa, 0x9, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x8, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0x7, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xd, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xb, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0x8, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0x8, 0x7, 0xd, 0xd, 0x7, 0x7, 0xa, 0x7, 0x7, 0x6, 0x6, 0x6, 0x6, 0x5, 0x6, 0x6, 0x6, 0x5, 0x6, 0x5, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x8, 0x5, 0x6, 0x7, 0x7 }; 
+0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8,
+0x8, 0x8, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x8, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9,
+0x8, 0x9, 0x9, 0xa, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa,
+0x9, 0x9, 0xa, 0x9, 0xa, 0x9, 0xa, 0x9, 0x9, 0x9, 0xa, 0xa, 0x9, 0xa, 0x9, 0x9,
+
+0x8, 0x9, 0x9, 0x9, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa,
+0x9, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa,
+0x8, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa,
+0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9,
+
+0x7, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa,
+0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa,
+0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xd, 0xa, 0xa, 0xa, 0xa,
+0xa, 0xa, 0xb, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa,
+
+0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa,
+0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa,
+0x9, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0xa, 0x9, 0xa,
+0x8, 0x9, 0x9, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0xa, 0xa, 0xa, 0x9, 0x9, 0x8, 0x7,
+
+0xd, 0xd, 0x7, 0x7, 0xa, 0x7, 0x7, 0x6, 0x6, 0x6, 0x6, 0x5, 0x6, 0x6, 0x6, 0x5,
+0x6, 0x5, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6,
+0x8, 0x5, 0x6, 0x7, 0x7 
+}; 
 
 static uint16_t HuffIndexLEC[512] = { 
 0x007b, 0xff1f, 0xff0d, 0xfe27, 0xfe00, 0xff05, 0xff17, 0xfe68, 0x00c5, 0xfe07, 0xff13, 0xfec0, 0xff08, 0xfe18, 0xff1b, 0xfeb3, 0xfe03, 0x00a2, 0xfe42, 0xff10, 0xfe0b, 0xfe02, 0xfe91, 0xff19, 0xfe80, 0x00e9, 0xfe3a, 0xff15, 0xfe12, 0x0057, 0xfed7, 0xff1d, 0xff0e, 0xfe35, 0xfe69, 0xff22, 0xff18, 0xfe7a, 0xfe01, 0xff23, 0xff14, 0xfef4, 0xfeb4, 0xfe09, 0xff1c, 0xfec4, 0xff09, 0xfe60, 0xfe70, 0xff12, 0xfe05, 0xfe92, 0xfea1, 0xff1a, 0xfe0f, 0xff07, 0xfe56, 0xff16, 0xff02, 0xfed8, 0xfee8, 0xff1e, 0xfe1d, 0x003b, 0xffff, 0xff06, 0xffff, 0xfe71, 0xfe89, 0xffff, 0xffff, 0xfe2c, 0xfe2b, 0xfe20, 0xffff, 0xfebb, 0xfecf, 0xfe08, 0xffff, 0xfee0, 0xfe0d, 0xffff, 0xfe99, 0xffff, 0xfe04, 0xfeaa, 0xfe49, 0xffff, 0xfe17, 0xfe61, 0xfedf, 0xffff, 0xfeff, 0xfef6, 0xfe4c, 0xffff, 0xffff, 0xfe87, 0xffff, 0xff24, 0xffff, 0xfe3c, 0xfe72, 0xffff, 0xffff, 0xfece, 0xffff, 0xfefe, 0xffff, 0xfe23, 0xfebc, 0xfe0a, 0xfea9, 0xffff, 0xfe11, 0xffff, 0xfe82, 0xffff, 0xfe06, 0xfe9a, 0xfef5, 0xffff, 0xfe22, 0xfe4d, 0xfe5f, 0xffff, 0xff03, 0xfee1, 0xffff, 0xfeca, 0xfecc, 0xffff, 0xfe19, 0xffff, 0xfeb7, 0xffff, 0xffff, 0xfe83, 0xfe29, 0xffff, 0xffff, 0xffff, 0xfe6c, 0xffff, 0xfeed, 0xffff, 0xffff, 0xfe46, 0xfe5c, 0xfe15, 0xffff, 0xfedb, 0xfea6, 0xffff, 0xffff, 0xfe44, 0xffff, 0xfe0c, 0xffff, 0xfe95, 0xfefc, 0xffff, 0xffff, 0xfeb8, 0x16c9, 0xffff, 0xfef0, 0xffff, 0xfe38, 0xffff, 0xffff, 0xfe6d, 0xfe7e, 0xffff, 0xffff, 0xffff, 0xffff, 0xfe5b, 0xfedc, 0xffff, 0xffff, 0xfeec, 0xfe47, 0xfe1f, 0xffff, 0xfe7f, 0xfe96, 0xffff, 0xffff, 0xfea5, 0xffff, 0xfe10, 0xfe40, 0xfe32, 0xfebf, 0xffff, 0xffff, 0xfed4, 0xfef1, 0xffff, 0xffff, 0xffff, 0xfe75, 0xffff, 0xffff, 0xfe8d, 0xfe31, 0xffff, 0xfe65, 0xfe1b, 0xffff, 0xfee4, 0xfefb, 0xffff, 0xffff, 0xfe52, 0xffff, 0xfe0e, 0xffff, 0xfe9d, 0xfeaf, 0xffff, 0xffff, 0xfe51, 0xfed3, 0xffff, 0xff20, 0xffff, 0xfe2f, 0xffff, 0xffff, 0xfec1, 0xfe8c, 0xffff, 0xffff, 0xffff, 0xfe3f, 0xffff, 0xffff, 0xfe76, 0xffff, 0xfefa, 0xfe53, 0xfe25, 0xffff, 0xfe64, 0xfee5, 0xffff, 0xffff, 0xfeae, 0xffff, 0xfe13, 0xffff, 0xfe88, 0xfe9e, 0xffff, 0xfe43, 0xffff, 0xffff, 0xfea4, 0xfe93, 0xffff, 0xffff, 0xffff, 0xfe3d, 0xffff, 0xffff, 0xfeeb, 0xfed9, 0xffff, 0xfe14, 0xfe5a, 0xffff, 0xfe28, 0xfe7d, 0xffff, 0xffff, 0xfe6a, 0xffff, 0xffff, 0xff01, 0xfec6, 0xfec8, 0xffff, 0xffff, 0xfeb5, 0xffff, 0xffff, 0xffff, 0xfe94, 0xfe78, 0xffff, 0xffff, 0xffff, 0xfea3, 0xffff, 0xffff, 0xfeda, 0xfe58, 0xffff, 0xfe1e, 0xfe45, 0xfeea, 0xffff, 0xfe6b, 0xffff, 0xffff, 0xfe37, 0xffff, 0xffff, 0xffff, 0xfe7c, 0xfeb6, 0xffff, 0xffff, 0xfef8, 0xffff, 0xffff, 0xffff, 0xfec7, 0xfe9b, 0xffff, 0xffff, 0xffff, 0xfe50, 0xffff, 0xffff, 0xfead, 0xfee2, 0xffff, 0xfe1a, 0xfe63, 0xfe4e, 0xffff, 0xffff, 0xfef9, 0xffff, 0xfe73, 0xffff, 0xffff, 0xffff, 0xfe30, 0xfe8b, 0xffff, 0xffff, 0xfebd, 0xfe2e, 0x0100, 0xffff, 0xfeee, 0xfed2, 0xffff, 0xffff, 0xffff, 0xfeac, 0xffff, 0xffff, 0xfe9c, 0xfe84, 0xffff, 0xfe24, 0xfe4f, 0xfef7, 0xffff, 0xffff, 0xfee3, 0xfe62, 0xffff, 0xffff, 0xffff, 0xffff, 0xfe8a, 0xfe74, 0xffff, 0xffff, 0xfe3e, 0xffff, 0xffff, 0xffff, 0xfed1, 0xfebe, 0xffff, 0xffff, 0xfe2d, 0xffff, 0xfe4a, 0xfef3, 0xffff, 0xffff, 0xfedd, 0xfe5e, 0xfe16, 0xffff, 0xfe48, 0xfea8, 0xffff, 0xfeab, 0xfe97, 0xffff, 0xffff, 0xfed0, 0xffff, 0xffff, 0xfecd, 0xfeb9, 0xffff, 0xffff, 0xffff, 0xfe2a, 0xffff, 0xffff, 0xfe86, 0xfe6e, 0xffff, 0xffff, 0xffff, 0xfede, 0xffff, 0xffff, 0xfe5d, 0xfe4b, 0xfe21, 0xffff, 0xfeef, 0xfe98, 0xffff, 0xffff, 0xfe81, 0xffff, 0xffff, 0xffff, 0xfea7, 0xffff, 0xfeba, 0xfefd, 0xffff, 0xffff, 0xffff, 0xfecb, 0xffff, 0xffff, 0xfe6f, 0xfe39, 0xffff, 0xffff, 0xffff, 0xfe85, 0xffff, 0x010c, 0xfee6, 0xfe67, 0xfe1c, 0xffff, 0xfe54, 0xfeb2, 0xffff, 0xffff, 0xfe9f, 0xffff, 0xffff, 0xffff, 0xfe59, 0xfeb1, 0xffff, 0xfec2, 0xffff, 0xffff, 0xfe36, 0xfef2, 0xffff, 0xffff, 0xfed6, 0xfe77, 0xffff, 0xffff, 0xffff, 0xfe33, 0xffff, 0xffff, 0xfe8f, 0xfe55, 0xfe26, 0x010a, 0xff04, 0xfee7, 0xffff, 0x0121, 0xfe66, 0xffff, 0xffff, 0xffff, 0xfeb0, 0xfea0, 0xffff, 0x010f, 0xfe90, 0xffff, 0xffff, 0xfed5, 0xffff, 0xffff, 0xfec3, 0xfe34, 0xffff, 0xffff, 0xffff, 0xfe8e, 0xffff, 0x0111, 0xfe79, 0xfe41, 0x010b };
@@ -180,19 +203,6 @@ static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex)
 
 static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int len, int ctype, uint32_t* roff, uint32_t* rlen)
 {
-    uint8_t*    history_buf;    /* uncompressed data goes here */
-    uint8_t*    history_ptr;    /* points to next free slot in history_buf */
-    uint32_t    d32;            /* we process 4 compressed uint8_ts at a time */
-    uint16_t    copy_offset;    /* location to copy data from */
-    uint16_t    lom;            /* length of match */
-    uint8_t*    src_ptr;        /* used while copying compressed data */
-    uint8_t*    cptr;           /* points to next uint8_t in cbuf */
-    uint8_t     cur_uint8_t;       /* last uint8_t fetched from cbuf */
-    int       bits_left;      /* bits left in d34 for processing */
-    int       cur_bits_left;  /* bits left in cur_uint8_t for processing */
-    int       tmp;
-    uint32_t    i32;
-
     fprintf(stderr, "decompress_rdp_4:\n");
 
     if ((dec == NULL) || (dec->history_buf == NULL))
@@ -201,22 +211,20 @@ static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
         return false;
     }
 
-    src_ptr = 0;
-    cptr = cbuf;
-    copy_offset = 0;
-    lom = 0;
-    bits_left = 0;
-    cur_bits_left = 0;
-    d32 = 0;
-    cur_uint8_t = 0;
+    uint8_t*    src_ptr = 0;        /* used while copying compressed data */
+    uint8_t*    cptr = cbuf;        /* points to next uint8_t in cbuf */
+    uint16_t    copy_offset = 0;    /* location to copy data from */
+    uint16_t    lom = 0;            /* length of match */
+    int       bits_left = 0;        /* bits left in d34 for processing */
+    int cur_bits_left = 0;              /* bits left in cur_uint8_t for processing */
+    uint32_t    d32 = 0;            /* we process 4 compressed uint8_ts at a time */
+    uint8_t cur_uint8_t = 0;        /* last uint8_t fetched from cbuf */
     *rlen = 0;
 
-    /* get start of history buffer */
-    history_buf = dec->history_buf;
-
     /* get next free slot in history buffer */
-    history_ptr = dec->history_ptr;
-    *roff = history_ptr - history_buf;
+    /* points to next free slot in history_buf */
+    uint8_t* history_ptr = dec->history_ptr;
+    *roff = history_ptr - dec->history_buf;
 
     if (ctype & PACKET_AT_FRONT)
     {
@@ -230,7 +238,7 @@ static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     {
         /* re-init history buffer */
         history_ptr = dec->history_buf;
-        memset(history_buf, 0, RDP6_HISTORY_BUF_SIZE);
+        memset(dec->history_buf, 0, RDP6_HISTORY_BUF_SIZE);
         *roff = 0;
     }
 
@@ -245,10 +253,10 @@ static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     }
 
     /* load initial data */
-    tmp = 24;
+    int tmp = 24;
     while (cptr < cbuf + len)
     {
-        i32 = *cptr++;
+        uint32_t i32 = *cptr++;
         d32  |= i32 << tmp;
         bits_left += 8;
         tmp -= 8;
@@ -339,17 +347,17 @@ static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
         */
 
         /* how may bits do we need to get? */
-        tmp = 32 - bits_left;
+        int tmp2 = 32 - bits_left;
 
-        while (tmp)
+        while (tmp2)
         {
-            if (cur_bits_left < tmp)
+            if (cur_bits_left < tmp2)
             {
                 /* we have less bits than we need */
-                i32 = cur_uint8_t >> (8 - cur_bits_left);
+                uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                 d32 |= i32 << ((32 - bits_left) - cur_bits_left);
                 bits_left += cur_bits_left;
-                tmp -= cur_bits_left;
+                tmp2 -= cur_bits_left;
                 if (cptr < cbuf + len)
                 {
                     /* more compressed data available */
@@ -359,23 +367,23 @@ static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
                 else
                 {
                     /* no more compressed data available */
-                    tmp = 0;
+                    tmp2 = 0;
                     cur_bits_left = 0;
                 }
             }
-            else if (cur_bits_left > tmp)
+            else if (cur_bits_left > tmp2)
             {
                 /* we have more bits than we need */
-                d32 |= cur_uint8_t >> (8 - tmp);
-                cur_uint8_t <<= tmp;
-                cur_bits_left -= tmp;
+                d32 |= cur_uint8_t >> (8 - tmp2);
+                cur_uint8_t <<= tmp2;
+                cur_bits_left -= tmp2;
                 bits_left = 32;
                 break;
             }
             else
             {
                 /* we have just the right amount of bits */
-                d32 |= cur_uint8_t >> (8 - tmp);
+                d32 |= cur_uint8_t >> (8 - tmp2);
                 bits_left = 32;
                 if (cptr < cbuf + len)
                 {
@@ -535,18 +543,18 @@ static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
         ** get more bits before we restart the loop
         */
 
-        /* how may bits do we need to get? */
-        tmp = 32 - bits_left;
+        /* how many bits do we need to get? */
+        int tmp3 = 32 - bits_left;
 
-        while (tmp)
+        while (tmp3)
         {
-            if (cur_bits_left < tmp)
+            if (cur_bits_left < tmp3)
             {
                 /* we have less bits than we need */
-                i32 = cur_uint8_t >> (8 - cur_bits_left);
+                uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                 d32 |= i32 << ((32 - bits_left) - cur_bits_left);
                 bits_left += cur_bits_left;
-                tmp -= cur_bits_left;
+                tmp3 -= cur_bits_left;
                 if (cptr < cbuf + len)
                 {
                     /* more compressed data available */
@@ -556,23 +564,23 @@ static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
                 else
                 {
                     /* no more compressed data available */
-                    tmp = 0;
+                    tmp3 = 0;
                     cur_bits_left = 0;
                 }
             }
-            else if (cur_bits_left > tmp)
+            else if (cur_bits_left > tmp3)
             {
                 /* we have more bits than we need */
-                d32 |= cur_uint8_t >> (8 - tmp);
-                cur_uint8_t <<= tmp;
-                cur_bits_left -= tmp;
+                d32 |= cur_uint8_t >> (8 - tmp3);
+                cur_uint8_t <<= tmp3;
+                cur_bits_left -= tmp3;
                 bits_left = 32;
                 break;
             }
             else
             {
                 /* we have just the right amount of bits */
-                d32 |= cur_uint8_t >> (8 - tmp);
+                d32 |= cur_uint8_t >> (8 - tmp3);
                 bits_left = 32;
                 if (cptr < cbuf + len)
                 {
@@ -621,7 +629,6 @@ static inline int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     int       bits_left;      /* bits left in d32 for processing */
     int       cur_bits_left;  /* bits left in cur_uint8_t for processing */
     int       tmp;
-    uint32_t    i32;
 
     if ((dec == NULL) || (dec->history_buf == NULL))
     {
@@ -639,12 +646,9 @@ static inline int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     cur_uint8_t = 0;
     *rlen = 0;
 
-    /* get start of history buffer */
-    history_buf = dec->history_buf;
-
     /* get next free slot in history buffer */
     history_ptr = dec->history_ptr;
-    *roff = history_ptr - history_buf;
+    *roff = history_ptr - dec->history_buf;
 
     if (ctype & PACKET_AT_FRONT)
     {
@@ -658,7 +662,7 @@ static inline int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     {
         /* re-init history buffer */
         history_ptr = dec->history_buf;
-        memset(history_buf, 0, RDP6_HISTORY_BUF_SIZE);
+        memset(dec->history_buf, 0, RDP6_HISTORY_BUF_SIZE);
         *roff = 0;
     }
 
@@ -676,7 +680,7 @@ static inline int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     tmp = 24;
     while (cptr < cbuf + len)
     {
-        i32 = *cptr++;
+        uint32_t i32 = *cptr++;
         d32  |= i32 << tmp;
         bits_left += 8;
         tmp -= 8;
@@ -785,7 +789,7 @@ static inline int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
             if (cur_bits_left < tmp)
             {
                 /* we have less bits than we need */
-                i32 = cur_uint8_t >> (8 - cur_bits_left);
+                uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                 d32 |= i32 << ((32 - bits_left) - cur_bits_left);
                 bits_left += cur_bits_left;
                 tmp -= cur_bits_left;
@@ -1006,7 +1010,7 @@ static inline int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
             if (cur_bits_left < tmp)
             {
                 /* we have less bits than we need */
-                i32 = cur_uint8_t >> (8 - cur_bits_left);
+                uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                 d32 |= i32 << ((32 - bits_left) - cur_bits_left);
                 bits_left += cur_bits_left;
                 tmp -= cur_bits_left;
@@ -1075,7 +1079,6 @@ static inline int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
 
 static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int len, int ctype, uint32_t* roff, uint32_t* rlen)
 {
-    uint8_t*    history_buf;    /* uncompressed data goes here */
     uint16_t*   offset_cache;      /* Copy Offset cache */
     uint8_t*    history_ptr;    /* points to next free slot in bistory_buf */
     uint32_t    d32;            /* we process 4 compressed uint8_ts at a time */
@@ -1088,7 +1091,6 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     int       bits_left;      /* bits left in d32 for processing */
     int       cur_bits_left;  /* bits left in cur_uint8_t for processing */
     int       tmp, i;
-    uint32_t    i32;
 
     if ((dec == NULL) || (dec->history_buf == NULL))
     {
@@ -1106,21 +1108,18 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     cur_uint8_t = 0;
     *rlen = 0;
 
-    /* get start of history buffer */
-    history_buf = dec->history_buf;
-
     /* get start of offset_cache */
     offset_cache = dec->offset_cache;
 
     /* get next free slot in history buffer */
     history_ptr = dec->history_ptr;
-    *roff = history_ptr - history_buf;
+    *roff = history_ptr - dec->history_buf;
 
     if (ctype & PACKET_AT_FRONT)
     {
         /* slid history_buf and reset history_buf to middle */
-        memmove(history_buf, (history_buf + (history_ptr - history_buf - 32768)), 32768);
-        history_ptr = history_buf + 32768;
+        memmove(dec->history_buf, (dec->history_buf + (history_ptr - dec->history_buf - 32768)), 32768);
+        history_ptr = dec->history_buf + 32768;
         dec->history_ptr = history_ptr;
         *roff = 32768;
     }
@@ -1129,7 +1128,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     {
         /* re-init history buffer */
         history_ptr = dec->history_buf;
-        memset(history_buf, 0, RDP6_HISTORY_BUF_SIZE);
+        memset(dec->history_buf, 0, RDP6_HISTORY_BUF_SIZE);
         memset(offset_cache, 0, RDP6_OFFSET_CACHE_SIZE);
         *roff = 0;
     }
@@ -1148,7 +1147,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     tmp = 0;
     while (cptr < cbuf + len)
     {
-        i32 = *cptr++;
+        uint32_t i32 = *cptr++;
         d32  |= i32 << tmp;
         bits_left += 8;
         tmp += 8;
@@ -1174,6 +1173,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     ** start uncompressing data in cbuf
     */
 
+    uint32_t i32 = 0;
     while (bits_left >= 8)
     {
         /* Decode Huffman Code for Literal/EOS/CopyOffset */
@@ -1224,7 +1224,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
             if (cur_bits_left < tmp)
             {    
                 /* we have less bits than we need */
-                i32 = cur_uint8_t >> (8 - cur_bits_left);
+                uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                 d32 |= i32 << ((32 - bits_left) - cur_bits_left);
                 bits_left += cur_bits_left;
                 tmp -= cur_bits_left;
@@ -1289,7 +1289,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
 
         src_ptr = history_ptr - copy_offset;
         tmp = (lom > copy_offset) ? copy_offset : lom;
-        i32 = 0;
+        uint32_t i32 = 0;
         if (src_ptr >= dec->history_buf)
         {
             while(tmp > 0)
@@ -1339,7 +1339,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
             if (cur_bits_left < tmp)
             {
                 /* we have less bits than we need */
-                i32 = cur_uint8_t >> (8 - cur_bits_left);
+                uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                 d32 |= i32 << ((32 - bits_left) - cur_bits_left);
                 bits_left += cur_bits_left;
                 tmp -= cur_bits_left;
@@ -1386,7 +1386,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
     }/* end while (bits_left >= 8) */
 
     if(ctype & PACKET_FLUSHED)
-        *rlen = history_ptr - history_buf;
+        *rlen = history_ptr - dec->history_buf;
     else
         *rlen = history_ptr - dec->history_ptr;
 
@@ -1460,7 +1460,6 @@ static inline struct rdp_mppc_dec* mppc_dec_new(void)
     }
 
     ptr->history_buf = (uint8_t*) malloc(RDP6_HISTORY_BUF_SIZE);
-//    ZeroMemory(ptr->history_buf, RDP6_HISTORY_BUF_SIZE);
     memset(ptr->history_buf, 0, RDP6_HISTORY_BUF_SIZE);
 
     ptr->offset_cache = (uint16_t*) malloc(RDP6_OFFSET_CACHE_SIZE);
@@ -1891,6 +1890,390 @@ static inline void insert_16_bits(uint16_t _data16, char* outputBuffer, int & bi
     bits_left = k;
 }
 
+// 3.1.8 MPPC-Based Bulk Data Compression
+// ======================================
+
+// RDP uses a modified form of the Microsoft Point-to-Point Compression (MPPC)
+// Protocol to perform bulk compression of the PDU contents. This protocol is
+// described in [RFC2118]. There are two forms of bulk compression used at the
+// server and client:
+
+//    RDP 4.0: Based on the original MPPC Protocol, with an 8,192 byte history
+// buffer (section 3.1.8.4.1).
+
+//    RDP 5.0: A modified version of RDP 4.0 that uses a 65,536 byte history
+// buffer and implements rearranged Huffman style encoding for the bitstream
+// formats (section 3.1.8.4.2).
+
+// Both the server and client may operate as the sender of compressed data.
+// Server-to-client compression can be used for fast-path output data 
+// (see section 2.2.9.1.2.1), slow-path output data (see section 2.2.9.1.1)
+// or virtual channel data (see section 2.2.6.1). Client-to-server compression
+// can currently only be used for virtual channel data.
+
+// The client advertises the maximum compression type it supports in the
+// Client Info PDU (see section 2.2.1.11). In response the server selects
+// a compression type within the range advertised by the client.
+// This compression type is then used when performing all subsequent
+// server-to-client and client-to-server bulk compression.
+
+// The compression type usage is indicated on a per-PDU basis by compression
+// flags which are set in the header flags associated with each PDU. Besides
+// being used to indicate the compression type, the compression flags are also
+// used to communicate compression state changes which are required to maintain
+// state synchronization. The header used to transmit the compression flags
+// will depend on the type of data payload, such as fast-path output data
+// (see section 2.2.9.1.2.1), virtual channel data (section 2.2.6.1) 
+// or slow-path data (section 2.2.9.1.1).
+
+// 3.1.8.1 Abstract Data Model
+
+// The shared state necessary to support the transmission and reception of
+// compressed data between a client and server requires a history buffer and
+// a current offset into the history buffer (HistoryOffset). The size of the
+// history buffer depends on the compression type being used (8 kilobytes for
+// RDP 4.0 and 64 kilobytes for RDP 5.0). Any data that is being compressed MUST
+// be smaller in size than the history buffer. The HistoryOffset MUST
+// start initialized to zero while the history buffer MUST be filled with zeros.
+// After it has been initialized, the entire history buffer is immediately 
+// regarded as valid.
+
+// When compressing data, the sender MUST first check that the uncompressed
+// data can be inserted into the history buffer at the position in the history
+// buffer given by the HistoryOffset. If the data will not fit into the history
+// buffer (the sum of the HistoryOffset and the size of the uncompressed data
+// exceeds the size of the history buffer), the HistoryOffset MUST be reset to
+// the start of the history buffer (offset 0). If the data will fit into the
+// history buffer, the sender endpoint inserts the uncompressed data at the
+// position in the history buffer given by the HistoryOffset, and then advances
+// the HistoryOffset by the amount of data added.
+
+// As the receiver endpoint decompresses the data, it inserts the decompressed
+// data at the position in the history buffer given by its local copy
+// HistoryOffset. If a reset occurs, the sender endpoint MUST notify the target
+// receiver so it can reset its local state. In this way, the sender and
+// receiver endpoints maintain an exact replica of the history buffer and
+// HistoryOffset.
+
+// 3.1.8.2 Compressing Data
+// ------------------------
+
+// The uncompressed data is first inserted into the local history buffer at the
+// position indicated by HistoryOffset by the sender. The compressor then runs
+// through the length of newly added uncompressed data to be sent and produces
+// as output a sequence of literals (bytes to be sent uncompressed) or 
+// copy-tuples which consists of a <copy-offset, length-of-match> pair.
+
+// The copy-offset component of the copy-tuple is an index into HistoryBuffer
+// (counting backwards from the current byte being compressed in the history
+// buffer towards the start of the buffer) where there is a match to the data
+// to be sent. The length-of-match component is the length of that match in
+// bytes, and MUST be larger than 2 (section 3.1.8.4.1.2.2 and 3.1.8.4.2.2.2).
+// If the resulting data is not smaller than the original bytes (that is, 
+// expansion instead of compression results), then this results in a flush
+// and the data is sent uncompressed so as never to send more data than the
+// original uncompressed bytes.
+
+// In this way the compressor aims to reduce the size of data that needs to be
+// transmitted. For example, consider the following string.
+
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+
+// The compressor produces the following:
+
+// for.whom.the.bell.tolls,<16,15>.<40,4><19,3>e!
+
+// The <16,15> tuple is the compression of '.the.bell.tolls' and <40,4> is 
+// 'for.', <19,3> gives 'the'.
+
+// The expansion of a copy-tuple MUST use a "replicating copy". A replicating
+// copy is implemented using the following pseudocode.
+
+// SrcPtr = HistoryPtr - CopyOffset;
+
+// while (LengthOfMatch > 0)
+// {
+//    *HistoryPtr = *SrcPtr;
+//
+//    SrcPtr = SrcPtr + 1;
+//    HistoryPtr = HistoryPtr + 1;
+//
+//    LengthOfMatch = LengthOfMatch - 1;
+// }
+
+// For example, consider the following compressed stream.
+
+// Xcd<2,4>YZ
+
+// Using a replicating copy, this is correctly decompressed to
+
+// XcdcdcdYZ
+
+// Literals and copy-tuples are encoded using the scheme described in section 
+// 3.1.8.4.1 or 3.1.8.4.2 (the scheme used depends on whether RDP 4.0 or 5.0 
+// bulk compression is being used).
+
+// 3.1.8.2.1 Setting the Compression Flags
+
+// The sender MUST always specify the compression flags associated with a
+// compressed payload. These flags MUST be set in the header field appropriate
+// to the type of data payload, such as fast-path output data (see section
+// 2.2.9.1.2.1), virtual channel data (see section 2.2.6.1), or slow-path
+// output data (see section 2.2.9.1.1).
+
+// The compression flags are produced by performing a logical OR operation of
+// the compression type with one or more of the following flags.
+
+// 
+// +------------------------+--------------------------------------------------+
+// | Compression flag       | Meaning                                          | 
+// +------------------------+--------------------------------------------------+
+// | PACKET_COMPRESSED 0x20 | Used to indicate that the data is compressed.    |
+// |                        | This flag is equivalent to MPPC bit C (for more  |
+// |                        | information see [RFC2118] section 3.1). This flag|
+// |                        | MUST be set when compression of the data was     |
+// |                        | successful.                                      |
+// +------------------------+--------------------------------------------------+
+// | PACKET_AT_FRONT 0x40   | Used to indicate that the decompressed data MUST be placed at the beginning of the local history buffer. This flag is equivalent to MPPC bit B (for more information see [RFC2118] section 3.1). This flag MUST be set in conjunction with the PACKET_COMPRESSED (0x20) flag. There are two conditions on the "compressor-side" that generate this scenario: (1) this is the first packet to be compressed, and (2) the data to be compressed will not fit at the end of the history buffer but instead needs to be placed at the start of the history buffer.
+// +------------------------+--------------------------------------------------+
+// | PACKET_FLUSHED 0x80    | Used to indicate that the decompressor MUST reinitialized the history buffer (by filling it with zeros) and reset the HistoryOffset to zero. After it has been reinitialized, the entire history buffer is immediately regarded as valid. This flag is equivalent to MPPC bit A (for more information see [RFC2118] section 3.1). If the PACKET_COMPRESSED (0x20) flag is also present, then the PACKET_FLUSHED flag MUST be processed first.
+// +------------------------+--------------------------------------------------+
+
+// Data that is tagged as compressed (using the PACKET_COMPRESSED flag) MUST NOT be larger in size than the original data. This implies that in a minority of cases it is possible for compressed data to be the same size as the original data, and still be regarded as compressed. In effect, the statement that "data is compressed" simply implies that the data is encoded using a particular scheme, and that a decoder (or decompressor) is required to obtain the original data.
+
+// 3.1.8.2.2 Operation of the Bulk Compressor
+
+// The flowchart in the following figure illustrates the general operation of the bulk compressor and the production of the compression flags described in section 3.1.8.2.1.
+
+// The constructs that follow are used throughout the flowchart.
+
+//    Flags: The compression flags.
+
+//    SrcData: The source bytes to be passed to the compressor.
+
+//    HistoryBuffer: The history buffer as described in section 3.1.8.1.
+
+//    HistoryOffset: The current offset into the history buffer as described in section 3.1.8.1.
+
+//    HistoryPtr: A pointer to the current byte in the history buffer which is being encoded.
+
+//    OutputBuffer: The output buffer that will contain the encoded bytes.
+
+// 3.1.8.2.3 Data Compression Example
+
+// This example is based on the flowchart in the preceding figure that describes the operation of the bulk compressor.
+
+// Source Data (ANSI characters):
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+
+// HistoryPtr = 0
+// HistoryOffset = 0
+
+// (1) Copy the source data to the history buffer.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+// ^ (HistoryPtr = 0)
+
+// HistoryOffset = 49
+
+// Output Buffer:
+// <empty>
+
+// (2) No match larger than 2 characters found at the current position. Add the ANSI character at HistoryPtr ('f') to the output buffer and advance HistoryPtr.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//  ^ (HistoryPtr = 1)
+
+// Output Buffer:
+// f
+
+// (3) No match larger than 2 characters found at the current position. Add the ANSI character at HistoryPtr ('o') to the output buffer and advance HistoryPtr.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//   ^ (HistoryPtr = 2)
+
+// Output Buffer:
+// fo
+
+// (4) No match larger than 2 characters found at the current position. Add the ANSI character at HistoryPtr ('r') to the output buffer and advance HistoryPtr.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//    ^ (HistoryPtr = 3)
+
+// Output Buffer:
+// for
+
+// (5) No match larger than 2 characters found at the current position. Add the ANSI character at HistoryPtr ('.') to the output buffer and advance HistoryPtr.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//    ^ (HistoryPtr = 4)
+
+// Output Buffer:
+// for.
+
+// For the sake of brevity, we skip the next 19 steps where we just add ANSI characters to the output buffer.
+
+// (6) Current value of HistoryPtr is 23. No match larger than 2 characters found at the current position. Add the ANSI character at HistoryPtr (',') to the output buffer and advance HistoryPtr.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//                        ^ (HistoryPtr = 24)
+
+// Output Buffer:
+// for.whom.the.bell.tolls,
+
+// (7) We find a match in the history buffer at position 8 of length 15 characters (".the.bell.tolls"). Encode the copy-tuple and add it to the output buffer and advance HistoryPtr by the size of the match. Recall from section 3.1.8.2 that the copy-offset component of the copy-tuple is an index into HistoryBuffer (counting backwards from the HistoryPtr towards the start of the buffer) where there is a match to the data to be sent.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//                                       ^ (HistoryPtr = 39)
+
+// Output Buffer:
+// for.whom.the.bell.tolls,<16,15>
+
+// (8) No match larger than 2 characters found at the current position. Add the ANSI character at HistoryPtr ('.') to the output buffer and advance HistoryPtr.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//                                        ^ (HistoryPtr = 40)
+
+// Output Buffer:
+// for.whom.the.bell.tolls,<16,15>.
+
+// (9) We find a match in the history buffer at position 0 of length 4 characters ("for."). Encode the copy-tuple and add it to the output buffer and advance HistoryPtr by the size of the match.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//                                            ^ (HistoryPtr = 44)
+
+// Output Buffer:
+// for.whom.the.bell.tolls,<16,15>.<40,4>
+
+// (10) We find a match in the history buffer at position 25 of length 3 characters ("the"). Encode the copy-tuple and add it to the output buffer and advance HistoryPtr by the size of the match.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//                                               ^ (HistoryPtr = 47)
+
+// Output Buffer:
+// for.whom.the.bell.tolls,<16,15>.<40,4><19,3>
+
+// (11) No match larger than 2 characters found at the current position. Add the ANSI character at HistoryPtr ('e') to the output buffer and advance HistoryPtr.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//                                                ^ (HistoryPtr = 48)
+
+// Output Buffer:
+// for.whom.the.bell.tolls,<16,15>.<40,4><19,3>e
+
+// (12) No match larger than 2 characters found at the current position. Add the ANSI character at HistoryPtr ('!') to the output buffer and advance HistoryPtr.
+
+// History Buffer:
+// 0         1         2         3         4
+// 012345678901234567890123456789012345678901234567890
+// for.whom.the.bell.tolls,.the.bell.tolls.for.thee!
+//                                                 ^ (HistoryPtr = 49)
+
+// Output Buffer:
+// for.whom.the.bell.tolls,<16,15>.<40,4><19,3>e!
+
+// (13) HistoryPtr (49) is not less than HistoryOffset (49), so we add the PACKET_COMPRESSED flag to the output packet and send the Output Buffer.
+
+
+// 3.1.8.4.1 RDP 4.0
+// =================
+
+// 3.1.8.4.1.1 Literal Encoding
+
+// Literals are bytes sent uncompressed. If the value of a literal is below
+// 0x80, it is not encoded in any special manner. If the literal has a value
+// greater than 0x7F it is sent as the bits 10 followed by the lower 7 bits of
+// the literal. For example, 0x56 is transmitted as the binary value 01010110,
+// while 0xE7 is transmitted as the binary value 101100111.
+
+// 3.1.8.4.1.2 Copy-Tuple Encoding
+// ===============================
+
+// Copy-tuples consist of a <copy-offset> and <length-of-match> pair (see 
+// section 3.1.8.2 for more details).
+ 
+// 3.1.8.4.1.2.1 Copy-Offset Encoding
+// ----------------------------------
+
+// Encoding of the copy-offset value is performed according to the following 
+// table.
+
+// Copy-offset range    | Encoding (binary header + copy-offset bits)
+// 0...63               | 1111 + lower 6 bits of copy-offset
+// 64...319             | 1110 + lower 8 bits of (copy-offset – 64)
+// 320...8191           | 110 + lower 13 bits of (copy-offset – 320)
+
+// For example:
+
+//    A copy-offset value of 3 is encoded as the binary value 1111 000011.
+
+//    A copy-offset value of 128 is encoded as the binary value 1110 01000000.
+
+//    A copy-offset value of 1024 is encoded as the binary value 110 0001011000000.
+
+// A copy-offset value MUST be followed by a length-of-match (L-o-M) value.
+
+// 3.1.8.4.1.2.2 Length-of-Match Encoding
+// --------------------------------------
+
+// Encoding of the length-of-match (L-o-M) value is performed according to the
+// following table.
+
+// L-o-M range | Encoding (binary header + L-o-M bits)
+// ------------+-----------------------------------------
+// 3           |            0
+// 4...7       |           10 + 2 lower bits of L-o-M
+// 8...15      |          110 + 3 lower bits of L-o-M
+// 16...31     |         1110 + 4 lower bits of L-o-M
+// 32...63     |        11110 + 5 lower bits of L-o-M
+// 64...127    |       111110 + 6 lower bits of L-o-M
+// 128...255   |      1111110 + 7 lower bits of L-o-M
+// 256...511   |     11111110 + 8 lower bits of L-o-M
+// 512...1023  |    111111110 + 9 lower bits of L-o-M
+// 1024...2047 |   1111111110 + 10 lower bits of L-o-M
+// 2048...4095 |  11111111110 + 11 lower bits of L-o-M
+// 4096...8191 | 111111111110 + 12 lower bits of L-o-M
+
+// For example:
+//    A length-of-match value of 15 is encoded as the binary value 110 111.
+//    A length-of-match value of 120 is encoded as the binary value 111110 111000.
+//    A length-of-match value of 4097 is encoded as the binary value 111111111110 000000000001.
+
 
 /**
  * encode (compress) data using RDP 4.0 protocol
@@ -1908,6 +2291,65 @@ static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     return false;
 }
 
+
+// 3.1.8.4.2 RDP 5.0
+// =================
+
+// The rules for RDP 5.0 are very similar to those of RDP 4.0 (section 3.1.8.4.1).
+// RDP 5.0 has a history buffer size of 64 kilobytes, thus both endpoints MUST
+// maintain a 64 kilobyte window.
+
+// 3.1.8.4.2.1 Literal Encoding
+// ----------------------------
+
+// Literals are bytes sent uncompressed. If the value of a literal is below 
+// 0x80, it is not encoded in any special manner. If the literal has a value
+// greater than 0x7F it is sent as the bits 10 followed by the lower 7 bits of
+// the literal. For example, 0x56 is transmitted as the binary value 01010110,
+// while 0xE7 is transmitted as the binary value 101100111
+
+// 3.1.8.4.2.2 Copy-Tuple Encoding
+// -------------------------------
+
+// Copy-tuples consist of a <copy-offset> and <length-of-match> pair
+// (see section 3.1.8.2 for more details).
+
+
+// 3.1.8.4.2.2.1 Copy-Offset Encoding
+
+// Encoding of the copy-offset value is performed according to the following table.
+
+// Copy-offset range   | Encoding (binary header + copy-offset bits) 
+//     0...63          | 11111 + lower 6 bits of copy-offset         
+//   64...319          | 11110 + lower 8 bits of (copy-offset – 64)  
+// 320...2367          | 1110 + lower 11 bits of (copy-offset – 320) 
+// 2368+               | 110 + lower 16 bits of (copy-offset – 2368)
+
+// A copy-offset value MUST be followed by a length-of-match value.
+
+// 3.1.8.4.2.2.2 Length-of-Match Encoding
+
+// Encoding of the length-of-match (L-o-M) value is performed according 
+// to the following table.
+
+// L-o-M range  | Encoding (binary header + L-o-M bits)
+// -------------+----------------------------------------
+// 3            | 0
+// 4..7         | 10 + 2 lower bits of L-o-M
+// 8..15        | 110 + 3 lower bits of L-o-M
+// 16..31       | 1110 + 4 lower bits of L-o-M
+// 32..63       | 11110 + 5 lower bits of L-o-M
+// 64..127      | 111110 + 6 lower bits of L-o-M
+// 128..255     | 1111110 + 7 lower bits of L-o-M
+// 256..511     | 11111110 + 8 lower bits of L-o-M
+// 512..1023    | 111111110 + 9 lower bits of L-o-M
+// 1024..2047   | 1111111110 + 10 lower bits of L-o-M
+// 2048..4095   | 11111111110 + 11 lower bits of L-o-M
+// 4096..8191   | 111111111110 + 12 lower bits of L-o-M
+// 8192..16383  | 1111111111110 + 13 lower bits of L-o-M
+// 16384..32767 | 11111111111110 + 14 lower bits of L-o-M
+// 32768..65535 | 111111111111110 + 15 lower bits of L-o-M
+ 
 
 /**
  * encode (compress) data using RDP 5.0 protocol using hash table
