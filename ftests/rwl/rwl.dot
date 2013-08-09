@@ -1,26 +1,24 @@
 digraph rwl {
-	edge [arrowtail=dot arrowhead=open]
+	edge [arrowhead=open]
 
-	Target        -> DefinedTarget [label="TargetName"]
+	Start         -> PropName [arrowhead=obox arrowtail=box dir=both]
+	ClosedTarget  -> Stop [arrowhead=box arrowtail=obox dir=both]
+	PropName      -> Stop [arrowhead=box arrowtail=obox dir=both]
+	Start [style=filled shape=rect fontcolor=white color=black]
+	Stop  [style=filled shape=rect fontcolor=white color=black]
 
-	Prop          -> LinkProp      [label="Dot"]
-	Prop          -> Value         [label="MathOperator"]
-	Prop          -> PropSep       [label="(void)"]
 
 	DefinedTarget -> PropName      [label="OpenBlock"]
-	DefinedTarget -> ClosingTarget [label="CloseBlock"]
+	DefinedTarget -> ClosedTarget  [label="CloseBlock"]
 
-	ClosingTarget -> ClosingTarget [label="CloseBlock"]
-	ClosingTarget -> PropName      [label="Semicolon"]
-	ClosingTarget -> DefinedTarget [label="TargetName"]
-	ClosingTarget -> PropName      [label="(void)"]
+	ClosedTarget  -> ClosedTarget  [label="CloseBlock"]
+	ClosedTarget  -> PropName      [label="Semicolon"]
+	ClosedTarget  -> DefinedTarget [label="TargetName"]
+	ClosedTarget  -> PropName      [label="(void)"]
 
-	PropName      -> ClosingTarget [label="CloseBlock"]
+	PropName      -> ClosedTarget  [label="CloseBlock"]
 	PropName      -> DefinedTarget [label="TargetName"]
 	PropName      -> DefinedProp   [label="Identifier"]
-
-	Expression    -> Value         [label="MathOperator"]
-	Expression    -> PropSep       [label="(void)"]
 
 	DefinedProp   -> DefinedLink   [label="Dot"]
 	DefinedProp   -> ValueBlock    [label="TwoPoint"]
@@ -30,21 +28,28 @@ digraph rwl {
 	ValueBlock    -> PropName      [label="OpenBlock"]
 	ValueBlock    -> Value         [label="(void)"]
 
-	Value         -> EndString     [label="Quote/String"]
+	Value         -> EndString     [label="Quote / String"]
 	Value         -> PropOrFunc    [label="Identifier"]
-	Value         -> PropSep       [label="DefinedColor"]
+	Value         -> PropSep       [label="DefinedColor / HexColor"]
 	Value         -> Expression    [label="Integer"]
 	Value         -> Value         [label="OpenExpr"]
 
 	EndString     -> PropSep       [label="Quote"]
 
-	PropOrFunc    -> LinkProp      [label="Dot"]
 	PropOrFunc    -> Value         [label="OpenExpr"]
+	PropOrFunc    -> Prop          [label="(void)"]
 
 	PropSep       -> Value         [label="Comma"]
 	PropSep       -> Expression    [label="CloseExpr"]
 	PropSep       -> PropName      [label="Semicolon"]
-	PropSep       -> ClosingTarget [label="CloseBlock"]
+	PropSep       -> ClosedTarget  [label="CloseBlock"]
 
 	LinkProp      -> Prop          [label="Identifier"]
+
+	Prop          -> LinkProp      [label="Dot"]
+	Prop          -> Value         [label="MathOperator"]
+	Prop          -> PropSep       [label="(void)"]
+
+	Expression    -> Value         [label="MathOperator"]
+	Expression    -> PropSep       [label="(void)"]
 }

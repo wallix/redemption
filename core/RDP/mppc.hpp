@@ -16,12 +16,12 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Raphael Zhou
- 
+
    Implementation of Microsoft Point to Point Compression (MPPC) protocol
- 
+
    Based on code by Laxmikant Rashinkar & Jiten Pathy from FreeRDP project
    Copyright 2011 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
-   Copyright 2012 Jiten Pathy 
+   Copyright 2012 Jiten Pathy
 
 */
 
@@ -55,10 +55,10 @@ enum {
 
 struct rdp_mppc_dec
 {
-	uint8_t* history_buf;
-	uint16_t* offset_cache;
-	uint8_t* history_buf_end;
-	uint8_t* history_ptr;
+    uint8_t* history_buf;
+    uint16_t* offset_cache;
+    uint8_t* history_buf_end;
+    uint8_t* history_ptr;
 };
 
 
@@ -86,10 +86,10 @@ static uint8_t HuffLenLEC[] = {
 
 0xd, 0xd, 0x7, 0x7, 0xa, 0x7, 0x7, 0x6, 0x6, 0x6, 0x6, 0x5, 0x6, 0x6, 0x6, 0x5,
 0x6, 0x5, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6,
-0x8, 0x5, 0x6, 0x7, 0x7 
-}; 
+0x8, 0x5, 0x6, 0x7, 0x7
+};
 
-static uint16_t HuffIndexLEC[512] = { 
+static uint16_t HuffIndexLEC[512] = {
 0x007b, 0xff1f, 0xff0d, 0xfe27, 0xfe00, 0xff05, 0xff17, 0xfe68, 0x00c5, 0xfe07, 0xff13, 0xfec0, 0xff08, 0xfe18, 0xff1b, 0xfeb3, 0xfe03, 0x00a2, 0xfe42, 0xff10, 0xfe0b, 0xfe02, 0xfe91, 0xff19, 0xfe80, 0x00e9, 0xfe3a, 0xff15, 0xfe12, 0x0057, 0xfed7, 0xff1d, 0xff0e, 0xfe35, 0xfe69, 0xff22, 0xff18, 0xfe7a, 0xfe01, 0xff23, 0xff14, 0xfef4, 0xfeb4, 0xfe09, 0xff1c, 0xfec4, 0xff09, 0xfe60, 0xfe70, 0xff12, 0xfe05, 0xfe92, 0xfea1, 0xff1a, 0xfe0f, 0xff07, 0xfe56, 0xff16, 0xff02, 0xfed8, 0xfee8, 0xff1e, 0xfe1d, 0x003b, 0xffff, 0xff06, 0xffff, 0xfe71, 0xfe89, 0xffff, 0xffff, 0xfe2c, 0xfe2b, 0xfe20, 0xffff, 0xfebb, 0xfecf, 0xfe08, 0xffff, 0xfee0, 0xfe0d, 0xffff, 0xfe99, 0xffff, 0xfe04, 0xfeaa, 0xfe49, 0xffff, 0xfe17, 0xfe61, 0xfedf, 0xffff, 0xfeff, 0xfef6, 0xfe4c, 0xffff, 0xffff, 0xfe87, 0xffff, 0xff24, 0xffff, 0xfe3c, 0xfe72, 0xffff, 0xffff, 0xfece, 0xffff, 0xfefe, 0xffff, 0xfe23, 0xfebc, 0xfe0a, 0xfea9, 0xffff, 0xfe11, 0xffff, 0xfe82, 0xffff, 0xfe06, 0xfe9a, 0xfef5, 0xffff, 0xfe22, 0xfe4d, 0xfe5f, 0xffff, 0xff03, 0xfee1, 0xffff, 0xfeca, 0xfecc, 0xffff, 0xfe19, 0xffff, 0xfeb7, 0xffff, 0xffff, 0xfe83, 0xfe29, 0xffff, 0xffff, 0xffff, 0xfe6c, 0xffff, 0xfeed, 0xffff, 0xffff, 0xfe46, 0xfe5c, 0xfe15, 0xffff, 0xfedb, 0xfea6, 0xffff, 0xffff, 0xfe44, 0xffff, 0xfe0c, 0xffff, 0xfe95, 0xfefc, 0xffff, 0xffff, 0xfeb8, 0x16c9, 0xffff, 0xfef0, 0xffff, 0xfe38, 0xffff, 0xffff, 0xfe6d, 0xfe7e, 0xffff, 0xffff, 0xffff, 0xffff, 0xfe5b, 0xfedc, 0xffff, 0xffff, 0xfeec, 0xfe47, 0xfe1f, 0xffff, 0xfe7f, 0xfe96, 0xffff, 0xffff, 0xfea5, 0xffff, 0xfe10, 0xfe40, 0xfe32, 0xfebf, 0xffff, 0xffff, 0xfed4, 0xfef1, 0xffff, 0xffff, 0xffff, 0xfe75, 0xffff, 0xffff, 0xfe8d, 0xfe31, 0xffff, 0xfe65, 0xfe1b, 0xffff, 0xfee4, 0xfefb, 0xffff, 0xffff, 0xfe52, 0xffff, 0xfe0e, 0xffff, 0xfe9d, 0xfeaf, 0xffff, 0xffff, 0xfe51, 0xfed3, 0xffff, 0xff20, 0xffff, 0xfe2f, 0xffff, 0xffff, 0xfec1, 0xfe8c, 0xffff, 0xffff, 0xffff, 0xfe3f, 0xffff, 0xffff, 0xfe76, 0xffff, 0xfefa, 0xfe53, 0xfe25, 0xffff, 0xfe64, 0xfee5, 0xffff, 0xffff, 0xfeae, 0xffff, 0xfe13, 0xffff, 0xfe88, 0xfe9e, 0xffff, 0xfe43, 0xffff, 0xffff, 0xfea4, 0xfe93, 0xffff, 0xffff, 0xffff, 0xfe3d, 0xffff, 0xffff, 0xfeeb, 0xfed9, 0xffff, 0xfe14, 0xfe5a, 0xffff, 0xfe28, 0xfe7d, 0xffff, 0xffff, 0xfe6a, 0xffff, 0xffff, 0xff01, 0xfec6, 0xfec8, 0xffff, 0xffff, 0xfeb5, 0xffff, 0xffff, 0xffff, 0xfe94, 0xfe78, 0xffff, 0xffff, 0xffff, 0xfea3, 0xffff, 0xffff, 0xfeda, 0xfe58, 0xffff, 0xfe1e, 0xfe45, 0xfeea, 0xffff, 0xfe6b, 0xffff, 0xffff, 0xfe37, 0xffff, 0xffff, 0xffff, 0xfe7c, 0xfeb6, 0xffff, 0xffff, 0xfef8, 0xffff, 0xffff, 0xffff, 0xfec7, 0xfe9b, 0xffff, 0xffff, 0xffff, 0xfe50, 0xffff, 0xffff, 0xfead, 0xfee2, 0xffff, 0xfe1a, 0xfe63, 0xfe4e, 0xffff, 0xffff, 0xfef9, 0xffff, 0xfe73, 0xffff, 0xffff, 0xffff, 0xfe30, 0xfe8b, 0xffff, 0xffff, 0xfebd, 0xfe2e, 0x0100, 0xffff, 0xfeee, 0xfed2, 0xffff, 0xffff, 0xffff, 0xfeac, 0xffff, 0xffff, 0xfe9c, 0xfe84, 0xffff, 0xfe24, 0xfe4f, 0xfef7, 0xffff, 0xffff, 0xfee3, 0xfe62, 0xffff, 0xffff, 0xffff, 0xffff, 0xfe8a, 0xfe74, 0xffff, 0xffff, 0xfe3e, 0xffff, 0xffff, 0xffff, 0xfed1, 0xfebe, 0xffff, 0xffff, 0xfe2d, 0xffff, 0xfe4a, 0xfef3, 0xffff, 0xffff, 0xfedd, 0xfe5e, 0xfe16, 0xffff, 0xfe48, 0xfea8, 0xffff, 0xfeab, 0xfe97, 0xffff, 0xffff, 0xfed0, 0xffff, 0xffff, 0xfecd, 0xfeb9, 0xffff, 0xffff, 0xffff, 0xfe2a, 0xffff, 0xffff, 0xfe86, 0xfe6e, 0xffff, 0xffff, 0xffff, 0xfede, 0xffff, 0xffff, 0xfe5d, 0xfe4b, 0xfe21, 0xffff, 0xfeef, 0xfe98, 0xffff, 0xffff, 0xfe81, 0xffff, 0xffff, 0xffff, 0xfea7, 0xffff, 0xfeba, 0xfefd, 0xffff, 0xffff, 0xffff, 0xfecb, 0xffff, 0xffff, 0xfe6f, 0xfe39, 0xffff, 0xffff, 0xffff, 0xfe85, 0xffff, 0x010c, 0xfee6, 0xfe67, 0xfe1c, 0xffff, 0xfe54, 0xfeb2, 0xffff, 0xffff, 0xfe9f, 0xffff, 0xffff, 0xffff, 0xfe59, 0xfeb1, 0xffff, 0xfec2, 0xffff, 0xffff, 0xfe36, 0xfef2, 0xffff, 0xffff, 0xfed6, 0xfe77, 0xffff, 0xffff, 0xffff, 0xfe33, 0xffff, 0xffff, 0xfe8f, 0xfe55, 0xfe26, 0x010a, 0xff04, 0xfee7, 0xffff, 0x0121, 0xfe66, 0xffff, 0xffff, 0xffff, 0xfeb0, 0xfea0, 0xffff, 0x010f, 0xfe90, 0xffff, 0xffff, 0xfed5, 0xffff, 0xffff, 0xfec3, 0xfe34, 0xffff, 0xffff, 0xffff, 0xfe8e, 0xffff, 0x0111, 0xfe79, 0xfe41, 0x010b };
 
 static uint16_t LECHTab[] = {511, 0, 508, 448, 494, 347, 486, 482};
@@ -123,7 +123,7 @@ static inline uint16_t LOMhash(uint16_t key)
 {
     return ((key & 0x1f) ^ (key  >> 5) ^ (key >> 9));
 }
-            
+
 static inline uint16_t miniLEChash(uint16_t key)
 {
     uint16_t h;
@@ -153,9 +153,9 @@ static inline uint16_t getLOMindex(uint16_t huff)
 {
     uint16_t h = HuffIndexLOM[LOMhash(huff)];
     if((h ^ huff) >> 5)
-    {    
+    {
         return h & 0x1f;
-    }    
+    }
     else
         return HuffIndexLOM[LOMHTab[miniLOMhash(huff)]];
 }
@@ -165,10 +165,10 @@ static inline uint32_t transposebits(uint32_t x)
     x = ((x & 0x55555555) << 1) | ((x >> 1) & 0x55555555);
     x = ((x & 0x33333333) << 2) | ((x >> 2) & 0x33333333);
     x = ((x & 0x0f0f0f0f) << 4) | ((x >> 4) & 0x0f0f0f0f);
-    if((x >> 8) == 0) 
+    if((x >> 8) == 0)
         return x;
     x = ((x & 0x00ff00ff) << 8) | ((x >> 8) & 0x00ff00ff);
-    if((x >> 16) == 0) 
+    if((x >> 16) == 0)
         return x;
     x = ((x & 0x0000ffff) << 16) | ((x >> 16) & 0x0000ffff);
     return x;
@@ -176,16 +176,16 @@ static inline uint32_t transposebits(uint32_t x)
 
 static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset)
 {
-    *((uint32_t*)(offset_cache+2)) <<= 16; 
+    *((uint32_t*)(offset_cache+2)) <<= 16;
     *((uint32_t*)(offset_cache+2)) |= (*((uint32_t*)offset_cache) >> 16);
     *((uint32_t*)offset_cache) = (*((uint32_t*)offset_cache) << 16) | copy_offset;
 }
 
-static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) 
+static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex)
 {
     uint16_t t = *offset_cache;
     *offset_cache = *(offset_cache + LUTIndex);
-    *(offset_cache + LUTIndex) = t; 
+    *(offset_cache + LUTIndex) = t;
 }
 
 /**
@@ -1122,7 +1122,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
         dec->history_ptr = history_ptr;
         *roff = 32768;
     }
-    
+
     if (ctype & PACKET_FLUSHED)
     {
         /* re-init history buffer */
@@ -1221,7 +1221,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
         while (tmp)
         {
             if (cur_bits_left < tmp)
-            {    
+            {
                 /* we have less bits than we need */
                 uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                 d32 |= i32 << ((32 - bits_left) - cur_bits_left);
@@ -1241,7 +1241,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
                 }
             }
             else if (cur_bits_left > tmp)
-            {    
+            {
                 /* we have more bits than we need */
                 d32 |= cur_uint8_t >> (8 - tmp);
                 cur_uint8_t <<= tmp;
@@ -1297,7 +1297,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
                 tmp--;
             }
             while (lom > copy_offset)
-            {    
+            {
                 i32 = ((i32 >= copy_offset)) ? 0 : i32;
                 *history_ptr++ = *(src_ptr + i32++);
                 lom--;
@@ -1511,17 +1511,17 @@ enum {
 
 struct rdp_mppc_enc
 {
-	int   protocol_type;    /* PROTO_RDP_40, PROTO_RDP_50 etc */
-	char* historyBuffer;    /* contains uncompressed data */
-	char* outputBuffer;     /* contains compressed data */
-	char* outputBufferPlus;
-	int   historyOffset;    /* next free slot in historyBuffer */
-	int   buf_len;          /* length of historyBuffer, protocol dependant */
-	int   bytes_in_opb;     /* compressed bytes available in outputBuffer */
-	int   flags;            /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
-	int   flagsHold;
-	int   first_pkt;        /* this is the first pkt passing through enc */
-	uint16_t* hash_table;
+    int   protocol_type;    /* PROTO_RDP_40, PROTO_RDP_50 etc */
+    char* historyBuffer;    /* contains uncompressed data */
+    char* outputBuffer;     /* contains compressed data */
+    char* outputBufferPlus;
+    int   historyOffset;    /* next free slot in historyBuffer */
+    int   buf_len;          /* length of historyBuffer, protocol dependant */
+    int   bytes_in_opb;     /* compressed bytes available in outputBuffer */
+    int   flags;            /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
+    int   flagsHold;
+    int   first_pkt;        /* this is the first pkt passing through enc */
+    uint16_t* hash_table;
 };
 
 /* local defines */
@@ -1639,7 +1639,7 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 // formats (section 3.1.8.4.2).
 
 // Both the server and client may operate as the sender of compressed data.
-// Server-to-client compression can be used for fast-path output data 
+// Server-to-client compression can be used for fast-path output data
 // (see section 2.2.9.1.2.1), slow-path output data (see section 2.2.9.1.1)
 // or virtual channel data (see section 2.2.6.1). Client-to-server compression
 // can currently only be used for virtual channel data.
@@ -1656,7 +1656,7 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 // used to communicate compression state changes which are required to maintain
 // state synchronization. The header used to transmit the compression flags
 // will depend on the type of data payload, such as fast-path output data
-// (see section 2.2.9.1.2.1), virtual channel data (section 2.2.6.1) 
+// (see section 2.2.9.1.2.1), virtual channel data (section 2.2.6.1)
 // or slow-path data (section 2.2.9.1.1).
 
 // 3.1.8.1 Abstract Data Model
@@ -1668,7 +1668,7 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 // RDP 4.0 and 64 kilobytes for RDP 5.0). Any data that is being compressed MUST
 // be smaller in size than the history buffer. The HistoryOffset MUST
 // start initialized to zero while the history buffer MUST be filled with zeros.
-// After it has been initialized, the entire history buffer is immediately 
+// After it has been initialized, the entire history buffer is immediately
 // regarded as valid.
 
 // When compressing data, the sender MUST first check that the uncompressed
@@ -1694,7 +1694,7 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 // The uncompressed data is first inserted into the local history buffer at the
 // position indicated by HistoryOffset by the sender. The compressor then runs
 // through the length of newly added uncompressed data to be sent and produces
-// as output a sequence of literals (bytes to be sent uncompressed) or 
+// as output a sequence of literals (bytes to be sent uncompressed) or
 // copy-tuples which consists of a <copy-offset, length-of-match> pair.
 
 // The copy-offset component of the copy-tuple is an index into HistoryBuffer
@@ -1702,7 +1702,7 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 // buffer towards the start of the buffer) where there is a match to the data
 // to be sent. The length-of-match component is the length of that match in
 // bytes, and MUST be larger than 2 (section 3.1.8.4.1.2.2 and 3.1.8.4.2.2.2).
-// If the resulting data is not smaller than the original bytes (that is, 
+// If the resulting data is not smaller than the original bytes (that is,
 // expansion instead of compression results), then this results in a flush
 // and the data is sent uncompressed so as never to send more data than the
 // original uncompressed bytes.
@@ -1718,7 +1718,7 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 
 // for.whom.the.bell.tolls,<16,15>.<40,4><19,3>e!
 
-// The <16,15> tuple is the compression of '.the.bell.tolls' and <40,4> is 
+// The <16,15> tuple is the compression of '.the.bell.tolls' and <40,4> is
 // 'for.', <19,3> gives 'the'.
 
 // The expansion of a copy-tuple MUST use a "replicating copy". A replicating
@@ -1744,8 +1744,8 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 
 // XcdcdcdYZ
 
-// Literals and copy-tuples are encoded using the scheme described in section 
-// 3.1.8.4.1 or 3.1.8.4.2 (the scheme used depends on whether RDP 4.0 or 5.0 
+// Literals and copy-tuples are encoded using the scheme described in section
+// 3.1.8.4.1 or 3.1.8.4.2 (the scheme used depends on whether RDP 4.0 or 5.0
 // bulk compression is being used).
 
 // 3.1.8.2.1 Setting the Compression Flags
@@ -1759,9 +1759,9 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 // The compression flags are produced by performing a logical OR operation of
 // the compression type with one or more of the following flags.
 
-// 
+//
 // +------------------------+--------------------------------------------------+
-// | Compression flag       | Meaning                                          | 
+// | Compression flag       | Meaning                                          |
 // +------------------------+--------------------------------------------------+
 // | PACKET_COMPRESSED 0x20 | Used to indicate that the data is compressed.    |
 // |                        | This flag is equivalent to MPPC bit C (for more  |
@@ -1957,13 +1957,13 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
 // 3.1.8.4.1.2 Copy-Tuple Encoding
 // ===============================
 
-// Copy-tuples consist of a <copy-offset> and <length-of-match> pair (see 
+// Copy-tuples consist of a <copy-offset> and <length-of-match> pair (see
 // section 3.1.8.2 for more details).
- 
+
 // 3.1.8.4.1.2.1 Copy-Offset Encoding
 // ----------------------------------
 
-// Encoding of the copy-offset value is performed according to the following 
+// Encoding of the copy-offset value is performed according to the following
 // table.
 
 // Copy-offset range    | Encoding (binary header + copy-offset bits)
@@ -2035,7 +2035,7 @@ static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 // 3.1.8.4.2.1 Literal Encoding
 // ----------------------------
 
-// Literals are bytes sent uncompressed. If the value of a literal is below 
+// Literals are bytes sent uncompressed. If the value of a literal is below
 // 0x80, it is not encoded in any special manner. If the literal has a value
 // greater than 0x7F it is sent as the bits 10 followed by the lower 7 bits of
 // the literal. For example, 0x56 is transmitted as the binary value 01010110,
@@ -2052,17 +2052,17 @@ static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 
 // Encoding of the copy-offset value is performed according to the following table.
 
-// Copy-offset range   | Encoding (binary header + copy-offset bits) 
-//     0...63          | 11111 + lower 6 bits of copy-offset         
-//   64...319          | 11110 + lower 8 bits of (copy-offset – 64)  
-// 320...2367          | 1110 + lower 11 bits of (copy-offset – 320) 
+// Copy-offset range   | Encoding (binary header + copy-offset bits)
+//     0...63          | 11111 + lower 6 bits of copy-offset
+//   64...319          | 11110 + lower 8 bits of (copy-offset – 64)
+// 320...2367          | 1110 + lower 11 bits of (copy-offset – 320)
 // 2368+               | 110 + lower 16 bits of (copy-offset – 2368)
 
 // A copy-offset value MUST be followed by a length-of-match value.
 
 // 3.1.8.4.2.2.2 Length-of-Match Encoding
 
-// Encoding of the length-of-match (L-o-M) value is performed according 
+// Encoding of the length-of-match (L-o-M) value is performed according
 // to the following table.
 
 // L-o-M range  | Encoding (binary header + L-o-M bits)
@@ -2082,7 +2082,7 @@ static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 // 8192..16383  | 1111111111110 + 13 lower bits of L-o-M
 // 16384..32767 | 11111111111110 + 14 lower bits of L-o-M
 // 32768..65535 | 111111111111110 + 15 lower bits of L-o-M
- 
+
 
 static inline uint32_t signature(const uint8_t v1, const uint8_t v2, const uint8_t v3, const uint16_t (&crc_table)[256])
 {
@@ -2113,16 +2113,16 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     char* hbuf_start = enc->historyBuffer;  /* points to start of history buffer */
     char* outputBuffer = enc->outputBuffer;  /* points to enc->outputBuffer */
     memset(outputBuffer, 0, len);
-    
+
     enc->flags = PACKET_COMPR_TYPE_64K;
-    
+
     if (enc->first_pkt)
     {
         enc->first_pkt = 0;
         enc->flagsHold |= PACKET_AT_FRONT;
     }
 
-    if ((enc->historyOffset + len) > enc->buf_len)
+    if ((enc->historyOffset + len) >= enc->buf_len)
     {
         /* historyBuffer cannot hold srcData - rewind it */
         enc->historyOffset = 0;
@@ -2155,7 +2155,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         }
 
         /* store hash for first two entries in historyBuffer */
-        
+
         hash_table[signature(enc->historyBuffer[0], enc->historyBuffer[1], enc->historyBuffer[2], crc_table)] = 0;
         hash_table[signature(enc->historyBuffer[1], enc->historyBuffer[2], enc->historyBuffer[3], crc_table)] = 1;
 
@@ -2203,14 +2203,14 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
                 break;
             }
         }
-        
+
         int log_lom = 31 - __builtin_clz(lom);
 //        LOG(LOG_INFO, "log_lom=%u lom=%u\n", log_lom, lom);
 
         /* compute CRCs for matching segment and store in hash table */
 
         /* if we have gone beyond enc->historyOffset - 3, go back */
-        const int j = (historyPointer + ctr + lom > hbuf_start + enc->historyOffset - 3) 
+        const int j = (historyPointer + ctr + lom > hbuf_start + enc->historyOffset - 3)
                     ? enc->historyOffset - 3 - (historyPointer + ctr - hbuf_start)
                     : lom - 1;
         // for all triplets in matching part
@@ -2241,7 +2241,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         /* encode length of match and insert into output buffer */
 
         if (lom == 3){
-            /* binary header is 'zero'; since outputBuffer is zero filled, 
+            /* binary header is 'zero'; since outputBuffer is zero filled,
                all we have to do is update bits_left */
             bits_left--;
             if (bits_left == 0){
@@ -2436,6 +2436,5 @@ static inline void mppc_enc_free(struct rdp_mppc_enc* enc)
     free(enc->hash_table);
     free(enc);
 }
-
 
 #endif /* _REDEMPTION_CORE_RDP_MPPC_HPP_ */
