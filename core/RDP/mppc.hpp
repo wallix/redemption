@@ -1566,324 +1566,35 @@ static const uint16_t crc_table[256] =
     0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
 };
 
-/*****************************************************************************
-                     insert 2 bits into outputBuffer
-******************************************************************************/
-static inline void insert_2_bits(uint8_t _data, char* outputBuffer, int & bits_left, int & opb_index)
+
+static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
 {
-    if ((bits_left >= 3) && (bits_left <= 8))
+    if ((bits_left >= n+1) && (bits_left <= 8))
     {
-        const int i = bits_left - 2;
-        outputBuffer[opb_index] |= _data << i;
+        const int i = bits_left - n;
+        outputBuffer[opb_index] |= _data16 << i;
         bits_left = i;
     }
     else
     {
-        const int i = 2 - bits_left;
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= _data >> i;
-        outputBuffer[opb_index] |= _data << j;
-        bits_left = j;
+        const int i = n - bits_left;
+        if ((bits_left >= n - 7) && (bits_left <= 8))
+        {
+            const int j = 8 - i;
+            outputBuffer[opb_index++] |= _data16 >> i;
+            outputBuffer[opb_index] |= _data16 << j;
+            bits_left = j;
+        }
+        else
+        {
+            const int j = i - 8;
+            const int k = 8 - j;
+            outputBuffer[opb_index++] |= _data16 >> i;
+            outputBuffer[opb_index++] |= _data16 >> j;
+            outputBuffer[opb_index] |=  _data16 << k;
+            bits_left = k;
+        }
     }
-}
-
-/*****************************************************************************
-                     insert 3 bits into outputBuffer
-******************************************************************************/
-static inline void insert_3_bits(uint8_t _data, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    if ((bits_left >= 4) && (bits_left <= 8))
-    {
-        const int i = bits_left - 3;
-        outputBuffer[opb_index] |= _data << i;
-        bits_left = i;
-    }
-    else
-    {
-        const int i = 3 - bits_left;
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= _data >> i;
-        outputBuffer[opb_index] |= _data << j;
-        bits_left = j;
-    }
-}
-
-/*****************************************************************************
-                     insert 4 bits into outputBuffer
-******************************************************************************/
-static inline void insert_4_bits(uint8_t _data, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    if ((bits_left >= 5) && (bits_left <= 8))
-    {
-        const int i = bits_left - 4;
-        outputBuffer[opb_index] |= _data << i;
-        bits_left = i;
-    }
-    else
-    {
-        const int i = 4 - bits_left;
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= _data >> i;
-        outputBuffer[opb_index] |= _data << j;
-        bits_left = j;
-    }
-}
-
-/*****************************************************************************
-                     insert 5 bits into outputBuffer
-******************************************************************************/
-static inline void insert_5_bits(uint8_t _data, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    if ((bits_left >= 6) && (bits_left <= 8))
-    {
-        const int i = bits_left - 5;
-        outputBuffer[opb_index] |= _data << i;
-        bits_left = i;
-    }
-    else
-    {
-        const int i = 5 - bits_left;
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= _data >> i;
-        outputBuffer[opb_index] |= _data << j;
-        bits_left = j;
-    }
-}
-
-/*****************************************************************************
-                     insert 6 bits into outputBuffer
-******************************************************************************/
-static inline void insert_6_bits(uint8_t _data, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    if ((bits_left >= 7) && (bits_left <= 8))
-    {
-        const int i = bits_left - 6;
-        outputBuffer[opb_index] |= (_data << i);
-        bits_left = i;
-    }
-    else
-    {
-        const int i = 6 - bits_left;
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= (_data >> i);
-        outputBuffer[opb_index] |= (_data << j);
-        bits_left = j;
-    }
-}
-
-/*****************************************************************************
-                     insert 7 bits into outputBuffer
-******************************************************************************/
-static inline void insert_7_bits(uint8_t _data, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    if (bits_left == 8)
-    {
-        outputBuffer[opb_index] |= _data << 1;
-        bits_left = 1;
-    }
-    else
-    {
-        const int i = 7 - bits_left;
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= _data >> i;
-        outputBuffer[opb_index] |= _data << j;
-        bits_left = j;
-    }
-}
-
-/*****************************************************************************
-                     insert 8 bits into outputBuffer
-******************************************************************************/
-static inline void insert_8_bits(uint8_t _data, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    if (bits_left == 8)
-    {
-        outputBuffer[opb_index++] |= _data;
-        bits_left = 8;
-    }
-    else
-    {
-        const int i = 8 - bits_left;
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= _data >> i;
-        outputBuffer[opb_index] |= _data << j;
-        bits_left = j;
-    }
-}
-
-/*****************************************************************************
-                     insert 9 bits into outputBuffer
-******************************************************************************/
-static inline void insert_9_bits(uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    const int i = 9 - bits_left;
-    const int j = 8 - i;
-    outputBuffer[opb_index++] |= (char) (_data16 >> i);
-    outputBuffer[opb_index] |= (char) (_data16 << j);
-    bits_left = j;
-    if (bits_left == 0)
-    {
-        opb_index++;
-        bits_left = 8;
-    }
-}
-
-/*****************************************************************************
-                     insert 10 bits into outputBuffer
-******************************************************************************/
-static inline void insert_10_bits(uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    const int i = 10 - bits_left;
-    if ((bits_left >= 3) && (bits_left <= 8))
-    {
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index] |= (char) (_data16 << j);
-        bits_left = j;
-    }
-    else
-    {
-        const int j = i - 8;
-        const int k = 8 - j;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index++] |= (char) (_data16 >> j);
-        outputBuffer[opb_index] |= (char) (_data16 << k);
-        bits_left = k;
-    }
-}
-
-/*****************************************************************************
-                     insert 11 bits into outputBuffer
-******************************************************************************/
-static inline void insert_11_bits(uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    const int i = 11 - bits_left;
-    if ((bits_left >= 4) && (bits_left <= 8))
-    {
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index] |= (char) (_data16 << j);
-        bits_left = j;
-    }
-    else
-    {
-        const int j = i - 8;                               
-        const int k = 8 - j;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index++] |= (char) (_data16 >> j);
-        outputBuffer[opb_index] |= (char) (_data16 << k);
-        bits_left = k;
-    }
-}
-
-/*****************************************************************************
-                     insert 12 bits into outputBuffer
-******************************************************************************/
-static inline void insert_12_bits(uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    const int i = 12 - bits_left;
-    if ((bits_left >= 5) && (bits_left <= 8))
-    {
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index] |= (char) (_data16 << j);
-        bits_left = j;
-    }
-    else
-    {
-        const int j = i - 8;
-        const int k = 8 - j;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index++] |= (char) (_data16 >> j);
-        outputBuffer[opb_index] |= (char) (_data16 << k);
-        bits_left = k;
-    }
-}
-
-/*****************************************************************************
-                     insert 13 bits into outputBuffer
-******************************************************************************/
-static inline void insert_13_bits(uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    const int i = 13 - bits_left;
-    if ((bits_left >= 6) && (bits_left <= 8))
-    {
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index] |= (char) (_data16 << j);
-        bits_left = j;
-    }
-    else
-    {
-        const int j = i - 8;
-        const int k = 8 - j;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index++] |= (char) (_data16 >> j);
-        outputBuffer[opb_index] |= (char) (_data16 << k);
-        bits_left = k;
-    }
-}
-
-/*****************************************************************************
-                     insert 14 bits into outputBuffer
-******************************************************************************/
-static inline void insert_14_bits(uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    const int i = 14 - bits_left;
-    if ((bits_left >= 7) && (bits_left <= 8))
-    {
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index] |= (char) (_data16 << j);
-        bits_left = j;
-    }
-    else
-    {
-        const int j = i - 8;
-        const int k = 8 - j;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index++] |= (char) (_data16 >> j);
-        outputBuffer[opb_index] |= (char) (_data16 << k);
-        bits_left = k;
-    }
-}
-
-/*****************************************************************************
-                     insert 15 bits into outputBuffer
-******************************************************************************/
-static inline void insert_15_bits(uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    const int i = 15 - bits_left;
-    if (bits_left == 8)
-    {
-        const int j = 8 - i;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index] |= (char) (_data16 << j);
-        bits_left = j;
-    }
-    else
-    {
-        const int j = i - 8;
-        const int k = 8 - j;
-        outputBuffer[opb_index++] |= (char) (_data16 >> i);
-        outputBuffer[opb_index++] |= (char) (_data16 >> j);
-        outputBuffer[opb_index] |= (char) (_data16 << k);
-        bits_left = k;
-    }
-}
-
-/*****************************************************************************
-                     insert 16 bits into outputBuffer
-******************************************************************************/
-static inline void insert_16_bits(uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
-{
-    const int i = 16 - bits_left;
-    const int j = i - 8;
-    const int k = 8 - j;
-    outputBuffer[opb_index++] |= (char) (_data16 >> i);
-    outputBuffer[opb_index++] |= (char) (_data16 >> j);
-    outputBuffer[opb_index] |= (char) (_data16 << k);
-    bits_left = k;
 }
 
 // 3.1.8 MPPC-Based Bulk Data Compression
@@ -2367,14 +2078,14 @@ static inline uint32_t signature(const uint8_t v1, const uint8_t v2, const uint8
  * @return  true on success, false on failure
  */
 
+
+
 static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, int len)
 {
-    uint32_t ctr;
     uint32_t data_end;
 
     int opb_index = 0;                      /* index into outputBuffer */
     int bits_left = 8;                      /* unused bits in current uint8_t in outputBuffer */
-    uint32_t copy_offset = 0;               /* pattern match starts here... */
     uint16_t *hash_table = enc->hash_table; /* hash table for pattern matching */
     char* hbuf_start = enc->historyBuffer;  /* points to start of history buffer */
     char* outputBuffer = enc->outputBuffer;  /* points to enc->outputBuffer */
@@ -2402,7 +2113,8 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     /* point to start of data to be compressed */
     char * const historyPointer = &(enc->historyBuffer[enc->historyOffset]); /* points to first uint8_t of srcData in historyBuffer */
 
-    ctr = copy_offset = 0;
+    uint32_t ctr = 0;
+    uint32_t copy_offset = 0; /* pattern match starts here... */
 
     /* if we are at start of history buffer, do not attempt to compress */
     /* first 2 uint8_ts,because minimum LoM is 3                           */
@@ -2411,12 +2123,12 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         for (int x = 0; x < 2; x++){
             if (historyPointer[x] & 0x80){
                 /* insert encoded literal */
-                insert_2_bits(0x02, outputBuffer, bits_left, opb_index);
-                insert_7_bits(historyPointer[x] & 0x7F, outputBuffer, bits_left, opb_index);
+                insert_n_bits(2, 0x02, outputBuffer, bits_left, opb_index);
+                insert_n_bits(7, historyPointer[x] & 0x7F, outputBuffer, bits_left, opb_index);
             }
             else{
                 /* insert literal */
-                insert_8_bits(historyPointer[x], outputBuffer, bits_left, opb_index);
+                insert_n_bits(8, historyPointer[x], outputBuffer, bits_left, opb_index);
             }
         }
 
@@ -2456,12 +2168,12 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
             /* no match found; encode literal uint8_t */
             if (cptr1[0] & 0x80){
                 /* literal uint8_t >= 0x80 */
-                insert_2_bits(0x02, outputBuffer, bits_left, opb_index);
-                insert_7_bits(cptr1[0] & 0x7F, outputBuffer, bits_left, opb_index);
+                insert_n_bits(2, 0x02, outputBuffer, bits_left, opb_index);
+                insert_n_bits(7, cptr1[0] & 0x7F, outputBuffer, bits_left, opb_index);
             }
             else {
                 /* literal uint8_t < 0x80 */
-                insert_8_bits(cptr1[0], outputBuffer, bits_left, opb_index);
+                insert_n_bits(8, cptr1[0], outputBuffer, bits_left, opb_index);
             }
             ctr++;
             continue;
@@ -2474,6 +2186,9 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
                 break;
             }
         }
+        
+        int log_lom = 31 - __builtin_clz(lom);
+//        LOG(LOG_INFO, "log_lom=%u lom=%u\n", log_lom, lom);
 
         /* compute CRCs for matching segment and store in hash table */
 
@@ -2491,21 +2206,21 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         /* encode copy_offset and insert into output buffer */
 
         if (copy_offset <= 63) { /* (copy_offset >= 0) is always true */
-            insert_5_bits(0x1f, outputBuffer, bits_left, opb_index);
-            insert_6_bits(copy_offset & 0x3f, outputBuffer, bits_left, opb_index);
+            insert_n_bits(5, 0x1f, outputBuffer, bits_left, opb_index);
+            insert_n_bits(6, copy_offset & 0x3f, outputBuffer, bits_left, opb_index);
         }
         else if ((copy_offset >= 64) && (copy_offset <= 319)) {
-            insert_5_bits(0x1e, outputBuffer, bits_left, opb_index);
-            insert_8_bits(copy_offset - 64, outputBuffer, bits_left, opb_index);
+            insert_n_bits(5, 0x1e, outputBuffer, bits_left, opb_index);
+            insert_n_bits(8, copy_offset - 64, outputBuffer, bits_left, opb_index);
         }
         else if ((copy_offset >= 320) && (copy_offset <= 2367)){
-            insert_4_bits(0x0e, outputBuffer, bits_left, opb_index);
-            insert_11_bits(copy_offset - 320, outputBuffer, bits_left, opb_index);
+            insert_n_bits(4, 0x0e, outputBuffer, bits_left, opb_index);
+            insert_n_bits(11, copy_offset - 320, outputBuffer, bits_left, opb_index);
         }
         else{
             /* copy_offset is 2368+ */
-            insert_3_bits(0x06, outputBuffer, bits_left, opb_index);
-            insert_16_bits(copy_offset - 2368, outputBuffer, bits_left, opb_index);
+            insert_n_bits(3, 0x06, outputBuffer, bits_left, opb_index);
+            insert_n_bits(16, copy_offset - 2368, outputBuffer, bits_left, opb_index);
         }
         /* encode length of match and insert into output buffer */
 
@@ -2518,61 +2233,29 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
                 bits_left = 8;
             }
         }
-        else if ((lom >= 4) && (lom <= 7)){
-            insert_2_bits(0x02, outputBuffer, bits_left, opb_index);
-            insert_2_bits(lom - 4, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 8) && (lom <= 15)){
-            insert_3_bits(0x06, outputBuffer, bits_left, opb_index);
-            insert_3_bits(lom - 8, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 16) && (lom <= 31)){
-            insert_4_bits(0x0e, outputBuffer, bits_left, opb_index);
-            insert_4_bits(lom - 16, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 32) && (lom <= 63)){
-            insert_5_bits(0x1e, outputBuffer, bits_left, opb_index);
-            insert_5_bits(lom - 32, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 64) && (lom <= 127)){   
-            insert_6_bits(0x3e, outputBuffer, bits_left, opb_index);
-            insert_6_bits(lom - 64, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 128) && (lom <= 255)){
-            insert_7_bits(0x7e, outputBuffer, bits_left, opb_index);
-            insert_7_bits(lom - 128, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 256) && (lom <= 511)){
-            insert_8_bits(0xfe, outputBuffer, bits_left, opb_index);
-            insert_8_bits(lom - 256, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 512) && (lom <= 1023)){
-            insert_9_bits(0x1fe, outputBuffer, bits_left, opb_index);
-            insert_9_bits(lom - 512, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 1024) && (lom <= 2047)){
-            insert_10_bits(0x3fe, outputBuffer, bits_left, opb_index);
-            insert_10_bits(lom - 1024, outputBuffer, bits_left, opb_index);
+        else if ((lom >= 4) && (lom <= 2047)){
+            insert_n_bits(log_lom, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
+            insert_n_bits(log_lom, lom - (1 << log_lom), outputBuffer, bits_left, opb_index);
         }
         else if ((lom >= 2048) && (lom <= 4095)){
-            insert_11_bits(0x7fe, outputBuffer, bits_left, opb_index);
-            insert_11_bits(lom - 2048, outputBuffer, bits_left, opb_index);
+            insert_n_bits(11, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
+            insert_n_bits(11, lom - 2048, outputBuffer, bits_left, opb_index);
         }
         else if ((lom >= 4096) && (lom <= 8191)){
-            insert_12_bits(0xffe, outputBuffer, bits_left, opb_index);
-            insert_12_bits(lom - 4096, outputBuffer, bits_left, opb_index);
+            insert_n_bits(12, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
+            insert_n_bits(12, lom - 4096, outputBuffer, bits_left, opb_index);
         }
         else if ((lom >= 8192) && (lom <= 16383)){
-            insert_13_bits(0x1ffe, outputBuffer, bits_left, opb_index);
-            insert_13_bits(lom - 8192, outputBuffer, bits_left, opb_index);
+            insert_n_bits(13, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
+            insert_n_bits(13, lom - 8192, outputBuffer, bits_left, opb_index);
         }
         else if ((lom >= 16384) && (lom <= 32767)){
-            insert_14_bits(0x3ffe, outputBuffer, bits_left, opb_index);
-            insert_14_bits(lom - 16384, outputBuffer, bits_left, opb_index);
+            insert_n_bits(14, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
+            insert_n_bits(14, lom - 16384, outputBuffer, bits_left, opb_index);
         }
         else if ((lom >= 32768) && (lom <= 65535)){
-            insert_15_bits(0x7ffe, outputBuffer, bits_left, opb_index);
-            insert_15_bits(lom - 32768, outputBuffer, bits_left, opb_index);
+            insert_n_bits(15, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
+            insert_n_bits(15, lom - 32768, outputBuffer, bits_left, opb_index);
         }
     } /* end while (ctr < data_end) */
 
@@ -2580,12 +2263,12 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     while (len - ctr > 0)
     {
         if (srcData[ctr] & 0x80){
-            insert_2_bits(0x02, outputBuffer, bits_left, opb_index);
-            insert_7_bits(srcData[ctr] & 0x7F, outputBuffer, bits_left, opb_index);
+            insert_n_bits(2, 0x02, outputBuffer, bits_left, opb_index);
+            insert_n_bits(7, srcData[ctr] & 0x7F, outputBuffer, bits_left, opb_index);
         }
         else
         {
-            insert_8_bits(srcData[ctr], outputBuffer, bits_left, opb_index);
+            insert_n_bits(8, srcData[ctr], outputBuffer, bits_left, opb_index);
         }
         ctr++;
     }
