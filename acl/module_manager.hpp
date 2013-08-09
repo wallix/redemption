@@ -322,9 +322,8 @@ public:
             //                keep_alive = true;
             if (this->ini.context.auth_error_message.is_empty()) {
                 this->ini.context.auth_error_message.copy_c_str("End of connection");
-            }// seems strange ?
+            }
             LOG(LOG_INFO, "=================> MODULE_FROM_PROTOCOL");
-            // this->ini.context.selector.set(false);
             return this->get_mod_from_protocol();
         }
         // User authentication rejected : close message
@@ -377,28 +376,6 @@ public:
     {
         this->remove_mod();
         delete this->no_mod;
-    }
-
-    // Check movie start/stop/pause
-    void record()
-    {
-        if (this->ini.globals.movie.get()) {
-        TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)")
-            if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                this->front.start_capture(this->front.client_info.width
-                                   , this->front.client_info.height
-                                   , this->ini
-                                   );
-                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
-            }
-            else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
-                this->front.resume_capture();
-                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
-            }
-        }
-        else if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
-            this->front.pause_capture();
-        }
     }
 
     virtual void new_mod(int target_module, time_t now)
@@ -718,9 +695,31 @@ public:
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
             }
+        if (this->connected) this->record();
+        if (this->last_module) this->front.stop_capture();
     }
 
-
+    // Check movie start/stop/pause
+    void record()
+    {
+        if (this->ini.globals.movie.get()) {
+            //TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)") DONE ?
+            if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
+                this->front.start_capture(this->front.client_info.width
+                                   , this->front.client_info.height
+                                   , this->ini
+                                   );
+                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+            }
+            else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {
+                this->front.resume_capture();
+                this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
+            }
+        }
+        else if (this->front.capture_state == Front::CAPTURE_STATE_STARTED) {
+            this->front.pause_capture();
+        }
+    }
 
 };
 

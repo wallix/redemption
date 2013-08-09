@@ -127,6 +127,25 @@ public:
         }
     }
 
+    void pause_snapshot(const timeval & now) {
+        // Draw Pause message
+        time_t rawtime = now.tv_sec;
+        tm *ptm = localtime(&rawtime);
+        this->drawable.trace_pausetimestamp(*ptm);
+
+        if (this->conf.png_limit > 0){
+            if (this->trans.seqno >= this->conf.png_limit){
+                // unlink may fail, for instance if file does not exist, just don't care
+                sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
+            }
+            this->ImageCapture::flush();
+            this->trans.next();
+        }
+
+        this->drawable.clear_pausetimestamp();
+        this->start_static_capture = now;
+    }
+
     void breakpoint(const timeval & now)
     {
         time_t rawtime = now.tv_sec;

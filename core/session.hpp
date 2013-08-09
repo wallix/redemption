@@ -147,7 +147,7 @@ struct Session {
                 }
                 TODO("Looks like acl and mod can be unified into a common class, where events can happen")
                 TODO("move ptr_auth_event to acl")
-                if (this->acl && !this->acl->lost_acl) {
+                if (this->acl) {
                     this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
                 }
                 mm.mod->event.add_to_fd_set(rfds, max, timeout);
@@ -235,12 +235,11 @@ struct Session {
                             }
                         }
                         else {
-                            if (!this->acl->lost_acl && this->ptr_auth_event->is_set(rfds)) {
+                            if (this->ptr_auth_event->is_set(rfds)) {
                                 // acl received updated values
                                 this->acl->receive();
                             }
                         }
-
 
                         if (this->acl) {
                             run_session = this->acl->check(mm, now, front_trans, signal);
@@ -254,7 +253,6 @@ struct Session {
                                 delete this->acl;
                                 this->acl = NULL;
                             }
-                            this->front->stop_capture();
                         }
                     }
                 } catch (Error & e) {
