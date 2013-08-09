@@ -2233,29 +2233,9 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
                 bits_left = 8;
             }
         }
-        else if ((lom >= 4) && (lom <= 2047)){
+        else if ((lom >= 4) && (lom <= 65535)){
             insert_n_bits(log_lom, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
             insert_n_bits(log_lom, lom - (1 << log_lom), outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 2048) && (lom <= 4095)){
-            insert_n_bits(11, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
-            insert_n_bits(11, lom - 2048, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 4096) && (lom <= 8191)){
-            insert_n_bits(12, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
-            insert_n_bits(12, lom - 4096, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 8192) && (lom <= 16383)){
-            insert_n_bits(13, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
-            insert_n_bits(13, lom - 8192, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 16384) && (lom <= 32767)){
-            insert_n_bits(14, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
-            insert_n_bits(14, lom - 16384, outputBuffer, bits_left, opb_index);
-        }
-        else if ((lom >= 32768) && (lom <= 65535)){
-            insert_n_bits(15, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
-            insert_n_bits(15, lom - 32768, outputBuffer, bits_left, opb_index);
         }
     } /* end while (ctr < data_end) */
 
