@@ -1288,6 +1288,19 @@ struct Drawable
         }
     }
 
+    void clear_timestamp()
+    {
+        const uint8_t * tsave = this->timestamp_save;
+        int step = this->width * 3;
+        uint8_t* buf = this->data;
+        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+            memcpy(buf, tsave, ts_width*3);
+            tsave += ts_width*3;
+        }
+    }
+
+    TODO("Instead of copying the trace timestamp function (un clear timestamp) for pause, "
+         "we could just parametrize the position of the timestamp on the screen");
     void trace_pausetimestamp(tm & now)
     {
         char rawdate[size_str_timestamp];
@@ -1323,16 +1336,6 @@ struct Drawable
         }
     }
 
-    void clear_timestamp()
-    {
-        const uint8_t * tsave = this->timestamp_save;
-        int step = this->width * 3;
-        uint8_t* buf = this->data;
-        for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(buf, tsave, ts_width*3);
-            tsave += ts_width*3;
-        }
-    }
 };
 
 #endif
