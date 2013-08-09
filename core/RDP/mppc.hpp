@@ -1567,9 +1567,35 @@ static const uint16_t crc_table[256] =
 };
 
 
+static inline void new_insert_n_bits(int n, uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
+{
+    int bits_to_serialize = n;
+    if (bits_left >= bits_to_serialize+1){
+        const int i = bits_left - bits_to_serialize;
+        outputBuffer[opb_index] |= _data16 << i;
+        bits_left = i;
+    }
+    else {
+        outputBuffer[opb_index++] |= _data16 >> (bits_to_serialize - bits_left) ;
+        _data16 << (8 - bits_to_serialize + bits_left);
+        _data16 &= (0xFFFFFFFF >> (32 - (bits_to_serialize - bits_left)));
+        for (; bits_to_serialize >= 8 ; bits_to_serialize -= 8){
+            outputBuffer[opb_index++] = (_data16 >> (bits_to_serialize - 8));
+            _data16 &= (0xFFFFFFFF >> (32 - (bits_to_serialize - 8)));
+        }
+        outputBuffer[opb_index] = (bits_to_serialize > 0)?(_data16 << (8 - bits_to_serialize)):0;
+        bits_left = 8 - bits_to_serialize;
+    }
+}
+
 static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, int & bits_left, int & opb_index)
 {
-    if ((bits_left >= n+1) && (bits_left <= 8))
+//    if (n == 2) {
+//        new_insert_n_bits(n, _data16, outputBuffer, bits_left, opb_index);
+//        return;
+//    }
+    
+    if (bits_left >= n+1)
     {
         const int i = bits_left - n;
         outputBuffer[opb_index] |= _data16 << i;
@@ -1578,7 +1604,7 @@ static inline void insert_n_bits(int n, uint16_t _data16, char* outputBuffer, in
     else
     {
         const int i = n - bits_left;
-        if ((bits_left >= n - 7) && (bits_left <= 8))
+        if (bits_left >= n - 7)
         {
             const int j = 8 - i;
             outputBuffer[opb_index++] |= _data16 >> i;
@@ -2079,11 +2105,8 @@ static inline uint32_t signature(const uint8_t v1, const uint8_t v2, const uint8
  */
 
 
-
 static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, int len)
 {
-    uint32_t data_end;
-
     int opb_index = 0;                      /* index into outputBuffer */
     int bits_left = 8;                      /* unused bits in current uint8_t in outputBuffer */
     uint16_t *hash_table = enc->hash_table; /* hash table for pattern matching */
@@ -2113,7 +2136,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     /* point to start of data to be compressed */
     char * const historyPointer = &(enc->historyBuffer[enc->historyOffset]); /* points to first uint8_t of srcData in historyBuffer */
 
-    uint32_t ctr = 0;
+    int ctr = 0;
     uint32_t copy_offset = 0; /* pattern match starts here... */
 
     /* if we are at start of history buffer, do not attempt to compress */
@@ -2123,8 +2146,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         for (int x = 0; x < 2; x++){
             if (historyPointer[x] & 0x80){
                 /* insert encoded literal */
-                insert_n_bits(2, 0x02, outputBuffer, bits_left, opb_index);
-                insert_n_bits(7, historyPointer[x] & 0x7F, outputBuffer, bits_left, opb_index);
+                insert_n_bits(9, (0x02 << 7) | historyPointer[x], outputBuffer, bits_left, opb_index);
             }
             else{
                 /* insert literal */
@@ -2146,12 +2168,8 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     /* point to last uint8_t in new data */
     char* const hptr_end = &(enc->historyBuffer[enc->historyOffset - 1]); /* points to end of history data */
 
-    /* do not search for pattern match beyond this */
-    data_end = len - 2;
-
     /* start compressing data */
-
-    while (ctr < data_end){
+    while (ctr < len - 2){ /* do not search for pattern match beyond len-2 */
         char * const cptr1 = historyPointer + ctr;
 
         uint32_t crc2 = signature(cptr1[0], cptr1[1], cptr1[2], crc_table);
@@ -2168,8 +2186,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
             /* no match found; encode literal uint8_t */
             if (cptr1[0] & 0x80){
                 /* literal uint8_t >= 0x80 */
-                insert_n_bits(2, 0x02, outputBuffer, bits_left, opb_index);
-                insert_n_bits(7, cptr1[0] & 0x7F, outputBuffer, bits_left, opb_index);
+                insert_n_bits(9, (0x02 << 7) | (cptr1[0] & 0x7F), outputBuffer, bits_left, opb_index);
             }
             else {
                 /* literal uint8_t < 0x80 */
@@ -2206,16 +2223,15 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         /* encode copy_offset and insert into output buffer */
 
         if (copy_offset <= 63) { /* (copy_offset >= 0) is always true */
-            insert_n_bits(5, 0x1f, outputBuffer, bits_left, opb_index);
-            insert_n_bits(6, copy_offset & 0x3f, outputBuffer, bits_left, opb_index);
+//            insert_n_bits(5, 0x1f, outputBuffer, bits_left, opb_index);
+//            insert_n_bits(6, copy_offset & 0x3f, outputBuffer, bits_left, opb_index);
+            insert_n_bits(11, (0x1f << 6)|(copy_offset & 0x3f) , outputBuffer, bits_left, opb_index);
         }
         else if ((copy_offset >= 64) && (copy_offset <= 319)) {
-            insert_n_bits(5, 0x1e, outputBuffer, bits_left, opb_index);
-            insert_n_bits(8, copy_offset - 64, outputBuffer, bits_left, opb_index);
+            insert_n_bits(13, (0x1e << 8) | (copy_offset - 64), outputBuffer, bits_left, opb_index);
         }
         else if ((copy_offset >= 320) && (copy_offset <= 2367)){
-            insert_n_bits(4, 0x0e, outputBuffer, bits_left, opb_index);
-            insert_n_bits(11, copy_offset - 320, outputBuffer, bits_left, opb_index);
+            insert_n_bits(15, (0x0e << 11) | (copy_offset - 320), outputBuffer, bits_left, opb_index);
         }
         else{
             /* copy_offset is 2368+ */
@@ -2237,7 +2253,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
             insert_n_bits(log_lom, (((1 << log_lom) - 1) & 0xFFFE), outputBuffer, bits_left, opb_index);
             insert_n_bits(log_lom, lom - (1 << log_lom), outputBuffer, bits_left, opb_index);
         }
-    } /* end while (ctr < data_end) */
+    } /* end while (ctr < len - 2) */
 
     /* add remaining data to the output */
     while (len - ctr > 0)
