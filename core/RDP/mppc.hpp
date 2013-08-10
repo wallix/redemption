@@ -2013,7 +2013,7 @@ static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 // 32768..65535 | 111111111111110 + 15 lower bits of L-o-M
 
 
-static inline uint32_t signature(const uint8_t v1, const uint8_t v2, const uint8_t v3)
+static inline uint32_t signature(const uint8_t v[])
 {
     /* CRC16 defs */
     static const uint16_t crc_table[256] =
@@ -2053,9 +2053,9 @@ static inline uint32_t signature(const uint8_t v1, const uint8_t v2, const uint8
     };
 
         uint32_t crc = 0xFFFF;
-        crc = (crc >> 8) ^ crc_table[(crc ^ v1) & 0x00ff];
-        crc = (crc >> 8) ^ crc_table[(crc ^ v2) & 0x00ff];
-        crc = (crc >> 8) ^ crc_table[(crc ^ v3) & 0x00ff];
+        crc = (crc >> 8) ^ crc_table[(crc ^ v[0]) & 0xff];
+        crc = (crc >> 8) ^ crc_table[(crc ^ v[1]) & 0xff];
+        crc = (crc >> 8) ^ crc_table[(crc ^ v[2]) & 0xff];
         return crc;
 }
 
@@ -2122,8 +2122,8 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 
         /* store hash for first two entries in historyBuffer */
 
-        hash_table[signature(enc->historyBuffer[0], enc->historyBuffer[1], enc->historyBuffer[2])] = 0;
-        hash_table[signature(enc->historyBuffer[1], enc->historyBuffer[2], enc->historyBuffer[3])] = 1;
+        hash_table[signature(reinterpret_cast<uint8_t*>(enc->historyBuffer))] = 0;
+        hash_table[signature(reinterpret_cast<uint8_t*>(enc->historyBuffer+1))] = 1;
 
         /* first two uint8_ts have already been processed */
         ctr = 2;
@@ -2138,7 +2138,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     while (ctr < len - 2){ /* do not search for pattern match beyond len-2 */
         char * const cptr1 = historyPointer + ctr;
 
-        uint32_t crc2 = signature(cptr1[0], cptr1[1], cptr1[2]);
+        uint32_t crc2 = signature(reinterpret_cast<uint8_t*>(cptr1));
         /* cptr2 points to start of pattern match */
         char * const cptr2 = hbuf_start + hash_table[crc2];
         /* save current entry */
@@ -2181,7 +2181,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
                     : lom - 1;
         // for all triplets in matching part
         for (int i = 0; i < j; i++){
-            uint32_t crc3 = signature(historyPointer[ctr+i+1], historyPointer[ctr+i+2], historyPointer[ctr+i+3]);
+            uint32_t crc3 = signature(reinterpret_cast<uint8_t*>(historyPointer+ctr+i+1));
             hash_table[crc3] = historyPointer + ctr + i + 1 - hbuf_start;
         }
         ctr += lom;
