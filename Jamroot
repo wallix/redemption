@@ -795,14 +795,14 @@ unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp libboost_unit
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto gcov libboost_unit_test : <variant>coverage ;
+#unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto libboost_unit_test ;
+#unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto gcov libboost_unit_test : <variant>coverage ;
 
-unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+#unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test ;
+#unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_wab_close : tests/mod/internal/widget2/test_wab_close.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_wab_close : tests/mod/internal/widget2/test_wab_close.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+#unit-test test_wab_close : tests/mod/internal/widget2/test_wab_close.cpp png z openssl crypto libboost_unit_test ;
+#unit-test test_wab_close : tests/mod/internal/widget2/test_wab_close.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_selector : tests/mod/internal/widget2/test_selector.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_selector : tests/mod/internal/widget2/test_selector.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;

@@ -1110,3 +1110,30 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     mppc_enc_free(enc);
     mppc_dec_free(rmppc);
 }
+
+BOOST_AUTO_TEST_CASE(TestBitsSerializer)
+{
+    char outputBuffer[256];
+    int bits_left = 8;
+    int opb_index = 0;
+    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    BOOST_CHECK_EQUAL(6, bits_left);
+    BOOST_CHECK_EQUAL(0, opb_index);
+    BOOST_CHECK_EQUAL(192, outputBuffer[0] & 0xFF);
+
+    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    BOOST_CHECK_EQUAL(4, bits_left);
+    BOOST_CHECK_EQUAL(0, opb_index);
+    BOOST_CHECK_EQUAL(0xF0, outputBuffer[0] & 0xFF);
+
+    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    BOOST_CHECK_EQUAL(2, bits_left);
+    BOOST_CHECK_EQUAL(0, opb_index);
+    BOOST_CHECK_EQUAL(0xFc, outputBuffer[0] & 0xFF);
+
+    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    BOOST_CHECK_EQUAL(8, bits_left);
+    BOOST_CHECK_EQUAL(1, opb_index);
+    BOOST_CHECK_EQUAL(0xFF, outputBuffer[0] & 0xFF);
+}
+
