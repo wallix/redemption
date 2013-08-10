@@ -1084,7 +1084,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     struct rdp_mppc_dec* rmppc = mppc_dec_new();
 
     /* setup encoder for RDP 5.0 */
-    struct rdp_mppc_enc * enc = mppc_enc_new(PROTO_RDP_50);
+    struct rdp_mppc_enc * enc = new rdp_mppc_enc(PROTO_RDP_50);
 
     int data_len = sizeof(decompressed_rd5_data);
     LOG(LOG_INFO, "test_mppc_enc: testing with embedded data of %d bytes", data_len);
@@ -1107,7 +1107,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     long int dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);
     LOG(LOG_INFO, "test_mppc_enc: compressed %d bytes in %f seconds\n", data_len, (float) (dur) / 1000000.0F);
 
-    mppc_enc_free(enc);
+    delete enc;
     mppc_dec_free(rmppc);
 }
 

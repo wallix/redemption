@@ -53,6 +53,11 @@ enum {
     RDP6_OFFSET_CACHE_SIZE = 8
 };
 
+/* local defines */
+
+#define RDP_40_HIST_BUF_LEN (1024 * 8) /* RDP 4.0 uses 8K history buf */
+#define RDP_50_HIST_BUF_LEN (1024 * 64) /* RDP 5.0 uses 64K history buf */
+
 struct rdp_mppc_dec
 {
     uint8_t* history_buf;
@@ -1522,12 +1527,60 @@ struct rdp_mppc_enc
     int   flagsHold;
     int   first_pkt;        /* this is the first pkt passing through enc */
     uint16_t* hash_table;
+    
+    /**
+     * Initialize mppc_enc structure
+     *
+     * @param   protocol_type   PROTO_RDP_40 or PROTO_RDP_50
+     */
+
+    rdp_mppc_enc(int protocol_type)
+    {
+        memset(this, 0, sizeof(*this));
+
+        switch (protocol_type)
+        {
+            case PROTO_RDP_40:
+                this->protocol_type = PROTO_RDP_40;
+                this->buf_len = RDP_40_HIST_BUF_LEN;
+                break;
+
+            case PROTO_RDP_50:
+                this->protocol_type = PROTO_RDP_50;
+                this->buf_len = RDP_50_HIST_BUF_LEN;
+                break;
+            default:
+                TODO("throw some error")
+                ;
+        }
+
+        this->first_pkt = 1;
+        this->historyBuffer = (char*) malloc(this->buf_len);
+        TODO("making it static and large enough should be good for both RDP4 and RDP5")
+        memset(this->historyBuffer, 0, this->buf_len);
+
+        this->outputBufferPlus = (char*) malloc(this->buf_len + 64);
+        memset(this->outputBufferPlus, 0, this->buf_len + 64);
+
+        this->outputBuffer = this->outputBufferPlus + 64;
+        this->hash_table = (uint16_t*) malloc(this->buf_len * 2);
+        memset(this->hash_table, 0, this->buf_len * 2);
+    }
+
+    /**
+     * deinit mppc_enc structure
+     *
+     * @param   enc  struct to be deinited
+     */
+
+    ~rdp_mppc_enc()
+    {
+        free(this->historyBuffer);
+        free(this->outputBufferPlus);
+        free(this->hash_table);
+    }
+
 };
-
-/* local defines */
-
-#define RDP_40_HIST_BUF_LEN (1024 * 8) /* RDP 4.0 uses 8K history buf */
-#define RDP_50_HIST_BUF_LEN (1024 * 64) /* RDP 5.0 uses 64K history buf */
 
 
 static inline void insert_n_bits(int n, uint32_t _data, char* outputBuffer, int & bits_left, int & opb_index)
@@ -2013,7 +2066,7 @@ static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 // 32768..65535 | 111111111111110 + 15 lower bits of L-o-M
 
 
-static inline uint32_t signature(const uint8_t v[])
+static inline uint32_t signature(const char v[])
 {
     /* CRC16 defs */
     static const uint16_t crc_table[256] =
@@ -2122,8 +2175,8 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 
         /* store hash for first two entries in historyBuffer */
 
-        hash_table[signature(reinterpret_cast<uint8_t*>(enc->historyBuffer))] = 0;
-        hash_table[signature(reinterpret_cast<uint8_t*>(enc->historyBuffer+1))] = 1;
+        hash_table[signature(enc->historyBuffer)] = 0;
+        hash_table[signature(enc->historyBuffer+1)] = 1;
 
         /* first two uint8_ts have already been processed */
         ctr = 2;
@@ -2138,7 +2191,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     while (ctr < len - 2){ /* do not search for pattern match beyond len-2 */
         char * const cptr1 = historyPointer + ctr;
 
-        uint32_t crc2 = signature(reinterpret_cast<uint8_t*>(cptr1));
+        uint32_t crc2 = signature(cptr1);
         /* cptr2 points to start of pattern match */
         char * const cptr2 = hbuf_start + hash_table[crc2];
         /* save current entry */
@@ -2181,7 +2234,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
                     : lom - 1;
         // for all triplets in matching part
         for (int i = 0; i < j; i++){
-            uint32_t crc3 = signature(reinterpret_cast<uint8_t*>(historyPointer+ctr+i+1));
+            uint32_t crc3 = signature(historyPointer+ctr+i+1);
             hash_table[crc3] = historyPointer + ctr + i + 1 - hbuf_start;
         }
         ctr += lom;
@@ -2295,95 +2348,6 @@ static inline bool compress_rdp(struct rdp_mppc_enc* enc, uint8_t* srcData, int 
 }
 
 
-/**
- * Initialize mppc_enc structure
- *
- * @param   protocol_type   PROTO_RDP_40 or PROTO_RDP_50
- *
- * @return  struct rdp_mppc_enc* or nil on failure
- */
 
-static inline struct rdp_mppc_enc* mppc_enc_new(int protocol_type)
-{
-    struct rdp_mppc_enc* enc;
-
-    enc = (struct rdp_mppc_enc*) malloc(sizeof(struct rdp_mppc_enc));
-//    ZeroMemory(enc, sizeof(struct rdp_mppc_enc));
-    memset(enc, 0, sizeof(struct rdp_mppc_enc));
-
-    if (enc == NULL)
-        return NULL;
-
-    switch (protocol_type)
-    {
-        case PROTO_RDP_40:
-            enc->protocol_type = PROTO_RDP_40;
-            enc->buf_len = RDP_40_HIST_BUF_LEN;
-            break;
-
-        case PROTO_RDP_50:
-            enc->protocol_type = PROTO_RDP_50;
-            enc->buf_len = RDP_50_HIST_BUF_LEN;
-            break;
-
-        default:
-            free(enc);
-            return NULL;
-    }
-
-    enc->first_pkt = 1;
-    enc->historyBuffer = (char*) malloc(enc->buf_len);
-//    ZeroMemory(enc->historyBuffer, enc->buf_len);
-    memset(enc->historyBuffer, 0, enc->buf_len);
-
-    if (enc->historyBuffer == NULL)
-    {
-        free(enc);
-        return NULL;
-    }
-
-    enc->outputBufferPlus = (char*) malloc(enc->buf_len + 64);
-//    ZeroMemory(enc->outputBufferPlus, enc->buf_len + 64);
-    memset(enc->outputBufferPlus, 0, enc->buf_len + 64);
-
-    if (enc->outputBufferPlus == NULL)
-    {
-        free(enc->historyBuffer);
-        free(enc);
-        return NULL;
-    }
-
-    enc->outputBuffer = enc->outputBufferPlus + 64;
-    enc->hash_table = (uint16_t*) malloc(enc->buf_len * 2);
-//    ZeroMemory(enc->hash_table, enc->buf_len * 2);
-    memset(enc->hash_table, 0, enc->buf_len * 2);
-
-    if (enc->hash_table == NULL)
-    {
-        free(enc->historyBuffer);
-        free(enc->outputBufferPlus);
-        free(enc);
-        return NULL;
-    }
-
-    return enc;
-}
-
-
-/**
- * deinit mppc_enc structure
- *
- * @param   enc  struct to be deinited
- */
-
-static inline void mppc_enc_free(struct rdp_mppc_enc* enc)
-{
-    if (enc == NULL)
-        return;
-    free(enc->historyBuffer);
-    free(enc->outputBufferPlus);
-    free(enc->hash_table);
-    free(enc);
-}
 
 #endif /* _REDEMPTION_CORE_RDP_MPPC_HPP_ */

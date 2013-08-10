@@ -16875,9 +16875,7 @@ uint8_t compressed_data[] = {
 /* 0bc0 */ 0x44, 0x28, 0x04, 0x82, 0xfe, 0x3a, 0x00,                             // D(...:.
 };
 
-    rdp_mppc_enc * mppc_enc;
-
-    mppc_enc = mppc_enc_new(PROTO_RDP_50);
+    rdp_mppc_enc * mppc_enc = new rdp_mppc_enc(PROTO_RDP_50);
 
 
     BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
@@ -16908,7 +16906,7 @@ uint8_t compressed_data[] = {
     BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc->outputBuffer
                                    , mppc_enc->bytes_in_opb));
 
-    mppc_enc_free(mppc_enc);
+    delete(mppc_enc);
 }
 
 
