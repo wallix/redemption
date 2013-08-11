@@ -2159,9 +2159,9 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     uint32_t copy_offset = 0; /* pattern match starts here... */
 
     /* if we are at start of history buffer, do not attempt to compress */
-    /* first 2 uint8_ts,because minimum LoM is 3                           */
+    /* first 2 bytes,because minimum LoM is 3                           */
     if (enc->historyOffset == 0){
-        /* encode first two uint8_ts are literals */
+        /* encode first two bytes as literals */
         for (int x = 0; x < 2; x++){
             if (historyPointer[x] & 0x80){
                 /* insert encoded literal */
@@ -2183,9 +2183,6 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     }
 
     enc->historyOffset += len;
-
-    /* point to last uint8_t in new data */
-    char* const hptr_end = &(enc->historyBuffer[enc->historyOffset - 1]); /* points to end of history data */
 
     /* start compressing data */
     while (ctr < len - 2){ /* do not search for pattern match beyond len-2 */
@@ -2217,7 +2214,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 
         /* we have a match - compute Length of Match */
         int lom = 3;
-        for (; lom <= hptr_end - cptr1 ; lom++){
+        for (; lom <= &(enc->historyBuffer[enc->historyOffset - 1]) - cptr1 ; lom++){
             if (cptr1[lom] != cptr2[lom]){
                 break;
             }
@@ -2228,7 +2225,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 
         /* compute CRCs for matching segment and store in hash table */
 
-        /* if we have gone beyond enc->historyOffset - 3, go back */
+        /* if we have gone beyond historyOffset - 3, go back */
         const int j = (historyPointer + ctr + lom > hbuf_start + enc->historyOffset - 3)
                     ? enc->historyOffset - 3 - (historyPointer + ctr - hbuf_start)
                     : lom - 1;
@@ -2240,22 +2237,21 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         ctr += lom;
 
         /* encode copy_offset and insert into output buffer */
-
-        if (copy_offset <= 63) { /* (copy_offset >= 0) is always true */
-            insert_n_bits(11, (0x1f << 6)|(copy_offset & 0x3f) , outputBuffer, bits_left, opb_index);
+        if (copy_offset <= 0x3F) {
+            insert_n_bits(11, 0x7c0|copy_offset , outputBuffer, bits_left, opb_index);
         }
-        else if ((copy_offset >= 64) && (copy_offset <= 319)) {
-            insert_n_bits(13, (0x1e << 8) | (copy_offset - 64), outputBuffer, bits_left, opb_index);
+        else if (copy_offset <= 0x13F) {
+            insert_n_bits(13, 0x1e00|(copy_offset - 0x40), outputBuffer, bits_left, opb_index);
         }
-        else if ((copy_offset >= 320) && (copy_offset <= 2367)){
-            insert_n_bits(15, (0x0e << 11) | (copy_offset - 320), outputBuffer, bits_left, opb_index);
+        else if (copy_offset <= 0x93F){
+            insert_n_bits(15, 0x7000|(copy_offset - 0x140), outputBuffer, bits_left, opb_index);
         }
-        else{
+        else {
             /* copy_offset is 2368+ */
-            insert_n_bits(19, (0x06 << 16) | (copy_offset - 2368), outputBuffer, bits_left, opb_index);
+            insert_n_bits(19, 0x060000|(copy_offset - 0x940), outputBuffer, bits_left, opb_index);
         }
+        
         /* encode length of match and insert into output buffer */
-
         if (lom == 3){
             /* binary header is 'zero'; since outputBuffer is zero filled,
                all we have to do is update bits_left */
@@ -2282,8 +2278,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         ctr++;
     }
 
-    /* if bits_left == 8, opb_index has already been incremented */
-    if (((bits_left == 8) && (opb_index > len)) || (opb_index + 1 > len)) 
+    if (opb_index + 1 > len)
     {
         /* compressed data longer than uncompressed data */
         /* give up */
@@ -2294,23 +2289,9 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         return true;
     }
 
-    /* if bits_left != 8, increment opb_index, which is zero indexed */
-    if (bits_left != 8){
-        opb_index++;
-    }
-
-    if (opb_index > len)
-    {
-        /* give up */
-        enc->historyOffset = 0;
-        memset(hash_table, 0, enc->buf_len * 2);
-        enc->flagsHold |= PACKET_FLUSHED;
-        enc->first_pkt = 1;
-        return true;
-    }
     enc->flags |= PACKET_COMPRESSED;
-    enc->bytes_in_opb = opb_index;
-
+    /* if bits_left == 8, opb_index has already been incremented */
+    enc->bytes_in_opb = opb_index + (bits_left != 8);
     enc->flags |= enc->flagsHold;
     enc->flagsHold = 0;
 
