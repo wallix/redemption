@@ -23,7 +23,10 @@
 #define BOOST_TEST_MODULE TestWindowWabClose
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define FIXTURES_PATH "./tests/fixtures"
+#define SHARE_PATH "./tests/fixtures"
+
+#define LOGPRINT
 #include "log.hpp"
 
 #include "internal/widget2/window_wab_close.hpp"
@@ -32,9 +35,6 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 
 struct TestDraw : DrawApi
 {
@@ -139,7 +139,11 @@ struct TestDraw : DrawApi
 
 BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
 {
+    BOOST_CHECK(1);
+
     TestDraw drawable(800, 600);
+
+    BOOST_CHECK(1);
 
     // WindowWabClose is a window_wab_close widget at position 0,0 in it's parent context
     Widget2* parent = NULL;
@@ -148,13 +152,23 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
     int16_t y = 0;
     int id = 0;
 
-    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+    BOOST_CHECK(1);
+
+    try {
+
+        WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
                                     "abc<br>def", id, "rec", "rec");
 
     // ask to widget to redraw at it's current position
     window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
     //drawable.save_to_png("/tmp/window_wab_close.png");
+
+    } catch (Error & e) {
+        LOG(LOG_INFO, "e=%u", e.id);
+    };
+
+    BOOST_CHECK(1);
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

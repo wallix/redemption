@@ -256,7 +256,8 @@ public:
 
     ~Front(){
         if (this->mppc_enc) {
-            mppc_enc_free(this->mppc_enc);
+            delete this->mppc_enc;
+            this->mppc_enc = NULL;
         }
 
         if (this->bmp_cache) {
@@ -541,14 +542,15 @@ public:
         }
 
         if (this->mppc_enc) {
-            mppc_enc_free(this->mppc_enc);
+            delete this->mppc_enc;
+            this->mppc_enc = NULL;
         }
         if (this->client_info.rdp_compression) {
             if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
-                this->mppc_enc = mppc_enc_new(PROTO_RDP_50);
+                this->mppc_enc = new rdp_mppc_enc(PROTO_RDP_50);
             }
             else {
-                this->mppc_enc = mppc_enc_new(PROTO_RDP_40);
+                this->mppc_enc = new rdp_mppc_enc(PROTO_RDP_40);
             }
         }
 

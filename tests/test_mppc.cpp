@@ -1084,7 +1084,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     struct rdp_mppc_dec* rmppc = mppc_dec_new();
 
     /* setup encoder for RDP 5.0 */
-    struct rdp_mppc_enc * enc = mppc_enc_new(PROTO_RDP_50);
+    struct rdp_mppc_enc * enc = new rdp_mppc_enc(PROTO_RDP_50);
 
     int data_len = sizeof(decompressed_rd5_data);
     LOG(LOG_INFO, "test_mppc_enc: testing with embedded data of %d bytes", data_len);
@@ -1107,6 +1107,33 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     long int dur = ((end_time.tv_sec - start_time.tv_sec) * 1000000) + (end_time.tv_usec - start_time.tv_usec);
     LOG(LOG_INFO, "test_mppc_enc: compressed %d bytes in %f seconds\n", data_len, (float) (dur) / 1000000.0F);
 
-    mppc_enc_free(enc);
+    delete enc;
     mppc_dec_free(rmppc);
 }
+
+BOOST_AUTO_TEST_CASE(TestBitsSerializer)
+{
+    char outputBuffer[256];
+    int bits_left = 8;
+    int opb_index = 0;
+    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    BOOST_CHECK_EQUAL(6, bits_left);
+    BOOST_CHECK_EQUAL(0, opb_index);
+    BOOST_CHECK_EQUAL(192, outputBuffer[0] & 0xFF);
+
+    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    BOOST_CHECK_EQUAL(4, bits_left);
+    BOOST_CHECK_EQUAL(0, opb_index);
+    BOOST_CHECK_EQUAL(0xF0, outputBuffer[0] & 0xFF);
+
+    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    BOOST_CHECK_EQUAL(2, bits_left);
+    BOOST_CHECK_EQUAL(0, opb_index);
+    BOOST_CHECK_EQUAL(0xFc, outputBuffer[0] & 0xFF);
+
+    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    BOOST_CHECK_EQUAL(8, bits_left);
+    BOOST_CHECK_EQUAL(1, opb_index);
+    BOOST_CHECK_EQUAL(0xFF, outputBuffer[0] & 0xFF);
+}
+
