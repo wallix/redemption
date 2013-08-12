@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -24,7 +23,7 @@
 #define BOOST_TEST_MODULE TestSocketTransport
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include <stdlib.h>
@@ -51,8 +50,8 @@
 
 // This test is somewhat tricky
 // The goal is to check that SocketTransport objects are working as expected
-// in order to achieve that we have to 
-// - create a listening socket, 
+// in order to achieve that we have to
+// - create a listening socket,
 // - connect a client socket to it
 // - accept connected client socket
 // - send data at one side
@@ -68,14 +67,14 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
         public:
         virtual Server_status start(int incoming_sck) { return START_WANT_STOP; }
     } dummy;
-    
+
     Listen listener(dummy, inet_addr("127.0.0.1"), 4444, true, 25, false); // 25 seconds to connect, or timeout
 
     int nb_inbuffer = 0;
     uint8_t buffer[1024];
     memset(buffer, 0, sizeof(buffer));
     uint8_t * p = buffer;
-    
+
     int nb_recv_sck = 0;
     // 10 should be enough for testing
     int recv_sck[10];
@@ -124,7 +123,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
         BOOST_CHECK_EQUAL(true, true);
         int max = listener.sck;
         FD_SET(max, &rfds);
-        
+
         for (int i = 0 ; i < nb_recv_sck ; i++){
             if (recv_sck[i] > max){
                 max = recv_sck[i];
@@ -132,7 +131,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
             FD_SET(recv_sck[i], &rfds);
         }
 
-        if (((client_trans != NULL) && (data_sent == 0)) 
+        if (((client_trans != NULL) && (data_sent == 0))
         || (res == -1))
         {
             FD_SET(client_sck, &wfds);
@@ -142,7 +141,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
         }
 
         int num = select(max + 1, &rfds, &wfds, 0, &timeout);
-    
+
         switch (num) {
         case 0:
             LOG(LOG_INFO, "woke up on timeout\n");
@@ -173,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
                     }
                 }
             }
-            
+
             if (FD_ISSET(listener.sck, &rfds)){
                 char ip_source[128];
                 union
@@ -209,5 +208,5 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
             run = false;
         }
     }
-    
+
 }

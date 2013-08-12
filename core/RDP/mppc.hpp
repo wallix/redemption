@@ -22,7 +22,6 @@
    Based on code by Laxmikant Rashinkar & Jiten Pathy from FreeRDP project
    Copyright 2011 Laxmikant Rashinkar <LK.Rashinkar@gmail.com>
    Copyright 2012 Jiten Pathy
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_MPPC_HPP_
@@ -49,7 +48,7 @@ enum {
 };
 
 enum {
-    RDP6_HISTORY_BUF_SIZE = 65536,
+    RDP6_HISTORY_BUF_SIZE  = 65536,
     RDP6_OFFSET_CACHE_SIZE = 8
 };
 
@@ -208,11 +207,11 @@ static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex)
 
 static inline int decompress_rdp_4(struct rdp_mppc_dec* dec, uint8_t* cbuf, int len, int ctype, uint32_t* roff, uint32_t* rlen)
 {
-    fprintf(stderr, "decompress_rdp_4:\n");
+//    LOG(LOG_INFO, "decompress_rdp_4:");
 
     if ((dec == NULL) || (dec->history_buf == NULL))
     {
-        fprintf(stderr, "decompress_rdp_4: null\n");
+        LOG(LOG_ERR, "decompress_rdp_4: null");
         return false;
     }
 
@@ -636,7 +635,7 @@ static inline int decompress_rdp_5(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
 
     if ((dec == NULL) || (dec->history_buf == NULL))
     {
-        fprintf(stderr, "decompress_rdp_5: null\n");
+        LOG(LOG_ERR, "decompress_rdp_5: null");
         return false;
     }
 
@@ -1098,7 +1097,7 @@ static inline int decompress_rdp_6(struct rdp_mppc_dec* dec, uint8_t* cbuf, int 
 
     if ((dec == NULL) || (dec->history_buf == NULL))
     {
-        fprintf(stderr, "decompress_rdp_6: null\n");
+        LOG(LOG_ERR, "decompress_rdp_6: null");
         return false;
     }
 
@@ -1440,7 +1439,7 @@ static inline int decompress_rdp(struct rdp_mppc_dec* dec, uint8_t* cbuf, int le
             break;
 
         default:
-            fprintf(stderr, "mppc.c: invalid RDP compression code 0x%2.2x\n", type);
+            LOG(LOG_ERR, "decompress_rdp: invalid RDP compression code 0x%2.2x", type);
             return false;
     }
 }
@@ -1459,7 +1458,7 @@ static inline struct rdp_mppc_dec* mppc_dec_new(void)
     ptr = (struct rdp_mppc_dec*) malloc(sizeof(struct rdp_mppc_dec));
     if (!ptr)
     {
-        fprintf(stderr, "mppc_new(): system out of memory\n");
+        LOG(LOG_ERR, "mppc_dec_new(): system out of memory");
         return NULL;
     }
 
@@ -1472,7 +1471,7 @@ static inline struct rdp_mppc_dec* mppc_dec_new(void)
 
     if (!ptr->history_buf)
     {
-        fprintf(stderr, "mppc_new(): system out of memory\n");
+        LOG(LOG_ERR, "mppc_dec_new(): system out of memory");
         free(ptr);
         return NULL;
     }
@@ -1514,20 +1513,19 @@ enum {
     PROTO_RDP_50 = 2
 };
 
-struct rdp_mppc_enc
-{
-    int   protocol_type;    /* PROTO_RDP_40, PROTO_RDP_50 etc */
-    char* historyBuffer;    /* contains uncompressed data */
-    char* outputBuffer;     /* contains compressed data */
-    char* outputBufferPlus;
-    int   historyOffset;    /* next free slot in historyBuffer */
-    int   buf_len;          /* length of historyBuffer, protocol dependant */
-    int   bytes_in_opb;     /* compressed bytes available in outputBuffer */
-    int   flags;            /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
-    int   flagsHold;
-    int   first_pkt;        /* this is the first pkt passing through enc */
-    uint16_t* hash_table;
-    
+struct rdp_mppc_enc {
+    int        protocol_type;       /* PROTO_RDP_40, PROTO_RDP_50 etc */
+    char     * historyBuffer;       /* contains uncompressed data */
+    char     * outputBuffer;        /* contains compressed data */
+    char     * outputBufferPlus;
+    int        historyOffset;       /* next free slot in historyBuffer */
+    int        buf_len;             /* length of historyBuffer, protocol dependant */
+    int        bytes_in_opb;        /* compressed bytes available in outputBuffer */
+    int        flags;               /* PACKET_COMPRESSED, PACKET_AT_FRONT, PACKET_FLUSHED etc */
+    int        flagsHold;
+    int        first_pkt;           /* this is the first pkt passing through enc */
+    uint16_t * hash_table;
+
     /**
      * Initialize mppc_enc structure
      *
@@ -1580,6 +1578,21 @@ struct rdp_mppc_enc
         free(this->hash_table);
     }
 
+    void dump() {
+        LOG(LOG_INFO, "protocol_type=%d",      this->protocol_type);
+        LOG(LOG_INFO, "historyBuffer");
+        hexdump_d(this->historyBuffer,         this->buf_len);
+        LOG(LOG_INFO, "outputBufferPlus");
+        hexdump_d(this->outputBufferPlus,      this->buf_len + 64);
+        LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
+        LOG(LOG_INFO, "buf_len=%d",            this->buf_len);
+        LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
+        LOG(LOG_INFO, "flags=%d",              this->flags);
+        LOG(LOG_INFO, "flagsHold=%d",          this->flagsHold);
+        LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
+        LOG(LOG_INFO, "hash_table");
+        hexdump_d((uint8_t *)this->hash_table, this->buf_len * 2);
+    }
 };
 
 
@@ -2123,7 +2136,6 @@ static inline uint32_t signature(const char v[])
  * @return  true on success, false on failure
  */
 
-
 static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, int len)
 {
     int opb_index = 0;                      /* index into outputBuffer */
@@ -2165,7 +2177,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         for (int x = 0; x < 2; x++){
             if (historyPointer[x] & 0x80){
                 /* insert encoded literal */
-                insert_n_bits(9, (0x02 << 7) | historyPointer[x], outputBuffer, bits_left, opb_index);
+                insert_n_bits(9, (0x02 << 7) | (historyPointer[x] & 0x7F), outputBuffer, bits_left, opb_index);
             }
             else{
                 /* insert literal */
@@ -2250,7 +2262,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
             /* copy_offset is 2368+ */
             insert_n_bits(19, 0x060000|(copy_offset - 0x940), outputBuffer, bits_left, opb_index);
         }
-        
+
         /* encode length of match and insert into output buffer */
         if (lom == 3){
             /* binary header is 'zero'; since outputBuffer is zero filled,

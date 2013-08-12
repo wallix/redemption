@@ -20,7 +20,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestFont
+#define BOOST_TEST_MODULE TestMppc2
 #include <boost/test/auto_unit_test.hpp>
 
 #include "log.hpp"
@@ -28,7 +28,7 @@
 
 #include "RDP/mppc.hpp"
 
-BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression)
+BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
 {
 uint8_t historyBuffer[] = {
 /* 0000 */ 0x28, 0x00, 0x03, 0x04, 0x01, 0x00, 0x04, 0x02, 0x00, 0x00, 0x20, 0x04, 0x10, 0x02, 0x01, 0x5a,  // (......... ....Z
@@ -16908,15 +16908,3 @@ uint8_t compressed_data[] = {
 
     delete(mppc_enc);
 }
-
-
-/*
-buffer_stream_orders.size()=4037, compress_data_count=18571
-mppc_enc->flags=0x21, mppc_enc->bytes_in_opb=2727
-
-Compress/Decompress ok
-unencrypted data, size=4037
-encrypted data, size=2727
-Compress/Decompress ok
-mppc_enc->first_pkt=0
-*/
