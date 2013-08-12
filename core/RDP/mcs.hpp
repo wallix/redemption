@@ -255,18 +255,7 @@ namespace MCS
         int maxHeight;
         int maxMCSPDUsize;
         int protocolVersion;
-/*
-        int in_ber_int(Stream & stream, int & v){
-            uint8_t tag = stream.in_uint8();
-            if (Stream::BER_TAG_INTEGER != tag){
-                LOG(LOG_ERR, "Connect Initial BER_TAG_INTEGER (%u) expected, got %u", Stream::BER_TAG_INTEGER, tag);
-                return -1;
-            }
-            uint8_t len = stream.in_uint8();
-            v = stream.in_bytes_be(len);
-            return 0;
-        }
-*/
+
         int recv(Stream & stream){
             enum {
                 BER_TAG_MCS_DOMAIN_PARAMS = 0x30
@@ -453,7 +442,7 @@ namespace MCS
         }
     };
 
-    struct BerStream
+    struct OutBerStream
     {
         // =========================================================================
         // BER encoding rules support methods
@@ -469,71 +458,88 @@ namespace MCS
 
         Stream & stream;
     
-        BerStream(Stream & stream) 
+        OutBerStream(Stream & stream) 
         : stream(stream)
         {
         }
         
         void out_ber_len(unsigned int v){
-            if (v >= 0x80) {
-                if (v >= 0x100){
-                    this->stream.out_uint8(0x82);
-                    this->stream.out_uint16_be(v);
-                }
-                else {
-                    this->stream.out_uint8(0x81);
-                    this->stream.out_uint8(v);
-                }
+            if (v < 0x80){
+                this->stream.out_uint8((uint8_t)v);            
+            }
+            else if (v < 0x100) {
+                this->stream.out_uint8(0x81);
+                this->stream.out_uint8(v);
             }
             else {
-                this->stream.out_uint8((uint8_t)v);
+                this->stream.out_uint8(0x82);
+                this->stream.out_uint16_be(v);
             }
         }
 
-        void out_ber_int8(unsigned int v){
+        void out_ber_integer(unsigned int v){
             this->stream.out_uint8(BER_TAG_INTEGER);
-            this->stream.out_uint8(1);
-            this->stream.out_uint8((uint8_t)v);
+            if (v < 0x80) {
+                this->stream.out_uint8(1);
+                this->stream.out_uint8((uint8_t)v);
+            }
+            else if (v < 0xfff8) { // Actually ffff should also work, but it would break old code
+                this->stream.out_uint8(2);
+                this->stream.out_uint8((uint8_t)(v >> 8));
+                this->stream.out_uint8((uint8_t)v);
+            }
+            else {
+                this->stream.out_uint8(3);
+                this->stream.out_uint8((uint8_t)(v >> 16));
+                this->stream.out_uint8((uint8_t)(v >> 8));
+                this->stream.out_uint8((uint8_t)v);            
+            }
         }
 
-        void set_out_ber_int8(unsigned int v, size_t offset){
-            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
-            this->stream.set_out_uint8(1, offset+1);
-            this->stream.set_out_uint8((uint8_t)v, offset+2);
-        }
+//        void out_ber_int8(unsigned int v){
+//            this->stream.out_uint8(BER_TAG_INTEGER);
+//            this->stream.out_uint8(1);
+//            this->stream.out_uint8((uint8_t)v);
+//        }
 
-        void out_ber_int16(int value)
-        {
-            this->stream.out_uint8(BER_TAG_INTEGER);
-            this->stream.out_uint8(2);
-            this->stream.out_uint8((uint8_t)(value >> 8));
-            this->stream.out_uint8((uint8_t)value);
-        }
+//        void set_out_ber_int8(unsigned int v, size_t offset){
+//            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
+//            this->stream.set_out_uint8(1, offset+1);
+//            this->stream.set_out_uint8((uint8_t)v, offset+2);
+//        }
 
-        void set_out_ber_int16(unsigned int v, size_t offset){
-            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
-            this->stream.set_out_uint8(2,               offset+1);
-            this->stream.set_out_uint8((uint8_t)(v >> 8),        offset+2);
-            this->stream.set_out_uint8((uint8_t)v,               offset+3);
-        }
+//        void out_ber_int16(int value)
+//        {
+//            this->stream.out_uint8(BER_TAG_INTEGER);
+//            this->stream.out_uint8(2);
+//            this->stream.out_uint8((uint8_t)(value >> 8));
+//            this->stream.out_uint8((uint8_t)value);
+//        }
 
-        void out_ber_int24(int value)
-        {
-            this->stream.out_uint8(BER_TAG_INTEGER);
-            this->stream.out_uint8(3);
-            this->stream.out_uint8((uint8_t)(value >> 16));
-            this->stream.out_uint8((uint8_t)(value >> 8));
-            this->stream.out_uint8((uint8_t)value);
-        }
+//        void set_out_ber_int16(unsigned int v, size_t offset){
+//            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
+//            this->stream.set_out_uint8(2,               offset+1);
+//            this->stream.set_out_uint8((uint8_t)(v >> 8),        offset+2);
+//            this->stream.set_out_uint8((uint8_t)v,               offset+3);
+//        }
 
-        void set_out_ber_int24(int value, size_t offset)
-        {
-            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
-            this->stream.set_out_uint8(3,               offset+1);
-            this->stream.set_out_uint8((uint8_t)(value >> 16),     offset+2);
-            this->stream.set_out_uint8((uint8_t)(value >> 8),      offset+3);
-            this->stream.set_out_uint8((uint8_t)value,           offset+4);
-        }
+//        void out_ber_int24(int value)
+//        {
+//            this->stream.out_uint8(BER_TAG_INTEGER);
+//            this->stream.out_uint8(3);
+//            this->stream.out_uint8((uint8_t)(value >> 16));
+//            this->stream.out_uint8((uint8_t)(value >> 8));
+//            this->stream.out_uint8((uint8_t)value);
+//        }
+
+//        void set_out_ber_int24(int value, size_t offset)
+//        {
+//            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
+//            this->stream.set_out_uint8(3,               offset+1);
+//            this->stream.set_out_uint8((uint8_t)(value >> 16),     offset+2);
+//            this->stream.set_out_uint8((uint8_t)(value >> 8),      offset+3);
+//            this->stream.set_out_uint8((uint8_t)value,           offset+4);
+//        }
 
         void set_out_ber_len_uint7(unsigned int v, size_t offset){
             if (v >= 0x80) {
@@ -592,7 +598,7 @@ namespace MCS
 
     struct CONNECT_INITIAL_Send
     {
-        BerStream ber_stream;
+        OutBerStream ber_stream;
     
         CONNECT_INITIAL_Send(Stream & stream, size_t payload_length, int encoding)
         : ber_stream(stream)
@@ -604,53 +610,53 @@ namespace MCS
             this->ber_stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_INITIAL);
             this->ber_stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
-            this->ber_stream.out_uint8(BerStream::BER_TAG_OCTET_STRING);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
             this->ber_stream.out_ber_len(1); /* calling domain */
             this->ber_stream.out_uint8(1);
-            this->ber_stream.out_uint8(BerStream::BER_TAG_OCTET_STRING);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
             this->ber_stream.out_ber_len(1); /* called domain */
             this->ber_stream.out_uint8(1);
-            this->ber_stream.out_uint8(BerStream::BER_TAG_BOOLEAN);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_BOOLEAN);
             this->ber_stream.out_ber_len(1);
             this->ber_stream.out_uint8(0xff); /* upward flag */
 
             // target params
-            this->ber_stream.out_uint8(BerStream::BER_TAG_MCS_DOMAIN_PARAMS);
-            this->ber_stream.out_ber_len(26);      // 26 = 0x1a
-            this->ber_stream.out_ber_int8(34);     // max_channels
-            this->ber_stream.out_ber_int8(2);      // max_users
-            this->ber_stream.out_ber_int8(0);      // max_tokens
-            this->ber_stream.out_ber_int8(1);
-            this->ber_stream.out_ber_int8(0);
-            this->ber_stream.out_ber_int8(1);
-            this->ber_stream.out_ber_int24(0xffff); // max_pdu_size
-            this->ber_stream.out_ber_int8(2);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
+            this->ber_stream.out_ber_len(26);       // 26 bytes
+            this->ber_stream.out_ber_integer(34);     // 3 bytes : max_channels
+            this->ber_stream.out_ber_integer(2);      // 3 bytes : max_users
+            this->ber_stream.out_ber_integer(0);      // 3 bytes : max_tokens
+            this->ber_stream.out_ber_integer(1);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(0);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(1);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_pdu_size
+            this->ber_stream.out_ber_integer(2);      // 3 bytes : 
 
             // min params
-            this->ber_stream.out_uint8(BerStream::BER_TAG_MCS_DOMAIN_PARAMS);
-            this->ber_stream.out_ber_len(25);     // 25=0x19
-            this->ber_stream.out_ber_int8(1);     // max_channels
-            this->ber_stream.out_ber_int8(1);     // max_users
-            this->ber_stream.out_ber_int8(1);     // max_tokens
-            this->ber_stream.out_ber_int8(1);
-            this->ber_stream.out_ber_int8(0);
-            this->ber_stream.out_ber_int8(1);
-            this->ber_stream.out_ber_int16(0x420); // max_pdu_size
-            this->ber_stream.out_ber_int8(2);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
+            this->ber_stream.out_ber_len(25);     // 25 bytes
+            this->ber_stream.out_ber_integer(1);     // 3 bytes : max_channels
+            this->ber_stream.out_ber_integer(1);     // 3 bytes : max_users
+            this->ber_stream.out_ber_integer(1);     // 3 bytes : max_tokens
+            this->ber_stream.out_ber_integer(1);     // 3 bytes :
+            this->ber_stream.out_ber_integer(0);     // 3 bytes :
+            this->ber_stream.out_ber_integer(1);     // 3 bytes :
+            this->ber_stream.out_ber_integer(0x420); // 4 bytes : max_pdu_size
+            this->ber_stream.out_ber_integer(2);     // 3 bytes : 
 
             // max params
-            this->ber_stream.out_uint8(BerStream::BER_TAG_MCS_DOMAIN_PARAMS);
-            this->ber_stream.out_ber_len(31);
-            this->ber_stream.out_ber_int24(0xffff); // max_channels
-            this->ber_stream.out_ber_int16(0xfc17); // max_users
-            this->ber_stream.out_ber_int24(0xffff); // max_tokens
-            this->ber_stream.out_ber_int8(1);
-            this->ber_stream.out_ber_int8(0);
-            this->ber_stream.out_ber_int8(1);
-            this->ber_stream.out_ber_int24(0xffff); // max_pdu_size
-            this->ber_stream.out_ber_int8(2);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
+            this->ber_stream.out_ber_len(31);      // 31 bytes
+            this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_channels
+            this->ber_stream.out_ber_integer(0xfc17); // 4 bytes : max_users
+            this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_tokens
+            this->ber_stream.out_ber_integer(1);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(0);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(1);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_pdu_size
+            this->ber_stream.out_ber_integer(2);      // 3 bytes : 
 
-            this->ber_stream.out_uint8(BerStream::BER_TAG_OCTET_STRING);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
             this->ber_stream.out_ber_len_uint16(payload_length);
             // now we know full MCS Initial header length (without initial tag and len)
             this->ber_stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - 5, 2);
@@ -868,7 +874,7 @@ namespace MCS
 
     struct CONNECT_RESPONSE_Send
     {
-        BerStream ber_stream;
+        OutBerStream ber_stream;
 
         CONNECT_RESPONSE_Send(Stream & stream, size_t payload_length, int encoding)
         : ber_stream(stream)
@@ -892,36 +898,26 @@ namespace MCS
             // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
             // length of the value is given by the second byte (1 byte), and the
             // actual value is 0 (rt-successful).
-            this->ber_stream.out_uint8(BerStream::BER_TAG_RESULT);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_RESULT);
             this->ber_stream.out_ber_len_uint7(1);
             this->ber_stream.out_uint8(0);
 
             // Connect-Response::calledConnectId = 0
-            this->ber_stream.out_uint8(BerStream::BER_TAG_INTEGER);
-            this->ber_stream.out_ber_len_uint7(1);
-            this->ber_stream.out_uint8(0);
+            this->ber_stream.out_ber_integer(0); // 3 bytes
 
             // Connect-Response::domainParameters (26 bytes)
-            this->ber_stream.out_uint8(BerStream::BER_TAG_MCS_DOMAIN_PARAMS);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
             this->ber_stream.out_ber_len_uint7(26);
-            // DomainParameters::maxChannelIds = 34
-            this->ber_stream.out_ber_int8(34);
-            // DomainParameters::maxUserIds = 3
-            this->ber_stream.out_ber_int8(3);
-            // DomainParameters::maximumTokenIds = 0
-            this->ber_stream.out_ber_int8(0);
-            // DomainParameters::numPriorities = 1
-            this->ber_stream.out_ber_int8(1);
-            // DomainParameters::minThroughput = 0
-            this->ber_stream.out_ber_int8(0);
-            // DomainParameters::maxHeight = 1
-            this->ber_stream.out_ber_int8(1);
-            // DomainParameters::maxMCSPDUsize = 65528
-            this->ber_stream.out_ber_int24(0xfff8);
-            // DomainParameters::protocolVersion = 2
-            this->ber_stream.out_ber_int8(2);
+            this->ber_stream.out_ber_integer(34);          // DomainParameters::maxChannelIds = 34
+            this->ber_stream.out_ber_integer(3);           // DomainParameters::maxUserIds = 3
+            this->ber_stream.out_ber_integer(0);           // DomainParameters::maximumTokenIds = 0
+            this->ber_stream.out_ber_integer(1);           // DomainParameters::numPriorities = 1
+            this->ber_stream.out_ber_integer(0);           // DomainParameters::minThroughput = 0             
+            this->ber_stream.out_ber_integer(1);           // DomainParameters::maxHeight = 1
+            this->ber_stream.out_ber_integer(0xfff8);      // DomainParameters::maxMCSPDUsize = 65528
+            this->ber_stream.out_ber_integer(2);           // DomainParameters::protocolVersion = 2
 
-            this->ber_stream.out_uint8(BerStream::BER_TAG_OCTET_STRING);
+            this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
             this->ber_stream.out_ber_len(payload_length);
 
             // now we know full MCS Initial header length (without initial tag and len)
