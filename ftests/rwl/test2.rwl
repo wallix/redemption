@@ -1,0 +1,26 @@
+Rect {
+bgcolor: #122 ;
+color:: rgb( #239, 'l' ) ;
+color: rgb( #239 ) ;
+color: rgb( (#239) , "l", 234 ) ;
+x: label.w ;
+x: label.w + 2 ;
+border.top: 2 ;
+border.top.color: #233 ;
+Rect { z: 22+2 }
+k: 21+3 ;
+Rect { Rect { x: 20 ;} }
+Rect { Rect { x: 20 } ; }
+text: "plop";
+border: { left: 2 ; right: 2 ; top: 2}
+border: { left: 2 ; color: { top:3 ; bottom: 1; } ; right: 2 ; top: 2}
+x: (screen.w - this.w) / 2 ;
+y: screen.w - this.w / 2 ;
+n: 1 * 2 + 3 ;
+n: 1 + 2 * 3 ;
+z: x ;
+zz: y;
+}
+Rect { x: 202 }
+Rect { x: r(r(g(8),2),1) }
+x:1
