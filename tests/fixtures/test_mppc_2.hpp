@@ -1,35 +1,3 @@
-/*
-    This program is free software; you can redistribute it and/or modify it
-     under the terms of the GNU General Public License as published by the
-     Free Software Foundation; either version 2 of the License, or (at your
-     option) any later version.
-
-    This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-     Public License for more details.
-
-    You should have received a copy of the GNU General Public License along
-     with this program; if not, write to the Free Software Foundation, Inc.,
-     675 Mass Ave, Cambridge, MA 02139, USA.
-
-    Product name: redemption, a FLOSS RDP proxy
-    Copyright (C) Wallix 2013
-    Author(s): Christophe Grosjean, Raphael Zhou
-*/
-
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestMppc2
-#include <boost/test/auto_unit_test.hpp>
-
-#include "log.hpp"
-#define LOGNULL
-
-#include "RDP/mppc.hpp"
-
-BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
-{
 uint8_t historyBuffer[] = {
 /* 0000 */ 0x28, 0x00, 0x03, 0x04, 0x01, 0x00, 0x04, 0x02, 0x00, 0x00, 0x20, 0x04, 0x10, 0x02, 0x01, 0x5a,  // (......... ....Z
 /* 0010 */ 0x00, 0x87, 0x72, 0x94, 0x52, 0x8c, 0x72, 0x9c, 0x11, 0x94, 0xf1, 0x8b, 0x33, 0x94, 0x12, 0x94,  // ..r.R.r.....3...
@@ -16874,37 +16842,3 @@ uint8_t compressed_data[] = {
 /* 0bb0 */ 0x29, 0x42, 0xd2, 0x82, 0x4e, 0x99, 0xca, 0x7e, 0xfc, 0x31, 0x40, 0xf0, 0x2e, 0x53, 0x98, 0x50,  // )B..N..~.1@..S.P
 /* 0bc0 */ 0x44, 0x28, 0x04, 0x82, 0xfe, 0x3a, 0x00,                             // D(...:.
 };
-
-    rdp_mppc_enc * mppc_enc = new rdp_mppc_enc(PROTO_RDP_50);
-
-
-    BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
-    BOOST_CHECK_EQUAL(sizeof(outputBufferPlus),  mppc_enc->buf_len + 64);
-    BOOST_CHECK_EQUAL(sizeof(hash_table),        mppc_enc->buf_len * 2);
-    BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 4037);
-    BOOST_CHECK_EQUAL(sizeof(compressed_data),   3015);
-
-
-    mppc_enc->protocol_type = 2;
-    memcpy(mppc_enc->historyBuffer,    historyBuffer,    mppc_enc->buf_len);
-    memcpy(mppc_enc->outputBufferPlus, outputBufferPlus, mppc_enc->buf_len + 64);
-    mppc_enc->historyOffset = 61499;
-    mppc_enc->buf_len       = 65536;
-    mppc_enc->bytes_in_opb  = 2834;
-    mppc_enc->flags         = 33;
-    mppc_enc->flagsHold     = 0;
-    mppc_enc->first_pkt     = 0;
-    memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
-
-
-    compress_rdp(mppc_enc, uncompressed_data, sizeof(uncompressed_data));
-
-    int flags = PACKET_COMPRESSED;
-
-    BOOST_CHECK_EQUAL(flags, (mppc_enc->flags & PACKET_COMPRESSED));
-    BOOST_CHECK_EQUAL(3015,  mppc_enc->bytes_in_opb);
-    BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc->outputBuffer
-                                   , mppc_enc->bytes_in_opb));
-
-    delete(mppc_enc);
-}
