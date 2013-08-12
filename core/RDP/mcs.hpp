@@ -56,10 +56,6 @@ namespace MCS
         return (reason > 4)?"???":reasons[reason];
     }
 
-    enum {
-        BER_TAG_MCS_DOMAIN_PARAMS = 0x30
-    };
-
     // Result ::= ENUMERATED   -- in Connect, response, confirm
     enum {
         RT_SUCCESSFUL               = 0,
@@ -272,6 +268,10 @@ namespace MCS
         }
 */
         int recv(Stream & stream){
+            enum {
+                BER_TAG_MCS_DOMAIN_PARAMS = 0x30
+            };
+
             bool in_result;
 
             uint8_t tag = stream.in_uint8_with_check(in_result);
@@ -453,68 +453,208 @@ namespace MCS
         }
     };
 
+    struct BerStream
+    {
+        // =========================================================================
+        // BER encoding rules support methods
+        // =========================================================================
+
+        enum {
+            BER_TAG_BOOLEAN      =    1,
+            BER_TAG_INTEGER      =    2,
+            BER_TAG_OCTET_STRING =    4,
+            BER_TAG_RESULT       =   10,
+            BER_TAG_MCS_DOMAIN_PARAMS = 0x30
+        };
+
+        Stream & stream;
+    
+        BerStream(Stream & stream) 
+        : stream(stream)
+        {
+        }
+        
+        void out_ber_len(unsigned int v){
+            if (v >= 0x80) {
+                if (v >= 0x100){
+                    this->stream.out_uint8(0x82);
+                    this->stream.out_uint16_be(v);
+                }
+                else {
+                    this->stream.out_uint8(0x81);
+                    this->stream.out_uint8(v);
+                }
+            }
+            else {
+                this->stream.out_uint8((uint8_t)v);
+            }
+        }
+
+        void out_ber_int8(unsigned int v){
+            this->stream.out_uint8(BER_TAG_INTEGER);
+            this->stream.out_uint8(1);
+            this->stream.out_uint8((uint8_t)v);
+        }
+
+        void set_out_ber_int8(unsigned int v, size_t offset){
+            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
+            this->stream.set_out_uint8(1, offset+1);
+            this->stream.set_out_uint8((uint8_t)v, offset+2);
+        }
+
+        void out_ber_int16(int value)
+        {
+            this->stream.out_uint8(BER_TAG_INTEGER);
+            this->stream.out_uint8(2);
+            this->stream.out_uint8((uint8_t)(value >> 8));
+            this->stream.out_uint8((uint8_t)value);
+        }
+
+        void set_out_ber_int16(unsigned int v, size_t offset){
+            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
+            this->stream.set_out_uint8(2,               offset+1);
+            this->stream.set_out_uint8((uint8_t)(v >> 8),        offset+2);
+            this->stream.set_out_uint8((uint8_t)v,               offset+3);
+        }
+
+        void out_ber_int24(int value)
+        {
+            this->stream.out_uint8(BER_TAG_INTEGER);
+            this->stream.out_uint8(3);
+            this->stream.out_uint8((uint8_t)(value >> 16));
+            this->stream.out_uint8((uint8_t)(value >> 8));
+            this->stream.out_uint8((uint8_t)value);
+        }
+
+        void set_out_ber_int24(int value, size_t offset)
+        {
+            this->stream.set_out_uint8(BER_TAG_INTEGER, offset);
+            this->stream.set_out_uint8(3,               offset+1);
+            this->stream.set_out_uint8((uint8_t)(value >> 16),     offset+2);
+            this->stream.set_out_uint8((uint8_t)(value >> 8),      offset+3);
+            this->stream.set_out_uint8((uint8_t)value,           offset+4);
+        }
+
+        void set_out_ber_len_uint7(unsigned int v, size_t offset){
+            if (v >= 0x80) {
+                LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
+                throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
+            }
+            this->stream.set_out_uint8((uint8_t)v, offset+0);
+        }
+
+        void out_ber_len_uint7(unsigned int v){
+            if (v >= 0x80) {
+                LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
+                throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
+            }
+            this->stream.out_uint8((uint8_t)v);
+        }
+
+        void set_out_ber_len_uint16(unsigned int v, size_t offset){
+            this->stream.set_out_uint8(0x82, offset+0);
+            this->stream.set_out_uint16_be(v, offset+1);
+        }
+
+        void out_ber_len_uint16(unsigned int v){
+            this->stream.out_uint8(0x82);
+            this->stream.out_uint16_be(v);
+        }
+
+        void set_out_ber_len(unsigned int v, size_t offset){
+            if (v>= 0x80){
+                REDASSERT(v < 65536);
+                (this->stream.get_data())[offset+0] = 0x82;
+                this->stream.set_out_uint16_be(v, offset+1);
+            }
+            else {
+                (this->stream.get_data())[offset+0] = (uint8_t)v;
+            }
+        }
+        
+        void mark_end() {
+            this->stream.mark_end();
+        }
+
+        uint32_t get_offset() const {
+            return this->stream.get_offset();
+        }
+
+        void out_uint16_be(unsigned int v) {
+            return this->stream.out_uint16_be(v);
+        }
+
+        void out_uint8(unsigned char v) {
+            return this->stream.out_uint8(v);
+        }
+    };
+    
+
     struct CONNECT_INITIAL_Send
     {
+        BerStream ber_stream;
+    
         CONNECT_INITIAL_Send(Stream & stream, size_t payload_length, int encoding)
+        : ber_stream(stream)
         {
             if (encoding != BER_ENCODING){
                 LOG(LOG_ERR, "Connect Initial::BER_ENCODING mandatory for Connect PDUs");
                 throw Error(ERR_MCS);
             }
-            stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_INITIAL);
-            stream.out_ber_len_uint16(0); // filled later, 3 bytes
+            this->ber_stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_INITIAL);
+            this->ber_stream.out_ber_len_uint16(0); // filled later, 3 bytes
 
-            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
-            stream.out_ber_len(1); /* calling domain */
-            stream.out_uint8(1);
-            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
-            stream.out_ber_len(1); /* called domain */
-            stream.out_uint8(1);
-            stream.out_uint8(Stream::BER_TAG_BOOLEAN);
-            stream.out_ber_len(1);
-            stream.out_uint8(0xff); /* upward flag */
+            this->ber_stream.out_uint8(BerStream::BER_TAG_OCTET_STRING);
+            this->ber_stream.out_ber_len(1); /* calling domain */
+            this->ber_stream.out_uint8(1);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_OCTET_STRING);
+            this->ber_stream.out_ber_len(1); /* called domain */
+            this->ber_stream.out_uint8(1);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_BOOLEAN);
+            this->ber_stream.out_ber_len(1);
+            this->ber_stream.out_uint8(0xff); /* upward flag */
 
             // target params
-            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-            stream.out_ber_len(26);      // 26 = 0x1a
-            stream.out_ber_int8(34);     // max_channels
-            stream.out_ber_int8(2);      // max_users
-            stream.out_ber_int8(0);      // max_tokens
-            stream.out_ber_int8(1);
-            stream.out_ber_int8(0);
-            stream.out_ber_int8(1);
-            stream.out_ber_int24(0xffff); // max_pdu_size
-            stream.out_ber_int8(2);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_MCS_DOMAIN_PARAMS);
+            this->ber_stream.out_ber_len(26);      // 26 = 0x1a
+            this->ber_stream.out_ber_int8(34);     // max_channels
+            this->ber_stream.out_ber_int8(2);      // max_users
+            this->ber_stream.out_ber_int8(0);      // max_tokens
+            this->ber_stream.out_ber_int8(1);
+            this->ber_stream.out_ber_int8(0);
+            this->ber_stream.out_ber_int8(1);
+            this->ber_stream.out_ber_int24(0xffff); // max_pdu_size
+            this->ber_stream.out_ber_int8(2);
 
             // min params
-            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-            stream.out_ber_len(25);     // 25=0x19
-            stream.out_ber_int8(1);     // max_channels
-            stream.out_ber_int8(1);     // max_users
-            stream.out_ber_int8(1);     // max_tokens
-            stream.out_ber_int8(1);
-            stream.out_ber_int8(0);
-            stream.out_ber_int8(1);
-            stream.out_ber_int16(0x420); // max_pdu_size
-            stream.out_ber_int8(2);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_MCS_DOMAIN_PARAMS);
+            this->ber_stream.out_ber_len(25);     // 25=0x19
+            this->ber_stream.out_ber_int8(1);     // max_channels
+            this->ber_stream.out_ber_int8(1);     // max_users
+            this->ber_stream.out_ber_int8(1);     // max_tokens
+            this->ber_stream.out_ber_int8(1);
+            this->ber_stream.out_ber_int8(0);
+            this->ber_stream.out_ber_int8(1);
+            this->ber_stream.out_ber_int16(0x420); // max_pdu_size
+            this->ber_stream.out_ber_int8(2);
 
             // max params
-            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-            stream.out_ber_len(31);
-            stream.out_ber_int24(0xffff); // max_channels
-            stream.out_ber_int16(0xfc17); // max_users
-            stream.out_ber_int24(0xffff); // max_tokens
-            stream.out_ber_int8(1);
-            stream.out_ber_int8(0);
-            stream.out_ber_int8(1);
-            stream.out_ber_int24(0xffff); // max_pdu_size
-            stream.out_ber_int8(2);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_MCS_DOMAIN_PARAMS);
+            this->ber_stream.out_ber_len(31);
+            this->ber_stream.out_ber_int24(0xffff); // max_channels
+            this->ber_stream.out_ber_int16(0xfc17); // max_users
+            this->ber_stream.out_ber_int24(0xffff); // max_tokens
+            this->ber_stream.out_ber_int8(1);
+            this->ber_stream.out_ber_int8(0);
+            this->ber_stream.out_ber_int8(1);
+            this->ber_stream.out_ber_int24(0xffff); // max_pdu_size
+            this->ber_stream.out_ber_int8(2);
 
-            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
-            stream.out_ber_len_uint16(payload_length);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_OCTET_STRING);
+            this->ber_stream.out_ber_len_uint16(payload_length);
             // now we know full MCS Initial header length (without initial tag and len)
-            stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - 5, 2);
-            stream.mark_end();
+            this->ber_stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - 5, 2);
+            this->ber_stream.mark_end();
         }
     };
 
@@ -728,67 +868,70 @@ namespace MCS
 
     struct CONNECT_RESPONSE_Send
     {
+        BerStream ber_stream;
+
         CONNECT_RESPONSE_Send(Stream & stream, size_t payload_length, int encoding)
+        : ber_stream(stream)
         {
             if (encoding != BER_ENCODING){
                 LOG(LOG_ERR, "Connect Response::BER_ENCODING mandatory for Connect PDUs");
                 throw Error(ERR_MCS);
            }
             // BER: Application-Defined Type = APPLICATION 102 = Connect-Response
-            stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_RESPONSE);
+            this->ber_stream.out_uint16_be(0x7F00|MCSPDU_CONNECT_RESPONSE);
             // BER: Type Length
             if (payload_length > 88){
-                stream.out_ber_len_uint16(0);
+                this->ber_stream.out_ber_len_uint16(0);
             }
             else {
-                stream.out_ber_len_uint7(0);
+                this->ber_stream.out_ber_len_uint7(0);
             }
-            uint16_t start_offset = stream.get_offset();
+            uint16_t start_offset = this->ber_stream.get_offset();
 
             // Connect-Response::result = rt-successful (0)
             // The first byte (0x0a) is the ASN.1 BER encoded Enumerated type. The
             // length of the value is given by the second byte (1 byte), and the
             // actual value is 0 (rt-successful).
-            stream.out_uint8(Stream::BER_TAG_RESULT);
-            stream.out_ber_len_uint7(1);
-            stream.out_uint8(0);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_RESULT);
+            this->ber_stream.out_ber_len_uint7(1);
+            this->ber_stream.out_uint8(0);
 
             // Connect-Response::calledConnectId = 0
-            stream.out_uint8(Stream::BER_TAG_INTEGER);
-            stream.out_ber_len_uint7(1);
-            stream.out_uint8(0);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_INTEGER);
+            this->ber_stream.out_ber_len_uint7(1);
+            this->ber_stream.out_uint8(0);
 
             // Connect-Response::domainParameters (26 bytes)
-            stream.out_uint8(BER_TAG_MCS_DOMAIN_PARAMS);
-            stream.out_ber_len_uint7(26);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_MCS_DOMAIN_PARAMS);
+            this->ber_stream.out_ber_len_uint7(26);
             // DomainParameters::maxChannelIds = 34
-            stream.out_ber_int8(34);
+            this->ber_stream.out_ber_int8(34);
             // DomainParameters::maxUserIds = 3
-            stream.out_ber_int8(3);
+            this->ber_stream.out_ber_int8(3);
             // DomainParameters::maximumTokenIds = 0
-            stream.out_ber_int8(0);
+            this->ber_stream.out_ber_int8(0);
             // DomainParameters::numPriorities = 1
-            stream.out_ber_int8(1);
+            this->ber_stream.out_ber_int8(1);
             // DomainParameters::minThroughput = 0
-            stream.out_ber_int8(0);
+            this->ber_stream.out_ber_int8(0);
             // DomainParameters::maxHeight = 1
-            stream.out_ber_int8(1);
+            this->ber_stream.out_ber_int8(1);
             // DomainParameters::maxMCSPDUsize = 65528
-            stream.out_ber_int24(0xfff8);
+            this->ber_stream.out_ber_int24(0xfff8);
             // DomainParameters::protocolVersion = 2
-            stream.out_ber_int8(2);
+            this->ber_stream.out_ber_int8(2);
 
-            stream.out_uint8(Stream::BER_TAG_OCTET_STRING);
-            stream.out_ber_len(payload_length);
+            this->ber_stream.out_uint8(BerStream::BER_TAG_OCTET_STRING);
+            this->ber_stream.out_ber_len(payload_length);
 
             // now we know full MCS Initial header length (without initial tag and len)
             if (payload_length > 88){
-                stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - start_offset, 2);
+                this->ber_stream.set_out_ber_len_uint16(payload_length + this->ber_stream.get_offset() - start_offset, 2);
             }
             else {
-                stream.set_out_ber_len_uint7(payload_length + stream.get_offset() - start_offset, 2);
+                this->ber_stream.set_out_ber_len_uint7(payload_length + this->ber_stream.get_offset() - start_offset, 2);
             }
-            stream.mark_end();
+            this->ber_stream.mark_end();
         }
     };
 
