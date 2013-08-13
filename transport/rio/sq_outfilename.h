@@ -40,6 +40,7 @@ extern "C" {
         char path[1024];
         char filename[1024];
         char extension[12];
+        char tempnam[2048];
         unsigned pid;
         unsigned count;
         int groupid;
@@ -49,8 +50,9 @@ extern "C" {
                 SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension, const int groupid)
     {
-        self->trans = NULL;
-        self->count = 0;
+        self->fd     = -1;
+        self->trans  = NULL;
+        self->count  = 0;
         self->format = format;
         self->pid = getpid();
         if (strlen(path) > sizeof(self->path) - 1){
@@ -67,13 +69,11 @@ extern "C" {
         }
         strcpy(self->extension, extension);
         self->groupid = groupid;
+        memset(self->tempnam, 0, sizeof(self->tempnam));
         return RIO_ERROR_OK;
     }
 
-    // internal utility method, used to get name of files used for target transports
-    // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
-    // not a part of external sequence API
-    static inline size_t sq_im_SQOutfilename_get_name(const SQOutfilename * self, char * buffer, size_t size, int count)
+    static inline size_t _sq_im_SQOutfilename_get_name(const SQOutfilename * self, char * buffer, size_t size, int count)
     {
         size_t res = 0;
         switch (self->format){
@@ -94,6 +94,22 @@ extern "C" {
         return res;
     }
 
+    // internal utility method, used to get name of files used for target transports
+    // it is called internally, but actual goal is to enable tests to check and remove the created files afterward.
+    // not a part of external sequence API
+    static inline size_t sq_im_SQOutfilename_get_name(const SQOutfilename * self, char * buffer, size_t size, int count)
+    {
+        size_t res = 0;
+        if (!self->tempnam[0] || (count != self->count)) {
+            return _sq_im_SQOutfilename_get_name(self, buffer, size, count);
+        }
+        else if (size > 0) {
+            strncpy(buffer, self->tempnam, size - 1);
+            buffer[size - 1] = 0;
+        }
+        return res;
+    }
+
     static RIO_ERROR sq_m_SQOutfilename_timestamp(SQOutfilename * self, timeval * tv)
     {
         return RIO_ERROR_OK;
@@ -103,9 +119,12 @@ extern "C" {
     {
         if (self->trans){
             char tmpname[1024];
-            sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
+            _sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
             rio_delete(self->trans);
             int res = close(self->fd);
+LOG(LOG_INFO, "\"%s\" -> \"%s\"", self->tempnam, tmpname);
+            rename(self->tempnam, tmpname);
+            memset(self->tempnam, 0, sizeof(self->tempnam));
             if (res < 0){
                 LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
                 return RIO_ERROR_CLOSE_FAILED;
@@ -119,10 +138,13 @@ extern "C" {
     {
         if (status && (*status != RIO_ERROR_OK)) { return self->trans; }
         if (!self->trans){
-            char tmpname[1024];
-            sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
+//            char tmpname[1024];
+//            sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
+            strncpy(self->tempnam, tempnam(self->path, "red"), sizeof(self->tempnam) - 1);
+            self->tempnam[sizeof(self->tempnam) - 1] = 0;
             TODO("add rights information to constructor")
-            self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR);
+//            self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR);
+            self->fd = ::open(self->tempnam, O_WRONLY|O_CREAT, S_IRUSR);
             if (self->fd < 0){
                 if (status) { *status = RIO_ERROR_CREAT; }
                 return self->trans;
@@ -131,8 +153,10 @@ extern "C" {
 //                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
 //                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);
 //                }
-                if (chmod(tmpname, S_IRUSR|S_IRGRP) == -1){
-                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", tmpname, strerror(errno), errno);
+//                if (chmod(tmpname, S_IRUSR|S_IRGRP) == -1){
+//                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", tmpname, strerror(errno), errno);
+                if (chmod(self->tempnam, S_IRUSR|S_IRGRP) == -1){
+                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", self->tempnam, strerror(errno), errno);
                 }
             }
             self->trans = rio_new_outfile(status, self->fd);

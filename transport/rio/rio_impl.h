@@ -1418,13 +1418,14 @@ inline ssize_t sq_outfilename_filesize(const SQ * seq, uint32_t count)
     return ::filesize(filename);
 }
 
-inline ssize_t sq_outfilename_unlink(const SQ * seq, uint32_t count)
+inline ssize_t sq_outfilename_unlink(SQ * seq, uint32_t count)
 {
     char filename[1024];
+    sq_m_SQOutfilename_destructor(&(seq->u.outfilename));
     sq_im_SQOutfilename_get_name(&(seq->u.outfilename), filename, sizeof(filename), count);
     int status = ::unlink(filename);
     if (status < 0){
-        LOG(LOG_INFO, "removing file %s failed. Error [%u] : %s\n", filename, errno, strerror(errno));
+        LOG(LOG_INFO, "removing file \"%s\" failed. Error [%u] : %s\n", filename, errno, strerror(errno));
     }
     return status;
 }
