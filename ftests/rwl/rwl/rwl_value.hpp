@@ -22,17 +22,11 @@
 #define REDEMPTION_RWL_RWL_VALUE_HPP
 
 #include "basic_cstring.hpp"
+#include "delete.hpp"
 
 #include <vector>
 #include <algorithm>
 #include <cstring>
-
-template<typename T>
-struct default_deleter {
-    void operator()(T * val) const {
-        delete val;
-    }
-};
 
 
 struct rwl_value
@@ -59,9 +53,8 @@ public:
                 delete [] this->value.linked.pair_strings;
                 break;
             case 'f':
-                std::for_each(this->value.func.params + 0,
-                              this->value.func.params + this->value.func.size,
-                              default_deleter<rwl_value>());
+                delete_all(this->value.func.params + 0,
+                           this->value.func.params + this->value.func.size);
                 delete [] this->value.func.params;
                 break;
             default:
@@ -215,25 +208,25 @@ public:
     }
 
 
-    union {
-        struct {
+    union Val {
+        struct S {
             const char * first;
             const char * last;
         } s;
-        struct {
+        struct Func {
             const char * first;
             const char * last;
             rwl_value ** params;
             unsigned size;
         } func;
-        struct {
+        struct Linked {
             const char * first;
             const char * last;
             const char * * pair_strings;
             unsigned size;
         } linked;
         rwl_value * g;
-        struct {
+        struct Operation {
             rwl_value * l;
             rwl_value * r;
             int op;
@@ -276,9 +269,7 @@ struct rwl_property
 
     ~rwl_property()
     {
-        std::for_each(this->properties.begin(),
-                      this->properties.end(),
-                      default_deleter<rwl_property>());
+        delete_all(this->properties.begin(), this->properties.end());
         if (&this->value != this->root_value) {
             this->root_value->detach(&this->value);
             delete this->root_value;
@@ -323,12 +314,8 @@ struct rwl_target
 
     ~rwl_target()
     {
-        std::for_each(this->properties.begin(),
-                      this->properties.end(),
-                      default_deleter<rwl_property>());
-        std::for_each(this->targets.begin(),
-                      this->targets.end(),
-                      default_deleter<rwl_target>());
+        delete_all(this->properties.begin(), this->properties.end());
+        delete_all(this->targets.begin(), this->targets.end());
     }
 
     const_cstring name;

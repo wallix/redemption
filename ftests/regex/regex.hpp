@@ -545,7 +545,7 @@ namespace rndfa {
             ++this->pidx_trace_free;
         }
 
-        void push_state(RangeList* l, StateBase * st, unsigned& step)
+        void push_state(RangeList* l, StateBase * st, unsigned step)
         {
             if (st && st->id != step) {
                 st->id = step;

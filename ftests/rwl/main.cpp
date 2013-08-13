@@ -23,13 +23,14 @@
 #include "basic_cstring.hpp"
 
 #include <iostream>
+#include <sstream>
+#include <fstream>
 
 const_cstring tb(unsigned tab = 0)
 {
 #define SPACE_S "                                                                      "
     return const_cstring(SPACE_S, SPACE_S + tab*2);
 #undef SPACE_S
-
 }
 
 void display_value(const rwl_value& value, unsigned tab = 0)
@@ -191,41 +192,27 @@ void rwl_to_string(const rwl_target& target, unsigned tab = 0)
 }
 
 
-int main()
+int main(int ac, char ** av)
 {
     std::ios::sync_with_stdio(false);
 
+    if (ac < 2) {
+        std::cerr << av[0] << " rwl_file\n";
+        return 2;
+    }
+
     rwl_target screen;
-    screen.name.assign("Screen", "Screen" + sizeof("Screen"));
+    screen.name.assign("Screen", "Screen" + sizeof("Screen") - 1);
     rwl_parser parser(screen);
 
-    const char * str = "Rect {"
-        " bgcolor: #122 ;"
-        " color: rgb( #239, 'l' ) ;"
-        " color: rgb( #239 ) ;"
-        " color: rgb( (#239) , \"l\", 234 ) ;"
-        " x: label.w ;"
-        " x: label.w + 2 ;"
-        " border.top: 2 ;"
-        " border.top.color: #233 ;"
-        " Rect { z: 22+2 }"
-        " k: 21+3 ;"
-        " Rect { Rect { x: 20 ;} }"
-        " Rect { Rect { x: 20 } ; }"
-        " text: \"plop\" ;"
-        " border: { left: 2 ; right: 2 ; top: 2}"
-        " border: { left: 2 ; color: { top:3 ; bottom: 1; } ; right: 2 ; top: 2}"
-        " x: (screen.w - this.w) / 2 ;"
-        " y: screen.w - this.w / 2 ;"
-        " n: 1 * 2 + 3 ;"
-        " n: 1 + 2 * 3 ;"
-        " z: x ;"
-        " zz: y;"
-    " }"
-    " Rect { x: 202 }"
-    " Rect { x: r(r(g(8),2),1) }"
-    " x:1"
-    ;
+    std::ifstream ifs(av[1]);
+    if (! ifs.is_open()) {
+        return 3;
+    }
+    std::string str;
+    std::getline(ifs, str, '\0'); //read all
+    const char * cstr = str.c_str();
+    const char * begin_cstr = cstr;
 
 //     const char * states[] = {
 //         "target",
@@ -244,18 +231,19 @@ int main()
 //         "expression",
 //     };
 
-    while (parser.valid() && *str) {
-        str = parser.next_event(str);
+    while (parser.valid() && *cstr) {
+        cstr = parser.next_event(cstr);
     }
 
     display_target(screen);
     std::cout << "\n";
     rwl_to_string(screen);
 
-    if (*str) {
-        std::cout << ("parsing error\n");
+    if (*cstr) {
+        std::cout << "\n\n\nparsing error line "
+        << (std::count(begin_cstr, cstr, '\n')+1) << "\n" << cstr;
     }
     else if (!parser.stop()) {
-        std::cout << ("invalid state\n");
+        std::cout << "\n\n\ninvalid state\n";
     }
 }

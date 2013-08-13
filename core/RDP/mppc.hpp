@@ -1557,12 +1557,12 @@ struct rdp_mppc_enc {
         TODO("making it static and large enough should be good for both RDP4 and RDP5")
         memset(this->historyBuffer, 0, this->buf_len);
 
-        this->outputBufferPlus = (char*) malloc(this->buf_len + 64);
+        this->outputBufferPlus = (char*) malloc(this->buf_len + 64 + 8);
         memset(this->outputBufferPlus, 0, this->buf_len + 64);
 
         this->outputBuffer = this->outputBufferPlus + 64;
-        this->hash_table = (uint16_t*) malloc(this->buf_len * 2);
-        memset(this->hash_table, 0, this->buf_len * 2);
+        this->hash_table = (uint16_t*) malloc(/*this->buf_len*/RDP_50_HIST_BUF_LEN * 2);
+        memset(this->hash_table, 0, /*this->buf_len*/RDP_50_HIST_BUF_LEN * 2);
     }
 
     /**
@@ -1578,6 +1578,24 @@ struct rdp_mppc_enc {
         free(this->hash_table);
     }
 
+    void mini_dump() {
+        LOG(LOG_INFO, "protocol_type=%d",      this->protocol_type);
+        LOG(LOG_INFO, "historyBuffer");
+        hexdump_d(this->historyBuffer,         16);
+        LOG(LOG_INFO, "outputBuffer");
+        hexdump_d(this->outputBuffer,          16);
+        LOG(LOG_INFO, "outputBufferPlus");
+        hexdump_d(this->outputBufferPlus,      16);
+        LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
+        LOG(LOG_INFO, "buf_len=%d",            this->buf_len);
+        LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
+        LOG(LOG_INFO, "flags=0x%X",              this->flags);
+        LOG(LOG_INFO, "flagsHold=0x%X",          this->flagsHold);
+        LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
+        LOG(LOG_INFO, "hash_table");
+        hexdump_d((uint8_t *)this->hash_table, 16);
+    }
+
     void dump() {
         LOG(LOG_INFO, "protocol_type=%d",      this->protocol_type);
         LOG(LOG_INFO, "historyBuffer");
@@ -1587,11 +1605,11 @@ struct rdp_mppc_enc {
         LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
         LOG(LOG_INFO, "buf_len=%d",            this->buf_len);
         LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
-        LOG(LOG_INFO, "flags=%d",              this->flags);
-        LOG(LOG_INFO, "flagsHold=%d",          this->flagsHold);
+        LOG(LOG_INFO, "flags=0x%X",              this->flags);
+        LOG(LOG_INFO, "flagsHold=0x%X",          this->flagsHold);
         LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
         LOG(LOG_INFO, "hash_table");
-        hexdump_d((uint8_t *)this->hash_table, this->buf_len * 2);
+        hexdump_d((uint8_t *)this->hash_table, /*this->buf_len*/RDP_50_HIST_BUF_LEN * 2);
     }
 };
 
@@ -1617,6 +1635,14 @@ static inline void insert_n_bits(int n, uint32_t _data, char* outputBuffer, int 
     }
 }
 
+
+static inline void encode_literal(char c, char* outputBuffer, int & bits_left, int & opb_index)
+{
+    insert_n_bits(
+        (c & 0x80)?9:8,
+        (c & 0x80)?(0x02 << 7) | (c & 0x7F):c,
+        outputBuffer, bits_left, opb_index);
+}
 
 // 3.1.8 MPPC-Based Bulk Data Compression
 // ======================================
@@ -1764,16 +1790,46 @@ static inline void insert_n_bits(int n, uint32_t _data, char* outputBuffer, int 
 // |                        | MUST be set when compression of the data was     |
 // |                        | successful.                                      |
 // +------------------------+--------------------------------------------------+
-// | PACKET_AT_FRONT 0x40   | Used to indicate that the decompressed data MUST be placed at the beginning of the local history buffer. This flag is equivalent to MPPC bit B (for more information see [RFC2118] section 3.1). This flag MUST be set in conjunction with the PACKET_COMPRESSED (0x20) flag. There are two conditions on the "compressor-side" that generate this scenario: (1) this is the first packet to be compressed, and (2) the data to be compressed will not fit at the end of the history buffer but instead needs to be placed at the start of the history buffer.
+// | PACKET_AT_FRONT 0x40   | Used to indicate that the decompressed data MUST |
+// |                        | be placed at the beginning of the local history  |
+// |                        | buffer. This flag is equivalent to MPPC bit B    |
+// |                        | (for more information see [RFC2118] section 3.1).|
+// |                        | This flag MUST be set in conjunction with the    |
+// |                        | PACKET_COMPRESSED (0x20) flag. There are two     |
+// |                        | conditions on the "compressor-side" that generate|
+// |                        | this scenario: (1) this is the first packet to be|
+// |                        | compressed, and (2) the data to be compressed    |
+// |                        | will not fit at the end of the history buffer but|
+// |                        | instead needs to be placed at the start of the   |
+// |                        | history buffer.                                  |
 // +------------------------+--------------------------------------------------+
-// | PACKET_FLUSHED 0x80    | Used to indicate that the decompressor MUST reinitialized the history buffer (by filling it with zeros) and reset the HistoryOffset to zero. After it has been reinitialized, the entire history buffer is immediately regarded as valid. This flag is equivalent to MPPC bit A (for more information see [RFC2118] section 3.1). If the PACKET_COMPRESSED (0x20) flag is also present, then the PACKET_FLUSHED flag MUST be processed first.
+// | PACKET_FLUSHED 0x80    | Used to indicate that the decompressor MUST      |
+// |                        | reinitialized the history buffer (by filling it  |
+// |                        | with zeros) and reset the HistoryOffset to zero. |
+// |                        | After it has been reinitialized, the entire      |
+// |                        | history buffer is immediately regarded as valid. |
+// |                        | This flag is equivalent to MPPC bit A (for more  |
+// |                        | information see [RFC2118] section 3.1). If the   |
+// |                        | PACKET_COMPRESSED (0x20) flag is also present,   |
+// |                        | then the PACKET_FLUSHED flag MUST be processed   |
+// |                        | first.                                          |
 // +------------------------+--------------------------------------------------+
 
-// Data that is tagged as compressed (using the PACKET_COMPRESSED flag) MUST NOT be larger in size than the original data. This implies that in a minority of cases it is possible for compressed data to be the same size as the original data, and still be regarded as compressed. In effect, the statement that "data is compressed" simply implies that the data is encoded using a particular scheme, and that a decoder (or decompressor) is required to obtain the original data.
+// Data that is tagged as compressed (using the PACKET_COMPRESSED flag) MUST NOT
+// be larger in size than the original data. This implies that in a minority of
+// cases it is possible for compressed data to be the same size as the original
+// data, and still be regarded as compressed. In effect, the statement that
+// "data is compressed" simply implies that the data is encoded using a
+// particular scheme, and that a decoder (or decompressor) is required to obtain
+// the original data.
 
 // 3.1.8.2.2 Operation of the Bulk Compressor
 
-// The flowchart in the following figure illustrates the general operation of the bulk compressor and the production of the compression flags described in section 3.1.8.2.1.
+// The flowchart in the following figure illustrates the general operation of
+// the bulk compressor and the production of the compression flags described in
+// section 3.1.8.2.1.
+
+// TODO: convert flowchart to pseudocode to insert it here
 
 // The constructs that follow are used throughout the flowchart.
 
@@ -1938,6 +1994,53 @@ static inline void insert_n_bits(int n, uint32_t _data, char* outputBuffer, int 
 // (13) HistoryPtr (49) is not less than HistoryOffset (49), so we add the PACKET_COMPRESSED flag to the output packet and send the Output Buffer.
 
 
+static inline uint32_t signature(const char v[])
+{
+    /* CRC16 defs */
+    static const uint16_t crc_table[256] =
+    {
+        0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
+        0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
+        0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
+        0x9cc9, 0x8d40, 0xbfdb, 0xae52, 0xdaed, 0xcb64, 0xf9ff, 0xe876,
+        0x2102, 0x308b, 0x0210, 0x1399, 0x6726, 0x76af, 0x4434, 0x55bd,
+        0xad4a, 0xbcc3, 0x8e58, 0x9fd1, 0xeb6e, 0xfae7, 0xc87c, 0xd9f5,
+        0x3183, 0x200a, 0x1291, 0x0318, 0x77a7, 0x662e, 0x54b5, 0x453c,
+        0xbdcb, 0xac42, 0x9ed9, 0x8f50, 0xfbef, 0xea66, 0xd8fd, 0xc974,
+        0x4204, 0x538d, 0x6116, 0x709f, 0x0420, 0x15a9, 0x2732, 0x36bb,
+        0xce4c, 0xdfc5, 0xed5e, 0xfcd7, 0x8868, 0x99e1, 0xab7a, 0xbaf3,
+        0x5285, 0x430c, 0x7197, 0x601e, 0x14a1, 0x0528, 0x37b3, 0x263a,
+        0xdecd, 0xcf44, 0xfddf, 0xec56, 0x98e9, 0x8960, 0xbbfb, 0xaa72,
+        0x6306, 0x728f, 0x4014, 0x519d, 0x2522, 0x34ab, 0x0630, 0x17b9,
+        0xef4e, 0xfec7, 0xcc5c, 0xddd5, 0xa96a, 0xb8e3, 0x8a78, 0x9bf1,
+        0x7387, 0x620e, 0x5095, 0x411c, 0x35a3, 0x242a, 0x16b1, 0x0738,
+        0xffcf, 0xee46, 0xdcdd, 0xcd54, 0xb9eb, 0xa862, 0x9af9, 0x8b70,
+        0x8408, 0x9581, 0xa71a, 0xb693, 0xc22c, 0xd3a5, 0xe13e, 0xf0b7,
+        0x0840, 0x19c9, 0x2b52, 0x3adb, 0x4e64, 0x5fed, 0x6d76, 0x7cff,
+        0x9489, 0x8500, 0xb79b, 0xa612, 0xd2ad, 0xc324, 0xf1bf, 0xe036,
+        0x18c1, 0x0948, 0x3bd3, 0x2a5a, 0x5ee5, 0x4f6c, 0x7df7, 0x6c7e,
+        0xa50a, 0xb483, 0x8618, 0x9791, 0xe32e, 0xf2a7, 0xc03c, 0xd1b5,
+        0x2942, 0x38cb, 0x0a50, 0x1bd9, 0x6f66, 0x7eef, 0x4c74, 0x5dfd,
+        0xb58b, 0xa402, 0x9699, 0x8710, 0xf3af, 0xe226, 0xd0bd, 0xc134,
+        0x39c3, 0x284a, 0x1ad1, 0x0b58, 0x7fe7, 0x6e6e, 0x5cf5, 0x4d7c,
+        0xc60c, 0xd785, 0xe51e, 0xf497, 0x8028, 0x91a1, 0xa33a, 0xb2b3,
+        0x4a44, 0x5bcd, 0x6956, 0x78df, 0x0c60, 0x1de9, 0x2f72, 0x3efb,
+        0xd68d, 0xc704, 0xf59f, 0xe416, 0x90a9, 0x8120, 0xb3bb, 0xa232,
+        0x5ac5, 0x4b4c, 0x79d7, 0x685e, 0x1ce1, 0x0d68, 0x3ff3, 0x2e7a,
+        0xe70e, 0xf687, 0xc41c, 0xd595, 0xa12a, 0xb0a3, 0x8238, 0x93b1,
+        0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
+        0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
+        0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
+    };
+
+    uint32_t crc = 0xFFFF;
+    crc = (crc >> 8) ^ crc_table[(crc ^ v[0]) & 0xff];
+    crc = (crc >> 8) ^ crc_table[(crc ^ v[1]) & 0xff];
+    crc = (crc >> 8) ^ crc_table[(crc ^ v[2]) & 0xff];
+    return crc;
+}
+
+
 // 3.1.8.4.1 RDP 4.0
 // =================
 
@@ -2015,8 +2118,115 @@ static inline void insert_n_bits(int n, uint32_t _data, char* outputBuffer, int 
 
 static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, int len)
 {
-    /* RDP 4.0 encoding not yet implemented */
-    return false;
+    int opb_index = 0;                      /* index into outputBuffer */
+    int bits_left = 8;                      /* unused bits in current uint8_t in outputBuffer */
+    uint16_t *hash_table = enc->hash_table; /* hash table for pattern matching */
+    char* outputBuffer = enc->outputBuffer;  /* points to enc->outputBuffer */
+    TODO("this memset should not be necessary")
+    memset(outputBuffer, 0, len);
+
+    enc->flags = PACKET_COMPR_TYPE_8K;
+
+    if (enc->first_pkt){
+        enc->first_pkt = 0;
+        enc->flagsHold |= PACKET_AT_FRONT;
+    }
+
+    if ((enc->historyOffset + len + 2) >= enc->buf_len)
+    {
+        /* historyBuffer cannot hold srcData - rewind it */
+        enc->historyOffset = 0;
+        enc->flagsHold |= PACKET_AT_FRONT;
+        memset(hash_table, 0, /*enc->buf_len*/RDP_50_HIST_BUF_LEN * 2);
+    }
+
+    /* add / append new data to historyBuffer */
+    memcpy(&(enc->historyBuffer[enc->historyOffset]), srcData, len);
+
+    int ctr = 0;
+    uint32_t copy_offset = 0; /* pattern match starts here... */
+
+    /* if we are at start of history buffer, do not attempt to compress */
+    /* first 2 bytes,because minimum LoM is 3                           */
+    if (enc->historyOffset == 0){
+        /* encode first two bytes as literals */
+        for (int x = 0; x < 2; x++){
+            encode_literal(enc->historyBuffer[enc->historyOffset+x], outputBuffer, bits_left, opb_index);
+        }
+
+        hash_table[signature(enc->historyBuffer)] = 0;
+        hash_table[signature(enc->historyBuffer+1)] = 1;
+        ctr = 2;
+    }
+
+    int lom = 0;
+    for ( ; ctr + 2 < len ; ctr += lom){ // we need at least 3 bytes to look for match
+        uint32_t crc2 = signature(enc->historyBuffer+enc->historyOffset+ctr);
+        int previous_match = hash_table[crc2];
+        hash_table[crc2] = enc->historyOffset + ctr;
+
+        /* check that we have a pattern match, hash is not enough */
+        if (0 != memcmp(enc->historyBuffer+enc->historyOffset + ctr, enc->historyBuffer+previous_match, 3)){
+            /* no match found; encode literal uint8_t */
+            encode_literal(enc->historyBuffer[enc->historyOffset + ctr], outputBuffer, bits_left, opb_index);
+            lom = 1;
+        }
+        else {
+            /* we have a match - compute hash and Length of Match for triplets */
+            hash_table[signature(enc->historyBuffer+enc->historyOffset+ctr+1)] = enc->historyOffset+ctr+1;
+            for (lom = 3; ctr + lom < len  ; lom++){
+                hash_table[signature(enc->historyBuffer+enc->historyOffset+ctr+lom-1)] = enc->historyOffset+ctr+lom-1;
+                if (enc->historyBuffer[enc->historyOffset + ctr + lom] != enc->historyBuffer[previous_match + lom]){
+                    break;
+                }
+            }
+
+            /* encode copy_offset and insert into output buffer */
+            copy_offset = enc->historyOffset + ctr - previous_match;
+            const int nbbits[3]  = {10, 12, 16};
+            const int headers[3] = {0x3c0, 0xe00, 0xc000};
+            const int base[3]    = {0, 0x40, 0x140};
+            int range = (copy_offset <= 0x3F)  ? 0 :
+                        (copy_offset <= 0x13F) ? 1 :
+                                                 2 ;
+            insert_n_bits(nbbits[range], headers[range]|(copy_offset - base[range]) , outputBuffer, bits_left, opb_index);
+
+            int log_lom = 8*sizeof(lom) - 1 - __builtin_clz(lom);
+
+            /* encode length of match and insert into output buffer */
+            insert_n_bits(
+                (lom==3)?1:2*log_lom,
+                (lom==3)?0:(((((1<<log_lom)-1)&0xFFE)<<log_lom)|(lom-(1<<log_lom))),
+                outputBuffer, bits_left, opb_index);
+        }
+    }
+
+    /* add remaining data if any to the output */
+    while (len - ctr > 0){
+        encode_literal(srcData[ctr], outputBuffer, bits_left, opb_index);
+        ctr++;
+    }
+
+    if (opb_index >= len)
+    {
+        /* compressed data longer or same size than uncompressed data */
+        /* give up */
+        enc->historyOffset = 0;
+        memset(hash_table, 0, /*enc->buf_len*/RDP_50_HIST_BUF_LEN * 2);
+        enc->flagsHold |= PACKET_FLUSHED;
+        enc->first_pkt = 1;
+
+        return true;
+    }
+
+    enc->historyOffset += len;
+    enc->flags |= PACKET_COMPRESSED;
+    /* if bits_left == 8, opb_index has already been incremented */
+    enc->bytes_in_opb = opb_index + (bits_left != 8);
+    enc->flags |= enc->flagsHold;
+    enc->flagsHold = 0;
+
+    return true;
 }
 
 
@@ -2079,53 +2289,6 @@ static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, in
 // 32768..65535 | 111111111111110 + 15 lower bits of L-o-M
 
 
-static inline uint32_t signature(const char v[])
-{
-    /* CRC16 defs */
-    static const uint16_t crc_table[256] =
-    {
-        0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
-        0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
-        0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
-        0x9cc9, 0x8d40, 0xbfdb, 0xae52, 0xdaed, 0xcb64, 0xf9ff, 0xe876,
-        0x2102, 0x308b, 0x0210, 0x1399, 0x6726, 0x76af, 0x4434, 0x55bd,
-        0xad4a, 0xbcc3, 0x8e58, 0x9fd1, 0xeb6e, 0xfae7, 0xc87c, 0xd9f5,
-        0x3183, 0x200a, 0x1291, 0x0318, 0x77a7, 0x662e, 0x54b5, 0x453c,
-        0xbdcb, 0xac42, 0x9ed9, 0x8f50, 0xfbef, 0xea66, 0xd8fd, 0xc974,
-        0x4204, 0x538d, 0x6116, 0x709f, 0x0420, 0x15a9, 0x2732, 0x36bb,
-        0xce4c, 0xdfc5, 0xed5e, 0xfcd7, 0x8868, 0x99e1, 0xab7a, 0xbaf3,
-        0x5285, 0x430c, 0x7197, 0x601e, 0x14a1, 0x0528, 0x37b3, 0x263a,
-        0xdecd, 0xcf44, 0xfddf, 0xec56, 0x98e9, 0x8960, 0xbbfb, 0xaa72,
-        0x6306, 0x728f, 0x4014, 0x519d, 0x2522, 0x34ab, 0x0630, 0x17b9,
-        0xef4e, 0xfec7, 0xcc5c, 0xddd5, 0xa96a, 0xb8e3, 0x8a78, 0x9bf1,
-        0x7387, 0x620e, 0x5095, 0x411c, 0x35a3, 0x242a, 0x16b1, 0x0738,
-        0xffcf, 0xee46, 0xdcdd, 0xcd54, 0xb9eb, 0xa862, 0x9af9, 0x8b70,
-        0x8408, 0x9581, 0xa71a, 0xb693, 0xc22c, 0xd3a5, 0xe13e, 0xf0b7,
-        0x0840, 0x19c9, 0x2b52, 0x3adb, 0x4e64, 0x5fed, 0x6d76, 0x7cff,
-        0x9489, 0x8500, 0xb79b, 0xa612, 0xd2ad, 0xc324, 0xf1bf, 0xe036,
-        0x18c1, 0x0948, 0x3bd3, 0x2a5a, 0x5ee5, 0x4f6c, 0x7df7, 0x6c7e,
-        0xa50a, 0xb483, 0x8618, 0x9791, 0xe32e, 0xf2a7, 0xc03c, 0xd1b5,
-        0x2942, 0x38cb, 0x0a50, 0x1bd9, 0x6f66, 0x7eef, 0x4c74, 0x5dfd,
-        0xb58b, 0xa402, 0x9699, 0x8710, 0xf3af, 0xe226, 0xd0bd, 0xc134,
-        0x39c3, 0x284a, 0x1ad1, 0x0b58, 0x7fe7, 0x6e6e, 0x5cf5, 0x4d7c,
-        0xc60c, 0xd785, 0xe51e, 0xf497, 0x8028, 0x91a1, 0xa33a, 0xb2b3,
-        0x4a44, 0x5bcd, 0x6956, 0x78df, 0x0c60, 0x1de9, 0x2f72, 0x3efb,
-        0xd68d, 0xc704, 0xf59f, 0xe416, 0x90a9, 0x8120, 0xb3bb, 0xa232,
-        0x5ac5, 0x4b4c, 0x79d7, 0x685e, 0x1ce1, 0x0d68, 0x3ff3, 0x2e7a,
-        0xe70e, 0xf687, 0xc41c, 0xd595, 0xa12a, 0xb0a3, 0x8238, 0x93b1,
-        0x6b46, 0x7acf, 0x4854, 0x59dd, 0x2d62, 0x3ceb, 0x0e70, 0x1ff9,
-        0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
-        0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
-    };
-
-        uint32_t crc = 0xFFFF;
-        crc = (crc >> 8) ^ crc_table[(crc ^ v[0]) & 0xff];
-        crc = (crc >> 8) ^ crc_table[(crc ^ v[1]) & 0xff];
-        crc = (crc >> 8) ^ crc_table[(crc ^ v[2]) & 0xff];
-        return crc;
-}
-
-
 /**
  * encode (compress) data using RDP 5.0 protocol using hash table
  *
@@ -2141,19 +2304,17 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     int opb_index = 0;                      /* index into outputBuffer */
     int bits_left = 8;                      /* unused bits in current uint8_t in outputBuffer */
     uint16_t *hash_table = enc->hash_table; /* hash table for pattern matching */
-    char* hbuf_start = enc->historyBuffer;  /* points to start of history buffer */
     char* outputBuffer = enc->outputBuffer;  /* points to enc->outputBuffer */
     memset(outputBuffer, 0, len);
 
     enc->flags = PACKET_COMPR_TYPE_64K;
 
-    if (enc->first_pkt)
-    {
+    if (enc->first_pkt){
         enc->first_pkt = 0;
         enc->flagsHold |= PACKET_AT_FRONT;
     }
 
-    if ((enc->historyOffset + len) >= enc->buf_len)
+    if ((enc->historyOffset + len + 2) >= enc->buf_len)
     {
         /* historyBuffer cannot hold srcData - rewind it */
         enc->historyOffset = 0;
@@ -2164,9 +2325,6 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     /* add / append new data to historyBuffer */
     memcpy(&(enc->historyBuffer[enc->historyOffset]), srcData, len);
 
-    /* point to start of data to be compressed */
-    char * const historyPointer = &(enc->historyBuffer[enc->historyOffset]); /* points to first uint8_t of srcData in historyBuffer */
-
     int ctr = 0;
     uint32_t copy_offset = 0; /* pattern match starts here... */
 
@@ -2175,124 +2333,66 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     if (enc->historyOffset == 0){
         /* encode first two bytes as literals */
         for (int x = 0; x < 2; x++){
-            if (historyPointer[x] & 0x80){
-                /* insert encoded literal */
-                insert_n_bits(9, (0x02 << 7) | (historyPointer[x] & 0x7F), outputBuffer, bits_left, opb_index);
-            }
-            else{
-                /* insert literal */
-                insert_n_bits(8, historyPointer[x], outputBuffer, bits_left, opb_index);
-            }
+            encode_literal(enc->historyBuffer[enc->historyOffset+x], outputBuffer, bits_left, opb_index);
         }
-
-        /* store hash for first two entries in historyBuffer */
 
         hash_table[signature(enc->historyBuffer)] = 0;
         hash_table[signature(enc->historyBuffer+1)] = 1;
-
-        /* first two uint8_ts have already been processed */
         ctr = 2;
     }
 
-    enc->historyOffset += len;
+    int lom = 0;
+    for ( ; ctr + 2 < len ; ctr += lom){ // we need at least 3 bytes to look for match
+        uint32_t crc2 = signature(enc->historyBuffer+enc->historyOffset+ctr);
+        int previous_match = hash_table[crc2];
+        hash_table[crc2] = enc->historyOffset + ctr;
 
-    /* start compressing data */
-    while (ctr < len - 2){ /* do not search for pattern match beyond len-2 */
-        char * const cptr1 = historyPointer + ctr;
-
-        uint32_t crc2 = signature(cptr1);
-        /* cptr2 points to start of pattern match */
-        char * const cptr2 = hbuf_start + hash_table[crc2];
-        /* save current entry */
-        hash_table[crc2] = cptr1 - hbuf_start;
-
-        copy_offset = cptr1 - cptr2;
-
-
-        /* double check that we have a pattern match */
-        if ((cptr1[0] != cptr2[0]) || (cptr1[1] != cptr2[1]) || (cptr1[2] != cptr2[2])){
+        /* check that we have a pattern match, hash is not enough */
+        if (0 != memcmp(enc->historyBuffer+enc->historyOffset + ctr, enc->historyBuffer+previous_match, 3)){
             /* no match found; encode literal uint8_t */
-            if (cptr1[0] & 0x80){
-                /* literal uint8_t >= 0x80 */
-                insert_n_bits(9, (0x02 << 7) | (cptr1[0] & 0x7F), outputBuffer, bits_left, opb_index);
-            }
-            else {
-                /* literal uint8_t < 0x80 */
-                insert_n_bits(8, cptr1[0], outputBuffer, bits_left, opb_index);
-            }
-            ctr++;
-            continue;
-        }
-
-        /* we have a match - compute Length of Match */
-        int lom = 3;
-        for (; lom <= &(enc->historyBuffer[enc->historyOffset - 1]) - cptr1 ; lom++){
-            if (cptr1[lom] != cptr2[lom]){
-                break;
-            }
-        }
-
-        int log_lom = 31 - __builtin_clz(lom);
-//        LOG(LOG_INFO, "log_lom=%u lom=%u\n", log_lom, lom);
-
-        /* compute CRCs for matching segment and store in hash table */
-
-        /* if we have gone beyond historyOffset - 3, go back */
-        const int j = (historyPointer + ctr + lom > hbuf_start + enc->historyOffset - 3)
-                    ? enc->historyOffset - 3 - (historyPointer + ctr - hbuf_start)
-                    : lom - 1;
-        // for all triplets in matching part
-        for (int i = 0; i < j; i++){
-            uint32_t crc3 = signature(historyPointer+ctr+i+1);
-            hash_table[crc3] = historyPointer + ctr + i + 1 - hbuf_start;
-        }
-        ctr += lom;
-
-        /* encode copy_offset and insert into output buffer */
-        if (copy_offset <= 0x3F) {
-            insert_n_bits(11, 0x7c0|copy_offset , outputBuffer, bits_left, opb_index);
-        }
-        else if (copy_offset <= 0x13F) {
-            insert_n_bits(13, 0x1e00|(copy_offset - 0x40), outputBuffer, bits_left, opb_index);
-        }
-        else if (copy_offset <= 0x93F){
-            insert_n_bits(15, 0x7000|(copy_offset - 0x140), outputBuffer, bits_left, opb_index);
+            encode_literal(enc->historyBuffer[enc->historyOffset + ctr], outputBuffer, bits_left, opb_index);
+            lom = 1;
         }
         else {
-            /* copy_offset is 2368+ */
-            insert_n_bits(19, 0x060000|(copy_offset - 0x940), outputBuffer, bits_left, opb_index);
-        }
-
-        /* encode length of match and insert into output buffer */
-        if (lom == 3){
-            /* binary header is 'zero'; since outputBuffer is zero filled,
-               all we have to do is update bits_left */
-            bits_left--;
-            if (bits_left == 0){
-                opb_index++;
-                bits_left = 8;
+            /* we have a match - compute hash and Length of Match for triplets */
+            hash_table[signature(enc->historyBuffer+enc->historyOffset+ctr+1)] = enc->historyOffset+ctr+1;
+            for (lom = 3; ctr + lom < len ; lom++){
+                hash_table[signature(enc->historyBuffer+enc->historyOffset+ctr+lom-1)] = enc->historyOffset+ctr+lom-1;
+                if (enc->historyBuffer[enc->historyOffset + ctr + lom] != enc->historyBuffer[previous_match + lom]){
+                    break;
+                }
             }
-        }
-        else if ((lom >= 4) && (lom <= 65535)){
-            insert_n_bits(2*log_lom, ((((1 << log_lom) - 1) & 0xFFFE) << log_lom) | (lom - (1 << log_lom)), outputBuffer, bits_left, opb_index);
-        }
-    } /* end while (ctr < len - 2) */
 
-    /* add remaining data to the output */
-    while (len - ctr > 0)
-    {
-        if (srcData[ctr] & 0x80){
-            insert_n_bits(9, (0x02 << 7) | (srcData[ctr] & 0x7F), outputBuffer, bits_left, opb_index);
+            /* encode copy_offset and insert into output buffer */
+            copy_offset = enc->historyOffset + ctr - previous_match;
+            const int nbbits[4]  = {11, 13, 15, 19};
+            const int headers[4] = {0x7c0, 0x1e00, 0x7000, 0x060000};
+            const int base[4]    = {0, 0x40, 0x140, 0x940};
+            int range = (copy_offset <= 0x3F)  ? 0 :
+                        (copy_offset <= 0x13F) ? 1 :
+                        (copy_offset <= 0x93F) ? 2 :
+                                                 3 ;
+            insert_n_bits(nbbits[range], headers[range]|(copy_offset - base[range]) , outputBuffer, bits_left, opb_index);
+
+            int log_lom = 31 - __builtin_clz(lom);
+
+            /* encode length of match and insert into output buffer */
+            insert_n_bits(
+                (lom==3)?1:2*log_lom,
+                (lom==3)?0:(((((1<<log_lom)-1)&0xFFFE)<<log_lom)|(lom-(1<<log_lom))),
+                outputBuffer, bits_left, opb_index);
         }
-        else {
-            insert_n_bits(8, srcData[ctr], outputBuffer, bits_left, opb_index);
-        }
+    }
+
+    /* add remaining data if any to the output */
+    while (len - ctr > 0){
+        encode_literal(srcData[ctr], outputBuffer, bits_left, opb_index);
         ctr++;
     }
 
-    if (opb_index + 1 > len)
+    if (opb_index >= len)
     {
-        /* compressed data longer than uncompressed data */
+        /* compressed data longer or same size than uncompressed data */
         /* give up */
         enc->historyOffset = 0;
         memset(hash_table, 0, enc->buf_len * 2);
@@ -2301,6 +2401,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         return true;
     }
 
+    enc->historyOffset += len;
     enc->flags |= PACKET_COMPRESSED;
     /* if bits_left == 8, opb_index has already been incremented */
     enc->bytes_in_opb = opb_index + (bits_left != 8);
