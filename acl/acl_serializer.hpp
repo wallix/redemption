@@ -115,12 +115,9 @@ public:
                             LOG(LOG_INFO, "receiving '%s'=<hidden>", (char *)keyword);
                         }
                         else {
-                            char buffer[128];
                             LOG(LOG_INFO, "receiving '%s'='%s'",
                                 keyword,
-                                this->ini->context_get_value_by_string((char *)keyword,
-                                                                       buffer,
-                                                                       sizeof(buffer)));
+                                this->ini->context_get_value_by_string((char *)keyword));
                         }
                     }
 
@@ -179,9 +176,7 @@ public:
             stream.out_copy_bytes("\nASK\n",5);
         }
         else {
-            char temp_buffer[256];
-
-            const char * tmp = this->ini->context_get_value(authid, temp_buffer, sizeof(temp_buffer));
+            const char * tmp = this->ini->context_get_value(authid);
 
             if ((strncasecmp("password", (char*)key, 8) == 0)
                 ||(strncasecmp("target_password", (char*)key, 15) == 0)){
@@ -278,35 +273,6 @@ public:
         if (!list.empty())
             this->send_new(list);
         this->ini->reset();
-    }
-
-    void ask_next_module_remote_new()
-    {
-        authid_to_send_t tosend[] = {
-            {this->ini->context_has_changed(AUTHID_PROXY_TYPE),                  AUTHID_PROXY_TYPE},
-            {this->ini->context_has_changed(AUTHID_DISPLAY_MESSAGE),             AUTHID_DISPLAY_MESSAGE},
-            {this->ini->context_has_changed(AUTHID_ACCEPT_MESSAGE),              AUTHID_ACCEPT_MESSAGE},
-            {this->ini->context_has_changed(AUTHID_HOST),                        AUTHID_HOST},
-            {this->ini->context_has_changed(AUTHID_TARGET),                      AUTHID_TARGET},
-            {this->ini->context_has_changed(AUTHID_AUTH_USER),                   AUTHID_AUTH_USER},
-            {this->ini->context_has_changed(AUTHID_PASSWORD),                    AUTHID_PASSWORD},
-            {this->ini->context_has_changed(AUTHID_TARGET_USER),                 AUTHID_TARGET_USER},
-            {this->ini->context_has_changed(AUTHID_TARGET_DEVICE),               AUTHID_TARGET_DEVICE},
-            {this->ini->context_has_changed(AUTHID_TARGET_PROTOCOL),             AUTHID_TARGET_PROTOCOL},
-            {this->ini->context_has_changed(AUTHID_SELECTOR),                    AUTHID_SELECTOR},
-            {this->ini->context_has_changed(AUTHID_SELECTOR_GROUP_FILTER),       AUTHID_SELECTOR_GROUP_FILTER},
-            {this->ini->context_has_changed(AUTHID_SELECTOR_DEVICE_FILTER),      AUTHID_SELECTOR_DEVICE_FILTER},
-            {this->ini->context_has_changed(AUTHID_SELECTOR_LINES_PER_PAGE),     AUTHID_SELECTOR_LINES_PER_PAGE},
-            {this->ini->context_has_changed(AUTHID_SELECTOR_CURRENT_PAGE),       AUTHID_SELECTOR_CURRENT_PAGE},
-            {this->ini->context_has_changed(AUTHID_TARGET_PASSWORD),             AUTHID_TARGET_PASSWORD},
-            {this->ini->context_has_changed(AUTHID_OPT_WIDTH),                   AUTHID_OPT_WIDTH},
-            {this->ini->context_has_changed(AUTHID_OPT_HEIGHT),                  AUTHID_OPT_HEIGHT},
-            {this->ini->context_has_changed(AUTHID_OPT_BPP),                     AUTHID_OPT_BPP},
-            {this->ini->context_has_changed(AUTHID_REAL_TARGET_DEVICE),          AUTHID_REAL_TARGET_DEVICE},
-            {0 == (this->ini->context_get_value(AUTHID_TRACE_SEAL, NULL, 0)[0] != 0), AUTHID_TRACE_SEAL}
-        };
-
-        this->send(tosend, sizeof(tosend) / sizeof(tosend[0]));
     }
 };
 

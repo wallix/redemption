@@ -665,6 +665,7 @@ struct Inifile : public FieldObserver {
 
         StringField        message;                  // AUTHID_MESSAGE //
 
+        TODO("why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button")
         StringField        accept_message;           // AUTHID_ACCEPT_MESSAGE //
         StringField        display_message;          // AUTHID_DISPLAY_MESSAGE //
 
@@ -1577,7 +1578,7 @@ public:
     void context_set_value_by_string(const char * strauthid, const char * value) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
-            context_set_value(authid, value);
+            this->context_set_value(authid, value);
         }
         else {
             LOG(LOG_WARNING, "Inifile::context_set_value(strid): unknown strauthid=\"%s\"", strauthid);
@@ -1588,7 +1589,7 @@ public:
         // this->field_list.at(authid)->set_from_cstr(value);
         switch (authid)
             {
-                // Context
+            // Context
             case AUTHID_AUTH_ERROR_MESSAGE:
                 this->context.auth_error_message.copy_c_str(value);
                 break;
@@ -1604,10 +1605,10 @@ public:
             }
     }
 
-    const char * context_get_value_by_string(const char * strauthid, char * buffer, size_t size) {
+    const char * context_get_value_by_string(const char * strauthid) {
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
-            return context_get_value(authid, buffer, size);
+            return context_get_value(authid);
         }
 
         LOG(LOG_WARNING, "Inifile::context_get_value(strid): unknown strauthid=\"%s\"", strauthid);
@@ -1615,11 +1616,10 @@ public:
         return "";
     }
 
-    const char * context_get_value(authid_t authid, char * buffer, size_t size) {
+    const char * context_get_value(authid_t authid) {
         const char * pszReturn = "";
 
-        if (size) { *buffer = 0; }
-
+        LOG(LOG_WARNING, "Getting value for authid=%d", authid);
         switch (authid)
             {
             case AUTHID_AUTH_ERROR_MESSAGE:
