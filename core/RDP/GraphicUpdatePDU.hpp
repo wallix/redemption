@@ -373,12 +373,29 @@ protected:
                 else {
                     HStream compressed_buffer_stream_orders(1024, 65565);
 
+            if (this->mppc_enc->historyOffset > 4000){
+                while (this->buffer_stream_orders.size() + this->mppc_enc->historyOffset < 65532) {
+                    this->order_count++;
+                    this->stream_orders.set_out_uint16_le(this->order_count, this->offset_order_count);
+//LOG(LOG_INFO, "buffer_stream_orders.size=%llu, ref=%d", this->buffer_stream_orders.size(), 8188 - this->mppc_enc->historyOffset);
+                    this->buffer_stream_orders.out_copy_bytes("\x09\x0a\x10\xFF", 4);
+                    this->stream_orders.mark_end();
+                }
+            }
+
                     compress_rdp( this->mppc_enc, this->buffer_stream_orders.get_data()
                                 , this->buffer_stream_orders.size());
 
                     if (!(this->mppc_enc->flags & PACKET_COMPRESSED)) {
                         header_size = FastPath::Update_Send::GetSize(0);
                     }
+else {
+    this->mppc_enc->mini_dump();
+LOG(LOG_INFO, "\n");
+    if (this->mppc_enc->historyOffset == 8191) {
+
+    }
+}
 
                     SubStream Upd_s(compressed_buffer_stream_orders, 0, header_size);
 

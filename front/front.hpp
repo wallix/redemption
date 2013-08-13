@@ -548,6 +548,7 @@ public:
         if (this->client_info.rdp_compression) {
             if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
                 this->mppc_enc = new rdp_mppc_enc(PROTO_RDP_50);
+//                this->mppc_enc = new rdp_mppc_enc(PROTO_RDP_40);
             }
             else {
                 this->mppc_enc = new rdp_mppc_enc(PROTO_RDP_40);
