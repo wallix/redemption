@@ -418,6 +418,9 @@ BOOST_AUTO_TEST_CASE(TestStream_RedemptionSubStream)
     redemption::InStream  & in_stream  = sub_stream;
     redemption::OutStream & out_stream = sub_stream;
 
+    BOOST_CHECK_EQUAL(0,     in_stream.in_remain());
+    BOOST_CHECK_EQUAL(0,     out_stream.get_size());
+
     BOOST_CHECK_EQUAL(0,     sub_stream.get_size());
     BOOST_CHECK_EQUAL(16,    sub_stream.get_body_capacity());
     BOOST_CHECK_EQUAL(true,  sub_stream.has_body_room(16));

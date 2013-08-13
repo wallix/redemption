@@ -254,6 +254,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         WRMChunk_Send chunk(header, TIMESTAMP, payload.size(), 1);
         this->trans->send(header);
         this->trans->send(payload);
+
+        this->last_sent_timer = this->timer;
     }
 
     void send_save_state_chunk()
