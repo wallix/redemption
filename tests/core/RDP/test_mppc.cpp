@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
 
 BOOST_AUTO_TEST_CASE(TestBitsSerializer)
 {
-    char outputBuffer[256];
+    char outputBuffer[256] ={};
     int bits_left = 8;
     int opb_index = 0;
     insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);

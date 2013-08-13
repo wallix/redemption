@@ -92,12 +92,8 @@ BOOST_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
     AclSerializer aclexcpt(&ini, transexcpt, 0);
     ini.context_set_value(AUTHID_AUTH_USER, "Newuser");
     aclexcpt.ask_next_module_remote();
-    char buffer[256];
     BOOST_CHECK(!ini.context_get_bool(AUTHID_AUTHENTICATED));
-    BOOST_CHECK_EQUAL(0,
-                      strncmp(ini.context_get_value(AUTHID_REJECTED,buffer,sizeof(buffer)),
-                              "Authentifier service failed",
-                              strlen("Authentifier service failed")));
+    BOOST_CHECK_EQUAL(0, strcmp(ini.context_get_value(AUTHID_REJECTED), "Authentifier service failed"));
 }
 
 BOOST_AUTO_TEST_CASE(TestAclSerializeIncoming)
