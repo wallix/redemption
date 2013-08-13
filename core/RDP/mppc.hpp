@@ -2118,11 +2118,6 @@ static inline uint32_t signature(const char v[])
 
 static inline bool compress_rdp_4(struct rdp_mppc_enc* enc, uint8_t* srcData, int len)
 {
-LOG(LOG_INFO, ">>>>> len=%d + historyOffset=%d = %d", len, enc->historyOffset, len+ enc->historyOffset);
-
-    /* RDP 4.0 encoding not yet implemented */
-//    return false;
-
     int opb_index = 0;                      /* index into outputBuffer */
     int bits_left = 8;                      /* unused bits in current uint8_t in outputBuffer */
     uint16_t *hash_table = enc->hash_table; /* hash table for pattern matching */
@@ -2220,7 +2215,6 @@ LOG(LOG_INFO, ">>>>> len=%d + historyOffset=%d = %d", len, enc->historyOffset, l
         memset(hash_table, 0, /*enc->buf_len*/RDP_50_HIST_BUF_LEN * 2);
         enc->flagsHold |= PACKET_FLUSHED;
         enc->first_pkt = 1;
-LOG(LOG_INFO, ">>>>> data remains uncompressed");
 
         return true;
     }
@@ -2307,8 +2301,6 @@ LOG(LOG_INFO, ">>>>> data remains uncompressed");
 
 static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, int len)
 {
-LOG(LOG_INFO, ">>>>> len=%d + historyOffset=%d = %d", len, enc->historyOffset, len+ enc->historyOffset);
-
     int opb_index = 0;                      /* index into outputBuffer */
     int bits_left = 8;                      /* unused bits in current uint8_t in outputBuffer */
     uint16_t *hash_table = enc->hash_table; /* hash table for pattern matching */
@@ -2402,7 +2394,6 @@ LOG(LOG_INFO, ">>>>> len=%d + historyOffset=%d = %d", len, enc->historyOffset, l
     {
         /* compressed data longer or same size than uncompressed data */
         /* give up */
-        TODO("why should we reset history when we fail compressing one buffer ?")
         enc->historyOffset = 0;
         memset(hash_table, 0, enc->buf_len * 2);
         enc->flagsHold |= PACKET_FLUSHED;
