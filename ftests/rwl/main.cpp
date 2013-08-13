@@ -31,7 +31,6 @@ const_cstring tb(unsigned tab = 0)
 #define SPACE_S "                                                                      "
     return const_cstring(SPACE_S, SPACE_S + tab*2);
 #undef SPACE_S
-
 }
 
 void display_value(const rwl_value& value, unsigned tab = 0)

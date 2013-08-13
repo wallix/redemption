@@ -9,7 +9,7 @@ if [ rwl.dot -nt rwl.jpg ] ; then
 	t=${t//Semicolon/';'}
 	t=${t//TargetName/'[A-Z][a-zA-Z0-9]*'}
 	t=${t//Identifier/'[a-z]+'}
-	t=${t//Integer/'[0-9]+'}
+	t=${t//Integer/'[-+]*[0-9]+'}
 	t=${t//Dot/'.'}
 	t=${t//Comma/','}
 	t=${t//Quote/"[\\\"|']"}

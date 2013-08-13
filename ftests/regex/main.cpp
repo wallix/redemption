@@ -3,7 +3,6 @@
 #include <vector>
 #include <sys/types.h>
 #include <regex.h>
-#include <boost/preprocessor/cat.hpp>
 
 #include "regex.hpp"
 
@@ -47,7 +46,7 @@ int main(int argc, char **argv) {
     using namespace rndfa;
 
     if (argc < 2) {
-        std::cerr << argv[0] << (" regex") << std::endl;
+        std::cerr << argv[0] << (" regex [str]") << std::endl;
         return 1;
     }
     const char * rgxstr = argv[1];

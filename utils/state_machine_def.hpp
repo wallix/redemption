@@ -53,6 +53,9 @@ namespace tokens
     struct Integer {
         const char * operator()(const char * s) const
         {
+            while (*s == '-' || *s == '+') {
+                ++s;
+            }
             while (*s && std::isdigit(*s)) {
                 ++s;
             }
@@ -170,7 +173,7 @@ namespace tokens
     struct Blank {
         const char * operator()(const char * s) const
         {
-            while (*s == '\n' || *s == ' ') {
+            while (*s == '\t' || *s == ' ' || *s == '\n') {
                 ++s;
             }
             return s;
@@ -182,12 +185,28 @@ namespace tokens
 using std::size_t;
 
 template<typename T, typename Default>
-struct value_or
+struct type_or
 { typedef T type; };
 
 template<typename Default>
-struct value_or<void, Default>
+struct type_or<void, Default>
 { typedef Default type; };
+
+template<typename T, typename U>
+struct is_same
+{ static const bool value = false; };
+
+template<typename T>
+struct is_same<T, T>
+{ static const bool value = true; };
+
+template<bool, typename T, typename U>
+struct if_c
+{ typedef T type; };
+
+template<typename T, typename U>
+struct if_c<false, T, U>
+{ typedef U type; };
 
 
 template<size_t N, size_t Max,
@@ -262,7 +281,7 @@ struct state_machine_transition
 
             if (!boost::is_same<typename row::base_ignore, void>::value) {
                 typedef typename row::ignore ignore;
-                s = ignore()(sm, s);
+                s = ignore()(static_cast<typename SM::derived_type&>(sm), s);
             }
 
             return state_machine_index_transition<
@@ -401,10 +420,12 @@ public:
 
     struct null_check {
         const char * operator()(state_machine_def&, const char * s) const
-        {return s; }
+        { return s; }
     };
 
     typedef null_check null_consumer;
+
+    typedef null_consumer default_blank;
 
 
 private:
@@ -448,23 +469,32 @@ protected:
         }
     };
 
+    class unspecified_blank;
+
     template<
         typename Start,
         typename Check,
         typename Next,
         typename Consumer = Check,
-        typename Ignore = consumer_functor<tokens::Blank>
+        typename Ignore = unspecified_blank
     >
     struct a_row
     {
         typedef Start event;
-        typedef typename value_or<Check, null_check>::type check;
+        typedef typename type_or<Check, null_check>::type check;
         typedef Next next;
         typedef Check base_check;
         typedef Consumer base_consumer;
         typedef Ignore base_ignore;
-        typedef typename value_or<Consumer, null_consumer>::type consumer;
-        typedef typename value_or<Ignore, null_consumer>::type ignore;
+        typedef typename type_or<Consumer, null_consumer>::type consumer;
+        typedef typename type_or<
+            typename if_c<
+                is_same<Ignore, unspecified_blank>::value,
+                typename Derived::default_blank,
+                Ignore
+            >::type,
+            null_consumer
+        >::type ignore;
         typedef void (Derived::*action_type)(const Start&);
 
         struct action
@@ -481,7 +511,7 @@ protected:
         typename Next,
         typename Consumer,
         void (Derived::*Action)(const Start &, const char *, const char *),
-        typename Ignore = consumer_functor<tokens::Blank>
+        typename Ignore = unspecified_blank
     >
     struct row
     : a_row<Start, Check, Next, Consumer, Ignore>
@@ -501,7 +531,7 @@ protected:
         typename CheckAndConsumer,
         typename Next,
         void (Derived::*Action)(const Start &, const char *, const char *),
-        typename Ignore = consumer_functor<tokens::Blank>
+        typename Ignore = unspecified_blank
     >
     struct c_row
     : row<Start, CheckAndConsumer, Next, CheckAndConsumer, Action, Ignore>
@@ -561,7 +591,7 @@ public:
 
     bool valid() const
     {
-        return this->state_num != -1u;
+        return -1u == this->state_error;
     }
 
     ///\return  Event error. -1u if no error
