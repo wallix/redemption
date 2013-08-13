@@ -315,6 +315,7 @@ private:
     typedef consumer_mem<&p::consume_string>           String;
     typedef consumer_functor<tokens::HexColor>         HexColor;
 
+public:
     struct default_blank
     {
         const char * operator()(rwl_parser& sm, const char * s) const

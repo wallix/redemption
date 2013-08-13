@@ -23,6 +23,10 @@
 #include "basic_cstring.hpp"
 #include "delete.hpp"
 
+#include <boost/mpl/vector.hpp>
+#include <boost/mpl/size.hpp>
+#include <boost/mpl/at.hpp>
+
 #include <vector>
 #include <iostream>
 #include <sstream>
@@ -35,15 +39,15 @@ struct widget_values
     struct border
     {
         unsigned color;
-        uint size;
+        unsigned size;
     };
     border borders[4];
     unsigned color;
     unsigned bgcolor;
     int x;
     int y;
-    uint w;
-    uint h;
+    unsigned w;
+    unsigned h;
     std::string id;
     std::vector<widget_values*> children;
 
@@ -265,6 +269,294 @@ struct set_property
     }
 };
 
+namespace rwl
+{
+    class state_machine_assign;
+
+    struct get_property_i
+    {
+        unsigned operator()(state_machine_assign&, const rwl_value& val) const
+        {
+            return val.value.i;
+        }
+    };
+
+    struct get_property_u
+    {
+        unsigned operator()(state_machine_assign&, const rwl_value& val) const
+        {
+            if (val.value.i < 0) {
+                throw std::runtime_error("number is negatif");
+            }
+            return val.value.i;
+        }
+    };
+
+    struct get_property_color
+    {
+        unsigned operator()(state_machine_assign&, const rwl_value& val) const
+        {
+            return val.value.color;
+        }
+    };
+
+    struct get_property_s
+    {
+        const_cstring operator()(state_machine_assign&, const rwl_value& val) const
+        {
+            return const_cstring(val.value.s.first, val.value.s.last);
+        }
+    };
+
+#define IS_NAME(name) struct is_##name { \
+    bool operator()(const const_cstring& cname){ \
+        return cname == #name; \
+    }\
+}
+
+    IS_NAME(x);
+    IS_NAME(y);
+    IS_NAME(w);
+    IS_NAME(h);
+    IS_NAME(color);
+    IS_NAME(bgcolor);
+    IS_NAME(id);
+    IS_NAME(size);
+    IS_NAME(type);
+    IS_NAME(border);
+    IS_NAME(top);
+    IS_NAME(right);
+    IS_NAME(bottom);
+    IS_NAME(left);
+
+#undef IS_NAME
+
+#define GET_ATTR(type, name) \
+    struct get_attr_##name { \
+        template<typename T> \
+        type & operator()(T& w) { \
+            return w.name; \
+        } \
+    }
+
+    GET_ATTR(int, x);
+    GET_ATTR(int, y);
+    GET_ATTR(unsigned, w);
+    GET_ATTR(unsigned, h);
+    GET_ATTR(unsigned, color);
+    GET_ATTR(unsigned, bgcolor);
+    GET_ATTR(unsigned, size);
+
+#undef GET_ATTR
+
+    struct get_attr_id
+    {
+        template<typename T>
+        struct dispatcher {
+            T& w;
+
+            dispatcher(T& w)
+            : w(w)
+            {}
+
+            void operator=(const const_cstring& s) const
+            {
+                w.id.assign(s.begin(), s.end());
+            }
+        };
+
+        template<typename T>
+        dispatcher<T> operator()(T& w)
+        {
+            return dispatcher<T>(w);
+        }
+    };
+
+
+    template<std::size_t N, std::size_t Max, typename Table>
+    struct state_machine_assign_row
+    {
+        static bool impl(state_machine_assign& sm, widget_values& w,
+                         const rwl_property& property)
+        {
+            typedef typename boost::mpl::at<Table, boost::mpl::int_<N> >::type row;
+            typedef typename row::check_name check_name;
+            typedef typename row::get_property get_property;
+            typedef typename row::get_attr get_attr;
+            if (row::integral_type == property.value.type && check_name()(property.name)) {
+                get_attr()(w) = get_property()(sm, *property.root_value);
+                return true;
+            }
+            return state_machine_assign_row<N+1, Max, Table>::impl(sm, w, property);
+        }
+    };
+
+    template<std::size_t Max, typename Table>
+    struct state_machine_assign_row<Max, Max, Table>
+    {
+        static bool impl(state_machine_assign&, widget_values&, const rwl_property&)
+        { return false; }
+    };
+
+
+    template<typename Group>
+    class state_machine_assign_row_group;
+
+    template<std::size_t N, std::size_t Max, typename Table>
+    struct state_machine_assign_group
+    {
+        static bool impl(state_machine_assign& sm, widget_values& w,
+                         const rwl_property& property)
+        {
+            typedef typename RowGroup::check_name check_name;
+            if (check_name()(property)) {
+                if (property.properties.empty()) {
+                    state_machine_assign_row<
+                    0,
+                    boost::mpl::size<typename RowGroup::row_type>::value,
+                    typename RowGroup::row_type
+                    >::impl(sm, w, property);
+                }
+                else {
+                    state_machine_assign_row_group<typename RowGroup::group_type>
+                    ::impl(sm, w, property);
+                }
+            }
+            return false;
+        }
+    };
+
+    template<std::size_t Max, typename Table>
+    struct state_machine_assign_group<Max, Max, Table>
+    {
+        static bool impl(state_machine_assign&, widget_values&, const rwl_property&)
+        { return false; }
+    };
+
+
+    template<typename RowGroup>
+    struct state_machine_assign_row_group
+    {
+        static bool impl(state_machine_assign& sm, widget_values& w,
+                         const rwl_property& property)
+        {
+            typedef typename RowGroup::check_name check_name;
+            if (check_name()(property)) {
+                if (property.properties.empty()) {
+                    state_machine_assign_row<
+                        0,
+                        boost::mpl::size<typename RowGroup::row_type>::value,
+                        typename RowGroup::row_type
+                    >::impl(sm, w, property);
+                }
+                else {
+                    state_machine_assign_row_group<typename RowGroup::group_type>
+                    ::impl(sm, w, property);
+                }
+            }
+            return false;
+        }
+    };
+
+    template<>
+    struct state_machine_assign_row_group<boost::mpl::vector<> >
+    {
+        static bool impl(state_machine_assign&, widget_values&, const rwl_property&)
+        { return false; }
+    };
+
+
+    class state_machine_assign
+    {
+    public:
+        template <typename Row, typename Group = boost::mpl::vector<> >
+        struct row_group
+        {
+            typedef Row row_type;
+            typedef Group group_type;
+        };
+
+        template<int IntegralType, typename Is, typename GetProperty, typename GetAttr>
+        struct row
+        {
+            static const bool is_row = true;
+            static const int integral_type = IntegralType;
+            typedef Is check_name;
+            typedef GetProperty get_property;
+            typedef GetAttr get_attr;
+        };
+
+        template<typename Is, typename RowGroup>
+        struct group
+        {
+            static const bool is_row = false;
+            typedef Is check_name;
+            typedef RowGroup::row row_type;
+            typedef typename RowGroup::group group_type;
+        };
+
+        class table_properties;
+
+        void assign(widget_values& w, const rwl_property& property)
+        {
+            state_machine_assign_row_group<table_properties>::impl(*this, w, property);
+        }
+
+        void assign(widget_values& w, const rwl_target& target)
+        {
+            typedef std::vector<rwl_property*>::const_iterator prop_iterator;
+            for (prop_iterator first = target.properties.begin(), last = target.properties.end(); first != last ; ++first) {
+                this->assign(w, **first);
+            }
+
+            typedef std::vector<rwl_target*>::const_iterator target_iterator;
+            for (target_iterator first = target.targets.begin(), last = target.targets.end(); first != last ; ++first) {
+                widget_values * wchild = w.new_child(target.name);
+                this->assign(*wchild, **first);
+            }
+        }
+
+        typedef row< 'i',   is_x,       get_property_i,         get_attr_x      > row_x;
+        typedef row< 'i',   is_y,       get_property_i,         get_attr_y      > row_y;
+        typedef row< 'i',   is_w,       get_property_u,         get_attr_w      > row_w;
+        typedef row< 'i',   is_h,       get_property_u,         get_attr_h      > row_h;
+        typedef row< 'c',   is_color,   get_property_color,     get_attr_color  > row_color;
+        typedef row< 'c',   is_bgcolor, get_property_color,     get_attr_bgcolor> row_bgcolor;
+        typedef row< 's',   is_id,      get_property_s,         get_attr_id     > row_id;
+        typedef row< 's',   is_size,    get_property_u,         get_attr_size   > row_size;
+
+        struct table_properties : row_group<
+            boost::mpl::vector<
+                row_x,
+                row_y,
+                row_w,
+                row_h,
+                row_color,
+                row_bgcolor,
+                row_id
+            >,
+            boost::mpl::vector<
+                group<
+                    is_border,
+                    row_group<
+                        boost::mpl::vector<
+                            row_color,
+                            row_size
+                        >
+                    >
+                >
+            >
+        >
+        {
+            struct check_name {
+                bool operator()(const rwl_property&) const
+                { return true; }
+            };
+        };
+    };
+}
+
+
 void rwl2widget(widget_values& w, const rwl_target& target)
 {
     typedef std::vector<rwl_property*>::const_iterator prop_iterator;
@@ -346,6 +638,8 @@ int main(int ac, char ** av)
     }
 
     widget_values w;
-    rwl2widget(w, screen);
+    //rwl2widget(w, screen);
+    rwl::state_machine_assign assigner;
+    assigner.assign(w, screen);
     display_widget_values(w);
 }
