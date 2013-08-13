@@ -140,8 +140,6 @@ struct RDPSerializer : public RDPGraphicDevice
 
     size_t bitmap_count;
 
-//    size_t emit_cache_count;
-
     uint32_t verbose;
 
     RDPSerializer( Transport * trans
@@ -178,14 +176,9 @@ struct RDPSerializer : public RDPGraphicDevice
     , order_count(0)
     , bmp_cache(bmp_cache)
     , bitmap_count(0)
-//    , emit_cache_count(0)
     , verbose(verbose) {}
 
-    ~RDPSerializer() {
-//        if (this->verbose) {
-//            LOG(LOG_INFO, "~RDPSerializer(): Emit cache count = %llu", this->emit_cache_count);
-//        }
-    }
+    ~RDPSerializer() {}
 
 protected:
     virtual void flush_orders() = 0;
@@ -211,7 +204,8 @@ public:
         }
         if (asked_size + 106 > max_packet_size){
             LOG( LOG_ERR
-               , "asked size (%u) > order batch capacity (%u)"
+               , "(asked size (%u) + 106 = %d) > order batch capacity (%u)"
+               , asked_size
                , asked_size + 106
                , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
@@ -289,8 +283,6 @@ public:
         this->reserve_order(cmd_cache.bmp->bmp_size + 16);
         cmd_cache.emit( this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
                       , this->op2);
-
-//        this->emit_cache_count++;
 
         if (this->ini.debug.secondary_orders){
             cmd_cache.log(LOG_INFO);
