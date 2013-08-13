@@ -1618,6 +1618,14 @@ static inline void insert_n_bits(int n, uint32_t _data, char* outputBuffer, int 
 }
 
 
+static inline void encode_literal(char c, char* outputBuffer, int & bits_left, int & opb_index) 
+{
+    insert_n_bits(
+        (c & 0x80)?9:8, 
+        (c & 0x80)?(0x02 << 7) | (c & 0x7F):c,
+        outputBuffer, bits_left, opb_index);
+}
+
 // 3.1.8 MPPC-Based Bulk Data Compression
 // ======================================
 
@@ -1764,16 +1772,46 @@ static inline void insert_n_bits(int n, uint32_t _data, char* outputBuffer, int 
 // |                        | MUST be set when compression of the data was     |
 // |                        | successful.                                      |
 // +------------------------+--------------------------------------------------+
-// | PACKET_AT_FRONT 0x40   | Used to indicate that the decompressed data MUST be placed at the beginning of the local history buffer. This flag is equivalent to MPPC bit B (for more information see [RFC2118] section 3.1). This flag MUST be set in conjunction with the PACKET_COMPRESSED (0x20) flag. There are two conditions on the "compressor-side" that generate this scenario: (1) this is the first packet to be compressed, and (2) the data to be compressed will not fit at the end of the history buffer but instead needs to be placed at the start of the history buffer.
+// | PACKET_AT_FRONT 0x40   | Used to indicate that the decompressed data MUST |
+// |                        | be placed at the beginning of the local history  |
+// |                        | buffer. This flag is equivalent to MPPC bit B    |
+// |                        | (for more information see [RFC2118] section 3.1).|
+// |                        | This flag MUST be set in conjunction with the    |
+// |                        | PACKET_COMPRESSED (0x20) flag. There are two     |
+// |                        | conditions on the "compressor-side" that generate|
+// |                        | this scenario: (1) this is the first packet to be|
+// |                        | compressed, and (2) the data to be compressed    |
+// |                        | will not fit at the end of the history buffer but|
+// |                        | instead needs to be placed at the start of the   |
+// |                        | history buffer.                                  |
 // +------------------------+--------------------------------------------------+
-// | PACKET_FLUSHED 0x80    | Used to indicate that the decompressor MUST reinitialized the history buffer (by filling it with zeros) and reset the HistoryOffset to zero. After it has been reinitialized, the entire history buffer is immediately regarded as valid. This flag is equivalent to MPPC bit A (for more information see [RFC2118] section 3.1). If the PACKET_COMPRESSED (0x20) flag is also present, then the PACKET_FLUSHED flag MUST be processed first.
+// | PACKET_FLUSHED 0x80    | Used to indicate that the decompressor MUST      |
+// |                        | reinitialized the history buffer (by filling it  |
+// |                        | with zeros) and reset the HistoryOffset to zero. |
+// |                        | After it has been reinitialized, the entire      |
+// |                        | history buffer is immediately regarded as valid. |
+// |                        | This flag is equivalent to MPPC bit A (for more  |
+// |                        | information see [RFC2118] section 3.1). If the   |
+// |                        | PACKET_COMPRESSED (0x20) flag is also present,   |
+// |                        | then the PACKET_FLUSHED flag MUST be processed   |
+// |                        | first.                                          |   
 // +------------------------+--------------------------------------------------+
 
-// Data that is tagged as compressed (using the PACKET_COMPRESSED flag) MUST NOT be larger in size than the original data. This implies that in a minority of cases it is possible for compressed data to be the same size as the original data, and still be regarded as compressed. In effect, the statement that "data is compressed" simply implies that the data is encoded using a particular scheme, and that a decoder (or decompressor) is required to obtain the original data.
+// Data that is tagged as compressed (using the PACKET_COMPRESSED flag) MUST NOT
+// be larger in size than the original data. This implies that in a minority of
+// cases it is possible for compressed data to be the same size as the original
+// data, and still be regarded as compressed. In effect, the statement that 
+// "data is compressed" simply implies that the data is encoded using a 
+// particular scheme, and that a decoder (or decompressor) is required to obtain
+// the original data.
 
 // 3.1.8.2.2 Operation of the Bulk Compressor
 
-// The flowchart in the following figure illustrates the general operation of the bulk compressor and the production of the compression flags described in section 3.1.8.2.1.
+// The flowchart in the following figure illustrates the general operation of 
+// the bulk compressor and the production of the compression flags described in 
+// section 3.1.8.2.1.
+
+// TODO: convert flowchart to pseudocode to insert it here
 
 // The constructs that follow are used throughout the flowchart.
 
@@ -2141,14 +2179,13 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     int opb_index = 0;                      /* index into outputBuffer */
     int bits_left = 8;                      /* unused bits in current uint8_t in outputBuffer */
     uint16_t *hash_table = enc->hash_table; /* hash table for pattern matching */
-    char* hbuf_start = enc->historyBuffer;  /* points to start of history buffer */
     char* outputBuffer = enc->outputBuffer;  /* points to enc->outputBuffer */
+    TODO("this memset should not be necessary")
     memset(outputBuffer, 0, len);
 
     enc->flags = PACKET_COMPR_TYPE_64K;
 
-    if (enc->first_pkt)
-    {
+    if (enc->first_pkt){
         enc->first_pkt = 0;
         enc->flagsHold |= PACKET_AT_FRONT;
     }
@@ -2164,9 +2201,6 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     /* add / append new data to historyBuffer */
     memcpy(&(enc->historyBuffer[enc->historyOffset]), srcData, len);
 
-    /* point to start of data to be compressed */
-    char * const historyPointer = &(enc->historyBuffer[enc->historyOffset]); /* points to first uint8_t of srcData in historyBuffer */
-
     int ctr = 0;
     uint32_t copy_offset = 0; /* pattern match starts here... */
 
@@ -2175,125 +2209,68 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
     if (enc->historyOffset == 0){
         /* encode first two bytes as literals */
         for (int x = 0; x < 2; x++){
-            if (historyPointer[x] & 0x80){
-                /* insert encoded literal */
-                insert_n_bits(9, (0x02 << 7) | (historyPointer[x] & 0x7F), outputBuffer, bits_left, opb_index);
-            }
-            else{
-                /* insert literal */
-                insert_n_bits(8, historyPointer[x], outputBuffer, bits_left, opb_index);
-            }
+            encode_literal(enc->historyBuffer[enc->historyOffset+x], outputBuffer, bits_left, opb_index);
         }
-
-        /* store hash for first two entries in historyBuffer */
 
         hash_table[signature(enc->historyBuffer)] = 0;
         hash_table[signature(enc->historyBuffer+1)] = 1;
-
-        /* first two uint8_ts have already been processed */
         ctr = 2;
     }
 
-    enc->historyOffset += len;
+    int lom = 0;
+    for ( ; ctr < len - 2 ; ctr += lom){ // we need at least 3 bytes to look for match
+        uint32_t crc2 = signature(enc->historyBuffer+enc->historyOffset+ctr);
+        int previous_match = hash_table[crc2];
+        hash_table[crc2] = enc->historyOffset + ctr;
 
-    /* start compressing data */
-    while (ctr < len - 2){ /* do not search for pattern match beyond len-2 */
-        char * const cptr1 = historyPointer + ctr;
-
-        uint32_t crc2 = signature(cptr1);
-        /* cptr2 points to start of pattern match */
-        char * const cptr2 = hbuf_start + hash_table[crc2];
-        /* save current entry */
-        hash_table[crc2] = cptr1 - hbuf_start;
-
-        copy_offset = cptr1 - cptr2;
-
-
-        /* double check that we have a pattern match */
-        if ((cptr1[0] != cptr2[0]) || (cptr1[1] != cptr2[1]) || (cptr1[2] != cptr2[2])){
+        /* check that we have a pattern match, hash is not enough */
+        if (0 != memcmp(enc->historyBuffer+enc->historyOffset + ctr, enc->historyBuffer+previous_match, 3)){
             /* no match found; encode literal uint8_t */
-            if (cptr1[0] & 0x80){
-                /* literal uint8_t >= 0x80 */
-                insert_n_bits(9, (0x02 << 7) | (cptr1[0] & 0x7F), outputBuffer, bits_left, opb_index);
-            }
-            else {
-                /* literal uint8_t < 0x80 */
-                insert_n_bits(8, cptr1[0], outputBuffer, bits_left, opb_index);
-            }
-            ctr++;
-            continue;
-        }
-
-        /* we have a match - compute Length of Match */
-        int lom = 3;
-        for (; lom <= &(enc->historyBuffer[enc->historyOffset - 1]) - cptr1 ; lom++){
-            if (cptr1[lom] != cptr2[lom]){
-                break;
-            }
-        }
-
-        int log_lom = 31 - __builtin_clz(lom);
-//        LOG(LOG_INFO, "log_lom=%u lom=%u\n", log_lom, lom);
-
-        /* compute CRCs for matching segment and store in hash table */
-
-        /* if we have gone beyond historyOffset - 3, go back */
-        const int j = (historyPointer + ctr + lom > hbuf_start + enc->historyOffset - 3)
-                    ? enc->historyOffset - 3 - (historyPointer + ctr - hbuf_start)
-                    : lom - 1;
-        // for all triplets in matching part
-        for (int i = 0; i < j; i++){
-            uint32_t crc3 = signature(historyPointer+ctr+i+1);
-            hash_table[crc3] = historyPointer + ctr + i + 1 - hbuf_start;
-        }
-        ctr += lom;
-
-        /* encode copy_offset and insert into output buffer */
-        if (copy_offset <= 0x3F) {
-            insert_n_bits(11, 0x7c0|copy_offset , outputBuffer, bits_left, opb_index);
-        }
-        else if (copy_offset <= 0x13F) {
-            insert_n_bits(13, 0x1e00|(copy_offset - 0x40), outputBuffer, bits_left, opb_index);
-        }
-        else if (copy_offset <= 0x93F){
-            insert_n_bits(15, 0x7000|(copy_offset - 0x140), outputBuffer, bits_left, opb_index);
+            encode_literal(enc->historyBuffer[enc->historyOffset + ctr], outputBuffer, bits_left, opb_index);
+            lom = 1;
         }
         else {
-            /* copy_offset is 2368+ */
-            insert_n_bits(19, 0x060000|(copy_offset - 0x940), outputBuffer, bits_left, opb_index);
-        }
-
-        /* encode length of match and insert into output buffer */
-        if (lom == 3){
-            /* binary header is 'zero'; since outputBuffer is zero filled,
-               all we have to do is update bits_left */
-            bits_left--;
-            if (bits_left == 0){
-                opb_index++;
-                bits_left = 8;
+            /* we have a match - compute hash and Length of Match for triplets */
+            hash_table[signature(enc->historyBuffer+enc->historyOffset+ctr+1)] = enc->historyOffset+ctr+1;
+            for (lom = 3; lom < len - ctr ; lom++){
+                hash_table[signature(enc->historyBuffer+enc->historyOffset+ctr+lom-1)] = enc->historyOffset+ctr+lom-1;
+                if (enc->historyBuffer[enc->historyOffset + ctr + lom] != enc->historyBuffer[previous_match + lom]){
+                    break;
+                }
             }
-        }
-        else if ((lom >= 4) && (lom <= 65535)){
-            insert_n_bits(2*log_lom, ((((1 << log_lom) - 1) & 0xFFFE) << log_lom) | (lom - (1 << log_lom)), outputBuffer, bits_left, opb_index);
-        }
-    } /* end while (ctr < len - 2) */
+            
+            /* encode copy_offset and insert into output buffer */
+            copy_offset = enc->historyOffset + ctr - previous_match;
+            const int nbbits[4]  = {11, 13, 15, 19};
+            const int headers[4] = {0x7c0, 0x1e00, 0x7000, 0x060000};
+            const int base[4]    = {0, 0x40, 0x140, 0x940};
+            int range = (copy_offset <= 0x3F)  ? 0 :
+                        (copy_offset <= 0x13F) ? 1 :
+                        (copy_offset <= 0x93F) ? 2 :
+                                                 3 ;
+            insert_n_bits(nbbits[range], headers[range]|(copy_offset - base[range]) , outputBuffer, bits_left, opb_index);
 
-    /* add remaining data to the output */
-    while (len - ctr > 0)
-    {
-        if (srcData[ctr] & 0x80){
-            insert_n_bits(9, (0x02 << 7) | (srcData[ctr] & 0x7F), outputBuffer, bits_left, opb_index);
+            int log_lom = 31 - __builtin_clz(lom);
+
+            /* encode length of match and insert into output buffer */
+            insert_n_bits(
+                (lom==3)?1:2*log_lom, 
+                (lom==3)?0:(((((1<<log_lom)-1)&0xFFFE)<<log_lom)|(lom-(1<<log_lom))),
+                outputBuffer, bits_left, opb_index);
         }
-        else {
-            insert_n_bits(8, srcData[ctr], outputBuffer, bits_left, opb_index);
-        }
+    }
+
+    /* add remaining data if any to the output */
+    while (len - ctr > 0){
+        encode_literal(srcData[ctr], outputBuffer, bits_left, opb_index);
         ctr++;
     }
 
-    if (opb_index + 1 > len)
+    if (opb_index >= len)
     {
-        /* compressed data longer than uncompressed data */
+        /* compressed data longer or same size than uncompressed data */
         /* give up */
+        TODO("why should we reset history when we fail compressing one buffer ?")
         enc->historyOffset = 0;
         memset(hash_table, 0, enc->buf_len * 2);
         enc->flagsHold |= PACKET_FLUSHED;
@@ -2301,6 +2278,7 @@ static inline bool compress_rdp_5(struct rdp_mppc_enc* enc, uint8_t* srcData, in
         return true;
     }
 
+    enc->historyOffset += len;
     enc->flags |= PACKET_COMPRESSED;
     /* if bits_left == 8, opb_index has already been incremented */
     enc->bytes_in_opb = opb_index + (bits_left != 8);
