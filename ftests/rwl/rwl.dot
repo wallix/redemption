@@ -19,6 +19,7 @@ digraph rwl {
 	PropName      -> ClosedTarget  [label="CloseBlock"]
 	PropName      -> DefinedTarget [label="TargetName"]
 	PropName      -> DefinedProp   [label="Identifier"]
+	PropName      -> PropName      [label="Semicolon"]
 
 	DefinedProp   -> DefinedLink   [label="Dot"]
 	DefinedProp   -> ValueBlock    [label="TwoPoint"]
@@ -43,6 +44,7 @@ digraph rwl {
 	PropSep       -> Expression    [label="CloseExpr"]
 	PropSep       -> PropName      [label="Semicolon"]
 	PropSep       -> ClosedTarget  [label="CloseBlock"]
+	PropSep       -> PropName      [label="(void)"]
 
 	LinkProp      -> Prop          [label="Identifier"]
 

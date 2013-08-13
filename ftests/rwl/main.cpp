@@ -197,20 +197,24 @@ int main(int ac, char ** av)
     std::ios::sync_with_stdio(false);
 
     if (ac < 2) {
-        std::cerr << av[0] << " rwl_file\n";
-        return 2;
+        std::cerr << av[0] << " rwl_file=stdin\n";
     }
 
     rwl_target screen;
     screen.name.assign("Screen", "Screen" + sizeof("Screen") - 1);
     rwl_parser parser(screen);
 
-    std::ifstream ifs(av[1]);
-    if (! ifs.is_open()) {
-        return 3;
-    }
     std::string str;
-    std::getline(ifs, str, '\0'); //read all
+    if (ac >= 2) {
+        std::ifstream ifs(av[1]);
+        if (! ifs.is_open()) {
+            return 3;
+        }
+        std::getline(ifs, str, '\0'); //read all
+    }
+    else {
+        std::getline(std::cin, str, '\0'); //read all
+    }
     const char * cstr = str.c_str();
     const char * begin_cstr = cstr;
 

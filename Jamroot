@@ -277,11 +277,9 @@ unit-test test_fastpath : tests/core/RDP/test_fastpath.cpp z openssl crypto dl l
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_slowpath : tests/core/RDP/test_slowpath.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
-# unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test d3des openssl crypto png z dl ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test d3des openssl crypto png z dl ;
+unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test d3des openssl crypto png z dl gcov : <variant>coverage ;
 
-# unit-test test_authentifier : tests/acl/test_authentifier.cpp libboost_unit_test d3des openssl crypto png z dl gcov : <variant>coverage ;
-
-unit-test test_authentifier_new : tests/acl/test_authentifier_new.cpp libboost_unit_test d3des openssl crypto png z dl ;
 unit-test test_module_manager : tests/acl/test_module_manager.cpp libboost_unit_test d3des openssl crypto png z dl ;
 
 
@@ -784,14 +782,14 @@ unit-test test_dialog : tests/mod/internal/widget2/test_dialog.cpp png z openssl
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp libboost_unit_test ;
 unit-test test_widget : tests/mod/internal/widget2/test_widget.cpp libboost_unit_test gcov : <variant>coverage ;
 
-#unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z openssl crypto  libboost_unit_test ;
-#unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z openssl crypto  libboost_unit_test ;
+unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-#unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto libboost_unit_test ;
-#unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto gcov libboost_unit_test : <variant>coverage ;
+unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto gcov libboost_unit_test : <variant>coverage ;
 
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
@@ -815,8 +813,8 @@ unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp libboos
 unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit_test ;
 unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_dialog_mod : tests/mod/internal/test_dialog_mod.cpp libboost_unit_test ;
-unit-test test_dialog_mod : tests/mod/internal/test_dialog_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_dialog_mod : tests/mod/internal/test_dialog_mod.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_dialog_mod : tests/mod/internal/test_dialog_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
