@@ -100,7 +100,7 @@ extern "C" {
     static inline size_t sq_im_SQOutfilename_get_name(const SQOutfilename * self, char * buffer, size_t size, int count)
     {
         size_t res = 0;
-        if (!self->tempnam[0] || (count != self->count)) {
+        if (!self->tempnam[0] || ((unsigned)count != self->count)) {
             return _sq_im_SQOutfilename_get_name(self, buffer, size, count);
         }
         else if (size > 0) {
@@ -122,7 +122,6 @@ extern "C" {
             _sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
             rio_delete(self->trans);
             int res = close(self->fd);
-LOG(LOG_INFO, "\"%s\" -> \"%s\"", self->tempnam, tmpname);
             rename(self->tempnam, tmpname);
             memset(self->tempnam, 0, sizeof(self->tempnam));
             if (res < 0){
