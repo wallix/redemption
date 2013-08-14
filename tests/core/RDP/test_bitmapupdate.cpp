@@ -27,7 +27,9 @@
 #define LOGNULL
 #include "log.hpp"
 
+#include "RDP/bitmapupdate.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+BOOST_AUTO_TEST_CASE(TestBitmapUpdate)
 {
+    RDPBitmapData b;   
 }

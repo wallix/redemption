@@ -50,6 +50,9 @@ class Cover:
         if '/' in module:
             modulename = module.split('/')[-1]
             modulepath = '/'.join(module.split('/')[:-1])+'/'
+        extension = '.hpp'
+        if '/rio/' in module:
+            extension = '.h'
 
 
         cmd = ["bjam", "coverage", "test_%s" % modulename]
@@ -62,11 +65,23 @@ class Cover:
         subprocess.call("mkdir -p coverage/%s" % module, shell=True)
         subprocess.call("mv *.gcov coverage/%s" % module, shell=True)
 
-        extension = '.hpp'
-        if '/rio/' in module:
-            extension = '.h'
+        cmd = ["etags", "%s%s" % (module, extension), "-o", "coverage/%s/%s%s.TAGS" % (module, modulename, extension)]
+        print " ".join(cmd)
+        res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
 
         self.results[module] = self.compute_coverage("./coverage/%s/%s%s.gcov" % (module, modulename, extension))
+
+    def compute_functions_list(self, f):
+        try:
+            print "Looking for functions in %s" % (f)
+            for line in open(f):
+                res = re.match(r'^.*[(]\x7F(.*)\x01(\d*)[,]', line)
+                if res:
+                    print "match:", res.group(1), ":", f[:-5][11:], ':', res.group(2)
+        except IOError:
+            print "Error in tags"
+            pass
+
 
     def compute_coverage(self, f):
         uncovered = 0
@@ -87,6 +102,11 @@ class Cover:
         return ((total - uncovered), total)
 
     def findbest(self):
+        for d, ds, fs in os.walk("./coverage/"):
+            for x in fs:
+                if x[-5:] == '.TAGS':
+                    self.compute_functions_list("%s/%s" % (d, x))
+
         for d, ds, fs in os.walk("./coverage/"):
             i = self.coverset.intersection(fs)
             for x in i:
@@ -147,6 +167,8 @@ if len(sys.argv) < 2:
     cover.covercurrent()
 elif sys.argv[1] == 'all':
     cover.coverall()
+elif sys.argv[1] == 'function' and len(sys.argv) > 2:
+    pass
 else:
     module = sys.argv[1]
     extension = ".hpp"
