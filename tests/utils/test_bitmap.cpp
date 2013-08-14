@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Unit test for bitmap class (mostly tests of compression/decompression)
@@ -3993,3 +3993,89 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
 
 }
+
+BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
+    BGRPalette palette332;
+    init_palette332(palette332);
+
+    int bpp = 8;
+    uint8_t data[0] = {};
+    Bitmap bmp(bpp, &palette332, 0, 4, data, 0);
+
+    Bitmap::openfile_t res;
+
+    const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
+    res = bmp.check_file_type(filename);
+    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_BMP);
+
+    const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
+    res = bmp.check_file_type(filename2);
+    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+
+    const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
+    res = bmp.check_file_type(filename3);
+    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_PNG);
+
+    res = bmp.check_file_type("wrong/access/directory/image.png");
+    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+
+    res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
+    BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
+
+
+    {// OPEN PNG FILE
+        png_structp png_ptr;
+        png_infop info_ptr;
+        png_uint_32 width, height;
+        png_byte bit_depth, color_type, filter_type, interlace_type;
+
+        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        if (!png_ptr) {
+            BOOST_CHECK(false);
+        }
+        info_ptr = png_create_info_struct(png_ptr);
+        if (!info_ptr) {
+            png_destroy_read_struct(&png_ptr, NULL, NULL);
+            BOOST_CHECK(false);
+        }
+
+        FILE * fd = fopen(filename3, "rb");
+        if (!fd) {
+            BOOST_CHECK(false);
+        }
+        png_init_io(png_ptr, fd);
+
+        png_read_info(png_ptr, info_ptr);
+
+        width = png_get_image_width(png_ptr, info_ptr);
+        height = png_get_image_height(png_ptr, info_ptr);
+        bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+        color_type = png_get_color_type(png_ptr, info_ptr);
+        filter_type = png_get_filter_type(png_ptr, info_ptr);
+        interlace_type = png_get_interlace_type(png_ptr, info_ptr);
+
+        BOOST_CHECK_EQUAL(width, 256);
+        BOOST_CHECK_EQUAL(height, 150);
+        BOOST_CHECK_EQUAL(bit_depth, 8);
+        BOOST_CHECK_EQUAL(color_type, 2);
+        BOOST_CHECK_EQUAL(filter_type, 0);
+        BOOST_CHECK_EQUAL(interlace_type, 0);
+        if (color_type & PNG_COLOR_TYPE_PALETTE) {
+            png_set_palette_to_rgb(png_ptr);
+        }
+        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+            png_set_gray_1_2_4_to_8 (png_ptr);
+        BOOST_CHECK_EQUAL(bit_depth, 8);
+
+
+
+        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        fclose(fd);
+    }
+
+    bool boolres = bmp.open_png_file(filename3);
+    BOOST_CHECK_EQUAL(boolres, true);
+
+}
+
+

@@ -83,7 +83,7 @@ static inline void transport_dump_png24(Transport * trans, const uint8_t * data,
         row += rowsize;
     }
     png_write_end(ppng, pinfo);
-    
+
     trans->flush();
     png_destroy_write_struct(&ppng, &pinfo);
     // commented line below it to create row capture
@@ -167,7 +167,7 @@ inline void read_png24(FILE * fd, const uint8_t * data,
     png_destroy_read_struct(&ppng, &pinfo, NULL);
 }
 
-static inline void png_read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length) { 
+static inline void png_read_data_fn(png_structp png_ptr, png_bytep data, png_size_t length) {
     uint8_t * tmp_data = data;
     ((Transport *)(png_ptr->io_ptr))->recv(&tmp_data, length);
 
