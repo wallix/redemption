@@ -1,27 +1,29 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Raphael Zhou, Meng Tan
+  Product name: redemption, a FLOSS RDP proxy
+  Copyright (C) Wallix 2010
+  Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+             Raphael Zhou, Meng Tan
+
+  Session related with ACL
+  find out the next module to run from context reading
 */
 
 #ifndef _REDEMPTION_ACL_AUTHENTIFIER_HPP_
 #define _REDEMPTION_ACL_AUTHENTIFIER_HPP_
-
-TODO("Sesman is performing two largely unrelated tasks : finding out the next module to run (from context reading) and updating context dictionnary from incoming acl traffic. These tasks should be performed by two different modules")
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -29,611 +31,366 @@ TODO("Sesman is performing two largely unrelated tasks : finding out the next mo
 #include "stream.hpp"
 #include "config.hpp"
 #include "netutils.hpp"
-#include "sockettransport.hpp"
-#include "wait_obj.hpp"
 #include "acl_serializer.hpp"
+#include "module_manager.hpp"
 
-typedef enum {
-    INTERNAL_NONE,
-    INTERNAL_DIALOG_DISPLAY_MESSAGE,
-    INTERNAL_DIALOG_VALID_MESSAGE,
-    INTERNAL_CLOSE,
-    INTERNAL_BOUNCER2,
-    INTERNAL_TEST,
-    INTERNAL_CARD,
-    INTERNAL_WIDGET2_SELECTOR,
-    INTERNAL_WIDGET2_CLOSE,
-    INTERNAL_WIDGET2_DIALOG,
-    INTERNAL_WIDGET2_MESSAGE,
-    INTERNAL_WIDGET2_LOGIN,
-    INTERNAL_WIDGET2_RWL,
-    INTERNAL_WIDGET2_RWL_LOGIN,
-} submodule_t;
-
-enum {
-    MCTX_STATUS_EXIT,
-    MCTX_STATUS_WAITING,
-    MCTX_STATUS_VNC,
-    MCTX_STATUS_RDP,
-    MCTX_STATUS_XUP,
-    MCTX_STATUS_INTERNAL,
-    MCTX_STATUS_TRANSITORY,
-    MCTX_STATUS_AUTH,
-    MCTX_STATUS_CLI,
-};
-
-class SessionManager {
-    enum {
-        MOD_STATE_INIT,
-        MOD_STATE_DONE_RECEIVED_CREDENTIALS,
-        MOD_STATE_DONE_DISPLAY_MESSAGE,
-        MOD_STATE_DONE_VALID_MESSAGE,
-        MOD_STATE_DONE_LOGIN,
-        MOD_STATE_DONE_SELECTOR,
-        MOD_STATE_DONE_PASSWORD,
-        MOD_STATE_DONE_CONNECTED,
-        MOD_STATE_DONE_CLOSE,
-        MOD_STATE_DONE_EXIT,
-    } mod_state;
-
-    Inifile * ini;
-
-    int tick_count;
-
-    public:
-    AclSerializer acl_serial;
-    int keepalive_grace_delay;
-    int max_tick;
-    bool internal_domain;
+class KeepAlive {
+    // Keep alive Variables
+    int  grace_delay;
+    long timeout;
+    long renew_time;
+    bool wait_answer;     // true when we are waiting for a positive response
+                          // false when positive response has been received and
+                          // timers have been set to new timers.
     uint32_t verbose;
+    bool connected;
 
-    SessionManager(Inifile * _ini, Transport & _auth_trans, int _keepalive_grace_delay, 
-                   int _max_tick, bool _internal_domain, uint32_t _verbose)
-        : mod_state(MOD_STATE_INIT)
-        , ini(_ini)
-        , tick_count(0)
-        , acl_serial(AclSerializer(_ini,_auth_trans,_verbose))
-        , keepalive_grace_delay(_keepalive_grace_delay)
-        , max_tick(_max_tick)
-        , internal_domain(_internal_domain)
-        , verbose(_verbose)
-        
+public:
+
+    KeepAlive(int _grace_delay, uint32_t verbose)
+        : grace_delay(_grace_delay)
+        , timeout(0)
+        , renew_time(0)
+        , wait_answer(false)
+        , verbose(verbose)
+        , connected(false)
     {
-        if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::SessionManager");
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
+        }
+    }
+    ~KeepAlive() {
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
         }
     }
 
-    ~SessionManager()
+    bool is_started() {
+        return this->connected;
+    }
+    void start(time_t now) {
+        this->connected = true;
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "auth::start_keep_alive");
+        }
+        this->timeout    = now + 2*this->grace_delay;
+        this->renew_time = now + this->grace_delay;
+    }
+
+    bool check(time_t now, Inifile * ini) {
+        if (this->connected) {
+
+            // LOG(LOG_INFO, "now=%u timeout=%u  renew_time=%u wait_answer=%s grace_delay=%u", now, this->timeout, this->renew_time, this->wait_answer?"Y":"N", this->grace_delay);
+            // Keep alive timeout
+            if (now > this->timeout) {
+                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
+                // mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+                return true;
+            }
+
+            // LOG(LOG_INFO, "keepalive state ask=%s bool=%s\n",
+            //     ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
+            //     ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
+
+            //Keepalive received positive response
+            if (this->wait_answer
+                && !ini->context_is_asked(AUTHID_KEEPALIVE)
+                && ini->context_get_bool(AUTHID_KEEPALIVE)) {
+                if (this->verbose & 0x10) {
+                    LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
+                }
+                this->timeout    = now + 2*this->grace_delay;
+                this->renew_time = now + this->grace_delay;
+                this->wait_answer = false;
+            }
+
+            // Keep alive asking for an answer from ACL
+            if (!this->wait_answer
+                && (now > this->renew_time)) {
+
+                this->wait_answer = true;
+
+                ini->context_ask(AUTHID_KEEPALIVE);
+            }
+        }
+        return false;
+    }
+
+};
+
+class Inactivity {
+    // Inactivity management
+    // let t be the timeout of the blocking select in session loop,
+    // the effective inactivity timeout detection will be between
+    // inactivity_timeout and inactivity_timeout + t.
+    // hence we should have t << inactivity_timeout.
+    long prev_remain;
+    time_t inactivity_timeout;
+    time_t last_activity_time;
+
+    uint32_t verbose;
+public:
+    Inactivity(uint32_t max_tick, time_t start, uint32_t verbose)
+        : prev_remain(0)
+        , inactivity_timeout(max_tick?30*max_tick:10)
+        , last_activity_time(start)
+        , verbose(verbose)
     {
-        if (this->verbose & 0x10){
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
+        }
+    }
+    ~Inactivity() {
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
+        }
+    }
+
+    bool check(time_t now, Transport & trans) {
+        if (trans.last_quantum_received == 0) {
+            if (now > this->last_activity_time + this->inactivity_timeout) {
+                LOG(LOG_INFO, "Session User inactivity : closing");
+                // mm.invoke_close_box("Connection closed on inactivity", signal, now);
+                return true;
+            }
+            // if (this->verbose & 0x10) {
+            //     long remain = this->last_activity_time + this->inactivity_timeout - now;
+            //     if ((remain / 10) != this->prev_remain
+            //         && (remain != this->inactivity_timeout)) {
+            //         this->prev_remain = remain / 10;
+            //         LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
+            //     }
+            // }
+        }
+        else {
+            this->last_activity_time = now;
+            trans.tick();
+            // if (this->verbose & 0x10) {
+            //     if (this->prev_remain != 0) {
+            //         LOG(LOG_INFO, "Session User inactivity : Timer reset");
+            //         this->prev_remain = 0;
+            //     }
+            // }
+        }
+        return false;
+    }
+};
+
+class SessionManager {
+    Inifile * ini;
+
+public:
+    AclSerializer acl_serial;
+
+    bool remote_answer;       // false initialy, set to true once response is received from acl
+                              // and asked_remote_answer is set to false
+    time_t start_time;
+    time_t acl_start_time;
+
+    uint32_t verbose;
+
+private:
+    KeepAlive keepalive;
+    Inactivity inactivity;
+public:
+    SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
+        : ini(ini)
+        , acl_serial(AclSerializer(ini, _auth_trans, ini->debug.auth))
+        , remote_answer(false)
+        , start_time(start_time)
+        , acl_start_time(acl_start_time)
+        , verbose(ini->debug.auth)
+        , keepalive(KeepAlive(ini->globals.keepalive_grace_delay, ini->debug.auth))
+        , inactivity(Inactivity(ini->globals.max_tick, acl_start_time, ini->debug.auth))
+    {
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "auth::SessionManager");
+        }
+        this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
+    }
+
+    ~SessionManager() {
+        if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::~SessionManager");
         }
     }
 
-    void start_keep_alive(long & keepalive_time)
-    {
-        if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::start_keep_alive");
+public:
+
+    bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
+        // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
+
+        if (signal == BACK_EVENT_STOP) {
+            // here, mm.last_module should be false only when we are in login box
+            mm.mod->event.reset();
+            return false;
         }
-        this->tick_count = 1;
-
-        this->ini->context_ask(AUTHID_KEEPALIVE);
-        this->acl_serial.send(STRAUTHID_KEEPALIVE);
-        
-        keepalive_time = ::time(NULL) + 30;
-
-    }
-
-    // Set AUTHCHANNEL_TARGET dict value and transmit request to sesman (then wabenginge)
-    void ask_auth_channel_target(const char * target)
-    {
-        if (this->verbose) {
-            LOG(LOG_INFO, "SessionManager::ask_auth_channel_target(%s)", target);
-        }
-
-        this->ini->context_set_value(AUTHID_AUTHCHANNEL_TARGET, target);
-        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_TARGET);
-        
-    }
-
-    // Set AUTHCHANNEL_RESULT dict value and transmit request to sesman (then wabenginge)
-    void set_auth_channel_result(const char * result)
-    {
-        if (this->verbose) {
-            LOG(LOG_INFO, "SessionManager::set_auth_channel_result(%s)", result);
-        }
-
-        this->ini->context_set_value(AUTHID_AUTHCHANNEL_RESULT, result);
-        this->acl_serial.send(STRAUTHID_AUTHCHANNEL_RESULT);
-        
-    }
-  
-    bool close_on_timestamp(long & timestamp)
-    {
-        bool res = false;
-        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
-            if (enddate != 0 && (timestamp > enddate)) {
-                if (this->verbose & 0x10){
-                    LOG(LOG_INFO, "auth::close_on_timestamp");
-                }
-                LOG(LOG_INFO, "Session is out of allowed timeframe : stopping");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                res = true;
-            }
-        }
-        return res;
-    }
-    
-    bool keep_alive_checking(long & keepalive_time, long & now, Transport & trans)
-    {
-        
-        //        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
-        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
-            //            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-            if (enddate != 0 && (now > enddate)) {
-                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
-
-        if (keepalive_time == 0){
-            //            LOG(LOG_INFO, "keep_alive disabled");
+        if (mm.last_module) {
+            // at a close box (mm.last_module is true),
+            // we are only waiting for a stop signal
+            // and Authentifier should not exist anymore.
             return true;
         }
 
-        TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
-            if (now > (keepalive_time + this->keepalive_grace_delay)){
-                LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
-                return false;
+        long enddate = this->ini->context.end_date_cnx.get();
+        if (enddate != 0 && (now > enddate)) {
+            LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
+            mm.invoke_close_box("Session is out of allowed timeframe", signal, now);
+            return true;
+        }
+
+        // Close by rejeted message received
+        if (!this->ini->context.rejected.is_empty()) {
+            this->ini->context.auth_error_message.copy_str(this->ini->context.rejected.get());
+            LOG(LOG_INFO, "Close by Rejected message received : %s", this->ini->context.rejected.get_cstr());
+            this->ini->context.rejected.set_empty();
+            mm.invoke_close_box(NULL, signal, now);
+            return true;
+        }
+
+        // Keep Alive
+        if (this->keepalive.check(now, this->ini)) {
+            mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+            return true;
+        }
+        // Inactivity management
+        if (this->inactivity.check(now, trans)) {
+            mm.invoke_close_box("Connection closed on inactivity", signal, now);
+            return true;
+        }
+
+        // Manage module (refresh or next)
+        if (this->ini->check()) {
+            if (mm.connected) {
+                // send message to acl with changed values when connected to
+                // a module (rdp, vnc, xup ...) and something changed.
+                // used for authchannel and keepalive.
+                this->ask_acl();
+            }
+            else if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
+                this->remote_answer       = false;
+                this->ask_acl();
             }
 
+        }
+        else if (this->remote_answer) {
 
-        if (now > keepalive_time){
-            // ===================== check if no traffic =====================
-            if (this->verbose & 8){
-                LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
-                    trans.last_quantum_received, trans.total_received,
-                    this->tick_count);
+            if (signal == BACK_EVENT_REFRESH) {
+                LOG(LOG_INFO, "===========> MODULE_REFRESH");
+                signal = BACK_EVENT_NONE;
+                TODO("signal management (refresh/next) should go to ModuleManager, "
+                     "it's basically the same behavior. It could be implemented by "
+                     "closing module then opening another one of the same kind");
+                mm.mod->refresh_context(*this->ini);
+                mm.mod->event.signal = BACK_EVENT_NONE;
+                mm.mod->event.set();
             }
-            if (trans.last_quantum_received == 0){
-                this->tick_count++;
-                if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
-                    this->ini->context.auth_error_message.copy_c_str("Connection closed on inactivity");
-                    LOG(LOG_INFO, "Session ACL inactivity : closing");
-                    this->mod_state = MOD_STATE_DONE_CLOSE;
-                    return false;
+            else if (signal == BACK_EVENT_NEXT) {
+
+                LOG(LOG_INFO, "===========> MODULE_NEXT");
+                signal = BACK_EVENT_NONE;
+                int next_state = mm.next_module();
+                if (next_state == MODULE_INTERNAL_CLOSE) {
+                    mm.invoke_close_box(NULL, signal, now);
+                    return true;
                 }
+                mm.remove_mod();
+                try {
+                    mm.new_mod(next_state,now);
+                }
+                catch (Error & e) {
+                    if (e.id == ERR_SOCKET_CONNECT_FAILED) {
+                        mm.invoke_close_box("Failed to connect to remote TCP host", signal, now);
+                        return true;
+                    }
+                    else {
+                        throw e;
+                    }
+                }
+                if (!this->keepalive.is_started() && mm.connected) {
+                    this->keepalive.start(now);
+                }
+            }
+        }
 
-                keepalive_time = now + this->keepalive_grace_delay;
-            }
-            else {
-                this->tick_count = 0;
-            }
-            trans.tick();
+        // LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
 
-            // ===================== check if keepalive ======================
-            try {
-                this->acl_serial.send(STRAUTHID_KEEPALIVE);
-            }
-            catch (...){
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
+        // AuthCHANNEL CHECK
+        // if an answer has been received, send it to
+        // rdp serveur via mod (should be rdp module)
+        TODO("Check if this->mod is RDP MODULE");
+        if (mm.connected && this->ini->globals.auth_channel[0]) {
+            // Get sesman answer to AUTHCHANNEL_TARGET
+            if (!this->ini->context.authchannel_answer.get().is_empty()) {
+                // If set, transmit to auth_channel channel
+                mm.mod->send_auth_channel_data(this->ini->context.authchannel_answer.get_cstr());
+                this->ini->context.authchannel_answer.use();
+                // Erase the context variable
+                this->ini->context.authchannel_answer.set_empty();
             }
         }
         return true;
     }
-    bool keep_alive_response(long & keepalive_time, long & now)
-    {
-        if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-        }
+
+    void receive() {
+        LOG(LOG_INFO, "+++++++++++> ACL receive <++++++++++++++++");
         try {
             this->acl_serial.incoming();
-            if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                keepalive_time = now + this->keepalive_grace_delay;
-                this->ini->context_ask(AUTHID_KEEPALIVE);
-            }
+            this->remote_answer = true;
+        } catch (...) {
+            // acl connection lost
+            this->ini->context.authenticated.set(false);
+            this->ini->context.rejected.set_from_cstr("Connection closed by manager (ACL closed)");
         }
-        catch (...){
-            this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
-            this->mod_state = MOD_STATE_DONE_CLOSE;
-            return false;
-        }
-        return true;
-    }
-    bool keep_alive(long & keepalive_time, long & now, Transport * trans, bool read_auth)
-    {
-//        LOG(LOG_INFO, "keep_alive(%lu, %lu)", keepalive_time, now);
-        if (MOD_STATE_DONE_CONNECTED == this->mod_state){
-            long enddate = this->ini->context.end_date_cnx;
-//            LOG(LOG_INFO, "keep_alive(%lu, %lu, %lu)", keepalive_time, now, enddate));
-            if (enddate != 0 && (now > enddate)) {
-                LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
-
-        if (keepalive_time == 0){
-//            LOG(LOG_INFO, "keep_alive disabled");
-            return true;
-        }
-
-        TODO("we should manage a mode to disconnect on inactivity when we are on login box or on selector")
-        if (now > (keepalive_time + this->keepalive_grace_delay)){
-            LOG(LOG_INFO, "auth::keep_alive_or_inactivity Connection closed by manager (timeout)");
-            this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (timeout)");
-            return false;
-        }
-
-
-        if (now > keepalive_time){
-            // ===================== check if no traffic =====================
-            if (this->verbose & 8){
-                LOG(LOG_INFO, "%llu bytes received in last quantum, total: %llu tick:%d",
-                          trans->last_quantum_received, trans->total_received,
-                          this->tick_count);
-            }
-            if (trans->last_quantum_received == 0){
-                this->tick_count++;
-                if (this->tick_count > this->max_tick){ // 15 minutes before closing on inactivity
-                    this->ini->context.auth_error_message.copy_c_str("Connection closed on inactivity");
-                    LOG(LOG_INFO, "Session ACL inactivity : closing");
-                    this->mod_state = MOD_STATE_DONE_CLOSE;
-                    return false;
-                }
-
-                keepalive_time = now + this->keepalive_grace_delay;
-            }
-            else {
-                this->tick_count = 0;
-            }
-            trans->tick();
-
-            // ===================== check if keepalive ======================
-            try {
-                this->acl_serial.send(STRAUTHID_KEEPALIVE);
-            }
-            catch (...){
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed).");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
-
-        if (read_auth) {
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::keep_alive ACL incoming event");
-            }
-            try {
-                this->acl_serial.incoming();
-                if (this->ini->context_get_bool(AUTHID_KEEPALIVE)) {
-                    keepalive_time = now + this->keepalive_grace_delay;
-                    this->ini->context_ask(AUTHID_KEEPALIVE);
-                }
-            }
-            catch (...){
-                this->ini->context.auth_error_message.copy_c_str("Connection closed by manager (ACL closed)");
-                this->mod_state = MOD_STATE_DONE_CLOSE;
-                return false;
-            }
-        }
-
-        return true;
     }
 
-    int get_mod_from_protocol(submodule_t & nextmod)
+    void ask_acl() {
+        LOG(LOG_INFO, "Ask next module remote\n");
+        this->acl_serial.ask_next_module_remote();
+    }
+
+};
+
+
+class PauseRecord {
+    // Stop record on inactivity Variables
+    bool stop_record_inactivity;
+    time_t stop_record_time;
+    time_t last_record_activity_time;
+
+public:
+
+    PauseRecord(time_t timeout)
+        : stop_record_inactivity(false)
+        , stop_record_time((timeout > 30)?timeout:30)
+        , last_record_activity_time(0)
     {
-        if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::get_mod_from_protocol");
-        }
-        const char * protocol = this->ini->context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0);
-        if (this->internal_domain){
-            const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
-            if (0 == strncmp(target, "autotest", 8)){
-                protocol = "INTERNAL";
-            }
-        }
-        int res = MCTX_STATUS_EXIT;
-        if (strncasecmp(protocol, "RDP", 4) == 0){
-            if (this->verbose & 0x4){
-                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
-            }
-            res = MCTX_STATUS_RDP;
-        }
-        else if (strncasecmp(protocol, "VNC", 4) == 0){
-            if (this->verbose & 0x4){
-                LOG(LOG_INFO, "auth::get_mod_from_protocol VNC");
-            }
-            res = MCTX_STATUS_VNC;
-        }
-        else if (strncasecmp(protocol, "XUP", 4) == 0){
-            if (this->verbose & 0x4){
-                LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
-            }
-            res = MCTX_STATUS_XUP;
-        }
-        else if (strncasecmp(protocol, "INTERNAL", 8) == 0){
-            const char * target = this->ini->context_get_value(AUTHID_TARGET_DEVICE, NULL, 0);
-            if (this->verbose & 0x4){
-                LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL");
-            }
-            res = MCTX_STATUS_INTERNAL;
-            if (0 == strcmp(target, "bouncer2")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL bouncer2");
-                }
-                nextmod = INTERNAL_BOUNCER2;
-            }
-            else if (0 == strncmp(target, "autotest", 8)){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL test");
-                }
-                const char * user = this->ini->context_get_value(AUTHID_TARGET_USER, NULL, 0);
-                size_t len_user = strlen(user);
-                strncpy(this->ini->context.movie, user, sizeof(this->ini->context.movie));
-                this->ini->context.movie[sizeof(this->ini->context.movie) - 1] = 0;
-                if (0 != strcmp(".mwrm", user + len_user - 5)){
-                    strcpy(this->ini->context.movie + len_user, ".mwrm");
-                }
-                nextmod = INTERNAL_TEST;
-            }
-            else if (0 == strcmp(target, "selector")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL selector");
-                }
-                nextmod = INTERNAL_WIDGET2_SELECTOR;
-            }
-            else if (0 == strcmp(target, "login")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                nextmod = INTERNAL_WIDGET2_LOGIN;
-            }
-            else if (0 == strcmp(target, "rwl_login")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                nextmod = INTERNAL_WIDGET2_RWL_LOGIN;
-            }
-            else if (0 == strcmp(target, "rwl")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                nextmod = INTERNAL_WIDGET2_RWL;
-            }
-            else if (0 == strcmp(target, "close")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
-                }
-                nextmod = INTERNAL_CLOSE;
-            }
-            else if (0 == strcmp(target, "widget2_close")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_close");
-                }
-                nextmod = INTERNAL_WIDGET2_CLOSE;
-            }
-            else if (0 == strcmp(target, "widget2_dialog")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_dialog");
-                }
-                nextmod = INTERNAL_WIDGET2_DIALOG;
-            }
-            else if (0 == strcmp(target, "widget2_message")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_message");
-                }
-                nextmod = INTERNAL_WIDGET2_MESSAGE;
-            }
-            else if (0 == strcmp(target, "widget2_login")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_login");
-                }
-                nextmod = INTERNAL_WIDGET2_LOGIN;
-            }
-            else if (0 == strcmp(target, "widget2_rwl")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL rwl_login");
-                }
-                nextmod = INTERNAL_WIDGET2_RWL;
-            }
-            else if (0 == strcmp(target, "widget2_rwl_login")){
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_rwl_login");
-                }
-                nextmod = INTERNAL_WIDGET2_RWL_LOGIN;
-            }
-            else {
-                if (this->verbose & 0x4){
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
-                }
-                nextmod = INTERNAL_CARD;
+    }
+    ~PauseRecord() {}
+
+    void check(time_t now, Front & front) {
+        // Procedure which stops the recording on inactivity
+        if (this->last_record_activity_time == 0) this->last_record_activity_time = now;
+        if ((front.trans->last_quantum_received == 0)
+            && (front.trans->last_quantum_sent == 0)) {
+            if (!this->stop_record_inactivity &&
+                (now > this->last_record_activity_time + this->stop_record_time)) {
+                this->stop_record_inactivity = true;
+                front.pause_capture();
             }
         }
         else {
-            LOG(LOG_WARNING, "Unsupported target protocol %c%c%c%c",
-                protocol[0], protocol[1], protocol[2], protocol[3]);
-            nextmod = INTERNAL_CARD;
-//            assert(false);
-        }
-        return res;
-    }
-
-    int ask_next_module(long & keepalive_time,
-                        bool & record_video, bool & keep_alive,
-                        submodule_t & nextmod)
-    {
-        if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::ask_next_module");
-        }
-        switch (this->mod_state){
-        default:
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module default state");
-            }
-            this->acl_serial.ask_next_module_remote();
-            return MCTX_STATUS_WAITING;
-        break;
-        case MOD_STATE_DONE_SELECTOR:
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_SELECTOR state");
-            }
-            this->acl_serial.ask_next_module_remote();
-            return MCTX_STATUS_WAITING;
-        break;
-        case MOD_STATE_DONE_LOGIN:
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_LOGIN state");
-            }
-            this->acl_serial.ask_next_module_remote();
-            return MCTX_STATUS_WAITING;
-        break;
-        case MOD_STATE_DONE_PASSWORD:
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_PASSWORD state");
-            }
-            this->acl_serial.ask_next_module_remote();
-            return MCTX_STATUS_WAITING;
-        break;
-        case MOD_STATE_DONE_RECEIVED_CREDENTIALS:
-        if (this->verbose & 0x10){
-            LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS state");
-        }
-        {
-            if (this->verbose & 0x20){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER=%s",
-                    (this->ini->context_is_asked(AUTHID_AUTH_USER) ? "True": "False"));
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD=%s",
-                    (this->ini->context_is_asked(AUTHID_PASSWORD) ? "True": "False"));
-            }
-
-            if (this->ini->context_is_asked(AUTHID_AUTH_USER)){
-                if (this->verbose & 0x20){
-                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_AUTH_USER is asked");
-                }
-                this->mod_state = MOD_STATE_DONE_LOGIN;
-                nextmod = INTERNAL_WIDGET2_LOGIN;
-                return MCTX_STATUS_INTERNAL;
-            }
-            else if (this->ini->context_is_asked(AUTHID_PASSWORD)){
-                if (this->verbose & 0x20){
-                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_PASSWORD is asked");
-                }
-                this->mod_state = MOD_STATE_DONE_LOGIN;
-                nextmod = INTERNAL_WIDGET2_LOGIN;
-                return MCTX_STATUS_INTERNAL;
-            }
-            else if (!this->ini->context_is_asked(AUTHID_SELECTOR)
-                 &&   this->ini->context_get_bool(AUTHID_SELECTOR)
-                 &&  !this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
-                 &&  !this->ini->context_is_asked(AUTHID_TARGET_USER)){
-                if (this->verbose & 0x20){
-                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_SELECTOR is asked");
-                }
-                this->mod_state = MOD_STATE_DONE_SELECTOR;
-                nextmod = INTERNAL_WIDGET2_SELECTOR;
-                return MCTX_STATUS_INTERNAL;
-            }
-            else if (this->ini->context_is_asked(AUTHID_TARGET_DEVICE)
-                 ||  this->ini->context_is_asked(AUTHID_TARGET_USER)){
-                    if (this->verbose & 0x20){
-                        LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_TARGET_DEVICE is asked");
-                    }
-                    this->mod_state = MOD_STATE_DONE_LOGIN;
-                    nextmod = INTERNAL_WIDGET2_LOGIN;
-                    return MCTX_STATUS_INTERNAL;
-            }
-            else if (this->ini->context_is_asked(AUTHID_DISPLAY_MESSAGE)){
-                if (this->verbose & 0x20){
-                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_DISPLAY_MESSAGE is asked");
-                }
-                nextmod = INTERNAL_DIALOG_DISPLAY_MESSAGE;
-                this->mod_state = MOD_STATE_DONE_DISPLAY_MESSAGE;
-                return MCTX_STATUS_INTERNAL;
-            }
-            else if (this->ini->context_is_asked(AUTHID_ACCEPT_MESSAGE)){
-                if (this->verbose & 0x20){
-                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS AUTHID_ACCEPT_MESSAGE is asked");
-                }
-                this->mod_state = MOD_STATE_DONE_VALID_MESSAGE;
-                nextmod = INTERNAL_DIALOG_VALID_MESSAGE;
-                return MCTX_STATUS_INTERNAL;
-            }
-            else if (this->ini->context.authenticated){
-                if (this->verbose & 0x20){
-                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS authenticated is True");
-                }
-                record_video = this->ini->globals.movie;
-                keep_alive = true;
-                if (this->ini->context.auth_error_message.is_empty()) {
-                    this->ini->context.auth_error_message.copy_c_str("End of connection");
-                }
-                this->mod_state = MOD_STATE_DONE_CONNECTED;
-                return this->get_mod_from_protocol(nextmod);
-            }
-            else {
-                if (this->verbose & 0x20){
-                    LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_RECEIVED_CREDENTIALS else");
-                }
-
-                if (!this->ini->context.rejected.is_empty()) {
-                    this->ini->context.auth_error_message.copy_str(this->ini->context.rejected);
-                }
-                if (this->ini->context.auth_error_message.is_empty()) {
-                    this->ini->context.auth_error_message.copy_c_str("Authentifier service failed");
-                }
-                this->mod_state = MOD_STATE_DONE_CONNECTED;
-                nextmod = INTERNAL_CLOSE;
-                return MCTX_STATUS_INTERNAL;
+            this->last_record_activity_time = now;
+            front.trans->reset_quantum_sent();
+            // Here we only reset the quantum sent
+            // because Check() will already reset the
+            // quantum received when checking for inactivity
+            if (this->stop_record_inactivity) {
+                this->stop_record_inactivity = false;
+                front.resume_capture();
+                // resume capture
             }
         }
-        break;
-        case MOD_STATE_DONE_CONNECTED:
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
-            }
-            this->mod_state = MOD_STATE_DONE_CLOSE;
-            nextmod = INTERNAL_CLOSE;
-            return MCTX_STATUS_INTERNAL;
-        break;
-        case MOD_STATE_DONE_CLOSE:
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_CONNECTED state");
-            }
-            this->mod_state = MOD_STATE_DONE_EXIT;
-            nextmod = INTERNAL_CLOSE;
-            return MCTX_STATUS_EXIT;
-        break;
-        case MOD_STATE_DONE_EXIT:
-            if (this->verbose & 0x10){
-                LOG(LOG_INFO, "auth::ask_next_module MOD_STATE_DONE_EXIT state");
-            }
-            // we should never goes here, the main loop should have stopped before
-            LOG(LOG_WARNING, "unexpected forced exit");
-            nextmod = INTERNAL_CLOSE;
-            return MCTX_STATUS_EXIT;
-        break;
-        }
-    }
-
-
-
-    void receive_next_module()
-    {
-        try {
-            this->acl_serial.incoming();
-        } catch (...) {
-            this->ini->context.authenticated = false;
-            this->ini->context.rejected.copy_c_str("Authentifier service failed");
-        }
-        this->mod_state = MOD_STATE_DONE_RECEIVED_CREDENTIALS;
     }
 };
 

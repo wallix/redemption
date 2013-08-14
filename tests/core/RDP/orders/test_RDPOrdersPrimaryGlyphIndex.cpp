@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -78,8 +77,8 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
             0x0c, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64,
         };
 
-        check_datas(stream.p-stream.data, stream.data, sizeof(datas), datas, "Text 1");
-        stream.mark_end(); stream.p = stream.data;
+        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Text 1");
+        stream.mark_end(); stream.p = stream.get_data();
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = stream.in_uint8();
@@ -111,6 +110,4 @@ BOOST_AUTO_TEST_CASE(TestGlyphIndex)
                           12, (uint8_t*)"Hello, World"),
             "Text 1");
     }
-
-
 }

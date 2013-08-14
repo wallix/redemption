@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -29,7 +29,6 @@
 #define LOGNULL
 #include "log.hpp"
 #include "RDP/capabilities.hpp"
-
 
 BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
 {
@@ -65,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
     BStream stream(1024);
     bmpcache_caps.emit(stream);
     stream.mark_end();
-    stream.p = stream.data;
+    stream.p = stream.get_data();
 
     BmpCacheCaps bmpcache_caps2;
 

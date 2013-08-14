@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -28,7 +27,6 @@
 #include "log.hpp"
 #include "RDP/capabilities.hpp"
 
-
 BOOST_AUTO_TEST_CASE(TestCapabilityBmpCache2)
 {
     BmpCache2Caps cap;
@@ -36,8 +34,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCache2)
     BStream stream(1024);
     cap.emit(stream);
     stream.mark_end();
-    stream.p = stream.data;
-    
+    stream.p = stream.get_data();
+
     BmpCache2Caps cap2;
     cap2.recv(stream, CAPLEN_BITMAPCACHE_REV2);
 }

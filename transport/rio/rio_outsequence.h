@@ -100,6 +100,23 @@ extern "C" {
          return RIO_ERROR_OK;
     }
 
+    static inline RIO_ERROR rio_m_RIOOutsequence_seek(RIOOutsequence * self, int64_t offset, int whence)
+    {
+         RIO_ERROR status = RIO_ERROR_OK;
+         RIO * trans = sq_get_trans(self->seq, &status);
+         if (status == RIO_ERROR_OK){
+             RIO_ERROR res = rio_seek(trans, offset, whence);
+             if (res != RIO_ERROR_OK){
+                rio_m_RIOOutsequence_destructor(self);
+             }
+             return res;
+         }
+         else {
+            rio_m_RIOOutsequence_destructor(self);
+            return status;
+         }
+    }
+
     static inline RIO_ERROR rio_m_RIOOutsequence_get_status(RIOOutsequence * self)
     {
         return RIO_ERROR_OK;

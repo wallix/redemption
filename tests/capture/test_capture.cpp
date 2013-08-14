@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         ini.video.capture_wrm = true;
         ini.video.capture_png = true;
-        ini.globals.enable_file_encryption = false;
+        ini.globals.enable_file_encryption.set(false);
         Capture capture(now, scr.cx, scr.cy, "./", "./", "/tmp/", "capture", false, ini);
 
         bool ignore_frame_in_timeval = false;
@@ -107,10 +107,10 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         BOOST_CHECK_EQUAL((unsigned)1625, (unsigned)sq_outfilename_filesize(&wrm_seq, 0));
         sq_outfilename_unlink(&wrm_seq, 0);
         // Mem3Blt save state = 34 bytes
-        BOOST_CHECK_EQUAL((unsigned)3397 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
+        BOOST_CHECK_EQUAL((unsigned)3376 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
         sq_outfilename_unlink(&wrm_seq, 1);
         // Mem3Blt save state = 34 bytes
-        BOOST_CHECK_EQUAL((unsigned)3373 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 2));
+        BOOST_CHECK_EQUAL((unsigned)3352 + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 2));
         sq_outfilename_unlink(&wrm_seq, 2);
         // The destruction of capture object will finalize the metafile content
     }
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
     BOOST_CHECK_EQUAL((unsigned)125, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
     sq_outfilename_unlink(&meta_seq, 0);
 
-    if (ini.globals.enable_file_encryption){
+    if (ini.globals.enable_file_encryption.get()){
         sq_init_outfilename(&meta_seq, SQF_PATH_FILE_PID_EXTENSION, "/tmp/", "capture", ".mwrm", groupid);
         BOOST_CHECK_EQUAL((unsigned)32, (unsigned)sq_outfilename_filesize(&meta_seq, 0));
         sq_outfilename_unlink(&meta_seq, 0);

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -122,8 +121,8 @@ BOOST_AUTO_TEST_CASE(TestColCache)
             04, 07, 03, 00, 05, 07, 03, 00, 06, 07, 03, 00, 07, 07, 03, 00,
         };
 
-        check_datas(stream.p-stream.data, stream.data, sizeof(datas), datas, "Color Cache 1");
-        stream.mark_end(); stream.p = stream.data;
+        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Color Cache 1");
+        stream.mark_end(); stream.p = stream.get_data();
 
         uint8_t control = stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
@@ -133,5 +132,4 @@ BOOST_AUTO_TEST_CASE(TestColCache)
 
         check<RDPColCache>(cmd, newcmd, "Color Cache 1");
     }
-
 }

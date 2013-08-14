@@ -18,10 +18,10 @@
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
  */
 
-#if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_RECT_HPP)
-#define REDEMPTION_MOD_WIDGET2_WIDGET_RECT_HPP
+#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_RECT_HPP)
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_RECT_HPP
 
-#include "widget2_widget.hpp"
+#include "widget.hpp"
 
 class WidgetRect : public Widget2
 {
@@ -29,8 +29,8 @@ public:
     int color;
 
 public:
-    WidgetRect(DrawApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
-    : Widget2(drawable, rect, parent, notifier, group_id)
+    WidgetRect(DrawApi& drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
+    : Widget2(&drawable, rect, parent, notifier, group_id)
     , color(color)
     {
     }

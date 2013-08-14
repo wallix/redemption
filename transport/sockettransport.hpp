@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
-   Author(s): Christophe Grosjean, Raphael Zhou
+   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 
    Transport layer abstraction, socket implementation with TLS support
 */
@@ -133,6 +133,12 @@ class SocketTransport : public Transport {
         if (!this->sck_closed){
             this->disconnect();
         }
+
+        if (verbose) {
+            LOG( LOG_INFO
+               , "%s (%d): total_received=%llu, total_sent=%llu"
+               , this->name, this->sck, this->total_received, this->total_sent);
+        }
     }
 
     virtual void enable_server_tls(const char * certificate_password) throw (Error)
@@ -172,7 +178,7 @@ class SocketTransport : public Transport {
 
         BIO * bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
-        SSL_CTX* ctx = SSL_CTX_new(TLSv1_server_method());
+        SSL_CTX* ctx = SSL_CTX_new(SSLv23_server_method());
         this->allocated_ctx = ctx;
 
         /*
@@ -335,10 +341,13 @@ class SocketTransport : public Transport {
 
         LOG(LOG_INFO, "RIO *::SSL_CTX_set_options()");
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
+        SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
+        SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
 
-        LOG(LOG_INFO, "RIO *::SSL_CTX_set_ciphers(HIGH:!ADH)");
+//        LOG(LOG_INFO, "RIO *::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
 //        SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
-        SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH");
+// Not compatible with MSTSC 6.1 on XP and W2K3
+//        SSL_CTX_set_cipher_list(ctx, "HIGH:!ADH:!3DES");
 
         // -------- End of system wide SSL_Ctx option ----------------------------------
 
@@ -905,9 +914,13 @@ class SocketTransport : public Transport {
                 }
 */
                 if (error_message) {
-                    snprintf(const_cast<char *>(error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
-                        "The certificate for host %s:%d has changed!",
-                        this->ip_address, this->port);
+                    char buff[256];
+                    snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
+                             this->ip_address, this->port);
+                    error_message->copy_c_str(buff);
+                    // snprintf(const_cast<char *>(error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
+                    //     "The certificate for host %s:%d has changed!",
+                    //     this->ip_address, this->port);
                 }
                 LOG(LOG_ERR, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                     this->ip_address, this->port,
@@ -994,7 +1007,7 @@ class SocketTransport : public Transport {
         uint8_t * tmp = public_key_data;
         i2d_PublicKey(pkey, &tmp);
 
-        delete public_key_data;
+        free(public_key_data);
         public_key_data =
         tmp             = 0;
 
@@ -1114,6 +1127,7 @@ class SocketTransport : public Transport {
             LOG(LOG_INFO, "Dump done on %s (%u) %u bytes", this->name, this->sck, len);
         }
 
+        TODO("move that to base class : accounting_recv(len)");
         this->total_received += len;
         this->last_quantum_received += len;
     }
@@ -1131,15 +1145,19 @@ class SocketTransport : public Transport {
 
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0) {
-            throw Error(ERR_TRANSPORT_DIFFERS);
+            LOG(LOG_WARNING, "SocketTransport::Send failed errno=%u [%s]", errno, strerror(errno));        
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         if (res < (ssize_t)len) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
 
+        TODO("move that to base class : accounting_send(len)");
         this->total_sent += len;
         this->last_quantum_sent += len;
     }
+
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
 
     virtual bool get_status()
     {

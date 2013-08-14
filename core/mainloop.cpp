@@ -1,23 +1,23 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010 - 2012
-   Author(s): Christophe Grosjean, Raphael Zhou
+  Product name: redemption, a FLOSS RDP proxy
+  Copyright (C) Wallix 2010 - 2012
+  Author(s): Christophe Grosjean, Raphael Zhou
 
-   Main loop
+  Main loop
 */
 
 #include <unistd.h>
@@ -54,6 +54,11 @@ void sigsegv(int sig)
     LOG(LOG_INFO, "Ignoring SIGSEGV : signal %d \n", sig);
 }
 
+void sighup(int sig)
+{
+    LOG(LOG_INFO, "Ignoring SIGHUP : signal %d \n", sig);
+}
+
 void sigchld(int sig)
 {
     // triggered when a child close. For now we will just ignore this signal
@@ -61,13 +66,6 @@ void sigchld(int sig)
     // When there will be child management code, we will have to setup
     // some communication protocol to discuss with childs.
     LOG(LOG_INFO, "Ignoring SIGCHLD : signal %d pid %d\n", sig, getpid());
-}
-
-int refreshconf;
-
-void sighup(int sig)
-{
-    refreshconf |= 1;
 }
 
 void init_signals(void)
@@ -161,14 +159,15 @@ void redemption_new_session()
 
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+        struct sockaddr s;
+        struct sockaddr_storage ss;
+        struct sockaddr_in s4;
+        struct sockaddr_in6 s6;
     } u;
     int sock_len = sizeof(u);
 
-    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+    Inifile ini;
+    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", getpid());
@@ -178,10 +177,10 @@ void redemption_new_session()
 
     union
     {
-      struct sockaddr s;
-      struct sockaddr_storage ss;
-      struct sockaddr_in s4;
-      struct sockaddr_in6 s6;
+        struct sockaddr s;
+        struct sockaddr_storage ss;
+        struct sockaddr_in s4;
+        struct sockaddr_in6 s6;
     } localAddress;
     socklen_t addressLength = sizeof(localAddress);
 
@@ -217,7 +216,7 @@ void redemption_new_session()
     if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
         wait_obj front_event(sck);
 
-        Session session(front_event, sck, &refreshconf, &ini);
+        Session session(front_event, sck, &ini);
 
         if (ini.debug.session){
             LOG(LOG_INFO, "Session::end of Session(%u)", sck);
@@ -236,17 +235,17 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid)
 {
     init_signals();
 
-    SessionServer ss(&refreshconf, uid, gid);
-//    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+    SessionServer ss(uid, gid);
+    //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.globals.listen_address);
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
     int port = ini.globals.port;
     Listen listener( ss
-                   , s_addr
-                   , port
-                   , false                              /* exit on timeout       */
-                   , 60                                 /* timeout sec           */
-                   , ini.globals.enable_ip_transparent
-                   );
+                     , s_addr
+                     , port
+                     , false                              /* exit on timeout       */
+                     , 60                                 /* timeout sec           */
+                     , ini.globals.enable_ip_transparent
+                     );
     listener.run();
 }

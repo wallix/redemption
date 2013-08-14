@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -20,7 +20,6 @@
    Unit test to RDP Orders coder/decoder
    Using lib boost functions for testing
 */
-
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
@@ -69,14 +68,14 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
             0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
         };
 
-        check_datas(stream.p-stream.data, stream.data, sizeof(datas), datas, "Bmp Cache 1");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Bmp Cache 1");
         stream.mark_end();
-        stream.p = stream.data;
+        stream.p = stream.get_data();
 
         uint8_t control = stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(stream);
-        BOOST_CHECK_EQUAL((uint16_t)33 - 7, header.length); // length after type - 7
+        BOOST_CHECK_EQUAL((uint16_t)33 - 7, header.order_length); // length after type - 7
         BOOST_CHECK_EQUAL((unsigned)0x08, header.flags);
         BOOST_CHECK_EQUAL((unsigned)TS_CACHE_BITMAP_UNCOMPRESSED, header.type);
 
@@ -85,5 +84,4 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
 
 //        check<RDPColCache>(cmd, newcmd, "Color Cache 1");
     }
-
 }

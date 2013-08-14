@@ -140,6 +140,8 @@ struct RDPSerializer : public RDPGraphicDevice
 
     size_t bitmap_count;
 
+    uint32_t verbose;
+
     RDPSerializer( Transport * trans
                  , Stream & stream_orders
                  , Stream & stream_bitmaps
@@ -148,7 +150,8 @@ struct RDPSerializer : public RDPGraphicDevice
                  , const int bitmap_cache_version
                  , const int use_bitmap_comp
                  , const int op2
-                 , const Inifile & ini)
+                 , const Inifile & ini
+                 , uint32_t verbose = 0)
     : RDPGraphicDevice()
     , stream_orders(stream_orders)
     , stream_bitmaps(stream_bitmaps)
@@ -172,7 +175,8 @@ struct RDPSerializer : public RDPGraphicDevice
     // state variables for a batch of orders
     , order_count(0)
     , bmp_cache(bmp_cache)
-    , bitmap_count(0) {}
+    , bitmap_count(0)
+    , verbose(verbose) {}
 
     ~RDPSerializer() {}
 
@@ -187,7 +191,7 @@ public:
     void reserve_order(size_t asked_size)
     {
 //    LOG(LOG_INFO, "RDPSerializer::reserve_order");
-        size_t max_packet_size = std::min(this->stream_orders.capacity, (size_t)16384);
+        size_t max_packet_size = std::min(this->stream_orders.get_capacity(), (size_t)16384);
         size_t used_size = this->stream_orders.get_offset();
         if (this->ini.debug.primary_orders > 3){
             LOG( LOG_INFO
@@ -200,7 +204,8 @@ public:
         }
         if (asked_size + 106 > max_packet_size){
             LOG( LOG_ERR
-               , "asked size (%u) > order batch capacity (%u)"
+               , "(asked size (%u) + 106 = %d) > order batch capacity (%u)"
+               , asked_size
                , asked_size + 106
                , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
@@ -371,7 +376,7 @@ public:
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
-        size_t max_packet_size = std::min(this->stream_bitmaps.capacity, (size_t)16384 * 3);
+        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), (size_t)8192);
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.debug.primary_orders > 3) {
             LOG( LOG_INFO

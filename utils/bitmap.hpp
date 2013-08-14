@@ -276,12 +276,12 @@ public:
         /* read file size */
         TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.")
         BStream stream(8192);
-        if (read(fd, stream.data, 4) < 4){
+        if (read(fd, stream.get_data(), 4) < 4){
             LOG(LOG_ERR, "Widget_load: error read file size\n");
             close(fd);
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
-        stream.end = stream.data + 4;
+        stream.end = stream.get_data() + 4;
         {
             TODO("Check what is this size ? header size ? used as fixed below ?")
             /* uint32_t size = */ stream.in_uint32_le();
@@ -290,12 +290,12 @@ public:
         // skip some bytes to set file pointer to bmp header
         lseek(fd, 14, SEEK_SET);
         stream.init(8192);
-        if (read(fd, stream.data, 40) < 40){
+        if (read(fd, stream.get_data(), 40) < 40){
             close(fd);
             LOG(LOG_ERR, "Widget_load: error read file size (2)\n");
             throw Error(ERR_BITMAP_LOAD_FAILED);
         }
-        stream.end = stream.data + 40;
+        stream.end = stream.get_data() + 40;
         TODO(" we should read header size and use it to read header instead of using magic constant 40")
         header.size = stream.in_uint32_le();
         if (header.size != 40){
@@ -329,11 +329,11 @@ public:
             file_Qpp = 2;
         case 4:
             stream.init(8192);
-            if (read(fd, stream.data, header.clr_used * 4) < header.clr_used * 4){
+            if (read(fd, stream.get_data(), header.clr_used * 4) < header.clr_used * 4){
                 close(fd);
                 throw Error(ERR_BITMAP_LOAD_FAILED);
             }
-            stream.end = stream.data + header.clr_used * 4;
+            stream.end = stream.get_data() + header.clr_used * 4;
             for (int i = 0; i < header.clr_used; i++) {
                 uint8_t r = stream.in_uint8();
                 uint8_t g = stream.in_uint8();
@@ -363,7 +363,7 @@ public:
             int row_size = (header.image_width * file_Qpp) / 2;
             int padding = align4(row_size) - row_size;
             for (unsigned y = 0; y < header.image_height; y++) {
-                int k = read(fd, stream.data + y * row_size, row_size + padding);
+                int k = read(fd, stream.get_data() + y * row_size, row_size + padding);
                 if (k != (row_size + padding)) {
                     LOG(LOG_ERR, "Widget_load: read error reading bitmap file [%s] read\n", filename);
                     close(fd);
@@ -371,7 +371,7 @@ public:
                 }
             }
             close(fd); // from now on all is in memory
-            stream.end = stream.data + size;
+            stream.end = stream.get_data() + size;
         }
 
         const uint8_t Bpp = 3;
@@ -887,15 +887,394 @@ public:
     }
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
-    void compress(Stream & out) const
+    void compress(Stream & outbuffer) const
     {
         if (this->data_compressed) {
-            out.out_copy_bytes(this->data_compressed, this->data_compressed_size); 
+            outbuffer.out_copy_bytes(this->data_compressed, this->data_compressed_size);
             return;
         }
+
+        struct RLE_OutStream {
+            Stream & stream;
+            RLE_OutStream(Stream & outbuffer)
+            : stream(outbuffer) 
+            {
+            }
+
+            // =========================================================================
+            // Helper methods for RDP RLE bitmap compression support
+            // =========================================================================
+            void out_count(const int in_count, const int mask){
+                if (in_count < 32) {
+                    this->stream.out_uint8((uint8_t)((mask << 5) | in_count));
+                }
+                else if (in_count < 256 + 32){
+                    this->stream.out_uint8((uint8_t)(mask << 5));
+                    this->stream.out_uint8((uint8_t)(in_count - 32));
+                }
+                else {
+                    this->stream.out_uint8((uint8_t)(0xf0 | mask));
+                    this->stream.out_uint16_le(in_count);
+                }
+            }
+
+            // Background Run Orders
+            // ~~~~~~~~~~~~~~~~~~~~~
+
+            // A Background Run Order encodes a run of pixels where each pixel in the
+            // run matches the uncompressed pixel on the previous scanline. If there is
+            // no previous scanline then each pixel in the run MUST be black.
+
+            // When encountering back-to-back background runs, the decompressor MUST
+            // write a one-pixel foreground run to the destination buffer before
+            // processing the second background run if both runs occur on the first
+            // scanline or after the first scanline (if the first run is on the first
+            // scanline, and the second run is on the second scanline, then a one-pixel
+            // foreground run MUST NOT be written to the destination buffer). This
+            // one-pixel foreground run is counted in the length of the run.
+
+            // The run length encodes the number of pixels in the run. There is no data
+            // associated with Background Run Orders.
+
+            // +-----------------------+-----------------------------------------------+
+            // | 0x0 REGULAR_BG_RUN    | The compression order encodes a regular-form  |
+            // |                       | background run. The run length is stored in   |
+            // |                       | the five low-order bits of  the order header  |
+            // |                       | byte. If this value is zero, then the run     |
+            // |                       | length is encoded in the byte following the   |
+            // |                       | order header and MUST be incremented by 32 to |
+            // |                       | give the final value.                         |
+            // +-----------------------+-----------------------------------------------+
+            // | 0xF0 MEGA_MEGA_BG_RUN | The compression order encodes a MEGA_MEGA     |
+            // |                       | background run. The run length is stored in   |
+            // |                       | the two bytes following the order header      |
+            // |                       | (in little-endian format).                    |
+            // +-----------------------+-----------------------------------------------+
+
+            void out_fill_count(const int in_count)
+            {
+                this->out_count(in_count, 0x00);
+            }
+
+            // Foreground Run Orders
+            // ~~~~~~~~~~~~~~~~~~~~~
+
+            // A Foreground Run Order encodes a run of pixels where each pixel in the
+            // run matches the uncompressed pixel on the previous scanline XOR’ed with
+            // the current foreground color. If there is no previous scanline, then
+            // each pixel in the run MUST be set to the current foreground color (the
+            // initial foreground color is white).
+
+            // The run length encodes the number of pixels in the run.
+            // If the order is a "set" variant, then in addition to encoding a run of
+            // pixels, the order also encodes a new foreground color (in little-endian
+            // format) in the bytes following the optional run length. The current
+            // foreground color MUST be updated with the new value before writing
+            // the run to the destination buffer.
+
+            // +---------------------------+-------------------------------------------+
+            // | 0x1 REGULAR_FG_RUN        | The compression order encodes a           |
+            // |                           | regular-form foreground run. The run      |
+            // |                           | length is stored in the five low-order    |
+            // |                           | bits of the order header byte. If this    |
+            // |                           | value is zero, then the run length is     |
+            // |                           | encoded in the byte following the order   |
+            // |                           | header and MUST be incremented by 32 to   |
+            // |                           | give the final value.                     |
+            // +---------------------------+-------------------------------------------+
+            // | 0xF1 MEGA_MEGA_FG_RUN     | The compression order encodes a MEGA_MEGA |
+            // |                           | foreground run. The run length is stored  |
+            // |                           | in the two bytes following the order      |
+            // |                           | header (in little-endian format).         |
+            // +---------------------------+-------------------------------------------+
+            // | 0xC LITE_SET_FG_FG_RUN    | The compression order encodes a "set"     |
+            // |                           | variant lite-form foreground run. The run |
+            // |                           | length is stored in the four low-order    |
+            // |                           | bits of the order header byte. If this    |
+            // |                           | value is zero, then the run length is     |
+            // |                           | encoded in the byte following the order   |
+            // |                           | header and MUST be incremented by 16 to   |
+            // |                           | give the final value.                     |
+            // +---------------------------+-------------------------------------------+
+            // | 0xF6 MEGA_MEGA_SET_FG_RUN | The compression order encodes a "set"     |
+            // |                           | variant MEGA_MEGA foreground run. The run |
+            // |                           | length is stored in the two bytes         |
+            // |                           | following the order header (in            |
+            // |                           | little-endian format).                    |
+            // +---------------------------+-------------------------------------------+
+
+            void out_mix_count(const int in_count)
+            {
+                this->out_count(in_count, 0x01);
+            }
+
+            void out_mix_count_set(const int in_count, const uint8_t Bpp, unsigned new_foreground)
+            {
+                const uint8_t mask = 0x06;
+                if (in_count < 16) {
+                    this->stream.out_uint8((uint8_t)(0xc0 | in_count));
+                }
+                else if (in_count < 256 + 16){
+                    this->stream.out_uint8(0xc0);
+                    this->stream.out_uint8((uint8_t)(in_count - 16));
+                }
+                else {
+                    this->stream.out_uint8(0xf0 | mask);
+                    this->stream.out_uint16_le(in_count);
+                }
+                this->stream.out_bytes_le(Bpp, new_foreground);
+            }
+
+            // Foreground / Background Image Orders
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+            // A Foreground/Background Image Order encodes a binary image where each
+            // pixel in the image that is not on the first scanline fulfils exactly one
+            // of the following two properties:
+
+            // (a) The pixel matches the uncompressed pixel on the previous scanline
+            // XOR'ed with the current foreground color.
+
+            // (b) The pixel matches the uncompressed pixel on the previous scanline.
+
+            // If the pixel is on the first scanline then it fulfils exactly one of the
+            // following two properties:
+
+            // (c) The pixel is the current foreground color.
+
+            // (d) The pixel is black.
+
+            // The binary image is encoded as a sequence of byte-sized bitmasks which
+            // follow the optional run length (the last bitmask in the sequence can be
+            // smaller than one byte in size). If the order is a "set" variant then the
+            // bitmasks MUST follow the bytes which specify the new foreground color.
+            // Each bit in the encoded bitmask sequence represents one pixel in the
+            // image. A bit that has a value of 1 represents a pixel that fulfils
+            // either property (a) or (c), while a bit that has a value of 0 represents
+            // a pixel that fulfils either property (b) or (d). The individual bitmasks
+            // MUST each be processed from the low-order bit to the high-order bit.
+
+            // The run length encodes the number of pixels in the run.
+
+            // If the order is a "set" variant, then in addition to encoding a binary
+            // image, the order also encodes a new foreground color (in little-endian
+            // format) in the bytes following the optional run length. The current
+            // foreground color MUST be updated with the new value before writing
+            // the run to the destination buffer.
+
+            // +--------------------------------+--------------------------------------+
+            // | 0x2 REGULAR_FGBG_IMAGE         | The compression order encodes a      |
+            // |                                | regular-form foreground/background   |
+            // |                                | image. The run length is encoded in  |
+            // |                                | the five low-order bits of the order |
+            // |                                | header byte and MUST be multiplied   |
+            // |                                | by 8 to give the final value. If     |
+            // |                                | this value is zero, then the run     |
+            // |                                | length is encoded in the byte        |
+            // |                                | following the order header and MUST  |
+            // |                                | be incremented by 1 to give the      |
+            // |                                | final value.                         |
+            // +--------------------------------+--------------------------------------+
+            // | 0xF2 MEGA_MEGA_FGBG_IMAGE      | The compression order encodes a      |
+            // |                                | MEGA_MEGA foreground/background      |
+            // |                                | image. The run length is stored in   |
+            // |                                | the two bytes following the order    |
+            // |                                | header (in little-endian format).    |
+            // +--------------------------------+--------------------------------------+
+            // | 0xD LITE_SET_FG_FGBG_IMAGE     | The compression order encodes a      |
+            // |                                | "set" variant lite-form              |
+            // |                                | foreground/background image. The run |
+            // |                                | length is encoded in the four        |
+            // |                                | low-order bits of the order header   |
+            // |                                | byte and MUST be multiplied by 8 to  |
+            // |                                | give the final value. If this value  |
+            // |                                | is zero, then the run length is      |
+            // |                                | encoded in the byte following the    |
+            // |                                | order header and MUST be incremented |
+            // |                                | by 1 to give the final value.        |
+            // +--------------------------------+--------------------------------------+
+            // | 0xF7 MEGA_MEGA_SET_FGBG_IMAGE  | The compression order encodes a      |
+            // |                                | "set" variant MEGA_MEGA              |
+            // |                                | foreground/background image. The run |
+            // |                                | length is stored in the two bytes    |
+            // |                                | following the order header (in       |
+            // |                                | little-endian format).               |
+            // +-----------------------------------------------------------------------+
+
+            void out_fom_count(const int in_count)
+            {
+                if (in_count < 256){
+                    if (in_count & 7){
+                        this->stream.out_uint8(0x40);
+                        this->stream.out_uint8((uint8_t)(in_count - 1));
+                    }
+                    else{
+                        this->stream.out_uint8((uint8_t)(0x40 | (in_count >> 3)));
+                    }
+                }
+                else{
+                    this->stream.out_uint8(0xf2);
+                    this->stream.out_uint16_le(in_count);
+                }
+            }
+
+            void out_fom_sequence(const int count, const uint8_t * masks) {
+                this->out_fom_count(count);
+                this->stream.out_copy_bytes(masks, nbbytes_large(count));
+            }
+
+            void out_fom_count_set(const int in_count)
+            {
+                if (in_count < 256){
+                    if (in_count & 0x87){
+                        this->stream.out_uint8(0xD0);
+                        this->stream.out_uint8((uint8_t)(in_count - 1));
+                    }
+                    else{
+                        this->stream.out_uint8((uint8_t)(0xD0 | (in_count >> 3)));
+                    }
+                }
+                else{
+                    this->stream.out_uint8(0xf7);
+                    this->stream.out_uint16_le(in_count);
+                }
+            }
+
+            void out_fom_sequence_set(const uint8_t Bpp, const int count,
+                                      const unsigned foreground, const uint8_t * masks) {
+                this->out_fom_count_set(count);
+                this->stream.out_bytes_le(Bpp, foreground);
+                this->stream.out_copy_bytes(masks, nbbytes_large(count));
+            }
+
+            // Color Run Orders
+            // ~~~~~~~~~~~~~~~~
+
+            // A Color Run Order encodes a run of pixels where each pixel is the same
+            // color. The color is encoded (in little-endian format) in the bytes
+            // following the optional run length.
+
+            // The run length encodes the number of pixels in the run.
+
+            // +--------------------------+--------------------------------------------+
+            // | 0x3 REGULAR_COLOR_RUN    | The compression order encodes a            |
+            // |                          | regular-form color run. The run length is  |
+            // |                          | stored in the five low-order bits of the   |
+            // |                          | order header byte. If this value is zero,  |
+            // |                          | then the run length is encoded in the byte |
+            // |                          | following the order header and MUST be     |
+            // |                          | incremented by 32 to give the final value. |
+            // +--------------------------+--------------------------------------------+
+            // | 0xF3 MEGA_MEGA_COLOR_RUN | The compression order encodes a MEGA_MEGA  |
+            // |                          | color run. The run length is stored in the |
+            // |                          | two bytes following the order header (in   |
+            // |                          | little-endian format).                     |
+            // +--------------------------+--------------------------------------------+
+
+            void out_color_sequence(const uint8_t Bpp, const int count, const uint32_t color)
+            {
+                this->out_color_count(count);
+                this->stream.out_bytes_le(Bpp, color);
+            }
+
+            void out_color_count(const int in_count)
+            {
+                this->out_count(in_count, 0x03);
+            }
+
+            // Color Image Orders
+            // ~~~~~~~~~~~~~~~~~~
+
+            // A Color Image Order encodes a run of uncompressed pixels.
+
+            // The run length encodes the number of pixels in the run. So, to compute
+            // the actual number of bytes which follow the optional run length, the run
+            // length MUST be multiplied by the color depth (in bits-per-pixel) of the
+            // bitmap data.
+
+            // +-----------------------------+-----------------------------------------+
+            // | 0x4 REGULAR_COLOR_IMAGE     | The compression order encodes a         |
+            // |                             | regular-form color image. The run       |
+            // |                             | length is stored in the five low-order  |
+            // |                             | bits of the order header byte. If this  |
+            // |                             | value is zero, then the run length is   |
+            // |                             | encoded in the byte following the order |
+            // |                             | header and MUST be incremented by 32 to |
+            // |                             | give the final value.                   |
+            // +-----------------------------+-----------------------------------------+
+            // | 0xF4 MEGA_MEGA_COLOR_IMAGE  | The compression order encodes a         |
+            // |                             | MEGA_MEGA color image. The run length   |
+            // |                             | is stored in the two bytes following    |
+            // |                             | the order header (in little-endian      |
+            // |                             | format).                                |
+            // +-----------------------------+-----------------------------------------+
+
+            void out_copy_sequence(const uint8_t Bpp, const int count, const uint8_t * data)
+            {
+                this->out_copy_count(count);
+                this->stream.out_copy_bytes(data, count * Bpp);
+            }
+
+            void out_copy_count(const int in_count)
+            {
+                this->out_count(in_count, 0x04);
+            }
+
+            // Dithered Run Orders
+            // ~~~~~~~~~~~~~~~~~~~
+
+            // A Dithered Run Order encodes a run of pixels which is composed of two
+            // alternating colors. The two colors are encoded (in little-endian format)
+            // in the bytes following the optional run length.
+
+            // The run length encodes the number of pixel-pairs in the run (not pixels).
+
+            // +-----------------------------+-----------------------------------------+
+            // | 0xE LITE_DITHERED_RUN       | The compression order encodes a         |
+            // |                             | lite-form dithered run. The run length  |
+            // |                             | is stored in the four low-order bits of |
+            // |                             | the order header byte. If this value is |
+            // |                             | zero, then the run length is encoded in |
+            // |                             | the byte following the order header and |
+            // |                             | MUST be incremented by 16 to give the   |
+            // |                             | final value.                            |
+            // +-----------------------------+-----------------------------------------+
+            // | 0xF8 MEGA_MEGA_DITHERED_RUN | The compression order encodes a         |
+            // |                             | MEGA_MEGA dithered run. The run length  |
+            // |                             | is stored in the two bytes following    |
+            // |                             | the order header (in little-endian      |
+            // |                             | format).                                |
+            // +-----------------------------+-----------------------------------------+
+
+            void out_bicolor_sequence(const uint8_t Bpp, const int count,
+                                      const unsigned color1, const unsigned color2)
+            {
+                this->out_bicolor_count(count);
+                this->stream.out_bytes_le(Bpp, color1);
+                this->stream.out_bytes_le(Bpp, color2);
+            }
+
+            void out_bicolor_count(const int in_count)
+            {
+                const uint8_t mask = 0x08;
+                if (in_count / 2 < 16){
+                    this->stream.out_uint8((uint8_t)(0xe0 | (in_count / 2)));
+                }
+                else if (in_count / 2 < 256 + 16){
+                    this->stream.out_uint8((uint8_t)0xe0);
+                    this->stream.out_uint8((uint8_t)(in_count / 2 - 16));
+                }
+                else{
+                    this->stream.out_uint8(0xf0 | mask);
+                    this->stream.out_uint16_le(in_count / 2);
+                }
+            }
+
+            
+        } out(outbuffer);
     
-        uint8_t * tmp_data_compressed = out.p;
-    
+        uint8_t * tmp_data_compressed = out.stream.p;
+
         const uint8_t Bpp = nbbytes(this->original_bpp);
         const uint8_t * pmin = this->data_bitmap.get();
         const uint8_t * p = pmin;
@@ -1009,8 +1388,7 @@ public:
                     break;
 
                     case FLAG_MIX_SET:
-                        out.out_mix_count_set(fom_count);
-                        out.out_bytes_le(Bpp, new_foreground);
+                        out.out_mix_count_set(fom_count, Bpp, new_foreground);
                         foreground = new_foreground;
                         p+= fom_count * Bpp;
                     break;
@@ -1041,9 +1419,9 @@ public:
                 copy_count = 0;
             }
         }
-        
+
         // Memoize result of compression
-        this->data_compressed_size = out.p - tmp_data_compressed;
+        this->data_compressed_size = out.stream.p - tmp_data_compressed;
         this->data_compressed = (uint8_t*)malloc(this->data_compressed_size);
         if (this->data_compressed) {
             memcpy(this->data_compressed, tmp_data_compressed, this->data_compressed_size);

@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Unit test to writing RDP orders to file and rereading them
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -35,7 +34,6 @@
 #include "stream.hpp"
 #include "transport.hpp"
 #include "testtransport.hpp"
-#include "constants.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
 #include "RDP/sec.hpp"
@@ -274,7 +272,7 @@
 
             }
     };
-    
+
 BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 {
     ClientInfo info(1, true, true);
@@ -285,21 +283,22 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 511;
 
     Front front(info, verbose);
 
     const char * name = "RDP XP Target";
 
-    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
-    // redemption::string error_message;
-    // SocketTransport t( name
-    //                  , client_sck
-    //                  , "10.10.47.175"
-    //                  , 3389
-    //                  , verbose
-    //                  , &error_message
-    //                  );
+//     int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
+//     redemption::string error_message;
+//     SocketTransport t( name
+//                      , client_sck
+//                      , "10.10.47.175"
+//                      , 3389
+//                      , verbose
+//                      , &error_message
+//                      );
 
 
     #include "fixtures/dump_xp_mem3blt.hpp"
@@ -317,21 +316,21 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
                                       , "SecureLinux"
                                       , "10.10.9.161"
                                       , front
-                                      , "test"
-                                      , false   /* tls                     */
+                                      , false   // tls
                                       , info
                                       , &gen
-                                      , 7       /* key flags               */
-                                      , NULL    /* session manager         */
-                                      , ""      /* auth channel            */
-                                      , ""      /* alternate_shell         */
-                                      , ""      /* shell_working_directory */
-                                      , true    /* clipboard               */
-                                      , false   /* fast-path support       */
-                                      , true    /* mem3blt support         */
-                                      , false   /* bitmap update support   */
+                                      , 7       // key flags
+                                      , NULL
+                                      , NULL
+                                      , ""      // auth channel
+                                      , ""      // alternate_shell
+                                      , ""      // shell_working_directory
+                                      , true    // clipboard
+                                      , false   // fast-path support
+                                      , true    // mem3blt support
+                                      , false   // bitmap update support
                                       , verbose
-                                      , false   /* enable new pointer      */
+                                      , false   // enable new pointer
                                       );
 
     if (verbose > 2){
@@ -353,12 +352,11 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 //        if (count == 20){
 //            front.dump_png("trace_xp_20_");
 //        }
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+        mod->draw_event();
     }
 
 //    front.dump_png("trace_xp_");
-}    
+}
 
 BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
@@ -371,14 +369,22 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 256;
 
     Front front(info, verbose);
 
     const char * name = "RDP W2008 Target";
 
-//    ClientSocketTransport t(name, "10.10.14.78", 3389, 3, 1000, verbose);
-//    t.connect();
+//    int client_sck = ip_connect("10.10.46.78", 3389, 3, 1000, verbose);
+//    redemption::string error_message;
+//    SocketTransport t( name
+//                     , client_sck
+//                     , "10.10.46.78"
+//                     , 3389
+//                     , verbose
+//                     , &error_message
+//                     );
 
     #include "fixtures/dump_w2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
@@ -395,27 +401,26 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                       , "S3cur3!1nux"
                                       , "10.10.9.161"
                                       , front
-                                      , "test"
-                                      , false   /* tls                     */
+                                      , false   // tls
                                       , info
                                       , &gen
-                                      , 2       /* key flags               */
-                                      , NULL    /* session manager         */
-                                      , ""      /* auth channel            */
-                                      , ""      /* alternate_shell         */
-                                      , ""      /* shell_working_directory */
-                                      , true    /* clipboard               */
-                                      , false   /* fast-path support       */
-                                      , false   /* bitmap update support   */
-                                      , 0       /* verbose                 */
-                                      , false   /* enable new pointer      */
+                                      , 2       // key flags
+                                      , NULL
+                                      , NULL
+                                      , ""      // auth channel
+                                      , ""      // alternate_shell
+                                      , ""      // shell_working_directory
+                                      , true    // clipboard
+                                      , false   // fast-path support
+                                      , false   // bitmap update support
+                                      , 0       // verbose
+                                      , false   // enable new pointer
                                       );
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
     BOOST_CHECK(t.get_status());
-
     BOOST_CHECK_EQUAL(mod->front_width, 800);
     BOOST_CHECK_EQUAL(mod->front_height, 600);
 
@@ -424,12 +429,10 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     while (res == BACK_EVENT_NONE){
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 38) break;
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+        mod->draw_event();
     }
 
 //    front.dump_png("trace_w2008_");
-
 }
 
 BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
@@ -443,6 +446,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 256;
 
     Front front(info, verbose);
@@ -475,21 +479,21 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
                                       , "SecureLinux"
                                       , "0.0.0.0"
                                       , front
-                                      , "test"
-                                      , false   /* tls                     */
+                                      , false   // tls
                                       , info
                                       , &gen
-                                      , 2       /* key flags               */
-                                      , NULL    /* session manager         */
-                                      , ""      /* auth channel            */
-                                      , ""      /* alternate_shell         */
-                                      , ""      /* shell_working_directory */
-                                      , true    /* clipbaord               */
-                                      , false   /* fast-path support       */
-                                      , true    /* mem3blt support         */
-                                      , false   /* bitmap update support   */
-                                      , 0       /* verbose                 */
-                                      , false   /* enable new pointer      */
+                                      , 2       // key flags
+                                      , NULL
+                                      , NULL
+                                      , ""      // auth channel
+                                      , ""      // alternate_shell
+                                      , ""      // shell_working_directory
+                                      , true    // clipbaord
+                                      , false   // fast-path support
+                                      , true    // mem3blt support
+                                      , false   // bitmap update support
+                                      , 0       // verbose
+                                      , false   // enable new pointer
                                       );
 
     if (verbose > 2){
@@ -512,8 +516,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2003_20_");
 //        }
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+        mod->draw_event();
     }
 
 //    front.dump_png("trace_w2003_");
@@ -530,6 +533,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     info.width = 800;
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 256;
 
     Front front(info, verbose);
@@ -546,7 +550,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 //                     , &error_message
 //                     );
 
-
     #include "fixtures/dump_w2000_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
@@ -562,21 +565,21 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
                                       , "SecureLinux$42"
                                       , "0.0.0.0"
                                       , front
-                                      , "test"
-                                      , false   /* tls                     */
+                                      , false   // tls
                                       , info
                                       , &gen
-                                      , 2       /* key flags               */
-                                      , NULL    /* session manager         */
-                                      , ""      /* auth channel            */
-                                      , ""      /* alternate_shell         */
-                                      , ""      /* shell_working_directory */
-                                      , true    /* clipbaord               */
-                                      , false   /* fast-path support       */
-                                      , true    /* mem3blt support         */
-                                      , false   /* bitmap update support   */
-                                      , 0       /* verbose                 */
-                                      , false   /* enable new pointer      */
+                                      , 2       // key flags
+                                      , NULL
+                                      , NULL
+                                      , ""      // auth channel
+                                      , ""      // alternate_shell
+                                      , ""      // shell_working_directory
+                                      , true    // clipbaord
+                                      , false   // fast-path support
+                                      , true    // mem3blt support
+                                      , false   // bitmap update support
+                                      , 0       // verbose
+                                      , false   // enable new pointer
                                       );
 
     if (verbose > 2){
@@ -599,8 +602,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 //        if (count == 20){
 //            front.dump_png("trace_w2000_20_");
 //        }
-        res = mod->draw_event();
-        BOOST_CHECK_EQUAL((BackEvent_t)BACK_EVENT_NONE, (BackEvent_t)res);
+          mod->draw_event();
     }
 
 //    front.dump_png("trace_w2000_");

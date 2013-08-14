@@ -1,24 +1,25 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+    This program is free software; you can redistribute it and/or modify it
+     under the terms of the GNU General Public License as published by the
+     Free Software Foundation; either version 2 of the License, or (at your
+     option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+     Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+    You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Dominique Lafages, Raphael Zhou
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+    Product name: redemption, a FLOSS RDP proxy
+    Copyright (C) Wallix 2013
+    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+               Dominique Lafages, Raphael Zhou, Meng Tan
+    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
-   header file. Front object (server), used to communicate with RDP client
+    Front object (server), used to communicate with RDP client
 */
 
 #ifndef _REDEMPTION_FRONT_FRONT_HPP_
@@ -29,7 +30,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include "constants.hpp"
 #include "stream.hpp"
 #include "transport.hpp"
 #include "RDP/x224.hpp"
@@ -68,6 +68,14 @@
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
+
+
+enum {
+    FRONT_DISCONNECTED,
+    FRONT_CONNECTING,
+    FRONT_RUNNING,
+};
+
 
 class Front : public FrontAPI {
     using FrontAPI::draw;
@@ -124,19 +132,31 @@ public:
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
-    bool tls_support;                         // choice of programmer, front support tls
+    bool tls_client_active;
     bool mem3blt_support;
+    bool rdp_50_bulk_compression_support;
     int clientRequestedProtocols;
 
     uint32_t bitmap_update_count;
+
+    GeneralCaps        client_general_caps;
+    BitmapCaps         client_bitmap_caps;
+    OrderCaps          client_order_caps;
+    BmpCacheCaps       client_bmpcache_caps;
+    OffScreenCacheCaps client_offscreencache_caps;
+
+    redemption::string server_capabilities_filename;
+
+    rdp_mppc_enc * mppc_enc;
 
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random * gen
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
-          , bool tls_support // If true, tls must be supported
           , bool mem3blt_support
+          , bool rdp_50_bulk_compression_support = false
+          , const char * server_capabilities_filename = ""
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture_state(CAPTURE_STATE_UNKNOWN)
@@ -161,10 +181,13 @@ public:
         , fastpath_support(fp_support)
         , client_fastpath_input_event_support(fp_support)
         , server_fastpath_update_support(false)
-        , tls_support(tls_support)
+        , tls_client_active(true)
         , mem3blt_support(mem3blt_support)
+        , rdp_50_bulk_compression_support(rdp_50_bulk_compression_support)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
+        , server_capabilities_filename(server_capabilities_filename)
+        , mppc_enc(0)
     {
         // init TLS
         // --------------------------------------------------------
@@ -232,12 +255,21 @@ public:
     }
 
     ~Front(){
+        if (this->mppc_enc) {
+            delete this->mppc_enc;
+            this->mppc_enc = NULL;
+        }
+
         if (this->bmp_cache) {
             delete this->bmp_cache;
         }
 
         if (this->orders) {
             delete this->orders;
+        }
+
+        if (this->capture){
+            delete this->capture;
         }
     }
 
@@ -279,7 +311,7 @@ public:
                 /* this should do the actual resizing */
                 this->send_demand_active();
 
-                LOG(LOG_INFO, "Front::incoming::ACTIVATED (resize)");
+                LOG(LOG_INFO, "Front::server_resize::ACTIVATED (resize)");
                 state = ACTIVATE_AND_PROCESS_DATA;
                 res = 1;
             }
@@ -405,19 +437,25 @@ public:
     // ===========================================================================
     void start_capture(int width, int height, Inifile & ini)
     {
-        if (ini.globals.movie) {
-            this->stop_capture();
+        if (this->capture) {
+            LOG(LOG_INFO, "Front::start_capture: session capture is already started");
+
+            return;
+        }
+
+        if (ini.globals.movie.get()) {
+//            this->stop_capture();
             LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
             struct timeval now = tvtime();
 
-            if (this->verbose & 1){
-                LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path);
-                LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id);
-                LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality);
-                LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user);
-                LOG(LOG_INFO, "host = %s\n",          ini.globals.host);
-                LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device);
-                LOG(LOG_INFO, "target_user = %s\n",   ini.globals.target_user);
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path.get_cstr());
+                LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id.get_cstr());
+                LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
+                LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user.get_cstr());
+                LOG(LOG_INFO, "host = %s\n",          ini.globals.host.get_cstr());
+                LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
+                LOG(LOG_INFO, "target_user = %s\n",   ini.globals.target_user.get_cstr());
             }
 
             char path[1024];
@@ -426,13 +464,16 @@ public:
             strcpy(path, WRM_PATH "/"); // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, ""); // extension is currently ignored
-            canonical_path(ini.globals.movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
-            this->capture = new Capture(now, width, height,
-                                        RECORD_PATH "/",
-                                        RECORD_TMP_PATH "/",
-                                        HASH_PATH "/", basename,
-                                        true, ini);
+            canonical_path(ini.globals.movie_path.get_cstr(), path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+            this->capture = new Capture( now, width, height
+                                       , ini.video.record_path
+                                       , ini.video.record_tmp_path
+                                       , ini.video.hash_path, basename
+                                       , true
+                                       , ini
+                                       );
 
+            this->capture->capture_event.set();
             this->capture_state = CAPTURE_STATE_STARTED;
         }
     }
@@ -444,7 +485,7 @@ public:
         }
 
         this->capture->pause();
-
+        this->capture->capture_event.reset();
         this->capture_state = CAPTURE_STATE_PAUSED;
     }
 
@@ -455,12 +496,12 @@ public:
         }
 
         this->capture->resume();
-
+        this->capture->capture_event.set();
         this->capture_state = CAPTURE_STATE_STARTED;
 
     }
 
-    void update_config(const Inifile & ini){
+    void update_config(Inifile & ini){
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)){
             this->capture->update_config(ini);
@@ -500,6 +541,19 @@ public:
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
         }
 
+        if (this->mppc_enc) {
+            delete this->mppc_enc;
+            this->mppc_enc = NULL;
+        }
+        if (this->client_info.rdp_compression) {
+            if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
+                this->mppc_enc = new rdp_mppc_enc(PROTO_RDP_50);
+            }
+            else {
+                this->mppc_enc = new rdp_mppc_enc(PROTO_RDP_40);
+            }
+        }
+
         // reset outgoing orders and reset caches
         delete this->bmp_cache;
         this->bmp_cache = new BmpCache(
@@ -512,18 +566,23 @@ public:
                         this->client_info.cache3_size);
 
         delete this->orders;
-        this->orders = new GraphicsUpdatePDU(trans,
-                        this->userid,
-                        this->share_id,
-                        this->client_info.encryptionLevel,
-                        this->encrypt,
-                        *this->ini,
-                        this->client_info.bpp,
-                        *this->bmp_cache,
-                        this->client_info.bitmap_cache_version,
-                        this->client_info.use_bitmap_comp,
-                        this->client_info.use_compact_packets,
-                        this->server_fastpath_update_support);
+        this->orders = new GraphicsUpdatePDU(
+              trans
+            , this->userid
+            , this->share_id
+            , this->client_info.encryptionLevel
+            , this->encrypt
+            , *this->ini
+            , this->client_info.bpp
+            , *this->bmp_cache
+            , this->client_info.bitmap_cache_version
+            , this->client_info.use_bitmap_comp
+            , this->client_info.use_compact_packets
+            , this->server_fastpath_update_support
+            , this->mppc_enc
+            , this->rdp_50_bulk_compression_support ? this->client_info.rdp_compression : 0
+            , this->rdp_50_bulk_compression_support ? this->client_info.rdp_compression_type : 0
+            );
 
         this->pointer_cache.reset(this->client_info);
         this->brush_cache.reset(this->client_info);
@@ -564,7 +623,7 @@ public:
         }
         this->order_level--;
         if (this->order_level == 0){
-            this->orders->flush();
+            this->flush();
         }
     }
 
@@ -575,19 +634,11 @@ public:
         }
 
         BStream x224_header(256);
-        BStream mcs_data(256);
-        MCS::DisconnectProviderUltimatum_Send(mcs_data, 0, MCS::PER_ENCODING);
+        HStream mcs_data(256, 512);
+        MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
         X224::DT_TPDU_Send(x224_header,  mcs_data.size());
 
         this->trans->send(x224_header, mcs_data);
-    }
-
-    void set_console_session(bool b)
-    {
-        if (this->verbose & 1){
-            LOG(LOG_INFO, "Front::set_console_session(%u)", b);
-        }
-        this->client_info.console_session = b;
     }
 
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const
@@ -595,44 +646,27 @@ public:
         return this->channel_list;
     }
 
-    virtual void send_to_channel(
-        const CHANNELS::ChannelDef & channel,
-        uint8_t* data,
-        size_t length,
-        size_t chunk_size,
-        int flags)
-    {
-        if (this->verbose & 16){
-            LOG(LOG_INFO, "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)", data, length, chunk_size, flags);
+    virtual void send_to_channel( const CHANNELS::ChannelDef & channel
+                                , uint8_t * data
+                                , size_t length
+                                , size_t chunk_size
+                                , int flags) {
+        if (this->verbose & 16) {
+            LOG( LOG_INFO
+               , "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)"
+               , data, length, chunk_size, flags);
         }
 
-        BStream stream(65536);
-
-        stream.out_uint32_le(length);
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNELS::ChannelDef::CHANNEL_FLAG_SHOW_PROTOCOL;
-        }
-        stream.out_uint32_le(flags);
-        stream.out_copy_bytes(data, chunk_size);
-        stream.mark_end();
-
-        BStream x224_header(256);
-        BStream mcs_header(256);
-        BStream sec_header(256);
-
-        if (((this->verbose & 128) != 0)||((this->verbose & 16)!=0)){
-            LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
+            flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, channel.chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        CHANNELS::VirtualChannelPDU virtual_channel_pdu(this->verbose);
+        FixedSizeStream             chunk(data, chunk_size);
 
-        if (this->verbose & 16){
-            LOG(LOG_INFO, "Front::send_to_channel done");
-        }
+        virtual_channel_pdu.send_to_client( *this->trans, this->encrypt
+                                          , this->client_info.encryptionLevel, userid, channel.chanid
+                                          , length, flags, chunk);
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -671,14 +705,13 @@ public:
     void send_global_palette() throw (Error)
     {
         if (!this->palette_sent && (this->client_info.bpp == 8)){
-LOG(LOG_INFO, "Front::send_global_palette()");
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_global_palette()");
             }
 
-            BStream stream(65536);
-
             if (this->server_fastpath_update_support == false) {
+                BStream stream(65536);
+
                 ShareData sdata(stream);
                 sdata.emit_begin(PDUTYPE2_UPDATE, this->share_id, RDP::STREAM_MED);
 
@@ -690,40 +723,44 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 BStream sctrl_header(256);
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-                BStream target_stream(65536);
+                HStream target_stream(1024, 65536);
                 target_stream.out_copy_bytes(sctrl_header);
                 target_stream.out_copy_bytes(stream);
                 target_stream.mark_end();
 
-                BStream x224_header(256);
-                BStream mcs_header(256);
                 BStream sec_header(256);
 
-                if (this->verbose & 128){
+                if (this->verbose & 128) {
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(target_stream.data, target_stream.size());
+                    hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
                 SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+                target_stream.copy_to_head(sec_header);
+
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
             }
             else {
+                HStream stream(1024, 65536);
+
                 if (this->verbose & 4){
                     LOG(LOG_INFO, "Front::send_global_palette: fast-path");
                 }
 
-                stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+                size_t header_size = FastPath::Update_Send::GetSize(0);
+
+                stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
                 GeneratePaletteUpdateData(stream);
 
-                SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+                SubStream Upd_s(stream, 0, header_size);
 
                 FastPath::Update_Send Upd( Upd_s
-                                         , stream.size() - FastPath::Update_Send::GetSize()
+                                         , stream.size() - header_size
                                          , FastPath::FASTPATH_UPDATETYPE_PALETTE
                                          , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                         , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                         , 0
                                          );
 
                 BStream SvrUpdPDU_s(256);
@@ -929,9 +966,8 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
         }
 
-        BStream stream(65536);
-
         if (this->server_fastpath_update_support == false) {
+            BStream stream(65536);
 
             ShareData sdata(stream);
             sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
@@ -948,40 +984,44 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
             if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+            target_stream.copy_to_head(sec_header);
+
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
+            HStream stream(1024, 65536);
+
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_pointer: fast-path");
             }
 
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
             GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_COLOR
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);
@@ -1036,9 +1076,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
-        BStream stream(65536);
 
         if (this->server_fastpath_update_support == false) {
+            BStream stream(65536);
 
             ShareData sdata(stream);
             sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
@@ -1055,42 +1095,46 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
             if ((this->verbose & (128|4)) == (128|4)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+            target_stream.copy_to_head(sec_header);
+
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
+            HStream stream(1024, 65536);
+
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::set_pointer: fast-path");
             }
 
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
 
             // Payload
             stream.out_uint16_le(cache_idx);
             stream.mark_end();
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_CACHED
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);
@@ -1146,16 +1190,12 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
                 this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
 
-                if (
-                    // Proxy supports TLS.
-                    this->tls_support
-                    // RDP client doesn't support TLS.
-                    && !(this->clientRequestedProtocols & X224::PROTOCOL_TLS)
+                if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
+                    (!this->ini->client.tls_support || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
                     // Fallback to legacy security protocol (RDP) is allowed.
                     && this->ini->client.tls_fallback_legacy) {
                     LOG(LOG_INFO, "Fallback to legacy security protocol");
-
-                    this->tls_support = false;
+                    this->tls_client_active = false;
                 }
             }
 
@@ -1167,7 +1207,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 uint8_t rdp_neg_type = 0;
                 uint8_t rdp_neg_flags = 0;
                 uint32_t rdp_neg_code = 0;
-                if (this->tls_support){
+                if (this->tls_client_active){
                     LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
                     if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
                         rdp_neg_type = X224::RDP_NEG_RSP;
@@ -1186,7 +1226,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
                 this->trans->send(stream);
 
-                if (this->tls_support){
+                if (this->tls_client_active){
                     this->trans->enable_server_tls(this->ini->globals.certificate_password);
 
             // 2.2.10.2 Early User Authorization Result PDU
@@ -1334,13 +1374,13 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             }
 
             // ------------------------------------------------------------------
-            BStream stream(65536);
+            HStream stream(1024, 65536);
             // ------------------------------------------------------------------
 //            GCC::UserData::ServerToClient_Send(stream, this->clientRequestedProtocols, this->channel_list.size());
 
             GCC::UserData::SCCore sc_core;
             sc_core.version = 0x00080004;
-            if (this->tls_support){
+            if (this->tls_client_active){
                 sc_core.length = 12;
                 sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
             }
@@ -1361,7 +1401,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             }
             sc_net.emit(stream);
             // ------------------------------------------------------------------
-            if (this->tls_support){
+            if (this->tls_client_active){
                 GCC::UserData::SCSecurity sc_sec1;
                 sc_sec1.encryptionMethod = 0;
                 sc_sec1.encryptionLevel = 0;
@@ -1506,7 +1546,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             }
             {
                 BStream x224_header(256);
-                BStream mcs_data(256);
+                HStream mcs_data(256, 512);
                 MCS::AttachUserConfirm_Send(mcs_data, MCS::RT_SUCCESSFUL, true, this->userid, MCS::PER_ENCODING);
                 X224::DT_TPDU_Send(x224_header, mcs_data.size());
                 this->trans->send(x224_header, mcs_data);
@@ -1522,7 +1562,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 this->userid = mcs.initiator;
 
                 BStream x224_header(256);
-                BStream mcs_cjcf_data(256);
+                HStream mcs_cjcf_data(256, 512);
 
                 MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                                              mcs.initiator,
@@ -1544,7 +1584,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
 
                 BStream x224_header(256);
-                BStream mcs_cjcf_data(256);
+                HStream mcs_cjcf_data(256, 512);
 
                 MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                                              mcs.initiator,
@@ -1571,7 +1611,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
 
                 BStream x224_header(256);
-                BStream mcs_cjcf_data(256);
+                HStream mcs_cjcf_data(256, 512);
 
                 MCS::ChannelJoinConfirm_Send(mcs_cjcf_data, MCS::RT_SUCCESSFUL,
                                              mcs.initiator,
@@ -1617,8 +1657,12 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
             // Client                                                     Server
             //    |------Security Exchange PDU ---------------------------> |
-            if (!this->tls_support)
+            if (this->tls_client_active){
+                LOG(LOG_INFO, "TLS mode: exchange packet disabled");
+            }
+            else
             {
+                LOG(LOG_INFO, "Legacy RDP mode: expecting exchange packet");
                 BStream pdu(65536);
                 X224::RecvFactory f(*this->trans, pdu);
                 X224::DT_TPDU_Recv x224(*this->trans, pdu);
@@ -1634,7 +1678,6 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
 
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
-
                 SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
                 ssllib ssl;
@@ -1642,7 +1685,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 memset(client_random, 0, 64);
                 {
                     uint8_t l_out[64]; memset(l_out, 0, 64);
-                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.data, 64);
+                    uint8_t l_in[64];  rmemcpy(l_in, sec.payload.get_data(), 64);
                     uint8_t l_mod[64]; rmemcpy(l_mod, this->pub_mod, 64);
                     uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
 
@@ -1673,9 +1716,6 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
                 this->encrypt.generate_key(key_block.key1, this->encrypt.encryptionMethod);
                 this->decrypt.generate_key(key_block.key2, this->encrypt.encryptionMethod);
-            }
-            else {
-                LOG(LOG_INFO, "TLS mode: exchange packet disabled");
             }
             this->state = WAITING_FOR_LOGON_INFO;
         }
@@ -1713,7 +1753,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if (this->verbose & 128){
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.data, sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
 
             if (!sec.flags & SEC::SEC_INFO_PKT) {
@@ -1743,7 +1783,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
 
                 {
-                    BStream stream(65535);
+                    HStream stream(1024, 65535);
 
                     /* mce */
                     /* some compilers need unsigned char to avoid warnings */
@@ -1755,19 +1795,17 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     stream.out_copy_bytes((char*)lic3, 16);
                     stream.mark_end();
 
-                    BStream x224_header(256);
-                    BStream mcs_header(256);
                     BStream sec_header(256);
 
                     if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
-                        hexdump_d(stream.data, stream.size());
+                        hexdump_d(stream.get_data(), stream.size());
                     }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
-                    MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                    X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                    this->trans->send(x224_header, mcs_header, sec_header, stream);
+                    stream.copy_to_head(sec_header);
+
+                    this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
                 // proceed with capabilities exchange
 
@@ -1796,7 +1834,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     LOG(LOG_INFO, "Front::incoming::licencing send_lic_initial");
                 }
 
-                BStream stream(65535);
+                HStream stream(1024, 65535);
 
                 stream.out_uint8(LIC::LICENSE_REQUEST);
                 stream.out_uint8(2); // preamble flags : PREAMBLE_VERSION_2_0 (RDP 4.0)
@@ -1851,19 +1889,17 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 stream.out_copy_bytes((char*)lic1, 314);
                 stream.mark_end();
 
-                BStream x224_header(256);
-                BStream mcs_header(256);
                 BStream sec_header(256);
 
                 if ((this->verbose & (128|2)) == (128|2)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(stream.data, stream.size());
+                    hexdump_d(stream.get_data(), stream.size());
                 }
 
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
-                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                this->trans->send(x224_header, mcs_header, sec_header, stream);
+                stream.copy_to_head(sec_header);
+
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
 
                 if (this->verbose & 2){
                     LOG(LOG_INFO, "Front::incoming::waiting for answer to lic_initial");
@@ -1897,7 +1933,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             SEC::SecSpecialPacket_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
             if ((this->verbose & (128|2)) == (128|2)){
                 LOG(LOG_INFO, "sec decrypted payload:");
-                hexdump_d(sec.payload.data, sec.payload.size());
+                hexdump_d(sec.payload.get_data(), sec.payload.size());
             }
 
             // Licensing
@@ -1941,7 +1977,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     }
                     LIC::NewLicenseRequest_Recv lic(sec.payload);
                     TODO("Instead of returning a license we return a message saying that no license is OK")
-                    BStream stream(65535);
+                    HStream stream(1024, 65535);
                     // Valid Client License Data (LICENSE_VALID_CLIENT_DATA)
 
                     /* some compilers need unsigned char to avoid warnings */
@@ -1957,19 +1993,17 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     stream.out_copy_bytes((char*)lic2, 16);
                     stream.mark_end();
 
-                    BStream x224_header(256);
-                    BStream mcs_header(256);
                     BStream sec_header(256);
 
                     if ((this->verbose & (128|2)) == (128|2)){
                         LOG(LOG_INFO, "Sec clear payload to send:");
-                        hexdump_d(stream.data, stream.size());
+                        hexdump_d(stream.get_data(), stream.size());
                     }
 
                     SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
-                    MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-                    X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-                    this->trans->send(x224_header, mcs_header, sec_header, stream);
+                    stream.copy_to_head(sec_header);
+
+                    this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
                 break;
                 case LIC::PLATFORM_CHALLENGE_RESPONSE:
@@ -2038,10 +2072,10 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
                     }
-		    if (!sctrl.payload.check_end()){
+                    if (!sctrl.payload.check_end()){
                         LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
                         throw Error(ERR_MCS_PDU_TRAILINGDATA);
-		    }
+                    }
                     break;
                 case PDUTYPE_DATAPDU: /* 7 */
                     if (this->verbose & 2){
@@ -2160,7 +2194,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                                 this->capture->input(now, decoded_data);
                             }
 
-                            cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                            if (this->up_and_running) {
+                                cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                            }
 
                         }
                         break;
@@ -2175,9 +2211,18 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                                     me.pointerFlags, me.xPos, me.yPos);
                             }
 
-                            cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            this->mouse_x = me.xPos;
+                            this->mouse_y = me.yPos;
+                            if (this->up_and_running) {
+                                cb.rdp_input_mouse(me.pointerFlags, me.xPos, me.yPos, &this->keymap);
+                            }
                         }
                         break;
+
+/*
+                        case FastPath::FASTPATH_INPUT_EVENT_MOUSEX:
+                        break;
+*/
 
                         case FastPath::FASTPATH_INPUT_EVENT_SYNC:
                         {
@@ -2189,9 +2234,16 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                             }
 
                             this->keymap.synchronize(se.eventFlags & 0xFFFF);
-                            cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                            if (this->up_and_running) {
+                                cb.rdp_input_synchronize(0, 0, se.eventFlags & 0xFFFF, 0);
+                            }
                         }
                         break;
+
+/*
+                        case FastPath::FASTPATH_INPUT_EVENT_UNICODE:
+                        break;
+*/
 
                         default:
                             LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
@@ -2239,7 +2291,7 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->client_info.encryptionLevel);
                 if (this->verbose & 128){
                     LOG(LOG_INFO, "sec decrypted payload:");
-                    hexdump_d(sec.payload.data, sec.payload.size());
+                    hexdump_d(sec.payload.get_data(), sec.payload.size());
                 }
 
                 if (this->verbose & 8){
@@ -2282,10 +2334,10 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                     size_t chunk_size = sec.payload.in_remain();
 
                     if (this->up_and_running){
-                        if (  !this->ini->client.device_redirection
+                        if (!this->ini->client.device_redirection.get()
                            && !strncmp(this->channel_list[num_channel_src].name, "rdpdr", 8)
                            ) {
-                            LOG(LOG_INFO, "Front::incoming::rdpdr channel disabed");
+                            LOG(LOG_INFO, "Front::incoming::rdpdr channel disabled");
                         }
                         else {
                             if (this->verbose & 16){
@@ -2375,16 +2427,46 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         }
     }
 
-    void send_data_indication(uint16_t channelId, Stream & stream)
-    {
+    void send_data_indication(uint16_t channelId, HStream & stream) {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, channelId, 1, 3, stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
+                                        , stream.size(), MCS::PER_ENCODING);
+
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
         TODO("shouldn't there be sec layer here ? even if it's disabled when there is not encryption server to client ?")
 //        this->trans->send(x224_header, mcs_header, sec_header, stream);
         this->trans->send(x224_header, mcs_header, stream);
+    }
+
+    void send_data_indication_ex(uint16_t channelId, HStream & stream) {
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec( sec_header, stream, 0, this->encrypt
+                         , this->client_info.encryptionLevel);
+        stream.copy_to_head(sec_header);
+
+        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
+                                        , stream.size(), MCS::PER_ENCODING);
+
+        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
+
+        this->trans->send(x224_header, mcs_header, stream);
+    }
+
+    void send_server_update(HStream & data) {
+        BStream fastpath_header(256);
+
+        FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+              fastpath_header
+            , data
+            , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
+            , this->encrypt
+            );
+        this->trans->send(fastpath_header, data);
     }
 
     /*****************************************************************************/
@@ -2411,39 +2493,42 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             BStream sctrl_header(256);
             ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-            BStream target_stream(65536);
+            HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
             if ((this->verbose & (128|1)) == (128|1)){
                 LOG(LOG_INFO, "Sec clear payload to send:");
-                hexdump_d(target_stream.data, target_stream.size());
+                hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream x224_header(256);
-            BStream mcs_header(256);
             BStream sec_header(256);
 
             SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-            X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-            this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+            target_stream.copy_to_head(sec_header);
+
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
             if (this->verbose & 4){
                 LOG(LOG_INFO, "Front::send_data_update_sync: fast-path");
             }
-            BStream stream(65536);
-            stream.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+            HStream stream(256, 65536);
+
+            size_t header_size = FastPath::Update_Send::GetSize(0);
+
+            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
             stream.mark_end();
 
-            SubStream Upd_s(stream, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(stream, 0, header_size);
 
             FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - FastPath::Update_Send::GetSize()
+                                     , stream.size() - header_size
                                      , FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE
                                      , FastPath::FASTPATH_FRAGMENT_SINGLE
+                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
+                                     , 0
                                      );
 
             BStream fastpath_header(256);
@@ -2483,9 +2568,18 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
         uint8_t * caps_ptr = stream.p;
 
+        CapabilitySets cap_sets;
+
+        if (!this->server_capabilities_filename.is_empty()) {
+            ConfigurationLoader cfg_loader(cap_sets, this->server_capabilities_filename.c_str());
+        }
+
         GeneralCaps general_caps;
         if (this->server_fastpath_update_support) {
             general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
+        }
+        if (!this->server_capabilities_filename.is_empty()) {
+            general_caps = cap_sets.general_caps;
         }
         if (this->verbose) {
             general_caps.log("Sending to client");
@@ -2497,6 +2591,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         bitmap_caps.preferredBitsPerPixel = this->client_info.bpp;
         bitmap_caps.desktopWidth = this->client_info.width;
         bitmap_caps.desktopHeight = this->client_info.height;
+        if (!this->server_capabilities_filename.is_empty()) {
+            bitmap_caps = cap_sets.bitmap_caps;
+        }
         if (this->verbose) {
             bitmap_caps.log("Sending to client");
         }
@@ -2525,6 +2622,9 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         order_caps.pad4octetsB = 0x0f4240;
         order_caps.desktopSaveSize = 0x0f4240;
         order_caps.pad2octetsC = 1;
+        if (!this->server_capabilities_filename.is_empty()) {
+            order_caps = cap_sets.order_caps;
+        }
         if (this->verbose) {
             order_caps.log("Sending to client");
         }
@@ -2592,24 +2692,22 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream sctrl_header(256);
         ShareControl_Send(sctrl_header, PDUTYPE_DEMANDACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        BStream target_stream(65536);
+        HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
 
     /* store the number of client cursor cache in client_info */
@@ -2689,48 +2787,50 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
             switch (capset_type) {
             case CAPSTYPE_GENERAL: {
-                    GeneralCaps general;
-                    general.recv(stream, capset_length);
+                    this->client_general_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        general.log("Receiving from client");
+                        this->client_general_caps.log("Receiving from client");
                     }
-                    this->client_info.use_compact_packets = (general.extraflags & NO_BITMAP_COMPRESSION_HDR)?1:0;
+                    this->client_info.use_compact_packets =
+                        (this->client_general_caps.extraflags & NO_BITMAP_COMPRESSION_HDR) ?
+                        1 : 0;
 
                     this->server_fastpath_update_support =
-                        (this->fastpath_support && ((general.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0));
+                        (   this->fastpath_support
+                         && ((this->client_general_caps.extraflags & FASTPATH_OUTPUT_SUPPORTED) != 0)
+                        );
                 }
                 break;
             case CAPSTYPE_BITMAP: {
-                    BitmapCaps bitmap_caps;
-                    bitmap_caps.recv(stream, capset_length);
+                    this->client_bitmap_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        bitmap_caps.log("Receiving from client");
+                        this->client_bitmap_caps.log("Receiving from client");
                     }
-                    this->client_info.bpp = (bitmap_caps.preferredBitsPerPixel >= 24)?24:bitmap_caps.preferredBitsPerPixel;
-                    this->client_info.width = bitmap_caps.desktopWidth;
-                    this->client_info.height = bitmap_caps.desktopHeight;
+                    this->client_info.bpp    =
+                          (this->client_bitmap_caps.preferredBitsPerPixel >= 24)
+                        ? 24 : this->client_bitmap_caps.preferredBitsPerPixel;
+                    this->client_info.width  = this->client_bitmap_caps.desktopWidth;
+                    this->client_info.height = this->client_bitmap_caps.desktopHeight;
                 }
                 break;
             case CAPSTYPE_ORDER: { /* 3 */
-                    OrderCaps order_caps;
-                    order_caps.recv(stream, capset_length);
+                    this->client_order_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        order_caps.log("Receiving from client");
+                        this->client_order_caps.log("Receiving from client");
                     }
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE: {
-                    BmpCacheCaps bmpcache_caps;
-                    bmpcache_caps.recv(stream, capset_length);
+                    this->client_bmpcache_caps.recv(stream, capset_length);
                     if (this->verbose) {
-                        bmpcache_caps.log("Receiving from client");
+                        this->client_bmpcache_caps.log("Receiving from client");
                     }
-                    this->client_info.cache1_entries = bmpcache_caps.cache0Entries;
-                    this->client_info.cache1_size = bmpcache_caps.cache0MaximumCellSize;
-                    this->client_info.cache2_entries = bmpcache_caps.cache1Entries;
-                    this->client_info.cache2_size = bmpcache_caps.cache1MaximumCellSize;
-                    this->client_info.cache3_entries = bmpcache_caps.cache2Entries;
-                    this->client_info.cache3_size = bmpcache_caps.cache2MaximumCellSize;
+                    this->client_info.cache1_entries = this->client_bmpcache_caps.cache0Entries;
+                    this->client_info.cache1_size    = this->client_bmpcache_caps.cache0MaximumCellSize;
+                    this->client_info.cache2_entries = this->client_bmpcache_caps.cache1Entries;
+                    this->client_info.cache2_size    = this->client_bmpcache_caps.cache1MaximumCellSize;
+                    this->client_info.cache3_entries = this->client_bmpcache_caps.cache2Entries;
+                    this->client_info.cache3_size    = this->client_bmpcache_caps.cache2MaximumCellSize;
                 }
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
@@ -2795,19 +2895,23 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
                 break;
             case CAPSTYPE_GLYPHCACHE: /* 16 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_GLYPHCACHE");
+                }
                 break;
             case CAPSTYPE_OFFSCREENCACHE: /* 17 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_OFFSCREENCACHE");
+                }
+                this->client_offscreencache_caps.recv(stream, capset_length);
+                if (this->verbose) {
+                    this->client_offscreencache_caps.log("Receiving from client");
+                }
                 break;
             case CAPSTYPE_BITMAPCACHE_HOSTSUPPORT: /* 18 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_HOSTSUPPORT");
+                }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
 //                    BmpCache2Caps bmpcache2_caps;
@@ -2843,29 +2947,29 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_VIRTUALCHANNEL");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_VIRTUALCHANNEL");
+                }
                 break;
             case CAPSTYPE_DRAWNINEGRIDCACHE: /* 21 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWNINEGRIDCACHE");
+                }
                 break;
             case CAPSTYPE_DRAWGDIPLUS: /* 22 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_DRAWGDIPLUS");
+                }
                 break;
             case CAPSTYPE_RAIL: /* 23 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_RAIL");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_RAIL");
+                }
                 break;
             case CAPSTYPE_WINDOW: /* 24 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_WINDOW");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSTYPE_WINDOW");
+                }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
                     CompDeskCaps compdesk_caps;
@@ -2876,34 +2980,34 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
                 break;
             case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
+                }
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_LARGE_POINTER");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_LARGE_POINTER");
+                }
                 break;
             case CAPSETTYPE_SURFACE_COMMANDS: /* 28 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_SURFACE_COMMANDS");
+                }
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_BITMAP_CODECS");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_BITMAP_CODECS");
+                }
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE: /* 30 */
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_FRAME_ACKNOWLEDGE");
+                }
                 break;
             default:
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client unknown caps %u", capset_type);
-                    }
+                if (this->verbose) {
+                    LOG(LOG_INFO, "Receiving from client unknown caps %u", capset_type);
+                }
                 break;
             }
             if (stream.p > next){
@@ -3004,24 +3108,22 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream sctrl_header(256);
         ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        BStream target_stream(65536);
+        HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_synchronize done");
@@ -3072,25 +3174,22 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream sctrl_header(256);
         ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        BStream target_stream(65536);
+        HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_control action=%u", action);
@@ -3142,24 +3241,22 @@ LOG(LOG_INFO, "Front::send_global_palette()");
         BStream sctrl_header(256);
         ShareControl_Send sctrl(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-        BStream target_stream(65535);
+        HStream target_stream(1024, 65535);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(target_stream.data, target_stream.size());
+            hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_fontmap");
@@ -3409,25 +3506,22 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 BStream sctrl_header(256);
                 ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
-                BStream target_stream(65536);
+                HStream target_stream(1024, 65536);
                 target_stream.out_copy_bytes(sctrl_header);
                 target_stream.out_copy_bytes(stream);
                 target_stream.mark_end();
 
                 if ((this->verbose & (128|8)) == (128|8)){
                     LOG(LOG_INFO, "Sec clear payload to send:");
-                    hexdump_d(target_stream.data, target_stream.size());
+                    hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
-                BStream x224_header(256);
-                BStream mcs_header(256);
                 BStream sec_header(256);
 
                 SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-                MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-                X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + target_stream.size());
+                target_stream.copy_to_head(sec_header);
 
-                this->trans->send(x224_header, mcs_header, sec_header, target_stream);
+                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -3500,6 +3594,14 @@ LOG(LOG_INFO, "Front::send_global_palette()");
                 }
                 cb.rdp_input_up_and_running();
                 this->up_and_running = 1;
+                TODO("we should use accessors to set that, also not sure it's the right place to set it")
+                this->ini->context.opt_width.set(this->client_info.width);
+                this->ini->context.opt_height.set(this->client_info.height);
+                this->ini->context.opt_bpp.set(this->client_info.bpp);
+                this->ini->parse_username(this->client_info.username);
+                if (this->client_info.password[0]) {
+                    this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);
+                }
             }
         }
         break;
@@ -3592,21 +3694,19 @@ LOG(LOG_INFO, "Front::send_global_palette()");
             LOG(LOG_INFO, "send_deactive");
         }
 
-        BStream x224_header(256);
-        BStream mcs_header(256);
         BStream sec_header(256);
-        BStream stream(256);
+        HStream stream(1024, 1024 + 256);
         ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
 
         if ((this->verbose & (128|1)) == (128|1)){
             LOG(LOG_INFO, "Sec clear payload to send:");
-            hexdump_d(stream.data, stream.size());
+            hexdump_d(stream.get_data(), stream.size());
         }
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        MCS::SendDataIndication_Send mcs(mcs_header, userid, GCC::MCS_GLOBAL_CHANNEL, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-        this->trans->send(x224_header, mcs_header, sec_header, stream);
+        stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_deactive done");
@@ -3992,6 +4092,10 @@ LOG(LOG_INFO, "Front::send_global_palette()");
 
     virtual void flush() {
         this->orders->flush();
+        if (  this->capture
+           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->flush();
+        }
     }
 
     void cache_brush(RDPBrush & brush)

@@ -83,6 +83,11 @@ extern "C" {
          return -RIO_ERROR_RECV_ONLY;
     }
 
+    static inline RIO_ERROR rio_m_RIOGenerator_seek(RIOGenerator * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     // actual errors are stored par generic rio, hence this method can be called only for OK
     static inline RIO_ERROR rio_m_RIOGenerator_get_status(RIOGenerator * self)
     {

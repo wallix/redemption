@@ -81,3 +81,30 @@ BOOST_AUTO_TEST_CASE(TestReverseOdd)
     BOOST_CHECK_EQUAL(buf[4], 1);
 }
 
+BOOST_AUTO_TEST_CASE(TestCompactToAlignedSizeComputing)
+{
+    BOOST_CHECK_EQUAL(800, row_size(800, 8));
+    BOOST_CHECK_EQUAL(1600, row_size(800, 16));
+    BOOST_CHECK_EQUAL(2400, row_size(800, 24));
+    BOOST_CHECK_EQUAL(3200, row_size(800, 32));
+
+    BOOST_CHECK_EQUAL(800, row_size(799, 8));
+    BOOST_CHECK_EQUAL(1600, row_size(799, 16));
+    BOOST_CHECK_EQUAL(2400, row_size(799, 24));
+    BOOST_CHECK_EQUAL(3196, row_size(799, 32));
+
+    BOOST_CHECK_EQUAL(800, row_size(798, 8));
+    BOOST_CHECK_EQUAL(1596, row_size(798, 16));
+    BOOST_CHECK_EQUAL(2396, row_size(798, 24));
+    BOOST_CHECK_EQUAL(3192, row_size(798, 32));
+
+    BOOST_CHECK_EQUAL(800, row_size(797, 8));
+    BOOST_CHECK_EQUAL(1596, row_size(797, 16));
+    BOOST_CHECK_EQUAL(2392, row_size(797, 24));
+    BOOST_CHECK_EQUAL(3188, row_size(797, 32));
+
+    BOOST_CHECK_EQUAL(796, row_size(796, 8));
+    BOOST_CHECK_EQUAL(1592, row_size(796, 16));
+    BOOST_CHECK_EQUAL(2388, row_size(796, 24));
+    BOOST_CHECK_EQUAL(3184, row_size(796, 32));
+}

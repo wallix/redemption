@@ -22,7 +22,8 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_MSGBOX_HPP
 
 #include "window.hpp"
-#include "widget2_multiline.hpp"
+#include "multiline.hpp"
+#include "button.hpp"
 
 class MessageBox : public Window
 {
@@ -30,24 +31,26 @@ public:
     WidgetMultiLine msg;
     WidgetButton ok;
 
-    MessageBox(DrawApi* drawable, int16_t x, int16_t y, Widget2 * parent,
+    MessageBox(DrawApi& drawable, int16_t x, int16_t y, Widget2 * parent,
                NotifyApi* notifier, const char * caption, const char * text,
                int group_id = 0, const char * ok_text = "Ok",
                int fgcolor = BLACK, int bgcolor = GREY)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , msg(drawable, 0, 0, this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
-    , ok(drawable, 0,0, this, this, "Ok", true, -11, fgcolor, bgcolor, 6, 2, NOTIFY_CANCEL)
+    , ok(drawable, 0,0, this, this, ok_text ? ok_text : "Ok", true, -11, fgcolor, bgcolor, 6, 2, NOTIFY_CANCEL)
     {
         this->child_list.push_back(&this->msg);
         this->child_list.push_back(&this->ok);
 
-        this->set_window_cx(std::max<int>(this->msg.cx(), this->ok.cx() + 20));
+        const int window_size = std::max<int>(this->titlebar_base_width + this->titlebar.x_text + 5 + this->button_close.cx(), this->msg.cx());
+
+        this->set_window_cx(std::max<int>(window_size, this->ok.cx() + 20));
         this->msg.rect.x += (this->cx() - this->msg.cx()) / 2;
 
-        this->set_window_cy(this->titlebar.cy() + this->msg.cy() + this->ok.cy() + 10);
+        this->set_window_cy(this->titlebar.cy() + this->msg.cy() + this->ok.cy() + 15);
         this->msg.rect.y += this->titlebar.cy() + 5;
         this->ok.set_button_x(this->dx() + this->cx() - this->ok.cx() - 10);
-        this->ok.set_button_y(this->dy() + this->cy() - this->ok.cy() - 5);
+        this->ok.set_button_y(this->msg.dy() + this->msg.cy() + 5);
     }
 
     virtual ~MessageBox()

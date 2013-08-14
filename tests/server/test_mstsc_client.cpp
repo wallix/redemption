@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestFrontMstscClient
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include <errno.h>
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 //        LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
 //    }
 //    wait_obj front_event(one_shot_server.sck);
-//    SocketTransport front_trans("RDP Client", one_shot_server.sck, "0.0.0.0", 0, ini.debug.front, NULL, 0);
+//    SocketTransport front_trans("RDP Client", one_shot_server.sck, "0.0.0.0", 0, ini.debug.front, 0);
 
     LCGRandom gen(0);
 
@@ -100,10 +100,10 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
         verbose);
 
     const bool fastpath_support = true;
-    const bool tls_support      = true;
+    ini.client.tls_support      = true;
+    ini.client.tls_fallback_legacy = false;
     const bool mem3blt_support  = false;
-    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
-        fastpath_support, tls_support, mem3blt_support);
+    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini, fastpath_support, mem3blt_support);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0){

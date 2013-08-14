@@ -1298,6 +1298,44 @@ struct Drawable
             tsave += ts_width*3;
         }
     }
+
+    TODO("Instead of copying the trace timestamp function (un clear timestamp) for pause, "
+         "we could just parametrize the position of the timestamp on the screen");
+    void trace_pausetimestamp(tm & now)
+    {
+        char rawdate[size_str_timestamp];
+        snprintf(rawdate, size_str_timestamp, "%4d-%02d-%02d %02d:%02d:%02d",
+                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
+                 now.tm_hour, now.tm_min, now.tm_sec);
+
+        this->draw_11x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_timestamp);
+        memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
+
+        uint8_t * tsave = this->timestamp_save;
+        uint8_t* buf = this->data
+            + (this->width * 3) * (this->height / 2)
+            + ((this->width - ts_width)*3) / 2 ;
+        int step = this->width * 3;
+        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+            memcpy(tsave, buf, ts_width*3);
+            tsave += ts_width*3;
+            memcpy(buf, this->timestamp_data + y*ts_width*3, ts_width*3);
+        }
+    }
+
+    void clear_pausetimestamp()
+    {
+        const uint8_t * tsave = this->timestamp_save;
+        int step = this->width * 3;
+        uint8_t* buf = this->data
+            + (this->width * 3) * (this->height / 2)
+            + ((this->width - ts_width)*3) / 2 ;
+        for (size_t y = 0; y < ts_height ; ++y, buf += step){
+            memcpy(buf, tsave, ts_width*3);
+            tsave += ts_width*3;
+        }
+    }
+
 };
 
 #endif

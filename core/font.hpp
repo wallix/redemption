@@ -19,7 +19,6 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Font header file
-
 */
 
 #ifndef _REDEMPTION_CORE_FONT_HPP_
@@ -219,8 +218,8 @@ TODO("Pass font name as parameter in constructor")
                     if (size_to_read > 0){
                         TODO("Create a pack_left function in stream to do this")
                         //-----------------------------------------------------
-                        memcpy(stream.data, stream.p, remaining);
-                        stream.p = stream.data;
+                        memcpy(stream.get_data(), stream.p, remaining);
+                        stream.p = stream.get_data();
                         stream.end = stream.p + remaining;
                         //-----------------------------------------------------
                         while ((b = read(fd, stream.end, std::min<uint32_t>(size_to_read, 8192 - remaining))) < 0){

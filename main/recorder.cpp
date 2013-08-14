@@ -175,7 +175,7 @@ int main(int argc, char** argv)
             end_cap += in_wrm_trans_tmp.begin_chunk_time;
         }
         while (begin_cap >= in_wrm_trans_tmp.end_chunk_time){
-            in_wrm_trans_tmp.next_chunk_info();    
+            in_wrm_trans_tmp.next_chunk_info();
         }
         count = in_wrm_trans_tmp.chunk_num;
     }
@@ -209,13 +209,15 @@ int main(int argc, char** argv)
         clear_files_flv_meta_png(outfile_path, outfile_basename);
     }
 
-    Capture capture(player.record_now, player.screen_rect.cx, player.screen_rect.cy, outfile_path, outfile_path, HASH_PATH "/", outfile_basename, false, ini);
+    Capture capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy
+                   , outfile_path, outfile_path, ini.video.hash_path, outfile_basename, false
+                   , ini);
     if (capture.capture_png){
         capture.psc->zoom(zoom);
     }
     player.add_consumer(&capture);
 
     player.play();
-    
+
     return 0;
 }

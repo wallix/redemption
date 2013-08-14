@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+              Martin Potier, Meng Tan
 */
 
 #ifndef _REDEMPTION_CAPTURE_STATICCAPTURE_HPP_
@@ -28,7 +29,6 @@
 
 #include "bitmap.hpp"
 #include "rect.hpp"
-#include "constants.hpp"
 #include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -69,11 +69,13 @@ public:
 
     struct timeval start_static_capture;
     uint64_t inter_frame_interval_static_capture;
+    uint64_t time_to_wait;
 
     StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, bool clear_png, const Inifile & ini, Drawable & drawable)
     : ImageCapture(trans, width, height, drawable)
     , clear_png(clear_png)
     , seq(seq)
+    , time_to_wait(0)
     {
         this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
@@ -95,7 +97,7 @@ public:
     }
 
     void update_config(const Inifile & ini){
-        if (ini.video.png_limit < this->conf.png_limit){
+        if (ini.video.png_limit < this->conf.png_limit) {
             for(size_t i = this->conf.png_limit ; i > ini.video.png_limit ; i--){
                 if (this->trans.seqno >= i){
                     // unlink may fail, for instance if file does not exist, just don't care
@@ -118,7 +120,30 @@ public:
         if ((unsigned)difftimeval(now, this->start_static_capture)
                 >= (unsigned)this->inter_frame_interval_static_capture) {
             this->breakpoint(now);
+            this->time_to_wait = this->inter_frame_interval_static_capture;
         }
+        else {
+            this->time_to_wait = this->inter_frame_interval_static_capture - difftimeval(now, this->start_static_capture);
+        }
+    }
+
+    void pause_snapshot(const timeval & now) {
+        // Draw Pause message
+        time_t rawtime = now.tv_sec;
+        tm *ptm = localtime(&rawtime);
+        this->drawable.trace_pausetimestamp(*ptm);
+
+        if (this->conf.png_limit > 0){
+            if (this->trans.seqno >= this->conf.png_limit){
+                // unlink may fail, for instance if file does not exist, just don't care
+                sq_outfilename_unlink(this->seq, this->trans.seqno - this->conf.png_limit);
+            }
+            this->ImageCapture::flush();
+            this->trans.next();
+        }
+
+        this->drawable.clear_pausetimestamp();
+        this->start_static_capture = now;
     }
 
     void breakpoint(const timeval & now)

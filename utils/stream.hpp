@@ -31,8 +31,6 @@
 #include <string.h> // for memcpy, memset
 #include <algorithm>
 
-#include "constants.hpp"
-//#include "ssl_calls.hpp"
 #include "error.hpp"
 #include "bitfu.hpp"
 #include "utf.hpp"
@@ -43,30 +41,44 @@ enum {
 };
 
 class Stream {
-    public:
+public:
     uint8_t* p;
     uint8_t* end;
+protected:
     uint8_t* data;
     size_t capacity;
 
+public:
     virtual ~Stream() {}
 
     virtual void init(size_t capacity) = 0;
 
-    void reset(){
+    virtual void reset(){
         this->end = this->p = this->data;
     }
 
     bool has_room(unsigned n) const {
-        return this->get_offset() + n <= this->capacity;
+        return this->get_offset() + n <= this->get_capacity();
+    }
+
+    virtual size_t get_capacity() const {
+        return this->capacity;
+    }
+
+    virtual uint8_t * get_data() const {
+        return this->data;
+    }
+
+    uint8_t * _get_buffer() const {
+        return this->data;
     }
 
     uint32_t get_offset() const {
-        return this->p - this->data;
+        return this->p - this->get_data();
     }
 
     uint32_t room() const {
-        return this->capacity - this->get_offset();
+        return this->get_capacity() - this->get_offset();
     }
 
     bool in_check_rem(const unsigned n) const {
@@ -94,16 +106,6 @@ class Stream {
     unsigned char in_uint8(void) {
         REDASSERT(this->in_check_rem(1));
         return *((unsigned char*)(this->p++));
-    }
-
-    unsigned char in_uint8_with_check(bool & result) {
-        if (this->in_check_rem(1)){
-            result = true;
-            return this->in_uint8();
-        }
-
-        result = false;
-        return 0;
     }
 
     /* Peek a byte from stream without move <p>. */
@@ -134,16 +136,6 @@ class Stream {
         REDASSERT(this->in_check_rem(2));
         this->p += 2;
         return (uint16_t)(this->p[-1] | (this->p[-2] << 8)) ;
-    }
-
-    uint16_t in_uint16_be_with_check(bool & result) {
-        if (this->in_check_rem(2)){
-            result = true;
-            return this->in_uint16_be();
-        }
-
-        result = false;
-        return 0;
     }
 
     unsigned int in_uint32_le(void) {
@@ -266,7 +258,7 @@ class Stream {
     }
 
     void set_out_uint8(unsigned char v, size_t offset) {
-        this->data[offset] = v;
+        (this->get_data())[offset] = v;
     }
 
     // MS-RDPEGDI : 2.2.2.2.1.2.1.2 Two-Byte Unsigned Encoding
@@ -314,7 +306,7 @@ class Stream {
     }
 
     void set_out_sint8(char v, size_t offset) {
-        this->data[offset] = v;
+        (this->get_data())[offset] = v;
     }
 
     void out_uint16_le(unsigned int v) {
@@ -325,8 +317,8 @@ class Stream {
     }
 
     void set_out_uint16_le(unsigned int v, size_t offset) {
-        this->data[offset] = v & 0xFF;
-        this->data[offset+1] = (v >> 8) & 0xFF;
+        (this->get_data())[offset] = v & 0xFF;
+        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
     }
 
     void out_sint16_le(signed int v) {
@@ -337,8 +329,8 @@ class Stream {
     }
 
     void set_out_sint16_le(signed int v, size_t offset) {
-        this->data[offset] = v & 0xFF;
-        this->data[offset+1] = (v >> 8) & 0xFF;
+        (this->get_data())[offset] = v & 0xFF;
+        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
     }
 
     void out_uint16_be(unsigned int v) {
@@ -349,8 +341,8 @@ class Stream {
     }
 
     void set_out_uint16_be(unsigned int v, size_t offset) {
-        this->data[offset+1] = v & 0xFF;
-        this->data[offset] = (v >> 8) & 0xFF;
+        (this->get_data())[offset+1] = v & 0xFF;
+        (this->get_data())[offset] = (v >> 8) & 0xFF;
     }
 
     void out_uint32_le(unsigned int v) {
@@ -363,10 +355,10 @@ class Stream {
     }
 
     void set_out_uint32_le(unsigned int v, size_t offset) {
-        this->data[offset+0] = v & 0xFF;
-        this->data[offset+1] = (v >> 8) & 0xFF;
-        this->data[offset+2] = (v >> 16) & 0xFF;
-        this->data[offset+3] = (uint8_t)(v >> 24) & 0xFF;
+        (this->get_data())[offset+0] = v & 0xFF;
+        (this->get_data())[offset+1] = (v >> 8) & 0xFF;
+        (this->get_data())[offset+2] = (v >> 16) & 0xFF;
+        (this->get_data())[offset+3] = (uint8_t)(v >> 24) & 0xFF;
     }
 
     void out_uint32_be(unsigned int v) {
@@ -380,10 +372,10 @@ class Stream {
 
     void set_out_uint32_be(unsigned int v, size_t offset) {
         REDASSERT(this->has_room(4));
-        this->data[offset+0] = (uint8_t)(v >> 24) & 0xFF;
-        this->data[offset+1] = (v >> 16) & 0xFF;
-        this->data[offset+2] = (v >> 8) & 0xFF;
-        this->data[offset+3] = v & 0xFF;
+        (this->get_data())[offset+0] = (uint8_t)(v >> 24) & 0xFF;
+        (this->get_data())[offset+1] = (v >> 16) & 0xFF;
+        (this->get_data())[offset+2] = (v >> 8) & 0xFF;
+        (this->get_data())[offset+3] = v & 0xFF;
     }
 
     void out_unistr(const char* text)
@@ -441,12 +433,12 @@ class Stream {
         this->end = this->p;
     }
 
-    void rewind(){
+    virtual void rewind(){
         this->p = this->data;
     }
 
     size_t size() const {
-        return this->end - this->data;
+        return this->end - this->get_data();
     }
 
     // Output zero terminated string, including trailing 0
@@ -463,7 +455,7 @@ class Stream {
 
 
     void out_copy_bytes(Stream & stream) {
-        this->out_copy_bytes(stream.data, stream.size());
+        this->out_copy_bytes(stream.get_data(), stream.size());
     }
 
     void out_copy_bytes(const uint8_t * v, size_t n) {
@@ -473,7 +465,7 @@ class Stream {
     }
 
     void set_out_copy_bytes(const uint8_t * v, size_t n, size_t offset) {
-        memcpy(this->data+offset, v, n);
+        memcpy(this->get_data()+offset, v, n);
     }
 
     void out_copy_bytes(const char * v, size_t n) {
@@ -500,7 +492,7 @@ class Stream {
     }
 
     void set_out_clear_bytes(size_t n, size_t offset) {
-        memset(this->data+offset, 0, n);
+        memset(this->get_data()+offset, 0, n);
     }
 
     void out_bytes_le(const uint8_t nb, const unsigned value){
@@ -510,7 +502,7 @@ class Stream {
     }
 
     void set_out_bytes_le(const uint8_t nb, const unsigned value, size_t offset){
-        ::out_bytes_le(this->data+offset, nb, value);
+        ::out_bytes_le(this->get_data()+offset, nb, value);
     }
 
     // =========================================================================
@@ -544,285 +536,6 @@ class Stream {
         ER_CLASS_CTXT           = 0x80, // 1 0
         ER_CLASS_PRIV           = 0xC0, // 1 1
     };
-
-    // =========================================================================
-    // BER encoding rules support methods
-    // =========================================================================
-
-    enum {
-        BER_TAG_BOOLEAN      =    1,
-        BER_TAG_INTEGER      =    2,
-        BER_TAG_OCTET_STRING =    4,
-        BER_TAG_RESULT       =   10,
-    };
-
-
-    // return string length or -1 on error
-    int in_ber_octet_string(uint8_t * target, uint16_t target_len)
-    {
-        uint8_t tag = this->in_uint8();
-        if (tag != BER_TAG_OCTET_STRING){
-            LOG(LOG_ERR, "Octet string BER tag (%u) expected, got %u", BER_TAG_OCTET_STRING, tag);
-            return -1;
-        }
-        size_t len = this->in_ber_len();
-        if (len > target_len){
-            LOG(LOG_ERR, "target string too large (max=%u, got=%u)", target_len, len);
-            return -1;
-        }
-        this->in_copy_bytes(target, len);
-        return len;
-    }
-
-    int in_ber_octet_string_with_check(uint8_t * target, uint16_t target_len)
-    {
-        bool in_result;
-        uint8_t tag = this->in_uint8_with_check(in_result);
-        if (!in_result) {
-            LOG(LOG_ERR, "Truncated BER octet string (need=1, remain=0)");
-            return -1;
-        }
-        if (tag != BER_TAG_OCTET_STRING){
-            LOG(LOG_ERR, "Octet string BER tag (%u) expected, got %u", BER_TAG_OCTET_STRING, tag);
-            return -1;
-        }
-        size_t len = this->in_ber_len_with_check(in_result);
-        if (!in_result){
-            return -1;
-        }
-        if (!this->in_check_rem(len)){
-            LOG(LOG_ERR, "Truncated BER octet string (need=%u, remain=%u)",
-                len, this->in_remain());
-            return -1;
-        }
-        if (len > target_len){
-            LOG(LOG_ERR, "target string too large (max=%u, got=%u)", target_len, len);
-            return -1;
-        }
-        this->in_copy_bytes(target, len);
-        return len;
-    }
-
-    // return 0 if false, 1 if true, -1 on error
-    int in_ber_boolean()
-    {
-        uint8_t tag = this->in_uint8();
-        if (tag != BER_TAG_BOOLEAN){
-            LOG(LOG_ERR, "Boolean BER tag (%u) expected, got %u", BER_TAG_BOOLEAN, tag);
-            return -1;
-        }
-        size_t len = this->in_ber_len();
-        if (len != 1){
-            LOG(LOG_ERR, "Boolean BER should be one byte");
-            return -1;
-        }
-        return this->in_uint8();
-    }
-
-    // return 0 if false, 1 if true, -1 on error
-    int in_ber_boolean_with_check()
-    {
-        bool in_result;
-        uint8_t tag = this->in_uint8_with_check(in_result);
-        if (!in_result){
-            LOG(LOG_ERR, "Truncated BER boolean tag (need=1, remain=0)");
-            return -1;
-        }
-        if (tag != BER_TAG_BOOLEAN){
-            LOG(LOG_ERR, "Boolean BER tag (%u) expected, got %u", BER_TAG_BOOLEAN, tag);
-            return -1;
-        }
-        size_t len = this->in_ber_len_with_check(in_result);
-        if (!in_result){
-            return -1;
-        }
-        if (len != 1){
-            LOG(LOG_ERR, "Boolean BER should be one byte");
-            return -1;
-        }
-        if (!this->in_check_rem(1)){
-            LOG(LOG_ERR, "Truncated BER boolean value (need=1, remain=0)");
-            return -1;
-        }
-        return this->in_uint8();
-    }
-
-    int in_ber_int_with_check(bool & result){
-        int v = 0;
-
-        result = true;
-
-        unsigned expected = 2; /* tag(1) + len(1) */
-        if (this->in_check_rem(expected)){
-           uint8_t tag = this->in_uint8();
-           if (tag == BER_TAG_INTEGER){
-               uint8_t len = this->in_uint8();
-               if (this->in_check_rem(len)){
-                   v = this->in_bytes_be(len);
-               }
-               else {
-                   LOG(LOG_ERR, "Truncated BER integer data (need=%u, remain=%u)",
-                       len, this->in_remain());
-                   result = false;
-               }
-           }
-           else {
-               LOG(LOG_ERR, "Integer BER tag (%u) expected, got %u", BER_TAG_INTEGER, tag);
-               result = false;
-           }
-        }
-        else {
-            LOG(LOG_ERR, "Truncated BER integer (need=%u, remain=%u)",
-                expected, this->in_remain());
-            result = false;
-        }
-        return v;
-    }
-
-
-    unsigned int in_ber_len(void) {
-        uint8_t l = this->in_uint8();
-        if (l & 0x80) {
-            const uint8_t nbbytes = (uint8_t)(l & 0x7F);
-            unsigned int len = 0;
-            for (uint8_t i = 0 ; i < nbbytes ; i++) {
-                len = (len << 8) | this->in_uint8();
-            }
-            return len;
-        }
-        return l;
-    }
-
-    unsigned int in_ber_len_with_check(bool & result) {
-        uint8_t l = 0;
-
-        result = true;
-
-        if (this->in_check_rem(1))
-        {
-            l = this->in_uint8();
-            if (l & 0x80) {
-                const uint8_t nbbytes = (uint8_t)(l & 0x7F);
-
-                if (this->in_check_rem(nbbytes)){
-                    unsigned int len = 0;
-                    for (uint8_t i = 0 ; i < nbbytes ; i++) {
-                        len = (len << 8) | this->in_uint8();
-                    }
-                    return len;
-                }
-                else {
-                    LOG(LOG_ERR, "Truncated PER length (need=%u, remain=%u)",
-                        nbbytes, this->in_remain());
-                    l = 0;
-                    result = false;
-                }
-            }
-        }
-        else {
-            result = false;
-            LOG(LOG_ERR, "Truncated BER length (need=1, remain=0)");
-        }
-        return l;
-    }
-
-    void out_ber_len(unsigned int v){
-        if (v >= 0x80) {
-            if (v >= 0x100){
-                this->out_uint8(0x82);
-                this->out_uint16_be(v);
-            }
-            else {
-                this->out_uint8(0x81);
-                this->out_uint8(v);
-            }
-        }
-        else {
-            this->out_uint8((uint8_t)v);
-        }
-    }
-
-    void out_ber_int8(unsigned int v){
-        this->out_uint8(BER_TAG_INTEGER);
-        this->out_uint8(1);
-        this->out_uint8((uint8_t)v);
-    }
-
-    void set_out_ber_int8(unsigned int v, size_t offset){
-        this->set_out_uint8(BER_TAG_INTEGER, offset);
-        this->set_out_uint8(1, offset+1);
-        this->set_out_uint8((uint8_t)v, offset+2);
-    }
-
-    void out_ber_int16(int value)
-    {
-        this->out_uint8(BER_TAG_INTEGER);
-        this->out_uint8(2);
-        this->out_uint8((uint8_t)(value >> 8));
-        this->out_uint8((uint8_t)value);
-    }
-
-    void set_out_ber_int16(unsigned int v, size_t offset){
-        this->set_out_uint8(BER_TAG_INTEGER, offset);
-        this->set_out_uint8(2,               offset+1);
-        this->set_out_uint8((uint8_t)(v >> 8),        offset+2);
-        this->set_out_uint8((uint8_t)v,               offset+3);
-    }
-
-    void out_ber_int24(int value)
-    {
-        this->out_uint8(BER_TAG_INTEGER);
-        this->out_uint8(3);
-        this->out_uint8((uint8_t)(value >> 16));
-        this->out_uint8((uint8_t)(value >> 8));
-        this->out_uint8((uint8_t)value);
-    }
-
-    void set_out_ber_int24(int value, size_t offset)
-    {
-        this->set_out_uint8(BER_TAG_INTEGER, offset);
-        this->set_out_uint8(3,               offset+1);
-        this->set_out_uint8((uint8_t)(value >> 16),     offset+2);
-        this->set_out_uint8((uint8_t)(value >> 8),      offset+3);
-        this->set_out_uint8((uint8_t)value,           offset+4);
-    }
-
-    void set_out_ber_len_uint7(unsigned int v, size_t offset){
-        if (v >= 0x80) {
-            LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
-            throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
-        }
-        this->set_out_uint8((uint8_t)v, offset+0);
-    }
-
-    void out_ber_len_uint7(unsigned int v){
-        if (v >= 0x80) {
-            LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
-            throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
-        }
-        this->out_uint8((uint8_t)v);
-    }
-
-    void set_out_ber_len_uint16(unsigned int v, size_t offset){
-        this->set_out_uint8(0x82, offset+0);
-        this->set_out_uint16_be(v, offset+1);
-    }
-
-    void out_ber_len_uint16(unsigned int v){
-        this->out_uint8(0x82);
-        this->out_uint16_be(v);
-    }
-
-    void set_out_ber_len(unsigned int v, size_t offset){
-        if (v>= 0x80){
-            REDASSERT(v < 65536);
-            this->data[offset+0] = 0x82;
-            this->set_out_uint16_be(v, offset+1);
-        }
-        else {
-            this->data[offset+0] = (uint8_t)v;
-        }
-    }
 
     // =========================================================================
     // DER encoding rules support methods
@@ -1218,375 +931,6 @@ TODO("check if implementation below is conforming to obfuscated text above (I ha
             this->out_uint8((c1 << 4) | c2);
         }
     }
-
-    // =========================================================================
-    // Helper methods for RDP RLE bitmap compression support
-    // =========================================================================
-    void out_count(const int in_count, const int mask){
-        if (in_count < 32) {
-            this->out_uint8((uint8_t)((mask << 5) | in_count));
-        }
-        else if (in_count < 256 + 32){
-            this->out_uint8((uint8_t)(mask << 5));
-            this->out_uint8((uint8_t)(in_count - 32));
-        }
-        else {
-            this->out_uint8((uint8_t)(0xf0 | mask));
-            this->out_uint16_le(in_count);
-        }
-    }
-
-    // Background Run Orders
-    // ~~~~~~~~~~~~~~~~~~~~~
-
-    // A Background Run Order encodes a run of pixels where each pixel in the
-    // run matches the uncompressed pixel on the previous scanline. If there is
-    // no previous scanline then each pixel in the run MUST be black.
-
-    // When encountering back-to-back background runs, the decompressor MUST
-    // write a one-pixel foreground run to the destination buffer before
-    // processing the second background run if both runs occur on the first
-    // scanline or after the first scanline (if the first run is on the first
-    // scanline, and the second run is on the second scanline, then a one-pixel
-    // foreground run MUST NOT be written to the destination buffer). This
-    // one-pixel foreground run is counted in the length of the run.
-
-    // The run length encodes the number of pixels in the run. There is no data
-    // associated with Background Run Orders.
-
-    // +-----------------------+-----------------------------------------------+
-    // | 0x0 REGULAR_BG_RUN    | The compression order encodes a regular-form  |
-    // |                       | background run. The run length is stored in   |
-    // |                       | the five low-order bits of  the order header  |
-    // |                       | byte. If this value is zero, then the run     |
-    // |                       | length is encoded in the byte following the   |
-    // |                       | order header and MUST be incremented by 32 to |
-    // |                       | give the final value.                         |
-    // +-----------------------+-----------------------------------------------+
-    // | 0xF0 MEGA_MEGA_BG_RUN | The compression order encodes a MEGA_MEGA     |
-    // |                       | background run. The run length is stored in   |
-    // |                       | the two bytes following the order header      |
-    // |                       | (in little-endian format).                    |
-    // +-----------------------+-----------------------------------------------+
-
-    void out_fill_count(const int in_count)
-    {
-        this->out_count(in_count, 0x00);
-    }
-
-    // Foreground Run Orders
-    // ~~~~~~~~~~~~~~~~~~~~~
-
-    // A Foreground Run Order encodes a run of pixels where each pixel in the
-    // run matches the uncompressed pixel on the previous scanline XOR’ed with
-    // the current foreground color. If there is no previous scanline, then
-    // each pixel in the run MUST be set to the current foreground color (the
-    // initial foreground color is white).
-
-    // The run length encodes the number of pixels in the run.
-    // If the order is a "set" variant, then in addition to encoding a run of
-    // pixels, the order also encodes a new foreground color (in little-endian
-    // format) in the bytes following the optional run length. The current
-    // foreground color MUST be updated with the new value before writing
-    // the run to the destination buffer.
-
-    // +---------------------------+-------------------------------------------+
-    // | 0x1 REGULAR_FG_RUN        | The compression order encodes a           |
-    // |                           | regular-form foreground run. The run      |
-    // |                           | length is stored in the five low-order    |
-    // |                           | bits of the order header byte. If this    |
-    // |                           | value is zero, then the run length is     |
-    // |                           | encoded in the byte following the order   |
-    // |                           | header and MUST be incremented by 32 to   |
-    // |                           | give the final value.                     |
-    // +---------------------------+-------------------------------------------+
-    // | 0xF1 MEGA_MEGA_FG_RUN     | The compression order encodes a MEGA_MEGA |
-    // |                           | foreground run. The run length is stored  |
-    // |                           | in the two bytes following the order      |
-    // |                           | header (in little-endian format).         |
-    // +---------------------------+-------------------------------------------+
-    // | 0xC LITE_SET_FG_FG_RUN    | The compression order encodes a "set"     |
-    // |                           | variant lite-form foreground run. The run |
-    // |                           | length is stored in the four low-order    |
-    // |                           | bits of the order header byte. If this    |
-    // |                           | value is zero, then the run length is     |
-    // |                           | encoded in the byte following the order   |
-    // |                           | header and MUST be incremented by 16 to   |
-    // |                           | give the final value.                     |
-    // +---------------------------+-------------------------------------------+
-    // | 0xF6 MEGA_MEGA_SET_FG_RUN | The compression order encodes a "set"     |
-    // |                           | variant MEGA_MEGA foreground run. The run |
-    // |                           | length is stored in the two bytes         |
-    // |                           | following the order header (in            |
-    // |                           | little-endian format).                    |
-    // +---------------------------+-------------------------------------------+
-
-    void out_mix_count(const int in_count)
-    {
-        this->out_count(in_count, 0x01);
-    }
-
-    void out_mix_count_set(const int in_count)
-    {
-        const uint8_t mask = 0x06;
-        if (in_count < 16) {
-            this->out_uint8((uint8_t)(0xc0 | in_count));
-        }
-        else if (in_count < 256 + 16){
-            this->out_uint8(0xc0);
-            this->out_uint8((uint8_t)(in_count - 16));
-        }
-        else {
-            this->out_uint8(0xf0 | mask);
-            this->out_uint16_le(in_count);
-        }
-    }
-
-    // Foreground / Background Image Orders
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    // A Foreground/Background Image Order encodes a binary image where each
-    // pixel in the image that is not on the first scanline fulfils exactly one
-    // of the following two properties:
-
-    // (a) The pixel matches the uncompressed pixel on the previous scanline
-    // XOR'ed with the current foreground color.
-
-    // (b) The pixel matches the uncompressed pixel on the previous scanline.
-
-    // If the pixel is on the first scanline then it fulfils exactly one of the
-    // following two properties:
-
-    // (c) The pixel is the current foreground color.
-
-    // (d) The pixel is black.
-
-    // The binary image is encoded as a sequence of byte-sized bitmasks which
-    // follow the optional run length (the last bitmask in the sequence can be
-    // smaller than one byte in size). If the order is a "set" variant then the
-    // bitmasks MUST follow the bytes which specify the new foreground color.
-    // Each bit in the encoded bitmask sequence represents one pixel in the
-    // image. A bit that has a value of 1 represents a pixel that fulfils
-    // either property (a) or (c), while a bit that has a value of 0 represents
-    // a pixel that fulfils either property (b) or (d). The individual bitmasks
-    // MUST each be processed from the low-order bit to the high-order bit.
-
-    // The run length encodes the number of pixels in the run.
-
-    // If the order is a "set" variant, then in addition to encoding a binary
-    // image, the order also encodes a new foreground color (in little-endian
-    // format) in the bytes following the optional run length. The current
-    // foreground color MUST be updated with the new value before writing
-    // the run to the destination buffer.
-
-    // +--------------------------------+--------------------------------------+
-    // | 0x2 REGULAR_FGBG_IMAGE         | The compression order encodes a      |
-    // |                                | regular-form foreground/background   |
-    // |                                | image. The run length is encoded in  |
-    // |                                | the five low-order bits of the order |
-    // |                                | header byte and MUST be multiplied   |
-    // |                                | by 8 to give the final value. If     |
-    // |                                | this value is zero, then the run     |
-    // |                                | length is encoded in the byte        |
-    // |                                | following the order header and MUST  |
-    // |                                | be incremented by 1 to give the      |
-    // |                                | final value.                         |
-    // +--------------------------------+--------------------------------------+
-    // | 0xF2 MEGA_MEGA_FGBG_IMAGE      | The compression order encodes a      |
-    // |                                | MEGA_MEGA foreground/background      |
-    // |                                | image. The run length is stored in   |
-    // |                                | the two bytes following the order    |
-    // |                                | header (in little-endian format).    |
-    // +--------------------------------+--------------------------------------+
-    // | 0xD LITE_SET_FG_FGBG_IMAGE     | The compression order encodes a      |
-    // |                                | "set" variant lite-form              |
-    // |                                | foreground/background image. The run |
-    // |                                | length is encoded in the four        |
-    // |                                | low-order bits of the order header   |
-    // |                                | byte and MUST be multiplied by 8 to  |
-    // |                                | give the final value. If this value  |
-    // |                                | is zero, then the run length is      |
-    // |                                | encoded in the byte following the    |
-    // |                                | order header and MUST be incremented |
-    // |                                | by 1 to give the final value.        |
-    // +--------------------------------+--------------------------------------+
-    // | 0xF7 MEGA_MEGA_SET_FGBG_IMAGE  | The compression order encodes a      |
-    // |                                | "set" variant MEGA_MEGA              |
-    // |                                | foreground/background image. The run |
-    // |                                | length is stored in the two bytes    |
-    // |                                | following the order header (in       |
-    // |                                | little-endian format).               |
-    // +-----------------------------------------------------------------------+
-
-    void out_fom_count(const int in_count)
-    {
-        if (in_count < 256){
-            if (in_count & 7){
-                this->out_uint8(0x40);
-                this->out_uint8((uint8_t)(in_count - 1));
-            }
-            else{
-                this->out_uint8((uint8_t)(0x40 | (in_count >> 3)));
-            }
-        }
-        else{
-            this->out_uint8(0xf2);
-            this->out_uint16_le(in_count);
-        }
-    }
-
-    void out_fom_sequence(const int count, const uint8_t * masks) {
-        this->out_fom_count(count);
-        this->out_copy_bytes(masks, nbbytes_large(count));
-    }
-
-    void out_fom_count_set(const int in_count)
-    {
-        if (in_count < 256){
-            if (in_count & 0x87){
-                this->out_uint8(0xD0);
-                this->out_uint8((uint8_t)(in_count - 1));
-            }
-            else{
-                this->out_uint8((uint8_t)(0xD0 | (in_count >> 3)));
-            }
-        }
-        else{
-            this->out_uint8(0xf7);
-            this->out_uint16_le(in_count);
-        }
-    }
-
-    void out_fom_sequence_set(const uint8_t Bpp, const int count,
-                              const unsigned foreground, const uint8_t * masks) {
-        this->out_fom_count_set(count);
-        this->out_bytes_le(Bpp, foreground);
-        this->out_copy_bytes(masks, nbbytes_large(count));
-    }
-
-    // Color Run Orders
-    // ~~~~~~~~~~~~~~~~
-
-    // A Color Run Order encodes a run of pixels where each pixel is the same
-    // color. The color is encoded (in little-endian format) in the bytes
-    // following the optional run length.
-
-    // The run length encodes the number of pixels in the run.
-
-    // +--------------------------+--------------------------------------------+
-    // | 0x3 REGULAR_COLOR_RUN    | The compression order encodes a            |
-    // |                          | regular-form color run. The run length is  |
-    // |                          | stored in the five low-order bits of the   |
-    // |                          | order header byte. If this value is zero,  |
-    // |                          | then the run length is encoded in the byte |
-    // |                          | following the order header and MUST be     |
-    // |                          | incremented by 32 to give the final value. |
-    // +--------------------------+--------------------------------------------+
-    // | 0xF3 MEGA_MEGA_COLOR_RUN | The compression order encodes a MEGA_MEGA  |
-    // |                          | color run. The run length is stored in the |
-    // |                          | two bytes following the order header (in   |
-    // |                          | little-endian format).                     |
-    // +--------------------------+--------------------------------------------+
-
-    void out_color_sequence(const uint8_t Bpp, const int count, const uint32_t color)
-    {
-        this->out_color_count(count);
-        this->out_bytes_le(Bpp, color);
-    }
-
-    void out_color_count(const int in_count)
-    {
-        this->out_count(in_count, 0x03);
-    }
-
-    // Color Image Orders
-    // ~~~~~~~~~~~~~~~~~~
-
-    // A Color Image Order encodes a run of uncompressed pixels.
-
-    // The run length encodes the number of pixels in the run. So, to compute
-    // the actual number of bytes which follow the optional run length, the run
-    // length MUST be multiplied by the color depth (in bits-per-pixel) of the
-    // bitmap data.
-
-    // +-----------------------------+-----------------------------------------+
-    // | 0x4 REGULAR_COLOR_IMAGE     | The compression order encodes a         |
-    // |                             | regular-form color image. The run       |
-    // |                             | length is stored in the five low-order  |
-    // |                             | bits of the order header byte. If this  |
-    // |                             | value is zero, then the run length is   |
-    // |                             | encoded in the byte following the order |
-    // |                             | header and MUST be incremented by 32 to |
-    // |                             | give the final value.                   |
-    // +-----------------------------+-----------------------------------------+
-    // | 0xF4 MEGA_MEGA_COLOR_IMAGE  | The compression order encodes a         |
-    // |                             | MEGA_MEGA color image. The run length   |
-    // |                             | is stored in the two bytes following    |
-    // |                             | the order header (in little-endian      |
-    // |                             | format).                                |
-    // +-----------------------------+-----------------------------------------+
-
-    void out_copy_sequence(const uint8_t Bpp, const int count, const uint8_t * data)
-    {
-        this->out_copy_count(count);
-        this->out_copy_bytes(data, count * Bpp);
-    }
-
-    void out_copy_count(const int in_count)
-    {
-        this->out_count(in_count, 0x04);
-    }
-
-    // Dithered Run Orders
-    // ~~~~~~~~~~~~~~~~~~~
-
-    // A Dithered Run Order encodes a run of pixels which is composed of two
-    // alternating colors. The two colors are encoded (in little-endian format)
-    // in the bytes following the optional run length.
-
-    // The run length encodes the number of pixel-pairs in the run (not pixels).
-
-    // +-----------------------------+-----------------------------------------+
-    // | 0xE LITE_DITHERED_RUN       | The compression order encodes a         |
-    // |                             | lite-form dithered run. The run length  |
-    // |                             | is stored in the four low-order bits of |
-    // |                             | the order header byte. If this value is |
-    // |                             | zero, then the run length is encoded in |
-    // |                             | the byte following the order header and |
-    // |                             | MUST be incremented by 16 to give the   |
-    // |                             | final value.                            |
-    // +-----------------------------+-----------------------------------------+
-    // | 0xF8 MEGA_MEGA_DITHERED_RUN | The compression order encodes a         |
-    // |                             | MEGA_MEGA dithered run. The run length  |
-    // |                             | is stored in the two bytes following    |
-    // |                             | the order header (in little-endian      |
-    // |                             | format).                                |
-    // +-----------------------------+-----------------------------------------+
-
-    void out_bicolor_sequence(const uint8_t Bpp, const int count,
-                              const unsigned color1, const unsigned color2)
-    {
-        this->out_bicolor_count(count);
-        this->out_bytes_le(Bpp, color1);
-        this->out_bytes_le(Bpp, color2);
-    }
-
-    void out_bicolor_count(const int in_count)
-    {
-        const uint8_t mask = 0x08;
-        if (in_count / 2 < 16){
-            this->out_uint8((uint8_t)(0xe0 | (in_count / 2)));
-        }
-        else if (in_count / 2 < 256 + 16){
-            this->out_uint8((uint8_t)0xe0);
-            this->out_uint8((uint8_t)(in_count / 2 - 16));
-        }
-        else{
-            this->out_uint8(0xf0 | mask);
-            this->out_uint16_le(in_count / 2);
-        }
-    }
-
 };
 
 // BStream is for "buffering stream", as this stream allocate a work buffer.
@@ -1595,11 +939,11 @@ class BStream : public Stream {
     uint8_t autobuffer[AUTOSIZE];
 
     public:
-
     BStream(size_t size = AUTOSIZE) {
         this->capacity = 0;
         this->init(size);
     }
+
     virtual ~BStream() {
         // <this->data> is allocated dynamically.
         if (this->capacity > AUTOSIZE) {
@@ -1608,7 +952,7 @@ class BStream : public Stream {
     }
 
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
-    void init(size_t v) {
+    virtual void init(size_t v) {
         if (v != this->capacity) {
             try {
                 // <this->data> is allocated dynamically.
@@ -1635,26 +979,123 @@ class BStream : public Stream {
     }
 };
 
+class HStream : public BStream {
+public:
+    size_t    reserved_leading_space;
+    uint8_t * data_start;
+
+    HStream(size_t reserved_leading_space, size_t total_size = AUTOSIZE)
+            : BStream(total_size)
+            , reserved_leading_space(reserved_leading_space) {
+        if (reserved_leading_space >= total_size) {
+            LOG( LOG_ERR
+               , "failed to allocate buffer : total_size=%u, reserved_leading_space=%u\n"
+               , total_size, reserved_leading_space);
+            throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_RESERVED_LEADING_SPACE);
+        }
+
+        this->p          += this->reserved_leading_space;
+        this->data_start  = this->p;
+        this->end         = this->p;
+    }
+
+    virtual ~HStream() {}
+
+    void copy_to_head(const uint8_t * v, size_t n) {
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, v, n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    void copy_to_head(const char * v, size_t n) {
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, v, n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    void copy_to_head(const Stream & stream) {
+        size_t n = stream.size();
+        if (this->data_start - this->data >= (ssize_t)n) {
+            this->data_start -= n;
+
+            ::memcpy(this->data_start, stream.get_data(), n);
+        }
+        else {
+            LOG( LOG_ERR
+               , "reserved leading space too small : size available = %d, size asked = %d\n"
+               , this->data_start - this->data
+               , (int)n);
+            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+        }
+    }
+
+    virtual size_t get_capacity() const {
+        return this->capacity - this->reserved_leading_space;
+    }
+
+    virtual uint8_t * get_data() const {
+        return this->data_start;
+    }
+
+    virtual void init(size_t body_size) {
+        BStream::init(this->reserved_leading_space + body_size);
+
+        this->p          += this->reserved_leading_space;
+        this->data_start  = this->p;
+        this->end         = this->p;
+    }
+
+    virtual void reset() {
+        BStream::reset();
+
+        this->p          += this->reserved_leading_space;
+        this->data_start  = this->p;
+        this->end         = this->p;
+    }
+
+    virtual void rewind() {
+        this->p          = this->data + this->reserved_leading_space;
+        this->data_start = this->p;
+    }
+};
+
 // SubStream does not allocate any buffer
 // (and the buffer pointed to should probably not be modifiable,
 // but I'm not yet doing any distinction between stream that can or can't be modified
 // many at some future time)
 class SubStream : public Stream {
     public:
-
     SubStream(){}  // not yet initialized
 
     SubStream(const Stream & stream, size_t offset = 0, size_t new_size = 0)
     {
-        if ((offset + new_size) > stream.capacity){
+        if ((offset + new_size) > stream.get_capacity()){
             LOG(LOG_ERR, "Substream allocation overflow capacity=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.capacity),
+                static_cast<unsigned>(stream.get_capacity()),
                 static_cast<unsigned>(offset),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
-        this->p = this->data = stream.data + offset;
-        this->capacity = (new_size == 0)?(stream.capacity - offset):new_size;
+        this->p = this->data = stream.get_data() + offset;
+        this->capacity = (new_size == 0)?(stream.get_capacity() - offset):new_size;
         this->end = this->data + this->capacity;
     }
 
@@ -1662,7 +1103,7 @@ class SubStream : public Stream {
         this->data = this->p = stream.p;
         if (new_size > (stream.room())){
             LOG(LOG_ERR, "Substream resize overflow capacity=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.capacity),
+                static_cast<unsigned>(stream.get_capacity()),
                 static_cast<unsigned>(stream.get_offset()),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_RESIZE);
@@ -1674,7 +1115,7 @@ class SubStream : public Stream {
     virtual ~SubStream() {}
 
     // Not allowed on SubStreams
-    void init(size_t v) {}
+    virtual void init(size_t v) {}
 };
 
 // FixedSizeStream does not allocate/reallocate any buffer
@@ -1689,7 +1130,7 @@ class FixedSizeStream : public Stream {
     }
 
     // Not allowed on SubStreams
-    void init(size_t v) {}
+    virtual void init(size_t v) {}
 };
 
 // StaticStream does not allocate/reallocate any buffer
@@ -1711,7 +1152,213 @@ class StaticStream : public FixedSizeStream {
     }
 
     // Not allowed on SubStreams
-    void init(size_t v) {}
+    virtual void init(size_t v) {}
 };
+
+
+namespace redemption {
+
+class Stream {
+protected:
+    Stream() {
+        this->buffer_ptr    = 0;
+        this->data_ptr      = this->buffer_ptr;
+
+        this->body_capacity = 0;
+        this->head_capacity = 0;
+
+        this->read_ptr      = this->data_ptr;
+        this->write_ptr     = this->data_ptr;
+    }   // Stream()
+
+public:
+    virtual ~Stream() {}
+
+    size_t get_body_capacity() const {
+        return this->body_capacity;
+    }
+
+protected:
+    static const uint8_t * get_buffer_ptr(const Stream & stream) {
+        return stream.buffer_ptr;
+    }
+
+public:
+    size_t get_head_capacity() const {
+        return this->head_capacity;
+    }
+
+    virtual const uint8_t * get_data() const {
+        return this->data_ptr;
+    }
+
+    size_t get_size() const {
+        return this->write_ptr - this->data_ptr;
+    }
+
+protected:
+    uint8_t * buffer_ptr;
+    uint8_t * data_ptr;
+
+    size_t    head_capacity;
+    size_t    body_capacity;
+
+    uint8_t * read_ptr;
+    uint8_t * write_ptr;
+};  // class Stream
+
+class InStream : public virtual Stream {
+protected:
+    InStream() : Stream() {}
+
+public:
+    bool in_check_remain(const size_t n) const {
+        // Returns true if there is enough data available to read n bytes.
+        return (n <= this->in_remain());
+    }
+
+    size_t in_remain() const {
+        return this->write_ptr - this->read_ptr;
+    }
+
+    uint8_t in_uint8() {
+        REDASSERT(this->in_check_remain(1));
+        return *((uint8_t *)(this->read_ptr++));
+    }
+};  // class InStream
+
+class OutStream : public virtual Stream {
+protected:
+    OutStream() : Stream() {}
+
+public:
+    bool has_body_room(const size_t size) const {
+        return ((  this->buffer_ptr
+                 + (this->head_capacity + this->body_capacity)
+                 - this->write_ptr) >= static_cast<ssize_t>(size));
+    }
+
+    void inc_write_ptr(const size_t size) {
+        REDASSERT((this->write_ptr + size) <=
+            (this->buffer_ptr + this->head_capacity + this->body_capacity));
+        this->write_ptr += size;
+    }
+
+    void out_uint8(const uint8_t v) {
+        REDASSERT(this->has_body_room(1));
+        *(this->write_ptr++) = v;
+    }
+};  // class OutStream
+
+class BStream : public InStream, public OutStream {
+public:
+    BStream(const size_t body_cap) : InStream(), OutStream() {
+        this->init(0, body_cap);
+    }
+
+    BStream(const size_t head_cap, const size_t body_cap) : InStream(), OutStream() {
+        this->init(head_cap, body_cap);
+    }
+
+    virtual ~BStream() {
+        if (this->buffer_ptr != &(this->auto_buffer[0])) {
+            free(this->buffer_ptr);
+        }
+    }
+
+protected:
+    void init(const size_t head_cap, const size_t body_cap) {
+        size_t cap      = head_cap + body_cap;
+        size_t capacity = this->head_capacity + this->body_capacity;
+
+        if (cap > capacity) {
+            if (this->buffer_ptr != &(this->auto_buffer[0])) {
+                free(this->buffer_ptr);
+            }   // if (this->buffer_ptr != &(this->auto_buffer[0]))
+
+            if (cap > AUTOSIZE) {
+                this->buffer_ptr = (uint8_t *)malloc(cap);
+            }
+            else {  // if (cap > AUTOSIZE)
+                this->buffer_ptr = &(this->auto_buffer[0]);
+            }
+        }   // if (cap > capacity)
+
+        this->data_ptr = this->buffer_ptr + head_cap;
+
+        this->head_capacity = head_cap;
+        this->body_capacity = body_cap;
+
+        this->read_ptr  =
+        this->write_ptr = this->data_ptr;
+    }   // void init(size_t head_cap, size_t body_cap)
+
+protected:
+    uint8_t auto_buffer[AUTOSIZE];
+};  // class BStream
+
+class ConstSubStream : public InStream {
+public:
+    ConstSubStream() : Stream(), InStream() {}
+
+    ConstSubStream(const Stream & stream, size_t offset = 0, size_t capacity = 0) :
+            Stream(), InStream() {
+        this->init_from_stream(stream, offset, capacity);
+    }
+
+    ConstSubStream(const uint8_t * data, const size_t size) :
+            Stream(), InStream() {
+        this->init_from_buffer(data, size);
+    }
+
+    void init_from_buffer(const uint8_t * data, const size_t size) {
+        this->buffer_ptr =
+        this->data_ptr   = const_cast<uint8_t *>(data);
+
+        this->head_capacity = 0;
+        this->body_capacity = size;
+
+        this->read_ptr  = this->data_ptr;
+        this->write_ptr = this->data_ptr + size;
+    }
+
+    void init_from_stream(const Stream & stream, size_t offset, size_t size) {
+        if ((offset + size) > stream.get_body_capacity()) {
+            LOG( LOG_ERR, "Substream allocation overflow body_capacity=%u offset=%u size=%u"
+               , static_cast<unsigned>(stream.get_body_capacity())
+               , static_cast<unsigned>(offset)
+               , static_cast<unsigned>(size)
+               );
+            throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
+        }
+
+        this->buffer_ptr =
+        this->data_ptr   = const_cast<uint8_t *>(  this->get_buffer_ptr(stream)
+                                                 + stream.get_head_capacity() + offset);
+
+        this->head_capacity = 0;
+        this->body_capacity = (size == 0) ? (stream.get_body_capacity() - offset) : size;
+
+        this->read_ptr  = this->data_ptr;
+        this->write_ptr = this->data_ptr + this->body_capacity;
+    }
+};  // class ConstSubStream
+
+class SubStream : public OutStream, public ConstSubStream {
+public:
+    SubStream() : Stream(), OutStream(), ConstSubStream() {}
+
+    SubStream(const Stream & stream, size_t offset = 0, size_t capacity = 0) :
+        Stream(), OutStream(), ConstSubStream(stream, offset, capacity) {
+        this->write_ptr = this->data_ptr;
+    }
+
+    SubStream(const uint8_t * data, const size_t size) :
+        Stream(), OutStream(), ConstSubStream(data, size) {
+        this->write_ptr = this->data_ptr;
+    }
+};  // class SubStream
+
+}  // namespace redemption
 
 #endif

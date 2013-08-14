@@ -71,7 +71,6 @@ protected:
     }
 
 public:
-
     virtual ~string() {
         if (this->buffer_pointer != this->static_buffer) {
             delete [] this->buffer_pointer;
@@ -86,25 +85,25 @@ public:
         size_t source_length  = ::strlen(source);
         size_t content_length = ::strlen(this->buffer_pointer);
 
-        realloc_memory(content_length + source_length + 1, true);
+        this->realloc_memory(content_length + source_length + 1, true);
 
         ::strcpy(this->buffer_pointer + content_length, source);
     }
 
     void concatenate_str(const string & source) {
-        concatenate_c_str(source.buffer_pointer);
+        this->concatenate_c_str(source.buffer_pointer);
     }
 
     void copy_c_str(const char * source) {
         size_t source_length = ::strlen(source);
 
-        realloc_memory(source_length + 1, false);
+        this->realloc_memory(source_length + 1, false);
 
         ::strcpy(this->buffer_pointer, source);
     }
 
     void copy_str(const string & source) {
-        copy_c_str(source.buffer_pointer);
+        this->copy_c_str(source.buffer_pointer);
     }
 
     void empty() {

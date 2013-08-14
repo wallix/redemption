@@ -19,7 +19,6 @@
 
    Logon packet
 
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_LOGON_HPP_
@@ -232,12 +231,6 @@ enum {
 
 //     to get PACKET_COMPR_TYPE: (flags & CompressonTypeMask) >> 9
 //     to set PACKET_COMPR_TYPE: (flags | (CompressonTypeMask & (compr_type << 9))
-enum {
-    PACKET_COMPR_TYPE_8K    = 0x00,
-    PACKET_COMPR_TYPE_64K   = 0x01,
-    PACKET_COMPR_TYPE_RDP6  = 0x02,
-    PACKET_COMPR_TYPE_RDP61 = 0x03,
-};
 
 // cbDomain (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
 //     character data in the Domain field. This size excludes the length of the

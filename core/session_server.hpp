@@ -1,21 +1,21 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean
+  Product name: redemption, a FLOSS RDP proxy
+  Copyright (C) Wallix 2012
+  Author(s): Christophe Grosjean
 */
 
 #ifndef _REDEMPTION_CORE_SESSION_SERVER_HPP_
@@ -25,31 +25,27 @@
 #include "ssl_calls.hpp"
 #include "server.hpp"
 #include "session.hpp"
-#include "constants.hpp"
 
 class SessionServer : public Server
 {
-    int * refreshconf ;
-
     // Used for enable transparent proxying on accepted socket (ini.globals.enable_ip_transparent = true).
     unsigned uid;
     unsigned gid;
 
-    public:
-    SessionServer(int * refreshconf, unsigned uid, unsigned gid) :
-      refreshconf(refreshconf)
-    , uid(uid)
-    , gid(gid) {
+public:
+    SessionServer(unsigned uid, unsigned gid) :
+        uid(uid)
+        , gid(gid) {
     }
 
     virtual Server_status start(int incoming_sck)
     {
         union
         {
-          struct sockaddr s;
-          struct sockaddr_storage ss;
-          struct sockaddr_in s4;
-          struct sockaddr_in6 s6;
+            struct sockaddr s;
+            struct sockaddr_storage ss;
+            struct sockaddr_in s4;
+            struct sockaddr_in6 s6;
         } u;
         unsigned int sin_size = sizeof(u);
         memset(&u, 0, sin_size);
@@ -73,107 +69,108 @@ class SessionServer : public Server
         pid_t pid = fork();
         switch (pid) {
         case 0: /* child */
-        {
-            close(incoming_sck);
-
-            Inifile ini(CFG_PATH "/" RDPPROXY_INI);
-            if (ini.debug.session){
-                LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
-            }
-
-            union
             {
-              struct sockaddr s;
-              struct sockaddr_storage ss;
-              struct sockaddr_in s4;
-              struct sockaddr_in6 s6;
-            } localAddress;
-            socklen_t addressLength = sizeof(localAddress);
+                close(incoming_sck);
 
-
-            if (-1 == getsockname(sck, &localAddress.s, &addressLength)){
-                LOG(LOG_INFO, "getsockname failed error=%s", strerror(errno));
-                _exit(1);
-            }
-
-            target_port = ntohs(localAddress.s4.sin_port);
-            strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
-
-            if (ini.globals.enable_ip_transparent) {
-                strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
-
-                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
-
-                int fd = open("/proc/net/ip_conntrack", O_RDONLY);
-                // source and dest are inverted because we get the information we want from reply path rule
-                int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), 1);
-                if (res){
-                    LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
-                }
-                close(fd);
-
-                setgid(this->gid);
-                setuid(this->uid);
-            }
-
-            LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);
-
-            int nodelay = 1;
-            if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
-                wait_obj front_event(sck);
-//                SocketTransport front_trans("RDP Client", sck, ini.debug.front);
-
-                // Create session file
-                int child_pid = getpid();
-                char session_file[256];
-                sprintf(session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
-                int fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
-                if (fd == -1) {
-                    LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%d\n", errno, strerror(errno));
-                    _exit(1);
-                }
-                size_t lg = snprintf(text, 255, "%d", child_pid);
-                if (write(fd, text, lg) == -1) {
-                    LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/session_<pid>.pid", strerror(errno));
-                    _exit(1);
-                }
-                close(fd);
-
-                // Launch session
-                LOG(LOG_INFO, "New session on %u (pid=%u) from %s to %s", (unsigned)sck, (unsigned)child_pid, source_ip, real_target_ip);
-                ini.context_set_value(AUTHID_HOST, source_ip);
-                ini.context_set_value(AUTHID_TARGET, real_target_ip);
-                if (ini.globals.enable_ip_transparent
-                &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
-                    ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
-                }
-                Session session(front_event, sck, this->refreshconf, &ini);
-
-                // Suppress session file
-                unlink(session_file);
-
+                Inifile ini;
+                ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
                 if (ini.debug.session){
-                    LOG(LOG_INFO, "Session::end of Session(%u)", sck);
+                    LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
                 }
 
-                shutdown(sck, 2);
+                union
+                {
+                    struct sockaddr s;
+                    struct sockaddr_storage ss;
+                    struct sockaddr_in s4;
+                    struct sockaddr_in6 s6;
+                } localAddress;
+                socklen_t addressLength = sizeof(localAddress);
+
+
+                if (-1 == getsockname(sck, &localAddress.s, &addressLength)){
+                    LOG(LOG_INFO, "getsockname failed error=%s", strerror(errno));
+                    _exit(1);
+                }
+
+                target_port = ntohs(localAddress.s4.sin_port);
+                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
+
+                if (ini.globals.enable_ip_transparent) {
+                    strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+
+                    LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
+
+                    int fd = open("/proc/net/ip_conntrack", O_RDONLY);
+                    // source and dest are inverted because we get the information we want from reply path rule
+                    int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), 1);
+                    if (res){
+                        LOG(LOG_WARNING, "Failed to get transparent proxy target from ip_conntrack: %d", fd);
+                    }
+                    close(fd);
+
+                    setgid(this->gid);
+                    setuid(this->uid);
+                }
+
+                LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);
+
+                int nodelay = 1;
+                if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
+                    wait_obj front_event(sck);
+                    //                SocketTransport front_trans("RDP Client", sck, ini.debug.front);
+
+                    // Create session file
+                    int child_pid = getpid();
+                    char session_file[256];
+                    sprintf(session_file, "%s/redemption/session_%d.pid", PID_PATH, child_pid);
+                    int fd = open(session_file, O_WRONLY | O_CREAT, S_IRWXU);
+                    if (fd == -1) {
+                        LOG(LOG_ERR, "Writing process id to SESSION ID FILE failed. Maybe no rights ?:%d:%d\n", errno, strerror(errno));
+                        _exit(1);
+                    }
+                    size_t lg = snprintf(text, 255, "%d", child_pid);
+                    if (write(fd, text, lg) == -1) {
+                        LOG(LOG_ERR, "Couldn't write pid to %s: %s", PID_PATH "/redemption/session_<pid>.pid", strerror(errno));
+                        _exit(1);
+                    }
+                    close(fd);
+
+                    // Launch session
+                    LOG(LOG_INFO, "New session on %u (pid=%u) from %s to %s", (unsigned)sck, (unsigned)child_pid, source_ip, real_target_ip);
+                    ini.context_set_value(AUTHID_HOST, source_ip);
+                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
+                    if (ini.globals.enable_ip_transparent
+                        &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
+                        ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
+                    }
+                    Session session(front_event, sck, &ini);
+
+                    // Suppress session file
+                    unlink(session_file);
+
+                    if (ini.debug.session){
+                        LOG(LOG_INFO, "Session::end of Session(%u)", sck);
+                    }
+
+                    shutdown(sck, 2);
+                    close(sck);
+                }
+                else {
+                    LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
+                }
+                return START_WANT_STOP;
+            }
+            break;
+        default: /* father */
+            {
                 close(sck);
             }
-            else {
-                LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
-            }
-            return START_WANT_STOP;
-        }
-        break;
-        default: /* father */
-        {
-            close(sck);
-        }
-        break;
+            break;
         case -1:
             // error forking
             LOG(LOG_ERR, "Error creating process for new session : %s\n", strerror(errno));
-        break;
+            break;
         }
         return START_FAILED;
     }

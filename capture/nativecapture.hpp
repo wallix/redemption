@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+              Martin Potier, Meng Tan
 */
 
 #ifndef _REDEMPTION_CAPTURE_NATIVECAPTURE_HPP_
@@ -24,7 +25,6 @@
 #include <errno.h>
 #include "bitmap.hpp"
 #include "rect.hpp"
-#include "constants.hpp"
 #include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -65,6 +65,7 @@ public:
     BmpCache & bmp_cache;
     GraphicToFile recorder;
     uint32_t nb_file;
+    uint64_t time_to_wait;
 
     NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable, const Inifile & ini)
     : width(width)
@@ -73,6 +74,7 @@ public:
     , bmp_cache(bmp_cache)
     , recorder(now, &trans, width, height, 24, bmp_cache, drawable, ini)
     , nb_file(0)
+    , time_to_wait(0)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
@@ -110,6 +112,7 @@ public:
         if (difftimeval(now, this->start_native_capture)
                 >= this->inter_frame_interval_native_capture) {
             this->recorder.timestamp(now);
+            this->time_to_wait = this->inter_frame_interval_native_capture;
             if (!pointer_already_displayed) {
                 this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
             }
@@ -119,6 +122,9 @@ public:
                 this->breakpoint();
                 this->start_break_capture = now;
             }
+        }
+        else {
+            this->time_to_wait = this->inter_frame_interval_native_capture - difftimeval(now, this->start_native_capture);
         }
     }
 

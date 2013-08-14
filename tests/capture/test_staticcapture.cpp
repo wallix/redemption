@@ -31,7 +31,6 @@
 #include "outfilenametransport.hpp"
 #include "image_capture.hpp"
 #include "staticcapture.hpp"
-#include "constants.hpp"
 #include "RDP/caches/bmpcache.hpp"
 #include <png.h>
 

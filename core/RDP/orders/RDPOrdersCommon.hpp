@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -18,13 +18,11 @@
    Author(s): Christophe Grosjean
 
    New RDP Orders Coder / Decoder : Common parts and constants
-
 */
 
 #ifndef _REDEMPTION_CORE_RDP_CAPABILITIES_RDPORDERSCOMMON_HPP_
 #define _REDEMPTION_CORE_RDP_CAPABILITIES_RDPORDERSCOMMON_HPP_
 
-#include "constants.hpp"
 #include "stream.hpp"
 #include "rect.hpp"
 #include "bitfu.hpp"
@@ -763,7 +761,7 @@ public:
             header.fields |= bits << (i * 8);
         }
 
-//        LOG(LOG_INFO, "control=%.2x order=%d  size=%d fields=%.6x assert=%d", 
+//        LOG(LOG_INFO, "control=%.2x order=%d  size=%d fields=%.6x assert=%d",
 //            header.control, this->order, size, header.fields, (0 == (header.fields & ~0x3FF)));
 
         switch (this->order){
@@ -800,10 +798,10 @@ public:
         if (header.control & BOUNDS) {
             if (!(header.control & LASTBOUNDS)){
                 int bound_fields = stream.in_uint8();
-                uint16_t bounds[4] = 
+                uint16_t bounds[4] =
                     { static_cast<uint16_t>(this->clip.x)
                     , static_cast<uint16_t>(this->clip.y)
-                    , static_cast<uint16_t>(this->clip.x + this->clip.cx - 1) 
+                    , static_cast<uint16_t>(this->clip.x + this->clip.cx - 1)
                     , static_cast<uint16_t>(this->clip.y + this->clip.cy - 1)
                     };
 
@@ -926,21 +924,25 @@ class RDPSecondaryOrderHeader {
     // +----------------------------------------+------------------------------+
 
     public:
-    uint16_t length;
+    uint16_t order_length;
     unsigned flags;
     unsigned type;
 
-    RDPSecondaryOrderHeader(Stream & stream){
-        this->length = stream.in_uint16_le();
-        this->flags = stream.in_uint16_le();
-        this->type = stream.in_uint8();
+    RDPSecondaryOrderHeader(Stream & stream) {
+        this->order_length = stream.in_uint16_le();
+        this->flags        = stream.in_uint16_le();
+        this->type         = stream.in_uint8();
     }
-    RDPSecondaryOrderHeader(uint16_t length, unsigned flags, unsigned type):
-        length(length), flags(flags), type(type)
-    {
+
+    RDPSecondaryOrderHeader(uint16_t order_length, unsigned flags, unsigned type):
+        order_length(order_length), flags(flags), type(type) {
+    }
+
+    uint16_t order_data_length() const {
+        return   this->order_length
+               + 13                     /* Protocol defined adjustment. */
+               - 6;                     /* Size of header.              */
     }
 };
-
-
 
 #endif

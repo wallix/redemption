@@ -27,6 +27,9 @@
 
 #include "RDP/slowpath.hpp"
 
+#include "ssl_calls.hpp"
+#include "RDP/mppc.hpp"
+
 TODO("To implement fastpath, the idea is to replace the current layer stack X224->Mcs->Sec with only one FastPath object. The FastPath layer would also handle legacy packets still using several independant layers. That should lead to a much simpler code in both front.hpp and rdp.hpp but still keep a flat easy to test model.")
 
 namespace FastPath {
@@ -203,9 +206,7 @@ namespace FastPath {
             if (stream.size() < 1)
                 trans.recv(&stream.end, 1);
 
-            uint8_t byte;
-
-            byte = stream.in_uint8();
+            uint8_t byte = stream.in_uint8();
 
             int action = byte & 0x03;
             if (action != 0) {
@@ -218,18 +219,19 @@ namespace FastPath {
 
             trans.recv(&stream.end, 1);
 
-             uint16_t length;
-             byte = stream.in_uint8();
-             if (byte & 0x80){
-                 length = (byte & 0x7F) << 8;
-
+             uint16_t length = stream.in_uint8();
+             if (length & 0x80){
                  trans.recv(&stream.end, 1);
                  byte = stream.in_uint8();
-                 length += byte;
+                 length = (length & 0x7F) << 8 | byte;
              }
-             else{
-                 length = byte;
-             }
+
+            if (length < stream.size()){
+                LOG( LOG_ERR
+                   , "FastPath::ClientInputEventPDU_Recv: inconsistent length in header (length=%u)"
+                   , length);
+                throw Error(ERR_RDP_FASTPATH);
+            }
 
             trans.recv(&stream.end, length - stream.size());
 
@@ -241,22 +243,23 @@ namespace FastPath {
                     + ((this->numEvents == 0) ? 1 : 0) // numEvent
                     ;
                 if (!stream.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%u",
-                        expected, stream.in_remain());
+                    LOG( LOG_ERR
+                       , "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%u"
+                       , expected, stream.in_remain());
                     throw Error(ERR_RDP_FASTPATH);
                 }
 
                 stream.in_copy_bytes(this->dataSignature, 8);
             }
 
-            if (this->numEvents == 0){
-                this->numEvents = stream.in_uint8();
-            }
-
             this->payload.resize(stream, stream.in_remain());
 
             if (this->secFlags & FASTPATH_INPUT_ENCRYPTED) {
                 decrypt.decrypt(payload);
+            }
+
+            if (this->numEvents == 0) {
+                this->numEvents = payload.in_uint8();
             }
         }   // ClientInputEventPDU_Recv(Transport & trans, Stream & stream)
     };  // struct ClientInputEventPDU_Recv
@@ -272,8 +275,9 @@ namespace FastPath {
             stream.reset();
 
             if ((fipsInformation != NULL) && (fipsInformation->size() < 4)) {
-                LOG(LOG_ERR, "FastPath::ClientInputEventPDU_Send: fipsInformation too short, expected=4 got=%u",
-                    fipsInformation->size());
+                LOG( LOG_ERR
+                   , "FastPath::ClientInputEventPDU_Send: fipsInformation too short, expected=4 got=%u"
+                   , fipsInformation->size());
                 throw Error(ERR_RDP_FASTPATH);
             }
 
@@ -299,7 +303,7 @@ namespace FastPath {
             stream.out_per_length(length);
 
             if (fipsInformation != NULL) {
-                stream.out_copy_bytes(fipsInformation->data, 4);
+                stream.out_copy_bytes(fipsInformation->get_data(), 4);
             }
 
             if (secFlags & FASTPATH_INPUT_ENCRYPTED) {
@@ -877,7 +881,7 @@ namespace FastPath {
             stream.out_per_length(length);
 
             if (fipsInformation != NULL) {
-                stream.out_copy_bytes(fipsInformation->data, 4);
+                stream.out_copy_bytes(fipsInformation->get_data(), 4);
             }
 
             if (secFlags & FASTPATH_OUTPUT_ENCRYPTED) {
@@ -1062,19 +1066,18 @@ namespace FastPath {
         uint8_t   updateCode;
         uint8_t   fragmentation;
         uint8_t   compression;
-//        uint8_t   compressionFlags;
+        uint8_t   compressionFlags;
         uint16_t  size;
         SubStream payload;
 
-        Update_Recv(Stream & stream)
+        Update_Recv(Stream & stream, rdp_mppc_dec * dec)
         : updateCode(0)
         , fragmentation(0)
         , compression(0)
-//        , compressionFlags(0)
+        , compressionFlags(0)
         , size(0)
         , payload(stream) {
-//            const unsigned expected = 4; // updateHeader(1) + compressionFlags(1) + size(2)
-            const unsigned expected = 3; // updateHeader(1) + size(2)
+            unsigned expected = 1; // updateHeader(1)
             if (!stream.in_check_rem(expected)) {
                 LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
                     expected, stream.in_remain());
@@ -1087,8 +1090,21 @@ namespace FastPath {
             this->fragmentation = (byte & 0x30) >> 4; // 2 bits
             this->compression   = (byte & 0xC0) >> 6; // 2 bits
 
-//            this->compressionFlags = stream.in_uint8();
-            this->size             = stream.in_uint16_le();
+            expected =
+                  ((this->compression & FASTPATH_OUTPUT_COMPRESSION_USED) ? 1 : 0)  //   ?compressionFlags?(1)
+                + 2;                                                                // + size(2)
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDP_FASTPATH);
+            }
+
+
+            if (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED) {
+                this->compressionFlags = stream.in_uint8();
+            }
+
+            this->size = stream.in_uint16_le();
 
             if ((this->size != 0) && !stream.in_check_rem(this->size)) {
                 LOG(LOG_ERR, "FastPath::Update: data truncated, expected=%u remains=%u",
@@ -1097,6 +1113,17 @@ namespace FastPath {
             }
 
             this->payload.resize(stream, this->size);
+
+            if (   (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED)
+                && (this->compressionFlags & PACKET_COMPRESSED)) {
+                uint32_t  roff = 0;
+                uint32_t  rlen = 0;
+
+                decompress_rdp( dec, this->payload.get_data(), this->payload.size()
+                              , this->compressionFlags, &roff, &rlen);
+
+                this->payload.resize(StaticStream(dec->history_buf + roff, rlen), rlen);
+            }
 
             stream.in_skip_bytes(this->size);
         }
@@ -1107,23 +1134,29 @@ namespace FastPath {
                    , uint16_t datalen
                    , uint8_t updateCode
                    , uint8_t fragmentation
-//                   , uint8_t compressionFlags
+                   , uint8_t compression
+                   , uint8_t compressionFlags
                    ) {
             stream.out_uint8(
                   updateCode
-                | fragmentation << 4 // fragmentation
-//                | 0 << 6             // compression
+                | (fragmentation & 0x3) << 4    // fragmentation
+                | (compression & 0x3) << 6      // compression
                 );
 
-//            stream.out_uint8(compressionFlags);
+            if (compression & FASTPATH_OUTPUT_COMPRESSION_USED) {
+                stream.out_uint8(compressionFlags);
+            }
 
-              stream.out_uint16_le(datalen);
+            stream.out_uint16_le(datalen);
 
             stream.mark_end();
         }
 
-        // Returns size of TS_FP_UPDATE structure.
-        static size_t GetSize() {
+        static size_t GetSize(bool compression) {
+            if (compression) {
+                return 4;
+            }
+
             return 3;
         }
     };

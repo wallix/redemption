@@ -7,6 +7,7 @@ from socket import error
 from struct    import unpack
 from struct    import pack
 import datetime
+# import base64
 
 from password import PASSWORD1, PASSWORD2, PASSWORD3, PASSWORD4, PASSWORD5, PASSWORD6, PASSWORD7, PASSWORD8
 
@@ -73,6 +74,10 @@ class User(object):
             answer['timeclose'] = str(service.timeclose)
             answer['is_rec'] = service.is_rec
             answer['rec_path'] = service.rec_path
+            if service.alternate_shell:
+                answer['alternate_shell'] = service.alternate_shell
+            if service.shell_working_directory:
+                answer['shell_working_directory'] = service.shell_working_directory
             if service.display_message:
                 answer['display_message'] = service.display_message
                 answer['message'] = service.message
@@ -94,6 +99,10 @@ class User(object):
                         answer['timeclose'] = str(service.timeclose)
                         answer['is_rec'] = service.is_rec
                         answer['rec_path'] = service.rec_path
+                        if service.alternate_shell:
+                            answer['alternate_shell'] = service.alternate_shell
+                        if service.shell_working_directory:
+                            answer['shell_working_directory'] = service.shell_working_directory
                         if service.display_message:
                             answer['display_message'] = service.display_message
                             answer['message'] = service.message
@@ -119,7 +128,7 @@ class User(object):
                 _x = _x[1:]
             _current_page = int(_x) - 1
         except:
-            _current_page = 1
+            _current_page = 0
 
         try:
             _x = dic.get('selector_lines_per_page', '10')
@@ -135,8 +144,11 @@ class User(object):
         _device_filter = dic.get('selector_device_filter', '')
         if _device_filter.startswith('!'):
             _device_filter = _device_filter[1:]
+        _proto_filter = dic.get('selector_proto_filter', '')
+        if _proto_filter.startswith('!'):
+            _proto_filter = _proto_filter[1:]
         answer['selector'] = 'true'
-        
+
         all_services = []
         all_groups = []
         all_protos = []
@@ -147,12 +159,16 @@ class User(object):
                 continue
             if service.protocol.lower().find(_group_filter) == -1:
                 continue
+            if service.protocol.find(_proto_filter.upper()) == -1:
+                continue
             # multiply number of entries by 15 to test pagination
             all_services.append(target)
             all_groups.append(service.protocol.lower())
             all_protos.append(service.protocol)
             all_endtimes.append(service.endtime)
-        _number_of_pages = 1 + len(all_protos) / _lines_per_page
+        _number_of_pages = 1
+        if _lines_per_page != 0:
+            _number_of_pages = 1 + (len(all_protos) - 1) / _lines_per_page
         if _current_page >= _number_of_pages:
             _current_page = _number_of_pages - 1
         if _current_page < 0:
@@ -165,10 +181,11 @@ class User(object):
         answer['target_login'] = " ".join(all_groups[_start_of_page:_end_of_page])
         answer['target_device'] = " ".join(all_services[_start_of_page:_end_of_page])
         answer['selector_number_of_pages'] = str(_number_of_pages)
+        answer['selector_current_page'] = _current_page + 1
 
 
 class Service(object):
-    def __init__(self, name, device, login, password, protocol, port, is_rec = 'False', rec_path = '/tmp/testxxx.png', alive=720000):
+    def __init__(self, name, device, login, password, protocol, port, is_rec = 'False', rec_path = '/tmp/testxxx.png', alive=720000, clipboard = 'true', file_encryption = 'true', alternate_shell = '', shell_working_directory = ''):
         import time
         import datetime
         self.name = name
@@ -183,6 +200,10 @@ class Service(object):
         self.rec_path = rec_path
         self.display_message = None
         self.message = None
+        self.clipboard = clipboard
+        self.file_encryption = file_encryption
+        self.alternate_shell = alternate_shell
+        self.shell_working_directory = shell_working_directory
 
         if self.device == 'display_message':
             self.display_message = MAGICASK
@@ -198,6 +219,7 @@ class Authentifier(object):
         self.sck = sck
         self.users = users
         self.dic = {'login':MAGICASK, 'password':MAGICASK}
+        self.tries = 5
 
     def read(self):
         print("Reading")
@@ -217,13 +239,17 @@ class Authentifier(object):
             if (_data[key][:3] == 'ASK'):
                 _data[key] = MAGICASK
             elif (_data[key][:1] == '!'):
+                # BASE64 TRY
+                # _data[key] = base64.b64decode(_data[key][1:])
                 _data[key] = _data[key][1:]
             else:
+                # BASE64 TRY
+                # _data[key] = base64.b64decode(_data[key])
                 # _data[key] unchanged
                 pass
         self.dic.update(_data)
 
-        answer = {'authenticated': 'false'}
+        answer = {'authenticated': 'false', 'clipboard' : 'true', 'file_encryption' : 'true', 'trans_cancel' : 'Annuler', 'trans_ok' : 'Oui', 'width' : '1280', 'height' : '1024', 'bpp' : '8'}
         _login = self.dic.get('login')
         if _login != MAGICASK:
             for user in self.users:
@@ -238,8 +264,14 @@ class Authentifier(object):
                         print("Wrong Password for user %s" % user.name)
                     break
 
+
         if answer['authenticated'] == 'true':
+            self.tries = 5
             answer.update(user.get_service(self.dic))
+        else:
+            self.tries = self.tries - 1
+            if self.tries == 0:
+                answer['rejected'] = "Too many login failures"
 
         self.dic.update(answer)
         self.send()
@@ -247,6 +279,8 @@ class Authentifier(object):
 
     def send(self):
         self.dic['keepalive'] = 'true'
+        # BASE64 TRY
+        # _list = ["%s\n%s\n" % (key, ("!%s" % base64.b64encode(("%s" % value))) if value != MAGICASK else "ASK") for key, value in self.dic.iteritems()]
         _list = ["%s\n%s\n" % (key, ("!%s" % value) if value != MAGICASK else "ASK") for key, value in self.dic.iteritems()]
 
         for s in _list:

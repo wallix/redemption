@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -22,7 +22,6 @@
    Based on xrdp and rdesktop
    Copyright (C) Jay Sorg 2004-2010
    Copyright (C) Matthew Chapman 1999-2007
-
 */
 
 #ifndef _REDEMPTION_UTILS_SSL_CALLS_HPP_
@@ -40,7 +39,6 @@
 #include <openssl/x509v3.h>
 
 #include <string.h>
-#include "constants.hpp"
 #include "log.hpp"
 #include "stream.hpp"
 
@@ -64,7 +62,7 @@ class SslSha1
 
     void update(const Stream & stream)
     {
-        SHA1_Update(&this->sha1, stream.data, stream.size());
+        SHA1_Update(&this->sha1, stream.get_data(), stream.size());
     }
 
     void final(uint8_t * out_data)
@@ -85,7 +83,7 @@ class SslMd5
 
     void update(const Stream & stream)
     {
-        MD5_Update(&this->md5, stream.data, stream.size());
+        MD5_Update(&this->md5, stream.get_data(), stream.size());
     }
 
     void final(uint8_t * out_data)
@@ -103,11 +101,11 @@ class SslRC4
 
     void set_key(const Stream & stream)
     {
-        RC4_set_key(&this->rc4, stream.size(), stream.data);
+        RC4_set_key(&this->rc4, stream.size(), stream.get_data());
     }
 
     void crypt(Stream & stream){
-        RC4(&this->rc4, stream.size(), stream.data, stream.data);
+        RC4(&this->rc4, stream.size(), stream.get_data(), stream.get_data());
     }
 };
 
@@ -118,7 +116,7 @@ class SslHMAC
     public:
     SslHMAC(const Stream & key, const EVP_MD *md = EVP_sha256())
     {
-        HMAC_Init(&this->hmac, key.data, key.size(), md);
+        HMAC_Init(&this->hmac, key.get_data(), key.size(), md);
     }
 
     ~SslHMAC()
@@ -128,16 +126,16 @@ class SslHMAC
 
     void update(const Stream & stream)
     {
-        HMAC_Update(&this->hmac, stream.data, stream.size());
+        HMAC_Update(&this->hmac, stream.get_data(), stream.size());
     }
 
     void final(Stream & stream)
     {
         unsigned int len = 0;
 
-        HMAC_Final(&this->hmac, stream.data, &len);
+        HMAC_Final(&this->hmac, stream.get_data(), &len);
 
-        stream.p = stream.end = stream.data + len;
+        stream.p = stream.end = stream.get_data() + len;
     }
 };
 
@@ -216,7 +214,7 @@ class ssllib
         uint8_t md5sig[MD5_DIGEST_LENGTH];
         md5.final(md5sig);
 
-        memcpy(signature.data, md5sig, signature.capacity);
+        memcpy(signature.get_data(), md5sig, signature.get_capacity());
     }
 };
 
@@ -258,7 +256,7 @@ struct CryptContext
     // +-------------------------------------+-------------------------------------+
     uint32_t encryptionMethod;
 
-    CryptContext() 
+    CryptContext()
         : use_count(0)
         , encryptionMethod(0)
     {
@@ -272,7 +270,7 @@ struct CryptContext
         // 16-byte transformation used to generate export keys (6.2.2).
         this->encryptionMethod = encryptionMethod;
         memcpy(this->key, keyblob, 16);
-        
+
         if (encryptionMethod == 1) {
             // 40 bits encryption
             ssllib ssl;

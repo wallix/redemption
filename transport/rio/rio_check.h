@@ -98,7 +98,7 @@ extern "C" {
             LOG(LOG_INFO, "=============== Common Part =======");
             hexdump_c(&(((const char *)data)[0]), differs);
             LOG(LOG_INFO, "=============== Expected ==========");
-            hexdump(&((const char *)self->data)[self->current+differs], available_len - differs);
+            hexdump_c(&((const char *)self->data)[self->current+differs], available_len - differs);
             LOG(LOG_INFO, "=============== Got ===============");
             hexdump_c(&(((const char *)data)[differs]), available_len - differs);
             rio_m_RIOCheck_destructor(self);
@@ -115,6 +115,11 @@ extern "C" {
             return -RIO_ERROR_TRAILING_DATA;
         }
         return available_len;
+    }
+
+    static inline RIO_ERROR rio_m_RIOCheck_seek(RIOCheck * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
     }
 
     static inline RIO_ERROR rio_m_RIOCheck_get_status(RIOCheck * self)

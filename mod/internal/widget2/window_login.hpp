@@ -22,13 +22,13 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_LOGIN_HPP
 
 #include "version.hpp"
-#include "widget2_edit.hpp"
-#include "widget2_label.hpp"
-#include "widget2_button.hpp"
+#include "edit.hpp"
+#include "label.hpp"
+#include "button.hpp"
 #include "password.hpp"
 #include "window.hpp"
-#include "widget2_multiline.hpp"
-#include "widget2_image.hpp"
+#include "multiline.hpp"
+#include "image.hpp"
 #include "msgbox.hpp"
 
 class WindowLogin : public Window
@@ -44,7 +44,7 @@ public:
     WidgetButton help;
     MessageBox * window_help;
 
-    WindowLogin(DrawApi* drawable, int16_t x, int16_t y, Widget2* parent,
+    WindowLogin(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
                 NotifyApi* notifier, const char* caption, int group_id = 0,
                 const char * login = 0, const char * password = 0,
                 int fgcolor = BLACK, int bgcolor = GREY,
@@ -139,7 +139,7 @@ public:
                 while (p->parent)
                     p = p->parent;
                 this->window_help = new MessageBox(
-                    this->drawable, 0, 0, p, this, "Help",
+                    *this->drawable, 0, 0, p, this, "Help",
                     "You must be authenticated before using this<br>"
                     "session.<br>"
                     "<br>"

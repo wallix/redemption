@@ -35,7 +35,6 @@
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
-#include "constants.hpp"
 
 const char expected_Red_on_Blue_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order

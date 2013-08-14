@@ -189,13 +189,11 @@ enum {
         stream.out_uint32_le(param4);
         uint32_t len = stream.get_offset();
         stream.set_out_uint32_le(len, 0);
-        this->t->send(stream.data, len);
+        this->t->send(stream.get_data(), len);
     }
 
-    virtual BackEvent_t draw_event(void)
+    virtual void draw_event(void)
     {
-        BackEvent_t rv = BACK_EVENT_NONE;
-
         try{
             BStream stream(32768);
             this->t->recv(&stream.end, 8);
@@ -315,16 +313,12 @@ enum {
                     default:
                         throw 1;
                     }
-                    if (rv != BACK_EVENT_NONE) {
-                        break;
-                    }
                 }
             }
         }
         catch(...){
-            rv = BACK_EVENT_NEXT;
+            this->event.signal = BACK_EVENT_NEXT;
         }
-        return rv;
     }
 
     virtual void begin_update()

@@ -61,6 +61,7 @@ struct ClientInfo {
     char directory[512];
 
     int rdp_compression;
+    int rdp_compression_type;
     int rdp_autologin;
     int encryptionLevel; /* 1, 2, 3 = low, medium, high */
     int sound_code; /* 1 = leave sound at server */
@@ -69,6 +70,10 @@ struct ClientInfo {
     int brush_cache_code; /* 0 = no cache 1 = 8x8 standard cache
                            2 = arbitrary dimensions */
     bool console_session;
+
+    InfoPacket infoPacket;
+
+    TODO("as encryption_level, bitmap_compression and bitmap_cache are not really in client_info RDP structure we should probably not keep them here either")
 
     ClientInfo(const int encryptionLevel, const bool bitmap_compression, const bool bitmap_cache) {
         this->bpp = 0;
@@ -100,6 +105,7 @@ struct ClientInfo {
         memset(this->program, 0, sizeof(this->program));
         memset(this->directory, 0, sizeof(this->directory));
         this->rdp_compression = 0;
+        this->rdp_compression_type = 0;
         this->rdp_autologin = 0;
         this->sound_code = 0; /* 1 = leave sound at server */
         this->is_mce = 0;
@@ -122,24 +128,25 @@ struct ClientInfo {
                            , bool verbose
                            ) throw (Error)
     {
-        InfoPacket infoPacket;
-        infoPacket.recv(stream);
-        infoPacket.log("Receiving from client");
+        this->infoPacket.recv(stream);
+        if (verbose) {
+            this->infoPacket.log("Receiving from client");
+        }
 
-        memcpy(this->domain, infoPacket.Domain, sizeof(infoPacket.Domain));
-        memcpy(this->username, infoPacket.UserName, sizeof(infoPacket.UserName));
+        memcpy(this->domain, this->infoPacket.Domain, sizeof(this->infoPacket.Domain));
+        memcpy(this->username, this->infoPacket.UserName, sizeof(this->infoPacket.UserName));
         if (!ignore_logon_password){
-            memcpy(this->password, infoPacket.Password, sizeof(infoPacket.Password));
+            memcpy(this->password, this->infoPacket.Password, sizeof(this->infoPacket.Password));
         }
         else{
             if (verbose){
                 LOG(LOG_INFO, "client info: logon password <hidden> ignored");
             }
         }
-        memcpy(this->program, infoPacket.AlternateShell, sizeof(infoPacket.AlternateShell));
-        memcpy(this->directory, infoPacket.WorkingDir, sizeof(infoPacket.WorkingDir));
+        memcpy(this->program, this->infoPacket.AlternateShell, sizeof(this->infoPacket.AlternateShell));
+        memcpy(this->directory, this->infoPacket.WorkingDir, sizeof(this->infoPacket.WorkingDir));
 
-        this->rdp5_performanceflags = infoPacket.extendedInfoPacket.performanceFlags;
+        this->rdp5_performanceflags = this->infoPacket.extendedInfoPacket.performanceFlags;
 
         if (this->rdp5_performanceflags == 0){
             this->rdp5_performanceflags = performance_flags_default;
@@ -150,7 +157,7 @@ struct ClientInfo {
         if (verbose){
             LOG(LOG_INFO,
                 "client info: performance flags before=0x%08X after=0x%08X default=0x%08X present=0x%08X not-present=0x%08X",
-                infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags, performance_flags_default,
+                this->infoPacket.extendedInfoPacket.performanceFlags, this->rdp5_performanceflags, performance_flags_default,
                 performance_flags_force_present, performance_flags_force_not_present);
         }
 
@@ -160,20 +167,22 @@ struct ClientInfo {
                                        | INFO_MAXIMIZESHELL
                                        ;
 
-        if ((infoPacket.flags & mandatory_flags) != mandatory_flags){
+        if ((this->infoPacket.flags & mandatory_flags) != mandatory_flags){
             throw Error(ERR_SEC_PROCESS_LOGON_UNKNOWN_FLAGS);
         }
-        if (infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
+        if (this->infoPacket.flags & INFO_REMOTECONSOLEAUDIO) {
             this->sound_code = 1;
         }
         TODO("for now not allowing both autologon and mce")
-        if ((infoPacket.flags & INFO_AUTOLOGON) && (!this->is_mce)){
+        if ((this->infoPacket.flags & INFO_AUTOLOGON) && (!this->is_mce)){
             this->rdp_autologin = 1;
         }
-        if (infoPacket.flags & INFO_COMPRESSION){
-            this->rdp_compression = 1;
+        if (this->infoPacket.flags & INFO_COMPRESSION){
+            this->rdp_compression      = 1;
+            this->rdp_compression_type =
+                ((this->infoPacket.flags & CompressionTypeMask) >> 9);
         }
     }
-
 };
+
 #endif

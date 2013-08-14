@@ -25,7 +25,7 @@
 #define BOOST_TEST_MODULE TestWrmImageChunk
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 
 #include "test_orders.hpp"
 #include "transport.hpp"
@@ -34,7 +34,6 @@
 #include "FileToGraphic.hpp"
 #include "GraphicToFile.hpp"
 #include "image_capture.hpp"
-#include "constants.hpp"
 
 
 BOOST_AUTO_TEST_CASE(TestImageChunk)

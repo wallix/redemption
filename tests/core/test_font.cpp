@@ -33,8 +33,6 @@
 
 #include "font.hpp"
 
-#include "constants.hpp"
-
 BOOST_AUTO_TEST_CASE(TestCreateFont)
 {
     // test loading a font from default file

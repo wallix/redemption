@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -19,9 +19,7 @@
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    rdp module main header file
-
 */
-
 
 #ifndef _REDEMPTION_CORE_RDP_SHARE_HPP_
 #define _REDEMPTION_CORE_RDP_SHARE_HPP_
@@ -29,8 +27,9 @@
 #include <stdlib.h>
 
 #include "log.hpp"
-#include "channel_list.hpp"
 #include "stream.hpp"
+
+#include "RDP/mppc.hpp"
 
 
 /* RDP PDU codes */
@@ -100,7 +99,6 @@ enum {
 // PDUSource (2 bytes): A 16-bit, unsigned integer. The channel ID which is the
 //   transmission source of the PDU.
 
-
 enum {
     RDP_POINTER_SYSTEM             = 1,
     RDP_POINTER_MOVE               = 3,
@@ -108,7 +106,6 @@ enum {
     RDP_POINTER_CACHED             = 7,
     RDP_POINTER_NEW                = 8,
 };
-
 
 //##############################################################################
 struct ShareControl_Recv
@@ -166,10 +163,8 @@ struct ShareControl_Recv
         }
 
         this->payload.resize(stream, new_size);
-    } 
+    }
 }; // END CLASS ShareControl_Recv
-
-
 
 //##############################################################################
 struct ShareControl_Send
@@ -187,7 +182,6 @@ struct ShareControl_Send
         stream.mark_end();
     }
 }; // END CLASS ShareControl_Send
-
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.2 Share Data Header (TS_SHAREDATAHEADER)
 // =================================================================
@@ -324,7 +318,6 @@ enum {
                                                // (section 2.2.4.1.1)
 };
 
-
 // compressedType (1 byte): An 8-bit, unsigned integer. The compression type
 //   and flags specifying the data following the Share Data Header (section
 //   2.2.8.1.1.1.2).
@@ -369,8 +362,6 @@ enum {
 // compressedLength (2 bytes): A 16-bit, unsigned integer. The compressed length
 //   of the packet in bytes.
 
-
-
 //##############################################################################
 struct ShareData
 //##############################################################################
@@ -383,12 +374,13 @@ struct ShareData
     uint8_t streamid;
     uint16_t len;
     uint8_t pdutype2;
+    uint16_t uncompressedLen;
     uint8_t compressedType;
     uint16_t compressedLen;
 
     // CONSTRUCTOR
     //==============================================================================
-    ShareData(Stream & stream )
+    ShareData(Stream & stream)
     //==============================================================================
     : stream(stream)
     , payload(this->stream, 0)
@@ -396,6 +388,7 @@ struct ShareData
     , streamid(0)
     , len(0)
     , pdutype2(0)
+    , uncompressedLen(0)
     , compressedType(0)
     , compressedLen(0)
     {
@@ -405,30 +398,39 @@ struct ShareData
     void emit_begin( uint8_t pdu_type2
                    , uint32_t share_id
                    , uint8_t streamid
+                   , uint8_t _uncompressedLen = 0
+                   , uint8_t compressedType = 0
+                   , uint16_t compressedLen = 0
                    )
     //==============================================================================
     {
         stream.out_uint32_le(share_id);
         stream.out_uint8(0); // pad1
         stream.out_uint8(streamid); // streamid
-        stream.out_uint16_le(2); // skip len
+        this->uncompressedLen = _uncompressedLen;
+        if (!_uncompressedLen) {
+            stream.out_clear_bytes(2); // skip len
+        }
+        else {
+            stream.out_uint16_le(_uncompressedLen);
+        }
         stream.out_uint8(pdu_type2); // pdutype2
-        stream.out_uint8(0); // compressedType
-        stream.out_uint16_le(0); // compressedLen
-
+        stream.out_uint8(compressedType); // compressedType
+        stream.out_uint16_le(compressedLen); // compressedLen
     } // END METHOD emit_begin
 
     //==============================================================================
     void emit_end()
     //==============================================================================
     {
-        stream.set_out_uint16_le(stream.get_offset() - 8, 6);
+        if (!this->uncompressedLen) {
+            stream.set_out_uint16_le(stream.get_offset() - 8, 6);
+        }
         stream.mark_end();
-
     } // END METHOD emit_end
 
     //==============================================================================
-    void recv_begin()
+    void recv_begin(rdp_mppc_dec * dec = 0)
     //==============================================================================
     {
         /* share_id(4) + ignored(1) + streamid(1) + len(2) + pdutype2(1) + compressedType(1) + compressedLen(2) */
@@ -448,20 +450,30 @@ struct ShareData
         this->compressedLen = stream.in_uint16_le();
 
         this->payload.resize(this->stream, this->stream.in_remain());
+
+        if (this->compressedType & PACKET_COMPRESSED) {
+            if (!dec) {
+                LOG(LOG_INFO, "ShareData::recv_begin: got unexpected compressed share data");
+            }
+
+            uint32_t  roff = 0;
+            uint32_t  rlen = 0;
+            decompress_rdp( dec, this->payload.get_data(), this->payload.size()
+                          , this->compressedType, &roff, &rlen);
+
+            this->payload.resize(StaticStream(dec->history_buf + roff, rlen), rlen);
+        }
     } // END METHOD recv_begin
 
     //==============================================================================
-    void recv_end()
+    void recv_end() {
     //==============================================================================
-    {
-        if (!this->payload.check_end()){
+        if (!this->payload.check_end()) {
             LOG(LOG_INFO, "ShareData : some payload data were not consumed len=%u compressedLen=%u remains1=%u remains=%u",
                 this->len, this->compressedLen, payload.in_remain(), stream.in_remain());
                 throw Error(ERR_SEC);
-      }
+        }
     } // END METHOD recv_end
-
-
 }; // END CLASS ShareData
 
 #endif

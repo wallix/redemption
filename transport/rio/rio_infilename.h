@@ -86,6 +86,11 @@ extern "C" {
          return -RIO_ERROR_RECV_ONLY;
     }
 
+    static inline RIO_ERROR rio_m_RIOInfilename_seek(RIOInfilename * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOInfilename_get_status(RIOInfilename * self)
     {
         // either OK, or error has already been intercepted

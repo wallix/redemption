@@ -30,6 +30,7 @@
 #include "stream.hpp"
 #include "log.hpp"
 #include "error.hpp"
+#include "fastpath.hpp"
 
 //##############################################################################
 namespace X224
@@ -305,36 +306,51 @@ namespace X224
     };
 
     // Factory just read enough data to know the type of packet we are dealing with
-    struct RecvFactory
-    {
-        int type;
+    struct RecvFactory {
+        int    type;
         size_t length;
+        bool   fast_path;
 
-        RecvFactory(Transport & t, Stream & stream)
-        {
-            /* 4 bytes */
-            uint16_t length = stream.size();
-            if (length < X224::TPKT_HEADER_LEN){
-                t.recv(&stream.end, X224::TPKT_HEADER_LEN - length);
+        RecvFactory(Transport & t, Stream & stream, bool support_fast_path = false)
+                : fast_path(false) {
+            /* 1 byte */
+            uint16_t stream_length = stream.size();
+            if (stream_length < 1) {
+                t.recv(&stream.end, 1);
             }
-            stream.p = stream.data;
+            stream.p = stream.get_data();
 
             uint8_t tpkt_version = stream.in_uint8();
-            if (tpkt_version != 3) {
-                LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
-                throw Error(ERR_X224);
+            if ((tpkt_version & FastPath::FASTPATH_OUTPUT_ACTION_X224) == 0) {
+                if (support_fast_path) {
+                    fast_path = true;
+
+                    return;
+                }
+                else {
+                    LOG(LOG_ERR, "Tpkt type 3 slow-path PDU expected (version = %u)", tpkt_version);
+                    throw Error(ERR_X224);
+                }
             }
-            stream.in_skip_bytes(1);
+
+            /* 4 bytes */
+            stream_length = stream.size();
+            if (stream_length < X224::TPKT_HEADER_LEN) {
+                t.recv(&stream.end, X224::TPKT_HEADER_LEN - stream_length);
+            }
+            stream.p = stream.get_data();
+
+            stream.in_skip_bytes(2);
             uint16_t tpkt_len = stream.in_uint16_be();
             t.recv(&stream.end, 2);
-            if (tpkt_len < 6){
+            if (tpkt_len < 6) {
                 LOG(LOG_ERR, "Bad X224 header, length too short (length = %u)", tpkt_len);
                 throw Error(ERR_X224);
             }
             this->length = tpkt_len;
             stream.in_skip_bytes(1);
             uint8_t tpdu_type = stream.in_uint8();
-            switch (tpdu_type & 0xF0){
+            switch (tpdu_type & 0xF0) {
             case X224::CR_TPDU: // Connection Request 1110 xxxx
             case X224::CC_TPDU: // Connection Confirm 1101 xxxx
             case X224::DR_TPDU: // Disconnect Request 1000 0000
@@ -368,16 +384,16 @@ namespace X224
             if (length < 4){
                 t.recv(&stream.end, 4 - length);
             }
-            stream.p = stream.data;
+            stream.p = stream.get_data();
 
             // TPKT
             this->tpkt.version = stream.in_uint8();
             stream.in_skip_bytes(1);
             this->tpkt.len = stream.in_uint16_be();
 
-            if (stream.capacity < this->tpkt.len){
+            if (stream.get_capacity() < this->tpkt.len){
                 LOG(LOG_ERR, "TPKT too long: stream=%u tpkt=%u",
-                    stream.capacity, this->tpkt.len);
+                    stream.get_capacity(), this->tpkt.len);
                 throw Error(ERR_X224);
             }
 
@@ -478,12 +494,12 @@ namespace X224
     // 3.3.5.3.1 Processing X.224 Connection Request PDU
     // =================================================
 
-    // The structure and fields of the X.224 Connection Request PDU are specified 
+    // The structure and fields of the X.224 Connection Request PDU are specified
     // in section 2.2.1.1.
 
-    // The embedded length fields within the tpktHeader field ([T123] section 8) 
-    // MUST be examined for consistency with the received data. If there is any 
-    // discrepancy, the connection SHOULD be dropped. Other reasons for dropping 
+    // The embedded length fields within the tpktHeader field ([T123] section 8)
+    // MUST be examined for consistency with the received data. If there is any
+    // discrepancy, the connection SHOULD be dropped. Other reasons for dropping
     // the connection include:
 
     // The length of the X.224 Connection Request PDU is less than 11 bytes.
@@ -496,7 +512,7 @@ namespace X224
     // If the optional routingToken field exists, it MUST be ignored because the
     // routing token is intended to be inspected and parsed by external networking
     // hardware along the connection path (for more information about load balancing
-    // of Remote Desktop sessions and the routing token format, see [MSFT-SDLBTS] 
+    // of Remote Desktop sessions and the routing token format, see [MSFT-SDLBTS]
     // "Load-Balanced Configurations", "Revectoring Clients", and "Routing Token Format").
 
     // If the optional cookie field is present, it MUST be ignored.
@@ -580,12 +596,12 @@ namespace X224
             this->cookie[0] = 0;
             this->rdp_neg_type = 0;
 
-            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             for (uint8_t * p = stream.p + 1; p < end_of_header ; p++){
                 if (p[-1] == 0x0D && p[0] == 0x0A){
-                    this->cookie_len = p - (stream.data + 11) + 1;
+                    this->cookie_len = p - (stream.get_data() + 11) + 1;
                     // cookie can't be larger than header (HEADER_LEN + LI + 1 = 230)
-                    memcpy(this->cookie, stream.data + 11, this->cookie_len);
+                    memcpy(this->cookie, stream.get_data() + 11, this->cookie_len);
                     this->cookie[this->cookie_len] = 0;
                     if (verbose){
                         LOG(LOG_INFO, "cookie: %s", this->cookie);
@@ -615,14 +631,14 @@ namespace X224
                 }
                 if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS){
                     LOG(LOG_INFO, "CR Recv: PROTOCOL TLS 1.0");
-                }                    
+                }
                 if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID){
                     LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID");
                 }
                 if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX){
                     LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
                 }
-                if (this->rdp_neg_requestedProtocols 
+                if (this->rdp_neg_requestedProtocols
                 & ~(X224::PROTOCOL_RDP
                    |X224::PROTOCOL_TLS
                    |X224::PROTOCOL_HYBRID
@@ -632,7 +648,7 @@ namespace X224
             }
             if (end_of_header != stream.p){
                 LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %u", end_of_header - stream.p);
-                hexdump_c(stream.data, stream.size());
+                hexdump_c(stream.get_data(), stream.size());
                 throw Error(ERR_X224);
             }
             this->_header_size = stream.get_offset();
@@ -727,10 +743,10 @@ namespace X224
     // |                                     | future use.                           |
     // +-------------------------------------+---------------------------------------+
 
-    // length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This 
+    // length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
     //   field MUST be set to 0x0008 (8 bytes)
 
-    // selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the 
+    // selectedProtocol (4 bytes): A 32-bit, unsigned integer. Field indicating the
     //  selected security protocol.
 
     // +-------------------------------+----------------------------------------------+
@@ -875,7 +891,7 @@ namespace X224
             this->rdp_neg_length = 0;
             this->rdp_neg_code = 0;
 
-            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             /* rdp_neg_type(1) + rdp_neg_flags(1) + rdp_neg_length(2) + rdp_neg_code(4) */
             if (stream.in_remain() >= 8){
                 this->rdp_neg_type = stream.in_uint8();
@@ -905,7 +921,7 @@ namespace X224
 
                 LOG(LOG_INFO, "NEG_RSP_TYPE=%d NEG_RSP_FLAGS=%d NEG_RSP_LENGTH=%d NEG_RSP_SELECTED_PROTOCOL=%d\n",
                     this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
-                    
+
                 switch (this->rdp_neg_type){
                 case X224::RDP_NEG_RSP:
                     switch (this->rdp_neg_code){
@@ -1081,7 +1097,7 @@ namespace X224
             this->tpdu_hdr.src_ref = stream.in_uint16_le();
             this->tpdu_hdr.reason = stream.in_uint8();
 
-            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             if (end_of_header != stream.p){
                 LOG(LOG_ERR, "DR TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);
@@ -1171,7 +1187,7 @@ namespace X224
                 throw Error(ERR_X224);
             }
 
-            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             if (end_of_header - stream.p >= 2){
                 this->tpdu_hdr.invalid_tpdu_var = stream.in_uint8();
                 if (this->tpdu_hdr.invalid_tpdu_var != 0xC1){
@@ -1285,7 +1301,7 @@ namespace X224
                 throw Error(ERR_X224);
             }
 
-            uint8_t * end_of_header = stream.data + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
+            uint8_t * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             if (end_of_header != stream.p){
                 LOG(LOG_ERR, "DT TPDU header should be tertminated, got trailing data %u", end_of_header - stream.p);
                 throw Error(ERR_X224);

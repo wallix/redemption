@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -223,7 +223,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
     BStream out_payload(65536);
 
     while (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload);
+        FastPath::Update_Recv in_upd(in_su.payload, 0);
 
         BOOST_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
 
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU2) {
     uint8_t i = 0;
 
     while (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload);
+        FastPath::Update_Recv in_upd(in_su.payload, 0);
 
         BOOST_CHECK_EQUAL(in_upd.updateCode, updateCodes[i++]);
     }
@@ -305,23 +305,26 @@ BOOST_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
 
     FastPath::ServerUpdatePDU_Recv in_su(in_t, in_s, decrypt);
 
-    out_s.out_clear_bytes(FastPath::Update_Send::GetSize()); // Fast-Path Update (TS_FP_UPDATE structure) size
+    out_s.out_clear_bytes(FastPath::Update_Send::GetSize(false)); // Fast-Path Update (TS_FP_UPDATE structure) size
 
     uint8_t updateCode = FastPath::FASTPATH_UPDATETYPE_CACHED;
 
     if (in_su.payload.in_remain()) {
-        FastPath::Update_Recv in_upd(in_su.payload);
+        FastPath::Update_Recv in_upd(in_su.payload, 0);
 
         if (in_upd.updateCode == updateCode) {
-            out_s.out_copy_bytes(in_upd.payload.data, in_upd.payload.size());
+            out_s.out_copy_bytes(in_upd.payload.get_data(), in_upd.payload.size());
             out_s.mark_end();
 
-            SubStream Upd_s(out_s, 0, FastPath::Update_Send::GetSize());
+            SubStream Upd_s(out_s, 0, FastPath::Update_Send::GetSize(false));
 
             FastPath::Update_Send Upd( Upd_s
-                                     , out_s.size() - FastPath::Update_Send::GetSize()
+                                     , out_s.size() - FastPath::Update_Send::GetSize(false)
                                      , in_upd.updateCode
-                                     , in_upd.fragmentation);
+                                     , in_upd.fragmentation
+                                     , 0
+                                     , 0
+                                     );
 
             BStream SvrUpdPDU_s(256);
 

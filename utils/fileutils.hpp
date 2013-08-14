@@ -38,8 +38,6 @@
 #include "log.hpp"
 
 
-
-
 static inline int filesize(const char * path)
 {
     struct stat sb;
@@ -106,16 +104,49 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
     }
 }
 
-void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
+static inline char * pathncpy(char * dest, const char * src, size_t n) {
+    size_t       i;
+    size_t       n_adjusted;
+    char       * dest_char;
+    const char * src_char;
+
+    if (n >= 1) {
+        for (  i = 0, dest_char = dest, src_char = src, n_adjusted = n - 1
+             ; (i < n_adjusted) && (*src_char != '\0')
+             ; i++, dest_char++, src_char++) {
+            *dest_char = *src_char;
+        }
+
+        if (   (i > 0)
+            && (*(dest_char - 1) != '/')
+            && (i < n_adjusted)) {
+            *dest_char = '/';
+
+            i++;
+            dest_char++;
+        }
+
+        for (; i < n; i++, dest_char++) {
+            *dest_char = '\0';
+        }
+    }
+
+   return dest;
+}
+
+static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
 {
     DIR * d = opendir(path);
     if (d){
-        char static_buffer[8192];
+//        char static_buffer[8192];
+        char buffer[8192];
         size_t path_len = strlen(path);
         size_t prefix_len = strlen(prefix);
-        size_t file_len = pathconf(path, _PC_NAME_MAX) + 1;
-        char * buffer = static_buffer;
+        size_t file_len = 1024;
+//        size_t file_len = pathconf(path, _PC_NAME_MAX) + 1;
+//        char * buffer = static_buffer;
 
+/*
         if (file_len < 4000){
             if (verbose >= 255) {
                 LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", (unsigned)file_len);
@@ -136,6 +167,11 @@ void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t v
                 file_len = 4000;
             }
         }
+*/
+        if (file_len + path_len + 1 > sizeof(buffer)) {
+            LOG(LOG_WARNING, "Path len %u > %u", file_len + path_len + 1, sizeof(buffer));
+            return;
+        }
         strncpy(buffer, path, file_len + path_len + 1);
         if (buffer[path_len] != '/'){
             buffer[path_len] = '/'; path_len++; buffer[path_len] = 0;
@@ -144,9 +180,7 @@ void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t v
         size_t len = offsetof(struct dirent, d_name) + file_len;
         struct dirent * entryp = (struct dirent *)malloc(len);
         if (!entryp){
-            if (verbose >= 255) {
-                LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
-            }
+            LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
             return;
         }
         struct dirent * result;
@@ -178,21 +212,19 @@ void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t v
                 continue;
             }
             if (unlink(buffer) < 0){
-                if (verbose >= 255) {
-                    LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
-                }
+                LOG(LOG_WARNING, "Failed to remove file %s", buffer, errno, strerror(errno));
             }
         }
         closedir(d);
         free(entryp);
+/*
         if (buffer != static_buffer){
             free(buffer);
         }
+*/
     }
     else {
-        if (verbose >= 255) {
-            LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
-        }
+        LOG(LOG_WARNING, "Failed to open directory %s [%u: %s]", path, errno, strerror(errno));
     }
 }
 
@@ -723,11 +755,10 @@ struct LineBuffer
         }
         return 0;
     }
-
 };
 
 // return 0 if found, -1 not found or error
-int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, int sz_transparent_dest, uint32_t verbose = 0)
+static inline int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, int sz_transparent_dest, uint32_t verbose = 0)
 {
     LineBuffer line(fd);
     char src_port[6];

@@ -26,7 +26,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include "internal/widget2/widget_rect.hpp"
+#include "internal/widget2/widget2_rect.hpp"
 #include "internal/widget2/window.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -39,7 +39,7 @@ struct TestDraw : DrawApi
     Font font;
 
     TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h, false)
+    : gd(w, h)
     , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
     {}
 
@@ -107,7 +107,7 @@ struct TestDraw : DrawApi
     virtual void server_draw_text(int16_t x, int16_t y, const char* text,
                                   uint32_t fgcolor, const Rect& clip)
     {
-        this->gd.server_draw_text(x, y, text, fgcolor, clip, this->font);
+        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
 
     virtual void text_metrics(const char* text, int& width, int& height)
@@ -142,19 +142,19 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
     Widget2* parent = NULL;
     int id = 0;
 
-    Window window(&drawable, Rect(30,40,500,400), parent, notifier, "Window 1");
+    Window window(drawable, Rect(30,40,500,400), parent, notifier, "Window 1");
     window.resize_titlebar();
-    WidgetRect wrect1(&drawable, Rect(0,window.titlebar.cy()+0,100,100),
+    WidgetRect wrect1(drawable, Rect(0,window.titlebar.cy()+0,100,100),
                       &window, notifier, id++, YELLOW);
-    WidgetRect wrect2(&drawable, Rect(0,window.titlebar.cy()+100,100,100),
+    WidgetRect wrect2(drawable, Rect(0,window.titlebar.cy()+100,100,100),
                       &window, notifier, id++, RED);
-    WidgetRect wrect3(&drawable, Rect(100,window.titlebar.cy()+100,100,100),
+    WidgetRect wrect3(drawable, Rect(100,window.titlebar.cy()+100,100,100),
                       &window, notifier, id++, BLUE);
-    WidgetRect wrect4(&drawable, Rect(300,300,100,100),
+    WidgetRect wrect4(drawable, Rect(300,300,100,100),
                       &window, notifier, id++, GREEN);
-    WidgetRect wrect5(&drawable, Rect(700,-50,100,100),
+    WidgetRect wrect5(drawable, Rect(700,-50,100,100),
                       &window, notifier, id++, WHITE);
-    WidgetRect wrect6(&drawable, Rect(-50,550,100,100),
+    WidgetRect wrect6(drawable, Rect(-50,550,100,100),
                       &window, notifier, id++, GREY);
     window.child_list.push_back(&wrect1);
     window.child_list.push_back(&wrect2);

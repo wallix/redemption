@@ -94,6 +94,8 @@ public:
         this->stream.mark_end();
     }
 
+    virtual void seek(int64_t offset, int whence) throw (Error) { throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE); }
+
     virtual void flush() {
         this->stream.mark_end();
         if (this->stream.size() > 0){
@@ -188,7 +190,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         uint32_t count  = input_data_32.size() / sizeof(uint32_t);
 
         size_t c = min<size_t>(count, keyboard_buffer_32.room() / sizeof(uint32_t));
-        keyboard_buffer_32.out_copy_bytes(input_data_32.data, c * sizeof(uint32_t));
+        keyboard_buffer_32.out_copy_bytes(input_data_32.get_data(), c * sizeof(uint32_t));
     }
 
     void send_meta_chunk(void)
@@ -243,7 +245,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             }
 */
 
-            payload.out_copy_bytes(keyboard_buffer_32.data, keyboard_buffer_32.size());
+            payload.out_copy_bytes(keyboard_buffer_32.get_data(), keyboard_buffer_32.size());
             keyboard_buffer_32.rewind();
         }
         payload.mark_end();
@@ -252,6 +254,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         WRMChunk_Send chunk(header, TIMESTAMP, payload.size(), 1);
         this->trans->send(header);
         this->trans->send(payload);
+
+        this->last_sent_timer = this->timer;
     }
 
     void send_save_state_chunk()

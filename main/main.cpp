@@ -36,8 +36,6 @@
 
 #include "version.hpp"
 
-#include "constants.hpp"
-
 #include "config.hpp"
 #include "check_files.hpp"
 #include "mainloop.hpp"
@@ -151,8 +149,8 @@ int shutdown(const char * pid_file)
 
     // remove all other pid files
     DIR * d = opendir("/var/run/redemption");
-    if (d){    
-        size_t path_len = strlen("/var/run/redemption/"); 
+    if (d){
+        size_t path_len = strlen("/var/run/redemption/");
 
         size_t file_len = pathconf("/var/run/redemption/", _PC_NAME_MAX) + 1;
         char * buffer = (char*)malloc(file_len + path_len);
@@ -194,13 +192,13 @@ int shutdown(const char * pid_file)
 namespace po = boost::program_options;
 
 const char * copyright_notice =
-"\n"
-"Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
-"Copyright (C) Wallix 2010-2013.\n"
-"Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
-"Martin Potier, Dominique Lafages, Jonathan Poelen and Raphael Zhou\n"
-"\n"
-;
+    "\n"
+    "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
+    "Copyright (C) Wallix 2010-2013.\n"
+    "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
+    "Martin Potier, Dominique Lafages, Jonathan Poelen and Raphael Zhou\n"
+    "\n"
+    ;
 
 int main(int argc, char** argv)
 {
@@ -310,7 +308,7 @@ int main(int argc, char** argv)
     if (mkdir(PID_PATH "/redemption", 0700) < 0){
         TODO("check only for relevant errors (exists with expected permissions is OK)");
     }
-     
+
     if (chown(PID_PATH "/redemption", uid, gid) < 0){
         LOG(LOG_INFO, "Failed to set owner %u.%u to " PID_PATH "/redemption", uid, gid);
         exit(1);
@@ -349,7 +347,8 @@ int main(int argc, char** argv)
         daemonize(PID_PATH "/redemption/" LOCKFILE);
     }
 
-    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
+    Inifile ini;
+    ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
     if (!ini.globals.enable_ip_transparent) {
         setgid(gid);

@@ -67,6 +67,7 @@ extern "C" {
         RIO_ERROR_OUT_SEQ_ONLY,
         RIO_ERROR_DESTRUCTED,
         RIO_ERROR_MORE_DATA,
+        RIO_ERROR_SEEK_NOT_AVAILABLE,
     } RIO_ERROR;
 
     typedef enum {
@@ -142,7 +143,7 @@ extern "C" {
 
     ssize_t rio_recv(RIO * rt, void * data, size_t len);
     ssize_t rio_send(RIO * rt, const void * data, size_t len);
-
+    RIO_ERROR rio_seek(RIO * rt, int64_t offset, int whence);
     RIO_ERROR rio_get_status(RIO * rt);
 
     SQ * sq_new_one(RIO_ERROR * error, RIO * trans);

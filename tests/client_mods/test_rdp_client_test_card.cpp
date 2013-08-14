@@ -35,7 +35,7 @@
 #include "front_api.hpp"
 #include "wait_obj.hpp"
 
-#include "internal/widget2/test_card_mod.hpp"
+#include "internal/test_card_mod.hpp"
 
 BOOST_AUTO_TEST_CASE(TestShowTestCard)
 {
@@ -159,8 +159,7 @@ BOOST_AUTO_TEST_CASE(TestShowTestCard)
     TestCardMod mod(front, info.width, info.height);
     BOOST_CHECK(true);
     try{
-        BackEvent_t res = mod.draw_event();
-        BOOST_CHECK_EQUAL((uint32_t)BACK_EVENT_NONE, (uint32_t)res);
+        mod.draw_event();
     }
     catch (const Error & e){
         // this test is not supposed to be executed

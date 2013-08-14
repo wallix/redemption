@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Synchronisation objects
@@ -31,15 +31,25 @@
 #include <arpa/inet.h>
 #include "difftimeval.hpp"
 
+enum BackEvent_t {
+    BACK_EVENT_NONE = 0,
+    BACK_EVENT_NEXT,
+    BACK_EVENT_STOP = 4,
+    BACK_EVENT_REFRESH,
+};
+
+
 class wait_obj
 {
     public:
     int obj;
     bool set_state;
+    BackEvent_t signal;
     struct timeval trigger_time;
-    wait_obj(int sck) 
+    wait_obj(int sck)
     : obj(sck)
-    , set_state(false) 
+    , set_state(false)
+    , signal(BACK_EVENT_NONE)
     {
         this->trigger_time = tvtime();
     }
@@ -51,11 +61,19 @@ class wait_obj
         }
     }
 
-    void add_to_fd_set(fd_set & rfds, unsigned & max)
+    void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout)
     {
         if (this->obj > 0){
             FD_SET(this->obj, &rfds);
             max = ((unsigned)this->obj > max)?this->obj:max;
+        }
+        else if (this->set_state) {
+            struct timeval now;
+            now = tvtime();
+            timeval remain = how_long_to_wait(this->trigger_time, now);
+            if (lessthantimeval(remain, timeout)){
+                timeout = remain;
+            }
         }
     }
 
@@ -73,9 +91,9 @@ class wait_obj
             if (this->set_state){
                 struct timeval now;
                 now = tvtime();
-                if ((now.tv_sec > this->trigger_time.tv_sec) 
+                if ((now.tv_sec > this->trigger_time.tv_sec)
                 ||  ( (now.tv_sec == this->trigger_time.tv_sec)
-                    &&(now.tv_usec > this->trigger_time.tv_usec))){
+                    &&(now.tv_usec >= this->trigger_time.tv_usec))){
                     return true;
                 }
             }
@@ -83,15 +101,31 @@ class wait_obj
         return false;
     }
 
-    // Idle time in millisecond
+    // Idle time in microsecond
     void set(uint64_t idle_usec = 0)
     {
         this->set_state = true;
         struct timeval now = tvtime();
-        
-        uint64_t sum_usec = (now.tv_usec + idle_usec);
-        this->trigger_time.tv_sec = (sum_usec / 1000000) + now.tv_sec;
-        this->trigger_time.tv_usec = sum_usec % 1000000;
+
+        // uint64_t sum_usec = (now.tv_usec + idle_usec);
+        // this->trigger_time.tv_sec = (sum_usec / 1000000) + now.tv_sec;
+        // this->trigger_time.tv_usec = sum_usec % 1000000;
+        this->trigger_time = addusectimeval(idle_usec, now);
+    }
+
+    // Idle time in microsecond
+    void update(uint64_t idle_usec)
+    {
+        if (this->set_state) {
+            struct timeval now = tvtime();
+            timeval new_trigger = addusectimeval(idle_usec, now);
+            if (lessthantimeval(new_trigger, this->trigger_time)) {
+                this->trigger_time = new_trigger;
+            }
+        }
+        else {
+            this->set(idle_usec);
+        }
     }
 
     bool can_recv()

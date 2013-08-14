@@ -161,6 +161,11 @@ extern "C" {
         return len;
     }
 
+    static inline RIO_ERROR rio_m_RIOSocketTLS_seek(RIOSocketTLS * self, int64_t offset, int whence)
+    {
+        return RIO_ERROR_SEEK_NOT_AVAILABLE;
+    }
+
     static inline RIO_ERROR rio_m_RIOSocketTLS_get_status(RIOSocketTLS * self)
     {
         TODO("when we will keep error value needed for recv we should return the stored error status")
