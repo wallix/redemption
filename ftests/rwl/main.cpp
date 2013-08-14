@@ -215,29 +215,8 @@ int main(int ac, char ** av)
     else {
         std::getline(std::cin, str, '\0'); //read all
     }
-    const char * cstr = str.c_str();
-    const char * begin_cstr = cstr;
-
-//     const char * states[] = {
-//         "target",
-//         "confirmed_target",
-//         "closing_target",
-//         "property",
-//         "defined_property",
-//         "defined_link",
-//         "value_block",
-//         "value",
-//         "confirmed_string",
-//         "property_or_function",
-//         "property_separator",
-//         "link_property",
-//         "property_name",
-//         "expression",
-//     };
-
-    while (parser.valid() && *cstr) {
-        cstr = parser.next_event(cstr);
-    }
+    const char * begin_cstr = str.c_str();
+    const char * cstr = parser.parse(begin_cstr);
 
     display_target(screen);
     std::cout << "\n";
@@ -245,7 +224,11 @@ int main(int ac, char ** av)
 
     if (*cstr) {
         std::cout << "\n\n\nparsing error line "
-        << (std::count(begin_cstr, cstr, '\n')+1) << "\n" << cstr;
+        << (std::count(begin_cstr, cstr, '\n')+1) << "\n";
+        if (const char * err = parser.message_error()) {
+            std::cout << (err) << "\n";
+        }
+        std::cout << cstr << "\n";
     }
     else if (!parser.stop()) {
         std::cout << "\n\n\ninvalid state\n";

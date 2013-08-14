@@ -1,0 +1,17 @@
+bgcolor: #122 ;
+x:1 ;
+border.color: #232 ;
+y:x
+border.left.color: #002
+border.bottom.color: #001
+border.left.size: 2;
+border: {
+	right.color: #111
+ right:{size: 3}
+}
+
+Rect {
+	bgcolor: #111
+}
+
+id: "    pop  " ;
