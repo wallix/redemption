@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+redemption (0.9.285-future) squeeze; urgency=low
+
+  * Avoid memcopy when sending packets
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 17 Jun 2013 10:12:26 +0200
+
+
+redemption (0.9.283-future) squeeze; urgency=low
+=======
 redemption (0.9.289) squeeze; urgency=low
 
   * Fixed Numlock initial state bug
@@ -12,6 +22,7 @@ redemption (0.9.289) squeeze; urgency=low
 
 
 redemption (0.9.283) squeeze; urgency=low
+>>>>>>> dd1fbd8fd29248d5b7a7929739c19214053c0a36
 
   * Fully moved internal pages to new widget components
   * support for RDP Bitmap Update order

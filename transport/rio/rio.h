@@ -68,6 +68,7 @@ extern "C" {
         RIO_ERROR_DESTRUCTED,
         RIO_ERROR_MORE_DATA,
         RIO_ERROR_SEEK_NOT_AVAILABLE,
+        RIO_ERROR_RENAME,
     } RIO_ERROR;
 
     typedef enum {
