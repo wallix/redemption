@@ -1249,7 +1249,6 @@ struct Drawable
 
     void trace_mouse(uint16_t x, uint16_t y)
     {
-LOG(LOG_INFO, "Drawable::trace_mouse, contiguous_mouse_pixels=%d", this->contiguous_mouse_pixels);
         uint8_t * psave = this->save_mouse;
         size_t nblines = std::max<uint16_t>(0, std::min<uint16_t>(this->contiguous_mouse_pixels,
             this->height - y));
@@ -1266,7 +1265,6 @@ LOG(LOG_INFO, "Drawable::trace_mouse, contiguous_mouse_pixels=%d", this->contigu
 
     void clear_mouse()
     {
-LOG(LOG_INFO, "Drawable::clear_mouse");
         uint8_t * psave = this->save_mouse;
         uint16_t x = this->save_mouse_x;
         uint16_t y = this->save_mouse_y;
