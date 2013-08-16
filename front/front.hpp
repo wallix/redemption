@@ -321,12 +321,16 @@ public:
         return res;
     }
 
-    void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
-    {
+    void server_set_pointer(int hotspot_x, int hotspot_y,
+            const uint8_t * data, const uint8_t * mask) {
         int cache_idx = 0;
-        switch (this->pointer_cache.add_pointer(data, mask, x, y, cache_idx)){
+        switch (this->pointer_cache.add_pointer(data,
+                                                mask,
+                                                hotspot_x,
+                                                hotspot_y,
+                                                cache_idx)) {
         case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, data, mask, x, y);
+            this->send_pointer(cache_idx, data, mask, hotspot_x, hotspot_y);
         break;
         default:
         case POINTER_ALLREADY_SENT:
@@ -889,12 +893,12 @@ public:
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    void GenerateColorPointerUpdateData( Stream & stream
-                                       , int cache_idx
-                                       , uint8_t * data
-                                       , uint8_t * mask
-                                       , int x
-                                       , int y) {
+    void GenerateColorPointerUpdateData(Stream & stream,
+                                        int cache_idx,
+                                        const uint8_t * data,
+                                        const uint8_t * mask,
+                                        int x,
+                                        int y) {
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
 //      number of cache entries is negotiated using the Pointer Capability Set
@@ -960,85 +964,98 @@ public:
         stream.mark_end();
     }
 
-    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw(Error)
-    {
-        if (this->verbose & 4){
-            LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
+    virtual void send_pointer(int cache_idx, const uint8_t * data,
+            const uint8_t * mask, int hotspot_x, int hotspot_y) throw(Error) {
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)",
+                cache_idx, hotspot_x, hotspot_y);
         }
 
         if (this->server_fastpath_update_support == false) {
             BStream stream(65536);
 
             ShareData sdata(stream);
-            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
+            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id,
+                RDP::STREAM_MED);
 
             // Payload
             stream.out_uint16_le(RDP_POINTER_COLOR);
             stream.out_uint16_le(0); /* pad */
 
-            GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
+            GenerateColorPointerUpdateData(stream, cache_idx, data, mask,
+                hotspot_x, hotspot_y);
 
             // Packet trailer
             sdata.emit_end();
 
             BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
             HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
-            if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
+            if (this->verbose & 4) {
                 LOG(LOG_INFO, "Sec clear payload to send:");
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
             BStream sec_header(256);
 
-            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt,
+                this->client_info.encryptionLevel);
             target_stream.copy_to_head(sec_header);
 
-            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL,
+                target_stream);
         }
         else {
             HStream stream(1024, 65536);
 
-            if (this->verbose & 4){
+            if (this->verbose & 4) {
                 LOG(LOG_INFO, "Front::send_pointer: fast-path");
             }
 
             size_t header_size = FastPath::Update_Send::GetSize(0);
 
-            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
+            stream.out_clear_bytes(header_size);    // Fast-Path Update (TS_FP_UPDATE structure) size
 
-            GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
+            GenerateColorPointerUpdateData(stream, cache_idx, data, mask,
+                hotspot_x, hotspot_y);
 
             SubStream Upd_s(stream, 0, header_size);
 
-            FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - header_size
-                                     , FastPath::FASTPATH_UPDATETYPE_COLOR
-                                     , FastPath::FASTPATH_FRAGMENT_SINGLE
-                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
-                                     , 0
-                                     );
+            FastPath::Update_Send Upd(Upd_s,
+                                      stream.size() - header_size,
+                                      FastPath::FASTPATH_UPDATETYPE_COLOR,
+                                      FastPath::FASTPATH_FRAGMENT_SINGLE,
+                                      /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0,
+                                      0);
 
             BStream fastpath_header(256);
 
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  fastpath_header
-                , stream
-                , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
-                , this->encrypt
-                );
+                fastpath_header,
+                stream,
+                ((this->client_info.encryptionLevel > 1) ?
+                 FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
+                this->encrypt);
             this->trans->send(fastpath_header, stream);
         }
 
-        if (this->verbose & 4){
+        if (this->capture &&
+            (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->send_pointer(cache_idx, data, mask,
+                hotspot_x, hotspot_y);
+        }
+
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::send_pointer done");
         }
-    }
+    }   // void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask,
+        //     int hotspot_x, hotspot_int y)
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
@@ -1071,9 +1088,8 @@ public:
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    virtual void set_pointer(int cache_idx) throw(Error)
-    {
-        if (this->verbose & 4){
+    virtual void set_pointer(int cache_idx) {
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
 
@@ -1081,7 +1097,8 @@ public:
             BStream stream(65536);
 
             ShareData sdata(stream);
-            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
+            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id,
+                RDP::STREAM_MED);
 
             // Payload
             stream.out_uint16_le(RDP_POINTER_CACHED);
@@ -1093,35 +1110,38 @@ public:
             sdata.emit_end();
 
             BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
             HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
-            if ((this->verbose & (128|4)) == (128|4)){
+            if (this->verbose & (128 | 4)) {
                 LOG(LOG_INFO, "Sec clear payload to send:");
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
             BStream sec_header(256);
 
-            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
+            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt,
+                this->client_info.encryptionLevel);
             target_stream.copy_to_head(sec_header);
 
-            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL,
+                target_stream);
         }
         else {
             HStream stream(1024, 65536);
 
-            if (this->verbose & 4){
+            if (this->verbose & 4) {
                 LOG(LOG_INFO, "Front::set_pointer: fast-path");
             }
 
             size_t header_size = FastPath::Update_Send::GetSize(0);
 
-            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
+            stream.out_clear_bytes(header_size);    // Fast-Path Update (TS_FP_UPDATE structure) size
 
             // Payload
             stream.out_uint16_le(cache_idx);
@@ -1129,30 +1149,34 @@ public:
 
             SubStream Upd_s(stream, 0, header_size);
 
-            FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - header_size
-                                     , FastPath::FASTPATH_UPDATETYPE_CACHED
-                                     , FastPath::FASTPATH_FRAGMENT_SINGLE
-                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
-                                     , 0
-                                     );
+            FastPath::Update_Send Upd(Upd_s,
+                                      stream.size() - header_size,
+                                      FastPath::FASTPATH_UPDATETYPE_CACHED,
+                                      FastPath::FASTPATH_FRAGMENT_SINGLE,
+                                      /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0,
+                                      0);
 
             BStream fastpath_header(256);
 
              // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  fastpath_header
-                , stream
-                , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
-                , this->encrypt
-                );
+                fastpath_header,
+                stream,
+                ((this->client_info.encryptionLevel > 1) ?
+                 FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
+                this->encrypt);
             this->trans->send(fastpath_header, stream);
         }
 
-        if (this->verbose & 4){
+        if (this->capture &&
+            (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->set_pointer(cache_idx);
+        }
+
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::set_pointer done");
         }
-    }
+    }   // void set_pointer(int cache_idx)
 
     void incoming(Callback & cb) throw(Error)
     {

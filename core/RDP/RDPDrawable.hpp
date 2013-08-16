@@ -23,6 +23,7 @@
 
 #include "drawable.hpp"
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
 
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -43,16 +44,22 @@ class RDPDrawable : public RDPGraphicDevice {
 public:
     Drawable drawable;
 
+    DrawablePointerCache ptr_cache;
+
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
     {
+        pointer_item pointer0(POINTER_CURSOR0);
+        this->ptr_cache.add_pointer_static(&pointer0, 0);
+
+        pointer_item pointer1(POINTER_CURSOR1);
+        this->ptr_cache.add_pointer_static(&pointer1, 1);
     }
 
     virtual void set_row(size_t rownum, const uint8_t * data)
     {
         memcpy(this->drawable.data + this->drawable.rowsize * rownum, data, this->drawable.rowsize);
     }
-
 
     virtual uint8_t * get_row(size_t rownum)
     {
@@ -63,7 +70,6 @@ public:
     {
         return this->drawable.rowsize;
     }
-
 
     uint32_t RGBtoBGR(uint32_t color)
     {
@@ -280,9 +286,8 @@ public:
         }
     }
 
-    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) {
-
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+            size_t size, const Bitmap & bmp) {
         Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
                     , bitmap_data.dest_right - bitmap_data.dest_left + 1
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
@@ -292,12 +297,28 @@ public:
         this->drawable.draw_bitmap(trect, bmp, false);
     }
 
-    virtual void dump_png24(Transport * trans, bool bgr){
-            ::transport_dump_png24(trans, this->drawable.data,
-                     this->drawable.width, this->drawable.height,
-                     this->drawable.rowsize,
-                     bgr
-                    );
+    virtual void send_pointer(int cache_idx, const uint8_t * data,
+        const uint8_t * mask, int hotspot_x, int hotspot_y)
+    {
+        this->ptr_cache.add_pointer_static_2(hotspot_x, hotspot_y, data, mask,
+            cache_idx);
+
+        drawable_pointer_item & pointer_item = this->ptr_cache.pointer_items[cache_idx];
+        this->drawable.set_mouse_cursor(
+            pointer_item.contiguous_mouse_pixels, pointer_item.mouse_cursor);
+    }
+
+    virtual void set_pointer(int cache_idx) {
+        drawable_pointer_item & pointer_item = this->ptr_cache.pointer_items[cache_idx];
+        this->drawable.set_mouse_cursor(
+            pointer_item.contiguous_mouse_pixels, pointer_item.mouse_cursor);
+    }
+
+    virtual void dump_png24(Transport * trans, bool bgr) {
+        ::transport_dump_png24(trans, this->drawable.data,
+            this->drawable.width, this->drawable.height,
+            this->drawable.rowsize,
+            bgr);
     }
 };
 

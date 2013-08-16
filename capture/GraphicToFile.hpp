@@ -517,6 +517,53 @@ public:
         this->bitmap_count = 0;
         this->stream_bitmaps.reset();
     }
-};
+
+    virtual void send_pointer(int cache_idx, const uint8_t * data,
+        const uint8_t * mask, uint8_t hotspot_x, uint8_t hotspot_y) {
+        this->drawable.send_pointer(cache_idx, data, mask,
+            hotspot_x, hotspot_y);
+
+        BStream header(8);
+        size_t size =   2           // mouse x
+                      + 2           // mouse y
+                      + 1           // cache index
+                      + 1           // hotspot x
+                      + 1           // hotspot y
+                      + 32 * 32 * 3 // data
+                      + 128         // mask
+                      ;
+        WRMChunk_Send chunk(header, POINTER, size, 0);
+        this->trans->send(header);
+
+        BStream payload(16);
+        payload.out_uint16_le(this->mouse_x);
+        payload.out_uint16_le(this->mouse_y);
+        payload.out_uint8(cache_idx);
+        payload.out_uint8(hotspot_x);
+        payload.out_uint8(hotspot_y);
+        this->trans->send(payload);
+
+        this->trans->send(data, 32 * 32 * 3);
+        this->trans->send(data, 128);
+    }
+
+    virtual void set_pointer(int cache_idx) {
+        this->drawable.set_pointer(cache_idx);
+
+        BStream header(8);
+        size_t size =   2                   // mouse x
+                      + 2                   // mouse y
+                      + 1                   // cache index
+                      ;
+        WRMChunk_Send chunk(header, POINTER, size, 0);
+        this->trans->send(header);
+
+        BStream payload(16);
+        payload.out_uint16_le(this->mouse_x);
+        payload.out_uint16_le(this->mouse_y);
+        payload.out_uint8(cache_idx);
+        this->trans->send(payload);
+    }
+};  // struct GraphicToFile
 
 #endif

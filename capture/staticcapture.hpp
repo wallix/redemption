@@ -32,8 +32,10 @@
 #include "difftimeval.hpp"
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
+/*
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+*/
 
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
@@ -41,7 +43,9 @@
 #include "png.hpp"
 #include "error.hpp"
 #include "config.hpp"
+/*
 #include "RDP/caches/bmpcache.hpp"
+*/
 #include "colors.hpp"
 
 #include "RDP/RDPDrawable.hpp"
@@ -119,7 +123,9 @@ public:
     {
         if ((unsigned)difftimeval(now, this->start_static_capture)
                 >= (unsigned)this->inter_frame_interval_static_capture) {
+            if (!pointer_already_displayed) { this->drawable.trace_mouse(x, y); }
             this->breakpoint(now);
+            if (!pointer_already_displayed) { this->drawable.clear_mouse(); }
             this->time_to_wait = this->inter_frame_interval_static_capture;
         }
         else {
