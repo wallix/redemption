@@ -41,11 +41,7 @@ class FrontAPI : public RDPGraphicDevice {
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
                                 , size_t length, size_t chunk_size, int flags) = 0;
-/*
-    virtual void send_pointer(int cache_idx, uint8_t * data, uint8_t * mask, int x, int y)
-      throw(Error) = 0;
-    virtual void set_pointer(int cache_idx) throw(Error) = 0;
-*/
+
     virtual void server_set_pointer(int x, int y, uint8_t * data, uint8_t * mask) = 0;
 
     virtual void send_global_palette() throw(Error) = 0;

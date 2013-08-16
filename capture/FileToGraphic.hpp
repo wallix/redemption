@@ -30,6 +30,7 @@
 
 #include "transport.hpp"
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "RDP/RDPSerializer.hpp"
@@ -60,7 +61,8 @@ struct FileToGraphic
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
 
-    BmpCache * bmp_cache;
+    BmpCache     * bmp_cache;
+    PointerCache   ptr_cache;
 
     // variables used to read batch of orders "chunks"
     uint32_t chunk_size;
@@ -159,6 +161,12 @@ struct FileToGraphic
                 break;
             }
         }
+
+        pointer_item pointer0(POINTER_CURSOR0);
+        this->ptr_cache.add_pointer_static(&pointer0, 0);
+
+        pointer_item pointer1(POINTER_CURSOR1);
+        this->ptr_cache.add_pointer_static(&pointer1, 1);
     }
 
     ~FileToGraphic()
@@ -738,6 +746,37 @@ struct FileToGraphic
                                             , data
                                             , bitmap_data.bitmap_size()
                                             , bitmap);
+                }
+            }
+            break;
+            case POINTER:
+            {
+                uint8_t          cache_idx;
+                const uint8_t  * data;
+                const uint8_t  * mask;
+                uint8_t          hotspot_x;
+                uint8_t          hotspot_y;
+
+                this->mouse_x = this->stream.in_uint16_le();
+                this->mouse_y = this->stream.in_uint16_le();
+                cache_idx     = this->stream.in_uint8();
+
+                if (  chunk_size - 8 /*header(8)*/
+                    > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
+                    data      = stream.in_uint8p(32 * 32 * 3);
+                    mask      = stream.in_uint8p(128);
+                    hotspot_x = this->stream.in_uint8();
+                    hotspot_y = this->stream.in_uint8();
+
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
+                        this->consumers[i]->send_pointer(cache_idx, data,
+                            mask, hotspot_x, hotspot_y);
+                    }
+                }
+                else {
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
+                        this->consumers[i]->set_pointer(cache_idx);
+                    }
                 }
             }
             break;

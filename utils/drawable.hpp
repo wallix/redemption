@@ -181,7 +181,7 @@ struct Drawable
         return mouse_cursor[i];
     }
 
-    enum { mouse_height = 17 };
+//    enum { mouse_height = 17 };
 
     uint8_t save_mouse[1024];
     uint16_t save_mouse_x;
