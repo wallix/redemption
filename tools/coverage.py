@@ -43,6 +43,7 @@ class Cover:
         self.results = {}
         self.coverset = set()
         self.bestcoverage = {} # module: (lincov, lintotal)
+        self.functions = {}
 
     def cover(self, module):
         modulepath = ''
@@ -74,32 +75,85 @@ class Cover:
     def compute_functions_list(self, f):
         try:
             print "Looking for functions in %s" % (f)
+            allf = []
             for line in open(f):
                 res = re.match(r'^.*[(]\x7F(.*)\x01(\d*)[,]', line)
                 if res:
                     print "match:", res.group(1), ":", f[:-5][11:], ':', res.group(2)
+                    allf.append((res.group(2), res.group(1)))
+            allf = sorted(allf)
+            if len(allf):
+                lastl, lastfname = allf[0]
+                rangefn = []
+                for l, fname in allf[1:]:
+                    rangefn.append((int(lastl), int(l) - 1, lastfname))
+                    lastl, lastfname = l, fname
+                rangefn.append((int(lastl), int(lastl) + 1000, lastfname))
+                for l1, l2, name in rangefn:
+                    self.functions[(f[:-5][11:], l1)] = [l1, l2, name]
         except IOError:
             print "Error in tags"
-            pass
-
 
     def compute_coverage(self, f):
+    
+        print "computing coverage for ", f
         uncovered = 0
         total = 0
         try:
+            current_function = None
+            functions_lines = {}
             for line in open(f):
-                res = re.match(r'^\s+#####[:]', line)
+                res = re.match(r'^\s+#####[:]\s*(\d+)[:]', line)
                 if res:
                     uncovered += 1
                     total += 1
-                res = re.match(r'^\s+\d+[:]', line)
+                    module = f[11:][:-5]
+                    if (module, int(res.group(1))) in self.functions:
+                        current_function = (module, int(res.group(1)))
+                        functions_lines[current_function] = [0, 0 
+                                                             ,self.functions[current_function][0]
+                                                             ,self.functions[current_function][1]
+                                                             ,self.functions[current_function][2]]
+                        print "function ", self.functions[current_function], " found"
+                    if current_function:
+                        functions_lines[current_function][1] += 1
+                    
+                res = re.match(r'^\s+\d+[:]\s*(\d+)[:]', line)
                 if res:
                     total += 1
+                    module = f[11:][:-5]
+                    if (module, int(res.group(1))) in self.functions:
+                        current_function = (module, int(res.group(1)))
+                        functions_lines[current_function] = [0, 0 
+                                                             ,self.functions[current_function][0]
+                                                             ,self.functions[current_function][1]
+                                                             ,self.functions[current_function][2]]
+                        print "function ", self.functions[current_function], " found"
+                    if current_function:
+                        functions_lines[current_function][0] += 1
+
+                res = re.match(r'^\s+[-][:]\s*(\d+)[:]', line)
+                if res:
+                    module = f[11:][:-5]
+                    if (module, int(res.group(1))) in self.functions:
+                        current_function = (module, int(res.group(1)))
+                        functions_lines[current_function] = [0, 0 
+                                                             ,self.functions[current_function][0]
+                                                             ,self.functions[current_function][1]
+                                                             ,self.functions[current_function][2]]
+                        print "function ", self.functions[current_function], " found"
+                    if current_function:
+                        functions_lines[current_function][1] += 1
+
+            if functions_lines:
+                print functions_lines
+                        
+                        
         except IOError:
             total = 100
             uncovered = 100
 
-        return ((total - uncovered), total)
+        return ((total - uncovered), total, len([t for t in functions_lines if functions_lines[t][0] > 0]), functions_lines)
 
     def findbest(self):
         for d, ds, fs in os.walk("./coverage/"):
@@ -110,7 +164,7 @@ class Cover:
         for d, ds, fs in os.walk("./coverage/"):
             i = self.coverset.intersection(fs)
             for x in i:
-                covered, total = self.compute_coverage("%s/%s" % (d, x))
+                covered, total, covered_fn, fns = self.compute_coverage("%s/%s" % (d, x))
                 if x in self.bestcoverage:
                     old_cover, old_total, old_path = self.bestcoverage[x]
                     if total > old_total:
