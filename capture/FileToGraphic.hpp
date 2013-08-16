@@ -768,14 +768,20 @@ struct FileToGraphic
                     hotspot_x = this->stream.in_uint8();
                     hotspot_y = this->stream.in_uint8();
 
+                    this->ptr_cache.add_pointer_static_2(hotspot_x, hotspot_y,
+                        data, mask, cache_idx);
+
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i]->send_pointer(cache_idx, data,
-                            mask, hotspot_x, hotspot_y);
+                        this->consumers[i]->server_set_pointer(
+                            hotspot_x, hotspot_y, data, mask);
                     }
                 }
                 else {
+                    pointer_item & pi = this->ptr_cache.pointer_items[cache_idx];
+
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i]->set_pointer(cache_idx);
+                        this->consumers[i]->server_set_pointer(
+                            pi.x, pi.y, pi.data, pi.mask);
                     }
                 }
             }

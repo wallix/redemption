@@ -520,6 +520,9 @@ public:
 
     virtual void send_pointer(int cache_idx, const uint8_t * data,
         const uint8_t * mask, uint8_t hotspot_x, uint8_t hotspot_y) {
+        this->drawable.send_pointer(cache_idx, data, mask,
+            hotspot_x, hotspot_y);
+
         BStream header(8);
         size_t size =   2           // mouse x
                       + 2           // mouse y
@@ -545,6 +548,8 @@ public:
     }
 
     virtual void set_pointer(int cache_idx) {
+        this->drawable.set_pointer(cache_idx);
+
         BStream header(8);
         size_t size =   2                   // mouse x
                       + 2                   // mouse y
@@ -559,6 +564,6 @@ public:
         payload.out_uint8(cache_idx);
         this->trans->send(payload);
     }
-};
+};  // struct GraphicToFile
 
 #endif

@@ -321,12 +321,16 @@ public:
         return res;
     }
 
-    void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
-    {
+    void server_set_pointer(int hotspot_x, int hotspot_y,
+            const uint8_t * data, const uint8_t * mask) {
         int cache_idx = 0;
-        switch (this->pointer_cache.add_pointer(data, mask, x, y, cache_idx)){
+        switch (this->pointer_cache.add_pointer(data,
+                                                mask,
+                                                hotspot_x,
+                                                hotspot_y,
+                                                cache_idx)) {
         case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, data, mask, x, y);
+            this->send_pointer(cache_idx, data, mask, hotspot_x, hotspot_y);
         break;
         default:
         case POINTER_ALLREADY_SENT:

@@ -71,6 +71,8 @@ struct RDPGraphicDevice {
         bool pointer_already_displayed, bool no_timestamp,
         bool ignore_frame_in_timeval) {}
 
+    virtual void server_set_pointer(int hotspot_x, int hotspot_y,
+        const uint8_t * data, const uint8_t * mask) {}
     virtual void send_pointer(int cache_idx, const uint8_t * data,
         const uint8_t * mask, int hotspot_x, int hotspot_y) {}
     virtual void set_pointer(int cache_idx) {}
