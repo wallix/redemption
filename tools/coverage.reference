@@ -90,9 +90,7 @@ core/session 100 100
 core/session_server 100 100
 core/wait_obj 100 100
 front/front 100 100
-mod/cli/cli_mod 100 100
 mod/draw_api 100 100
-
 mod/internal/login_mod 100 100
 mod/internal/wab_close_mod 100 100
 mod/internal/replay_mod 100 100
@@ -124,7 +122,6 @@ mod/null/null 100 100
 mod/rdp/rdp 100 100
 mod/rdp/rdp_cursor 100 100
 mod/rdp/rdp_orders 100 100
-mod/transitory/transitory 100 100
 mod/vnc/vnc 100 100
 mod/xup/xup 100 100
 transport/inbymetasequencetransport 100 100

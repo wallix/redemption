@@ -430,9 +430,6 @@ unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test gcov :
 unit-test test_front : tests/front/test_front.cpp libboost_unit_test ;
 unit-test test_front : tests/front/test_front.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_cli_mod : tests/mod/cli/test_cli_mod.cpp libboost_unit_test ;
-unit-test test_cli_mod : tests/mod/cli/test_cli_mod.cpp libboost_unit_test gcov : <variant>coverage ;
-
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test ;
 unit-test test_mod_api : tests/mod/test_mod_api.cpp libboost_unit_test gcov : <variant>coverage ;
 
@@ -447,9 +444,6 @@ unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test
 
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test ;
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test gcov : <variant>coverage ;
-
-unit-test test_transitory : tests/mod/transitory/test_transitory.cpp libboost_unit_test ;
-unit-test test_transitory : tests/mod/transitory/test_transitory.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test ;
 unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test gcov : <variant>coverage ;

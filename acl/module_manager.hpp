@@ -33,8 +33,6 @@
 #include "rdp/rdp.hpp"
 #include "vnc/vnc.hpp"
 #include "xup/xup.hpp"
-#include "transitory/transitory.hpp"
-#include "cli/cli_mod.hpp"
 #include "internal/bouncer2_mod.hpp"
 #include "internal/test_card_mod.hpp"
 #include "internal/replay_mod.hpp"
