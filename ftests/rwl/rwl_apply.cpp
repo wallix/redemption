@@ -29,19 +29,18 @@
 
 #include <vector>
 #include <iostream>
-#include <sstream>
 #include <fstream>
 #include <stdexcept>
 
 struct widget_values
 {
     widget_values * parent;
-    struct border
+    struct border_t
     {
         unsigned color;
         unsigned size;
     };
-    border borders[4];
+    border_t borders[4];
     unsigned color;
     unsigned bgcolor;
     int x;
@@ -83,492 +82,137 @@ struct widget_values
     }
 };
 
-namespace rwl {
-
-    template<typename T, T widget_values::*WidgetMember, T rwl_value::Val::*RwlMember>
-    struct set_value
-    {
-        void operator()(widget_values& w, const rwl_value& val) const
-        {
-            (w.*WidgetMember) = val.*RwlMember;
-        }
-    };
-
-    template<
-        typename T, T widget_values::*WidgetMember,
-        typename U, U rwl_value::Val::*RwlMember,
-        typename Adapter
-    >
-    struct set_value_adapter
-    {
-        void operator()(widget_values& w, const rwl_value& val) const
-        {
-            (w.*WidgetMember) = Adapter()(val.*RwlMember);
-        }
-    };
-
-    namespace adapter {
-        struct i2u
-        {
-            uint operator()(int n) const
-            {
-                return (n < 0) ? 0 : n;
-            }
-        };
-
-        struct vs2s
-        {
-            std::string operator()(const rwl_value::Val::S& s) const
-            {
-                return std::string(s.first, s.last);
-            }
-        };
-    }
-
-    typedef set_value<unsigned, &widget_values::color, &rwl_value::Val::color> set_color;
-    typedef set_value<unsigned, &widget_values::bgcolor, &rwl_value::Val::color> set_bgcolor;
-    typedef set_value<int, &widget_values::x, &rwl_value::Val::i> set_x;
-    typedef set_value<int, &widget_values::y, &rwl_value::Val::i> set_y;
-    typedef set_value_adapter<uint, &widget_values::w, int, &rwl_value::Val::i, adapter::i2u> set_w;
-    typedef set_value_adapter<uint, &widget_values::h, int, &rwl_value::Val::i, adapter::i2u> set_h;
-    typedef set_value_adapter<std::string, &widget_values::id, rwl_value::Val::S, &rwl_value::Val::s, adapter::vs2s> set_id;
-
-}
-
-
-
-struct set_property
-{
-    rwl::set_color set_color;
-    int type;
-
-    void assign(widget_values& w, const rwl_property& property)
-    {
-        rwl_value * val = property.root_value;
-        if (property.properties.empty() ? 1 : (property.value.type != 0)) {
-            if (this->check(property, "color", 'c')) {
-                w.color = val->value.color;
-            }
-            else if (this->check(property, "bgcolor", 'c')) {
-                w.bgcolor = val->value.color;
-            }
-            else if (this->check(property, "x", 'i')) {
-                w.x = val->value.i;
-            }
-            else if (this->check(property, "y", 'i')) {
-                w.y = val->value.i;
-            }
-            else if (this->check(property, "w", 'i')) {
-                if (val->value.i < 0) {
-                    throw std::runtime_error("number is negatif");
-                }
-                w.w = val->value.i;
-            }
-            else if (this->check(property, "h", 'i')) {
-                if (val->value.i < 0) {
-                    throw std::runtime_error("number is negatif");
-                }
-                w.h = val->value.i;
-            }
-            else if (this->check(property, "id", 's')) {
-                w.id.assign(val->value.s.first, val->value.s.last);
-            }
-            else {
-                std::string msg = "invalid name ";
-                msg.append(property.name.begin(), property.name.size());
-                throw std::runtime_error(msg);
-            }
-            return ;
-        }
-        else if (property.name == "border") {
-            if (property.properties.empty()) {
-                throw std::runtime_error("invalid name border.");
-            }
-            typedef std::vector<rwl_property*>::const_iterator prop_iterator;
-            for (prop_iterator first = property.properties.begin(), last = property.properties.end(); first != last ; ++first) {
-                if ((**first).properties.empty() ? 1 : ((**first).value.type != 0)) {
-                    val = (*first)->root_value;
-                    if (this->check(**first, "color", 'c')) {
-                        w.borders[0].color = val->value.color;
-                        w.borders[1].color = val->value.color;
-                        w.borders[2].color = val->value.color;
-                        w.borders[3].color = val->value.color;
-                    }
-                    else if (this->check(**first, "size", 'i')) {
-                        w.borders[0].size = val->value.i;
-                        w.borders[1].size = val->value.i;
-                        w.borders[2].size = val->value.i;
-                        w.borders[3].size = val->value.i;
-                    }
-                    else {
-                        std::string msg = "invalid name ";
-                        msg.append((*first)->name.begin(), (*first)->name.size());
-                        throw std::runtime_error(msg);
-                    }
-                }
-                else {
-                    uint idx = -1u;
-                    if ((*first)->name == "top") {
-                        idx = 0;
-                    }
-                    else if ((*first)->name == "right") {
-                        idx = 1;
-                    }
-                    else if ((*first)->name == "bottom") {
-                        idx = 2;
-                    }
-                    else if ((*first)->name == "left") {
-                        idx = 3;
-                    }
-                    else {
-                        std::string msg = "invalid name ";
-                        msg.append((*first)->name.begin(), (*first)->name.size());
-                        throw std::runtime_error(msg);
-                    }
-
-                    for (prop_iterator first2 = (*first)->properties.begin(), last2 = (*first)->properties.end(); first2 != last2 ; ++first2) {
-                        if ((**first2).properties.empty() ? 1 : ((**first2).value.type != 0)) {
-                            val = (*first2)->root_value;
-                            if (this->check(**first2, "color", 'c')) {
-                                w.borders[idx].color = val->value.color;
-                            }
-                            else if (this->check(**first2, "size", 'i')) {
-                                w.borders[idx].size = val->value.i;
-                            }
-                            else {
-                                std::string msg = "invalid name border.";
-                                msg += "top\0\0\0\0right\0\0bottom\0left\0\0"[idx*6];
-                                msg.append((*first2)->name.begin(), (*first2)->name.size());
-                                throw std::runtime_error(msg);
-                            }
-                        }
-                        else {
-                            std::string msg = "invalid name border.";
-                            msg.append((*first2)->name.begin(), (*first2)->name.size());
-                            throw std::runtime_error(msg);
-                        }
-                    }
-                }
-            }
-            return ;
-        }
-        std::string msg = "invalid name ";
-        msg.append(property.name.begin(), property.name.size());
-        throw std::runtime_error(msg);
-    }
-
-    bool check(const rwl_property& property, const char * name, int type)
-    {
-        if (property.name == name) {
-            if (property.root_value->type == type) {
-                return true;
-            }
-            throw std::runtime_error(name);
-        }
-        return false;
-    }
-};
-
 namespace rwl
 {
-    class state_machine_assign;
-
-    struct get_property_i
+    struct rwl_evaluate
     {
-        unsigned operator()(state_machine_assign&, const rwl_value& val) const
-        {
-            return val.value.i;
-        }
-    };
-
-    struct get_property_u
-    {
-        unsigned operator()(state_machine_assign&, const rwl_value& val) const
-        {
-            if (val.value.i < 0) {
-                throw std::runtime_error("number is negatif");
-            }
-            return val.value.i;
-        }
-    };
-
-    struct get_property_color
-    {
-        unsigned operator()(state_machine_assign&, const rwl_value& val) const
-        {
-            return val.value.color;
-        }
-    };
-
-    struct get_property_s
-    {
-        const_cstring operator()(state_machine_assign&, const rwl_value& val) const
-        {
-            return const_cstring(val.value.s.first, val.value.s.last);
-        }
-    };
-
-#define IS_NAME(name) struct is_##name { \
-    bool operator()(const const_cstring& cname){ \
-        return cname == #name; \
-    }\
-}
-
-    IS_NAME(x);
-    IS_NAME(y);
-    IS_NAME(w);
-    IS_NAME(h);
-    IS_NAME(color);
-    IS_NAME(bgcolor);
-    IS_NAME(id);
-    IS_NAME(size);
-    IS_NAME(type);
-    IS_NAME(border);
-    IS_NAME(top);
-    IS_NAME(right);
-    IS_NAME(bottom);
-    IS_NAME(left);
-
-#undef IS_NAME
-
-#define GET_ATTR(type, name) \
-    struct get_attr_##name { \
-        template<typename T> \
-        type & operator()(T& w) { \
-            return w.name; \
-        } \
-    }
-
-    GET_ATTR(int, x);
-    GET_ATTR(int, y);
-    GET_ATTR(unsigned, w);
-    GET_ATTR(unsigned, h);
-    GET_ATTR(unsigned, color);
-    GET_ATTR(unsigned, bgcolor);
-    GET_ATTR(unsigned, size);
-
-#undef GET_ATTR
-
-    struct get_attr_id
-    {
-        template<typename T>
-        struct dispatcher {
-            T& w;
-
-            dispatcher(T& w)
-            : w(w)
-            {}
-
-            void operator=(const const_cstring& s) const
-            {
-                w.id.assign(s.begin(), s.end());
-            }
-        };
+        typedef std::pair<int, rwl_value::Val> evaluate_value_t;
 
         template<typename T>
-        dispatcher<T> operator()(T& w)
-        {
-            return dispatcher<T>(w);
-        }
-    };
+        const_cstring to_cstring(const T& val)
+        { return const_cstring(val.first, val.last); }
 
-
-    template<std::size_t N, std::size_t Max, typename Table>
-    struct state_machine_assign_row
-    {
-        static bool impl(state_machine_assign& sm, widget_values& w,
-                         const rwl_property& property)
+        static evaluate_value_t evaluate(const rwl_value& a)
         {
-            typedef typename boost::mpl::at<Table, boost::mpl::int_<N> >::type row;
-            typedef typename row::check_name check_name;
-            typedef typename row::get_property get_property;
-            typedef typename row::get_attr get_attr;
-            if (row::integral_type == property.value.type && check_name()(property.name)) {
-                get_attr()(w) = get_property()(sm, *property.root_value);
-                return true;
+            switch (a.type) {
+                case 'f':
+                    return evaluate_function(a);
+                    break;
+                case 'o':
+                    if (a.value.operation.l == 0 || a.value.operation.l == 0) {
+                        //TODO error
+                    }
+                    return evaluate_operation(
+                        a.value.operation.op,
+                        *a.value.operation.l,
+                        *a.value.operation.r
+                    );
+                    break;
+                case 'g':
+                    if (a.value.g) {
+                        return evaluate(*a.value.g);
+                    }
+                    else {
+                        return evaluate_value_t();
+                    }
+                    break;
+                case 't':
+                    return evaluate_identifier(a);
+                    break;
+                case 'l':
+                    return evaluate_link_identifier(a);
+                    break;
+                case 'i':
+                    return evaluate_value_t('i', a.value);
+                    break;
+                case 's':
+                    return evaluate_value_t('s', a.value);
+                    break;
+                case 'c':
+                    return evaluate_value_t('c', a.value);
+                    break;
+                default:
+                    break;
             }
-            return state_machine_assign_row<N+1, Max, Table>::impl(sm, w, property);
         }
-    };
 
-    template<std::size_t Max, typename Table>
-    struct state_machine_assign_row<Max, Max, Table>
-    {
-        static bool impl(state_machine_assign&, widget_values&, const rwl_property&)
-        { return false; }
-    };
-
-
-    template<typename Group>
-    class state_machine_assign_row_group;
-
-    template<std::size_t N, std::size_t Max, typename Table>
-    struct state_machine_assign_group
-    {
-        static bool impl(state_machine_assign& sm, widget_values& w,
-                         const rwl_property& property)
+        static evaluate_value_t evaluate_link_identifier(const rwl_value& /*val*/)
         {
-            typedef typename RowGroup::check_name check_name;
-            if (check_name()(property)) {
-                if (property.properties.empty()) {
-                    state_machine_assign_row<
-                    0,
-                    boost::mpl::size<typename RowGroup::row_type>::value,
-                    typename RowGroup::row_type
-                    >::impl(sm, w, property);
+            //TODO
+            return evaluate_value_t();
+        }
+
+        static evaluate_value_t evaluate_identifier(const rwl_value& /*val*/)
+        {
+            //TODO
+            return evaluate_value_t();
+        }
+
+        static evaluate_value_t evaluate_function(const rwl_value& val)
+        {
+            const_cstring name(val.value.func.first, val.value.func.last);
+            if (name == "rgb") {
+                if (val.value.func.size != 3) {
+                    //TODO error
+                }
+                int r = to_i(*val.value.func.params[0]);
+                int g = to_i(*val.value.func.params[1]);
+                int b = to_i(*val.value.func.params[2]);
+
+                r = std::min(0, std::max(255, r));
+                g = std::min(0, std::max(255, g));
+                b = std::min(0, std::max(255, b));
+
+                evaluate_value_t val;
+                val.first = 'c';
+                val.second.color = (r << 16) | (g << 8) | b;
+                return val;
+            }
+        }
+
+        static int to_i(const rwl_value& a)
+        {
+            if (a.type != 'i') {
+                evaluate_value_t v = evaluate(a);
+                if (v.first == 'i') {
+                    return v.second.i;
                 }
                 else {
-                    state_machine_assign_row_group<typename RowGroup::group_type>
-                    ::impl(sm, w, property);
+                    //TODO error
                 }
             }
-            return false;
+            return a.value.i;
         }
-    };
 
-    template<std::size_t Max, typename Table>
-    struct state_machine_assign_group<Max, Max, Table>
-    {
-        static bool impl(state_machine_assign&, widget_values&, const rwl_property&)
-        { return false; }
-    };
-
-
-    template<typename RowGroup>
-    struct state_machine_assign_row_group
-    {
-        static bool impl(state_machine_assign& sm, widget_values& w,
-                         const rwl_property& property)
+        static evaluate_value_t to_val_i(int i)
         {
-            typedef typename RowGroup::check_name check_name;
-            if (check_name()(property)) {
-                if (property.properties.empty()) {
-                    state_machine_assign_row<
-                        0,
-                        boost::mpl::size<typename RowGroup::row_type>::value,
-                        typename RowGroup::row_type
-                    >::impl(sm, w, property);
-                }
-                else {
-                    state_machine_assign_row_group<typename RowGroup::group_type>
-                    ::impl(sm, w, property);
-                }
+            evaluate_value_t val;
+            val.first = 'i';
+            val.second.i = i;
+            return val;
+        }
+
+        static evaluate_value_t evaluate_operation(int op, const rwl_value& a, const rwl_value& b)
+        {
+            if (a.type == 'c' || a.type == 's' || b.type == 'c' || b.type == 's') {
+                //TODO error
             }
-            return false;
-        }
-    };
+            unsigned n1 = to_i(a);
+            unsigned n2 = to_i(b);
 
-    template<>
-    struct state_machine_assign_row_group<boost::mpl::vector<> >
-    {
-        static bool impl(state_machine_assign&, widget_values&, const rwl_property&)
-        { return false; }
-    };
-
-
-    class state_machine_assign
-    {
-    public:
-        template <typename Row, typename Group = boost::mpl::vector<> >
-        struct row_group
-        {
-            typedef Row row_type;
-            typedef Group group_type;
-        };
-
-        template<int IntegralType, typename Is, typename GetProperty, typename GetAttr>
-        struct row
-        {
-            static const bool is_row = true;
-            static const int integral_type = IntegralType;
-            typedef Is check_name;
-            typedef GetProperty get_property;
-            typedef GetAttr get_attr;
-        };
-
-        template<typename Is, typename RowGroup>
-        struct group
-        {
-            static const bool is_row = false;
-            typedef Is check_name;
-            typedef RowGroup::row row_type;
-            typedef typename RowGroup::group group_type;
-        };
-
-        class table_properties;
-
-        void assign(widget_values& w, const rwl_property& property)
-        {
-            state_machine_assign_row_group<table_properties>::impl(*this, w, property);
-        }
-
-        void assign(widget_values& w, const rwl_target& target)
-        {
-            typedef std::vector<rwl_property*>::const_iterator prop_iterator;
-            for (prop_iterator first = target.properties.begin(), last = target.properties.end(); first != last ; ++first) {
-                this->assign(w, **first);
-            }
-
-            typedef std::vector<rwl_target*>::const_iterator target_iterator;
-            for (target_iterator first = target.targets.begin(), last = target.targets.end(); first != last ; ++first) {
-                widget_values * wchild = w.new_child(target.name);
-                this->assign(*wchild, **first);
+            switch (op) {
+                case '+': return to_val_i(n1+n2);
+                case '-': return to_val_i(n1-n2);
+                case '*': return to_val_i(n1*n2);
+                case '/': return to_val_i(n1/n2);
+                case '%': return to_val_i(n1%n2);
+                default: //TODO error
+                    return to_val_i(0);
+                    break;
             }
         }
-
-        typedef row< 'i',   is_x,       get_property_i,         get_attr_x      > row_x;
-        typedef row< 'i',   is_y,       get_property_i,         get_attr_y      > row_y;
-        typedef row< 'i',   is_w,       get_property_u,         get_attr_w      > row_w;
-        typedef row< 'i',   is_h,       get_property_u,         get_attr_h      > row_h;
-        typedef row< 'c',   is_color,   get_property_color,     get_attr_color  > row_color;
-        typedef row< 'c',   is_bgcolor, get_property_color,     get_attr_bgcolor> row_bgcolor;
-        typedef row< 's',   is_id,      get_property_s,         get_attr_id     > row_id;
-        typedef row< 's',   is_size,    get_property_u,         get_attr_size   > row_size;
-
-        struct table_properties : row_group<
-            boost::mpl::vector<
-                row_x,
-                row_y,
-                row_w,
-                row_h,
-                row_color,
-                row_bgcolor,
-                row_id
-            >,
-            boost::mpl::vector<
-                group<
-                    is_border,
-                    row_group<
-                        boost::mpl::vector<
-                            row_color,
-                            row_size
-                        >
-                    >
-                >
-            >
-        >
-        {
-            struct check_name {
-                bool operator()(const rwl_property&) const
-                { return true; }
-            };
-        };
     };
-}
 
-
-void rwl2widget(widget_values& w, const rwl_target& target)
-{
-    typedef std::vector<rwl_property*>::const_iterator prop_iterator;
-    for (prop_iterator first = target.properties.begin(), last = target.properties.end(); first != last ; ++first) {
-        set_property().assign(w, **first);
-    }
-
-    typedef std::vector<rwl_target*>::const_iterator target_iterator;
-    for (target_iterator first = target.targets.begin(), last = target.targets.end(); first != last ; ++first) {
-        widget_values * wchild = w.new_child(target.name);
-        rwl2widget(*wchild, **first);
-    }
 }
 
 
@@ -582,6 +226,7 @@ const_cstring tb(unsigned tab = 0)
 void display_widget_values(const widget_values& w, unsigned tab = 0)
 {
     std::cout
+    << tb(tab) << "id: '" << w.id << "'\n"
     << tb(tab) << "border.top.color: " << w.borders[0].color << "\n"
     << tb(tab) << "border.top.size: " << w.borders[0].size << "\n"
     << tb(tab) << "border.right.color: " << w.borders[1].color << "\n"
@@ -603,6 +248,313 @@ void display_widget_values(const widget_values& w, unsigned tab = 0)
 }
 
 
+namespace rwl {
+
+struct value_t
+{
+    static value_t make_s(const char * first, const char * last)
+    {
+        value_t ret;
+        ret.type = 's';
+        ret.val.s.first = first;
+        ret.val.s.last = last;
+        return ret;
+    }
+
+    static value_t make_color(unsigned color)
+    {
+        value_t ret;
+        ret.type = 'c';
+        ret.val.c = color;
+        return ret;
+    }
+
+    static value_t make_i(int i)
+    {
+        value_t ret;
+        ret.type = 'i';
+        ret.val.i = i;
+        return ret;
+    }
+
+    value_t(int type = 0)
+    : type(type)
+    {}
+
+    int type;
+
+    union {
+        struct {
+            const char * first;
+            const char * last;
+        } s;
+        unsigned c;
+        int i;
+    } val;
+};
+
+void widget_set_value(widget_values& w, const std::string& property_name, const value_t& val)
+{
+    if (val.type == 'c') {
+        if (property_name == "color") {
+            w.color = val.val.c;
+        }
+        else if (property_name == "bgcolor") {
+            w.bgcolor = val.val.c;
+        }
+        else if (property_name == "border.color") {
+            w.borders[0].color = val.val.c;
+            w.borders[1].color = val.val.c;
+            w.borders[2].color = val.val.c;
+            w.borders[3].color = val.val.c;
+        }
+        else if (property_name == "border.top.color") {
+            w.borders[0].color = val.val.c;
+        }
+        else if (property_name == "border.right.color") {
+            w.borders[1].color = val.val.c;
+        }
+        else if (property_name == "border.bottom.color") {
+            w.borders[2].color = val.val.c;
+        }
+        else if (property_name == "border.left.color") {
+            w.borders[3].color = val.val.c;
+        }
+        else {
+            goto not_find;
+        }
+    }
+    else if (val.type == 'i') {
+        if (property_name == "x") {
+            w.x = val.val.i;
+        }
+        else if (property_name == "y") {
+            w.y = val.val.i;
+        }
+        else if (property_name == "w") {
+            if (val.val.i < 0) {
+                //TODO error
+            }
+            w.w = val.val.i;
+        }
+        else if (property_name == "h") {
+            if (val.val.i < 0) {
+                //TODO error
+            }
+            w.h = val.val.i;
+        }
+        else if (property_name == "border.size") {
+            w.borders[0].size = val.val.c;
+            w.borders[1].size = val.val.c;
+            w.borders[2].size = val.val.c;
+            w.borders[3].size = val.val.c;
+        }
+        else if (property_name == "border.top.size") {
+            w.borders[0].size = val.val.c;
+        }
+        else if (property_name == "border.right.size") {
+            w.borders[1].size = val.val.c;
+        }
+        else if (property_name == "border.bottom.size") {
+            w.borders[2].size = val.val.c;
+        }
+        else if (property_name == "border.left.size") {
+            w.borders[3].size = val.val.c;
+        }
+        else {
+            goto not_find;
+        }
+    }
+    else if (val.type == 's') {
+        if (property_name == "id") {
+            if (!w.id.empty()) {
+                //TODO error
+            }
+            w.id.assign(val.val.s.first, val.val.s.last);
+        }
+        else {
+            goto not_find;
+        }
+    }
+
+    return ;
+
+    not_find:
+    //TODO ???(widget_type, w, property_name, val)
+    std::cout << ("widget set value error ") << property_name << std::endl;
+    return ;
+}
+
+value_t widget_get_value(widget_values& w, const std::string& property_name)
+{
+    if (property_name == "color") {
+        return value_t::make_color(w.color);
+    }
+    if (property_name == "bgcolor") {
+        return value_t::make_color(w.bgcolor);
+    }
+    if (property_name == "border.top.color") {
+        return value_t::make_color(w.borders[0].color);
+    }
+    if (property_name == "border.right.color") {
+        return value_t::make_color(w.borders[1].color);
+    }
+    if (property_name == "border.bottom.color") {
+        return value_t::make_color(w.borders[2].color);
+    }
+    if (property_name == "border.left.color") {
+        return value_t::make_color(w.borders[3].color);
+    }
+
+    if (property_name == "x") {
+        return value_t::make_i(w.x);
+    }
+    if (property_name == "y") {
+        return value_t::make_i(w.y);
+    }
+    if (property_name == "w") {
+        return value_t::make_i(w.w);
+    }
+    if (property_name == "h") {
+        return value_t::make_i(w.h);
+    }
+    if (property_name == "border.top.size") {
+        return value_t::make_i(w.borders[0].size);
+    }
+    if (property_name == "border.right.size") {
+        return value_t::make_i(w.borders[1].size);
+    }
+    if (property_name == "border.bottom.size") {
+        return value_t::make_i(w.borders[2].size);
+    }
+    if (property_name == "border.left.size") {
+        return value_t::make_i(w.borders[3].size);
+    }
+
+    if (property_name == "id") {
+        return value_t::make_s(w.id.c_str(), w.id.c_str() + w.id.size());
+    }
+
+    //TODO error
+    std::cout << ("widget get value error ") << property_name << std::endl;
+
+    return value_t();
+}
+
+struct apply_rwl_impl
+{
+    std::string name;
+    std::string name_ref;
+
+    typedef std::vector<rwl_property*>::const_iterator prop_iterator;
+    typedef std::vector<rwl_target*>::const_iterator target_iterator;
+
+    value_t get_value(std::vector<widget_values*>& /*v*/, widget_values& w, const rwl_value& val)
+    {
+        if (val.type == 't') {
+            this->name_ref.assign(val.value.s.first, val.value.s.last);
+            return widget_get_value(w, this->name_ref);
+        }
+        //if (val.type == 'l') {
+        //    this->name_ref.clear();
+        //    for (const char **first = val.value.func.first, **last = val.value.func.last; first != last; ++first) {
+        //        this->name_ref.append(*first, *(first+1));
+        //    }
+        //
+        //}
+        //if (val.type == 'f') {
+        //
+        //}
+        //if (val.type == 'o') {
+        //
+        //}
+        //if (val.type == 'g') {
+        //
+        //}
+
+        if (val.type == 'i') {
+            return value_t::make_i(val.value.i);
+        }
+        if (val.type == 'c') {
+            return value_t::make_color(val.value.color);
+        }
+        if (val.type == 's') {
+            return value_t::make_s(val.value.s.first, val.value.s.last);
+        }
+
+        //TODO error
+        std::cout << ("get value error") << std::endl;
+        return value_t();
+    }
+
+    void apply_rwl(std::vector<widget_values*>& v, widget_values& w, const rwl_property& prop)
+    {
+        size_t pos = this->name.size();
+        this->name.append(prop.name.begin(), prop.name.end());
+        if (prop.properties.empty()) {
+            value_t val = this->get_value(v, w, *prop.root_value);
+            widget_set_value(w, this->name, val);
+        }
+        else {
+            this->name += '.';
+            for (prop_iterator first = prop.properties.begin(), last = prop.properties.end(); first != last; ++first) {
+                this->apply_rwl(v, w, **first);
+            }
+        }
+        this->name.erase(pos);
+    }
+
+    void apply_rwl(std::vector<widget_values*>& v, widget_values& w, const rwl_target& target)
+    {
+        for (prop_iterator first = target.properties.begin(), last = target.properties.end(); first != last ; ++first) {
+            this->apply_rwl(v, w, **first);
+        }
+
+        for (target_iterator first = target.targets.begin(), last = target.targets.end(); first != last ; ++first) {
+            widget_values * wchild = w.new_child(target.name);
+            v.push_back(wchild);
+            this->apply_rwl(v, *wchild, **first);
+        }
+    }
+};
+
+void apply_rwl(std::vector<widget_values*>& v, widget_values& w, const rwl_target& target)
+{
+    rwl::apply_rwl_impl().apply_rwl(v, w, target);
+}
+
+struct rwl_set_value_base
+{
+    void set(const rwl_value& val)
+    {
+        switch (val.type) {
+            case 'i':
+            case 's':
+            case 'c':
+                this->do_set(val.type, val.value);
+                break;
+            case 'f':
+
+                break;
+            case 'o':
+                break;
+            case 'g':
+                break;
+            case 't':
+                break;
+            case 'l':
+                break;
+            default:
+                break;
+        }
+    }
+
+private:
+    virtual void do_set(int type, const rwl_value::Val& val) = 0;
+};
+
+}
+
 int main(int ac, char ** av)
 {
     std::ios::sync_with_stdio(false);
@@ -622,24 +574,26 @@ int main(int ac, char ** av)
     }
     std::string str;
     std::getline(ifs, str, '\0'); //read all
-    const char * cstr = str.c_str();
-    const char * begin_cstr = cstr;
-
-    while (parser.valid() && *cstr) {
-        cstr = parser.next_event(cstr);
-    }
+    const char * begin_cstr = str.c_str();
+    const char * cstr = parser.parse(begin_cstr);
 
     if (*cstr) {
         std::cout << "\n\n\nparsing error line "
-        << (std::count(begin_cstr, cstr, '\n')+1) << "\n" << cstr;
+        << (std::count(begin_cstr, cstr, '\n')+1) << "\n";
+        if (const char * err = parser.message_error()) {
+            std::cout << (err) << "\n";
+        }
+        std::cout << cstr << "\n";
     }
     else if (!parser.stop()) {
         std::cout << "\n\n\ninvalid state\n";
     }
 
     widget_values w;
-    //rwl2widget(w, screen);
-    rwl::state_machine_assign assigner;
-    assigner.assign(w, screen);
+//     rwl::state_machine_assign assigner;
+//     assigner.assign(w, screen);
+    std::vector<widget_values*> v;
+    v.push_back(&w);
+    rwl::apply_rwl(v, w, screen);
     display_widget_values(w);
 }

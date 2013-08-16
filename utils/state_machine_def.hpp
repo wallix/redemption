@@ -410,10 +410,10 @@ public:
         this->state_error = this->state_num;
     }
 
-    void start(const char * s)
+    const char * start(const char * s)
     {
         typedef typename Derived::start_event event_t;
-        transition(s, event_t());
+        return transition(s, event_t());
     }
 
     struct null_transition {};
@@ -576,10 +576,6 @@ public:
         typedef typename Derived::table_transition table_transition;
 
         typedef defined_range_transition<table_transition> range_transition;
-
-        using boost::mpl::int_;
-
-        typedef typename boost::mpl::at<range_transition, int_<0> >::type range_type;
 
         return state_machine_transition<
             0,

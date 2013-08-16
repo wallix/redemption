@@ -63,6 +63,7 @@ private:
 
 
     //BEGIN Event
+    struct TrimLeft {};
     struct Target {};
     struct DefinedTarget {};
     struct ClosedTarget {};
@@ -338,6 +339,7 @@ public:
                     while (*ss && *ss != '\n') {
                         ++ss;
                     }
+                    sm.has_new_line = true;
                 }
                 if (*ss == '/' && *(ss+1) == '*' ) {
                     ss += 2;
@@ -358,10 +360,12 @@ public:
 
 
 public:
-    typedef PropName start_event;
+    typedef TrimLeft start_event;
 
     struct table_transition : boost::mpl::vector<
         //---+- event -------+ check ------+ event next --+ consumer + action ------------+
+        a_row< TrimLeft,      void,         PropName                                      >,
+        //---+---------------+-------------+--------------+----------+--------------------+
         c_row< DefinedTarget, OpenBlock,    PropName,                 &p::confirmed_target>,
         c_row< DefinedTarget, CloseBlock,   ClosedTarget,             &p::empty_target    >,
         //---+---------------+-------------+--------------+----------+--------------------+
@@ -409,6 +413,16 @@ public:
         c_row< Expression,    MathOperator, Value,                    &p::math_operator   >,
         t_row< Expression,                  PropSep                                       >
     > {};
+
+    ///\return  last position of \p str
+    const char * parse(const char * str)
+    {
+        str = this->start(str);
+        while (this->valid() && *str) {
+            str = this->next_event(str);
+        }
+        return str;
+    }
 
     bool stop() const
     {
