@@ -87,19 +87,19 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         capture.flush(); // to close last wrm
 
-        BOOST_CHECK_EQUAL((unsigned)3051, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 0));
+        BOOST_CHECK_EQUAL((unsigned)3098, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 0));
         sq_outfilename_unlink(&(capture.png_trans->seq), 0);
-        BOOST_CHECK_EQUAL((unsigned)3082, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 1));
+        BOOST_CHECK_EQUAL((unsigned)3126, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 1));
         sq_outfilename_unlink(&(capture.png_trans->seq), 1);
-        BOOST_CHECK_EQUAL((unsigned)3102, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 2));
+        BOOST_CHECK_EQUAL((unsigned)3150, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 2));
         sq_outfilename_unlink(&(capture.png_trans->seq), 2);
-        BOOST_CHECK_EQUAL((unsigned)3109, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 3));
+        BOOST_CHECK_EQUAL((unsigned)3154, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 3));
         sq_outfilename_unlink(&(capture.png_trans->seq), 3);
-        BOOST_CHECK_EQUAL((unsigned)3136, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 4));
+        BOOST_CHECK_EQUAL((unsigned)3183, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 4));
         sq_outfilename_unlink(&(capture.png_trans->seq), 4);
-        BOOST_CHECK_EQUAL((unsigned)3145, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 5));
+        BOOST_CHECK_EQUAL((unsigned)3191, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 5));
         sq_outfilename_unlink(&(capture.png_trans->seq), 5);
-        BOOST_CHECK_EQUAL((unsigned)3176, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 6));
+        BOOST_CHECK_EQUAL((unsigned)3224, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 6));
         sq_outfilename_unlink(&(capture.png_trans->seq), 6);
 
         SQ wrm_seq;
