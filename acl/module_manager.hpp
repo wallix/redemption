@@ -277,13 +277,6 @@ public:
 
     int next_module() {
         LOG(LOG_INFO, "----------> ACL next_module <--------");
-        // if (!this->ini.context.rejected.get().is_empty()) {
-        //     this->ini.context.auth_error_message.copy_str(this->ini.context.rejected.get());
-        //     this->ini.context.rejected.set_empty();
-        //     LOG(LOG_INFO, "MODULE_INTERNAL_CLOSE");
-        //     return MODULE_INTERNAL_CLOSE;
-        // }
-        // else
         if (this->ini.context_is_asked(AUTHID_AUTH_USER)
             ||  this->ini.context_is_asked(AUTHID_PASSWORD)) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
