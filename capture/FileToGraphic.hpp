@@ -763,10 +763,10 @@ struct FileToGraphic
 
                 if (  chunk_size - 8 /*header(8)*/
                     > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
-                    data      = stream.in_uint8p(32 * 32 * 3);
-                    mask      = stream.in_uint8p(128);
                     hotspot_x = this->stream.in_uint8();
                     hotspot_y = this->stream.in_uint8();
+                    data      = stream.in_uint8p(32 * 32 * 3);
+                    mask      = stream.in_uint8p(128);
 
                     this->ptr_cache.add_pointer_static_2(hotspot_x, hotspot_y,
                         data, mask, cache_idx);
