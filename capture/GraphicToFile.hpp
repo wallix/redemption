@@ -545,7 +545,7 @@ public:
         this->trans->send(payload);
 
         this->trans->send(data, 32 * 32 * 3);
-        this->trans->send(data, 128);
+        this->trans->send(mask, 128);
     }
 
     virtual void set_pointer(int cache_idx) {
