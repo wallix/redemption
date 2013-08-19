@@ -27,6 +27,9 @@
 #define LOGPRINT
 #include "log.hpp"
 
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
+
 #include "internal/rwl_mod.hpp"
 
 BOOST_AUTO_TEST_CASE(TestRwlMod)
