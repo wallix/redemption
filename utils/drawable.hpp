@@ -94,6 +94,8 @@ struct Drawable {
 
         this->contiguous_mouse_pixels = 20;
         this->mouse_cursor            = default_mouse_cursor;
+        this->mouse_hotspot_x         = 0;
+        this->mouse_hotspot_y         = 0;
 
         if (!this->pix_len) {
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
