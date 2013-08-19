@@ -32,6 +32,9 @@ class Function:
 class Module:
     def __init__(self, name):
         self.name = name
+        self.extension = '.hpp'
+        if '/rio/' in self.name:
+            self.extension = '.h'
         self.lines = 0
         self.covered = 0
         self.functions = {}
@@ -85,9 +88,11 @@ class Cover:
         if os.path.isfile(fgcov) and os.path.isfile(ftags):
             self.modules[module] = Module(module)
             for line in open(ftags):
+                if re.match(r'^.*(TODO|REDOC)', line):
+                    continue
                 res = re.match(r'^.*[(]\x7F(.*)\x01(\d*)[,]', line)
                 if not res:
-                    res = re.match(r'^(.*)[(]\x7F(\d*)[,]', line)
+                    res = re.match(r'^(?:\s*static\s)(?:\s*inline\s)(.*)[(]\x7F(\d*)[,]', line)
                 if res:
                     name, startline = res.group(1, 2)
 #                    print "function found at %s %s" % (name, startline)
@@ -95,11 +100,21 @@ class Cover:
 
             current_function = None
             for line in open(fgcov):
-                res = re.match(r'^\s+(#####|[-]|\d+)[:]\s*(\d+)[:]', line)
+                res = re.match(r'^\s+(#####|[-]|\d+)[:]\s*(\d+)[:](.*)$', line)
                 if res:
                     if int(res.group(2)) in self.modules[module].functions:
                         current_function = int(res.group(2))
 #                        print "function %s found" % self.modules[module].functions[current_function].name
+
+                    # ignore comments
+                    if re.match('^\s+//', res.group(3)):
+                        continue
+                    # ignore blank lines
+                    if re.match('^\s+$', res.group(3)):
+                        continue
+                    # At least one identifier or number on the line (ie: ignore alone brackets)
+                    if not re.match('^.*[a-zA-Z0-9]', res.group(3)):
+                        continue
 
                     if current_function:
                         self.modules[module].functions[current_function].total_lines += 1
@@ -152,6 +167,11 @@ print "Coverage Results:"
 for m in cover.modules:
     for fnl in cover.modules[m].functions:
         fn = cover.modules[m].functions[fnl]
-        print "%s:%s [%s] %s/%s" % (m, fnl, fn.name, fn.covered_lines, fn.total_lines)
+        if fn.covered_lines == 0:
+            print "WARNING: NO COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension, 
+                                                fnl, fn.name, fn.covered_lines, fn.total_lines)
+        elif fn.covered_lines * 100 < fn.total_lines * 50:
+            print "WARNING: LOW COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension, 
+                                                fnl, fn.name, fn.covered_lines, fn.total_lines)
 
 
