@@ -97,13 +97,13 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)")
 #endif
 
 TODO("move these into configuration")
-#define LOGIN_LOGO24 "ad24b.bmp"
-//#define LOGIN_LOGO24 "ad24b.png"
+// #define LOGIN_LOGO24 "ad24b.bmp"
+#define LOGIN_LOGO24 "ad24b.png"
 #define CURSOR0 "cursor0.cur"
 #define CURSOR1 "cursor1.cur"
 #define FONT1 "sans-10.fv1"
-#define REDEMPTION_LOGO24 "xrdp24b-redemption.bmp"
-//#define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
+// #define REDEMPTION_LOGO24 "xrdp24b-redemption.bmp"
+#define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define LOCKFILE "rdpproxy.pid"
 
 #define RSAKEYS_INI "rsakeys.ini"

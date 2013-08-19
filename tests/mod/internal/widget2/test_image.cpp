@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+    WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetImage wimage(drawable, 10,100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+    WidgetImage wimage(drawable, 10,100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetImage wimage(drawable, -100,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+    WidgetImage wimage(drawable, -100,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetImage wimage(drawable, 700,500, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+    WidgetImage wimage(drawable, 700,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetImage wimage(drawable, -100,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+    WidgetImage wimage(drawable, -100,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -259,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+    WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at it's current position
     wimage.rdp_input_invalidate(Rect(0 + wimage.dx(),
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+    WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at position 80,10 and of size 50x100. After clip the size is of 20x15
     wimage.rdp_input_invalidate(Rect(80 + wimage.dx(),
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+    WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wimage.rdp_input_invalidate(Rect(100 + wimage.dx(),
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     DrawApi * drawable = NULL;
 //     NotifyApi * notifier = NULL;
 //
-//     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.bmp", parent, notifier);
+//     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
 //
 //     wimage.send_event(CLIC_BUTTON1_UP, 0, 0, 0);
 //     BOOST_CHECK(widget_for_receive_event.sender == &wimage);

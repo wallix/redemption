@@ -4004,78 +4004,53 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
 
     Bitmap::openfile_t res;
 
-    const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
+    // const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
+    const char * filename = "tests/fixtures/xrdp24b.bmp";
     res = bmp.check_file_type(filename);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_BMP);
 
-    const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
+    // const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
+    const char * filename2 = "tests/fixtures/xrdp24b.jpg";
     res = bmp.check_file_type(filename2);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
-    const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
+    // const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
+    const char * filename3 = "tests/fixtures/xrdp24b.png";
     res = bmp.check_file_type(filename3);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_PNG);
 
     res = bmp.check_file_type("wrong/access/directory/image.png");
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
-    res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
+    // res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
+    res = bmp.check_file_type("tests/fixtures/cursor1.cur");
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
-
-    {// OPEN PNG FILE
-        png_structp png_ptr;
-        png_infop info_ptr;
-        png_uint_32 width, height;
-        png_byte bit_depth, color_type, filter_type, interlace_type;
-
-        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-        if (!png_ptr) {
-            BOOST_CHECK(false);
-        }
-        info_ptr = png_create_info_struct(png_ptr);
-        if (!info_ptr) {
-            png_destroy_read_struct(&png_ptr, NULL, NULL);
-            BOOST_CHECK(false);
-        }
-
-        FILE * fd = fopen(filename3, "rb");
-        if (!fd) {
-            BOOST_CHECK(false);
-        }
-        png_init_io(png_ptr, fd);
-
-        png_read_info(png_ptr, info_ptr);
-
-        width = png_get_image_width(png_ptr, info_ptr);
-        height = png_get_image_height(png_ptr, info_ptr);
-        bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-        color_type = png_get_color_type(png_ptr, info_ptr);
-        filter_type = png_get_filter_type(png_ptr, info_ptr);
-        interlace_type = png_get_interlace_type(png_ptr, info_ptr);
-
-        BOOST_CHECK_EQUAL(width, 256);
-        BOOST_CHECK_EQUAL(height, 150);
-        BOOST_CHECK_EQUAL(bit_depth, 8);
-        BOOST_CHECK_EQUAL(color_type, 2);
-        BOOST_CHECK_EQUAL(filter_type, 0);
-        BOOST_CHECK_EQUAL(interlace_type, 0);
-        if (color_type & PNG_COLOR_TYPE_PALETTE) {
-            png_set_palette_to_rgb(png_ptr);
-        }
-        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-            png_set_gray_1_2_4_to_8 (png_ptr);
-        BOOST_CHECK_EQUAL(bit_depth, 8);
-
-
-
-        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-        fclose(fd);
-    }
 
     bool boolres = bmp.open_png_file(filename3);
     BOOST_CHECK_EQUAL(boolres, true);
 
+    try {
+        Bitmap file(filename);
+    }
+    catch (const Error & e){
+        // this test is not supposed to be executed
+        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
+    }
+
+    try {
+        Bitmap file(filename2);
+    }
+    catch (const Error & e){
+        // this test is supposed to be executed
+        BOOST_CHECK_EQUAL((uint32_t)ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE, (uint32_t)e.id);
+    }
+    try {
+        Bitmap file(filename3);
+    }
+    catch (const Error & e){
+        // this test is not supposed to be executed
+        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
+    }
+
 }
-
-
