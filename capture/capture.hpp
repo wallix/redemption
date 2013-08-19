@@ -44,7 +44,6 @@ public:
     OutmetaTransport       * wrm_trans;
     CryptoOutmetaTransport * crypto_wrm_trans;
     BmpCache               * pnc_bmp_cache;
-    PointerCache           * pnc_ptr_cache;
     NativeCapture          * pnc;
 
     RDPDrawable * drawable;
@@ -67,7 +66,6 @@ public:
             , wrm_trans(NULL)
             , crypto_wrm_trans(NULL)
             , pnc_bmp_cache(NULL)
-            , pnc_ptr_cache(NULL)
             , pnc(NULL)
             , drawable(NULL)
             , capture_event(wait_obj(0))
@@ -105,7 +103,6 @@ public:
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
             this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
-            this->pnc_ptr_cache = new PointerCache();
             if (this->enable_file_encryption) {
                 this->crypto_wrm_trans = new CryptoOutmetaTransport( wrm_path, hash_path, basename, now
                                                                    , width, height
@@ -135,7 +132,6 @@ public:
         else {
             delete this->crypto_wrm_trans;
         }
-        delete this->pnc_ptr_cache;
         delete this->pnc_bmp_cache;
 
         delete this->drawable;
