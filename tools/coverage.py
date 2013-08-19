@@ -21,6 +21,20 @@ elif GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7']:
 print GCCVERSION, TESTSSUBDIR
 
 
+class Module:
+    def __init__(self, name):
+        self.name = name
+        self.lines = 0
+        self.covered = 0
+        self.functions = {}
+
+    def __repr__(self):
+        return "\n".join(("Module: %s" % self.name
+               ,"Total Lines: %s" % self.lines
+               ,"Covered Lines: %s" % self.covered
+               ,"Total functions: %s" % len(self.functions))) + "\n"
+
+
 def list_modules():
     for line in open("./tools/coverage.reference"):
         res = re.match(r'^([/A-Za-z0-9_]+)\s+(\d+)\s+(\d+)', line)
@@ -40,6 +54,7 @@ def list_modules():
 
 class Cover:
     def __init__(self):
+        self.modules = {}
         self.results = {}
         self.coverset = set()
         self.bestcoverage = {} # module: (lincov, lintotal)
@@ -70,6 +85,7 @@ class Cover:
         print " ".join(cmd)
         res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
 
+        self.modules[module] = Module(module)
         self.results[module] = self.compute_coverage("./coverage/%s/%s%s.gcov" % (module, modulename, extension))
 
     def compute_functions_list(self, f):
@@ -164,6 +180,8 @@ class Cover:
         for d, ds, fs in os.walk("./coverage/"):
             i = self.coverset.intersection(fs)
             for x in i:
+                if not d[:11] in self.modules:
+                    self.modules[d[11:]] = Module(d[11:])
                 covered, total, covered_fn, fns = self.compute_coverage("%s/%s" % (d, x))
                 if x in self.bestcoverage:
                     old_cover, old_total, old_path = self.bestcoverage[x]
@@ -201,6 +219,8 @@ class Cover:
                 except IOError:
                     for i in range(0, 100):
                         print module, ' #####: %u: NO COVERAGE' % i
+
+        print self.modules
 
 
     def coverall(self):
