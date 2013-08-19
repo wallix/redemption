@@ -26,15 +26,17 @@
 #define LOGNULL
 #include "log.hpp"
 
+#undef FIXTURES_PATH
+#define FIXTURES_PATH "./tests/fixtures"
+#undef SHARE_PATH
+#define SHARE_PATH "./tests/fixtures"
+
 #include "internal/widget2/window_login.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 
 
 struct TestDraw : DrawApi

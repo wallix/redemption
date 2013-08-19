@@ -24,6 +24,11 @@
 #define BOOST_TEST_MODULE TestWabCloseMod
 #include <boost/test/auto_unit_test.hpp>
 
+#undef FIXTURES_PATH
+#define FIXTURES_PATH "./tests/fixtures"
+#undef SHARE_PATH
+#define SHARE_PATH "./tests/fixtures"
+
 #define LOGPRINT
 #include "log.hpp"
 

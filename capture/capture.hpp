@@ -48,6 +48,8 @@ public:
 
     RDPDrawable * drawable;
 
+    PointerCache ptr_cache;
+
     wait_obj capture_event;
 
     redemption::string png_path;
@@ -118,6 +120,25 @@ public:
                                              , *this->drawable, ini);
             }
             this->pnc->recorder.send_input = true;
+        }
+
+        pointer_item pointer0(POINTER_CURSOR0);
+        this->ptr_cache.add_pointer_static(&pointer0, 0);
+        if (this->drawable) {
+            this->drawable->send_pointer(0,
+                                         pointer0.data,
+                                         pointer0.mask,
+                                         pointer0.x,
+                                         pointer0.y);
+        }
+        pointer_item pointer1(POINTER_CURSOR1);
+        this->ptr_cache.add_pointer_static(&pointer1, 1);
+        if (this->drawable) {
+            this->drawable->send_pointer(1,
+                                         pointer1.data,
+                                         pointer1.mask,
+                                         pointer1.x,
+                                         pointer1.y);
         }
     }
 
@@ -272,6 +293,24 @@ public:
         }
         else if (this->capture_drawable) {
             this->drawable->draw(bitmap_data, data, size, bmp);
+        }
+    }
+
+    virtual void server_set_pointer(int hotspot_x, int hotspot_y,
+        const uint8_t * data, const uint8_t * mask) {
+        int cache_idx = 0;
+        switch (this->ptr_cache.add_pointer(data,
+                                            mask,
+                                            hotspot_x,
+                                            hotspot_y,
+                                            cache_idx)) {
+        case POINTER_TO_SEND:
+            this->send_pointer(cache_idx, data, mask, hotspot_x, hotspot_y);
+        break;
+        default:
+        case POINTER_ALLREADY_SENT:
+            this->set_pointer(cache_idx);
+        break;
         }
     }
 

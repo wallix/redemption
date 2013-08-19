@@ -28,8 +28,7 @@
 #include "colors.hpp"
 #include "rect.hpp"
 
-struct Drawable
-{
+struct Drawable {
     static const std::size_t Bpp = 3;
 
     uint16_t width;
@@ -48,6 +47,21 @@ struct Drawable
     uint8_t timestamp_data[ts_width * ts_height * 3];
     char previous_timestamp[size_str_timestamp];
 
+    struct Mouse_t {
+        uint8_t      y;
+        uint8_t      x;
+        uint8_t      lg;
+        const char * line;
+    };
+
+    size_t          contiguous_mouse_pixels;
+    const Mouse_t * mouse_cursor;
+    uint8_t         mouse_hotspot_x;
+    uint8_t         mouse_hotspot_y;
+    uint8_t         save_mouse[1024];
+    uint16_t        save_mouse_x;
+    uint16_t        save_mouse_y;
+
     Drawable(int width, int height)
     : width(width)
     , height(height)
@@ -56,30 +70,32 @@ struct Drawable
     {
         static const Mouse_t default_mouse_cursor[] =
         {
-            {0,  0, 3*1, "\x00\x00\x00"},
-            {1,  0, 3*2, "\x00\x00\x00\x00\x00\x00"},
-            {2,  0, 3*3, "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
-            {3,  0, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {4,  0, 3*5, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {5,  0, 3*6, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {6,  0, 3*7, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {7,  0, 3*8, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {8,  0, 3*9, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {9,  0, 3*10, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {10, 0, 3*11, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {11, 0, 3*12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {12, 0, 3*12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-            {13, 0, 3*8, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {14, 0, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {14, 5, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {15, 0, 3*3, "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
-            {15, 5, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {16, 1, 3*1, "\x00\x00\x00"},
-            {16, 6, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"}
+            {0,  0, 3 * 1,  "\x00\x00\x00"},
+            {1,  0, 3 * 2,  "\x00\x00\x00\x00\x00\x00"},
+            {2,  0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
+            {3,  0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {4,  0, 3 * 5,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {5,  0, 3 * 6,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {6,  0, 3 * 7,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {7,  0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {8,  0, 3 * 9,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {9,  0, 3 * 10, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {10, 0, 3 * 11, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {11, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {12, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+            {13, 0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {14, 0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {14, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {15, 0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
+            {15, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {16, 1, 3 * 1,  "\x00\x00\x00"},
+            {16, 6, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"}
         };
 
         this->contiguous_mouse_pixels = 20;
         this->mouse_cursor            = default_mouse_cursor;
+        this->mouse_hotspot_x         = 0;
+        this->mouse_hotspot_y         = 0;
 
         if (!this->pix_len) {
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
@@ -169,30 +185,6 @@ struct Drawable
     int size() const
     {
         return this->width * this->height;
-    }
-
-    struct Mouse_t{
-        uint8_t y;
-        uint8_t x;
-        uint8_t lg;
-        const char * line;
-    };
-
-    int             contiguous_mouse_pixels;
-    const Mouse_t * mouse_cursor;
-
-    const Mouse_t & line_of_mouse(size_t i)
-    {
-        return mouse_cursor[i];
-    }
-
-    uint8_t save_mouse[1024];
-    uint16_t save_mouse_x;
-    uint16_t save_mouse_y;
-
-    char * pixel_start_data(int x, int y, size_t i)
-    {
-        return (char*)this->data + ((this->line_of_mouse(i).y + y) * this->width + this->line_of_mouse(i).x + x) * 3;
     }
 
     int _posch(char ch)
@@ -1242,40 +1234,136 @@ struct Drawable
         }
     }
 
-    void set_mouse_cursor(int contiguous_mouse_pixels, const Mouse_t * mouse_cursor) {
-        this->contiguous_mouse_pixels = contiguous_mouse_pixels;
-        this->mouse_cursor            = mouse_cursor;
+    const Mouse_t & line_of_mouse(size_t i) {
+        return this->mouse_cursor[i];
     }
 
-    void trace_mouse(uint16_t x, uint16_t y)
-    {
-        uint8_t * psave = this->save_mouse;
-        size_t nblines = std::max<uint16_t>(0, std::min<uint16_t>(this->contiguous_mouse_pixels,
-            this->height - y));
-        for (size_t i = 0 ; i < nblines ; i++){
-            char * pixel_start = this->pixel_start_data(x, y, i);
-            unsigned lg = this->line_of_mouse(i).lg;
+    void set_mouse_cursor(int contiguous_mouse_pixels,
+            const Mouse_t * mouse_cursor,
+            uint8_t hotspot_x, uint8_t hotspot_y) {
+        this->contiguous_mouse_pixels = contiguous_mouse_pixels;
+        this->mouse_cursor            = mouse_cursor;
+        this->mouse_hotspot_x         = hotspot_x;
+        this->mouse_hotspot_y         = hotspot_y;
+    }
+
+    void trace_mouse(uint16_t x, uint16_t y) {
+/*
+        uint8_t * psave   = this->save_mouse;
+        size_t    nblines = std::max<uint16_t>(
+            0,
+            std::min<uint16_t>(this->contiguous_mouse_pixels, this->height - y));
+        for (size_t i = 0; i < nblines; i++) {
+            char     * pixel_start = this->pixel_start_data(x, y, i);
+            unsigned   lg          = this->line_of_mouse(i).lg;
             memcpy(psave, pixel_start, lg);
             psave += lg;
             memcpy(pixel_start, this->line_of_mouse(i).line, lg);
         }
         this->save_mouse_x = x;
         this->save_mouse_y = y;
+*/
+        uint8_t * psave  = this->save_mouse;
+        int       draw_x = x - this->mouse_hotspot_x;
+        int       draw_y = y - this->mouse_hotspot_y;
+
+        for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
+            uint16_t contiguous_mouse_pixels_y = draw_y + this->mouse_cursor[i].y;
+            if ((contiguous_mouse_pixels_y < 0) ||
+                (contiguous_mouse_pixels_y >= this->height)) {
+                continue;
+            }
+
+            uint16_t contiguous_mouse_pixels_line_start = draw_x + this->mouse_cursor[i].x;
+            if (contiguous_mouse_pixels_line_start >= this->width) {
+                continue;
+            }
+
+            uint16_t contiguous_mouse_pixels_line_stop = contiguous_mouse_pixels_line_start +
+                                                         this->mouse_cursor[i].lg / 3;
+            if (contiguous_mouse_pixels_line_stop < 0) {
+                continue;
+            }
+            uint16_t contiguous_mouse_pixels_line_data_start_offset =
+                (contiguous_mouse_pixels_line_start < 0) ?
+                (0 - contiguous_mouse_pixels_line_start) * 3 : 0;
+
+            uint16_t contiguous_mouse_pixels_line_data_lenght =
+                (contiguous_mouse_pixels_line_stop > this->width) ?
+                this->mouse_cursor[i].lg - (contiguous_mouse_pixels_line_stop - this->width) * 3 :
+                this->mouse_cursor[i].lg;
+
+            char * pixel_start = this->pixel_start_data(draw_x, draw_y, i);
+
+            memcpy(psave,
+                   pixel_start + contiguous_mouse_pixels_line_data_start_offset,
+                   contiguous_mouse_pixels_line_data_lenght);
+            psave += contiguous_mouse_pixels_line_data_lenght;
+            memcpy(pixel_start,
+                   this->line_of_mouse(i).line + contiguous_mouse_pixels_line_data_start_offset,
+                   contiguous_mouse_pixels_line_data_lenght);
+        }
+
+        this->save_mouse_x = x;
+        this->save_mouse_y = y;
     }
 
-    void clear_mouse()
-    {
-        uint8_t * psave = this->save_mouse;
-        uint16_t x = this->save_mouse_x;
-        uint16_t y = this->save_mouse_y;
-        size_t nblines = std::max<uint16_t>(0, std::min<uint16_t>(this->contiguous_mouse_pixels,
-            this->height - y));
-        for (size_t i = 0 ; i < nblines ; i++){
-            char * pixel_start = this->pixel_start_data(x,y, i);
-            unsigned lg = this->line_of_mouse(i).lg;
+    void clear_mouse() {
+/*
+        uint8_t  * psave = this->save_mouse;
+        uint16_t   x     = this->save_mouse_x;
+        uint16_t   y     = this->save_mouse_y;
+        size_t nblines = std::max<uint16_t>(
+            0,
+            std::min<uint16_t>(this->contiguous_mouse_pixels, this->height - y));
+        for (size_t i = 0; i < nblines; i++) {
+            char     * pixel_start = this->pixel_start_data(x, y, i);
+            unsigned   lg          = this->line_of_mouse(i).lg;
             memcpy(pixel_start, psave, lg);
             psave += lg;
         }
+*/
+        uint8_t * psave  = this->save_mouse;
+        int       draw_x = this->save_mouse_x - this->mouse_hotspot_x;
+        int       draw_y = this->save_mouse_y - this->mouse_hotspot_y;
+
+        for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
+            uint16_t contiguous_mouse_pixels_y = draw_y + this->mouse_cursor[i].y;
+            if ((contiguous_mouse_pixels_y < 0) ||
+                (contiguous_mouse_pixels_y >= this->height)) {
+                continue;
+            }
+
+            uint16_t contiguous_mouse_pixels_line_start = draw_x + this->mouse_cursor[i].x;
+            if (contiguous_mouse_pixels_line_start >= this->width) {
+                continue;
+            }
+
+            uint16_t contiguous_mouse_pixels_line_stop = contiguous_mouse_pixels_line_start +
+                                                         this->mouse_cursor[i].lg / 3;
+            if (contiguous_mouse_pixels_line_stop < 0) {
+                continue;
+            }
+            uint16_t contiguous_mouse_pixels_line_data_start_offset =
+                (contiguous_mouse_pixels_line_start < 0) ?
+                (0 - contiguous_mouse_pixels_line_start) * 3 : 0;
+
+            uint16_t contiguous_mouse_pixels_line_data_lenght =
+                (contiguous_mouse_pixels_line_stop > this->width) ?
+                this->mouse_cursor[i].lg - (contiguous_mouse_pixels_line_stop - this->width) * 3 :
+                this->mouse_cursor[i].lg;
+
+            char * pixel_start = this->pixel_start_data(draw_x, draw_y, i);
+
+            memcpy(pixel_start, psave, contiguous_mouse_pixels_line_data_lenght);
+            psave += contiguous_mouse_pixels_line_data_lenght;
+        }
+    }
+
+    char * pixel_start_data(int x, int y, size_t i)
+    {
+        return (char *)this->data +
+               ((this->line_of_mouse(i).y + y) * this->width + this->line_of_mouse(i).x + x) * 3;
     }
 
     void trace_timestamp(tm & now)
@@ -1345,7 +1433,6 @@ struct Drawable
             tsave += ts_width*3;
         }
     }
-
 };
 
 #endif
