@@ -88,8 +88,8 @@ public:
         Rect winrect = this->get_screen_rect().shrink(30);
         this->front.draw(RDPOpaqueRect(winrect, WINBLUE), clip);
 
-        //Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.png");
-        Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
+        Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.png");
+        //Bitmap bitmap(SHARE_PATH "/" "Philips_PM5544_640.bmp");
         this->front.draw(RDPMemBlt(0,
             Rect(winrect.x + (winrect.cx - bitmap.cx)/2,
                  winrect.y + (winrect.cy - bitmap.cy)/2,
@@ -154,7 +154,8 @@ public:
             Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
              32, 32, 0), clip, bloc64x64);
 
-        Bitmap logo(SHARE_PATH "/ad8b.bmp");
+        //Bitmap logo(SHARE_PATH "/ad8b.bmp");
+        Bitmap logo(SHARE_PATH "/ad8b.png");
         this->front.draw(RDPMemBlt(0,
             Rect(100, 100, 26, 32),
             0xCC,

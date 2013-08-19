@@ -230,13 +230,13 @@ public:
 
         if (res == OPEN_FILE_UNKNOWN) {
             LOG(LOG_ERR, "loading bitmap %s failed, Unknown format type", filename);
-            throw Error(ERR_BITMAP_LOAD_FAILED);
+            throw Error(ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE);
         }
         else if (res == OPEN_FILE_PNG) {
             bool bres = this->open_png_file(filename);
             if (!bres) {
                 LOG(LOG_ERR, "loading bitmap %s failed", filename);
-                throw Error(ERR_BITMAP_LOAD_FAILED);
+                throw Error(ERR_BITMAP_PNG_LOAD_FAILED);
             }
         }
         else {
@@ -463,13 +463,14 @@ public:
             LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
         }
         else if ((type1[0] == 'B') && (type1[1] == 'M')) {
-            LOG(LOG_INFO, "Widget_load: bitmap file [%s] is BMP file\n", filename);
+            LOG(LOG_INFO, "Widget_load: image file [%s] is BMP file\n", filename);
             res = OPEN_FILE_BMP;
         }
         else if (read(fd, &type1[2], 6) != 6) {
             LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
         }
         else if (png_check_sig(reinterpret_cast<png_bytep>(type1), 8)) {
+            LOG(LOG_INFO, "Widget_load: image file [%s] is PNG file\n", filename);
             res = OPEN_FILE_PNG;
         }
         else {
@@ -509,9 +510,9 @@ public:
         bit_depth = png_get_bit_depth(png_ptr, info_ptr);
         color_type = png_get_color_type(png_ptr, info_ptr);
 
-        if (color_type == PNG_COLOR_TYPE_PALETTE) {
+        if (color_type == PNG_COLOR_TYPE_PALETTE)
             png_set_palette_to_rgb(png_ptr);
-        }
+
         if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
             png_set_gray_1_2_4_to_8 (png_ptr);
 
