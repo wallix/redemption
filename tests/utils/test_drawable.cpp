@@ -233,14 +233,14 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     {
         char message[1024];
         if (!check_sig(gd.drawable, message,
-        "\x75\xc6\xe6\x3b\xd3\x22\x88\x14\x27\x03\xf3\x3e\x3c\x90\x5f\xac\xc1\x5c\x61\xa0"
+        "\x87\x84\x2e\x6b\xa1\x7a\x49\x86\x4a\xa8\xbd\xc2\xa6\xf0\x6a\x82\xad\xfd\x49\xad"
         )){
             BOOST_CHECK_MESSAGE(false, message);
         }
     }
 
     // uncomment to see result in png file
-    // dump_png("/tmp/test_mouse_000_", gd.drawable);
+    dump_png("/tmp/test_mouse_000_", gd.drawable);
 
     gd.drawable.clear_mouse();
 

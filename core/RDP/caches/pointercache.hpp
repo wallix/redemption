@@ -326,6 +326,9 @@ struct drawable_pointer_item {
     Drawable::Mouse_t mouse_cursor[16 * 32];
     int               contiguous_mouse_pixels;
     uint8_t           data[32 * 32 * 3];
+
+    int x; /* hotspot */
+    int y;
 };
 
 struct DrawablePointerCache {
@@ -349,6 +352,9 @@ struct DrawablePointerCache {
         drawable_pointer_item & pointer_item = this->pointer_items[index];
 
         this->make_drawable_mouse_cursor(data, mask, pointer_item);
+
+        pointer_item.x = hotspot_x;
+        pointer_item.y = hotspot_y;
     }
 
 protected:

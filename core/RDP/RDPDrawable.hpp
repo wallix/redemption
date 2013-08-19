@@ -305,13 +305,15 @@ public:
 
         drawable_pointer_item & pointer_item = this->ptr_cache.pointer_items[cache_idx];
         this->drawable.set_mouse_cursor(
-            pointer_item.contiguous_mouse_pixels, pointer_item.mouse_cursor);
+            pointer_item.contiguous_mouse_pixels, pointer_item.mouse_cursor,
+            pointer_item.x, pointer_item.y);
     }
 
     virtual void set_pointer(int cache_idx) {
         drawable_pointer_item & pointer_item = this->ptr_cache.pointer_items[cache_idx];
         this->drawable.set_mouse_cursor(
-            pointer_item.contiguous_mouse_pixels, pointer_item.mouse_cursor);
+            pointer_item.contiguous_mouse_pixels, pointer_item.mouse_cursor,
+            pointer_item.x, pointer_item.y);
     }
 
     virtual void dump_png24(Transport * trans, bool bgr) {
