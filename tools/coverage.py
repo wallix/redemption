@@ -55,8 +55,7 @@ def list_modules():
 class Cover:
     def __init__(self):
         self.modules = {}
-        self.results = {}
-        self.coverset = set()
+        self.coverset = set([])
         self.bestcoverage = {} # module: (lincov, lintotal)
         self.functions = {}
 
@@ -69,7 +68,6 @@ class Cover:
         extension = '.hpp'
         if '/rio/' in module:
             extension = '.h'
-
 
         cmd = ["bjam", "coverage", "test_%s" % modulename]
         print " ".join(cmd)
@@ -84,9 +82,6 @@ class Cover:
         cmd = ["etags", "%s%s" % (module, extension), "-o", "coverage/%s/%s%s.TAGS" % (module, modulename, extension)]
         print " ".join(cmd)
         res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
-
-        self.modules[module] = Module(module)
-        self.results[module] = self.compute_coverage("./coverage/%s/%s%s.gcov" % (module, modulename, extension))
 
     def compute_functions_list(self, f):
         try:
@@ -113,6 +108,10 @@ class Cover:
     def compute_coverage(self, f):
     
         print "computing coverage for ", f
+        module = '/'.join(f.split('/')[2:-1])
+        if not module in self.modules:
+            self.modules[module] = Module(module)
+
         uncovered = 0
         total = 0
         try:
