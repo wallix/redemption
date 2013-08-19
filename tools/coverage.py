@@ -4,6 +4,7 @@ import subprocess
 import sys
 import re
 import os
+import os.path
 
 gccinfo = subprocess.Popen(["gcc", "--version"], stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
 #res = re.match("\s+(\d+[.]*\d+)[.]?\d+$", gccinfo)
@@ -21,6 +22,13 @@ elif GCCVERSION[:7] in ['gcc-4.6', 'gcc-4.7']:
 print GCCVERSION, TESTSSUBDIR
 
 
+class Function:
+    def __init__(self, name, startline):
+        self.name = name
+        self.startline = startline
+        self.total_lines = 0
+        self.covered_lines = 0
+
 class Module:
     def __init__(self, name):
         self.name = name
@@ -28,211 +36,96 @@ class Module:
         self.covered = 0
         self.functions = {}
 
-    def __repr__(self):
-        return "\n".join(("Module: %s" % self.name
-               ,"Total Lines: %s" % self.lines
-               ,"Covered Lines: %s" % self.covered
-               ,"Total functions: %s" % len(self.functions))) + "\n"
-
 
 def list_modules():
     for line in open("./tools/coverage.reference"):
-        res = re.match(r'^([/A-Za-z0-9_]+)\s+(\d+)\s+(\d+)', line)
+        res = re.match(r'^((?:[/A-Za-z0-9_]+[/])*([/A-Za-z0-9_]+))\s+(\d+)\s+(\d+)', line)
         if res:
-            module, covered, total = res.group(1, 2, 3)
+            module, name = res.group(1, 2)
             extension = '.hpp'
             if '/rio/' in module:
                 extension = '.h'
-            covered = int(covered)
-            total = int(total)
-            yield module, extension, covered, total
+            yield module, name, extension
         else:
             if line[0] != '\n' and line[0] != '#': 
-                print "Line '%s' does not match" % line
-
-
+                print "Line '%s' does not match in coverage.reference" % line
+                sys.exit(-1)
 
 class Cover:
     def __init__(self):
         self.modules = {}
-        self.coverset = set([])
         self.bestcoverage = {} # module: (lincov, lintotal)
         self.functions = {}
+        self.verbose = 1
 
-    def cover(self, module):
-        modulepath = ''
-        modulename = module
-        if '/' in module:
-            modulename = module.split('/')[-1]
-            modulepath = '/'.join(module.split('/')[:-1])+'/'
-        extension = '.hpp'
-        if '/rio/' in module:
-            extension = '.h'
+    def cover(self, module, name, extension):
 
-        cmd = ["bjam", "coverage", "test_%s" % modulename]
-        print " ".join(cmd)
-        res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+        cmd1 = ["bjam", "coverage", "test_%s" % name]
+        cmd2 = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
+        cmd3 = ["etags", "%s%s" % (module, extension), "-o", "coverage/%s/%s%s.TAGS" % (module, name, extension)]
 
-        cmd = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, modulepath if TESTSSUBDIR else '', modulename), "bin/%s/coverage/test_%s" % (GCCVERSION, modulename)]
-        print " ".join(cmd)
-        res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+        res = subprocess.Popen(cmd1, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+        res = subprocess.Popen(cmd2, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
         subprocess.call("mkdir -p coverage/%s" % module, shell=True)
-        subprocess.call("mv *.gcov coverage/%s" % module, shell=True)
+        res = subprocess.Popen(cmd3, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
 
-        cmd = ["etags", "%s%s" % (module, extension), "-o", "coverage/%s/%s%s.TAGS" % (module, modulename, extension)]
-        print " ".join(cmd)
-        res = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
+        status = subprocess.call("mv *.gcov coverage/%s" % module, shell=True)
+        if status & 0x255 != 0:
+            print " ".join(cmd1)
+            print " ".join(cmd2)
+            print " ".join(cmd3)
+            sys.exit(0)
 
-    def compute_functions_list(self, f):
-        try:
-            print "Looking for functions in %s" % (f)
-            allf = []
-            for line in open(f):
-                res = re.match(r'^.*[(]\x7F(.*)\x01(\d*)[,]', line)
-                if res:
-                    print "match:", res.group(1), ":", f[:-5][11:], ':', res.group(2)
-                    allf.append((res.group(2), res.group(1)))
-            allf = sorted(allf)
-            if len(allf):
-                lastl, lastfname = allf[0]
-                rangefn = []
-                for l, fname in allf[1:]:
-                    rangefn.append((int(lastl), int(l) - 1, lastfname))
-                    lastl, lastfname = l, fname
-                rangefn.append((int(lastl), int(lastl) + 1000, lastfname))
-                for l1, l2, name in rangefn:
-                    self.functions[(f[:-5][11:], l1)] = [l1, l2, name]
-        except IOError:
-            print "Error in tags"
 
-    def compute_coverage(self, f):
-    
-        print "computing coverage for ", f
-        module = '/'.join(f.split('/')[2:-1])
-        if not module in self.modules:
+    def compute_coverage(self, module, name, extension):
+        ftags = "./coverage/%s/%s%s.TAGS" % (module, name, extension)
+        fgcov = "./coverage/%s/%s%s.gcov" % (module, name, extension)
+
+        import os.path
+        if os.path.isfile(fgcov) and os.path.isfile(ftags):
             self.modules[module] = Module(module)
+            for line in open(ftags):
+                res = re.match(r'^.*[(]\x7F(.*)\x01(\d*)[,]', line)
+                if not res:
+                    res = re.match(r'^(.*)[(]\x7F(\d*)[,]', line)
+                if res:
+                    name, startline = res.group(1, 2)
+#                    print "function found at %s %s" % (name, startline)
+                    self.modules[module].functions[int(startline)] = Function(name, int(startline))
 
-        uncovered = 0
-        total = 0
-        try:
             current_function = None
-            functions_lines = {}
-            for line in open(f):
-                res = re.match(r'^\s+#####[:]\s*(\d+)[:]', line)
+            for line in open(fgcov):
+                res = re.match(r'^\s+(#####|[-]|\d+)[:]\s*(\d+)[:]', line)
                 if res:
-                    uncovered += 1
-                    total += 1
-                    module = f[11:][:-5]
-                    if (module, int(res.group(1))) in self.functions:
-                        current_function = (module, int(res.group(1)))
-                        functions_lines[current_function] = [0, 0 
-                                                             ,self.functions[current_function][0]
-                                                             ,self.functions[current_function][1]
-                                                             ,self.functions[current_function][2]]
-                        print "function ", self.functions[current_function], " found"
+                    if int(res.group(2)) in self.modules[module].functions:
+                        current_function = int(res.group(2))
+#                        print "function %s found" % self.modules[module].functions[current_function].name
+
                     if current_function:
-                        functions_lines[current_function][1] += 1
-                    
-                res = re.match(r'^\s+\d+[:]\s*(\d+)[:]', line)
-                if res:
-                    total += 1
-                    module = f[11:][:-5]
-                    if (module, int(res.group(1))) in self.functions:
-                        current_function = (module, int(res.group(1)))
-                        functions_lines[current_function] = [0, 0 
-                                                             ,self.functions[current_function][0]
-                                                             ,self.functions[current_function][1]
-                                                             ,self.functions[current_function][2]]
-                        print "function ", self.functions[current_function], " found"
-                    if current_function:
-                        functions_lines[current_function][0] += 1
+                        self.modules[module].functions[current_function].total_lines += 1
 
-                res = re.match(r'^\s+[-][:]\s*(\d+)[:]', line)
-                if res:
-                    module = f[11:][:-5]
-                    if (module, int(res.group(1))) in self.functions:
-                        current_function = (module, int(res.group(1)))
-                        functions_lines[current_function] = [0, 0 
-                                                             ,self.functions[current_function][0]
-                                                             ,self.functions[current_function][1]
-                                                             ,self.functions[current_function][2]]
-                        print "function ", self.functions[current_function], " found"
-                    if current_function:
-                        functions_lines[current_function][1] += 1
+                    if not res.group(1) in ('#####', "-"):
+                        if current_function:
+                            self.modules[module].functions[current_function].covered_lines += 1
 
-            if functions_lines:
-                print functions_lines
-                        
-                        
-        except IOError:
-            total = 100
-            uncovered = 100
-
-        return ((total - uncovered), total, len([t for t in functions_lines if functions_lines[t][0] > 0]), functions_lines)
-
-    def findbest(self):
-        for d, ds, fs in os.walk("./coverage/"):
-            for x in fs:
-                if x[-5:] == '.TAGS':
-                    self.compute_functions_list("%s/%s" % (d, x))
-
-        for d, ds, fs in os.walk("./coverage/"):
-            i = self.coverset.intersection(fs)
-            for x in i:
-                if not d[:11] in self.modules:
-                    self.modules[d[11:]] = Module(d[11:])
-                covered, total, covered_fn, fns = self.compute_coverage("%s/%s" % (d, x))
-                if x in self.bestcoverage:
-                    old_cover, old_total, old_path = self.bestcoverage[x]
-                    if total > old_total:
-                        self.bestcoverage[x] = (covered, total, [d[11:]])
-                    elif old_total == total:
-                        self.bestcoverage[x][2].append(d[11:])
-                else:
-                    self.bestcoverage[x] = (covered, total, [d[11:]])
-
-        res = []
-        for x, (c, t, p) in self.bestcoverage.iteritems():
-            res.append((sorted(p), (c*100/t), x, x.split('.')[0], c, t))
-            print x
-
-        target = open("coverage.summary", "w")
-
-        for p, pc, covname, module, c, t in sorted(res):
-            print self.fullmodules[module], p, pc, c, t
-
-            target.write("%s: %d%s (%d / %d) %s\n" % (self.fullmodules[module], pc, "%", c, t, 
-                '[]' if  self.fullmodules[module] in p else p))
-            target.flush()
-
-            if c == 0:
-                for i in range(0, 100):
-                    print module, ' #####: %u: NO COVERAGE FILE' % i
-            else:
-                try:
-                    print "./coverage/%s/%s" % (p[0], covname)
-                    for line in open("./coverage/%s/%s" % (p[0], covname)):
-                        res = re.match(r'^\s+#####[:]', line)
-                        if res:
-                            print module, ' ', line
-                except IOError:
-                    for i in range(0, 100):
-                        print module, ' #####: %u: NO COVERAGE' % i
-
-        print self.modules
-
+            if self.verbose > 0:
+                print "computing coverage for %s : done" % module
+        else:
+            if self.verbose > 1:
+                print "computing coverage for %s : FAILED" % module
 
     def coverall(self):
-        self.coverset = set([ "%s%s.gcov" % (module.split('/')[-1], extension) for module, extension, covered, total in list_modules()])
-        self.fullmodules = dict([(module.split('/')[-1], module) for module, extension, covered, total in list_modules()])
-        for module, extension, covered, total in list_modules():
-            self.cover(module)
-        self.findbest()
+        for module, name, extension in list_modules():
+            self.cover(module, name, extension)
+        for module, name, extension in list_modules():
+            self.compute_coverage(module, name, extension)
 
     def covercurrent(self):
-        self.coverset = set([ "%s%s.gcov" % (module.split('/')[-1], extension) for module, extension, covered, total in list_modules()])
-        self.fullmodules = dict([(module.split('/')[-1], module) for module, extension, covered, total in list_modules()])
-        self.findbest()
+        for module, name, extension in list_modules():
+            ftags = "./coverage/%s/%s%s.TAGS" % (module, name, extension)
+            fgcov = "./coverage/%s/%s%s.gcov" % (module, name, extension)
+            if os.path.isfile(fgcov) and os.path.isfile(ftags):
+                self.compute_coverage(module, name, extension)
 
 
 cover = Cover()
@@ -240,22 +133,25 @@ if len(sys.argv) < 2:
     cover.covercurrent()
 elif sys.argv[1] == 'all':
     cover.coverall()
-elif sys.argv[1] == 'function' and len(sys.argv) > 2:
-    pass
 else:
-    module = sys.argv[1]
-    extension = ".hpp"
-    if '/rio/' in module:
-        extension = '.h'
-
-    cover.cover(sys.argv[1])
-    cover.coverset = set([ "%s%s.gcov" % (module.split('/')[-1], extension)])
-    cover.fullmodules = dict([(module.split('/')[-1], module)])
-    cover.findbest()
-
-
+    print "Computing coverage for one file"
+    res = re.match(r'^((?:[/A-Za-z0-9_]+[/])*([/A-Za-z0-9_]+))', sys.argv[1])
+    if res:
+        module, name = res.group(1, 2)
+        extension = '.hpp'
+        if '/rio/' in module:
+            extension = '.h'
+        cover.cover(module, name, extension)
+        for module, name, extension in [(module, name, extension)]:
+            cover.compute_coverage(module, name, extension)
+    else:
+        print "Input does not match expected format"
+        sys.exit(0)
 
 print "Coverage Results:"
-for line in open("coverage.summary"):
-    print line
+for m in cover.modules:
+    for fnl in cover.modules[m].functions:
+        fn = cover.modules[m].functions[fnl]
+        print "%s:%s [%s] %s/%s" % (m, fnl, fn.name, fn.covered_lines, fn.total_lines)
+
 

@@ -29,15 +29,15 @@ public:
     int color;
 
 public:
-    WidgetRect(DrawApi& drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
-    : Widget2(&drawable, rect, parent, notifier, group_id)
+    WidgetRect(DrawApi & drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0, int color = BLACK)
+    : Widget2(drawable, rect, parent, notifier, group_id)
     , color(color)
     {
     }
 
     virtual void draw(const Rect& clip)
     {
-        this->drawable->draw(
+        this->drawable.draw(
             RDPOpaqueRect(
                 clip,
                 this->color

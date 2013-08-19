@@ -21,7 +21,7 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_MSGBOX_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_MSGBOX_HPP
 
-#include "window.hpp"
+#include "widget2_window.hpp"
 #include "multiline.hpp"
 #include "button.hpp"
 

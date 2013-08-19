@@ -33,7 +33,7 @@ class WidgetComposite : public Widget2
 public:
     std::vector<Widget2*> child_list;
 
-    WidgetComposite(DrawApi * drawable, const Rect& rect, Widget2 * parent,
+    WidgetComposite(DrawApi & drawable, const Rect& rect, Widget2 * parent,
                     NotifyApi * notifier, int group_id = 0)
     : Widget2(drawable, rect, parent, notifier, group_id)
     , child_list()
@@ -288,7 +288,7 @@ public:
         }
 
         for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable->draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
         }
     }
 

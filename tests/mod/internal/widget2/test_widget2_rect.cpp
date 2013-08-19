@@ -347,12 +347,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
 
 BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
 {
+    TestDraw drawable(800, 600);
+
     struct WidgetReceiveEvent : public Widget2 {
         Widget2* sender;
         NotifyApi::notify_event_t event;
 
-        WidgetReceiveEvent()
-        : Widget2(NULL, Rect(), NULL, NULL)
+        WidgetReceiveEvent(DrawApi & drawable)
+        : Widget2(drawable, Rect(), NULL, NULL)
         , sender(NULL)
         , event(0)
         {}
@@ -366,10 +368,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
             this->sender = sender;
             this->event = event;
         }
-    } widget_for_receive_event;
+    } widget_for_receive_event(drawable);
 
     Widget2* parent = &widget_for_receive_event;
-    TestDraw drawable(800, 600);
     NotifyApi * notifier = NULL;
 
     WidgetRect wrect(drawable, Rect(), parent, notifier);

@@ -29,7 +29,7 @@ class WidgetImage : public Widget2
 
 public:
     WidgetImage(DrawApi& drawable, int x, int y, const char * filename, Widget2* parent, NotifyApi* notifier, int group_id = 0)
-    : Widget2(&drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , bmp(filename)
     {
         this->tab_flag = IGNORE_TAB;
@@ -46,7 +46,7 @@ public:
     {
         int16_t mx = std::max<int16_t>(clip.x, 0);
         int16_t my = std::max<int16_t>(clip.y, 0);
-        this->drawable->draw(
+        this->drawable.draw(
             RDPMemBlt(
                 0,
                 Rect(mx, my, clip.cx, clip.cy),

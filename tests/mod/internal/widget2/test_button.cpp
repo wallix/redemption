@@ -454,7 +454,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(&drawable, Rect(), NULL, NULL)
+        : Widget2(drawable, Rect(), NULL, NULL)
         , sender(0)
         , event(0)
         {}
@@ -556,7 +556,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
+    WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
     WidgetButton wbutton1(drawable, 0,0, &wcomposite, notifier,
                         "abababab", true, 0, YELLOW, BLACK);

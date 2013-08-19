@@ -51,7 +51,7 @@ public:
 public:
     RwlRectangle(DrawApi& drawable, Widget2* parent, NotifyApi* notifier,
                  const Style& basestyle, int group_id = 0)
-    : WidgetComposite(&drawable, Rect(), parent, notifier, group_id)
+    : WidgetComposite(drawable, Rect(), parent, notifier, group_id)
     , style(basestyle)
     {}
 
@@ -69,7 +69,7 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        this->drawable->draw(
+        this->drawable.draw(
             RDPOpaqueRect(
                 clip,
                 this->style.color
@@ -116,7 +116,7 @@ public:
         Rect newclip = inner_clip.intersect(clip);
         int16_t mx = std::max<int16_t>(newclip.x, 0);
         int16_t my = std::max<int16_t>(newclip.y, 0);
-        this->drawable->draw(
+        this->drawable.draw(
             RDPMemBlt(
                 0,
                 Rect(mx, my, newclip.cx, newclip.cy),

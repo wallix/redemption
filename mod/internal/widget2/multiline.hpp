@@ -48,7 +48,7 @@ public:
                     bool auto_resize = true,
                     int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                     int xtext = 0, int ytext = 0)
-    : Widget2(&drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , x_text(xtext)
     , y_text(ytext)
     , cy_text(0)
@@ -83,7 +83,7 @@ public:
             *pbuf = '\0';
             ++pbuf;
             int h;
-            this->drawable->text_metrics(line->str, line->cx, h);
+            this->drawable.text_metrics(line->str, line->cx, h);
             if (h > this->cy_text)
                 this->cy_text = h;
             if (this->auto_resize) {
@@ -113,10 +113,10 @@ public:
     virtual void draw(const Rect& clip)
     {
         int dy = this->dy();
-        this->drawable->draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
-            this->drawable->server_draw_text(this->x_text + this->dx(),
+            this->drawable.server_draw_text(this->x_text + this->dx(),
                                              dy,
                                              line->str,
                                              this->fg_color,

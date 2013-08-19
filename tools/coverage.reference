@@ -98,8 +98,9 @@ mod/internal/selector_mod 100 100
 mod/internal/test_card_mod 100 100
 mod/internal/bouncer2_mod 100 100
 mod/internal/rwl_mod 100 100
+mod/internal/dialog_mod 100 100
 mod/internal/widget2/button 100 100
-mod/internal/widget2/dialog_mod 100 100
+mod/internal/widget2/dialog 100 100
 mod/internal/widget2/edit 100 100
 mod/internal/widget2/image 100 100
 mod/internal/internal_mod 100 100
