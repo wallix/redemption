@@ -48,9 +48,9 @@ struct Drawable {
     char previous_timestamp[size_str_timestamp];
 
     struct Mouse_t {
-        uint8_t      y;
-        uint8_t      x;
-        uint8_t      lg;
+        int      y;
+        int      x;
+        int      lg;
         const char * line;
     };
 
@@ -1247,122 +1247,62 @@ struct Drawable {
         this->mouse_hotspot_y         = hotspot_y;
     }
 
-    void trace_mouse(uint16_t x, uint16_t y) {
-/*
-        uint8_t * psave   = this->save_mouse;
-        size_t    nblines = std::max<uint16_t>(
-            0,
-            std::min<uint16_t>(this->contiguous_mouse_pixels, this->height - y));
-        for (size_t i = 0; i < nblines; i++) {
-            char     * pixel_start = this->pixel_start_data(x, y, i);
-            unsigned   lg          = this->line_of_mouse(i).lg;
-            memcpy(psave, pixel_start, lg);
-            psave += lg;
-            memcpy(pixel_start, this->line_of_mouse(i).line, lg);
-        }
-        this->save_mouse_x = x;
-        this->save_mouse_y = y;
-*/
-        uint8_t * psave  = this->save_mouse;
-        int       draw_x = x - this->mouse_hotspot_x;
-        int       draw_y = y - this->mouse_hotspot_y;
+    void trace_mouse(uint16_t ux, uint16_t uy) {
+        this->save_mouse_x = ux;
+        this->save_mouse_y = uy;
+
+        uint8_t * psave = this->save_mouse;
+        int       x     = ux - this->mouse_hotspot_x;
+        int       y     = uy - this->mouse_hotspot_y;
+
+        const uint8_t * data_end = this->data + this->height * this->width * 3;
 
         for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
-            uint16_t contiguous_mouse_pixels_y = draw_y + this->mouse_cursor[i].y;
-            if ((contiguous_mouse_pixels_y < 0) ||
-                (contiguous_mouse_pixels_y >= this->height)) {
-                continue;
+            uint8_t  * pixel_start = this->pixel_start_data(x, y, i);
+            unsigned   lg          = this->line_of_mouse(i).lg;
+            int offset = 0;
+            if (pixel_start + lg <= this->data) continue;
+            if (pixel_start < this->data) {
+                offset = this->data - pixel_start;
+                lg -= offset;
+                pixel_start = this->data;
             }
-
-            uint16_t contiguous_mouse_pixels_line_start = draw_x + this->mouse_cursor[i].x;
-            if (contiguous_mouse_pixels_line_start >= this->width) {
-                continue;
+            if (pixel_start > data_end) break;
+            if (pixel_start + lg >= data_end) {
+                lg = data_end - pixel_start;
             }
-
-            uint16_t contiguous_mouse_pixels_line_stop = contiguous_mouse_pixels_line_start +
-                                                         this->mouse_cursor[i].lg / 3;
-            if (contiguous_mouse_pixels_line_stop < 0) {
-                continue;
-            }
-            uint16_t contiguous_mouse_pixels_line_data_start_offset =
-                (contiguous_mouse_pixels_line_start < 0) ?
-                (0 - contiguous_mouse_pixels_line_start) * 3 : 0;
-
-            uint16_t contiguous_mouse_pixels_line_data_lenght =
-                (contiguous_mouse_pixels_line_stop > this->width) ?
-                this->mouse_cursor[i].lg - (contiguous_mouse_pixels_line_stop - this->width) * 3 :
-                this->mouse_cursor[i].lg;
-
-            char * pixel_start = this->pixel_start_data(draw_x, draw_y, i);
-
-            memcpy(psave,
-                   pixel_start + contiguous_mouse_pixels_line_data_start_offset,
-                   contiguous_mouse_pixels_line_data_lenght);
-            psave += contiguous_mouse_pixels_line_data_lenght;
-            memcpy(pixel_start,
-                   this->line_of_mouse(i).line + contiguous_mouse_pixels_line_data_start_offset,
-                   contiguous_mouse_pixels_line_data_lenght);
+            memcpy(psave, pixel_start, lg);
+            psave += lg;
+            memcpy(pixel_start, this->line_of_mouse(i).line + offset, lg);
         }
-
-        this->save_mouse_x = x;
-        this->save_mouse_y = y;
     }
 
     void clear_mouse() {
-/*
-        uint8_t  * psave = this->save_mouse;
-        uint16_t   x     = this->save_mouse_x;
-        uint16_t   y     = this->save_mouse_y;
-        size_t nblines = std::max<uint16_t>(
-            0,
-            std::min<uint16_t>(this->contiguous_mouse_pixels, this->height - y));
-        for (size_t i = 0; i < nblines; i++) {
-            char     * pixel_start = this->pixel_start_data(x, y, i);
+        uint8_t * psave = this->save_mouse;
+        int       x     = this->save_mouse_x - this->mouse_hotspot_x;
+        int       y     = this->save_mouse_y - this->mouse_hotspot_y;
+
+        const uint8_t * data_end = this->data + this->height * this->width * 3;
+
+        for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
+            uint8_t  * pixel_start = this->pixel_start_data(x, y, i);
             unsigned   lg          = this->line_of_mouse(i).lg;
+            if (pixel_start + lg <= this->data) continue;
+            if (pixel_start < this->data) {
+                lg -= this->data - pixel_start;
+                pixel_start = this->data;
+            }
+            if (pixel_start > data_end) break;
+            if (pixel_start + lg >= data_end) {
+                lg = data_end - pixel_start;
+            }
             memcpy(pixel_start, psave, lg);
             psave += lg;
         }
-*/
-        uint8_t * psave  = this->save_mouse;
-        int       draw_x = this->save_mouse_x - this->mouse_hotspot_x;
-        int       draw_y = this->save_mouse_y - this->mouse_hotspot_y;
-
-        for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
-            uint16_t contiguous_mouse_pixels_y = draw_y + this->mouse_cursor[i].y;
-            if ((contiguous_mouse_pixels_y < 0) ||
-                (contiguous_mouse_pixels_y >= this->height)) {
-                continue;
-            }
-
-            uint16_t contiguous_mouse_pixels_line_start = draw_x + this->mouse_cursor[i].x;
-            if (contiguous_mouse_pixels_line_start >= this->width) {
-                continue;
-            }
-
-            uint16_t contiguous_mouse_pixels_line_stop = contiguous_mouse_pixels_line_start +
-                                                         this->mouse_cursor[i].lg / 3;
-            if (contiguous_mouse_pixels_line_stop < 0) {
-                continue;
-            }
-            uint16_t contiguous_mouse_pixels_line_data_start_offset =
-                (contiguous_mouse_pixels_line_start < 0) ?
-                (0 - contiguous_mouse_pixels_line_start) * 3 : 0;
-
-            uint16_t contiguous_mouse_pixels_line_data_lenght =
-                (contiguous_mouse_pixels_line_stop > this->width) ?
-                this->mouse_cursor[i].lg - (contiguous_mouse_pixels_line_stop - this->width) * 3 :
-                this->mouse_cursor[i].lg;
-
-            char * pixel_start = this->pixel_start_data(draw_x, draw_y, i);
-
-            memcpy(pixel_start, psave, contiguous_mouse_pixels_line_data_lenght);
-            psave += contiguous_mouse_pixels_line_data_lenght;
-        }
     }
 
-    char * pixel_start_data(int x, int y, size_t i)
-    {
-        return (char *)this->data +
+    uint8_t * pixel_start_data(int x, int y, size_t i) {
+        return this->data +
                ((this->line_of_mouse(i).y + y) * this->width + this->line_of_mouse(i).x + x) * 3;
     }
 

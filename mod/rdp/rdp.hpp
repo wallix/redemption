@@ -3563,41 +3563,65 @@ public:
     }
 
 
-    void process_new_pointer_pdu(Stream & stream) throw(Error)
-    {
-        if (this->verbose & 4){
+    void process_new_pointer_pdu(Stream & stream) throw(Error) {
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
 
-        unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+        unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned cache_idx = stream.in_uint16_le();
         if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_CACHE_NOT_OK);
         }
 
-        struct rdp_cursor* cursor = this->cursors + cache_idx;
-        cursor->x = stream.in_uint16_le();
-        cursor->y = stream.in_uint16_le();
-        cursor->width = stream.in_uint16_le();
-        cursor->height = stream.in_uint16_le();
-        unsigned mlen = stream.in_uint16_le(); /* mask length */
-        unsigned dlen = stream.in_uint16_le(); /* data length */
+        struct rdp_cursor * cursor = this->cursors + cache_idx;
+        cursor->x                  = stream.in_uint16_le();
+        cursor->y                  = stream.in_uint16_le();
+        cursor->width              = stream.in_uint16_le();
+        cursor->height             = stream.in_uint16_le();
+        unsigned mlen              = stream.in_uint16_le(); /* mask length */
+        unsigned dlen              = stream.in_uint16_le(); /* data length */
+        if (this->verbose & 4) {
+            LOG(LOG_INFO,
+                ">>> data_bpp=%u, width=%u, height=%u mlen=%u dlen=%u",
+                data_bpp, cursor->width, cursor->height, mlen, dlen);
+        }
 
-        size_t out_data_len = (bpp == 1) ? (cursor->width * cursor->height) / 8 :
+        size_t out_data_len =
+            (bpp == 1) ? (cursor->width * cursor->height) / 8 :
             (bpp == 4) ? (cursor->width * cursor->height) / 2 :
-            (dlen * 3) / nbbytes(data_bpp) ;
+            (dlen * 3) / nbbytes(data_bpp);
 
-        if ((mlen > sizeof(cursor->mask)) || (out_data_len > sizeof(cursor->data))) {
-            LOG(LOG_WARNING, "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
-                (unsigned)mlen, (unsigned)dlen, cursor->width, cursor->height, data_bpp, out_data_len, nbbytes(data_bpp));
+        if ((mlen > sizeof(cursor->mask)) ||
+            (out_data_len > sizeof(cursor->data))) {
+            LOG(LOG_WARNING,
+                "mod_rdp::Bad length for color pointer mask_len=%u "
+                    "data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
+                (unsigned)mlen, (unsigned)dlen, cursor->width, cursor->height,
+                data_bpp, out_data_len, nbbytes(data_bpp));
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+
+        if (data_bpp == 1) {
+            unsigned   i;
+            uint8_t  * mask_data;
+            uint8_t  * data_data;
+            uint8_t    new_mask_data;
+
+            for (i = 0, data_data = stream.p, mask_data = stream.p + dlen; i < mlen;
+                 i++, data_data++, mask_data++) {
+                new_mask_data = (*mask_data & (*data_data ^ 0xFF));
+                *data_data    = (*data_data ^ *mask_data ^ new_mask_data);
+                *mask_data    = new_mask_data;
+            }
         }
 
         to_regular_pointer(stream, dlen, data_bpp, cursor->data, sizeof(cursor->data));
         to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
 
-        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
-        if (this->verbose & 4){
+        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data,
+            cursor->mask);
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
     }
