@@ -86,26 +86,27 @@ class Cover:
 
         import os.path
         if os.path.isfile(fgcov) and os.path.isfile(ftags):
+
             self.modules[module] = Module(module)
             for line in open(ftags):
                 if re.match(r'^.*(TODO|REDOC)', line):
                     continue
-                res = re.match(r'^.*[(]\x7F(.*)\x01(\d*)[,]', line)
-                if not res:
-                    res = re.match(r'^(?:\s*static\s)(?:\s*inline\s)(.*)[(]\x7F(\d*)[,]', line)
+                res = re.match(r'^(.*[(].*)\x7F.*\x01(\d+)[,].*$', line)
+                if res is None:
+                    res = re.match(r'^(.*[(].*)\x7F(\d+)[,].*$', line)
                 if res:
                     name, startline = res.group(1, 2)
-#                    print "function found at %s %s" % (name, startline)
+                    print "function found at %s %s" % (name, startline)
                     self.modules[module].functions[int(startline)] = Function(name, int(startline))
 
             current_function = None
             for line in open(fgcov):
-                res = re.match(r'^\s+(#####|[-]|\d+)[:]\s*(\d+)[:](.*)$', line)
+                res = re.match(r'^\s*(#####|[-]|\d+)[:]\s*(\d+)[:](.*)$', line)
                 if res:
                     if int(res.group(2)) in self.modules[module].functions:
+			print "current function found at %d" % int(res.group(2))
                         current_function = int(res.group(2))
-#                        print "function %s found" % self.modules[module].functions[current_function].name
-
+ 
                     # ignore comments
                     if re.match('^\s+//', res.group(3)):
                         continue
@@ -113,7 +114,7 @@ class Cover:
                     if re.match('^\s+$', res.group(3)):
                         continue
                     # At least one identifier or number on the line (ie: ignore alone brackets)
-                    if not re.match('^.*[a-zA-Z0-9]', res.group(3)):
+                    if re.match('^.*[a-zA-Z0-9]', res.group(3)) is None:
                         continue
 
                     if current_function:
@@ -173,5 +174,7 @@ for m in cover.modules:
         elif fn.covered_lines * 100 < fn.total_lines * 50:
             print "WARNING: LOW COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension, 
                                                 fnl, fn.name, fn.covered_lines, fn.total_lines)
-
+        else:
+            print "COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension, 
+                                                fnl, fn.name, fn.covered_lines, fn.total_lines)
 
