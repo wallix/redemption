@@ -788,6 +788,10 @@ unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp p
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_widget2_window : tests/mod/internal/widget2/test_widget2_window.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_widget2_window : tests/mod/internal/widget2/test_widget2_window.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+
+
 unit-test test_wab_close : tests/mod/internal/widget2/test_wab_close.cpp png z openssl crypto libboost_unit_test ;
 #unit-test test_wab_close : tests/mod/internal/widget2/test_wab_close.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
@@ -800,6 +804,9 @@ unit-test test_screen : tests/mod/internal/widget2/test_screen.cpp png z openssl
 
 unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rwl_mod : tests/mod/internal/test_rwl_mod.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_rwl_mod : tests/mod/internal/test_rwl_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp libboost_unit_test ;
 unit-test test_test_card_mod : tests/mod/internal/test_test_card_mod.cpp libboost_unit_test gcov : <variant>coverage ;

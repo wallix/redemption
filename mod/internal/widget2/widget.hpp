@@ -69,7 +69,7 @@ public:
     Widget2 * parent;
     Widget2 * widget_with_focus;
     Widget2 * old_widget_with_focus;
-    DrawApi * drawable;
+    DrawApi & drawable;
     NotifyApi * notifier;
     Rect rect;
     int group_id;
@@ -78,7 +78,7 @@ public:
     bool has_focus;
 
 public:
-    Widget2(DrawApi * drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
+    Widget2(DrawApi & drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
     , widget_with_focus(NULL)
     , old_widget_with_focus(NULL)
@@ -114,12 +114,10 @@ public:
 
     void refresh(const Rect& clip)
     {
-        if (this->drawable) {
-            if (!clip.isempty()){
-                this->drawable->begin_update();
-                this->draw(clip);
-                this->drawable->end_update();
-            }
+        if (!clip.isempty()){
+            this->drawable.begin_update();
+            this->draw(clip);
+            this->drawable.end_update();
         }
     }
 

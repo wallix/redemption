@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestUsecToTimeval)
     BOOST_CHECK_EQUAL(res.tv_sec,  0);
     BOOST_CHECK_EQUAL(res.tv_usec, 459327);
 
-    usec = 5476000000L;
+    usec = 5476000000LL;
     res = usectotimeval(usec);
     BOOST_CHECK_EQUAL(res.tv_sec,  5476);
     BOOST_CHECK_EQUAL(res.tv_usec, 0);

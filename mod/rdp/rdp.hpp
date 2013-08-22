@@ -56,6 +56,7 @@
 #include "RDP/fastpath.hpp"
 #include "RDP/protocol.hpp"
 #include "RDP/RefreshRectPDU.hpp"
+#include "RDP/SaveSessionInfoPDU.hpp"
 
 #include "genrandom.hpp"
 
@@ -1371,6 +1372,12 @@ struct mod_rdp : public mod_api {
                                 if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported"); }
                                 break;
 
+                            case FastPath::FASTPATH_UPDATETYPE_COLOR:
+                                this->process_color_pointer_pdu(upd.payload);
+
+                                if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_COLOR"); }
+                                break;
+
                             case FastPath::FASTPATH_UPDATETYPE_POINTER:
                                 this->process_new_pointer_pdu(upd.payload);
 
@@ -1509,14 +1516,13 @@ struct mod_rdp : public mod_api {
                             ShareControl_Recv sctrl(sec.payload);
                             next_packet += sctrl.totalLength;
 
-                            if (this->verbose & 128){
+                            if (this->verbose & 128) {
                                 LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.totalLength);
                             }
 
-
                             switch (sctrl.pdu_type1) {
                             case PDUTYPE_DATAPDU:
-                                if (this->verbose & 128){
+                                if (this->verbose & 128) {
                                     LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
                                 }
                                 switch (this->connection_finalization_state){
@@ -1627,7 +1633,7 @@ struct mod_rdp : public mod_api {
                                         case PDUTYPE2_SAVE_SESSION_INFO:
                                             if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
                                             TODO("CGR: Data should actually be consumed")
-                                                sdata.payload.p = sdata.payload.end;
+                                            this->process_save_session_info(sdata.payload);
                                             break;
                                         case PDUTYPE2_SET_ERROR_INFO_PDU:
                                             if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
@@ -3093,6 +3099,48 @@ struct mod_rdp : public mod_api {
         }
     }
 
+    void process_save_session_info(Stream & stream) {
+        RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
+
+        switch (ssipdudata.infoType) {
+        case RDP::INFOTYPE_LOGON:
+        {
+            LOG(LOG_INFO, "process save session info : Logon");
+            RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
+        }
+        break;
+        case RDP::INFOTYPE_LOGON_LONG:
+        {
+            LOG(LOG_INFO, "process save session info : Logon long");
+            RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
+        }
+        break;
+        case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
+        {
+            LOG(LOG_INFO, "process save session info : Logon plainnotify");
+            RDP::PlainNotify_Recv pn(ssipdudata.payload);
+        }
+        break;
+        case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
+        {
+            LOG(LOG_INFO, "process save session info : Logon extended info");
+            RDP::LogonInfoExtended_Recv lie(ssipdudata.payload);
+
+            RDP::LogonInfoField_Recv lif(lie.payload);
+
+            if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
+                LOG(LOG_INFO, "process save session info : Auto-reconnect cookie");
+            }
+            if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
+                LOG(LOG_INFO, "process save session info : Logon Errors Info");
+            }
+        }
+        break;
+        }
+
+        stream.p = stream.end;
+    }
+
     TODO("CGR: this can probably be unified with process_confirm_active in front");
     void process_server_caps(Stream & stream, uint16_t len)
     {
@@ -3379,8 +3427,10 @@ public:
         }
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             if (!r.isempty()){
-                RefreshRectPDU rrpdu( this->share_id, this->userid, this->encryptionLevel
-                                      , this->encrypt);
+                RDP::RefreshRectPDU rrpdu(this->share_id,
+                                          this->userid,
+                                          this->encryptionLevel,
+                                          this->encrypt);
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.cx - 1, r.cy - 1);
 
@@ -3392,36 +3442,39 @@ public:
         }
     }
 
-    void process_color_pointer_pdu(Stream & stream) throw(Error)
-    {
-        if (this->verbose & 4){
+    void process_color_pointer_pdu(Stream & stream) throw(Error) {
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
         unsigned cache_idx = stream.in_uint16_le();
         if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
-        struct rdp_cursor* cursor = this->cursors + cache_idx;
+
+        struct rdp_cursor * cursor = this->cursors + cache_idx;
+        memset(cursor, 0, sizeof(struct rdp_cursor));
 
         TODO("CGR: move that to rdp_cursor")
 
-            cursor->x = stream.in_uint16_le();
-        cursor->y = stream.in_uint16_le();
-        cursor->width = stream.in_uint16_le();
+        cursor->x      = stream.in_uint16_le();
+        cursor->y      = stream.in_uint16_le();
+        cursor->width  = stream.in_uint16_le();
         cursor->height = stream.in_uint16_le();
-        unsigned mlen = stream.in_uint16_le(); /* mask length */
-        unsigned dlen = stream.in_uint16_le(); /* data length */
+        unsigned mlen  = stream.in_uint16_le(); /* mask length */
+        unsigned dlen  = stream.in_uint16_le(); /* data length */
 
         if ((mlen > sizeof(cursor->mask)) || (dlen > sizeof(cursor->data))) {
-            LOG(LOG_WARNING, "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u",
+            LOG(LOG_WARNING,
+                "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u",
                 (unsigned)mlen, (unsigned)dlen);
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
         memcpy(cursor->data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
 
-        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
-        if (this->verbose & 4){
+        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data,
+            cursor->mask);
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
     }
@@ -3470,134 +3523,161 @@ public:
         }
     }
 
-    void to_regular_mask(Stream & stream, unsigned mlen, uint8_t bpp, uint8_t * mask, size_t mask_size)
-    {
-        if (this->verbose & 4){
+    void to_regular_mask(Stream & stream, unsigned mlen, uint8_t bpp,
+            uint8_t * mask, size_t mask_size) {
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
         TODO("CGR: we should ensure we have data enough to create mask")
-            uint8_t * end = stream.p + mlen;
+        uint8_t * end = stream.p + mlen;
         switch (bpp) {
-        case 1 : {
+        case 1 :
+        {
             for (unsigned x = 0; x < mlen ; x++) {
                 BGRColor px = stream.in_uint8();
                 // incoming new pointer mask is upside down, revert it
                 mask[128 - 4 - (x & 0xFFFC) + (x & 3)] = px;
             }
         }
-            break;
+        break;
         default:
             for (unsigned x = 0; x < mlen ; x++) {
                 BGRColor px = stream.in_uint8();
                 mask[x] = px;
             }
-            //            stream.in_copy_bytes(mask, mlen);
-            break;
+//            stream.in_copy_bytes(mask, mlen);
+        break;
         }
+
         stream.p = end;
-        if (this->verbose & 4){
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
     }
 
-    void to_regular_pointer(Stream & stream, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len)
-    {
-        if (this->verbose & 4){
+    void to_regular_pointer(Stream & stream, unsigned dlen, uint8_t bpp,
+            uint8_t * data, size_t target_data_len) {
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
         uint8_t * end = stream.p + dlen;
         TODO("CGR: we should ensure we have data enough to create pointer")
-            switch (bpp) {
-            case 1 :
-                {
-                    for (unsigned x = 0; x < dlen ; x ++) {
-                        BGRColor px = stream.in_uint8();
-                        // target cursor will receive 8 bits input at once
-                        for (unsigned b = 0 ; b < 8 ; b++){
-                            // incoming new pointer is upside down, revert it
-                            uint8_t * bstart = &(data[24 * (128 - 4 - (x & 0xFFFC) + (x & 3))]);
-                            // emit all individual bits
-                            ::out_bytes_le(bstart ,      3, (px & 0x80)?0xFFFFFF:0);
-                            ::out_bytes_le(bstart +  3,  3, (px & 0x40)?0xFFFFFF:0);
-                            ::out_bytes_le(bstart +  6,  3, (px & 0x20)?0xFFFFFF:0);
-                            ::out_bytes_le(bstart +  9 , 3, (px & 0x10)?0xFFFFFF:0);
-                            ::out_bytes_le(bstart + 12 , 3, (px &    8)?0xFFFFFF:0);
-                            ::out_bytes_le(bstart + 15 , 3, (px &    4)?0xFFFFFF:0);
-                            ::out_bytes_le(bstart + 18 , 3, (px &    2)?0xFFFFFF:0);
-                            ::out_bytes_le(bstart + 21 , 3, (px &    1)?0xFFFFFF:0);
-                        }
-                    }
+        switch (bpp) {
+        case 1 :
+        {
+            for (unsigned x = 0; x < dlen ; x ++) {
+                BGRColor px = stream.in_uint8();
+                // target cursor will receive 8 bits input at once
+                for (unsigned b = 0 ; b < 8 ; b++) {
+                    // incoming new pointer is upside down, revert it
+                    uint8_t * bstart = &(data[24 * (128 - 4 - (x & 0xFFFC) + (x & 3))]);
+                    // emit all individual bits
+                    ::out_bytes_le(bstart,      3, (px & 0x80) ? 0xFFFFFF : 0);
+                    ::out_bytes_le(bstart +  3, 3, (px & 0x40) ? 0xFFFFFF : 0);
+                    ::out_bytes_le(bstart +  6, 3, (px & 0x20) ? 0xFFFFFF : 0);
+                    ::out_bytes_le(bstart +  9, 3, (px & 0x10) ? 0xFFFFFF : 0);
+                    ::out_bytes_le(bstart + 12, 3, (px &    8) ? 0xFFFFFF : 0);
+                    ::out_bytes_le(bstart + 15, 3, (px &    4) ? 0xFFFFFF : 0);
+                    ::out_bytes_le(bstart + 18, 3, (px &    2) ? 0xFFFFFF : 0);
+                    ::out_bytes_le(bstart + 21, 3, (px &    1) ? 0xFFFFFF : 0);
                 }
-                break;
-            case 4 :
-                {
-                    for (unsigned i=0; i < dlen ; i++) {
-                        BGRColor px = stream.in_uint8();
-                        // target cursor will receive 8 bits input at once
-                        ::out_bytes_le(&(data[6 *i]),     3, color_decode((px >> 4) & 0xF, bpp, this->orders.global_palette));
-                        ::out_bytes_le(&(data[6 *i + 3]), 3, color_decode(px        & 0xF, bpp, this->orders.global_palette));
-                    }
-                }
-                break;
-            case 32: case 24: case 16: case 15: case 8:
-                {
-                    uint8_t BPP = nbbytes(bpp);
-                    for (unsigned i=0; i + BPP <= dlen; i += BPP) {
-                        BGRColor px = stream.in_bytes_le(BPP);
-                        ::out_bytes_le(&(data[(i/BPP)*3]), 3, color_decode(px, bpp, this->orders.global_palette));
-                    }
-                }
-                break;
-            default:
-                LOG(LOG_ERR, "Mouse pointer : color depth not supported %d, forcing green mouse (running in the grass ?)", bpp);
-                for (size_t x = 0 ; x < 1024 ; x++){
-                    ::out_bytes_le(data + x *3, 3, GREEN);
-                }
-                break;
             }
+        }
+        break;
+        case 4 :
+        {
+            for (unsigned i=0; i < dlen ; i++) {
+                BGRColor px = stream.in_uint8();
+                // target cursor will receive 8 bits input at once
+                ::out_bytes_le(&(data[6 * i]),     3, color_decode((px >> 4) & 0xF, bpp, this->orders.global_palette));
+                ::out_bytes_le(&(data[6 * i + 3]), 3, color_decode(px        & 0xF, bpp, this->orders.global_palette));
+            }
+        }
+        break;
+        case 32: case 24: case 16: case 15: case 8:
+        {
+            uint8_t BPP = nbbytes(bpp);
+            for (unsigned i=0; i + BPP <= dlen; i += BPP) {
+                BGRColor px = stream.in_bytes_le(BPP);
+                ::out_bytes_le(&(data[(i/BPP)*3]), 3, color_decode(px, bpp, this->orders.global_palette));
+            }
+        }
+        break;
+        default:
+            LOG(LOG_ERR, "Mouse pointer : color depth not supported %d, forcing green mouse (running in the grass ?)", bpp);
+            for (size_t x = 0 ; x < 1024 ; x++) {
+                ::out_bytes_le(data + x *3, 3, GREEN);
+            }
+            break;
+        }
 
         stream.p = end;
-        if (this->verbose & 4){
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
     }
 
-
-    void process_new_pointer_pdu(Stream & stream) throw(Error)
-    {
-        if (this->verbose & 4){
+    void process_new_pointer_pdu(Stream & stream) throw(Error) {
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
 
-        unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+        unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned cache_idx = stream.in_uint16_le();
         if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_CACHE_NOT_OK);
         }
 
-        struct rdp_cursor* cursor = this->cursors + cache_idx;
-        cursor->x = stream.in_uint16_le();
-        cursor->y = stream.in_uint16_le();
-        cursor->width = stream.in_uint16_le();
+        struct rdp_cursor * cursor = this->cursors + cache_idx;
+        memset(cursor, 0, sizeof(struct rdp_cursor));
+
+        cursor->x      = stream.in_uint16_le();
+        cursor->y      = stream.in_uint16_le();
+        cursor->width  = stream.in_uint16_le();
         cursor->height = stream.in_uint16_le();
-        unsigned mlen = stream.in_uint16_le(); /* mask length */
-        unsigned dlen = stream.in_uint16_le(); /* data length */
+        unsigned mlen  = stream.in_uint16_le(); /* mask length */
+        unsigned dlen  = stream.in_uint16_le(); /* data length */
+        if (this->verbose & 4) {
+            LOG(LOG_INFO,
+                ">>> data_bpp=%u, width=%u, height=%u mlen=%u dlen=%u",
+                data_bpp, cursor->width, cursor->height, mlen, dlen);
+        }
 
-        size_t out_data_len = (bpp == 1) ? (cursor->width * cursor->height) / 8 :
+        size_t out_data_len =
+            (bpp == 1) ? (cursor->width * cursor->height) / 8 :
             (bpp == 4) ? (cursor->width * cursor->height) / 2 :
-            (dlen * 3) / nbbytes(data_bpp) ;
+            (dlen * 3) / nbbytes(data_bpp);
 
-        if ((mlen > sizeof(cursor->mask)) || (out_data_len > sizeof(cursor->data))) {
-            LOG(LOG_WARNING, "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
-                (unsigned)mlen, (unsigned)dlen, cursor->width, cursor->height, data_bpp, out_data_len, nbbytes(data_bpp));
+        if ((mlen > sizeof(cursor->mask)) ||
+            (out_data_len > sizeof(cursor->data))) {
+            LOG(LOG_WARNING,
+                "mod_rdp::Bad length for color pointer mask_len=%u "
+                    "data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
+                (unsigned)mlen, (unsigned)dlen, cursor->width, cursor->height,
+                data_bpp, out_data_len, nbbytes(data_bpp));
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+
+        if (data_bpp == 1) {
+            unsigned   i;
+            uint8_t  * mask_data;
+            uint8_t  * data_data;
+            uint8_t    new_mask_data;
+
+            for (i = 0, data_data = stream.p, mask_data = stream.p + dlen; i < mlen;
+                 i++, data_data++, mask_data++) {
+                new_mask_data = (*mask_data & (*data_data ^ 0xFF));
+                *data_data    = (*data_data ^ *mask_data ^ new_mask_data);
+                *mask_data    = new_mask_data;
+            }
         }
 
         to_regular_pointer(stream, dlen, data_bpp, cursor->data, sizeof(cursor->data));
         to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
 
-        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
-        if (this->verbose & 4){
+        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data,
+            cursor->mask);
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
     }

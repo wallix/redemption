@@ -27,6 +27,8 @@
 #include "RDP/sec.hpp"
 #include "RDP/gcc.hpp"
 
+namespace RDP {
+
 // 2.2.11.2 Client Refresh Rect PDU
 // ================================
 // The Refresh Rect PDU allows the client to request that the server redraw
@@ -147,25 +149,31 @@ struct RefreshRectPDU {
     uint8_t  area_count;
     uint32_t offset_area_count;
 
-    RefreshRectPDU( uint32_t shareId
-                  , uint16_t userId
-                  , int encryptionLevel
-                  , CryptContext & encrypt)
-    : buffer_stream(65536)
-    , sdata(buffer_stream)
-    , userId(userId)
-    , encryptionLevel(encryptionLevel)
-    , encrypt(encrypt)
-    , area_count(0)
-    , offset_area_count(0) {
-        this->sdata.emit_begin(PDUTYPE2_REFRESH_RECT, shareId, RDP::STREAM_MED);
+    RefreshRectPDU(uint32_t shareId,
+                   uint16_t userId,
+                   int encryptionLevel,
+                   CryptContext & encrypt) :
+    buffer_stream(65536),
+    sdata(buffer_stream),
+    userId(userId),
+    encryptionLevel(encryptionLevel),
+    encrypt(encrypt),
+    area_count(0),
+    offset_area_count(0) {
+        this->sdata.emit_begin(PDUTYPE2_REFRESH_RECT,
+                               shareId,
+                               RDP::STREAM_MED);
 
         this->offset_area_count = this->buffer_stream.get_offset();
         this->buffer_stream.out_clear_bytes(1); /* number of areas, set later */
+
         this->buffer_stream.out_clear_bytes(3); /* pad */
     }
 
-    void addInclusiveRect(uint16_t left, uint16_t top, uint16_t right, uint16_t bottom) {
+    void addInclusiveRect(uint16_t left,
+                          uint16_t top,
+                          uint16_t right,
+                          uint16_t bottom) {
         buffer_stream.out_uint16_le(left);
         buffer_stream.out_uint16_le(top);
         buffer_stream.out_uint16_le(right);
@@ -175,15 +183,18 @@ struct RefreshRectPDU {
     }
 
     void emit(Transport & trans) {
-        this->buffer_stream.set_out_uint8(this->area_count, this->offset_area_count);
+        this->buffer_stream.set_out_uint8(this->area_count,
+                                          this->offset_area_count);
 
         this->buffer_stream.mark_end();
 
         this->sdata.emit_end();
 
         BStream sctrl_header(256);
-        ShareControl_Send( sctrl_header, PDUTYPE_DATAPDU, this->userId + GCC::MCS_USERCHANNEL_BASE
-                         , this->buffer_stream.size());
+        ShareControl_Send(sctrl_header,
+                          PDUTYPE_DATAPDU,
+                          this->userId + GCC::MCS_USERCHANNEL_BASE,
+                          this->buffer_stream.size());
 
         HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
@@ -194,14 +205,25 @@ struct RefreshRectPDU {
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
-        MCS::SendDataRequest_Send mcs( mcs_header, this->userId, GCC::MCS_GLOBAL_CHANNEL, 1, 3
-                                     , sec_header.size() + target_stream.size(), MCS::PER_ENCODING);
-        X224::DT_TPDU_Send(x224_header, mcs_header.size() + sec_header.size() + target_stream.size());
+        SEC::Sec_Send sec(sec_header,
+                          target_stream,
+                          0,
+                          this->encrypt,
+                          this->encryptionLevel);
+        MCS::SendDataRequest_Send mcs(mcs_header,
+                                      this->userId,
+                                      GCC::MCS_GLOBAL_CHANNEL,
+                                      1,
+                                      3,
+                                      sec_header.size() + target_stream.size(),
+                                      MCS::PER_ENCODING);
+        X224::DT_TPDU_Send(x224_header,
+                           mcs_header.size() + sec_header.size() + target_stream.size());
 
         trans.send(x224_header, mcs_header, sec_header, target_stream);
     }
 };  // struct RefreshRectPDU
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_REFRESH_RECT_PDU_HPP_
+}   // namespace RDP
 
+#endif  // #ifndef _REDEMPTION_CORE_RDP_REFRESH_RECT_PDU_HPP_

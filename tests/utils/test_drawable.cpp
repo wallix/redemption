@@ -27,8 +27,8 @@
 #define BOOST_TEST_MODULE TestCapture
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGPRINT
 #include "log.hpp"
-#define LOGNULL
 
 #include <errno.h>
 #include <algorithm>
@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     }
 
     // uncomment to see result in png file
-    // dump_png("/tmp/test_mouse_000_", gd.drawable);
+    dump_png("/tmp/test_mouse_000_", gd.drawable);
 
     gd.drawable.clear_mouse();
 
@@ -254,9 +254,84 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     }
 
     // uncomment to see result in png file
-    // dump_png("/tmp/test_mouse_001_", gd.drawable);
+    dump_png("/tmp/test_mouse_001_", gd.drawable);
 }
 
+BOOST_AUTO_TEST_CASE(TestAddMouse2)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width  = 640;
+    uint16_t height = 480;
+    Rect screen_rect(0, 0, width, height);
+    RDPDrawable gd(width, height);
+    gd.draw(RDPOpaqueRect(screen_rect, BLACK), screen_rect); // BLACK
+    gd.drawable.trace_mouse(638, 470);
+
+    {
+        char message[1024];
+        if (!check_sig(gd.drawable, message,
+        "\xd1\x1b\xe6\x6b\x0a\x66\x87\xd2\x06\x07\x5a\x52\x90\x8a\x37\xc7\x8c\x46\x46\x4b"
+        )) {
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    // dump_png("test_mouse2_visible_", gd.drawable);
+
+    gd.drawable.clear_mouse();
+
+    {
+        char message[1024];
+        if (!check_sig(gd.drawable, message,
+        "\xf9\x71\xf3\x63\x57\xcc\x45\x41\x40\x90\xce\xce\xce\x55\xa9\x1e\xe1\x9a\xab\x29"
+        )) {
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    // dump_png("test_mouse2_clear_", gd.drawable);
+}
+
+BOOST_AUTO_TEST_CASE(TestAddMouse3)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width  = 640;
+    uint16_t height = 480;
+    Rect screen_rect(0, 0, width, height);
+    RDPDrawable gd(width, height);
+    gd.drawable.mouse_hotspot_x = 8;
+    gd.drawable.mouse_hotspot_y = 8;
+    gd.draw(RDPOpaqueRect(screen_rect, RED), screen_rect); // RED
+    gd.drawable.trace_mouse(0, 0);
+
+    {
+        char message[1024];
+        if (!check_sig(gd.drawable, message,
+        "\xec\x2b\xf0\xb0\xe0\x8a\x60\x64\xba\x8d\x2d\xbb\x33\xc7\x58\xd0\x4b\x19\x21\x3f"
+        )) {
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    // dump_png("test_mouse3_visible_", gd.drawable);
+
+    gd.drawable.clear_mouse();
+
+    {
+        char message[1024];
+        if (!check_sig(gd.drawable, message,
+        "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05"
+        )) {
+            BOOST_CHECK_MESSAGE(false, message);
+        }
+    }
+
+    // uncomment to see result in png file
+    // dump_png("test_mouse3_clear_", gd.drawable);
+}
 
 BOOST_AUTO_TEST_CASE(TestTimestampMouse)
 {

@@ -36,11 +36,11 @@ public:
     int border_top_left_color2;
     bool focus_is_visible;
 
-    WidgetButton(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
+    WidgetButton(DrawApi & drawable, int16_t x, int16_t y, Widget2* parent,
                  NotifyApi* notifier, const char * text, bool auto_resize = true,
                  int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                  int xtext = 0, int ytext = 0, notify_event_t notify_event = NOTIFY_SUBMIT)
-    : Widget2(&drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , label(drawable, 1, 1, this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)
     , state(0)
     , event(notify_event)
@@ -106,28 +106,28 @@ public:
             ++this->label.rect.cx;
             ++this->label.rect.cy;
             //top
-            this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx(), this->dy(), this->cx() - 1, 1
             )), this->border_right_bottom_color2), this->rect);
-            this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx() + 1, this->dy() + 1, this->cx() - 3, 1
             )), this->border_top_left_color2), this->rect);
             //left
-            this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx(), this->dy() + 1, 1, this->cy() - 2
             )), this->border_right_bottom_color2), this->rect);
-            this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx() + 1, this->dy() + 1, 1, this->cy() - 3
             )), this->border_top_left_color2), this->rect);
         }
         else {
             this->label.draw(clip);
             //top
-            this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx(), this->dy(), this->cx() - 1, 1
             )), this->border_top_left_color), this->rect);
             //left
-            this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx(), this->dy() + 1, 1, this->cy() - 2
             )), this->border_top_left_color), this->rect);
         }
@@ -141,17 +141,17 @@ public:
     {
         this->update_draw_state(clip);
         //right
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
         )), this->border_right_bottom_color), this->rect);
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 2
         )), this->border_right_bottom_color2), this->rect);
         //bottom
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
         )), this->border_right_bottom_color), this->rect);
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), this->border_right_bottom_color2), this->rect);
     }
@@ -161,9 +161,9 @@ public:
         this->border_top_left_color ^= this->border_right_bottom_color;
         this->border_right_bottom_color ^= this->border_top_left_color;
         this->border_top_left_color ^= this->border_right_bottom_color;
-        this->drawable->begin_update();
+        this->drawable.begin_update();
         this->update_draw_state(this->rect);
-        this->drawable->end_update();
+        this->drawable.end_update();
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
@@ -209,11 +209,11 @@ public:
 
 private:
     struct ImplFocusBorder {
-        DrawApi * drawable;
+        DrawApi & drawable;
         Rect & rect;
         int bevel;
 
-        ImplFocusBorder(Rect & rect, int bevel, DrawApi * drawable = 0)
+        ImplFocusBorder(Rect & rect, int bevel, DrawApi & drawable)
         : drawable(drawable)
         , rect(rect)
         , bevel(bevel)
@@ -233,19 +233,19 @@ private:
 
         void draw_border(const Rect& rect, const Rect& clip)
         {
-            drawable->draw(RDPPatBlt(rect, 0xF0, GREY, BLACK, RDPBrush(this->rect.x, this->rect.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
+            drawable.draw(RDPPatBlt(rect, 0xF0, GREY, BLACK, RDPBrush(this->rect.x, this->rect.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
         }
     };
 
     void draw_focus(const Rect& clip)
     {
         ImplFocusBorder impl(this->rect, (state & 1), this->drawable);
-        this->drawable->begin_update();
+        this->drawable.begin_update();
         impl.draw_border(impl.top(), clip);
         impl.draw_border(impl.left(), clip);
         impl.draw_border(impl.right(), clip);
         impl.draw_border(impl.bottom(), clip);
-        this->drawable->end_update();
+        this->drawable.end_update();
 
         this->focus_is_visible = true;
     }
@@ -262,13 +262,13 @@ public:
     virtual void blur()
     {
         if (this->focus_is_visible){
-            ImplFocusBorder impl(this->rect, (state & 1));
-            this->drawable->begin_update();
+            ImplFocusBorder impl(this->rect, (state & 1), this->drawable);
+            this->drawable.begin_update();
             this->label.draw(impl.top());
             this->label.draw(impl.left());
             this->label.draw(impl.bottom());
             this->label.draw(impl.right());
-            this->drawable->end_update();
+            this->drawable.end_update();
             this->focus_is_visible = false;
         }
         Widget2::blur();

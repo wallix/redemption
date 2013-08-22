@@ -326,6 +326,9 @@ struct drawable_pointer_item {
     Drawable::Mouse_t mouse_cursor[16 * 32];
     int               contiguous_mouse_pixels;
     uint8_t           data[32 * 32 * 3];
+
+    int x; /* hotspot */
+    int y;
 };
 
 struct DrawablePointerCache {
@@ -349,6 +352,9 @@ struct DrawablePointerCache {
         drawable_pointer_item & pointer_item = this->pointer_items[index];
 
         this->make_drawable_mouse_cursor(data, mask, pointer_item);
+
+        pointer_item.x = hotspot_x;
+        pointer_item.y = hotspot_y;
     }
 
 protected:
@@ -387,12 +393,12 @@ protected:
                     in_contiguous_mouse_pixels = true;
                 }
                 else if (!draw_pixel && in_contiguous_mouse_pixels) {
-                    in_contiguous_mouse_pixels           = false;
+                    in_contiguous_mouse_pixels = false;
                 }
 
                 if (in_contiguous_mouse_pixels) {
                     memcpy(line_data, pixel, 3);
-                    line_data             += 3;
+                    line_data        += 3;
                     mouse_cursor->lg += 3;
                 }
             }

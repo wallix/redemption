@@ -26,7 +26,7 @@
 #include "label.hpp"
 #include "button.hpp"
 #include "password.hpp"
-#include "window.hpp"
+#include "widget2_window.hpp"
 #include "multiline.hpp"
 #include "image.hpp"
 #include "msgbox.hpp"
@@ -139,7 +139,7 @@ public:
                 while (p->parent)
                     p = p->parent;
                 this->window_help = new MessageBox(
-                    *this->drawable, 0, 0, p, this, "Help",
+                    this->drawable, 0, 0, p, this, "Help",
                     "You must be authenticated before using this<br>"
                     "session.<br>"
                     "<br>"
@@ -177,9 +177,9 @@ public:
                 this->window_help->set_widget_focus(&this->window_help->ok);
                 p->set_widget_focus(this->window_help);
 
-                this->drawable->begin_update();
+                this->drawable.begin_update();
                 this->window_help->draw(this->window_help->rect);
-                this->drawable->end_update();
+                this->drawable.end_update();
             }
         } else if (widget == this->window_help && event == NOTIFY_CANCEL) {
             this->close_window_help(true);
@@ -214,9 +214,9 @@ private:
     {
         Widget2 * parent = this->window_help->parent;
         static_cast<WidgetComposite*>(parent)->detach_widget(this->window_help, active_previous_widget);
-        parent->drawable->begin_update();
+        parent->drawable.begin_update();
         parent->draw(this->window_help->rect);
-        parent->drawable->end_update();
+        parent->drawable.end_update();
         delete this->window_help;
     }
 };

@@ -51,7 +51,7 @@ public:
                    Widget2* parent, NotifyApi* notifier, const char * text,
                    int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                    std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
-    : Widget2(&drawable, Rect(x,y,cx,1), parent, notifier, group_id)
+    : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
     , buf_size(0)
     , buf_pos(0)
     , num_chars(0)
@@ -82,7 +82,7 @@ public:
             this->display_pass[this->num_chars] = 0;
         }
         this->rect.cy = 0;
-        this->drawable->text_metrics("*", this->w_char, this->h_char);
+        this->drawable.text_metrics("*", this->w_char, this->h_char);
         this->rect.cy = this->y_text * 2 + this->h_char;
         this->rect.cy += 2;
         this->rect.cx += 2;
@@ -131,17 +131,17 @@ public:
 
     virtual bool focus(Widget2* old_focused, int policy = 0)
     {
-        this->drawable->begin_update();
+        this->drawable.begin_update();
         this->draw_cursor(this->get_cursor_rect());
-        this->drawable->end_update();
+        this->drawable.end_update();
         return Widget2::focus(old_focused, policy);
     }
 
     virtual void blur()
     {
-        this->drawable->begin_update();
+        this->drawable.begin_update();
         this->draw_text(this->get_cursor_rect());
-        this->drawable->end_update();
+        this->drawable.end_update();
         return Widget2::blur();
     }
 
@@ -158,8 +158,8 @@ public:
 
     void draw_text(const Rect& clip)
     {
-        this->drawable->draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
-        this->drawable->server_draw_text(this->x_text + this->dx(),
+        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
+        this->drawable.server_draw_text(this->x_text + this->dx(),
                                          this->y_text + this->dy() + 1,
                                          this->display_pass,
                                          this->fg_color,
@@ -171,25 +171,25 @@ public:
     void draw_border(const Rect& clip)
     {
         //top
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx() - 1, 1
         )), this->border_top_left_color), this->rect);
         //left
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
         )), this->border_top_left_color), this->rect);
         //right
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
         )), this->border_right_bottom_color), this->rect);
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 3
         )), this->border_right_bottom_color_inner), this->rect);
         //bottom
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
         )), this->border_right_bottom_color), this->rect);
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), this->border_right_bottom_color_inner), this->rect);
     }
@@ -205,7 +205,7 @@ public:
     void draw_cursor(const Rect& clip)
     {
         if (!clip.isempty()) {
-            this->drawable->draw(RDPOpaqueRect(clip, this->cursor_color), this->rect);
+            this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), this->rect);
         }
     }
 
@@ -254,10 +254,10 @@ public:
 
     void update_draw_cursor(Rect old_cursor)
     {
-        this->drawable->begin_update();
+        this->drawable.begin_update();
         this->draw_cursor(this->get_cursor_rect());
         this->draw(old_cursor);
-        this->drawable->end_update();
+        this->drawable.end_update();
     }
 
     void move_to_last_character()
@@ -280,8 +280,8 @@ public:
     {
         --this->num_chars;
         this->display_pass[this->num_chars] = 0;
-        this->drawable->begin_update();
-        this->drawable->draw(
+        this->drawable.begin_update();
+        this->drawable.draw(
             RDPOpaqueRect(this->rect, this->bg_color),
             Rect(
                 this->dx() + this->num_chars * this->w_char + this->x_text,
@@ -290,7 +290,7 @@ public:
                 this->h_char
             )
         );
-        this->drawable->end_update();
+        this->drawable.end_update();
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
@@ -365,7 +365,7 @@ public:
                         this->buf_size += d;
                         this->buf_pos += d;
                         this->send_notify(NOTIFY_TEXT_CHANGED);
-                        this->drawable->begin_update();
+                        this->drawable.begin_update();
                         this->draw_text(Rect(
                             this->dx() + this->x_text + (this->edit_pos - 1) * this->w_char,
                             this->dy() + this->y_text + 1,
@@ -373,7 +373,7 @@ public:
                             this->h_char
                         ));
                         this->draw_cursor(this->get_cursor_rect());
-                        this->drawable->end_update();
+                        this->drawable.end_update();
                     }
                     keymap->get_kevent();
                     break;

@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     class Screen : public WidgetComposite {
     public:
-        Screen(DrawApi* drawable)
+        Screen(DrawApi & drawable)
         : WidgetComposite(drawable, Rect(0,0,800,600), 0, 0)
         {}
 
@@ -429,13 +429,13 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
             }
 
             for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-                this->drawable->draw(RDPOpaqueRect(region.rects[i], 0x000000),
+                this->drawable.draw(RDPOpaqueRect(region.rects[i], 0x000000),
                                      region.rects[i]);
             }
         }
     };
 
-    Screen parent(&drawable);
+    Screen parent(drawable);
 
     int16_t x = 10;
     int16_t y = 10;

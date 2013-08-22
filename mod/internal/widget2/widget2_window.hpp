@@ -44,7 +44,7 @@ public:
 
     Window(DrawApi& drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
-    : WidgetComposite(&drawable, rect, parent, notifier, group_id)
+    : WidgetComposite(drawable, rect, parent, notifier, group_id)
     , titlebar(drawable, 2, 2, this, NULL, caption, false, -1, WHITE, WABGREEN, 5)
     , button_close(drawable, 2, 2, this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1, NOTIFY_CANCEL)
     , bg_color(bgcolor)
@@ -71,7 +71,7 @@ public:
         this->button_close.set_button_cy(this->button_close.cy() - 2);
 
         int h;
-        this->drawable->text_metrics(this->titlebar.buffer, this->titlebar_base_width, h);
+        this->drawable.text_metrics(this->titlebar.buffer, this->titlebar_base_width, h);
         this->titlebar.rect.cy = std::max<int>(h - 2, this->button_close.cy()) + this->titlebar.y_text * 2;
     }
 
@@ -92,14 +92,14 @@ public:
         this->rect.y = y;
     }
 
-protected:
+public:
+
     void resize_titlebar()
     {
         this->titlebar.rect.cx = this->cx() - this->button_close.cx() - 4;
         this->button_close.set_button_x(this->dx() + this->cx() - this->button_close.cx() - 2);
     }
 
-public:
     void set_window_cx(int w)
     {
         this->rect.cx = w;
@@ -144,36 +144,36 @@ public:
                      int border_right_bottom_color, int border_right_bottom_color_inner)
     {
         //top
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx(), 1
         )), border_top_left_color), this->rect);
         //left
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
         )), border_top_left_color), this->rect);
         //right
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy() + 1, 1, this->cy() - 2
         )), border_right_bottom_color), this->rect);
         //bottom
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
         )), border_right_bottom_color), this->rect);
 
         //top
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + 1, this->cx() - 2, 1
         )), border_top_left_color_inner), this->rect);
         //left
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + 2, 1, this->cy() - 4
         )), border_top_left_color_inner), this->rect);
         //right
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 2, this->dy() + 2, 1, this->cy() - 4
         )), border_right_bottom_color_inner), this->rect);
         //bottom
-        this->drawable->draw(RDPOpaqueRect(clip.intersect(Rect(
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), border_right_bottom_color_inner), this->rect);
     }

@@ -127,7 +127,7 @@ public:
     int color;
 
     WidgetCompositeRect(TestDraw & drawable)
-    : WidgetComposite(&drawable, Rect(0, 0,
+    : WidgetComposite(drawable, Rect(0, 0,
                                       drawable.gd.drawable.width,
                                       drawable.gd.drawable.height),
                       NULL, NULL)
@@ -139,7 +139,7 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        this->drawable->draw(RDPOpaqueRect(clip, color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(clip, color), this->rect);
         this->WidgetComposite::draw(clip);
     }
 };

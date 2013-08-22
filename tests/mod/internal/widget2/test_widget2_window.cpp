@@ -27,7 +27,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/widget2_rect.hpp"
-#include "internal/widget2/window.hpp"
+#include "internal/widget2/widget2_window.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -104,8 +104,8 @@ struct TestDraw : DrawApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text,
-                                  uint32_t fgcolor, const Rect& clip)
+    virtual void server_draw_text(int16_t x, int16_t y, const char* text, 
+                                  uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
         this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
     }
@@ -126,13 +126,13 @@ struct TestDraw : DrawApi
         }
     }
 
-    void save_to_png(const char * filename)
-    {
-        std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize);
-        fclose(file);
-    }
+//    void save_to_png(const char * filename)
+//    {
+//        std::FILE * file = fopen(filename, "w+");
+//        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
+//                   this->gd.drawable.height, this->gd.drawable.rowsize);
+//        fclose(file);
+//    }
 };
 
 BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
@@ -173,8 +173,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa0\x6a\x4d\xee\x0d\xef\xd4\xa4\x72\x60"
-        "\x47\xaa\xf6\x4c\xef\xdc\x2f\x0a\x4f\x9e")){
+        "\xd4\xd9\xca\x9c\xf9\x83\xaa\xa1\x6f\xac"
+        "\xaa\x1d\x71\x5a\xfd\x22\x95\x0d\x81\x13"
+        )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -187,8 +188,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
     //drawable.save_to_png("/tmp/window2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa0\x6a\x4d\xee\x0d\xef\xd4\xa4\x72\x60"
-        "\x47\xaa\xf6\x4c\xef\xdc\x2f\x0a\x4f\x9e")){
+        "\xd4\xd9\xca\x9c\xf9\x83\xaa\xa1\x6f\xac"
+        "\xaa\x1d\x71\x5a\xfd\x22\x95\x0d\x81\x13"
+        )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -198,8 +200,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
     //drawable.save_to_png("/tmp/window3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc2\xe9\xa5\xaf\x91\xe1\xfd\x1e\x40\xab"
-        "\x62\x19\xd5\x56\x4d\x01\xb7\x96\x5f\x83")){
+        "\x09\x31\xc2\xa0\xae\x78\x5a\x00\x69\x3e"
+        "\xfe\x5e\x80\xb9\x3d\xbe\x52\x3f\x99\x1e"
+        )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -223,14 +226,113 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
             this->event = event;
         }
     } notifier;
-    DrawApi * drawable = 0;
+
+    struct TestDraw : DrawApi
+    {
+        RDPDrawable gd;
+        Font font;
+
+        TestDraw(uint16_t w, uint16_t h)
+        : gd(w, h)
+        , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
+        {}
+
+        virtual void draw(const RDPOpaqueRect& cmd, const Rect& rect)
+        {
+            this->gd.draw(cmd, rect);
+        }
+
+        virtual void draw(const RDPScrBlt&, const Rect&)
+        {
+            BOOST_CHECK(false);
+        }
+
+        virtual void draw(const RDPDestBlt&, const Rect&)
+        {
+            BOOST_CHECK(false);
+        }
+
+        virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
+        {
+            this->gd.draw(cmd, rect);
+        }
+
+        virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
+        {
+            this->gd.draw(cmd, rect, bmp);
+        }
+
+        virtual void draw(const RDPMem3Blt& cmd, const Rect& rect, const Bitmap& bmp)
+        {
+            this->gd.draw(cmd, rect, bmp);
+        }
+
+        virtual void draw(const RDPLineTo&, const Rect&)
+        {
+            BOOST_CHECK(false);
+        }
+
+        virtual void draw(const RDPGlyphIndex&, const Rect&)
+        {
+            BOOST_CHECK(false);
+        }
+
+        virtual void draw(const RDPBrushCache&)
+        {
+            BOOST_CHECK(false);
+        }
+
+        virtual void draw(const RDPColCache&)
+        {
+            BOOST_CHECK(false);
+        }
+
+        virtual void draw(const RDPGlyphCache&)
+        {
+            BOOST_CHECK(false);
+        }
+
+        virtual void begin_update()
+        {}
+
+        virtual void end_update()
+        {}
+
+        virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
+        {
+            this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
+        }
+
+        virtual void text_metrics(const char* text, int& width, int& height)
+        {
+            height = 0;
+            width = 0;
+            uint32_t uni[256];
+            size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
+            if (len_uni){
+                for (size_t index = 0; index < len_uni; index++) {
+                    FontChar *font_item = this->gd.get_font(this->font, uni[index]);
+                    width += font_item->width + 2;
+                    height = std::max(height, font_item->height);
+                }
+                width -= 2;
+            }
+        }
+
+        void save_to_png(const char * filename)
+        {
+            std::FILE * file = fopen(filename, "w+");
+            dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
+                       this->gd.drawable.height, this->gd.drawable.rowsize, true);
+            fclose(file);
+        }
+    } drawable(800, 600);
+
     Widget2* parent = NULL;
 
     Window window(drawable, Rect(30,40,500,400), parent, &notifier, "Window 1");
-    window.button_close.rdp_input_mouse(CLIC_BUTTON1_DOWN, 0,0,0);
+    window.button_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, NULL);
     BOOST_CHECK(notifier.event == 0);
     BOOST_CHECK(notifier.sender == 0);
-    window.button_close.rdp_input_mouse(CLIC_BUTTON1_UP, 0,0,0);
-    BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
-    BOOST_CHECK(notifier.sender == &window);
+    window.button_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, NULL);
 }

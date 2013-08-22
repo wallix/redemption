@@ -575,7 +575,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(&drawable, Rect(), NULL, NULL)
+        : Widget2(drawable, Rect(), NULL, NULL)
         , sender(NULL)
         , event(0)
         {}
@@ -618,7 +618,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
-    WidgetComposite wcomposite(&drawable, Rect(0,0,800,600), parent, notifier);
+    WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
     WidgetPassword wpassword1(drawable, 0,0, 50, &wcomposite, notifier,
                         "abababab", 4, YELLOW, BLACK);
