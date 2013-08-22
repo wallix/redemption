@@ -206,6 +206,14 @@ public:
 
     Rect get_cursor_rect() const
     {
+LOG(LOG_INFO,
+    ">>>>> get_cursor_rect: rect.x=%d, rect.y=%d, rect.cx=%d, rect.cy=%d",
+    this->label.x_text + this->cursor_px_pos + this->label.dx() + 1,
+    this->label.y_text + this->label.dy(),
+    1,
+    this->h_text);
+if (!this->h_text) { REDASSERT(false); }
+
         return Rect(this->label.x_text + this->cursor_px_pos + this->label.dx() + 1,
                     this->label.y_text + this->label.dy(),
                     1,
@@ -214,6 +222,9 @@ public:
 
     void draw_cursor(const Rect& clip)
     {
+if (!clip.x && !clip.y && !clip.cx && !clip.cy) {
+    REDASSERT(false);
+}
         if (!clip.isempty()) {
             this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), this->rect);
         }
@@ -235,7 +246,8 @@ public:
     size_t utf8len_current_char()
     {
         size_t len = 1;
-        while (this->label.buffer[this->edit_buffer_pos + len] >> 6 == 2){
+LOG(LOG_INFO, "%02X", (uint8_t)this->label.buffer[this->edit_buffer_pos]);
+        while ((this->label.buffer[this->edit_buffer_pos + len] & 0xC0) == 0x80){
             ++len;
         }
         return len;
@@ -244,9 +256,15 @@ public:
     void decrement_edit_pos()
     {
         size_t len = 1;
-        while (this->edit_buffer_pos - len - 1 >= 0 && this->label.buffer[this->edit_buffer_pos - len - 1] >> 6 == 2){
+LOG(LOG_INFO, "code=%02X", (uint8_t)this->label.buffer[this->edit_buffer_pos - len]);
+        while (this->edit_buffer_pos - len/* - 1*/ >= 0 &&
+//               (((uint8_t)this->label.buffer[this->edit_buffer_pos - len/* - 1*/]) >> 6 == 2)
+                        ((this->label.buffer[this->edit_buffer_pos - len/* - 1*/] & 0xC0) == 0x80)
+){
             ++len;
+LOG(LOG_INFO, "code=%02X", (uint8_t)this->label.buffer[this->edit_buffer_pos - len]);
         }
+
         this->edit_pos--;
         char c = this->label.buffer[this->edit_buffer_pos];
         this->label.buffer[this->edit_buffer_pos] = 0;
@@ -377,6 +395,7 @@ public:
                     keymap->get_kevent();
                     if (this->edit_pos < this->num_chars) {
                         size_t len = this->utf8len_current_char();
+LOG(LOG_INFO, "delete len=%d", len);
                         char c = this->label.buffer[this->edit_buffer_pos + len];
                         this->label.buffer[this->edit_buffer_pos + len] = 0;
                         int w;
