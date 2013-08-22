@@ -189,6 +189,7 @@ struct Session {
 
                         // Process incoming module trafic
                         if (mm.mod->event.is_set(rfds)) {
+                            mm.mod->update_time(now);
                             mm.mod->draw_event();
 
                             if (mm.mod->event.signal != BACK_EVENT_NONE) {

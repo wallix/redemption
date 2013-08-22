@@ -33,13 +33,15 @@ class DialogMod : public InternalMod, public NotifyApi
     WindowDialog window_dialog;
 
     Inifile & ini;
+    time_t timeout;
 
 public:
     DialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
-              const char * caption, const char * message, const char * cancel_text)
+              const char * caption, const char * message, const char * cancel_text, time_t now)
     : InternalMod(front, width, height)
     , window_dialog(*this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, GREY)
     , ini(ini)
+    , timeout(ini.debug.pass_dialog_box?(now + ini.debug.pass_dialog_box):0)
     {
         this->screen.child_list.push_back(&this->window_dialog);
 
@@ -97,7 +99,17 @@ private:
 public:
     virtual void draw_event()
     {
-        this->event.reset();
+        if (this->timeout) {
+            if (this->now > this->timeout) {
+                this->accepted();
+            }
+            else {
+                this->event.set(1000000);
+            }
+        }
+        else {
+            this->event.reset();
+        }
     }
 
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)

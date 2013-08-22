@@ -70,9 +70,9 @@ public:
     }
 
     void tick() {
-        quantum_count++;
-        last_quantum_received = 0;
-        last_quantum_sent = 0;
+        this->quantum_count++;
+        this->last_quantum_received = 0;
+        this->last_quantum_sent = 0;
     }
 
     void reset_quantum_sent() {
