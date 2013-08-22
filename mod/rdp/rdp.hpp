@@ -3104,17 +3104,37 @@ struct mod_rdp : public mod_api {
 
         switch (ssipdudata.infoType) {
         case RDP::INFOTYPE_LOGON:
+        {
             LOG(LOG_INFO, "process save session info : Logon");
-            RDP::LogonInfoVersion1_Recv(ssipdudata.payload);
+            RDP::LogonInfoVersion1_Recv liv1(ssipdudata.payload);
+        }
         break;
         case RDP::INFOTYPE_LOGON_LONG:
+        {
             LOG(LOG_INFO, "process save session info : Logon long");
+            RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
+        }
         break;
         case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
+        {
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
+            RDP::PlainNotify_Recv pn(ssipdudata.payload);
+        }
         break;
         case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
+        {
             LOG(LOG_INFO, "process save session info : Logon extended info");
+            RDP::LogonInfoExtended_Recv lie(ssipdudata.payload);
+
+            RDP::LogonInfoField_Recv lif(lie.payload);
+
+            if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
+                LOG(LOG_INFO, "process save session info : Auto-reconnect cookie");
+            }
+            if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
+                LOG(LOG_INFO, "process save session info : Logon Errors Info");
+            }
+        }
         break;
         }
 
