@@ -668,6 +668,115 @@ enum {
     LOGON_WARNING                = 0x00000003
 };
 
+struct LogonErrorsInfo_Recv {
+    uint32_t ErrorNotificationData;
+    uint32_t ErrorNotificationType;
+
+    LogonErrorsInfo_Recv(Stream & stream) :
+    ErrorNotificationData(0),
+    ErrorNotificationType(0) {
+        const unsigned expected = 4 +   // ErrorNotificationData(4)
+                                  4;    // ErrorNotificationType(4)
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR,
+                "Truncated Logon Info Field (data): expected=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->ErrorNotificationData = stream.in_uint32_le();
+        this->ErrorNotificationType = stream.in_uint32_le();
+
+//        LOG(LOG_INFO,
+//            "ErrorNotificationData=%s(0x%08X) \"%s\" ErrorNotificationType=%s(0x%08X) \"%s\"",
+//            ErrorNotificationDataToString(this->ErrorNotificationData),
+//            this->ErrorNotificationData,
+//            ErrorNotificationDataToMessage(this->ErrorNotificationData),
+//            ErrorNotificationTypeToString(this->ErrorNotificationType),
+//            this->ErrorNotificationType,
+//            ErrorNotificationTypeToMessage(this->ErrorNotificationType));
+    }
+
+    static const char * ErrorNotificationDataToString(
+            uint32_t ErrorNotificationData) {
+        switch (ErrorNotificationData) {
+        case LOGON_MSG_NO_PERMISSION:
+            return "LOGON_MSG_NO_PERMISSION";
+        case LOGON_MSG_BUMP_OPTIONS:
+            return "LOGON_MSG_BUMP_OPTIONS";
+        case LOGON_MSG_SESSION_RECONNECT:
+            return "LOGON_MSG_SESSION_RECONNECT";
+        case LOGON_MSG_SESSION_TERMINATE:
+            return "LOGON_MSG_SESSION_TERMINATE";
+        case LOGON_MSG_SESSION_CONTINUE:
+            return "LOGON_MSG_SESSION_CONTINUE";
+
+        default:
+            return "<Unexpected>";
+        }
+    }
+
+    static const char * ErrorNotificationDataToMessage(
+            uint32_t ErrorNotificationData) {
+        switch (ErrorNotificationData) {
+        case LOGON_MSG_NO_PERMISSION:
+            return "The user does not have permission to log on.";
+        case LOGON_MSG_BUMP_OPTIONS:
+            return "Session contention UI is being displayed.";
+        case LOGON_MSG_SESSION_RECONNECT:
+            return "Session reconnection UI is being displayed.";
+        case LOGON_MSG_SESSION_TERMINATE:
+            return "The session is being terminated.";
+        case LOGON_MSG_SESSION_CONTINUE:
+            return "The logon process is continuing.";
+
+        default:
+            return "Unexpected Error Notification Data.";
+        }
+    }
+
+    static const char * ErrorNotificationTypeToString(
+            uint32_t ErrorNotificationType) {
+        switch (ErrorNotificationType) {
+        case LOGON_FAILED_BAD_PASSWORD:
+            return "LOGON_FAILED_BAD_PASSWORD";
+        case LOGON_FAILED_UPDATE_PASSWORD:
+            return "LOGON_FAILED_UPDATE_PASSWORD";
+        case LOGON_FAILED_OTHER:
+            return "LOGON_FAILED_OTHER";
+        case LOGON_WARNING:
+            return "LOGON_WARNING";
+
+        default:
+            return "<Unexpected>";
+        }
+    }
+
+    static const char * ErrorNotificationTypeToMessage(
+            uint32_t ErrorNotificationType) {
+        switch (ErrorNotificationType) {
+        case LOGON_FAILED_BAD_PASSWORD:
+            return "The logon process failed. "
+                "The logon credentials which were supplied are invalid.";
+        case LOGON_FAILED_UPDATE_PASSWORD:
+            return "The logon process failed. "
+                "The user cannot continue with the logon process until the "
+                "password is changed.";
+        case LOGON_FAILED_OTHER:
+            return "The logon process failed. "
+                "The reason for the failure can be deduced from the "
+                "ErrorNotificationData field.";
+        case LOGON_WARNING:
+            return "The user received a warning during the logon process. "
+                "The reason for the warning can be deduced from the "
+                "ErrorNotificationData field.";
+
+        default:
+            return "Unexpected Error Notification Type.";
+        }
+    }
+};  // struct LogonErrorsInfo_Recv
+
 }   // namespace RDP
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_SAVE_SESSION_INFO_PDU_HPP_
