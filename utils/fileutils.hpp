@@ -36,7 +36,7 @@
 #include <sys/socket.h>
 #include <ctype.h>
 #include "log.hpp"
-
+#include "error.hpp"
 
 static inline int filesize(const char * path)
 {
@@ -104,34 +104,28 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
     }
 }
 
-static inline char * pathncpy(char * dest, const char * src, size_t n) {
-    size_t       i;
-    size_t       n_adjusted;
-    char       * dest_char;
-    const char * src_char;
-
-    if (n >= 1) {
-        for (  i = 0, dest_char = dest, src_char = src, n_adjusted = n - 1
-             ; (i < n_adjusted) && (*src_char != '\0')
-             ; i++, dest_char++, src_char++) {
-            *dest_char = *src_char;
-        }
-
-        if (   (i > 0)
-            && (*(dest_char - 1) != '/')
-            && (i < n_adjusted)) {
-            *dest_char = '/';
-
-            i++;
-            dest_char++;
-        }
-
-        for (; i < n; i++, dest_char++) {
-            *dest_char = '\0';
+static inline char * pathncpy(char * dest, const char * src, const size_t n) {
+    TODO("use error return value instead of raisong an exception. The returned pointer is only used in tests, not code anyway");
+    size_t src_len = strnlen(src, n);
+    if (src_len >= n) {
+        LOG(LOG_INFO, "can't copy path, no room in dest path (available %d): %s\n", static_cast<int>(n), src);
+        throw Error(ERR_PATH_TOO_LONG);
+    }
+    if ((src_len == 0) && (n >= 3)){
+        memcpy(dest, "./", 3);
+    }
+    else {
+        memcpy(dest, src, src_len + 1);
+        if (src[src_len - 1] != '/') {
+            if (src_len + 1 >= n) {
+                LOG(LOG_INFO, "can't copy path, no room in dest path to add trailing slash: %s\n", src);
+                throw Error(ERR_PATH_TOO_LONG);
+            }
+            dest[src_len] = '/';
+            dest[src_len+1] = 0;
         }
     }
-
-   return dest;
+    return dest;
 }
 
 static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)
