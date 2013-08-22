@@ -107,8 +107,8 @@ public:
 
     virtual void draw_event()
     {
-        time_t now = time(NULL);
-        if (now > this->timeout) {
+        //time_t now = time(NULL);
+        if (this->now > this->timeout) {
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
         }

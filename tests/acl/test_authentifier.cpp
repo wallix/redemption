@@ -410,10 +410,11 @@ BOOST_AUTO_TEST_CASE(TestAuthentifierInactivity)
     ;
 
     TestTransport acl_trans("test", indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    CountTransport keepalivetrans;
     SessionManager sesman(&ini, acl_trans, 10000, 10010);
     signal = BACK_EVENT_NEXT;
 
-    CountTransport keepalivetrans;
+
     bool res/* = false*/;
 
 // Ask next_module, send inital data to ACL
