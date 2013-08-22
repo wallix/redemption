@@ -55,7 +55,6 @@ public:
     redemption::string png_path;
     redemption::string basename;
 
-    TODO("capture_wrm flag should be changed to some configuration parameter in inifile")
     Capture( const timeval & now, int width, int height, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
            , bool clear_png, Inifile & ini)
