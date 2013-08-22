@@ -249,9 +249,9 @@ struct LogonInfoVersion1_Recv {
 
         this->SessionId = stream.in_uint32_le();
 
-//        LOG(LOG_INFO,
-//            "Logon Info Version 1 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%d",
-//            this->Domain, this->UserName, this->SessionId);
+        LOG(LOG_INFO,
+            "Logon Info Version 1 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%d",
+            this->Domain, this->UserName, this->SessionId);
     }   // LogonInfoVersion1_Recv(Stream & stream)
 };  // struct LogonInfoVersion1_Recv
 
@@ -389,9 +389,9 @@ struct LogonInfoVersion2_Recv {
         stream.in_uni_to_ascii_str(this->UserName, this->cbUserName,
             sizeof(this->UserName));
 
-//        LOG(LOG_INFO,
-//            "Logon Info Version 2 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%d",
-//            this->Domain, this->UserName, this->SessionId);
+        LOG(LOG_INFO,
+            "Logon Info Version 2 (data): Domain=\"%s\" UserName=\"%s\" SessionId=%d",
+            this->Domain, this->UserName, this->SessionId);
     }   // LogonInfoVersion2_Recv(Stream & stream)
 };  // struct LogonInfoVersion2_Recv
 
@@ -687,14 +687,14 @@ struct LogonErrorsInfo_Recv {
         this->ErrorNotificationData = stream.in_uint32_le();
         this->ErrorNotificationType = stream.in_uint32_le();
 
-//        LOG(LOG_INFO,
-//            "ErrorNotificationData=%s(0x%08X) \"%s\" ErrorNotificationType=%s(0x%08X) \"%s\"",
-//            ErrorNotificationDataToString(this->ErrorNotificationData),
-//            this->ErrorNotificationData,
-//            ErrorNotificationDataToMessage(this->ErrorNotificationData),
-//            ErrorNotificationTypeToString(this->ErrorNotificationType),
-//            this->ErrorNotificationType,
-//            ErrorNotificationTypeToMessage(this->ErrorNotificationType));
+        LOG(LOG_INFO,
+            "ErrorNotificationData=%s(0x%08X) \"%s\" ErrorNotificationType=%s(0x%08X) \"%s\"",
+            ErrorNotificationDataToString(this->ErrorNotificationData),
+            this->ErrorNotificationData,
+            ErrorNotificationDataToMessage(this->ErrorNotificationData),
+            ErrorNotificationTypeToString(this->ErrorNotificationType),
+            this->ErrorNotificationType,
+            ErrorNotificationTypeToMessage(this->ErrorNotificationType));
     }
 
     static const char * ErrorNotificationDataToString(
