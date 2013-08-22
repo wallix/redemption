@@ -711,6 +711,7 @@ struct InfoPacket {
         this->flags |= INFO_UNICODE;
         this->flags |= INFO_MAXIMIZESHELL;
         this->flags |= INFO_ENABLEWINDOWSKEY;
+        this->flags |= INFO_LOGONERRORS;
         this->flags |= INFO_LOGONNOTIFY;
     } // END CONSTRUCTOR
 

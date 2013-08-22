@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(TestRefreshRectPDU)
     CheckTransport out_t(payload, payload_length);
     CryptContext   encrypt;
 
-    RefreshRectPDU rrpdu(132074, 7, 0, encrypt);
+    RDP::RefreshRectPDU rrpdu(132074, 7, 0, encrypt);
 
     rrpdu.addInclusiveRect(0, 0, 800 - 1, 600 - 1);
 

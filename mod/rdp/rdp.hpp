@@ -56,6 +56,7 @@
 #include "RDP/fastpath.hpp"
 #include "RDP/protocol.hpp"
 #include "RDP/RefreshRectPDU.hpp"
+#include "RDP/SaveSessionInfoPDU.hpp"
 
 #include "genrandom.hpp"
 
@@ -1371,6 +1372,12 @@ struct mod_rdp : public mod_api {
                                 if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_PTR_POSITION, not yet supported"); }
                                 break;
 
+                            case FastPath::FASTPATH_UPDATETYPE_COLOR:
+                                this->process_color_pointer_pdu(upd.payload);
+
+                                if (this->verbose & 8) { LOG(LOG_INFO, "FASTPATH_UPDATETYPE_COLOR"); }
+                                break;
+
                             case FastPath::FASTPATH_UPDATETYPE_POINTER:
                                 this->process_new_pointer_pdu(upd.payload);
 
@@ -1509,14 +1516,13 @@ struct mod_rdp : public mod_api {
                             ShareControl_Recv sctrl(sec.payload);
                             next_packet += sctrl.totalLength;
 
-                            if (this->verbose & 128){
+                            if (this->verbose & 128) {
                                 LOG(LOG_WARNING, "LOOPING on PDUs: %u", (unsigned)sctrl.totalLength);
                             }
 
-
                             switch (sctrl.pdu_type1) {
                             case PDUTYPE_DATAPDU:
-                                if (this->verbose & 128){
+                                if (this->verbose & 128) {
                                     LOG(LOG_WARNING, "PDUTYPE_DATAPDU");
                                 }
                                 switch (this->connection_finalization_state){
@@ -1627,7 +1633,7 @@ struct mod_rdp : public mod_api {
                                         case PDUTYPE2_SAVE_SESSION_INFO:
                                             if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
                                             TODO("CGR: Data should actually be consumed")
-                                                sdata.payload.p = sdata.payload.end;
+                                            this->process_save_session_info(sdata.payload);
                                             break;
                                         case PDUTYPE2_SET_ERROR_INFO_PDU:
                                             if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SET_ERROR_INFO_PDU");}
@@ -3093,6 +3099,28 @@ struct mod_rdp : public mod_api {
         }
     }
 
+    void process_save_session_info(Stream & stream) {
+        RDP::SaveSessionInfoPDUData_Recv ssipdudata(stream);
+
+        switch (ssipdudata.infoType) {
+        case RDP::INFOTYPE_LOGON:
+            LOG(LOG_INFO, "process save session info : Logon");
+            RDP::LogonInfoVersion1_Recv(ssipdudata.payload);
+        break;
+        case RDP::INFOTYPE_LOGON_LONG:
+            LOG(LOG_INFO, "process save session info : Logon long");
+        break;
+        case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
+            LOG(LOG_INFO, "process save session info : Logon plainnotify");
+        break;
+        case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
+            LOG(LOG_INFO, "process save session info : Logon extended info");
+        break;
+        }
+
+        stream.p = stream.end;
+    }
+
     TODO("CGR: this can probably be unified with process_confirm_active in front");
     void process_server_caps(Stream & stream, uint16_t len)
     {
@@ -3379,8 +3407,10 @@ public:
         }
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             if (!r.isempty()){
-                RefreshRectPDU rrpdu( this->share_id, this->userid, this->encryptionLevel
-                                      , this->encrypt);
+                RDP::RefreshRectPDU rrpdu(this->share_id,
+                                          this->userid,
+                                          this->encryptionLevel,
+                                          this->encrypt);
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.cx - 1, r.cy - 1);
 
