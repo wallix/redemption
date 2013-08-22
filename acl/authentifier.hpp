@@ -124,17 +124,19 @@ class Inactivity {
     // the effective inactivity timeout detection will be between
     // inactivity_timeout and inactivity_timeout + t.
     // hence we should have t << inactivity_timeout.
-    long prev_remain;
     time_t inactivity_timeout;
     time_t last_activity_time;
+    uint64_t last_total_received;
 
     uint32_t verbose;
+    long prev_remain;
 public:
     Inactivity(uint32_t max_tick, time_t start, uint32_t verbose)
-        : prev_remain(0)
-        , inactivity_timeout(max_tick?30*max_tick:10)
+        : inactivity_timeout(max_tick?30*max_tick:10)
         , last_activity_time(start)
+        , last_total_received(0)
         , verbose(verbose)
+        , prev_remain(0)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
@@ -147,30 +149,31 @@ public:
     }
 
     bool check(time_t now, Transport & trans) {
-        if (trans.last_quantum_received == 0) {
+        if (trans.total_received == this->last_total_received) {
             if (now > this->last_activity_time + this->inactivity_timeout) {
                 LOG(LOG_INFO, "Session User inactivity : closing");
                 // mm.invoke_close_box("Connection closed on inactivity", signal, now);
                 return true;
             }
-            // if (this->verbose & 0x10) {
-            //     long remain = this->last_activity_time + this->inactivity_timeout - now;
-            //     if ((remain / 10) != this->prev_remain
-            //         && (remain != this->inactivity_timeout)) {
-            //         this->prev_remain = remain / 10;
-            //         LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
-            //     }
-            // }
+            if (this->verbose & 0x10) {
+                long remain = this->last_activity_time + this->inactivity_timeout - now;
+                if ((remain / 10) != this->prev_remain
+                    && (remain != this->inactivity_timeout)) {
+                    this->prev_remain = remain / 10;
+                    LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
+                }
+            }
         }
         else {
             this->last_activity_time = now;
-            trans.tick();
-            // if (this->verbose & 0x10) {
-            //     if (this->prev_remain != 0) {
-            //         LOG(LOG_INFO, "Session User inactivity : Timer reset");
-            //         this->prev_remain = 0;
-            //     }
-            // }
+            this->last_total_received = trans.total_received;
+            // trans.tick();
+            if (this->verbose & 0x10) {
+                if (this->prev_remain != 0) {
+                    LOG(LOG_INFO, "Session User inactivity : Timer reset");
+                    this->prev_remain = 0;
+                }
+            }
         }
         return false;
     }
@@ -357,6 +360,8 @@ class PauseRecord {
     bool stop_record_inactivity;
     time_t stop_record_time;
     time_t last_record_activity_time;
+    uint64_t last_total_received;
+    uint64_t last_total_sent;
 
 public:
 
@@ -364,6 +369,8 @@ public:
         : stop_record_inactivity(false)
         , stop_record_time((timeout > 30)?timeout:30)
         , last_record_activity_time(0)
+        , last_total_received(0)
+        , last_total_sent(0)
     {
     }
     ~PauseRecord() {}
@@ -371,8 +378,8 @@ public:
     void check(time_t now, Front & front) {
         // Procedure which stops the recording on inactivity
         if (this->last_record_activity_time == 0) this->last_record_activity_time = now;
-        if ((front.trans->last_quantum_received == 0)
-            && (front.trans->last_quantum_sent == 0)) {
+        if ((front.trans->total_received == this->last_total_received)
+            && (front.trans->total_sent == this->last_total_sent)) {
             if (!this->stop_record_inactivity &&
                 (now > this->last_record_activity_time + this->stop_record_time)) {
                 this->stop_record_inactivity = true;
@@ -381,7 +388,9 @@ public:
         }
         else {
             this->last_record_activity_time = now;
-            front.trans->reset_quantum_sent();
+            this->last_total_received = front.trans->total_received;
+            this->last_total_sent = front.trans->total_sent;
+            // front.trans->reset_quantum_sent();
             // Here we only reset the quantum sent
             // because Check() will already reset the
             // quantum received when checking for inactivity
