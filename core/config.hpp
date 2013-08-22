@@ -607,6 +607,7 @@ struct Inifile : public FieldObserver {
         uint32_t widget;
         uint32_t input;
 
+        uint32_t pass_dialog_box;
         int log_type;
         char log_file_path[1024]; // log file location
     } debug;
@@ -885,6 +886,7 @@ public:
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
+        this->debug.pass_dialog_box   = 0;
         // End Section "debug"
 
         // Begin Section "translation"
@@ -1467,6 +1469,9 @@ public:
             }
             else if (0 == strcmp(key, "log_type")){
                 this->debug.log_type = logtype_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "pass_dialog_box")){
+                this->debug.pass_dialog_box = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "log_file_path")){
                 strncpy(this->debug.log_file_path, value, sizeof(this->debug.log_file_path));

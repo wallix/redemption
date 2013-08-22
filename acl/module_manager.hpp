@@ -448,7 +448,8 @@ public:
                                               this->front.client_info.height,
                                               caption,
                                               message,
-                                              button
+                                              button,
+                                              now
                                               );
                     LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Accept Message' ready");
                 }
@@ -467,7 +468,8 @@ public:
                                               this->front.client_info.height,
                                               caption,
                                               message,
-                                              button
+                                              button,
+                                              now
                                               );
                     LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
                 }

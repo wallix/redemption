@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    DialogMod d(ini, front, 800, 600, "Title", "Hello, World", "OK");
+    DialogMod d(ini, front, 800, 600, "Title", "Hello, World", "OK", 0);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);
@@ -285,7 +285,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    DialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel");
+    DialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);
