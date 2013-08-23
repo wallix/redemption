@@ -516,49 +516,42 @@ BOOST_AUTO_TEST_CASE(ParseIpConntrack)
 
 BOOST_AUTO_TEST_CASE(TestPathNCopy)
 {
-    char dest[16];
+    char dest[16] = {};
 
     memset(dest, 'A', sizeof(dest));
-
     pathncpy(dest, "", sizeof(dest));
-
-    BOOST_CHECK_EQUAL(std::string(""),                std::string(dest));
-
+    BOOST_CHECK_EQUAL(std::string("./"), std::string(dest));
 
     memset(dest, 'A', sizeof(dest));
-
     pathncpy(dest, "/tmp", sizeof(dest));
-
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),           std::string(dest));
-
+    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(dest));
 
     memset(dest, 'A', sizeof(dest));
-
     pathncpy(dest, "/tmp/", sizeof(dest));
-
-    BOOST_CHECK_EQUAL(std::string("/tmp/"),           std::string(dest));
-
+    BOOST_CHECK_EQUAL(std::string("/tmp/"), std::string(dest));
 
     memset(dest, 'A', sizeof(dest));
+    try {
+        pathncpy(dest, "/var/rdpproxy/tmp", sizeof(dest));
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_PATH_TOO_LONG));
+    };
 
-    pathncpy(dest, "/var/rdpproxy/tmp", sizeof(dest));
-
-    BOOST_CHECK_EQUAL(15,                             strlen(dest));
-    BOOST_CHECK_EQUAL(std::string("/var/rdpproxy/t"), std::string(dest));
-
+    BOOST_CHECK(true);
 
     memset(dest, 'A', sizeof(dest));
-
     pathncpy(dest, "/usr/local/tmp", sizeof(dest));
-
-    BOOST_CHECK_EQUAL(15,                             strlen(dest));
+    BOOST_CHECK_EQUAL(15, strlen(dest));
     BOOST_CHECK_EQUAL(std::string("/usr/local/tmp/"), std::string(dest));
 
-
     memset(dest, 'A', sizeof(dest));
-
-    pathncpy(dest, "/usr/local/temp", sizeof(dest));
-
-    BOOST_CHECK_EQUAL(15,                             strlen(dest));
-    BOOST_CHECK_EQUAL(std::string("/usr/local/temp"), std::string(dest));
+    try {
+        pathncpy(dest, "/usr/local/temp", sizeof(dest));
+        BOOST_CHECK(false);
+    }
+    catch (Error & e) {
+        BOOST_CHECK_EQUAL(static_cast<int>(e.id), static_cast<int>(ERR_PATH_TOO_LONG));        
+    };
 }
