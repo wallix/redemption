@@ -225,7 +225,22 @@ if (!this->h_text) { REDASSERT(false); }
 if (!clip.x && !clip.y && !clip.cx && !clip.cy) {
     REDASSERT(false);
 }
+
+LOG(LOG_INFO,
+    ">>>>> draw_cursor: clip.x=%d, clip.y=%d, clip.cx=%d, clip.cy=%d, color=0x%08X",
+    clip.x,
+    clip.y,
+    clip.cx,
+    clip.cy, this->cursor_color);
+LOG(LOG_INFO,
+    ">>>>> draw_cursor: rect.x=%d, rect.y=%d, rect.cx=%d, rect.cy=%d",
+    rect.x,
+    rect.y,
+    rect.cx,
+    rect.cy);
+
         if (!clip.isempty()) {
+LOG(LOG_INFO, "Draw OpaqueRect");
             this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), this->rect);
         }
     }
@@ -233,10 +248,13 @@ if (!clip.x && !clip.y && !clip.cx && !clip.cy) {
     void increment_edit_pos()
     {
         this->edit_pos++;
+LOG(LOG_INFO, "GetPos=\"%s\"", this->label.buffer + this->edit_buffer_pos);
         size_t n = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 1);
+LOG(LOG_INFO, "n=%d", n);
         char c = this->label.buffer[this->edit_buffer_pos + n];
         this->label.buffer[this->edit_buffer_pos + n] = 0;
         int w;
+LOG(LOG_INFO, "test_metrics=\"%s\"", this->label.buffer + this->edit_buffer_pos);
         this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos, w, this->h_text);
         this->cursor_px_pos += w;
         this->label.buffer[this->edit_buffer_pos + n] = c;
@@ -278,8 +296,16 @@ LOG(LOG_INFO, "code=%02X", (uint8_t)this->label.buffer[this->edit_buffer_pos - l
     void update_draw_cursor(Rect old_cursor)
     {
         this->drawable.begin_update();
-        this->draw_cursor(this->get_cursor_rect());
+//        this->draw_cursor(this->get_cursor_rect());
+LOG(LOG_INFO,
+    ">>>>> update_draw_cursor: old_cursor rect.x=%d, rect.y=%d, rect.cx=%d, rect.cy=%d",
+    old_cursor.x,
+    old_cursor.y,
+    old_cursor.cx,
+    old_cursor.cy);
+//REDASSERT(old_cursor.cx == 1);
         this->label.draw(old_cursor);
+        this->draw_cursor(this->get_cursor_rect());
         this->drawable.end_update();
     }
 
@@ -434,11 +460,13 @@ LOG(LOG_INFO, "delete len=%d", len);
                         UTF8InsertOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0, c, WidgetLabel::buffer_size - 1 - this->edit_buffer_pos);
                         size_t tmp = this->edit_buffer_pos;
                         size_t pxtmp = this->cursor_px_pos;
+LOG(LOG_INFO, "pxtmp=%d cursor_px_pos=%d", pxtmp, this->cursor_px_pos);
                         this->increment_edit_pos();
                         this->buffer_size += this->edit_buffer_pos - tmp;
                         this->num_chars++;
                         this->send_notify(NOTIFY_TEXT_CHANGED);
                         this->w_text += this->cursor_px_pos - pxtmp;
+LOG(LOG_INFO, "w_text=%d cursor_px_pos=%d, w_text - pxtmp=%d", this->w_text, this->cursor_px_pos, this->w_text - pxtmp);
                         this->update_draw_cursor(Rect(
                             this->dx() + pxtmp + this->label.x_text + 1,
                             this->dy() + this->label.y_text + 1,
