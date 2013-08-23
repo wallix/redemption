@@ -1269,9 +1269,8 @@ public:
 protected:
     void init(const size_t head_cap, const size_t body_cap) {
         const size_t cap      = head_cap + body_cap;
-        const size_t capacity = this->head_capacity + this->body_capacity;
 
-        if (cap > capacity) {
+        if (cap > (this->head_capacity + this->body_capacity)) {
             if (this->buffer_ptr != this->auto_buffer) { free(this->buffer_ptr); }
             this->buffer_ptr = (cap > AUTOSIZE)?static_cast<uint8_t*>(malloc(cap)):this->auto_buffer;
             if (!this->buffer_ptr){
