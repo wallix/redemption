@@ -1268,30 +1268,22 @@ public:
 
 protected:
     void init(const size_t head_cap, const size_t body_cap) {
-        size_t cap      = head_cap + body_cap;
-        size_t capacity = this->head_capacity + this->body_capacity;
+        const size_t cap      = head_cap + body_cap;
+        const size_t capacity = this->head_capacity + this->body_capacity;
 
         if (cap > capacity) {
-            if (this->buffer_ptr != &(this->auto_buffer[0])) {
-                free(this->buffer_ptr);
-            }   // if (this->buffer_ptr != &(this->auto_buffer[0]))
-
-            if (cap > AUTOSIZE) {
-                this->buffer_ptr = (uint8_t *)malloc(cap);
+            if (this->buffer_ptr != this->auto_buffer) { free(this->buffer_ptr); }
+            this->buffer_ptr = (cap > AUTOSIZE)?static_cast<uint8_t*>(malloc(cap)):this->auto_buffer;
+            if (!this->buffer_ptr){
+                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", (int)cap);
+                throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
             }
-            else {  // if (cap > AUTOSIZE)
-                this->buffer_ptr = &(this->auto_buffer[0]);
-            }
-        }   // if (cap > capacity)
-
+        }
         this->data_ptr = this->buffer_ptr + head_cap;
-
         this->head_capacity = head_cap;
         this->body_capacity = body_cap;
-
-        this->read_ptr  =
-        this->write_ptr = this->data_ptr;
-    }   // void init(size_t head_cap, size_t body_cap)
+        this->read_ptr  = this->write_ptr = this->data_ptr;
+    }
 
 protected:
     uint8_t auto_buffer[AUTOSIZE];
