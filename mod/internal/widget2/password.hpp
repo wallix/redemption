@@ -150,7 +150,10 @@ public:
         this->draw_text(clip);
 
         if (this->has_focus) {
-            this->draw_cursor(this->get_cursor_rect().intersect(clip));
+            Rect rect = this->get_cursor_rect();
+LOG(LOG_INFO, "draw: rect.x=%d, rect.y=%d, rect.cx=%d, rect.cy=%d", rect.x, rect.y, rect.cx, rect.cy);
+//            this->draw_cursor(this->get_cursor_rect().intersect(clip));
+            this->draw_cursor(this->get_cursor_rect().intersect(this->rect));
         }
 
         this->draw_border(clip);
@@ -158,13 +161,18 @@ public:
 
     void draw_text(const Rect& clip)
     {
+LOG(LOG_INFO, "draw_text: clip.x=%d, clip.y=%d, clip.cx=%d, clip.cy=%d", clip.x, clip.y, clip.cx, clip.cy);
+LOG(LOG_INFO, "draw_text: rect.x=%d, rect.y=%d, rect.cx=%d, rect.cy=%d", this->rect.x, this->rect.y, this->rect.cx, this->rect.cy);
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
+LOG(LOG_INFO, "draw_text: display_pass=\"%s\"", this->display_pass);
+LOG(LOG_INFO, "draw_text: x=%d, y=%d", this->x_text + this->dx(), this->y_text + this->dy() + 1);
         this->drawable.server_draw_text(this->x_text + this->dx(),
                                          this->y_text + this->dy() + 1,
                                          this->display_pass,
                                          this->fg_color,
                                          this->bg_color,
-                                         this->rect.intersect(clip)
+//                                         this->rect.intersect(clip)
+                                         this->rect
         );
     }
 
@@ -204,6 +212,8 @@ public:
 
     void draw_cursor(const Rect& clip)
     {
+LOG(LOG_INFO, "draw_cursor: clip.x=%d, clip.y=%d, clip.cx=%d, clip.cy=%d", clip.x, clip.y, clip.cx, clip.cy);
+if (!clip.x && !clip.y && !clip.cx && !clip.cy) { REDASSERT(false) };
         if (!clip.isempty()) {
             this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), this->rect);
         }
@@ -237,7 +247,7 @@ public:
     size_t utf8len_current_char()
     {
         size_t len = 1;
-        while (this->buffer[this->buf_pos + len] >> 6 == 2){
+        while ((this->buffer[this->buf_pos + len] & 0xC0) == 0x80){
             ++len;
         }
         return len;
@@ -246,7 +256,7 @@ public:
     size_t utf8len_prevent_char()
     {
         size_t len = 2;
-        while (this->buffer[this->buf_pos - len] >> 6 == 2){
+        while ((this->buffer[this->buf_pos - len] & 0xC0) == 0x80){
             ++len;
         }
         return len-1;
