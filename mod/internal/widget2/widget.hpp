@@ -24,7 +24,6 @@
 #include <vector>
 #include "notify_api.hpp"
 #include "mod_api.hpp"
-#include "notify_api.hpp"
 #include <rect.hpp>
 #include <callback.hpp>
 
