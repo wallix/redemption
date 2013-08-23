@@ -34,7 +34,8 @@ class DialogMod : public InternalMod, public NotifyApi
     WindowDialog window_dialog;
 
     Inifile & ini;
-    time_t timeout;
+    Timeout timeout;
+    // time_t timeout;
 
 public:
     DialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
@@ -42,7 +43,8 @@ public:
     : InternalMod(front, width, height)
     , window_dialog(*this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, GREY)
     , ini(ini)
-    , timeout(ini.debug.pass_dialog_box?(now + ini.debug.pass_dialog_box):0)
+    // , timeout(ini.debug.pass_dialog_box?(now + ini.debug.pass_dialog_box):0)
+    , timeout(Timeout(now, ini.debug.pass_dialog_box))
     {
         this->screen.child_list.push_back(&this->window_dialog);
 
@@ -100,16 +102,27 @@ private:
 public:
     virtual void draw_event()
     {
-        if (this->timeout) {
-            if (this->now > this->timeout) {
-                this->accepted();
-            }
-            else {
-                this->event.set(1000000);
-            }
-        }
-        else {
+        // if (this->timeout) {
+        //     if (this->now > this->timeout) {
+        //         this->accepted();
+        //     }
+        //     else {
+        //         this->event.set(1000000);
+        //     }
+        // }
+        // else {
+        //     this->event.reset();
+        // }
+        switch(this->timeout.check(this->now)) {
+        case Timeout::TIMEOUT_REACHED:
+            this->accepted();
+            break;
+        case Timeout::TIMEOUT_NOT_REACHED:
+            this->event.set(1000000);
+            break;
+        default:
             this->event.reset();
+            break;
         }
     }
 

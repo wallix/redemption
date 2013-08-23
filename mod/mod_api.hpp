@@ -34,7 +34,46 @@ enum {
     BUTTON_STATE_UP   = 0,
     BUTTON_STATE_DOWN = 1,
 };
+class Timeout {
 
+    time_t timeout;
+
+public:
+    typedef enum {
+        TIMEOUT_REACHED,
+        TIMEOUT_NOT_REACHED,
+        TIMEOUT_INACTIVE
+    } timeout_result_t;
+
+    Timeout(time_t now, time_t length = 0)
+        : timeout(length ?(now + length):0)
+    {
+    }
+
+    ~Timeout() {}
+
+    timeout_result_t check(time_t now)
+    {
+        if (this->timeout) {
+            if (now > this->timeout) {
+                return TIMEOUT_REACHED;
+            }
+            else {
+                return TIMEOUT_NOT_REACHED;
+            }
+        }
+        return TIMEOUT_INACTIVE;
+    }
+
+    void cancel_timeout() {
+        this->timeout = 0;
+    }
+
+    void start_timeout(time_t now, time_t length) {
+        this->timeout = now + length;
+    }
+
+};
 
 struct mod_api : public Callback, public DrawApi {
     wait_obj event;
