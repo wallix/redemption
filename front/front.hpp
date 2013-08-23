@@ -361,12 +361,10 @@ public:
     TODO(" implementation of the server_draw_text function below is a small subset of possibilities text can be packed (detecting duplicated strings). See MS-RDPEGDI 2.2.2.2.1.1.2.13 GlyphIndex (GLYPHINDEX_ORDER)")
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
-LOG(LOG_INFO, "server_draw_text: clip.x=%d, clip.y=%d, clip.cx=%d, clip.cy=%d", clip.x, clip.y, clip.cx, clip.cy);
         this->send_global_palette();
 
         // add text to glyph cache
         int len = strlen(text);
-LOG(LOG_INFO, "server_draw_text: len=%d", len);
         TODO("we should put some loop here for text to be splitted between chunks of UTF8 characters and loop on them")
         if (len > 120) {
             len = 120;
@@ -375,7 +373,6 @@ LOG(LOG_INFO, "server_draw_text: len=%d", len);
         if (len > 0){
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-LOG(LOG_INFO, "server_draw_text: part_len=%llu", part_len);
             int total_width = 0;
             int total_height = 0;
             uint8_t data[256];
