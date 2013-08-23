@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
 
 */
 
@@ -69,7 +69,7 @@ public:
         this->timeout = 0;
     }
 
-    void start_timeout(time_t now, time_t length) {
+    void restart_timeout(time_t now, time_t length) {
         this->timeout = now + length;
     }
 
