@@ -129,14 +129,14 @@ class Inactivity {
     uint64_t last_total_received;
 
     uint32_t verbose;
-    long prev_remain;
+    // long prev_remain;
 public:
     Inactivity(uint32_t max_tick, time_t start, uint32_t verbose)
         : inactivity_timeout(max_tick?30*max_tick:10)
         , last_activity_time(start)
         , last_total_received(0)
         , verbose(verbose)
-        , prev_remain(0)
+        // , prev_remain(0)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
@@ -155,25 +155,25 @@ public:
                 // mm.invoke_close_box("Connection closed on inactivity", signal, now);
                 return true;
             }
-            if (this->verbose & 0x10) {
-                long remain = this->last_activity_time + this->inactivity_timeout - now;
-                if ((remain / 10) != this->prev_remain
-                    && (remain != this->inactivity_timeout)) {
-                    this->prev_remain = remain / 10;
-                    LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
-                }
-            }
+            // if (this->verbose & 0x10) {
+            //     long remain = this->last_activity_time + this->inactivity_timeout - now;
+            //     if ((remain / 10) != this->prev_remain
+            //         && (remain != this->inactivity_timeout)) {
+            //         this->prev_remain = remain / 10;
+            //         LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
+            //     }
+            // }
         }
         else {
             this->last_activity_time = now;
             this->last_total_received = trans.total_received;
             // trans.tick();
-            if (this->verbose & 0x10) {
-                if (this->prev_remain != 0) {
-                    LOG(LOG_INFO, "Session User inactivity : Timer reset");
-                    this->prev_remain = 0;
-                }
-            }
+            // if (this->verbose & 0x10) {
+            //     if (this->prev_remain != 0) {
+            //         LOG(LOG_INFO, "Session User inactivity : Timer reset");
+            //         this->prev_remain = 0;
+            //     }
+            // }
         }
         return false;
     }
