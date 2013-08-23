@@ -150,7 +150,7 @@ public:
         this->draw_text(clip);
 
         if (this->has_focus) {
-            this->draw_cursor(this->get_cursor_rect().intersect(clip));
+            this->draw_cursor(this->get_cursor_rect().intersect(this->rect));
         }
 
         this->draw_border(clip);
@@ -237,7 +237,7 @@ public:
     size_t utf8len_current_char()
     {
         size_t len = 1;
-        while (this->buffer[this->buf_pos + len] >> 6 == 2){
+        while ((this->buffer[this->buf_pos + len] & 0xC0) == 0x80){
             ++len;
         }
         return len;
@@ -246,7 +246,7 @@ public:
     size_t utf8len_prevent_char()
     {
         size_t len = 2;
-        while (this->buffer[this->buf_pos - len] >> 6 == 2){
+        while ((this->buffer[this->buf_pos - len] & 0xC0) == 0x80){
             ++len;
         }
         return len-1;
@@ -335,12 +335,14 @@ public:
                 case Keymap2::KEVENT_DELETE:
                     keymap->get_kevent();
                     if (this->edit_pos < this->num_chars) {
+                        Rect old_cursor = this->get_cursor_rect();
                         size_t d = this->utf8len_current_char();
                         std::memmove(&this->buffer[this->buf_pos],
                                      &this->buffer[this->buf_pos+d],
                                      this->buf_size - this->buf_pos + 1);
                         this->buf_size -= d;
                         this->remove_last_character();
+                        this->update_draw_cursor(old_cursor);
                     }
                     break;
                 case Keymap2::KEVENT_END:
@@ -369,7 +371,7 @@ public:
                         this->draw_text(Rect(
                             this->dx() + this->x_text + (this->edit_pos - 1) * this->w_char,
                             this->dy() + this->y_text + 1,
-                            this->w_char,
+                            this->w_char * this->num_chars,
                             this->h_char
                         ));
                         this->draw_cursor(this->get_cursor_rect());
