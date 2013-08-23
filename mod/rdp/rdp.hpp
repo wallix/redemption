@@ -51,6 +51,7 @@
 #include "RDP/gcc.hpp"
 #include "RDP/sec.hpp"
 #include "colors.hpp"
+#include "RDP/autoreconnect.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/clipboard.hpp"
 #include "RDP/fastpath.hpp"
@@ -3130,9 +3131,13 @@ struct mod_rdp : public mod_api {
 
             if (lie.FieldsPresent & RDP::LOGON_EX_AUTORECONNECTCOOKIE) {
                 LOG(LOG_INFO, "process save session info : Auto-reconnect cookie");
+
+                RDP::ServerAutoReconnectPacket_Recv sarp(lif.payload);
             }
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
                 LOG(LOG_INFO, "process save session info : Logon Errors Info");
+
+                RDP::LogonErrorsInfo_Recv lei(lif.payload);
             }
         }
         break;

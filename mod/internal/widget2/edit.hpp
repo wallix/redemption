@@ -235,7 +235,7 @@ public:
     size_t utf8len_current_char()
     {
         size_t len = 1;
-        while (this->label.buffer[this->edit_buffer_pos + len] >> 6 == 2){
+        while ((this->label.buffer[this->edit_buffer_pos + len] & 0xC0) == 0x80){
             ++len;
         }
         return len;
@@ -244,9 +244,11 @@ public:
     void decrement_edit_pos()
     {
         size_t len = 1;
-        while (this->edit_buffer_pos - len - 1 >= 0 && this->label.buffer[this->edit_buffer_pos - len - 1] >> 6 == 2){
+        while (this->edit_buffer_pos - len >= 0 &&
+               ((this->label.buffer[this->edit_buffer_pos - len] & 0xC0) == 0x80)){
             ++len;
         }
+
         this->edit_pos--;
         char c = this->label.buffer[this->edit_buffer_pos];
         this->label.buffer[this->edit_buffer_pos] = 0;
@@ -260,8 +262,8 @@ public:
     void update_draw_cursor(Rect old_cursor)
     {
         this->drawable.begin_update();
-        this->draw_cursor(this->get_cursor_rect());
         this->label.draw(old_cursor);
+        this->draw_cursor(this->get_cursor_rect());
         this->drawable.end_update();
     }
 
