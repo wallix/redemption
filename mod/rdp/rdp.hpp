@@ -436,36 +436,36 @@ struct mod_rdp : public mod_api {
 
     // Method used by session to transmit sesman answer for auth_channel
     virtual void send_auth_channel_data(const char * data) {
-	// if (!this->acl){ return; }
+    // if (!this->acl){ return; }
 
-	if (strncmp("Error:", data, 6)) {
-	    this->auth_channel_state = 1; // session started
-	}
+    if (strncmp("Error:", data, 6)) {
+        this->auth_channel_state = 1; // session started
+    }
 
-	/*
-	  HStream stream(1024, 65536);
-	  BStream x224_header(256);
-	  BStream mcs_header(256);
-	  BStream sec_header(256);
+    /*
+      HStream stream(1024, 65536);
+      BStream x224_header(256);
+      BStream mcs_header(256);
+      BStream sec_header(256);
 
-	  stream.out_uint32_le(strlen(data));
-	  stream.out_uint32_le(this->auth_channel_flags);
-	  stream.out_copy_bytes(data, strlen(data));
-	  stream.mark_end();
+      stream.out_uint32_le(strlen(data));
+      stream.out_uint32_le(this->auth_channel_flags);
+      stream.out_copy_bytes(data, strlen(data));
+      stream.mark_end();
 
-	  SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
-	  MCS::SendDataIndication_Send mcs(mcs_header, userid,
-	  this->auth_channel_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-	  X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
+      SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
+      MCS::SendDataIndication_Send mcs(mcs_header, userid,
+      this->auth_channel_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
+      X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
 
-	  this->nego.trans->send(x224_header, mcs_header, sec_header, stream);
-	*/
-	CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-	StaticStream                chunk(data, ::strlen(data));
+      this->nego.trans->send(x224_header, mcs_header, sec_header, stream);
+    */
+    CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+    StaticStream                chunk(data, ::strlen(data));
 
-	virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-					    , this->userid, this->auth_channel_chanid, chunk.size()
-					    , this->auth_channel_flags, chunk);
+    virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
+                        , this->userid, this->auth_channel_chanid, chunk.size()
+                        , this->auth_channel_flags, chunk);
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
@@ -1670,13 +1670,51 @@ struct mod_rdp : public mod_api {
                                     break;
                                 case PDUTYPE_DEMANDACTIVEPDU:
                                     {
-                                        if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU"); }
+                                        if (this->verbose & 128){
+                                             LOG(LOG_INFO, "PDUTYPE_DEMANDACTIVEPDU");
+                                        }
+
+    // 2.2.1.13.1.1 Demand Active PDU Data (TS_DEMAND_ACTIVE_PDU)
+    // ==========================================================
+
+    //    shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1 ) containing information
+    //  about the packet. The type subfield of the pduType field of the Share Control Header MUST be set to
+    // PDUTYPE_DEMANDACTIVEPDU (1).
+
+    //    shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128]
+    // section 8.4.2 for more information regarding share IDs).
+
                                         this->share_id = sctrl.payload.in_uint32_le();
+
+    //    lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor
+    // field.
                                         uint16_t lengthSourceDescriptor = sctrl.payload.in_uint16_le();
+
+    //    lengthCombinedCapabilities (2 bytes): A 16-bit, unsigned integer. The combined size in bytes of the
+    // numberCapabilities, pad2Octets, and capabilitySets fields.
+
                                         uint16_t lengthCombinedCapabilities = sctrl.payload.in_uint16_le();
+
+    //    sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see
+    // [T128] section 8.4.1 for more information regarding source descriptors).
+
+                                        TODO("before skipping we should check we do not go outside current stream")
                                         sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
+
+    // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the
+    // Demand Active PDU.
+
+    // pad2Octets (2 bytes): A 16-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+    // capabilitySets (variable): An array of Capability Set (section 2.2.1.13.1.1.1) structures. The number
+    //  of capability sets is specified by the numberCapabilities field.
+
                                         this->process_server_caps(sctrl.payload, lengthCombinedCapabilities);
+
+    // sessionId (4 bytes): A 32-bit, unsigned integer. The session identifier. This field is ignored by the client.
+
                                         uint32_t sessionId = sctrl.payload.in_uint32_le();
+                                        (void)sessionId;
 
                                         this->send_confirm_active(this);
                                         this->send_synchronise();
@@ -1721,7 +1759,7 @@ struct mod_rdp : public mod_api {
                                     break;
                                 }
                                 TODO("check sctrl.payload is completely consumed")
-                                    }
+                            }
                         }
                     }
                 }
@@ -1756,6 +1794,8 @@ struct mod_rdp : public mod_api {
             break;
             case Timeout::TIMEOUT_NOT_REACHED:
                 this->event.set(1000000);
+            break;
+            case Timeout::TIMEOUT_INACTIVE:
             break;
             }
         }
