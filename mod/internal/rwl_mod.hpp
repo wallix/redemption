@@ -102,7 +102,7 @@ public:
     virtual void notify(Widget2* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
     {}
 
-    virtual void draw_event()
+    virtual void draw_event(time_t now)
     {
         this->event.reset();
     }

@@ -105,7 +105,7 @@ public:
     }
 
     // This should come from BACK!
-    virtual void draw_event()
+    virtual void draw_event(time_t now)
     {
         this->interaction();
         // Calculating new speedx and speedy

@@ -261,7 +261,7 @@ struct mod_rdp_transparent : public mod_api {
         this->directory[length] = 0;
 
         while (this->connection_finalization_state != UP_AND_RUNNING) {
-            this->draw_event();
+            this->draw_event(time(NULL));
             if (this->event.signal != BACK_EVENT_NONE) {
                 LOG(LOG_INFO, "Creation of new mod 'RDP' failed");
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
@@ -312,7 +312,7 @@ struct mod_rdp_transparent : public mod_api {
     // management of module originated event ("data received from server")
     // return non zero if module is "finished", 0 if it's still running
     // the null module never finish and accept any incoming event
-    virtual void draw_event(void) {
+    virtual void draw_event(time_t now) {
         switch (this->state) {
         case MOD_RDP_NEGO:
             if (this->verbose & 1) {
@@ -1387,7 +1387,7 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
             }
             break;  // case MOD_RDP_CONNECTED:
         }   // switch (this->state)
-    }   // virtual void draw_event(void)
+    }   // virtual void draw_event(time_t now)
 
     void send_client_info_pdu(int userid, const char * password) {
         if (this->verbose & 1) {

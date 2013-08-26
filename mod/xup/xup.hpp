@@ -192,7 +192,7 @@ enum {
         this->t->send(stream.get_data(), len);
     }
 
-    virtual void draw_event(void)
+    virtual void draw_event(time_t now)
     {
         try{
             BStream stream(32768);

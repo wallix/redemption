@@ -155,9 +155,6 @@ public:
         LOG(LOG_INFO, "overloaded by subclasses");
         return;
     }
-
-    // module got an internal event (like incoming data) and want to sent it outside
-    virtual void draw_event() = 0;
 };
 
 #endif

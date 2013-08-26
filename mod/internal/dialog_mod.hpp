@@ -100,20 +100,9 @@ private:
     }
 
 public:
-    virtual void draw_event()
+    virtual void draw_event(time_t now)
     {
-        // if (this->timeout) {
-        //     if (this->now > this->timeout) {
-        //         this->accepted();
-        //     }
-        //     else {
-        //         this->event.set(1000000);
-        //     }
-        // }
-        // else {
-        //     this->event.reset();
-        // }
-        switch(this->timeout.check(this->now)) {
+        switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->accepted();
             break;

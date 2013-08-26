@@ -34,7 +34,6 @@ class WabCloseMod : public InternalMod, public NotifyApi
     Inifile & ini;
     WindowWabClose window_close;
     WidgetImage image;
-    // time_t timeout;
     Timeout timeout;
 
 private:
@@ -76,7 +75,6 @@ public:
                    BLACK, GREY
     )
     , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
-    // , timeout(now + ini.globals.close_timeout)
     , timeout(Timeout(now, ini.globals.close_timeout))
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
@@ -107,21 +105,9 @@ public:
         }
     }
 
-    virtual void draw_event()
+    virtual void draw_event(time_t now)
     {
-        //time_t now = time(NULL);
-
-        // if (this->now > this->timeout) {
-        //     this->event.signal = BACK_EVENT_STOP;
-        //     this->event.set();
-        // }
-        // else {
-        //     this->event.set(1000000);
-        // }
-
-        // this->event.reset();
-
-        switch(this->timeout.check(this->now)) {
+        switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
             this->event.set();
