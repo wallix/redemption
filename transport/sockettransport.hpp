@@ -786,8 +786,8 @@ class SocketTransport : public Transport {
         // ensures the certificate directory exists
         if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
             LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
-            if (error_message) {
-                error_message->copy_c_str("Failed to create certificate directory: \"" CERTIF_PATH "/\"");
+            if (this->error_message) {
+                this->error_message->copy_c_str("Failed to create certificate directory: \"" CERTIF_PATH "/\"");
             }
             throw Error(ERR_TRANSPORT, 0);
         }
@@ -804,10 +804,10 @@ class SocketTransport : public Transport {
             if (errno != ENOENT) {
                 // failed to open stored certificate file
                 LOG(LOG_ERR, "Failed to open stored certificate: \"%s\"\n", filename);
-                if (error_message) {
-                    error_message->copy_c_str("Failed to open stored certificate: \"");
-                    error_message->concatenate_c_str(filename);
-                    error_message->concatenate_c_str("\"\n");
+                if (this->error_message) {
+                    this->error_message->copy_c_str("Failed to open stored certificate: \"");
+                    this->error_message->concatenate_c_str(filename);
+                    this->error_message->concatenate_c_str("\"\n");
                 }
                 throw Error(ERR_TRANSPORT, 0);
             }
@@ -824,10 +824,10 @@ class SocketTransport : public Transport {
             if (!px509Existing) {
                 // failed to read stored certificate file
                 LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
-                if (error_message) {
-                    error_message->copy_c_str("Failed to read stored certificate: \"");
-                    error_message->concatenate_c_str(filename);
-                    error_message->concatenate_c_str("\"\n");
+                if (this->error_message) {
+                    this->error_message->copy_c_str("Failed to read stored certificate: \"");
+                    this->error_message->concatenate_c_str(filename);
+                    this->error_message->concatenate_c_str("\"\n");
                 }
                 throw Error(ERR_TRANSPORT, 0);
             }
@@ -913,12 +913,12 @@ class SocketTransport : public Transport {
                     this->error_message_buffer[this->error_message_len - 1] = 0;
                 }
 */
-                if (error_message) {
+                if (this->error_message) {
                     char buff[256];
                     snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
                              this->ip_address, this->port);
-                    error_message->copy_c_str(buff);
-                    // snprintf(const_cast<char *>(error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
+                    this->error_message->copy_c_str(buff);
+                    // snprintf(const_cast<char *>(this->error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
                     //     "The certificate for host %s:%d has changed!",
                     //     this->ip_address, this->port);
                 }

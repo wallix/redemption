@@ -542,7 +542,6 @@ struct Inifile : public FieldObserver {
         bool rdp_compression;
 
         bool disconnect_on_logon_user_change;
-        bool disconnect_on_open_session_timeout;
 
         uint32_t open_session_timeout;
     } mod_rdp;
@@ -829,10 +828,9 @@ public:
         // Begin section "mod_rdp"
         this->mod_rdp.rdp_compression = false;
 
-        this->mod_rdp.disconnect_on_logon_user_change       = false;
-        this->mod_rdp.disconnect_on_open_session_timeout    = false;
+        this->mod_rdp.disconnect_on_logon_user_change = false;
 
-        this->mod_rdp.open_session_timeout                  = 60;
+        this->mod_rdp.open_session_timeout = 0;
         // End Section "mod_rdp"
 
         // Begin section video
@@ -1335,9 +1333,6 @@ public:
             }
             else if (0 == strcmp(key, "disconnect_on_logon_user_change")) {
                 this->mod_rdp.disconnect_on_logon_user_change = bool_from_cstr(value);
-            }
-            else if (0 == strcmp(key, "disconnect_on_open_session_timeout")) {
-                this->mod_rdp.disconnect_on_open_session_timeout = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "open_session_timeout")){
                 this->mod_rdp.open_session_timeout = ulong_from_cstr(value);

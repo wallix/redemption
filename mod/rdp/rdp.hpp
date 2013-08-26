@@ -73,7 +73,7 @@ struct mod_rdp : public mod_api {
 
     uint8_t   lic_layer_license_key[16];
     uint8_t   lic_layer_license_sign_key[16];
-//    int       lic_layer_license_issued;
+//  int       lic_layer_license_issued;
     uint8_t * lic_layer_license_data;
     size_t    lic_layer_license_size;
 
@@ -103,7 +103,7 @@ struct mod_rdp : public mod_api {
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
         , MOD_RDP_GET_LICENSE
-//        , MOD_RDP_WAITING_DEMAND_ACTIVE_PDU
+//      , MOD_RDP_WAITING_DEMAND_ACTIVE_PDU
         , MOD_RDP_CONNECTED
     };
 
@@ -125,7 +125,7 @@ struct mod_rdp : public mod_api {
     Random * gen;
     uint32_t verbose;
 
-//    SessionManager *acl;
+//  SessionManager *acl;
 
     char auth_channel[8];
     int  auth_channel_flags;
@@ -137,8 +137,8 @@ struct mod_rdp : public mod_api {
 
     RdpNego nego;
 
-    char clientAddr[512];
-//    uint16_t cbClientAddr;
+    char     clientAddr[512];
+//  uint16_t cbClientAddr;
 
     bool enable_new_pointer;
 
@@ -154,6 +154,11 @@ struct mod_rdp : public mod_api {
     size_t recv_bmp_update;
 
     rdp_mppc_dec * mppc_dec;
+
+    redemption::string * error_message;
+
+    bool     disconnect_on_logon_user_change;
+    uint32_t open_session_timeout;
 
     mod_rdp( Transport * trans
            , const char * target_user
@@ -177,7 +182,11 @@ struct mod_rdp : public mod_api {
            , bool bitmap_update_support
            , uint32_t verbose = 0
            , bool enable_new_pointer = false
-           , bool rdp_50_bulk_compression_support = false)
+           , bool rdp_50_bulk_compression_support = false
+           , redemption::string * error_message = 0
+           , bool disconnect_on_logon_user_change = false
+           , uint32_t open_session_timeout = 0
+           )
         : mod_api(info.width, info.height)
         , front(front)
         , in_stream(65536)
@@ -200,7 +209,7 @@ struct mod_rdp : public mod_api {
         , performanceFlags(info.rdp5_performanceflags)
         , gen(gen)
         , verbose(verbose)
-//        , acl(acl)
+//      , acl(acl)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
@@ -216,6 +225,9 @@ struct mod_rdp : public mod_api {
         , server_fastpath_update_support(fp_support)
         , rdp_50_bulk_compression_support(rdp_50_bulk_compression_support)
         , recv_bmp_update(0)
+        , error_message(error_message)
+        , disconnect_on_logon_user_change(disconnect_on_logon_user_change)
+        , open_session_timeout(open_session_timeout)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -3114,6 +3126,20 @@ struct mod_rdp : public mod_api {
         {
             LOG(LOG_INFO, "process save session info : Logon long");
             RDP::LogonInfoVersion2_Recv liv2(ssipdudata.payload);
+
+            if (this->disconnect_on_logon_user_change &&
+                (strcmp(reinterpret_cast<char *>(liv2.Domain), this->domain) ||
+                 strcmp(reinterpret_cast<char *>(liv2.UserName), this->username))) {
+                if (this->error_message) {
+                    this->error_message->copy_c_str(
+                        "Unauthorized logon user change detected!");
+                }
+                LOG(LOG_ERR,
+                    "Unauthorized logon user change detected on %s (%s\\%s). "
+                        "The session will be disconnected.",
+                    this->hostname, liv2.Domain, liv2.UserName);
+                throw Error(ERR_RDP_LOGON_USER_CHANGED);
+            }
         }
         break;
         case RDP::INFOTYPE_LOGON_PLAINNOTIFY:

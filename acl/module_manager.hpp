@@ -624,6 +624,9 @@ public:
                                             , this->ini.debug.mod_rdp
                                             , true          // support new pointer
                                             , this->ini.mod_rdp.rdp_compression
+                                            , &this->ini.context.auth_error_message
+                                            , this->ini.mod_rdp.disconnect_on_logon_user_change
+                                            , this->ini.mod_rdp.open_session_timeout
                                             );
                     this->mod->event.obj = client_sck;
 
