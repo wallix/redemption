@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestDialogMod
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "internal/dialog_mod.hpp"

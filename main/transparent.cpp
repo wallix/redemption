@@ -242,7 +242,7 @@ int main(int argc, char * argv[]) {
 
                 if (front.up_and_running) {
                     if (mod.event.is_set(rfds)) {
-                        mod.draw_event();
+                        mod.draw_event(time(NULL));
                         if (mod.event.signal != BACK_EVENT_NONE) {
                             mod_event_signal = mod.event.signal;
 

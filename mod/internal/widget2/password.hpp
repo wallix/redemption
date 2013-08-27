@@ -72,7 +72,10 @@ public:
         this->display_pass[0] = 0;
         if (text && *text) {
             this->buf_size = std::min(buffer_size - 1, strlen(text));
-            this->buffer[this->num_chars] = 0;
+            memcpy(this->buffer, text, this->buf_size);
+            this->buffer[this->buf_size] = 0;
+
+
             this->num_chars = UTF8Len(text);
             this->edit_pos = std::min(this->num_chars, edit_position);
             this->buf_pos = UTF8GetPos(reinterpret_cast<uint8_t *>(this->buffer), this->edit_pos);
@@ -245,11 +248,20 @@ public:
 
     size_t utf8len_prevent_char()
     {
+/*
         size_t len = 2;
+LOG(LOG_INFO, "buf_pos=%d", this->buf_pos);
         while ((this->buffer[this->buf_pos - len] & 0xC0) == 0x80){
             ++len;
         }
         return len-1;
+*/
+        size_t len = 1;
+//LOG(LOG_INFO, "buf_pos=%d", this->buf_pos);
+        while ((this->buffer[this->buf_pos - len] & 0xC0) == 0x80){
+            ++len;
+        }
+        return len;
     }
 
     void update_draw_cursor(Rect old_cursor)
@@ -322,7 +334,8 @@ public:
                     if (this->edit_pos > 0) {
                         Rect old_cursor = this->get_cursor_rect();
                         --this->edit_pos;
-                        size_t d = this->utf8len_current_char();
+//                        size_t d = this->utf8len_current_char();
+                        size_t d = this->utf8len_prevent_char();
                         std::memmove(&this->buffer[this->buf_pos-d],
                                      &this->buffer[this->buf_pos],
                                      this->buf_size - this->buf_pos + 1);

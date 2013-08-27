@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestBouncer2Mod
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "internal/bouncer2_mod.hpp"

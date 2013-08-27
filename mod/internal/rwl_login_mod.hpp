@@ -552,7 +552,7 @@ public:
                                        int16_t /*param1*/, int16_t /*param2*/)
     {}
 
-    virtual void draw_event()
+    virtual void draw_event(time_t now)
     {
         this->event.reset();
     }

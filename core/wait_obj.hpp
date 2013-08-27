@@ -41,15 +41,20 @@ enum BackEvent_t {
 
 class wait_obj
 {
-    public:
-    int obj;
-    bool set_state;
-    BackEvent_t signal;
+public:
+    int            obj;
+    bool           set_state;
+    BackEvent_t    signal;
     struct timeval trigger_time;
-    wait_obj(int sck)
+    bool           object_and_time;
+    bool           waked_up_by_time;
+
+    wait_obj(int sck, bool object_and_time = false)
     : obj(sck)
     , set_state(false)
     , signal(BACK_EVENT_NONE)
+    , object_and_time(object_and_time)
+    , waked_up_by_time(false)
     {
         this->trigger_time = tvtime();
     }
@@ -67,7 +72,8 @@ class wait_obj
             FD_SET(this->obj, &rfds);
             max = ((unsigned)this->obj > max)?this->obj:max;
         }
-        else if (this->set_state) {
+//        else if (this->set_state) {
+        if (((this->obj <= 0) || this->object_and_time) && this->set_state) {
             struct timeval now;
             now = tvtime();
             timeval remain = how_long_to_wait(this->trigger_time, now);
@@ -84,20 +90,27 @@ class wait_obj
 
     bool is_set(fd_set & rfds)
     {
-        if (this->obj > 0){
-            return FD_ISSET(this->obj, &rfds);
-        }
-        else{
-            if (this->set_state){
-                struct timeval now;
-                now = tvtime();
-                if ((now.tv_sec > this->trigger_time.tv_sec)
-                ||  ( (now.tv_sec == this->trigger_time.tv_sec)
-                    &&(now.tv_usec >= this->trigger_time.tv_usec))){
-                    return true;
-                }
+        this->waked_up_by_time = false;
+
+        if (this->obj > 0) {
+            bool res = FD_ISSET(this->obj, &rfds);
+
+            if (res || !this->object_and_time) {
+                return res;
             }
         }
+
+        if (this->set_state) {
+            struct timeval now;
+            now = tvtime();
+            if ((now.tv_sec > this->trigger_time.tv_sec) ||
+                ((now.tv_sec  == this->trigger_time.tv_sec) &&
+                 (now.tv_usec >= this->trigger_time.tv_usec))) {
+                this->waked_up_by_time = true;
+                return true;
+            }
+        }
+
         return false;
     }
 

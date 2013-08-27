@@ -597,7 +597,7 @@ struct mod_vnc : public mod_api {
     } // rdp_input_invalidate
 
     //==============================================================================================================
-    virtual void draw_event(void)
+    virtual void draw_event(time_t now)
     {
         if (this->verbose) {
             LOG(LOG_INFO, "vnc::draw_event");
