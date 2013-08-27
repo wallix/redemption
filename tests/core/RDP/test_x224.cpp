@@ -33,6 +33,7 @@
 #include "transport.hpp"
 #include "testtransport.hpp"
 #include "RDP/x224.hpp"
+#include "config.hpp"
 
 BOOST_AUTO_TEST_CASE(TestReceive_RecvFactory_Bad_TPKT)
 {
@@ -77,8 +78,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
 {
     GeneratorTransport t("\x03\x00\x00\x0B\x06\xE0\x00\x00\x00\x00\x00", 11);
 
+    Inifile ini;
     BStream stream(65536);
-    X224::CR_TPDU_Recv x224(t, stream);
+    X224::CR_TPDU_Recv x224(t, stream, ini);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -98,7 +100,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
     // stream is too small to hold received data
     BStream stream(4);
     try {
-        X224::CR_TPDU_Recv x224(t, stream);
+        Inifile ini;
+
+        X224::CR_TPDU_Recv x224(t, stream, ini);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -112,7 +116,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
 
     BStream stream(20);
     try {
-        X224::CR_TPDU_Recv x224(t, stream);
+        Inifile ini;
+
+        X224::CR_TPDU_Recv x224(t, stream, ini);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -126,7 +132,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
 
     BStream stream(20);
     try {
-        X224::CR_TPDU_Recv x224(t, stream);
+        Inifile ini;
+
+        X224::CR_TPDU_Recv x224(t, stream, ini);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -146,7 +154,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
 
     BStream stream(100);
     try {
-        X224::CR_TPDU_Recv x224(t, stream);
+        Inifile ini;
+
+        X224::CR_TPDU_Recv x224(t, stream, ini);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -166,7 +176,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
 
     BStream stream(100);
     try {
-        X224::CR_TPDU_Recv x224(t, stream);
+        Inifile ini;
+
+        X224::CR_TPDU_Recv x224(t, stream, ini);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -186,7 +198,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
 
     BStream stream(100);
     try {
-        X224::CR_TPDU_Recv x224(t, stream);
+        Inifile ini;
+
+        X224::CR_TPDU_Recv x224(t, stream, ini);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -203,7 +217,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL((size_t)11, (size_t)fac_x224.length);
 
-    X224::CR_TPDU_Recv x224(t, stream);
+    Inifile ini;
+
+    X224::CR_TPDU_Recv x224(t, stream, ini);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -239,7 +255,9 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
     BOOST_CHECK_EQUAL((uint8_t)X224::CR_TPDU, fac_x224.type);
     BOOST_CHECK_EQUAL(tpkt_len, (size_t)fac_x224.length);
 
-    X224::CR_TPDU_Recv x224(t, stream);
+    Inifile ini;
+
+    X224::CR_TPDU_Recv x224(t, stream, ini);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);

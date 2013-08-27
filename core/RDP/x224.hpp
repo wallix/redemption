@@ -31,6 +31,7 @@
 #include "log.hpp"
 #include "error.hpp"
 #include "fastpath.hpp"
+#include "config.hpp"
 
 //##############################################################################
 namespace X224
@@ -557,7 +558,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_requestedProtocols;
 
-        CR_TPDU_Recv(Transport & t, Stream & stream, uint32_t verbose = 0)
+        CR_TPDU_Recv(Transport & t, Stream & stream, Inifile & ini, uint32_t verbose = 0)
         : Recv(t, stream)
         , rdp_neg_type(0)
         , rdp_neg_flags(0)
@@ -615,35 +616,41 @@ namespace X224
                 if (verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
                 }
-                this->rdp_neg_type = stream.in_uint8();
-                this->rdp_neg_flags = stream.in_uint8();
-                this->rdp_neg_length = stream.in_uint16_le();
-                this->rdp_neg_requestedProtocols = stream.in_uint32_le();
+                if (this->rdp_neg_type == X224::RDP_NEG_NONE && ini.client.bogus_neg_request){
+                    // for broken clients like jrdp
+                    stream.p = end_of_header;
+                }
+                else {
+                    this->rdp_neg_type = stream.in_uint8();
+                    this->rdp_neg_flags = stream.in_uint8();
+                    this->rdp_neg_length = stream.in_uint16_le();
+                    this->rdp_neg_requestedProtocols = stream.in_uint32_le();
 
-                if (this->rdp_neg_type != X224::RDP_NEG_REQ){
-                    LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
-                        this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_requestedProtocols);
-                    throw Error(ERR_X224);
-                }
+                    if (this->rdp_neg_type != X224::RDP_NEG_REQ){
+                        LOG(LOG_INFO, "X224:RDP_NEG_REQ Expected LI=%u %x %x %x %x",
+                            this->tpdu_hdr.LI, this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_requestedProtocols);
+                        throw Error(ERR_X224);
+                    }
 
-                if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_RDP){
-                    LOG(LOG_INFO, "CR Recv: PROTOCOL RDP");
-                }
-                if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS){
-                    LOG(LOG_INFO, "CR Recv: PROTOCOL TLS 1.0");
-                }
-                if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID){
-                    LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID");
-                }
-                if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX){
-                    LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
-                }
-                if (this->rdp_neg_requestedProtocols
-                & ~(X224::PROTOCOL_RDP
-                   |X224::PROTOCOL_TLS
-                   |X224::PROTOCOL_HYBRID
-                   |X224::PROTOCOL_HYBRID_EX)){
-                    LOG(LOG_INFO, "CR Recv: Unknown protocol flags %x", this->rdp_neg_requestedProtocols);
+                    if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_RDP){
+                        LOG(LOG_INFO, "CR Recv: PROTOCOL RDP");
+                    }
+                    if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS){
+                        LOG(LOG_INFO, "CR Recv: PROTOCOL TLS 1.0");
+                    }
+                    if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID){
+                        LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID");
+                    }
+                    if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID_EX){
+                        LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID EX");
+                    }
+                    if (this->rdp_neg_requestedProtocols
+                    & ~(X224::PROTOCOL_RDP
+                       |X224::PROTOCOL_TLS
+                       |X224::PROTOCOL_HYBRID
+                       |X224::PROTOCOL_HYBRID_EX)){
+                        LOG(LOG_INFO, "CR Recv: Unknown protocol flags %x", this->rdp_neg_requestedProtocols);
+                    }
                 }
             }
             if (end_of_header != stream.p){

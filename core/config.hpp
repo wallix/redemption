@@ -531,6 +531,7 @@ struct Inifile : public FieldObserver {
 
         bool tls_fallback_legacy;
         bool tls_support;
+        bool bogus_neg_request; // needed to connect with jrdp, based on bogus X224 layer code
 
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
@@ -822,6 +823,7 @@ public:
         this->client.performance_flags_force_not_present = 0;
         this->client.tls_fallback_legacy                 = false;
         this->client.tls_support                         = true;
+        this->client.bogus_neg_request                   = false;
         this->client.rdp_compression                     = false;
         // End Section "client"
 
@@ -1316,6 +1318,9 @@ public:
             }
             else if (0 == strcmp(key, "tls_support")){
                 this->client.tls_support = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "bogus_neg_request")){
+                this->client.bogus_neg_request = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "clipboard")){
                 this->client.clipboard.set_from_cstr(value);
