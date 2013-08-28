@@ -292,14 +292,12 @@ class WidgetSelector : public WidgetComposite
 
         virtual void draw(const Rect& clip)
         {
-            Rect new_clip = clip.intersect(this->rect);
             std::size_t size = this->labels.size();
 
             for (std::size_t i = 0; i < size; ++i) {
                 Widget2 * w = this->labels[i];
-                Rect rect = new_clip.intersect(w->rect);
 
-                w->refresh(rect);
+                w->refresh(clip);
 
                 if (this->h_border) {
                     this->drawable.draw(
@@ -307,13 +305,14 @@ class WidgetSelector : public WidgetComposite
                                                       Rect(
                                                            this->rect.x,
                                                            w->dy() + w->cy(),
-                                                           rect.cx,
+                                                           this->rect.cx,
                                                            this->h_border
                                                            ),
                                                       this->bg_color
                                                       ), clip
                                         );
                 }
+
             }
 
             uint lcy = size * (this->h_text + this->y_text * 2 + this->h_border);
@@ -367,21 +366,17 @@ class WidgetSelector : public WidgetComposite
                         int w = 0;
                         int h = 0;
                         this->drawable.text_metrics(this->get_over_index(), w, h);
+                        this->send_notify(NOTIFY_HIDE_TOOLTIP);
                         if (w >= this->rect.cx) {
-                            if (selector->tooltip) {
-                                this->send_notify(NOTIFY_HIDE_TOOLTIP);
-                            }
                             int sw = selector->rect.cx;
                             int posx = ((x + w) > sw)?(sw - w):x;
+                            int posy = (y > h)?(y - h):0;
                             selector->tooltip = new WidgetTooltip(this->drawable,
                                                                   posx,
-                                                                  y,
+                                                                  posy,
                                                                   selector, this,
                                                                   this->get_over_index());
                             this->send_notify(NOTIFY_SHOW_TOOLTIP);
-                        }
-                        else if (selector->tooltip) {
-                            this->send_notify(NOTIFY_HIDE_TOOLTIP);
                         }
                         // LOG(LOG_INFO, "THIS TOOLTIP %s", this->get_over_index());
                     }
@@ -3919,10 +3914,12 @@ public:
             this->refresh(this->tooltip->rect);
         }
         if (NOTIFY_HIDE_TOOLTIP == event) {
-            this->child_list.pop_back();
-            this->refresh(this->tooltip->rect);
-            delete this->tooltip;
-            this->tooltip = NULL;
+            if (this->tooltip) {
+                this->child_list.pop_back();
+                this->refresh(this->tooltip->rect);
+                delete this->tooltip;
+                this->tooltip = NULL;
+            }
         }
         if (widget->group_id == this->device_lines.group_id) {
             if (NOTIFY_SUBMIT == event) {
@@ -3949,13 +3946,16 @@ public:
         if (device_flags & MOUSE_FLAG_MOVE) {
             Widget2 * w = this->child_at_pos(x, y);
             if (w != this->w_over) {
-                if (this->tooltip) {
-                    this->notify(this, NOTIFY_HIDE_TOOLTIP, 0, 0);
-                }
+                this->notify(this, NOTIFY_HIDE_TOOLTIP, 0, 0);
                 this->w_over = w;
             }
         }
         WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
+    }
+    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
+    {
+         this->notify(this, NOTIFY_HIDE_TOOLTIP, 0, 0);
+         WidgetComposite::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
     void set_index_list(int idx)

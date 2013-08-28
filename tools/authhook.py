@@ -163,7 +163,7 @@ class User(object):
                 continue
             # multiply number of entries by 15 to test pagination
             all_services.append(target)
-            all_groups.append(service.protocol.lower())
+            all_groups.append(service.protocol.lower() + service.protocol.lower() + service.protocol.lower())
             all_protos.append(service.protocol)
             all_endtimes.append(service.endtime)
         _number_of_pages = 1
@@ -305,7 +305,7 @@ server3450.listen(5)
 
 servers = [server3350, server3450]
 wsockets = []
-manager ={}
+manager = {}
 
 users = [
     User('one', 'one', [
@@ -321,7 +321,7 @@ users = [
         Service('w2008', '10.10.46.114', r'administrator', PASSWORD6, 'RDP', '3389'),
         Service('Vnc', '10.10.46.70', 'any', PASSWORD2, 'VNC', '5900'),
         Service('Vnc', '10.10.46.70', 'nobody', PASSWORD3, 'VNC', '5900'),
-        Service('xp', '10.10.46.111', r'qa\administrateur',
+        Service('xp', '10.10.46.111', r'qa\administrateur_oapzdjiadaoinddshfpiosqhfsquioq',
                 PASSWORD1, 'RDP', '3389'),
         Service('seven', '10.10.46.116', r'qa\administrateur', PASSWORD1, 'RDP', '3389'),
         Service('w2003', '10.10.46.70', r'test_unicode', PASSWORD4, 'RDP', '3389'),
