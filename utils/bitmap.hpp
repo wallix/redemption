@@ -1476,7 +1476,7 @@ public:
                 pmax = pmin + this->bmp_size;
             }
             else {
-                pmax = pmin + row_size(this->cx, this->original_bpp);
+                pmax = pmin + align4(this->cx * nbbytes(this->original_bpp));
             }
             while (p < pmax)
             {
