@@ -27,6 +27,8 @@
 #include "keymap2.hpp"
 #include <region.hpp>
 
+TODO("child_list should not be directly accessed");
+
 class WidgetComposite : public Widget2
 {
     typedef std::vector<Widget2*>::iterator position_t;
