@@ -244,6 +244,7 @@ public:
 
     void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip, Font& font)
     {
+        TODO("Merge common code with Front::server_draw_text()");
         if (text[0] != 0) {
             Rect screen_rect = clip.intersect(this->drawable.width, this->drawable.height);
             if (screen_rect.isempty()){
@@ -251,6 +252,7 @@ public:
             }
 
             fgcolor = RGBtoBGR(fgcolor);
+            bgcolor = RGBtoBGR(bgcolor);
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
 
