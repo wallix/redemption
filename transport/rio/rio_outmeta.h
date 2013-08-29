@@ -53,6 +53,7 @@ extern "C" {
         if (fd < 0){
             return RIO_ERROR_CREAT;
         }
+        self->fd = fd;
         if (groupid){
 //            if (chown(buffer, (uid_t)-1, groupid) < 0){
 //                LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", buffer, groupid, strerror(errno), errno);
