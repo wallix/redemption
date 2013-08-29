@@ -118,6 +118,10 @@ public:
         Widget2 * tmp_widget_with_focus = this->widget_with_focus;
         bool same_window = this->widget_with_focus && this->widget_with_focus->rect.contains_pt(x, y);
         Widget2 * w = same_window ? this->widget_with_focus->widget_at_pos(x, y) : this->child_at_pos(x, y);
+        TODO("Quick fix, should consider a specified widget (not according to flags)")
+        if (device_flags == MOUSE_FLAG_MOVE) {
+            w = same_window ? this->widget_with_focus : this->child_at_pos(x, y);
+        }
         if (device_flags == MOUSE_FLAG_BUTTON1) {
             if (this->widget_pressed && w != this->widget_pressed) {
                 this->widget_pressed->rdp_input_mouse(device_flags, x, y, keymap);
