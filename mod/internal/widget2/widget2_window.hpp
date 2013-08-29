@@ -177,26 +177,6 @@ public:
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), border_right_bottom_color_inner), this->rect);
     }
-
-    virtual bool focus(Widget2* old_focused, int policy = 0)
-    {
-        this->draw_border(this->rect,
-                          this->active_border_top_left_color,
-                          this->active_border_top_left_color_inner,
-                          this->active_border_right_bottom_color,
-                          this->active_border_right_bottom_color_inner);
-        return WidgetComposite::focus(old_focused, policy);
-    }
-
-    virtual void blur()
-    {
-        this->draw_border(this->rect,
-                          this->inactive_border_top_left_color,
-                          this->inactive_border_top_left_color_inner,
-                          this->inactive_border_right_bottom_color,
-                          this->inactive_border_right_bottom_color_inner);
-        WidgetComposite::blur();
-    }
 };
 
 #endif

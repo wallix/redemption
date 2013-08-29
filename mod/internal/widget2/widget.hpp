@@ -76,6 +76,7 @@ public:
     int group_id;
     int tab_flag;
     int focus_flag;
+
     bool has_focus;
 
 public:
@@ -102,15 +103,13 @@ public:
     virtual ~Widget2()
     {}
 
-    virtual bool next_focus(int policy = 0)
+    virtual bool next_focus()
     {
-        (void)policy;
         return false;
     }
 
-    virtual bool previous_focus(int policy = 0)
+    virtual bool previous_focus()
     {
-        (void)policy;
         return false;
     }
 
@@ -136,14 +135,14 @@ public:
                     //std::cout << ("tab") << '\n';
                     keymap->get_kevent();
                     if (this->parent) {
-                        this->parent->next_focus(1);
+                        this->parent->next_focus();
                     }
                     break;
                 case Keymap2::KEVENT_BACKTAB:
                     //std::cout << ("backtab") << '\n';
                     keymap->get_kevent();
                     if (this->parent) {
-                        this->parent->previous_focus(1);
+                        this->parent->previous_focus();
                     }
                     break;
                 default:
@@ -204,31 +203,34 @@ public:
     /**
      * @param policy  0 = normal ; 1 = focus with keyboard ; 2 = focus with mouse
      */
-    virtual bool focus(Widget2 * old_focused, int policy = 0)
+    virtual bool focus(Widget2 * old_focused)
     {
-        (void)old_focused;
-        (void)policy;
-        this->send_notify(NOTIFY_FOCUS_BEGIN);
-        this->has_focus = true;
+        if (!this->has_focus){
+            (void)old_focused;
+            this->send_notify(NOTIFY_FOCUS_BEGIN);
+            this->has_focus = true;
+            this->refresh(this->rect);
+        }
         return true;
     }
 
     virtual void blur()
     {
-        this->send_notify(NOTIFY_FOCUS_END);
-        this->has_focus = false;
+        if (this->has_focus){
+            this->send_notify(NOTIFY_FOCUS_END);
+            this->has_focus = false;
+            this->refresh(this->rect);
+        }
     }
 
-    void switch_focus_with(Widget2 * new_focused, int policy = 0)
+    void switch_focus_with(Widget2 * new_focused)
     {
         this->old_widget_with_focus = this->widget_with_focus;
         if (this->old_widget_with_focus) {
-            //std::cout << "blur: " << (typeid(*this->old_widget_with_focus).name()) << '\n';
             this->old_widget_with_focus->blur();
         }
         this->widget_with_focus = new_focused;
-        //std::cout << "focus: " << (typeid(*new_focused).name()) << " " << new_focused << '\n';
-        this->widget_with_focus->focus(this->old_widget_with_focus, policy);
+        this->widget_with_focus->focus(this->old_widget_with_focus);
     }
 
     void set_widget_focus(Widget2 * new_focused)

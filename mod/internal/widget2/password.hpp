@@ -132,14 +132,6 @@ public:
         this->rect.y = y;
     }
 
-    virtual bool focus(Widget2* old_focused, int policy = 0)
-    {
-        this->drawable.begin_update();
-        this->draw_cursor(this->get_cursor_rect());
-        this->drawable.end_update();
-        return Widget2::focus(old_focused, policy);
-    }
-
     virtual void blur()
     {
         this->drawable.begin_update();

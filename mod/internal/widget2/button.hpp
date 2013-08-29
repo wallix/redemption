@@ -251,14 +251,6 @@ private:
     }
 
 public:
-    virtual bool focus(Widget2* old_focused, int policy = 0)
-    {
-        if (policy != 2) {
-            this->draw_focus(this->rect);
-        }
-        return Widget2::focus(old_focused, policy);
-    }
-
     virtual void blur()
     {
         if (this->focus_is_visible){
