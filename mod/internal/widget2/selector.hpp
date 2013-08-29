@@ -118,10 +118,10 @@ public:
                              );
     }
 
-    virtual bool focus(Widget2* old_focused)
+    virtual void focus()
     {
         this->swap_image();
-        return Widget2::focus(old_focused);
+        Widget2::focus();
     }
 
     virtual void blur()

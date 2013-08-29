@@ -200,18 +200,13 @@ public:
         this->rect.cy = h;
     }
 
-    /**
-     * @param policy  0 = normal ; 1 = focus with keyboard ; 2 = focus with mouse
-     */
-    virtual bool focus(Widget2 * old_focused)
+    virtual void focus()
     {
         if (!this->has_focus){
-            (void)old_focused;
             this->send_notify(NOTIFY_FOCUS_BEGIN);
             this->has_focus = true;
             this->refresh(this->rect);
         }
-        return true;
     }
 
     virtual void blur()
@@ -230,7 +225,7 @@ public:
             this->old_widget_with_focus->blur();
         }
         this->widget_with_focus = new_focused;
-        this->widget_with_focus->focus(this->old_widget_with_focus);
+        this->widget_with_focus->focus();
     }
 
     void set_widget_focus(Widget2 * new_focused)

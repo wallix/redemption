@@ -423,7 +423,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     uint16_t cx = 100;
 
     WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF);
-    wpassword.focus(0);
+    wpassword.focus();
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e1.png");
     char message[1024];
@@ -689,7 +689,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     uint16_t cx = 100;
 
     WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF);
-    wpassword.focus(0);
+    wpassword.focus();
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e1.png");
     char message[1024];
@@ -786,7 +786,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     uint16_t cx = 100;
 
     WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF);
-    wpassword.focus(0);
+    wpassword.focus();
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e1.png");
     char message[1024];
@@ -895,7 +895,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     uint16_t cx = 100;
 
     WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF);
-    wpassword.focus(0);
+    wpassword.focus();
     wpassword.rdp_input_invalidate(wpassword.rect);
     //drawable.save_to_png("/tmp/password-e1.png");
     char message[1024];

@@ -630,7 +630,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wbutton.focus(0);
+    wbutton.focus();
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
@@ -652,7 +652,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wbutton.focus(0);
+    wbutton.focus();
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 

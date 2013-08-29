@@ -445,7 +445,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     uint16_t cx = 100;
 
     WidgetEdit wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, GREEN, RED);
-    wedit.focus(0);
+    wedit.focus();
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     //drawable.save_to_png("/tmp/edit-e1.png");

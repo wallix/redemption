@@ -241,7 +241,7 @@ public:
                     if (this->widget_with_focus == widget) {
                         this->widget_with_focus = this->old_widget_with_focus;
                         if (this->widget_with_focus) {
-                            this->widget_with_focus->focus(widget);
+                            this->widget_with_focus->focus();
                         }
                     }
                 }
@@ -254,10 +254,9 @@ public:
     virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
     {
         if (event == NOTIFY_FOCUS_BEGIN) {
-            Widget2 * old = this->widget_with_focus;
             this->widget_with_focus = widget;
             if (this->parent && this->parent->widget_with_focus != this) {
-                this->focus(old);
+                this->focus();
             }
         }
         else {

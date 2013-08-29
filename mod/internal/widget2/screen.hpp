@@ -83,7 +83,7 @@ public:
                                     this->new_focus_parents[n]->switch_focus_with(this->new_focus_parents[n-1]);
                                 }
                                 else if (false == this->new_focus_parents[n]->has_focus) {
-                                    this->new_focus_parents[n-1]->focus(0);
+                                    this->new_focus_parents[n-1]->focus();
                                 }
                             }
                             break;
