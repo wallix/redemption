@@ -208,8 +208,8 @@ class WidgetSelector : public WidgetComposite
             , x_text(xtext)
             , y_text(ytext)
             , labels()
-            , click_interval()
             , over_index(-1u)
+            , click_interval()
         {
             int w;
             this->drawable.text_metrics("Lp", w, this->h_text);

@@ -240,7 +240,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     }
 
     // uncomment to see result in png file
-    dump_png("/tmp/test_mouse_000_", gd.drawable);
+//  dump_png("/tmp/test_mouse_000_", gd.drawable);
 
     gd.drawable.clear_mouse();
 
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE(TestAddMouse)
     }
 
     // uncomment to see result in png file
-    dump_png("/tmp/test_mouse_001_", gd.drawable);
+//  dump_png("/tmp/test_mouse_001_", gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestAddMouse2)

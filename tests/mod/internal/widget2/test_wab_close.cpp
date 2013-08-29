@@ -28,7 +28,7 @@
 #undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "internal/widget2/window_wab_close.hpp"
@@ -36,7 +36,6 @@
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
-
 
 struct TestDraw : DrawApi
 {
@@ -378,4 +377,3 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
-

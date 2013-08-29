@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestInByMetaSequenceTransport
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include <stdlib.h>
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
         };
     }
 
-    // check we can do it two times    
+    // check we can do it two times
     InByMetaSequenceTransport mwrm_trans("./tests/fixtures/sample", ".mwrm");
 
     BOOST_CHECK_EQUAL(0, mwrm_trans.chunk_num);
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestSequenceFollowedTransportWRM2)
     BOOST_CHECK_EQUAL(1352304930, mwrm_trans.begin_chunk_time);
     BOOST_CHECK_EQUAL(1352304990, mwrm_trans.end_chunk_time);
     BOOST_CHECK_EQUAL(3, mwrm_trans.chunk_num);
-    
+
 }
 
 

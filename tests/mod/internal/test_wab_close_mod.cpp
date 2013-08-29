@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean
-
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -29,7 +28,7 @@
 #undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "internal/wab_close_mod.hpp"
@@ -151,7 +150,7 @@ BOOST_AUTO_TEST_CASE(TestWabCloseMod)
 
     } front(info);
 
-    Inifile             ini;
+    Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
@@ -159,6 +158,4 @@ BOOST_AUTO_TEST_CASE(TestWabCloseMod)
 
     WabCloseMod d(ini, front, 800, 600, (time_t)100000);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-
 }
-

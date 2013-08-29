@@ -44,7 +44,7 @@
 // out_bytes_be is only defined for 1 to 4 bytes
 BOOST_AUTO_TEST_CASE(TestAlign4)
 {
-    uint8_t buffer[4] = {};
+//  uint8_t buffer[4] = {};
     BOOST_CHECK_EQUAL(0x00, align4(0));
     BOOST_CHECK_EQUAL(0x04, align4(1));
     BOOST_CHECK_EQUAL(0x04, align4(2));
