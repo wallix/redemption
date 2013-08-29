@@ -56,7 +56,7 @@ public:
     FocusPropagation()
     {}
 
-    void active_focus(Widget2 * screen, Widget2 * new_focused, int policy = 0)
+    void active_focus(Widget2 * screen, Widget2 * new_focused)
     {
         Widget2 * w2 = new_focused->parent;
         if (0 == w2) {
@@ -80,10 +80,10 @@ public:
                         if (std::find<>(&this->focus_parents[0], last, w2) != last) {
                             for (size_t n = this->new_focus_parents.size() - 1; n > 0; --n) {
                                 if (this->new_focus_parents[n]->widget_with_focus != this->new_focus_parents[n-1]) {
-                                    this->new_focus_parents[n]->switch_focus_with(this->new_focus_parents[n-1], policy);
+                                    this->new_focus_parents[n]->switch_focus_with(this->new_focus_parents[n-1]);
                                 }
                                 else if (false == this->new_focus_parents[n]->has_focus) {
-                                    this->new_focus_parents[n-1]->focus(0, policy);
+                                    this->new_focus_parents[n-1]->focus(0);
                                 }
                             }
                             break;
@@ -133,7 +133,7 @@ public:
         if (w) {
             if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                 this->widget_pressed = w;
-                focus_propagation.active_focus(this, w, 2);
+                focus_propagation.active_focus(this, w);
                 if (!same_window && tmp_widget_with_focus->focus_flag != Widget2::FORCE_FOCUS) {
                     w->refresh(tmp_widget_with_focus->rect);
                 }

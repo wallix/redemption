@@ -97,17 +97,17 @@ public:
                          this->widget_with_focus);
     }
 
-    virtual bool next_focus(int policy)
+    virtual bool next_focus()
     {
         struct focus_manager {
-            static position_t next_in(position_t first, position_t last, int policy)
+            static position_t next_in(position_t first, position_t last)
             {
                 for (; first < last; ++first) {
                     if ((*first)->tab_flag & NORMAL_TAB) {
                         break ;
                     }
                     if ((*first)->tab_flag & DELEGATE_CONTROL_TAB) {
-                        if ((*first)->next_focus(policy)) {
+                        if ((*first)->next_focus()) {
                             break ;
                         }
                     }
@@ -117,35 +117,35 @@ public:
         };
 
         if (this->widget_with_focus != NULL && this->widget_with_focus != this) {
-            if (this->widget_with_focus->next_focus(policy)) {
+            if (this->widget_with_focus->next_focus()) {
                 return true;
             }
         }
 
         position_t pos = this->next_position_of_widget_with_focus();
         if (pos != this->child_list.end()) {
-            position_t pos2 = focus_manager::next_in(pos+1, this->child_list.end(), policy);
+            position_t pos2 = focus_manager::next_in(pos+1, this->child_list.end());
             bool ok = (pos2 != this->child_list.end());
             if (!ok) {
-                pos2 = focus_manager::next_in(this->child_list.begin(), pos, policy);
+                pos2 = focus_manager::next_in(this->child_list.begin(), pos);
                 ok = (pos2 != pos);
             }
             if (ok) {
                 if (this->widget_with_focus != *pos2) {
-                    this->switch_focus_with(*pos2, policy);
+                    this->switch_focus_with(*pos2);
                 }
                 return true;
             }
         } else {
-            pos = focus_manager::next_in(this->child_list.begin(), this->child_list.end(), policy);
+            pos = focus_manager::next_in(this->child_list.begin(), this->child_list.end());
             if (pos != this->child_list.end()) {
-                this->switch_focus_with(*pos, policy);
+                this->switch_focus_with(*pos);
                 return true;
             }
         }
 
         if ((!this->tab_flag & NO_DELEGATE_PARENT) && this->parent) {
-            this->parent->next_focus(policy);
+            this->parent->next_focus();
         }
         return false;
     }
@@ -160,17 +160,17 @@ public:
         return last;
     }
 
-    virtual bool previous_focus(int policy)
+    virtual bool previous_focus()
     {
         struct focus_manager {
-            static position_t previous_in(position_t first, position_t last, int policy)
+            static position_t previous_in(position_t first, position_t last)
             {
                 for (; first != last; --first) {
                     if ((*first)->tab_flag & NORMAL_TAB) {
                         break ;
                     }
                     if ((*first)->tab_flag & DELEGATE_CONTROL_TAB) {
-                        if ((*first)->previous_focus(policy)) {
+                        if ((*first)->previous_focus()) {
                             break ;
                         }
                     }
@@ -180,35 +180,35 @@ public:
         };
 
         if (this->widget_with_focus != NULL && this->widget_with_focus != this) {
-            if (this->widget_with_focus->previous_focus(policy)) {
+            if (this->widget_with_focus->previous_focus()) {
                 return true;
             }
         }
 
         position_t pos = this->previous_position_of_widget_with_focus();
         if (pos != this->child_list.begin()-1) {
-            position_t pos2 = focus_manager::previous_in(pos-1, this->child_list.begin()-1, policy);
+            position_t pos2 = focus_manager::previous_in(pos-1, this->child_list.begin()-1);
             bool ok = (pos2 != this->child_list.begin()-1);
             if (!ok) {
-                pos2 = focus_manager::previous_in(this->child_list.end()-1, pos, policy);
+                pos2 = focus_manager::previous_in(this->child_list.end()-1, pos);
                 ok = (pos2 != pos);
             }
             if (ok) {
                 if (this->widget_with_focus != *pos2) {
-                    this->switch_focus_with(*pos2, policy);
+                    this->switch_focus_with(*pos2);
                 }
                 return true;
             }
         } else {
-            pos = focus_manager::previous_in(this->child_list.end()-1, this->child_list.begin()-1, policy);
+            pos = focus_manager::previous_in(this->child_list.end()-1, this->child_list.begin()-1);
             if (pos != this->child_list.begin()-1) {
-                this->switch_focus_with(*pos, policy);
+                this->switch_focus_with(*pos);
                 return true;
             }
         }
 
         if ((!this->tab_flag & NO_DELEGATE_PARENT) && this->parent) {
-            this->parent->previous_focus(policy);
+            this->parent->previous_focus();
         }
         return false;
     }

@@ -157,27 +157,11 @@ public:
         this->set_edit_cy(h);
     }
 
-    virtual bool focus(Widget2* old_focused, int policy = 0)
-    {
-        this->drawable.begin_update();
-        this->draw_cursor(this->get_cursor_rect());
-        this->drawable.end_update();
-        return Widget2::focus(old_focused, policy);
-    }
-
-    virtual void blur()
-    {
-        this->drawable.begin_update();
-        this->label.draw(this->get_cursor_rect());
-        this->drawable.end_update();
-        return Widget2::blur();
-    }
-
     virtual void draw(const Rect& clip)
     {
         this->label.draw(clip);
         if (this->has_focus) {
-            this->draw_cursor(clip.intersect(this->get_cursor_rect()));
+            this->draw_cursor(this->get_cursor_rect());
         }
 
         //top
