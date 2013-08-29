@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WIDGET_HPP_)
@@ -26,7 +27,6 @@
 #include "mod_api.hpp"
 #include <rect.hpp>
 #include <callback.hpp>
-
 //#include <typeinfo>
 
 class Keymap2;
@@ -46,6 +46,8 @@ enum NotifyEventType {
     NOTIFY_SUBMIT = WIDGET_SUBMIT,
     NOTIFY_CANCEL = WIDGET_CANCEL,
     NOTIFY_SELECTION_CHANGED,
+    NOTIFY_SHOW_TOOLTIP,
+    NOTIFY_HIDE_TOOLTIP,
 };
 
 class Widget2 : public RdpInput, public NotifyApi
@@ -92,7 +94,10 @@ public:
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
     , has_focus(false)
-    {}
+    {
+        TODO("Constructor should take absolute coordinates")
+
+    }
 
     virtual ~Widget2()
     {}
@@ -119,6 +124,7 @@ public:
             this->drawable.end_update();
         }
     }
+
 
     // External world can generate 4 kind of events
     // - keyboard event (scancode)

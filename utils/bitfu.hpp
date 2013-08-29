@@ -49,6 +49,16 @@ static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned 
     }
 }
 
+// Output a uint32 into a buffer (little-endian)
+static inline void buf_out_uint32(uint8_t* buffer, int value)
+{
+  buffer[0] = value & 0xff;
+  buffer[1] = (value >> 8) & 0xff;
+  buffer[2] = (value >> 16) & 0xff;
+  buffer[3] = (value >> 24) & 0xff;
+}
+
+TODO("only defined for 1 to 4 bytes : rename to in_uint32_from_nb_bytes_le ?")
 static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
 {
     unsigned res = 0;
@@ -58,6 +68,7 @@ static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
     return res;
 }
 
+TODO("only defined for 1 to 4 bytes : rename to in_uint32_from_nb_bytes_be ?")
 static inline unsigned in_bytes_be(const uint8_t nb, const uint8_t * ptr)
 {
     unsigned res = 0;
@@ -67,13 +78,8 @@ static inline unsigned in_bytes_be(const uint8_t nb, const uint8_t * ptr)
     return res;
 }
 
-static inline uint16_t row_size(uint16_t width, uint8_t bpp)
-{
-    return align4(width * nbbytes(bpp));
-}
-
 // The  rmemcpy() function copies n bytes from memory area src to memory area dest inverting end and beginning.
-// The memory areas must not overlap.  Use rmemmove() if the memory areas do overlap.
+// The memory areas must not overlap.
 static inline void rmemcpy(uint8_t *dest, const uint8_t *src, size_t n)
 {
     for (size_t i = 0; i < n ; i++){
@@ -87,40 +93,6 @@ static inline void reverseit(uint8_t *buffer, size_t n){
         buffer[n-1-i] = buffer[i];
         buffer[i] = tmp;
     }
-}
-
-static inline void rmemmove(uint8_t *dest, uint8_t *src, size_t n)
-{
-    if (src > dest){
-        size_t intersect = src - dest;
-        if (intersect > n){
-            rmemcpy(dest, src, n);
-        }
-        else {
-            rmemcpy(dest, src + intersect, n - intersect);
-            reverseit(src, intersect);
-        }
-    }
-    else {
-        size_t intersect = dest - src;
-        if (intersect > n){
-            rmemcpy(dest, src, n);
-        }
-        else {
-            rmemcpy(dest + intersect, src, n - intersect);
-            reverseit(dest, intersect);
-        }
-
-    }
-}
-
-// Output a uint32 into a buffer (little-endian)
-static inline void buf_out_uint32(uint8_t* buffer, int value)
-{
-  buffer[0] = value & 0xff;
-  buffer[1] = (value >> 8) & 0xff;
-  buffer[2] = (value >> 16) & 0xff;
-  buffer[3] = (value >> 24) & 0xff;
 }
 
 #endif
