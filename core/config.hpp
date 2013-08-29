@@ -1645,7 +1645,7 @@ public:
     const char * context_get_value(authid_t authid) {
         const char * pszReturn = "";
 
-        LOG(LOG_WARNING, "Getting value for authid=%d", authid);
+//        LOG(LOG_INFO, "Getting value for authid=%d", authid);
         switch (authid)
             {
             case AUTHID_AUTH_ERROR_MESSAGE:
