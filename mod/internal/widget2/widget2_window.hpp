@@ -111,12 +111,6 @@ public:
         this->rect.cy = h;
     }
 
-    virtual void set_wh(uint16_t w, uint16_t h)
-    {
-        this->WidgetComposite::set_wh(w, h);
-        this->resize_titlebar();
-    }
-
     virtual void draw(const Rect& clip)
     {
         Rect inner_window = clip.intersect(this->rect.shrink(2));

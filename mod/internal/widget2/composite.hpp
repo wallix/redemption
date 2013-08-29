@@ -63,15 +63,6 @@ public:
         Widget2::set_xy(x, y);
     }
 
-    virtual void set_wh(uint16_t width, uint16_t height)
-    {
-        for (size_t i = 0, max = this->child_list.size(); i < max; ++i) {
-            Widget2 * w = this->child_list[i];
-            w->set_wh(width, height);
-        }
-        Widget2::set_wh(width, height);
-    }
-
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
     {
         if (!this->rect.contains_pt(x, y))

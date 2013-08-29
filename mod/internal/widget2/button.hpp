@@ -87,12 +87,6 @@ public:
         this->set_button_y(y);
     }
 
-    virtual void set_wh(uint16_t w, uint16_t h)
-    {
-        this->set_button_cx(w);
-        this->set_button_cy(h);
-    }
-
     void update_draw_state(const Rect& clip)
     {
         if (this->state & 1)  {

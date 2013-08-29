@@ -100,6 +100,8 @@ public:
 
 class WidgetScreen : public WidgetComposite
 {
+    Widget2 * current_window_with_focus;
+    
     Widget2 * widget_pressed;
     FocusPropagation focus_propagation;
 
