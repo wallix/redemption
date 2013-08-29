@@ -2938,26 +2938,11 @@ public:
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
-//                    BmpCache2Caps bmpcache2_caps;
-//                    bmpcache2_caps.recv(stream, capset_length);
-//                    bmpcache2_caps.log("Receiving from client");
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_REV2");
-                    }
+                    BmpCache2Caps cap;
+                    cap.recv(stream, capset_length);
+                    cap.log("Receiving from client");
 
-                    /* bitmap_cache_persist_enable(2) + ignored(2) + cache1_entries(4) + cache2_entries(4) +
-                     * cache3_entries(4)
-                     */
-                    const unsigned expected = 16;
-                    if (!stream.in_check_rem(expected)){
-                        LOG(LOG_ERR, "Truncated CAPSTYPE_BITMAPCACHE_REV2, need=%u remains=%u",
-                            expected, stream.in_remain());
-                        throw Error(ERR_MCS_PDU_TRUNCATED);
-                    }
-
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "capset_bmpcache2");
-                    }
+                    TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
                     this->client_info.bitmap_cache_version = 2;
                     int Bpp = nbbytes(this->client_info.bpp);
                     this->client_info.bitmap_cache_persist_enable = stream.in_uint16_le();
@@ -2996,16 +2981,19 @@ public:
                 }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
-                    CompDeskCaps compdesk_caps;
-                    compdesk_caps.recv(stream, capset_length);
+                    CompDeskCaps cap;
+                    cap.recv(stream, capset_length);
                     if (this->verbose) {
-                        compdesk_caps.log("Receiving from client");
+                        cap.log("Receiving from client");
                     }
                 }
                 break;
-            case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
-                if (this->verbose) {
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
+            case CAPSETTYPE_MULTIFRAGMENTUPDATE: { /* 26 */
+                    MultiFragmentUpdateCaps cap;
+                    cap.recv(stream, capset_length);
+                    if (this->verbose) {
+                        cap.log("Receiving from client");
+                    }
                 }
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
@@ -3041,9 +3029,9 @@ public:
             stream.p = next;
         }
         // After Capabilities read optional SessionId
-        TODO("Check if sessionId is actually optional or not, rdesktop does not send it")
         if (stream.in_remain() >= 4){
-            uint32_t sessionId = stream.in_uint32_le(); /* Session Id */
+            // From the documentation SessionId is ignored by client.
+            stream.in_skip_bytes(4); /* Session Id */
         }
         if (this->verbose & 1){
             LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.p, stream.end);
