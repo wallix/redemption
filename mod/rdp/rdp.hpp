@@ -3179,12 +3179,31 @@ struct mod_rdp : public mod_api {
     }
 
     void process_logon_info(const char * domain, const char * username) {
+        char domain_username_format_0[2048];
+        char domain_username_format_1[2048];
+
+        snprintf(domain_username_format_0, sizeof(domain_username_format_0),
+            "%s@%s", username, domain);
+        snprintf(domain_username_format_1, sizeof(domain_username_format_0),
+            "%s\\%s", domain, username);
+//        LOG(LOG_INFO,
+//            "Domain username format 0=(%s) Domain username format 1=(%s)",
+//            domain_username_format_0, domain_username_format_0);
+
         if (this->disconnect_on_logon_user_change &&
-            (strcmp(domain, this->domain) || strcmp(username, this->username))) {
+            ((strcasecmp(domain, this->domain) || strcasecmp(username, this->username)) &&
+             (this->domain[0] ||
+              (strcasecmp(domain_username_format_0, this->username) &&
+               strcasecmp(domain_username_format_1, this->username) &&
+               strcasecmp(username, this->username))))) {
             if (this->error_message) {
                 this->error_message->copy_c_str(
                     "Unauthorized logon user change detected!");
             }
+            LOG(LOG_ERR,
+                "Unauthorized logon user change detected on %s (%s\\%s) -> (%s\\%s). "
+                    "The session will be disconnected.",
+                this->hostname, this->domain, this->username, domain, username);
             LOG(LOG_ERR,
                 "Unauthorized logon user change detected on %s (%s\\%s). "
                     "The session will be disconnected.",
