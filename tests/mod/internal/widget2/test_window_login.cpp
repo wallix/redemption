@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     int16_t y = 0;
     int id = 0;
 
-    WindowLogin window_login(drawable, x, y, parent, notifier, "test1", id, "rec", "rec");
+    WindowLogin window_login(drawable, x, y, parent, notifier, "test1", false, id, "rec", "rec");
 
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(window_login.rect);
@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     window_login.help.send_notify(NOTIFY_SUBMIT);
     parent.rdp_input_invalidate(parent.rect);
 
-    //drawable.save_to_png("/tmp/window_login-help.png");
+    drawable.save_to_png("./window_login-help.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -459,11 +459,11 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     //close window_help and redraw
     window_login.window_help->button_close.send_notify(NOTIFY_CANCEL);
 
-    //drawable.save_to_png("/tmp/window_login-help2.png");
+    drawable.save_to_png("./window_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xc8\xd8\x06\xc1\xcd\x95\x34\xf5\xb3\x52"
-        "\xc9\x68\x3e\x14\x21\x56\xc4\xb9\x44\x25")){
+        "\x30\x7b\x94\x6f\xa4\xc0\x56\x7c\xfa\xe5"
+        "\xf6\xba\x63\x65\x4f\x58\x2e\xc1\xac\x28")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

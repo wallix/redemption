@@ -3746,7 +3746,7 @@ public:
                    const char * current_page, const char * number_of_page,
                    const char * filter_device = 0, const char * filter_target = 0,
                    const char * filter_proto = 0)
-        : WidgetComposite(drawable, Rect(0,0,width,height), NULL, notifier)
+        : WidgetComposite(drawable, Rect(0, 0, width, height), NULL, notifier)
         , device_label(drawable, 20, 10, this, NULL, device_name, true, -10, BLACK, GREY)
         , device_target_label(drawable, 20, 0, this, NULL, "Device Group", true, -10, BLACK, GREY)
         , target_label(drawable, 150, 0, this, NULL, "Account Device", true, -10, BLACK, GREY)
@@ -3794,7 +3794,7 @@ public:
         , tooltip(NULL)
         , w_over(NULL)
     {
-        this->widget_with_focus = &this->device_lines;
+        this->current_focus = &this->device_lines;
         this->child_list.push_back(&this->device_label);
         this->child_list.push_back(&this->device_target_label);
         this->child_list.push_back(&this->target_label);
@@ -3939,17 +3939,47 @@ public:
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    virtual void focus()
+    {
+        this->send_notify(NOTIFY_FOCUS_BEGIN);
+        this->has_focus = true;
+        this->refresh(this->rect);
+    }
+
+    virtual void blur()
+    {
+        this->send_notify(NOTIFY_FOCUS_END);
+        this->has_focus = false;
+        this->refresh(this->rect);
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
         if (device_flags & MOUSE_FLAG_MOVE) {
-            Widget2 * w = this->child_at_pos(x, y);
+            Widget2 * w = this->widget_at_pos(x, y);
             if (w != this->w_over) {
                 this->notify(this, NOTIFY_HIDE_TOOLTIP, 0, 0);
                 this->w_over = w;
             }
         }
-        WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
+
+        Widget2 * w = this->widget_at_pos(x, y);
+        if (w){
+            if (device_flags & MOUSE_FLAG_BUTTON1) {
+                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
+                    if (this->current_focus) {
+                        this->current_focus->blur(); 
+                    }
+                    this->current_focus = w;
+                    this->current_focus->focus();
+                }
+            }
+            w->rdp_input_mouse(device_flags, x, y, keymap);
+        }
     }
+
+
+
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
          this->notify(this, NOTIFY_HIDE_TOOLTIP, 0, 0);

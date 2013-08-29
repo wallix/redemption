@@ -30,6 +30,7 @@
 #include "multiline.hpp"
 #include "image.hpp"
 #include "msgbox.hpp"
+#include "screen.hpp"
 
 class WindowLogin : public Window
 {
@@ -45,7 +46,9 @@ public:
     MessageBox * window_help;
 
     WindowLogin(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
-                NotifyApi* notifier, const char* caption, int group_id = 0,
+                NotifyApi* notifier, const char* caption, 
+                bool focus_on_password = false, 
+                int group_id = 0,
                 const char * login = 0, const char * password = 0,
                 int fgcolor = BLACK, int bgcolor = GREY,
                 const char * button_text_ok = "Ok",
@@ -122,12 +125,19 @@ public:
         this->help.set_button_y(y);
 
         this->set_window_cy(y + this->ok.cy() + 10 - this->dy());
+
+        this->current_focus = &this->login_edit;
+        if (focus_on_password){
+            this->current_focus = &this->password_edit;
+        }        
+        this->current_focus->focus();
     }
 
     virtual ~WindowLogin()
     {
-        if (this->window_help)
+        if (this->window_help){
             this->close_window_help();
+        }
     }
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event,
@@ -136,8 +146,6 @@ public:
         if (widget == &this->help && event == NOTIFY_SUBMIT && !this->window_help) {
             if (this->parent) {
                 Widget2 * p = this->parent;
-                while (p->parent)
-                    p = p->parent;
                 this->window_help = new MessageBox(
                     this->drawable, 0, 0, p, this, "Help",
                     "You must be authenticated before using this<br>"
@@ -173,25 +181,57 @@ public:
                 this->window_help->ok.set_button_y(this->window_help->ok.dy() + y);
 
                 static_cast<WidgetComposite*>(p)->child_list.push_back(this->window_help);
+                p->current_focus = this->window_help;
 
-                this->window_help->set_widget_focus(&this->window_help->ok);
-                p->set_widget_focus(this->window_help);
-
-                this->drawable.begin_update();
-                this->window_help->draw(this->window_help->rect);
-                this->drawable.end_update();
+                if (this->current_focus){
+                    this->current_focus->blur();
+                }
+                this->current_focus = NULL;
+                this->blur();
+                this->window_help->ok.focus();
+                this->window_help->focus();
+                p->refresh(p->rect);
             }
         } else if (widget == this->window_help && event == NOTIFY_CANCEL) {
-            this->close_window_help(true);
-            this->window_help = 0;
+            this->close_window_help();
         } else if (widget == &this->cancel && event == NOTIFY_CANCEL) {
             if (this->window_help) {
-                this->close_window_help(false);
-                this->window_help = 0;
+                this->close_window_help();
             }
             this->send_notify(NOTIFY_CANCEL);
         } else {
             Window::notify(widget, event, param, param2);
+        }
+    }
+
+    virtual void focus()
+    {
+        this->send_notify(NOTIFY_FOCUS_BEGIN);
+        this->has_focus = true;
+        this->refresh(this->rect);
+    }
+
+    virtual void blur()
+    {
+        this->send_notify(NOTIFY_FOCUS_END);
+        this->has_focus = false;
+        this->refresh(this->rect);
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        Widget2 * w = this->widget_at_pos(x, y);
+        if (w){
+            if (device_flags & MOUSE_FLAG_BUTTON1) {
+                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
+                    if (this->current_focus) {
+                        this->current_focus->blur(); 
+                    }
+                    this->current_focus = w;
+                    this->current_focus->focus();
+                }
+            }
+            w->rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 
@@ -210,14 +250,17 @@ public:
     }
 
 private:
-    void close_window_help(bool active_previous_widget = false)
+    void close_window_help()
     {
-        Widget2 * parent = this->window_help->parent;
-        static_cast<WidgetComposite*>(parent)->detach_widget(this->window_help, active_previous_widget);
-        parent->drawable.begin_update();
-        parent->draw(this->window_help->rect);
-        parent->drawable.end_update();
+        WidgetScreen * p = static_cast<WidgetScreen*>(this->parent);
+        p->current_focus = this;
+        p->child_list.pop_back();
         delete this->window_help;
+        this->window_help = NULL;
+        this->current_focus = &this->help;
+        this->help.focus();
+        this->focus();
+        p->refresh(p->rect);        
     }
 };
 

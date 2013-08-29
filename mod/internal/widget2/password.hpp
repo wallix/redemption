@@ -62,7 +62,7 @@ public:
     , y_text(ytext)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
-    , auto_resize(auto_resize)
+    , auto_resize(false)
     , cursor_color(0x888888)
     , border_top_left_color(0x444444)
     , border_right_bottom_color(0xEEEEEE)

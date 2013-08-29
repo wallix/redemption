@@ -64,6 +64,7 @@ public:
     {
         this->selector.set_widget_focus(&this->selector.device_lines);
         this->screen.set_widget_focus(&this->selector);
+        this->screen.child_list.push_back(&this->selector);
 
         this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border));
         this->ask_page();
@@ -270,7 +271,7 @@ public:
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3,
                                     long int param4, Keymap2* keymap)
     {
-        if (&this->selector.device_lines == this->selector.widget_with_focus
+        if (&this->selector.device_lines == this->selector.current_focus
             && keymap->nb_kevent_available() > 0) {
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_LEFT_ARROW:

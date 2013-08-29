@@ -53,37 +53,38 @@ enum NotifyEventType {
 class Widget2 : public RdpInput, public NotifyApi
 {
 public:
+
+    TODO("using several booleans may be easier to read than flags")
     enum OptionTab {
-        IGNORE_TAB = 0,
-        NORMAL_TAB = 1 << 1,
-        DELEGATE_CONTROL_TAB = 1 << 2,
-        NO_DELEGATE_PARENT = 1 << 4
+        IGNORE_TAB           = 0x00,
+        NORMAL_TAB           = 0x02,
+        DELEGATE_CONTROL_TAB = 0x04,
+        NO_DELEGATE_PARENT   = 0x10
     };
 
     enum OptionFocus {
-        IGNORE_FOCUS = 0 << 1,
-        NORMAL_FOCUS = 1 << 1,
-        FORCE_FOCUS = 1 << 3
+        IGNORE_FOCUS = 0x00,
+        NORMAL_FOCUS = 0x01,
+        FORCE_FOCUS  = 0x04
     };
 
 public:
     Widget2 * parent;
-    Widget2 * widget_with_focus;
-    Widget2 * old_widget_with_focus;
+    Widget2 * current_focus;
+    Widget2 * old_current_focus;
     DrawApi & drawable;
     NotifyApi * notifier;
     Rect rect;
     int group_id;
     int tab_flag;
     int focus_flag;
-
     bool has_focus;
 
 public:
     Widget2(DrawApi & drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
-    , widget_with_focus(NULL)
-    , old_widget_with_focus(NULL)
+    , current_focus(NULL)
+    , old_current_focus(NULL)
     , drawable(drawable)
     , notifier(notifier)
     , rect(Rect(rect.x + (parent ? parent->dx() : 0),
@@ -214,22 +215,22 @@ public:
 
     void switch_focus_with(Widget2 * new_focused)
     {
-        this->old_widget_with_focus = this->widget_with_focus;
-        if (this->old_widget_with_focus) {
-            this->old_widget_with_focus->blur();
+        this->old_current_focus = this->current_focus;
+        if (this->old_current_focus) {
+            this->old_current_focus->blur();
         }
-        this->widget_with_focus = new_focused;
-        this->widget_with_focus->focus();
+        this->current_focus = new_focused;
+        this->current_focus->focus();
     }
 
     void set_widget_focus(Widget2 * new_focused)
     {
-        this->old_widget_with_focus = this->widget_with_focus;
-        if (this->old_widget_with_focus) {
-            this->old_widget_with_focus->blur();
+        this->old_current_focus = this->current_focus;
+        if (this->old_current_focus) {
+            this->old_current_focus->blur();
         }
-        this->widget_with_focus = new_focused;
-        this->widget_with_focus->has_focus = true;
+        this->current_focus = new_focused;
+        this->current_focus->has_focus = true;
     }
 
     ///Return x position in it's screen

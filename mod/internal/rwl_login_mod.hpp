@@ -390,7 +390,7 @@ public:
     RwlLoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height)
         , definition("/tmp/login_mod.rwl")
-        , window_login(*this, 0, 0, &this->screen, this, VERSION, 0, 0, 0, BLACK, GREY,
+        , window_login(*this, 0, 0, &this->screen, this, VERSION, false, 0, 0, 0, BLACK, GREY,
                        ini.translation.button_ok.get().c_str(),
                        ini.translation.button_cancel.get().c_str(),
                        ini.translation.button_help.get().c_str(),

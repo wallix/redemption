@@ -26,89 +26,11 @@
 
 #include <typeinfo>
 
-class FocusPropagation {
-    class minivector {
-        Widget2* data[32];
-        size_t data_size;
-
-    public:
-        minivector()
-        : data_size(0)
-        {}
-
-        void clear()
-        { this->data_size = 0; }
-
-        size_t size() const
-        { return this->data_size; }
-
-        void push_back(Widget2 * w)
-        { this->data[this->data_size++] = w; }
-
-        Widget2 * & operator[](size_t n)
-        { return data[n]; }
-    };
-
-    minivector focus_parents;
-    minivector new_focus_parents;
-
-public:
-    FocusPropagation()
-    {}
-
-    void active_focus(Widget2 * screen, Widget2 * new_focused)
-    {
-        Widget2 * w2 = new_focused->parent;
-        if (0 == w2) {
-            return ;
-        }
-
-        this->new_focus_parents.clear();
-        this->focus_parents.clear();
-        Widget2 * w = screen;
-        while (w->widget_with_focus && w->widget_with_focus->has_focus && w->focus_flag != Widget2::FORCE_FOCUS) {
-            this->focus_parents.push_back(w);
-            w = w->widget_with_focus;
-        }
-        if (w != screen && Widget2::FORCE_FOCUS != w->focus_flag) {
-            Widget2 ** last = &this->focus_parents[this->focus_parents.size()];
-            this->new_focus_parents.push_back(new_focused);
-            switch (new_focused->focus_flag) {
-                case Widget2::NORMAL_FOCUS:
-                    while (w2) {
-                        this->new_focus_parents.push_back(w2);
-                        if (std::find<>(&this->focus_parents[0], last, w2) != last) {
-                            for (size_t n = this->new_focus_parents.size() - 1; n > 0; --n) {
-                                if (this->new_focus_parents[n]->widget_with_focus != this->new_focus_parents[n-1]) {
-                                    this->new_focus_parents[n]->switch_focus_with(this->new_focus_parents[n-1]);
-                                }
-                                else if (false == this->new_focus_parents[n]->has_focus) {
-                                    this->new_focus_parents[n-1]->focus();
-                                }
-                            }
-                            break;
-                        }
-                        w2 = w2->parent;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-};
-
 class WidgetScreen : public WidgetComposite
 {
-    Widget2 * current_window_with_focus;
-    
-    Widget2 * widget_pressed;
-    FocusPropagation focus_propagation;
-
 public:
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
     : WidgetComposite(drawable, Rect(0, 0, width, height), NULL, notifier)
-    , widget_pressed(0)
     {
     }
 
@@ -117,27 +39,15 @@ public:
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        Widget2 * tmp_widget_with_focus = this->widget_with_focus;
-        bool same_window = this->widget_with_focus && this->widget_with_focus->rect.contains_pt(x, y);
-        Widget2 * w = same_window ? this->widget_with_focus->widget_at_pos(x, y) : this->child_at_pos(x, y);
-        TODO("Quick fix, should consider a specified widget (not according to flags)")
-        if (device_flags == MOUSE_FLAG_MOVE) {
-            w = same_window ? this->widget_with_focus : this->child_at_pos(x, y);
-        }
-        if (device_flags == MOUSE_FLAG_BUTTON1) {
-            if (this->widget_pressed && w != this->widget_pressed) {
-                this->widget_pressed->rdp_input_mouse(device_flags, x, y, keymap);
-            }
-            else {
-                this->widget_pressed = 0;
-            }
-        }
-        if (w) {
-            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-                this->widget_pressed = w;
-                focus_propagation.active_focus(this, w);
-                if (!same_window && tmp_widget_with_focus->focus_flag != Widget2::FORCE_FOCUS) {
-                    w->refresh(tmp_widget_with_focus->rect);
+        Widget2 * w = this->widget_at_pos(x, y);
+        if (w){
+            if (device_flags & MOUSE_FLAG_BUTTON1) {
+                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
+                    if (this->current_focus) {
+                        this->current_focus->blur(); 
+                    }
+                    this->current_focus = w;
+                    this->current_focus->focus();
                 }
             }
             w->rdp_input_mouse(device_flags, x, y, keymap);
@@ -146,8 +56,8 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (this != this->widget_with_focus) {
-            this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        if (this->current_focus) {
+            this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
 
         for (uint32_t n = keymap->nb_kevent_available(); n ; --n) {
