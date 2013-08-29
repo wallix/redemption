@@ -85,7 +85,6 @@ public:
     , old_widget_with_focus(NULL)
     , drawable(drawable)
     , notifier(notifier)
-    TODO("Constructor should take absolute coordinates")
     , rect(Rect(rect.x + (parent ? parent->dx() : 0),
                 rect.y + (parent ? parent->dy() : 0),
                 rect.cx,
@@ -95,7 +94,10 @@ public:
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
     , has_focus(false)
-    {}
+    {
+        TODO("Constructor should take absolute coordinates")
+
+    }
 
     virtual ~Widget2()
     {}
