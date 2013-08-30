@@ -134,7 +134,6 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        LOG(LOG_INFO, "LOGIN_PASSWORD::label_draw() h_text: %u", this->h_char);
         this->draw_text(clip);
 
         if (this->has_focus) {

@@ -155,7 +155,6 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        LOG(LOG_INFO, "LOGIN_EDIT::label_draw() h_text: %u", this->h_text);
         this->label.draw(clip);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
@@ -191,7 +190,6 @@ public:
 
     Rect get_cursor_rect() const
     {
-        LOG(LOG_INFO, "LOGIN_EDIT::get_cursor_rect h_text: %u", this->h_text);
         return Rect(this->label.x_text + this->cursor_px_pos + this->label.dx() + 1,
                     this->label.y_text + this->label.dy(),
                     1,
@@ -200,9 +198,7 @@ public:
 
     void draw_cursor(const Rect& clip)
     {
-        LOG(LOG_INFO, "LOGIN_EDIT::draw_cursor() clipcx: %u, clipcy: %u", clip.cx, clip.cy);
         if (!clip.isempty()) {
-            LOG(LOG_INFO, "LOGIN_EDIT::draw_cursor() rectcx: %u, rectcy: %u", this->rect.cx, this->rect.cy);
             this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), this->rect);
         }
     }
