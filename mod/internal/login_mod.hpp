@@ -39,7 +39,7 @@ public:
 public:
     LoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height)
-        , window_login(*this, 0, 0, &this->screen, this, VERSION, 
+        , window_login(*this, 0, 0, &this->screen, this, VERSION,
                        ini.account.username[0] != 0,
                        0, 0, 0, BLACK, GREY,
                        ini.translation.button_ok.get().c_str(),
@@ -59,8 +59,8 @@ public:
         this->image.rect.x = width - this->image.cx();
         this->image.rect.y = height - this->image.cy();
 
-        this->window_login.password_edit.set_text(this->ini.account.password);
         this->window_login.login_edit.set_text(this->ini.account.username);
+        this->window_login.password_edit.set_text(this->ini.account.password);
         this->screen.current_focus = &this->window_login;
         this->window_login.focus();
         this->screen.refresh(this->screen.rect);

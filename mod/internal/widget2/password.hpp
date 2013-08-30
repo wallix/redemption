@@ -102,7 +102,7 @@ public:
         this->edit_pos = 0;
         this->buf_pos = 0;
         this->buf_size = 0;
-        if (text) {
+        if (text && *text) {
             this->buf_size = std::min(buffer_size - 1, strlen(text));
             memcpy(this->buffer, text, this->buf_size);
             this->buffer[this->buf_size] = 0;
@@ -132,20 +132,13 @@ public:
         this->rect.y = y;
     }
 
-    virtual void blur()
-    {
-        this->drawable.begin_update();
-        this->draw_text(this->get_cursor_rect());
-        this->drawable.end_update();
-        return Widget2::blur();
-    }
-
     virtual void draw(const Rect& clip)
     {
+        LOG(LOG_INFO, "LOGIN_PASSWORD::label_draw() h_text: %u", this->h_char);
         this->draw_text(clip);
 
         if (this->has_focus) {
-            this->draw_cursor(this->get_cursor_rect().intersect(this->rect));
+            this->draw_cursor(this->get_cursor_rect());
         }
 
         this->draw_border(clip);
@@ -155,7 +148,7 @@ public:
     {
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         this->drawable.server_draw_text(this->x_text + this->dx(),
-                                         this->y_text + this->dy() + 1,
+                                         this->y_text + this->dy() + 2,
                                          this->display_pass,
                                          this->fg_color,
                                          this->bg_color,

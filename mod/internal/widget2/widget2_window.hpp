@@ -60,9 +60,9 @@ public:
         this->child_list.push_back(&this->titlebar);
         this->child_list.push_back(&this->button_close);
 
-        this->titlebar.tab_flag = IGNORE_TAB;
-        this->button_close.tab_flag = IGNORE_TAB;
-        this->button_close.focus_flag = IGNORE_FOCUS;
+        // this->titlebar.tab_flag = IGNORE_TAB;
+        // this->button_close.tab_flag = IGNORE_TAB;
+        // this->button_close.focus_flag = IGNORE_FOCUS;
 
         this->tab_flag |= NO_DELEGATE_PARENT;
 
@@ -133,6 +133,28 @@ public:
         }
     }
 
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        Widget2 * w = this->widget_at_pos(x, y);
+
+        if (device_flags == MOUSE_FLAG_BUTTON1) {
+            if (this->current_focus && (w != this->current_focus)) {
+                this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
+            }
+        }
+        if (w){
+            if (device_flags & (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
+                    if (this->current_focus) {
+                        this->current_focus->blur();
+                    }
+                    this->current_focus = w;
+                    this->current_focus->focus();
+                }
+            }
+            w->rdp_input_mouse(device_flags, x, y, keymap);
+        }
+    }
     void draw_border(const Rect& clip,
                      int border_top_left_color, int border_top_left_color_inner,
                      int border_right_bottom_color, int border_right_bottom_color_inner)

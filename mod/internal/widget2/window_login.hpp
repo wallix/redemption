@@ -46,8 +46,8 @@ public:
     MessageBox * window_help;
 
     WindowLogin(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
-                NotifyApi* notifier, const char* caption, 
-                bool focus_on_password = false, 
+                NotifyApi* notifier, const char* caption,
+                bool focus_on_password = false,
                 int group_id = 0,
                 const char * login = 0, const char * password = 0,
                 int fgcolor = BLACK, int bgcolor = GREY,
@@ -129,58 +129,63 @@ public:
         this->current_focus = &this->login_edit;
         if (focus_on_password){
             this->current_focus = &this->password_edit;
-        }        
+        }
         this->current_focus->focus();
     }
 
     virtual ~WindowLogin()
     {
         if (this->window_help){
-            this->close_window_help();
+            delete this->window_help;
+            this->window_help = NULL;
         }
     }
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
-        if (widget == &this->help && event == NOTIFY_SUBMIT && !this->window_help) {
+        if (widget == &this->help && event == NOTIFY_SUBMIT) {
             if (this->parent) {
                 Widget2 * p = this->parent;
-                this->window_help = new MessageBox(
-                    this->drawable, 0, 0, p, this, "Help",
-                    "You must be authenticated before using this<br>"
-                    "session.<br>"
-                    "<br>"
-                    "Enter a valid username in the username edit box.<br>"
-                    "Enter the password in the password edit box.<br>"
-                    "<br>"
-                    "Both the username and password are case<br>"
-                    "sensitive.<br>"
-                    "<br>"
-                    "Contact your system administrator if you are<br>"
-                    "having problems logging on.",
-                    -20, "Ok", this->login_label.fg_color, this->bg_color
-                );
-                this->window_help->focus_flag = Widget2::FORCE_FOCUS;
+                if (!this->window_help) {
+                    this->window_help =
+                        new MessageBox(
+                                       this->drawable, 0, 0, p, this, "Help",
+                                       "You must be authenticated before using this<br>"
+                                       "session.<br>"
+                                       "<br>"
+                                       "Enter a valid username in the username edit box.<br>"
+                                       "Enter the password in the password edit box.<br>"
+                                       "<br>"
+                                                       "Both the username and password are case<br>"
+                                       "sensitive.<br>"
+                                       "<br>"
+                                       "Contact your system administrator if you are<br>"
+                                       "having problems logging on.",
+                                       -20, "Ok", this->login_label.fg_color, this->bg_color
+                                       );
+                    this->window_help->focus_flag = Widget2::FORCE_FOCUS;
 
-                this->window_help->ok.label.bg_color = GREY;
-                this->window_help->ok.label.fg_color = BLACK;
-                this->window_help->ok.border_top_left_color = WHITE;
+                    this->window_help->ok.label.bg_color = GREY;
+                    this->window_help->ok.label.fg_color = BLACK;
+                    this->window_help->ok.border_top_left_color = WHITE;
 
-                int x = (p->cx() - this->window_help->cx()) / 2 - this->window_help->dx();
-                int y = (p->cy() - this->window_help->cy()) / 2 - this->window_help->dy();
-                this->window_help->rect.x += x;
-                this->window_help->rect.y += y;
-                this->window_help->titlebar.rect.x += x;
-                this->window_help->titlebar.rect.y += y;
-                this->window_help->button_close.set_button_x(this->window_help->button_close.dx() + x);
-                this->window_help->button_close.set_button_y(this->window_help->button_close.dy() + y);
-                this->window_help->msg.rect.x += x;
-                this->window_help->msg.rect.y += y;
-                this->window_help->ok.set_button_x(this->window_help->ok.dx() + x);
-                this->window_help->ok.set_button_y(this->window_help->ok.dy() + y);
+                    int x = (p->cx() - this->window_help->cx()) / 2 - this->window_help->dx();
+                    int y = (p->cy() - this->window_help->cy()) / 2 - this->window_help->dy();
+                    this->window_help->rect.x += x;
+                    this->window_help->rect.y += y;
+                    this->window_help->titlebar.rect.x += x;
+                    this->window_help->titlebar.rect.y += y;
+                    this->window_help->button_close.set_button_x(this->window_help->button_close.dx() + x);
+                    this->window_help->button_close.set_button_y(this->window_help->button_close.dy() + y);
+                    this->window_help->msg.rect.x += x;
+                    this->window_help->msg.rect.y += y;
+                    this->window_help->ok.set_button_x(this->window_help->ok.dx() + x);
+                    this->window_help->ok.set_button_y(this->window_help->ok.dy() + y);
 
-                static_cast<WidgetComposite*>(p)->child_list.push_back(this->window_help);
+
+                    static_cast<WidgetComposite*>(p)->child_list.push_back(this->window_help);
+                }
                 p->current_focus = this->window_help;
 
                 if (this->current_focus){
@@ -204,36 +209,7 @@ public:
         }
     }
 
-    virtual void focus()
-    {
-        this->send_notify(NOTIFY_FOCUS_BEGIN);
-        this->has_focus = true;
-        this->refresh(this->rect);
-    }
 
-    virtual void blur()
-    {
-        this->send_notify(NOTIFY_FOCUS_END);
-        this->has_focus = false;
-        this->refresh(this->rect);
-    }
-
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        Widget2 * w = this->widget_at_pos(x, y);
-        if (w){
-            if (device_flags & MOUSE_FLAG_BUTTON1) {
-                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
-                    if (this->current_focus) {
-                        this->current_focus->blur(); 
-                    }
-                    this->current_focus = w;
-                    this->current_focus->focus();
-                }
-            }
-            w->rdp_input_mouse(device_flags, x, y, keymap);
-        }
-    }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
@@ -257,10 +233,14 @@ private:
         p->child_list.pop_back();
         delete this->window_help;
         this->window_help = NULL;
-        this->current_focus = &this->help;
-        this->help.focus();
+
+        this->current_focus = this->search_focus();
+        if (!this->current_focus) {
+            this->current_focus = &this->help;
+        }
+        this->current_focus->focus();
         this->focus();
-        p->refresh(p->rect);        
+        p->refresh(p->rect);
     }
 };
 

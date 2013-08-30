@@ -52,6 +52,8 @@ public:
     , border_top_left_color(0x444444)
     , border_right_bottom_color(0xEEEEEE)
     , border_right_bottom_color_inner(0x888888)
+    , cursor_px_pos(0)
+    , num_chars(0)
     {
         if (text) {
             this->buffer_size = strlen(text);
@@ -68,6 +70,8 @@ public:
             this->drawable.text_metrics(&this->label.buffer[this->edit_buffer_pos], w, h);
             this->w_text += w;
         } else {
+            // this->drawable.text_metrics("abc", this->w_text, this->h_text);
+            // LOG(LOG_INFO, "LOGIN_EDIT::constructor() w_text: %u, h_text: %u", this->w_text, this->h_text);
             this->buffer_size = 0;
             this->num_chars = 0;
             this->edit_buffer_pos = 0;
@@ -95,9 +99,7 @@ public:
         this->label.buffer[0] = 0;
         this->buffer_size = 0;
         this->num_chars = 0;
-        this->h_text = 0;
-        this->w_text = 0;
-        if (text) {
+        if (text && *text) {
             this->buffer_size = std::min(WidgetLabel::buffer_size - 1, strlen(text));
             memcpy(this->label.buffer, text, this->buffer_size);
             this->label.buffer[this->buffer_size] = 0;
@@ -153,11 +155,16 @@ public:
 
     virtual void draw(const Rect& clip)
     {
+        LOG(LOG_INFO, "LOGIN_EDIT::label_draw() h_text: %u", this->h_text);
         this->label.draw(clip);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
         }
+        this->draw_border(clip);
+    }
 
+    void draw_border(const Rect& clip)
+    {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx() - 1, 1
@@ -184,6 +191,7 @@ public:
 
     Rect get_cursor_rect() const
     {
+        LOG(LOG_INFO, "LOGIN_EDIT::get_cursor_rect h_text: %u", this->h_text);
         return Rect(this->label.x_text + this->cursor_px_pos + this->label.dx() + 1,
                     this->label.y_text + this->label.dy(),
                     1,
@@ -192,7 +200,9 @@ public:
 
     void draw_cursor(const Rect& clip)
     {
+        LOG(LOG_INFO, "LOGIN_EDIT::draw_cursor() clipcx: %u, clipcy: %u", clip.cx, clip.cy);
         if (!clip.isempty()) {
+            LOG(LOG_INFO, "LOGIN_EDIT::draw_cursor() rectcx: %u, rectcy: %u", this->rect.cx, this->rect.cy);
             this->drawable.draw(RDPOpaqueRect(clip, this->cursor_color), this->rect);
         }
     }

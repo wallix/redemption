@@ -29,6 +29,7 @@
 class WidgetScreen : public WidgetComposite
 {
 public:
+
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
     : WidgetComposite(drawable, Rect(0, 0, width, height), NULL, notifier)
     {
@@ -40,11 +41,19 @@ public:
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
         Widget2 * w = this->widget_at_pos(x, y);
+        // LOG(LOG_INFO, "Screen::rdp_input_mouse(device_flags = %x, x = %u, y = %u)", device_flags, x, y)
+            ;
+        if (device_flags == MOUSE_FLAG_BUTTON1) {
+            if (this->current_focus
+                && (w != this->current_focus)) {
+                this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
+            }
+        }
         if (w){
-            if (device_flags & MOUSE_FLAG_BUTTON1) {
+            if (device_flags & (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                 if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
                     if (this->current_focus) {
-                        this->current_focus->blur(); 
+                        this->current_focus->blur();
                     }
                     this->current_focus = w;
                     this->current_focus->focus();

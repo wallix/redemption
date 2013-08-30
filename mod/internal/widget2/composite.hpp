@@ -67,6 +67,10 @@ public:
     {
         if (!this->rect.contains_pt(x, y))
             return 0;
+        if (this->current_focus &&
+            this->current_focus->rect.contains_pt(x, y)) {
+            return this->current_focus;
+        }
 
         Widget2 * ret = 0;
         std::size_t size = this->child_list.size();
@@ -93,6 +97,15 @@ public:
     {
         return std::find(this->child_list.begin(), this->child_list.end(),
                          this->current_focus);
+    }
+    virtual Widget2 * search_focus() {
+        Widget2 * ret = 0;
+        std::size_t size = this->child_list.size();
+        for (std::size_t i = 0; i < size && ret == 0; ++i){
+            if (this->child_list[i]->has_focus)
+                ret = this->child_list[i];
+        }
+        return ret;
     }
 
     virtual bool next_focus()
