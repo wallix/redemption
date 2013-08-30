@@ -102,7 +102,7 @@ public:
         this->edit_pos = 0;
         this->buf_pos = 0;
         this->buf_size = 0;
-        if (text && *text) {
+        if (text) {
             this->buf_size = std::min(buffer_size - 1, strlen(text));
             memcpy(this->buffer, text, this->buf_size);
             this->buffer[this->buf_size] = 0;
@@ -148,7 +148,7 @@ public:
     {
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         this->drawable.server_draw_text(this->x_text + this->dx(),
-                                         this->y_text + this->dy() + 2,
+                                         this->y_text + this->dy() + 1,
                                          this->display_pass,
                                          this->fg_color,
                                          this->bg_color,
