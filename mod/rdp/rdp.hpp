@@ -3772,6 +3772,12 @@ public:
                 data_bpp, cursor->width, cursor->height, mlen, dlen);
         }
 
+        // Fix bug TSC.
+        if (cursor->x >= cursor->width)
+            cursor->x = 0;
+        if (cursor->y >= cursor->height)
+            cursor->y = 0;
+
         size_t out_data_len =
             (bpp == 1) ? (cursor->width * cursor->height) / 8 :
             (bpp == 4) ? (cursor->width * cursor->height) / 2 :
