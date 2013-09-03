@@ -146,6 +146,83 @@ public:
 
 class WidgetSelector : public WidgetComposite
 {
+    class Line : public Widget2 {
+    public:
+        WidgetLabel group;
+        WidgetLabel target;
+        WidgetLabel protocol;
+        WidgetLabel closetime;
+
+
+        Line(DrawApi & drawable, Widget2* parent, NotifyApi* notifier,
+             int x, int y, int lcy,
+             int group_w, int target_w, int protocol_w, int closetime_w,
+             const char * device_group, const char * target_label,
+             const char * protocol, const char * closetime,
+             int fgcolor, int bgcolor, int x_text, int y_text)
+            : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w, lcy),
+                      parent, notifier)
+            , group(WidgetLabel(drawable, x, y,
+                                parent, notifier,
+                                device_group, false, 0,
+                                fgcolor, bgcolor, x_text, y_text))
+            , target(WidgetLabel(drawable, x + group_w, y,
+                                 parent, notifier,
+                                 target_label, false, 0,
+                                 fgcolor, bgcolor, x_text, y_text))
+            , protocol(WidgetLabel(drawable, x + group_w + target_w, y,
+                                   parent, notifier,
+                                   protocol, false, 0,
+                                   fgcolor, bgcolor, x_text, y_text))
+            , closetime(WidgetLabel(drawable, x + group_w + target_w + protocol_w, y,
+                                    parent, notifier,
+                                    closetime, false, 0,
+                                    fgcolor, bgcolor, x_text, y_text))
+        {
+            this->group.rect.cx     = group_w;
+            this->target.rect.cx    = target_w;
+            this->protocol.rect.cx  = protocol_w;
+            this->closetime.rect.cx = closetime_w;
+            this->group.rect.cy     = lcy;
+            this->target.rect.cy    = lcy;
+            this->protocol.rect.cy  = lcy;
+            this->closetime.rect.cy = lcy;
+        }
+
+        ~Line() {}
+
+        virtual void draw(const Rect& clip) {
+            Rect new_clip = clip.intersect(this->rect);
+            this->group.refresh(new_clip.intersect(this->group.rect));
+            this->target.refresh(new_clip.intersect(this->target.rect));
+            this->protocol.refresh(new_clip.intersect(this->protocol.rect));
+            this->closetime.refresh(new_clip.intersect(this->closetime.rect));
+        }
+
+        void set_bg_color(int bg_color) {
+            this->group.bg_color     = bg_color;
+            this->target.bg_color    = bg_color;
+            this->protocol.bg_color  = bg_color;
+            this->closetime.bg_color = bg_color;
+        }
+        void set_fg_color(int fg_color) {
+            this->group.fg_color     = fg_color;
+            this->target.fg_color    = fg_color;
+            this->protocol.fg_color  = fg_color;
+            this->closetime.fg_color = fg_color;
+        }
+    };
+
+public:
+    typedef enum {
+        COLUMN_UNKNOWN,
+        COLUMN_GROUP,
+        COLUMN_TARGET,
+        COLUMN_PROTOCOL,
+        COLUMN_CLOSETIME,
+    } Column;
+
+private:
     class WidgetSelectLine : public Widget2
     {
     public:
@@ -161,8 +238,18 @@ class WidgetSelector : public WidgetComposite
         int h_text;
         int x_text;
         int y_text;
-        std::vector<WidgetLabel*> labels;
+
+        int group_w;
+        int target_w;
+        int protocol_w;
+        int closetime_w;
+        Column col;
+
+        std::vector<Line*> labels;
         uint over_index;
+
+
+
 
         struct difftimer {
             uint64_t t;
@@ -184,15 +271,18 @@ class WidgetSelector : public WidgetComposite
             }
         } click_interval;
 
-        WidgetSelectLine(DrawApi& drawable, const Rect& rect,
-                         WidgetSelector* parent, NotifyApi* notifier, int group_id = 0,
+        // TOCHANGE
+        WidgetSelectLine(DrawApi& drawable, WidgetSelector* parent,
+                         NotifyApi* notifier, int x, int y,
+                         int group_w, int target_w, int protocol_w, int closetime_w,
+                         int group_id = 0,
                          int fgcolor1 = BLACK, int fgcolor2 = BLACK,
                          int current_fgcolor = BLACK,
                          int bgcolor1 = WABGREEN, int bgcolor2 = GREEN,
                          int current_bgcolor = DARK_GREEN,
                          int xtext = 0, int ytext = 0,
                          int bgcolor = GREY, uint border_height = 1)
-            : Widget2(drawable, rect, parent, notifier, group_id)
+            : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w, 1), parent, notifier, group_id)
             , current_index(-1u)
             , current_bg_color(current_bgcolor)
             , bg_color(bgcolor)
@@ -205,6 +295,10 @@ class WidgetSelector : public WidgetComposite
             , h_text(0)
             , x_text(xtext)
             , y_text(ytext)
+            , group_w(group_w)
+            , target_w(target_w)
+            , protocol_w(protocol_w)
+            , closetime_w(closetime_w)
             , labels()
             , over_index(-1u)
             , click_interval()
@@ -213,6 +307,40 @@ class WidgetSelector : public WidgetComposite
             this->drawable.text_metrics("Lp", w, this->h_text);
         }
 
+        void set_x(int x) {
+            this->rect.x = x;
+        }
+        void set_group_w(int w) {
+            this->group_w = w;
+            this->rect.cx = get_total_w();
+        }
+        void set_target_w(int w) {
+            this->target_w = w;
+            this->rect.cx = get_total_w();
+        }
+        void set_protocol_w(int w) {
+            this->protocol_w = w;
+            this->rect.cx = get_total_w();
+        }
+        void set_closetime_w(int w) {
+            this->closetime_w = w;
+            this->rect.cx = get_total_w();
+        }
+
+        int get_target_x() {
+            return this->rect.x + this->group_w;
+        }
+        int get_protocol_x() {
+            return this->get_target_x() + this->target_w;
+        }
+        int get_closetime_x() {
+            return this->get_protocol_x() + this->protocol_w;
+        }
+        int get_total_w() {
+            return this->group_w + this->target_w + this->protocol_w + this->closetime_w;
+        }
+
+
         virtual ~WidgetSelectLine()
         {
             for (size_t i = 0; i < this->labels.size(); ++i) {
@@ -220,37 +348,64 @@ class WidgetSelector : public WidgetComposite
             }
         }
 
-        const char * get_current_index() const
+        const char * get_current_index(Column col) const
         {
             if (this->current_index < this->labels.size()) {
-                return this->labels[this->current_index]->get_text();
-            }
-            return "";
-        }
-        const char * get_over_index() const
-        {
-            if (this->over_index < this->labels.size()) {
-                return this->labels[this->over_index]->get_text();
+                switch (col) {
+                case COLUMN_GROUP:
+                    return this->labels[this->current_index]->group.get_text();
+                case COLUMN_TARGET:
+                    return this->labels[this->current_index]->target.get_text();
+                case COLUMN_PROTOCOL:
+                    return this->labels[this->current_index]->protocol.get_text();
+                case COLUMN_CLOSETIME:
+                    return this->labels[this->current_index]->closetime.get_text();
+                default:
+                    return "";
+                    break;
+                }
             }
             return "";
         }
 
-        void add_line(const char * line)
+        const char * get_over_index() const
+        {
+            if (this->over_index < this->labels.size()) {
+                switch (this->col) {
+                case COLUMN_GROUP:
+                    return this->labels[this->over_index]->group.get_text();
+                case COLUMN_TARGET:
+                    return this->labels[this->over_index]->target.get_text();
+                case COLUMN_PROTOCOL:
+                    return this->labels[this->over_index]->protocol.get_text();
+                case COLUMN_CLOSETIME:
+                    return this->labels[this->over_index]->closetime.get_text();
+                default:
+                    return "";
+                    break;
+                }
+            }
+
+            return "";
+        }
+
+        void add_line(const char * device_group, const char * target_label,
+                      const char * protocol, const char * close_time)
         {
             uint16_t lcy = this->h_text + this->y_text * 2;
             bool b = this->labels.size() & 1;
-            WidgetLabel * label = new WidgetLabel(
-                                                  this->drawable,
-                                                  0,
-                                                  this->labels.size() * (lcy + this->h_border),
-                                                  this, NULL, line, false, 0,
-                                                  b ? this->fg_color1 : this->fg_color2,
-                                                  b ? this->bg_color1 : this->bg_color2,
-                                                  this->x_text, this->y_text
-                                                  );
-            label->rect.cx = this->cx();
-            label->rect.cy = lcy;
-            this->labels.push_back(label);
+
+            Line * line = new Line(this->drawable, this, NULL,
+                                   0, this->labels.size() * (lcy + this->h_border), lcy,
+                                   this->group_w, this->target_w, this->protocol_w, this->closetime_w,
+                                   device_group, target_label, protocol, close_time,
+                                   b ? this->fg_color1 : this->fg_color2,
+                                   b ? this->bg_color1 : this->bg_color2,
+                                   this->x_text, this->y_text);
+
+            this->labels.push_back(line);
+            const uint lines_h = this->labels.size() * (this->h_text + this->y_text * 2 + this->h_border) - this->h_border;
+            this->rect.cy = lines_h;
         }
 
         void clear()
@@ -266,8 +421,8 @@ class WidgetSelector : public WidgetComposite
         {
             if (idx < this->labels.size()) {
                 this->current_index = idx;
-                this->labels[idx]->bg_color = this->current_bg_color;
-                this->labels[idx]->fg_color = this->current_fg_color;
+                this->labels[idx]->set_bg_color(this->current_bg_color);
+                this->labels[idx]->set_fg_color(this->current_fg_color);
             }
         }
 
@@ -275,15 +430,17 @@ class WidgetSelector : public WidgetComposite
         {
             if (idx != this->current_index) {
                 if (this->current_index < this->labels.size()) {
-                    this->labels[this->current_index]->bg_color = this->current_index & 1
-                        ? this->bg_color1 : this->bg_color2;
-                    this->labels[this->current_index]->fg_color = this->current_index & 1
-                        ? this->fg_color1 : this->fg_color2;
+                    this->labels[this->current_index]->set_bg_color(this->current_index & 1
+                                                                    ? this->bg_color1
+                                                                    : this->bg_color2);
+                    this->labels[this->current_index]->set_fg_color(this->current_index & 1
+                                                                    ? this->fg_color1
+                                                                    : this->fg_color2);
                     this->refresh(this->labels[this->current_index]->rect);
                 }
                 this->current_index = idx;
-                this->labels[idx]->bg_color = this->current_bg_color;
-                this->labels[idx]->fg_color = this->current_fg_color;
+                this->labels[idx]->set_bg_color(this->current_bg_color);
+                this->labels[idx]->set_fg_color(this->current_fg_color);
                 this->refresh(this->labels[this->current_index]->rect);
             }
         }
@@ -291,29 +448,32 @@ class WidgetSelector : public WidgetComposite
         virtual void draw(const Rect& clip)
         {
             std::size_t size = this->labels.size();
-
+            uint lcy = 0;
             for (std::size_t i = 0; i < size; ++i) {
-                Widget2 * w = this->labels[i];
+                // Widget2 * w = this->labels[i];
+                Line * line = this->labels[i];
 
-                w->refresh(clip);
+                line->refresh(clip);
 
+                lcy += this->h_text + this->y_text * 2;
                 if (this->h_border) {
                     this->drawable.draw(
                                         RDPOpaqueRect(
                                                       Rect(
                                                            this->rect.x,
-                                                           w->dy() + w->cy(),
+                                                           this->rect.y + lcy,
                                                            this->rect.cx,
                                                            this->h_border
                                                            ),
                                                       this->bg_color
                                                       ), clip
                                         );
+                    lcy += this->h_border;
                 }
 
             }
 
-            uint lcy = size * (this->h_text + this->y_text * 2 + this->h_border);
+            // lcy = size * (this->h_text + this->y_text * 2 + this->h_border);
             this->drawable.draw(
                                 RDPOpaqueRect(
                                               Rect(
@@ -327,6 +487,41 @@ class WidgetSelector : public WidgetComposite
                                 );
         }
 
+        Column get_column(int x) {
+            if (x >= this->rect.x) {
+                if (x <= this->rect.x + this->group_w) {
+                    return COLUMN_GROUP;
+                }
+                else if (x <= this->rect.x + this->group_w + this->target_w) {
+                    return COLUMN_TARGET;
+                }
+                else if (x <= this->rect.x + this->group_w + this->target_w + this->protocol_w) {
+                    return COLUMN_PROTOCOL;
+                }
+                else if (x  <= this->rect.x + this->group_w + this->target_w + this->protocol_w + this->closetime_w) {
+                    return COLUMN_CLOSETIME;
+                }
+            }
+            return COLUMN_TARGET;
+        }
+
+        int get_column_cx() {
+            switch (this->col) {
+            case COLUMN_GROUP:
+                return this->group_w;
+            case COLUMN_TARGET:
+                return this->target_w;
+            case COLUMN_PROTOCOL:
+                return this->protocol_w;
+            case COLUMN_CLOSETIME:
+                return this->closetime_w;
+            default:
+                return 0;
+                break;
+            }
+            return 0;
+        }
+
         virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
         {
             if (device_flags == MOUSE_FLAG_BUTTON1) {
@@ -337,10 +532,7 @@ class WidgetSelector : public WidgetComposite
                     int p = (y - this->dy()) / lcy;
                     if ((uint)p != this->current_index) {
                         this->click_interval.update();
-                        int old_current_index = this->current_index;
                         this->set_current_index(p);
-                        this->send_notify(NOTIFY_SELECTION_CHANGED,
-                                          old_current_index, this->current_index);
                         return ;
                     }
                     else {
@@ -357,15 +549,19 @@ class WidgetSelector : public WidgetComposite
                     && y < int(this->dy() + this->labels.size() * lcy - this->h_border)
                     && lcy != 0) {
                     int p = (y - this->dy()) / lcy;
+                    Column c = this->get_column(x);
                     WidgetSelector * selector = reinterpret_cast<WidgetSelector*>(this->parent);
+
                     if ((uint)p != this->over_index
+                        || (c != this->col)
                         || (selector->tooltip == NULL)) {
                         this->over_index = p;
+                        this->col = c;
                         int w = 0;
                         int h = 0;
                         this->drawable.text_metrics(this->get_over_index(), w, h);
                         this->send_notify(NOTIFY_HIDE_TOOLTIP);
-                        if (w >= this->rect.cx) {
+                        if (w >= this->get_column_cx()) {
                             int sw = selector->rect.cx;
                             int posx = ((x + w) > sw)?(sw - w):x;
                             int posy = (y > h)?(y - h):0;
@@ -393,7 +589,6 @@ class WidgetSelector : public WidgetComposite
                     keymap->get_kevent();
                     if (this->labels.size() > 1) {
                         this->set_current_index(this->current_index ? this->current_index - 1 : this->labels.size() - 1);
-                        this->send_notify(NOTIFY_SELECTION_CHANGED, this->current_index);
                     }
                     break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
@@ -401,21 +596,18 @@ class WidgetSelector : public WidgetComposite
                     keymap->get_kevent();
                     if (this->labels.size() > 1) {
                         this->set_current_index(this->current_index + 1 != this->labels.size() ? this->current_index + 1 : 0);
-                        this->send_notify(NOTIFY_SELECTION_CHANGED, this->current_index);
                     }
                     break;
                 case Keymap2::KEVENT_END:
                     keymap->get_kevent();
                     if (this->labels.size() > 1 && this->labels.size() - 1 != this->current_index) {
                         this->set_current_index(this->labels.size() - 1);
-                        this->send_notify(NOTIFY_SELECTION_CHANGED, this->current_index);
                     }
                     break;
                 case Keymap2::KEVENT_HOME:
                     keymap->get_kevent();
                     if (this->labels.size() > 1 && 0 != this->current_index) {
                         this->set_current_index(0);
-                        this->send_notify(NOTIFY_SELECTION_CHANGED, this->current_index);
                     }
                     break;
                 case Keymap2::KEVENT_ENTER:
@@ -443,10 +635,13 @@ public:
     WidgetLabel target_label;
     WidgetLabel protocol_label;
     WidgetLabel close_time_label;
-    WidgetSelectLine device_lines;
-    WidgetSelectLine target_lines;
-    WidgetSelectLine protocol_lines;
-    WidgetSelectLine close_time_lines;
+
+    WidgetSelectLine selector_lines;
+
+    // WidgetSelectLine device_lines;
+    // WidgetSelectLine target_lines;
+    // WidgetSelectLine protocol_lines;
+    // WidgetSelectLine close_time_lines;
     WidgetEdit filter_device;
     WidgetEdit filter_target;
     WidgetEdit filter_proto;
@@ -493,14 +688,8 @@ public:
         , target_label(drawable, 150, 0, this, NULL, "Account Device", true, -10, BLACK, GREY)
         , protocol_label(drawable, 500, 0, this, NULL, "Protocol", true, -10, BLACK, GREY)
         , close_time_label(drawable, 620, 0, this, NULL, "Close Time", true, -10, BLACK, GREY)
-        , device_lines(drawable, Rect(15,0,130,1), this, this, -11,
-                       BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
-        , target_lines(drawable, Rect(145,0,350,1), this, this, -11,
-                       BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
-        , protocol_lines(drawable, Rect(495,0,120,1), this, this, -11,
+        , selector_lines(drawable, this, this, 15, 0, 130, 350, 120, 170, -11,
                          BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
-        , close_time_lines(drawable, Rect(615,0,170,1), this, this, -11,
-                           BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
         , filter_device(drawable, 20, 0, 120, this, this, filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
         , filter_target(drawable, 150, 0, 340, this, this, filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
         , filter_proto(drawable, 500, 0, 110, this, this, filter_proto?filter_proto:0, -12, BLACK, WHITE, -1, 1, 1)
@@ -535,7 +724,7 @@ public:
         , tooltip(NULL)
         , w_over(NULL)
     {
-        this->current_focus = &this->device_lines;
+        this->current_focus = &this->selector_lines;
         this->child_list.push_back(&this->device_label);
         this->child_list.push_back(&this->device_target_label);
         this->child_list.push_back(&this->target_label);
@@ -544,10 +733,7 @@ public:
         this->child_list.push_back(&this->filter_device);
         this->child_list.push_back(&this->filter_target);
         this->child_list.push_back(&this->filter_proto);
-        this->child_list.push_back(&this->device_lines);
-        this->child_list.push_back(&this->target_lines);
-        this->child_list.push_back(&this->protocol_lines);
-        this->child_list.push_back(&this->close_time_lines);
+        this->child_list.push_back(&this->selector_lines);
         this->child_list.push_back(&this->first_page);
         this->child_list.push_back(&this->prev_page);
         this->child_list.push_back(&this->current_page);
@@ -559,47 +745,40 @@ public:
         this->child_list.push_back(&this->connect);
         //this->child_list.push_back(&this->pager);
 
-        this->target_lines.tab_flag = IGNORE_TAB;
-        this->protocol_lines.tab_flag = IGNORE_TAB;
-        this->close_time_lines.tab_flag = IGNORE_TAB;
-
-        int dw = width - (this->close_time_lines.lx() + 15);
+        int dw = width - (this->selector_lines.rect.x + this->selector_lines.get_total_w() + 15);
         if (dw < 0) {
+
             this->device_target_label.rect.x -= 15;
             this->filter_device.set_edit_x(this->device_target_label.dx());
-            this->device_lines.rect.x -= 15;
+            this->selector_lines.set_x(this->selector_lines.rect.x - 15);
             this->filter_device.set_edit_cx(this->device_target_label.cx());
-            this->device_lines.rect.cx = this->device_target_label.cx() + 10;
+            this->selector_lines.set_group_w(this->device_target_label.cx() + 10);
 
             int w,h;
             this->drawable.text_metrics("INTERNAL", w,h);
-            this->protocol_lines.rect.cx = w + 10;
+            this->selector_lines.set_protocol_w(w + 10);
             this->drawable.text_metrics("XXXX-XX-XX XX:XX:XX", w,h);
-            this->close_time_lines.rect.cx = w + 10;
+            this->selector_lines.set_closetime_w(w + 10);
 
-            this->close_time_lines.rect.x = width - this->close_time_lines.cx();
-            this->close_time_label.rect.x = this->close_time_lines.dx() + 5;
-            this->protocol_lines.rect.x = this->close_time_lines.dx() - this->protocol_lines.cx();
-            this->protocol_label.rect.x = this->protocol_lines.dx() + 5;
+            this->close_time_label.rect.x = this->selector_lines.get_closetime_x() + 5;
+            this->protocol_label.rect.x = this->selector_lines.get_protocol_x() + 5;
             this->filter_proto.set_edit_x(this->protocol_label.dx());
-            this->filter_proto.set_edit_cx(this->protocol_lines.cx() - 10);
+            this->filter_proto.set_edit_cx(this->selector_lines.protocol_w - 10);
 
-            this->target_lines.rect.cx = this->protocol_lines.dx() - this->device_lines.lx();
-            this->target_lines.rect.x = this->device_lines.lx();
-            this->target_label.rect.x = this->target_lines.dx() + 5;
+            this->target_label.rect.x = this->selector_lines.get_target_x() + 5;
             this->filter_target.set_edit_x(this->target_label.dx());
-            this->filter_target.set_edit_cx(this->target_lines.cx() - 10);
+            this->filter_target.set_edit_cx(this->selector_lines.target_w - 10);
+
         }
         else if (dw > 0) {
-            this->target_lines.rect.cx += dw;
+            this->selector_lines.set_target_w(this->selector_lines.target_w + dw);
             this->filter_target.set_edit_cx(this->filter_target.cx() + dw);
+
             this->protocol_label.rect.x += dw;
             this->close_time_label.rect.x += dw;
-            this->protocol_lines.rect.x += dw;
-            this->close_time_lines.rect.x += dw;
 
             this->filter_proto.set_edit_x(this->protocol_label.dx());
-            this->filter_proto.set_edit_cx(this->protocol_lines.cx() - 10);
+            this->filter_proto.set_edit_cx(this->selector_lines.protocol_w - 10);
         }
 
         this->device_target_label.rect.y = this->device_label.cy() + this->device_label.dy() + 5;
@@ -609,10 +788,7 @@ public:
         this->filter_device.set_edit_y(this->device_target_label.dy() + this->device_target_label.cy() + 5);
         this->filter_target.set_edit_y(this->filter_device.dy());
         this->filter_proto.set_edit_y(this->filter_device.dy());
-        this->device_lines.rect.y = this->filter_device.dy() + this->filter_device.cy() + 5;
-        this->target_lines.rect.y = this->device_lines.dy();
-        this->protocol_lines.rect.y = this->device_lines.dy();
-        this->close_time_lines.rect.y = this->device_lines.dy();
+        this->selector_lines.rect.y = this->filter_device.dy() + this->filter_device.cy() + 5;
 
         this->connect.rect.y = this->cy() - (this->logout.cy() + 10);
         this->apply.rect.y = this->connect.dy();
@@ -660,14 +836,11 @@ public:
                 this->tooltip = NULL;
             }
         }
-        if (widget->group_id == this->device_lines.group_id) {
+        if (widget->group_id == this->selector_lines.group_id) {
             if (NOTIFY_SUBMIT == event) {
                 if (this->notifier) {
                     this->notifier->notify(widget, event, param, param2);
                 }
-            }
-            else {
-                this->set_index_list(static_cast<WidgetSelectLine*>(widget)->current_index);
             }
         }
         else if (widget->group_id == this->apply.group_id) {
@@ -727,26 +900,12 @@ public:
          WidgetComposite::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
-    void set_index_list(int idx)
-    {
-        this->device_lines.set_current_index(idx);
-        this->target_lines.set_current_index(idx);
-        this->protocol_lines.set_current_index(idx);
-        this->close_time_lines.set_current_index(idx);
-    }
 
     void add_device(const char * device_group, const char * target_label,
                     const char * protocol, const char * close_time)
     {
-        this->device_lines.add_line(device_group);
-        this->target_lines.add_line(target_label);
-        this->protocol_lines.add_line(protocol);
-        this->close_time_lines.add_line(close_time);
-        const uint lcy = this->device_lines.labels.size() * (this->device_lines.h_text + this->device_lines.y_text * 2 + this->device_lines.h_border) - this->device_lines.h_border;
-        this->device_lines.rect.cy = lcy;
-        this->target_lines.rect.cy = lcy;
-        this->protocol_lines.rect.cy = lcy;
-        this->close_time_lines.rect.cy = lcy;
+        this->selector_lines.add_line(device_group, target_label, protocol, close_time);
+
     }
 };
 

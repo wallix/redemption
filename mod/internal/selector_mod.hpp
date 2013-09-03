@@ -62,11 +62,11 @@ public:
         , number_page(atoi(this->selector.number_page.get_text()+1))
         , ini(ini)
     {
-        this->selector.set_widget_focus(&this->selector.device_lines);
+        this->selector.set_widget_focus(&this->selector.selector_lines);
         this->screen.set_widget_focus(&this->selector);
         this->screen.child_list.push_back(&this->selector);
 
-        this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.device_lines.dy() + 10) + this->selector.device_lines.h_border) / (this->selector.device_lines.h_text + this->selector.device_lines.y_text * 2 + this->selector.device_lines.h_border));
+        this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.selector_lines.dy() + 10) + this->selector.selector_lines.h_border) / (this->selector.selector_lines.h_text + this->selector.selector_lines.y_text * 2 + this->selector.selector_lines.h_border));
         this->ask_page();
         this->selector.refresh(this->selector.rect);
     }
@@ -113,10 +113,10 @@ public:
         }
         else if (NOTIFY_SUBMIT == event) {
             if (widget == &this->selector.connect
-                || widget->group_id == this->selector.device_lines.group_id) {
+                || widget->group_id == this->selector.selector_lines.group_id) {
                 char buffer[1024];
                 snprintf(buffer, sizeof(buffer), "%s:%s",
-                         this->selector.target_lines.get_current_index(),
+                         this->selector.selector_lines.get_current_index(WidgetSelector::COLUMN_TARGET),
                          this->ini.globals.auth_user.get_cstr());
                          //this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
                 this->ini.parse_username(buffer);
@@ -179,20 +179,22 @@ public:
 	this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
 
 
-        uint16_t cy = this->selector.device_lines.cy();
+        uint16_t cy = this->selector.selector_lines.cy();
 
-        this->selector.device_lines.clear();
-        this->selector.target_lines.clear();
-        this->selector.protocol_lines.clear();
-        this->selector.close_time_lines.clear();
+        this->selector.selector_lines.clear();
+
+        // this->selector.device_lines.clear();
+        // this->selector.target_lines.clear();
+        // this->selector.protocol_lines.clear();
+        // this->selector.close_time_lines.clear();
 
         this->refresh_device();
 
         this->selector.refresh(Rect(
-                                    this->selector.device_lines.dx(),
-                                    this->selector.device_lines.dy(),
-                                    this->selector.close_time_lines.dx() + this->selector.close_time_lines.cx() - this->selector.device_lines.dx(),
-                                    std::max(cy, this->selector.device_lines.cy())
+                                    this->selector.selector_lines.dx(),
+                                    this->selector.selector_lines.dy(),
+                                    this->selector.selector_lines.get_total_w(),
+                                    std::max(cy, this->selector.selector_lines.cy())
                                     ));
         this->selector.current_page.refresh(this->selector.current_page.rect);
         this->selector.number_page.refresh(this->selector.number_page.rect);
@@ -248,14 +250,14 @@ public:
             endtimes += size_endtimes + 1;
         }
 
-        if (this->selector.device_lines.labels.empty()) {
-            this->selector.device_lines.tab_flag = Widget2::IGNORE_TAB;
-            this->selector.device_lines.focus_flag = Widget2::IGNORE_FOCUS;
+        if (this->selector.selector_lines.labels.empty()) {
+            this->selector.selector_lines.tab_flag = Widget2::IGNORE_TAB;
+            this->selector.selector_lines.focus_flag = Widget2::IGNORE_FOCUS;
         } else {
-            this->selector.device_lines.tab_flag = Widget2::NORMAL_TAB;
-            this->selector.device_lines.focus_flag = Widget2::NORMAL_FOCUS;
-            this->selector.set_index_list(0);
-            this->selector.switch_focus_with(&this->selector.device_lines);
+            this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
+            this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
+            this->selector.selector_lines.set_current_index(0);
+            this->selector.switch_focus_with(&this->selector.selector_lines);
         }
     }
 
@@ -271,7 +273,7 @@ public:
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3,
                                     long int param4, Keymap2* keymap)
     {
-        if (&this->selector.device_lines == this->selector.current_focus
+        if (&this->selector.selector_lines == this->selector.current_focus
             && keymap->nb_kevent_available() > 0) {
             switch (keymap->top_kevent()){
             case Keymap2::KEVENT_LEFT_ARROW:
