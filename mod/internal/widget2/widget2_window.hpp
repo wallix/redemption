@@ -137,13 +137,16 @@ public:
     {
         Widget2 * w = this->widget_at_pos(x, y);
 
+        // Mouse clic release
+        // w could be null if mouse is located at an empty space
         if (device_flags == MOUSE_FLAG_BUTTON1) {
             if (this->current_focus && (w != this->current_focus)) {
                 this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
             }
         }
         if (w){
-            if (device_flags & (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+            // Mouse clic pressed
+            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                 if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
                     if (this->current_focus) {
                         this->current_focus->blur();
@@ -193,6 +196,8 @@ public:
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), border_right_bottom_color_inner), this->rect);
     }
+
+
 };
 
 #endif

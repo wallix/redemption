@@ -41,8 +41,9 @@ public:
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
         Widget2 * w = this->widget_at_pos(x, y);
-        // LOG(LOG_INFO, "Screen::rdp_input_mouse(device_flags = %x, x = %u, y = %u)", device_flags, x, y)
-            ;
+
+        // Mouse clic release
+        // w could be null if mouse is located at an empty space
         if (device_flags == MOUSE_FLAG_BUTTON1) {
             if (this->current_focus
                 && (w != this->current_focus)) {
@@ -50,7 +51,8 @@ public:
             }
         }
         if (w){
-            if (device_flags & (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+            // Mouse clic pressed
+            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                 if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
                     if (this->current_focus) {
                         this->current_focus->blur();

@@ -164,7 +164,7 @@ public:
                                        "having problems logging on.",
                                        -20, "Ok", this->login_label.fg_color, this->bg_color
                                        );
-                    this->window_help->focus_flag = Widget2::FORCE_FOCUS;
+                    // this->window_help->focus_flag = Widget2::FORCE_FOCUS;
 
                     this->window_help->ok.label.bg_color = GREY;
                     this->window_help->ok.label.fg_color = BLACK;
@@ -188,10 +188,10 @@ public:
                 }
                 p->current_focus = this->window_help;
 
-                if (this->current_focus){
-                    this->current_focus->blur();
-                }
-                this->current_focus = NULL;
+                // if (this->current_focus){
+                //     this->current_focus->blur();
+                // }
+                // this->current_focus = NULL;
                 this->blur();
                 this->window_help->ok.focus();
                 this->window_help->focus();
