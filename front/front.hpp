@@ -2945,13 +2945,12 @@ public:
                     TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
                     this->client_info.bitmap_cache_version = 2;
                     int Bpp = nbbytes(this->client_info.bpp);
-                    this->client_info.bitmap_cache_persist_enable = stream.in_uint16_le();
-                    stream.in_skip_bytes(2); /* number of caches in set, 3 */
-                    this->client_info.cache1_entries = stream.in_uint32_le();
+                    this->client_info.bitmap_cache_persist_enable = cap.cacheFlags;
+                    this->client_info.cache1_entries = cap.bitmapCache0CellInfo;
                     this->client_info.cache1_size = 256 * Bpp;
-                    this->client_info.cache2_entries = stream.in_uint32_le();
+                    this->client_info.cache2_entries = cap.bitmapCache1CellInfo;
                     this->client_info.cache2_size = 1024 * Bpp;
-                    this->client_info.cache3_entries = (stream.in_uint32_le() & 0x7fffffff);
+                    this->client_info.cache3_entries = (cap.bitmapCache2CellInfo & 0x7fffffff);
                     this->client_info.cache3_size = 4096 * Bpp;
                 }
                 break;
