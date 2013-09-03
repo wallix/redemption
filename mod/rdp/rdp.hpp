@@ -3788,21 +3788,36 @@ public:
         }
 
         if (data_bpp == 1) {
+            uint8_t    copy_data_data[32 * 32 * 3];
+            uint8_t    copy_mask_data[32 * 32 / 8];
+
+            stream.in_copy_bytes(copy_data_data, dlen);
+            stream.in_copy_bytes(copy_mask_data, mlen);
+
             unsigned   i;
             uint8_t  * mask_data;
             uint8_t  * data_data;
             uint8_t    new_mask_data;
 
-            for (i = 0, data_data = stream.p, mask_data = stream.p + dlen; i < mlen;
+            for (i = 0, data_data = copy_data_data, mask_data = copy_mask_data; i < mlen;
                  i++, data_data++, mask_data++) {
                 new_mask_data = (*mask_data & (*data_data ^ 0xFF));
                 *data_data    = (*data_data ^ *mask_data ^ new_mask_data);
                 *mask_data    = new_mask_data;
             }
-        }
 
-        to_regular_pointer(stream, dlen, data_bpp, cursor->data, sizeof(cursor->data));
-        to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
+            FixedSizeStream data_stream(copy_data_data, sizeof(copy_data_data));
+            FixedSizeStream mask_stream(copy_mask_data, sizeof(copy_mask_data));
+
+            to_regular_pointer(data_stream,
+                dlen, data_bpp, cursor->data, sizeof(cursor->data));
+            to_regular_mask(mask_stream,
+                mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
+        }
+        else {
+            to_regular_pointer(stream, dlen, data_bpp, cursor->data, sizeof(cursor->data));
+            to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
+        }
 
         this->front.server_set_pointer(cursor->x, cursor->y, cursor->data,
             cursor->mask);
