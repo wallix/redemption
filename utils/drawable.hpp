@@ -47,9 +47,9 @@ struct Drawable {
     };
 
     enum {
-        ts_width = /*133 + 4*/ts_max_length * char_width,
+        ts_width = ts_max_length * char_width,
         ts_height = char_height,
-        size_str_timestamp = /*20 + 4*/ts_max_length + 1
+        size_str_timestamp = ts_max_length + 1
     };
 
     uint8_t timestamp_save[ts_width * ts_height * 3];
@@ -117,10 +117,7 @@ struct Drawable {
         std::fill<>(this->data, this->data + this->pix_len, 0);
 
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
-//        memset(this->previous_timestamp, 'X', sizeof(this->previous_timestamp));
         memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
-        //memset(this->timestamp_data, 0x00, sizeof(this->timestamp_data));
-        //memset(this->previous_timestamp, ' ', len_str_timestamp);
         this->previous_timestamp_length = 0;
     }
 
@@ -199,229 +196,8 @@ struct Drawable {
         return this->width * this->height;
     }
 
-/*
-    int _posch(char ch)
-    {
-        return 7 * 11 *
-        (isdigit(ch) ? ch-'0'
-        : ch == '-'  ?    10
-        : ch == ':'  ?    11
-        : ch == 'X'  ?    13
-        :                 12);
-    }
-
-    void draw_11x7_digits(uint8_t * rgbpixbuf, unsigned width, unsigned lg_message, const char * message, const char * old_message)
-    {
-        const char * digits =
-        "       "
-        "  XX   "
-        " X  X  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " X  X  "
-        "  XX   "
-        "       "
-
-        "       "
-        "  XX   "
-        " XXX   "
-        "X XX   "
-        "  XX   "
-        "  XX   "
-        "  XX   "
-        "  XX   "
-        "  XX   "
-        "XXXXXX "
-        "       "
-
-        "       "
-        " XXXX  "
-        "XX  XX "
-        "XX  XX "
-        "    XX "
-        "  XXX  "
-        " XX    "
-        "XX     "
-        "XX     "
-        "XXXXXX "
-        "       "
-
-
-        "       "
-        "XXXXXX "
-        "    XX "
-        "   XX  "
-        "  XX   "
-        " XXXX  "
-        "    XX "
-        "    XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-
-        "       "
-        "    XX "
-        "   XXX "
-        "  XXXX "
-        " XX XX "
-        "XX  XX "
-        "XX  XX "
-        "XXXXXX "
-        "    XX "
-        "    XX "
-        "       "
-
-        "       "
-        "XXXXXX "
-        "XX     "
-        "XX     "
-        "XXXXX  "
-        "XX  XX "
-        "    XX "
-        "    XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-        "       "
-        " XXXX  "
-        "XX  XX "
-        "XX     "
-        "XX     "
-        "XXXXX  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-        "       "
-        "XXXXXX "
-        "    XX "
-        "    XX "
-        "   XX  "
-        "   XX  "
-        "  XX   "
-        "  XX   "
-        " XX    "
-        " XX    "
-        "       "
-
-        "       "
-        " XXXX  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " XXXX  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-        "       "
-        " XXXX  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " XXXXX "
-        "    XX "
-        "    XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "XXXXXX "
-        "       "
-        "       "
-        "       "
-        "       "
-
-        "       "
-        "       "
-        "  XX   "
-        " XXXX  "
-        "  XX   "
-        "       "
-        "       "
-        "  XX   "
-        " XXXX  "
-        "  XX   "
-        "       "
-
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        ;
-        for (size_t i = 0 ; i < lg_message ; ++i){
-            char newch = message[i];
-            char oldch = old_message[i];
-
-
-            if (newch != oldch){
-                const char * pnewch = digits + _posch(newch);
-                const char * poldch = digits + _posch(oldch);
-
-                unsigned br_pix = 0;
-                unsigned br_pixindex = i * (7 * 3);
-
-                for (size_t y = 0 ; y < 11 ; ++y, br_pix += 7, br_pixindex += width*3){
-                    for (size_t x = 0 ; x <  7 ; ++x){
-                        unsigned pix = br_pix + x;
-                        if (pnewch[pix] != poldch[pix]){
-                            uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
-                            unsigned pixindex = br_pixindex + x*3;
-                            rgbpixbuf[pixindex] =
-                            rgbpixbuf[pixindex+1] =
-                            rgbpixbuf[pixindex+2] = pixcolorcomponent;
-                        }
-                    }
-                }
-            }
-        }
-    }
-*/
-
     int _posch_12x7(char ch)
     {
-/*
-        return 7 * 12 *
-        ( isdigit(ch) ? ch - '0'
-        : isupper(ch) ? ch - 'A' + 13
-        : ch == '-'   ? 10
-        : ch == ':'   ? 11
-        :               12);
-*/
         return char_width * char_height *
         (isdigit(ch)  ? ch-'0'
         : isupper(ch) ? ch - 'A' + 14
@@ -964,10 +740,10 @@ struct Drawable {
                 const char * poldch = digits + _posch_12x7(oldch);
 
                 unsigned br_pix = 0;
-                unsigned br_pixindex = i * (/*7*/char_width * 3);
+                unsigned br_pixindex = i * (char_width * 3);
 
-                for (size_t y = 0 ; y < /*12*/char_height ; ++y, br_pix += /*7*/char_width, br_pixindex += width*3){
-                    for (size_t x = 0 ; x <  /*7*/char_width ; ++x){
+                for (size_t y = 0 ; y < char_height ; ++y, br_pix += char_width, br_pixindex += width*3){
+                    for (size_t x = 0 ; x <  char_width ; ++x){
                         unsigned pix = br_pix + x;
                         if (pnewch[pix] != poldch[pix]){
                             uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
@@ -1774,32 +1550,6 @@ struct Drawable {
                 // +------+-------------------------------+
             case 0xCC:
                 this->scr_blt_op<Op_0xCC>(srcx, srcy, drect);
-                //        {
-                //            const signed int deltax = srcx - drect.x;
-                //            const signed int deltay = srcy - drect.y;
-                //            const Rect srect = drect.offset(deltax, deltay);
-                //            if (!srect.equal(drect)){
-                //                const Rect & overlap = srect.intersect(drect);
-                //                if ((deltay >= 0)||(overlap.isempty())){
-                //                    uint8_t * target = this->first_pixel(drect);
-                //                    uint8_t * source = this->first_pixel(srect);
-                //                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
-                //                        memcpy(target, source, drect.cx * ::nbbytes(this->bpp));
-                //                        target += this->rowsize;
-                //                        source += this->rowsize;
-                //                    }
-                //                }
-                //                else if (deltay < 0){
-                //                    uint8_t * target = this->beginning_of_last_line(drect);
-                //                    uint8_t * source = this->beginning_of_last_line(srect);
-                //                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
-                //                        memcpy(target, source, drect.cx * ::nbbytes(this->bpp));
-                //                        target -= this->rowsize;
-                //                        source -= this->rowsize;
-                //                     }
-                //                }
-                //            }
-                //        }
                 break;
                 // +------+-------------------------------+
                 // | 0xDD | ROP: 0x00DD0228               |
@@ -1984,20 +1734,16 @@ struct Drawable {
         char    * timezone;
         uint8_t   timestamp_length;
 
-//        tzset();
         timezone = (daylight ? tzname[1] : tzname[0]);
 
         char rawdate[size_str_timestamp];
-//        snprintf(rawdate, size_str_timestamp, "%4d-%02d-%02d %02d:%02d:%02d",
-//                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
-//                 now.tm_hour, now.tm_min, now.tm_sec);
         timestamp_length = 20 + strlen(timezone);
         snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
                  now.tm_year+1900, now.tm_mon+1, now.tm_mday,
                  now.tm_hour, now.tm_min, now.tm_sec, timezone);
 
-//        this->draw_11x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_timestamp);
-        this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_timestamp);
+        this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate,
+            this->previous_timestamp);
         memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
         this->previous_timestamp_length = timestamp_length;
 
@@ -2005,9 +1751,9 @@ struct Drawable {
         uint8_t* buf = this->data;
         int step = this->width * 3;
         for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(tsave, buf, /*ts_width*/timestamp_length*char_width*3);
-            tsave += /*ts_width*/timestamp_length*char_width*3;
-            memcpy(buf, this->timestamp_data + y*ts_width*3, /*ts_width*/timestamp_length*char_width*3);
+            memcpy(tsave, buf, timestamp_length*char_width*3);
+            tsave += timestamp_length*char_width*3;
+            memcpy(buf, this->timestamp_data + y*ts_width*3, timestamp_length*char_width*3);
         }
     }
 
@@ -2017,8 +1763,8 @@ struct Drawable {
         int step = this->width * 3;
         uint8_t* buf = this->data;
         for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(buf, tsave, /*ts_width*/this->previous_timestamp_length*char_width*3);
-            tsave += /*ts_width*/this->previous_timestamp_length*char_width*3;
+            memcpy(buf, tsave, this->previous_timestamp_length*char_width*3);
+            tsave += this->previous_timestamp_length*char_width*3;
         }
     }
 
@@ -2026,25 +1772,31 @@ struct Drawable {
          "we could just parametrize the position of the timestamp on the screen");
     void trace_pausetimestamp(tm & now)
     {
-        char rawdate[size_str_timestamp];
-//        snprintf(rawdate, size_str_timestamp, "%4d-%02d-%02d %02d:%02d:%02d",
-        snprintf(rawdate, size_str_timestamp, "%4d-%02d-%02d %02d:%02d:%02d AAA",
-                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
-                 now.tm_hour, now.tm_min, now.tm_sec);
+        char    * timezone;
+        uint8_t   timestamp_length;
 
-//        this->draw_11x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_timestamp);
-        this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_timestamp);
+        timezone = (daylight ? tzname[1] : tzname[0]);
+
+        char rawdate[size_str_timestamp];
+        timestamp_length = 20 + strlen(timezone);
+        snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
+                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
+                 now.tm_hour, now.tm_min, now.tm_sec, timezone);
+
+        this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate,
+            this->previous_timestamp);
         memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
+        this->previous_timestamp_length = timestamp_length;
 
         uint8_t * tsave = this->timestamp_save;
         uint8_t* buf = this->data
             + (this->width * 3) * (this->height / 2)
-            + ((this->width - ts_width)*3) / 2 ;
+            + ((this->width - timestamp_length*char_width)*3) / 2 ;
         int step = this->width * 3;
         for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(tsave, buf, ts_width*3);
-            tsave += ts_width*3;
-            memcpy(buf, this->timestamp_data + y*ts_width*3, ts_width*3);
+            memcpy(tsave, buf, timestamp_length*char_width*3);
+            tsave += timestamp_length*char_width*3;
+            memcpy(buf, this->timestamp_data + y*ts_width*3, timestamp_length*char_width*3);
         }
     }
 
@@ -2054,10 +1806,10 @@ struct Drawable {
         int step = this->width * 3;
         uint8_t* buf = this->data
             + (this->width * 3) * (this->height / 2)
-            + ((this->width - ts_width)*3) / 2 ;
+            + ((this->width - this->previous_timestamp_length*char_width)*3) / 2 ;
         for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(buf, tsave, ts_width*3);
-            tsave += ts_width*3;
+            memcpy(buf, tsave, this->previous_timestamp_length*char_width*3);
+            tsave += this->previous_timestamp_length*char_width*3;
         }
     }
 };
