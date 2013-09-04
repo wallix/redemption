@@ -321,38 +321,38 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 2));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
 
-    BOOST_CHECK_EQUAL(3051, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
+    BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 3));
 
     now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
 
     rio_clear(&trans.rio);
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
-    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
+    BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(3059, sq_outfilename_filesize(seq, 3));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
     ini.video.png_limit = 10;
     consumer.update_config(ini);
 
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
-    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
-    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
+    BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
+    BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(3059, sq_outfilename_filesize(seq, 3));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
     ini.video.png_limit = 2;
@@ -360,8 +360,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
-    BOOST_CHECK_EQUAL(3064, sq_outfilename_filesize(seq, 2));
-    BOOST_CHECK_EQUAL(3054, sq_outfilename_filesize(seq, 3));
+    BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
+    BOOST_CHECK_EQUAL(3059, sq_outfilename_filesize(seq, 3));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 4));
 
     ini.video.png_limit = 0;
