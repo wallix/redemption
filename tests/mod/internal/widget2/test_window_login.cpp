@@ -40,8 +40,7 @@
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
-#define OUTPUT_FILE_PATH "/home/mtan/work/tmp/testwindowlogin/"
-//#define OUTPUT_FILE_PATH "/tmp/"
+#define OUTPUT_FILE_PATH "/tmp/"
 
 struct TestDraw : DrawApi
 {
