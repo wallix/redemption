@@ -87,19 +87,19 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         capture.flush(); // to close last wrm
 
-        BOOST_CHECK_EQUAL((unsigned)3072, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 0));
+        BOOST_CHECK_EQUAL((unsigned)3067, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 0));
         sq_outfilename_unlink(&(capture.png_trans->seq), 0);
-        BOOST_CHECK_EQUAL((unsigned)3104, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 1));
+        BOOST_CHECK_EQUAL((unsigned)3094, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 1));
         sq_outfilename_unlink(&(capture.png_trans->seq), 1);
-        BOOST_CHECK_EQUAL((unsigned)3123, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 2));
+        BOOST_CHECK_EQUAL((unsigned)3107, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 2));
         sq_outfilename_unlink(&(capture.png_trans->seq), 2);
         BOOST_CHECK_EQUAL((unsigned)3129, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 3));
         sq_outfilename_unlink(&(capture.png_trans->seq), 3);
-        BOOST_CHECK_EQUAL((unsigned)3156, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 4));
+        BOOST_CHECK_EQUAL((unsigned)3139, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 4));
         sq_outfilename_unlink(&(capture.png_trans->seq), 4);
         BOOST_CHECK_EQUAL((unsigned)3165, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 5));
         sq_outfilename_unlink(&(capture.png_trans->seq), 5);
-        BOOST_CHECK_EQUAL((unsigned)3197, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 6));
+        BOOST_CHECK_EQUAL((unsigned)3190, (unsigned)sq_outfilename_filesize(&(capture.png_trans->seq), 6));
         sq_outfilename_unlink(&(capture.png_trans->seq), 6);
 
         SQ wrm_seq;
