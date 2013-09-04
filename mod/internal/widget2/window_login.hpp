@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_LOGIN_HPP)
@@ -130,7 +131,6 @@ public:
         if (focus_on_password){
             this->current_focus = &this->password_edit;
         }
-        this->current_focus->focus();
     }
 
     virtual ~WindowLogin()
@@ -188,12 +188,14 @@ public:
                 }
                 p->current_focus = this->window_help;
 
+                this->focus_flag = IGNORE_FOCUS;
                 // if (this->current_focus){
                 //     this->current_focus->blur();
                 // }
                 // this->current_focus = NULL;
                 this->blur();
-                this->window_help->ok.focus();
+                this->window_help->current_focus = &this->window_help->ok;
+                // this->window_help->ok.focus();
                 this->window_help->focus();
                 p->refresh(p->rect);
             }
@@ -209,7 +211,12 @@ public:
         }
     }
 
-
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
+        if (this->window_help) {
+            return;
+        }
+        Window::rdp_input_mouse(device_flags, x, y, keymap);
+    }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
@@ -228,19 +235,19 @@ public:
 private:
     void close_window_help()
     {
-        WidgetScreen * p = static_cast<WidgetScreen*>(this->parent);
-        p->current_focus = this;
-        p->child_list.pop_back();
-        delete this->window_help;
-        this->window_help = NULL;
-
-        this->current_focus = this->search_focus();
-        if (!this->current_focus) {
+        if (this->parent) {
+            WidgetScreen * p = static_cast<WidgetScreen*>(this->parent);
+            p->current_focus = this;
+            p->child_list.pop_back();
+            delete this->window_help;
+            this->window_help = NULL;
             this->current_focus = &this->help;
+            this->current_focus->focus();
+
+            this->focus_flag = NORMAL_FOCUS;
+            this->focus();
+            p->refresh(p->rect);
         }
-        this->current_focus->focus();
-        this->focus();
-        p->refresh(p->rect);
     }
 };
 

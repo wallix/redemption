@@ -482,16 +482,13 @@ public:
     } // openfile_t check_file_type(const char * filename)
 
     bool open_png_file(const char * filename) {
-        png_structp png_ptr;
-        png_infop info_ptr;
-        png_uint_32 width, height;
-        png_byte bit_depth, color_type;
 
-        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
         if (!png_ptr) {
             return false;
         }
-        info_ptr = png_create_info_struct(png_ptr);
+
+        png_infop info_ptr = png_create_info_struct(png_ptr);
         if (!info_ptr) {
             png_destroy_read_struct(&png_ptr, NULL, NULL);
             return false;
@@ -505,10 +502,10 @@ public:
 
         png_read_info(png_ptr, info_ptr);
 
-        width = png_get_image_width(png_ptr, info_ptr);
-        height = png_get_image_height(png_ptr, info_ptr);
-        bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-        color_type = png_get_color_type(png_ptr, info_ptr);
+        png_uint_32 width = png_get_image_width(png_ptr, info_ptr);
+        png_uint_32 height = png_get_image_height(png_ptr, info_ptr);
+        png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+        png_byte color_type = png_get_color_type(png_ptr, info_ptr);
 
         if (color_type == PNG_COLOR_TYPE_PALETTE)
             png_set_palette_to_rgb(png_ptr);

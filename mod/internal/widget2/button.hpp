@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_WIDGET2_BUTTON_HPP)
@@ -227,7 +228,7 @@ private:
 
         void draw_border(const Rect& rect, const Rect& clip)
         {
-            drawable.draw(RDPPatBlt(rect, 0xF0, GREY, BLACK, RDPBrush(this->rect.x, this->rect.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
+            drawable.draw(RDPPatBlt(rect, 0xF0, BLACK, GREY, RDPBrush(this->rect.x, this->rect.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
         }
     };
 

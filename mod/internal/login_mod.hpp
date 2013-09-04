@@ -64,6 +64,7 @@ public:
         this->screen.current_focus = &this->window_login;
         this->window_login.focus();
         this->screen.refresh(this->screen.rect);
+        this->screen.current_focus->focus();
     }
 
     virtual ~LoginMod()

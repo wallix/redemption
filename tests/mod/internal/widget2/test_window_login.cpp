@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -24,6 +25,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+// #define LOGPRINT
 #include "log.hpp"
 
 #undef FIXTURES_PATH
@@ -37,7 +39,9 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/home/mtan/work/tmp/testwindowlogin/"
+//#define OUTPUT_FILE_PATH "/tmp/"
 
 struct TestDraw : DrawApi
 {
@@ -156,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(window_login.rect);
 
-    //drawable.save_to_png("/tmp/window_login.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -184,7 +188,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -212,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -240,7 +244,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -268,7 +272,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login5.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -296,7 +300,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login6.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -324,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    //drawable.save_to_png("/tmp/window_login7.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -352,7 +356,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/window_login8.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -404,66 +408,50 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 {
     TestDraw drawable(800, 600);
 
-    class Screen : public WidgetComposite {
-    public:
-        Screen(DrawApi & drawable)
-        : WidgetComposite(drawable, Rect(0,0,800,600), 0, 0)
-        {}
-
-        virtual ~Screen()
-        {}
-
-        virtual void draw(const Rect& clip)
-        {
-            this->WidgetComposite::draw(clip);
-            Rect new_clip = clip.intersect(this->rect);
-            Region region;
-            region.rects.push_back(new_clip);
-
-            for (std::size_t i = 0, size = this->child_list.size(); i < size; ++i) {
-                Rect rect = new_clip.intersect(this->child_list[i]->rect);
-
-                if (!rect.isempty()) {
-                    region.subtract_rect(rect);
-                }
-            }
-
-            for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-                this->drawable.draw(RDPOpaqueRect(region.rects[i], 0x000000),
-                                     region.rects[i]);
-            }
-        }
-    };
-
-    Screen parent(drawable);
+    WidgetScreen parent(drawable, 800, 600, 0);
 
     int16_t x = 10;
     int16_t y = 10;
 
-    WindowLogin window_login(drawable, x, y, &parent, 0, "test6");
+    WindowLogin window_login(drawable, x, y, &parent, &parent, "test6");
     parent.child_list.push_back(&window_login);
 
+    window_login.focus();
     parent.rdp_input_invalidate(parent.rect);
 
-    window_login.help.send_notify(NOTIFY_SUBMIT);
+    x = window_login.help.rect.x + window_login.help.rect.cx / 2;
+    y = window_login.help.rect.y + window_login.help.rect.cy / 2;
+    window_login.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN), x, y, NULL);
+    window_login.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
+
+    // window_login.help.send_notify(NOTIFY_SUBMIT);
+
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png("./window_login-help.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help.png");
 
+    TODO("change signatures once brush orders are supported by PatBlt");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x7e\x11\x58\x26\xca\x34\xc2\xf3\xf3\x31\x14\xdf\xef\xff\x69\x08\x19\x2d\xe4\x80")){
+                   "\xc0\x5f\x1a\x5d\xde\x87\x2b\x9a\xa8\x6a\x75\x9e\x42\x4c\x5d\x29\xb4\x6f\xc9\x29"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     //close window_help and redraw
-    window_login.window_help->button_close.send_notify(NOTIFY_CANCEL);
 
-    drawable.save_to_png("./window_login-help2.png");
+    x = window_login.window_help->button_close.rect.x + window_login.window_help->button_close.rect.cx / 2;
+    y = window_login.window_help->button_close.rect.y + window_login.window_help->button_close.rect.cy / 2;
+    window_login.window_help->rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN), x, y, NULL);
+    window_login.window_help->rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
+
+    // window_login.window_help->button_close.send_notify(NOTIFY_CANCEL);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x30\x7b\x94\x6f\xa4\xc0\x56\x7c\xfa\xe5"
-        "\xf6\xba\x63\x65\x4f\x58\x2e\xc1\xac\x28")){
+                   "\x65\xd1\xcc\xa7\x72\xdc\xd0\xf1\xe4\x75\xea\xd0\x44\x03\xa0\x36\xb1\x12\x07\x39"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

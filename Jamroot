@@ -787,8 +787,8 @@ unit-test test_composite : tests/mod/internal/widget2/test_composite.cpp png z o
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_window_dialog : tests/mod/internal/widget2/test_window_dialog.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-#unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto libboost_unit_test ;
-#unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto gcov libboost_unit_test : <variant>coverage ;
+unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_window_login : tests/mod/internal/widget2/test_window_login.cpp png z openssl crypto gcov libboost_unit_test : <variant>coverage ;
 
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_window_wab_close : tests/mod/internal/widget2/test_window_wab_close.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
