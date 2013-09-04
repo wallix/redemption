@@ -39,7 +39,7 @@ public:
 public:
     LoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height)
-        , window_login(*this, 0, 0, &this->screen, this, VERSION,
+        , window_login(*this, 0, 0, this->screen, this, VERSION,
                        ini.account.username[0] != 0,
                        0, 0, 0, BLACK, GREY,
                        ini.translation.button_ok.get().c_str(),
@@ -47,7 +47,7 @@ public:
                        ini.translation.button_help.get().c_str(),
                        ini.translation.login.get().c_str(),
                        ini.translation.password.get().c_str())
-        , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
+        , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, this->screen, NULL)
         , ini(ini)
     {
         this->screen.child_list.push_back(&this->image);
@@ -68,7 +68,9 @@ public:
     }
 
     virtual ~LoginMod()
-    {}
+    {
+        this->screen.child_list.clear();
+    }
 
     virtual void notify(Widget2* sender, notify_event_t event,
                         long unsigned int param, long unsigned int param2)

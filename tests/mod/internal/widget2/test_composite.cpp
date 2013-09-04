@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -130,7 +131,7 @@ public:
     : WidgetComposite(drawable, Rect(0, 0,
                                       drawable.gd.drawable.width,
                                       drawable.gd.drawable.height),
-                      NULL, NULL)
+                      *this, NULL)
     , color(0x27642F)
     {}
 
@@ -152,17 +153,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
 
     WidgetCompositeRect wcomposite(drawable);
     WidgetRect wrect1(drawable, Rect(0,0,100,100),
-                      &wcomposite, notifier, id++, CYAN);
+                      wcomposite, notifier, id++, CYAN);
     WidgetRect wrect2(drawable, Rect(0,100,100,100),
-                      &wcomposite, notifier, id++, RED);
+                      wcomposite, notifier, id++, RED);
     WidgetRect wrect3(drawable, Rect(100,100,100,100),
-                      &wcomposite, notifier, id++, BLUE);
+                      wcomposite, notifier, id++, BLUE);
     WidgetRect wrect4(drawable, Rect(300,300,100,100),
-                      &wcomposite, notifier, id++, GREEN);
+                      wcomposite, notifier, id++, GREEN);
     WidgetRect wrect5(drawable, Rect(700,-50,100,100),
-                      &wcomposite, notifier, id++, WHITE);
+                      wcomposite, notifier, id++, WHITE);
     WidgetRect wrect6(drawable, Rect(-50,550,100,100),
-                      &wcomposite, notifier, id++, GREY);
+                      wcomposite, notifier, id++, GREY);
     wcomposite.child_list.push_back(&wrect1);
     wcomposite.child_list.push_back(&wrect2);
     wcomposite.child_list.push_back(&wrect3);
@@ -212,5 +213,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+    wcomposite.child_list.clear();
 }
 

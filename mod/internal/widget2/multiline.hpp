@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP)
@@ -43,7 +44,7 @@ public:
     int fg_color;
 
 public:
-    WidgetMultiLine(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
+    WidgetMultiLine(DrawApi& drawable, int16_t x, int16_t y, Widget2& parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize = true,
                     int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,

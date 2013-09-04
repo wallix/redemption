@@ -173,10 +173,10 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     Notify notifier3;
     Notify notifier4;
 
-    WidgetButton wbutton1(drawable, 0, 0, &wscreen, &notifier1, "button 1");
-    WidgetButton wbutton2(drawable, 0, 30, &wscreen, &notifier2, "button 2");
-    WidgetButton wbutton3(drawable, 100, 0, &wscreen, &notifier3, "button 3");
-    WidgetButton wbutton4(drawable, 100, 30, &wscreen, &notifier4, "button 4");
+    WidgetButton wbutton1(drawable, 0, 0, wscreen, &notifier1, "button 1");
+    WidgetButton wbutton2(drawable, 0, 30, wscreen, &notifier2, "button 2");
+    WidgetButton wbutton3(drawable, 100, 0, wscreen, &notifier3, "button 3");
+    WidgetButton wbutton4(drawable, 100, 30, wscreen, &notifier4, "button 4");
     struct init_border {
         static void on(WidgetButton& wbutton) {
             wbutton.border_right_bottom_color = YELLOW;
@@ -398,4 +398,5 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
                    "\x09\x5a\xa5\x54\x9a\x30\x3a\x4a\xaa\x4a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
+    wscreen.child_list.clear();
 }

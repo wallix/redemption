@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Jonathan Poelen
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Jonathan Poelen,
+              Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Use (implemented) basic RDP orders to draw some known test pattern
@@ -105,6 +106,7 @@ public:
 
         if (in_trans)
             delete in_trans;
+        this->screen.child_list.clear();
     }
 
     virtual void rdp_input_invalidate(const Rect & /*rect*/)

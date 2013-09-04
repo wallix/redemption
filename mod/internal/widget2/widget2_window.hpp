@@ -43,11 +43,11 @@ public:
     int inactive_border_right_bottom_color_inner;
     int titlebar_base_width;
 
-    Window(DrawApi& drawable, const Rect& rect, Widget2* parent, NotifyApi* notifier,
+    Window(DrawApi& drawable, const Rect& rect, Widget2 & parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
     : WidgetComposite(drawable, rect, parent, notifier, group_id)
-    , titlebar(drawable, 2, 2, this, NULL, caption, false, -1, WHITE, WABGREEN, 5)
-    , button_close(drawable, 2, 2, this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1, NOTIFY_CANCEL)
+    , titlebar(drawable, 2, 2, *this, NULL, caption, false, -1, WHITE, WABGREEN, 5)
+    , button_close(drawable, 2, 2, *this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1, NOTIFY_CANCEL)
     , bg_color(bgcolor)
     , active_border_top_left_color(0xEEEEEE)
     , active_border_top_left_color_inner(0xEEEEEE)
@@ -77,7 +77,8 @@ public:
     }
 
     virtual ~Window()
-    {}
+    {
+    }
 
     void set_window_x(int x)
     {

@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Martin Potier, Jonathan Poelen
+   Author(s): Christophe Grosjean, Martin Potier, Jonathan Poelen,
+              Meng Tan
 
    Bouncer test, high level API
 
@@ -49,7 +50,9 @@ public:
     }
 
     ~Bouncer2Mod()
-    {}
+    {
+        this->screen.child_list.clear();
+    }
 
     virtual void rdp_input_invalidate(const Rect & /*rect*/)
     {

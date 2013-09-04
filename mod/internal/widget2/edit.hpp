@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 1010-2013
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_EDIT_HPP)
@@ -41,11 +42,11 @@ public:
     int border_right_bottom_color_inner;
 
     WidgetEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
-               Widget2* parent, NotifyApi* notifier, const char * text,
+               Widget2 & parent, NotifyApi* notifier, const char * text,
                int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
-    , label(drawable, 0, 0, this, 0, text, false, 0, fgcolor, bgcolor, xtext, ytext)
+    , label(drawable, 0, 0, *this, 0, text, false, 0, fgcolor, bgcolor, xtext, ytext)
     , w_text(0)
     , h_text(0)
     , cursor_color(0x888888)

@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_DIALOG_HPP)
@@ -33,15 +34,15 @@ public:
     WidgetButton * cancel;
 
     WindowDialog(DrawApi& drawable, int16_t x, int16_t y,
-                 Widget2* parent, NotifyApi* notifier,
+                 Widget2 & parent, NotifyApi* notifier,
                  const char* caption, const char * text, int group_id = 0,
                  const char * ok_text = "Ok", const char * cancel_text = "Cancel",
                  int fgcolor = BLACK, int bgcolor = GREY,
                  int fgcolorbtn = BLACK, int bgcolorbtn = WHITE)
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
-    , dialog(drawable, 0, 0, this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
-    , ok(drawable, 0, 0, this, this, ok_text ? ok_text : "Ok", true, -12, fgcolorbtn, bgcolorbtn, 6, 2)
-    , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2, NOTIFY_CANCEL) : NULL)
+    , dialog(drawable, 0, 0, *this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
+    , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12, fgcolorbtn, bgcolorbtn, 6, 2)
+    , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, *this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2, NOTIFY_CANCEL) : NULL)
     {
         this->child_list.push_back(&this->dialog);
         this->child_list.push_back(&this->ok);
@@ -74,7 +75,9 @@ public:
 
     virtual ~WindowDialog()
     {
-        delete this->cancel;
+        if (this->cancel)
+            delete this->cancel;
+        this->child_list.clear();
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)

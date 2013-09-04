@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/multiline.hpp"
+#include "internal/widget2/screen.hpp"
 // #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -143,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -186,7 +188,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -224,7 +226,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -262,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -300,7 +302,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -338,7 +340,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -376,7 +378,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -414,7 +416,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -452,7 +454,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;

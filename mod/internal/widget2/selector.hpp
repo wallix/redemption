@@ -44,7 +44,7 @@ class WidgetSelectorImageButton : public Widget2
     notify_event_t event;
 
 public:
-    WidgetSelectorImageButton(DrawApi & drawable, int x, int y, Widget2* parent,
+    WidgetSelectorImageButton(DrawApi & drawable, int x, int y, Widget2 & parent,
                               NotifyApi* notifier,
                               uint16_t img_cx, uint16_t img_cy, size_t img_size,
                               const uint8_t * img_data1, const uint8_t * img_data2,
@@ -154,7 +154,7 @@ class WidgetSelector : public WidgetComposite
         WidgetLabel closetime;
 
 
-        Line(DrawApi & drawable, Widget2* parent, NotifyApi* notifier,
+        Line(DrawApi & drawable, Widget2& parent, NotifyApi* notifier,
              int x, int y, int lcy,
              int group_w, int target_w, int protocol_w, int closetime_w,
              const char * device_group, const char * target_label,
@@ -272,7 +272,7 @@ private:
         } click_interval;
 
         // TOCHANGE
-        WidgetSelectLine(DrawApi& drawable, WidgetSelector* parent,
+        WidgetSelectLine(DrawApi& drawable, WidgetSelector& parent,
                          NotifyApi* notifier, int x, int y,
                          int group_w, int target_w, int protocol_w, int closetime_w,
                          int group_id = 0,
@@ -395,7 +395,7 @@ private:
             uint16_t lcy = this->h_text + this->y_text * 2;
             bool b = this->labels.size() & 1;
 
-            Line * line = new Line(this->drawable, this, NULL,
+            Line * line = new Line(this->drawable, *this, NULL,
                                    0, this->labels.size() * (lcy + this->h_border), lcy,
                                    this->group_w, this->target_w, this->protocol_w, this->closetime_w,
                                    device_group, target_label, protocol, close_time,
@@ -550,7 +550,7 @@ private:
                     && lcy != 0) {
                     int p = (y - this->dy()) / lcy;
                     Column c = this->get_column(x);
-                    WidgetSelector * selector = reinterpret_cast<WidgetSelector*>(this->parent);
+                    WidgetSelector * selector = reinterpret_cast<WidgetSelector*>(&this->parent);
 
                     if ((uint)p != this->over_index
                         || (c != this->col)
@@ -568,7 +568,7 @@ private:
                             selector->tooltip = new WidgetTooltip(this->drawable,
                                                                   posx,
                                                                   posy,
-                                                                  selector, this,
+                                                                  *selector, this,
                                                                   this->get_over_index());
                             this->send_notify(NOTIFY_SHOW_TOOLTIP);
                         }
@@ -678,47 +678,47 @@ public:
 
 public:
     WidgetSelector(DrawApi& drawable, const char * device_name,
-                   uint16_t width, uint16_t height, NotifyApi* notifier,
+                   uint16_t width, uint16_t height, Widget2 & parent, NotifyApi* notifier,
                    const char * current_page, const char * number_of_page,
                    const char * filter_device = 0, const char * filter_target = 0,
                    const char * filter_proto = 0)
-        : WidgetComposite(drawable, Rect(0, 0, width, height), NULL, notifier)
-        , device_label(drawable, 20, 10, this, NULL, device_name, true, -10, BLACK, GREY)
-        , device_target_label(drawable, 20, 0, this, NULL, "Device Group", true, -10, BLACK, GREY)
-        , target_label(drawable, 150, 0, this, NULL, "Account Device", true, -10, BLACK, GREY)
-        , protocol_label(drawable, 500, 0, this, NULL, "Protocol", true, -10, BLACK, GREY)
-        , close_time_label(drawable, 620, 0, this, NULL, "Close Time", true, -10, BLACK, GREY)
-        , selector_lines(drawable, this, this, 15, 0, 130, 350, 120, 170, -11,
+        : WidgetComposite(drawable, Rect(0, 0, width, height), parent, notifier)
+        , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10, BLACK, GREY)
+        , device_target_label(drawable, 20, 0, *this, NULL, "Device Group", true, -10, BLACK, GREY)
+        , target_label(drawable, 150, 0, *this, NULL, "Account Device", true, -10, BLACK, GREY)
+        , protocol_label(drawable, 500, 0, *this, NULL, "Protocol", true, -10, BLACK, GREY)
+        , close_time_label(drawable, 620, 0, *this, NULL, "Close Time", true, -10, BLACK, GREY)
+        , selector_lines(drawable, *this, this, 15, 0, 130, 350, 120, 170, -11,
                          BLACK, BLACK, BLACK, PALE_GREEN, MEDIUM_GREEN, 0X44FFAC, 5, 1, GREY, 1)
-        , filter_device(drawable, 20, 0, 120, this, this, filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
-        , filter_target(drawable, 150, 0, 340, this, this, filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
-        , filter_proto(drawable, 500, 0, 110, this, this, filter_proto?filter_proto:0, -12, BLACK, WHITE, -1, 1, 1)
+        , filter_device(drawable, 20, 0, 120, *this, this, filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
+        , filter_target(drawable, 150, 0, 340, *this, this, filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
+        , filter_proto(drawable, 500, 0, 110, *this, this, filter_proto?filter_proto:0, -12, BLACK, WHITE, -1, 1, 1)
           //BEGIN WidgetPager
-        , first_page(drawable, 0, 0, this, notifier,
+        , first_page(drawable, 0, 0, *this, notifier,
                      raw_first_page().cx, raw_first_page().cy, raw_first_page().size,
                      raw_first_page().img_blur, raw_first_page().img_focus, -15)
-        , prev_page(drawable, 0, 0, this, notifier,
+        , prev_page(drawable, 0, 0, *this, notifier,
                     raw_prev_page().cx, raw_prev_page().cy, raw_prev_page().size,
                     raw_prev_page().img_blur, raw_prev_page().img_focus, -15)
-        , current_page(drawable, 0, 0, this->first_page.cy(), this, notifier,
+        , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
                        current_page ? current_page : "XXXX", -15, BLACK, WHITE, -1, 1, 1)
-        , number_page(drawable, 0, 0, this, NULL,
+        , number_page(drawable, 0, 0, *this, NULL,
                       number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXXX",
                       true, -100, BLACK, GREY)
-        , next_page(drawable, 0, 0, this, notifier,
+        , next_page(drawable, 0, 0, *this, notifier,
                     raw_next_page().cx, raw_next_page().cy, raw_next_page().size,
                     raw_next_page().img_blur, raw_next_page().img_focus, -15)
-        , last_page(drawable, 0, 0, this, notifier,
+        , last_page(drawable, 0, 0, *this, notifier,
                     raw_last_page().cx, raw_last_page().cy, raw_last_page().size,
                     raw_last_page().img_blur, raw_last_page().img_focus, -15)
           //END WidgetPager
-        , logout(drawable, 0, 0, this, notifier,
+        , logout(drawable, 0, 0, *this, notifier,
                  raw_logout().cx, raw_logout().cy, raw_logout().size,
                  raw_logout().img_blur, raw_logout().img_focus, -16, NOTIFY_CANCEL)
-        , apply(drawable, 0, 0, this, notifier,
+        , apply(drawable, 0, 0, *this, notifier,
                 raw_apply().cx, raw_apply().cy, raw_apply().size,
                 raw_apply().img_blur, raw_apply().img_focus, -12)
-        , connect(drawable, 0, 0, this, notifier,
+        , connect(drawable, 0, 0, *this, notifier,
                   raw_connect().cx, raw_connect().cy, raw_connect().size,
                   raw_connect().img_blur, raw_connect().img_focus, -18)
         , tooltip(NULL)
@@ -814,7 +814,13 @@ public:
     }
 
     virtual ~WidgetSelector()
-    {}
+    {
+        if (this->tooltip) {
+            delete this->tooltip;
+            this->tooltip = NULL;
+        }
+        this->child_list.clear();
+    }
 
     virtual void draw(const Rect& clip)
     {

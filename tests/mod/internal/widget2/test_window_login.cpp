@@ -34,6 +34,7 @@
 #define SHARE_PATH "./tests/fixtures"
 
 #include "internal/widget2/window_login.hpp"
+#include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -148,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
@@ -174,7 +175,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 10,100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 10;
     int16_t y = 100;
@@ -202,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position -10,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = -10;
     int16_t y = 500;
@@ -230,7 +231,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 770,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 770;
     int16_t y = 500;
@@ -258,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position -20,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = -20;
     int16_t y = -7;
@@ -286,7 +287,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -314,7 +315,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -342,7 +343,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
     TestDraw drawable(800, 600);
 
     // WindowLogin is a window_login widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
@@ -369,7 +370,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
 {
     TestDraw drawable(800, 600);
 
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     struct Notify : NotifyApi {
         Widget2* sender;
         notify_event_t event;
@@ -412,7 +413,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     int16_t x = 10;
     int16_t y = 10;
 
-    WindowLogin window_login(drawable, x, y, &parent, &parent, "test6");
+    WindowLogin window_login(drawable, x, y, parent, &parent, "test6");
     parent.child_list.push_back(&window_login);
 
     window_login.focus();
@@ -453,5 +454,6 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+    parent.child_list.clear();
 }
 

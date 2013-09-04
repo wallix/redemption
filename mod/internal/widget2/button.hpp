@@ -37,12 +37,12 @@ public:
     int border_top_left_color2;
     bool focus_is_visible;
 
-    WidgetButton(DrawApi & drawable, int16_t x, int16_t y, Widget2* parent,
+    WidgetButton(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
                  NotifyApi* notifier, const char * text, bool auto_resize = true,
                  int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                  int xtext = 0, int ytext = 0, notify_event_t notify_event = NOTIFY_SUBMIT)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
-    , label(drawable, 1, 1, this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)
+    , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)
     , state(0)
     , event(notify_event)
     , border_right_bottom_color(BLACK)

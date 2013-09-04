@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -32,6 +33,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/window_wab_close.hpp"
+#include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -147,7 +149,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
     BOOST_CHECK(1);
 
     // WindowWabClose is a window_wab_close widget at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;
@@ -184,7 +186,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 10;
     int16_t y = 100;
@@ -224,7 +226,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = -10;
     int16_t y = 500;
@@ -250,7 +252,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 770,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 770;
     int16_t y = 500;
@@ -276,7 +278,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position -20,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = -20;
     int16_t y = -7;
@@ -302,7 +304,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -328,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 760;
     int16_t y = -7;
@@ -354,7 +356,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
     TestDraw drawable(800, 600);
 
     // WindowWabClose is a window_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t x = 0;
     int16_t y = 0;

@@ -28,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/tooltip.hpp"
+#include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -143,7 +144,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     TestDraw drawable(800, 600);
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;

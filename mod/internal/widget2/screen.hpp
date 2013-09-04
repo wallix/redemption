@@ -31,12 +31,13 @@ class WidgetScreen : public WidgetComposite
 public:
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
-        : WidgetComposite(drawable, Rect(0, 0, width, height), NULL, notifier)
+        : WidgetComposite(drawable, Rect(0, 0, width, height), *this, notifier)
     {
     }
 
     virtual ~WidgetScreen()
-    {}
+    {
+    }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {

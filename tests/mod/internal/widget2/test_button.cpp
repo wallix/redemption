@@ -28,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/button.hpp"
+#include "internal/widget2/screen.hpp"
 #include "internal/widget2/composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -144,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -176,7 +177,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 10,100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -208,7 +209,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position -10,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -240,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 770,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -272,7 +273,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position -20,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -304,7 +305,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -336,7 +337,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -368,7 +369,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -399,7 +400,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 {
     TestDraw drawable(800, 600);
 
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -455,7 +456,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), NULL, NULL)
+        : Widget2(drawable, Rect(), *this, NULL)
         , sender(0)
         , event(0)
         {}
@@ -488,7 +489,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonEvent)
         }
     } notifier;
 
-    Widget2* parent = &widget_for_receive_event;
+    Widget2& parent = widget_for_receive_event;
     bool auto_resize = false;
     int16_t x = 0;
     int16_t y = 0;
@@ -554,22 +555,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     TestDraw drawable(800, 600);
 
     // WidgetButton is a button widget of size 256x125 at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
-    WidgetButton wbutton1(drawable, 0,0, &wcomposite, notifier,
+    WidgetButton wbutton1(drawable, 0,0, wcomposite, notifier,
                         "abababab", true, 0, YELLOW, BLACK);
-    WidgetButton wbutton2(drawable, 0,100, &wcomposite, notifier,
+    WidgetButton wbutton2(drawable, 0,100, wcomposite, notifier,
                         "ggghdgh", true, 0, WHITE, RED);
-    WidgetButton wbutton3(drawable, 100,100, &wcomposite, notifier,
+    WidgetButton wbutton3(drawable, 100,100, wcomposite, notifier,
                         "lldlslql", true, 0, BLUE, RED);
-    WidgetButton wbutton4(drawable, 300,300, &wcomposite, notifier,
+    WidgetButton wbutton4(drawable, 300,300, wcomposite, notifier,
                         "LLLLMLLM", true, 0, PINK, DARK_GREEN);
-    WidgetButton wbutton5(drawable, 700,-10, &wcomposite, notifier,
+    WidgetButton wbutton5(drawable, 700,-10, wcomposite, notifier,
                         "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
-    WidgetButton wbutton6(drawable, -10,550, &wcomposite, notifier,
+    WidgetButton wbutton6(drawable, -10,550, wcomposite, notifier,
                         "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
 
     wcomposite.child_list.push_back(&wbutton1);
@@ -601,6 +602,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
         "\x57\x26\x23\x8d\x10\x48\x26\x8e\x6d\xcf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
+    wcomposite.child_list.clear();
 }
 
 
@@ -608,7 +611,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
 {
     TestDraw drawable(70, 40);
 
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
