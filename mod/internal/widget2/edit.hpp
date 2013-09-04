@@ -52,8 +52,6 @@ public:
     , border_top_left_color(0x444444)
     , border_right_bottom_color(0xEEEEEE)
     , border_right_bottom_color_inner(0x888888)
-    , cursor_px_pos(0)
-    , num_chars(0)
     {
         if (text) {
             this->buffer_size = strlen(text);

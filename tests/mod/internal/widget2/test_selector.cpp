@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -33,7 +34,7 @@
 #include "check_sig.hpp"
 
 #ifndef FIXTURES_PATH
-# define FIXTURES_PATH
+#define FIXTURES_PATH
 #endif
 
 struct TestDraw : DrawApi
@@ -159,12 +160,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
                         "RDP", "2013-04-20 19:56:50");
 
-    selector.set_index_list(0);
+    selector.selector_lines.set_current_index(0);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector1.png");
+    // drawable.save_to_png("/tmp/selector1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -173,12 +174,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    selector.set_index_list(1);
+    selector.selector_lines.set_current_index(1);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector2.png");
+    // drawable.save_to_png("/tmp/selector2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x3e\x81\x4e\x08\x32\x8c\x51\x6c\x30\xc5"
@@ -201,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector2)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector3.png");
+    // drawable.save_to_png("/tmp/selector3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -228,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip)
                                       selector.cx(),
                                       selector.cy()));
 
-    //drawable.save_to_png("/tmp/selector4.png");
+    // drawable.save_to_png("/tmp/selector4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -255,7 +256,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/selector5.png");
+    // drawable.save_to_png("/tmp/selector5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -287,16 +288,16 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     selector.add_device("rdp", "administrateur@qa@10.10.14.33",
                         "RDP", "2013-04-20 19:56:50");
 
-    selector.set_index_list(0);
+    selector.selector_lines.set_current_index(0);
 
-    selector.device_lines.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
-                                          selector.device_lines.dx() + 20,
-                                          selector.device_lines.dy() + 40,
+    selector.selector_lines.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                                          selector.selector_lines.dx() + 20,
+                                          selector.selector_lines.dy() + 40,
                                           NULL);
 
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector6-1.png");
+    // drawable.save_to_png("/tmp/selector6-1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -309,11 +310,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     keymap.init_layout(0x040C);
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
-    selector.close_time_lines.rdp_input_scancode(0,0,0,0, &keymap);
+    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector6-2.png");
+    // drawable.save_to_png("/tmp/selector6-2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x55\x2a\x79\x6e\x86\x9a\xfa\x74\xfd\x27"
@@ -322,11 +323,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     }
 
     keymap.push_kevent(Keymap2::KEVENT_END);
-    selector.close_time_lines.rdp_input_scancode(0,0,0,0, &keymap);
+    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector6-3.png");
+    // drawable.save_to_png("/tmp/selector6-3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x55\x2a\x79\x6e\x86\x9a\xfa\x74\xfd\x27"
@@ -335,11 +336,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     }
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
-    selector.close_time_lines.rdp_input_scancode(0,0,0,0, &keymap);
+    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector6-4.png");
+    // drawable.save_to_png("/tmp/selector6-4.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x31\x4a\xc0\x25\x3f\x92\x51\x7a\x9b\xcc"
@@ -348,11 +349,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     }
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
-    selector.close_time_lines.rdp_input_scancode(0,0,0,0, &keymap);
+    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector6-5.png");
+    // drawable.save_to_png("/tmp/selector6-5.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x3e\x81\x4e\x08\x32\x8c\x51\x6c\x30\xc5"
@@ -361,11 +362,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     }
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
-    selector.close_time_lines.rdp_input_scancode(0,0,0,0, &keymap);
+    selector.selector_lines.rdp_input_scancode(0,0,0,0, &keymap);
 
     selector.rdp_input_invalidate(selector.rect);
 
-    //drawable.save_to_png("/tmp/selector6-6.png");
+    // drawable.save_to_png("/tmp/selector6-6.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x31\x4a\xc0\x25\x3f\x92\x51\x7a\x9b\xcc"

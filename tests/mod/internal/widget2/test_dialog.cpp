@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -440,8 +441,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x09\xf5\xd2\xd1\xe5\x28\x1a\x7a\x53\xb0"
-        "\xc4\xca\xb7\x0d\xfc\x9e\x82\x3a\xfb\xd9")){
+                   "\x1c\xe9\xa8\x5e\x73\x8a\xae\x52\x43\x01\x69\x29\xb6\xc7\xea\x88\xc2\x51\xfc\x05"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -459,8 +460,10 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     //drawable.save_to_png("/tmp/window_dialog-clic-button-cancel.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x6c\x65\xdb\xf8\xc7\xbd\xf4\xd5\x08\x5f"
-        "\xd1\x16\x78\xae\x55\x1c\x79\x94\x99\x20")){
+                   "\x5c\x1f\xfe\x98\x20\x6d\x2a\x79\x76\x2f\x11\x14\x78\xf4\x3f\x76\x25\x53\xd4\x10"
+        // "\x6c\x65\xdb\xf8\xc7\xbd\xf4\xd5\x08\x5f"
+        // "\xd1\x16\x78\xae\x55\x1c\x79\x94\x99\x20"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

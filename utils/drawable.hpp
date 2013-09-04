@@ -1410,7 +1410,6 @@ struct Drawable {
     // mostly avoid clipping because we already took care of it
     void patblt(const Rect & rect, const uint8_t rop, const uint32_t color)
     {
-        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
         switch (rop){
             // +------+-------------------------------+
             // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |

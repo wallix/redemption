@@ -197,18 +197,20 @@ public:
 
     virtual void focus()
     {
+        // LOG(LOG_INFO, "focus %p", this);
         if (!this->has_focus){
-            this->send_notify(NOTIFY_FOCUS_BEGIN);
             this->has_focus = true;
+            this->send_notify(NOTIFY_FOCUS_BEGIN);
             this->refresh(this->rect);
         }
     }
 
     virtual void blur()
     {
+        // LOG(LOG_INFO, "blur %p", this);
         if (this->has_focus){
-            this->send_notify(NOTIFY_FOCUS_END);
             this->has_focus = false;
+            this->send_notify(NOTIFY_FOCUS_END);
             this->refresh(this->rect);
         }
     }

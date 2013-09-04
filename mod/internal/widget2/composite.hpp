@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_)
@@ -67,6 +68,11 @@ public:
     {
         if (!this->rect.contains_pt(x, y))
             return 0;
+        if (this->current_focus) {
+            if (this->current_focus->rect.contains_pt(x, y)) {
+                return this->current_focus;
+            }
+        }
 
         Widget2 * ret = 0;
         std::size_t size = this->child_list.size();
@@ -263,15 +269,6 @@ public:
     {
         if (event == NOTIFY_FOCUS_BEGIN) {
             this->current_focus = widget;
-            if (this->parent && this->parent->current_focus != this) {
-                this->focus();
-            }
-        }
-        else if (event == NOTIFY_FOCUS_END) {
-            if (this->current_focus == widget
-                && this->parent && this->parent->current_focus != this) {
-                this->blur();
-            }
         }
         else {
             Widget2::notify(widget, event, param, param2);

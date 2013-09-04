@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -428,8 +429,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     //drawable.save_to_png("/tmp/button10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xab\x46\x94\xad\xdb\xce\xb1\x30\xc1\x1c"
-        "\x7d\xb4\xa3\x00\x08\xf5\x1c\x69\x77\x34")){
+                   "\xec\x8d\x4f\x52\xc9\xf1\x5e\x5e\x7c\xd3\x1e\x6c\xd1\xe2\xa3\x55\x03\xf7\x20\x56"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -439,8 +440,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     //drawable.save_to_png("/tmp/button11.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe5\x7a\x73\x85\x6a\xce\x0f\x0f\x02\xab"
-        "\xbe\xbc\x1c\xc3\x30\xfd\x9c\x7c\xeb\x80")){
+                   "\xfb\x67\x5f\x09\x35\x9f\xf8\x75\xa7\x33\x8c\x52\x78\xdc\x84\x05\xab\x66\x6c\xdc"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -637,7 +638,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
     //drawable.save_to_png("/tmp/button11.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe7\x3c\x7e\xbf\x0e\xaa\xb3\x12\xdd\xc9\x38\xb3\x77\x38\xf4\x34\x2b\xa4\x20\xf2")){
+                   "\xd4\x6b\xf5\xb3\x35\x77\xa1\x95\xac\x33\x17\x67\x5e\x0f\x75\x83\x88\x0e\x24\xa7"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -659,7 +661,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
     //drawable.save_to_png("/tmp/button13.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe7\x3c\x7e\xbf\x0e\xaa\xb3\x12\xdd\xc9\x38\xb3\x77\x38\xf4\x34\x2b\xa4\x20\xf2")){
+                   "\xd4\x6b\xf5\xb3\x35\x77\xa1\x95\xac\x33\x17\x67\x5e\x0f\x75\x83\x88\x0e\x24\xa7"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
