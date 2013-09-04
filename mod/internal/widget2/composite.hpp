@@ -68,6 +68,11 @@ public:
     {
         if (!this->rect.contains_pt(x, y))
             return 0;
+        if (this->current_focus) {
+            if (this->current_focus->rect.contains_pt(x, y)) {
+                return this->current_focus;
+            }
+        }
 
         Widget2 * ret = 0;
         std::size_t size = this->child_list.size();
