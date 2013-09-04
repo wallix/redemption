@@ -440,6 +440,90 @@ struct Drawable {
         }
     }
 
+    template <typename Op>
+    void memblt_op( const Rect & rect
+                  , const Bitmap & bmp
+                  , const uint16_t srcx
+                  , const uint16_t srcy
+                  , const bool bgr) {
+        Op op;
+
+        if (bmp.cx < srcx || bmp.cy < srcy){
+            return ;
+        }
+
+        const int16_t mincx = std::min<int16_t>(bmp.cx - srcx,
+            std::min<int16_t>(this->width - rect.x, rect.cx));
+        const int16_t mincy = std::min<int16_t>(bmp.cy - srcy,
+            std::min<int16_t>(this->height - rect.y, rect.cy));
+
+        if (mincx <= 0 || mincy <= 0){
+            return;
+        }
+        const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+
+        const uint8_t   Bpp = ::nbbytes(bmp.original_bpp);
+        uint8_t       * target = this->first_pixel(trect);
+        const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) +
+            srcx * Bpp;
+
+        int steptarget = (this->width - trect.cx) * 3;
+        int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
+
+        uint8_t s0, s1, s2;
+
+        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
+            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){
+                uint32_t px = source[Bpp-1];
+                for (int b = 1 ; b < Bpp ; b++){
+                    px = (px << 8) + source[Bpp-1-b];
+                }
+                uint32_t color = /* xormask ^ */color_decode(px, bmp.original_bpp, bmp.original_palette);
+                if (bgr){
+                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+                }
+
+                s0 = color         & 0xFF;
+                s1 = (color >> 8 ) & 0xFF;
+                s2 = (color >> 16) & 0xFF;
+
+                target[0] = op(target[0], s0);
+                target[1] = op(target[1], s1);
+                target[2] = op(target[2], s2);
+            }
+        }
+    }
+
+    void mem_blt_ex( const Rect & rect
+                   , const Bitmap & bmp
+                   , const uint16_t srcx
+                   , const uint16_t srcy
+                   , uint8_t rop
+                   , const bool bgr) {
+        switch (rop) {
+            // +------+-------------------------------+
+            // | 0x22 | ROP: 0x00220326               |
+            // |      | RPN: DSna                     |
+            // +------+-------------------------------+
+            case 0x22:
+                this->memblt_op<Op_0x22>(rect, bmp, srcx, srcy, bgr);
+            break;
+
+            case 0x66:
+                this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
+            break;
+
+            case 0xEE:
+                this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
+            break;
+
+            default:
+                LOG(LOG_INFO, "Drawable::mem_blt_ex(): unimplemented rop=%X", rop);
+            break;
+        }
+    }
+
+
     void draw_bitmap(const Rect & rect, const Bitmap & bmp, bool bgr) {
         const int16_t mincx =
             std::min<int16_t>(bmp.cx, std::min<int16_t>(this->width  - rect.x, rect.cx));

@@ -134,6 +134,14 @@ public:
                 , cmd.srcy + (rect.y  - cmd.rect.y)
                 , 0, false);
         break;
+        case 0x22:  // dest = dest AND (NOT source)
+        case 0x66:  // dest = source XOR dest (SRCINVERT)
+        case 0xEE:  // dest = source OR dest (SRCPAINT)
+            this->drawable.mem_blt_ex(rect, bmp
+                , cmd.srcx + (rect.x - cmd.rect.x)
+                , cmd.srcy + (rect.y - cmd.rect.y)
+                , cmd.rop, false);
+            break;
         default:
             // should not happen
         break;
