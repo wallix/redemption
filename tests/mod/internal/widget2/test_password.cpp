@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/password.hpp"
+#include "internal/widget2/screen.hpp"
 #include "internal/widget2/composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -143,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -179,7 +181,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword2)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 10,100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -211,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword3)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position -10,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -243,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword4)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 770,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -275,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword5)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position -20,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -307,7 +309,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword6)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -339,7 +341,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -371,7 +373,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordClip2)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = YELLOW;
@@ -417,7 +419,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
         }
     } notifier;
 
-    Widget2* parent = 0;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
@@ -575,7 +578,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), NULL, NULL)
+        : Widget2(drawable, Rect(), *this, NULL)
         , sender(NULL)
         , event(0)
         {}
@@ -615,22 +618,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     TestDraw drawable(800, 600);
 
     // WidgetPassword is a password widget of size 256x125 at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
-    WidgetPassword wpassword1(drawable, 0,0, 50, &wcomposite, notifier,
+    WidgetPassword wpassword1(drawable, 0,0, 50, wcomposite, notifier,
                         "abababab", 4, YELLOW, BLACK);
-    WidgetPassword wpassword2(drawable, 0,100, 50, &wcomposite, notifier,
+    WidgetPassword wpassword2(drawable, 0,100, 50, wcomposite, notifier,
                         "ggghdgh", 2, WHITE, RED);
-    WidgetPassword wpassword3(drawable, 100,100, 50, &wcomposite, notifier,
+    WidgetPassword wpassword3(drawable, 100,100, 50, wcomposite, notifier,
                         "lldlslql", 1, BLUE, RED);
-    WidgetPassword wpassword4(drawable, 300,300, 50, &wcomposite, notifier,
+    WidgetPassword wpassword4(drawable, 300,300, 50, wcomposite, notifier,
                         "LLLLMLLM", 20, PINK, DARK_GREEN);
-    WidgetPassword wpassword5(drawable, 700,-10, 50, &wcomposite, notifier,
+    WidgetPassword wpassword5(drawable, 700,-10, 50, wcomposite, notifier,
                         "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE);
-    WidgetPassword wpassword6(drawable, -10,550, 50, &wcomposite, notifier,
+    WidgetPassword wpassword6(drawable, -10,550, 50, wcomposite, notifier,
                         "xxwwp", 2, DARK_GREY, PALE_GREEN);
 
     wcomposite.child_list.push_back(&wpassword1);
@@ -662,6 +665,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
         "\x8e\x00\x91\xf6\x55\x65\x10\x46\xed\x90")){
         BOOST_CHECK_MESSAGE(false, message);
     }
+    wcomposite.child_list.clear();
 }
 
 BOOST_AUTO_TEST_CASE(DataWidgetPassword)
@@ -683,7 +687,8 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
         }
     } notifier;
 
-    Widget2* parent = 0;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
@@ -780,7 +785,8 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
         }
     } notifier;
 
-    Widget2* parent = 0;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;
@@ -889,7 +895,8 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
         }
     } notifier;
 
-    Widget2* parent = 0;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;

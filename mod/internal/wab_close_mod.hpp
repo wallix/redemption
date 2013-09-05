@@ -64,7 +64,7 @@ public:
     WabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height, time_t now)
     : InternalMod(front, width, height)
     , ini(ini)
-    , window_close(*this, 0, 0, &this->screen, this,
+    , window_close(*this, 0, 0, this->screen, this,
                    ini.context.auth_error_message.c_str(), 0,
                    (ini.context_is_asked(AUTHID_AUTH_USER)
                     || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
@@ -74,7 +74,7 @@ public:
                     NULL : temporary_text(ini).text,
                    BLACK, GREY
     )
-    , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, &this->screen, NULL)
+    , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, this->screen, NULL)
     , timeout(Timeout(now, ini.globals.close_timeout))
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
@@ -94,7 +94,9 @@ public:
     }
 
     virtual ~WabCloseMod()
-    {}
+    {
+        this->screen.child_list.clear();
+    }
 
     virtual void notify(Widget2* sender, notify_event_t event,
                         long unsigned int param, long unsigned int param2)

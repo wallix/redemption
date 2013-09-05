@@ -36,7 +36,7 @@ class WidgetComposite : public Widget2
 public:
     std::vector<Widget2*> child_list;
 
-    WidgetComposite(DrawApi & drawable, const Rect& rect, Widget2 * parent,
+    WidgetComposite(DrawApi & drawable, const Rect& rect, Widget2 & parent,
                     NotifyApi * notifier, int group_id = 0)
     : Widget2(drawable, rect, parent, notifier, group_id)
     , child_list()
@@ -46,10 +46,8 @@ public:
 
     virtual ~WidgetComposite()
     {
-        for (size_t i = 0; i < this->child_list.size(); ++i) {
-            if (this->child_list[i]->parent == this) {
-                this->child_list[i]->parent = 0;
-            }
+        if (!this->child_list.empty()) {
+            throw Error(ERR_WIDGET_INVALID_COMPOSITE_DESTROY);
         }
     }
 
@@ -157,9 +155,8 @@ public:
                 return true;
             }
         }
-
-        if ((!this->tab_flag & NO_DELEGATE_PARENT) && this->parent) {
-            this->parent->next_focus();
+        if ((!this->tab_flag & NO_DELEGATE_PARENT) && (&this->parent != this)) {
+            this->parent.next_focus();
         }
         return false;
     }
@@ -221,8 +218,8 @@ public:
             }
         }
 
-        if ((!this->tab_flag & NO_DELEGATE_PARENT) && this->parent) {
-            this->parent->previous_focus();
+        if ((!this->tab_flag & NO_DELEGATE_PARENT) && (&this->parent != this)) {
+            this->parent.previous_focus();
         }
         return false;
     }
@@ -238,32 +235,7 @@ public:
         }
     }
 
-    bool detach_widget(Widget2 * widget, bool active_previous_widget = false)
-    {
-        for (size_t i = 0; i < this->child_list.size(); ++i) {
-            if (this->child_list[i] == widget) {
-                if (widget->parent == this) {
-                    widget->parent = 0;
-                }
-                this->child_list[i] = this->child_list[this->child_list.size()-1];
-                this->child_list.pop_back();
 
-                if (active_previous_widget) {
-                    if (this->old_current_focus == widget) {
-                        this->old_current_focus = NULL;
-                    }
-                    if (this->current_focus == widget) {
-                        this->current_focus = this->old_current_focus;
-                        if (this->current_focus) {
-                            this->current_focus->focus();
-                        }
-                    }
-                }
-                return true;
-            }
-        }
-        return false;
-    }
 
     virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
     {

@@ -46,7 +46,7 @@ public:
     WidgetButton help;
     MessageBox * window_help;
 
-    WindowLogin(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
+    WindowLogin(DrawApi& drawable, int16_t x, int16_t y, Widget2 & parent,
                 NotifyApi* notifier, const char* caption,
                 bool focus_on_password = false,
                 int group_id = 0,
@@ -58,14 +58,14 @@ public:
                 const char * label_text_login = "Login",
                 const char * label_text_password = "Password")
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
-    , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, this, NULL, -10)
-    , login_label(drawable, this->img.cx() + 20, 0, this, NULL, label_text_login, true, -11, fgcolor, bgcolor)
-    , login_edit(drawable, 0, 0, 350, this, this, login, -12, BLACK, WHITE, -1u, 1, 1)
-    , password_label(drawable, this->img.cx() + 20, 0, this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
-    , password_edit(drawable, 0, 0, 350, this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
-    , ok(drawable, 0, 0, this, this, button_text_ok, true, -15, BLACK, GREY, 6, 2)
-    , cancel(drawable, 0, 0, this, this, button_text_cancel, true, -16, BLACK, GREY, 6, 2, NOTIFY_CANCEL)
-    , help(drawable, 0, 0, this, this, button_text_help, true, -17, BLACK, GREY, 6, 2)
+    , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, *this, NULL, -10)
+    , login_label(drawable, this->img.cx() + 20, 0, *this, NULL, label_text_login, true, -11, fgcolor, bgcolor)
+    , login_edit(drawable, 0, 0, 350, *this, this, login, -12, BLACK, WHITE, -1u, 1, 1)
+    , password_label(drawable, this->img.cx() + 20, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
+    , password_edit(drawable, 0, 0, 350, *this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
+    , ok(drawable, 0, 0, *this, this, button_text_ok, true, -15, BLACK, GREY, 6, 2)
+    , cancel(drawable, 0, 0, *this, this, button_text_cancel, true, -16, BLACK, GREY, 6, 2, NOTIFY_CANCEL)
+    , help(drawable, 0, 0, *this, this, button_text_help, true, -17, BLACK, GREY, 6, 2)
     , window_help(NULL)
     {
         this->child_list.push_back(&this->login_edit);
@@ -139,18 +139,19 @@ public:
             delete this->window_help;
             this->window_help = NULL;
         }
+        this->child_list.clear();
     }
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event,
                         long unsigned int param, long unsigned int param2)
     {
         if (widget == &this->help && event == NOTIFY_SUBMIT) {
-            if (this->parent) {
-                Widget2 * p = this->parent;
+            if (&this->parent != this) {
+                Widget2 * p = &this->parent;
                 if (!this->window_help) {
                     this->window_help =
                         new MessageBox(
-                                       this->drawable, 0, 0, p, this, "Help",
+                                       this->drawable, 0, 0, *p, this, "Help",
                                        "You must be authenticated before using this<br>"
                                        "session.<br>"
                                        "<br>"
@@ -235,8 +236,8 @@ public:
 private:
     void close_window_help()
     {
-        if (this->parent) {
-            WidgetScreen * p = static_cast<WidgetScreen*>(this->parent);
+        if (&this->parent != this) {
+            WidgetScreen * p = static_cast<WidgetScreen*>(&this->parent);
             p->current_focus = this;
             p->child_list.pop_back();
             delete this->window_help;

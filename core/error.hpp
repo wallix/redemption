@@ -256,6 +256,9 @@ enum {
     ERR_WRM_IDX_NOT_FOUND,
     ERR_WRM_INVALID_INIT_CRYPT,
     ERR_WRM_FAILED_OPENING_META_FILENAME,
+
+    ERR_WIDGET = 21000,
+    ERR_WIDGET_INVALID_COMPOSITE_DESTROY,
 };
 
 class Error {
@@ -285,6 +288,9 @@ class Error {
             break;
         case ERR_VNC_CONNECTION_ERROR:
             snprintf(errstr, sizeof(errstr), "VNC connection error.");
+            break;
+        case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
+            snprintf(errstr, sizeof(errstr), "Composite Widget Destroyed without child list not empty.");
             break;
         default:
             snprintf(errstr, sizeof(errstr), "Exception Error no : %d", this->id);

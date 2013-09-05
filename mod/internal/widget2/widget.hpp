@@ -69,11 +69,11 @@ public:
     };
 
 public:
-    Widget2 * parent;
-    Widget2 * current_focus;
-    Widget2 * old_current_focus;
+    Widget2 & parent;
     DrawApi & drawable;
     NotifyApi * notifier;
+    Widget2 * current_focus;
+    Widget2 * old_current_focus;
     Rect rect;
     int group_id;
     int tab_flag;
@@ -81,14 +81,14 @@ public:
     bool has_focus;
 
 public:
-    Widget2(DrawApi & drawable, const Rect& rect, Widget2 * parent, NotifyApi * notifier, int group_id = 0)
+    Widget2(DrawApi & drawable, const Rect& rect, Widget2 & parent, NotifyApi * notifier, int group_id = 0)
     : parent(parent)
-    , current_focus(NULL)
-    , old_current_focus(NULL)
     , drawable(drawable)
     , notifier(notifier)
-    , rect(Rect(rect.x + (parent ? parent->dx() : 0),
-                rect.y + (parent ? parent->dy() : 0),
+    , current_focus(NULL)
+    , old_current_focus(NULL)
+    , rect(Rect(rect.x + ((&parent != this) ? parent.dx() : 0),
+                rect.y + ((&parent != this) ? parent.dy() : 0),
                 rect.cx,
                 rect.cy
     ))
@@ -100,6 +100,11 @@ public:
         TODO("Constructor should take absolute coordinates")
 
     }
+
+    // Widget2 & operator=(Widget2 const&) {}
+    // Widget2 & operator=(Widget2 const&) { return *this; }
+
+    // Widget2 & operator=(Widget2 & w) { return w; }
 
     virtual ~Widget2()
     {}
@@ -135,15 +140,15 @@ public:
                 case Keymap2::KEVENT_TAB:
                     //std::cout << ("tab") << '\n';
                     keymap->get_kevent();
-                    if (this->parent) {
-                        this->parent->next_focus();
+                    if (&this->parent != this) {
+                        this->parent.next_focus();
                     }
                     break;
                 case Keymap2::KEVENT_BACKTAB:
                     //std::cout << ("backtab") << '\n';
                     keymap->get_kevent();
-                    if (this->parent) {
-                        this->parent->previous_focus();
+                    if (&this->parent != this) {
+                        this->parent.previous_focus();
                     }
                     break;
                 default:
@@ -274,13 +279,13 @@ public:
     ///Return x position in it's parent
     int16_t px() const
     {
-        return this->parent ? this->dx() - this->parent->dx() : this->dx();
+        return this->dx() - this->parent.dx();
     }
 
     ///Return y position in it's parent
     int16_t py() const
     {
-        return this->parent ? this->dy() - this->parent->dy() : this->dy();
+        return this->dy() - this->parent.dy();
     }
 
     //static std::vecor<Widget2*> widgets_focused();

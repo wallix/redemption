@@ -37,7 +37,7 @@ public:
 
 
 public:
-    WidgetTooltip(DrawApi & drawable, int16_t x, int16_t y, Widget2* parent,
+    WidgetTooltip(DrawApi & drawable, int16_t x, int16_t y, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
                   int fgcolor = BLACK, int bgcolor = YELLOW
                   )

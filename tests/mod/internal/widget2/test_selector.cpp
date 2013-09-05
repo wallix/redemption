@@ -28,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/selector.hpp"
+#include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -143,11 +144,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector)
     TestDraw drawable(800, 600);
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1");
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP", "2013-04-20 19:56:50");
@@ -193,11 +195,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelector2)
     TestDraw drawable(800, 600);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1");
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
@@ -217,11 +220,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     TestDraw drawable(800, 600);
 
     // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1");
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -244,11 +248,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     TestDraw drawable(800, 600);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
+
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1");
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.dx(),
@@ -271,11 +277,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     TestDraw drawable(800, 600);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
 
-    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, notifier, "1", "1");
+    WidgetSelector selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1");
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP", "2013-04-20 19:56:50");

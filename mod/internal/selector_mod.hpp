@@ -51,7 +51,7 @@ class SelectorMod : public InternalMod, public NotifyApi
 public:
     SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height)
-        , selector(*this, temporary_login(ini).buffer, width, height, this,
+        , selector(*this, temporary_login(ini).buffer, width, height, this->screen, this,
                    ini.context.selector_current_page.get_value(),
                    ini.context.selector_number_of_pages.get_value(),
                    ini.context.selector_group_filter.get_cstr(),
@@ -72,7 +72,9 @@ public:
     }
 
     virtual ~SelectorMod()
-    {}
+    {
+        this->screen.child_list.clear();
+    }
 
     virtual void rdp_input_invalidate(const Rect& r)
     {

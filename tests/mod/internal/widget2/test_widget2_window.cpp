@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -28,6 +29,7 @@
 
 #include "internal/widget2/widget2_rect.hpp"
 #include "internal/widget2/widget2_window.hpp"
+#include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -104,7 +106,7 @@ struct TestDraw : DrawApi
     virtual void end_update()
     {}
 
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, 
+    virtual void server_draw_text(int16_t x, int16_t y, const char* text,
                                   uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
     {
         this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
@@ -139,23 +141,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
 {
     TestDraw drawable(800, 600);
     NotifyApi * notifier = NULL;
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     int id = 0;
 
     Window window(drawable, Rect(30,40,500,400), parent, notifier, "Window 1");
     window.resize_titlebar();
     WidgetRect wrect1(drawable, Rect(0,window.titlebar.cy()+0,100,100),
-                      &window, notifier, id++, YELLOW);
+                      window, notifier, id++, YELLOW);
     WidgetRect wrect2(drawable, Rect(0,window.titlebar.cy()+100,100,100),
-                      &window, notifier, id++, RED);
+                      window, notifier, id++, RED);
     WidgetRect wrect3(drawable, Rect(100,window.titlebar.cy()+100,100,100),
-                      &window, notifier, id++, BLUE);
+                      window, notifier, id++, BLUE);
     WidgetRect wrect4(drawable, Rect(300,300,100,100),
-                      &window, notifier, id++, GREEN);
+                      window, notifier, id++, GREEN);
     WidgetRect wrect5(drawable, Rect(700,-50,100,100),
-                      &window, notifier, id++, WHITE);
+                      window, notifier, id++, WHITE);
     WidgetRect wrect6(drawable, Rect(-50,550,100,100),
-                      &window, notifier, id++, GREY);
+                      window, notifier, id++, GREY);
     window.child_list.push_back(&wrect1);
     window.child_list.push_back(&wrect2);
     window.child_list.push_back(&wrect3);
@@ -205,6 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
         )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+    window.child_list.clear();
 }
 
 BOOST_AUTO_TEST_CASE(EventWidgetWindow)
@@ -328,11 +331,12 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
         }
     } drawable(800, 600);
 
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
 
     Window window(drawable, Rect(30,40,500,400), parent, &notifier, "Window 1");
     window.button_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, NULL);
     BOOST_CHECK(notifier.event == 0);
     BOOST_CHECK(notifier.sender == 0);
     window.button_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, NULL);
+    window.child_list.clear();
 }

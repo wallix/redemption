@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/number_edit.hpp"
+#include "internal/widget2/screen.hpp"
 #include "internal/widget2/composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -156,8 +158,8 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
             this->event = event;
         }
     } notifier;
-
-    Widget2* parent = 0;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = 0;
     int16_t x = 0;
     int16_t y = 0;
     uint16_t cx = 100;

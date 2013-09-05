@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_WIDGET2_IMAGE_HPP)
@@ -28,7 +29,7 @@ class WidgetImage : public Widget2
     Bitmap bmp;
 
 public:
-    WidgetImage(DrawApi& drawable, int x, int y, const char * filename, Widget2* parent, NotifyApi* notifier, int group_id = 0)
+    WidgetImage(DrawApi& drawable, int x, int y, const char * filename, Widget2 & parent, NotifyApi* notifier, int group_id = 0)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , bmp(filename)
     {

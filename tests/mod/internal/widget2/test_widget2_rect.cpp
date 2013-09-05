@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/widget2_rect.hpp"
+#include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -126,7 +128,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
     int color = 0xCCF604; /* BGR */
@@ -154,7 +157,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -182,7 +186,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -210,7 +215,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -238,7 +244,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -266,7 +273,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -294,7 +302,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -322,7 +331,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -354,7 +364,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent(DrawApi & drawable)
-        : Widget2(drawable, Rect(), NULL, NULL)
+        : Widget2(drawable, Rect(), *this, NULL)
         , sender(NULL)
         , event(0)
         {}
@@ -370,7 +380,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
         }
     } widget_for_receive_event(drawable);
 
-    Widget2* parent = &widget_for_receive_event;
+    Widget2& parent = widget_for_receive_event;
     NotifyApi * notifier = NULL;
 
     WidgetRect wrect(drawable, Rect(), parent, notifier);

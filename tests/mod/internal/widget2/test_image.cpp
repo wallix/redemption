@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/image.hpp"
+#include "internal/widget2/screen.hpp"
 // #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -126,7 +128,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
@@ -152,7 +155,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage2)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 10,100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(drawable, 10,100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
@@ -178,7 +182,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage3)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position -100,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(drawable, -100,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
@@ -204,7 +209,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage4)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 700,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(drawable, 700,500, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
@@ -230,7 +236,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage5)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position -100,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(drawable, -100,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
@@ -256,7 +263,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImage6)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
@@ -282,7 +290,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 700,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(drawable, 700,-100, FIXTURES_PATH"/logo-redemption.png", parent, notifier);
@@ -308,7 +317,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
     TestDraw drawable(800, 600);
 
     // WidgetImage is a image widget of size 256x125 at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+    // Widget2* parent = NULL;
     NotifyApi * notifier = NULL;
 
     WidgetImage wimage(drawable, 0,0, FIXTURES_PATH"/logo-redemption.png", parent, notifier);

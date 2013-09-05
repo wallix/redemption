@@ -41,7 +41,7 @@ public:
     DialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
               const char * caption, const char * message, const char * cancel_text, time_t now)
     : InternalMod(front, width, height)
-    , window_dialog(*this, 0, 0, &this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, GREY)
+    , window_dialog(*this, 0, 0, this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, GREY)
     , ini(ini)
     // , timeout(ini.debug.pass_dialog_box?(now + ini.debug.pass_dialog_box):0)
     , timeout(Timeout(now, ini.debug.pass_dialog_box))
@@ -62,7 +62,9 @@ public:
     }
 
     virtual ~DialogMod()
-    {}
+    {
+        this->screen.child_list.clear();
+    }
 
     virtual void notify(Widget2* sender, notify_event_t event,
                         long unsigned int param, long unsigned int param2)

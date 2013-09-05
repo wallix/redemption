@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/label.hpp"
+#include "internal/widget2/screen.hpp"
 #include "internal/widget2/composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -143,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -180,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -212,7 +214,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position -10,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -244,7 +246,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 770,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -276,7 +278,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position -20,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -308,7 +310,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -340,7 +342,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -372,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
     TestDraw drawable(800, 600);
 
     // WidgetLabel is a label widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
@@ -408,7 +410,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         NotifyApi::notify_event_t event;
 
         WidgetReceiveEvent(TestDraw& drawable)
-        : Widget2(drawable, Rect(), NULL, NULL)
+        : Widget2(drawable, Rect(), *this, NULL)
         , sender(NULL)
         , event(0)
         {}
@@ -424,7 +426,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         }
     } widget_for_receive_event(drawable);
 
-    Widget2* parent = &widget_for_receive_event;
+    Widget2& parent = widget_for_receive_event;
     NotifyApi * notifier = NULL;
     bool auto_resize = false;
     int16_t x = 0;
@@ -453,22 +455,22 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     TestDraw drawable(800, 600);
 
     //WidgetLabel is a label widget of size 256x125 at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
-    WidgetLabel wlabel1(drawable, 0,0, &wcomposite, notifier,
+    WidgetLabel wlabel1(drawable, 0,0, wcomposite, notifier,
                         "abababab", true, 0, YELLOW, BLACK);
-    WidgetLabel wlabel2(drawable, 0,100, &wcomposite, notifier,
+    WidgetLabel wlabel2(drawable, 0,100, wcomposite, notifier,
                         "ggghdgh", true, 0, WHITE, BLUE);
-    WidgetLabel wlabel3(drawable, 100,100, &wcomposite, notifier,
+    WidgetLabel wlabel3(drawable, 100,100, wcomposite, notifier,
                         "lldlslql", true, 0, BLUE, RED);
-    WidgetLabel wlabel4(drawable, 300,300, &wcomposite, notifier,
+    WidgetLabel wlabel4(drawable, 300,300, wcomposite, notifier,
                         "LLLLMLLM", true, 0, PINK, DARK_GREEN);
-    WidgetLabel wlabel5(drawable, 700,-10, &wcomposite, notifier,
+    WidgetLabel wlabel5(drawable, 700,-10, wcomposite, notifier,
                         "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
-    WidgetLabel wlabel6(drawable, -10,550, &wcomposite, notifier,
+    WidgetLabel wlabel6(drawable, -10,550, wcomposite, notifier,
                         "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
 
     wcomposite.child_list.push_back(&wlabel1);
@@ -500,6 +502,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
         "\x3a\x30\x71\xfd\xee\xa6\x3a\x6c\xaa\x75")){
         BOOST_CHECK_MESSAGE(false, message);
     }
+    wcomposite.child_list.clear();
 }
 
 TODO("the entry point exists in module: it's rdp_input_invalidate"
