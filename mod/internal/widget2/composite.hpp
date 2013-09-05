@@ -99,16 +99,6 @@ public:
                          this->current_focus);
     }
 
-    virtual Widget2 * search_focus() {
-        Widget2 * ret = 0;
-        std::size_t size = this->child_list.size();
-        for (std::size_t i = 0; i < size && ret == 0; ++i){
-            if (this->child_list[i]->has_focus)
-                ret = this->child_list[i];
-        }
-        return ret;
-    }
-
     virtual bool next_focus()
     {
         struct focus_manager {
