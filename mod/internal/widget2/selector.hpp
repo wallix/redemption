@@ -828,7 +828,7 @@ public:
         this->WidgetComposite::draw_inner_free(clip.intersect(this->rect), GREY);
     }
 
-    virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2* widget, notify_event_t event)
     {
         if (NOTIFY_SHOW_TOOLTIP == event) {
             this->child_list.push_back(this->tooltip);
@@ -845,17 +845,17 @@ public:
         if (widget->group_id == this->selector_lines.group_id) {
             if (NOTIFY_SUBMIT == event) {
                 if (this->notifier) {
-                    this->notifier->notify(widget, event, param, param2);
+                    this->notifier->notify(widget, event);
                 }
             }
         }
         else if (widget->group_id == this->apply.group_id) {
             if (this->notifier) {
-                this->notifier->notify(widget, event, param, param2);
+                this->notifier->notify(widget, event);
             }
         }
         else {
-            WidgetComposite::notify(widget, event, param, param2);
+            WidgetComposite::notify(widget, event);
         }
     }
 
@@ -878,7 +878,7 @@ public:
         if (device_flags & MOUSE_FLAG_MOVE) {
             Widget2 * w = this->widget_at_pos(x, y);
             if (w != this->w_over) {
-                this->notify(this, NOTIFY_HIDE_TOOLTIP, 0, 0);
+                this->notify(this, NOTIFY_HIDE_TOOLTIP);
                 this->w_over = w;
             }
         }
@@ -902,7 +902,7 @@ public:
 
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
     {
-         this->notify(this, NOTIFY_HIDE_TOOLTIP, 0, 0);
+         this->notify(this, NOTIFY_HIDE_TOOLTIP);
          WidgetComposite::rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 

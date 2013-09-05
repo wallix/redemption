@@ -101,8 +101,7 @@ public:
         this->event.set();
     }
 
-    virtual void notify(Widget2* widget, notify_event_t event,
-                        long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2* widget, notify_event_t event)
     {
         if (NOTIFY_CANCEL == event) {
             this->ini.context_ask(AUTHID_AUTH_USER);

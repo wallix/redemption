@@ -168,21 +168,19 @@ public:
         this->refresh(r);
     }
 
-    void send_notify(NotifyApi::notify_event_t event,
-                     unsigned long param = 0, unsigned long param2 = 0)
+    void send_notify(NotifyApi::notify_event_t event)
     {
         if (this->notifier)
-            this->notifier->notify(this, event, param, param2);
+            this->notifier->notify(this, event);
     }
 
-    virtual void notify(Widget2 * widget, NotifyApi::notify_event_t event,
-                        unsigned long param, unsigned long param2)
+    virtual void notify(Widget2 * widget, NotifyApi::notify_event_t event)
     {
         (void)widget;
         TODO("Quickfix, events should not be propagated in general");
         if ((event != NOTIFY_FOCUS_BEGIN) &&
             (event != NOTIFY_FOCUS_END)) {
-            this->send_notify(event, param, param2);
+            this->send_notify(event);
         }
     }
 

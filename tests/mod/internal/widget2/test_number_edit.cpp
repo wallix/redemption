@@ -154,8 +154,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
         : sender(0)
         , event(0)
         {}
-        virtual void notify(Widget2* sender, notify_event_t event,
-                            long unsigned int, long unsigned int)
+        virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
             this->event = event;

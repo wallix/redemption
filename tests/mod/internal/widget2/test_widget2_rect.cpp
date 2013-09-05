@@ -375,8 +375,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
         virtual void draw(const Rect&)
         {}
 
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
-                            unsigned long, unsigned long)
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
         {
             this->sender = sender;
             this->event = event;

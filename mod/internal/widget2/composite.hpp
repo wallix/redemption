@@ -237,13 +237,13 @@ public:
 
 
 
-    virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2* widget, notify_event_t event)
     {
         if (event == NOTIFY_FOCUS_BEGIN) {
             this->current_focus = widget;
         }
         else {
-            Widget2::notify(widget, event, param, param2);
+            Widget2::notify(widget, event);
         }
     }
 

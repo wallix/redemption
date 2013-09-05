@@ -142,8 +142,7 @@ public:
         this->child_list.clear();
     }
 
-    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event,
-                        long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
     {
         if (widget == &this->help && event == NOTIFY_SUBMIT) {
             if (&this->parent != this) {
@@ -208,7 +207,7 @@ public:
             }
             this->send_notify(NOTIFY_CANCEL);
         } else {
-            Window::notify(widget, event, param, param2);
+            Window::notify(widget, event);
         }
     }
 
