@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
