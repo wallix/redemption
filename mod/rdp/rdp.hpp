@@ -153,7 +153,7 @@ struct mod_rdp : public mod_api {
 
     size_t recv_bmp_update;
 
-    rdp_mppc_dec * mppc_dec;
+    rdp_mppc_dec mppc_dec;
 
     redemption::string * error_message;
 
@@ -310,8 +310,6 @@ struct mod_rdp : public mod_api {
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
 
-        this->mppc_dec = mppc_dec_new();
-
         while (UP_AND_RUNNING != this->connection_finalization_state){
             this->draw_event(time(NULL));
             if (this->event.signal != BACK_EVENT_NONE){
@@ -322,8 +320,6 @@ struct mod_rdp : public mod_api {
     }
 
     virtual ~mod_rdp() {
-        mppc_dec_free(this->mppc_dec);
-
         if (this->lic_layer_license_data) {
             free(this->lic_layer_license_data);
         }
@@ -735,6 +731,7 @@ struct mod_rdp : public mod_api {
 
                                             uint32_t cert_len = sc_sec1.x509.cert[certcount - 1].len;
                                             X509 *cert =  sc_sec1.x509.cert[certcount - 1].cert;
+(void)cert_len;
 
                                             TODO("CGR: Currently, we don't use the CA Certificate, we should"
                                                  "*) Verify the server certificate (server_cert) with the CA certificate."
@@ -1348,7 +1345,7 @@ struct mod_rdp : public mod_api {
                         if (f.fast_path) {
                             FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
                             while (su.payload.in_remain()) {
-                                FastPath::Update_Recv upd(su.payload, this->mppc_dec);
+                                FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
 
                                 switch (upd.updateCode) {
                                 case FastPath::FASTPATH_UPDATETYPE_ORDERS:
@@ -1584,7 +1581,7 @@ struct mod_rdp : public mod_api {
                                     case UP_AND_RUNNING:
                                         {
                                             ShareData sdata(sctrl.payload);
-                                            sdata.recv_begin(this->mppc_dec);
+                                            sdata.recv_begin(&this->mppc_dec);
                                             switch (sdata.pdutype2) {
                                             case PDUTYPE2_UPDATE:
                                                 {
