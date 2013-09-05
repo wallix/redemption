@@ -703,11 +703,11 @@ private:
                         count = 1;
                     break;
                     case 0xFA:
-                        opcode = SPECIAL_FGBG_1;
+                        opcode = SPECIAL_FGBG_2;
                         count = 8;
                     break;
                     case 0xF9:
-                        opcode = SPECIAL_FGBG_2;
+                        opcode = SPECIAL_FGBG_1;
                         count = 8;
                     break;
                     case 0xF8:
@@ -781,11 +781,11 @@ private:
             break;
             case SPECIAL_FGBG_1:
                 mask = 1;
-                fom_mask = 7;
+                fom_mask = 3;
             break;
             case SPECIAL_FGBG_2:
                 mask = 1;
-                fom_mask = 3;
+                fom_mask = 5;
             break;
             case BICOLOR:
                 bicolor = 0;
