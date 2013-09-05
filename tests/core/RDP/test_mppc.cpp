@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     /* save starting time */
     gettimeofday(&start_time, NULL);
 
-    BOOST_CHECK_EQUAL(true, compress_rdp(enc, decompressed_rd5_data, data_len));
+    BOOST_CHECK_EQUAL(true, enc->compress_rdp(decompressed_rd5_data, data_len));
 
     BOOST_CHECK(0 != (enc->flags & PACKET_COMPRESSED));
     BOOST_CHECK_EQUAL(true,
@@ -118,22 +118,22 @@ BOOST_AUTO_TEST_CASE(TestBitsSerializer)
     char outputBuffer[256] ={};
     int bits_left = 8;
     int opb_index = 0;
-    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    rdp_mppc_enc::insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(6, bits_left);
     BOOST_CHECK_EQUAL(0, opb_index);
     BOOST_CHECK_EQUAL(192, outputBuffer[0] & 0xFF);
 
-    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    rdp_mppc_enc::insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(4, bits_left);
     BOOST_CHECK_EQUAL(0, opb_index);
     BOOST_CHECK_EQUAL(0xF0, outputBuffer[0] & 0xFF);
 
-    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    rdp_mppc_enc::insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(2, bits_left);
     BOOST_CHECK_EQUAL(0, opb_index);
     BOOST_CHECK_EQUAL(0xFc, outputBuffer[0] & 0xFF);
 
-    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    rdp_mppc_enc::insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(8, bits_left);
     BOOST_CHECK_EQUAL(1, opb_index);
     BOOST_CHECK_EQUAL(0xFF, outputBuffer[0] & 0xFF);
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
     memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
 
 
-    compress_rdp(mppc_enc, uncompressed_data, sizeof(uncompressed_data));
+    mppc_enc->compress_rdp(uncompressed_data, sizeof(uncompressed_data));
 
     int flags = PACKET_COMPRESSED;
 
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
     memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
 
 
-    compress_rdp(mppc_enc, uncompressed_data, sizeof(uncompressed_data));
+    mppc_enc->compress_rdp(uncompressed_data, sizeof(uncompressed_data));
 
     int flags = PACKET_COMPRESSED;
 
