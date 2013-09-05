@@ -40,6 +40,8 @@
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH
 #endif
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
 
 struct TestDraw : DrawApi
 {
@@ -168,7 +170,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    //drawable.save_to_png("/tmp/edit1.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -200,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    //drawable.save_to_png("/tmp/edit2.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -232,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    //drawable.save_to_png("/tmp/edit3.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -264,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit4)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    //drawable.save_to_png("/tmp/edit4.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -296,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit5)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    //drawable.save_to_png("/tmp/edit5.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -328,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit6)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    //drawable.save_to_png("/tmp/edit6.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -360,7 +362,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip)
                                     wedit.cx(),
                                     wedit.cy()));
 
-    //drawable.save_to_png("/tmp/edit7.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -392,7 +394,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditClip2)
                                     30,
                                     10));
 
-    //drawable.save_to_png("/tmp/edit8.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -419,8 +421,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
         virtual void draw(const Rect&)
         {}
 
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
-                            unsigned long, unsigned long)
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
         {
             this->sender = sender;
             this->event = event;
@@ -434,8 +435,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
         : sender(0)
         , event(0)
         {}
-        virtual void notify(Widget2* sender, notify_event_t event,
-                            long unsigned int, long unsigned int)
+        virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
             this->event = event;
@@ -451,7 +451,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.focus();
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e1.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
         "\xb7\xac\xcd\x09\x45\x2e\x92\x80\x35\xf1"
@@ -468,7 +468,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, decoded_data);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e2-1.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\x4c\xf8\x17\x33\xff\x14\xd3\xc7\xe0\xce"
         "\xfb\x5e\x46\xe5\x90\xab\x9d\xa5\x92\xe7")){
@@ -483,7 +483,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, decoded_data);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e2-2.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\xc6\x4b\xf6\xb2\x76\xd9\xef\xe2\xe3\x66"
         "\x09\x94\x39\x50\x46\xb5\xae\xd4\xdf\x4f")){
@@ -497,7 +497,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e3.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e3.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\x7d\xf2\xc6\x0e\xc9\x4e\x07\xd0\x11\x84"
         "\x19\xd5\x98\xba\x6e\x6a\x6a\x03\x95\x5d"
@@ -511,7 +511,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e4.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e4.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\xc6\x4b\xf6\xb2\x76\xd9\xef\xe2\xe3\x66"
         "\x09\x94\x39\x50\x46\xb5\xae\xd4\xdf\x4f")){
@@ -522,7 +522,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e5.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e5.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\x4c\xf8\x17\x33\xff\x14\xd3\xc7\xe0\xce"
         "\xfb\x5e\x46\xe5\x90\xab\x9d\xa5\x92\xe7")){
@@ -532,7 +532,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e6.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e6.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\xff\x0c\x43\xde\xa2\x4c\x22\xbe\xfc\x98"
         "\x63\xe3\x10\x9e\x7e\x49\x45\x78\x83\x61")){
@@ -542,7 +542,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e7.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e7.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\x92\xe3\x46\x0e\x91\x55\xb1\xca\x80\xad"
         "\x3d\xe5\x09\xb1\x68\xcc\x31\xeb\x75\xa4")){
@@ -555,7 +555,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     BOOST_CHECK(notifier.event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e8.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e8.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\xd4\x6a\x59\xd1\x20\xc1\x50\xac\x40\x52"
         "\xf6\x39\x37\x11\x4d\x2f\x25\x7a\x90\x0f")){
@@ -568,7 +568,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     BOOST_CHECK(notifier.event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e9.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e9.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\x02\x8b\x52\x84\xe0\xd9\x58\x89\xdb\x0f"
         "\x25\x7d\x46\xa5\x62\xb4\x4e\x4b\x5a\x01")){
@@ -581,7 +581,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     BOOST_CHECK(notifier.event == 0);
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
-    //drawable.save_to_png("/tmp/edit-e10.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e10.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\xc4\xd8\x39\x91\xd1\x42\x68\x2f\x65\xec"
         "\x9c\xa7\xad\xf1\x81\xce\x5e\x14\x35\x7a")){
@@ -605,7 +605,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
 
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
 
-    //drawable.save_to_png("/tmp/edit-e10.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit-e10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x56\xad\x48\xb5\xfc\x61\xcc\xad\x3c\xc7"
@@ -647,7 +647,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 
-    //drawable.save_to_png("/tmp/edit9.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit9.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -659,7 +659,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     // ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
-    //drawable.save_to_png("/tmp/edit10.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "edit10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x3f\xcb\x49\xfe\x0f\xe0\xc6\xbc\x53\x0b"

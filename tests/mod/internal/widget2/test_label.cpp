@@ -39,6 +39,9 @@
 # define FIXTURES_PATH
 #endif
 
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -167,7 +170,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -199,7 +202,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel2)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -231,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel3)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -263,7 +266,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel4)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -295,7 +298,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel5)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -327,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabel6)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -359,7 +362,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip)
                                      wlabel.cx(),
                                      wlabel.cy()));
 
-    //drawable.save_to_png("/tmp/label7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -391,7 +394,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelClip2)
                                      30,
                                      10));
 
-    //drawable.save_to_png("/tmp/label8.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "label8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -418,8 +421,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
         virtual void draw(const Rect&)
         {}
 
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
-                            unsigned long, unsigned long)
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
         {
             this->sender = sender;
             this->event = event;
@@ -483,7 +485,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     //ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 
-   //drawable.save_to_png("/tmp/label9.png");
+   //drawable.save_to_png(OUTPUT_FILE_PATH "label9.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -495,7 +497,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     //ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
-   //drawable.save_to_png("/tmp/label10.png");
+   //drawable.save_to_png(OUTPUT_FILE_PATH "label10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x47\x60\x43\x39\x74\x53\x46\x46\xd0\x1a"

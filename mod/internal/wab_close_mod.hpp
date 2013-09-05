@@ -98,8 +98,7 @@ public:
         this->screen.child_list.clear();
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event,
-                        long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2* sender, notify_event_t event)
     {
         if (NOTIFY_CANCEL == event) {
             this->event.signal = BACK_EVENT_STOP;

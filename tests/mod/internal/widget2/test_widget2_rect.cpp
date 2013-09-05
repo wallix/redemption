@@ -35,6 +35,9 @@
 #include "check_sig.hpp"
 #include "callback.hpp"
 
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -129,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
 
     // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
     int color = 0xCCF604; /* BGR */
@@ -142,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -158,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -171,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -187,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -200,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -216,7 +219,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -229,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -245,7 +248,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -258,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -274,7 +277,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -287,7 +290,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -303,7 +306,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -316,7 +319,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
                                     100,
                                     100));
 
-    //drawable.save_to_png("/tmp/rect7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -332,7 +335,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    // Widget2* parent = NULL;
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -345,7 +348,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
                                     50,
                                     50));
 
-    //drawable.save_to_png("/tmp/rect8.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -372,8 +375,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
         virtual void draw(const Rect&)
         {}
 
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
-                            unsigned long, unsigned long)
+        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event)
         {
             this->sender = sender;
             this->event = event;

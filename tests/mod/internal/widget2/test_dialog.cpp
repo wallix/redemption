@@ -38,6 +38,8 @@
 # define FIXTURES_PATH
 #endif
 
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
 
 struct TestDraw : DrawApi
 {
@@ -160,7 +162,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog)
     // ask to widget to redraw at it's current position
     window_dialog.rdp_input_invalidate(window_dialog.rect);
 
-    //drawable.save_to_png("/tmp/window_dialog1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -193,7 +195,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog2)
                                       window_dialog.cx(),
                                       window_dialog.cy()));
 
-    //drawable.save_to_png("/tmp/window_dialog2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -226,7 +228,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog3)
                                       window_dialog.cx(),
                                       window_dialog.cy()));
 
-    //drawable.save_to_png("/tmp/window_dialog3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -259,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog4)
                                       window_dialog.cx(),
                                       window_dialog.cy()));
 
-    //drawable.save_to_png("/tmp/window_dialog4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -292,7 +294,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog5)
                                       window_dialog.cx(),
                                       window_dialog.cy()));
 
-    //drawable.save_to_png("/tmp/window_dialog5.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -325,7 +327,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog6)
                                       window_dialog.cx(),
                                       window_dialog.cy()));
 
-    //drawable.save_to_png("/tmp/window_dialog6.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -358,7 +360,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip)
                                       window_dialog.cx(),
                                       window_dialog.cy()));
 
-    //drawable.save_to_png("/tmp/window_dialog7.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -391,7 +393,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/window_dialog8.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -415,7 +417,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
         , event(0)
         {}
 
-        virtual void notify(Widget2* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
+        virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
             this->event = event;
@@ -433,12 +435,16 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
-    window_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
+
+    x = window_dialog.ok.rect.x + window_dialog.ok.rect.cx / 2 ;
+    y = window_dialog.ok.rect.y + window_dialog.ok.rect.cy / 2 ;
+    window_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, NULL);
+    // window_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
 
     window_dialog.rdp_input_invalidate(window_dialog.rect);
-    //drawable.save_to_png("/tmp/window_dialog-clic-button-ok.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog-clic-1-button-ok.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -447,23 +453,38 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    window_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
-                                     window_dialog.ok.dx(), window_dialog.ok.dy(), NULL);
+    window_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
+    // window_dialog.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+    //                                  window_dialog.ok.dx(), window_dialog.ok.dy(), NULL);
     BOOST_CHECK(notifier.sender == &window_dialog);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
     notifier.sender = 0;
     notifier.event = 0;
-    window_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
+
+    window_dialog.rdp_input_invalidate(window_dialog.rect);
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog-clic-2-button-ok.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xaa\x98\x2f\x17\x76\xa9\xab\x6b\x60\x25"
+                   "\x8e\xd0\x50\xcc\xf1\x66\x66\x6b\x5a\x81"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    x = window_dialog.cancel->rect.x + window_dialog.cancel->rect.cx / 2 ;
+    y = window_dialog.cancel->rect.y + window_dialog.cancel->rect.cy / 2 ;
+    window_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, NULL);
+    // window_dialog.cancel->rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
 
+
     window_dialog.rdp_input_invalidate(window_dialog.rect);
-    //drawable.save_to_png("/tmp/window_dialog-clic-button-cancel.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog-clic-3-button-cancel.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x5c\x1f\xfe\x98\x20\x6d\x2a\x79\x76\x2f\x11\x14\x78\xf4\x3f\x76\x25\x53\xd4\x10"
-        // "\x6c\x65\xdb\xf8\xc7\xbd\xf4\xd5\x08\x5f"
-        // "\xd1\x16\x78\xae\x55\x1c\x79\x94\x99\x20"
+                   "\x62\x0f\xd3\x94\x91\xde\x0a\xd9\xf9\x12"
+                   "\xfd\x57\x4e\x07\x02\xcd\xd0\x40\x48\x86"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

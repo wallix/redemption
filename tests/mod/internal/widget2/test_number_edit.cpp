@@ -39,6 +39,9 @@
 # define FIXTURES_PATH
 #endif
 
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -151,8 +154,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
         : sender(0)
         , event(0)
         {}
-        virtual void notify(Widget2* sender, notify_event_t event,
-                            long unsigned int, long unsigned int)
+        virtual void notify(Widget2* sender, notify_event_t event)
         {
             this->sender = sender;
             this->event = event;
@@ -167,7 +169,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     WidgetNumberEdit wnumber_edit(drawable, x, y, cx, parent, &notifier, "123456", 0, GREEN, RED);
 
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
-    //drawable.save_to_png("/tmp/number_edit-e1.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e1.png");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
         "\x66\xb1\x75\x71\x9c\x6c\x7a\xde\xff\xdd"
@@ -181,7 +183,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     keymap.push('a');
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
-    //drawable.save_to_png("/tmp/number_edit-e2-1.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\x66\xb1\x75\x71\x9c\x6c\x7a\xde\xff\xdd"
         "\x63\x41\x04\x7e\x1a\xf2\x04\xee\x19\x9c")){
@@ -193,7 +195,7 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     keymap.push('2');
     wnumber_edit.rdp_input_scancode(0, 0, 0, 0, &keymap);
     wnumber_edit.rdp_input_invalidate(wnumber_edit.rect);
-    //drawable.save_to_png("/tmp/number_edit-e2-2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "number_edit-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
         "\x27\x63\x8c\xf4\x37\x25\xca\xcd\xa2\x90"
         "\x60\x4e\xaa\x22\xe9\x23\x66\x30\x39\xa3")){
@@ -202,4 +204,3 @@ BOOST_AUTO_TEST_CASE(WidgetNumberEditEventPushChar)
     BOOST_CHECK(notifier.sender == &wnumber_edit);
     BOOST_CHECK(notifier.event == NOTIFY_TEXT_CHANGED);
 }
-
