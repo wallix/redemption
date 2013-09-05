@@ -622,7 +622,7 @@ struct rdp_mppc_dec
     int decompress_rdp_5(uint8_t * cbuf, int len, int ctype, uint32_t * roff,
         uint32_t * rlen)
     {
-        LOG(LOG_INFO, "decompress_rdp_5");
+//        LOG(LOG_INFO, "decompress_rdp_5");
 
         uint8_t  * history_ptr;     /* points to next free slot in bistory_buf    */
         uint32_t   d32;             /* we process 4 compressed uint8_ts at a time */
@@ -2330,7 +2330,7 @@ struct rdp_mppc_enc {
      */
     bool compress_rdp_5(uint8_t * srcData, int len)
     {
-        LOG(LOG_INFO, "compress_rdp_5");
+//        LOG(LOG_INFO, "compress_rdp_5");
 
         int        opb_index    = 0;                    /* index into outputBuffer                        */
         int        bits_left    = 8;                    /* unused bits in current uint8_t in outputBuffer */
