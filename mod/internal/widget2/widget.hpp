@@ -101,11 +101,6 @@ public:
 
     }
 
-    // Widget2 & operator=(Widget2 const&) {}
-    // Widget2 & operator=(Widget2 const&) { return *this; }
-
-    // Widget2 & operator=(Widget2 & w) { return w; }
-
     virtual ~Widget2()
     {}
 
@@ -184,7 +179,11 @@ public:
                         unsigned long param, unsigned long param2)
     {
         (void)widget;
-        this->send_notify(event, param, param2);
+        TODO("Quickfix, events should not be propagated in general");
+        if ((event != NOTIFY_FOCUS_BEGIN) &&
+            (event != NOTIFY_FOCUS_END)) {
+            this->send_notify(event, param, param2);
+        }
     }
 
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
@@ -274,6 +273,15 @@ public:
     int16_t ly() const
     {
         return this->rect.y + this->rect.cy;
+    }
+
+    int16_t centerx() const
+    {
+        return this->rect.x + this->rect.cx / 2;
+    }
+    int16_t centery() const
+    {
+        return this->rect.y + this->rect.cy / 2;
     }
 
     ///Return x position in it's parent

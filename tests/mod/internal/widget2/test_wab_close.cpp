@@ -39,6 +39,10 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
+
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -165,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
     // ask to widget to redraw at it's current position
     window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
-    //drawable.save_to_png("/tmp/window_wab_close.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close.png");
 
     } catch (Error & e) {
         LOG(LOG_INFO, "e=%u", e.id);
@@ -211,7 +215,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
     // ask to widget to redraw at it's current position
     window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
-    //drawable.save_to_png("/tmp/window_wab_close2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -237,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
     // ask to widget to redraw at it's current position
     window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
-    //drawable.save_to_png("/tmp/window_wab_close3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -263,7 +267,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
     // ask to widget to redraw at it's current position
     window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
-    //drawable.save_to_png("/tmp/window_wab_close4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -289,7 +293,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
     // ask to widget to redraw at it's current position
     window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
-    //drawable.save_to_png("/tmp/window_wab_close5.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -315,7 +319,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
     // ask to widget to redraw at it's current position
     window_wab_close.rdp_input_invalidate(window_wab_close.rect);
 
-    //drawable.save_to_png("/tmp/window_wab_close6.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -341,7 +345,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     window_wab_close.rdp_input_invalidate(window_wab_close.rect.offset(20,0));
 
-    //drawable.save_to_png("/tmp/window_wab_close7.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -370,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/window_wab_close8.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
