@@ -38,6 +38,9 @@
 # define FIXTURES_PATH
 #endif
 
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -166,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog)
     wdialog.rdp_input_invalidate(Rect(0, 0, wdialog.cx(), wdialog.cy()));
 
 
-    //drawable.save_to_png("/tmp/dialog.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -204,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog2)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png("/tmp/dialog2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -242,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog3)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png("/tmp/dialog3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -281,7 +284,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog4)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png("/tmp/dialog4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -320,7 +323,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog5)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png("/tmp/dialog5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

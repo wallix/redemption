@@ -37,6 +37,8 @@
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH
 #endif
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
 
 struct TestDraw : DrawApi
 {
@@ -158,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     // ask to widget to redraw
     wtooltip.rdp_input_invalidate(Rect(0, 0, 100, 100));
 
-    drawable.save_to_png("/tmp/tooltip.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "tooltip.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

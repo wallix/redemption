@@ -38,6 +38,8 @@
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH
 #endif
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
 
 struct TestDraw : DrawApi
 {
@@ -173,7 +175,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -211,7 +213,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -249,7 +251,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -287,7 +289,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -325,7 +327,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -363,7 +365,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -401,7 +403,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -439,7 +441,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
                                          30,
                                          10));
 
-    //drawable.save_to_png("/tmp/multiline8.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -475,7 +477,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(wmultiline.rect);
 
-    //drawable.save_to_png("/tmp/multiline9.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline9.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

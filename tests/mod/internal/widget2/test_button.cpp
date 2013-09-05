@@ -39,6 +39,9 @@
 # define FIXTURES_PATH
 #endif
 
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -162,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton)
     wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.cx(), wbutton.cy()));
 
 
-    //drawable.save_to_png("/tmp/button.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -194,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton2)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    //drawable.save_to_png("/tmp/button2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -226,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton3)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    //drawable.save_to_png("/tmp/button3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -258,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton4)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    //drawable.save_to_png("/tmp/button4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -290,7 +293,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton5)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    //drawable.save_to_png("/tmp/button5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -322,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButton6)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    //drawable.save_to_png("/tmp/button6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -354,7 +357,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip)
                                       wbutton.cx(),
                                       wbutton.cy()));
 
-    //drawable.save_to_png("/tmp/button7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -386,7 +389,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/button8.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -415,7 +418,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png("/tmp/button9.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button9.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -427,7 +430,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png("/tmp/button10.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xec\x8d\x4f\x52\xc9\xf1\x5e\x5e\x7c\xd3\x1e\x6c\xd1\xe2\xa3\x55\x03\xf7\x20\x56"
@@ -438,7 +441,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15, NULL);
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png("/tmp/button11.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button11.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xfb\x67\x5f\x09\x35\x9f\xf8\x75\xa7\x33\x8c\x52\x78\xdc\x84\x05\xab\x66\x6c\xdc"
@@ -583,7 +586,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
 
-    //drawable.save_to_png("/tmp/button12.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button12.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -595,7 +598,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     // ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
-    //drawable.save_to_png("/tmp/button13.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button13.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x6b\x18\x4b\x47\x59\xd9\xca\xe7\xe4\xd1"
@@ -626,7 +629,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png("/tmp/button10.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button14.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -638,7 +641,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png("/tmp/button11.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button15.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xd4\x6b\xf5\xb3\x35\x77\xa1\x95\xac\x33\x17\x67\x5e\x0f\x75\x83\x88\x0e\x24\xa7"
@@ -650,7 +653,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png("/tmp/button12.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button16.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\xc5\x83\xfc\x1a\x58\xc0\xc7\xfb\xcd\x10\x54\x90\xf0\xd4\x7d\x4b\x2d\x88\x40\x5f")){
@@ -661,7 +664,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png("/tmp/button13.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "button17.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xd4\x6b\xf5\xb3\x35\x77\xa1\x95\xac\x33\x17\x67\x5e\x0f\x75\x83\x88\x0e\x24\xa7"

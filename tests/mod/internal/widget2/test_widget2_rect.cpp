@@ -35,6 +35,9 @@
 #include "check_sig.hpp"
 #include "callback.hpp"
 
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -142,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -171,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -200,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -229,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -258,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -287,7 +290,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -316,7 +319,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
                                     100,
                                     100));
 
-    //drawable.save_to_png("/tmp/rect7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -345,7 +348,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
                                     50,
                                     50));
 
-    //drawable.save_to_png("/tmp/rect8.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

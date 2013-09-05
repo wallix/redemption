@@ -37,6 +37,8 @@
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH
 #endif
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
 
 struct TestDraw : DrawApi
 {
@@ -165,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox)
     wmsgbox.rdp_input_invalidate(Rect(0, 0, wmsgbox.cx(), wmsgbox.cy()));
 
 
-    //drawable.save_to_png("/tmp/msgbox.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -202,7 +204,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox2)
                                       wmsgbox.cx(),
                                       wmsgbox.cy()));
 
-    //drawable.save_to_png("/tmp/msgbox2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -239,7 +241,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox3)
                                       wmsgbox.cx(),
                                       wmsgbox.cy()));
 
-    //drawable.save_to_png("/tmp/msgbox3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -277,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox4)
                                       wmsgbox.cx(),
                                       wmsgbox.cy()));
 
-    //drawable.save_to_png("/tmp/msgbox4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -315,7 +317,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox5)
                                       wmsgbox.cx(),
                                       wmsgbox.cy()));
 
-    //drawable.save_to_png("/tmp/msgbox5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -352,7 +354,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBox6)
                                       wmsgbox.cx(),
                                       wmsgbox.cy()));
 
-    //drawable.save_to_png("/tmp/msgbox6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -389,7 +391,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip)
                                       wmsgbox.cx(),
                                       wmsgbox.cy()));
 
-    //drawable.save_to_png("/tmp/msgbox7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -426,7 +428,7 @@ BOOST_AUTO_TEST_CASE(TraceMessageBoxClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/msgbox8.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -484,3 +486,58 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 }
 
+
+BOOST_AUTO_TEST_CASE(TraceMessageBoxOk)
+{
+    TestDraw drawable(800, 600);
+
+    // MessageBox is a msgbox widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    NotifyApi * notifier = NULL;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int id = 0;
+    int16_t x = 0;
+    int16_t y = 0;
+
+    MessageBox wmsgbox(drawable, x, y, parent, notifier, "test1",
+                         "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
+                         "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
+                         "Nam non magna sit amet dui vestibulum feugiat.<br>"
+                         "Praesent vitae purus et lacus tincidunt lobortis.<br>"
+                         "Nam lacinia purus luctus ante congue facilisis.<br>"
+                         "Donec sodales mauris luctus ante ultrices blandit.",
+                         id, "Ok", fg_color, bg_color);
+
+    x = wmsgbox.ok.centerx();
+    y = wmsgbox.ok.centery();
+
+    wmsgbox.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, NULL);
+    // ask to widget to redraw at it's current position
+    wmsgbox.rdp_input_invalidate(Rect(0, 0, wmsgbox.cx(), wmsgbox.cy()));
+
+
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox9.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x9e\x1c\x81\x45\xa8\x6d\x0c\x32\x07\xd6"
+                   "\x79\x8a\xf5\x3a\xc7\x09\x1a\xcc\x4d\x56"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wmsgbox.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
+    // ask to widget to redraw at it's current position
+    wmsgbox.rdp_input_invalidate(Rect(0, 0, wmsgbox.cx(), wmsgbox.cy()));
+
+
+    //drawable.save_to_png(OUTPUT_FILE_PATH "msgbox10.png");
+
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xa4\x62\x26\x93\x4d\x17\x15\x38\xa4\x29"
+                   "\xe8\x8b\x24\xce\xab\x09\x40\xa8\x56\xc5")){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
