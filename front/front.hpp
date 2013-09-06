@@ -2095,6 +2095,8 @@ public:
                         uint32_t share_id = sctrl.payload.in_uint32_le();
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
+(void)share_id;
+(void)originatorId;
                     }
                     if (!sctrl.payload.check_end()){
                         LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
@@ -2397,6 +2399,8 @@ public:
                                 uint32_t share_id = sctrl.payload.in_uint32_le();
                                 uint16_t originatorId = sctrl.payload.in_uint16_le();
                                 this->process_confirm_active(sctrl.payload);
+(void)share_id;
+(void)originatorId;
                             }
                             // reset caches, etc.
                             this->reset();

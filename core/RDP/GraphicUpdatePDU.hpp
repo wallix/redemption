@@ -275,8 +275,9 @@ protected:
 
                     HStream compressed_buffer_stream_orders(1024, 65565);
 
-                    compress_rdp( this->mppc_enc, this->buffer_stream_orders.get_data()
-                                , this->buffer_stream_orders.size());
+                    this->mppc_enc->compress_rdp(
+                        this->buffer_stream_orders.get_data(),
+                        this->buffer_stream_orders.size());
 
                     uint16_t datalen          =   (this->mppc_enc->flags & PACKET_COMPRESSED)
                                                 ? this->mppc_enc->bytes_in_opb : 0;
@@ -373,8 +374,9 @@ protected:
                 else {
                     HStream compressed_buffer_stream_orders(1024, 65565);
 
-                    compress_rdp( this->mppc_enc, this->buffer_stream_orders.get_data()
-                                , this->buffer_stream_orders.size());
+                    this->mppc_enc->compress_rdp(
+                        this->buffer_stream_orders.get_data(),
+                        this->buffer_stream_orders.size());
 
                     if (!(this->mppc_enc->flags & PACKET_COMPRESSED)) {
                         header_size = FastPath::Update_Send::GetSize(0);
@@ -518,8 +520,9 @@ protected:
                 else {
                     HStream compressed_buffer_stream_bitmaps(1024, 65565);
 
-                    compress_rdp( this->mppc_enc, this->buffer_stream_bitmaps.get_data()
-                                , this->buffer_stream_bitmaps.size());
+                    this->mppc_enc->compress_rdp(
+                        this->buffer_stream_bitmaps.get_data(),
+                        this->buffer_stream_bitmaps.size());
 
                     if (!(this->mppc_enc->flags & PACKET_COMPRESSED)) {
                         header_size = FastPath::Update_Send::GetSize(0);

@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestMPPC
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include <stdint.h>
@@ -51,13 +51,13 @@ BOOST_AUTO_TEST_CASE(TestMPPC)
     gettimeofday(&start_time, NULL);
 
     for (int x = 0; x < 1000 ; x++){
-        struct rdp_mppc_dec* rmppc = mppc_dec_new();
+        struct rdp_mppc_dec* rmppc = new rdp_mppc_dec();
 
         /* uncompress data */
-        BOOST_CHECK_EQUAL(true, decompress_rdp_5(rmppc, compressed_rd5, sizeof(compressed_rd5), PACKET_COMPRESSED, &roff, &rlen));
+        BOOST_CHECK_EQUAL(true, rmppc->decompress_rdp_5(compressed_rd5, sizeof(compressed_rd5), PACKET_COMPRESSED, &roff, &rlen));
 
         BOOST_CHECK_EQUAL(0, memcmp(decompressed_rd5, rmppc->history_buf, sizeof(decompressed_rd5)));
-        mppc_dec_free(rmppc);
+        delete rmppc;
     }
 
     /* get end time */
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     struct timeval end_time;
 
     /* setup decoder */
-    struct rdp_mppc_dec* rmppc = mppc_dec_new();
+    struct rdp_mppc_dec * rmppc = new rdp_mppc_dec();
 
     /* setup encoder for RDP 5.0 */
     struct rdp_mppc_enc * enc = new rdp_mppc_enc(PROTO_RDP_50);
@@ -94,11 +94,11 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     /* save starting time */
     gettimeofday(&start_time, NULL);
 
-    BOOST_CHECK_EQUAL(true, compress_rdp(enc, decompressed_rd5_data, data_len));
+    BOOST_CHECK_EQUAL(true, enc->compress_rdp(decompressed_rd5_data, data_len));
 
     BOOST_CHECK(0 != (enc->flags & PACKET_COMPRESSED));
     BOOST_CHECK_EQUAL(true,
-        decompress_rdp_5(rmppc, (uint8_t*)enc->outputBuffer, enc->bytes_in_opb, enc->flags, &roff, &rlen));
+        rmppc->decompress_rdp_5((uint8_t*)enc->outputBuffer, enc->bytes_in_opb, enc->flags, &roff, &rlen));
     BOOST_CHECK_EQUAL(data_len, rlen);
     BOOST_CHECK_EQUAL(0, memcmp(decompressed_rd5_data, &rmppc->history_buf[roff], rlen));
 
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     LOG(LOG_INFO, "test_mppc_enc: compressed %d bytes in %f seconds\n", data_len, (float) (dur) / 1000000.0F);
 
     delete enc;
-    mppc_dec_free(rmppc);
+    delete rmppc;
 }
 
 BOOST_AUTO_TEST_CASE(TestBitsSerializer)
@@ -118,22 +118,22 @@ BOOST_AUTO_TEST_CASE(TestBitsSerializer)
     char outputBuffer[256] ={};
     int bits_left = 8;
     int opb_index = 0;
-    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    rdp_mppc_enc::insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(6, bits_left);
     BOOST_CHECK_EQUAL(0, opb_index);
     BOOST_CHECK_EQUAL(192, outputBuffer[0] & 0xFF);
 
-    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    rdp_mppc_enc::insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(4, bits_left);
     BOOST_CHECK_EQUAL(0, opb_index);
     BOOST_CHECK_EQUAL(0xF0, outputBuffer[0] & 0xFF);
 
-    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    rdp_mppc_enc::insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(2, bits_left);
     BOOST_CHECK_EQUAL(0, opb_index);
     BOOST_CHECK_EQUAL(0xFc, outputBuffer[0] & 0xFF);
 
-    insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
+    rdp_mppc_enc::insert_n_bits(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(8, bits_left);
     BOOST_CHECK_EQUAL(1, opb_index);
     BOOST_CHECK_EQUAL(0xFF, outputBuffer[0] & 0xFF);
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
     memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
 
 
-    compress_rdp(mppc_enc, uncompressed_data, sizeof(uncompressed_data));
+    mppc_enc->compress_rdp(uncompressed_data, sizeof(uncompressed_data));
 
     int flags = PACKET_COMPRESSED;
 
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
     memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
 
 
-    compress_rdp(mppc_enc, uncompressed_data, sizeof(uncompressed_data));
+    mppc_enc->compress_rdp(uncompressed_data, sizeof(uncompressed_data));
 
     int flags = PACKET_COMPRESSED;
 
