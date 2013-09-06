@@ -40,6 +40,7 @@ public:
     int border_top_left_color;
     int border_right_bottom_color;
     int border_right_bottom_color_inner;
+    bool drawall;
 
     WidgetEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                Widget2 & parent, NotifyApi* notifier, const char * text,
@@ -53,6 +54,7 @@ public:
     , border_top_left_color(0x444444)
     , border_right_bottom_color(0xEEEEEE)
     , border_right_bottom_color_inner(0x888888)
+    , drawall(false)
     {
         if (text) {
             this->buffer_size = strlen(text);
@@ -78,7 +80,7 @@ public:
             this->cursor_px_pos = 0;
         }
 
-        int w;
+        int w = 0;
         this->drawable.text_metrics("Lp", w, this->h_text);
         this->rect.cy = this->h_text + this->label.y_text * 2;
         this->label.rect.cx = this->rect.cx;
@@ -213,6 +215,10 @@ public:
         this->cursor_px_pos += w;
         this->label.buffer[this->edit_buffer_pos + n] = c;
         this->edit_buffer_pos += n;
+
+        if (this->label.shift_text(this->cursor_px_pos)) {
+            this->drawall = true;
+        }
     }
 
     size_t utf8len_current_char()
@@ -240,12 +246,22 @@ public:
         this->cursor_px_pos -= w;
         this->label.buffer[this->edit_buffer_pos] = c;
         this->edit_buffer_pos -= len;
+
+        if (this->label.shift_text(this->cursor_px_pos)) {
+            this->drawall = true;
+        }
     }
 
     void update_draw_cursor(Rect old_cursor)
     {
         this->drawable.begin_update();
-        this->label.draw(old_cursor);
+        if (this->drawall) {
+            this->drawall = false;
+            this->label.draw(this->rect);
+        }
+        else {
+            this->label.draw(old_cursor);
+        }
         this->draw_cursor(this->get_cursor_rect());
         this->drawable.end_update();
     }
@@ -256,6 +272,11 @@ public:
         this->edit_pos = this->num_chars;
         this->edit_buffer_pos = this->buffer_size;
         this->cursor_px_pos = this->w_text;
+
+        if (this->label.shift_text(this->cursor_px_pos)) {
+            this->drawall = true;
+        }
+
         this->update_draw_cursor(old_cursor_rect);
     }
 
@@ -265,6 +286,11 @@ public:
         this->edit_pos = 0;
         this->edit_buffer_pos = 0;
         this->cursor_px_pos = 0;
+
+        if (this->label.shift_text(this->cursor_px_pos)) {
+            this->drawall = true;
+        }
+
         this->update_draw_cursor(old_cursor_rect);
     }
 

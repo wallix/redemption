@@ -36,6 +36,9 @@ public:
     int fg_color;
     bool auto_resize;
 
+    int w_border;
+    int h_border;
+
 public:
     WidgetLabel(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
                 NotifyApi* notifier, const char * text, bool auto_resize = true,
@@ -47,6 +50,8 @@ public:
     , bg_color(bgcolor)
     , fg_color(fgcolor)
     , auto_resize(auto_resize)
+    , w_border(x_text)
+    , h_border(y_text)
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
@@ -91,6 +96,20 @@ public:
                                         this->bg_color,
                                         this->rect.intersect(clip)
                                         );
+    }
+
+    bool shift_text(int pos_x) {
+        bool res = true;
+        if (pos_x + this->x_text > this->cx() - this->w_border) {
+            this->x_text = this->cx() - pos_x - this->w_border;
+        }
+        else if (pos_x + this->x_text < this->w_border) {
+            this->x_text = this->w_border - pos_x;
+        }
+        else {
+            res = false;
+        }
+        return res;
     }
 
 };

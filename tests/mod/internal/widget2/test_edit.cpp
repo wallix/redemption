@@ -668,4 +668,3 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     }
     wcomposite.child_list.clear();
 }
-
