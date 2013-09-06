@@ -27,7 +27,7 @@
 #define BOOST_TEST_MODULE TestMPPC
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include <stdint.h>

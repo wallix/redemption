@@ -542,6 +542,8 @@ struct mod_rdp_transparent : public mod_api {
 
                                     uint32_t   cert_len = sc_sec1.x509.cert[certcount - 1].len;
                                     X509     * cert     = sc_sec1.x509.cert[certcount - 1].cert;
+(void)cert_len;
+(void)cert;
 
                                     TODO("CGR: Currently, we don't use the CA Certificate, we should"
                                          "*) Verify the server certificate (server_cert) with the CA certificate."
@@ -1330,6 +1332,7 @@ LOG(LOG_INFO, "mod_rdp_transparent::draw_event: Licensing sec.flags & SEC::SEC_L
                                 this->process_server_caps( sctrl.payload
                                                          , lengthCombinedCapabilities);
                                 uint32_t sessionId = sctrl.payload.in_uint32_le();
+(void)sessionId;
 
                                 this->send_confirm_active(this);
                                 this->send_synchronise();
