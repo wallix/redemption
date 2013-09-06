@@ -257,12 +257,12 @@ public:
         this->drawable.begin_update();
         if (this->drawall) {
             this->drawall = false;
-            this->label.draw(this->rect);
+            this->draw(this->rect);
         }
         else {
             this->label.draw(old_cursor);
+            this->draw_cursor(this->get_cursor_rect());
         }
-        this->draw_cursor(this->get_cursor_rect());
         this->drawable.end_update();
     }
 
@@ -366,20 +366,16 @@ public:
                     if (this->edit_pos > 0) {
                         this->num_chars--;
                         size_t pxtmp = this->cursor_px_pos;
-                        Rect crect = this->get_cursor_rect();
                         size_t ebpos = this->edit_buffer_pos;
                         this->decrement_edit_pos();
                         UTF8RemoveOneAtPos(reinterpret_cast<uint8_t *>(this->label.buffer + this->edit_buffer_pos), 0);
                         this->buffer_size += this->edit_buffer_pos - ebpos;
                         this->drawable.begin_update();
-                        this->drawable.draw(RDPOpaqueRect(crect, 0x888888), this->rect);
-                        this->draw_cursor(this->get_cursor_rect());
-                        this->label.draw(Rect(
-                            this->dx() + this->cursor_px_pos + this->label.x_text + 3,
-                            this->dy() + this->label.y_text + 1,
-                            this->w_text - this->cursor_px_pos,
-                            this->h_text
-                        ));
+                        this->draw(Rect(this->dx() + this->cursor_px_pos + this->label.x_text,
+                                        this->dy() + this->label.y_text + 1,
+                                        this->w_text - this->cursor_px_pos + 3,
+                                        this->h_text
+                                        ));
                         this->drawable.end_update();
                         this->w_text -= pxtmp - this->cursor_px_pos;
                     }
@@ -397,12 +393,11 @@ public:
                         this->buffer_size -= len;
                         this->num_chars--;
                         this->drawable.begin_update();
-                        this->label.draw(Rect(
-                            this->dx() + this->cursor_px_pos + this->label.x_text + 3,
-                            this->dy() + this->label.y_text + 1,
-                            this->w_text - this->cursor_px_pos,
-                            this->h_text
-                        ));
+                        this->draw(Rect(this->dx() + this->cursor_px_pos + this->label.x_text,
+                                        this->dy() + this->label.y_text + 1,
+                                        this->w_text - this->cursor_px_pos + 3,
+                                        this->h_text
+                                        ));
                         this->draw_cursor(this->get_cursor_rect());
                         this->drawable.end_update();
                         this->w_text -= w;

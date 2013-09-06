@@ -100,8 +100,8 @@ public:
 
     bool shift_text(int pos_x) {
         bool res = true;
-        if (pos_x + this->x_text > this->cx() - this->w_border) {
-            this->x_text = this->cx() - pos_x - this->w_border;
+        if (pos_x + this->x_text > this->cx() - 4) {
+            this->x_text = this->cx() - pos_x - 4;
         }
         else if (pos_x + this->x_text < this->w_border) {
             this->x_text = this->w_border - pos_x;
