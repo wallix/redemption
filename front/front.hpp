@@ -400,6 +400,11 @@ public:
 
 //                        this->draw(cmd);
                         this->orders->draw(cmd);
+
+                        if (  this->capture
+                           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                            this->capture->draw(cmd);
+                        }
                     }
                     break;
                     default:
@@ -4173,6 +4178,11 @@ public:
                             cmd.glyphData_aj);
 
             this->orders->draw(cmd2);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                this->capture->draw(cmd2);
+            }
         }
     }
 

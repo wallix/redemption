@@ -1672,6 +1672,32 @@ public:
             }
         }
     }
+
+    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
+        : original_bpp(bpp)
+        , cx(align4(cx))
+        , cy(cy)
+        , line_size(this->cx * nbbytes(this->original_bpp))
+        , bmp_size(this->line_size * cy)
+        , data_bitmap()
+        , data_compressed(NULL)
+        , data_compressed_size(0)
+    {
+        this->data_bitmap.alloc(this->bmp_size);
+//        LOG(LOG_ERR, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
+        if (bpp == 8){
+            if (palette){
+                memcpy(&this->original_palette, palette, sizeof(BGRPalette));
+            }
+            else {
+                init_palette332(this->original_palette);
+            }
+        }
+
+        if (this->cx <= 0 || this->cy <= 0){
+            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u bpp=%u", this->cx, this->cy, this->original_bpp);
+        }
+    }
 };
 
 #endif

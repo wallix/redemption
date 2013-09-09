@@ -114,7 +114,7 @@ struct GlyphCache {
         return GLYPH_ADDED_TO_CACHE;
     }
 
-    void set_glyph(RDPGlyphCache & cmd)
+    void set_glyph(const RDPGlyphCache & cmd)
     {
         this->char_stamp++;
 
@@ -126,6 +126,7 @@ struct GlyphCache {
             cmd.glyphData_cx, cmd.glyphData_cy, -1);
         memcpy(fi->data, cmd.glyphData_aj, fi->datasize());
         this->char_items[cmd.cacheId][cmd.glyphData_cacheIndex].font_item = fi;
+        this->char_items[cmd.cacheId][cmd.glyphData_cacheIndex].stamp     = this->char_stamp;
     }
 
     int find_glyph(FontChar * font_item, int cacheid)
