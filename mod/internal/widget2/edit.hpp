@@ -71,8 +71,6 @@ public:
             this->drawable.text_metrics(&this->label.buffer[this->edit_buffer_pos], w, h);
             this->w_text += w;
         } else {
-            // this->drawable.text_metrics("abc", this->w_text, this->h_text);
-            // LOG(LOG_INFO, "LOGIN_EDIT::constructor() w_text: %u, h_text: %u", this->w_text, this->h_text);
             this->buffer_size = 0;
             this->num_chars = 0;
             this->edit_buffer_pos = 0;
@@ -95,7 +93,7 @@ public:
     virtual ~WidgetEdit()
     {}
 
-    void set_text(const char * text/*, int position = 0*/)
+    virtual void set_text(const char * text/*, int position = 0*/)
     {
         this->label.buffer[0] = 0;
         this->buffer_size = 0;
@@ -124,25 +122,25 @@ public:
         return this->label.get_text();
     }
 
-    void set_edit_x(int x)
+    virtual void set_edit_x(int x)
     {
         this->rect.x = x;
         this->label.rect.x = x + 1;
     }
 
-    void set_edit_y(int y)
+    virtual void set_edit_y(int y)
     {
         this->rect.y = y;
         this->label.rect.y = y + 1;
     }
 
-    void set_edit_cx(int w)
+    virtual void set_edit_cx(int w)
     {
         this->rect.cx = w;
         this->label.rect.cx = w - 2;
     }
 
-    void set_edit_cy(int h)
+    virtual void set_edit_cy(int h)
     {
         this->rect.cy = h;
         this->label.rect.cy = h - 2;
@@ -189,7 +187,7 @@ public:
         )), this->border_right_bottom_color_inner), this->rect);
     }
 
-    Rect get_cursor_rect() const
+    virtual Rect get_cursor_rect() const
     {
         return Rect(this->label.x_text + this->cursor_px_pos + this->label.dx() + 1,
                     this->label.y_text + this->label.dy(),
@@ -252,7 +250,7 @@ public:
         }
     }
 
-    void update_draw_cursor(Rect old_cursor)
+    virtual void update_draw_cursor(Rect old_cursor)
     {
         this->drawable.begin_update();
         if (this->drawall) {
