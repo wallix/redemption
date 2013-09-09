@@ -172,6 +172,11 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPGlyphCache & cmd)
+    {
+        this->recorder.draw(cmd);
+    }
+
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         this->recorder.draw(cmd, clip, gly_cache);

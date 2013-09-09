@@ -481,6 +481,12 @@ public:
         this->RDPSerializer::draw(cmd, clip);
     }
 
+    virtual void draw(const RDPGlyphCache & cmd)
+    {
+        this->drawable.draw(cmd);
+        this->RDPSerializer::draw(cmd);
+    }
+
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         this->drawable.draw(cmd, clip, gly_cache);
