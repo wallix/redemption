@@ -339,7 +339,8 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (keymap->nb_kevent_available() > 0){
+        while (keymap->nb_kevent_available() > 0){
+            uint32_t nb_kevent = keymap->nb_kevent_available();
             switch (keymap->top_kevent()){
                 case Keymap2::KEVENT_LEFT_ARROW:
                 case Keymap2::KEVENT_UP_ARROW:
@@ -431,7 +432,10 @@ public:
                             this->h_text
                         ));
                     }
-                    keymap->get_kevent();
+                    else {
+                        // No need to get_event if get_char has been called already
+                        keymap->get_kevent();
+                    }
                     break;
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
@@ -440,6 +444,10 @@ public:
                 default:
                     Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
                     break;
+            }
+            if (nb_kevent == keymap->nb_kevent_available()) {
+                // avoid infinite loop if the kevent is not consummed
+                keymap->get_kevent();
             }
         }
     }

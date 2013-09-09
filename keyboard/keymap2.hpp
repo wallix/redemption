@@ -91,7 +91,7 @@ struct Keymap2
          , LEFT_ALT    = 0x38
          , RIGHT_ALT   = 0xB8
     };
-    
+
     TODO("we should be able to unify unicode support and events. Idea would be to attribute codes 0xFFFFxxxx on 32 bits for events."
          " These are outside unicode range. It would enable to use only one keycode stack instead of two and it's more similar"
          " to the way X11 manage inputs (hence easier to unify with keymapSym)")
@@ -233,8 +233,8 @@ struct Keymap2
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
-        
-        if (is_ctrl_pressed() && is_alt_pressed() 
+
+        if (is_ctrl_pressed() && is_alt_pressed()
         && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
             //    Delete                           65535     0xffff
             extendedKeyCode = 211; // SUPPR
@@ -518,19 +518,30 @@ struct Keymap2
                             }
 
                             // Test if the extendedKeyCode is a deadkey in the current keyboard layout
+                            bool check_extendedkey = true;
                             for (int i=0; i < keylayout_WORK->nbDeadkeys; i++) {
                                 if (   (keylayout_WORK->deadkeys[i].uchar == uchar)
                                    and (keylayout_WORK->deadkeys[i].extendedKeyCode == extendedKeyCode)
                                    )
                                 {
-                                    this->deadkey = DEADKEY_FOUND;
-                                    // set the deadkey definition pointer with the current deadkey definition
-                                    this->deadkey_pending_def = keylayout_WORK->deadkeys[i];
+                                    if (this->deadkey == DEADKEY_FOUND) {
+                                        check_extendedkey = false;
+                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(this->deadkey_pending_def.uchar); }
+                                        this->push(this->deadkey_pending_def.uchar);
+                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(uchar); }
+                                        this->push(uchar);
+                                        this->deadkey = DEADKEY_NONE;
+                                    }
+                                    else {
+                                        this->deadkey = DEADKEY_FOUND;
+                                        // set the deadkey definition pointer with the current deadkey definition
+                                        this->deadkey_pending_def = keylayout_WORK->deadkeys[i];
+                                    }
                                     break;
                                 }
                             }
 
-                            if (this->deadkey == DEADKEY_NONE) {
+                            if (check_extendedkey) {
                                 switch (extendedKeyCode){
                                 // ESCAPE
                                 case 0x01:
@@ -587,8 +598,14 @@ struct Keymap2
                                     break;
                                 // backspace
                                 case 0x0E:
-                                    if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0008); }
-                                    this->push_kevent(KEVENT_BACKSPACE);
+                                    // Windows(c) behavior for backspace following a Deadkey
+                                    if (this->deadkey == DEADKEY_NONE) {
+                                        if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x0008); }
+                                        this->push_kevent(KEVENT_BACKSPACE);
+                                    }
+                                    else {
+                                        this->deadkey = DEADKEY_NONE;
+                                    }
                                     break;
                                 case 0xD3: // delete
                                     if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
