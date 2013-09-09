@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
-        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip, const GlyphCache * gly_cache)
         {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");

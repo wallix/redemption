@@ -62,6 +62,8 @@ struct rdp_orders {
     TODO("CGR: this cache_bitmap here looks strange. At least it's size should be negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
     const Bitmap * cache_bitmap[3][10000];
 
+    GlyphCache gly_cache;
+
     uint32_t verbose;
 
     size_t recv_bmp_cache_count;
@@ -153,6 +155,7 @@ public:
         memcpy(fi.data, data, fi.datasize());
 
         RDPGlyphCache cmd(font, 1, character, fi.offset, fi.baseline, fi.width, fi.height, fi.data);
+        this->gly_cache.set_glyph(cmd);
         mod->draw(cmd);
     }
 
@@ -260,7 +263,7 @@ public:
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
-                    mod->draw(this->glyph_index, cmd_clip);
+                    mod->draw(this->glyph_index, cmd_clip, &this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);

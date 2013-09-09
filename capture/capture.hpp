@@ -283,7 +283,8 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+        const GlyphCache * gly_cache) {}
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {

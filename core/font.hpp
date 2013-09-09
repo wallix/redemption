@@ -77,16 +77,31 @@ struct FontChar
 
     /* compare the two font items returns 1 if they match */
     //==============================================================================
-    int item_compare(struct FontChar* glyph)
+    int item_compare(struct FontChar * glyph, bool ignore_incby = false)
     //==============================================================================
     {
-        return glyph
+        bool result =
+               glyph
             && (this->offset == glyph->offset)
             && (this->baseline == glyph->baseline)
             && (this->width == glyph->width)
             && (this->height == glyph->height)
-            && (this->incby == glyph->incby)
+            && (!ignore_incby || (this->incby == glyph->incby))
             && (0 == memcmp(this->data, glyph->data, glyph->datasize()));
+
+        if (result && !ignore_incby)
+        {
+            if ((this->incby < 0) && (glyph->incby >= 0))
+            {
+                this->incby = glyph->incby;
+            }
+            else if ((this->incby >= 0) && (glyph->incby < 0))
+            {
+                glyph->incby = this->incby;
+            }
+        }
+
+        return result;
     }
 
 }; // END STRUCT - FontChar

@@ -80,7 +80,7 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPGlyphIndex&, const Rect&)
+    virtual void draw(const RDPGlyphIndex&, const Rect&, const GlyphCache * gly_cache)
     {
         BOOST_CHECK(false);
     }
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
             BOOST_CHECK(false);
         }
 
-        virtual void draw(const RDPGlyphIndex&, const Rect&)
+        virtual void draw(const RDPGlyphIndex&, const Rect&, const GlyphCache * gly_cache)
         {
             BOOST_CHECK(false);
         }

@@ -230,7 +230,7 @@ public:
         }
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {}
     virtual void draw(const RDPBrushCache & cmd) {}
     virtual void draw(const RDPColCache & cmd) {}
     virtual void draw(const RDPGlyphCache & cmd) {}

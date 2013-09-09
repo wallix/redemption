@@ -172,9 +172,9 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
-        this->recorder.draw(cmd, clip);
+        this->recorder.draw(cmd, clip, gly_cache);
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
