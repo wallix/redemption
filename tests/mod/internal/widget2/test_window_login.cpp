@@ -41,8 +41,7 @@
 #include "check_sig.hpp"
 
 #undef OUTPUT_FILE_PATH
-// #define OUTPUT_FILE_PATH "/tmp/"
-#define OUTPUT_FILE_PATH "/home/mtan/work/tmp/testwidget/"
+#define OUTPUT_FILE_PATH "/tmp/"
 
 
 struct TestDraw : DrawApi
@@ -162,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
     // ask to widget to redraw at it's current position
     window_login.rdp_input_invalidate(window_login.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -190,7 +189,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -218,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin3)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -246,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin4)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -274,7 +273,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin5)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login5.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -302,7 +301,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin6)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login6.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -330,7 +329,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip)
                                       window_login.cx(),
                                       window_login.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login7.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -358,7 +357,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLoginClip2)
                                       30,
                                       10));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login8.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -430,7 +429,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help.png");
 
     TODO("change signatures once brush orders are supported by PatBlt");
     char message[1024];
@@ -449,7 +448,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     // window_login.window_help->button_close.send_notify(NOTIFY_CANCEL);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x65\xd1\xcc\xa7\x72\xdc\xd0\xf1\xe4\x75\xea\xd0\x44\x03\xa0\x36\xb1\x12\x07\x39"
