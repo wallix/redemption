@@ -4108,7 +4108,7 @@ public:
                         {
                             if (new_cmd.data[++i] == 0x80)
                             {
-                                i += 2;
+                                i += 3;
                             }
                             else
                             {
@@ -4118,23 +4118,8 @@ public:
                     }
                     else if (new_cmd.data[i] == 0xFE)
                     {
-//                      LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[++i]);
-                        FontChar * fc = gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item;
-                        REDASSERT(fc);
-                        int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
-                        new_cmd.data[i] = static_cast<uint8_t>(g_idx);
-                        REDASSERT(g_idx >= 0);
-                        if (has_delta_byte)
-                        {
-                            if (new_cmd.data[++i] == 0x80)
-                            {
-                                i += 2;
-                            }
-                            else
-                            {
-                                i++;
-                            }
-                        }
+                        LOG(LOG_INFO, "Front::draw(RDPGlyphIndex, ...): Unsupported data");
+                        throw Error(ERR_RDP_UNSUPPORTED);
                     }
                     else if (new_cmd.data[i] == 0xFF)
                     {
