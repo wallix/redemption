@@ -105,10 +105,42 @@ struct GlyphCache {
 
         FontChar * fi = new FontChar(font_item->offset, font_item->baseline, font_item->width, font_item->height, font_item->incby);
         memcpy(fi->data, font_item->data, font_item->datasize());
+        if (this->char_items[cacheid][c].font_item) {
+            delete this->char_items[cacheid][c].font_item;
+        }
         this->char_items[cacheid][c].font_item = fi;
         this->char_items[cacheid][c].stamp = this->char_stamp;
         cacheidx = c;
         return GLYPH_ADDED_TO_CACHE;
+    }
+
+    void set_glyph(const RDPGlyphCache & cmd)
+    {
+        this->char_stamp++;
+
+        if (this->char_items[cmd.cacheId][cmd.glyphData_cacheIndex].font_item) {
+            delete this->char_items[cmd.cacheId][cmd.glyphData_cacheIndex].font_item;
+        }
+
+        FontChar * fi = new FontChar(cmd.glyphData_x, cmd.glyphData_y,
+            cmd.glyphData_cx, cmd.glyphData_cy, -1);
+        memcpy(fi->data, cmd.glyphData_aj, fi->datasize());
+        this->char_items[cmd.cacheId][cmd.glyphData_cacheIndex].font_item = fi;
+        this->char_items[cmd.cacheId][cmd.glyphData_cacheIndex].stamp     = this->char_stamp;
+    }
+
+    int find_glyph(FontChar * font_item, int cacheid)
+    {
+        /* look for match */
+        for (size_t j = 0; j < 250; j++) {
+            if (this->char_items[cacheid][j].font_item) {
+                if (this->char_items[cacheid][j].font_item->item_compare(font_item)) {
+                    return static_cast<int>(j);
+                }
+            }
+        }
+
+        return -1;
     }
 };
 

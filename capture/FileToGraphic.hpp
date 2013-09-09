@@ -63,6 +63,7 @@ struct FileToGraphic
 
     BmpCache     * bmp_cache;
     PointerCache   ptr_cache;
+    GlyphCache     gly_cache;
 
     // variables used to read batch of orders "chunks"
     uint32_t chunk_size;
@@ -308,7 +309,7 @@ struct FileToGraphic
                 case RDP::GLYPHINDEX:
                     this->glyphindex.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->glyphindex, clip);
+                        this->consumers[i]->draw(this->glyphindex, clip, &this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:

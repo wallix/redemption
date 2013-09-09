@@ -398,7 +398,13 @@ public:
                             font_item->height,
                             font_item->data);
 
-                        this->draw(cmd);
+//                        this->draw(cmd);
+                        this->orders->draw(cmd);
+
+                        if (  this->capture
+                           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                            this->capture->draw(cmd);
+                        }
                     }
                     break;
                     default:
@@ -432,7 +438,7 @@ public:
                 data // data
             );
 
-            this->draw(glyphindex, clip);
+            this->draw(glyphindex, clip, NULL);
 
             x += total_width;
         }
@@ -4072,7 +4078,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
             this->send_global_palette();
@@ -4085,24 +4091,84 @@ public:
                 new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
             }
 
+            if (gly_cache)
+            {
+                bool has_delta_byte = (!new_cmd.ui_charinc && !(new_cmd.fl_accel & 0x20/*SO_CHAR_INC_EQUAL_BM_BASE*/));
+                for (uint8_t i = 0; i < new_cmd.data_len;)
+                {
+                    if (new_cmd.data[i] <= 0xFD)
+                    {
+//                      LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
+                        FontChar * fc = gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item;
+                        REDASSERT(fc);
+                        int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
+                        REDASSERT(g_idx >= 0);
+                        new_cmd.data[i] = static_cast<uint8_t>(g_idx);
+                        if (has_delta_byte)
+                        {
+                            if (new_cmd.data[++i] == 0x80)
+                            {
+                                i += 3;
+                            }
+                            else
+                            {
+                                i++;
+                            }
+                        }
+                    }
+                    else if (new_cmd.data[i] == 0xFE)
+                    {
+                        LOG(LOG_INFO, "Front::draw(RDPGlyphIndex, ...): Unsupported data");
+                        throw Error(ERR_RDP_UNSUPPORTED);
+                    }
+                    else if (new_cmd.data[i] == 0xFF)
+                    {
+                        i += 3;
+                        REDASSERT(i == new_cmd.data_len);
+                    }
+                }
+            }
+
             // this may change the brush and send it to to remote cache
             this->cache_brush(new_cmd.brush);
 
-            this->orders->draw(new_cmd, clip);
+            this->orders->draw(new_cmd, clip, gly_cache);
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
                 RDPGlyphIndex new_cmd24 = cmd;
                 new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
                 new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(new_cmd24, clip, gly_cache);
             }
         }
     }
 
     void draw(const RDPGlyphCache & cmd)
     {
-        this->orders->draw(cmd);
+        FontChar font_item(cmd.glyphData_x, cmd.glyphData_y,
+            cmd.glyphData_cx, cmd.glyphData_cy, -1);
+        memcpy(font_item.data, cmd.glyphData_aj, font_item.datasize());
+
+        int cacheidx = 0;
+
+        if (this->glyph_cache.add_glyph(&font_item, cmd.cacheId, cacheidx) ==
+            GlyphCache::GLYPH_ADDED_TO_CACHE)
+        {
+            RDPGlyphCache cmd2(cmd.cacheId, 1, cacheidx,
+                            cmd.glyphData_x,
+                            cmd.glyphData_y,
+                            cmd.glyphData_cx,
+                            cmd.glyphData_cy,
+                            cmd.glyphData_aj);
+
+            this->orders->draw(cmd2);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                this->capture->draw(cmd2);
+            }
+        }
     }
 
     virtual void flush() {

@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
         {
             cmd.log(LOG_INFO, clip);
         }
-        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip, const GlyphCache * gly_cache)
         {
             cmd.log(LOG_INFO, clip);
         }
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
         {
             cmd.log(LOG_INFO, clip);
         }
-        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip, const GlyphCache * gly_cache)
         {
             cmd.log(LOG_INFO, clip);
         }

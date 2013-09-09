@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
         }
 
-        virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {
+        virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
             exit(0);
         }
 

@@ -125,8 +125,6 @@ struct mod_rdp : public mod_api {
     Random * gen;
     uint32_t verbose;
 
-//  SessionManager *acl;
-
     char auth_channel[8];
     int  auth_channel_flags;
     int  auth_channel_chanid;
@@ -172,7 +170,6 @@ struct mod_rdp : public mod_api {
            , const ClientInfo & info
            , Random * gen
            , int key_flags
-//           , SessionManager * acl
            , Inifile::StringField * auth_channel_target
            , Inifile::StringField * auth_channel_result
            , const char * auth_channel
@@ -211,7 +208,6 @@ struct mod_rdp : public mod_api {
         , performanceFlags(info.rdp5_performanceflags)
         , gen(gen)
         , verbose(verbose)
-//      , acl(acl)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
@@ -4125,9 +4121,9 @@ public:
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
-        this->front.draw(cmd, clip);
+        this->front.draw(cmd, clip, gly_cache);
     }
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)

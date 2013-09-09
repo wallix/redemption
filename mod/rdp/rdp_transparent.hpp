@@ -1461,7 +1461,7 @@ LOG(LOG_INFO, "[M] CompressionTypeMask = 0x%X",   ((infoPacket.flags & Compressi
     virtual void draw(const RDPMemBlt     & cmd, const Rect & clip, const Bitmap & bmp) {}
     virtual void draw(const RDPMem3Blt    & cmd, const Rect & clip, const Bitmap & bmp) {}
     virtual void draw(const RDPLineTo     & cmd, const Rect & clip) {}
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {}
 
     virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
                                  , uint32_t bgcolor, const Rect & clip) {}

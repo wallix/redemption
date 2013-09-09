@@ -143,7 +143,7 @@
             this->gd.draw(cmd, clip);
 
         }
-        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip, const GlyphCache * gly_cache)
         {
             exit(0);
         }

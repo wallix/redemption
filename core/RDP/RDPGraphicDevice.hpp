@@ -42,6 +42,7 @@
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/bitmapupdate.hpp"
+#include "RDP/caches/fontcache.hpp"
 
 struct RDPGraphicDevice {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
@@ -55,7 +56,8 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPMem3Blt    & cmd, const Rect & clip,
         const Bitmap & bmp) = 0;
     virtual void draw(const RDPLineTo     & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+     const GlyphCache * gly_cache) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders")
     virtual void draw(const RDPBrushCache & cmd) {}

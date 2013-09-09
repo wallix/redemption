@@ -45,6 +45,7 @@ public:
     Drawable drawable;
 
     DrawablePointerCache ptr_cache;
+    GlyphCache           gly_cache;
 
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
@@ -230,10 +231,25 @@ public:
         }
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+    virtual void draw(const RDPGlyphCache & cmd)
+    {
+        this->gly_cache.set_glyph(cmd);
+    }
+
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+        const GlyphCache * gly_cache)
+    {
+        Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
+
+/*
+        this->drawable.draw_bitmap(
+            Rect(cmd.glyph_x, cmd.glyph_y, cmd.bk.cx, cmd.bk.cy), glyph_fragments,
+            false);
+*/
+    }
+
     virtual void draw(const RDPBrushCache & cmd) {}
     virtual void draw(const RDPColCache & cmd) {}
-    virtual void draw(const RDPGlyphCache & cmd) {}
 
     virtual void set_row(uint16_t r, uint8_t * row){
         memcpy(this->drawable.data + this->drawable.rowsize * r, row, this->drawable.rowsize);
