@@ -483,7 +483,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     wmsgbox.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                                wmsgbox.ok.dx(), wmsgbox.ok.dy(), NULL);
     BOOST_CHECK(notifier.sender == &wmsgbox);
-    BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 }
 
 

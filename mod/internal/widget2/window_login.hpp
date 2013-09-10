@@ -30,7 +30,8 @@
 #include "widget2_window.hpp"
 #include "multiline.hpp"
 #include "image.hpp"
-#include "msgbox.hpp"
+// #include "msgbox.hpp"
+#include "window_dialog.hpp"
 #include "screen.hpp"
 
 class WindowLogin : public Window
@@ -44,7 +45,8 @@ public:
     WidgetButton ok;
     WidgetButton cancel;
     WidgetButton help;
-    MessageBox * window_help;
+    WindowDialog * window_help;
+    // MessageBox * window_help;
 
     WindowLogin(DrawApi& drawable, int16_t x, int16_t y, Widget2 & parent,
                 NotifyApi* notifier, const char* caption,
@@ -64,7 +66,7 @@ public:
     , password_label(drawable, this->img.cx() + 20, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
     , password_edit(drawable, 0, 0, 350, *this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
     , ok(drawable, 0, 0, *this, this, button_text_ok, true, -15, BLACK, GREY, 6, 2)
-    , cancel(drawable, 0, 0, *this, this, button_text_cancel, true, -16, BLACK, GREY, 6, 2, NOTIFY_CANCEL)
+    , cancel(drawable, 0, 0, *this, this, button_text_cancel, true, -16, BLACK, GREY, 6, 2)
     , help(drawable, 0, 0, *this, this, button_text_help, true, -17, BLACK, GREY, 6, 2)
     , window_help(NULL)
     {
@@ -149,21 +151,22 @@ public:
                 Widget2 * p = &this->parent;
                 if (!this->window_help) {
                     this->window_help =
-                        new MessageBox(
-                                       this->drawable, 0, 0, *p, this, "Help",
-                                       "You must be authenticated before using this<br>"
-                                       "session.<br>"
-                                       "<br>"
-                                       "Enter a valid username in the username edit box.<br>"
-                                       "Enter the password in the password edit box.<br>"
-                                       "<br>"
-                                                       "Both the username and password are case<br>"
-                                       "sensitive.<br>"
-                                       "<br>"
-                                       "Contact your system administrator if you are<br>"
-                                       "having problems logging on.",
-                                       -20, "Ok", this->login_label.fg_color, this->bg_color
-                                       );
+                        // new MessageBox(
+                        new WindowDialog(
+                                         this->drawable, 0, 0, *p, this, "Help",
+                                         "You must be authenticated before using this<br>"
+                                         "session.<br>"
+                                         "<br>"
+                                         "Enter a valid username in the username edit box.<br>"
+                                         "Enter the password in the password edit box.<br>"
+                                         "<br>"
+                                         "Both the username and password are case<br>"
+                                         "sensitive.<br>"
+                                         "<br>"
+                                         "Contact your system administrator if you are<br>"
+                                         "having problems logging on.",
+                                         -20, "Ok", NULL, this->login_label.fg_color, this->bg_color
+                                         );
                     // this->window_help->focus_flag = Widget2::FORCE_FOCUS;
 
                     this->window_help->ok.label.bg_color = GREY;
@@ -178,10 +181,11 @@ public:
                     this->window_help->titlebar.rect.y += y;
                     this->window_help->button_close.set_button_x(this->window_help->button_close.dx() + x);
                     this->window_help->button_close.set_button_y(this->window_help->button_close.dy() + y);
-                    this->window_help->msg.rect.x += x;
-                    this->window_help->msg.rect.y += y;
+                    this->window_help->dialog.rect.x += x;
+                    this->window_help->dialog.rect.y += y;
                     this->window_help->ok.set_button_x(this->window_help->ok.dx() + x);
                     this->window_help->ok.set_button_y(this->window_help->ok.dy() + y);
+
 
 
                     static_cast<WidgetComposite*>(p)->child_list.push_back(this->window_help);
@@ -199,14 +203,22 @@ public:
                 this->window_help->focus();
                 p->refresh(p->rect);
             }
-        } else if (widget == this->window_help && event == NOTIFY_CANCEL) {
+        } else if ((widget == this->window_help) &&
+                   (event == NOTIFY_CANCEL || event == NOTIFY_SUBMIT)) {
             this->close_window_help();
-        } else if (widget == &this->cancel && event == NOTIFY_CANCEL) {
+        } else if (widget == &this->cancel && event == NOTIFY_SUBMIT) {
             if (this->window_help) {
                 this->close_window_help();
             }
             this->send_notify(NOTIFY_CANCEL);
-        } else {
+        }
+        else if ((widget == &this->login_edit
+                  || widget == &this->password_edit
+                  || widget == &this->ok)
+                 && event == NOTIFY_SUBMIT) {
+            this->send_notify(NOTIFY_SUBMIT);
+        }
+        else {
             Window::notify(widget, event);
         }
     }
@@ -222,12 +234,13 @@ public:
     {
         if (keymap->nb_kevent_available() > 0){
             switch (keymap->top_kevent()){
-                case Keymap2::KEVENT_ESC:
-                    keymap->get_kevent();
-                    this->send_notify(NOTIFY_CANCEL);
-                    break;
-                default:
-                    Window::rdp_input_scancode(param1, param2, param3, param4, keymap);
+            case Keymap2::KEVENT_ESC:
+                keymap->get_kevent();
+                this->send_notify(NOTIFY_CANCEL);
+                break;
+            default:
+                Window::rdp_input_scancode(param1, param2, param3, param4, keymap);
+                break;
             }
         }
     }

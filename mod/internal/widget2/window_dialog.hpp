@@ -42,7 +42,7 @@ public:
     : Window(drawable, Rect(x,y,1,1), parent, notifier, caption, bgcolor, group_id)
     , dialog(drawable, 0, 0, *this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
     , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12, fgcolorbtn, bgcolorbtn, 6, 2)
-    , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, *this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2, NOTIFY_CANCEL) : NULL)
+    , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, *this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2) : NULL)
     {
         this->child_list.push_back(&this->dialog);
         this->child_list.push_back(&this->ok);
@@ -78,6 +78,19 @@ public:
         if (this->cancel)
             delete this->cancel;
         this->child_list.clear();
+    }
+
+    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event) {
+        if ((event == NOTIFY_CANCEL) ||
+            ((event == NOTIFY_SUBMIT) && (widget == this->cancel))) {
+            this->send_notify(NOTIFY_CANCEL);
+        }
+        else if ((event == NOTIFY_SUBMIT) && (widget == &this->ok)){
+            this->send_notify(NOTIFY_SUBMIT);
+        }
+        else {
+            Window::notify(widget, event);
+        }
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)

@@ -169,6 +169,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowLogin)
         "\xd4\xe2\x20\x27\x52\xbe\xa8\xd9\xc3\x0a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceWindowLogin2)
@@ -401,6 +402,13 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     BOOST_CHECK(notifier.event == 0);
     window_login.ok.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
                                     window_login.ok.dx(), window_login.ok.dy(), NULL);
+    BOOST_CHECK(notifier.sender == &window_login);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+
+
+    Keymap2 keymap;
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    window_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
     BOOST_CHECK(notifier.sender == &window_login);
     BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 }
