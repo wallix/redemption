@@ -236,16 +236,116 @@ public:
         this->gly_cache.set_glyph(cmd);
     }
 
+    void draw_glyph(Bitmap & bmp, FontChar * fc, size_t offset_x, uint32_t color)
+    {
+        uint8_t * bmp_data    = bmp.data_bitmap.get() + (offset_x + 1) * 3 + bmp.line_size * (fc->height - 1);
+        uint8_t * fc_data     = fc->data;
+        uint8_t   fc_bit_mask = 128;
+
+        for (int y = 0; y < fc->height; y++)
+        {
+            for (int x = 0; x < fc->width; x++)
+            {
+                if (fc_bit_mask & (*fc_data))
+                {
+                    bmp_data[x * 3    ] = color;
+                    bmp_data[x * 3 + 1] = color >> 8;
+                    bmp_data[x * 3 + 2] = color >> 16;
+                    printf("X");
+                }
+                else
+                {
+                printf(".");
+                }
+
+                fc_bit_mask >>= 1;
+                if (!fc_bit_mask)
+                {
+                    fc_data++;
+                    fc_bit_mask = 128;
+                }
+            }
+
+            bmp_data -= bmp.line_size;
+            printf("\n");
+        }
+    }
+
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
         const GlyphCache * gly_cache)
     {
         Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
 
-/*
+        {
+            const uint32_t color = this->RGBtoBGR(cmd.fore_color);
+
+            uint8_t * base = glyph_fragments.data_bitmap.get();
+            uint8_t * p    = base;
+
+            for (size_t x = 0; x < glyph_fragments.cx; x++)
+            {
+                p[0] = color;
+                p[1] = color >> 8;
+                p[2] = color >> 16;
+
+                p += 3;
+            }
+
+            uint8_t * target = base;
+
+            for (size_t y = 1; y < glyph_fragments.cy; y++)
+            {
+                target += glyph_fragments.line_size;
+                memcpy(target, base, glyph_fragments.line_size);
+            }
+        }
+
+        {
+            bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+
+            StaticStream aj(cmd.data, cmd.data_len);
+
+            uint16_t draw_pos = 0;
+
+            while (aj.in_remain())
+            {
+                uint8_t  data     = aj.in_uint8();
+                if (data <= 0xFD)
+                {
+                    FontChar * fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
+                    REDASSERT(fc);
+
+                    if (has_delta_byte)
+                    {
+                        data = aj.in_uint8();
+                        if (data == 0x80)
+                        {
+                            draw_pos += aj.in_uint16_le();
+                        }
+                        else
+                        {
+                            draw_pos += data;
+                        }
+                    }
+
+                    this->draw_glyph(glyph_fragments, fc, draw_pos, this->RGBtoBGR(cmd.back_color));
+                }
+                else if (data == 0xFE)
+                {
+                    LOG(LOG_INFO, "RDPDrawabke::draw(RDPGlyphIndex, ...): Unsupported data");
+                    throw Error(ERR_RDP_UNSUPPORTED);
+                }
+                else if (data == 0xFF)
+                {
+                    aj.in_skip_bytes(2);
+                    REDASSERT(!aj.in_remain());
+                }
+            }
+        }
+
         this->drawable.draw_bitmap(
-            Rect(cmd.glyph_x, cmd.glyph_y, cmd.bk.cx, cmd.bk.cy), glyph_fragments,
+            Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments,
             false);
-*/
     }
 
     virtual void draw(const RDPBrushCache & cmd) {}

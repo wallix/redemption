@@ -734,7 +734,6 @@ struct Drawable {
             char newch = message[i];
             char oldch = old_message[i];
 
-
             if (newch != oldch){
                 const char * pnewch = digits + _posch_12x7(newch);
                 const char * poldch = digits + _posch_12x7(oldch);
@@ -1737,6 +1736,7 @@ struct Drawable {
         timezone = (daylight ? tzname[1] : tzname[0]);
 
         char rawdate[size_str_timestamp];
+        memset(rawdate, 0, sizeof(rawdate));
         timestamp_length = 20 + strlen(timezone);
         snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
                  now.tm_year+1900, now.tm_mon+1, now.tm_mday,
@@ -1778,6 +1778,7 @@ struct Drawable {
         timezone = (daylight ? tzname[1] : tzname[0]);
 
         char rawdate[size_str_timestamp];
+        memset(rawdate, 0, sizeof(rawdate));
         timestamp_length = 20 + strlen(timezone);
         snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
                  now.tm_year+1900, now.tm_mon+1, now.tm_mday,

@@ -4136,7 +4136,7 @@ public:
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                RDPGlyphIndex new_cmd24 = cmd;
+                RDPGlyphIndex new_cmd24 = /*cmd*/new_cmd;
                 new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
                 new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
                 this->capture->draw(new_cmd24, clip, gly_cache);
