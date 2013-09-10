@@ -446,10 +446,10 @@ public:
             const RwlDefinition::Target& rwl_window = this->definition.get("edit");
             int color = rwl_window.get<int>("bgcolor", WHITE);
             this->window_login.login_edit.label.bg_color = color;
-            this->window_login.password_edit.bg_color = color;
+            this->window_login.password_edit.masked_text.bg_color = color;
             color = rwl_window.get<int>("color", BLACK);
             this->window_login.login_edit.label.fg_color = color;
-            this->window_login.password_edit.fg_color = color;
+            this->window_login.password_edit.masked_text.fg_color = color;
         }
         {
             const RwlDefinition::Target& rwl_window = this->definition.get("button");
@@ -536,7 +536,7 @@ public:
         switch (event) {
         case NOTIFY_SUBMIT:
             this->ini.parse_username(this->window_login.login_edit.label.buffer);
-            this->ini.context_set_value(AUTHID_PASSWORD, this->window_login.password_edit.buffer);
+            this->ini.context_set_value(AUTHID_PASSWORD, this->window_login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();
             break;
