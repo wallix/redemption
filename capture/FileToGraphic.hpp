@@ -283,9 +283,20 @@ struct FileToGraphic
 //                    this->process_colormap(this->stream, control, header, mod);
                     break;
                 case TS_CACHE_GLYPH:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
-//                    this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
-                    break;
+                {
+//                  LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
+//                  this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
+                    RDPGlyphCache cmd;
+                    cmd.receive(this->stream, control, header);
+                    if (this->verbose > 32){
+                        cmd.log(LOG_INFO);
+                    }
+                    this->gly_cache.set_glyph(cmd);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(cmd);
+                    }
+                }
+                break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
                   break;
