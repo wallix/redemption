@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(TestDeadKeys)
     keymap.event(0xC000, 0x0F, decoded_data); // TAB
     BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
     BOOST_CHECK_EQUAL(1, keymap.nb_kevent_available());
-    BOOST_CHECK_EQUAL(Keymap2::KEVENT_TAB, keymap.get_kevent());
+    BOOST_CHECK_EQUAL(0x02, keymap.get_kevent()); // KEVENT_TAB
     // the deadkey is still pending
     keymap.event(0x0000, 0x12, decoded_data); // 'e'
     keymap.event(0xC000, 0x12, decoded_data); // 'e'
