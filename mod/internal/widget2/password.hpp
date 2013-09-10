@@ -145,7 +145,7 @@ public:
                 }
             }
             else {
-                this->edit_pos = std::min<size_t>((x - this->dx() + this->masked_text.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
+                this->edit_pos = std::min<size_t>((x - this->dx() - this->masked_text.x_text - this->w_char/2) / this->w_char, this->num_chars-1);
                 this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t*>(&this->label.buffer[0]), this->edit_pos);
             }
             if (e != this->edit_pos) {
