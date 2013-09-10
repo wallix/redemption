@@ -30,7 +30,6 @@
 #include "widget2_window.hpp"
 #include "multiline.hpp"
 #include "image.hpp"
-// #include "msgbox.hpp"
 #include "window_dialog.hpp"
 #include "screen.hpp"
 

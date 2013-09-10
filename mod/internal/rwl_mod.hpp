@@ -24,7 +24,6 @@
 
 #include "front_api.hpp"
 #include "config.hpp"
-//#include "widget2/msgbox.hpp"
 #include "widget2/rwl_rectangle.hpp"
 #include "internal_mod.hpp"
 
