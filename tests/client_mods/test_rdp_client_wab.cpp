@@ -49,6 +49,38 @@
 #include "RDP/RDPDrawable.hpp"
 #include "staticcapture.hpp"
 
+inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
+                      char * message, const char * shasig)
+{
+    uint8_t sig[20];
+    SslSha1 sha1;
+    for (size_t y = 0; y < (size_t)height; y++){
+        sha1.update(StaticStream(data + y * len, len));
+    }
+    sha1.final(sig);
+
+    if (memcmp(shasig, sig, 20)){
+        sprintf(message, "Expected signature: \""
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+        "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+        sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+        sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+        sig[ 8], sig[ 9], sig[10], sig[11],
+        sig[12], sig[13], sig[14], sig[15],
+        sig[16], sig[17], sig[18], sig[19]);
+        return false;
+    }
+    return true;
+}
+
+inline bool check_sig(Drawable & data, char * message, const char * shasig)
+{
+    return check_sig(data.data, data.height, data.rowsize, message, shasig);
+}
+
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
     int verbose = 256;
@@ -281,6 +313,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "===================> count = %u", count);
         if (count++ >= 12) break;
         mod->draw_event(time(NULL));
+    }
+
+    char message[1024];
+    if (!check_sig(front.gd.drawable, message,
+    "\x0d\x80\x56\x7b\x36\x90\x5a\xb2\x4c\xdb\x2c\x0a\x78\x37\xe3\x3c\xed\x18\x10\xba"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
     }
     // front.dump_png("trace_wab_");
 }
