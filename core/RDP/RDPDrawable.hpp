@@ -251,12 +251,12 @@ public:
                     bmp_data[x * 3    ] = color;
                     bmp_data[x * 3 + 1] = color >> 8;
                     bmp_data[x * 3 + 2] = color >> 16;
-                    printf("X");
+//                  printf("X");
                 }
-                else
-                {
-                printf(".");
-                }
+//              else
+//              {
+//                  printf(".");
+//              }
 
                 fc_bit_mask >>= 1;
                 if (!fc_bit_mask)
@@ -267,7 +267,7 @@ public:
             }
 
             bmp_data -= bmp.line_size;
-            printf("\n");
+//          printf("\n");
         }
     }
 
@@ -313,7 +313,11 @@ public:
                 if (data <= 0xFD)
                 {
                     FontChar * fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
-                    REDASSERT(fc);
+                    if (!fc)
+                    {
+                        LOG(LOG_INFO, "RDPDrawabke::draw(RDPGlyphIndex, ...): Unknown glyph=%u", data);
+                        REDASSERT(fc);
+                    }
 
                     if (has_delta_byte)
                     {
@@ -328,7 +332,10 @@ public:
                         }
                     }
 
-                    this->draw_glyph(glyph_fragments, fc, draw_pos, this->RGBtoBGR(cmd.back_color));
+                    if (fc)
+                    {
+                        this->draw_glyph(glyph_fragments, fc, draw_pos, this->RGBtoBGR(cmd.back_color));
+                    }
                 }
                 else if (data == 0xFE)
                 {
