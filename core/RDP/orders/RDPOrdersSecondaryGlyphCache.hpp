@@ -105,7 +105,6 @@ class RDPGlyphCache {
 
     RDPGlyphCache() : cGlyphs(1), glyphData_aj(NULL)
     {
-
     }
 
     RDPGlyphCache( uint8_t  cacheId
@@ -162,7 +161,7 @@ class RDPGlyphCache {
 
     void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
-        // using namespace RDP;
+        using namespace RDP;
 
         // uint8_t cacheIndex = stream.in_uint8();
         // this->bpp = stream.in_uint8();
@@ -172,6 +171,19 @@ class RDPGlyphCache {
         // this->size = stream.in_uint8();
         // this->data = (uint8_t *)malloc(this->size);
         // memcpy(this->data, stream.in_uint8p(this->size), this->size);
+
+        this->cacheId              = stream.in_uint8();
+        this->cGlyphs              = stream.in_uint8();
+        this->glyphData_cacheIndex = stream.in_uint16_le();
+        this->glyphData_x          = stream.in_uint16_le();
+        this->glyphData_y          = stream.in_uint16_le();
+        this->glyphData_cx         = stream.in_uint16_le();
+        this->glyphData_cy         = stream.in_uint16_le();
+
+        size_t size = align4(nbbytes(this->glyphData_cx) * this->glyphData_cy);
+
+        this->glyphData_aj = (uint8_t *)malloc(size);
+        memcpy(this->glyphData_aj, stream.in_uint8p(size), size);
     }
 
     bool operator==(const RDPColCache & other) const {

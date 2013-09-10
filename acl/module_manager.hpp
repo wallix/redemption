@@ -372,7 +372,7 @@ public:
     virtual void new_mod(int target_module, time_t now)
     {
         LOG(LOG_INFO, "target_module=%u", target_module);
-
+        if (this->last_module) this->front.stop_capture();
         switch (target_module)
             {
             case MODULE_INTERNAL_BOUNCER2:
@@ -730,7 +730,7 @@ public:
                 }
             }
         if (this->connected) this->record();
-        if (this->last_module) this->front.stop_capture();
+//        if (this->last_module) this->front.stop_capture();
     }
 
     // Check movie start/stop/pause
