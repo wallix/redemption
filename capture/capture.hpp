@@ -283,10 +283,26 @@ public:
         }
     }
 
-    virtual void draw(const RDPGlyphCache & cmd) {}
+    virtual void draw(const RDPGlyphCache & cmd)
+    {
+        if (this->capture_wrm) {
+            this->pnc->draw(cmd);
+        }
+        else if (this->capture_drawable) {
+            this->drawable->draw(cmd);
+        }
+    }
 
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
-        const GlyphCache * gly_cache) {}
+        const GlyphCache * gly_cache)
+    {
+        if (this->capture_wrm) {
+            this->pnc->draw(cmd, clip, gly_cache);
+        }
+        else if (this->capture_drawable) {
+            this->drawable->draw(cmd, clip, gly_cache);
+        }
+    }
 
     virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
                      , size_t size, const Bitmap & bmp) {
