@@ -174,14 +174,8 @@ public:
             this->notifier->notify(this, event);
     }
 
-    virtual void notify(Widget2 * widget, NotifyApi::notify_event_t event)
+    virtual void notify(Widget2 *, NotifyApi::notify_event_t)
     {
-        (void)widget;
-        TODO("Quickfix, events should not be propagated in general");
-        if ((event != NOTIFY_FOCUS_BEGIN) &&
-            (event != NOTIFY_FOCUS_END)) {
-            this->send_notify(event);
-        }
     }
 
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)

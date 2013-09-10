@@ -58,7 +58,7 @@ public:
                    "Target:", true, -12, fgcolor, bgcolor)
     , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12, fgcolor, bgcolor)
     , connection_closed_label(drawable, 0, 0, *this, NULL, "Connection closed", true, -13, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, *this, this, "Close", true, -14, BLACK, GREY, 6, 2, NOTIFY_CANCEL)
+    , cancel(drawable, 0, 0, *this, this, "Close", true, -14, BLACK, GREY, 6, 2)
     , diagnostic(drawable, this->img.cx() + 20, 0, *this, NULL,
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, this->img.cx() + 20, 0, *this, NULL,
@@ -123,6 +123,16 @@ public:
     virtual ~WindowWabClose()
     {
         this->child_list.clear();
+    }
+
+    virtual void notify(Widget2 * widget, NotifyApi::notify_event_t event)
+    {
+        if (widget == &this->cancel && event == NOTIFY_SUBMIT) {
+            this->send_notify(NOTIFY_CANCEL);
+        }
+        else {
+            Window::notify(widget, event);
+        }
     }
 };
 

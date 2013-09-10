@@ -25,7 +25,6 @@
 #include "front_api.hpp"
 #include "config.hpp"
 #include "widget2/window_dialog.hpp"
-#include "widget2/msgbox.hpp"
 #include "widget2/screen.hpp"
 #include "internal_mod.hpp"
 

@@ -47,7 +47,7 @@ public:
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
     : WidgetComposite(drawable, rect, parent, notifier, group_id)
     , titlebar(drawable, 2, 2, *this, NULL, caption, false, -1, WHITE, WABGREEN, 5)
-    , button_close(drawable, 2, 2, *this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1, NOTIFY_CANCEL)
+    , button_close(drawable, 2, 2, *this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1)
     , bg_color(bgcolor)
     , active_border_top_left_color(0xEEEEEE)
     , active_border_top_left_color_inner(0xEEEEEE)
@@ -186,6 +186,16 @@ public:
             w->rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
+
+    virtual void notify(Widget2* widget, NotifyApi::notify_event_t event) {
+        if (widget == &this->button_close && event == NOTIFY_SUBMIT) {
+            this->send_notify(NOTIFY_CANCEL);
+        }
+        else {
+            Widget2::notify(widget, event);
+        }
+    }
+
     void draw_border(const Rect& clip,
                      int border_top_left_color, int border_top_left_color_inner,
                      int border_right_bottom_color, int border_right_bottom_color_inner)
