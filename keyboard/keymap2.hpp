@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Dominique Lafages, Raphael Zhou
+   Author(s): Christophe Grosjean, Dominique Lafages, Raphael Zhou,
+              Meng Tan
 
    header file. Keymap2 object, used to manage key stroke events
 */
