@@ -109,6 +109,10 @@ TODO("move these into configuration")
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
 
+#define RDPPROXY_CRT "rdpproxy.crt"
+#define RDPPROXY_KEY "rdpproxy.key"
+#define DH1024_PEM "dh1024.pem"
+
 using namespace std;
 
 /*

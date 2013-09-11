@@ -37,6 +37,7 @@
 #include "version.hpp"
 
 #include "config.hpp"
+#include "font.hpp"
 #include "check_files.hpp"
 #include "mainloop.hpp"
 #include "log.hpp"
@@ -202,16 +203,21 @@ const char * copyright_notice =
 
 int main(int argc, char** argv)
 {
+/*
     bool check_share_files = false;
     bool check_etc_files = false;
+    Check_files cfc;
+*/
     int fd;
     int pid;
     char text[256];
     setlocale(LC_CTYPE, "C");
-    Check_files cfc;
 
     unsigned uid = getuid();
     unsigned gid = getgid();
+
+    unsigned euid = uid;
+    unsigned egid = gid;
 
     po::options_description desc("Options");
     desc.add_options()
@@ -224,9 +230,9 @@ int main(int argc, char** argv)
     // -nodaemon" -n
     ("nodaemon,n", "don't fork into background")
 
-    ("uid,u", po::value<unsigned>(&uid), "run with given uid")
+    ("uid,u", po::value<unsigned>(&euid), "run with given uid")
 
-    ("gid,g", po::value<unsigned>(&gid), "run with given gid")
+    ("gid,g", po::value<unsigned>(&egid), "run with given gid")
 
 //    ("trace,t", "trace behaviour")
 
@@ -266,18 +272,23 @@ int main(int argc, char** argv)
         cout << "Version " VERSION "\n" << endl;
         _exit(0);
     }
+
+/*
+    check_share_files = cfc.check_share();
+    check_etc_files = cfc.check_etc();
     if (options.count("check")) {
-        check_share_files = cfc.check_share();
-        check_etc_files = cfc.check_etc();
         std::clog << boolalpha;
         clog <<
-        LOGIN_LOGO24   " is present at " SHARE_PATH     " .... " << cfc.ad24b       << "\n"
-        CURSOR0        " is present at " SHARE_PATH     " .... " << cfc.cursor0     << "\n"
-        CURSOR1        " is present at " SHARE_PATH     " .... " << cfc.cursor1     << "\n"
-        FONT1          " is present at " SHARE_PATH     " .... " << cfc.sans        << "\n"
-        REDEMPTION_LOGO24  " is present at " SHARE_PATH " .... " << cfc.logo        << "\n"
-        RSAKEYS_INI    " is present at " CFG_PATH       "..... " << cfc.keys        << "\n"
-        RDPPROXY_INI   " is present at " CFG_PATH       "..... " << cfc.config_file << "\n"
+        LOGIN_LOGO24      " is present at " SHARE_PATH " ... " << cfc.share.ad24b      << "\n"
+        CURSOR0           " is present at " SHARE_PATH " ... " << cfc.share.cursor0    << "\n"
+        CURSOR1           " is present at " SHARE_PATH " ... " << cfc.share.cursor1    << "\n"
+        DEFAULT_FONT_NAME " is present at " SHARE_PATH " ... " << cfc.share.font       << "\n"
+        REDEMPTION_LOGO24 " is present at " SHARE_PATH " ... " << cfc.share.logo       << "\n"
+        RSAKEYS_INI       " is present at " CFG_PATH   " ... " << cfc.cfg.keys         << "\n"
+        RDPPROXY_INI      " is present at " CFG_PATH   " ... " << cfc.cfg.config_file  << "\n"
+        RDPPROXY_CRT      " is present at " CFG_PATH   " ... " << cfc.cfg.rdpproxy_crt << "\n"
+        RDPPROXY_KEY      " is present at " CFG_PATH   " ... " << cfc.cfg.rdpproxy_key << "\n"
+        DH1024_PEM        " is present at " CFG_PATH   " ... " << cfc.cfg.dh1024_pem   << "\n"
         ;
 
         if (!(check_share_files && check_etc_files)){
@@ -291,8 +302,47 @@ int main(int argc, char** argv)
         }
         _exit(0);
     }
+*/
 
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
+
+
+    bool user_check_file_result  =
+        ((uid != euid) || (gid != egid)) ?
+        CheckFile::check(user_check_file_list) : true;
+    setuid(euid);
+    setgid(egid);
+    bool euser_check_file_result = CheckFile::check(euser_check_file_list);
+    setuid(uid);
+    setgid(gid);
+
+    if (options.count("check")) {
+        if ((uid != euid) || (gid != egid))
+        {
+            CheckFile::ShowAll(user_check_file_list, uid, gid);
+        }
+        CheckFile::ShowAll(euser_check_file_list, euid, egid);
+
+        if (!user_check_file_result || !euser_check_file_result)
+        {
+            LOG(LOG_INFO,
+                "Please verify that all tests passed. If not, "
+                    "you may need to remove " PID_PATH "/redemption/"
+                    LOCKFILE " or reinstall rdpproxy if some configuration "
+                    "files are missing.");
+        }
+        _exit(0);
+    }
+    else if (!user_check_file_result || !euser_check_file_result)
+    {
+        if ((uid != euid) || (gid != egid))
+        {
+            CheckFile::ShowErrors(user_check_file_list, euid, egid);
+        }
+        CheckFile::ShowErrors(euser_check_file_list, euid, egid);
+        _exit(0);
+    }
+
 
     if (options.count("inetd")) {
         redemption_new_session();
@@ -309,8 +359,8 @@ int main(int argc, char** argv)
         TODO("check only for relevant errors (exists with expected permissions is OK)");
     }
 
-    if (chown(PID_PATH "/redemption", uid, gid) < 0){
-        LOG(LOG_INFO, "Failed to set owner %u.%u to " PID_PATH "/redemption", uid, gid);
+    if (chown(PID_PATH "/redemption", euid, egid) < 0){
+        LOG(LOG_INFO, "Failed to set owner %u.%u to " PID_PATH "/redemption", euid, egid);
         exit(1);
     }
 
@@ -351,12 +401,12 @@ int main(int argc, char** argv)
     ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
     if (!ini.globals.enable_ip_transparent) {
-        setgid(gid);
-        setuid(uid);
+        setgid(egid);
+        setuid(euid);
     }
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, uid, gid);
+    redemption_main_loop(ini, euid, egid);
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */
