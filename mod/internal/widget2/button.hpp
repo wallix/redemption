@@ -44,7 +44,6 @@ public:
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)
     , state(0)
-    // , event(notify_event)
     , event(NOTIFY_SUBMIT)
     , border_right_bottom_color(BLACK)
     , border_right_bottom_color2(0x888888)

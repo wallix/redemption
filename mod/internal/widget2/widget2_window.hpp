@@ -135,31 +135,6 @@ public:
         }
     }
 
-    virtual void focus()
-    {
-        // LOG(LOG_INFO, "window focus %p", this);
-        if (!this->has_focus){
-            this->has_focus = true;
-            this->send_notify(NOTIFY_FOCUS_BEGIN);
-            if (this->current_focus) {
-                this->current_focus->focus();
-            }
-            this->refresh(this->rect);
-        }
-    }
-
-    virtual void blur()
-    {
-        // LOG(LOG_INFO, "window blur %p", this);
-        if (this->has_focus){
-            this->has_focus = false;
-            this->send_notify(NOTIFY_FOCUS_END);
-            if (this->current_focus) {
-                this->current_focus->blur();
-            }
-            this->refresh(this->rect);
-        }
-    }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
