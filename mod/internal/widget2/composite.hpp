@@ -30,7 +30,7 @@
 
 TODO("child_list should not be directly accessed");
 
-class WidgetComposite : public Widget2
+class WidgetComposite : public WidgetParent
 {
     typedef std::vector<Widget2*>::iterator position_t;
 public:
@@ -38,7 +38,7 @@ public:
 
     WidgetComposite(DrawApi & drawable, const Rect& rect, Widget2 & parent,
                     NotifyApi * notifier, int group_id = 0)
-    : Widget2(drawable, rect, parent, notifier, group_id)
+    : WidgetParent(drawable, rect, parent, notifier, group_id)
     , child_list()
     {
         this->tab_flag = DELEGATE_CONTROL_TAB;
@@ -59,7 +59,7 @@ public:
             Widget2 * w = this->child_list[i];
             w->set_xy(xx + w->dx(), yy + w->dy());
         }
-        Widget2::set_xy(x, y);
+        WidgetParent::set_xy(x, y);
     }
 
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
@@ -215,27 +215,7 @@ public:
     }
     //END focus manager @}
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
-        if (this->current_focus != NULL && this->current_focus != this) {
-            this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
-        else {
-            Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
-    }
 
-
-
-    virtual void notify(Widget2* widget, notify_event_t event)
-    {
-        if (event == NOTIFY_FOCUS_BEGIN) {
-            this->current_focus = widget;
-        }
-        else {
-            Widget2::notify(widget, event);
-        }
-    }
 
     virtual void draw(const Rect& clip)
     {
@@ -266,27 +246,7 @@ public:
         }
     }
 
-protected:
-    size_t direct_idx_focused() const
-    {
-        for (std::size_t i = 0; i < this->child_list.size(); ++i)
-        {
-            if (this->child_list[i]->has_focus)
-                return i;
-        }
-        return -1;
-    }
 
-    Widget2 * get_child_by_group_id(int group_id) const
-    {
-        for (size_t i = 0; i < this->child_list.size(); i++)
-        {
-            struct Widget2 * w = this->child_list[i];
-            if (w->group_id == group_id)
-                return w;
-        }
-        return 0;
-    }
 };
 
 #endif

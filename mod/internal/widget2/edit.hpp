@@ -446,7 +446,7 @@ public:
                     break;
             }
             if (nb_kevent == keymap->nb_kevent_available()) {
-                // avoid infinite loop if the kevent is not consummed
+                // this is to prevent infinite loop if the kevent is not consummed
                 keymap->get_kevent();
             }
         }

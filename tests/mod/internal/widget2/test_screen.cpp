@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     WidgetScreen wscreen(drawable, drawable.gd.drawable.width, drawable.gd.drawable.height);
 
     wscreen.refresh(wscreen.rect);
-
+    wscreen.tab_flag = Widget2::NORMAL_TAB;
     Notify notifier1;
     Notify notifier2;
     Notify notifier3;
@@ -201,9 +201,10 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     char message[1024];
 
     BOOST_CHECK(notifier1.sender == 0);
-    BOOST_CHECK(notifier2.sender == 0);
+    BOOST_CHECK(notifier2.sender == &wbutton2);
     BOOST_CHECK(notifier3.sender == 0);
     BOOST_CHECK(notifier4.sender == 0);
+    BOOST_CHECK(notifier2.event == FOCUS_BEGIN);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x49\x68\xc7\x1b\x75\x6d\xc8\x49\xe5\xc9"

@@ -45,7 +45,6 @@ public:
     WidgetButton cancel;
     WidgetButton help;
     WindowDialog * window_help;
-    // MessageBox * window_help;
 
     WindowLogin(DrawApi& drawable, int16_t x, int16_t y, Widget2 & parent,
                 NotifyApi* notifier, const char* caption,
@@ -147,10 +146,9 @@ public:
     {
         if (widget == &this->help && event == NOTIFY_SUBMIT) {
             if (&this->parent != this) {
-                Widget2 * p = &this->parent;
+                WidgetParent * p = static_cast<WidgetParent*>(&this->parent);
                 if (!this->window_help) {
                     this->window_help =
-                        // new MessageBox(
                         new WindowDialog(
                                          this->drawable, 0, 0, *p, this, "Help",
                                          "You must be authenticated before using this<br>"
@@ -166,7 +164,6 @@ public:
                                          "having problems logging on.",
                                          -20, "Ok", NULL, this->login_label.fg_color, this->bg_color
                                          );
-                    // this->window_help->focus_flag = Widget2::FORCE_FOCUS;
 
                     this->window_help->ok.label.bg_color = GREY;
                     this->window_help->ok.label.fg_color = BLACK;
@@ -192,13 +189,8 @@ public:
                 p->current_focus = this->window_help;
 
                 this->focus_flag = IGNORE_FOCUS;
-                // if (this->current_focus){
-                //     this->current_focus->blur();
-                // }
-                // this->current_focus = NULL;
                 this->blur();
                 this->window_help->current_focus = &this->window_help->ok;
-                // this->window_help->ok.focus();
                 this->window_help->focus();
                 p->refresh(p->rect);
             }

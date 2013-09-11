@@ -33,6 +33,7 @@ public:
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
         : WidgetComposite(drawable, Rect(0, 0, width, height), *this, notifier)
     {
+        this->tab_flag = IGNORE_TAB;
     }
 
     virtual ~WidgetScreen()
@@ -68,7 +69,11 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (this->current_focus) {
+
+        if (this->tab_flag != IGNORE_TAB) {
+            WidgetComposite::rdp_input_scancode(param1, param2, param3, param4, keymap);
+        }
+        else if (this->current_focus) {
             this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
 

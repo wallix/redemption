@@ -30,8 +30,6 @@
 #include "number_edit.hpp"
 #include "image.hpp"
 #include "region.hpp"
-//#include "pager.hpp"
-//#include "selectline.hpp"
 #include "difftimeval.hpp"
 #include "tooltip.hpp"
 
@@ -450,7 +448,6 @@ private:
             std::size_t size = this->labels.size();
             uint lcy = 0;
             for (std::size_t i = 0; i < size; ++i) {
-                // Widget2 * w = this->labels[i];
                 Line * line = this->labels[i];
 
                 line->refresh(clip);
@@ -638,10 +635,6 @@ public:
 
     WidgetSelectLine selector_lines;
 
-    // WidgetSelectLine device_lines;
-    // WidgetSelectLine target_lines;
-    // WidgetSelectLine protocol_lines;
-    // WidgetSelectLine close_time_lines;
     WidgetEdit filter_device;
     WidgetEdit filter_target;
     WidgetEdit filter_proto;
@@ -743,7 +736,7 @@ public:
         this->child_list.push_back(&this->logout);
         this->child_list.push_back(&this->apply);
         this->child_list.push_back(&this->connect);
-        //this->child_list.push_back(&this->pager);
+
 
         int dw = width - (this->selector_lines.rect.x + this->selector_lines.get_total_w() + 15);
         if (dw < 0) {
@@ -859,19 +852,6 @@ public:
         }
     }
 
-    virtual void focus()
-    {
-        this->send_notify(NOTIFY_FOCUS_BEGIN);
-        this->has_focus = true;
-        this->refresh(this->rect);
-    }
-
-    virtual void blur()
-    {
-        this->send_notify(NOTIFY_FOCUS_END);
-        this->has_focus = false;
-        this->refresh(this->rect);
-    }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
