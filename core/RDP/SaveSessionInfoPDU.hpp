@@ -101,7 +101,7 @@ enum {
 //  2.2.10.1.1.3), or Logon Info Extended (section 2.2.10.1.1.4) structure.
 //  The type of data that follows depends on the value of the infoType field.
 
-struct SaveSessionInfoPDUData_Recv{
+struct SaveSessionInfoPDUData_Recv {
     uint32_t infoType;
 
     SubStream payload;
@@ -123,6 +123,14 @@ struct SaveSessionInfoPDUData_Recv{
         this->payload.resize(stream, stream.in_remain());
     }
 };
+
+/*
+struct SaveSessionInfoPDUData_Send {
+    SaveSessionInfoPDUData_Send(Stream & stream, uint32_t infoType) {
+        stream.out_uint32_le(infoType);
+    }
+};
+*/
 
 // 2.2.10.1.1.1 Logon Info Version 1 (TS_LOGON_INFO)
 // =================================================
@@ -254,6 +262,31 @@ struct LogonInfoVersion1_Recv {
             this->Domain, this->UserName, this->SessionId);
     }   // LogonInfoVersion1_Recv(Stream & stream)
 };  // struct LogonInfoVersion1_Recv
+
+/*
+struct LogonInfoVersion1_Send {
+    LogonInfoVersion1_Send(Stream & stream, const uint8_t * Domain,
+        const uint8_t * UserName, uint32_t sessionId)
+    {
+        uint8_t utf16_Domain[52];
+        uint8_t utf16_UserName[512];
+
+        memset(utf16_Domain,   0, sizeof(utf16_Domain));
+        uint32_t cbDomain   = UTF8toUTF16(Domain, utf16_Domain,
+            sizeof(utf16_Domain)   - sizeof(uint16_t)) + 1;
+
+        memset(utf16_UserName, 0, sizeof(utf16_UserName));
+        uint32_t cbUserName = UTF8toUTF16(UserName, utf16_UserName,
+            sizeof(utf16_UserName) - sizeof(uint16_t)) + 1;
+
+        stream.out_uint32_le(cbDomain);
+        stream.out_copy_bytes(utf16_Domain, sizeof(utf16_Domain));
+        stream.out_uint32_le(cbUserName);
+        stream.out_copy_bytes(utf16_UserName, sizeof(utf16_UserName));
+        stream.out_uint32_le(sessionId);
+    }
+};
+*/
 
 // 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2)
 // ===========================================================

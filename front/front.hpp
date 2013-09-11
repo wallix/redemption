@@ -65,6 +65,7 @@
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
+#include "RDP/SaveSessionInfoPDU.hpp"
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
@@ -712,6 +713,48 @@ public:
         stream.mark_end();
     }
 
+/*
+    void SendLogonInfo(const uint8_t * user_name)
+    {
+        BStream stream(65536);
+        ShareData sdata_out(stream);
+        sdata_out.emit_begin(PDUTYPE2_SAVE_SESSION_INFO, this->share_id,
+            RDP::STREAM_MED);
+
+        RDP::SaveSessionInfoPDUData_Send ssipdu(stream, RDP::INFOTYPE_LOGON);
+        RDP::LogonInfoVersion1_Send      liv1(stream,
+                                              reinterpret_cast<const uint8_t *>(""),
+                                              user_name, getpid());
+
+        stream.mark_end();
+
+        // Packet trailer
+        sdata_out.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+            this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        if ((this->verbose & (128|8)) == (128|8)){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(target_stream.get_data(), target_stream.size());
+        }
+
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt,
+            this->client_info.encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    }
+*/
+
     void send_global_palette() throw (Error)
     {
         if (!this->palette_sent && (this->client_info.bpp == 8)){
@@ -1186,6 +1229,8 @@ public:
 
     void incoming(Callback & cb) throw(Error)
     {
+        unsigned expected;
+
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::incoming()");
         }
@@ -2092,7 +2137,7 @@ public:
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
-                        const unsigned expected = 6; /* share_id(4) + originatorId(2) */
+                        expected = 6; /* shareId(4) + originatorId(2) */
                         if (!sctrl.payload.in_check_rem(expected)){
                             LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
                                 expected, sctrl.payload.in_remain());
@@ -2105,7 +2150,8 @@ public:
 (void)originatorId;
                     }
                     if (!sctrl.payload.check_end()){
-                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
+                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u",
+                            sctrl.payload.in_remain());
                         throw Error(ERR_MCS_PDU_TRAILINGDATA);
                     }
                     break;
@@ -2198,6 +2244,12 @@ public:
                 uint8_t eventCode;
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++){
+                    if (!cfpie.payload.in_check_rem(1)){
+                        LOG(LOG_ERR, "Truncated Fast-Path input event PDU, need=1 remains=%u",
+                            cfpie.payload.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+
                     byte = cfpie.payload.in_uint8();
 
                     eventCode  = (byte & 0xE0) >> 5;
@@ -2278,7 +2330,9 @@ public:
 */
 
                         default:
-                            LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
+                            LOG(LOG_INFO,
+                                "Front::Received unexpected fast-path PUD, eventCode = %u",
+                                eventCode);
                             throw Error(ERR_RDP_FASTPATH);
                         break;
                     }
@@ -2288,7 +2342,8 @@ public:
                 }
 
                 if (cfpie.payload.in_remain() != 0) {
-                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u", cfpie.payload.in_remain());
+                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u",
+                        cfpie.payload.in_remain());
                 }
                 break;
             }
@@ -2353,7 +2408,7 @@ public:
                         channel.log(mcs.channelId);
                     }
 
-                    const unsigned expected = 8; /* length(4) + flags(4) */
+                    expected = 8; /* length(4) + flags(4) */
                     if (!sec.payload.in_check_rem(expected)){
                         LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
                             expected, sec.payload.in_remain());
@@ -2402,6 +2457,14 @@ public:
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
                             }
                             {
+                                expected = 6;   /* shareId(4) + originatorId(2) */
+                                if (!sctrl.payload.in_check_rem(expected)){
+                                    LOG(LOG_ERR,
+                                        "Truncated Confirm active PDU data, need=%u remains=%u",
+                                        expected, sctrl.payload.in_remain());
+                                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                                }
+
                                 uint32_t share_id = sctrl.payload.in_uint32_le();
                                 uint16_t originatorId = sctrl.payload.in_uint16_le();
                                 this->process_confirm_active(sctrl.payload);
@@ -3287,6 +3350,7 @@ public:
     /* PDUTYPE_DATAPDU */
     void process_data(Stream & stream, Callback & cb) throw (Error)
     {
+        unsigned expected;
         if (this->verbose & 8){
             LOG(LOG_INFO, "Front::process_data(...)");
         }
@@ -3319,6 +3383,13 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             }
             {
+                expected = 8;   /* action(2) + grantId(2) + controlId(4) */
+                if (!sdata_in.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Control PDU data, need=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 int action = sdata_in.payload.in_uint16_le();
                 sdata_in.payload.in_skip_bytes(2); /* user id */
                 sdata_in.payload.in_skip_bytes(4); /* control id */
@@ -3430,6 +3501,13 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
             }
             {
+                expected = 4;   /* messageType(2) + targetUser(4) */
+                if (!sdata_in.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Synchronize PDU data, need=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 uint16_t messageType = sdata_in.payload.in_uint16_le();
                 uint16_t controlId = sdata_in.payload.in_uint16_le();
                 if (this->verbose & 8){
@@ -3465,10 +3543,25 @@ public:
             // bottom (2 bytes): A 16-bit, unsigned integer. The lower bound of the rectangle.
 
             {
+                expected = 4;   /* numberOfAreas(1) + pad3Octects(3) */
+                if (!sdata_in.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 size_t numberOfAreas = sdata_in.payload.in_uint8();
                 sdata_in.payload.in_skip_bytes(3);
 
+                expected = numberOfAreas * 8;   /* numberOfAreas * (left(2) + top(2) + right(2) + bottom(2)) */
+                if (!sdata_in.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 for (size_t i = 0; i < numberOfAreas ; i++){
+
                     int left = sdata_in.payload.in_uint16_le();
                     int top = sdata_in.payload.in_uint16_le();
                     int right = sdata_in.payload.in_uint16_le();
@@ -3589,6 +3682,13 @@ public:
         // entrySize (2 bytes): A 16-bit, unsigned integer. The entry size. This
         // field SHOULD be set to 0x0032 (50 bytes).
 
+            expected = 8;   /* numberFonts(2) + totalNumFonts(2) + listFlags(2) + entrySize(2) */
+            if (!sdata_in.payload.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Font list PDU data, need=%u remains=%u",
+                    expected, sdata_in.payload.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
             sdata_in.payload.in_uint16_le(); /* numberFont -> 0*/
             sdata_in.payload.in_uint16_le(); /* totalNumFonts -> 0 */
             int seq = sdata_in.payload.in_uint16_le();
@@ -3644,6 +3744,13 @@ public:
             if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
+
+            if (!sdata_in.payload.in_check_rem(sdata_in.len)){
+                LOG(LOG_ERR, "Truncated Persistent key list PDU data, need=%u remains=%u",
+                    sdata_in.len, sdata_in.payload.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
             sdata_in.payload.in_skip_bytes(sdata_in.len);
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
