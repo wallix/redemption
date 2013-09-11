@@ -65,6 +65,7 @@
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
+#include "RDP/SaveSessionInfoPDU.hpp"
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
@@ -711,6 +712,48 @@ public:
         }
         stream.mark_end();
     }
+
+/*
+    void SendLogonInfo(const uint8_t * user_name)
+    {
+        BStream stream(65536);
+        ShareData sdata_out(stream);
+        sdata_out.emit_begin(PDUTYPE2_SAVE_SESSION_INFO, this->share_id,
+            RDP::STREAM_MED);
+
+        RDP::SaveSessionInfoPDUData_Send ssipdu(stream, RDP::INFOTYPE_LOGON);
+        RDP::LogonInfoVersion1_Send      liv1(stream,
+                                              reinterpret_cast<const uint8_t *>(""),
+                                              user_name, getpid());
+
+        stream.mark_end();
+
+        // Packet trailer
+        sdata_out.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+            this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        if ((this->verbose & (128|8)) == (128|8)){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(target_stream.get_data(), target_stream.size());
+        }
+
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt,
+            this->client_info.encryptionLevel);
+        target_stream.copy_to_head(sec_header);
+
+        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    }
+*/
 
     void send_global_palette() throw (Error)
     {
