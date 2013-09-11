@@ -173,6 +173,7 @@ static CheckFileList user_check_file_list[] =
 {
     { RDPPROXY_INI, CFG_PATH, true,  false, false, false },
 
+    // End of list.
     { NULL,         NULL,     false, false, false, false }
 };
 
@@ -184,10 +185,13 @@ static CheckFileList euser_check_file_list[] =
     { DEFAULT_FONT_NAME, SHARE_PATH,      true,  false, false, false },
     { REDEMPTION_LOGO24, SHARE_PATH,      true,  false, false, false },
 
+    // Directory.
     { "",                CERTIF_PATH,     false, true,  false, false },
 
+    // Directory.
     { "",                RECORD_PATH,     false, true,  false, false },
 
+    // Directory.
     { "",                RECORD_TMP_PATH, false, true,  false, false },
 
     { RSAKEYS_INI,       CFG_PATH,        true,  false, false, false },
@@ -196,6 +200,7 @@ static CheckFileList euser_check_file_list[] =
     { RDPPROXY_KEY,      CFG_PATH,        true,  false, false, false },
     { DH1024_PEM,        CFG_PATH,        true,  false, false, false },
 
+    // End of list.
     { NULL,              NULL,            false, false, false, false }
 };
 

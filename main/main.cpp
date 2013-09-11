@@ -203,11 +203,6 @@ const char * copyright_notice =
 
 int main(int argc, char** argv)
 {
-/*
-    bool check_share_files = false;
-    bool check_etc_files = false;
-    Check_files cfc;
-*/
     int fd;
     int pid;
     char text[256];
@@ -272,37 +267,6 @@ int main(int argc, char** argv)
         cout << "Version " VERSION "\n" << endl;
         _exit(0);
     }
-
-/*
-    check_share_files = cfc.check_share();
-    check_etc_files = cfc.check_etc();
-    if (options.count("check")) {
-        std::clog << boolalpha;
-        clog <<
-        LOGIN_LOGO24      " is present at " SHARE_PATH " ... " << cfc.share.ad24b      << "\n"
-        CURSOR0           " is present at " SHARE_PATH " ... " << cfc.share.cursor0    << "\n"
-        CURSOR1           " is present at " SHARE_PATH " ... " << cfc.share.cursor1    << "\n"
-        DEFAULT_FONT_NAME " is present at " SHARE_PATH " ... " << cfc.share.font       << "\n"
-        REDEMPTION_LOGO24 " is present at " SHARE_PATH " ... " << cfc.share.logo       << "\n"
-        RSAKEYS_INI       " is present at " CFG_PATH   " ... " << cfc.cfg.keys         << "\n"
-        RDPPROXY_INI      " is present at " CFG_PATH   " ... " << cfc.cfg.config_file  << "\n"
-        RDPPROXY_CRT      " is present at " CFG_PATH   " ... " << cfc.cfg.rdpproxy_crt << "\n"
-        RDPPROXY_KEY      " is present at " CFG_PATH   " ... " << cfc.cfg.rdpproxy_key << "\n"
-        DH1024_PEM        " is present at " CFG_PATH   " ... " << cfc.cfg.dh1024_pem   << "\n"
-        ;
-
-        if (!(check_share_files && check_etc_files)){
-            std::clog << boolalpha;
-            clog <<
-            "Share files test result: " << check_share_files << ".\n"
-            << "Etc files test result: " << check_etc_files <<  ".\n"
-            << "Please verify that all tests passed. If not, "
-            "you may need to remove " PID_PATH "/redemption/" LOCKFILE " or "
-            "reinstall rdpproxy if some configuration files are missing.\n";
-        }
-        _exit(0);
-    }
-*/
 
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
