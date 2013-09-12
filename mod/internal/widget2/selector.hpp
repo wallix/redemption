@@ -717,7 +717,6 @@ public:
         , tooltip(NULL)
         , w_over(NULL)
     {
-        this->current_focus = &this->selector_lines;
         this->add_widget(&this->device_label);
         this->add_widget(&this->device_target_label);
         this->add_widget(&this->target_label);
@@ -736,7 +735,6 @@ public:
         this->add_widget(&this->logout);
         this->add_widget(&this->apply);
         this->add_widget(&this->connect);
-
 
         int dw = width - (this->selector_lines.rect.x + this->selector_lines.get_total_w() + 15);
         if (dw < 0) {
@@ -863,19 +861,8 @@ public:
             }
         }
 
-        Widget2 * w = this->widget_at_pos(x, y);
-        if (w){
-            if (device_flags & MOUSE_FLAG_BUTTON1) {
-                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
-                    if (this->current_focus) {
-                        this->current_focus->blur();
-                    }
-                    this->current_focus = w;
-                    this->current_focus->focus();
-                }
-            }
-            w->rdp_input_mouse(device_flags, x, y, keymap);
-        }
+        WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
+
     }
 
 
@@ -891,7 +878,6 @@ public:
                     const char * protocol, const char * close_time)
     {
         this->selector_lines.add_line(device_group, target_label, protocol, close_time);
-
     }
 };
 

@@ -61,10 +61,16 @@ public:
 
         this->window_login.login_edit.set_text(this->ini.account.username);
         this->window_login.password_edit.set_text(this->ini.account.password);
-        this->screen.current_focus = &this->window_login;
-        this->window_login.focus();
+
+        this->window_login.set_widget_focus(&this->window_login.login_edit);
+        if (ini.account.username[0] != 0){
+            this->window_login.set_widget_focus(&this->window_login.password_edit);
+        }
+
+        this->screen.set_widget_focus(&this->window_login);
+
         this->screen.refresh(this->screen.rect);
-        this->screen.current_focus->focus();
+
     }
 
     virtual ~LoginMod()

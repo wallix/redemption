@@ -255,16 +255,6 @@ public:
 
     }
 
-    // These two following methods do the same thing
-    void switch_focus_with(Widget2 * new_focused)
-    {
-        if (this->current_focus) {
-            this->current_focus->blur();
-        }
-        this->current_focus = new_focused;
-        this->current_focus->focus();
-    }
-
     void set_widget_focus(Widget2 * new_focused)
     {
         if (this->current_focus) {
