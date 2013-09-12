@@ -45,7 +45,7 @@ public:
     // , timeout(ini.debug.pass_dialog_box?(now + ini.debug.pass_dialog_box):0)
     , timeout(Timeout(now, ini.debug.pass_dialog_box))
     {
-        this->screen.child_list.push_back(&this->window_dialog);
+        this->screen.add_widget(&this->window_dialog);
 
         this->window_dialog.ok.border_top_left_color = WHITE;
         if (this->window_dialog.cancel) {
@@ -62,7 +62,7 @@ public:
 
     virtual ~DialogMod()
     {
-        this->screen.child_list.clear();
+        this->screen.clear();
     }
 
     virtual void notify(Widget2* sender, notify_event_t event)

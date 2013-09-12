@@ -44,13 +44,13 @@ public:
     , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12, fgcolorbtn, bgcolorbtn, 6, 2)
     , cancel(cancel_text ? new WidgetButton(drawable, 0, 0, *this, this, cancel_text, true, -11, fgcolorbtn, bgcolorbtn, 6, 2) : NULL)
     {
-        this->child_list.push_back(&this->dialog);
-        this->child_list.push_back(&this->ok);
+        this->add_widget(&this->dialog);
+        this->add_widget(&this->ok);
 
         const int window_size = std::max<int>(this->titlebar_base_width + this->titlebar.x_text + 5 + this->button_close.cx(), this->dialog.cx());
 
         if (this->cancel) {
-            this->child_list.push_back(this->cancel);
+            this->add_widget(this->cancel);
 
             this->set_window_cx(std::max<int>(window_size, this->ok.cx() + this->cancel->cx() + 30));
             this->dialog.rect.x += (this->cx() - this->dialog.cx()) / 2;
@@ -77,7 +77,7 @@ public:
     {
         if (this->cancel)
             delete this->cancel;
-        this->child_list.clear();
+        this->clear();
     }
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event) {

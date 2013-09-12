@@ -93,8 +93,6 @@ public:
     , focus_flag(NORMAL_FOCUS)
     , has_focus(false)
     {
-        TODO("Constructor should take absolute coordinates")
-
     }
 
     virtual ~Widget2()

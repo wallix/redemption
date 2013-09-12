@@ -72,11 +72,11 @@ public:
 
         this->resize_titlebar();
 
-        this->child_list.push_back(&this->img);
-        this->child_list.push_back(&this->connection_closed_label);
-        this->child_list.push_back(&this->cancel);
-        this->child_list.push_back(&this->diagnostic);
-        this->child_list.push_back(&this->diagnostic_lines);
+        this->add_widget(&this->img);
+        this->add_widget(&this->connection_closed_label);
+        this->add_widget(&this->cancel);
+        this->add_widget(&this->diagnostic);
+        this->add_widget(&this->diagnostic_lines);
 
         uint16_t px = this->diagnostic.cx() + 10;
 
@@ -85,10 +85,10 @@ public:
         y += 10;
 
         if (username && *username) {
-            this->child_list.push_back(&this->username_label);
-            this->child_list.push_back(&this->username_label_value);
-            this->child_list.push_back(&this->target_label);
-            this->child_list.push_back(&this->target_label_value);
+            this->add_widget(&this->username_label);
+            this->add_widget(&this->username_label_value);
+            this->add_widget(&this->target_label);
+            this->add_widget(&this->target_label_value);
 
             px = std::max(this->username_label.cx(), this->diagnostic.cx()) + 10;
             this->username_label_value.rect.x = this->username_label.dx() + px;
@@ -122,7 +122,7 @@ public:
 
     virtual ~WindowWabClose()
     {
-        this->child_list.clear();
+        this->clear();
     }
 
     virtual void notify(Widget2 * widget, NotifyApi::notify_event_t event)

@@ -409,12 +409,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //     WidgetImage wimage6(drawable, -50,550, FIXTURES_PATH"/logo-redemption.bmp",
 //                         wcomposite, notifier);
 
-//     wcomposite.child_list.push_back(&wimage1);
-//     wcomposite.child_list.push_back(&wimage2);
-//     wcomposite.child_list.push_back(&wimage3);
-//     wcomposite.child_list.push_back(&wimage4);
-//     wcomposite.child_list.push_back(&wimage5);
-//     wcomposite.child_list.push_back(&wimage6);
+//     wcomposite.add_widget(&wimage1);
+//     wcomposite.add_widget(&wimage2);
+//     wcomposite.add_widget(&wimage3);
+//     wcomposite.add_widget(&wimage4);
+//     wcomposite.add_widget(&wimage5);
+//     wcomposite.add_widget(&wimage6);
 
 //     // ask to widget to redraw at position 100,25 and of size 100x100.
 //     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
@@ -438,6 +438,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetImageClip2)
 //         "\x5b\x46\xcd\xd4\xb2\x5a\xcd\x0a\x2d\x2b")){
 //         BOOST_CHECK_MESSAGE(false, message);
 //     }
-//     wcomposite.child_list.clear();
+//     wcomposite.clear();
 // }
 

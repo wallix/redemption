@@ -423,7 +423,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     int16_t y = 10;
 
     WindowLogin window_login(drawable, x, y, parent, &parent, "test6");
-    parent.child_list.push_back(&window_login);
+    parent.add_widget(&window_login);
 
     window_login.focus();
     parent.rdp_input_invalidate(parent.rect);
@@ -463,6 +463,6 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    parent.child_list.clear();
+    parent.clear();
 }
 

@@ -64,7 +64,7 @@ public:
     {
         this->selector.set_widget_focus(&this->selector.selector_lines);
         this->screen.set_widget_focus(&this->selector);
-        this->screen.child_list.push_back(&this->selector);
+        this->screen.add_widget(&this->selector);
 
         this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.selector_lines.dy() + 10) + this->selector.selector_lines.h_border) / (this->selector.selector_lines.h_text + this->selector.selector_lines.y_text * 2 + this->selector.selector_lines.h_border));
         this->ask_page();
@@ -73,7 +73,7 @@ public:
 
     virtual ~SelectorMod()
     {
-        this->screen.child_list.clear();
+        this->screen.clear();
     }
 
     virtual void rdp_input_invalidate(const Rect& r)

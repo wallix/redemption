@@ -50,26 +50,26 @@ public:
         RwlRectangle * img = new RwlImage(*this, this->screen, 0, SHARE_PATH"/"REDEMPTION_LOGO24, style);
         img->rect.x = width - img->cx();
         img->rect.y = height - img->cy();
-        this->screen.child_list.push_back(img);
+        this->screen.add_widget(img);
 
         RwlRectangle * zone = new RwlRectangle(*this, this->screen, 0, style);
         zone->rect.cx = 100;
         zone->rect.cy = 100;
-        this->screen.child_list.push_back(zone);
+        this->screen.add_widget(zone);
 
         zone = new RwlRectangle(*this, this->screen, 0, style);
         zone->rect.x = 100;
         zone->rect.y = 100;
         zone->rect.cx = 100;
         zone->rect.cy = 100;
-        this->screen.child_list.push_back(zone);
+        this->screen.add_widget(zone);
 
         style.color = YELLOW;
         zone = new RwlRectangle(*this, this->screen, 0, style);
         zone->rect.y = 100;
         zone->rect.cx = 100;
         zone->rect.cy = 100;
-        this->screen.child_list.push_back(zone);
+        this->screen.add_widget(zone);
 
 //         this->screen.set_widget_focus(&this->window_dialog);
         this->screen.refresh(this->screen.rect);
@@ -77,7 +77,7 @@ public:
 
     virtual ~RwlMod()
     {
-        this->screen.child_list.clear();
+        this->screen.clear();
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2,

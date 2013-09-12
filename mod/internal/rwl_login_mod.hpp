@@ -399,8 +399,8 @@ public:
         , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, this->screen, NULL)
         , ini(ini)
     {
-        this->screen.child_list.push_back(&this->image);
-        this->screen.child_list.push_back(&this->window_login);
+        this->screen.add_widget(&this->image);
+        this->screen.add_widget(&this->window_login);
 
         typedef std::vector<RwlDefinition::Target>::iterator target_iterator;
         target_iterator target_first = this->definition.targets.begin();
@@ -528,7 +528,7 @@ public:
 
     virtual ~RwlLoginMod()
     {
-        this->screen.child_list.clear();
+        this->screen.clear();
     }
 
     virtual void notify(Widget2* sender, notify_event_t event)

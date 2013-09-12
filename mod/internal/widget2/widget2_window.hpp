@@ -58,8 +58,8 @@ public:
     , inactive_border_right_bottom_color(0x888888)
     , inactive_border_right_bottom_color_inner(0x888888)
     {
-        this->child_list.push_back(&this->titlebar);
-        this->child_list.push_back(&this->button_close);
+        this->add_widget(&this->titlebar);
+        this->add_widget(&this->button_close);
 
         // this->titlebar.tab_flag = IGNORE_TAB;
         // this->button_close.tab_flag = IGNORE_TAB;

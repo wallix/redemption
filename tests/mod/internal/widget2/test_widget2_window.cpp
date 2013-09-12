@@ -158,12 +158,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
                       window, notifier, id++, WHITE);
     WidgetRect wrect6(drawable, Rect(-50,550,100,100),
                       window, notifier, id++, GREY);
-    window.child_list.push_back(&wrect1);
-    window.child_list.push_back(&wrect2);
-    window.child_list.push_back(&wrect3);
-    window.child_list.push_back(&wrect4);
-    window.child_list.push_back(&wrect5);
-    window.child_list.push_back(&wrect6);
+    window.add_widget(&wrect1);
+    window.add_widget(&wrect2);
+    window.add_widget(&wrect3);
+    window.add_widget(&wrect4);
+    window.add_widget(&wrect5);
+    window.add_widget(&wrect6);
 
     // ask to widget to redraw at position 150,500 and of size 800x600
     window.rdp_input_invalidate(Rect(150 + window.dx(),
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetWindow)
         )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    window.child_list.clear();
+    window.clear();
 }
 
 BOOST_AUTO_TEST_CASE(EventWidgetWindow)
@@ -337,5 +337,5 @@ BOOST_AUTO_TEST_CASE(EventWidgetWindow)
     BOOST_CHECK(notifier.event == 0);
     BOOST_CHECK(notifier.sender == 0);
     window.button_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, NULL);
-    window.child_list.clear();
+    window.clear();
 }

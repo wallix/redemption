@@ -475,12 +475,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     WidgetLabel wlabel6(drawable, -10,550, wcomposite, notifier,
                         "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
 
-    wcomposite.child_list.push_back(&wlabel1);
-    wcomposite.child_list.push_back(&wlabel2);
-    wcomposite.child_list.push_back(&wlabel3);
-    wcomposite.child_list.push_back(&wlabel4);
-    wcomposite.child_list.push_back(&wlabel5);
-    wcomposite.child_list.push_back(&wlabel6);
+    wcomposite.add_widget(&wlabel1);
+    wcomposite.add_widget(&wlabel2);
+    wcomposite.add_widget(&wlabel3);
+    wcomposite.add_widget(&wlabel4);
+    wcomposite.add_widget(&wlabel5);
+    wcomposite.add_widget(&wlabel6);
 
     //ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
         "\x3a\x30\x71\xfd\xee\xa6\x3a\x6c\xaa\x75")){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    wcomposite.child_list.clear();
+    wcomposite.clear();
 }
 
 TODO("the entry point exists in module: it's rdp_input_invalidate"

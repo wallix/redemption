@@ -164,12 +164,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
                       wcomposite, notifier, id++, WHITE);
     WidgetRect wrect6(drawable, Rect(-50,550,100,100),
                       wcomposite, notifier, id++, GREY);
-    wcomposite.child_list.push_back(&wrect1);
-    wcomposite.child_list.push_back(&wrect2);
-    wcomposite.child_list.push_back(&wrect3);
-    wcomposite.child_list.push_back(&wrect4);
-    wcomposite.child_list.push_back(&wrect5);
-    wcomposite.child_list.push_back(&wrect6);
+    wcomposite.add_widget(&wrect1);
+    wcomposite.add_widget(&wrect2);
+    wcomposite.add_widget(&wrect3);
+    wcomposite.add_widget(&wrect4);
+    wcomposite.add_widget(&wrect5);
+    wcomposite.add_widget(&wrect6);
 
     // ask to widget to redraw at position 150,500 and of size 800x600
     wcomposite.rdp_input_invalidate(Rect(150 + wcomposite.dx(),
@@ -213,6 +213,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    wcomposite.child_list.clear();
+    wcomposite.clear();
 }
 
