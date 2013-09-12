@@ -33,132 +33,6 @@
 
 TODO("merge that with find and unlink")
 
-/*
-struct Check_files {
-    struct {
-        bool ad24b;
-        bool cursor0;
-        bool cursor1;
-        bool font;
-        bool logo;
-        bool wallix_logo;
-    } share;
-
-    struct {
-        bool keys;
-        bool config_file;
-        bool rdpproxy_crt;
-        bool rdpproxy_key;
-        bool dh1024_pem;
-    } cfg;
-
-    Check_files() {
-        this->share.ad24b   = false;
-        this->share.cursor0 = false;
-        this->share.cursor1 = false;
-        this->share.font    = false;
-        this->share.logo    = false;
-
-        this->cfg.keys         = false;
-        this->cfg.config_file  = false;
-        this->cfg.rdpproxy_crt = false;
-        this->cfg.rdpproxy_key = false;
-        this->cfg.dh1024_pem   = false;
-    }
-
-    bool check_share() {
-        using namespace std;
-
-        string login_1(LOGIN_LOGO24);
-        string cursor_arrow(CURSOR0);
-        string cursor_pointer(CURSOR1);
-        string font(DEFAULT_FONT_NAME);
-        string logo(REDEMPTION_LOGO24);
-
-        DIR * dirp = opendir(SHARE_PATH);
-        if (!dirp){
-            cerr << "Error opening " SHARE_PATH " directory : "
-                 << strerror(errno)
-                 << endl;
-            return 0;
-        }
-        struct dirent * d = readdir(dirp);
-        while (d) {
-            string line(d->d_name);
-
-                 if (login_1.compare(line) == 0) {
-                this->share.ad24b = true;
-            }
-            else if(cursor_arrow.compare(line) == 0) {
-                this->share.cursor0 = true;
-            }
-            else if(cursor_pointer.compare(line) == 0) {
-                this->share.cursor1 = true;
-            }
-            else if(font.compare(line) == 0) {
-                this->share.font = true;
-            }
-            else if(logo.compare(line) == 0) {
-                this->share.logo = true;
-            }
-
-            d = readdir(dirp);
-        }
-        closedir(dirp);
-
-        return this->share.ad24b
-            && this->share.cursor0
-            && this->share.cursor1
-            && this->share.font
-            && this->share.logo;
-    }
-
-    bool check_etc() {
-        using namespace std;
-
-        string keys(RSAKEYS_INI);
-        string config_file(RDPPROXY_INI);
-
-        DIR * dirp = opendir(CFG_PATH);
-        if (!dirp){
-            cerr << "Error opening " CFG_PATH " directory : "
-                 << strerror(errno)
-                 << endl;
-            return 0;
-        }
-        struct dirent * d = readdir(dirp);
-        while (d) {
-            string line(d->d_name);
-
-                 if (keys.compare(line) == 0) {
-                this->cfg.keys = true;
-            }
-            else if(config_file.compare(line) == 0) {
-                this->cfg.config_file = true;
-            }
-            else if (!line.compare(RDPPROXY_CRT)) {
-                this->cfg.rdpproxy_crt = true;
-            }
-            else if (!line.compare(RDPPROXY_KEY)) {
-                this->cfg.rdpproxy_key = true;
-            }
-            else if (!line.compare(DH1024_PEM)) {
-                this->cfg.dh1024_pem = true;
-            }
-
-            d = readdir(dirp);
-        }
-        closedir(dirp);
-
-        return this->cfg.keys
-            && this->cfg.config_file
-            && this->cfg.rdpproxy_crt
-            && this->cfg.rdpproxy_key
-            && this->cfg.dh1024_pem;
-    }
-};
-*/
-
 struct CheckFileList
 {
     const char * filename;
@@ -179,26 +53,27 @@ static CheckFileList user_check_file_list[] =
 
 static CheckFileList euser_check_file_list[] =
 {
-    { LOGIN_LOGO24,      SHARE_PATH,      true,  false, false, false },
-    { CURSOR0,           SHARE_PATH,      true,  false, false, false },
-    { CURSOR1,           SHARE_PATH,      true,  false, false, false },
-    { DEFAULT_FONT_NAME, SHARE_PATH,      true,  false, false, false },
-    { REDEMPTION_LOGO24, SHARE_PATH,      true,  false, false, false },
+    { LOGIN_LOGO24,             SHARE_PATH,      true,  false, false, false },
+    { CURSOR0,                  SHARE_PATH,      true,  false, false, false },
+    { CURSOR1,                  SHARE_PATH,      true,  false, false, false },
+    { DEFAULT_FONT_NAME,        SHARE_PATH,      true,  false, false, false },
+    { REDEMPTION_LOGO24,        SHARE_PATH,      true,  false, false, false },
+    { "Philips_PM5544_640.png", SHARE_PATH,      true,  false, false, false },
+    { "ad8b.png",               SHARE_PATH,      true,  false, false, false },
 
     // Directory.
-    { "",                CERTIF_PATH,     false, true,  false, false },
+    { "",                       CERTIF_PATH,     false, true,  false, false },
 
     // Directory.
-    { "",                RECORD_PATH,     false, true,  false, false },
+    { "",                       RECORD_PATH,     false, true,  false, false },
 
     // Directory.
-    { "",                RECORD_TMP_PATH, false, true,  false, false },
+    { "",                       RECORD_TMP_PATH, false, true,  false, false },
 
-    { RSAKEYS_INI,       CFG_PATH,        true,  false, false, false },
-    { RDPPROXY_INI,      CFG_PATH,        true,  false, false, false },
-    { RDPPROXY_CRT,      CFG_PATH,        true,  false, false, false },
-    { RDPPROXY_KEY,      CFG_PATH,        true,  false, false, false },
-    { DH1024_PEM,        CFG_PATH,        true,  false, false, false },
+    { RDPPROXY_INI,             CFG_PATH,        true,  false, false, false },
+    { RDPPROXY_KEY,             CFG_PATH,        true,  false, false, false },
+    { RDPPROXY_CRT,             CFG_PATH,        true,  false, false, false },
+    { DH1024_PEM,               CFG_PATH,        true,  false, false, false },
 
     // End of list.
     { NULL,              NULL,            false, false, false, false }
