@@ -1344,26 +1344,27 @@ public:
                             cs_core.log("Received from Client");
                         }
 
-                        client_info.width = cs_core.desktopWidth;
-                        client_info.height = cs_core.desktopHeight;
-                        client_info.keylayout = cs_core.keyboardLayout;
-                        client_info.build = cs_core.clientBuild;
+                        this->client_info.width     = cs_core.desktopWidth;
+                        this->client_info.height    = cs_core.desktopHeight;
+                        this->client_info.keylayout = cs_core.keyboardLayout;
+                        this->client_info.build     = cs_core.clientBuild;
                         for (size_t i = 0; i < 16 ; i++){
-                            client_info.hostname[i] = cs_core.clientName[i];
+                            this->client_info.hostname[i] = cs_core.clientName[i];
                         }
-                        client_info.bpp = 8;
+                        this->client_info.bpp = 8;
                         switch (cs_core.postBeta2ColorDepth){
                         case 0xca01:
-                            client_info.bpp = (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                            this->client_info.bpp =
+                                (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
                         break;
                         case 0xca02:
-                            client_info.bpp = 15;
+                            this->client_info.bpp = 15;
                         break;
                         case 0xca03:
-                            client_info.bpp = 16;
+                            this->client_info.bpp = 16;
                         break;
                         case 0xca04:
-                            client_info.bpp = 24;
+                            this->client_info.bpp = 24;
                         break;
                         default:
                         break;
@@ -1399,7 +1400,7 @@ public:
                     {
                         GCC::UserData::CSCluster cs_cluster;
                         cs_cluster.recv(f.payload);
-                        client_info.console_session =
+                        this->client_info.console_session =
                             (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
                         if (this->verbose & 1) {
                             cs_cluster.log("Receiving from Client");
@@ -1504,7 +1505,7 @@ public:
                 uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
 
                 sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
-                sc_sec1.encryptionLevel = client_info.encryptionLevel;
+                sc_sec1.encryptionLevel = this->client_info.encryptionLevel;
                 sc_sec1.serverRandomLen = 32;
                 this->gen->random(this->server_random, 32);
                 memcpy(sc_sec1.serverRandom, this->server_random, 32);
@@ -2885,8 +2886,13 @@ public:
                     this->client_info.bpp    =
                           (this->client_bitmap_caps.preferredBitsPerPixel >= 24)
                         ? 24 : this->client_bitmap_caps.preferredBitsPerPixel;
-                    this->client_info.width  = this->client_bitmap_caps.desktopWidth;
-                    this->client_info.height = this->client_bitmap_caps.desktopHeight;
+                    // Fixed bug in rdesktop
+                    // Desktop size in Client Core Data != Desktop size in Bitmap Capability Set
+                    if (!this->client_info.width || !this->client_info.height)
+                    {
+                        this->client_info.width  = this->client_bitmap_caps.desktopWidth;
+                        this->client_info.height = this->client_bitmap_caps.desktopHeight;
+                    }
                 }
                 break;
             case CAPSTYPE_ORDER: { /* 3 */
