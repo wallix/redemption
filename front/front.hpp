@@ -2497,7 +2497,14 @@ public:
                             if (this->verbose & 8){
                                 LOG(LOG_INFO, "Front received DATAPDU done");
                             }
-                            TODO("check all received data consumed")
+
+                            if (!sctrl.payload.check_end())
+                            {
+                                LOG(LOG_ERR,
+                                    "Trailing data after DATAPDU: remains=%u",
+                                    sctrl.payload.in_remain());
+                                throw Error(ERR_MCS_PDU_TRAILINGDATA);
+                            }
                             break;
                         case PDUTYPE_DEACTIVATEALLPDU:
                             if (this->verbose & 1){
@@ -2513,11 +2520,19 @@ public:
                             LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
                             break;
                         }
+
                         TODO("check all sctrl.payload data is consumed")
                         sec.payload.p = sctrl.payload.p;
                     }
                 }
-                TODO("check all data have been consumed")
+
+                if (!sec.payload.check_end())
+                {
+                    LOG(LOG_ERR,
+                        "Trailing data after SEC: remains=%u",
+                        sec.payload.in_remain());
+                    throw Error(ERR_SEC_TRAILINGDATA);
+                }
             }
         }
         break;
