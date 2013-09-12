@@ -34,10 +34,6 @@ class SelectorMod : public InternalMod, public NotifyApi
 
     Inifile & ini;
 
-    // struct temporary_buffer {
-    //     char buffer[16];
-    // };
-
     struct temporary_login {
         char buffer[256];
 
@@ -63,8 +59,8 @@ public:
         , ini(ini)
     {
         this->selector.set_widget_focus(&this->selector.selector_lines);
-        this->screen.set_widget_focus(&this->selector);
         this->screen.add_widget(&this->selector);
+        this->screen.set_widget_focus(&this->selector);
 
         this->ini.context.selector_lines_per_page.set((this->selector.first_page.dy() - (this->selector.selector_lines.dy() + 10) + this->selector.selector_lines.h_border) / (this->selector.selector_lines.h_text + this->selector.selector_lines.y_text * 2 + this->selector.selector_lines.h_border));
         this->ask_page();
@@ -85,9 +81,6 @@ public:
     {
         this->ini.context_ask(AUTHID_SELECTOR);
     	this->ini.context.selector_current_page.set((uint32_t)this->current_page);
-        // char buffer[32];
-        // sprintf(buffer, "%u", (unsigned int)this->current_page);
-        // this->ini.context_set_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer);
         this->ini.context_set_value(AUTHID_SELECTOR_GROUP_FILTER,
                                     this->selector.filter_device.get_text());
         this->ini.context_set_value(AUTHID_SELECTOR_DEVICE_FILTER,
@@ -118,8 +111,8 @@ public:
                 char buffer[1024];
                 snprintf(buffer, sizeof(buffer), "%s:%s",
                          this->selector.selector_lines.get_current_index(WidgetSelector::COLUMN_TARGET),
-                         this->ini.globals.auth_user.get_cstr());
-                         //this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0));
+                         this->ini.globals.auth_user.get_cstr()
+                         );
                 this->ini.parse_username(buffer);
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
@@ -165,16 +158,10 @@ public:
     {
         char buffer[16];
 
-	// ini.context_get_value(AUTHID_SELECTOR_CURRENT_PAGE, buffer, sizeof(buffer));
-        // this->selector.current_page.set_text(buffer);
-        // this->current_page = atoi(buffer);
 	this->current_page = ini.context.selector_current_page.get();
 	snprintf(buffer, sizeof(buffer), "%u", this->current_page);
 	this->selector.current_page.set_text(buffer);
 
-        // ini.context_get_value(AUTHID_SELECTOR_NUMBER_OF_PAGES, buffer, sizeof(buffer));
-        // this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
-        // this->number_page = atoi(buffer);
 	this->number_page = ini.context.selector_number_of_pages.get();
 	snprintf(buffer, sizeof(buffer), "%u", this->number_page);
 	this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
@@ -183,11 +170,6 @@ public:
         uint16_t cy = this->selector.selector_lines.cy();
 
         this->selector.selector_lines.clear();
-
-        // this->selector.device_lines.clear();
-        // this->selector.target_lines.clear();
-        // this->selector.protocol_lines.clear();
-        // this->selector.close_time_lines.clear();
 
         this->refresh_device();
 
@@ -204,9 +186,6 @@ public:
 
     void refresh_device()
     {
-        // char * groups    = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0));
-        // char * targets   = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0));
-        // char * protocols = const_cast<char *>(this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0));
         char * groups    = const_cast<char *>(this->ini.globals.target_user.get_cstr());
         char * targets   = const_cast<char *>(this->ini.globals.target_device.get_cstr());
         char * protocols = const_cast<char *>(this->ini.context.target_protocol.get_cstr());
@@ -258,7 +237,7 @@ public:
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
             this->selector.selector_lines.set_current_index(0);
-            this->selector.switch_focus_with(&this->selector.selector_lines);
+            this->selector.set_widget_focus(&this->selector.selector_lines);
         }
     }
 

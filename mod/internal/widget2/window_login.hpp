@@ -126,11 +126,6 @@ public:
         this->help.set_button_y(y);
 
         this->set_window_cy(y + this->ok.cy() + 10 - this->dy());
-
-        this->current_focus = &this->login_edit;
-        if (focus_on_password){
-            this->current_focus = &this->password_edit;
-        }
     }
 
     virtual ~WindowLogin()
@@ -186,13 +181,11 @@ public:
 
                     static_cast<WidgetComposite*>(p)->add_widget(this->window_help);
                 }
-                p->current_focus = this->window_help;
+                this->window_help->set_widget_focus(&this->window_help->ok);
+                p->set_widget_focus(this->window_help);
 
                 this->focus_flag = IGNORE_FOCUS;
-                this->blur();
-                this->window_help->current_focus = &this->window_help->ok;
-                this->window_help->focus();
-                p->refresh(p->rect);
+
             }
         } else if ((widget == this->window_help) &&
                    (event == NOTIFY_CANCEL || event == NOTIFY_SUBMIT)) {
@@ -241,15 +234,13 @@ private:
     {
         if (&this->parent != this) {
             WidgetScreen * p = static_cast<WidgetScreen*>(&this->parent);
-            p->current_focus = this;
+            p->set_widget_focus(this);
+
             p->remove_widget(this->window_help);
             delete this->window_help;
             this->window_help = NULL;
-            this->current_focus = &this->help;
-            this->current_focus->focus();
 
             this->focus_flag = NORMAL_FOCUS;
-            this->focus();
             p->refresh(p->rect);
         }
     }

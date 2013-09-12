@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip)
                                       selector.cx(),
                                       selector.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector4.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "selector4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
                                       30,
                                       10));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector5.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "selector5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

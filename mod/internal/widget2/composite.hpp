@@ -137,14 +137,14 @@ public:
             }
             if (ok) {
                 if (thiswidget->current_focus != *pos2) {
-                    thiswidget->switch_focus_with(*pos2);
+                    thiswidget->set_widget_focus(*pos2);
                 }
                 return true;
             }
         } else {
             pos = focus_manager::next_in(this->child_list.begin(), this->child_list.end());
             if (pos != this->child_list.end()) {
-                thiswidget->switch_focus_with(*pos);
+                thiswidget->set_widget_focus(*pos);
                 return true;
             }
         }
@@ -199,14 +199,14 @@ public:
             }
             if (ok) {
                 if (thiswidget->current_focus != *pos2) {
-                    thiswidget->switch_focus_with(*pos2);
+                    thiswidget->set_widget_focus(*pos2);
                 }
                 return true;
             }
         } else {
             pos = focus_manager::previous_in(this->child_list.end()-1, this->child_list.begin()-1);
             if (pos != this->child_list.begin()-1) {
-                thiswidget->switch_focus_with(*pos);
+                thiswidget->set_widget_focus(*pos);
                 return true;
             }
         }
@@ -321,11 +321,24 @@ public:
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        if (this->rect.contains_pt(x, y)) {
-            Widget2 * w = this->widget_at_pos(x,y);
-            if (w) {
-                w->rdp_input_mouse(device_flags, x, y, keymap);
+        Widget2 * w = this->widget_at_pos(x, y);
+
+        // Mouse clic release
+        // w could be null if mouse is located at an empty space
+        if (device_flags == MOUSE_FLAG_BUTTON1) {
+            if (this->current_focus
+                && (w != this->current_focus)) {
+                this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
             }
+        }
+        if (w){
+            // get focus when mouse clic
+            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
+                    this->set_widget_focus(w);
+                }
+            }
+            w->rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 

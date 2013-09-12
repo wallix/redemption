@@ -425,7 +425,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     WindowLogin window_login(drawable, x, y, parent, &parent, "test6");
     parent.add_widget(&window_login);
 
-    window_login.focus();
+    parent.set_widget_focus(&window_login);
     parent.rdp_input_invalidate(parent.rect);
 
     x = window_login.help.rect.x + window_login.help.rect.cx / 2;
