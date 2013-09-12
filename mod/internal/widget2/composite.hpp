@@ -28,7 +28,6 @@
 #include "keymap2.hpp"
 #include <region.hpp>
 
-TODO("child_list should not be directly accessed");
 class CompositeInterface {
 public:
     virtual ~CompositeInterface() {}
@@ -66,6 +65,7 @@ public:
     }
     virtual void remove_widget_compo(Widget2 * w) {
         std::size_t size = this->child_list.size();
+        // This only remove the widget if it is on the top of the list
         if (size != 0 && this->child_list[size - 1] == w) {
             this->child_list.pop_back();
         }
