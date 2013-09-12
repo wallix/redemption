@@ -482,12 +482,31 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    void send_data_request(uint16_t channelId, HStream & stream) {
+    void send_data_request(uint16_t channelId, HStream & stream)
+    {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        MCS::SendDataRequest_Send mcs( mcs_header, this->userid, channelId, 1, 3, stream.size()
-                                     , MCS::PER_ENCODING);
+        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
+                                      3, stream.size(), MCS::PER_ENCODING);
+
+        X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
+
+        this->nego.trans->send(x224_header, mcs_header, stream);
+    }
+
+    void send_data_request_ex(uint16_t channelId, HStream & stream)
+    {
+        BStream x224_header(256);
+        BStream mcs_header(256);
+        BStream sec_header(256);
+
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
+                          this->encryptionLevel);
+        stream.copy_to_head(sec_header);
+
+        MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
+                                      3, stream.size(), MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
@@ -983,10 +1002,12 @@ struct mod_rdp : public mod_api {
 
                         if (this->encryptionLevel){
                             if (this->verbose & 1){
-                                LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u", this->server_public_key_len);
+                                LOG(LOG_INFO, "mod_rdp::SecExchangePacket keylen=%u",
+                                    this->server_public_key_len);
                             }
                             HStream stream(512, 512 + this->server_public_key_len + 32);
-                            SEC::SecExchangePacket_Send mcs(stream, client_crypt_random, this->server_public_key_len);
+                            SEC::SecExchangePacket_Send mcs(stream, client_crypt_random,
+                                this->server_public_key_len);
                             this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
                         }
 
@@ -1153,7 +1174,8 @@ struct mod_rdp : public mod_api {
                                         LIC::NewLicenseRequest_Send(lic_data, this->use_rdp5?3:2, username, hostname);
                                     }
 
-                                    SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
+                                    SEC::Sec_Send sec(sec_header, lic_data,
+                                        SEC::SEC_LICENSE_PKT, this->encrypt, 0);
                                     lic_data.copy_to_head(sec_header);
 
                                     this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
@@ -1208,7 +1230,8 @@ struct mod_rdp : public mod_api {
                                     HStream lic_data(1024, 65535);
 
                                     LIC::ClientPlatformChallengeResponse_Send(lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig);
-                                    SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
+                                    SEC::Sec_Send sec(sec_header, lic_data,
+                                        SEC::SEC_LICENSE_PKT, this->encrypt, 0);
                                     lic_data.copy_to_head(sec_header);
                                     this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
                                 }
@@ -1982,22 +2005,19 @@ struct mod_rdp : public mod_api {
 
         confirm_active_pdu.emit_end();
 
-        BStream sec_header(256);
         // shareControlHeader (6 bytes): Share Control Header (section 2.2.8.1.1.1.1)
         // containing information about the packet. The type subfield of the pduType
         // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
         BStream sctrl_header(256);
-        ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+        ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU,
+            this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
         HStream target_stream(1024, 65536);
         target_stream.out_copy_bytes(sctrl_header);
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active done");
@@ -3333,7 +3353,6 @@ struct mod_rdp : public mod_api {
             LOG(LOG_INFO, "mod_rdp::send_control");
         }
 
-        BStream sec_header(256);
         BStream stream(256);
 
         ShareData sdata(stream);
@@ -3356,10 +3375,7 @@ struct mod_rdp : public mod_api {
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1) {
             LOG(LOG_INFO, "mod_rdp::send_control done");
@@ -3392,11 +3408,7 @@ struct mod_rdp : public mod_api {
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
-        BStream sec_header(256);
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise done");
@@ -3430,11 +3442,7 @@ struct mod_rdp : public mod_api {
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
-        BStream sec_header(256);
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_fonts done");
@@ -3480,11 +3488,7 @@ public:
         target_stream.out_copy_bytes(stream);
         target_stream.mark_end();
 
-        BStream sec_header(256);
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::send_input_slowpath done");
@@ -4055,7 +4059,8 @@ public:
 
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel);
+        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT,
+            this->encrypt, this->encryptionLevel);
         stream.copy_to_head(sec_header);
 
         this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);

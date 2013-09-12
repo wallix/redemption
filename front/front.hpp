@@ -2519,28 +2519,32 @@ public:
         }
     }
 
-    void send_data_indication(uint16_t channelId, HStream & stream) {
+    void send_data_indication(uint16_t channelId, HStream & stream)
+    {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
-                                        , stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
+                                         1, 3, stream.size(),
+                                         MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
         this->trans->send(x224_header, mcs_header, stream);
     }
 
-    void send_data_indication_ex(uint16_t channelId, HStream & stream) {
+    void send_data_indication_ex(uint16_t channelId, HStream & stream)
+    {
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec( sec_header, stream, 0, this->encrypt
-                         , this->client_info.encryptionLevel);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
+                          this->client_info.encryptionLevel);
         stream.copy_to_head(sec_header);
 
-        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
-                                        , stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
+                                         1, 3, stream.size(),
+                                         MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
@@ -3157,8 +3161,8 @@ public:
         sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
         // Payload
-        stream.out_uint16_le(1); /* messageType */
-        stream.out_uint16_le(1002); /* control id */
+        stream.out_uint16_le(1);    // messageType
+        stream.out_uint16_le(1002); // control id
         stream.mark_end();
 
         // Packet trailer
@@ -3183,6 +3187,7 @@ public:
             LOG(LOG_INFO, "send_synchronize done");
         }
     }
+
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
 // ============================================
