@@ -2581,7 +2581,8 @@ public:
             sdata.emit_end();
 
             BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
             HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
@@ -2643,15 +2644,14 @@ public:
         stream.out_uint16_le(4); /* 4 chars for RDP\0 */
 
         /* 2 bytes size after num caps, set later */
-        uint8_t * caps_size_ptr = stream.p;
+        uint32_t caps_size_offset = stream.get_offset();
         stream.out_clear_bytes(2);
+
         stream.out_copy_bytes("RDP", 4);
 
         /* 4 byte num caps, set later */
-        uint8_t * caps_count_ptr = stream.p;
+        uint32_t caps_count_offset = stream.get_offset();
         stream.out_clear_bytes(4);
-
-        uint8_t * caps_ptr = stream.p;
 
         CapabilitySets cap_sets;
 
@@ -2759,19 +2759,11 @@ public:
         input_caps.emit(stream);
         caps_count++;
 
-        TODO("Check if this padding is necessary and, if so, how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")
-        stream.out_clear_bytes(4); /* pad */
+        size_t caps_size = stream.get_offset() - caps_count_offset;
+        stream.set_out_uint16_le(caps_size, caps_size_offset);
+        stream.set_out_uint32_le(caps_count, caps_count_offset);
 
-        size_t caps_size = stream.p - caps_ptr;
-        TODO("change this using set_out_uint16_le")
-        caps_size_ptr[0] = caps_size;
-        caps_size_ptr[1] = caps_size >> 8;
-
-        TODO("change this using set_out_uint32_le")
-        caps_count_ptr[0] = caps_count;
-        caps_count_ptr[1] = caps_count >> 8;
-        caps_count_ptr[2] = caps_count >> 16;
-        caps_count_ptr[3] = caps_count >> 24;
+        stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
         stream.mark_end();
 
         BStream sctrl_header(256);
