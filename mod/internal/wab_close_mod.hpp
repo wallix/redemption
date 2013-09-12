@@ -78,8 +78,8 @@ public:
     , timeout(Timeout(now, ini.globals.close_timeout))
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
-        this->screen.child_list.push_back(&this->image);
-        this->screen.child_list.push_back(&this->window_close);
+        this->screen.add_widget(&this->image);
+        this->screen.add_widget(&this->window_close);
 
         this->window_close.set_xy((width - this->window_close.cx()) / 2,
                                   (height - this->window_close.cy()) / 2);
@@ -95,7 +95,7 @@ public:
 
     virtual ~WabCloseMod()
     {
-        this->screen.child_list.clear();
+        this->screen.clear();
     }
 
     virtual void notify(Widget2* sender, notify_event_t event)

@@ -718,24 +718,24 @@ public:
         , w_over(NULL)
     {
         this->current_focus = &this->selector_lines;
-        this->child_list.push_back(&this->device_label);
-        this->child_list.push_back(&this->device_target_label);
-        this->child_list.push_back(&this->target_label);
-        this->child_list.push_back(&this->protocol_label);
-        this->child_list.push_back(&this->close_time_label);
-        this->child_list.push_back(&this->filter_device);
-        this->child_list.push_back(&this->filter_target);
-        this->child_list.push_back(&this->filter_proto);
-        this->child_list.push_back(&this->selector_lines);
-        this->child_list.push_back(&this->first_page);
-        this->child_list.push_back(&this->prev_page);
-        this->child_list.push_back(&this->current_page);
-        this->child_list.push_back(&this->number_page);
-        this->child_list.push_back(&this->next_page);
-        this->child_list.push_back(&this->last_page);
-        this->child_list.push_back(&this->logout);
-        this->child_list.push_back(&this->apply);
-        this->child_list.push_back(&this->connect);
+        this->add_widget(&this->device_label);
+        this->add_widget(&this->device_target_label);
+        this->add_widget(&this->target_label);
+        this->add_widget(&this->protocol_label);
+        this->add_widget(&this->close_time_label);
+        this->add_widget(&this->filter_device);
+        this->add_widget(&this->filter_target);
+        this->add_widget(&this->filter_proto);
+        this->add_widget(&this->selector_lines);
+        this->add_widget(&this->first_page);
+        this->add_widget(&this->prev_page);
+        this->add_widget(&this->current_page);
+        this->add_widget(&this->number_page);
+        this->add_widget(&this->next_page);
+        this->add_widget(&this->last_page);
+        this->add_widget(&this->logout);
+        this->add_widget(&this->apply);
+        this->add_widget(&this->connect);
 
 
         int dw = width - (this->selector_lines.rect.x + this->selector_lines.get_total_w() + 15);
@@ -812,7 +812,7 @@ public:
             delete this->tooltip;
             this->tooltip = NULL;
         }
-        this->child_list.clear();
+        this->clear();
     }
 
     virtual void draw(const Rect& clip)
@@ -824,12 +824,12 @@ public:
     virtual void notify(Widget2* widget, notify_event_t event)
     {
         if (NOTIFY_SHOW_TOOLTIP == event) {
-            this->child_list.push_back(this->tooltip);
+            this->add_widget(this->tooltip);
             this->refresh(this->tooltip->rect);
         }
         if (NOTIFY_HIDE_TOOLTIP == event) {
             if (this->tooltip) {
-                this->child_list.pop_back();
+                this->remove_widget(this->tooltip);
                 this->refresh(this->tooltip->rect);
                 delete this->tooltip;
                 this->tooltip = NULL;

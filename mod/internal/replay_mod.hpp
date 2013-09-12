@@ -106,7 +106,7 @@ public:
 
         if (in_trans)
             delete in_trans;
-        this->screen.child_list.clear();
+        this->screen.clear();
     }
 
     virtual void rdp_input_invalidate(const Rect & /*rect*/)

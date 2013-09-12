@@ -189,10 +189,10 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     init_border::on(wbutton3);
     init_border::on(wbutton4);
 
-    wscreen.child_list.push_back(&wbutton1);
-    wscreen.child_list.push_back(&wbutton2);
-    wscreen.child_list.push_back(&wbutton3);
-    wscreen.child_list.push_back(&wbutton4);
+    wscreen.add_widget(&wbutton1);
+    wscreen.add_widget(&wbutton2);
+    wscreen.add_widget(&wbutton3);
+    wscreen.add_widget(&wbutton4);
 
     wscreen.set_widget_focus(&wbutton2);
 
@@ -398,5 +398,5 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
                    "\x09\x5a\xa5\x54\x9a\x30\x3a\x4a\xaa\x4a")){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    wscreen.child_list.clear();
+    wscreen.clear();
 }

@@ -637,12 +637,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     WidgetPassword wpassword6(drawable, -10,550, 50, wcomposite, notifier,
                         "xxwwp", 2, DARK_GREY, PALE_GREEN);
 
-    wcomposite.child_list.push_back(&wpassword1);
-    wcomposite.child_list.push_back(&wpassword2);
-    wcomposite.child_list.push_back(&wpassword3);
-        wcomposite.child_list.push_back(&wpassword4);
-    wcomposite.child_list.push_back(&wpassword5);
-    wcomposite.child_list.push_back(&wpassword6);
+    wcomposite.add_widget(&wpassword1);
+    wcomposite.add_widget(&wpassword2);
+    wcomposite.add_widget(&wpassword3);
+    wcomposite.add_widget(&wpassword4);
+    wcomposite.add_widget(&wpassword5);
+    wcomposite.add_widget(&wpassword6);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
@@ -666,7 +666,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
         "\x8e\x00\x91\xf6\x55\x65\x10\x46\xed\x90")){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    wcomposite.child_list.clear();
+    wcomposite.clear();
 }
 
 BOOST_AUTO_TEST_CASE(DataWidgetPassword)

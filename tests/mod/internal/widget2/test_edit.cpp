@@ -639,12 +639,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     WidgetEdit wedit6(drawable, -10,550, 50, wcomposite, notifier,
                         "xxwwp", 2, DARK_GREY, PALE_GREEN);
 
-    wcomposite.child_list.push_back(&wedit1);
-    wcomposite.child_list.push_back(&wedit2);
-    wcomposite.child_list.push_back(&wedit3);
-    wcomposite.child_list.push_back(&wedit4);
-    wcomposite.child_list.push_back(&wedit5);
-    wcomposite.child_list.push_back(&wedit6);
+    wcomposite.add_widget(&wedit1);
+    wcomposite.add_widget(&wedit2);
+    wcomposite.add_widget(&wedit3);
+    wcomposite.add_widget(&wedit4);
+    wcomposite.add_widget(&wedit5);
+    wcomposite.add_widget(&wedit6);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
@@ -668,7 +668,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
         "\xd7\xd5\x5f\xe7\xbe\x08\xc8\x5b\xad\xbf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    wcomposite.child_list.clear();
+    wcomposite.clear();
 }
 
 BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
@@ -680,7 +680,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     uint16_t cx = 100;
     WidgetEdit wedit(drawable, x, y, cx, parent, &parent, "abcde", 0, BLACK, WHITE, -1u, 1, 1);
     wedit.focus();
-    parent.child_list.push_back(&wedit);
+    parent.add_widget(&wedit);
     parent.current_focus = &wedit;
 
     char message[1024];
@@ -763,5 +763,5 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    parent.child_list.clear();
+    parent.clear();
 }

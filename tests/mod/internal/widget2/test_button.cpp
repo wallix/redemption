@@ -574,12 +574,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
     WidgetButton wbutton6(drawable, -10,550, wcomposite, notifier,
                         "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
 
-    wcomposite.child_list.push_back(&wbutton1);
-    wcomposite.child_list.push_back(&wbutton2);
-    wcomposite.child_list.push_back(&wbutton3);
-    wcomposite.child_list.push_back(&wbutton4);
-    wcomposite.child_list.push_back(&wbutton5);
-    wcomposite.child_list.push_back(&wbutton6);
+    wcomposite.add_widget(&wbutton1);
+    wcomposite.add_widget(&wbutton2);
+    wcomposite.add_widget(&wbutton3);
+    wcomposite.add_widget(&wbutton4);
+    wcomposite.add_widget(&wbutton5);
+    wcomposite.add_widget(&wbutton6);
 
     // ask to widget to redraw at position 100,25 and of size 100x100.
     wcomposite.rdp_input_invalidate(Rect(100, 25, 100, 100));
@@ -604,7 +604,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonAndComposite)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
-    wcomposite.child_list.clear();
+    wcomposite.clear();
 }
 
 

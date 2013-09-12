@@ -68,14 +68,14 @@ public:
     , help(drawable, 0, 0, *this, this, button_text_help, true, -17, BLACK, GREY, 6, 2)
     , window_help(NULL)
     {
-        this->child_list.push_back(&this->login_edit);
-        this->child_list.push_back(&this->login_label);
-        this->child_list.push_back(&this->password_edit);
-        this->child_list.push_back(&this->password_label);
-        this->child_list.push_back(&this->ok);
-        this->child_list.push_back(&this->cancel);
-        this->child_list.push_back(&this->help);
-        this->child_list.push_back(&this->img);
+        this->add_widget(&this->login_edit);
+        this->add_widget(&this->login_label);
+        this->add_widget(&this->password_edit);
+        this->add_widget(&this->password_label);
+        this->add_widget(&this->ok);
+        this->add_widget(&this->cancel);
+        this->add_widget(&this->help);
+        this->add_widget(&this->img);
 
         this->ok.border_top_left_color = WHITE;
         this->cancel.border_top_left_color = WHITE;
@@ -139,7 +139,7 @@ public:
             delete this->window_help;
             this->window_help = NULL;
         }
-        this->child_list.clear();
+        this->clear();
     }
 
     virtual void notify(Widget2* widget, NotifyApi::notify_event_t event)
@@ -184,7 +184,7 @@ public:
 
 
 
-                    static_cast<WidgetComposite*>(p)->child_list.push_back(this->window_help);
+                    static_cast<WidgetComposite*>(p)->add_widget(this->window_help);
                 }
                 p->current_focus = this->window_help;
 
@@ -242,7 +242,7 @@ private:
         if (&this->parent != this) {
             WidgetScreen * p = static_cast<WidgetScreen*>(&this->parent);
             p->current_focus = this;
-            p->child_list.pop_back();
+            p->remove_widget(this->window_help);
             delete this->window_help;
             this->window_help = NULL;
             this->current_focus = &this->help;
