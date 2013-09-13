@@ -1284,11 +1284,11 @@ struct mod_rdp : public mod_api {
                                 }
                                 break;
                             }
-                            TODO("CGR: check if moving end is still necessary all data should have been consumed")
-                                if (sec.payload.p != sec.payload.end){
-                                    LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
-                                    throw Error(ERR_SEC);
-                                }
+
+                            if (sec.payload.p != sec.payload.end){
+                                LOG(LOG_ERR, "all data should have been consumed %s:%u tag = %x", __FILE__, __LINE__, flic.tag);
+                                throw Error(ERR_SEC);
+                            }
                         }
                         else {
                             LOG(LOG_ERR, "Failed to get expected license negotiation PDU");
@@ -3289,12 +3289,36 @@ struct mod_rdp : public mod_api {
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
+
+        unsigned expected = 4; /* numberCapabilities(2) + pad2Octets(2) */
+        if (!stream.in_check_rem(expected)){
+            LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+                expected, stream.in_remain());
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
         uint16_t ncapsets = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
+
         for (uint16_t n = 0; n < ncapsets; n++) {
+            expected = 4; /* capabilitySetType(2) + lengthCapability(2) */
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS_PDU_TRUNCATED);
+            }
+
             uint16_t capset_type = stream.in_uint16_le();
             uint16_t capset_length = stream.in_uint16_le();
-            uint8_t * next = (stream.p + capset_length) - 4;
+
+            expected = capset_length - 4 /* capabilitySetType(2) + lengthCapability(2) */;
+            if (!stream.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
+                    expected, stream.in_remain());
+                throw Error(ERR_MCS_PDU_TRUNCATED);
+            }
+
+            uint8_t * next = stream.p + expected;
             switch (capset_type) {
             case CAPSTYPE_GENERAL:
                 {
