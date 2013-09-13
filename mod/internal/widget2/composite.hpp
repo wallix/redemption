@@ -242,7 +242,6 @@ public:
 
     }
 
-
 };
 
 // WidgetComposite is a WidgetParent and use Delegation to an implementation of CompositeInterface
