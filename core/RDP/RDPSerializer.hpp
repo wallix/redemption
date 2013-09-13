@@ -370,8 +370,7 @@ public:
 
     virtual void draw(const RDPGlyphCache & cmd)
     {
-        TODO(" compute actual size instead of a majoration as below")
-        this->reserve_order(1000);
+        this->reserve_order(cmd.total_order_size() + 16 /* majoration */);
         cmd.emit(this->stream_orders);
     }
 

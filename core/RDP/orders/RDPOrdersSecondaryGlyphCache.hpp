@@ -124,11 +124,10 @@ class RDPGlyphCache {
         , glyphData_cx(glyphData_cx)
         , glyphData_cy(glyphData_cy)
     {
-        size_t size = align4(nbbytes(glyphData_cx) * glyphData_cy);
+        size_t size = this->datasize();
         this->glyphData_aj = (uint8_t*)malloc(size);
         memcpy(this->glyphData_aj, glyphData_aj, size);
     }
-
 
     ~RDPGlyphCache()
     {
@@ -137,10 +136,24 @@ class RDPGlyphCache {
         }
     }
 
+    inline int datasize() const
+    {
+        return align4(nbbytes(this->glyphData_cx) * this->glyphData_cy);
+    }
+
+    int total_order_size() const
+    {
+        return 18 + /* controlFlags(1) + orderLength(2) + extraFlags(2) + orderType(1) +
+                     *     cacheId(1) + cGlyphs(1) + cacheIndex(2) + x(2) + y(2) + cx(2) +
+                     *     cy(2)
+                     */
+               this->datasize();
+    }
+
     void emit(Stream & stream) const
     {
         using namespace RDP;
-        size_t size = align4(nbbytes(this->glyphData_cx) * this->glyphData_cy);
+        size_t size = this->datasize();
 
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);

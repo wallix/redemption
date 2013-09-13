@@ -1504,6 +1504,11 @@ struct rdp_mppc_dec
     int decompress_rdp_61(uint8_t * cbuf, int len, int ctype, uint32_t * roff,
         uint32_t * rlen)
     {
+        LOG(LOG_INFO,
+            "Unsupported RDP decompression method (%d) is invoked!",
+            PACKET_COMPR_TYPE_RDP61);
+        throw Error(ERR_RDP_UNSUPPORTED);
+
         return false;
     }
 
@@ -1922,7 +1927,10 @@ struct rdp_mppc_enc {
                 this->buf_len = RDP_50_HIST_BUF_LEN;
                 break;
             default:
-                TODO("throw some error")
+                LOG(LOG_INFO,
+                    "Unsupported RDP compression method (%d) is invoked!",
+                    protocol_type);
+                throw Error(ERR_RDP_UNSUPPORTED);
                 ;
         }
 
