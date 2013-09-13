@@ -62,8 +62,8 @@ public:
             int w = 0;
             int h = 0;
             this->drawable.text_metrics(this->buffer, w, h);
-            this->rect.cx = w;
-            this->rect.cy = h;
+            this->rect.cx = w + 6;
+            this->rect.cy = h + 3;
         }
     }
 
@@ -75,13 +75,34 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
-        this->drawable.server_draw_text(this->rect.x,
-                                        this->rect.y,
+        this->drawable.server_draw_text(this->rect.x + 2,
+                                        this->rect.y + 2,
                                         this->get_text(),
                                         this->fg_color,
                                         this->bg_color,
                                         this->rect.intersect(clip)
                                         );
+        this->draw_border(clip);
+    }
+
+    void draw_border(const Rect& clip)
+    {
+        //top
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy(), this->cx() - 1, 1
+        )), BLACK), this->rect);
+        //left
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + 1, 1, this->cy() - 2
+        )), BLACK), this->rect);
+        //right
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
+        )), BLACK), this->rect);
+        //bottom
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + this->cy() - 1, this->cx() - 1, 1
+        )), BLACK), this->rect);
     }
 
 };

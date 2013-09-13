@@ -101,6 +101,17 @@ public:
     {
     }
 
+    // virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
+    //     if (device_flags & MOUSE_FLAG_MOVE) {
+    //         Widget2 * wid = this->screen.widget_at_pos(x, y);
+    //         if (wid == &this->image) {
+    //             this->screen.show_tooltip("Redemption", this->image.centerx(), this->image.centery());
+    //         }
+    //     }
+
+    //     InternalMod::rdp_input_mouse(device_flags, x, y, keymap);
+    // }
+
     virtual void draw_event(time_t now)
     {
         this->event.reset();

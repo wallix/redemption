@@ -87,7 +87,7 @@ public:
                 rect.y + ((&parent != this) ? parent.dy() : 0),
                 rect.cx,
                 rect.cy
-    ))
+                ))
     , group_id(group_id)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
@@ -117,6 +117,47 @@ public:
             this->draw(clip);
             this->drawable.end_update();
         }
+    }
+
+    bool is_root() {
+        // The root widget is defined as the parent of itself (screen widget only)
+        return (&this->parent == this);
+    }
+
+    Widget2 * root() {
+        // recursive
+        // if (this->is_root()) {
+        //     return this;
+        // }
+        // return this->parent.root();
+
+        // loop
+        Widget2 * w = this;
+        int count = 10;
+        while ((!w->is_root())
+               && (--count > 0)) {
+            w = &w->parent;
+        }
+        return w;
+    }
+
+    Widget2 * last_widget_at_pos(int16_t x, int16_t y) {
+        // recursive
+        // Widget2 * w = this->widget_at_pos(x, y);
+        // if (w && (w != this)) {
+        //     return w->last_widget_at_pos(x, y);
+        // }
+        // return this;
+
+        // loop
+        Widget2 * w = this;
+        int count = 10;
+        while (w->widget_at_pos(x, y)
+               && (w != w->widget_at_pos(x, y))
+               && (--count > 0)) {
+            w = w->widget_at_pos(x, y);
+        }
+        return w;
     }
 
 
@@ -224,6 +265,7 @@ public:
     {
         return this->rect.x + this->rect.cx / 2;
     }
+
     int16_t centery() const
     {
         return this->rect.y + this->rect.cy / 2;
