@@ -16,6 +16,7 @@
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
+ *
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_WAB_CLOSE_MOD_HPP
@@ -122,9 +123,9 @@ public:
         }
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                                       int16_t /*param1*/, int16_t /*param2*/)
     {
-        return;
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)

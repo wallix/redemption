@@ -58,6 +58,7 @@ public:
     , inactive_border_right_bottom_color(0x888888)
     , inactive_border_right_bottom_color_inner(0x888888)
     {
+
         this->add_widget(&this->titlebar);
         this->add_widget(&this->button_close);
 
@@ -141,7 +142,7 @@ public:
             this->send_notify(NOTIFY_CANCEL);
         }
         else {
-            Widget2::notify(widget, event);
+            WidgetComposite::notify(widget, event);
         }
     }
 
@@ -183,7 +184,6 @@ public:
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), border_right_bottom_color_inner), this->rect);
     }
-
 
 };
 

@@ -87,7 +87,7 @@ public:
                 rect.y + ((&parent != this) ? parent.dy() : 0),
                 rect.cx,
                 rect.cy
-    ))
+                ))
     , group_id(group_id)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
@@ -117,6 +117,41 @@ public:
             this->draw(clip);
             this->drawable.end_update();
         }
+    }
+
+    bool is_root() {
+        // The root widget is defined as the parent of itself (screen widget only)
+        return (&this->parent == this);
+    }
+    virtual bool tooltip_exist(int iter = 10) {
+        if (iter > 0) {
+            return this->parent.tooltip_exist(iter - 1);
+        }
+        return true;
+    }
+    virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int iter = 10) {
+        if (iter > 0) {
+            this->parent.show_tooltip(widget, text, x, y, iter - 1);
+        }
+    }
+
+    Widget2 * last_widget_at_pos(int16_t x, int16_t y) {
+        // recursive
+        // Widget2 * w = this->widget_at_pos(x, y);
+        // if (w && (w != this)) {
+        //     return w->last_widget_at_pos(x, y);
+        // }
+        // return this;
+
+        // loop
+        Widget2 * w = this;
+        int count = 10;
+        while (w->widget_at_pos(x, y)
+               && (w != w->widget_at_pos(x, y))
+               && (--count > 0)) {
+            w = w->widget_at_pos(x, y);
+        }
+        return w;
     }
 
 
@@ -224,6 +259,7 @@ public:
     {
         return this->rect.x + this->rect.cx / 2;
     }
+
     int16_t centery() const
     {
         return this->rect.y + this->rect.cy / 2;
@@ -254,7 +290,6 @@ public:
     {
 
     }
-
     void set_widget_focus(Widget2 * new_focused)
     {
         if (this->current_focus) {
@@ -308,6 +343,29 @@ public:
                     this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
                 break;
             }
+        }
+    }
+
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        Widget2 * w = this->widget_at_pos(x, y);
+
+        // Mouse clic release
+        // w could be null if mouse is located at an empty space
+        if (device_flags == MOUSE_FLAG_BUTTON1) {
+            if (this->current_focus
+                && (w != this->current_focus)) {
+                this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
+            }
+        }
+        if (w){
+            // get focus when mouse clic
+            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
+                    this->set_widget_focus(w);
+                }
+            }
+            w->rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 

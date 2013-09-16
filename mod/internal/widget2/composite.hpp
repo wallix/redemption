@@ -31,15 +31,15 @@
 class CompositeInterface {
 public:
     virtual ~CompositeInterface() {}
-    virtual void add_widget_compo(Widget2 * w) = 0;
-    virtual void remove_widget_compo(Widget2 * w) = 0;
-    virtual void clear_compo() = 0;
-    virtual void set_xy_compo(int16_t x, int16_t y) = 0;
-    virtual Widget2 * widget_at_pos_compo(int16_t x, int16_t y) = 0;
-    virtual bool next_focus_compo(WidgetParent * thiswidget) = 0;
-    virtual bool previous_focus_compo(WidgetParent * thiswidget) = 0;
-    virtual void draw_compo(const Rect& clip) = 0;
-    virtual void draw_inner_free_compo(const Rect& clip, int bg_color, Region & region) = 0;
+    virtual void add_widget(Widget2 * w) = 0;
+    virtual void remove_widget(Widget2 * w) = 0;
+    virtual void clear() = 0;
+    virtual void set_xy(int16_t x, int16_t y) = 0;
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) = 0;
+    virtual bool next_focus(WidgetParent * thiswidget) = 0;
+    virtual bool previous_focus(WidgetParent * thiswidget) = 0;
+    virtual void draw(const Rect& clip) = 0;
+    virtual void draw_inner_free(const Rect& clip, int bg_color, Region & region) = 0;
 };
 
 // CompositeVector is an Implementation of CompositeInterface
@@ -60,10 +60,10 @@ public:
         }
     }
 
-    virtual void add_widget_compo(Widget2 * w) {
+    virtual void add_widget(Widget2 * w) {
         this->child_list.push_back(w);
     }
-    virtual void remove_widget_compo(Widget2 * w) {
+    virtual void remove_widget(Widget2 * w) {
         std::size_t size = this->child_list.size();
         // This only remove the widget if it is on the top of the list
         if (size != 0 && this->child_list[size - 1] == w) {
@@ -71,11 +71,11 @@ public:
         }
     }
 
-    virtual void clear_compo() {
+    virtual void clear() {
         this->child_list.clear();
     }
 
-    virtual void set_xy_compo(int16_t xx, int16_t yy)
+    virtual void set_xy(int16_t xx, int16_t yy)
     {
         for (size_t i = 0, max = this->child_list.size(); i < max; ++i) {
             Widget2 * w = this->child_list[i];
@@ -83,7 +83,7 @@ public:
         }
     }
 
-    virtual Widget2 * widget_at_pos_compo(int16_t x, int16_t y)
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
     {
         Widget2 * ret = 0;
         std::size_t size = this->child_list.size();
@@ -102,7 +102,7 @@ public:
                          w);
     }
 
-    virtual bool next_focus_compo(WidgetParent * thiswidget)
+    virtual bool next_focus(WidgetParent * thiswidget)
     {
         struct focus_manager {
             static position_t next_in(position_t first, position_t last)
@@ -164,7 +164,7 @@ public:
         return last;
     }
 
-    virtual bool previous_focus_compo(WidgetParent * thiswidget)
+    virtual bool previous_focus(WidgetParent * thiswidget)
     {
         struct focus_manager {
             static position_t previous_in(position_t first, position_t last)
@@ -220,7 +220,7 @@ public:
 
 
 
-    virtual void draw_compo(const Rect& clip)
+    virtual void draw(const Rect& clip)
     {
         std::size_t size = this->child_list.size();
 
@@ -230,7 +230,7 @@ public:
         }
     }
 
-    void draw_inner_free_compo(const Rect& clip, int bg_color, Region & region)
+    void draw_inner_free(const Rect& clip, int bg_color, Region & region)
     {
         for (std::size_t i = 0, size = this->child_list.size(); i < size; ++i) {
             Rect rect = clip.intersect(this->child_list[i]->rect);
@@ -239,9 +239,7 @@ public:
                 region.subtract_rect(rect);
             }
         }
-
     }
-
 
 };
 
@@ -266,20 +264,21 @@ public:
         }
     }
 
+
     virtual void add_widget(Widget2 * w) {
-        this->impl->add_widget_compo(w);
+        this->impl->add_widget(w);
     }
     virtual void remove_widget(Widget2 * w) {
-        this->impl->remove_widget_compo(w);
+        this->impl->remove_widget(w);
     }
     virtual void clear() {
-        this->impl->clear_compo();
+        this->impl->clear();
     }
 
     virtual void set_xy(int16_t x, int16_t y) {
         int16_t xx = x - this->dx();
         int16_t yy = y - this->dy();
-        this->impl->set_xy_compo(xx, yy);
+        this->impl->set_xy(xx, yy);
         WidgetParent::set_xy(x, y);
     }
 
@@ -291,56 +290,33 @@ public:
                 return this->current_focus;
             }
         }
-        return this->impl->widget_at_pos_compo(x, y);
+        return this->impl->widget_at_pos(x, y);
     }
 
     virtual bool next_focus() {
-        return this->impl->next_focus_compo(this);
+        return this->impl->next_focus(this);
     }
 
     virtual bool previous_focus() {
-        return this->impl->previous_focus_compo(this);
+        return this->impl->previous_focus(this);
     }
 
     virtual void draw(const Rect& clip) {
         Rect new_clip = clip.intersect(this->rect);
-        this->impl->draw_compo(new_clip);
+        this->impl->draw(new_clip);
     }
 
     virtual void draw_inner_free(const Rect& clip, int bg_color) {
         Region region;
         region.rects.push_back(clip);
 
-        this->impl->draw_inner_free_compo(clip, bg_color, region);
+        this->impl->draw_inner_free(clip, bg_color, region);
 
         for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
             this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
         }
-
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        Widget2 * w = this->widget_at_pos(x, y);
-
-        // Mouse clic release
-        // w could be null if mouse is located at an empty space
-        if (device_flags == MOUSE_FLAG_BUTTON1) {
-            if (this->current_focus
-                && (w != this->current_focus)) {
-                this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
-            }
-        }
-        if (w){
-            // get focus when mouse clic
-            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
-                    this->set_widget_focus(w);
-                }
-            }
-            w->rdp_input_mouse(device_flags, x, y, keymap);
-        }
-    }
 
 };
 #endif

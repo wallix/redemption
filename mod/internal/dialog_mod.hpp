@@ -34,7 +34,6 @@ class DialogMod : public InternalMod, public NotifyApi
 
     Inifile & ini;
     Timeout timeout;
-    // time_t timeout;
 
 public:
     DialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
@@ -42,7 +41,6 @@ public:
     : InternalMod(front, width, height)
     , window_dialog(*this, 0, 0, this->screen, this, caption, message, 0, "Ok", cancel_text, BLACK, GREY, BLACK, GREY)
     , ini(ini)
-    // , timeout(ini.debug.pass_dialog_box?(now + ini.debug.pass_dialog_box):0)
     , timeout(Timeout(now, ini.debug.pass_dialog_box))
     {
         this->screen.add_widget(&this->window_dialog);
@@ -115,9 +113,9 @@ public:
         }
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                                       int16_t /*param1*/, int16_t /*param2*/)
     {
-        return;
     }
 
 };

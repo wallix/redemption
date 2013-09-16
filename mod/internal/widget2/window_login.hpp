@@ -81,13 +81,18 @@ public:
         this->cancel.border_top_left_color = WHITE;
         this->help.border_top_left_color = WHITE;
 
+
+        // horizontal position
+        // left image then login and password edit box
         x = this->dx() + 12;
         this->img.rect.x = x;
         x += this->img.cx() + std::max(this->login_label.cx(), this->password_label.cx()) + 20;
         this->login_edit.set_edit_x(x);
         this->password_edit.set_edit_x(x);
+        // login window width
         this->set_window_cx(x - this->dx() + std::max(this->login_edit.cx(), this->password_edit.cx()) + 14);
 
+        /* Button arrangement and position */
         x = std::max(std::max(this->help.cx(), this->cancel.cx()), this->ok.cx());
         this->ok.label.x_text += (x - this->ok.cx()) / 2;
         this->cancel.label.x_text += (x - this->cancel.cx()) / 2;
@@ -104,9 +109,12 @@ public:
         x += this->cancel.cx() + 10;
         this->help.set_button_x(x);
 
+        // login and password edit box width
         this->login_edit.set_edit_cx(this->cx() - (this->login_edit.dx() - this->dx()) - 10);
         this->password_edit.set_edit_cx(this->login_edit.cx());
 
+
+        // vertical position
         uint16_t rightsize = this->login_edit.cy() * 2 + 10;
         uint16_t maxry = std::max(this->img.cy(), rightsize);
         y = this->titlebar.dy() + this->titlebar.cy();
@@ -179,7 +187,7 @@ public:
 
 
 
-                    static_cast<WidgetComposite*>(p)->add_widget(this->window_help);
+                    static_cast<WidgetScreen*>(p)->add_widget(this->window_help);
                 }
                 this->window_help->set_widget_focus(&this->window_help->ok);
                 p->set_widget_focus(this->window_help);
@@ -207,12 +215,26 @@ public:
         }
     }
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
-        if (this->window_help) {
-            return;
-        }
-        Window::rdp_input_mouse(device_flags, x, y, keymap);
-    }
+    // virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
+    //     if (this->window_help) {
+    //         return;
+    //     }
+
+    //     if (device_flags & MOUSE_FLAG_MOVE) {
+    //         Widget2 * wid = this->widget_at_pos(x, y);
+    //         if (wid == &this->login_label) {
+    //             this->show_tooltip(wid, "WAB LOGIN not windows account login", x, y);
+    //         }
+    //         else if (wid == &this->img) {
+    //             this->show_tooltip(wid, "WAB LOGO", this->img.centerx(), this->img.centery());
+    //         }
+    //         else if (wid == &this->password_label) {
+    //             this->show_tooltip(wid, "WAB PASSWORD", x, y);
+    //         }
+    //     }
+
+    //     Window::rdp_input_mouse(device_flags, x, y, keymap);
+    // }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {

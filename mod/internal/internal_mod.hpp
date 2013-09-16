@@ -150,10 +150,10 @@ public:
         this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
+                                       int16_t param1, int16_t param2)
     {
         LOG(LOG_INFO, "overloaded by subclasses");
-        return;
     }
 };
 

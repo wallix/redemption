@@ -29,6 +29,7 @@
 
 #include "internal/widget2/tooltip.hpp"
 #include "internal/widget2/screen.hpp"
+#include "internal/widget2/label.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -164,10 +165,60 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xe6\x2c\xef\x48\x7f\x0a\x88\x73"
-                   "\xd8\x0a\x04\x88\xd7\xf1\x91\x62"
-                   "\xfb\x4b\xa4\xa0"
+                   "\xd8\xcd\x65\xae\x47\xc0\x71\xe1\xf4\x1f"
+                   "\x30\xd1\x77\xc9\xd2\x0d\x06\x7c\xd3\xff"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+}
+
+void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget2 * w)
+{
+
+    if (device_flags == MOUSE_FLAG_MOVE) {
+        Widget2 * wid = parent->widget_at_pos(x, y);
+        if (wid == w) {
+            parent->show_tooltip(w, "Test tooltip description", x, y);
+        }
+    }
+    parent->rdp_input_mouse(device_flags, x, y, keymap);
+};
+
+BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
+{
+    TestDraw drawable(800, 600);
+    int x = 50;
+    int y = 20;
+    // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    WidgetLabel label(drawable, x, y, parent, &parent, "TOOLTIPTEST");
+
+    parent.add_widget(&label);
+
+    parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen1.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x3e\x67\x39\xdc\x4c\x58\x4f\x86\xa1\x44"
+                   "\xaa\x73\x99\x54\x77\xb2\x8e\xb9\xf2\x89"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    rdp_input_mouse(MOUSE_FLAG_MOVE,
+                    label.centerx(), label.centery(),
+                    NULL, &parent, &label);
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xc0\x68\x89\xe3\x50\x90\xee\x98\x28\x91"
+                   "\x17\x2a\x39\xd5\x34\x2b\x2d\x67\xcd\xd7"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+    parent.clear();
 }

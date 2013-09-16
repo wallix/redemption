@@ -32,7 +32,7 @@
 #include "region.hpp"
 #include "difftimeval.hpp"
 #include "tooltip.hpp"
-
+#include "screen.hpp"
 class WidgetSelectorImageButton : public Widget2
 {
     Bitmap image_inactive;
@@ -470,7 +470,6 @@ private:
 
             }
 
-            // lcy = size * (this->h_text + this->y_text * 2 + this->h_border);
             this->drawable.draw(
                                 RDPOpaqueRect(
                                               Rect(
@@ -547,29 +546,19 @@ private:
                     && lcy != 0) {
                     int p = (y - this->dy()) / lcy;
                     Column c = this->get_column(x);
-                    WidgetSelector * selector = reinterpret_cast<WidgetSelector*>(&this->parent);
-
                     if ((uint)p != this->over_index
                         || (c != this->col)
-                        || (selector->tooltip == NULL)) {
+                        || (!this->tooltip_exist())
+                        ) {
                         this->over_index = p;
                         this->col = c;
                         int w = 0;
                         int h = 0;
                         this->drawable.text_metrics(this->get_over_index(), w, h);
-                        this->send_notify(NOTIFY_HIDE_TOOLTIP);
+                        this->show_tooltip(this, NULL, 0, 0);
                         if (w >= this->get_column_cx()) {
-                            int sw = selector->rect.cx;
-                            int posx = ((x + w) > sw)?(sw - w):x;
-                            int posy = (y > h)?(y - h):0;
-                            selector->tooltip = new WidgetTooltip(this->drawable,
-                                                                  posx,
-                                                                  posy,
-                                                                  *selector, this,
-                                                                  this->get_over_index());
-                            this->send_notify(NOTIFY_SHOW_TOOLTIP);
+                            this->show_tooltip(this, this->get_over_index(), x, y);
                         }
-                        // LOG(LOG_INFO, "THIS TOOLTIP %s", this->get_over_index());
                     }
 
                 }
@@ -622,10 +611,6 @@ private:
     };
 
 
-
-
-    TODO("WidgetSelector is not a Composite but has a Composite "
-         "We should use Composition instead of inheritance.");
 public:
     WidgetLabel device_label;
     WidgetLabel device_target_label;
@@ -651,9 +636,6 @@ public:
     WidgetSelectorImageButton connect;
     //WidgetPager pager;
 
-    WidgetTooltip * tooltip;
-
-    Widget2 * w_over;
 public:
     struct temporary_number_of_page {
         char buffer[15];
@@ -714,8 +696,6 @@ public:
         , connect(drawable, 0, 0, *this, notifier,
                   raw_connect().cx, raw_connect().cy, raw_connect().size,
                   raw_connect().img_blur, raw_connect().img_focus, -18)
-        , tooltip(NULL)
-        , w_over(NULL)
     {
         this->add_widget(&this->device_label);
         this->add_widget(&this->device_target_label);
@@ -806,10 +786,6 @@ public:
 
     virtual ~WidgetSelector()
     {
-        if (this->tooltip) {
-            delete this->tooltip;
-            this->tooltip = NULL;
-        }
         this->clear();
     }
 
@@ -821,18 +797,6 @@ public:
 
     virtual void notify(Widget2* widget, notify_event_t event)
     {
-        if (NOTIFY_SHOW_TOOLTIP == event) {
-            this->add_widget(this->tooltip);
-            this->refresh(this->tooltip->rect);
-        }
-        if (NOTIFY_HIDE_TOOLTIP == event) {
-            if (this->tooltip) {
-                this->remove_widget(this->tooltip);
-                this->refresh(this->tooltip->rect);
-                delete this->tooltip;
-                this->tooltip = NULL;
-            }
-        }
         if (widget->group_id == this->selector_lines.group_id) {
             if (NOTIFY_SUBMIT == event) {
                 if (this->notifier) {
@@ -851,34 +815,12 @@ public:
     }
 
 
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        if (device_flags & MOUSE_FLAG_MOVE) {
-            Widget2 * w = this->widget_at_pos(x, y);
-            if (w != this->w_over) {
-                this->notify(this, NOTIFY_HIDE_TOOLTIP);
-                this->w_over = w;
-            }
-        }
-
-        WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
-
-    }
-
-
-
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
-    {
-         this->notify(this, NOTIFY_HIDE_TOOLTIP);
-         WidgetComposite::rdp_input_scancode(param1, param2, param3, param4, keymap);
-    }
-
-
     void add_device(const char * device_group, const char * target_label,
                     const char * protocol, const char * close_time)
     {
         this->selector_lines.add_line(device_group, target_label, protocol, close_time);
     }
+
 };
 
 #endif

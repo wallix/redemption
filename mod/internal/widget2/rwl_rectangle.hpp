@@ -25,7 +25,7 @@
 #include "composite.hpp"
 #include "draw_api.hpp"
 
-class RwlRectangle : public WidgetComposite
+class RwlRectangle : public WidgetParent
 {
 public:
     struct Style {
@@ -52,7 +52,7 @@ public:
 public:
     RwlRectangle(DrawApi& drawable, Widget2& parent, NotifyApi* notifier,
                  const Style& basestyle, int group_id = 0)
-    : WidgetComposite(drawable, Rect(), parent, notifier, group_id)
+    : WidgetParent(drawable, Rect(), parent, notifier, group_id)
     , style(basestyle)
     {}
 

@@ -96,9 +96,10 @@ public:
         }
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+
+    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                                       int16_t /*param1*/, int16_t /*param2*/)
     {
-        return;
     }
 
     virtual void notify(Widget2* sender, notify_event_t event)
