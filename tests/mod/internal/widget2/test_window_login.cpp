@@ -25,7 +25,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
-// #define LOGPRINT
 #include "log.hpp"
 
 #undef FIXTURES_PATH
@@ -42,7 +41,6 @@
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
-
 
 struct TestDraw : DrawApi
 {
@@ -442,7 +440,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     TODO("change signatures once brush orders are supported by PatBlt");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xc0\x5f\x1a\x5d\xde\x87\x2b\x9a\xa8\x6a\x75\x9e\x42\x4c\x5d\x29\xb4\x6f\xc9\x29"
+                   "\xb7\xf1\x64\xa6\x38\xac\xaf\xbb\xb4\x6a\x2c\x97\xff\xa5\x97\xbe\xe0\x96\xe7\xb2"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -459,7 +457,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x65\xd1\xcc\xa7\x72\xdc\xd0\xf1\xe4\x75\xea\xd0\x44\x03\xa0\x36\xb1\x12\x07\x39"
+                   "\xc0\x46\x06\xf6\x86\xd1\x52\x6d\x48\x50\xd5\xe9\x7e\x88\x2c\xee\xd9\x08\x6a\x6e"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

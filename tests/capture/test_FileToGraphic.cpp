@@ -103,11 +103,11 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     BOOST_CHECK_EQUAL((unsigned)499907, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 0));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 0);
     // Mem3Blt save state = 34 bytes
-    BOOST_CHECK_EQUAL((unsigned)1263885 + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
-    sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
+    BOOST_CHECK_EQUAL((unsigned)1263894 + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
+    //sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
     // Mem3Blt save state = 34 bytes
-    BOOST_CHECK_EQUAL((unsigned)359976 + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
-    sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
+    BOOST_CHECK_EQUAL((unsigned)360450 + 34, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
+    //sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
 }
 
 //BOOST_AUTO_TEST_CASE(TestSecondPart)
