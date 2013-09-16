@@ -105,8 +105,21 @@ public:
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
-        const uint32_t color = this->RGBtoBGR(cmd.back_color);
-        this->drawable.patblt(trect, cmd.rop, color);
+        if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03))
+        {
+            uint8_t brush_data[8];
+            memcpy(brush_data, cmd.brush.extra, 7);
+            brush_data[7] = cmd.brush.hatch;
+
+            const uint32_t back_color = this->RGBtoBGR(cmd.back_color);
+            const uint32_t fore_color = this->RGBtoBGR(cmd.fore_color);
+            this->drawable.patblt_ex(trect, cmd.rop, back_color, fore_color, brush_data);
+        }
+        else
+        {
+            const uint32_t color = this->RGBtoBGR(cmd.back_color);
+            this->drawable.patblt(trect, cmd.rop, color);
+        }
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
