@@ -228,7 +228,10 @@ private:
 
         void draw_border(const Rect& rect, const Rect& clip)
         {
-            drawable.draw(RDPPatBlt(rect, 0xF0, BLACK, GREY, RDPBrush(this->rect.x, this->rect.y, 3, 0xaa, (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55")), clip);
+            drawable.draw(RDPPatBlt(rect, 0xF0, BLACK, GREY,
+                RDPBrush(this->rect.x, this->rect.y, 3, 0x55,
+                         (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa")),
+                clip);
         }
     };
 
