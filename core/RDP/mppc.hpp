@@ -29,6 +29,8 @@
 
 #include <stdint.h>
 
+#include "error.hpp"
+
 /* Compression Types */
 enum {
     PACKET_COMPRESSED = 0x20,
