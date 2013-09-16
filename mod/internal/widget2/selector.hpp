@@ -546,19 +546,18 @@ private:
                     && lcy != 0) {
                     int p = (y - this->dy()) / lcy;
                     Column c = this->get_column(x);
-                    WidgetScreen * screen = reinterpret_cast<WidgetScreen*>(this->root());
-
                     if ((uint)p != this->over_index
                         || (c != this->col)
-                        || (screen->tooltip == NULL)) {
+                        || (!this->tooltip_exist())
+                        ) {
                         this->over_index = p;
                         this->col = c;
                         int w = 0;
                         int h = 0;
                         this->drawable.text_metrics(this->get_over_index(), w, h);
-                        screen->notify(this, NOTIFY_HIDE_TOOLTIP);
+                        this->show_tooltip(this, NULL, 0, 0);
                         if (w >= this->get_column_cx()) {
-                            screen->show_tooltip(this, this->get_over_index(), x, y);
+                            this->show_tooltip(this, this->get_over_index(), x, y);
                         }
                     }
 
@@ -610,7 +609,6 @@ private:
             }
         }
     };
-
 
 
 public:
@@ -816,18 +814,13 @@ public:
         }
     }
 
-    virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap)
-    {
-         // this->notify(this, NOTIFY_HIDE_TOOLTIP);
-         WidgetComposite::rdp_input_scancode(param1, param2, param3, param4, keymap);
-    }
-
 
     void add_device(const char * device_group, const char * target_label,
                     const char * protocol, const char * close_time)
     {
         this->selector_lines.add_line(device_group, target_label, protocol, close_time);
     }
+
 };
 
 #endif

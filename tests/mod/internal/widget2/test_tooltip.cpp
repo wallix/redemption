@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     // ask to widget to redraw
     wtooltip.rdp_input_invalidate(Rect(0, 0, 100, 100));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "tooltip.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "tooltip.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

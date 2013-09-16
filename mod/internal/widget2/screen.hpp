@@ -29,7 +29,6 @@
 
 class WidgetScreen : public WidgetComposite
 {
-
     Widget2 * w_over;
 public:
     WidgetTooltip * tooltip;
@@ -68,8 +67,14 @@ public:
         WidgetComposite::notify(widget, event);
     }
 
-    void show_tooltip(Widget2 * widget, const char * text, int x, int y) {
-        if (this->tooltip == NULL) {
+    virtual bool tooltip_exist(int = 10) {
+        return (this->tooltip);
+    }
+    virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
+        if (text == NULL) {
+            this->notify(widget, NOTIFY_HIDE_TOOLTIP);
+        }
+        else if (this->tooltip == NULL) {
             int w = 0;
             int h = 0;
             this->drawable.text_metrics(text, w, h);
@@ -95,6 +100,9 @@ public:
                     this->w_over = w;
                 }
             }
+            if (device_flags & (MOUSE_FLAG_BUTTON1)) {
+                this->notify(this, NOTIFY_HIDE_TOOLTIP);
+            }
         }
         WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
     }
@@ -119,6 +127,7 @@ public:
         this->WidgetComposite::draw(clip);
         this->WidgetComposite::draw_inner_free(clip, BLACK);
     }
+
 };
 
 #endif

@@ -239,7 +239,6 @@ public:
                 region.subtract_rect(rect);
             }
         }
-
     }
 
 };

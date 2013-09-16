@@ -187,7 +187,7 @@ public:
 
 
 
-                    static_cast<WidgetComposite*>(p)->add_widget(this->window_help);
+                    static_cast<WidgetScreen*>(p)->add_widget(this->window_help);
                 }
                 this->window_help->set_widget_focus(&this->window_help->ok);
                 p->set_widget_focus(this->window_help);
@@ -223,16 +223,13 @@ public:
     //     if (device_flags & MOUSE_FLAG_MOVE) {
     //         Widget2 * wid = this->widget_at_pos(x, y);
     //         if (wid == &this->login_label) {
-    //             WidgetScreen * screen = reinterpret_cast<WidgetScreen*>(this->root());
-    //             screen->show_tooltip(wid, "WAB LOGIN not windows account login", x, y);
+    //             this->show_tooltip(wid, "WAB LOGIN not windows account login", x, y);
     //         }
     //         else if (wid == &this->img) {
-    //             WidgetScreen * screen = reinterpret_cast<WidgetScreen*>(this->root());
-    //             screen->show_tooltip(wid, "WAB LOGO", this->img.centerx(), this->img.centery());
+    //             this->show_tooltip(wid, "WAB LOGO", this->img.centerx(), this->img.centery());
     //         }
     //         else if (wid == &this->password_label) {
-    //             WidgetScreen * screen = reinterpret_cast<WidgetScreen*>(this->root());
-    //             screen->show_tooltip(wid, "WAB PASSWORD", x, y);
+    //             this->show_tooltip(wid, "WAB PASSWORD", x, y);
     //         }
     //     }
 
