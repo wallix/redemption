@@ -1344,26 +1344,27 @@ public:
                             cs_core.log("Received from Client");
                         }
 
-                        client_info.width = cs_core.desktopWidth;
-                        client_info.height = cs_core.desktopHeight;
-                        client_info.keylayout = cs_core.keyboardLayout;
-                        client_info.build = cs_core.clientBuild;
+                        this->client_info.width     = cs_core.desktopWidth;
+                        this->client_info.height    = cs_core.desktopHeight;
+                        this->client_info.keylayout = cs_core.keyboardLayout;
+                        this->client_info.build     = cs_core.clientBuild;
                         for (size_t i = 0; i < 16 ; i++){
-                            client_info.hostname[i] = cs_core.clientName[i];
+                            this->client_info.hostname[i] = cs_core.clientName[i];
                         }
-                        client_info.bpp = 8;
+                        this->client_info.bpp = 8;
                         switch (cs_core.postBeta2ColorDepth){
                         case 0xca01:
-                            client_info.bpp = (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                            this->client_info.bpp =
+                                (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
                         break;
                         case 0xca02:
-                            client_info.bpp = 15;
+                            this->client_info.bpp = 15;
                         break;
                         case 0xca03:
-                            client_info.bpp = 16;
+                            this->client_info.bpp = 16;
                         break;
                         case 0xca04:
-                            client_info.bpp = 24;
+                            this->client_info.bpp = 24;
                         break;
                         default:
                         break;
@@ -1399,7 +1400,7 @@ public:
                     {
                         GCC::UserData::CSCluster cs_cluster;
                         cs_cluster.recv(f.payload);
-                        client_info.console_session =
+                        this->client_info.console_session =
                             (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
                         if (this->verbose & 1) {
                             cs_cluster.log("Receiving from Client");
@@ -1504,7 +1505,7 @@ public:
                 uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
 
                 sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
-                sc_sec1.encryptionLevel = client_info.encryptionLevel;
+                sc_sec1.encryptionLevel = this->client_info.encryptionLevel;
                 sc_sec1.serverRandomLen = 32;
                 this->gen->random(this->server_random, 32);
                 memcpy(sc_sec1.serverRandom, this->server_random, 32);
@@ -2519,28 +2520,32 @@ public:
         }
     }
 
-    void send_data_indication(uint16_t channelId, HStream & stream) {
+    void send_data_indication(uint16_t channelId, HStream & stream)
+    {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
-                                        , stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
+                                         1, 3, stream.size(),
+                                         MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
         this->trans->send(x224_header, mcs_header, stream);
     }
 
-    void send_data_indication_ex(uint16_t channelId, HStream & stream) {
+    void send_data_indication_ex(uint16_t channelId, HStream & stream)
+    {
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec( sec_header, stream, 0, this->encrypt
-                         , this->client_info.encryptionLevel);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
+                          this->client_info.encryptionLevel);
         stream.copy_to_head(sec_header);
 
-        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
-                                        , stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
+                                         1, 3, stream.size(),
+                                         MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
@@ -2581,7 +2586,8 @@ public:
             sdata.emit_end();
 
             BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
             HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
@@ -2643,15 +2649,14 @@ public:
         stream.out_uint16_le(4); /* 4 chars for RDP\0 */
 
         /* 2 bytes size after num caps, set later */
-        uint8_t * caps_size_ptr = stream.p;
+        uint32_t caps_size_offset = stream.get_offset();
         stream.out_clear_bytes(2);
+
         stream.out_copy_bytes("RDP", 4);
 
         /* 4 byte num caps, set later */
-        uint8_t * caps_count_ptr = stream.p;
+        uint32_t caps_count_offset = stream.get_offset();
         stream.out_clear_bytes(4);
-
-        uint8_t * caps_ptr = stream.p;
 
         CapabilitySets cap_sets;
 
@@ -2759,19 +2764,11 @@ public:
         input_caps.emit(stream);
         caps_count++;
 
-        TODO("Check if this padding is necessary and, if so, how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")
-        stream.out_clear_bytes(4); /* pad */
+        size_t caps_size = stream.get_offset() - caps_count_offset;
+        stream.set_out_uint16_le(caps_size, caps_size_offset);
+        stream.set_out_uint32_le(caps_count, caps_count_offset);
 
-        size_t caps_size = stream.p - caps_ptr;
-        TODO("change this using set_out_uint16_le")
-        caps_size_ptr[0] = caps_size;
-        caps_size_ptr[1] = caps_size >> 8;
-
-        TODO("change this using set_out_uint32_le")
-        caps_count_ptr[0] = caps_count;
-        caps_count_ptr[1] = caps_count >> 8;
-        caps_count_ptr[2] = caps_count >> 16;
-        caps_count_ptr[3] = caps_count >> 24;
+        stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
         stream.mark_end();
 
         BStream sctrl_header(256);
@@ -2889,8 +2886,13 @@ public:
                     this->client_info.bpp    =
                           (this->client_bitmap_caps.preferredBitsPerPixel >= 24)
                         ? 24 : this->client_bitmap_caps.preferredBitsPerPixel;
-                    this->client_info.width  = this->client_bitmap_caps.desktopWidth;
-                    this->client_info.height = this->client_bitmap_caps.desktopHeight;
+                    // Fixed bug in rdesktop
+                    // Desktop size in Client Core Data != Desktop size in Bitmap Capability Set
+                    if (!this->client_info.width || !this->client_info.height)
+                    {
+                        this->client_info.width  = this->client_bitmap_caps.desktopWidth;
+                        this->client_info.height = this->client_bitmap_caps.desktopHeight;
+                    }
                 }
                 break;
             case CAPSTYPE_ORDER: { /* 3 */
@@ -3165,8 +3167,8 @@ public:
         sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
         // Payload
-        stream.out_uint16_le(1); /* messageType */
-        stream.out_uint16_le(1002); /* control id */
+        stream.out_uint16_le(1);    // messageType
+        stream.out_uint16_le(1002); // control id
         stream.mark_end();
 
         // Packet trailer
@@ -3191,6 +3193,7 @@ public:
             LOG(LOG_INFO, "send_synchronize done");
         }
     }
+
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
 // ============================================

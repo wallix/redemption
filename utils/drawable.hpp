@@ -1296,6 +1296,69 @@ struct Drawable {
         }
     }
 
+    template <typename Op>
+    void patblt_op_ex(const Rect & rect, const uint8_t * brush_data,
+        const uint32_t back_color, const uint32_t fore_color)
+    {
+        Op op;
+        uint8_t * const base = this->first_pixel(rect);
+        uint8_t *       p    = base;
+
+        uint8_t p0;
+        uint8_t p1;
+        uint8_t p2;
+
+        for (size_t y = 0; y < (size_t)rect.cy ; y++)
+        {
+            p = base + this->rowsize * y;
+            for (size_t x = 0; x < (size_t)rect.cx ; x++)
+            {
+                if (brush_data[y % 8] & (1 << (x % 8)))
+                {
+                    p0 = back_color         & 0xFF;
+                    p1 = (back_color >> 8)  & 0xFF;
+                    p2 = (back_color >> 16) & 0xFF;
+                }
+                else
+                {
+                    p0 = fore_color         & 0xFF;
+                    p1 = (fore_color >> 8)  & 0xFF;
+                    p2 = (fore_color >> 16) & 0xFF;
+                }
+
+                p[0] = op(p[0], p0);
+                p[1] = op(p[1], p1);
+                p[2] = op(p[2], p2);
+                p += 3;
+            }
+        }
+    }
+
+    void patblt_ex(const Rect & rect, const uint8_t rop,
+        const uint32_t back_color, const uint32_t fore_color,
+        const uint8_t * brush_data)
+    {
+        if (rop != 0xF0)
+        {
+            LOG(LOG_INFO, "Unsupported parameters for PatBlt Primary Drawing Order!");
+            this->patblt(rect, rop, back_color);
+        }
+
+        switch (rop)
+        {
+        // +------+-------------------------------+
+        // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
+        // |      | RPN: P                        |
+        // +------+-------------------------------+
+        case 0xF0:
+            this->patblt_op_ex<Op_0xF0>(rect, brush_data, back_color, fore_color);
+            break;
+        default:
+            // should not happen, do nothing
+            break;
+        }
+    }
+
     // low level destblt,
     // mostly avoid clipping because we already took care of it
     void destblt(const Rect & rect, const uint8_t rop)
