@@ -55,6 +55,7 @@ public:
         if (NOTIFY_SHOW_TOOLTIP == event) {
             this->add_widget(this->tooltip);
             this->refresh(this->tooltip->rect);
+            this->w_over = widget;
         }
         if (NOTIFY_HIDE_TOOLTIP == event) {
             if (this->tooltip) {
@@ -67,7 +68,7 @@ public:
         WidgetComposite::notify(widget, event);
     }
 
-    void show_tooltip(const char * text, int x, int y) {
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y) {
         if (this->tooltip == NULL) {
             int w = 0;
             int h = 0;
@@ -80,7 +81,7 @@ public:
                                               posy,
                                               *this, this,
                                               text);
-            this->notify(this, NOTIFY_SHOW_TOOLTIP);
+            this->notify(widget, NOTIFY_SHOW_TOOLTIP);
         }
     }
 

@@ -558,7 +558,7 @@ private:
                         this->drawable.text_metrics(this->get_over_index(), w, h);
                         screen->notify(this, NOTIFY_HIDE_TOOLTIP);
                         if (w >= this->get_column_cx()) {
-                            screen->show_tooltip(this->get_over_index(), x, y);
+                            screen->show_tooltip(this, this->get_over_index(), x, y);
                         }
                     }
 

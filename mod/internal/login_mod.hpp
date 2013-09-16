@@ -105,7 +105,7 @@ public:
     //     if (device_flags & MOUSE_FLAG_MOVE) {
     //         Widget2 * wid = this->screen.widget_at_pos(x, y);
     //         if (wid == &this->image) {
-    //             this->screen.show_tooltip("Redemption", this->image.centerx(), this->image.centery());
+    //             this->screen.show_tooltip(wid, "Redemption", this->image.centerx(), this->image.centery());
     //         }
     //     }
 

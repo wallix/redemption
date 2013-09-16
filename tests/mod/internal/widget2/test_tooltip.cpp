@@ -174,10 +174,11 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
 
 void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget2 * w)
 {
+
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget2 * wid = parent->widget_at_pos(x, y);
         if (wid == w) {
-            parent->show_tooltip("Test tooltip description", x, y);
+            parent->show_tooltip(w, "Test tooltip description", x, y);
         }
     }
     parent->rdp_input_mouse(device_flags, x, y, keymap);
@@ -209,16 +210,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label.centerx(), label.centery(),
                     NULL, &parent, &label);
-    rdp_input_mouse(MOUSE_FLAG_MOVE,
-                    label.centerx(), label.centery() + 1,
-                    NULL, &parent, &label);
     parent.rdp_input_invalidate(parent.rect);
 
     drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x49\xb5\xde\x42\x9e\x83\x3a\xb3\x22\xb0"
-                   "\xce\x9e\xf4\xbb\xcb\x9b\xd1\x8c\x3a\x9d"
+                   "\xc0\x68\x89\xe3\x50\x90\xee\x98\x28\x91"
+                   "\x17\x2a\x39\xd5\x34\x2b\x2d\x67\xcd\xd7"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
