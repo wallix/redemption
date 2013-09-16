@@ -353,6 +353,29 @@ public:
         }
     }
 
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
+    {
+        Widget2 * w = this->widget_at_pos(x, y);
+
+        // Mouse clic release
+        // w could be null if mouse is located at an empty space
+        if (device_flags == MOUSE_FLAG_BUTTON1) {
+            if (this->current_focus
+                && (w != this->current_focus)) {
+                this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
+            }
+        }
+        if (w){
+            // get focus when mouse clic
+            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
+                    this->set_widget_focus(w);
+                }
+            }
+            w->rdp_input_mouse(device_flags, x, y, keymap);
+        }
+    }
+
 };
 
 #endif
