@@ -437,7 +437,6 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help.png");
 
-    TODO("change signatures once brush orders are supported by PatBlt");
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
                    "\x9c\x21\x1b\xda\x31\x3d\x50\xe0\xe3\x49\x9c\xb1\x66\x78\x6f\x52\x93\xe8\x19\x90"

@@ -520,7 +520,7 @@ private:
 
         virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
         {
-            if (device_flags == MOUSE_FLAG_BUTTON1) {
+            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
                 int lcy = (this->h_text + this->y_text * 2 + this->h_border);
                 if (int16_t(y) >= this->dy()
                     && y < int(this->dy() + this->labels.size() * lcy - this->h_border)
@@ -548,14 +548,13 @@ private:
                     Column c = this->get_column(x);
                     if ((uint)p != this->over_index
                         || (c != this->col)
-                        || (!this->tooltip_exist())
                         ) {
                         this->over_index = p;
                         this->col = c;
                         int w = 0;
                         int h = 0;
                         this->drawable.text_metrics(this->get_over_index(), w, h);
-                        this->show_tooltip(this, NULL, 0, 0);
+                        this->hide_tooltip();
                         if (w >= this->get_column_cx()) {
                             this->show_tooltip(this, this->get_over_index(), x, y);
                         }
@@ -820,7 +819,16 @@ public:
             WidgetParent::notify(widget, event);
         }
     }
-
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
+    {
+        if (device_flags == MOUSE_FLAG_MOVE) {
+            Widget2 * w = this->widget_at_pos(x, y);
+            if (w != &this->selector_lines) {
+                this->selector_lines.col = COLUMN_UNKNOWN;
+            }
+        }
+        WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
+    }
 
     void add_device(const char * device_group, const char * target_label,
                     const char * protocol, const char * close_time)

@@ -310,8 +310,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x31\x4a\xc0\x25\x3f\x92\x51\x7a\x9b\xcc"
-        "\x29\xd4\x74\x67\x39\x1d\x80\xc5\x7c\xb3")){
+                   "\xea\xb0\x6f\x3a\xb0\xea\x28\xea\xeb\x5d"
+                   "\xc6\xf3\x4b\xab\x8c\x9e\xdf\xe3\x19\xfa")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -326,8 +326,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector6-2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-        "\x55\x2a\x79\x6e\x86\x9a\xfa\x74\xfd\x27"
-        "\xce\x55\x59\x53\xcd\x41\x2f\x77\x9f\xce")){
+                   "\x3e\x81\x4e\x08\x32\x8c\x51\x6c\x30\xc5"
+                   "\x06\x80\x9b\x77\x58\x9d\x82\x0b\x38\xbf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 

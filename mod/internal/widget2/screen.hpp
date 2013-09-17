@@ -54,9 +54,6 @@ public:
     }
 
 
-    virtual bool tooltip_exist(int = 10) {
-        return (this->tooltip);
-    }
     virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
         if (text == NULL) {
             if (this->tooltip) {
