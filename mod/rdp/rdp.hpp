@@ -62,38 +62,42 @@
 #include "genrandom.hpp"
 
 struct mod_rdp : public mod_api {
-    /* mod data */
-    FrontAPI                  & front;
-    BStream                     in_stream;
-    CHANNELS::ChannelDefArray   mod_channel_list;
+    FrontAPI & front;
 
-    bool dev_redirection_enable;
+    CHANNELS::ChannelDefArray mod_channel_list;
+
     int  use_rdp5;
+
     int  keylayout;
 
     uint8_t   lic_layer_license_key[16];
     uint8_t   lic_layer_license_sign_key[16];
-//  int       lic_layer_license_issued;
     uint8_t * lic_layer_license_data;
     size_t    lic_layer_license_size;
 
     rdp_orders orders;
-    int        share_id;
-    int        bitmap_compression;
-    int        version;
-    uint16_t   userid;
 
-    char    hostname[16];
-    char    username[128];
-    char    password[256];
-    char    domain[256];
-    char    program[512];
-    char    directory[512];
+    int      share_id;
+    uint16_t userid;
+
+    int bitmap_compression;
+
+    int version;
+
+    char hostname[16];
+    char username[128];
+    char password[256];
+    char domain[256];
+    char program[512];
+    char directory[512];
+
     uint8_t bpp;
 
-    int          encryptionLevel;
-    int          encryptionMethod;
+    int encryptionLevel;
+    int encryptionMethod;
+
     const int    key_flags;
+
     uint32_t     server_public_key_len;
     uint8_t      client_crypt_random[512];
     CryptContext encrypt, decrypt;
@@ -103,7 +107,6 @@ struct mod_rdp : public mod_api {
         , MOD_RDP_BASIC_SETTINGS_EXCHANGE
         , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
         , MOD_RDP_GET_LICENSE
-//      , MOD_RDP_WAITING_DEMAND_ACTIVE_PDU
         , MOD_RDP_CONNECTED
     };
 
@@ -135,19 +138,17 @@ struct mod_rdp : public mod_api {
 
     RdpNego nego;
 
-    char     clientAddr[512];
-//  uint16_t cbClientAddr;
+    char clientAddr[512];
 
+    bool enable_bitmap_update;
+    bool enable_clipboard;                   // true clipboard available, false clipboard unavailable
+    bool enable_fastpath;                    // choice of programmer
+    bool enable_fastpath_client_input_event; // choice of programmer + capability of server
+    bool enable_fastpath_server_update;      // = choice of programmer
+    bool enable_mem3blt;
     bool enable_new_pointer;
-
-    bool opt_clipboard;  // true clipboard available, false clipboard unavailable
-
-    bool mem3blt_support;
-    bool bitmap_update_support;
-    bool fastpath_support;                    // choice of programmer
-    bool client_fastpath_input_event_support; // choice of programmer + capability of server
-    bool server_fastpath_update_support;      // = choice of programmer
-    bool rdp_50_bulk_compression_support;
+    bool enable_rdp_bulk_compression;
+    bool enable_transparent_mode;
 
     size_t recv_bmp_update;
 
@@ -160,13 +161,14 @@ struct mod_rdp : public mod_api {
 
     Timeout  open_session_timeout_checker;
 
+    redemption::string output_filename;
+
     mod_rdp( Transport * trans
            , const char * target_user
            , const char * target_password
-           , const char * clientIP
+           , const char * client_address
            , struct FrontAPI & front
-             //, const char * hostname
-           , const bool tls
+           , const bool enable_tls
            , const ClientInfo & info
            , Random * gen
            , int key_flags
@@ -175,27 +177,28 @@ struct mod_rdp : public mod_api {
            , const char * auth_channel
            , const char * alternate_shell
            , const char * shell_working_directory
-           , bool clipboard
-           , bool fp_support    // If true, fast-path must be supported
-           , bool mem3blt_support
-           , bool bitmap_update_support
+           , bool enable_clipboard
+           , bool enable_fastpath    // If true, fast-path must be supported
+           , bool enable_mem3blt
+           , bool enable_bitmap_update
            , uint32_t verbose = 0
            , bool enable_new_pointer = false
-           , bool rdp_50_bulk_compression_support = false
+           , bool enable_rdp_bulk_compression = false
            , redemption::string * error_message = 0
            , bool disconnect_on_logon_user_change = false
            , uint32_t open_session_timeout = 0
+           , bool enable_transparent_mode = false
+           , const char * output_filename = ""
            )
         : mod_api(info.width, info.height)
         , front(front)
-        , in_stream(65536)
         , use_rdp5(1)
         , keylayout(info.keylayout)
         , orders(0)
         , share_id(0)
+        , userid(0)
         , bitmap_compression(1)
         , version(0)
-        , userid(0)
         , bpp(0)
         , encryptionLevel(0)
         , key_flags(key_flags)
@@ -213,37 +216,51 @@ struct mod_rdp : public mod_api {
         , auth_channel_state(0) // 0 means unused
         , auth_channel_target(auth_channel_target)
         , auth_channel_result(auth_channel_result)
-        , nego(tls, trans, target_user)
+        , nego(enable_tls, trans, target_user)
+        , enable_bitmap_update(enable_bitmap_update)
+        , enable_clipboard(enable_clipboard)
+        , enable_fastpath(enable_fastpath)
+        , enable_fastpath_client_input_event(false)
+        , enable_fastpath_server_update(enable_fastpath)
+        , enable_mem3blt(enable_mem3blt)
         , enable_new_pointer(enable_new_pointer)
-        , opt_clipboard(clipboard)
-        , mem3blt_support(mem3blt_support)
-        , bitmap_update_support(bitmap_update_support)
-        , fastpath_support(fp_support)
-        , client_fastpath_input_event_support(false)
-        , server_fastpath_update_support(fp_support)
-        , rdp_50_bulk_compression_support(rdp_50_bulk_compression_support)
+        , enable_rdp_bulk_compression(enable_rdp_bulk_compression)
+        , enable_transparent_mode(enable_transparent_mode)
         , recv_bmp_update(0)
         , error_message(error_message)
         , disconnect_on_logon_user_change(disconnect_on_logon_user_change)
         , open_session_timeout(open_session_timeout)
         , open_session_timeout_checker(0)
+        , output_filename(output_filename)
     {
-        if (this->verbose & 1){
-            LOG(LOG_INFO, "Creation of new mod 'RDP'");
+        if (this->verbose & 1)
+        {
+            if (!enable_transparent_mode)
+            {
+                LOG(LOG_INFO, "Creation of new mod 'RDP'");
+            }
+            else
+            {
+                LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
+
+                if (this->output_filename.is_empty())
+                {
+                    LOG(LOG_INFO, "Use transparent capabilities.");
+                }
+                else
+                {
+                    LOG(LOG_INFO, "Use proxy default capabilities.");
+                }
+            }
         }
 
         this->event.object_and_time = (this->open_session_timeout > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
-        strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel));
+        strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel) - 1);
 
-//        this->cbClientAddr = strlen(clientIP)+1;
-//        memcpy(this->clientAddr, clientIP, this->cbClientAddr);
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
-        strncpy(this->clientAddr, clientIP, sizeof(this->clientAddr));
-
-//        this->key_flags = key_flags;
-//        this->lic_layer_license_issued = 0;
+        strncpy(this->clientAddr, client_address, sizeof(this->clientAddr) - 1);
 
         this->lic_layer_license_data = 0;
         this->lic_layer_license_size = 0;
@@ -315,15 +332,21 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    virtual ~mod_rdp() {
-        if (this->lic_layer_license_data) {
+    virtual ~mod_rdp()
+    {
+        if (this->lic_layer_license_data)
+        {
             free(this->lic_layer_license_data);
         }
 
-        if (this->verbose) {
-            LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %llu", this->orders.recv_bmp_cache_count);
-            LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %llu", this->orders.recv_order_count);
-            LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %llu", this->recv_bmp_update);
+        if (this->verbose)
+        {
+            LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %llu",
+                this->orders.recv_bmp_cache_count);
+            LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %llu",
+                this->orders.recv_order_count);
+            LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %llu",
+                this->recv_bmp_update);
         }
     }
 
@@ -368,7 +391,7 @@ struct mod_rdp : public mod_api {
         }
 
         // Clipboard is unavailable and is a Clipboard PDU
-        if (!this->opt_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+        if (!this->enable_clipboard && !::strcmp(front_channel_name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
             if (this->verbose) {
                 LOG(LOG_INFO, "mod_rdp clipboard PDU");
             }
@@ -1500,7 +1523,7 @@ struct mod_rdp : public mod_api {
                                     }
                                 }
                             }
-                            else if (!this->opt_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
+                            else if (!this->enable_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
                                 TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
@@ -1548,6 +1571,9 @@ struct mod_rdp : public mod_api {
                             uint8_t * next_packet = sec.payload.p;
                             while (next_packet < sec.payload.end) {
                                 sec.payload.p = next_packet;
+
+                                uint8_t * current_packet = next_packet;
+
                                 ShareControl_Recv sctrl(sec.payload);
                                 next_packet += sctrl.totalLength;
 
@@ -1598,6 +1624,22 @@ struct mod_rdp : public mod_api {
                                         rdp_input_synchronize(0, 0, (this->key_flags & 0x07), 0);
                                         break;
                                     case UP_AND_RUNNING:
+                                        if (this->enable_transparent_mode)
+                                        {
+                                            sec.payload.p = current_packet;
+
+                                            HStream copy_stream(1024, 65535);
+
+                                            copy_stream.out_copy_bytes(sec.payload.p, sec.payload.in_remain());
+                                            copy_stream.mark_end();
+
+                                            this->front.send_data_indication_ex(mcs.channelId, copy_stream);
+
+                                            next_packet = sec.payload.end;
+
+                                            break;
+                                        }
+
                                         {
                                             ShareData sdata(sctrl.payload);
                                             sdata.recv_begin(&this->mppc_dec);
@@ -1875,7 +1917,7 @@ struct mod_rdp : public mod_api {
             ;
         // Slow/Fast-path
         general_caps.extraflags |=
-            this->server_fastpath_update_support
+            this->enable_fastpath_server_update
             ? FASTPATH_OUTPUT_SUPPORTED
             : 0
             ;
@@ -1901,7 +1943,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt ? 1 : 0);
         order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
         order_caps.orderSupport[UnusedIndex3]                    = 1;
@@ -3290,6 +3332,13 @@ struct mod_rdp : public mod_api {
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
 
+        FILE * output_file = 0;
+
+        if (!this->output_filename.is_empty())
+        {
+            output_file = fopen(this->output_filename.c_str(), "w");
+        }
+
         unsigned expected = 4; /* numberCapabilities(2) + pad2Octets(2) */
         if (!stream.in_check_rem(expected)){
             LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%u",
@@ -3327,6 +3376,10 @@ struct mod_rdp : public mod_api {
                     if (this->verbose) {
                         general_caps.log("Received from server");
                     }
+                    if (output_file)
+                    {
+                        general_caps.dump(output_file);
+                    }
                 }
                 break;
             case CAPSTYPE_BITMAP:
@@ -3335,6 +3388,10 @@ struct mod_rdp : public mod_api {
                     bitmap_caps.recv(stream, capset_length);
                     if (this->verbose) {
                         bitmap_caps.log("Received from server");
+                    }
+                    if (output_file)
+                    {
+                        bitmap_caps.dump(output_file);
                     }
                     this->bpp = bitmap_caps.preferredBitsPerPixel;
                     this->front_width = bitmap_caps.desktopWidth;
@@ -3348,6 +3405,10 @@ struct mod_rdp : public mod_api {
                     if (this->verbose) {
                         order_caps.log("Received from server");
                     }
+                    if (output_file)
+                    {
+                        order_caps.dump(output_file);
+                    }
                 }
                 break;
             case CAPSTYPE_INPUT:
@@ -3358,8 +3419,8 @@ struct mod_rdp : public mod_api {
                         input_caps.log("Received from server");
                     }
 
-                    this->client_fastpath_input_event_support =
-                        (this->fastpath_support && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
+                    this->enable_fastpath_client_input_event =
+                        (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
                 }
                 break;
             default:
@@ -3367,6 +3428,12 @@ struct mod_rdp : public mod_api {
             }
             stream.p = next;
         }
+
+        if (output_file)
+        {
+            fclose(output_file);
+        }
+
         if (this->verbose & 32){
             LOG(LOG_INFO, "mod_rdp::process_server_caps done");
         }
@@ -3562,7 +3629,7 @@ public:
     }
 
     void send_input(int time, int message_type, int device_flags, int param1, int param2) throw(Error) {
-        if (this->client_fastpath_input_event_support == false) {
+        if (this->enable_fastpath_client_input_event == false) {
             send_input_slowpath(time, message_type, device_flags, param1, param2);
         }
         else {
@@ -4039,7 +4106,7 @@ public:
                      );
             }
 
-            if (   !this->bitmap_update_support
+            if (   !this->enable_mem3blt
                    || ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
                 this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
             }
@@ -4069,7 +4136,7 @@ public:
                                , this->clientAddr
                                );
 
-        if (this->rdp_50_bulk_compression_support) {
+        if (this->enable_rdp_bulk_compression) {
             infoPacket.flags |= INFO_COMPRESSION;
             infoPacket.flags &= ~CompressionTypeMask;
             infoPacket.flags |= (PACKET_COMPR_TYPE_64K << 9);
