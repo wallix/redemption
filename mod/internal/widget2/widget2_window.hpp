@@ -27,8 +27,9 @@
 #include "colors.hpp"
 #include "button.hpp"
 
-class Window : public WidgetComposite
+class Window : public WidgetParent
 {
+    CompositeInterface * impl;
 public:
     WidgetLabel titlebar;
     WidgetButton button_close;
@@ -45,7 +46,7 @@ public:
 
     Window(DrawApi& drawable, const Rect& rect, Widget2 & parent, NotifyApi* notifier,
            const char * caption, int bgcolor = DARK_WABGREEN, int group_id = 0)
-    : WidgetComposite(drawable, rect, parent, notifier, group_id)
+    : WidgetParent(drawable, rect, parent, notifier, group_id)
     , titlebar(drawable, 2, 2, *this, NULL, caption, false, -1, WHITE, WABGREEN, 5)
     , button_close(drawable, 2, 2, *this, this, "X", true, -2, WHITE, DARK_GREEN, 0, -1)
     , bg_color(bgcolor)
@@ -58,6 +59,8 @@ public:
     , inactive_border_right_bottom_color(0x888888)
     , inactive_border_right_bottom_color_inner(0x888888)
     {
+        this->tab_flag = DELEGATE_CONTROL_TAB;
+        this->impl = new CompositeVector;
 
         this->add_widget(&this->titlebar);
         this->add_widget(&this->button_close);
@@ -79,6 +82,10 @@ public:
 
     virtual ~Window()
     {
+        if (this->impl) {
+            delete this->impl;
+            this->impl = NULL;
+        }
     }
 
     void set_window_x(int x)
@@ -117,8 +124,8 @@ public:
     virtual void draw(const Rect& clip)
     {
         Rect inner_window = clip.intersect(this->rect.shrink(2));
-        this->WidgetComposite::draw(inner_window);
-        this->WidgetComposite::draw_inner_free(inner_window, this->bg_color);
+        this->impl->draw(inner_window);
+        this->draw_inner_free(inner_window, this->bg_color);
 
         if (this->has_focus) {
             this->draw_border(clip,
@@ -142,7 +149,7 @@ public:
             this->send_notify(NOTIFY_CANCEL);
         }
         else {
-            WidgetComposite::notify(widget, event);
+            WidgetParent::notify(widget, event);
         }
     }
 
@@ -184,6 +191,54 @@ public:
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), border_right_bottom_color_inner), this->rect);
     }
+
+    virtual void add_widget(Widget2 * w) {
+        this->impl->add_widget(w);
+    }
+    virtual void remove_widget(Widget2 * w) {
+        this->impl->remove_widget(w);
+    }
+    virtual void clear() {
+        this->impl->clear();
+    }
+
+    virtual void set_xy(int16_t x, int16_t y) {
+        int16_t xx = x - this->dx();
+        int16_t yy = y - this->dy();
+        this->impl->set_xy(xx, yy);
+        WidgetParent::set_xy(x, y);
+    }
+
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
+        if (!this->rect.contains_pt(x, y))
+            return 0;
+        if (this->current_focus) {
+            if (this->current_focus->rect.contains_pt(x, y)) {
+                return this->current_focus;
+            }
+        }
+        return this->impl->widget_at_pos(x, y);
+    }
+
+    virtual bool next_focus() {
+        return this->impl->next_focus(this);
+    }
+
+    virtual bool previous_focus() {
+        return this->impl->previous_focus(this);
+    }
+
+    virtual void draw_inner_free(const Rect& clip, int bg_color) {
+        Region region;
+        region.rects.push_back(clip);
+
+        this->impl->draw_inner_free(clip, bg_color, region);
+
+        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+        }
+    }
+
 
 };
 

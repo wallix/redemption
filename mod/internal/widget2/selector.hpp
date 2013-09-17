@@ -142,7 +142,7 @@ public:
     }
 };
 
-class WidgetSelector : public WidgetComposite
+class WidgetSelector : public WidgetParent
 {
     class Line : public Widget2 {
     public:
@@ -610,7 +610,7 @@ private:
         }
     };
 
-
+    CompositeInterface * impl;
 public:
     WidgetLabel device_label;
     WidgetLabel device_target_label;
@@ -657,7 +657,7 @@ public:
                    const char * current_page, const char * number_of_page,
                    const char * filter_device = 0, const char * filter_target = 0,
                    const char * filter_proto = 0)
-        : WidgetComposite(drawable, Rect(0, 0, width, height), parent, notifier)
+        : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10, BLACK, GREY)
         , device_target_label(drawable, 20, 0, *this, NULL, "Device Group", true, -10, BLACK, GREY)
         , target_label(drawable, 150, 0, *this, NULL, "Account Device", true, -10, BLACK, GREY)
@@ -697,6 +697,9 @@ public:
                   raw_connect().cx, raw_connect().cy, raw_connect().size,
                   raw_connect().img_blur, raw_connect().img_focus, -18)
     {
+        this->tab_flag = DELEGATE_CONTROL_TAB;
+        this->impl = new CompositeVector;
+
         this->add_widget(&this->device_label);
         this->add_widget(&this->device_target_label);
         this->add_widget(&this->target_label);
@@ -787,12 +790,16 @@ public:
     virtual ~WidgetSelector()
     {
         this->clear();
+        if (this->impl) {
+            delete this->impl;
+            this->impl = NULL;
+        }
     }
 
     virtual void draw(const Rect& clip)
     {
-        this->WidgetComposite::draw(clip);
-        this->WidgetComposite::draw_inner_free(clip.intersect(this->rect), GREY);
+        this->impl->draw(clip);
+        this->draw_inner_free(clip.intersect(this->rect), GREY);
     }
 
     virtual void notify(Widget2* widget, notify_event_t event)
@@ -810,7 +817,7 @@ public:
             }
         }
         else {
-            WidgetComposite::notify(widget, event);
+            WidgetParent::notify(widget, event);
         }
     }
 
@@ -819,6 +826,53 @@ public:
                     const char * protocol, const char * close_time)
     {
         this->selector_lines.add_line(device_group, target_label, protocol, close_time);
+    }
+
+    virtual void add_widget(Widget2 * w) {
+        this->impl->add_widget(w);
+    }
+    virtual void remove_widget(Widget2 * w) {
+        this->impl->remove_widget(w);
+    }
+    virtual void clear() {
+        this->impl->clear();
+    }
+
+    virtual void set_xy(int16_t x, int16_t y) {
+        int16_t xx = x - this->dx();
+        int16_t yy = y - this->dy();
+        this->impl->set_xy(xx, yy);
+        WidgetParent::set_xy(x, y);
+    }
+
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
+        if (!this->rect.contains_pt(x, y))
+            return 0;
+        if (this->current_focus) {
+            if (this->current_focus->rect.contains_pt(x, y)) {
+                return this->current_focus;
+            }
+        }
+        return this->impl->widget_at_pos(x, y);
+    }
+
+    virtual bool next_focus() {
+        return this->impl->next_focus(this);
+    }
+
+    virtual bool previous_focus() {
+        return this->impl->previous_focus(this);
+    }
+
+    virtual void draw_inner_free(const Rect& clip, int bg_color) {
+        Region region;
+        region.rects.push_back(clip);
+
+        this->impl->draw_inner_free(clip, bg_color, region);
+
+        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+        }
     }
 
 };
