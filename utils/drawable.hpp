@@ -1313,7 +1313,7 @@ struct Drawable {
             p = base + this->rowsize * y;
             for (size_t x = 0; x < (size_t)rect.cx ; x++)
             {
-                if (brush_data[y % 8] & (1 << (x % 8)))
+                if (brush_data[(y + rect.y) % 8] & (1 << ((x + rect.x) % 8)))
                 {
                     p0 = back_color         & 0xFF;
                     p1 = (back_color >> 8)  & 0xFF;

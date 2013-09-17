@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
                     NULL, &parent, &label);
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\xc0\x68\x89\xe3\x50\x90\xee\x98\x28\x91"

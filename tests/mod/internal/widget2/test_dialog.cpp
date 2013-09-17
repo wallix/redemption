@@ -448,8 +448,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x7c\xa6\x13\x14\x6e\x9d\xda\xe6\x4b\xf9"
-                   "\xdc\x1f\x86\xce\x23\xe7\x7e\x79\x16\xb3"
+                   "\xc9\xaa\x25\x1f\x69\x6b\xf0\x3f\x81\x46"
+                   "\xbf\x38\x29\x52\x9a\x40\x21\x58\xee\x01"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -466,8 +466,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog-clic-2-button-ok.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x43\x81\xe1\x72\x05\x36\xa9\x41\x6d\xfb"
-                   "\x5f\x84\xf7\x73\x1d\xcf\x18\xad\xf2\x31"
+                   "\x27\xea\x67\xc4\xa6\xb9\x50\x60\xf7\x70"
+                   "\x06\x4c\xe4\x7e\x0c\x02\x77\x32\x5b\xab"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

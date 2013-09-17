@@ -441,10 +441,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 15, 15, NULL);
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "button11.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "button11.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x1c\x64\xd9\x6e\x8e\x28\x64\x14\x6b\x9b\x62\xe3\xb1\xb2\xf9\x5e\xde\x33\xc3\x61"
+                   "\xa1\xf6\x94\xe3\x14\x79\xf7\x1f\xbf\x58\x88\x5f\x24\x4e\x7a\x2e\xd2\x33\x66\xee"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -642,7 +642,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
     //drawable.save_to_png(OUTPUT_FILE_PATH "button15.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x00\x44\x01\xe7\xc0\x66\x7f\x00\xce\x90\xb4\xbd\xdb\xe3\xee\xbc\x2c\x03\xba\x1d"
+                   "\x83\x52\xd7\xc8\xe9\x6f\x34\x44\x61\x59\x1e\x70\x38\x77\x39\x62\x96\x8e\x5e\xec"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -665,7 +665,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonFocus)
     //drawable.save_to_png(OUTPUT_FILE_PATH "button17.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x00\x44\x01\xe7\xc0\x66\x7f\x00\xce\x90\xb4\xbd\xdb\xe3\xee\xbc\x2c\x03\xba\x1d"
+                   "\x83\x52\xd7\xc8\xe9\x6f\x34\x44\x61\x59\x1e\x70\x38\x77\x39\x62\x96\x8e\x5e\xec"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
