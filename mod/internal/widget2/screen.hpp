@@ -27,17 +27,17 @@
 
 #include <typeinfo>
 
-class WidgetScreen : public WidgetComposite
+class WidgetScreen : public WidgetParent
 {
-    Widget2 * w_over;
+    CompositeInterface * impl;
 public:
     WidgetTooltip * tooltip;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
-        : WidgetComposite(drawable, Rect(0, 0, width, height), *this, notifier)
-        , w_over(NULL)
+        : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , tooltip(NULL)
     {
+        this->impl = new CompositeVector;
         this->tab_flag = IGNORE_TAB;
     }
 
@@ -47,32 +47,21 @@ public:
             delete this->tooltip;
             this->tooltip = NULL;
         }
+        if (this->impl) {
+            delete this->impl;
+            this->impl = NULL;
+        }
     }
 
-    virtual void notify(Widget2* widget, notify_event_t event)
-    {
-        if (NOTIFY_SHOW_TOOLTIP == event) {
-            this->add_widget(this->tooltip);
-            this->refresh(this->tooltip->rect);
-            this->w_over = widget;
-        }
-        if (NOTIFY_HIDE_TOOLTIP == event) {
+
+    virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
+        if (text == NULL) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);
                 this->refresh(this->tooltip->rect);
                 delete this->tooltip;
                 this->tooltip = NULL;
             }
-        }
-        WidgetComposite::notify(widget, event);
-    }
-
-    virtual bool tooltip_exist(int = 10) {
-        return (this->tooltip);
-    }
-    virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
-        if (text == NULL) {
-            this->notify(widget, NOTIFY_HIDE_TOOLTIP);
         }
         else if (this->tooltip == NULL) {
             int w = 0;
@@ -84,9 +73,11 @@ public:
             this->tooltip = new WidgetTooltip(this->drawable,
                                               posx,
                                               posy,
-                                              *this, this,
+                                              *this,
+                                              widget,
                                               text);
-            this->notify(widget, NOTIFY_SHOW_TOOLTIP);
+            this->add_widget(this->tooltip);
+            this->refresh(this->tooltip->rect);
         }
     }
 
@@ -95,23 +86,22 @@ public:
         if (this->tooltip) {
             if (device_flags & MOUSE_FLAG_MOVE) {
                 Widget2 * w = this->last_widget_at_pos(x, y);
-                if (w != this->w_over) {
-                    this->notify(this, NOTIFY_HIDE_TOOLTIP);
-                    this->w_over = w;
+                if (w != this->tooltip->notifier) {
+                    this->hide_tooltip();
                 }
             }
             if (device_flags & (MOUSE_FLAG_BUTTON1)) {
-                this->notify(this, NOTIFY_HIDE_TOOLTIP);
+                this->hide_tooltip();
             }
         }
-        WidgetComposite::rdp_input_mouse(device_flags, x, y, keymap);
+        WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        this->notify(this, NOTIFY_HIDE_TOOLTIP);
+        this->hide_tooltip();
         if (this->tab_flag != IGNORE_TAB) {
-            WidgetComposite::rdp_input_scancode(param1, param2, param3, param4, keymap);
+            WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
         else if (this->current_focus) {
             this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
@@ -124,8 +114,56 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        this->WidgetComposite::draw(clip);
-        this->WidgetComposite::draw_inner_free(clip, BLACK);
+        Rect new_clip = clip.intersect(this->rect);
+        this->impl->draw(new_clip);
+        this->draw_inner_free(clip, BLACK);
+    }
+
+    virtual void add_widget(Widget2 * w) {
+        this->impl->add_widget(w);
+    }
+    virtual void remove_widget(Widget2 * w) {
+        this->impl->remove_widget(w);
+    }
+    virtual void clear() {
+        this->impl->clear();
+    }
+
+    virtual void set_xy(int16_t x, int16_t y) {
+        int16_t xx = x - this->dx();
+        int16_t yy = y - this->dy();
+        this->impl->set_xy(xx, yy);
+        WidgetParent::set_xy(x, y);
+    }
+
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
+        if (!this->rect.contains_pt(x, y))
+            return 0;
+        if (this->current_focus) {
+            if (this->current_focus->rect.contains_pt(x, y)) {
+                return this->current_focus;
+            }
+        }
+        return this->impl->widget_at_pos(x, y);
+    }
+
+    virtual bool next_focus() {
+        return this->impl->next_focus(this);
+    }
+
+    virtual bool previous_focus() {
+        return this->impl->previous_focus(this);
+    }
+
+    virtual void draw_inner_free(const Rect& clip, int bg_color) {
+        Region region;
+        region.rects.push_back(clip);
+
+        this->impl->draw_inner_free(clip, bg_color, region);
+
+        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+        }
     }
 
 };

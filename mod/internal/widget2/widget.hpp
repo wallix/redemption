@@ -123,16 +123,14 @@ public:
         // The root widget is defined as the parent of itself (screen widget only)
         return (&this->parent == this);
     }
-    virtual bool tooltip_exist(int iter = 10) {
-        if (iter > 0) {
-            return this->parent.tooltip_exist(iter - 1);
-        }
-        return true;
-    }
+
     virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int iter = 10) {
         if (iter > 0) {
             this->parent.show_tooltip(widget, text, x, y, iter - 1);
         }
+    }
+    void hide_tooltip() {
+        this->show_tooltip(NULL, NULL, 0, 0);
     }
 
     Widget2 * last_widget_at_pos(int16_t x, int16_t y) {

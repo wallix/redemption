@@ -215,26 +215,26 @@ public:
         }
     }
 
-    // virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
-    //     if (this->window_help) {
-    //         return;
-    //     }
+    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap) {
+        if (this->window_help) {
+            return;
+        }
 
-    //     if (device_flags & MOUSE_FLAG_MOVE) {
-    //         Widget2 * wid = this->widget_at_pos(x, y);
-    //         if (wid == &this->login_label) {
-    //             this->show_tooltip(wid, "WAB LOGIN not windows account login", x, y);
-    //         }
-    //         else if (wid == &this->img) {
-    //             this->show_tooltip(wid, "WAB LOGO", this->img.centerx(), this->img.centery());
-    //         }
-    //         else if (wid == &this->password_label) {
-    //             this->show_tooltip(wid, "WAB PASSWORD", x, y);
-    //         }
-    //     }
+        // if (device_flags & MOUSE_FLAG_MOVE) {
+        //     Widget2 * wid = this->widget_at_pos(x, y);
+        //     if (wid == &this->login_label) {
+        //         this->show_tooltip(wid, "WAB LOGIN not windows account login", x, y);
+        //     }
+        //     else if (wid == &this->img) {
+        //         this->show_tooltip(wid, "WAB LOGO", this->img.centerx(), this->img.centery());
+        //     }
+        //     else if (wid == &this->password_label) {
+        //         this->show_tooltip(wid, "WAB PASSWORD", x, y);
+        //     }
+        // }
 
-    //     Window::rdp_input_mouse(device_flags, x, y, keymap);
-    // }
+        Window::rdp_input_mouse(device_flags, x, y, keymap);
+    }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
