@@ -496,14 +496,6 @@ public:
                     TODO("check this! Assembling parts to get user login with target is not obvious"
                          "method used below il likely to show @: if target fields are empty")
                     char buffer[255];
-                    // snprintf( buffer, 256, "%s@%s:%s%s%s"
-                    //           , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                    //           , this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
-                    //           , (this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ?
-                    //              this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0) : "")
-                    //           , (this->ini.context_get_value(AUTHID_TARGET_PROTOCOL, NULL, 0)[0] ? ":" : "")
-                    //           , this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0)
-                    //           );
                     snprintf( buffer, sizeof(buffer), "%s@%s:%s%s%s"
                             , this->ini.globals.target_user.get_cstr()
                             , this->ini.globals.target_device.get_cstr()
@@ -513,7 +505,7 @@ public:
                             );
                     strcpy(this->ini.account.username, buffer);
                 }
-                
+
                 this->mod = new LoginMod(
                                          this->ini,
                                          this->front,
@@ -548,7 +540,6 @@ public:
                     }
 
                     int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                                //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                                 this->ini.context.target_port.get(),
                                                 4, 1000,
                                                 this->ini.debug.mod_xup);
@@ -561,7 +552,6 @@ public:
                     SocketTransport * t = new SocketTransport(name
                                                               , client_sck
                                                               , this->ini.globals.target_device.get_cstr()
-                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                                                               , this->ini.context.target_port.get()
                                                               , this->ini.debug.mod_xup);
                     this->mod_transport = t;
@@ -613,7 +603,6 @@ public:
                     static const char * name = "RDP Target";
 
                     int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                                //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                                 this->ini.context.target_port.get(),
                                                 3, 1000,
                                                 this->ini.debug.mod_rdp);
@@ -628,7 +617,6 @@ public:
                                                               name
                                                               , client_sck
                                                               , this->ini.globals.target_device.get_cstr()
-                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                                                               , this->ini.context.target_port.get()
                                                               , this->ini.debug.mod_rdp
                                                               , &this->ini.context.auth_error_message
@@ -640,16 +628,12 @@ public:
                     this->mod = new mod_rdp(t
                                             , this->ini.globals.target_user.get_cstr()
                                             , this->ini.context.target_password.get_cstr()
-                                            //, this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                            //, this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
                                             , "0.0.0.0"  // client ip is silenced
                                             , this->front
-                                            // , hostname
                                             , true
                                             , client_info
                                             , &gen
                                             , this->front.keymap.key_flags
-//                                            , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
                                             , &this->ini.context.authchannel_target
                                             , &this->ini.context.authchannel_result
                                             , this->ini.globals.auth_channel
@@ -695,7 +679,6 @@ public:
                     SocketTransport * t = new SocketTransport(name
                                                               , client_sck
                                                               , this->ini.globals.target_device.get_cstr()
-                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                                                               , this->ini.context.target_port.get()
                                                               , this->ini.debug.mod_vnc);
                     this->mod_transport = t;
@@ -705,8 +688,6 @@ public:
                     this->mod = new mod_vnc(t
                                             , this->ini.globals.target_user.get_cstr()
                                             , this->ini.context.target_password.get_cstr()
-                                            // , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                            // , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
                                             , this->front
                                             , this->front.client_info.width
                                             , this->front.client_info.height
@@ -730,7 +711,6 @@ public:
                 }
             }
         if (this->connected) this->record();
-//        if (this->last_module) this->front.stop_capture();
     }
 
     // Check movie start/stop/pause
