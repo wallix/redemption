@@ -24,7 +24,7 @@
 #include <string>
 
 #include "listen.hpp"
-#include "rdp/rdp_transparent.hpp"
+//#include "rdp/rdp.hpp"
 #include "session.hpp"
 #include "sockettransport.hpp"
 
@@ -108,8 +108,7 @@ int main(int argc, char * argv[]) {
     }
 
     if (password.c_str()[0] == 0) {
-        cout << "Missing password : use -u password\n\n";
-        exit(-1);
+        password = "";
     }
 
 
@@ -143,10 +142,6 @@ int main(int argc, char * argv[]) {
 
     Inifile ini;
     ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
-//    ini.debug.front = 511;
-    ini.debug.front = 0;
-//    ini.debug.mod_rdp = 511;
-    ini.debug.mod_rdp = 0;
 
     int nodelay = 1;
     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char *)&nodelay
@@ -176,25 +171,34 @@ int main(int argc, char * argv[]) {
                              , ini.debug.mod_rdp, &ini.context.auth_error_message);
 
     try {
-        mod_rdp_transparent mod( mod_trans
-                               , username.c_str()
-                               , password.c_str()
-                               , "0.0.0.0"
-                               , front
-                               , target_device.c_str()
-                               , true               // tls
-                               , front.client_info
-                               , gen
-                               , front.keymap.key_flags
-                               , ini.globals.auth_channel
-                               , ini.globals.alternate_shell.get_cstr()
-                               , ini.globals.shell_working_directory.get_cstr()
-                               , true   // fast-path
-                               , true   // mem3blt
-                               , false  // bitmap update
-                               , output_filename.c_str()
-                               , ini.debug.mod_rdp
-                               , true);
+        ClientInfo client_info = front.client_info;
+
+        mod_rdp mod(&mod_trans,
+                    username.c_str(),
+                    password.c_str(),
+                    "0.0.0.0",
+                    front,
+                    true,               // tls
+                    client_info,
+                    &gen,
+                    front.keymap.key_flags,
+                    NULL,
+                    NULL,
+                    ini.globals.auth_channel,
+                    ini.globals.alternate_shell.get_cstr(),
+                    ini.globals.shell_working_directory.get_cstr(),
+                    true,               // clipboard
+                    true,               // fast-path
+                    true,               // mem3blt
+                    false,              // bitmap update
+                    ini.debug.mod_rdp,  // Verbose
+                    true,               // new pointer
+                    true,               // rdp compression
+                    NULL,               // error message
+                    false,              // disconnect on logon user change
+                    0,                  // open session timeout
+                    true,               // enable transparent mode
+                    output_filename.c_str());
         mod.event.obj = client_sck;
 
         struct      timeval time_mark = { 0, 50000 };

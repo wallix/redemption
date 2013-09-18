@@ -66,6 +66,8 @@ class FrontAPI : public RDPGraphicDevice {
         , mouse_y(0)
         , notimestamp(notimestamp)
         , nomouse(nomouse) {}
+
+    virtual void send_data_indication_ex(uint16_t channelId, HStream & stream) {}
 };
 
 #endif
