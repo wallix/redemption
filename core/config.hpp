@@ -97,12 +97,10 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)")
 #endif
 
 TODO("move these into configuration")
-// #define LOGIN_LOGO24 "ad24b.bmp"
 #define LOGIN_LOGO24 "ad24b.png"
 #define CURSOR0 "cursor0.cur"
 #define CURSOR1 "cursor1.cur"
 #define FONT1 "sans-10.fv1"
-// #define REDEMPTION_LOGO24 "xrdp24b-redemption.bmp"
 #define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define LOCKFILE "rdpproxy.pid"
 
@@ -114,42 +112,6 @@ TODO("move these into configuration")
 #define DH1024_PEM "dh1024.pem"
 
 using namespace std;
-
-/*
-  static inline bool bool_from_string(string str)
-  {
-  return (boost::iequals(string("1"),str))
-  || (boost::iequals(string("yes"),str))
-  || (boost::iequals(string("on"),str))
-  || (boost::iequals(string("true"),str));
-  }
-*/
-
-static inline bool bool_from_cstr(const char * str)
-{
-    return (0 == strcasecmp("1",str))
-        || (0 == strcasecmp("yes",str))
-        || (0 == strcasecmp("on",str))
-        || (0 == strcasecmp("true",str));
-}
-
-static inline unsigned level_from_cstr(const char * str)
-{ // low = 0, medium = 1, high = 2
-    unsigned res = 0;
-    if (0 == strcasecmp("medium", str)) { res = 1; }
-    else if (0 == strcasecmp("high",   str)) { res = 2; }
-    return res;
-}
-
-static inline unsigned logtype_from_cstr(const char * str)
-{ // null = 0, print = 1, syslog = 2, file = 3, encryptedfile = 4
-    unsigned res = 0;
-    if (0 == strcasecmp("print",         str)) { res = 1; }
-    else if (0 == strcasecmp("syslog",        str)) { res = 2; }
-    else if (0 == strcasecmp("file",          str)) { res = 3; }
-    else if (0 == strcasecmp("encryptedfile", str)) { res = 4; }
-    return res;
-}
 
 static inline bool check_name(const char * str)
 {
@@ -450,6 +412,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_AUTHENTICATION_CHALLENGE,
 };
+
 static inline authid_t authid_from_string(const char * strauthid) {
 
     std::string str = std::string(strauthid);
@@ -704,6 +667,7 @@ struct Inifile : public FieldObserver {
     } context;
 
     struct IniAccounts account;
+
 public:
     Inifile() : FieldObserver() {
         this->init();
@@ -1575,13 +1539,6 @@ public:
 
         return false;
     }
-
-/*
-    void cparse(const char * filename) {
-        ifstream inifile(filename);
-        this->cparse(inifile);
-    }
-*/
 
     void parse_username(const char * username)
     {
