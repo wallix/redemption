@@ -428,7 +428,8 @@ public:
                                                 this->front,
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
-                                                now);
+                                                now
+                                                );
                     this->front.init_pointers();
                 }
                 LOG(LOG_INFO, "ModuleManager::internal module Close ready");
@@ -513,7 +514,7 @@ public:
                             );
                     strcpy(this->ini.account.username, buffer);
                 }
-                
+
                 this->mod = new LoginMod(
                                          this->ini,
                                          this->front,

@@ -43,12 +43,14 @@ public:
     WidgetButton cancel;
     WidgetLabel diagnostic;
     WidgetMultiLine diagnostic_lines;
+    WidgetLabel timeleft_label;
+    WidgetLabel timeleft_value;
 
 public:
     WindowWabClose(DrawApi& drawable, int16_t x, int16_t y, Widget2& parent,
                    NotifyApi* notifier, const char * diagnostic_text, int group_id = 0,
                    const char * username = 0, const char * target = 0,
-                   int fgcolor = BLACK, int bgcolor = DARK_WABGREEN)
+                   int fgcolor = BLACK, int bgcolor = DARK_WABGREEN, bool showtimer = false)
     : Window(drawable, Rect(x,y,600,1), parent, notifier, "Close", bgcolor, group_id)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, *this, NULL, -10)
     , username_label(drawable, this->img.cx() + 20, 0, *this, NULL,
@@ -63,6 +65,9 @@ public:
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, this->img.cx() + 20, 0, *this, NULL,
                        diagnostic_text, true, -16, fgcolor, bgcolor)
+    , timeleft_label(drawable, this->img.cx() + 20, 0, *this, NULL,
+                     "Time left:", true, -12, fgcolor, bgcolor)
+    , timeleft_value(drawable, this->img.cx() + 95, 0, *this, NULL, NULL, true, -12, fgcolor, bgcolor)
     {
         this->cancel.border_top_left_color = WHITE;
 
@@ -104,6 +109,16 @@ public:
 
         this->connection_closed_label.rect.y = y;
         y += this->connection_closed_label.cy() + 20;
+
+        if (showtimer) {
+            y -= 10;
+            this->add_widget(&this->timeleft_label);
+            this->add_widget(&this->timeleft_value);
+            this->timeleft_label.rect.y = y;
+            this->timeleft_value.rect.y = y;
+            y += this->timeleft_label.cy() + 10;
+        }
+
         this->diagnostic.rect.y = y;
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;

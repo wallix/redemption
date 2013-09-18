@@ -43,6 +43,7 @@
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;

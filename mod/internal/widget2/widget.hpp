@@ -130,7 +130,7 @@ public:
         }
     }
     void hide_tooltip() {
-        this->show_tooltip(NULL, NULL, 0, 0);
+        this->show_tooltip(this, NULL, 0, 0);
     }
 
     Widget2 * last_widget_at_pos(int16_t x, int16_t y) {
