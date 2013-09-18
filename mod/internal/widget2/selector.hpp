@@ -658,8 +658,8 @@ public:
                    const char * filter_proto = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10, BLACK, GREY)
-        , device_target_label(drawable, 20, 0, *this, NULL, "Device Group", true, -10, BLACK, GREY)
-        , target_label(drawable, 150, 0, *this, NULL, "Account Device", true, -10, BLACK, GREY)
+        , device_target_label(drawable, 20, 0, *this, NULL, "Target Group", true, -10, BLACK, GREY)
+        , target_label(drawable, 150, 0, *this, NULL, "Target", true, -10, BLACK, GREY)
         , protocol_label(drawable, 500, 0, *this, NULL, "Protocol", true, -10, BLACK, GREY)
         , close_time_label(drawable, 620, 0, *this, NULL, "Close Time", true, -10, BLACK, GREY)
         , selector_lines(drawable, *this, this, 15, 0, 130, 350, 120, 170, -11,
