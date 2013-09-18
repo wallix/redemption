@@ -201,7 +201,7 @@ public:
     void add_widget(Widget2 * w) {
         if (this->size >= AUTOSIZE)
             return;
-        this->child_list[size] = w;
+        this->child_list[this->size] = w;
         this->size++;
     }
 
