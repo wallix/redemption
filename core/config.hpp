@@ -205,6 +205,8 @@ typedef enum
         AUTHID_TARGET,          // ip_target
         AUTHID_PASSWORD,        // password
 
+        AUTHID_REPORTING,       // reporting message (client -> server)
+
         AUTHID_AUTHCHANNEL_ANSWER,  // WabLauncher target answer
         AUTHID_AUTHCHANNEL_RESULT,  // WabLauncher session result
         AUTHID_AUTHCHANNEL_TARGET,  // WabLauncher target request
@@ -291,6 +293,8 @@ typedef enum
 #define STRAUTHID_HOST                     "ip_client"
 #define STRAUTHID_TARGET                   "ip_target"
 #define STRAUTHID_PASSWORD                 "password"
+
+#define STRAUTHID_REPORTING                "reporting"
 
 TODO("This is not a translation but auth_channel answer, change key name in sesman")
 #define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
@@ -382,6 +386,8 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_HOST,             // ip_client
     STRAUTHID_TARGET,           // ip_target
     STRAUTHID_PASSWORD,         // password
+
+    STRAUTHID_REPORTING,        // reporting message (client -> server)
 
     STRAUTHID_AUTHCHANNEL_ANSWER,   // WabLauncher target answer
     STRAUTHID_AUTHCHANNEL_RESULT,   // WabLauncher session result
@@ -618,7 +624,6 @@ struct Inifile : public FieldObserver {
         // constructor and modify it as a redemption::string
         redemption::string auth_error_message;       // AUTHID_AUTH_ERROR_MESSAGE --
 
-
         BoolField          selector;                 // AUTHID_SELECTOR //
         UnsignedField      selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE //
         StringField        selector_device_filter;   // AUTHID_SELECTOR_DEVICE_FILTER //
@@ -633,6 +638,7 @@ struct Inifile : public FieldObserver {
 
         StringField        password;                 // AUTHID_PASSWORD //
 
+        StringField        reporting;                // AUTHID_REPORTING //
 
         StringField        authchannel_answer;       // AUTHID_AUTHCHANNEL_ANSWER //
         StringField        authchannel_result;       // AUTHID_AUTHCHANNEL_RESULT //
@@ -682,6 +688,7 @@ public:
         this->to_send_set.insert(AUTHID_TARGET);
         this->to_send_set.insert(AUTHID_AUTH_USER);
         this->to_send_set.insert(AUTHID_PASSWORD);
+        this->to_send_set.insert(AUTHID_REPORTING);
         this->to_send_set.insert(AUTHID_TARGET_USER);
         this->to_send_set.insert(AUTHID_TARGET_DEVICE);
         this->to_send_set.insert(AUTHID_TARGET_PROTOCOL);
@@ -939,8 +946,9 @@ public:
         this->context.target_protocol.ask();
 
         this->context.password.set_empty();
-
         this->context.password.ask();
+
+        this->context.reporting.set_empty();
 
         this->context.authchannel_answer.set_empty();
         this->context.authchannel_result.set_empty();
@@ -999,6 +1007,8 @@ public:
         this->context.target_port.attach_ini(this,AUTHID_TARGET_PORT);
 
         this->context.password.attach_ini(this,AUTHID_PASSWORD);
+
+        this->context.reporting.attach_ini(this,AUTHID_REPORTING);
 
         this->context.accept_message.attach_ini(this,AUTHID_ACCEPT_MESSAGE);
         this->context.display_message.attach_ini(this,AUTHID_DISPLAY_MESSAGE);
@@ -1646,10 +1656,9 @@ public:
             }
         }
 
-        if (*target_user == 0)
-            {
-                this->context_ask(AUTHID_TARGET_USER);
-            }
+        if (*target_user == 0) {
+            this->context_ask(AUTHID_TARGET_USER);
+        }
         else {
             this->context_set_value(AUTHID_TARGET_USER, target_user);
         }
