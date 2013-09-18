@@ -428,7 +428,8 @@ public:
                                                 this->front,
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
-                                                now
+                                                now,
+                                                true
                                                 );
                     this->front.init_pointers();
                 }

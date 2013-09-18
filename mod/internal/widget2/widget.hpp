@@ -45,8 +45,6 @@ enum NotifyEventType {
     NOTIFY_SUBMIT = WIDGET_SUBMIT,
     NOTIFY_CANCEL = WIDGET_CANCEL,
     NOTIFY_SELECTION_CHANGED,
-    NOTIFY_SHOW_TOOLTIP,
-    NOTIFY_HIDE_TOOLTIP,
 };
 
 
@@ -58,8 +56,6 @@ public:
     enum OptionTab {
         IGNORE_TAB           = 0x00,
         NORMAL_TAB           = 0x02,
-        DELEGATE_CONTROL_TAB = 0x04,
-        NO_DELEGATE_PARENT   = 0x10
     };
 
     enum OptionFocus {
@@ -216,7 +212,6 @@ public:
         }
     }
 
-
     ///Return x position in it's screen
     int16_t dx() const
     {
@@ -273,98 +268,6 @@ public:
     int16_t py() const
     {
         return this->dy() - this->parent.dy();
-    }
-
-};
-
-class WidgetParent : public Widget2 {
-public:
-    Widget2 * current_focus;
-
-    WidgetParent(DrawApi & drawable, const Rect& rect, Widget2 & parent,
-                 NotifyApi * notifier, int group_id = 0)
-        : Widget2(drawable, rect, parent, notifier, group_id)
-        , current_focus(NULL)
-    {
-
-    }
-    void set_widget_focus(Widget2 * new_focused)
-    {
-        if (this->current_focus) {
-            this->current_focus->blur();
-        }
-        this->current_focus = new_focused;
-        this->current_focus->focus();
-    }
-
-    virtual void focus()
-    {
-        if (!this->has_focus){
-            this->has_focus = true;
-            this->send_notify(NOTIFY_FOCUS_BEGIN);
-            if (this->current_focus) {
-                this->current_focus->focus();
-            }
-            this->refresh(this->rect);
-        }
-    }
-
-    virtual void blur()
-    {
-        if (this->has_focus){
-            this->has_focus = false;
-            this->send_notify(NOTIFY_FOCUS_END);
-            if (this->current_focus) {
-                this->current_focus->blur();
-            }
-            this->refresh(this->rect);
-        }
-    }
-
-    virtual void rdp_input_scancode(long param1, long param2, long param3,
-                                    long param4, Keymap2 * keymap)
-    {
-        if (keymap->nb_kevent_available() > 0) {
-            switch (keymap->top_kevent()) {
-            case Keymap2::KEVENT_TAB:
-                //std::cout << ("tab") << '\n';
-                keymap->get_kevent();
-                this->next_focus();
-                break;
-            case Keymap2::KEVENT_BACKTAB:
-                //std::cout << ("backtab") << '\n';
-                keymap->get_kevent();
-                this->previous_focus();
-                break;
-            default:
-                if (this->current_focus)
-                    this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
-                break;
-            }
-        }
-    }
-
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        Widget2 * w = this->widget_at_pos(x, y);
-
-        // Mouse clic release
-        // w could be null if mouse is located at an empty space
-        if (device_flags == MOUSE_FLAG_BUTTON1) {
-            if (this->current_focus
-                && (w != this->current_focus)) {
-                this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
-            }
-        }
-        if (w){
-            // get focus when mouse clic
-            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
-                    this->set_widget_focus(w);
-                }
-            }
-            w->rdp_input_mouse(device_flags, x, y, keymap);
-        }
     }
 
 };
