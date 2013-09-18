@@ -485,12 +485,12 @@ struct Inifile : public FieldObserver {
         // BEGIN globals
         bool bitmap_cache;                // default true
         bool bitmap_compression;          // default true
-        int port;                         // default 3389
+        int  port;                        // default 3389
         bool nomouse;
         bool notimestamp;
-        int encryptionLevel;              // 0=low, 1=medium, 2=high
+        int  encryptionLevel;             // 0=low, 1=medium, 2=high
         char authip[255];                 //
-        int authport;                     //
+        int  authport;                    //
         bool autovalidate;                // dialog autovalidation for test
 
         // keepalive and no traffic auto deconnexion
@@ -500,12 +500,12 @@ struct Inifile : public FieldObserver {
 
         bool internal_domain;
 
-        char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
-        char auth_channel[512];
+        char      dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
+        char      auth_channel[512];
         BoolField enable_file_encryption; // AUTHID_OPT_FILE_ENCRYPTION //
-        char listen_address[256];
-        bool enable_ip_transparent;
-        char certificate_password[256];
+        char      listen_address[256];
+        bool      enable_ip_transparent;
+        char      certificate_password[256];
 
         char png_path[1024];
         char wrm_path[1024];
@@ -515,10 +515,10 @@ struct Inifile : public FieldObserver {
         StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY //
 
         StringField codec_id;                 // AUTHID_OPT_CODEC_ID //
-        BoolField movie;                      // AUTHID_OPT_MOVIE //
+        BoolField   movie;                      // AUTHID_OPT_MOVIE //
         StringField movie_path;               // AUTHID_OPT_MOVIE_PATH //
         StringField video_quality;            // AUTHID_VIDEO_QUALITY //
-        bool enable_bitmap_update;
+        bool        enable_bitmap_update;
         // END globals
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
@@ -555,10 +555,10 @@ struct Inifile : public FieldObserver {
     struct {
         unsigned capture_flags;   // 1 PNG capture, 2 WRM
         // video opt from capture_flags
-        bool capture_png;
-        bool capture_wrm;
-        bool capture_flv;
-        bool capture_ocr;
+        bool     capture_png;
+        bool     capture_wrm;
+        bool     capture_flv;
+        bool     capture_ocr;
 
         unsigned ocr_interval;
         unsigned png_interval;    // time between 2 png captures (in 1/10 seconds)
@@ -566,7 +566,7 @@ struct Inifile : public FieldObserver {
         unsigned frame_interval;  // time between 2 frame captures (in 1/100 seconds)
         unsigned break_interval;  // time between 2 wrm movies (in seconds)
         unsigned png_limit;       // number of png captures to keep
-        char replay_path[1024];
+        char     replay_path[1024];
 
         int l_bitrate;            // bitrate for low quality
         int l_framerate;          // framerate for low quality
@@ -639,8 +639,8 @@ struct Inifile : public FieldObserver {
 
     // section "context"
     struct {
-        unsigned           selector_focus;           //  --
-        char               movie[1024];              //  --
+        unsigned           selector_focus;           // --
+        char               movie[1024];              // --
 
         UnsignedField      opt_bitrate;              // AUTHID_OPT_BITRATE //
         UnsignedField      opt_framerate;            // AUTHID_OPT_FRAMERATE //
@@ -789,8 +789,6 @@ public:
 
         this->globals.alternate_shell.set_empty();
         this->globals.shell_working_directory.set_empty();
-        // this->globals.alternate_shell[0]         = 0;
-        // this->globals.shell_working_directory[0] = 0;
 
 
         this->globals.codec_id.attach_ini(this,AUTHID_OPT_CODEC_ID);
@@ -944,23 +942,12 @@ public:
         this->context.opt_bitrate.attach_ini(this,AUTHID_OPT_BITRATE);
         this->context.opt_framerate.attach_ini(this,AUTHID_OPT_FRAMERATE);
         this->context.opt_qscale.attach_ini(this,AUTHID_OPT_QSCALE);
-        // this->context.opt_bitrate                 = 40000;
-        // this->context.opt_framerate               = 5;
-        // this->context.opt_qscale                  = 15;
-
-
 
         this->context.opt_bpp.set(24);
         this->context.opt_height.set(600);
         this->context.opt_width.set(800);
-        // this->context.opt_bpp                     = 24;
-        // this->context.opt_height                  = 600;
-        // this->context.opt_width                   = 800;
 
         this->context.auth_error_message.empty();
-        // this->context.auth_error_message.attach_ini(this,AUTHID_AUTH_ERROR_MESSAGE);
-        // this->context.auth_error_message.empty();
-
 
         this->context.selector.set(false);
         this->context.selector_current_page.set(1);
@@ -987,34 +974,13 @@ public:
         this->context.target_protocol.set_from_cstr("RDP");
         this->context.target_protocol.ask();
 
-
-        // this->globals.state_host.asked                    = false;
-        // this->globals.state_host.modified                    = true;
-
-        // this->globals.state_target.asked                  = false;
-        // this->globals.state_target.modified                  = true;
-
-
-        // this->globals.state_auth_user.asked               = true;
-        // this->globals.state_auth_user.modified               = true;
-
         this->context.password.set_empty();
 
         this->context.password.ask();
-        // this->context.state_password.asked                = true;
-        // this->context.state_password.modified                = true;
-
 
         this->context.authchannel_answer.set_empty();
         this->context.authchannel_result.set_empty();
         this->context.authchannel_target.set_empty();
-
-
-        // this->context.state_accept_message.asked          = false;
-        // this->context.state_accept_message.modified          = true;
-
-        // this->context.state_display_message.asked         = false;
-        // this->context.state_display_message.modified         = true;
 
 
         this->context.message.set_empty();
@@ -1024,7 +990,6 @@ public:
         this->context.display_message.set_empty();
 
         this->context.rejected.set_empty();
-        // this->context.rejected.set_from_cstr("Connection refused by authentifier.");
         this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
         this->context.authenticated.set(false);
@@ -1032,16 +997,7 @@ public:
 
         this->context.keepalive.set(false);
 
-        // this->context.state_proxy_type.asked              = false;
-        // this->context.state_proxy_type.modified              = true;
-
-
-
         this->context.proxy_type.set_from_cstr("RDP");
-
-
-        // this->context.state_trace_seal.asked              = false;
-        // this->context.state_trace_seal.modified              = true;
 
         this->context.trace_seal.set_empty();
 
@@ -1053,20 +1009,12 @@ public:
         this->context.end_date_cnx.attach_ini(this, AUTHID_END_DATE_CNX);
         this->context.end_time.attach_ini(this, AUTHID_END_TIME);
 
-
-
         this->context.mode_console.set_from_cstr("allow");
         this->context.timezone.set(-3600);
         this->context.mode_console.attach_ini(this, AUTHID_MODE_CONSOLE);
         this->context.timezone.attach_ini(this, AUTHID_TIMEZONE);
 
-
-
         this->context.real_target_device.set_empty();
-
-        // this->context.state_real_target_device.asked              = false;
-        // this->context.state_real_target_device.modified              = true;
-
 
         this->context.authentication_challenge.set_empty();
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
@@ -1081,7 +1029,6 @@ public:
         this->context.selector_group_filter.attach_ini(this,AUTHID_SELECTOR_GROUP_FILTER);
         this->context.selector_proto_filter.attach_ini(this,AUTHID_SELECTOR_PROTO_FILTER);
         this->context.selector_lines_per_page.attach_ini(this,AUTHID_SELECTOR_LINES_PER_PAGE);
-        //this->context.selector_lines_per_page.use();
 
         this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);
         this->context.target_protocol.attach_ini(this,AUTHID_TARGET_PROTOCOL);
@@ -1101,112 +1048,6 @@ public:
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
     };
-
-/*
-    void cparse(istream & ifs){
-        const size_t maxlen = 256;
-        char line[maxlen];
-        char context[128] = {0};
-        bool truncated = false;
-        while (ifs.good()){
-            ifs.getline(line, maxlen);
-            if (ifs.fail() && ifs.gcount() == (maxlen-1)){
-                if (!truncated){
-                    LOG(LOG_INFO, "Line too long in configuration file");
-                    hexdump(line, maxlen-1);
-                }
-                ifs.clear();
-                truncated = true;
-                continue;
-            }
-            if (truncated){
-                truncated = false;
-                continue;
-            }
-            this->parseline(line, context);
-        };
-    }
-
-    void parseline(const char * line, char * context)
-    {
-        char key[128];
-        char value[128];
-
-        const char * startkey = line;
-        for (; *startkey ; startkey++) {
-            if (!isspace(*startkey)){
-                if (*startkey == '['){
-                    const char * startcontext = startkey + 1;
-                    const char * endcontext = strchr(startcontext, ']');
-                    if (endcontext){
-                        memcpy(context, startcontext, endcontext - startcontext);
-                        context[endcontext - startcontext] = 0;
-                    }
-                    return;
-                }
-                break;
-            }
-        }
-        const char * endkey = strchr(startkey, '=');
-        if (endkey && endkey != startkey){
-            const char * sep = endkey;
-            for (--endkey; endkey >= startkey ; endkey--) {
-                if (!isspace(*endkey)){
-                    TODO("RZ: Possible buffer overflow if length of key is larger than 128 bytes")
-                        memcpy(key, startkey, endkey - startkey + 1);
-                    key[endkey - startkey + 1] = 0;
-
-                    const char * startvalue = sep + 1;
-                    for ( ; *startvalue ; startvalue++) {
-                        if (!isspace(*startvalue)){
-                            break;
-                        }
-                    }
-                    const char * endvalue;
-*/
-                    /*
-                      for (endvalue = startvalue; *endvalue ; endvalue++) {
-                      TODO("RZ: Support space in value")
-                      if (isspace(*endvalue) || *endvalue == '#'){
-                      break;
-                      }
-                      }
-                      TODO("RZ: Possible buffer overflow if length of value is larger than 128 bytes")
-                      memcpy(value, startvalue, endvalue - startvalue + 1);
-                      value[endvalue - startvalue + 1] = 0;
-                    */
-/*
-                    char *curvalue = value;
-                    for (endvalue = startvalue; *endvalue ; endvalue++) {
-                        if (isspace(*endvalue) || *endvalue == '#'){
-                            break;
-                        }
-                        else if ((*endvalue == '\\') && *(endvalue + 1)) {
-                            if (endvalue > startvalue) {
-                                memcpy(curvalue, startvalue, endvalue - startvalue);
-                                curvalue += (endvalue - startvalue);
-                            }
-
-                            endvalue++;
-
-                            *curvalue++ = *endvalue;
-
-                            startvalue = endvalue + 1;
-                        }
-                    }
-                    if (endvalue > startvalue) {
-                        memcpy(curvalue, startvalue, endvalue - startvalue);
-                        curvalue += (endvalue - startvalue);
-                    }
-                    *curvalue = 0;
-
-                    this->setglobal_from_file(key, value, context);
-                    break;
-                }
-            }
-        }
-    }
-*/
 
     virtual void set_value(const char * context, const char * key, const char * value)
     {
