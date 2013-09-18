@@ -41,6 +41,129 @@ public:
     virtual void draw(const Rect& clip) = 0;
     virtual void draw_inner_free(const Rect& clip, int bg_color, Region & region) = 0;
 };
+class CompositeTable : public CompositeInterface {
+    enum {
+        AUTOSIZE = 256
+    };
+
+    Widget2 * child_list[AUTOSIZE];
+    size_t size;
+
+public:
+    CompositeTable()
+        : size(0)
+    {
+    }
+    virtual void add_widget(Widget2 * w) {
+        if (this->size >= AUTOSIZE)
+            return;
+        this->child_list[size] = w;
+        this->size++;
+    }
+    virtual void remove_widget(Widget2 * w) {
+        bool found = false;
+        for (size_t i = 0; i < this->size; ++i) {
+            if (!found) {
+                if (w == this->child_list[i]) {
+                    found = true;
+                    this->child_list[i] = NULL;
+                }
+            }
+            else {
+                this->child_list[i-1] = this->child_list[i];
+            }
+        }
+        if (found) {
+            this->child_list[this->size] = NULL;
+            this->size--;
+        }
+    }
+    virtual void clear() {
+        this->size = 0;
+    };
+
+    virtual void set_xy(int16_t xx, int16_t yy) {
+        for (size_t i = 0, max = this->size; i < max; ++i) {
+            Widget2 * w = this->child_list[i];
+            w->set_xy(xx + w->dx(), yy + w->dy());
+        }
+    }
+
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
+        Widget2 * ret = 0;
+        for (size_t i = 0; i < this->size && ret == 0; ++i){
+            if (this->child_list[i]->rect.contains_pt(x, y)){
+                ret = this->child_list[i];
+            }
+        }
+        return ret;
+    }
+
+    virtual void draw(const Rect& clip)
+    {
+        for (size_t i = 0; i < this->size; ++i) {
+            Widget2 *w = this->child_list[i];
+            w->refresh(clip.intersect(w->rect));
+        }
+    }
+
+    void draw_inner_free(const Rect& clip, int bg_color, Region & region)
+    {
+        for (size_t i = 0; i < this->size; ++i) {
+            Rect rect = clip.intersect(this->child_list[i]->rect);
+
+            if (!rect.isempty()) {
+                region.subtract_rect(rect);
+            }
+        }
+    }
+    size_t find(Widget2 * w) {
+        size_t pos = 0;
+        for (pos = 0; pos < this->size; ++pos) {
+            if (this->child_list[pos] == w) {
+                break;
+            }
+        }
+        return (pos == this->size)?0:pos;
+    }
+    size_t next(size_t n) {
+        return (n >= this->size - 1)?0:(n+1);
+    }
+    size_t prev(size_t n) {
+        return (n == 0)?(this->size - 1):(n-1);
+    }
+
+    virtual bool next_focus(WidgetParent * thiswidget) {
+        Widget2 * current = thiswidget->current_focus;
+        size_t current_pos = this->find(current);
+        size_t next = this->next(current_pos);
+        while (!(this->child_list[next]->tab_flag & Widget2::NORMAL_TAB) &&
+               (next != current_pos)) {
+            next = this->next(next);
+        }
+        if (this->child_list[next]->tab_flag & Widget2::NORMAL_TAB) {
+            thiswidget->set_widget_focus(this->child_list[next]);
+            return true;
+        }
+        return false;
+    }
+    virtual bool previous_focus(WidgetParent * thiswidget) {
+        Widget2 * current = thiswidget->current_focus;
+        size_t current_pos = this->find(current);
+        size_t prev = this->prev(current_pos);
+        while (!(this->child_list[prev]->tab_flag & Widget2::NORMAL_TAB) &&
+               (prev != current_pos)) {
+            prev = this->prev(prev);
+        }
+        if (this->child_list[prev]->tab_flag & Widget2::NORMAL_TAB) {
+            thiswidget->set_widget_focus(this->child_list[prev]);
+            return true;
+        }
+        return false;
+    }
+
+
+};
 
 // CompositeVector is an Implementation of CompositeInterface
 class CompositeVector : public CompositeInterface
@@ -254,7 +377,7 @@ public:
     : WidgetParent(drawable, rect, parent, notifier, group_id)
     {
         this->tab_flag = DELEGATE_CONTROL_TAB;
-        this->impl = new CompositeVector;
+        this->impl = new CompositeTable;
     }
 
     ~WidgetComposite() {

@@ -37,7 +37,7 @@ public:
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , tooltip(NULL)
     {
-        this->impl = new CompositeVector;
+        this->impl = new CompositeTable;
         this->tab_flag = IGNORE_TAB;
     }
 

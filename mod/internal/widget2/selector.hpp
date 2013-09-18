@@ -697,7 +697,7 @@ public:
                   raw_connect().img_blur, raw_connect().img_focus, -18)
     {
         this->tab_flag = DELEGATE_CONTROL_TAB;
-        this->impl = new CompositeVector;
+        this->impl = new CompositeTable;
 
         this->add_widget(&this->device_label);
         this->add_widget(&this->device_target_label);

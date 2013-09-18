@@ -60,7 +60,8 @@ public:
     , inactive_border_right_bottom_color_inner(0x888888)
     {
         this->tab_flag = DELEGATE_CONTROL_TAB;
-        this->impl = new CompositeVector;
+        // this->impl = new CompositeVector;
+        this->impl = new CompositeTable;
 
         this->add_widget(&this->titlebar);
         this->add_widget(&this->button_close);
