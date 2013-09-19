@@ -63,6 +63,8 @@ public:
         this->add_widget(&this->titlebar);
         this->add_widget(&this->button_close);
 
+        this->button_close.focus_flag = IGNORE_FOCUS;
+
         this->button_close.label.x_text = 2;
         this->button_close.set_button_cx(this->button_close.label.cx()*2);
         this->button_close.set_button_cy(this->button_close.cy() - 2);

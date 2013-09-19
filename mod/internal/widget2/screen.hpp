@@ -48,7 +48,7 @@ public:
         }
     }
 
-    virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
         if (text == NULL) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);

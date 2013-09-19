@@ -37,7 +37,6 @@ class WabCloseMod : public InternalMod, public NotifyApi
     Timeout timeout;
 
 private:
-    long prev_time;
     bool showtimer;
     struct temporary_text {
         char text[255];
@@ -79,7 +78,6 @@ public:
                    )
     , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, this->screen, NULL)
     , timeout(Timeout(now, ini.globals.close_timeout))
-    , prev_time(0)
     , showtimer(showtimer)
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
@@ -113,9 +111,6 @@ public:
 
     virtual void draw_event(time_t now)
     {
-        char buff[32];
-        long tl = 0;
-        bool seconds = true;
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
@@ -123,20 +118,7 @@ public:
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
             if (this->showtimer) {
-                tl = this->timeout.timeleft_sec(now);
-                if (tl > 60) {
-                    seconds = false;
-                    tl = tl / 60;
-                }
-                if (this->prev_time != tl) {
-                    snprintf(buff, sizeof(buff), "%2ld %s%s  ",
-                             tl,
-                             seconds?"second":"minute",
-                             (tl <= 1)?"":"s");
-                    this->window_close.timeleft_value.set_text(buff);
-                    this->screen.refresh(this->window_close.timeleft_value.rect);
-                    this->prev_time = tl;
-                }
+                this->window_close.refresh_timeleft(this->timeout.timeleft_sec(now));
             }
             this->event.set(200000);
             break;
