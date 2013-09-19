@@ -46,7 +46,6 @@ class KeepAlive {
     bool connected;
 
 public:
-
     KeepAlive(int _grace_delay, uint32_t verbose)
         : grace_delay(_grace_delay)
         , timeout(0)
@@ -59,6 +58,7 @@ public:
             LOG(LOG_INFO, "KEEP ALIVE CONSTRUCTOR");
         }
     }
+
     ~KeepAlive() {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "KEEP ALIVE DESTRUCTOR");
@@ -73,13 +73,12 @@ public:
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::start_keep_alive");
         }
-        this->timeout    = now + 2*this->grace_delay;
+        this->timeout    = now + 2 * this->grace_delay;
         this->renew_time = now + this->grace_delay;
     }
 
     bool check(time_t now, Inifile * ini) {
         if (this->connected) {
-
             // LOG(LOG_INFO, "now=%u timeout=%u  renew_time=%u wait_answer=%s grace_delay=%u", now, this->timeout, this->renew_time, this->wait_answer?"Y":"N", this->grace_delay);
             // Keep alive timeout
             if (now > this->timeout) {
@@ -92,7 +91,7 @@ public:
             //     ini->context_is_asked(AUTHID_KEEPALIVE)?"Y":"N",
             //     ini->context_get_bool(AUTHID_KEEPALIVE)?"Y":"N");
 
-            //Keepalive received positive response
+            // Keepalive received positive response
             if (this->wait_answer
                 && !ini->context_is_asked(AUTHID_KEEPALIVE)
                 && ini->context_get_bool(AUTHID_KEEPALIVE)) {
@@ -129,19 +128,19 @@ class Inactivity {
     uint64_t last_total_received;
 
     uint32_t verbose;
-    // long prev_remain;
+
 public:
     Inactivity(uint32_t max_tick, time_t start, uint32_t verbose)
         : inactivity_timeout(max_tick?30*max_tick:10)
         , last_activity_time(start)
         , last_total_received(0)
         , verbose(verbose)
-        // , prev_remain(0)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "INACTIVITY CONSTRUCTOR");
         }
     }
+
     ~Inactivity() {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "INACTIVITY DESTRUCTOR");
@@ -155,25 +154,10 @@ public:
                 // mm.invoke_close_box("Connection closed on inactivity", signal, now);
                 return true;
             }
-            // if (this->verbose & 0x10) {
-            //     long remain = this->last_activity_time + this->inactivity_timeout - now;
-            //     if ((remain / 10) != this->prev_remain
-            //         && (remain != this->inactivity_timeout)) {
-            //         this->prev_remain = remain / 10;
-            //         LOG(LOG_INFO, "Session User inactivity : %d secs remaining before closing", remain);
-            //     }
-            // }
         }
         else {
             this->last_activity_time = now;
             this->last_total_received = trans.total_received;
-            // trans.tick();
-            // if (this->verbose & 0x10) {
-            //     if (this->prev_remain != 0) {
-            //         LOG(LOG_INFO, "Session User inactivity : Timer reset");
-            //         this->prev_remain = 0;
-            //     }
-            // }
         }
         return false;
     }
@@ -195,6 +179,7 @@ public:
 private:
     KeepAlive keepalive;
     Inactivity inactivity;
+
 public:
     SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
@@ -219,15 +204,16 @@ public:
     }
 
 public:
-
     bool check(MMApi & mm, time_t now, Transport & trans, BackEvent_t & signal) {
-        // LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u", (unsigned)now, (unsigned)signal);
+//        LOG(LOG_INFO, "================> ACL check: now=%u, signal=%u",
+//            (unsigned)now, (unsigned)signal);
 
         if (signal == BACK_EVENT_STOP) {
             // here, mm.last_module should be false only when we are in login box
             mm.mod->event.reset();
             return false;
         }
+
         if (mm.last_module) {
             // at a close box (mm.last_module is true),
             // we are only waiting for a stop signal
@@ -256,6 +242,7 @@ public:
             mm.invoke_close_box("Missed keepalive from ACL", signal, now);
             return true;
         }
+
         // Inactivity management
         if (this->inactivity.check(now, trans)) {
             mm.invoke_close_box("Connection closed on inactivity", signal, now);
@@ -271,13 +258,11 @@ public:
                 this->ask_acl();
             }
             else if (signal == BACK_EVENT_REFRESH || signal == BACK_EVENT_NEXT) {
-                this->remote_answer       = false;
+                this->remote_answer = false;
                 this->ask_acl();
             }
-
         }
         else if (this->remote_answer) {
-
             if (signal == BACK_EVENT_REFRESH) {
                 LOG(LOG_INFO, "===========> MODULE_REFRESH");
                 signal = BACK_EVENT_NONE;
@@ -289,10 +274,16 @@ public:
                 mm.mod->event.set();
             }
             else if (signal == BACK_EVENT_NEXT) {
-
                 LOG(LOG_INFO, "===========> MODULE_NEXT");
-                signal = BACK_EVENT_NONE;
                 int next_state = mm.next_module();
+
+                if (next_state == MODULE_TRANSITORY) {
+                    this->remote_answer = false;
+
+                    return true;
+                }
+
+                signal = BACK_EVENT_NONE;
                 if (next_state == MODULE_INTERNAL_CLOSE) {
                     mm.invoke_close_box(NULL, signal, now);
                     return true;
@@ -303,7 +294,22 @@ public:
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        mm.invoke_close_box("Failed to connect to remote TCP host", signal, now);
+                        this->ini->context.target_protocol.set_from_cstr("_TRANSITORY");
+
+                        this->ini->context_ask(AUTHID_KEEPALIVE);
+
+                        char message[1024];
+
+                        snprintf(message, sizeof(message),
+                            "CONNECTION_FAILED:%s:Failed to connect to remote TCP host.",
+                            this->ini->globals.target_device.get_cstr());
+                        this->ini->context.reporting.set_from_cstr(message);
+
+                        this->remote_answer = false;
+                        this->ask_acl();
+
+                        signal = BACK_EVENT_NEXT;
+
                         return true;
                     }
                     else {
@@ -351,7 +357,6 @@ public:
         LOG(LOG_INFO, "Ask next module remote\n");
         this->acl_serial.ask_next_module_remote();
     }
-
 };
 
 
@@ -364,7 +369,6 @@ class PauseRecord {
     uint64_t last_total_sent;
 
 public:
-
     PauseRecord(time_t timeout)
         : stop_record_inactivity(false)
         , stop_record_time((timeout > 30)?timeout:30)
@@ -373,6 +377,7 @@ public:
         , last_total_sent(0)
     {
     }
+
     ~PauseRecord() {}
 
     void check(time_t now, Front & front) {

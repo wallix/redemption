@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestAuthentifierNew
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "authentifier.hpp"

@@ -1389,8 +1389,15 @@ public:
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
             try {
-                BaseField * field = this->field_list.at(authid);
-                field->set_from_acl(value);
+                if (authid == AUTHID_AUTH_ERROR_MESSAGE)
+                {
+                    this->context.auth_error_message.copy_c_str(value);
+                }
+                else
+                {
+                    BaseField * field = this->field_list.at(authid);
+                    field->set_from_acl(value);
+                }
             }
             catch (const std::out_of_range & oor){
                 LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);

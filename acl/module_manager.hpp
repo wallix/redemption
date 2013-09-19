@@ -170,6 +170,12 @@ public:
             }
             res = MODULE_XUP;
         }
+        else if (!this->connected && 0 == strncasecmp(protocol, "_TRANSITORY", 4)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol _TRANSITORY");
+            }
+            res = MODULE_TRANSITORY;
+        }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0) {
             const char * target = this->ini.globals.target_device.get_cstr();
             if (this->verbose & 0x4) {
@@ -218,10 +224,16 @@ public:
                 }
                 res = MODULE_INTERNAL_WIDGET2_RWL;
             }
-            else if (0 == strcmp(target, "close") || 0 == strcmp(target, "widget2_close")) {
+            else if (0 == strncmp(target, "close", 5) || 0 == strncmp(target, "widget2_close", 13)) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
+                const char * separator_position = strchr(target, ':');
+                if (separator_position)
+                {
+                    this->ini.globals.target_device.set_from_acl(separator_position + 1);
+                }
+
                 res = MODULE_INTERNAL_CLOSE;
             }
             else if (0 == strcmp(target, "widget2_dialog")) {
