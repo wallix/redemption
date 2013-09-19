@@ -65,6 +65,10 @@ public:
         return (this->timeout == 0);
     }
 
+    long timeleft_sec(time_t now) {
+        return (this->timeout - now);
+    }
+
     void cancel_timeout() {
         this->timeout = 0;
     }

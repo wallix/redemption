@@ -29,7 +29,6 @@
 
 class WidgetScreen : public WidgetParent
 {
-    CompositeInterface * impl;
 public:
     WidgetTooltip * tooltip;
 
@@ -37,7 +36,7 @@ public:
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , tooltip(NULL)
     {
-        this->impl = new CompositeVector;
+        this->impl = new CompositeTable;
         this->tab_flag = IGNORE_TAB;
     }
 
@@ -47,12 +46,7 @@ public:
             delete this->tooltip;
             this->tooltip = NULL;
         }
-        if (this->impl) {
-            delete this->impl;
-            this->impl = NULL;
-        }
     }
-
 
     virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
         if (text == NULL) {
@@ -119,41 +113,6 @@ public:
         this->draw_inner_free(clip, BLACK);
     }
 
-    virtual void add_widget(Widget2 * w) {
-        this->impl->add_widget(w);
-    }
-    virtual void remove_widget(Widget2 * w) {
-        this->impl->remove_widget(w);
-    }
-    virtual void clear() {
-        this->impl->clear();
-    }
-
-    virtual void set_xy(int16_t x, int16_t y) {
-        int16_t xx = x - this->dx();
-        int16_t yy = y - this->dy();
-        this->impl->set_xy(xx, yy);
-        WidgetParent::set_xy(x, y);
-    }
-
-    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
-        if (!this->rect.contains_pt(x, y))
-            return 0;
-        if (this->current_focus) {
-            if (this->current_focus->rect.contains_pt(x, y)) {
-                return this->current_focus;
-            }
-        }
-        return this->impl->widget_at_pos(x, y);
-    }
-
-    virtual bool next_focus() {
-        return this->impl->next_focus(this);
-    }
-
-    virtual bool previous_focus() {
-        return this->impl->previous_focus(this);
-    }
 
     virtual void draw_inner_free(const Rect& clip, int bg_color) {
         Region region;

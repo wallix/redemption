@@ -43,6 +43,7 @@
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
+
 struct TestDraw : DrawApi
 {
     RDPDrawable gd;
@@ -370,9 +371,9 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     window_wab_close.rdp_input_invalidate(Rect(20 + window_wab_close.dx(),
-                                      5 + window_wab_close.dy(),
-                                      30,
-                                      10));
+                                               5 + window_wab_close.dy(),
+                                               30,
+                                               10));
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close8.png");
 

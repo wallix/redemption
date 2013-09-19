@@ -246,9 +246,6 @@ private:
         std::vector<Line*> labels;
         uint over_index;
 
-
-
-
         struct difftimer {
             uint64_t t;
 
@@ -609,7 +606,6 @@ private:
         }
     };
 
-    CompositeInterface * impl;
 public:
     WidgetLabel device_label;
     WidgetLabel device_target_label;
@@ -658,8 +654,8 @@ public:
                    const char * filter_proto = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10, BLACK, GREY)
-        , device_target_label(drawable, 20, 0, *this, NULL, "Device Group", true, -10, BLACK, GREY)
-        , target_label(drawable, 150, 0, *this, NULL, "Account Device", true, -10, BLACK, GREY)
+        , device_target_label(drawable, 20, 0, *this, NULL, "Target Group", true, -10, BLACK, GREY)
+        , target_label(drawable, 150, 0, *this, NULL, "Target", true, -10, BLACK, GREY)
         , protocol_label(drawable, 500, 0, *this, NULL, "Protocol", true, -10, BLACK, GREY)
         , close_time_label(drawable, 620, 0, *this, NULL, "Close Time", true, -10, BLACK, GREY)
         , selector_lines(drawable, *this, this, 15, 0, 130, 350, 120, 170, -11,
@@ -696,8 +692,7 @@ public:
                   raw_connect().cx, raw_connect().cy, raw_connect().size,
                   raw_connect().img_blur, raw_connect().img_focus, -18)
     {
-        this->tab_flag = DELEGATE_CONTROL_TAB;
-        this->impl = new CompositeVector;
+        this->impl = new CompositeTable;
 
         this->add_widget(&this->device_label);
         this->add_widget(&this->device_target_label);
@@ -789,10 +784,6 @@ public:
     virtual ~WidgetSelector()
     {
         this->clear();
-        if (this->impl) {
-            delete this->impl;
-            this->impl = NULL;
-        }
     }
 
     virtual void draw(const Rect& clip)
@@ -836,41 +827,6 @@ public:
         this->selector_lines.add_line(device_group, target_label, protocol, close_time);
     }
 
-    virtual void add_widget(Widget2 * w) {
-        this->impl->add_widget(w);
-    }
-    virtual void remove_widget(Widget2 * w) {
-        this->impl->remove_widget(w);
-    }
-    virtual void clear() {
-        this->impl->clear();
-    }
-
-    virtual void set_xy(int16_t x, int16_t y) {
-        int16_t xx = x - this->dx();
-        int16_t yy = y - this->dy();
-        this->impl->set_xy(xx, yy);
-        WidgetParent::set_xy(x, y);
-    }
-
-    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
-        if (!this->rect.contains_pt(x, y))
-            return 0;
-        if (this->current_focus) {
-            if (this->current_focus->rect.contains_pt(x, y)) {
-                return this->current_focus;
-            }
-        }
-        return this->impl->widget_at_pos(x, y);
-    }
-
-    virtual bool next_focus() {
-        return this->impl->next_focus(this);
-    }
-
-    virtual bool previous_focus() {
-        return this->impl->previous_focus(this);
-    }
 
     virtual void draw_inner_free(const Rect& clip, int bg_color) {
         Region region;
