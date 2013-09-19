@@ -37,7 +37,6 @@ class WabCloseMod : public InternalMod, public NotifyApi
     Timeout timeout;
 
 private:
-    long prev_time;
     bool showtimer;
     struct temporary_text {
         char text[255];
@@ -79,7 +78,6 @@ public:
                    )
     , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, this->screen, NULL)
     , timeout(Timeout(now, ini.globals.close_timeout))
-    , prev_time(0)
     , showtimer(showtimer)
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
@@ -113,9 +111,6 @@ public:
 
     virtual void draw_event(time_t now)
     {
-        char buff[32];
-        long tl = 0;
-        bool seconds = true;
         switch(this->timeout.check(now)) {
         case Timeout::TIMEOUT_REACHED:
             this->event.signal = BACK_EVENT_STOP;
@@ -123,20 +118,7 @@ public:
             break;
         case Timeout::TIMEOUT_NOT_REACHED:
             if (this->showtimer) {
-                tl = this->timeout.timeleft_sec(now);
-                if (tl > 60) {
-                    seconds = false;
-                    tl = tl / 60;
-                }
-                if (this->prev_time != tl) {
-                    snprintf(buff, sizeof(buff), "%2ld %s%s  ",
-                             tl,
-                             seconds?"second":"minute",
-                             (tl <= 1)?"":"s");
-                    this->window_close.timeleft_value.set_text(buff);
-                    this->screen.refresh(this->window_close.timeleft_value.rect);
-                    this->prev_time = tl;
-                }
+                this->window_close.refresh_timeleft(this->timeout.timeleft_sec(now));
             }
             this->event.set(200000);
             break;
@@ -149,23 +131,6 @@ public:
     virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
                                        int16_t /*param1*/, int16_t /*param2*/)
     {
-    }
-
-    virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
-    {
-        this->screen.rdp_input_mouse(device_flags, x, y, keymap);
-    }
-
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
-        if (keymap->nb_kevent_available() > 0 && keymap->top_kevent() == Keymap2::KEVENT_ESC){
-            keymap->get_kevent();
-            this->event.signal = BACK_EVENT_STOP;
-            this->event.set();
-        }
-        else {
-            this->window_close.rdp_input_scancode(param1, param2, param3, param4, keymap);
-        }
     }
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)

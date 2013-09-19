@@ -63,6 +63,8 @@ public:
         this->add_widget(&this->titlebar);
         this->add_widget(&this->button_close);
 
+        this->button_close.focus_flag = IGNORE_FOCUS;
+
         this->button_close.label.x_text = 2;
         this->button_close.set_button_cx(this->button_close.label.cx()*2);
         this->button_close.set_button_cy(this->button_close.cy() - 2);
@@ -138,6 +140,21 @@ public:
         }
         else {
             WidgetParent::notify(widget, event);
+        }
+    }
+
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+    {
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+            case Keymap2::KEVENT_ESC:
+                keymap->get_kevent();
+                this->send_notify(NOTIFY_CANCEL);
+                break;
+            default:
+                WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+                break;
+            }
         }
     }
 

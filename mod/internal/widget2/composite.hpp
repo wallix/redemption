@@ -44,6 +44,7 @@ public:
 
 
 class WidgetParent : public Widget2 {
+    Widget2 * pressed;
 protected:
     CompositeInterface * impl;
 public:
@@ -52,6 +53,7 @@ public:
     WidgetParent(DrawApi & drawable, const Rect& rect, Widget2 & parent,
                  NotifyApi * notifier, int group_id = 0)
         : Widget2(drawable, rect, parent, notifier, group_id)
+        , pressed(NULL)
         , impl(NULL)
         , current_focus(NULL)
     {
@@ -165,14 +167,15 @@ public:
         // Mouse clic release
         // w could be null if mouse is located at an empty space
         if (device_flags == MOUSE_FLAG_BUTTON1) {
-            if (this->current_focus
-                && (w != this->current_focus)) {
-                this->current_focus->rdp_input_mouse(device_flags, x, y, keymap);
+            if (this->pressed
+                && (w != this->pressed)) {
+                this->pressed->rdp_input_mouse(device_flags, x, y, keymap);
             }
         }
         if (w){
             // get focus when mouse clic
             if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                this->pressed = w;
                 if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
                     this->set_widget_focus(w);
                 }
@@ -282,11 +285,12 @@ public:
         Widget2 * current = current_focus;
         size_t current_pos = this->find(current);
         size_t next = this->next(current_pos);
-        while (!(this->child_list[next]->tab_flag & Widget2::NORMAL_TAB) &&
-               (next != current_pos)) {
+        while (((this->child_list[next]->tab_flag == Widget2::IGNORE_TAB)
+                || (this->child_list[next]->focus_flag == Widget2::IGNORE_FOCUS))
+               && (next != current_pos)) {
             next = this->next(next);
         }
-        if (this->child_list[next]->tab_flag & Widget2::NORMAL_TAB) {
+        if (next != current_pos) {
             return this->child_list[next];
         }
         return NULL;
@@ -295,11 +299,12 @@ public:
         Widget2 * current = current_focus;
         size_t current_pos = this->find(current);
         size_t prev = this->prev(current_pos);
-        while (!(this->child_list[prev]->tab_flag & Widget2::NORMAL_TAB) &&
-               (prev != current_pos)) {
+        while (((this->child_list[prev]->tab_flag == Widget2::IGNORE_TAB)
+                || (this->child_list[prev]->focus_flag == Widget2::IGNORE_FOCUS))
+               && (prev != current_pos)) {
             prev = this->prev(prev);
         }
-        if (this->child_list[prev]->tab_flag & Widget2::NORMAL_TAB) {
+        if (prev != current_pos) {
             return this->child_list[prev];
         }
         return NULL;

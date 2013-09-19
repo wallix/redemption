@@ -48,7 +48,7 @@ public:
         }
     }
 
-    virtual void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
         if (text == NULL) {
             if (this->tooltip) {
                 this->remove_widget(this->tooltip);
@@ -93,7 +93,9 @@ public:
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        this->hide_tooltip();
+        if (this->tooltip) {
+            this->hide_tooltip();
+        }
         if (this->tab_flag != IGNORE_TAB) {
             WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
         }

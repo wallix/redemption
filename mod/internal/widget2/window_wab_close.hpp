@@ -46,6 +46,9 @@ public:
     WidgetLabel timeleft_label;
     WidgetLabel timeleft_value;
 
+private:
+    long prev_time;
+
 public:
     WindowWabClose(DrawApi& drawable, int16_t x, int16_t y, Widget2& parent,
                    NotifyApi* notifier, const char * diagnostic_text, int group_id = 0,
@@ -68,6 +71,7 @@ public:
     , timeleft_label(drawable, this->img.cx() + 20, 0, *this, NULL,
                      "Time left:", true, -12, fgcolor, bgcolor)
     , timeleft_value(drawable, this->img.cx() + 95, 0, *this, NULL, NULL, true, -12, fgcolor, bgcolor)
+    , prev_time(0)
     {
         this->cancel.border_top_left_color = WHITE;
 
@@ -110,15 +114,6 @@ public:
         this->connection_closed_label.rect.y = y;
         y += this->connection_closed_label.cy() + 20;
 
-        if (showtimer) {
-            y -= 10;
-            this->add_widget(&this->timeleft_label);
-            this->add_widget(&this->timeleft_value);
-            this->timeleft_label.rect.y = y;
-            this->timeleft_value.rect.y = y;
-            y += this->timeleft_label.cy() + 10;
-        }
-
         this->diagnostic.rect.y = y;
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;
@@ -130,6 +125,16 @@ public:
             y += std::max(this->diagnostic_lines.cy(), this->diagnostic.cy()) + 20;
             this->diagnostic_lines.rect.x = this->username_label.dx() + px;
         }
+
+        if (showtimer) {
+            y -= 10;
+            this->add_widget(&this->timeleft_label);
+            this->add_widget(&this->timeleft_value);
+            this->timeleft_label.rect.y = y;
+            this->timeleft_value.rect.y = y;
+            y += this->timeleft_label.cy() + 10;
+        }
+
         this->cancel.set_button_y(y);
         y += this->cancel.cy() + 20;
         this->set_window_cy(y - this->dy());
@@ -138,6 +143,31 @@ public:
     virtual ~WindowWabClose()
     {
         this->clear();
+    }
+
+    void refresh_timeleft(long tl) {
+        bool seconds = true;
+        if (tl > 60) {
+            seconds = false;
+            tl = tl / 60;
+        }
+        if (this->prev_time != tl) {
+            char buff[128];
+            snprintf(buff, sizeof(buff), "%2ld %s%s before closing.",
+                     tl,
+                     seconds?"second":"minute",
+                     (tl <= 1)?"":"s");
+
+            Rect old = this->timeleft_value.rect;
+            this->drawable.begin_update();
+            this->timeleft_value.set_text(NULL);
+            this->draw(old);
+            this->timeleft_value.set_text(buff);
+            this->draw(this->timeleft_value.rect);
+            this->drawable.end_update();
+
+            this->prev_time = tl;
+        }
     }
 
     virtual void notify(Widget2 * widget, NotifyApi::notify_event_t event)

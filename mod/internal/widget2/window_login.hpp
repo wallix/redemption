@@ -236,20 +236,6 @@ public:
         Window::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
-        if (keymap->nb_kevent_available() > 0){
-            switch (keymap->top_kevent()){
-            case Keymap2::KEVENT_ESC:
-                keymap->get_kevent();
-                this->send_notify(NOTIFY_CANCEL);
-                break;
-            default:
-                Window::rdp_input_scancode(param1, param2, param3, param4, keymap);
-                break;
-            }
-        }
-    }
 
 private:
     void close_window_help()
