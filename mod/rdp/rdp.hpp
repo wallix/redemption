@@ -174,6 +174,7 @@ struct mod_rdp : public mod_api {
            , int key_flags
            , Inifile::StringField * auth_channel_target
            , Inifile::StringField * auth_channel_result
+//           , Inifile::StringField * reporting
            , const char * auth_channel
            , const char * alternate_shell
            , const char * shell_working_directory

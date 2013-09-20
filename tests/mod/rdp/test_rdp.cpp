@@ -269,7 +269,6 @@
               nomouse(true),
               gd(info.width, info.height)
             {
-
             }
     };
 
@@ -311,27 +310,28 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp( &t
-                                      , "xavier"
-                                      , "SecureLinux"
-                                      , "10.10.9.161"
-                                      , front
-                                      , false   // tls
-                                      , info
-                                      , &gen
-                                      , 7       // key flags
-                                      , NULL
-                                      , NULL
-                                      , ""      // auth channel
-                                      , ""      // alternate_shell
-                                      , ""      // shell_working_directory
-                                      , true    // clipboard
-                                      , false   // fast-path support
-                                      , true    // mem3blt support
-                                      , false   // bitmap update support
-                                      , verbose
-                                      , false   // enable new pointer
-                                      );
+    struct mod_api * mod = new mod_rdp(
+        &t,
+        "xavier",
+        "SecureLinux",
+        "10.10.9.161",
+        front,
+        false,      // tls
+        info,
+        &gen,
+        7,          // key flags
+        NULL,
+        NULL,
+        "",         // auth channel
+        "",         // alternate_shell
+        "",         // shell_working_directory
+        true,       // clipboard
+        false,      // fast-path support
+        true,       // mem3blt support
+        false,      // bitmap update support
+        verbose,
+        false       // enable new pointer
+    );
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -360,7 +360,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
 BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
-
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -396,26 +395,27 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp( &t
-                                      , "administrateur@qa"
-                                      , "S3cur3!1nux"
-                                      , "10.10.9.161"
-                                      , front
-                                      , false   // tls
-                                      , info
-                                      , &gen
-                                      , 2       // key flags
-                                      , NULL
-                                      , NULL
-                                      , ""      // auth channel
-                                      , ""      // alternate_shell
-                                      , ""      // shell_working_directory
-                                      , true    // clipboard
-                                      , false   // fast-path support
-                                      , false   // bitmap update support
-                                      , 0       // verbose
-                                      , false   // enable new pointer
-                                      );
+    struct mod_api * mod = new mod_rdp(
+        &t,
+        "administrateur@qa",
+        "S3cur3!1nux",
+        "10.10.9.161",
+        front,
+        false,   // tls
+        info,
+        &gen,
+        2,       // key flags
+        NULL,
+        NULL,
+        "",      // auth channel
+        "",      // alternate_shell
+        "",      // shell_working_directory
+        true,    // clipboard
+        false,   // fast-path support
+        false,   // bitmap update support
+        0,       // verbose
+        false    // enable new pointer
+    );
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -474,27 +474,28 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp( &t
-                                      , "administrateur"
-                                      , "SecureLinux"
-                                      , "0.0.0.0"
-                                      , front
-                                      , false   // tls
-                                      , info
-                                      , &gen
-                                      , 2       // key flags
-                                      , NULL
-                                      , NULL
-                                      , ""      // auth channel
-                                      , ""      // alternate_shell
-                                      , ""      // shell_working_directory
-                                      , true    // clipbaord
-                                      , false   // fast-path support
-                                      , true    // mem3blt support
-                                      , false   // bitmap update support
-                                      , 0       // verbose
-                                      , false   // enable new pointer
-                                      );
+    struct mod_api * mod = new mod_rdp(
+        &t,
+        "administrateur",
+        "SecureLinux",
+        "0.0.0.0",
+        front,
+        false,   // tls
+        info,
+        &gen,
+        2,       // key flags
+        NULL,
+        NULL,
+        "",      // auth channel
+        "",      // alternate_shell
+        "",      // shell_working_directory
+        true,    // clipbaord
+        false,   // fast-path support
+        true,    // mem3blt support
+        false,   // bitmap update support
+        0,       // verbose
+        false   // enable new pointer
+    );
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -560,27 +561,28 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp( &t
-                                      , "administrateur"
-                                      , "SecureLinux$42"
-                                      , "0.0.0.0"
-                                      , front
-                                      , false   // tls
-                                      , info
-                                      , &gen
-                                      , 2       // key flags
-                                      , NULL
-                                      , NULL
-                                      , ""      // auth channel
-                                      , ""      // alternate_shell
-                                      , ""      // shell_working_directory
-                                      , true    // clipbaord
-                                      , false   // fast-path support
-                                      , true    // mem3blt support
-                                      , false   // bitmap update support
-                                      , 0       // verbose
-                                      , false   // enable new pointer
-                                      );
+    struct mod_api * mod = new mod_rdp(
+        &t,
+        "administrateur",
+        "SecureLinux$42",
+        "0.0.0.0",
+        front,
+        false,   // tls
+        info,
+        &gen,
+        2,       // key flags
+        NULL,
+        NULL,
+        "",      // auth channel
+        "",      // alternate_shell
+        "",      // shell_working_directory
+        true,    // clipbaord
+        false,   // fast-path support
+        true,    // mem3blt support
+        false,   // bitmap update support
+        0,       // verbose
+        false   // enable new pointer
+    );
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

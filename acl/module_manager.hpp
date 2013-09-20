@@ -97,7 +97,6 @@ class MMApi
         return this->connected;
     }
 //    virtual bool is_close_box() { return false; }
-
 };
 
 class MMIni : public MMApi {
@@ -639,31 +638,32 @@ public:
 
                     this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
                     UdevRandom gen;
-                    this->mod = new mod_rdp(t
-                                            , this->ini.globals.target_user.get_cstr()
-                                            , this->ini.context.target_password.get_cstr()
-                                            , "0.0.0.0"  // client ip is silenced
-                                            , this->front
-                                            , true
-                                            , client_info
-                                            , &gen
-                                            , this->front.keymap.key_flags
-                                            , &this->ini.context.authchannel_target
-                                            , &this->ini.context.authchannel_result
-                                            , this->ini.globals.auth_channel
-                                            , this->ini.globals.alternate_shell.get_cstr()
-                                            , this->ini.globals.shell_working_directory.get_cstr()
-                                            , this->ini.client.clipboard.get()
-                                            , true          // support fast-path
-                                            , true          // support mem3blt
-                                            , this->ini.globals.enable_bitmap_update
-                                            , this->ini.debug.mod_rdp
-                                            , true          // support new pointer
-                                            , this->ini.mod_rdp.rdp_compression
-                                            , &this->ini.context.auth_error_message
-                                            , this->ini.mod_rdp.disconnect_on_logon_user_change
-                                            , this->ini.mod_rdp.open_session_timeout
-                                            );
+                    this->mod = new mod_rdp(
+                        t,
+                        this->ini.globals.target_user.get_cstr(),
+                        this->ini.context.target_password.get_cstr(),
+                        "0.0.0.0",  // client ip is silenced
+                        this->front,
+                        true,
+                        client_info,
+                        &gen,
+                        this->front.keymap.key_flags,
+                        &this->ini.context.authchannel_target,
+                        &this->ini.context.authchannel_result,
+                        this->ini.globals.auth_channel,
+                        this->ini.globals.alternate_shell.get_cstr(),
+                        this->ini.globals.shell_working_directory.get_cstr(),
+                        this->ini.client.clipboard.get(),
+                        true,          // support fast-path
+                        true,          // support mem3blt
+                        this->ini.globals.enable_bitmap_update,
+                        this->ini.debug.mod_rdp,
+                        true,          // support new pointer
+                        this->ini.mod_rdp.rdp_compression,
+                        &this->ini.context.auth_error_message,
+                        this->ini.mod_rdp.disconnect_on_logon_user_change,
+                        this->ini.mod_rdp.open_session_timeout
+                    );
                     this->mod->event.obj = client_sck;
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));

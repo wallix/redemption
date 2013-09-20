@@ -178,7 +178,7 @@ int main(int argc, char * argv[]) {
                     password.c_str(),
                     "0.0.0.0",
                     front,
-                    true,               // tls
+                    false,               // tls
                     client_info,
                     &gen,
                     front.keymap.key_flags,

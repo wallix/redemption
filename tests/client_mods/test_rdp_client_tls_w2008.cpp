@@ -232,26 +232,28 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     snprintf(info.hostname,sizeof(info.hostname),"192-168-1-100");
 
-    struct mod_api * mod = new mod_rdp( &t
-                                      , "administrateur@qa"
-                                      , "S3cur3!1nux"
-                                      , "192.168.1.100"
-                                      , front
-                                      , tls
-                                      , info
-                                      , &gen
-                                      , 7
-                                      , NULL
-                                      , NULL
-                                      , ""
-                                      , ""      // alternate_shell
-                                      , ""      // shell_working_directory
-                                      , true    // clipboard
-                                      , false   // fast-path support
-                                      , false   // mem3blt support
-                                      , false   // bitmap update support
-                                      , 511     // verbose
-                                      , false); // enable new pointer
+    struct mod_api * mod = new mod_rdp(
+        &t,
+        "administrateur@qa",
+        "S3cur3!1nux",
+        "192.168.1.100",
+        front,
+        tls,
+        info,
+        &gen,
+        7,
+        NULL,
+        NULL,
+        "",
+        "",      // alternate_shell
+        "",      // shell_working_directory
+        true,    // clipboard
+        false,   // fast-path support
+        false,   // mem3blt support
+        false,   // bitmap update support
+        511,     // verbose
+        false
+    ); // enable new pointer
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
