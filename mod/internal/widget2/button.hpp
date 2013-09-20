@@ -190,9 +190,6 @@ public:
             if (this->rect.contains_pt(x, y)) {
                 this->send_notify(this->event);
             }
-            else if (this->has_focus) {
-                this->draw_focus(this->rect);
-            }
         }
         else
             this->Widget2::rdp_input_mouse(device_flags, x, y, keymap);
