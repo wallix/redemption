@@ -435,7 +435,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "window_login-help.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
