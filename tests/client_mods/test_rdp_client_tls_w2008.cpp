@@ -242,16 +242,15 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         info,
         &gen,
         7,
-        NULL,
-        NULL,
+        NULL,   // auth_api
         "",
-        "",      // alternate_shell
-        "",      // shell_working_directory
-        true,    // clipboard
-        false,   // fast-path support
-        false,   // mem3blt support
-        false,   // bitmap update support
-        511,     // verbose
+        "",     // alternate_shell
+        "",     // shell_working_directory
+        true,   // clipboard
+        false,  // fast-path support
+        false,  // mem3blt support
+        false,  // bitmap update support
+        511,    // verbose
         false
     ); // enable new pointer
 

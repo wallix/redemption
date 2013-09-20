@@ -114,7 +114,6 @@ public:
         }
         return false;
     }
-
 };
 
 class Inactivity {
@@ -163,7 +162,7 @@ public:
     }
 };
 
-class SessionManager {
+class SessionManager : public auth_api {
     Inifile * ini;
 
 public:
@@ -197,7 +196,7 @@ public:
         this->ini->to_send_set.insert(AUTHID_KEEPALIVE);
     }
 
-    ~SessionManager() {
+    virtual ~SessionManager() {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::~SessionManager");
         }
@@ -290,25 +289,18 @@ public:
                 }
                 mm.remove_mod();
                 try {
-                    mm.new_mod(next_state,now);
+                    mm.new_mod(next_state, now, this);
                 }
                 catch (Error & e) {
                     if (e.id == ERR_SOCKET_CONNECT_FAILED) {
-                        this->ini->context.target_protocol.set_from_cstr("_TRANSITORY");
-
-                        this->ini->context_ask(AUTHID_KEEPALIVE);
-
-                        char message[1024];
-
-                        snprintf(message, sizeof(message),
-                            "CONNECTION_FAILED:%s:Failed to connect to remote TCP host.",
-                            this->ini->globals.target_device.get_cstr());
-                        this->ini->context.reporting.set_from_cstr(message);
-
-                        this->remote_answer = false;
-                        this->ask_acl();
+                        this->ini->context.target_protocol.set_from_cstr(
+                            "_TRANSITORY");
 
                         signal = BACK_EVENT_NEXT;
+
+                        this->remote_answer = false;
+                        this->report("CONNECTION_FAILED",
+                            "Failed to connect to remote TCP host.");
 
                         return true;
                     }
@@ -356,6 +348,28 @@ public:
     void ask_acl() {
         LOG(LOG_INFO, "Ask next module remote\n");
         this->acl_serial.ask_next_module_remote();
+    }
+
+    virtual void set_auth_channel_target(const char * target)
+    {
+        this->ini->context.authchannel_target.set_from_cstr(target);
+    }
+
+    virtual void set_auth_channel_result(const char * result)
+    {
+        this->ini->context.authchannel_result.set_from_cstr(result);
+    }
+
+    virtual void report(const char * reason, const char * message)
+    {
+        this->ini->context_ask(AUTHID_KEEPALIVE);
+
+        char report[1024];
+        snprintf(report, sizeof(report), "%s:%s:%s", reason,
+            this->ini->globals.target_device.get_cstr(), message);
+        this->ini->context.reporting.set_from_cstr(report);
+
+        this->ask_acl();
     }
 };
 

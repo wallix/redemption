@@ -29,6 +29,7 @@
 #include "config.hpp"
 #include "netutils.hpp"
 #include "mod_api.hpp"
+#include "auth_api.hpp"
 #include "null/null.hpp"
 #include "rdp/rdp.hpp"
 #include "vnc/vnc.hpp"
@@ -73,8 +74,9 @@ enum {
 
 class MMApi
 {
-    public:
+public:
     mod_api * mod;
+
     bool last_module;
     bool connected;
 
@@ -82,7 +84,7 @@ class MMApi
             , connected(false) {}
     ~MMApi() {}
     virtual void remove_mod() = 0;
-    virtual void new_mod(int target_module, time_t now) = 0;
+    virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
     virtual void record() = 0;
     virtual int next_module() = 0;
     virtual int get_mod_from_protocol() = 0;
@@ -96,7 +98,6 @@ class MMApi
     virtual bool is_connected() {
         return this->connected;
     }
-//    virtual bool is_close_box() { return false; }
 };
 
 class MMIni : public MMApi {
@@ -107,9 +108,9 @@ public:
                           , verbose(ini.debug.auth) {}
     virtual ~MMIni() {}
     virtual void remove_mod() {};
-    virtual void new_mod(int target_module, time_t now) {
+    virtual void new_mod(int target_module, time_t now, auth_api * acl) {
         LOG(LOG_INFO, "new mod %d at time: %d\n", static_cast<int>(target_module), static_cast<int>(now));
-        switch(target_module) {
+        switch (target_module) {
         case MODULE_VNC:
         case MODULE_XUP:
         case MODULE_RDP:
@@ -128,7 +129,7 @@ public:
             this->ini.context.auth_error_message.copy_c_str(auth_error_message);
         }
         this->remove_mod();
-        this->new_mod(MODULE_INTERNAL_CLOSE, now);
+        this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
         signal = BACK_EVENT_NONE;
     }
 
@@ -380,7 +381,7 @@ public:
         delete this->no_mod;
     }
 
-    virtual void new_mod(int target_module, time_t now)
+    virtual void new_mod(int target_module, time_t now, auth_api * acl)
     {
         LOG(LOG_INFO, "target_module=%u", target_module);
         if (this->last_module) this->front.stop_capture();
@@ -648,8 +649,7 @@ public:
                         client_info,
                         &gen,
                         this->front.keymap.key_flags,
-                        &this->ini.context.authchannel_target,
-                        &this->ini.context.authchannel_result,
+                        acl,
                         this->ini.globals.auth_channel,
                         this->ini.globals.alternate_shell.get_cstr(),
                         this->ini.globals.shell_working_directory.get_cstr(),

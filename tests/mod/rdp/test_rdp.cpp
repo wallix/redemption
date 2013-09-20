@@ -320,8 +320,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
         info,
         &gen,
         7,          // key flags
-        NULL,
-        NULL,
+        NULL,       // auth_api
         "",         // auth channel
         "",         // alternate_shell
         "",         // shell_working_directory
@@ -401,20 +400,19 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         "S3cur3!1nux",
         "10.10.9.161",
         front,
-        false,   // tls
+        false,      // tls
         info,
         &gen,
-        2,       // key flags
-        NULL,
-        NULL,
-        "",      // auth channel
-        "",      // alternate_shell
-        "",      // shell_working_directory
-        true,    // clipboard
-        false,   // fast-path support
-        false,   // bitmap update support
-        0,       // verbose
-        false    // enable new pointer
+        2,          // key flags
+        NULL,       // auth_api
+        "",         // auth channel
+        "",         // alternate_shell
+        "",         // shell_working_directory
+        true,       // clipboard
+        false,      // fast-path support
+        false,      // bitmap update support
+        0,          // verbose
+        false       // enable new pointer
     );
 
     if (verbose > 2){
@@ -480,21 +478,20 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         "SecureLinux",
         "0.0.0.0",
         front,
-        false,   // tls
+        false,      // tls
         info,
         &gen,
-        2,       // key flags
-        NULL,
-        NULL,
-        "",      // auth channel
-        "",      // alternate_shell
-        "",      // shell_working_directory
-        true,    // clipbaord
-        false,   // fast-path support
-        true,    // mem3blt support
-        false,   // bitmap update support
-        0,       // verbose
-        false   // enable new pointer
+        2,          // key flags
+        NULL,       // auth_api
+        "",         // auth channel
+        "",         // alternate_shell
+        "",         // shell_working_directory
+        true,       // clipbaord
+        false,      // fast-path support
+        true,       // mem3blt support
+        false,      // bitmap update support
+        0,          // verbose
+        false       // enable new pointer
     );
 
     if (verbose > 2){
@@ -567,21 +564,26 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         "SecureLinux$42",
         "0.0.0.0",
         front,
-        false,   // tls
+        false,      // tls
         info,
         &gen,
-        2,       // key flags
-        NULL,
-        NULL,
-        "",      // auth channel
-        "",      // alternate_shell
-        "",      // shell_working_directory
-        true,    // clipbaord
-        false,   // fast-path support
-        true,    // mem3blt support
-        false,   // bitmap update support
-        0,       // verbose
-        false   // enable new pointer
+        2,          // key flags
+        NULL,       // auth_api
+        "",         // auth channel
+        "",         // alternate_shell
+        "",         // shell_working_directory
+        true,       // clipbaord
+        false,      // fast-path support
+        true,       // mem3blt support
+        false,      // bitmap update support
+        0,          // verbose
+        false,      // enable new pointer
+        false,      // enable rdp bulk compression
+        NULL,       // error message
+        false,      // disconnect on logon user change
+        0,          // open session timeout
+        false,      // enable transparent mode
+        ""
     );
 
     if (verbose > 2){

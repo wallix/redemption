@@ -41,6 +41,7 @@
 #include "stream.hpp"
 #include "ssl_calls.hpp"
 #include "mod_api.hpp"
+#include "auth_api.hpp"
 
 #include "RDP/x224.hpp"
 #include "RDP/nego.hpp"
@@ -133,8 +134,7 @@ struct mod_rdp : public mod_api {
     int  auth_channel_chanid;
     int  auth_channel_state;    // 0 means unused, 1 means session running
 
-    Inifile::StringField * auth_channel_target;
-    Inifile::StringField * auth_channel_result;
+    auth_api * acl;
 
     RdpNego nego;
 
@@ -163,6 +163,9 @@ struct mod_rdp : public mod_api {
 
     redemption::string output_filename;
 
+    redemption::string end_session_reason;
+    redemption::string end_session_message;
+
     mod_rdp( Transport * trans
            , const char * target_user
            , const char * target_password
@@ -172,9 +175,7 @@ struct mod_rdp : public mod_api {
            , const ClientInfo & info
            , Random * gen
            , int key_flags
-           , Inifile::StringField * auth_channel_target
-           , Inifile::StringField * auth_channel_result
-//           , Inifile::StringField * reporting
+           , auth_api * acl
            , const char * auth_channel
            , const char * alternate_shell
            , const char * shell_working_directory
@@ -185,7 +186,7 @@ struct mod_rdp : public mod_api {
            , uint32_t verbose = 0
            , bool enable_new_pointer = false
            , bool enable_rdp_bulk_compression = false
-           , redemption::string * error_message = 0
+           , redemption::string * error_message = NULL
            , bool disconnect_on_logon_user_change = false
            , uint32_t open_session_timeout = 0
            , bool enable_transparent_mode = false
@@ -215,8 +216,7 @@ struct mod_rdp : public mod_api {
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
-        , auth_channel_target(auth_channel_target)
-        , auth_channel_result(auth_channel_result)
+        , acl(acl)
         , nego(enable_tls, trans, target_user)
         , enable_bitmap_update(enable_bitmap_update)
         , enable_clipboard(enable_clipboard)
@@ -335,6 +335,13 @@ struct mod_rdp : public mod_api {
 
     virtual ~mod_rdp()
     {
+        if (this->acl && !this->end_session_reason.is_empty() &&
+            !this->end_session_message.is_empty())
+        {
+            this->acl->report(this->end_session_reason.c_str(),
+                this->end_session_message.c_str());
+        }
+
         if (this->lic_layer_license_data)
         {
             free(this->lic_layer_license_data);
@@ -452,36 +459,16 @@ struct mod_rdp : public mod_api {
 
     // Method used by session to transmit sesman answer for auth_channel
     virtual void send_auth_channel_data(const char * data) {
-    // if (!this->acl){ return; }
+        if (strncmp("Error:", data, 6)) {
+            this->auth_channel_state = 1; // session started
+        }
 
-    if (strncmp("Error:", data, 6)) {
-        this->auth_channel_state = 1; // session started
-    }
+        CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+        StaticStream                chunk(data, ::strlen(data));
 
-    /*
-      HStream stream(1024, 65536);
-      BStream x224_header(256);
-      BStream mcs_header(256);
-      BStream sec_header(256);
-
-      stream.out_uint32_le(strlen(data));
-      stream.out_uint32_le(this->auth_channel_flags);
-      stream.out_copy_bytes(data, strlen(data));
-      stream.mark_end();
-
-      SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
-      MCS::SendDataIndication_Send mcs(mcs_header, userid,
-      this->auth_channel_chanid, 1, 3, sec_header.size() + stream.size(), MCS::PER_ENCODING);
-      X224::DT_TPDU_Send(x224_header,  mcs_header.size() + sec_header.size() + stream.size());
-
-      this->nego.trans->send(x224_header, mcs_header, sec_header, stream);
-    */
-    CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-    StaticStream                chunk(data, ::strlen(data));
-
-    virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                        , this->userid, this->auth_channel_chanid, chunk.size()
-                        , this->auth_channel_flags, chunk);
+        virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
+                            , this->userid, this->auth_channel_chanid, chunk.size()
+                            , this->auth_channel_flags, chunk);
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
@@ -1506,10 +1493,9 @@ struct mod_rdp : public mod_api {
     //                                    LOG(LOG_ERR, "WabLauncher send program (%s)", this->program);
                                         this->send_auth_channel_data(this->program);
                                     }
-                                    else if (this->auth_channel_target) {
+                                    else if (this->acl) {
                                         // Ask sesman for requested target
-                                        this->auth_channel_target->set_from_cstr(auth_channel_message + 7);
-                                        // this->acl->ask_auth_channel_target(auth_channel_message + 7);
+                                        this->acl->set_auth_channel_target(auth_channel_message + 7);
                                     }
                                 }
                                 else if (this->auth_channel_state == 1){
@@ -1518,9 +1504,8 @@ struct mod_rdp : public mod_api {
                                         auth_channel_message = "result:Session interrupted";
                                     }
                                     this->auth_channel_state = 0;
-                                    if (this->auth_channel_result) {
-                                        this->auth_channel_result->set_from_cstr(auth_channel_message + 7);
-                                        // this->acl->set_auth_channel_result(auth_channel_message + 7);
+                                    if (this->acl) {
+                                        this->acl->set_auth_channel_result(auth_channel_message + 7);
                                     }
                                 }
                             }
@@ -3264,8 +3249,20 @@ struct mod_rdp : public mod_api {
                 "Unauthorized logon user change detected on %s (%s\\%s). "
                     "The session will be disconnected.",
                 this->hostname, domain, username);
+
+            this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
+            this->end_session_message.copy_c_str(
+                "Unauthorized logon user change detected.");
+
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
+
+        if (this->acl)
+        {
+            this->acl->report("OPEN_SESSION_SUCCESSFUL", "Ok.");
+        }
+        this->end_session_reason.copy_c_str("CLOSE_SESSION_SUCCESSFUL");
+        this->end_session_message.copy_c_str("OK.");
 
         if (this->open_session_timeout) {
             this->open_session_timeout_checker.cancel_timeout();
