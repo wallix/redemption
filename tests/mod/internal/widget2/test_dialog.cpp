@@ -166,8 +166,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xe5\x62\xb8\x3d\x8e\x5b\x08\x30\xca\xac"
-        "\xe2\x80\x2e\xc7\x43\x08\x00\x48\x3f\x74")){
+                   "\xe6\x20\x02\x51\xfd\x01\x5b\xb3\x17\xe5"
+                   "\xe0\xd1\xf1\x50\x5a\xdb\xc8\x76\xe6\xfe")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -199,8 +199,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x23\xc4\x23\x5f\xae\x9f\x05\x50\x4a\xdf"
-        "\x49\x68\x93\x2c\xd6\x5d\x73\x49\xef\xe4")){
+                   "\x24\xf2\x2a\x43\x9c\x57\x5d\x23\xe5\xec"
+                   "\xec\x13\x3e\x0c\x1b\x57\x42\x80\x93\xf7")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -232,8 +232,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x0e\x87\xc7\x07\x96\x5c\x04\x9e\x9c\xee"
-        "\x57\xfd\x80\xc3\x76\x43\x9d\xf0\xd6\xe6")){
+                   "\xf6\x4c\x5c\x3f\x47\xda\xe3\x3f\x90\x66"
+                   "\x10\xc0\x5e\xb9\x21\xfa\x51\xda\xbe\x4f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -265,8 +265,9 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog4)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xbb\x41\xb2\x44\xeb\x72\x00\xb9\xdf\x4f"
-        "\x4b\xe0\x01\x3e\x21\x48\x39\xfb\x49\xd2")){
+                   "\x1c\x3b\xdb\xfe\xe2\xa6\xd0\x54\x73\x41"
+                   "\xd7\xff\xc5\x7e\x64\x99\xc2\x57\xee\xc0"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -298,8 +299,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog5)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x79\xdc\xfe\x77\x14\xae\x16\x29\x52\x9a"
-        "\xd2\xe5\xe6\x3d\x85\x52\x1c\xc2\xb7\x1f")){
+                   "\xbd\xc6\x42\x54\xc5\x5a\x8e\xed\xb8\xb7"
+                   "\x6e\xf4\x7d\x71\xb0\xaf\x64\x5d\xda\x6f")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -331,8 +332,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog6)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x28\x2a\xaa\xc7\x98\x97\x81\xf4\x97\x6f"
-        "\x4c\x49\xc2\xe9\xaf\xbd\xec\x2d\xf4\x5b")){
+                   "\x8b\x5b\xc7\xad\x39\x1a\x71\x0a\xd4\xbd"
+                   "\x41\xb2\x14\x59\xd5\x96\xf7\x11\xb5\x5c")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -364,8 +365,8 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x54\xe8\xcf\xef\xdc\x04\x96\x0b\x92\xf9"
-        "\xec\x18\x85\x4c\xdf\x36\xf7\x94\x3d\xdf")){
+                   "\xda\x6d\x2d\x09\x2e\xe4\xe2\xc3\x08\xe0"
+                   "\x3d\xa7\x7c\xeb\xa3\xd9\xed\xa6\x08\x69")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -448,8 +449,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xc9\xaa\x25\x1f\x69\x6b\xf0\x3f\x81\x46"
-                   "\xbf\x38\x29\x52\x9a\x40\x21\x58\xee\x01"
+                   "\x71\x57\xb6\xd7\x6c\xab\x31\x83\x26\x7f"
+                   "\x2e\x5c\xa2\x4f\x89\xb6\x9b\x08\x18\xfa"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -466,8 +467,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog-clic-2-button-ok.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x27\xea\x67\xc4\xa6\xb9\x50\x60\xf7\x70"
-                   "\x06\x4c\xe4\x7e\x0c\x02\x77\x32\x5b\xab"
+                   "\xe3\x95\x3e\x4c\xa9\x07\x74\x62\x65\xf3"
+                   "\xa3\x02\x64\xfa\xd0\x80\xc9\x49\x0c\xa7"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -484,8 +485,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "window_dialog-clic-3-button-cancel.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xfb\x84\x31\x4c\xc5\x1d\x8a\x16\x61\xa5"
-                   "\x0d\xd7\xc6\xc5\xf5\x44\xf9\x7a\xbb\xc2"
+                   "\x50\x0b\xd4\x88\xc3\x96\xae\xd9\x7b\x0a"
+                   "\x12\x2b\x1c\x27\x45\x11\x6e\x35\xae\xf1"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

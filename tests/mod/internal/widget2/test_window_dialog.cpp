@@ -169,11 +169,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog)
     wdialog.rdp_input_invalidate(Rect(0, 0, wdialog.cx(), wdialog.cy()));
 
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "dialog.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfb\x84\x4d\x48\x61\x0d\x08\x8d\x5f\xa0\x63\xb6\x8a\x5d\x42\x97\x37\x7a\x97\x7c")){
+                   "\xc3\x64\xa9\x43\x6e\x5f\x7d\xda\x67\xf6"
+                   "\x14\x31\x72\xfc\x79\x52\x2b\x19\x46\x4d")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -207,11 +208,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog2)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "dialog2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x79\x4a\x0f\xed\xad\xae\xbd\x3d\x94\x99\xe3\xf9\x10\xfb\x6b\xf8\x7e\x4e\x0c\x26")){
+                   "\x52\x7e\xf8\xe8\x8a\x17\x88\x2e\x82\xf5"
+                   "\x42\x3e\x43\xef\x4a\xa7\xcf\x9d\x40\x78")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -245,12 +247,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog3)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "dialog3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x1d\xc2\x6b\x72\x14\x5f\xeb\x64\xfc\x1a"
-        "\x69\x4f\xce\x55\xef\xef\xd1\x53\x66\xc7")){
+                   "\x00\x41\x86\x08\x90\x72\xa4\x88\xf8\x7a"
+                   "\xa7\x74\x62\xa6\x43\x4d\xce\x32\xe4\x16")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -284,12 +286,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog4)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "dialog4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf7\x26\x94\xdb\x18\x6a\x9b\xfd\xb6\x22"
-        "\x53\xe2\x9e\x06\x51\xff\xc7\x91\xeb\x7d")){
+                   "\xff\xc7\x17\x44\x65\x08\x98\x28\x65\xf6"
+                   "\x39\x5d\x51\x38\x8a\xdb\x5a\xce\x02\x33")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -323,11 +325,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog5)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "dialog5.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "dialog5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xfe\x24\x78\x02\x5a\x9d\x58\x21\xdb\xbe\xb8\x11\xaf\x79\xdb\x8f\x34\xf2\xe0\x68")){
+                   "\x5b\x93\xb4\x9b\x2e\x8a\x34\x03\x40\xec"
+                   "\x4a\xaf\xd1\x69\x62\x0d\x3b\xb2\x75\xd2")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -361,11 +364,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialog6)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png("/tmp/dialog6.png");
+    // drawable.save_to_png("/tmp/dialog6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x92\xde\xd8\x4e\x62\x0a\x59\xa6\x6a\xd1\x03\x0b\x82\x8c\xc5\xc2\xcd\xf3\x55\xb1")){
+                   "\xa7\xc7\x21\x29\x1b\x12\x05\xca\xbb\xe7"
+                   "\x39\xe7\x24\xb4\x9c\x30\x0c\xfe\x82\xaf")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -399,11 +403,12 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip)
                                       wdialog.cx(),
                                       wdialog.cy()));
 
-    //drawable.save_to_png("/tmp/dialog7.png");
+    // drawable.save_to_png("/tmp/dialog7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa3\x90\xd4\x2b\x42\xb5\x24\xf1\x0d\x76\xb5\xe5\x9c\x40\xa0\x61\xb0\x07\xb0\x22")){
+                   "\x05\x8b\x3f\x74\xad\xc4\xb4\x23\x7f\x2c"
+                   "\x93\x6e\xbd\x35\xb9\x35\xe7\xf0\xb6\x61")){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -437,7 +442,7 @@ BOOST_AUTO_TEST_CASE(TraceWindowDialogClip2)
                                       30,
                                       10));
 
-    //drawable.save_to_png("/tmp/dialog8.png");
+    // drawable.save_to_png("/tmp/dialog8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

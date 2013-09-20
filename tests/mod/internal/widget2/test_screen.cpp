@@ -328,7 +328,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier3.sender = 0;
     notifier1.event = 0;
     notifier3.event = 0;
-    // drawable.save_to_png(OUTPUT_FILE_PATH "screen7.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "screen7.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x3f\x6b\xc7\x20\x10\x6d\x72\x73\x2e\xa3"
                    "\xc7\xc1\x8e\x6a\xa7\xd5\xe6\x19\xec\x03"
@@ -383,7 +383,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.sender = 0;
     notifier2.event = 0;
     notifier4.event = 0;
-    // drawable.save_to_png(OUTPUT_FILE_PATH "screen10.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "screen10.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\xc1\xa6\x10\x68\x65\x79\xc7\xf5\x75\xee"
                    "\xab\x4a\x27\xe5\x75\xaa\x36\x02\x5b\x03"

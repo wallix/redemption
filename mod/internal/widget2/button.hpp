@@ -114,6 +114,21 @@ public:
             this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx() + 1, this->dy() + 1, 1, this->cy() - 3
             )), this->border_top_left_color2), this->rect);
+
+            //right
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
+            )), this->border_top_left_color), this->rect);
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 2
+            )), this->border_right_bottom_color2), this->rect);
+            //bottom
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
+            )), this->border_top_left_color), this->rect);
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
+            )), this->border_right_bottom_color2), this->rect);
         }
         else {
             this->label.draw(clip);
@@ -125,6 +140,21 @@ public:
             this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                 this->dx(), this->dy() + 1, 1, this->cy() - 2
             )), this->border_top_left_color), this->rect);
+
+            //right
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
+            )), this->border_right_bottom_color), this->rect);
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 2
+            )), this->border_right_bottom_color2), this->rect);
+            //bottom
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
+            )), this->border_right_bottom_color), this->rect);
+            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+                this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
+            )), this->border_right_bottom_color2), this->rect);
         }
 
         if (this->has_focus || this->focus_is_visible) {
@@ -135,20 +165,6 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->update_draw_state(clip);
-        //right
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
-        )), this->border_right_bottom_color), this->rect);
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 2
-        )), this->border_right_bottom_color2), this->rect);
-        //bottom
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
-        )), this->border_right_bottom_color), this->rect);
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
-        )), this->border_right_bottom_color2), this->rect);
     }
 
     void swap_border_color()
@@ -157,7 +173,7 @@ public:
         this->border_right_bottom_color ^= this->border_top_left_color;
         this->border_top_left_color ^= this->border_right_bottom_color;
         this->drawable.begin_update();
-        this->update_draw_state(this->rect);
+        this->draw(this->rect);
         this->drawable.end_update();
     }
 
