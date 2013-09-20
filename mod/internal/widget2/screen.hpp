@@ -58,18 +58,19 @@ public:
             }
         }
         else if (this->tooltip == NULL) {
-            int w = 0;
-            int h = 0;
-            this->drawable.text_metrics(text, w, h);
-            int sw = this->rect.cx;
-            int posx = ((x + w) > sw)?(sw - w):x;
-            int posy = (y > h)?(y - h):0;
             this->tooltip = new WidgetTooltip(this->drawable,
-                                              posx,
-                                              posy,
+                                              x,
+                                              y,
                                               *this,
                                               widget,
                                               text);
+            int w = this->tooltip->get_tooltip_cx();
+            int h = this->tooltip->get_tooltip_cy();
+            int sw = this->rect.cx;
+            int posx = ((x + w) > sw)?(sw - w):x;
+            int posy = (y > h)?(y - h):0;
+            this->tooltip->set_tooltip_xy(posx, posy);
+
             this->add_widget(this->tooltip);
             this->refresh(this->tooltip->rect);
         }

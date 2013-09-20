@@ -165,23 +165,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xd8\xcd\x65\xae\x47\xc0\x71\xe1\xf4\x1f"
-                   "\x30\xd1\x77\xc9\xd2\x0d\x06\x7c\xd3\xff"
+                   "\xa5\x2a\x2e\x7f\xb7\x8a\x52\x95\x5a\xdb"
+                   "\x85\xec\xb5\xae\x3b\xa6\x29\x0b\x60\xfb"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget2 * w)
+void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScreen * parent, Widget2 * w, const char * text)
 {
-
+    parent->rdp_input_mouse(device_flags, x, y, keymap);
     if (device_flags == MOUSE_FLAG_MOVE) {
         Widget2 * wid = parent->widget_at_pos(x, y);
         if (wid == w) {
-            parent->show_tooltip(w, "Test tooltip description", x, y);
+            parent->show_tooltip(w, text, x, y);
         }
     }
-    parent->rdp_input_mouse(device_flags, x, y, keymap);
+
 };
 
 BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
@@ -192,8 +192,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     WidgetLabel label(drawable, x, y, parent, &parent, "TOOLTIPTEST");
+    WidgetLabel label2(drawable, x + 50, y + 90, parent, &parent, "TOOLTIPTESTMULTI");
 
     parent.add_widget(&label);
+    parent.add_widget(&label2);
 
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
 
@@ -201,24 +203,43 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x3e\x67\x39\xdc\x4c\x58\x4f\x86\xa1\x44"
-                   "\xaa\x73\x99\x54\x77\xb2\x8e\xb9\xf2\x89"
+                   "\x87\x22\x76\x5e\xc5\x6b\x02\x4f\xa6\xc9"
+                   "\x60\x32\xbd\x64\x6e\x5c\xbd\x80\x16\xa2"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label.centerx(), label.centery(),
-                    NULL, &parent, &label);
+                    NULL, &parent, &label, "Test tooltip description");
     parent.rdp_input_invalidate(parent.rect);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xc0\x68\x89\xe3\x50\x90\xee\x98\x28\x91"
-                   "\x17\x2a\x39\xd5\x34\x2b\x2d\x67\xcd\xd7"
+                   "\xb3\xbf\x9a\x9b\x1e\xd5\x09\xb9\x1a\xaa"
+                   "\xf2\xaa\x32\x51\x24\x5d\x3f\xbc\x1d\xad"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
+    rdp_input_mouse(MOUSE_FLAG_MOVE,
+                    label2.centerx(), label2.centery(),
+                    NULL, &parent, &label2,
+                    "Test tooltip<br>"
+                    "description in<br>"
+                    "multilines !");
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen3.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x57\x94\x1e\x7a\x4a\x2e\x37\xfd\x2a\x2f"
+                   "\xb2\x5c\xca\x06\xd6\xdc\x7b\x40\x16\xfb"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
     parent.clear();
 }

@@ -175,12 +175,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "multiline.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-    "\xee\xa2\x81\x4c\x50\xf0\x0d\x1e\x13\x42\x3e\xa2\x08\xf8\xc6\x7c\xea\x1d\x84\x87"
-    )){
+                   "\x06\x2b\x02\xe5\x16\x1e\x08\xd2\xe8\x66"
+                   "\xb6\x9b\xeb\xad\xdb\x98\xa3\x2b\x75\x7b"
+    // "\xee\xa2\x81\x4c\x50\xf0\x0d\x1e\x13\x42\x3e\xa2\x08\xf8\xc6\x7c\xea\x1d\x84\x87"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

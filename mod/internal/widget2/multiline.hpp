@@ -113,7 +113,7 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        int dy = this->dy();
+        int dy = this->dy() + this->y_text;
         this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;

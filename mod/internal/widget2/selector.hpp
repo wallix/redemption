@@ -65,11 +65,9 @@ public:
     {
         if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN) && (this->state & 1) == 0) {
             this->state |= 1;
-            this->swap_image();
         }
         else if (device_flags == MOUSE_FLAG_BUTTON1 && this->state & 1) {
             this->state &= ~1;
-            this->swap_image();
             if (this->rect.contains_pt(x, y)) {
                 this->send_notify(this->event);
             }

@@ -430,10 +430,10 @@ BOOST_AUTO_TEST_CASE(TraceWidgetButtonDownAndUp)
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 15, 15, NULL);
     wbutton.rdp_input_invalidate(wbutton.rect);
 
-    //drawable.save_to_png(OUTPUT_FILE_PATH "button10.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "button10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xfc\xd6\xde\x96\xf6\xdf\xa2\x75\x68\xbe\xcd\x49\x47\xcb\x07\x95\xba\xa6\x99\x8c"
+                   "\x0e\x0d\x15\x27\x90\x5a\x23\x3a\xa3\x6d\x56\x31\x3a\xfe\x6d\x72\x39\x1a\x7e\x5a"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

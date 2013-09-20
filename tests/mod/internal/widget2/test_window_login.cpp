@@ -439,7 +439,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetHelp)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x9c\x21\x1b\xda\x31\x3d\x50\xe0\xe3\x49\x9c\xb1\x66\x78\x6f\x52\x93\xe8\x19\x90"
+                   "\x1e\x09\xe7\xe6\xdf\x02\x03\x49\x97\x95"
+                   "\x14\xb7\xa9\x30\x7a\xd9\x37\x3c\x64\x35"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

@@ -34,6 +34,8 @@ public:
     : Widget2(drawable, rect, parent, notifier, group_id)
     , color(color)
     {
+        this->tab_flag = IGNORE_TAB;
+        this->focus_flag = IGNORE_FOCUS;
     }
 
     virtual void draw(const Rect& clip)
