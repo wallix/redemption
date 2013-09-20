@@ -220,31 +220,31 @@ public:
             return;
         }
 
-        if (device_flags == MOUSE_FLAG_MOVE) {
-            Widget2 * wid = this->widget_at_pos(x, y);
-            if (wid == &this->login_label) {
-                this->show_tooltip(wid, "WAB LOGIN <br>not windows account login", x, y);
-            }
-            else if (wid == &this->img) {
-                this->show_tooltip(wid, "WAB LOGO", this->img.centerx(), this->img.centery());
-            }
-            else if (wid == &this->password_label) {
-                this->show_tooltip(wid, "WAB PASSWORD", x, y);
-            }
-            else if (wid == &this->help) {
-                this->show_tooltip(wid, "You must be authenticated before using this<br>"
-                                         "session.<br>"
-                                         "<br>"
-                                         "Enter a valid username in the username edit box.<br>"
-                                         "Enter the password in the password edit box.<br>"
-                                         "<br>"
-                                         "Both the username and password are case<br>"
-                                         "sensitive.<br>"
-                                         "<br>"
-                                         "Contact your system administrator if you are<br>"
-                                         "having problems logging on.", x, y);
-            }
-        }
+        // if (device_flags == MOUSE_FLAG_MOVE) {
+        //     Widget2 * wid = this->widget_at_pos(x, y);
+        //     if (wid == &this->login_label) {
+        //         this->show_tooltip(wid, "WAB LOGIN <br>not windows account login", x, y);
+        //     }
+        //     else if (wid == &this->img) {
+        //         this->show_tooltip(wid, "WAB LOGO", this->img.centerx(), this->img.centery());
+        //     }
+        //     else if (wid == &this->password_label) {
+        //         this->show_tooltip(wid, "WAB PASSWORD", x, y);
+        //     }
+        //     else if (wid == &this->help) {
+        //         this->show_tooltip(wid, "You must be authenticated before using this<br>"
+        //                                  "session.<br>"
+        //                                  "<br>"
+        //                                  "Enter a valid username in the username edit box.<br>"
+        //                                  "Enter the password in the password edit box.<br>"
+        //                                  "<br>"
+        //                                  "Both the username and password are case<br>"
+        //                                  "sensitive.<br>"
+        //                                  "<br>"
+        //                                  "Contact your system administrator if you are<br>"
+        //                                  "having problems logging on.", x, y);
+        //     }
+        // }
 
         Window::rdp_input_mouse(device_flags, x, y, keymap);
     }
