@@ -47,6 +47,11 @@ public:
                        ini.translation.button_help.get().c_str(),
                        ini.translation.login.get().c_str(),
                        ini.translation.password.get().c_str())
+                       // TR("OK"),
+                       // TR("cancel"),
+                       // TR("help"),
+                       // TR("login"),
+                       // TR("password"))
         , image(*this, 0, 0, SHARE_PATH "/" REDEMPTION_LOGO24, this->screen, NULL)
         , ini(ini)
     {

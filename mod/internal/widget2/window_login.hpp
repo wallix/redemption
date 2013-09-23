@@ -153,7 +153,8 @@ public:
                 if (!this->window_help) {
                     this->window_help =
                         new WindowDialog(
-                                         this->drawable, 0, 0, *p, this, "Help",
+                                         this->drawable, 0, 0, *p, this,
+                                         "Help",
                                          "You must be authenticated before using this<br>"
                                          "session.<br>"
                                          "<br>"
@@ -165,7 +166,10 @@ public:
                                          "<br>"
                                          "Contact your system administrator if you are<br>"
                                          "having problems logging on.",
-                                         -20, "Ok", NULL, this->login_label.fg_color, this->bg_color
+                                         // TR("help"),
+                                         // TR("help_message"),
+                                         -20, "Ok"
+                                         , NULL, this->login_label.fg_color, this->bg_color
                                          );
 
                     this->window_help->ok.label.bg_color = GREY;

@@ -249,7 +249,7 @@ class Authentifier(object):
                 pass
         self.dic.update(_data)
 
-        answer = {'authenticated': 'false', 'clipboard' : 'true', 'file_encryption' : 'true', 'trans_cancel' : 'Annuler', 'trans_ok' : 'Oui', 'width' : '1280', 'height' : '1024', 'bpp' : '8'}
+        answer = {'authenticated': 'false', 'clipboard' : 'true', 'file_encryption' : 'true', 'trans_cancel' : 'Cancel', 'trans_ok' : 'Ok', 'width' : '1280', 'height' : '1024', 'bpp' : '8'}
         _login = self.dic.get('login')
         if _login != MAGICASK:
             for user in self.users:
