@@ -35,7 +35,6 @@
 #include <math.h>
 
 #include "rdp/rdp_orders.hpp"
-#include "rdp/rdp_cursor.hpp"
 
 /* include "ther h files */
 #include "stream.hpp"
@@ -59,6 +58,7 @@
 #include "RDP/protocol.hpp"
 #include "RDP/RefreshRectPDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
+#include "RDP/rdp_cursor.hpp"
 
 #include "genrandom.hpp"
 
@@ -331,6 +331,9 @@ struct mod_rdp : public mod_api {
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
         }
+
+        this->end_session_reason.copy_c_str("CONNECTION_FAILED");
+        this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }
 
     virtual ~mod_rdp()
@@ -361,7 +364,7 @@ struct mod_rdp : public mod_api {
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
                                      , Keymap2 * keymap) {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            //            LOG(LOG_INFO, "Direct parameter transmission");
+//            LOG(LOG_INFO, "Direct parameter transmission");
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
@@ -1832,6 +1835,11 @@ struct mod_rdp : public mod_api {
                 LOG(LOG_ERR,
                     "Logon timer expired on %s. The session will be disconnected.",
                     this->hostname);
+                if (this->acl)
+                {
+                    this->acl->report("CONNECTION_FAILED",
+                        "Logon timer expired.");
+                }
 
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
@@ -3687,8 +3695,7 @@ public:
         memcpy(cursor->data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
 
-        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data,
-            cursor->mask);
+        this->front.server_set_pointer(*cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
@@ -3708,7 +3715,7 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
         struct rdp_cursor* cursor = this->cursors + cache_idx;
-        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data, cursor->mask);
+        this->front.server_set_pointer(*cursor);
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
         }
@@ -3725,8 +3732,7 @@ public:
             {
                 struct rdp_cursor cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
-                TODO("CGR: we should pass in a cursor to set_pointer instead of individual fields")
-                    this->front.server_set_pointer(cursor.x, cursor.y, cursor.data, cursor.mask);
+                this->front.server_set_pointer(cursor);
                 this->set_pointer_display();
             }
             break;
@@ -3911,8 +3917,7 @@ public:
             to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
         }
 
-        this->front.server_set_pointer(cursor->x, cursor->y, cursor->data,
-            cursor->mask);
+        this->front.server_set_pointer(*cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }

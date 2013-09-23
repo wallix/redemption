@@ -30,6 +30,7 @@
 #include <errno.h>
 
 /* include "ther h files */
+#include "RDP/rdp_cursor.hpp"
 #include "stream.hpp"
 
 struct xup_mod : public mod_api {
@@ -300,14 +301,12 @@ enum {
                     break;
                     case 19:
                     {
-                        int x = stream.in_sint16_le();
-                        int y = stream.in_sint16_le();
-                        TODO(" copy seems useless here")
-                        uint8_t cur_data[32 * (32 * 3)];
-                        uint8_t cur_mask[32 * (32 / 8)];
-                        memcpy(cur_data, stream.in_uint8p(32 * (32 * 3)), 32 * (32 * 3));
-                        memcpy(cur_mask, stream.in_uint8p(32 * (32 / 8)), 32 * (32 / 8));
-                        this->front.server_set_pointer(x, y, cur_data, cur_mask);
+                        struct rdp_cursor cursor;
+                        cursor.x = stream.in_sint16_le();
+                        cursor.y = stream.in_sint16_le();
+                        stream.in_copy_bytes(cursor.data, 32 * (32 * 3));
+                        stream.in_copy_bytes(cursor.mask, 32 * (32 / 8));
+                        this->front.server_set_pointer(cursor);
                     }
                     break;
                     default:

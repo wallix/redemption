@@ -62,7 +62,7 @@ extern "C" {
                 LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", buffer, strerror(errno), errno);
             }
         }
-        
+
         RIO_ERROR status = RIO_ERROR_OK;
         RIO * meta = rio_new_outfile(&status, fd);
         SQ * sequence = sq_new_outtracker(&status, meta, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3, groupid);

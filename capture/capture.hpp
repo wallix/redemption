@@ -29,6 +29,7 @@
 #include "nativecapture.hpp"
 
 #include "wait_obj.hpp"
+#include "RDP/rdp_cursor.hpp"
 
 class Capture : public RDPGraphicDevice {
 public:
@@ -314,16 +315,16 @@ public:
         }
     }
 
-    virtual void server_set_pointer(int hotspot_x, int hotspot_y,
-        const uint8_t * data, const uint8_t * mask) {
+        virtual void server_set_pointer(const rdp_cursor & cursor)
+        {
         int cache_idx = 0;
-        switch (this->ptr_cache.add_pointer(data,
-                                            mask,
-                                            hotspot_x,
-                                            hotspot_y,
+        switch (this->ptr_cache.add_pointer(cursor.data,
+                                            cursor.mask,
+                                            cursor.x,
+                                            cursor.y,
                                             cache_idx)) {
         case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, data, mask, hotspot_x, hotspot_y);
+            this->send_pointer(cache_idx, cursor.data, cursor.mask, cursor.x, cursor.y);
         break;
         default:
         case POINTER_ALLREADY_SENT:

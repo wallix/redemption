@@ -139,6 +139,9 @@ public:
         }
         // Initialy, it no protocol known and get_value should provide "ASK".
         const char * protocol = this->ini.context.target_protocol.get_value();
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "auth::get_mod_from_protocol protocol=\"%s\"", protocol);
+        }
         if (ini.globals.internal_domain) {
             const char * target = this->ini.globals.target_device.get_cstr();
             if (0 == strncmp(target, "autotest", 8)) {
@@ -151,6 +154,19 @@ public:
                 LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
             }
             res = MODULE_RDP;
+        }
+        else if (this->connected && 0 == strncasecmp(protocol, "RDP", 4) &&
+            !((mod_rdp *)this->mod)->end_session_reason.is_empty() &&
+            !strncmp(((mod_rdp *)this->mod)->end_session_reason.c_str(), "CONNECTION_FAILED", 17)
+            ) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP (connected)");
+            }
+            this->remove_mod();
+            this->connected = false;
+
+            this->ini.context.target_protocol.set_from_acl("_TRANSITORY");
+            res = MODULE_TRANSITORY;
         }
         else if (!this->connected && 0 == strncasecmp(protocol, "APP", 4)) {
             if (this->verbose & 0x4) {
@@ -170,7 +186,7 @@ public:
             }
             res = MODULE_XUP;
         }
-        else if (!this->connected && 0 == strncasecmp(protocol, "_TRANSITORY", 4)) {
+        else if (!this->connected && 0 == strncasecmp(protocol, "_TRANSITORY", 11)) {
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol _TRANSITORY");
             }

@@ -764,10 +764,6 @@ struct FileToGraphic
             case POINTER:
             {
                 uint8_t          cache_idx;
-                const uint8_t  * data;
-                const uint8_t  * mask;
-                uint8_t          hotspot_x;
-                uint8_t          hotspot_y;
 
                 this->mouse_x = this->stream.in_uint16_le();
                 this->mouse_y = this->stream.in_uint16_le();
@@ -775,25 +771,29 @@ struct FileToGraphic
 
                 if (  chunk_size - 8 /*header(8)*/
                     > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
-                    hotspot_x = this->stream.in_uint8();
-                    hotspot_y = this->stream.in_uint8();
-                    data      = stream.in_uint8p(32 * 32 * 3);
-                    mask      = stream.in_uint8p(128);
+                    struct rdp_cursor cursor;
+                    cursor.x = this->stream.in_uint8();
+                    cursor.y = this->stream.in_uint8();
+                    stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
+                    stream.in_copy_bytes(cursor.mask, 128);
 
-                    this->ptr_cache.add_pointer_static_2(hotspot_x, hotspot_y,
-                        data, mask, cache_idx);
+                    this->ptr_cache.add_pointer_static_2(cursor.x, cursor.y,
+                        cursor.data, cursor.mask, cache_idx);
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i]->server_set_pointer(
-                            hotspot_x, hotspot_y, data, mask);
+                        this->consumers[i]->server_set_pointer(cursor);
                     }
                 }
                 else {
                     pointer_item & pi = this->ptr_cache.pointer_items[cache_idx];
+                    rdp_cursor cursor;
+                    cursor.x = pi.x;
+                    cursor.y = pi.y;
+                    memcpy(cursor.data, pi.data, sizeof(pi.data));
+                    memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
-                        this->consumers[i]->server_set_pointer(
-                            pi.x, pi.y, pi.data, pi.mask);
+                        this->consumers[i]->server_set_pointer(cursor);
                     }
                 }
             }

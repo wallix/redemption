@@ -300,6 +300,7 @@ public:
                 this->client_info.width = width;
                 this->client_info.height = height;
 
+                TODO("Why are we not calling this->flush() instead ? Looks dubious.")
                 // send buffered orders
                 this->orders->flush();
 
@@ -322,16 +323,16 @@ public:
         return res;
     }
 
-    void server_set_pointer(int hotspot_x, int hotspot_y,
-            const uint8_t * data, const uint8_t * mask) {
+    void server_set_pointer(const rdp_cursor & cursor)
+    {
         int cache_idx = 0;
-        switch (this->pointer_cache.add_pointer(data,
-                                                mask,
-                                                hotspot_x,
-                                                hotspot_y,
+        switch (this->pointer_cache.add_pointer(cursor.data,
+                                                cursor.mask,
+                                                cursor.x,
+                                                cursor.y,
                                                 cache_idx)) {
         case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, data, mask, hotspot_x, hotspot_y);
+            this->send_pointer(cache_idx, cursor.data, cursor.mask, cursor.x, cursor.y);
         break;
         default:
         case POINTER_ALLREADY_SENT:
@@ -455,26 +456,25 @@ public:
         }
 
         if (ini.globals.movie.get()) {
-//            this->stop_capture();
             LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
             struct timeval now = tvtime();
 
             if (this->verbose & 1) {
-                LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path.get_cstr());
-                LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id.get_cstr());
+                LOG(LOG_INFO, "movie_path    = %s\n", ini.globals.movie_path.get_cstr());
+                LOG(LOG_INFO, "codec_id      = %s\n", ini.globals.codec_id.get_cstr());
                 LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
-                LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user.get_cstr());
-                LOG(LOG_INFO, "host = %s\n",          ini.globals.host.get_cstr());
+                LOG(LOG_INFO, "auth_user     = %s\n", ini.globals.auth_user.get_cstr());
+                LOG(LOG_INFO, "host          = %s\n", ini.globals.host.get_cstr());
                 LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
-                LOG(LOG_INFO, "target_user = %s\n",   ini.globals.target_user.get_cstr());
+                LOG(LOG_INFO, "target_user   = %s\n", ini.globals.target_user.get_cstr());
             }
 
             char path[1024];
             char basename[1024];
             char extension[128];
-            strcpy(path, WRM_PATH "/"); // default value, actual one should come from movie_path
+            strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
-            strcpy(extension, ""); // extension is currently ignored
+            strcpy(extension, "");          // extension is currently ignored
             canonical_path(ini.globals.movie_path.get_cstr(), path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
             this->capture = new Capture( now, width, height
                                        , ini.video.record_path
