@@ -69,9 +69,9 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPPatBlt&, const Rect&)
+    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, rect);
     }
 
     virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
@@ -129,6 +129,7 @@ struct TestDraw : DrawApi
         if (len_uni){
             for (size_t index = 0; index < len_uni; index++) {
                 FontChar *font_item = this->gd.get_font(this->font, uni[index]);
+                // width += font_item->incby;
                 width += font_item->width + 2;
                 height = std::max(height, font_item->height);
             }
@@ -144,6 +145,7 @@ struct TestDraw : DrawApi
         fclose(file);
     }
 };
+
 
 BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
 {

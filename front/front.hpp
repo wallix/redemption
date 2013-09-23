@@ -300,6 +300,7 @@ public:
                 this->client_info.width = width;
                 this->client_info.height = height;
 
+                TODO("Why are we not calling this->flush() instead ? Looks dubious.")
                 // send buffered orders
                 this->orders->flush();
 
