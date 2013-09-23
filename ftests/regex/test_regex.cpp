@@ -36,21 +36,23 @@
 
 using namespace rndfa;
 
-#define regex_test(p_regex, p_str, \
-                   p_exact_result_search, p_result_search, p_exact_result_match, \
-                   p_exact_match_result, p_result_match, p_match_result)\
-{\
-    BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);\
-    \
-    BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);\
-    \
-    BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);\
-    Regex::range_matches exact_matches = p_regex.match_result();\
-    BOOST_CHECK(exact_matches == p_exact_match_result);\
-    \
-    BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);\
-    Regex::range_matches matches = p_regex.match_result();\
-    BOOST_CHECK(matches == p_match_result);\
+inline void regex_test(Regex & p_regex,
+                        const char * p_str,
+                        const int p_exact_result_search,
+                        const int p_result_search,
+                        const int p_exact_result_match,
+                        const Regex::range_matches & p_exact_match_result, 
+                        const bool p_result_match,
+                        const Regex::range_matches & p_match_result)
+{
+    BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);
+    BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);
+    BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);
+    Regex::range_matches exact_matches = p_regex.match_result();
+    BOOST_CHECK(exact_matches == p_exact_match_result);
+    BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);
+    Regex::range_matches matches = p_regex.match_result();
+    BOOST_CHECK(matches == p_match_result);
 }
 
 
