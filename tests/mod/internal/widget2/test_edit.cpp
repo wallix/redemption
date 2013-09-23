@@ -68,9 +68,9 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPPatBlt&, const Rect&)
+    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
     {
-        BOOST_CHECK(false);
+        this->gd.draw(cmd, rect);
     }
 
     virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
@@ -133,7 +133,6 @@ struct TestDraw : DrawApi
                 height = std::max(height, font_item->height);
             }
             width -= 1;
-
         }
     }
 
@@ -145,6 +144,7 @@ struct TestDraw : DrawApi
         fclose(file);
     }
 };
+
 
 BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
 {
