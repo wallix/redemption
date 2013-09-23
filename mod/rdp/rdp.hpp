@@ -331,6 +331,9 @@ struct mod_rdp : public mod_api {
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
         }
+
+        this->end_session_reason.copy_c_str("CONNECTION_FAILED");
+        this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }
 
     virtual ~mod_rdp()
@@ -1832,6 +1835,11 @@ struct mod_rdp : public mod_api {
                 LOG(LOG_ERR,
                     "Logon timer expired on %s. The session will be disconnected.",
                     this->hostname);
+                if (this->acl)
+                {
+                    this->acl->report("CONNECTION_FAILED",
+                        "Logon timer expired.");
+                }
 
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
