@@ -364,7 +364,7 @@ struct mod_rdp : public mod_api {
     virtual void rdp_input_scancode( long param1, long param2, long device_flags, long time
                                      , Keymap2 * keymap) {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            //            LOG(LOG_INFO, "Direct parameter transmission");
+//            LOG(LOG_INFO, "Direct parameter transmission");
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
         }
