@@ -39,6 +39,7 @@
 #include "channel_list.hpp"
 
 #include "RDP/clipboard.hpp"
+#include "RDP/rdp_cursor.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -442,17 +443,15 @@ struct mod_vnc : public mod_api {
             break;
         }
 
-        TODO(" define some constants  not need to use dynamic data")
 //        /* set almost null cursor, this is the little dot cursor */
-        uint8_t rdp_cursor_data[32 * (32 * 3)];
-        uint8_t rdp_cursor_mask[32 * (32 / 8)];
-        memset(rdp_cursor_data, 0, 32 * (32 * 3));
-        memset(rdp_cursor_data + (32 * (32 * 3) - 1 * 32 * 3), 0xff, 9);
-        memset(rdp_cursor_data + (32 * (32 * 3) - 2 * 32 * 3), 0xff, 9);
-        memset(rdp_cursor_data + (32 * (32 * 3) - 3 * 32 * 3), 0xff, 9);
-        memset(rdp_cursor_mask, 0xff, 32 * (32 / 8));
-
-        this->front.server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
+        struct rdp_cursor cursor;
+        cursor.x = 3;
+        cursor.y = 3;
+        memset(cursor.data + 31 * (32 * 3), 0xff, 9);
+        memset(cursor.data + 30 * (32 * 3), 0xff, 9);
+        memset(cursor.data + 29 * (32 * 3), 0xff, 9);
+        memset(cursor.mask, 0xff, 32 * (32 / 8));
+        this->front.server_set_pointer(cursor);
 
         if (error) {
             LOG(LOG_INFO, "error - problem connecting\n");
@@ -807,35 +806,37 @@ struct mod_vnc : public mod_api {
                 const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
                 const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
 
-                uint8_t rdp_cursor_mask[32 * (32 / 8)] = {};
-                uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
+                struct rdp_cursor cursor;
+                cursor.x = 3;
+                cursor.y = 3;
 
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
                 if (cx == 1 && cy == 1) {
-                    memset(rdp_cursor_data, 0, sizeof(rdp_cursor_data));
-                    rdp_cursor_data[2883] = 0xFF;
-                    rdp_cursor_data[2884] = 0xFF;
-                    rdp_cursor_data[2885] = 0xFF;
-                    memset(rdp_cursor_mask, 0xFF, sizeof(rdp_cursor_mask));
-                    rdp_cursor_mask[116] = 0x1F;
-                    rdp_cursor_mask[120] = 0x1F;
-                    rdp_cursor_mask[124] = 0x1F;
+                    TODO("Appearence of this 1x1 cursor looks broken, check what we actually get")
+                    memset(cursor.data, 0, sizeof(cursor.data));
+                    cursor.data[2883] = 0xFF;
+                    cursor.data[2884] = 0xFF;
+                    cursor.data[2885] = 0xFF;
+                    memset(cursor.mask, 0xFF, sizeof(cursor.mask));
+                    cursor.mask[116] = 0x1F;
+                    cursor.mask[120] = 0x1F;
+                    cursor.mask[124] = 0x1F;
                 }
                 else {
                     // clear target cursor mask
                     for (size_t tmpy = 0; tmpy < 32; tmpy++) {
                         for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                            rdp_cursor_mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
+                            cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
                         }
                     }
-                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask use is 1 bit per pixel arrays")
+                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays")
                     // copy vnc pointer and mask to rdp pointer and mask
 
                     for (int yy = 0; yy < cy; yy++) {
                         for (int xx = 0 ; xx < cx ; xx++){
                             if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
                                 if ((yy < 32) && (xx < 32)){
-                                    rdp_cursor_mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
+                                    cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
                                     int pixel = 0;
                                     for (int tt = 0 ; tt < Bpp; tt++){
                                         pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
@@ -844,9 +845,9 @@ struct mod_vnc : public mod_api {
                                     int red   = (pixel >> this->red_shift) & red_max;
                                     int green = (pixel >> this->green_shift) & green_max;
                                     int blue  = (pixel >> this->blue_shift) & blue_max;
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);;
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
+                                    cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
+                                    cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);;
+                                    cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
                                 }
                             }
                         }
@@ -858,7 +859,7 @@ struct mod_vnc : public mod_api {
                 }
 TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
                 this->front.begin_update();
-                this->front.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
+                this->front.server_set_pointer(cursor);
                 this->front.end_update();
             }
             break;

@@ -43,6 +43,7 @@
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/caches/fontcache.hpp"
+#include "RDP/rdp_cursor.hpp"
 
 struct RDPGraphicDevice {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
@@ -73,8 +74,7 @@ struct RDPGraphicDevice {
         bool pointer_already_displayed, bool no_timestamp,
         bool ignore_frame_in_timeval) {}
 
-    virtual void server_set_pointer(int hotspot_x, int hotspot_y,
-        const uint8_t * data, const uint8_t * mask) {}
+    virtual void server_set_pointer(const rdp_cursor & cursor) {}
     virtual void send_pointer(int cache_idx, const uint8_t * data,
         const uint8_t * mask, int hotspot_x, int hotspot_y) {}
     virtual void set_pointer(int cache_idx) {}
