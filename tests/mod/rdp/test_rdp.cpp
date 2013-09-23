@@ -215,7 +215,7 @@
             }
 //            this->palette_sent = false;
         }
-        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+        virtual void server_set_pointer(const rdp_cursor & cursor)
         {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");

@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TestWabCloseMod)
         {
             LOG(LOG_INFO, "set_mod_palette\n");
         }
-        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+        virtual void server_set_pointer(const rdp_cursor & cursor)
         {
             LOG(LOG_INFO, "server_set_pointer\n");
         }

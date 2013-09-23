@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
         virtual void set_mod_palette(const BGRPalette & palette) {}
 
-        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask) {}
+        virtual void server_set_pointer(const rdp_cursor & cursor) {}
 
         virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
                                      , uint32_t bgcolor, const Rect & clip) {}

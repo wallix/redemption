@@ -30,7 +30,7 @@
 
 class FrontAPI : public DrawApi {
     public:
-    virtual void draw_vnc( const Rect & rect
+    virtual void draw_vnc(const Rect & rect
                          , const uint8_t bpp
                          , const BGRPalette & palette332
                          , const uint8_t * raw

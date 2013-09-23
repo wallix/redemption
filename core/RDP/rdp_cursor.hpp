@@ -21,7 +21,7 @@
 
 */
 
-#ifndef _REDEMPTION_CORE_RDP_RDP_CURSOR_HPP_
+#ifndef _REDEMPTION_CORE_RDP_RDP_CURSOR_HPP__
 #define _REDEMPTION_CORE_RDP_RDP_CURSOR_HPP__
 
 #include <string.h>
@@ -35,15 +35,15 @@ enum { DATA_BITMAP_SIZE = 4096 // maxHeight x maxWidth x bpp = 32 pixel x 32 pix
 struct rdp_cursor {
     int x;
     int y;
-//    int width;
-//    int height;
+    int width;
+    int height;
     uint8_t data[DATA_BITMAP_SIZE];
     uint8_t mask[MASK_BITMAP_SIZE];
     rdp_cursor() {
         this->x = 0;
         this->y = 0;
-//        this->width = 0;
-//        this->height = 0;
+        this->width = 0;
+        this->height = 0;
         memset(this->data, 0, DATA_BITMAP_SIZE);
         memset(this->mask, 0, MASK_BITMAP_SIZE);
     }
