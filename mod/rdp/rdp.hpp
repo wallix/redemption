@@ -4106,8 +4106,8 @@ public:
                      );
             }
 
+            TODO("this is to protect rdesktop different color depth works with mstsc and xfreerdp")
             if (!this->enable_bitmap_update
-                TODO("this is to protect rdesktop different color depth works with mstsc and xfreerdp")
                || (bmpdata.bits_per_pixel != this->front_bpp)
                || ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {
                 this->front.draw(RDPMemBlt(0, boundary, 0xCC, 0, 0, 0), boundary, bitmap);
