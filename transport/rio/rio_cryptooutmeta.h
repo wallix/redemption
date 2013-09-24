@@ -34,6 +34,7 @@ extern "C" {
     *******************/
 
     struct RIOCryptoOutmeta {
+        char meta_filename[2048];
         char hasher_filename[2048];
         int lastcount;
         struct RIO * meta;
@@ -51,11 +52,10 @@ extern "C" {
                                                   const int groupid)
     {
         TODO("use system constants for size")
-        char buffer[2048];
-        size_t res = snprintf(buffer, sizeof(buffer), "%s%s%s", path, filename, extension);
+        size_t res = snprintf(self->meta_filename, sizeof(self->meta_filename), "%s%s%s", path, filename, extension);
         size_t res2 = snprintf(self->hasher_filename, sizeof(self->hasher_filename), "%s%s%s", hash_path, filename, extension);
-        if (res >= sizeof(buffer)){
-            LOG(LOG_ERR, "CryptoOutMeta failed : filename too long for %s\n", buffer);
+        if (res >= sizeof(self->meta_filename)){
+            LOG(LOG_ERR, "CryptoOutMeta failed : filename too long for %s\n", self->meta_filename);
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
         if (res2 >= sizeof(self->hasher_filename)){
@@ -64,25 +64,25 @@ extern "C" {
         }
 
         RIO_ERROR status = RIO_ERROR_OK;
-        RIO * meta = rio_new_crypto(&status, buffer, O_WRONLY);
+        RIO * meta = rio_new_crypto(&status, self->meta_filename, O_WRONLY);
         if (status != RIO_ERROR_OK){
             return status;
         }
 
-        if (chmod(buffer, S_IRUSR|S_IRGRP) == -1){
-            LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", buffer, strerror(errno), errno);
+        if (chmod(self->meta_filename, S_IRUSR|S_IRGRP) == -1){
+            LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", self->meta_filename, strerror(errno), errno);
         }
 
         SQ * sequence = sq_new_cryptoouttracker(&status, meta, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3, groupid);
         if (status != RIO_ERROR_OK){
-            LOG(LOG_ERR, "CryptoOutMeta failed : tracker creation failed for %s\n", buffer);
+            LOG(LOG_ERR, "CryptoOutMeta failed : tracker creation failed for %s\n", self->meta_filename);
             rio_delete(meta);
             return status;
         }
 
         RIO * out = rio_new_outsequence(&status, sequence);
         if (status != RIO_ERROR_OK){
-            LOG(LOG_ERR, "CryptoOutMeta failed : outsequence creation failed for %s\n", buffer);
+            LOG(LOG_ERR, "CryptoOutMeta failed : outsequence creation failed for %s\n", self->meta_filename);
             sq_delete(sequence);
             rio_delete(meta);
             return status;
@@ -184,6 +184,62 @@ extern "C" {
     static inline RIO_ERROR rio_m_RIOCryptoOutmeta_get_status(RIOCryptoOutmeta * self)
     {
         return rio_get_status(self->out);
+    }
+
+    /* This method deallocate and remove any space used for subfields if any
+    */
+    inline RIO_ERROR rio_m_RIOCryptoOutmeta_full_clear(RIOCryptoOutmeta * self)
+    {
+        rio_delete(self->out);
+
+        sq_clear(self->seq);
+        sq_cryptoouttracker_unlink(self->seq);
+        free(self->seq);
+
+        if (self->meta){
+            unsigned char hash[HASH_LEN];
+            size_t        res_len;
+            char          path[1024] = {};
+            char          basename[1024] = {};
+            char          extension[256] = {};
+            char          filename[2048] = {};
+
+            canonical_path(self->hasher_filename, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+            snprintf(filename, sizeof(filename), "%s%s", basename, extension);
+
+            TODO("check if sign returns some error");
+            rio_sign(self->meta, hash, sizeof(hash), &res_len);
+
+            TODO("check errors when storing hash")
+            RIOCrypto hasher;
+            RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->hasher_filename, O_WRONLY);
+            if (status != RIO_ERROR_OK){
+                LOG(LOG_ERR, "Failed to open hash file %s\n", self->hasher_filename);
+            }
+            else {
+                ssize_t sent_len;
+                if (((sent_len = rio_m_RIOCrypto_send(&hasher, filename, strlen(filename))) < 0) ||
+                    ((sent_len = rio_m_RIOCrypto_send(&hasher, " ", 1)) < 0) ||
+                    ((sent_len = rio_m_RIOCrypto_send(&hasher, hash, res_len)) < 0)) {
+                    LOG(LOG_ERR, "Failed writing signature to hash file %s [%u]\n", self->hasher_filename, -res_len);
+                }
+                else {
+                    rio_m_RIOCrypto_destructor(&hasher);
+                }
+
+                if (chmod(self->hasher_filename, S_IRUSR|S_IRGRP) == -1){
+                    LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", self->hasher_filename, strerror(errno), errno);
+                }
+            }
+            TODO("check if close returns some error");
+            rio_delete(self->meta);
+            self->meta = NULL;
+        }
+
+        unlink(self->hasher_filename);
+        unlink(self->meta_filename);
+
+        return RIO_ERROR_CLOSED;
     }
 };
 

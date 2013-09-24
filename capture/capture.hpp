@@ -29,7 +29,7 @@
 #include "nativecapture.hpp"
 
 #include "wait_obj.hpp"
-#include "RDP/rdp_cursor.hpp"
+#include "RDP/caches/pointer.hpp"
 
 class Capture : public RDPGraphicDevice {
 public:
@@ -158,6 +158,16 @@ public:
         delete this->drawable;
 
         clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
+    }
+
+    void request_full_cleaning()
+    {
+        if (this->enable_file_encryption == false) {
+            this->wrm_trans->request_full_cleaning();
+        }
+        else {
+            this->crypto_wrm_trans->request_full_cleaning();
+        }
     }
 
     void pause() {
@@ -315,7 +325,7 @@ public:
         }
     }
 
-        virtual void server_set_pointer(const rdp_cursor & cursor)
+        virtual void server_set_pointer(const pointer_item & cursor)
         {
         int cache_idx = 0;
         switch (this->ptr_cache.add_pointer(cursor.data,

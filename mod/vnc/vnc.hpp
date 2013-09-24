@@ -39,7 +39,7 @@
 #include "channel_list.hpp"
 
 #include "RDP/clipboard.hpp"
-#include "RDP/rdp_cursor.hpp"
+#include "RDP/caches/pointer.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -444,7 +444,7 @@ struct mod_vnc : public mod_api {
         }
 
 //        /* set almost null cursor, this is the little dot cursor */
-        struct rdp_cursor cursor;
+        struct pointer_item cursor;
         cursor.x = 3;
         cursor.y = 3;
         memset(cursor.data + 31 * (32 * 3), 0xff, 9);
@@ -806,7 +806,7 @@ struct mod_vnc : public mod_api {
                 const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
                 const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
 
-                struct rdp_cursor cursor;
+                struct pointer_item cursor;
                 cursor.x = 3;
                 cursor.y = 3;
 

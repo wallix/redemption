@@ -164,6 +164,7 @@ public:
             if (this->verbose & 0x4) {
                 LOG(LOG_INFO, "auth::get_mod_from_protocol RDP (connected)");
             }
+
             this->remove_mod();
             this->connected = false;
 

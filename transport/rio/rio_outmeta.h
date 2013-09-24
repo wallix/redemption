@@ -31,6 +31,7 @@ extern "C" {
         struct RIO * meta;
         struct SQ * seq;
         struct RIO * out;
+        char meta_filename[2048];
         int fd;
     };
 
@@ -44,22 +45,24 @@ extern "C" {
                                                   const int groupid)
     {
         TODO("use system constants for size")
-        char buffer[2048];
-        size_t res = snprintf(buffer, sizeof(buffer), "%s%s%s", path, filename, extension);
-        if (res >= sizeof(buffer)){
+        size_t res = snprintf(self->meta_filename,
+            sizeof(self->meta_filename), "%s%s%s", path, filename, extension);
+        if (res >= sizeof(self->meta_filename)){
             return RIO_ERROR_FILENAME_TOO_LONG;
         }
-        int fd = ::open(buffer, O_WRONLY|O_CREAT, S_IRUSR);
+        int fd = ::open(self->meta_filename, O_WRONLY|O_CREAT, S_IRUSR);
         if (fd < 0){
             return RIO_ERROR_CREAT;
         }
         self->fd = fd;
         if (groupid){
-//            if (chown(buffer, (uid_t)-1, groupid) < 0){
-//                LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", buffer, groupid, strerror(errno), errno);
+//            if (chown(self->meta_filename, (uid_t)-1, groupid) < 0){
+//                LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]",
+//                    self->meta_filename, groupid, strerror(errno), errno);
 //            }
-            if (chmod(buffer, S_IRUSR|S_IRGRP) == -1){
-                LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", buffer, strerror(errno), errno);
+            if (chmod(self->meta_filename, S_IRUSR|S_IRGRP) == -1){
+                LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]",
+                    self->meta_filename, strerror(errno), errno);
             }
         }
 
@@ -137,6 +140,24 @@ extern "C" {
     static inline RIO_ERROR rio_m_RIOOutmeta_get_status(RIOOutmeta * self)
     {
         return rio_get_status(self->out);
+    }
+
+    /* This method deallocate and remove any space used for subfields if any
+    */
+    inline RIO_ERROR rio_m_RIOOutmeta_full_clear(RIOOutmeta * self)
+    {
+        rio_delete(self->out);
+
+        sq_clear(self->seq);
+        sq_outtracker_unlink(self->seq);
+        free(self->seq);
+
+        rio_delete(self->meta);
+        close(self->fd);
+
+        unlink(self->meta_filename);
+
+        return RIO_ERROR_CLOSED;
     }
 };
 

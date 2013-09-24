@@ -110,7 +110,7 @@ public:
 
     virtual void set_mod_palette(const BGRPalette & palette) {}
 
-    virtual void server_set_pointer(const rdp_cursor & cursor){}
+    virtual void server_set_pointer(const pointer_item & cursor){}
 
     virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
                                  , uint32_t bgcolor, const Rect & clip) {}
@@ -124,7 +124,7 @@ public:
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
             LOG(LOG_INFO, "========================================\n");
         }
-        return 0;
+        return 1;
     }
 
     void dump_png(const char * prefix) {

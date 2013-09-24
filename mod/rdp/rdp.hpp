@@ -58,7 +58,7 @@
 #include "RDP/protocol.hpp"
 #include "RDP/RefreshRectPDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
-#include "RDP/rdp_cursor.hpp"
+#include "RDP/caches/pointer.hpp"
 
 #include "genrandom.hpp"
 
@@ -121,7 +121,7 @@ struct mod_rdp : public mod_api {
     } connection_finalization_state;
 
     int state;
-    struct rdp_cursor cursors[32];
+    struct pointer_item cursors[32];
     const bool console_session;
     const int brush_cache_code;
     const uint8_t front_bpp;
@@ -3674,15 +3674,13 @@ public:
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
 
-        struct rdp_cursor * cursor = this->cursors + cache_idx;
-        memset(cursor, 0, sizeof(struct rdp_cursor));
-
-        TODO("CGR: move that to rdp_cursor")
+        struct pointer_item * cursor = this->cursors + cache_idx;
+        memset(cursor, 0, sizeof(struct pointer_item));
 
         cursor->x      = stream.in_uint16_le();
         cursor->y      = stream.in_uint16_le();
-        cursor->width  = stream.in_uint16_le();
-        cursor->height = stream.in_uint16_le();
+        int cursor_width  = stream.in_uint16_le();
+        int cursor_height = stream.in_uint16_le();
         unsigned mlen  = stream.in_uint16_le(); /* mask length */
         unsigned dlen  = stream.in_uint16_le(); /* data length */
 
@@ -3711,10 +3709,10 @@ public:
         if (cache_idx < 0){
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
         }
-        if (cache_idx >= (int)(sizeof(this->cursors) / sizeof(rdp_cursor))) {
+        if (cache_idx >= (int)(sizeof(this->cursors) / sizeof(pointer_item))) {
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
-        struct rdp_cursor* cursor = this->cursors + cache_idx;
+        struct pointer_item* cursor = this->cursors + cache_idx;
         this->front.server_set_pointer(*cursor);
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -3730,7 +3728,7 @@ public:
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
-                struct rdp_cursor cursor;
+                struct pointer_item cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
                 this->set_pointer_display();
@@ -3776,8 +3774,7 @@ public:
         }
     }
 
-    void to_regular_pointer(Stream & stream, unsigned dlen, uint8_t bpp,
-            uint8_t * data, size_t target_data_len) {
+    void to_regular_pointer(Stream & stream, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
@@ -3849,30 +3846,30 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_CACHE_NOT_OK);
         }
 
-        struct rdp_cursor * cursor = this->cursors + cache_idx;
-        memset(cursor, 0, sizeof(struct rdp_cursor));
+        struct pointer_item * cursor = this->cursors + cache_idx;
+        memset(cursor, 0, sizeof(struct pointer_item));
 
         cursor->x      = stream.in_uint16_le();
         cursor->y      = stream.in_uint16_le();
-        cursor->width  = stream.in_uint16_le();
-        cursor->height = stream.in_uint16_le();
+        int cursor_width  = stream.in_uint16_le();
+        int cursor_height = stream.in_uint16_le();
         unsigned mlen  = stream.in_uint16_le(); /* mask length */
         unsigned dlen  = stream.in_uint16_le(); /* data length */
         if (this->verbose & 4) {
             LOG(LOG_INFO,
                 ">>> data_bpp=%u, width=%u, height=%u mlen=%u dlen=%u",
-                data_bpp, cursor->width, cursor->height, mlen, dlen);
+                data_bpp, cursor_width, cursor_height, mlen, dlen);
         }
 
         // Fix bug TSC.
-        if (cursor->x >= cursor->width)
+        if (cursor->x >= cursor_width)
             cursor->x = 0;
-        if (cursor->y >= cursor->height)
+        if (cursor->y >= cursor_height)
             cursor->y = 0;
 
         size_t out_data_len =
-            (bpp == 1) ? (cursor->width * cursor->height) / 8 :
-            (bpp == 4) ? (cursor->width * cursor->height) / 2 :
+            (bpp == 1) ? (cursor_width * cursor_height) / 8 :
+            (bpp == 4) ? (cursor_width * cursor_height) / 2 :
             (dlen * 3) / nbbytes(data_bpp);
 
         if ((mlen > sizeof(cursor->mask)) ||
@@ -3880,7 +3877,7 @@ public:
             LOG(LOG_WARNING,
                 "mod_rdp::Bad length for color pointer mask_len=%u "
                     "data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
-                (unsigned)mlen, (unsigned)dlen, cursor->width, cursor->height,
+                (unsigned)mlen, (unsigned)dlen, cursor_width, cursor_height,
                 data_bpp, out_data_len, nbbytes(data_bpp));
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
