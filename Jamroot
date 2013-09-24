@@ -231,8 +231,8 @@ exe rgx_cmp : ftests/rgx_cmp.cpp ;
 
 import testing ;
 
-unit-test test_stream : tests/utils/test_stream.cpp openssl libboost_unit_test ;
-unit-test test_stream : tests/utils/test_stream.cpp openssl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_stream : tests/utils/test_stream.cpp openssl crypto png z dl libboost_unit_test ;
+unit-test test_stream : tests/utils/test_stream.cpp openssl crypto png z dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test ;
 unit-test test_utf : tests/utils/test_utf.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -387,8 +387,8 @@ unit-test test_virchan : tests/core/RDP/capabilities/test_virchan.cpp libboost_u
 unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp libboost_unit_test ;
 unit-test test_GraphicUpdatePDU : tests/core/RDP/test_GraphicUpdatePDU.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp openssl libboost_unit_test ;
-unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp openssl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp openssl crypto png z dl libboost_unit_test ;
+unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp openssl crypto png z dl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test ;
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -613,7 +613,7 @@ unit-test test_rdp : tests/mod/rdp/test_rdp.cpp png openssl crypto d3des z dl li
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp z png openssl crypto libboost_unit_test ;
 unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp png openssl crypto d3des z dl libboost_unit_test ;
 unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp png openssl crypto d3des z dl libboost_unit_test ;
-unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp openssl crypto d3des z dl libboost_unit_test ;
+unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp png openssl crypto d3des z dl libboost_unit_test ;
 unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
 unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp d3des openssl crypto z dl png libboost_unit_test ;
 unit-test test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk.cpp d3des openssl crypto z dl png libboost_unit_test ;
