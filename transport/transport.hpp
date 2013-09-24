@@ -47,13 +47,20 @@
 class Transport {
 public:
     timeval future;
+
     uint32_t seqno;
+
     uint64_t total_received;
     uint64_t last_quantum_received;
+
     uint64_t total_sent;
     uint64_t last_quantum_sent;
+
     uint64_t quantum_count;
+
     bool status;
+
+    bool full_cleaning_requested;
 
     Transport() :
         seqno(0),
@@ -62,7 +69,8 @@ public:
         total_sent(0),
         last_quantum_sent(0),
         quantum_count(0),
-        status(true)
+        status(true),
+        full_cleaning_requested(false)
     {}
 
     virtual ~Transport()
@@ -141,6 +149,11 @@ public:
     {
         this->seqno++;
         return true;
+    }
+
+    virtual void request_full_cleaning()
+    {
+        this->full_cleaning_requested = true;
     }
 };
 

@@ -1340,6 +1340,26 @@ void rio_clear(RIO * rt)
     /* after a close any subsequent call to recv/send/etc. raise an error */
 }
 
+void rio_full_clear(RIO * rt)
+{
+    if (rt->err != RIO_ERROR_OK){
+        return;
+    }
+
+    switch(rt->rt_type)
+    {
+        case RIO_TYPE_OUTMETA:
+            rt->err = rio_m_RIOOutmeta_full_clear(&(rt->u.outmeta));
+        break;
+        case RIO_TYPE_CRYPTOOUTMETA:
+            rt->err = rio_m_RIOCryptoOutmeta_full_clear(&(rt->u.cryptooutmeta));
+        break;
+        default:
+            REDASSERT(false);
+            rt->err = RIO_ERROR_OK;
+    }
+}
+
 RIO_ERROR rio_sign(RIO * rt, unsigned char * buf, size_t size, size_t * len)
 {
     /* if transport goes into error state it should be immediately flushed and closed (if it means something)
@@ -1415,7 +1435,7 @@ inline ssize_t sq_outfilename_filesize(const SQ * seq, uint32_t count)
 {
     char filename[1024];
     sq_im_SQOutfilename_get_name(&(seq->u.outfilename), filename, sizeof(filename), count);
-    return ::filesize(filename);
+    return filesize(filename);
 }
 
 inline ssize_t sq_outfilename_unlink(SQ * seq, uint32_t count)
@@ -1423,9 +1443,28 @@ inline ssize_t sq_outfilename_unlink(SQ * seq, uint32_t count)
     char filename[1024];
     sq_m_SQOutfilename_destructor(&(seq->u.outfilename));
     sq_im_SQOutfilename_get_name(&(seq->u.outfilename), filename, sizeof(filename), count);
-    int status = ::unlink(filename);
+    int status = unlink(filename);
     if (status < 0){
         LOG(LOG_INFO, "removing file \"%s\" failed. Error [%u] : %s\n", filename, errno, strerror(errno));
+    }
+    return status;
+}
+
+inline ssize_t sq_outtracker_unlink(SQ * seq)
+{
+    sq_m_SQOuttracker_destructor(&seq->u.outtracker);
+    char filename[1024];
+    int  status = 0;
+    for (int i = static_cast<int>(seq->u.outtracker.count); i >= 0; i--)
+    {
+        sq_im_SQOuttracker_get_name(&seq->u.outtracker, filename, sizeof(filename), i);
+
+        int s = unlink(filename);
+        if (s < 0)
+        {
+            LOG(LOG_INFO, "removing file %s failed. Error [%u] : %s\n", filename, errno, strerror(errno));
+            status = s;
+        }
     }
     return status;
 }
@@ -1439,16 +1478,36 @@ inline ssize_t sq_cryptooutfilename_filesize(const SQ * seq, uint32_t count)
 {
     char filename[1024];
     sq_im_SQCryptoOutfilename_get_name(&(seq->u.cryptooutfilename), filename, sizeof(filename), count);
-    return ::filesize(filename);
+    return filesize(filename);
 }
 
-inline ssize_t sq_cryptooutfilename_unlink(const SQ * seq, uint32_t count)
+inline ssize_t sq_cryptooutfilename_unlink(SQ * seq, uint32_t count)
 {
     char filename[1024];
+    sq_m_SQCryptoOutfilename_destructor(&(seq->u.cryptooutfilename));
     sq_im_SQCryptoOutfilename_get_name(&(seq->u.cryptooutfilename), filename, sizeof(filename), count);
-    int status = ::unlink(filename);
+    int status = unlink(filename);
     if (status < 0){
         LOG(LOG_INFO, "removing file %s failed. Error [%u] : %s\n", filename, errno, strerror(errno));
+    }
+    return status;
+}
+
+inline ssize_t sq_cryptoouttracker_unlink(SQ * seq)
+{
+    sq_m_SQCryptoOuttracker_destructor(&seq->u.cryptoouttracker);
+    char filename[1024];
+    int  status = 0;
+    for (int i = static_cast<int>(seq->u.cryptoouttracker.count); i >= 0; i--)
+    {
+        sq_im_SQCryptoOuttracker_get_name(&seq->u.cryptoouttracker, filename, sizeof(filename), i);
+
+        int s = unlink(filename);
+        if (s < 0)
+        {
+            LOG(LOG_INFO, "removing file %s failed. Error [%u] : %s\n", filename, errno, strerror(errno));
+            status = s;
+        }
     }
     return status;
 }

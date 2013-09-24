@@ -207,6 +207,9 @@ extern "C" {
 
     RIO * rio_new_crypto(RIO_ERROR * error, const char * file, int oflag);
     RIO_ERROR rio_init_crypto(RIO * self, const char * file, int oflag);
+
+    ssize_t sq_outtracker_unlink(SQ * seq);
+    ssize_t sq_cryptoouttracker_unlink(SQ * seq);
 }
 
 #endif

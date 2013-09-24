@@ -81,7 +81,7 @@ enum {
 class Front : public FrontAPI {
     using FrontAPI::draw;
 public:
-    enum {
+    enum CaptureState {
           CAPTURE_STATE_UNKNOWN
         , CAPTURE_STATE_STARTED
         , CAPTURE_STATE_PAUSED
@@ -297,6 +297,16 @@ public:
             else {
                 LOG(LOG_INFO, "Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
 
+                if (this->capture)
+                {
+                    CaptureState original_capture_state = this->capture_state;
+
+                    this->stop_capture();
+                    this->start_capture(width, height, *this->ini);
+
+                    this->capture_state = original_capture_state;
+                }
+
                 this->client_info.width = width;
                 this->client_info.height = height;
 
@@ -400,7 +410,6 @@ public:
                             font_item->height,
                             font_item->data);
 
-//                        this->draw(cmd);
                         this->orders->draw(cmd);
 
                         if (  this->capture
@@ -433,7 +442,6 @@ public:
                 // brush
                 RDPBrush(0, 0, 3, 0xaa,
                     (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-    //            this->brush,
                 x,  // glyph_x
                 y + total_height, // glyph_y
                 part_len * 2, // data_len in bytes
@@ -475,7 +483,9 @@ public:
             strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, "");          // extension is currently ignored
-            canonical_path(ini.globals.movie_path.get_cstr(), path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+            canonical_path(ini.globals.movie_path.get_cstr(), path,
+                sizeof(path), basename, sizeof(basename), extension,
+                sizeof(extension));
             this->capture = new Capture( now, width, height
                                        , ini.video.record_path
                                        , ini.video.record_tmp_path
@@ -509,7 +519,6 @@ public:
         this->capture->resume();
         this->capture->capture_event.set();
         this->capture_state = CAPTURE_STATE_STARTED;
-
     }
 
     void update_config(Inifile & ini){
