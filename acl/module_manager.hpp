@@ -45,6 +45,8 @@
 #include "internal/rwl_login_mod.hpp"
 #include "front.hpp"
 
+#include "internal/flat_login_mod.hpp"
+
 enum {
     MODULE_EXIT,
     MODULE_WAITING,
@@ -536,7 +538,8 @@ public:
                     strcpy(this->ini.account.username, buffer);
                 }
 
-                this->mod = new LoginMod(
+                this->mod = // new FlatLoginMod(
+                            new LoginMod(
                                          this->ini,
                                          this->front,
                                          this->front.client_info.width,
