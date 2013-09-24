@@ -29,7 +29,7 @@
 #include "nativecapture.hpp"
 
 #include "wait_obj.hpp"
-#include "RDP/rdp_cursor.hpp"
+#include "RDP/caches/pointer.hpp"
 
 class Capture : public RDPGraphicDevice {
 public:
@@ -315,7 +315,7 @@ public:
         }
     }
 
-        virtual void server_set_pointer(const rdp_cursor & cursor)
+        virtual void server_set_pointer(const pointer_item & cursor)
         {
         int cache_idx = 0;
         switch (this->ptr_cache.add_pointer(cursor.data,

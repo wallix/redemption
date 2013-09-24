@@ -771,7 +771,7 @@ struct FileToGraphic
 
                 if (  chunk_size - 8 /*header(8)*/
                     > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
-                    struct rdp_cursor cursor;
+                    struct pointer_item cursor(POINTER_NULL);
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -786,7 +786,7 @@ struct FileToGraphic
                 }
                 else {
                     pointer_item & pi = this->ptr_cache.pointer_items[cache_idx];
-                    rdp_cursor cursor;
+                    pointer_item cursor(POINTER_NULL);
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));

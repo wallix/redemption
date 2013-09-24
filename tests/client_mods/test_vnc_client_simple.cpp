@@ -39,7 +39,7 @@
 #include "front_api.hpp"
 #include "client_info.hpp"
 #include "vnc/vnc.hpp"
-#include "RDP/rdp_cursor.hpp"
+#include "RDP/caches/pointer.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
-        virtual void server_set_pointer(const rdp_cursor & cursor)
+        virtual void server_set_pointer(const pointer_item & cursor)
         {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");

@@ -323,7 +323,7 @@ public:
         return res;
     }
 
-    void server_set_pointer(const rdp_cursor & cursor)
+    void server_set_pointer(const pointer_item & cursor)
     {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor.data,
