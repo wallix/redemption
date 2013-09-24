@@ -158,7 +158,7 @@ static inline const char * TR(const char * key) {
         res = trans.at(key);
     }
     catch (const std::out_of_range & oor) {
-        LOG(LOG_INFO, "Translation not found for %s", key);
+        LOG(LOG_INFO, "Translation not found for '%s'", key);
     }
     return res;
 };

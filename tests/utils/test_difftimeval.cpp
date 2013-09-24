@@ -28,6 +28,43 @@
 #include "log.hpp"
 #include "difftimeval.hpp"
 
+BOOST_AUTO_TEST_CASE(TestUstime)
+{
+    uint64_t res = 0L;
+    timeval timev;
+    timev.tv_sec = 0;
+    timev.tv_usec = 0;
+    res = ustime(timev);
+    BOOST_CHECK_EQUAL(res, 0L);
+
+    timev.tv_sec = 0;
+    timev.tv_usec = 57321;
+    res = ustime(timev);
+    BOOST_CHECK_EQUAL(res, 57321L);
+
+
+    timev.tv_sec = 489435;
+    timev.tv_usec = 0;
+    res = ustime(timev);
+    BOOST_CHECK_EQUAL(res, 489435000000L);
+
+    timev.tv_sec = 1520;
+    timev.tv_usec = 254321;
+
+    res = ustime(timev);
+    BOOST_CHECK_EQUAL(res,  1520254321L);
+
+}
+
+BOOST_AUTO_TEST_CASE(TestTvtimeustime)
+{
+    timeval restv = tvtime();
+    uint64_t resus = ustime();
+    BOOST_CHECK(restv.tv_usec > 0);
+    BOOST_CHECK(restv.tv_sec > 0);
+    BOOST_CHECK(resus > 0);
+}
+
 BOOST_AUTO_TEST_CASE(TestUsecToTimeval)
 {
     uint64_t usec = 0L;
@@ -276,6 +313,67 @@ BOOST_AUTO_TEST_CASE(Testaddtimeval)
     sym = addtimeval(time2, time1);
     BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
     BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+}
+
+BOOST_AUTO_TEST_CASE(TestHowLongToWait)
+{
+    timeval time1, time2;
+    timeval res, sym;
+
+    time1.tv_sec  = 0;
+    time1.tv_usec = 0;
+    time2 = time1;
+    res = how_long_to_wait(time1, time2);
+    BOOST_CHECK_EQUAL(res.tv_sec, 0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 0);
+    sym = how_long_to_wait(time2, time1);
+    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+
+
+    time1.tv_sec  = 3457;
+    time1.tv_usec = 215733;
+    res = how_long_to_wait(time1, time2);
+    BOOST_CHECK_EQUAL(res.tv_sec, 3457);
+    BOOST_CHECK_EQUAL(res.tv_usec, 215733);
+    sym = how_long_to_wait(time2, time1);
+    BOOST_CHECK_EQUAL(0, sym.tv_sec);
+    BOOST_CHECK_EQUAL(0, sym.tv_usec);
+
+    time2 = time1;
+    res = how_long_to_wait(time1, time2);
+    BOOST_CHECK_EQUAL(res.tv_sec, 0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 0);
+    sym = how_long_to_wait(time2, time1);
+    BOOST_CHECK_EQUAL(res.tv_sec, sym.tv_sec);
+    BOOST_CHECK_EQUAL(res.tv_usec, sym.tv_usec);
+
+
+    time2.tv_usec = 215733 + 457352;
+    res = how_long_to_wait(time2, time1);
+    BOOST_CHECK_EQUAL(res.tv_sec, 0);
+    BOOST_CHECK_EQUAL(res.tv_usec, 457352);
+
+    time2.tv_sec = 3457 + 54573;
+    res = how_long_to_wait(time2, time1);
+    BOOST_CHECK_EQUAL(res.tv_sec, 54573);
+    BOOST_CHECK_EQUAL(res.tv_usec, 457352);
+
+
+    time2.tv_usec = time1.tv_usec;
+    res = how_long_to_wait(time2, time1);
+    BOOST_CHECK_EQUAL(res.tv_sec, 54573);
+    BOOST_CHECK_EQUAL(res.tv_usec, 0);
+
+    time1.tv_sec  = 67235;
+    time1.tv_usec = 454324;
+    time2.tv_sec  = 421;
+    time2.tv_usec = 842136;
+    res = how_long_to_wait(time1, time2);
+    BOOST_CHECK_EQUAL(res.tv_sec, 66813);
+    BOOST_CHECK_EQUAL(res.tv_usec, 612188);
+
+
 }
 
 BOOST_AUTO_TEST_CASE(Testabsdifftimeval)

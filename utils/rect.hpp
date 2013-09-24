@@ -148,7 +148,7 @@ struct Rect {
     }
 
     Rect right_side() const {
-        return Rect(this->x + this->cx - 1, this->cy, 1, this->cy);
+        return Rect(this->x + this->cx - 1, this->y, 1, this->cy);
     }
 
     Rect intersect(uint16_t width, uint16_t height) const

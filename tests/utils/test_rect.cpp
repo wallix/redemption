@@ -125,6 +125,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(0, res.bottom());
     }
 
+
     {
         Rect i1(-10, -20, 110, 120);
         Rect i2(-5, -7, 155, 157);
@@ -323,5 +324,24 @@ BOOST_AUTO_TEST_CASE(TestRect)
     BOOST_CHECK_EQUAL(Rect(145, 200, 1054, 1), Rect(1198, 200, 1, 1).enlarge_to(145, 200));
     BOOST_CHECK_EQUAL(Rect(10, 10, 91, 91), Rect(10, 10, 1, 1).enlarge_to(100, 100));
     BOOST_CHECK_EQUAL(Rect(10, 10, 91, 91), Rect(100, 100, 1, 1).enlarge_to(10, 10));
+
+    BOOST_CHECK_EQUAL(Rect(10, 10, 20, 45).getCenteredX(), 20);
+
+    BOOST_CHECK_EQUAL(Rect(10, 10, 100, 50).getCenteredY(), 35);
+
+
+    BOOST_CHECK_EQUAL(Rect(0, 0, 20, 45), Rect(45, 57, 20, 45).wh());
+
+    BOOST_CHECK_EQUAL(Rect(20, 30, 50, 80).shrink(15), Rect(35, 45, 20, 50));
+
+    {
+        Rect r(10, 110, 10, 10);
+        BOOST_CHECK_EQUAL(r.upper_side(), Rect(10, 110, 10, 1));
+        BOOST_CHECK_EQUAL(r.left_side(), Rect(10, 110, 1, 10));
+        BOOST_CHECK_EQUAL(r.lower_side(), Rect(10, 119, 10, 1));
+        BOOST_CHECK_EQUAL(r.right_side(), Rect(19, 110, 1, 10));
+
+        BOOST_CHECK_EQUAL(r.intersect(15,115), Rect(10, 110, 5, 5));
+    }
 
 }
