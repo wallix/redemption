@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(TestUstime)
     timev.tv_sec = 489435;
     timev.tv_usec = 0;
     res = ustime(timev);
-    BOOST_CHECK_EQUAL(res, 489435000000L);
+    BOOST_CHECK_EQUAL(res, 489435000000LL);
 
     timev.tv_sec = 1520;
     timev.tv_usec = 254321;
