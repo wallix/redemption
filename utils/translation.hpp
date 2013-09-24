@@ -23,7 +23,7 @@
 
 #include <map>
 
-typedef map <const char *, const char *> trans_t;
+typedef std::map <const char *, const char *> trans_t;
 typedef enum {
     EN,
     FR,
@@ -31,16 +31,13 @@ typedef enum {
 } language_t;
 
 class Translation {
+private:
     language_t lang;
     trans_t en_map;
     trans_t fr_map;
-    // map <const char *, const char *> en_map;
-    // map <const char *, const char *> fr_map;
-
 
     void build_fr_map() {
         fr_map["login"] = "Identifiant";
-        fr_map["target"] = "Compte Cible";
         fr_map["password"] = "Mot de passe";
         fr_map["diagnostic"] = "Diagnostic";
         fr_map["connection_closed"] = "Connexion fermée";
@@ -52,10 +49,10 @@ class Translation {
         fr_map["username"] = "Utilisateur";
         fr_map["password_expire"] = "Votre mot de passe va bientôt expirer. Veuillez le changer";
         fr_map["protocol"] = "Protocole";
-        fr_map["target_group"] = "Groupe de cibles";
+        fr_map["target_group"] = "Groupe";
         fr_map["target"] = "Cible";
-        fr_map["close_time"] = "Date de cloture";
-        fr_map["logout"] = "Déconnection";
+        fr_map["close_time"] = "Date de clôture";
+        fr_map["logout"] = "Déconnexion";
         fr_map["apply"] = "Appliquer";
         fr_map["connect"] = "Connecter";
         fr_map["timeleft"] = "Temps restant";
@@ -75,7 +72,6 @@ class Translation {
     }
     void build_en_map() {
         en_map["login"] = "Login";
-        en_map["target"] = "Target";
         en_map["password"] = "Password";
         en_map["diagnostic"] = "Diagnostic";
         en_map["connection_closed"] = "Connection closed";
@@ -112,7 +108,6 @@ class Translation {
     }
 
 
-private:
     Translation()
         : lang(EN)
     {
@@ -137,7 +132,6 @@ public:
         return true;
     }
 
-    // map <const char *, const char *> & getmap() {
     trans_t & getmap() {
         switch(this->lang) {
         case EN:
@@ -158,15 +152,15 @@ public:
 
 static inline const char * TR(const char * key) {
 
-    // map <const char *, const char *> trans = TRANSLATIONCONF.getmap();
     trans_t trans = TRANSLATIONCONF.getmap();
+    const char * res = key;
     try {
-        return trans[key];
+        res = trans.at(key);
     }
-    catch (...) {
-        LOG(LOG_ERR, "Translation not found");
+    catch (const std::out_of_range & oor) {
+        LOG(LOG_INFO, "Translation not found for %s", key);
     }
-    return key;
+    return res;
 };
 
 #endif

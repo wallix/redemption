@@ -840,3 +840,6 @@ unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test gcov : <variant>
 
 unit-test test_base64 : tests/utils/test_base64.cpp libboost_unit_test ;
 unit-test test_base64 : tests/utils/test_base64.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_translation : tests/utils/test_translation.cpp libboost_unit_test ;
+unit-test test_translation : tests/utils/test_translation.cpp libboost_unit_test gcov : <variant>coverage ;
