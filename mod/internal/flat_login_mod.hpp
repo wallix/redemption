@@ -36,9 +36,9 @@ public:
 
     FlatLoginMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height)
-        , login(*this, width, height, this->screen, this, VERSION,
+        , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 ini.account.username[0] != 0,
-                0, 0, 0, WHITE, DARK_BLUE_WIN_BIS,
+                0, 0, 0, WHITE, DARK_BLUE_BIS,
                 ini.translation.login.get().c_str(),
                 ini.translation.password.get().c_str())
         , ini(ini)

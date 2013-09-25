@@ -559,37 +559,6 @@ public:
         }
 
 
-        // THIS IS EXPERIMENT
-        // int Bpp = 3;
-        // this->cx = (uint16_t)width;
-        // this->cy = (uint16_t)height;
-        // this->line_size = this->cx * Bpp;
-        // this->bmp_size = this->line_size * this->cy;
-
-        // this->data_bitmap.alloc(this->bmp_size);
-        // uint8_t * dest = this->data_bitmap.get() + (this->cy - 1) * this->line_size;
-
-
-        // for (size_t k = 0 ; k < this->cy ; ++k) {
-        //     png_read_row(png_ptr, dest, NULL);
-        //     dest -= this->line_size;
-        // }
-
-        // dest = this->data_bitmap.get() + (this->cy - 1) * this->line_size;
-        // for (unsigned y = 0; y < this->cy ; y++) {
-        //     for (unsigned x = 0 ; x < this->cy; x++) {
-        //         uint8_t tmp = *dest;
-        //         *dest = *(dest + 2);
-        //         *(dest + 2) = tmp;
-        //         dest += Bpp;
-        //     }
-        //     dest = this->data_bitmap.get() + (this->cy - y - 1) * this->line_size;
-        // }
-
-        // png_read_end(png_ptr, info_ptr);
-        // png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-        // fclose(fd);
-
         return true;
     } // bool open_png_file(const char * filename)
 

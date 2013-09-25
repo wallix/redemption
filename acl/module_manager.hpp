@@ -46,6 +46,7 @@
 #include "front.hpp"
 
 #include "internal/flat_login_mod.hpp"
+#include "internal/flat_selector_mod.hpp"
 
 enum {
     MODULE_EXIT,
@@ -440,7 +441,8 @@ public:
                 break;
             case MODULE_INTERNAL_WIDGET2_SELECTOR:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
-                this->mod = new SelectorMod(this->ini,
+                this->mod = new FlatSelectorMod(this->ini,
+                            // new SelectorMod(this->ini,
                                             this->front,
                                             this->front.client_info.width,
                                             this->front.client_info.height
@@ -539,8 +541,8 @@ public:
                     strcpy(this->ini.account.username, buffer);
                 }
 
-                this->mod = // new FlatLoginMod(
-                            new LoginMod(
+                this->mod = new FlatLoginMod(
+                            // new LoginMod(
                                          this->ini,
                                          this->front,
                                          this->front.client_info.width,

@@ -32,6 +32,8 @@
 #include "window_dialog.hpp"
 #include "screen.hpp"
 
+#include "flat_button.hpp"
+
 class FlatLogin : public WidgetParent
 {
 public:
@@ -42,7 +44,7 @@ public:
     WidgetPassword  password_edit;
     WidgetLabel version_label;
 
-    WidgetImage helpicon;
+    WidgetFlatButton helpicon;
     int fgcolor;
     int bgcolor;
 
@@ -61,7 +63,7 @@ public:
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
         , version_label(drawable, 0, 0, *this, NULL, caption, true, -15, fgcolor, bgcolor)
-        , helpicon(drawable, 0, 0, SHARE_PATH "/" HELP_ICON, *this, NULL, -10)
+        , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, WHITE, DARK_BLUE_BIS, 6, 2)
         , fgcolor(fgcolor)
         , bgcolor(bgcolor)
     {
@@ -109,8 +111,10 @@ public:
         this->version_label.set_xy((width - this->version_label.rect.cx) / 2,
                                    y_bbloc + this->img.rect.cy + 10);
 
-        this->helpicon.rect.x = width - 60;
-        this->helpicon.rect.y = height - 60;
+        this->helpicon.tab_flag = IGNORE_TAB;
+        this->helpicon.focus_flag = IGNORE_FOCUS;
+        this->helpicon.set_button_x(width - 60);
+        this->helpicon.set_button_y(height - 60);
 
     }
 
