@@ -25,8 +25,7 @@
 
 #include "rio.h"
 #include "netutils.hpp"
-#include </usr/include/openssl/ssl.h>
-#include </usr/include/openssl/err.h>
+#include "openssl_tls.hpp"
 
 extern "C" {
     struct RIOSocketTLS {

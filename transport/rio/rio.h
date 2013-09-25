@@ -23,7 +23,7 @@
 #ifndef _REDEMPTION_TRANSPORT_RIO_RIO_H_
 #define _REDEMPTION_TRANSPORT_RIO_RIO_H_
 
-#include </usr/include/openssl/ssl.h>
+#include "openssl_tls.hpp"
 
 extern "C" {
     typedef enum {

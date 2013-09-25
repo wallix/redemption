@@ -29,7 +29,7 @@
 #include "nativecapture.hpp"
 
 #include "wait_obj.hpp"
-#include "RDP/caches/pointer.hpp"
+#include "RDP/pointer.hpp"
 
 class Capture : public RDPGraphicDevice {
 public:
@@ -122,7 +122,7 @@ public:
             this->pnc->recorder.send_input = true;
         }
 
-        pointer_item pointer0(POINTER_CURSOR0);
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->ptr_cache.add_pointer_static(&pointer0, 0);
         if (this->drawable) {
             this->drawable->send_pointer(0,
@@ -131,7 +131,7 @@ public:
                                          pointer0.x,
                                          pointer0.y);
         }
-        pointer_item pointer1(POINTER_CURSOR1);
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
         this->ptr_cache.add_pointer_static(&pointer1, 1);
         if (this->drawable) {
             this->drawable->send_pointer(1,
@@ -325,7 +325,7 @@ public:
         }
     }
 
-        virtual void server_set_pointer(const pointer_item & cursor)
+        virtual void server_set_pointer(const Pointer & cursor)
         {
         int cache_idx = 0;
         switch (this->ptr_cache.add_pointer(cursor.data,
