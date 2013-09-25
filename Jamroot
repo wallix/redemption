@@ -74,6 +74,7 @@ lib gcov : : <name>gcov ;
 project redemption
     : requirements
     <include>main
+    <include>headers
     <include>mod
     <include>core
     <include>front

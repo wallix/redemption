@@ -50,10 +50,10 @@ public:
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
     {
-        pointer_item pointer0(POINTER_CURSOR0);
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->ptr_cache.add_pointer_static(&pointer0, 0);
 
-        pointer_item pointer1(POINTER_CURSOR1);
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
         this->ptr_cache.add_pointer_static(&pointer1, 1);
     }
 
@@ -449,17 +449,17 @@ public:
         this->ptr_cache.add_pointer_static_2(hotspot_x, hotspot_y, data, mask,
             cache_idx);
 
-        drawable_pointer_item & pointer_item = this->ptr_cache.pointer_items[cache_idx];
+        drawable_Pointer & Pointer = this->ptr_cache.Pointers[cache_idx];
         this->drawable.set_mouse_cursor(
-            pointer_item.contiguous_mouse_pixels, pointer_item.mouse_cursor,
-            pointer_item.x, pointer_item.y);
+            Pointer.contiguous_mouse_pixels, Pointer.mouse_cursor,
+            Pointer.x, Pointer.y);
     }
 
     virtual void set_pointer(int cache_idx) {
-        drawable_pointer_item & pointer_item = this->ptr_cache.pointer_items[cache_idx];
+        drawable_Pointer & Pointer = this->ptr_cache.Pointers[cache_idx];
         this->drawable.set_mouse_cursor(
-            pointer_item.contiguous_mouse_pixels, pointer_item.mouse_cursor,
-            pointer_item.x, pointer_item.y);
+            Pointer.contiguous_mouse_pixels, Pointer.mouse_cursor,
+            Pointer.x, Pointer.y);
     }
 
     virtual void dump_png24(Transport * trans, bool bgr) {

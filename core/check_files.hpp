@@ -68,7 +68,7 @@ static CheckFileList euser_check_file_list[] =
     { "",                       RECORD_PATH,     false, true,  false, false },
 
     // Directory.
-    { "",                       RECORD_TMP_PATH, false, true,  false, false },
+//    { "",                       RECORD_TMP_PATH, false, true,  false, false },
 
     { RDPPROXY_INI,             CFG_PATH,        true,  false, false, false },
     { RDPPROXY_KEY,             CFG_PATH,        true,  false, false, false },
@@ -165,14 +165,14 @@ struct CheckFile {
             if (*tmp_check_list->filename)
             {
                 LOG(LOG_ERR,
-                    "User (euid=%u guid=%u) has no %s access to file \"%s/%s\"",
+                    "User (euid=%u egid=%u) has no %s access to file \"%s/%s\"",
                     euid, egid, accessibility, tmp_check_list->directory,
                     tmp_check_list->filename);
             }
             else
             {
                 LOG(LOG_ERR,
-                    "User (euid=%u guid=%u) has no %s access to directory \"%s\"",
+                    "User (euid=%u egid=%u) has no %s access to directory \"%s\"",
                     euid, egid, accessibility, tmp_check_list->directory);
             }
         }
@@ -208,14 +208,14 @@ struct CheckFile {
                 if (*tmp_check_list->filename)
                 {
                     LOG(LOG_INFO,
-                        "File \"%s\" at \"%s\" is present and accessible by user (euid=%u guid=%u) ... yes",
+                        "File \"%s\" at \"%s\" is present and accessible by user (euid=%u egid=%u) ... yes",
                         tmp_check_list->filename, tmp_check_list->directory, euid,
                         egid);
                 }
                 else
                 {
                     LOG(LOG_INFO,
-                        "Directory \"%s\" is present and accessible by user (euid=%u guid=%u) ... yes",
+                        "Directory \"%s\" is present and accessible by user (euid=%u egid=%u) ... yes",
                         tmp_check_list->directory, euid, egid);
                 }
 
@@ -225,14 +225,14 @@ struct CheckFile {
             if (*tmp_check_list->filename)
             {
                 LOG(LOG_INFO,
-                    "User (euid=%u guid=%u) has no %s access to file \"%s/%s\"",
+                    "User (euid=%u egid=%u) has no %s access to file \"%s/%s\"",
                     euid, egid, accessibility, tmp_check_list->directory,
                     tmp_check_list->filename);
             }
             else
             {
                 LOG(LOG_INFO,
-                    "User (euid=%u guid=%u) has no %s access to directory \"%s\"",
+                    "User (euid=%u egid=%u) has no %s access to directory \"%s\"",
                     euid, egid, accessibility, tmp_check_list->directory);
             }
         }

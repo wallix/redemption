@@ -163,10 +163,10 @@ struct FileToGraphic
             }
         }
 
-        pointer_item pointer0(POINTER_CURSOR0);
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->ptr_cache.add_pointer_static(&pointer0, 0);
 
-        pointer_item pointer1(POINTER_CURSOR1);
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
         this->ptr_cache.add_pointer_static(&pointer1, 1);
     }
 
@@ -771,7 +771,7 @@ struct FileToGraphic
 
                 if (  chunk_size - 8 /*header(8)*/
                     > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
-                    struct pointer_item cursor(POINTER_NULL);
+                    struct Pointer cursor(Pointer::POINTER_NULL);
                     cursor.x = this->stream.in_uint8();
                     cursor.y = this->stream.in_uint8();
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
@@ -785,8 +785,8 @@ struct FileToGraphic
                     }
                 }
                 else {
-                    pointer_item & pi = this->ptr_cache.pointer_items[cache_idx];
-                    pointer_item cursor(POINTER_NULL);
+                    Pointer & pi = this->ptr_cache.Pointers[cache_idx];
+                    Pointer cursor(Pointer::POINTER_NULL);
                     cursor.x = pi.x;
                     cursor.y = pi.y;
                     memcpy(cursor.data, pi.data, sizeof(pi.data));

@@ -32,9 +32,8 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include </usr/include/openssl/ssl.h>
-#include </usr/include/openssl/err.h>
 
+#include "openssl_tls.hpp"
 #include "error.hpp"
 #include "log.hpp"
 #include "fileutils.hpp"

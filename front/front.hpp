@@ -333,7 +333,7 @@ public:
         return res;
     }
 
-    void server_set_pointer(const pointer_item & cursor)
+    void server_set_pointer(const Pointer & cursor)
     {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor.data,
@@ -611,7 +611,7 @@ public:
 
     void init_pointers()
     {
-        pointer_item pointer0(POINTER_CURSOR0);
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
         this->pointer_cache.add_pointer_static(&pointer0, 0);
         this->send_pointer(0,
                          pointer0.data,
@@ -619,7 +619,7 @@ public:
                          pointer0.x,
                          pointer0.y);
 
-        pointer_item pointer1(POINTER_CURSOR1);
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
         this->pointer_cache.add_pointer_static(&pointer1, 1);
         this->send_pointer(1,
                  pointer1.data,

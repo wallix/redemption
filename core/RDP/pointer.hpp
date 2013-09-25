@@ -18,42 +18,41 @@
    Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_CACHES_POINTER_HPP_
-#define _REDEMPTION_CORE_RDP_CACHES_POINTER_HPP_
+#ifndef _REDEMPTION_CORE_RDP_POINTER_HPP_
+#define _REDEMPTION_CORE_RDP_POINTER_HPP_
 
 #include <math.h>
 
 #include "drawable.hpp"
 #include "client_info.hpp"
 
-enum {
-    POINTER_NULL,
-    POINTER_CURSOR0,
-    POINTER_CURSOR1
-};
+struct Pointer {
+    enum {
+        POINTER_NULL,
+        POINTER_CURSOR0,
+        POINTER_CURSOR1
+    };
 
-
-struct pointer_item {
     // Bitmap sizes (in bytes)
-    enum { DATA_BITMAP_SIZE = 32 * 32 * 4 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x 32 bits
-         , MASK_BITMAP_SIZE = 32 * 32 / 8 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x  1 bit
+    enum { DATA_SIZE = 32 * 32 * 4 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x 32 bits
+         , MASK_SIZE = 32 * 32 / 8 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x  1 bit
     };
 
     int x; /* hotspot */
     int y;
 
-    uint8_t data[DATA_BITMAP_SIZE];
-    uint8_t mask[MASK_BITMAP_SIZE];
+    uint8_t data[DATA_SIZE];
+    uint8_t mask[MASK_SIZE];
 
-    pointer_item(uint8_t pointer_type = POINTER_NULL) {
+    Pointer(uint8_t pointer_type = POINTER_NULL) {
         switch (pointer_type) {
             default:
             case POINTER_NULL:
             {
                 this->x = 0; /* hotspot */
                 this->y = 0;
-                memset(this->data, 0, 32 * 32 * 3);
-                memset(this->mask, 0, 32 * 32 / 8);
+                memset(this->data, 0, DATA_SIZE);
+                memset(this->mask, 0, MASK_SIZE);
             }
             break;
 
@@ -222,9 +221,9 @@ struct pointer_item {
             }
             break;  // case POINTER_CURSOR1:
         }   // switch (pointer_type)
-    }   // pointer_item(uint8_t pointer_type)
+    }   // Pointer(uint8_t pointer_type)
 
-    ~pointer_item() {}
+    ~Pointer() {}
 };
 
 #endif

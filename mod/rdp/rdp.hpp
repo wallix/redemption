@@ -58,7 +58,7 @@
 #include "RDP/protocol.hpp"
 #include "RDP/RefreshRectPDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
-#include "RDP/caches/pointer.hpp"
+#include "RDP/pointer.hpp"
 
 #include "genrandom.hpp"
 
@@ -121,7 +121,7 @@ struct mod_rdp : public mod_api {
     } connection_finalization_state;
 
     int state;
-    struct pointer_item cursors[32];
+    struct Pointer cursors[32];
     const bool console_session;
     const int brush_cache_code;
     const uint8_t front_bpp;
@@ -3674,8 +3674,8 @@ public:
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
 
-        struct pointer_item * cursor = this->cursors + cache_idx;
-        memset(cursor, 0, sizeof(struct pointer_item));
+        struct Pointer * cursor = this->cursors + cache_idx;
+        memset(cursor, 0, sizeof(struct Pointer));
 
         cursor->x      = stream.in_uint16_le();
         cursor->y      = stream.in_uint16_le();
@@ -3709,10 +3709,10 @@ public:
         if (cache_idx < 0){
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
         }
-        if (cache_idx >= (int)(sizeof(this->cursors) / sizeof(pointer_item))) {
+        if (cache_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
-        struct pointer_item* cursor = this->cursors + cache_idx;
+        struct Pointer* cursor = this->cursors + cache_idx;
         this->front.server_set_pointer(*cursor);
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
@@ -3728,7 +3728,7 @@ public:
         switch (system_pointer_type) {
         case RDP_NULL_POINTER:
             {
-                struct pointer_item cursor;
+                struct Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
                 this->set_pointer_display();
@@ -3846,8 +3846,8 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_CACHE_NOT_OK);
         }
 
-        struct pointer_item * cursor = this->cursors + cache_idx;
-        memset(cursor, 0, sizeof(struct pointer_item));
+        struct Pointer * cursor = this->cursors + cache_idx;
+        memset(cursor, 0, sizeof(struct Pointer));
 
         cursor->x      = stream.in_uint16_le();
         cursor->y      = stream.in_uint16_le();
