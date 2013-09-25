@@ -176,10 +176,10 @@ class User(object):
         print "lines per page = ",_lines_per_page
         _start_of_page = _current_page * _lines_per_page
         _end_of_page = _start_of_page + _lines_per_page
-        answer['proto_dest'] = " ".join(all_protos[_start_of_page:_end_of_page])
+        answer['proto_dest'] = "\x01".join(all_protos[_start_of_page:_end_of_page])
         answer['end_time'] = ";".join(all_endtimes[_start_of_page:_end_of_page])
-        answer['target_login'] = " ".join(all_groups[_start_of_page:_end_of_page])
-        answer['target_device'] = " ".join(all_services[_start_of_page:_end_of_page])
+        answer['target_login'] = "\x01".join(all_groups[_start_of_page:_end_of_page])
+        answer['target_device'] = "\x01".join(all_services[_start_of_page:_end_of_page])
         answer['selector_number_of_pages'] = str(_number_of_pages)
         answer['selector_current_page'] = _current_page + 1
 

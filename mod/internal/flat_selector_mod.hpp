@@ -192,11 +192,11 @@ public:
         char * endtimes  = const_cast<char *>(this->ini.context.end_time.get_cstr());
 
         for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page.get(); index++) {
-            size_t size_groups = proceed_item(groups);
+            size_t size_groups = proceed_item(groups, '\x01');
             if (!size_groups)
                 break;
-            size_t size_targets = proceed_item(targets);
-            size_t size_protocols = proceed_item(protocols);
+            size_t size_targets = proceed_item(targets, '\x01');
+            size_t size_protocols = proceed_item(protocols, '\x01');
             size_t size_endtimes = proceed_item(endtimes, ';');
 
             char c_group = groups[size_groups];
