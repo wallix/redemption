@@ -5,7 +5,6 @@ mod/internal/widget2/window_wab_close 100 100
 mod/mod_api 100 100
 mod/null/null 100 100
 mod/rdp/rdp 100 100
-mod/rdp/rdp_cursor 100 100
 mod/rdp/rdp_orders 100 100
 mod/vnc/vnc 100 100
 mod/xup/xup 100 100

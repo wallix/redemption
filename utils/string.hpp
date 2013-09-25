@@ -28,6 +28,10 @@
 
 namespace redemption {
 
+
+TODO("remove this class. This is no better than C++ STL String class."
+     "Remove it completely or at least make it a thin wrapper over C++ String class."
+    )
 class string {
 protected:
     char static_buffer[STRING_STATIC_BUFFER_SIZE];
