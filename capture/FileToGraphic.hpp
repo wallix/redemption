@@ -164,10 +164,10 @@ struct FileToGraphic
         }
 
         Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->ptr_cache.add_pointer_static(&pointer0, 0);
+        this->ptr_cache.add_pointer_static(pointer0, 0);
 
         Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->ptr_cache.add_pointer_static(&pointer1, 1);
+        this->ptr_cache.add_pointer_static(pointer1, 1);
     }
 
     ~FileToGraphic()
@@ -777,8 +777,7 @@ struct FileToGraphic
                     stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
                     stream.in_copy_bytes(cursor.mask, 128);
 
-                    this->ptr_cache.add_pointer_static_2(cursor.x, cursor.y,
-                        cursor.data, cursor.mask, cache_idx);
+                    this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
                     for (size_t i = 0; i < this->nbconsumers; i++) {
                         this->consumers[i]->server_set_pointer(cursor);

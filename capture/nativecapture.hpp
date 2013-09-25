@@ -187,10 +187,8 @@ public:
         this->recorder.draw(bitmap_data, data, size, bmp);
     }
 
-    virtual void send_pointer(int cache_idx, const uint8_t * data,
-        const uint8_t * mask, int hotspot_x, int hotspot_y) {
-        this->recorder.send_pointer(cache_idx, data, mask,
-            hotspot_x, hotspot_y);
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) {
+        this->recorder.send_pointer(cache_idx, cursor);
     }
 
     virtual void set_pointer(int cache_idx) {

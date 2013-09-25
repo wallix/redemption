@@ -336,13 +336,9 @@ public:
     void server_set_pointer(const Pointer & cursor)
     {
         int cache_idx = 0;
-        switch (this->pointer_cache.add_pointer(cursor.data,
-                                                cursor.mask,
-                                                cursor.x,
-                                                cursor.y,
-                                                cache_idx)) {
+        switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, cursor.data, cursor.mask, cursor.x, cursor.y);
+            this->send_pointer(cache_idx, cursor);
         break;
         default:
         case POINTER_ALLREADY_SENT:
@@ -612,20 +608,12 @@ public:
     void init_pointers()
     {
         Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->pointer_cache.add_pointer_static(&pointer0, 0);
-        this->send_pointer(0,
-                         pointer0.data,
-                         pointer0.mask,
-                         pointer0.x,
-                         pointer0.y);
+        this->pointer_cache.add_pointer_static(pointer0, 0);
+        this->send_pointer(0, pointer0);
 
         Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->pointer_cache.add_pointer_static(&pointer1, 1);
-        this->send_pointer(1,
-                 pointer1.data,
-                 pointer1.mask,
-                 pointer1.x,
-                 pointer1.y);
+        this->pointer_cache.add_pointer_static(pointer1, 1);
+        this->send_pointer(1, pointer1);
     }
 
     virtual void begin_update()
@@ -940,12 +928,8 @@ public:
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    void GenerateColorPointerUpdateData(Stream & stream,
-                                        int cache_idx,
-                                        const uint8_t * data,
-                                        const uint8_t * mask,
-                                        int x,
-                                        int y) {
+    void GenerateColorPointerUpdateData(Stream & stream, int cache_idx, const Pointer & cursor) 
+    {
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
 //      number of cache entries is negotiated using the Pointer Capability Set
@@ -963,32 +947,32 @@ public:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(x);
+        stream.out_uint16_le(cursor.x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(y);
+        stream.out_uint16_le(cursor.y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
 
-        stream.out_uint16_le(32);
+        stream.out_uint16_le(cursor.width);
 
 //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
 //      in pixels (the maximum allowed pointer height is 32 pixels).
 
-        stream.out_uint16_le(32);
+        stream.out_uint16_le(cursor.height);
 
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the andMaskData field.
 
-        stream.out_uint16_le(128);
+        stream.out_uint16_le(cursor.mask_size());
 
 //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the xorMaskData field.
 
-        stream.out_uint16_le(32*32*3);
+        stream.out_uint16_le(cursor.data_size());
 
 //    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
 //      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -996,7 +980,7 @@ public:
 //      is being sent, then each scan-line will consume 10 bytes (3 pixels per
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(data, 32*32*3);
+        stream.out_copy_bytes(cursor.data, cursor.data_size());
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
 //      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
@@ -1004,33 +988,30 @@ public:
 //      is being sent, then each scan-line will consume 2 bytes (7 pixels per
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(mask, 128); /* mask */
+        stream.out_copy_bytes(cursor.mask, cursor.mask_size()); /* mask */
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
         stream.mark_end();
     }
 
-    virtual void send_pointer(int cache_idx, const uint8_t * data,
-            const uint8_t * mask, int hotspot_x, int hotspot_y) throw(Error) {
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) throw(Error) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)",
-                cache_idx, hotspot_x, hotspot_y);
+                cache_idx, cursor.x, cursor.y);
         }
 
         if (this->server_fastpath_update_support == false) {
             BStream stream(65536);
 
             ShareData sdata(stream);
-            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id,
-                RDP::STREAM_MED);
+            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
 
             // Payload
             stream.out_uint16_le(RDP_POINTER_COLOR);
             stream.out_uint16_le(0); /* pad */
 
-            GenerateColorPointerUpdateData(stream, cache_idx, data, mask,
-                hotspot_x, hotspot_y);
+            GenerateColorPointerUpdateData(stream, cache_idx, cursor);
 
             // Packet trailer
             sdata.emit_end();
@@ -1063,8 +1044,7 @@ public:
 
             stream.out_clear_bytes(header_size);    // Fast-Path Update (TS_FP_UPDATE structure) size
 
-            GenerateColorPointerUpdateData(stream, cache_idx, data, mask,
-                hotspot_x, hotspot_y);
+            GenerateColorPointerUpdateData(stream, cache_idx, cursor);
 
             SubStream Upd_s(stream, 0, header_size);
 
@@ -1088,8 +1068,7 @@ public:
 
         if (this->capture &&
             (this->capture_state == CAPTURE_STATE_STARTED)) {
-            this->capture->send_pointer(cache_idx, data, mask,
-                hotspot_x, hotspot_y);
+            this->capture->send_pointer(cache_idx, cursor);
         }
 
         if (this->verbose & 4) {

@@ -123,22 +123,14 @@ public:
         }
 
         Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->ptr_cache.add_pointer_static(&pointer0, 0);
+        this->ptr_cache.add_pointer_static(pointer0, 0);
         if (this->drawable) {
-            this->drawable->send_pointer(0,
-                                         pointer0.data,
-                                         pointer0.mask,
-                                         pointer0.x,
-                                         pointer0.y);
+            this->drawable->send_pointer(0, pointer0);
         }
         Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->ptr_cache.add_pointer_static(&pointer1, 1);
+        this->ptr_cache.add_pointer_static(pointer1, 1);
         if (this->drawable) {
-            this->drawable->send_pointer(1,
-                                         pointer1.data,
-                                         pointer1.mask,
-                                         pointer1.x,
-                                         pointer1.y);
+            this->drawable->send_pointer(1, pointer1);
         }
     }
 
@@ -328,13 +320,9 @@ public:
         virtual void server_set_pointer(const Pointer & cursor)
         {
         int cache_idx = 0;
-        switch (this->ptr_cache.add_pointer(cursor.data,
-                                            cursor.mask,
-                                            cursor.x,
-                                            cursor.y,
-                                            cache_idx)) {
+        switch (this->ptr_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, cursor.data, cursor.mask, cursor.x, cursor.y);
+            this->send_pointer(cache_idx, cursor);
         break;
         default:
         case POINTER_ALLREADY_SENT:
@@ -343,15 +331,12 @@ public:
         }
     }
 
-    virtual void send_pointer(int cache_idx, const uint8_t * data,
-        const uint8_t * mask, int hotspot_x, int hotspot_y) {
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) {
         if (this->capture_wrm) {
-            this->pnc->send_pointer(cache_idx, data, mask,
-                hotspot_x, hotspot_y);
+            this->pnc->send_pointer(cache_idx, cursor);
         }
         else if (this->capture_drawable) {
-            this->drawable->send_pointer(cache_idx, data, mask,
-                hotspot_x, hotspot_y);
+            this->drawable->send_pointer(cache_idx, cursor);
         }
     }
 

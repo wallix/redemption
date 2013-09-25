@@ -56,72 +56,50 @@ struct PointerCache {
         return 0;
     }
 
-    int add_pointer(const uint8_t * data, const uint8_t * mask, int x, int y, int & cache_idx) {
-        TODO(" see code below to avoid useless copy")
-        struct Pointer Pointer;
-
-        Pointer.x = x;
-        Pointer.y = y;
-        memcpy(Pointer.data, data, 32 * 32 * 3);
-        memcpy(Pointer.mask, mask, 32 * 32 / 8);
-        return this->add_pointer(&Pointer, cache_idx);
+    void add_pointer_static(const Pointer & cursor, int index) {
+        this->Pointers[index].x = cursor.x;
+        this->Pointers[index].y = cursor.y;
+        memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
+        memcpy(this->Pointers[index].mask, cursor.mask, cursor.mask_size());
+        this->stamps[index] = this->pointer_stamp;
     }
 
     /* check if the pointer is in the cache or not and if it should be sent      */
-    int add_pointer(struct Pointer * Pointer, int & cache_idx)
+    int add_pointer(const Pointer & cursor, int & cache_idx)
     {
         int i;
-        int oldest;
-        int index;
+        int oldest = 0x7fffffff;
+        int index = 2;
 
         this->pointer_stamp++;
         /* look for match */
         for (i = 2; i < this->pointer_cache_entries; i++) {
-            if (this->Pointers[i].x == Pointer->x &&
-                this->Pointers[i].y == Pointer->y &&
-                (memcmp(this->Pointers[i].data,
-                        Pointer->data, 32 * 32 * 3) == 0) &&
-                (memcmp(this->Pointers[i].mask,
-                        Pointer->mask, 32 * 32 / 8) == 0)) {
+            if (this->Pointers[i].x == cursor.x 
+            &&  this->Pointers[i].y == cursor.y 
+            &&  this->Pointers[i].width == cursor.width 
+            &&  this->Pointers[i].height == cursor.height 
+            &&  this->Pointers[i].bpp == cursor.bpp 
+            &&  (memcmp(this->Pointers[i].data, cursor.data, cursor.data_size()) == 0) 
+            &&  (memcmp(this->Pointers[i].mask, cursor.mask, cursor.mask_size()) == 0)) {
                 this->stamps[i] = this->pointer_stamp;
                 cache_idx = i;
                 return POINTER_ALLREADY_SENT;
             }
         }
         /* look for oldest */
-        index  = 2;
-        oldest = 0x7fffffff;
         for (i = 2; i < this->pointer_cache_entries; i++) {
             if (this->stamps[i] < oldest) {
                 oldest = this->stamps[i];
                 index  = i;
             }
         }
-        this->Pointers[index].x = Pointer->x;
-        this->Pointers[index].y = Pointer->y;
-        memcpy(this->Pointers[index].data, Pointer->data, 32 * 32 * 3);
-        memcpy(this->Pointers[index].mask, Pointer->mask, 32 * 32 / 8);
+        
         this->stamps[index] = this->pointer_stamp;
         cache_idx = index;
+        this->add_pointer_static(cursor, index);
         return POINTER_TO_SEND;
     }
 
-    void add_pointer_static(struct Pointer * Pointer, int index) {
-        this->Pointers[index].x = Pointer->x;
-        this->Pointers[index].y = Pointer->y;
-        memcpy(this->Pointers[index].data, Pointer->data, 32 * 32 * 3);
-        memcpy(this->Pointers[index].mask, Pointer->mask, 32 * 32 / 8);
-        this->stamps[index] = this->pointer_stamp;
-    }
-
-    void add_pointer_static_2(int hotspot_x, int hotspot_y,
-            const uint8_t * data, const uint8_t * mask, int index) {
-        this->Pointers[index].x = hotspot_x;
-        this->Pointers[index].y = hotspot_y;
-        memcpy(this->Pointers[index].data, data, 32 * 32 * 3);
-        memcpy(this->Pointers[index].mask, mask, 32 * 32 / 8);
-        this->stamps[index] = this->pointer_stamp;
-    }
 };  // struct PointerCache
 
 struct drawable_Pointer {
@@ -144,19 +122,14 @@ struct DrawablePointerCache {
         }
     }
 
-    void add_pointer_static(struct Pointer * Pointer, int index) {
-        this->add_pointer_static_2(Pointer->x, Pointer->y,
-            Pointer->data, Pointer->mask, index);
-    }
+    void add_pointer_static(const Pointer & cursor, int index) {
+        drawable_Pointer & dcursor = this->Pointers[index];
 
-    void add_pointer_static_2(int hotspot_x, int hotspot_y,
-            const uint8_t * data, const uint8_t * mask, int index) {
-        drawable_Pointer & Pointer = this->Pointers[index];
+        this->make_drawable_mouse_cursor(cursor.data, cursor.mask, dcursor);
 
-        this->make_drawable_mouse_cursor(data, mask, Pointer);
+        dcursor.x = cursor.x;
+        dcursor.y = cursor.y;
 
-        Pointer.x = hotspot_x;
-        Pointer.y = hotspot_y;
     }
 
 protected:

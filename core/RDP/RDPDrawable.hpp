@@ -51,10 +51,10 @@ public:
     : drawable(width, height)
     {
         Pointer pointer0(Pointer::POINTER_CURSOR0);
-        this->ptr_cache.add_pointer_static(&pointer0, 0);
+        this->ptr_cache.add_pointer_static(pointer0, 0);
 
         Pointer pointer1(Pointer::POINTER_CURSOR1);
-        this->ptr_cache.add_pointer_static(&pointer1, 1);
+        this->ptr_cache.add_pointer_static(pointer1, 1);
     }
 
     virtual void set_row(size_t rownum, const uint8_t * data)
@@ -443,16 +443,14 @@ public:
         this->drawable.draw_bitmap(trect, bmp, false);
     }
 
-    virtual void send_pointer(int cache_idx, const uint8_t * data,
-        const uint8_t * mask, int hotspot_x, int hotspot_y)
+    virtual void send_pointer(int cache_idx, const Pointer & cursor)
     {
-        this->ptr_cache.add_pointer_static_2(hotspot_x, hotspot_y, data, mask,
-            cache_idx);
+        this->ptr_cache.add_pointer_static(cursor, cache_idx);
 
-        drawable_Pointer & Pointer = this->ptr_cache.Pointers[cache_idx];
+        drawable_Pointer & dcursor = this->ptr_cache.Pointers[cache_idx];
         this->drawable.set_mouse_cursor(
-            Pointer.contiguous_mouse_pixels, Pointer.mouse_cursor,
-            Pointer.x, Pointer.y);
+            dcursor.contiguous_mouse_pixels, dcursor.mouse_cursor,
+            dcursor.x, dcursor.y);
     }
 
     virtual void set_pointer(int cache_idx) {

@@ -37,7 +37,14 @@ struct Pointer {
     enum { DATA_SIZE = 32 * 32 * 4 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x 32 bits
          , MASK_SIZE = 32 * 32 / 8 // maxHeight x maxWidth x bpp = 32 pixel x 32 pixel x  1 bit
     };
+    enum { 
+            MAX_WIDTH = 32
+          , MAX_HEIGHT = 32
+    };
 
+    unsigned bpp;
+    unsigned width;
+    unsigned height;
     int x; /* hotspot */
     int y;
 
@@ -49,8 +56,11 @@ struct Pointer {
             default:
             case POINTER_NULL:
             {
-                this->x = 0; /* hotspot */
+                this->x = 0;
                 this->y = 0;
+                this->width = 32;
+                this->height = 32;
+                this->bpp = 24;
                 memset(this->data, 0, DATA_SIZE);
                 memset(this->mask, 0, MASK_SIZE);
             }
@@ -60,6 +70,9 @@ struct Pointer {
             {
                 this->x = 0; /* hotspot */
                 this->y = 0;
+                this->width = 32;
+                this->height = 32;
+                this->bpp = 24;
                 const char * data_cursor0 =
                 /* 0000 */ "................................"
                 /* 0060 */ "................................"
@@ -95,7 +108,7 @@ struct Pointer {
                 /* 0ba0 */ "X..............................."
                 ;
                 uint8_t * tmp = this->data;
-                for (size_t i = 0 ; i < 32 * 32 ; i++) {
+                for (size_t i = 0 ; i < this->width * this->height ; i++) {
                     uint8_t v = (data_cursor0[i] == 'X') ? 0xFF : 0;
                     tmp[0] = tmp[1] = tmp[2] = v;
                     tmp += 3;
@@ -135,7 +148,7 @@ struct Pointer {
                 /* 0078 */ "\x3f\xff\xff\xff"
                            "\x7f\xff\xff\xff"
                 ;
-                memcpy(this->mask, mask_cursor0, 32 * 32 / 8);
+                memcpy(this->mask, mask_cursor0, this->width * this->height / 8);
             }
             break;  // case POINTER_CURSOR0:
 
@@ -143,6 +156,9 @@ struct Pointer {
             {
                 this->x = 15; /* hotspot */
                 this->y = 16;
+                this->width = 32;
+                this->height = 32;
+                this->bpp = 24;
                 const char * data_cursor1 =
                 /* 0000 */ "................................"
                 /* 0060 */ "................................"
@@ -178,7 +194,7 @@ struct Pointer {
                 /* 0ba0 */ "................................"
                 ;
                 uint8_t * tmp = this->data;
-                for (size_t i = 0 ; i < 32 * 32 ; i++) {
+                for (size_t i = 0 ; i < this->width * this->height ; i++) {
                     uint8_t v = (data_cursor1[i] == 'X') ? 0xFF : 0;
                     tmp[0] = tmp[1] = tmp[2] = v;
                     tmp += 3;
@@ -217,11 +233,28 @@ struct Pointer {
                 /* 0078 */ "\xff\xff\xff\xff"
                            "\xff\xff\xff\xff"
                 ;
-                memcpy(this->mask, mask_cursor1, 32 * 32 / 8);
+                memcpy(this->mask, mask_cursor1, this->width * this->height / 8);
             }
             break;  // case POINTER_CURSOR1:
         }   // switch (pointer_type)
     }   // Pointer(uint8_t pointer_type)
+
+    unsigned data_size() const
+    {
+        switch (this->bpp){
+        case 1:
+            return (this->width * this->height) / 8;
+        case 4:
+            return (this->width * this->height) / 2;
+        default:
+            return (this->width * this->height) * nbbytes(this->bpp);
+        }
+    }
+
+    unsigned mask_size() const
+    {
+        return (this->width * this->height) / 8;
+    }
 
     ~Pointer() {}
 };

@@ -524,10 +524,8 @@ public:
         this->stream_bitmaps.reset();
     }
 
-    virtual void send_pointer(int cache_idx, const uint8_t * data,
-            const uint8_t * mask, uint8_t hotspot_x, uint8_t hotspot_y) {
-        this->drawable.send_pointer(cache_idx, data, mask,
-            hotspot_x, hotspot_y);
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) {
+        this->drawable.send_pointer(cache_idx, cursor);
 
         BStream header(8);
         size_t size =   2           // mouse x
@@ -541,17 +539,19 @@ public:
         WRMChunk_Send chunk(header, POINTER, size, 0);
         this->trans->send(header);
 
+        TODO("why several send ? one should be enough. See that")
+        
         BStream payload(16);
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);
         payload.out_uint8(cache_idx);
-        payload.out_uint8(hotspot_x);
-        payload.out_uint8(hotspot_y);
+        payload.out_uint8(cursor.x);
+        payload.out_uint8(cursor.y);
         payload.mark_end();
         this->trans->send(payload);
 
-        this->trans->send(data, 32 * 32 * 3);
-        this->trans->send(mask, 128);
+        this->trans->send(cursor.data, cursor.data_size());
+        this->trans->send(cursor.mask, cursor.mask_size());
     }
 
     virtual void set_pointer(int cache_idx) {

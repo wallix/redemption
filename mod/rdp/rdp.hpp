@@ -121,7 +121,7 @@ struct mod_rdp : public mod_api {
     } connection_finalization_state;
 
     int state;
-    struct Pointer cursors[32];
+    Pointer cursors[32];
     const bool console_session;
     const int brush_cache_code;
     const uint8_t front_bpp;
@@ -3665,35 +3665,102 @@ public:
         }
     }
 
+    // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
+    // =========================================================================
+
+    // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is 
+    // the same as the updateHeader byte field specified in the Fast-Path Update 
+    // (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST
+    // be set to FASTPATH_UPDATETYPE_COLOR (9).
+
+    // compressionFlags (1 byte): An 8-bit, unsigned integer. The format of this optional
+    // field (as well as the possible values) is the same as the compressionFlags field
+    // specified in the Fast-Path Update structure.
+
+    // size (2 bytes): A 16-bit, unsigned integer. The format of this field (as well as
+    // the possible values) is the same as the size field specified in the Fast-Path
+    // Update structure.
+
+    // colorPointerUpdateData (variable): Color pointer data. Both slow-path and
+    // fast-path utilize the same data format, a Color Pointer Update (section 
+    // 2.2.9.1.1.4.4) structure, to represent this information.
+
+    // 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
+    // =============================================================
+
+    // The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp 
+    // color pointer, as specified in [T128] section 8.14.3. This pointer update 
+    // is used for both monochrome and color pointers in RDP.
+
+    //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
+    // entry in the pointer cache in which to store the pointer image. The number
+    // of cache entries is specified using the Pointer Capability Set (section 2.2.7.1.5).
+
+    //    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1 ) structure containing
+    // the x-coordinates and y-coordinates of the pointer hotspot.
+
+    //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer
+    // in pixels. The maximum allowed pointer width is 96 pixels if the client
+    // indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001)
+    // in the Large Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG
+    // was not set, the maximum allowed pointer width is 32 pixels.
+
+    //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer 
+    // in pixels. The maximum allowed pointer height is 96 pixels if the client
+    // indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001)
+    // in the Large Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG
+    // was not set, the maximum allowed pointer height is 32 pixels.
+
+    //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+    // andMaskData field.
+
+    //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+    // xorMaskData field.
+
+    //    xorMaskData (variable): A variable-length array of bytes. Contains the 24-bpp,
+    // bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte boundary for
+    // each encoded scan-line. For example, if a 3x3 pixel cursor is being sent, then each
+    // scan-line will consume 10 bytes (3 pixels per scan-line multiplied by 3 bytes per pixel,
+    // rounded up to the next even number of bytes).
+
+    //    andMaskData (variable): A variable-length array of bytes. Contains the 1-bpp, bottom-up
+    // AND mask scan-line data. The AND mask is padded to a 2-byte boundary for each encoded scan-line.
+    // For example, if a 7x7 pixel cursor is being sent, then each scan-line will consume 2 bytes
+    // (7 pixels per scan-line multiplied by 1 bpp, rounded up to the next even number of bytes).
+
+    //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
     void process_color_pointer_pdu(Stream & stream) throw(Error) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
         }
-        unsigned cache_idx = stream.in_uint16_le();
-        if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
+        unsigned pointer_cache_idx = stream.in_uint16_le();
+        if (pointer_cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
         }
 
-        struct Pointer * cursor = this->cursors + cache_idx;
-        memset(cursor, 0, sizeof(struct Pointer));
+        struct Pointer & cursor = this->cursors[pointer_cache_idx];
 
-        cursor->x      = stream.in_uint16_le();
-        cursor->y      = stream.in_uint16_le();
-        int cursor_width  = stream.in_uint16_le();
-        int cursor_height = stream.in_uint16_le();
+        memset(&cursor, 0, sizeof(struct Pointer));
+        cursor.bpp = 24;
+        cursor.x      = stream.in_uint16_le();
+        cursor.y      = stream.in_uint16_le();
+        cursor.width  = stream.in_uint16_le();
+        cursor.height = stream.in_uint16_le();
         unsigned mlen  = stream.in_uint16_le(); /* mask length */
         unsigned dlen  = stream.in_uint16_le(); /* data length */
 
-        if ((mlen > sizeof(cursor->mask)) || (dlen > sizeof(cursor->data))) {
+        if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
             LOG(LOG_WARNING,
                 "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u",
                 (unsigned)mlen, (unsigned)dlen);
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
-        memcpy(cursor->data, stream.in_uint8p(dlen), dlen);
-        memcpy(cursor->mask, stream.in_uint8p(mlen), mlen);
+        TODO("this is modifiying cursor in place: we should not do that.")
+        memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
+        memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
 
-        this->front.server_set_pointer(*cursor);
+        this->front.server_set_pointer(cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
         }
@@ -3705,15 +3772,17 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
         }
 
-        int cache_idx = stream.in_uint16_le();
-        if (cache_idx < 0){
+        int pointer_idx = stream.in_uint16_le();
+        if (pointer_idx < 0){
+            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
         }
-        if (cache_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
+        if (pointer_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
+            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
-        struct Pointer* cursor = this->cursors + cache_idx;
-        this->front.server_set_pointer(*cursor);
+        struct Pointer & cursor = this->cursors[pointer_idx];
+        this->front.server_set_pointer(cursor);
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
         }
@@ -3841,51 +3910,64 @@ public:
         }
 
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
-        unsigned cache_idx = stream.in_uint16_le();
-        if (cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
-            throw Error(ERR_RDP_PROCESS_NEW_POINTER_CACHE_NOT_OK);
+        unsigned pointer_idx = stream.in_uint16_le();
+        
+        if (pointer_idx < 0){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
+        }
+        if (pointer_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%d)", pointer_idx);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        struct Pointer * cursor = this->cursors + cache_idx;
-        memset(cursor, 0, sizeof(struct Pointer));
+        Pointer & cursor = this->cursors[pointer_idx];
+        memset(&cursor, 0, sizeof(struct Pointer));
+        cursor.bpp    = data_bpp;
+        cursor.x      = stream.in_uint16_le();
+        cursor.y      = stream.in_uint16_le();
+        cursor.width  = stream.in_uint16_le();
+        cursor.height = stream.in_uint16_le();
+        uint16_t mlen  = stream.in_uint16_le(); /* mask length */
+        uint16_t dlen  = stream.in_uint16_le(); /* data length */
 
-        cursor->x      = stream.in_uint16_le();
-        cursor->y      = stream.in_uint16_le();
-        int cursor_width  = stream.in_uint16_le();
-        int cursor_height = stream.in_uint16_le();
-        unsigned mlen  = stream.in_uint16_le(); /* mask length */
-        unsigned dlen  = stream.in_uint16_le(); /* data length */
-        if (this->verbose & 4) {
-            LOG(LOG_INFO,
-                ">>> data_bpp=%u, width=%u, height=%u mlen=%u dlen=%u",
-                data_bpp, cursor_width, cursor_height, mlen, dlen);
+        if (cursor.width >= Pointer::MAX_WIDTH){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer width overflow (%d)", cursor.width);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);        
+        }
+        if (cursor.height >= Pointer::MAX_HEIGHT){ 
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer height overflow (%d)", cursor.height);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);        
         }
 
-        // Fix bug TSC.
-        if (cursor->x >= cursor_width)
-            cursor->x = 0;
-        if (cursor->y >= cursor_height)
-            cursor->y = 0;
+        if ((unsigned)cursor.x >= cursor.width){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %d)", cursor.x, cursor.width);
+            cursor.x = 0;
+        }
+        
+        if ((unsigned)cursor.y >= cursor.height){
+            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %d)", cursor.y, cursor.height);
+            cursor.y = 0;
+        }
 
-        size_t out_data_len =
-            (bpp == 1) ? (cursor_width * cursor_height) / 8 :
-            (bpp == 4) ? (cursor_width * cursor_height) / 2 :
-            (dlen * 3) / nbbytes(data_bpp);
+        size_t out_data_len = 3 * (
+            (bpp == 1) ? (cursor.width * cursor.height) / 8 :
+            (bpp == 4) ? (cursor.width * cursor.height) / 2 :
+            (dlen / nbbytes(data_bpp)));
 
-        if ((mlen > sizeof(cursor->mask)) ||
-            (out_data_len > sizeof(cursor->data))) {
+        if ((mlen > sizeof(cursor.mask)) ||
+            (out_data_len > sizeof(cursor.data))) {
             LOG(LOG_WARNING,
                 "mod_rdp::Bad length for color pointer mask_len=%u "
                     "data_len=%u Width = %u Height = %u bpp = %u out_data_len = %u nbbytes=%u",
-                (unsigned)mlen, (unsigned)dlen, cursor_width, cursor_height,
+                (unsigned)mlen, (unsigned)dlen, cursor.width, cursor.height,
                 data_bpp, out_data_len, nbbytes(data_bpp));
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
         if (data_bpp == 1) {
-            uint8_t    copy_data_data[32 * 32 * 3];
-            uint8_t    copy_mask_data[32 * 32 / 8];
-
+            uint8_t copy_data_data[32*32*4];
+            uint8_t copy_mask_data[32*32/8];
             stream.in_copy_bytes(copy_data_data, dlen);
             stream.in_copy_bytes(copy_mask_data, mlen);
 
@@ -3905,16 +3987,18 @@ public:
             FixedSizeStream mask_stream(copy_mask_data, sizeof(copy_mask_data));
 
             to_regular_pointer(data_stream,
-                dlen, data_bpp, cursor->data, sizeof(cursor->data));
+                dlen, data_bpp, cursor.data, sizeof(cursor.data));
             to_regular_mask(mask_stream,
-                mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
+                mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
+                cursor.bpp = 24;
         }
         else {
-            to_regular_pointer(stream, dlen, data_bpp, cursor->data, sizeof(cursor->data));
-            to_regular_mask(stream, mlen, data_bpp, cursor->mask, sizeof(cursor->mask));
+            to_regular_pointer(stream, dlen, data_bpp, cursor.data, sizeof(cursor.data));
+            to_regular_mask(stream, mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
+            cursor.bpp = 24;
         }
 
-        this->front.server_set_pointer(*cursor);
+        this->front.server_set_pointer(cursor);
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
         }
