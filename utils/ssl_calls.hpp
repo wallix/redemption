@@ -26,19 +26,14 @@
 
 #ifndef _REDEMPTION_UTILS_SSL_CALLS_HPP_
 #define _REDEMPTION_UTILS_SSL_CALLS_HPP_
-#include "bitfu.hpp"
 
 #include <stdint.h>
-#include <stdlib.h> /* needed for openssl headers */
-#include <openssl/rc4.h>
-#include <openssl/md5.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/bn.h>
-#include <openssl/rsa.h>
-#include <openssl/x509v3.h>
-
+#include <stdlib.h>
 #include <string.h>
+
+#include "openssl_crypto.hpp"
+#include "bitfu.hpp"
+
 #include "log.hpp"
 #include "stream.hpp"
 

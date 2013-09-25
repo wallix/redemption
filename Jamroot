@@ -42,7 +42,6 @@ constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
 constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
 constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
-constant OPENSSL_HEADERS_PATH : [ setvar OPENSSL_HEADERS_PATH : /usr/include/openssl ] ;
 
 rule defines ( properties * )
 {
@@ -75,6 +74,7 @@ lib gcov : : <name>gcov ;
 project redemption
     : requirements
     <include>main
+    <include>headers
     <include>mod
     <include>core
     <include>front
