@@ -68,7 +68,7 @@ static CheckFileList euser_check_file_list[] =
     { "",                       RECORD_PATH,     false, true,  false, false },
 
     // Directory.
-    { "",                       RECORD_TMP_PATH, false, true,  false, false },
+//    { "",                       RECORD_TMP_PATH, false, true,  false, false },
 
     { RDPPROXY_INI,             CFG_PATH,        true,  false, false, false },
     { RDPPROXY_KEY,             CFG_PATH,        true,  false, false, false },
