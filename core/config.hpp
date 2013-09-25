@@ -98,11 +98,14 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)")
 
 TODO("move these into configuration")
 #define LOGIN_LOGO24 "ad24b.png"
+#define LOGIN_WAB_BLUE "wablogoblue.png"
+#define HELP_ICON "helpicon.png"
 #define CURSOR0 "cursor0.cur"
 #define CURSOR1 "cursor1.cur"
 #define FONT1 "sans-10.fv1"
 #define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define LOCKFILE "rdpproxy.pid"
+
 
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
@@ -878,9 +881,9 @@ public:
         this->translation.button_help.set_from_cstr("Help");
         this->translation.button_close.set_from_cstr("Close");
         this->translation.button_refused.set_from_cstr("Refused");
-        this->translation.login.set_from_cstr("login");
+        this->translation.login.set_from_cstr("Login");
         this->translation.username.set_from_cstr("username");
-        this->translation.password.set_from_cstr("password");
+        this->translation.password.set_from_cstr("Password");
         this->translation.target.set_from_cstr("target");
         this->translation.diagnostic.set_from_cstr("diagnostic");
         this->translation.connection_closed.set_from_cstr("Connection closed");

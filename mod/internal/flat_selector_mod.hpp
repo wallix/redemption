@@ -18,17 +18,17 @@
  *   Author(s): Christophe Grosjean, Xiaopeng Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_SELECTOR_MOD_HPP
-#define REDEMPTION_MOD_INTERNAL_SELECTOR_MOD_HPP
+#ifndef REDEMPTION_MOD_INTERNAL_FLAT_SELECTOR_MOD_HPP
+#define REDEMPTION_MOD_INTERNAL_FLAT_SELECTOR_MOD_HPP
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "widget2/selector.hpp"
+#include "widget2/flat_selector.hpp"
 #include "internal_mod.hpp"
 
-class SelectorMod : public InternalMod, public NotifyApi
+class FlatSelectorMod : public InternalMod, public NotifyApi
 {
-    WidgetSelector selector;
+    WidgetSelectorFlat selector;
     int current_page;
     int number_page;
 
@@ -45,7 +45,7 @@ class SelectorMod : public InternalMod, public NotifyApi
     };
 
 public:
-    SelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
+    FlatSelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
         : InternalMod(front, width, height)
         , selector(*this, temporary_login(ini).buffer, width, height, this->screen, this,
                    ini.context.selector_current_page.get_value(),
@@ -67,7 +67,7 @@ public:
         this->selector.refresh(this->selector.rect);
     }
 
-    virtual ~SelectorMod()
+    virtual ~FlatSelectorMod()
     {
         this->screen.clear();
     }
@@ -110,7 +110,7 @@ public:
                 || widget->group_id == this->selector.selector_lines.group_id) {
                 char buffer[1024];
                 snprintf(buffer, sizeof(buffer), "%s:%s",
-                         this->selector.selector_lines.get_current_index(WidgetSelector::COLUMN_TARGET),
+                         this->selector.selector_lines.get_current_index(WidgetSelectorFlat::COLUMN_TARGET),
                          this->ini.globals.auth_user.get_cstr()
                          );
                 this->ini.parse_username(buffer);

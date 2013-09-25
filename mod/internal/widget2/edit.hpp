@@ -41,7 +41,7 @@ public:
     int border_right_bottom_color;
     int border_right_bottom_color_inner;
     bool drawall;
-
+    bool is_flat;
     WidgetEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                Widget2 & parent, NotifyApi* notifier, const char * text,
                int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
@@ -55,6 +55,7 @@ public:
     , border_right_bottom_color(0xEEEEEE)
     , border_right_bottom_color_inner(0x888888)
     , drawall(false)
+    , is_flat(false)
     {
         if (text) {
             this->buffer_size = strlen(text);
@@ -92,6 +93,10 @@ public:
 
     virtual ~WidgetEdit()
     {}
+
+    void set_flat(bool draw) {
+        this->is_flat = draw;
+    }
 
     virtual void set_text(const char * text/*, int position = 0*/)
     {
@@ -163,6 +168,31 @@ public:
 
     void draw_border(const Rect& clip)
     {
+        if (this->is_flat) {
+        //top
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy(), this->cx() - 1, 1
+        )), this->label.bg_color), this->rect);
+        //left
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + 1, 1, this->cy() - 2
+        )), this->label.bg_color), this->rect);
+        //right
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
+        )), this->label.bg_color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 3
+        )), this->label.bg_color), this->rect);
+        //bottom
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
+        )), this->label.bg_color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
+        )), this->label.bg_color), this->rect);
+        }
+        else {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx() - 1, 1
@@ -185,6 +215,7 @@ public:
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
         )), this->border_right_bottom_color_inner), this->rect);
+        }
     }
 
     virtual Rect get_cursor_rect() const

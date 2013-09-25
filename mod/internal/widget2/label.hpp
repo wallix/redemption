@@ -88,7 +88,7 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(this->rect, this->bg_color), clip);
         this->drawable.server_draw_text(this->x_text + this->dx(),
                                         this->y_text + this->dy(),
                                         this->get_text(),

@@ -151,7 +151,7 @@ struct Font
 //##############################################################################
 {
 #ifndef DEFAULT_FONT_NAME
-#define DEFAULT_FONT_NAME "dejavu_11.fv1"
+#define DEFAULT_FONT_NAME "dejavu_14.fv1"
 #endif
 
     enum {

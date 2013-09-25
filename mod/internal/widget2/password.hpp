@@ -110,7 +110,9 @@ public:
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
         }
+
         this->draw_border(clip);
+
     }
     virtual void update_draw_cursor(Rect old_cursor)
     {
