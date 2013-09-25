@@ -23,8 +23,7 @@
 
 #include <math.h>
 
-#include "pointer.hpp"
-
+#include "RDP/pointer.hpp"
 #include "drawable.hpp"
 #include "client_info.hpp"
 
@@ -40,7 +39,7 @@ struct PointerCache {
 
     /* pointer */
     int pointer_stamp;
-    struct pointer_item pointer_items[32];
+    struct Pointer Pointers[32];
     int stamps[32];
 
     PointerCache() {
@@ -59,17 +58,17 @@ struct PointerCache {
 
     int add_pointer(const uint8_t * data, const uint8_t * mask, int x, int y, int & cache_idx) {
         TODO(" see code below to avoid useless copy")
-        struct pointer_item pointer_item;
+        struct Pointer Pointer;
 
-        pointer_item.x = x;
-        pointer_item.y = y;
-        memcpy(pointer_item.data, data, 32 * 32 * 3);
-        memcpy(pointer_item.mask, mask, 32 * 32 / 8);
-        return this->add_pointer(&pointer_item, cache_idx);
+        Pointer.x = x;
+        Pointer.y = y;
+        memcpy(Pointer.data, data, 32 * 32 * 3);
+        memcpy(Pointer.mask, mask, 32 * 32 / 8);
+        return this->add_pointer(&Pointer, cache_idx);
     }
 
     /* check if the pointer is in the cache or not and if it should be sent      */
-    int add_pointer(struct pointer_item * pointer_item, int & cache_idx)
+    int add_pointer(struct Pointer * Pointer, int & cache_idx)
     {
         int i;
         int oldest;
@@ -78,12 +77,12 @@ struct PointerCache {
         this->pointer_stamp++;
         /* look for match */
         for (i = 2; i < this->pointer_cache_entries; i++) {
-            if (this->pointer_items[i].x == pointer_item->x &&
-                this->pointer_items[i].y == pointer_item->y &&
-                (memcmp(this->pointer_items[i].data,
-                        pointer_item->data, 32 * 32 * 3) == 0) &&
-                (memcmp(this->pointer_items[i].mask,
-                        pointer_item->mask, 32 * 32 / 8) == 0)) {
+            if (this->Pointers[i].x == Pointer->x &&
+                this->Pointers[i].y == Pointer->y &&
+                (memcmp(this->Pointers[i].data,
+                        Pointer->data, 32 * 32 * 3) == 0) &&
+                (memcmp(this->Pointers[i].mask,
+                        Pointer->mask, 32 * 32 / 8) == 0)) {
                 this->stamps[i] = this->pointer_stamp;
                 cache_idx = i;
                 return POINTER_ALLREADY_SENT;
@@ -98,34 +97,34 @@ struct PointerCache {
                 index  = i;
             }
         }
-        this->pointer_items[index].x = pointer_item->x;
-        this->pointer_items[index].y = pointer_item->y;
-        memcpy(this->pointer_items[index].data, pointer_item->data, 32 * 32 * 3);
-        memcpy(this->pointer_items[index].mask, pointer_item->mask, 32 * 32 / 8);
+        this->Pointers[index].x = Pointer->x;
+        this->Pointers[index].y = Pointer->y;
+        memcpy(this->Pointers[index].data, Pointer->data, 32 * 32 * 3);
+        memcpy(this->Pointers[index].mask, Pointer->mask, 32 * 32 / 8);
         this->stamps[index] = this->pointer_stamp;
         cache_idx = index;
         return POINTER_TO_SEND;
     }
 
-    void add_pointer_static(struct pointer_item * pointer_item, int index) {
-        this->pointer_items[index].x = pointer_item->x;
-        this->pointer_items[index].y = pointer_item->y;
-        memcpy(this->pointer_items[index].data, pointer_item->data, 32 * 32 * 3);
-        memcpy(this->pointer_items[index].mask, pointer_item->mask, 32 * 32 / 8);
+    void add_pointer_static(struct Pointer * Pointer, int index) {
+        this->Pointers[index].x = Pointer->x;
+        this->Pointers[index].y = Pointer->y;
+        memcpy(this->Pointers[index].data, Pointer->data, 32 * 32 * 3);
+        memcpy(this->Pointers[index].mask, Pointer->mask, 32 * 32 / 8);
         this->stamps[index] = this->pointer_stamp;
     }
 
     void add_pointer_static_2(int hotspot_x, int hotspot_y,
             const uint8_t * data, const uint8_t * mask, int index) {
-        this->pointer_items[index].x = hotspot_x;
-        this->pointer_items[index].y = hotspot_y;
-        memcpy(this->pointer_items[index].data, data, 32 * 32 * 3);
-        memcpy(this->pointer_items[index].mask, mask, 32 * 32 / 8);
+        this->Pointers[index].x = hotspot_x;
+        this->Pointers[index].y = hotspot_y;
+        memcpy(this->Pointers[index].data, data, 32 * 32 * 3);
+        memcpy(this->Pointers[index].mask, mask, 32 * 32 / 8);
         this->stamps[index] = this->pointer_stamp;
     }
 };  // struct PointerCache
 
-struct drawable_pointer_item {
+struct drawable_Pointer {
     Drawable::Mouse_t mouse_cursor[16 * 32];
     int               contiguous_mouse_pixels;
     uint8_t           data[32 * 32 * 3];
@@ -135,41 +134,41 @@ struct drawable_pointer_item {
 };
 
 struct DrawablePointerCache {
-    struct drawable_pointer_item pointer_items[32];
+    struct drawable_Pointer Pointers[32];
 
     DrawablePointerCache() {
         for (int i = 0,
-                 c = sizeof(this->pointer_items) / sizeof(drawable_pointer_item);
+                 c = sizeof(this->Pointers) / sizeof(drawable_Pointer);
              i < c; i++) {
-            memset(&this->pointer_items[i], 0, sizeof(this->pointer_items[i]));
+            memset(&this->Pointers[i], 0, sizeof(this->Pointers[i]));
         }
     }
 
-    void add_pointer_static(struct pointer_item * pointer_item, int index) {
-        this->add_pointer_static_2(pointer_item->x, pointer_item->y,
-            pointer_item->data, pointer_item->mask, index);
+    void add_pointer_static(struct Pointer * Pointer, int index) {
+        this->add_pointer_static_2(Pointer->x, Pointer->y,
+            Pointer->data, Pointer->mask, index);
     }
 
     void add_pointer_static_2(int hotspot_x, int hotspot_y,
             const uint8_t * data, const uint8_t * mask, int index) {
-        drawable_pointer_item & pointer_item = this->pointer_items[index];
+        drawable_Pointer & Pointer = this->Pointers[index];
 
-        this->make_drawable_mouse_cursor(data, mask, pointer_item);
+        this->make_drawable_mouse_cursor(data, mask, Pointer);
 
-        pointer_item.x = hotspot_x;
-        pointer_item.y = hotspot_y;
+        Pointer.x = hotspot_x;
+        Pointer.y = hotspot_y;
     }
 
 protected:
     void make_drawable_mouse_cursor(const uint8_t * data,
-        const uint8_t * mask, drawable_pointer_item & pointer_item) {
-        memset(&pointer_item, 0, sizeof(pointer_item));
+        const uint8_t * mask, drawable_Pointer & Pointer) {
+        memset(&Pointer, 0, sizeof(Pointer));
 
         bool                draw_pixel;
         int                 current_contiguous_mouse_pixels = 0;
-        Drawable::Mouse_t * mouse_cursor                    = &pointer_item.mouse_cursor[-1];
+        Drawable::Mouse_t * mouse_cursor                    = &Pointer.mouse_cursor[-1];
         bool                in_contiguous_mouse_pixels      = false;
-        uint8_t           * line_data                       = pointer_item.data;
+        uint8_t           * line_data                       = Pointer.data;
 
         for (unsigned line = 0; line < 32; line++) {
             in_contiguous_mouse_pixels = false;
@@ -208,7 +207,7 @@ protected:
 //            printf("\n");
         }
 
-        pointer_item.contiguous_mouse_pixels = current_contiguous_mouse_pixels;
+        Pointer.contiguous_mouse_pixels = current_contiguous_mouse_pixels;
     }
 };
 

@@ -30,7 +30,7 @@
 #include <errno.h>
 
 /* include "ther h files */
-#include "RDP/caches/pointer.hpp"
+#include "RDP/pointer.hpp"
 #include "stream.hpp"
 
 struct xup_mod : public mod_api {
@@ -301,7 +301,7 @@ enum {
                     break;
                     case 19:
                     {
-                        struct pointer_item cursor;
+                        struct Pointer cursor;
                         cursor.x = stream.in_sint16_le();
                         cursor.y = stream.in_sint16_le();
                         stream.in_copy_bytes(cursor.data, 32 * (32 * 3));
