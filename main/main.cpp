@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
               Olivier Hervieu, Martin Potier, Raphael Zhou
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+              and Meng Tan
 
    main program
 */
@@ -101,24 +101,20 @@ int shutdown(const char * pid_file)
     /* read the rdpproxy.pid file */
     fd = -1;
     cout << "looking if pid_file " << pid_file <<  " exists\n";
-//  if ((0 == access(pid_file, F_OK))) { /* rdpproxy.pid */
-//   /*Code related to g_file_open os_call*/
-//   fd =  open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-//   if (fd == -1) {
-//       /* can't open read / write, try to open read only */
-//       fd =  open(pid_file, O_RDONLY);
-//   }
-//
-    fd =  open(pid_file, O_RDONLY);
+    if ((0 == access(pid_file, F_OK))) {
+        fd =  open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+        if (fd == -1) {
+            /* can't open read / write, try to open read only */
+            fd =  open(pid_file, O_RDONLY);
+        }
+    }
     if (fd == -1) {
-      // file does not exist.
-        return 1;
+        return 1; // file does not exist.
     }
     cout << "reading pid_file " << pid_file << "\n";
     memset(text, 0, 32);
     if (read(fd, text, 31) < 0){
         cout << "failed to read pid file\n";
-        //cout << "pid =" << text << "\n";
     }
     else{
         pid = atoi(text);
@@ -139,10 +135,10 @@ int shutdown(const char * pid_file)
                     res = kill(pid,0);
                 }
                 if ((errno != ESRCH) || (res == 0)){
-	            // if errno != ESRCH, pid is still running
-		    cout << "Error stopping process id " << pid << "\n";
-		}
-	    }
+                    // if errno != ESRCH, pid is still running
+                    cout << "Error stopping process id " << pid << "\n";
+                }
+            }
         }
     }
     close(fd);
@@ -152,7 +148,6 @@ int shutdown(const char * pid_file)
     DIR * d = opendir("/var/run/redemption");
     if (d){
         size_t path_len = strlen("/var/run/redemption/");
-
         size_t file_len = pathconf("/var/run/redemption/", _PC_NAME_MAX) + 1;
         char * buffer = (char*)malloc(file_len + path_len);
         strcpy(buffer, "/var/run/redemption/");
@@ -197,7 +192,8 @@ const char * copyright_notice =
     "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
     "Copyright (C) Wallix 2010-2013.\n"
     "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
-    "Martin Potier, Dominique Lafages, Jonathan Poelen and Raphael Zhou\n"
+    "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
+    "and Meng Tan\n"
     "\n"
     ;
 
@@ -270,7 +266,6 @@ int main(int argc, char** argv)
 
     openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
-
     bool user_check_file_result  =
         ((uid != euid) || (gid != egid)) ?
         CheckFile::check(user_check_file_list) : true;
@@ -306,7 +301,6 @@ int main(int argc, char** argv)
         CheckFile::ShowErrors(euser_check_file_list, euid, egid);
         _exit(0);
     }
-
 
     if (options.count("inetd")) {
         redemption_new_session();
