@@ -1564,7 +1564,8 @@ public:
 
     void parse_username(const char * username)
     {
-        //        LOG(LOG_INFO, "parse_username(%s)", username);
+/*
+//        LOG(LOG_INFO, "parse_username(%s)", username);
         TODO("These should be results of the parsing function, not storing it away immediately in context. Mixing context management and parsing is not right");
         char target_user[256];
         char target_device[256];
@@ -1692,6 +1693,14 @@ public:
         else {
             this->context_set_value(AUTHID_AUTH_USER, auth_user);
         }
+*/
+        this->context_ask(AUTHID_SELECTOR);
+        LOG(LOG_INFO, "asking for selector");
+
+        this->context_set_value(AUTHID_AUTH_USER, username);
+        this->context_ask(AUTHID_TARGET_USER);
+        this->context_ask(AUTHID_TARGET_DEVICE);
+        this->context_ask(AUTHID_TARGET_PROTOCOL);
     }
 };
 
