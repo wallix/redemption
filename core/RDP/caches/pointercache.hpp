@@ -59,6 +59,9 @@ struct PointerCache {
     void add_pointer_static(const Pointer & cursor, int index) {
         this->Pointers[index].x = cursor.x;
         this->Pointers[index].y = cursor.y;
+        this->Pointers[index].width = cursor.width;
+        this->Pointers[index].height = cursor.height;
+        this->Pointers[index].bpp = cursor.bpp;
         memcpy(this->Pointers[index].data, cursor.data, cursor.data_size());
         memcpy(this->Pointers[index].mask, cursor.mask, cursor.mask_size());
         this->stamps[index] = this->pointer_stamp;

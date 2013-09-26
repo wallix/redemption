@@ -3931,11 +3931,11 @@ public:
         uint16_t mlen  = stream.in_uint16_le(); /* mask length */
         uint16_t dlen  = stream.in_uint16_le(); /* data length */
 
-        if (cursor.width >= Pointer::MAX_WIDTH){
+        if (cursor.width > Pointer::MAX_WIDTH){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer width overflow (%d)", cursor.width);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);        
         }
-        if (cursor.height >= Pointer::MAX_HEIGHT){ 
+        if (cursor.height > Pointer::MAX_HEIGHT){ 
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer height overflow (%d)", cursor.height);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);        
         }
