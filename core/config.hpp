@@ -113,6 +113,8 @@ TODO("move these into configuration")
 #define RDPPROXY_CRT "rdpproxy.crt"
 #define RDPPROXY_KEY "rdpproxy.key"
 #define DH1024_PEM "dh1024.pem"
+#define DH2048_PEM "dh2048.pem"
+#define DH_PEM DH2048_PEM
 
 using namespace std;
 
