@@ -1,5 +1,10 @@
-redemption (0.9.289+precise) unstable; urgency=low
+redemption (0.9.330+precise) unstable; urgency=low
 
+  * Fixed some graphical bugs
+  * support for compression MPPC 5.1
+  * support for glyphs
+  * new loging screen and selector Flat look
+  * Added support for mouse cursors in video
   * Fixed Numlock initial state bug
   * Use only one RDPDrawable
   * support for pause/restart recording

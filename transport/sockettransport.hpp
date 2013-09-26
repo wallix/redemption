@@ -23,6 +23,7 @@
 #ifndef _REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP_
 #define _REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP_
 
+#include "config.hpp"
 #include "transport.hpp"
 #include "rio/rio.h"
 #include "string.hpp"
@@ -373,7 +374,7 @@ class SocketTransport : public Transport {
         DH *ret=0;
         BIO *bio;
 
-        if ((bio=BIO_new_file(CFG_PATH "/dh1024.pem","r")) == NULL){
+        if ((bio=BIO_new_file(CFG_PATH "/" DH_PEM,"r")) == NULL){
             BIO_printf(bio_err,"Couldn't open DH file\n");
             ERR_print_errors(bio_err);
             exit(0);
