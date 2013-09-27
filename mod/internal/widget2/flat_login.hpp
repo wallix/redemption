@@ -24,14 +24,10 @@
 #include "version.hpp"
 #include "edit.hpp"
 #include "label.hpp"
-#include "button.hpp"
 #include "password.hpp"
-#include "widget2_window.hpp"
 #include "multiline.hpp"
 #include "image.hpp"
-#include "window_dialog.hpp"
 #include "screen.hpp"
-
 #include "flat_button.hpp"
 
 class FlatLogin : public WidgetParent

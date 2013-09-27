@@ -47,6 +47,8 @@
 
 #include "internal/flat_login_mod.hpp"
 #include "internal/flat_selector_mod.hpp"
+#include "internal/flat_wab_close_mod.hpp"
+#include "internal/flat_dialog_mod.hpp"
 
 enum {
     MODULE_EXIT,
@@ -457,7 +459,8 @@ public:
                     if (this->ini.context.auth_error_message.is_empty()) {
                         this->ini.context.auth_error_message.copy_c_str("Connection to server ended");
                     }
-                    this->mod = new WabCloseMod(this->ini,
+                    this->mod = new FlatWabCloseMod(this->ini,
+                                // new WabCloseMod(this->ini,
                                                 this->front,
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
@@ -476,7 +479,8 @@ public:
                     const char * message = this->ini.context.message.get_cstr();
                     const char * button = this->ini.translation.button_refused.get_cstr();
                     const char * caption = "Information";
-                    this->mod = new DialogMod(
+                    this->mod = new FlatDialogMod(
+                                // new DialogMod(
                                               this->ini,
                                               this->front,
                                               this->front.client_info.width,
@@ -496,7 +500,8 @@ public:
                     const char * message = this->ini.context.message.get_cstr();
                     const char * button = NULL;
                     const char * caption = "Information";
-                    this->mod = new DialogMod(
+                    this->mod = new FlatDialogMod(
+                                // new DialogMod(
                                               this->ini,
                                               this->front,
                                               this->front.client_info.width,

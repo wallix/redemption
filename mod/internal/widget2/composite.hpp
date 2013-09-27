@@ -34,7 +34,7 @@ public:
     virtual void add_widget(Widget2 * w) = 0;
     virtual void remove_widget(Widget2 * w) = 0;
     virtual void clear() = 0;
-    virtual void set_xy(int16_t x, int16_t y) = 0;
+    virtual void move_xy(int16_t x, int16_t y) = 0;
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y) = 0;
     virtual Widget2 * next_focus(Widget2 * current_focus) = 0;
     virtual Widget2 * previous_focus(Widget2 * current_focus) = 0;
@@ -230,13 +230,12 @@ public:
         this->size = 0;
     };
 
-    void set_xy(int16_t xx, int16_t yy) {
+    void move_xy(int16_t x, int16_t y) {
         for (size_t i = 0, max = this->size; i < max; ++i) {
             Widget2 * w = this->child_list[i];
-            w->set_xy(xx + w->dx(), yy + w->dy());
+            w->set_xy(x + w->dx(), y + w->dy());
         }
     }
-
     Widget2 * widget_at_pos(int16_t x, int16_t y) {
         Widget2 * ret = 0;
         for (size_t i = 0; i < this->size && ret == 0; ++i){

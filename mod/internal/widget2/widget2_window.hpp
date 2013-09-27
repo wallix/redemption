@@ -200,7 +200,7 @@ public:
     virtual void set_xy(int16_t x, int16_t y) {
         int16_t xx = x - this->dx();
         int16_t yy = y - this->dy();
-        this->impl->set_xy(xx, yy);
+        this->impl->move_xy(xx, yy);
         WidgetParent::set_xy(x, y);
     }
 

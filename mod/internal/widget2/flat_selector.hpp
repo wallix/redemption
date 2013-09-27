@@ -24,14 +24,12 @@
 
 #include "composite.hpp"
 #include "multiline.hpp"
-#include "button.hpp"
 #include "label.hpp"
 #include "edit.hpp"
 #include "number_edit.hpp"
 #include "image.hpp"
 #include "region.hpp"
 #include "difftimeval.hpp"
-#include "tooltip.hpp"
 #include "screen.hpp"
 
 #include "flat_button.hpp"

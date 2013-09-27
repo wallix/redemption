@@ -19,17 +19,19 @@
  *              Meng Tan
  */
 
-#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_WAB_CLOSE_HPP)
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_WINDOW_WAB_CLOSE_HPP
+#if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAB_CLOSE_HPP)
+#define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_WAB_CLOSE_HPP
 
-#include "widget2_window.hpp"
-#include "button.hpp"
+#include "composite.hpp"
+#include "flat_button.hpp"
 #include "image.hpp"
 #include "edit.hpp"
 #include "label.hpp"
 #include "multiline.hpp"
 
-class WindowWabClose : public Window
+#include <vector>
+
+class FlatWabClose : public WidgetParent
 {
 public:
     WidgetImage img;
@@ -38,46 +40,46 @@ public:
     WidgetLabel target_label;
     WidgetLabel target_label_value;
     WidgetLabel connection_closed_label;
-    WidgetButton cancel;
+    WidgetFlatButton cancel;
     WidgetLabel diagnostic;
     WidgetMultiLine diagnostic_lines;
     WidgetLabel timeleft_label;
     WidgetLabel timeleft_value;
 
+    int bgcolor;
 private:
     long prev_time;
 
 public:
-    WindowWabClose(DrawApi& drawable, int16_t x, int16_t y, Widget2& parent,
+    FlatWabClose(DrawApi& drawable, int16_t width, int16_t height, Widget2& parent,
                    NotifyApi* notifier, const char * diagnostic_text, int group_id = 0,
                    const char * username = 0, const char * target = 0,
-                   int fgcolor = BLACK, int bgcolor = DARK_WABGREEN, bool showtimer = false)
-    : Window(drawable, Rect(x,y,600,1), parent, notifier, "Close", bgcolor, group_id)
-    , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_LOGO24, *this, NULL, -10)
-    , username_label(drawable, this->img.cx() + 20, 0, *this, NULL,
+                   int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS, bool showtimer = false)
+    : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+    , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
+    , username_label(drawable, (width - 600) / 2, 0, *this, NULL,
                      "Username:", true, -11, fgcolor, bgcolor)
     , username_label_value(drawable, 0, 0, *this, NULL, username, true, -11, fgcolor, bgcolor)
-    , target_label(drawable, this->img.cx() + 20, 0, *this, NULL,
+    , target_label(drawable, (width - 600) / 2, 0, *this, NULL,
                    "Target:", true, -12, fgcolor, bgcolor)
     , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12, fgcolor, bgcolor)
     , connection_closed_label(drawable, 0, 0, *this, NULL, "Connection closed", true, -13, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, *this, this, "Close", true, -14, BLACK, GREY, 6, 2)
-    , diagnostic(drawable, this->img.cx() + 20, 0, *this, NULL,
+    , cancel(drawable, 0, 0, *this, this, "Close", true, -14, WHITE, DARK_BLUE_BIS, 6, 2)
+    , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL,
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
-    , diagnostic_lines(drawable, this->img.cx() + 20, 0, *this, NULL,
+    , diagnostic_lines(drawable, 0, 0, *this, NULL,
                        diagnostic_text, true, -16, fgcolor, bgcolor)
-    , timeleft_label(drawable, this->img.cx() + 20, 0, *this, NULL,
+    , timeleft_label(drawable, (width - 600) / 2, 0, *this, NULL,
                      "Time left:", true, -12, fgcolor, bgcolor)
-    , timeleft_value(drawable, this->img.cx() + 95, 0, *this, NULL, NULL, true, -12, fgcolor, bgcolor)
+    , timeleft_value(drawable, 0, 0, *this, NULL, NULL, true, -12, fgcolor, bgcolor)
+    , bgcolor(bgcolor)
     , prev_time(0)
     {
-        this->cancel.border_top_left_color = WHITE;
+        this->impl = new CompositeTable;
 
-        this->img.rect.x = this->dx() + 10;
+        this->img.rect.x = (this->cx() - this->img.cx()) / 2;
         this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
         this->connection_closed_label.rect.x = (this->cx() - this->connection_closed_label.cx()) / 2;
-
-        this->resize_titlebar();
 
         this->add_widget(&this->img);
         this->add_widget(&this->connection_closed_label);
@@ -87,9 +89,9 @@ public:
 
         uint16_t px = this->diagnostic.cx() + 10;
 
-        y = this->dy() + this->titlebar.cy() + 10;
+        int y = this->dy() + 10;
         this->img.rect.y = y;
-        y += 10;
+        y += this->img.cy() + 20;
 
         if (username && *username) {
             this->add_widget(&this->username_label);
@@ -125,20 +127,22 @@ public:
         }
 
         if (showtimer) {
-            y -= 10;
             this->add_widget(&this->timeleft_label);
             this->add_widget(&this->timeleft_value);
             this->timeleft_label.rect.y = y;
             this->timeleft_value.rect.y = y;
-            y += this->timeleft_label.cy() + 10;
+            this->timeleft_value.rect.x =
+                this-> timeleft_label.dx() + this->timeleft_label.cx() + 20;
+            y += this->timeleft_label.cy() + 20;
         }
 
         this->cancel.set_button_y(y);
         y += this->cancel.cy() + 20;
-        this->set_window_cy(y - this->dy());
+
+        this->impl->move_xy(0, (height - y) / 2);
     }
 
-    virtual ~WindowWabClose()
+    virtual ~FlatWabClose()
     {
         this->clear();
     }
@@ -174,7 +178,39 @@ public:
             this->send_notify(NOTIFY_CANCEL);
         }
         else {
-            Window::notify(widget, event);
+            WidgetParent::notify(widget, event);
+        }
+    }
+
+    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+    {
+        if (keymap->nb_kevent_available() > 0){
+            switch (keymap->top_kevent()){
+            case Keymap2::KEVENT_ESC:
+                keymap->get_kevent();
+                this->send_notify(NOTIFY_CANCEL);
+                break;
+            default:
+                WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+                break;
+            }
+        }
+    }
+
+    virtual void draw(const Rect& clip)
+    {
+        this->impl->draw(clip);
+        this->draw_inner_free(clip.intersect(this->rect), this->bgcolor);
+    }
+
+    virtual void draw_inner_free(const Rect& clip, int bg_color) {
+        Region region;
+        region.rects.push_back(clip);
+
+        this->impl->draw_inner_free(clip, bg_color, region);
+
+        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
         }
     }
 };
