@@ -21,7 +21,6 @@
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_LOGIN_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_LOGIN_HPP
 
-#include "version.hpp"
 #include "edit.hpp"
 #include "label.hpp"
 #include "password.hpp"

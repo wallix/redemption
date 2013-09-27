@@ -77,11 +77,10 @@ public:
     {
         this->impl = new CompositeTable;
 
-        this->img.rect.x = (this->cx() - this->img.cx()) / 2;
+        // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
         this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
         this->connection_closed_label.rect.x = (this->cx() - this->connection_closed_label.cx()) / 2;
 
-        this->add_widget(&this->img);
         this->add_widget(&this->connection_closed_label);
         this->add_widget(&this->cancel);
         this->add_widget(&this->diagnostic);
@@ -90,8 +89,8 @@ public:
         uint16_t px = this->diagnostic.cx() + 10;
 
         int y = this->dy() + 10;
-        this->img.rect.y = y;
-        y += this->img.cy() + 20;
+        // this->img.rect.y = y;
+        // y += this->img.cy() + 20;
 
         if (username && *username) {
             this->add_widget(&this->username_label);
@@ -137,9 +136,14 @@ public:
         }
 
         this->cancel.set_button_y(y);
-        y += this->cancel.cy() + 20;
+        y += this->cancel.cy();
 
         this->impl->move_xy(0, (height - y) / 2);
+
+        this->img.rect.x = (this->cx() - this->img.cx()) / 2;
+        this->img.rect.y = (3*(height - y) / 2 - this->img.cy()) / 2 + y;
+        this->add_widget(&this->img);
+
     }
 
     virtual ~FlatWabClose()
