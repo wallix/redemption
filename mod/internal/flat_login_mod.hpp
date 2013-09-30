@@ -26,6 +26,7 @@
 #include "widget2/flat_login.hpp"
 #include "internal_mod.hpp"
 #include "widget2/notify_api.hpp"
+#include "translation.hpp"
 
 class FlatLoginMod : public InternalMod, public NotifyApi
 {
@@ -39,8 +40,9 @@ public:
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 ini.account.username[0] != 0,
                 0, 0, 0, WHITE, DARK_BLUE_BIS,
-                ini.translation.login.get().c_str(),
-                ini.translation.password.get().c_str())
+                TR("login", &ini),
+                TR("password", &ini)
+                )
         , ini(ini)
     {
         this->screen.add_widget(&this->login);
