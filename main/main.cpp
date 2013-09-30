@@ -269,11 +269,15 @@ int main(int argc, char** argv)
     bool user_check_file_result  =
         ((uid != euid) || (gid != egid)) ?
         CheckFile::check(user_check_file_list) : true;
-    setuid(euid);
+/*
     setgid(egid);
+    setuid(euid);
+*/
     bool euser_check_file_result = CheckFile::check(euser_check_file_list);
-    setuid(uid);
+/*
     setgid(gid);
+    setuid(uid);
+*/
 
     if (options.count("check")) {
         if ((uid != euid) || (gid != egid))
