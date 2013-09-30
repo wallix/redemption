@@ -29,6 +29,7 @@
 class FlatDialog : public WidgetParent
 {
 public:
+    WidgetImage img;
     WidgetLabel title;
     WidgetMultiLine dialog;
     WidgetFlatButton ok;
@@ -43,6 +44,7 @@ public:
                int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS
                )
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -8)
         , title(drawable, 0, 0, *this, NULL, caption, true, -9,
                               BLACK, LIGHT_BLUE, 5)
         , dialog(drawable, 0, 0, *this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
@@ -77,6 +79,11 @@ public:
             this->ok.set_button_y(this->dialog.dy() + this->dialog.cy() + 15);
         }
         this->impl->move_xy(0, (height - total_height) /2);
+
+        this->img.rect.x = (this->cx() - this->img.cx()) / 2;
+        this->img.rect.y = (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
+        this->add_widget(&this->img);
+
     }
 
     virtual ~FlatDialog()

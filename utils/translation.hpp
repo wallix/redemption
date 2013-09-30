@@ -69,6 +69,7 @@ private:
             "Le nom de l'utilisateur et le mot de passe sont<br>sensible à la case.<br>"
             "<br>"
             "Contactez votre administrateur système en cas<br>de problème pour vous connecter.";
+        fr_map["selector"] = "Sélécteur";
     }
     void build_en_map() {
         en_map["login"] = "Login";
@@ -105,8 +106,8 @@ private:
             "<br>"
             "Contact your system administrator if you are<br>"
             "having problems logging on.";
+        fr_map["selector"] = "Selector";
     }
-
 
     Translation()
         : lang(EN)
