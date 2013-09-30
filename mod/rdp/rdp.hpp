@@ -332,7 +332,12 @@ struct mod_rdp : public mod_api {
             }
         }
 
-        this->end_session_reason.copy_c_str("CONNECTION_FAILED");
+        if (this->acl)
+        {
+            this->acl->report("CONNECTION_SUCCESSFUL", "Ok.");
+        }
+
+        this->end_session_reason.copy_c_str("OPEN_SESSION_FAILED");
         this->end_session_message.copy_c_str("Open RDP session cancelled.");
     }
 
@@ -1812,6 +1817,16 @@ struct mod_rdp : public mod_api {
                 }
             }
             catch(Error e){
+                if (this->acl)
+                {
+                    char message[128];
+                    snprintf(message, sizeof(message), "Code=%d", e.id);
+                    this->acl->report("SESSION_EXCEPTION", message);
+
+                    this->end_session_reason.empty();
+                    this->end_session_message.empty();
+                }
+
                 BStream stream(256);
                 X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                 try {
