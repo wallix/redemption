@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     BOOST_CHECK_EQUAL(std::string(TR("connect")),
                       std::string("Connect"));
     BOOST_CHECK_EQUAL(std::string(TR("timeleft")),
-                      std::string("Timeleft"));
+                      std::string("Time left"));
     BOOST_CHECK_EQUAL(std::string(TR("second")),
                       std::string("second"));
     BOOST_CHECK_EQUAL(std::string(TR("minute")),

@@ -63,8 +63,8 @@ public:
     , target_label(drawable, (width - 600) / 2, 0, *this, NULL,
                    "Target:", true, -12, fgcolor, bgcolor)
     , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12, fgcolor, bgcolor)
-    , connection_closed_label(drawable, 0, 0, *this, NULL, "Connection closed", true, -13, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, *this, this, "Close", true, -14, WHITE, DARK_BLUE_BIS, 6, 2)
+    , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed"), true, -13, fgcolor, bgcolor)
+    , cancel(drawable, 0, 0, *this, this, TR("close"), true, -14, WHITE, DARK_BLUE_BIS, 6, 2)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL,
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, 0, 0, *this, NULL,
@@ -76,6 +76,16 @@ public:
     , prev_time(0)
     {
         this->impl = new CompositeTable;
+
+        char label[255];
+        snprintf(label, sizeof(label), "%s:", TR("username"));
+        this->username_label.set_text(label);
+        snprintf(label, sizeof(label), "%s:", TR("target"));
+        this->target_label.set_text(label);
+        snprintf(label, sizeof(label), "%s:", TR("diagnostic"));
+        this->diagnostic.set_text(label);
+        snprintf(label, sizeof(label), "%s:", TR("timeleft"));
+        this->timeleft_label.set_text(label);
 
         // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
         this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
@@ -158,11 +168,13 @@ public:
             tl = tl / 60;
         }
         if (this->prev_time != tl) {
-            char buff[128];
-            snprintf(buff, sizeof(buff), "%2ld %s%s before closing.",
+            char buff[256];
+            snprintf(buff, sizeof(buff), "%2ld %s%s %s. ",
                      tl,
-                     seconds?"second":"minute",
-                     (tl <= 1)?"":"s");
+                     seconds?TR("second"):TR("minute"),
+                     (tl <= 1)?"":"s",
+                     TR("before_closing")
+                     );
 
             Rect old = this->timeleft_value.rect;
             this->drawable.begin_update();

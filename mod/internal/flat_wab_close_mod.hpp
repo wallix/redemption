@@ -43,7 +43,7 @@ private:
         {
             if (ini.context.selector.get()
                 && !ini.context.selector.is_asked()) {
-                snprintf(text,sizeof(text),"Selector");
+                snprintf(text, sizeof(text), "%s", TR("selector", &ini));
             }
             else {
                 if (::strlen(ini.globals.target_application.get_cstr())) {

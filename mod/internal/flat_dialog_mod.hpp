@@ -40,7 +40,7 @@ public:
                   const char * caption, const char * message, const char * cancel_text, time_t now)
     : InternalMod(front, width, height)
     , dialog_widget(*this, width, height, this->screen, this,
-                    caption, message, 0, "Ok", cancel_text,
+                    caption, message, 0, TR("OK", &ini), cancel_text,
                     WHITE, DARK_BLUE_BIS)
     , ini(ini)
     , timeout(Timeout(now, ini.debug.pass_dialog_box))

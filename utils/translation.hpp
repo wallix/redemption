@@ -22,6 +22,7 @@
 #define REDEMPTION_TRANSLATION_HPP
 
 #include <map>
+#include "config.hpp"
 
 typedef std::map <const char *, const char *> trans_t;
 typedef enum {
@@ -54,6 +55,7 @@ private:
         fr_map["close_time"] = "Date de clôture";
         fr_map["logout"] = "Déconnexion";
         fr_map["apply"] = "Appliquer";
+        fr_map["filter"] = "Filtrer";
         fr_map["connect"] = "Connecter";
         fr_map["timeleft"] = "Temps restant";
         fr_map["second"] = "seconde";
@@ -69,7 +71,7 @@ private:
             "Le nom de l'utilisateur et le mot de passe sont<br>sensible à la case.<br>"
             "<br>"
             "Contactez votre administrateur système en cas<br>de problème pour vous connecter.";
-        fr_map["selector"] = "Sélécteur";
+        fr_map["selector"] = "Sélecteur";
     }
     void build_en_map() {
         en_map["login"] = "Login";
@@ -89,8 +91,9 @@ private:
         en_map["close_time"] = "Close Time";
         en_map["logout"] = "Logout";
         en_map["apply"] = "Apply";
+        en_map["filter"] = "Filter";
         en_map["connect"] = "Connect";
-        en_map["timeleft"] = "Timeleft";
+        en_map["timeleft"] = "Time left";
         en_map["second"] = "second";
         en_map["minute"] = "minute";
         en_map["before_closing"] = "before closing";
@@ -151,15 +154,69 @@ public:
 
 #define TRANSLATIONCONF Translation::getInstance()
 
-static inline const char * TR(const char * key) {
+static inline const char * TR(const char * key, Inifile * ini = NULL) {
 
-    trans_t trans = TRANSLATIONCONF.getmap();
-    const char * res = key;
-    try {
-        res = trans.at(key);
+    const char * res = NULL;
+
+    if (ini) {
+        if (0 == strcmp(key, "OK")) {
+            res = ini->translation.button_ok.get_cstr();
+        }
+        else if (0 == strcmp(key, "cancel")) {
+            res = ini->translation.button_cancel.get_cstr();
+        }
+        else if (0 == strcmp(key, "help")) {
+            res = ini->translation.button_help.get_cstr();
+        }
+        else if (0 == strcmp(key, "close")) {
+            res = ini->translation.button_close.get_cstr();
+        }
+        else if (0 == strcmp(key, "refused")) {
+            res = ini->translation.button_refused.get_cstr();
+        }
+        else if (0 == strcmp(key, "login")) {
+            res = ini->translation.login.get_cstr();
+        }
+        else if (0 == strcmp(key, "username")) {
+            res = ini->translation.username.get_cstr();
+        }
+        else if (0 == strcmp(key, "password")) {
+            res = ini->translation.password.get_cstr();
+        }
+        else if (0 == strcmp(key, "target")) {
+            res = ini->translation.target.get_cstr();
+        }
+        else if (0 == strcmp(key, "diagnostic")) {
+            res = ini->translation.diagnostic.get_cstr();
+        }
+        else if (0 == strcmp(key, "connection_closed")) {
+            res = ini->translation.connection_closed.get_cstr();
+        }
+        else if (0 == strcmp(key, "help_message")) {
+            res = ini->translation.diagnostic.get_cstr();
+        }
+        LOG(LOG_INFO, "Translation FOUND in INIFILE: %s", res);
+        if (0 == strcmp("Aide", ini->translation.button_help.get_cstr())) {
+            TRANSLATIONCONF.set_lang(FR);
+            LOG(LOG_INFO, "Translation Set to language FR");
+        }
+        else {
+            LOG(LOG_INFO, "Translation Set to language EN");
+            TRANSLATIONCONF.set_lang(EN);
+        }
     }
-    catch (const std::out_of_range & oor) {
-        LOG(LOG_INFO, "Translation not found for '%s'", key);
+    if ((res == NULL) ||
+        0 == strcmp(res, "") ||
+        0 == strcmp(res, "ASK")) {
+
+        trans_t trans = TRANSLATIONCONF.getmap();
+        try {
+            res = trans.at(key);
+        }
+        catch (const std::out_of_range & oor) {
+            LOG(LOG_INFO, "Translation not found for '%s'", key);
+            res = key;
+        }
     }
     return res;
 };

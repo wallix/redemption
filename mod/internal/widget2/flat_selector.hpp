@@ -30,9 +30,9 @@
 #include "image.hpp"
 #include "region.hpp"
 #include "difftimeval.hpp"
-#include "screen.hpp"
 
 #include "flat_button.hpp"
+#include "translation.hpp"
 
 class WidgetSelectorFlat : public WidgetParent
 {
@@ -556,33 +556,41 @@ public:
         , fgcolor(WHITE)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10,
                        this->fgcolor, this->bgcolor)
-        , device_target_label(drawable, 15, 0, *this, NULL, "Target Group", true, -10,
+        , device_target_label(drawable, 15, 0, *this, NULL, TR("target_group"), true, -10,
                               this->fgcolor, MEDIUM_BLUE, 5)
-        , target_label(drawable, 145, 0, *this, NULL, "Target", true, -10,
+        , target_label(drawable, 145, 0, *this, NULL, TR("target"), true, -10,
                        this->fgcolor, MEDIUM_BLUE, 5)
-        , protocol_label(drawable, 495, 0, *this, NULL, "Protocol", true, -10,
+        , protocol_label(drawable, 495, 0, *this, NULL, TR("protocol"), true, -10,
                          this->fgcolor, MEDIUM_BLUE, 5)
-        , close_time_label(drawable, 615, 0, *this, NULL, "Close Time", true, -10,
+        , close_time_label(drawable, 615, 0, *this, NULL, TR("close_time"), true, -10,
                            this->fgcolor, MEDIUM_BLUE, 5)
         , selector_lines(drawable, *this, this, 15, 0, 130, 350, 120, 170, -11,
-                         BLACK, BLACK, WHITE, PALE_BLUE, LIGHT_BLUE, MEDIUM_BLUE, 5, 1, DARK_BLUE_BIS, 1)
-        , filter_device(drawable, 15, 0, 120, *this, this, filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
-        , filter_target(drawable, 145, 0, 340, *this, this, filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
-        , filter_proto(drawable, 495, 0, 110, *this, this, filter_proto?filter_proto:0, -12, BLACK, WHITE, -1, 1, 1)
+                         BLACK, BLACK, WHITE, PALE_BLUE, LIGHT_BLUE, MEDIUM_BLUE,
+                         5, 1, DARK_BLUE_BIS, 1)
+        , filter_device(drawable, 15, 0, 120, *this, this,
+                        filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
+        , filter_target(drawable, 145, 0, 340, *this, this,
+                        filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
+        , filter_proto(drawable, 495, 0, 110, *this, this,
+                       filter_proto?filter_proto:0, -12, BLACK, WHITE, -1, 1, 1)
           //BEGIN WidgetPager
-        , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15, WHITE, DARK_BLUE_BIS, 6, 2, true)
-        , prev_page(drawable, 0, 0, *this, notifier, "◀", true, -15, WHITE, DARK_BLUE_BIS, 6, 2, true)
+        , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15,
+                     WHITE, DARK_BLUE_BIS, 6, 2, true)
+        , prev_page(drawable, 0, 0, *this, notifier, "◀", true, -15,
+                    WHITE, DARK_BLUE_BIS, 6, 2, true)
         , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
                        current_page ? current_page : "XXXX", -15, BLACK, WHITE, -1, 1, 1)
         , number_page(drawable, 0, 0, *this, NULL,
                       number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXX",
                       true, -100, this->fgcolor, this->bgcolor)
-        , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15, WHITE, DARK_BLUE_BIS, 6, 2, true)
-        , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15, WHITE, DARK_BLUE_BIS, 6, 2, true)
+        , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15,
+                    WHITE, DARK_BLUE_BIS, 6, 2, true)
+        , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15,
+                    WHITE, DARK_BLUE_BIS, 6, 2, true)
           //END WidgetPager
-        , logout(drawable, 0, 0, *this, this, "Logout", true, -16, WHITE, DARK_BLUE_BIS, 6, 2)
-        , apply(drawable, 0, 0, *this, this, "Filter", true, -12, WHITE, DARK_BLUE_BIS, 6, 2)
-        , connect(drawable, 0, 0, *this, this, "Connect", true, -18, WHITE, DARK_BLUE_BIS, 6, 2)
+        , logout(drawable, 0, 0, *this, this, TR("logout"), true, -16, WHITE, DARK_BLUE_BIS, 6, 2)
+        , apply(drawable, 0, 0, *this, this, TR("filter"), true, -12, WHITE, DARK_BLUE_BIS, 6, 2)
+        , connect(drawable, 0, 0, *this, this, TR("connect"), true, -18, WHITE, DARK_BLUE_BIS, 6, 2)
     {
         this->impl = new CompositeTable;
 
