@@ -535,6 +535,10 @@ struct Inifile : public FieldObserver {
         bool     capture_ocr;
 
         unsigned ocr_interval;
+        unsigned ocr_max_unrecog_char_rate; // expressed in percentage,
+                                            //     0   - all of characters need be recognized
+                                            //     100 - accept all results
+
         unsigned png_interval;    // time between 2 png captures (in 1/10 seconds)
         unsigned capture_groupid;
         unsigned frame_interval;  // time between 2 frame captures (in 1/100 seconds)
@@ -820,7 +824,9 @@ public:
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
-        this->video.ocr_interval    = 100;        // 1 every second
+        this->video.ocr_interval                = 100;      // 1 every second
+        this->video.ocr_max_unrecog_char_rate   = 40;
+
         this->video.png_interval    = 3000;
         this->video.capture_groupid = 33;
         this->video.frame_interval  = 40;         // 2,5 frame per second
@@ -1176,7 +1182,10 @@ public:
                 this->video.capture_ocr = 0 != (this->video.capture_flags & 8);
             }
             else if (0 == strcmp(key, "ocr_interval")){
-                this->video.ocr_interval   = ulong_from_cstr(value);
+                this->video.ocr_interval                = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "ocr_max_unrecog_char_rate")){
+                this->video.ocr_max_unrecog_char_rate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_interval")){
                 this->video.png_interval   = ulong_from_cstr(value);
