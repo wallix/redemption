@@ -26,7 +26,7 @@
 #include "password.hpp"
 #include "multiline.hpp"
 #include "image.hpp"
-#include "screen.hpp"
+#include "composite.hpp"
 #include "flat_button.hpp"
 
 class FlatLogin : public WidgetParent
