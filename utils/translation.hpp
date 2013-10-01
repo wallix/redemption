@@ -196,7 +196,7 @@ static inline const char * TR(const char * key, Inifile * ini = NULL) {
             res = ini->translation.diagnostic.get_cstr();
         }
         LOG(LOG_INFO, "Translation FOUND in INIFILE: %s", res);
-        if (0 == strcmp("Aide", ini->translation.button_help.get_cstr())) {
+        if (0 == strcmp("fr", ini->translation.language.get_cstr())) {
             TRANSLATIONCONF.set_lang(FR);
             LOG(LOG_INFO, "Translation Set to language FR");
         }

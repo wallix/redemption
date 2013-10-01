@@ -164,7 +164,7 @@ public:
 
 	this->number_page = ini.context.selector_number_of_pages.get();
 	snprintf(buffer, sizeof(buffer), "%u", this->number_page);
-	this->selector.number_page.set_text(WidgetSelector::temporary_number_of_page(buffer).buffer);
+	this->selector.number_page.set_text(WidgetSelectorFlat::temporary_number_of_page(buffer).buffer);
 
 
         uint16_t cy = this->selector.selector_lines.cy();

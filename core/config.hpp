@@ -164,6 +164,8 @@ typedef enum
         AUTHID_TRANS_CONNECTION_CLOSED,
         AUTHID_TRANS_HELP_MESSAGE,
 
+        AUTHID_LANGUAGE,
+
         // Options
         AUTHID_OPT_CLIPBOARD,           // clipboard
         AUTHID_OPT_DEVICEREDIRECTION,   // device_redirection
@@ -257,6 +259,7 @@ typedef enum
 #define STRAUTHID_TRANS_DIAGNOSTIC         "trans_diagnostic"
 #define STRAUTHID_TRANS_CONNECTION_CLOSED  "trans_connection_closed"
 #define STRAUTHID_TRANS_HELP_MESSAGE       "trans_help_message"
+#define STRAUTHID_LANGUAGE                 "language"
 // Options
 #define STRAUTHID_OPT_CLIPBOARD            "clipboard"
 #define STRAUTHID_OPT_DEVICEREDIRECTION    "device_redirection"
@@ -345,6 +348,8 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_TRANS_DIAGNOSTIC,
     STRAUTHID_TRANS_CONNECTION_CLOSED,
     STRAUTHID_TRANS_HELP_MESSAGE,
+
+    STRAUTHID_LANGUAGE,
 
     // Options
     STRAUTHID_OPT_CLIPBOARD,            // clipboard
@@ -614,6 +619,8 @@ struct Inifile : public FieldObserver {
         StringField diagnostic;             // AUTHID_TRANS_DIAGNOSTIC
         StringField connection_closed;      // AUTHID_TRANS_CONNECTION_CLOSED
         StringField help_message;           // AUTHID_TRANS_HELP_MESSAGE
+
+        StringField language;
     } translation;
 
     // section "context"
@@ -899,6 +906,7 @@ public:
         this->translation.connection_closed.set_from_cstr("Connection closed");
         this->translation.help_message.set_from_cstr("Help message");
 
+
         this->translation.button_ok.attach_ini(this,AUTHID_TRANS_BUTTON_OK);
         this->translation.button_cancel.attach_ini(this,AUTHID_TRANS_BUTTON_CANCEL);
         this->translation.button_help.attach_ini(this,AUTHID_TRANS_BUTTON_HELP);
@@ -911,6 +919,9 @@ public:
         this->translation.diagnostic.attach_ini(this,AUTHID_TRANS_DIAGNOSTIC);
         this->translation.connection_closed.attach_ini(this,AUTHID_TRANS_CONNECTION_CLOSED);
         this->translation.help_message.attach_ini(this,AUTHID_TRANS_HELP_MESSAGE);
+
+        this->translation.language.set_from_cstr("en");
+        this->translation.language.attach_ini(this,AUTHID_LANGUAGE);
         // End Section "translation"
 
         // Begin section "context"
@@ -1339,7 +1350,13 @@ public:
             }
         }
         else if (0 == strcmp(context, "translation")){
-            if (0 == strcmp(key, "button_ok")){
+            if (0 == strcmp(key, "language")){
+                if ((0 == strcmp(value, "en")) ||
+                    (0 == strcmp(value, "fr"))) {
+                    this->translation.language.set_from_cstr(value);
+                }
+            }
+            else if (0 == strcmp(key, "button_ok")){
                 this->translation.button_ok.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "button_cancel")){

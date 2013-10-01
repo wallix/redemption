@@ -27,16 +27,17 @@
 #define LOGNULL
 #include "log.hpp"
 
+#undef FIXTURES_PATH
+#define FIXTURES_PATH "./tests/fixtures"
+#undef SHARE_PATH
+#define SHARE_PATH "./tests/fixtures"
+
 #include "internal/widget2/flat_dialog.hpp"
 #include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
-
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
