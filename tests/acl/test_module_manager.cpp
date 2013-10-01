@@ -145,10 +145,6 @@ BOOST_AUTO_TEST_CASE(TestModuleManagerGetMod)
     res = mm.get_mod_from_protocol();
     BOOST_CHECK(MODULE_INTERNAL_WIDGET2_LOGIN == res);
 
-    ini.context_set_value(AUTHID_TARGET_DEVICE,"rwl_login");
-    res = mm.get_mod_from_protocol();
-    BOOST_CHECK(MODULE_INTERNAL_WIDGET2_RWL_LOGIN == res);
-
     ini.context_set_value(AUTHID_TARGET_DEVICE,"rwl");
     res = mm.get_mod_from_protocol();
     BOOST_CHECK(MODULE_INTERNAL_WIDGET2_RWL == res);
@@ -172,10 +168,6 @@ BOOST_AUTO_TEST_CASE(TestModuleManagerGetMod)
     ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_rwl");
     res = mm.get_mod_from_protocol();
     BOOST_CHECK(MODULE_INTERNAL_WIDGET2_RWL == res);
-
-    ini.context_set_value(AUTHID_TARGET_DEVICE,"widget2_rwl_login");
-    res = mm.get_mod_from_protocol();
-    BOOST_CHECK(MODULE_INTERNAL_WIDGET2_RWL_LOGIN == res);
 
     ini.context_set_value(AUTHID_TARGET_DEVICE,"card");
     res = mm.get_mod_from_protocol();
