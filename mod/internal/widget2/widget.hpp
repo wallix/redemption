@@ -27,6 +27,7 @@
 #include "mod_api.hpp"
 #include <rect.hpp>
 #include <callback.hpp>
+#include "RDP/pointer.hpp"
 
 class Keymap2;
 
@@ -64,6 +65,12 @@ public:
         FORCE_FOCUS  = 0x04
     };
 
+    // Warning: these numbers are not random but associed to Front pointer cache index
+    enum OptionPointer {
+        NORMAL_POINTER = 0x00,
+        EDIT_POINTER   = 0x01,
+    };
+
 public:
     Widget2 & parent;
     DrawApi & drawable;
@@ -72,6 +79,7 @@ public:
     int group_id;
     int tab_flag;
     int focus_flag;
+    int pointer_flag;
     bool has_focus;
 
 public:
@@ -87,6 +95,7 @@ public:
     , group_id(group_id)
     , tab_flag(NORMAL_TAB)
     , focus_flag(NORMAL_FOCUS)
+    , pointer_flag(NORMAL_POINTER)
     , has_focus(false)
     {
     }

@@ -89,6 +89,8 @@ public:
         this->rect.cx += 2;
         this->rect.cy += 2;
         --this->h_text;
+
+        this->pointer_flag = EDIT_POINTER;
     }
 
     virtual ~WidgetEdit()

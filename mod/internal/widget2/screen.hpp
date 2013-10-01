@@ -31,10 +31,12 @@ class WidgetScreen : public WidgetParent
 {
 public:
     WidgetTooltip * tooltip;
+    Widget2 * current_over;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , tooltip(NULL)
+        , current_over(NULL)
     {
         this->impl = new CompositeTable;
         this->tab_flag = IGNORE_TAB;
@@ -78,9 +80,19 @@ public:
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
+        Widget2 * w = this->last_widget_at_pos(x, y);
+        if (this->current_over != w) {
+            if (w != NULL) {
+                this->drawable.set_pointer(w->pointer_flag);
+            }
+            else {
+                this->drawable.set_pointer(NORMAL_POINTER);
+            }
+            this->current_over = w;
+        }
         if (this->tooltip) {
             if (device_flags & MOUSE_FLAG_MOVE) {
-                Widget2 * w = this->last_widget_at_pos(x, y);
+                // Widget2 * w = this->last_widget_at_pos(x, y);
                 if (w != this->tooltip->notifier) {
                     this->hide_tooltip();
                 }

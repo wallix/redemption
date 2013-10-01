@@ -182,6 +182,9 @@ public:
             }
             w->rdp_input_mouse(device_flags, x, y, keymap);
         }
+        else {
+            Widget2::rdp_input_mouse(device_flags, x, y, keymap);
+        }
     }
 
 };
