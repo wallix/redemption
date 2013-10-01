@@ -1,3 +1,11 @@
+#mod/internal/widget2/screen 100 100
+mod/internal/widget2/selector 100 100
+mod/internal/widget2/widget 100 100
+mod/internal/widget2/composite 100 100
+mod/internal/widget2/widget2_rect 100 100
+mod/internal/widget2/flat_selector 100 100
+mod/internal/widget2/flat_login 100 100
+mod/internal/widget2/flat_wab_close 100 100
 mod/internal/widget2/widget2_window 100 100
 mod/internal/widget2/window_dialog 100 100
 #mod/internal/widget2/window_login 100 100
@@ -158,15 +166,21 @@ core/wait_obj 100 100
 front/front 100 100
 mod/draw_api 100 100
 mod/internal/login_mod 100 100
+mod/internal/flat_login_mod 100 100
 mod/internal/wab_close_mod 100 100
+mod/internal/flat_wab_close_mod 100 100
 mod/internal/replay_mod 100 100
+mod/internal/flat_selector_mod 100 100
 mod/internal/selector_mod 100 100
 mod/internal/test_card_mod 100 100
 mod/internal/bouncer2_mod 100 100
 mod/internal/rwl_mod 100 100
 mod/internal/dialog_mod 100 100
+mod/internal/flat_dialog_mod 100 100
 mod/internal/widget2/button 100 100
+mod/internal/widget2/flat_button 100 100
 mod/internal/widget2/dialog 100 100
+mod/internal/widget2/flat_dialog 100 100
 mod/internal/widget2/edit 100 100
 mod/internal/widget2/image 100 100
 mod/internal/internal_mod 100 100
@@ -176,9 +190,4 @@ mod/internal/widget2/msgbox 100 100
 mod/internal/widget2/multiline 100 100
 mod/internal/widget2/number_edit 100 100
 mod/internal/widget2/password 100 100
-#mod/internal/widget2/screen 100 100
-mod/internal/widget2/selector 100 100
-mod/internal/widget2/widget 100 100
-mod/internal/widget2/composite 100 100
-mod/internal/widget2/widget2_rect 100 100
 

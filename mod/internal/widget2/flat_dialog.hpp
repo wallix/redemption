@@ -25,6 +25,7 @@
 #include "composite.hpp"
 #include "flat_button.hpp"
 #include "multiline.hpp"
+#include "image.hpp"
 
 class FlatDialog : public WidgetParent
 {
