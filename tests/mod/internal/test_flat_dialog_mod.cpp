@@ -29,7 +29,7 @@
 #undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "internal/flat_dialog_mod.hpp"
@@ -51,15 +51,16 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
     FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "OK", 0);
+    keymap.push_kevent(Keymap2::KEVENT_TAB); // move focus to OK
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);
     LOG(LOG_INFO, "%s\n", res);
     BOOST_CHECK(0 == strcmp("True", res));
-
 }
 
 
@@ -79,9 +80,9 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
-    keymap.push_kevent(Keymap2::KEVENT_ESC);
 
     FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0);
+    keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);

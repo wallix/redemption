@@ -858,14 +858,14 @@ unit-test test_translation : tests/utils/test_translation.cpp libboost_unit_test
 unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_flat_login : tests/mod/internal/widget2/test_flat_login.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_flat_dialog_mod : tests/mod/internal/test_dialog_mod.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_flat_dialog_mod : tests/mod/internal/test_dialog_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_flat_dialog_mod : tests/mod/internal/test_flat_dialog_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_flat_login_mod : tests/mod/internal/test_login_mod.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_flat_login_mod : tests/mod/internal/test_login_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_flat_login_mod : tests/mod/internal/test_flat_login_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_flat_selector_mod : tests/mod/internal/test_selector_mod.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_flat_selector_mod : tests/mod/internal/test_selector_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_flat_wab_close_mod : tests/mod/internal/test_wab_close_mod.cpp png z openssl crypto libboost_unit_test ;
-unit-test test_flat_wab_close_mod : tests/mod/internal/test_wab_close_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;

@@ -21,6 +21,7 @@
 #ifndef REDEMPTION_MOD_INTERNAL_FLAT_LOGIN_MOD_HPP
 #define REDEMPTION_MOD_INTERNAL_FLAT_LOGIN_MOD_HPP
 
+#include "version.hpp"
 #include "front_api.hpp"
 #include "config.hpp"
 #include "widget2/flat_login.hpp"

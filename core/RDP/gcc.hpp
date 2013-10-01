@@ -1663,6 +1663,10 @@ namespace GCC
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
                 this->channelCount = stream.in_uint32_le();
+                if (this->channelCount >= 32) {
+                    LOG(LOG_ERR, "cs_net::recv channel count out of range (%u)", this->channelCount);
+                    throw Error(ERR_CHANNEL_OUT_OF_RANGE);
+                }
                 for (size_t i = 0; i < this->channelCount ; i++){
                     stream.in_copy_bytes(this->channelDefArray[i].name, 8);
                     this->channelDefArray[i].options = stream.in_uint32_le();
