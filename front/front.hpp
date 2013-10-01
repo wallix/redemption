@@ -928,7 +928,7 @@ public:
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    void GenerateColorPointerUpdateData(Stream & stream, int cache_idx, const Pointer & cursor) 
+    void GenerateColorPointerUpdateData(Stream & stream, int cache_idx, const Pointer & cursor)
     {
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
