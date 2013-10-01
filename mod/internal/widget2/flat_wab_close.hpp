@@ -28,6 +28,7 @@
 #include "edit.hpp"
 #include "label.hpp"
 #include "multiline.hpp"
+#include "translation.hpp"
 
 #include <vector>
 
