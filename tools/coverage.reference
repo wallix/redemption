@@ -66,7 +66,6 @@ utils/stream 100 100
 utils/string 100 100
 utils/utf 100 100
 utils/zlib 100 100
-
 acl/authentifier 100 100
 acl/acl_serializer 100 100
 capture/capture 100 100
@@ -168,9 +167,7 @@ mod/internal/test_card_mod 100 100
 mod/internal/bouncer2_mod 100 100
 mod/internal/rwl_mod 100 100
 mod/internal/flat_dialog_mod 100 100
-mod/internal/widget2/button 100 100
 mod/internal/widget2/flat_button 100 100
-mod/internal/widget2/dialog 100 100
 mod/internal/widget2/flat_dialog 100 100
 mod/internal/widget2/edit 100 100
 mod/internal/widget2/image 100 100
