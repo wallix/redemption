@@ -28,6 +28,7 @@
 #include "image.hpp"
 #include "composite.hpp"
 #include "flat_button.hpp"
+#include "translation.hpp"
 
 class FlatLogin : public WidgetParent
 {
@@ -164,17 +165,19 @@ public:
         if (device_flags == MOUSE_FLAG_MOVE) {
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {
-                this->show_tooltip(wid, "You must be authenticated before using this<br>"
-                                         "session.<br>"
-                                         "<br>"
-                                         "Enter a valid username in the username edit box.<br>"
-                                         "Enter the password in the password edit box.<br>"
-                                         "<br>"
-                                         "Both the username and password are case<br>"
-                                         "sensitive.<br>"
-                                         "<br>"
-                                         "Contact your system administrator if you are<br>"
-                                         "having problems logging on.", x, y);
+                this->show_tooltip(wid, TR("help_message")
+                                   // "You must be authenticated before using this<br>"
+                                   // "session.<br>"
+                                   // "<br>"
+                                   // "Enter a valid username in the username edit box.<br>"
+                                   // "Enter the password in the password edit box.<br>"
+                                   // "<br>"
+                                   // "Both the username and password are case<br>"
+                                   // "sensitive.<br>"
+                                   // "<br>"
+                                   // "Contact your system administrator if you are<br>"
+                                   // "having problems logging on."
+                                   , x, y);
             }
         }
 

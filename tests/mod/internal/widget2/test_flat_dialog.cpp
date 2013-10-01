@@ -34,9 +34,10 @@
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 
-#ifndef FIXTURES_PATH
-# define FIXTURES_PATH
-#endif
+#undef FIXTURES_PATH
+#define FIXTURES_PATH "./tests/fixtures"
+#undef SHARE_PATH
+#define SHARE_PATH "./tests/fixtures"
 
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"

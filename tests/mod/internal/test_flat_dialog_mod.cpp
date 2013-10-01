@@ -24,6 +24,11 @@
 #define BOOST_TEST_MODULE TestFlatDialogMod
 #include <boost/test/auto_unit_test.hpp>
 
+#undef FIXTURES_PATH
+#define FIXTURES_PATH "./tests/fixtures"
+#undef SHARE_PATH
+#define SHARE_PATH "./tests/fixtures"
+
 #define LOGNULL
 #include "log.hpp"
 
@@ -48,7 +53,7 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    DialogMod d(ini, front, 800, 600, "Title", "Hello, World", "OK", 0);
+    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "OK", 0);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     const char * res = ini.context_get_value(AUTHID_ACCEPT_MESSAGE);
