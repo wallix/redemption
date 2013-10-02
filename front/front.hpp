@@ -424,7 +424,7 @@ public:
                 total_height = std::max(total_height, font_item->height);
             }
 
-            const Rect bk(x, y, total_width + 1, total_height);
+            const Rect bk(x, y, total_width + 1, total_height + 1);
 
              RDPGlyphIndex glyphindex(
                 f, // cache_id
