@@ -29,8 +29,8 @@
 #define REDOC(x)
 
 // These are used to help coverage chain when function length autodetection (using ctags and gcov) fails
-#define BEGINBODY(x)
-#define ENDBODY(x)
+#define BEGINBODY
+#define ENDBODY
 
 #ifndef VERBOSE
 #define TODO(x)

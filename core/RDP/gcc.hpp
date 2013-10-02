@@ -1053,11 +1053,13 @@ namespace GCC
             , connectionType(0)
             , pad1octet(0)
             , serverSelectedProtocol(0)
+            BEGINBODY
             {
                 bzero(this->clientName, 32);
                 bzero(this->imeFileName, 64);
                 bzero(this->clientDigProductId, 64);
             }
+            ENDBODY
 
             void recv(Stream & stream)
             {
@@ -2310,10 +2312,10 @@ namespace GCC
                 , wPublicKeyBlobLen(92)
                 , wSignatureBlobType(BB_RSA_SIGNATURE_BLOB)
                 , wSignatureBlobLen(72)
-                BEGINBODY("ServerProprietaryCertificate")
+                BEGINBODY
                 {
                 }
-                ENDBODY("ServerProprietaryCertificate")
+                ENDBODY
             } proprietaryCertificate;
 
             struct X509CertificateChain {

@@ -438,57 +438,59 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     BOOST_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
 }
 
-TODO("Add some tests for CS_CORE")
+
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
+{
+    const char indata[] =
+        "\x01\xc0"         // TS_UD_HEADER::type = CS_CORE (0xc001)
+        "\xd8\x00"         // length = 216 bytes
+        "\x04\x00\x08\x00" // TS_UD_CS_CORE::version = 0x0008004
+        "\x00\x05"         // TS_UD_CS_CORE::desktopWidth = 1280
+        "\x00\x04"         // TS_UD_CS_CORE::desktopHeight = 1024
+        "\x01\xca"         // TS_UD_CS_CORE::colorDepth = RNS_UD_COLOR_8BPP (0xca01)
+        "\x03\xaa"         // TS_UD_CS_CORE::SASSequence
+        "\x09\x04\x00\x00" // TS_UD_CS_CORE::keyboardLayout = 0x409 = 1033 = English (US)
+        "\xce\x0e\x00\x00" // TS_UD_CS_CORE::clientBuild = 3790
+                           // TS_UD_CS_CORE::clientName = ELTONS-TEST2
+        "\x45\x00\x4c\x00\x54\x00\x4f\x00\x4e\x00\x53\x00\x2d\x00\x44\x00"
+        "\x45\x00\x56\x00\x32\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x04\x00\x00\x00" // TS_UD_CS_CORE::keyboardType
+        "\x00\x00\x00\x00" // TS_UD_CS_CORE::keyboardSubtype
+        "\x0c\x00\x00\x00" // TS_UD_CS_CORE::keyboardFunctionKey
+                           // TS_UD_CS_CORE::imeFileName = ""
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x01\xca"         // TS_UD_CS_CORE::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (0xca01)
+        "\x01\x00"         // TS_UD_CS_CORE::clientProductId
+        "\x00\x00\x00\x00" // TS_UD_CS_CORE::serialNumber
+        "\x18\x00"         // TS_UD_CS_CORE::highColorDepth = 24 bpp
+        "\x07\x00"         // TS_UD_CS_CORE::supportedColorDepths
+                           //0x07 = 0x01 | 0x02 | 0x04 = RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT
+        "\x01\x00"         // TS_UD_CS_CORE::earlyCapabilityFlags
+                           //0x01 = RNS_UD_CS_SUPPORT_ERRINFO_PDU
+                           //TS_UD_CS_CORE::clientDigProductId = "69712-783-0357974-42714"
+        "\x36\x00\x39\x00\x37\x00\x31\x00\x32\x00\x2d\x00\x37\x00\x38\x00"
+        "\x33\x00\x2d\x00\x30\x00\x33\x00\x35\x00\x37\x00\x39\x00\x37\x00"
+        "\x34\x00\x2d\x00\x34\x00\x32\x00\x37\x00\x31\x00\x34\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00"             // TS_UD_CS_CORE::connectionType = 0 (not used as RNS_UD_CS_VALID_CONNECTION_TYPE not set)
+        "\x00"             // TS_UD_CS_CORE::pad1octet
+        "\x00\x00\x00\x00" // TS_UD_CS_CORE::serverSelectedProtocol
+    ;
+
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::CSCore cs_core;
+    cs_core.recv(stream);
+    BOOST_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
+    BOOST_CHECK_EQUAL(216, cs_core.length);
+}
 
 
-//01 c0 d8 00 -> TS_UD_HEADER::type = CS_CORE (0xc001), length = 216 bytes
 
-//04 00 08 00 -> TS_UD_CS_CORE::version = 0x0008004
-//00 05 -> TS_UD_CS_CORE::desktopWidth = 1280
-//00 04 -> TS_UD_CS_CORE::desktopHeight = 1024
-//01 ca -> TS_UD_CS_CORE::colorDepth = RNS_UD_COLOR_8BPP (0xca01)
-//03 aa -> TS_UD_CS_CORE::SASSequence
-//09 04 00 00 -> TS_UD_CS_CORE::keyboardLayout = 0x409 = 1033 = English (US)
-//ce 0e 00 00 -> TS_UD_CS_CORE::clientBuild = 3790
-
-//45 00 4c 00 54 00 4f 00 4e 00 53 00 2d 00 44 00
-//45 00 56 00 32 00 00 00 00 00 00 00 00 00 00 00 -> TS_UD_CS_CORE::clientName = ELTONS-TEST2
-
-//04 00 00 00 -> TS_UD_CS_CORE::keyboardType
-//00 00 00 00 -> TS_UD_CS_CORE::keyboardSubtype
-//0c 00 00 00 -> TS_UD_CS_CORE::keyboardFunctionKey
-
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ->
-//TS_UD_CS_CORE::imeFileName = ""
-
-//01 ca -> TS_UD_CS_CORE::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (0xca01)
-
-//01 00 -> TS_UD_CS_CORE::clientProductId
-//00 00 00 00 -> TS_UD_CS_CORE::serialNumber
-//18 00 -> TS_UD_CS_CORE::highColorDepth = 24 bpp
-
-//07 00 -> TS_UD_CS_CORE::supportedColorDepths
-//0x07
-//= 0x01 | 0x02 | 0x04
-//= RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT
-
-//01 00 -> TS_UD_CS_CORE::earlyCapabilityFlags
-//0x01
-//= RNS_UD_CS_SUPPORT_ERRINFO_PDU
-
-//36 00 39 00 37 00 31 00 32 00 2d 00 37 00 38 00
-//33 00 2d 00 30 00 33 00 35 00 37 00 39 00 37 00
-//34 00 2d 00 34 00 32 00 37 00 31 00 34 00 00 00
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ->
-//TS_UD_CS_CORE::clientDigProductId = "69712-783-0357974-42714"
-
-//00 -> TS_UD_CS_CORE::connectionType = 0 (not used as RNS_UD_CS_VALID_CONNECTION_TYPE not set)
-//00 -> TS_UD_CS_CORE::pad1octet
-
-//00 00 00 00 -> TS_UD_CS_CORE::serverSelectedProtocol
 
 
 
