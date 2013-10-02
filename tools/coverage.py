@@ -89,7 +89,7 @@ class Cover:
 
             self.modules[module] = Module(module)
             for line in open(ftags):
-                if re.match(r'^.*(TODO|REDOC)', line):
+                if re.match(r'^.*(TODO|REDOC|BODY)', line):
                     continue
                 res = re.match(r'^(.*[(].*)\x7F.*\x01(\d+)[,].*$', line)
                 if res is None:
@@ -101,10 +101,26 @@ class Cover:
 
             current_function = None
             for line in open(fgcov):
+                res = re.match(r'^.*(\d+)[:]\s*BEGINBODY(.*)$', line)
+                if res and current_function:
+                    if self.modules[module].functions[current_function].covered_lines > 0:
+                        self.modules[module].functions[current_function].covered_lines = 1
+                        self.modules[module].functions[current_function].total_lines = 1
+                    else:
+                        self.modules[module].functions[current_function].covered_lines = 0
+                        self.modules[module].functions[current_function].total_lines = 0
+
+                    continue
+
+                res = re.match(r'^.*(\d+)[:]\s*ENDBODY(.*)$', line)
+                if res:
+                    current_function = None
+                    continue
+
                 res = re.match(r'^\s*(#####|[-]|\d+)[:]\s*(\d+)[:](.*)$', line)
                 if res:
                     if int(res.group(2)) in self.modules[module].functions:
-			print "current function found at %d" % int(res.group(2))
+                        print "current function found at %d" % int(res.group(2))
                         current_function = int(res.group(2))
  
                     # ignore comments
@@ -166,7 +182,7 @@ else:
 
 print "Coverage Results:"
 for m in cover.modules:
-    for fnl in cover.modules[m].functions:
+    for fnl in sorted(cover.modules[m].functions):
         fn = cover.modules[m].functions[fnl]
         if fn.covered_lines == 0:
             print "WARNING: NO COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension, 
