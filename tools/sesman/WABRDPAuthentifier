@@ -1,0 +1,80 @@
+#!/usr/bin/python -O
+#
+# Copyright (c) 2011 WALLIX, SAS. All rights reserved.
+# Licensed computer software. Property of WALLIX.
+# Product Name: Wallix AdminBastion
+# Author(s) : Christophe Grosjean <cgr@wallix.com>
+# Id: $Id$
+# URL: $URL$
+# Module description:
+# Compile with:
+#
+"""
+WAB RDP Authentifier server launcher
+"""
+
+import socket
+import sys
+
+#from sys import stdin
+
+from socket import fromfd
+from socket import AF_INET
+from socket import SOCK_STREAM
+from socket import SOL_SOCKET
+from socket import SO_REUSEADDR
+from select import select
+from logger import Logger
+import os
+import signal
+
+def standalone():
+    signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+    # create socket from bounded port
+    s1 = socket.socket(AF_INET, SOCK_STREAM)
+    s1.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    s1.bind(('127.0.0.1', 3350))
+    s1.listen(100)
+
+    s2 = socket.socket(AF_INET, SOCK_STREAM)
+    s2.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+    s2.bind(('127.0.0.1', 3450))
+    s2.listen(100)
+
+    try:
+        while 1:
+            rfds, wfds, xfds = select([s1, s2], [], [], 1)
+            for sck in rfds:
+                if sck in [s1, s2]:
+                    client_socket, client_addr = sck.accept()
+                    child_pid = os.fork()
+                    if child_pid == 0:
+                        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+                        sck.close()
+
+                        try:
+                            from sesmanworker import Sesman
+                        except Exception, e:
+                            import traceback
+                            print traceback.format_exc(e)
+                            sys.exit(0)
+                            raise RuntimeError(u"WABRDPAuthentifier importing Sesman : %s" % e)
+
+                        server = Sesman(client_socket, client_addr)
+                        server.start()
+                        sys.exit(0)
+                    else:
+                        client_socket.close()
+                        #os.waitpid(child_pid, 0)
+
+    except KeyboardInterrupt:
+        if client_socket:
+            client_socket.close()
+        sys.exit(1)
+    except socket.error, e:
+        pass
+    except Exception, e:
+        Logger().exception("%s" % e)
+
+if __name__ == '__main__':
+    standalone()
