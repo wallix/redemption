@@ -2702,6 +2702,75 @@ namespace GCC
             }
         };
 
+// 2.2.1.3.7 Client Message Channel Data (TS_UD_CS_MCS_MSGCHANNEL)
+// ===============================================================
+
+// The TS_UD_CS_MCS_MSGCHANNEL packet indicates support for the message channel which
+// is used to transport the Initiate Multitransport Request PDU (section 2.2.15.1). 
+// This packet is an Extended Client Data Block and MUST NOT be sent to a server which
+// does not advertise support for Extended Client Data Blocks by using the 
+// EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section 2.2.1.2.1.
+
+//    header (4 bytes): A GCC user data block header, as specified in User Data Header 
+// (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MCS_MSGCHANNEL 
+// (0xC006).
+
+//   flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for
+// future use. It MUST be set to zero.
+
+// 2.2.1.3.8 Client Multitransport Channel Data (TS_UD_CS_MULTITRANSPORT)
+// ======================================================================
+
+// The TS_UD_CS_MULTITRANSPORT packet is used to indicate support for the RDP Multitransport
+// Layer ([MS-RDPEMT] section 1.3) and to specify multitransport characteristics. This packet
+// is an Extended Client Data Block and MUST NOT be sent to a server which does not advertise
+// support for Extended Client Data Blocks by using the EXTENDED_CLIENT_DATA_SUPPORTED flag
+// (0x00000001) as described in section 2.2.1.2.1.
+
+//    header (4 bytes): A GCC user data block header, as specified in User Data Header 
+// (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MULTITRANSPORT 
+// (0xC00A).
+
+//    flags (4 bytes): A 32-bit, unsigned integer that specifies protocols supported by the
+// client-side multitransport layer.
+
+// +----------------------------+------------------------------------------------------------+
+// | TRANSPORTTYPE_UDPFECR 0x01 | RDP-UDP Forward Error Correction (FEC) reliable transport  | 
+// |                            | ([MS-RDPEUDP] sections 1 to 3).                            |
+// +----------------------------+------------------------------------------------------------+
+// | TRANSPORTTYPE_UDPFECL 0x04 | RDP-UDP FEC lossy transport ([MS-RDPEUDP] sections 1 to 3).|
+// +----------------------------+------------------------------------------------------------+
+// |TRANSPORTTYPE_UDP_PREFERRED | Indicates that tunneling of static virtual channel traffic |
+// | 0x100                      | over UDP is supported.                                     |
+// +----------------------------+------------------------------------------------------------+
+
+// 2.2.1.3.9 Client Monitor Extended Data (TS_UD_CS_MONITOR_EX)
+// ============================================================
+
+// The TS_UD_CS_MONITOR_EX packet describes extended attributes of the client-side display 
+// monitor layout defined by the Client Monitor Data block (section 2.2.1.3.6). This packet 
+// is an Extended Client Data Block and MUST NOT be sent to a server which does not advertise
+// support for Extended Client Data Blocks by using the EXTENDED_CLIENT_DATA_SUPPORTED flag 
+// (0x00000001) as described in section 2.2.1.2.1.
+
+//    header (4 bytes): A GCC user data block header, as specified in User Data Header 
+// (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MONITOR_EX (0xC008).
+
+//    flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for 
+// future use. It MUST be set to zero.
+
+//    monitorAttributeSize (4 bytes): A 32-bit, unsigned integer. The size, in bytes, of a 
+// single element in the monitorAttributesArray field. This field MUST be set to 20 bytes, 
+// which is the size of the Monitor Attributes structure (section 2.2.1.3.9.1).
+
+//    monitorCount (4 bytes): A 32-bit, unsigned integer. The number of elements in the 
+// monitorAttributesArray field. This value MUST be the same as the monitorCount field 
+// specified in the Client Monitor Data (section 2.2.1.3.6 block (section).
+
+//    monitorAttributesArray (variable): A variable-length array containing a series of 
+// TS_MONITOR_ATTRIBUTES structures (section 2.2.1.3.9.1) which describe extended attributes 
+// of each display monitor specified in the Client Monitor Data block. The number of 
+// TS_MONITOR_ATTRIBUTES structures is specified by the monitorCount field.
 
     }; /* namespace UserData */
 }; /* namespace GCC */
