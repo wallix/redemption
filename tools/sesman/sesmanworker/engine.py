@@ -41,7 +41,7 @@ class Engine(object):
                 account = AccountInfo(
                     isAgentForwardable = u'False',
                     login = u'administrateur@qa',
-                    password = u'S3cur3!1nux',
+                    password = PASSWORD1,
                     pubkey = None,
                     isKeyAuth = None
                 ),
@@ -76,7 +76,7 @@ class Engine(object):
                 account = AccountInfo(
                     isAgentForwardable = u'False',
                     login = u'admin',
-                    password = u'SecureLinux',
+                    password = PASSWORD2,
                     pubkey = None,
                     isKeyAuth = None
                 ),
@@ -111,7 +111,7 @@ class Engine(object):
                 account = AccountInfo(
                     isAgentForwardable = u'False',
                     login = u'qa\\administrateur',
-                    password = u'S3cur3!1nux',
+                    password = PASSWORD1,
                     pubkey = None,
                     isKeyAuth = None
                 ),
@@ -395,7 +395,7 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'administrateur',
-                password = u'SecureLinux$42',
+                password = PASSWORD3,
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -495,7 +495,7 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'qa\\administrateur',
-                password = u'S3cur3!1nux',
+                password = PASSWORD1,
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -548,7 +548,7 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'administrateur',
-                password = u'SecureLinux$42',
+                password = PASSWORD3,
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -648,7 +648,7 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'administrateur@qa',
-                password = u'S3cur3!1nux',
+                password = PASSWORD1,
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -751,7 +751,7 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'qa\\administrateur',
-                password = u'S3cur3!1nux',
+                password = PASSWORD1,
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -804,7 +804,7 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'qa\\administrateur',
-                password = u'S3cur3!1nux',
+                password = PASSWORD1,
                 pubkey = None,
                 isKeyAuth = None
             ),
