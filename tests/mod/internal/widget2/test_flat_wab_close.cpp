@@ -21,7 +21,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestWindowWabClose
+#define BOOST_TEST_MODULE TestFlatWabClose
 #include <boost/test/auto_unit_test.hpp>
 
 #undef FIXTURES_PATH
@@ -32,7 +32,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include "internal/widget2/window_wab_close.hpp"
+#include "internal/widget2/flat_wab_close.hpp"
 #include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -147,7 +147,7 @@ struct TestDraw : DrawApi
 };
 
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
+BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
 {
     BOOST_CHECK(1);
 
@@ -155,24 +155,22 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
 
     BOOST_CHECK(1);
 
-    // WindowWabClose is a window_wab_close widget at position 0,0 in it's parent context
+    // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 0;
-    int16_t y = 0;
     int id = 0;
 
     BOOST_CHECK(1);
 
     try {
 
-        WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+        FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def", id, "rec", "rec");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
 
     } catch (Error & e) {
         LOG(LOG_INFO, "e=%u", e.id);
@@ -182,23 +180,23 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x47\xde\x18\x14\x9b\x59\xf9\xb0\x98\xd9"
-        "\x38\xab\xa8\xe6\xec\xa6\xca\x0c\x47\xc8")){
+        "\xc4\x46\x5c\xc2\x19\xfd\x24\x7b\x66\xa9"
+        "\x28\x2d\x3f\xfe\xf6\x7d\x0d\x62\x25\xfa"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
+BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 10,100 in it's parent context
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 10;
-    int16_t y = 100;
 
-    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+    try {
+    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
         "Lorem ipsum dolor sit amet, consectetur<br>"
         "adipiscing elit. Nam purus lacus, luctus sit<br>"
         "amet suscipit vel, posuere quis turpis. Sed<br>"
@@ -215,174 +213,175 @@ BOOST_AUTO_TEST_CASE(TraceWindowWabClose2)
         "adipiscing et arcu."
     );
 
-    // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+    }
+    catch(Error & e) {
+        LOG(LOG_INFO, "error.id=%d", e.id);
+        BOOST_CHECK(false);
+    };
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close2.png");
+    // ask to widget to redraw at it's current position
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf4\x69\x47\x81\xc8\xf8\x49\xbb\xbd\xd1"
-        "\x3f\x73\x33\x87\x34\x7f\x14\x79\xb6\xc8")){
+        "\x6a\x67\xa0\x60\x91\xe2\xcd\x44\x4b\x33"
+        "\x86\xc0\x99\x3b\x47\x68\x3b\x21\x80\x69"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose3)
+BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position -10,500 in it's parent context
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = -10;
-    int16_t y = 500;
 
-    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x60\x89\x44\x36\xf0\x10\xe5\x80\x2a\x90"
-        "\xf5\x42\xfd\x75\xbc\x55\xe1\x6a\xc9\xd4")){
+        "\xbb\xeb\x86\x43\x8e\xe4\xa4\x1f\xd9\x83"
+        "\x0a\xe4\x6a\xb5\x40\xc2\xa7\x24\x43\xe3"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose4)
+BOOST_AUTO_TEST_CASE(TraceFlatWabClose4)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 770,500 in it's parent context
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 770;
-    int16_t y = 500;
 
-    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x8a\x32\xc4\x5c\x86\xd3\xd0\xbf\x16\x3b"
-        "\xef\x03\xbb\x27\xf7\xd6\xa3\x4d\x2e\x40")){
+        "\xbb\xeb\x86\x43\x8e\xe4\xa4\x1f\xd9\x83"
+        "\x0a\xe4\x6a\xb5\x40\xc2\xa7\x24\x43\xe3"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose5)
+BOOST_AUTO_TEST_CASE(TraceFlatWabClose5)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position -20,-7 in it's parent context
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = -20;
-    int16_t y = -7;
 
-    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close5.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd4\x7c\x88\x20\x0c\xa2\x51\x42\x43\x01"
-        "\x92\x16\x17\x36\x74\x43\xd8\x44\x5f\x93")){
+        "\xbb\xeb\x86\x43\x8e\xe4\xa4\x1f\xd9\x83"
+        "\x0a\xe4\x6a\xb5\x40\xc2\xa7\x24\x43\xe3"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabClose6)
+BOOST_AUTO_TEST_CASE(TraceFlatWabClose6)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 760,-7 in it's parent context
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 760;
-    int16_t y = -7;
 
-    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at it's current position
-    window_wab_close.rdp_input_invalidate(window_wab_close.rect);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close6.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xf2\x57\xf1\x5c\x1b\x12\x16\x05\x4c\x76"
-        "\x3a\xeb\x78\x83\x10\xfc\xce\xfd\x4a\x2b")){
+        "\xbb\xeb\x86\x43\x8e\xe4\xa4\x1f\xd9\x83"
+        "\x0a\xe4\x6a\xb5\x40\xc2\xa7\x24\x43\xe3"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip)
+BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 760,-7 in it's parent context
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 760;
-    int16_t y = -7;
 
-    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
-    window_wab_close.rdp_input_invalidate(window_wab_close.rect.offset(20,0));
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect.offset(20,0));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close7.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xd1\x64\x9a\x20\xe1\x84\xca\x7a\x3a\xb7"
-        "\x55\x59\x14\x86\x3d\x42\xf8\x9c\xe3\xd9")){
+        "\x52\x55\x4e\xf9\x74\x66\xef\x2b\x62\x12"
+        "\x37\xc7\x95\xce\x24\xbe\x23\xb5\x74\xb5"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWindowWabCloseClip2)
+BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 {
     TestDraw drawable(800, 600);
 
-    // WindowWabClose is a window_wab_close widget of size 100x20 at position 10,7 in it's parent context
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 0;
-    int16_t y = 0;
 
-    WindowWabClose window_wab_close(drawable, x, y, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
                                     "abc<br>def");
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
-    window_wab_close.rdp_input_invalidate(Rect(20 + window_wab_close.dx(),
-                                               5 + window_wab_close.dy(),
+    flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.dx(),
+                                               5 + flat_wab_close.dy(),
                                                30,
                                                10));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "window_wab_close8.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x63\x57\xbf\x01\x37\xb5\x68\xd4\x65\xc8"
-        "\x75\xb1\x94\x9c\x2e\xbd\x77\x50\x5b\xa0")){
+        "\x31\x82\xdc\x89\xfd\xda\x77\xc1\xf9\xa1"
+        "\x44\x23\xdb\xc5\x09\xae\xb9\xb7\x2b\x35"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }

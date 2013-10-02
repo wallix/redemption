@@ -129,6 +129,12 @@ public:
         this->front.text_metrics(text, width, height);
     }
 
+    virtual void server_set_pointer(const Pointer & cursor) {
+        this->front.server_set_pointer(cursor);
+    }
+    virtual void set_pointer(int cache_idx) {
+        this->front.set_pointer(cache_idx);
+    }
 
     uint32_t convert_to_black(uint32_t color)
     {

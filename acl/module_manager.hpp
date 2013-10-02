@@ -37,12 +37,7 @@
 #include "internal/bouncer2_mod.hpp"
 #include "internal/test_card_mod.hpp"
 #include "internal/replay_mod.hpp"
-#include "internal/selector_mod.hpp"
-#include "internal/wab_close_mod.hpp"
-#include "internal/dialog_mod.hpp"
-#include "internal/login_mod.hpp"
 #include "internal/rwl_mod.hpp"
-#include "internal/rwl_login_mod.hpp"
 #include "front.hpp"
 
 #include "internal/flat_login_mod.hpp"
@@ -64,7 +59,6 @@ enum {
     MODULE_INTERNAL_WIDGET2_MESSAGE,
     MODULE_INTERNAL_WIDGET2_LOGIN,
     MODULE_INTERNAL_WIDGET2_RWL,
-    MODULE_INTERNAL_WIDGET2_RWL_LOGIN,
     MODULE_INTERNAL_CARD,
     MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
     MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
@@ -234,12 +228,6 @@ public:
                 }
                 res = MODULE_INTERNAL_WIDGET2_LOGIN;
             }
-            else if (0 == strcmp(target, "rwl_login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
-            }
             else if (0 == strcmp(target, "rwl")) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
@@ -281,12 +269,6 @@ public:
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL rwl_login");
                 }
                 res = MODULE_INTERNAL_WIDGET2_RWL;
-            }
-            else if (0 == strcmp(target, "widget2_rwl_login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_rwl_login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
             }
             else {
                 if (this->verbose & 0x4) {
@@ -561,15 +543,6 @@ public:
                                        this->front,
                                        this->front.client_info.width,
                                        this->front.client_info.height);
-                LOG(LOG_INFO, "ModuleManager::internal module Login ready");
-                break;
-            case MODULE_INTERNAL_WIDGET2_RWL_LOGIN:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-                this->mod = new RwlLoginMod(
-                                            this->ini,
-                                            this->front,
-                                            this->front.client_info.width,
-                                            this->front.client_info.height);
                 LOG(LOG_INFO, "ModuleManager::internal module Login ready");
                 break;
 
