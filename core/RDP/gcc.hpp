@@ -2694,12 +2694,14 @@ namespace GCC
             }
 
             void log(const char * msg)
+            BEGINBODY
             {
                 // --------------------- Base Fields ---------------------------------------
                 LOG(LOG_INFO, "%s GCC User Data CS_SECURITY (%u bytes)", msg, this->length);
                 LOG(LOG_INFO, "CSSecGccUserData::encryptionMethods %u", this->encryptionMethods);
                 LOG(LOG_INFO, "CSSecGccUserData::extEncryptionMethods %u", this->extEncryptionMethods);
             }
+            ENDBODY
         };
 
 // 2.2.1.3.7 Client Message Channel Data (TS_UD_CS_MCS_MSGCHANNEL)

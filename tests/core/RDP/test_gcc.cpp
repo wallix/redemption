@@ -57,7 +57,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     const char gcc_conference_create_request_expected[] =
     // conference_create_request_header
-    "\x00\x05\x00\x14\x7C\x00\x01\x81\x2A\x00\x08\x00\x10\x00\x01\xC0"
+    "\x00\x05\x00\x14\x7C\x00\x01"
+    "\x81\x2A\x00\x08\x00\x10\x00\x01\xC0"
     "\x00\x44\x75\x63\x61"
     "\x81\x1c" // User data length
     // header
@@ -93,9 +94,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     BStream gcc_header(65536);
     GCC::Create_Request_Send(gcc_header, stream.size());
-
-    t.send(gcc_header.get_data(), gcc_header.size());
-//    t.send(stream.get_data(), stream.size());
+    t.send(gcc_header);
+    
+    BStream stream2(65536);
+    stream2.out_copy_bytes(gcc_conference_create_request_expected, 
+                  sizeof(gcc_conference_create_request_expected)-1); // -1 to ignore final 0
+    stream2.mark_end();
+    stream2.rewind();
+    
+    try {
+        GCC::Create_Request_Recv header(stream2);
+    } catch(Error & e) {
+        BOOST_CHECK(false);
+    };
+    
 //    BOOST_CHECK(t.get_status());
 }
 
