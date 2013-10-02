@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     //drawable.save_to_png(OUTPUT_FILE_PATH "button4.png");
 
     char message[1024];
-    if (!check_sig(drawable.gd.drawable, message, 
+    if (!check_sig(drawable.gd.drawable, message,
         "\x3e\xed\x9c\xa1\xa0\xca\x17\xf7\x2c\x0a"
         "\x1d\x3d\x6c\x99\x55\x17\x22\xa4\xa2\xbd"
         )){
@@ -556,12 +556,19 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "button15.png");
 
+    // if (!check_sig(drawable.gd.drawable, message,
+    //     "\x4e\x56\x78\x23\xe6\x8f\xb2\xac\x4d\xe7"
+    //     "\x7d\x10\xe9\x62\x46\x33\x6b\x92\x17\xe9"
+    //    )){
+    //     BOOST_CHECK_MESSAGE(false, message);
+    // }
     if (!check_sig(drawable.gd.drawable, message,
-        "\x4e\x56\x78\x23\xe6\x8f\xb2\xac\x4d\xe7"
-        "\x7d\x10\xe9\x62\x46\x33\x6b\x92\x17\xe9"
+                   "\x3b\xae\x86\x5e\xf7\xb4\xbe\x36\x09\x24"
+                   "\x43\xc7\x04\x61\x4b\xac\x18\xce\x9f\xfb"
        )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 
     wbutton.blur();
 
@@ -582,9 +589,16 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
 
     //drawable.save_to_png(OUTPUT_FILE_PATH "button17.png");
 
+    // if (!check_sig(drawable.gd.drawable, message,
+    //     "\x4e\x56\x78\x23\xe6\x8f\xb2\xac\x4d\xe7"
+    //     "\x7d\x10\xe9\x62\x46\x33\x6b\x92\x17\xe9"
+    // )){
+    //     BOOST_CHECK_MESSAGE(false, message);
+    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-        "\x4e\x56\x78\x23\xe6\x8f\xb2\xac\x4d\xe7"
-        "\x7d\x10\xe9\x62\x46\x33\x6b\x92\x17\xe9"
+                   "\x3b\xae\x86\x5e\xf7\xb4\xbe\x36\x09\x24"
+                   "\x43\xc7\x04\x61\x4b\xac\x18\xce\x9f\xfb"
    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

@@ -42,16 +42,18 @@ class WidgetSelectorFlat : public WidgetParent
         WidgetLabel target;
         WidgetLabel protocol;
         WidgetLabel closetime;
+        uint h_border;
+        int border_color;
 
 
         Line(DrawApi & drawable, Widget2& parent, NotifyApi* notifier,
-             int x, int y, int lcy,
+             int x, int y, int lcy, uint h_border,
              int group_w, int target_w, int protocol_w, int closetime_w,
              const char * device_group, const char * target_label,
              const char * protocol, const char * closetime,
              int fgcolor, int bgcolor, int x_text, int y_text)
-            : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w, lcy),
-                      parent, notifier)
+            : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w,
+                                     lcy + h_border), parent, notifier)
             , group(WidgetLabel(drawable, x, y,
                                 parent, notifier,
                                 device_group, false, 0,
@@ -68,6 +70,8 @@ class WidgetSelectorFlat : public WidgetParent
                                     parent, notifier,
                                     closetime, false, 0,
                                     fgcolor, bgcolor, x_text, y_text))
+            , h_border(h_border)
+            , border_color(bgcolor)
         {
             this->group.rect.cx     = group_w;
             this->target.rect.cx    = target_w;
@@ -87,6 +91,19 @@ class WidgetSelectorFlat : public WidgetParent
             this->target.refresh(new_clip.intersect(this->target.rect));
             this->protocol.refresh(new_clip.intersect(this->protocol.rect));
             this->closetime.refresh(new_clip.intersect(this->closetime.rect));
+            if (this->h_border) {
+                this->drawable.draw(
+                                    RDPOpaqueRect(
+                                                  Rect(
+                                                       this->rect.x,
+                                                       this->rect.y + this->group.rect.cy,
+                                                       this->rect.cx,
+                                                       this->h_border
+                                                       ),
+                                                  this->border_color
+                                                  ), clip
+                                    );
+            }
         }
 
         void set_bg_color(int bg_color) {
@@ -94,6 +111,7 @@ class WidgetSelectorFlat : public WidgetParent
             this->target.bg_color    = bg_color;
             this->protocol.bg_color  = bg_color;
             this->closetime.bg_color = bg_color;
+            this->border_color       = bg_color;
         }
         void set_fg_color(int fg_color) {
             this->group.fg_color     = fg_color;
@@ -284,6 +302,7 @@ private:
 
             Line * line = new Line(this->drawable, *this, NULL,
                                    0, this->labels.size() * (lcy + this->h_border), lcy,
+                                   this->h_border,
                                    this->group_w, this->target_w, this->protocol_w, this->closetime_w,
                                    device_group, target_label, protocol, close_time,
                                    b ? this->fg_color1 : this->fg_color2,
@@ -291,7 +310,7 @@ private:
                                    this->x_text, this->y_text);
 
             this->labels.push_back(line);
-            const uint lines_h = this->labels.size() * (this->h_text + this->y_text * 2 + this->h_border) - this->h_border;
+            const uint lines_h = this->labels.size() * (this->h_text + this->y_text * 2 + this->h_border);
             this->rect.cy = lines_h;
         }
 
@@ -313,21 +332,32 @@ private:
             }
         }
 
+        void set_line_focus_color(Line & line) {
+            if (this->has_focus) {
+                line.set_bg_color(WABGREEN_BIS);
+                line.set_fg_color(BLACK);
+            }
+            else {
+                line.set_bg_color(this->current_bg_color);
+                line.set_fg_color(this->current_fg_color);
+            }
+        }
+
         void set_current_index(uint idx)
         {
             if (idx != this->current_index) {
-                if (this->current_index < this->labels.size()) {
-                    this->labels[this->current_index]->set_bg_color(this->current_index & 1
-                                                                    ? this->bg_color1
-                                                                    : this->bg_color2);
-                    this->labels[this->current_index]->set_fg_color(this->current_index & 1
-                                                                    ? this->fg_color1
-                                                                    : this->fg_color2);
-                    this->refresh(this->labels[this->current_index]->rect);
-                }
+                uint previous_index = this->current_index;
                 this->current_index = idx;
-                this->labels[idx]->set_bg_color(this->current_bg_color);
-                this->labels[idx]->set_fg_color(this->current_fg_color);
+                if (previous_index < this->labels.size()) {
+                    this->labels[previous_index]->set_bg_color(previous_index & 1
+                                                               ? this->bg_color1
+                                                               : this->bg_color2);
+                    this->labels[previous_index]->set_fg_color(previous_index & 1
+                                                               ? this->fg_color1
+                                                               : this->fg_color2);
+                    this->refresh(this->labels[previous_index]->rect);
+                }
+                this->set_line_focus_color(*this->labels[idx]);
                 this->refresh(this->labels[this->current_index]->rect);
             }
         }
@@ -338,40 +368,14 @@ private:
             uint lcy = 0;
             for (std::size_t i = 0; i < size; ++i) {
                 Line * line = this->labels[i];
+                if (i == this->current_index) {
+                    this->set_line_focus_color(*line);
+                }
 
                 line->refresh(clip);
 
-                lcy += this->h_text + this->y_text * 2;
-                if (this->h_border) {
-                    this->drawable.draw(
-                                        RDPOpaqueRect(
-                                                      Rect(
-                                                           this->rect.x,
-                                                           this->rect.y + lcy,
-                                                           this->rect.cx,
-                                                           this->h_border
-                                                           ),
-                                                      // this->bg_color
-                                                      (i & 1) ? this->bg_color1 : this->bg_color2
-                                                      ), clip
-                                        );
-                    lcy += this->h_border;
-                }
-
+                lcy += line->rect.cy;
             }
-
-            this->drawable.draw(
-                                RDPOpaqueRect(
-                                              Rect(
-                                                   this->rect.x,
-                                                   this->rect.y + lcy,
-                                                   this->rect.cx,
-                                                   this->rect.cy - lcy
-                                                   ),
-
-                                              this->bg_color
-                                              ), clip
-                                );
         }
 
         Column get_column(int x) {

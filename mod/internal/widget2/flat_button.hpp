@@ -86,7 +86,7 @@ public:
 
         if (this->logo) {
             if (this->has_focus) {
-                this->label.fg_color = MEDIUM_BLUE;
+                this->label.fg_color = WABGREEN_BIS;
                 this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                     this->dx(), this->dy(), this->cx(), this->cy()
                     )), this->label.bg_color), this->rect);
@@ -113,47 +113,45 @@ public:
         }
         else {
             this->label.draw(clip);
-
         }
 
         if (this->logo)
             return;
 
+        //top
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+              this->dx(), this->dy(), this->cx() - 2, 2
+              )), WHITE), this->rect);
+        //left
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+              this->dx(), this->dy() + 2, 2, this->cy() - 2
+              )), WHITE), this->rect);
+        //right
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+              this->dx() + this->cx() - 2, this->dy(), 2, this->cy()
+              )), WHITE), this->rect);
+        //bottom
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+              this->dx(), this->dy() + this->cy() - 2, this->cx(), 2
+              )), WHITE), this->rect);
+
         if (this->has_focus) {
             //top
             this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx(), this->dy(), this->cx() - 2, 2
-                  )), MEDIUM_BLUE), this->rect);
+                  this->dx(), this->dy(), this->cx(), 2
+                  )), WABGREEN_BIS), this->rect);
             //left
             this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx(), this->dy() + 2, 2, this->cy() - 2
-                  )), MEDIUM_BLUE), this->rect);
+                  this->dx(), this->dy(), 2, this->cy()
+                  )), WABGREEN_BIS), this->rect);
             //right
             this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   this->dx() + this->cx() - 2, this->dy(), 2, this->cy()
-                  )), MEDIUM_BLUE), this->rect);
+                  )), WABGREEN_BIS), this->rect);
             //bottom
             this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
                   this->dx(), this->dy() + this->cy() - 2, this->cx(), 2
-                  )), MEDIUM_BLUE), this->rect);
-        }
-        else {
-            //top
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx(), this->dy(), this->cx() - 2, 2
-                  )), WHITE), this->rect);
-            //left
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx(), this->dy() + 2, 2, this->cy() - 2
-                  )), WHITE), this->rect);
-            //right
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx() + this->cx() - 2, this->dy(), 2, this->cy()
-                  )), WHITE), this->rect);
-            //bottom
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx(), this->dy() + this->cy() - 2, this->cx(), 2
-                  )), WHITE), this->rect);
+                  )), WABGREEN_BIS), this->rect);
         }
 
     }

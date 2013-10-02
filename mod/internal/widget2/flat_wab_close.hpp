@@ -155,6 +155,7 @@ public:
         this->img.rect.y = (3*(height - y) / 2 - this->img.cy()) / 2 + y;
         this->add_widget(&this->img);
 
+        this->set_widget_focus(&this->cancel);
     }
 
     virtual ~FlatWabClose()

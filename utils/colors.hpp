@@ -46,6 +46,7 @@ enum {
     YELLOW     = 0x00ffff,
     CYAN       = 0xffff00,
     WABGREEN   = 0x2BBE91,
+    WABGREEN_BIS  = 0x08ff7b,
     DARK_WABGREEN = 0x91BE2B,
     INV_DARK_WABGREEN = 0x2BBE91,
     DARK_GREEN    = 0x499F74,

@@ -85,6 +85,7 @@ public:
         this->img.rect.y = (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
         this->add_widget(&this->img);
 
+        this->set_widget_focus(this->cancel?this->cancel:&this->ok);
     }
 
     virtual ~FlatDialog()
