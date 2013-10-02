@@ -157,7 +157,7 @@ lib icuuc : : <name>icuuc ;
 # bjam -a -d2 rio
 # See library content (entry points) using
 # nm -C --defined-only -g bin/*/*/librio.so
-lib rio : transport/rio/rio.cpp : ;
+#lib rio : transport/rio/rio.cpp : ;
 
 
 obj mainloop : core/mainloop.cpp ;
