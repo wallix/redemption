@@ -2310,8 +2310,10 @@ namespace GCC
                 , wPublicKeyBlobLen(92)
                 , wSignatureBlobType(BB_RSA_SIGNATURE_BLOB)
                 , wSignatureBlobLen(72)
+                BEGINBODY("ServerProprietaryCertificate")
                 {
                 }
+                ENDBODY("ServerProprietaryCertificate")
             } proprietaryCertificate;
 
             struct X509CertificateChain {

@@ -96,15 +96,31 @@ class Cover:
                     res = re.match(r'^(.*[(].*)\x7F(\d+)[,].*$', line)
                 if res:
                     name, startline = res.group(1, 2)
-                    print "function found at %s %s" % (name, startline)
+#                    print "function found at %s %s" % (name, startline)
                     self.modules[module].functions[int(startline)] = Function(name, int(startline))
 
             current_function = None
             for line in open(fgcov):
+                res = re.match(r'^.*(\d+)[:]\s*BEGINBODY[^A-Za-z0-9_]+([A-Za-z0-9_]*)[^A-Za-z0-9_]+(.*)$', line)
+                if res and current_function:
+                    if self.modules[module].functions[current_function].covered_lines > 0:
+                        self.modules[module].functions[current_function].covered_lines = 1
+                        self.modules[module].functions[current_function].total_lines = 1
+                    else:
+                        self.modules[module].functions[current_function].covered_lines = 0
+                        self.modules[module].functions[current_function].total_lines = 0
+
+                    continue
+
+                res = re.match(r'^.*(\d+)[:]\s*ENDBODY[^A-Za-z0-9_]+([A-Za-z0-9_]*)[^A-Za-z0-9_]+(.*)$', line)
+                if res:
+                    current_function = None
+                    continue
+
                 res = re.match(r'^\s*(#####|[-]|\d+)[:]\s*(\d+)[:](.*)$', line)
                 if res:
                     if int(res.group(2)) in self.modules[module].functions:
-			print "current function found at %d" % int(res.group(2))
+#                        print "current function found at %d" % int(res.group(2))
                         current_function = int(res.group(2))
  
                     # ignore comments

@@ -208,6 +208,24 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
                      , cs_net.channelDefArray[1].options);
 }
 
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
+{
+    const char indata[] =
+        /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    ;
+
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::SCSecurity sc_sec1;
+    sc_sec1.recv(stream);
+    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
+    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+}
+
+
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
 {
     const char indata[] =
@@ -386,21 +404,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
 }
 
 
-TODO("Add tests for CS_SECURITY")
-
-// 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes
-
-// 1b 00 00 00 -> TS_UD_CS_SEC::encryptionMethods
-// 0x1b
-// = 0x01 | 0x02 | 0x08 | 0x10
-// = 40BIT_ENCRYPTION_FLAG | 128BIT_ENCRYPTION_FLAG |
-// 56BIT_ENCRYPTION_FLAG | FIPS_ENCRYPTION_FLAG
-
-// 00 00 00 00 -> TS_UD_CS_SEC::extEncryptionMethods
-
-
 TODO("Add some tests for CS_CLUSTER")
-
 
 // 04 c0 0c 00 -> TS_UD_HEADER::type = CS_CLUSTER (0xc004), length = 12 bytes
 
@@ -410,6 +414,29 @@ TODO("Add some tests for CS_CLUSTER")
 // = REDIRECTION_VERSION4 << 2 | REDIRECTION_SUPPORTED
 
 // 00 00 00 00 -> TS_UD_CS_CLUSTER::RedirectedSessionID
+
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
+{
+    const char indata[] =
+        "\x04\xc0"         // CS_CLUSTER
+        "\x0c\x00"         // 12 bytes user Data
+        "\x0d\x00\x00\x00" // TS_UD_CS_CLUSTER::Flags = 0x0d
+        // 0x0d
+        // = 0x03 << 2 | 0x01
+        // = REDIRECTION_VERSION4 << 2 | REDIRECTION_SUPPORTED
+        "\x00\x00\x00\x00" // TS_UD_CS_CLUSTER::RedirectedSessionID
+    ;
+
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::CSCluster cs_cluster;
+    cs_cluster.recv(stream);
+    BOOST_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
+    BOOST_CHECK_EQUAL(12, cs_cluster.length);
+    BOOST_CHECK_EQUAL(13, cs_cluster.flags);
+    BOOST_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
+}
 
 TODO("Add some tests for CS_CORE")
 
@@ -462,5 +489,20 @@ TODO("Add some tests for CS_CORE")
 //00 -> TS_UD_CS_CORE::pad1octet
 
 //00 00 00 00 -> TS_UD_CS_CORE::serverSelectedProtocol
+
+
+
+TODO("Add tests for CS_SECURITY")
+
+// 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes
+
+// 1b 00 00 00 -> TS_UD_CS_SEC::encryptionMethods
+// 0x1b
+// = 0x01 | 0x02 | 0x08 | 0x10
+// = 40BIT_ENCRYPTION_FLAG | 128BIT_ENCRYPTION_FLAG |
+// 56BIT_ENCRYPTION_FLAG | FIPS_ENCRYPTION_FLAG
+
+// 00 00 00 00 -> TS_UD_CS_SEC::extEncryptionMethods
+
 
 
