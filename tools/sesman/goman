@@ -1,0 +1,5 @@
+#!/usr/bin/perl
+my $srchost = '<USER>@<HOST>:';
+my $srcpath = '<ROOT_DIR>sesman/sesmanworker';
+my $dstpath = '/opt/wab/lib/python2.6/site-packages/sesmanworker';
+system(qq{scp '$srchost$srcpath/sesman.py $srcpath/wab/engine.py $srcpath/wab/fileconf.py $srcpath/sesmanconf.py $srcpath/wab/model.py' '$dstpath'}) == 0 or die "Remote copy of source files failed";
