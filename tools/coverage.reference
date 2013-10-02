@@ -1,15 +1,10 @@
 mod/internal/widget2/screen 100 100
-mod/internal/widget2/selector 100 100
 mod/internal/widget2/widget 100 100
 mod/internal/widget2/composite 100 100
 mod/internal/widget2/widget2_rect 100 100
 mod/internal/widget2/flat_selector 100 100
 mod/internal/widget2/flat_login 100 100
 mod/internal/widget2/flat_wab_close 100 100
-mod/internal/widget2/widget2_window 100 100
-mod/internal/widget2/window_dialog 100 100
-#mod/internal/widget2/window_login 100 100
-mod/internal/widget2/window_wab_close 100 100
 mod/mod_api 100 100
 mod/null/null 100 100
 mod/rdp/rdp 100 100
@@ -71,7 +66,6 @@ utils/stream 100 100
 utils/string 100 100
 utils/utf 100 100
 utils/zlib 100 100
-
 acl/authentifier 100 100
 acl/acl_serializer 100 100
 capture/capture 100 100
@@ -165,21 +159,15 @@ core/session_server 100 100
 core/wait_obj 100 100
 front/front 100 100
 mod/draw_api 100 100
-mod/internal/login_mod 100 100
 mod/internal/flat_login_mod 100 100
-mod/internal/wab_close_mod 100 100
 mod/internal/flat_wab_close_mod 100 100
 mod/internal/replay_mod 100 100
 mod/internal/flat_selector_mod 100 100
-mod/internal/selector_mod 100 100
 mod/internal/test_card_mod 100 100
 mod/internal/bouncer2_mod 100 100
 mod/internal/rwl_mod 100 100
-mod/internal/dialog_mod 100 100
 mod/internal/flat_dialog_mod 100 100
-mod/internal/widget2/button 100 100
 mod/internal/widget2/flat_button 100 100
-mod/internal/widget2/dialog 100 100
 mod/internal/widget2/flat_dialog 100 100
 mod/internal/widget2/edit 100 100
 mod/internal/widget2/image 100 100

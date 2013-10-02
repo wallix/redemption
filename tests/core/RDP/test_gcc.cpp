@@ -25,8 +25,8 @@
 #define BOOST_TEST_MODULE TestGCC
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGPRINT
 #include "log.hpp"
-#define LOGNULL
 
 #include "transport.hpp"
 #include "testtransport.hpp"
@@ -152,16 +152,22 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     BOOST_CHECK(0 == memcmp(expected, stream.get_data(), 12));
 
     stream.p = stream.get_data();
-    GCC::UserData::SCNet sc_net2;
 
-    sc_net2.recv(stream);
-    BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
-    BOOST_CHECK_EQUAL(16, sc_net2.length);
-    BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
-    BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
-    BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
-    BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
-    BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
+    try {
+        GCC::UserData::SCNet sc_net2;
+
+        sc_net2.recv(stream);
+        BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
+        BOOST_CHECK_EQUAL(16, sc_net2.length);
+        BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
+        BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
+        BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
+        BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
+        BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
+    }
+    catch (const Error & e){
+        BOOST_CHECK(false);
+    };
 }
 
 

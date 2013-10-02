@@ -27,7 +27,7 @@
 #define LOGNULL
 #include "log.hpp"
 
-#include "internal/widget2/button.hpp"
+#include "internal/widget2/flat_button.hpp"
 #include "internal/widget2/screen.hpp"
 #include "internal/widget2/composite.hpp"
 #include "png.hpp"
@@ -72,22 +72,10 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     Notify notifier3;
     Notify notifier4;
 
-    WidgetButton wbutton1(drawable, 0, 0, wscreen, &notifier1, "button 1");
-    WidgetButton wbutton2(drawable, 0, 30, wscreen, &notifier2, "button 2");
-    WidgetButton wbutton3(drawable, 100, 0, wscreen, &notifier3, "button 3");
-    WidgetButton wbutton4(drawable, 100, 30, wscreen, &notifier4, "button 4");
-    struct init_border {
-        static void on(WidgetButton& wbutton) {
-            wbutton.border_right_bottom_color = YELLOW;
-            wbutton.border_right_bottom_color2 = CYAN;
-            wbutton.border_top_left_color = GREEN;
-            wbutton.border_top_left_color2 = RED;
-        }
-    };
-    init_border::on(wbutton1);
-    init_border::on(wbutton2);
-    init_border::on(wbutton3);
-    init_border::on(wbutton4);
+    WidgetFlatButton wbutton1(drawable, 0, 0, wscreen, &notifier1, "button 1");
+    WidgetFlatButton wbutton2(drawable, 0, 30, wscreen, &notifier2, "button 2");
+    WidgetFlatButton wbutton3(drawable, 100, 0, wscreen, &notifier3, "button 3");
+    WidgetFlatButton wbutton4(drawable, 100, 30, wscreen, &notifier4, "button 4");
 
     wscreen.add_widget(&wbutton1);
     wscreen.add_widget(&wbutton2);
@@ -107,9 +95,9 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier2.event == FOCUS_BEGIN);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x5d\xb4\xbd\x2d\x2a\xd8\xb0\x38\x24\x69"
-                   "\xf4\x73\xa6\xd7\x0a\x38\x54\xa7\x45\x04"
-                   )){
+        "\x4a\x82\xfb\x92\xf0\xbb\x4c\x98\x3d\x4c"
+        "\xfe\x39\xa3\x87\xbb\x41\xc1\xff\xdb\x65"
+   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -130,9 +118,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier3.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen2.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xf4\x38\x55\x4a\xce\x42\xdc\xad\x3b\x3f"
-                   "\x9e\xd7\x04\x95\x71\xe0\xb5\x4c\xd4\xf8"
-                   )){
+        "\xff\xe5\xbc\x52\xc6\x5a\x98\xd0\x82\xfc\x36\x9b\xb4\x73\x18\x19\xd3\x4d\x66\xcd"
+   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -150,9 +137,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen3.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xf1\x23\x73\xbe\xe9\x42\x92\x7e\x6f\x89"
-                   "\x52\xf8\xb8\xb0\x78\x17\x0d\xb2\x72\x7c"
-                   )){
+        "\xe5\x54\x52\xaf\xdb\x0e\x7b\x03\xf9\x54\x58\x72\x1a\x05\xf2\x21\x57\x2b\xa8\x46"
+   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -170,9 +156,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen4.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x18\x20\x46\xbc\x58\x3f\xad\xaa\x31\x05"
-                   "\x70\x59\x34\x0a\xfc\x51\xd2\xc1\xce\xa9"
-                   )){
+        "\xb6\xc8\xfc\x80\xd1\x71\x62\x09\x60\x04\x8b\x3b\x4a\x7e\x5f\xcb\xef\x17\xa4\x1f"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -190,9 +175,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen5.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xf1\x23\x73\xbe\xe9\x42\x92\x7e\x6f\x89"
-                   "\x52\xf8\xb8\xb0\x78\x17\x0d\xb2\x72\x7c"
-                   )){
+        "\xe5\x54\x52\xaf\xdb\x0e\x7b\x03\xf9\x54\x58\x72\x1a\x05\xf2\x21\x57\x2b\xa8\x46"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -210,9 +194,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen6.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xf4\x38\x55\x4a\xce\x42\xdc\xad\x3b\x3f"
-                   "\x9e\xd7\x04\x95\x71\xe0\xb5\x4c\xd4\xf8"
-                   )){
+        "\xff\xe5\xbc\x52\xc6\x5a\x98\xd0\x82\xfc\x36\x9b\xb4\x73\x18\x19\xd3\x4d\x66\xcd"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -230,9 +213,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier3.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen7.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x3f\x6b\xc7\x20\x10\x6d\x72\x73\x2e\xa3"
-                   "\xc7\xc1\x8e\x6a\xa7\xd5\xe6\x19\xec\x03"
-                   )){
+        "\x4e\x10\xd5\x60\x33\xec\x6c\xf4\x75\x22\x3c\x97\x0b\x7e\xf4\x69\x35\xb5\x4e\x9d"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -245,9 +227,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier1.event == 0);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen8.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x18\x20\x46\xbc\x58\x3f\xad\xaa\x31\x05"
-                   "\x70\x59\x34\x0a\xfc\x51\xd2\xc1\xce\xa9"
-                   )){
+        "\xb6\xc8\xfc\x80\xd1\x71\x62\x09\x60\x04\x8b\x3b\x4a\x7e\x5f\xcb\xef\x17\xa4\x1f"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -265,9 +246,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier2.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen9.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x5d\xb4\xbd\x2d\x2a\xd8\xb0\x38\x24\x69"
-                   "\xf4\x73\xa6\xd7\x0a\x38\x54\xa7\x45\x04"
-                   )){
+        "\x4a\x82\xfb\x92\xf0\xbb\x4c\x98\x3d\x4c\xfe\x39\xa3\x87\xbb\x41\xc1\xff\xdb\x65"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -285,9 +265,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     notifier4.event = 0;
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen10.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xc1\xa6\x10\x68\x65\x79\xc7\xf5\x75\xee"
-                   "\xab\x4a\x27\xe5\x75\xaa\x36\x02\x5b\x03"
-                   )){
+        "\xc2\xbd\x62\x95\xee\x4f\xb9\x15\x90\x4c\xa3\xa1\xb8\x5b\x0a\x84\xbe\xa1\xc2\x09"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -300,9 +279,8 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     BOOST_CHECK(notifier4.event == NOTIFY_SUBMIT);
     // drawable.save_to_png(OUTPUT_FILE_PATH "screen11.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xf1\x23\x73\xbe\xe9\x42\x92\x7e\x6f\x89"
-                   "\x52\xf8\xb8\xb0\x78\x17\x0d\xb2\x72\x7c"
-                   )){
+        "\xe5\x54\x52\xaf\xdb\x0e\x7b\x03\xf9\x54\x58\x72\x1a\x05\xf2\x21\x57\x2b\xa8\x46"
+    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
     wscreen.clear();

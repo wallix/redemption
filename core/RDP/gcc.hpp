@@ -650,6 +650,11 @@ namespace GCC
 
             void recv(Stream & stream)
             {
+                if (!stream.in_check_rem(8)){
+                    LOG(LOG_ERR, "SC_CORE short header");
+                    throw Error(ERR_GCC);
+                }
+
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
                 this->version = stream.in_uint32_le();
@@ -1056,8 +1061,19 @@ namespace GCC
 
             void recv(Stream & stream)
             {
+                if (!stream.in_check_rem(36)){
+                    LOG(LOG_ERR, "CSCore::recv short header");
+                    throw Error(ERR_GCC);
+                }
+
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
+
+                if (!stream.in_check_rem(this->length - 4)){
+                    LOG(LOG_ERR, "CSCore::recv short length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+
                 this->version = stream.in_uint32_le();
                 this->desktopWidth = stream.in_uint16_le();
                 this->desktopHeight = stream.in_uint16_le();
@@ -1398,8 +1414,19 @@ namespace GCC
 
             void recv(Stream & stream)
             {
+                if (!stream.in_check_rem(12)){
+                    LOG(LOG_ERR, "CS_CORE short header");
+                    throw Error(ERR_GCC);
+                }
+
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
+
+                if (this->length != 12){
+                    LOG(LOG_ERR, "CSCluster::recv bad header length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+
                 this->flags = stream.in_uint32_le();
                 this->redirectedSessionID = stream.in_uint32_le();
             }
@@ -1519,8 +1546,19 @@ namespace GCC
 
             void recv(Stream & stream)
             {
+                if (!stream.in_check_rem(24)){
+                    LOG(LOG_ERR, "CSMonitor::recv short header");
+                    throw Error(ERR_GCC);
+                }
+            
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
+
+                if (this->length != 24){
+                    LOG(LOG_ERR, "CSMonitor::recv bad header length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+
                 this->left   = stream.in_uint32_le();
                 this->top    = stream.in_uint32_le();
                 this->right  = stream.in_uint32_le();
@@ -1634,7 +1672,9 @@ namespace GCC
             };
 
             struct {
-                char name[8];
+                // one char padding at end of name to hold zero terminator if needed
+                // (and make stack based attacks harder...)
+                char name[9];
                 uint32_t options;
             } channelDefArray[32];
 
@@ -1660,10 +1700,22 @@ namespace GCC
 
             void recv(Stream & stream)
             {
+            
+                if (!stream.in_check_rem(8)){
+                    LOG(LOG_ERR, "CSNet::recv short header");
+                    throw Error(ERR_GCC);
+                }
+
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
+
+                if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
+                    LOG(LOG_ERR, "CSNet::recv bad header length=%u", this->length);
+                    throw Error(ERR_GCC);
+                }
+
                 this->channelCount = stream.in_uint32_le();
-                if (this->channelCount >= 32) {
+                if (this->channelCount >= 31) {
                     LOG(LOG_ERR, "cs_net::recv channel count out of range (%u)", this->channelCount);
                     throw Error(ERR_CHANNEL_OUT_OF_RANGE);
                 }
@@ -1772,10 +1824,31 @@ namespace GCC
 
             void recv(Stream & stream)
             {
+                if (!stream.in_check_rem(8)){
+                    LOG(LOG_ERR, "SCNet::recv short header");
+                    throw Error(ERR_GCC);
+                }
+
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
+
+                if (this->length < 8 || !stream.in_check_rem(this->length - 4)){
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%d size=%d", this->length, stream.size());
+                    throw Error(ERR_GCC);
+                }
+
                 this->MCSChannelId = stream.in_uint16_le();
                 this->channelCount = stream.in_uint16_le();
+                
+                if (this->length != (((this->channelCount + (this->channelCount & 1))<<1) + 8)){
+                    LOG(LOG_ERR, "SCNet::recv bad header length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+
+                if (this->channelCount >= 32) {
+                    LOG(LOG_ERR, "SCNet::recv channel count out of range (%u)", this->channelCount);
+                    throw Error(ERR_CHANNEL_OUT_OF_RANGE);
+                }
                 for (size_t i = 0; i < this->channelCount ; i++){
                     this->channelDefArray[i].id = stream.in_uint16_le();
                 }
@@ -2328,10 +2401,16 @@ namespace GCC
 
             void recv(Stream & stream)
             {
-                TODO("check we are not reading outside stream. Create substream based on len to ensure that")
-
+                if (!stream.in_check_rem(4)){
+                    LOG(LOG_ERR, "SC_SECURITY short header");
+                    throw Error(ERR_GCC);
+                }
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
+                if ((this->length <= 4) || !stream.in_check_rem(this->length - 4)){
+                    LOG(LOG_ERR, "SC_SECURITY bad header length");
+                    throw Error(ERR_GCC);
+                }
                 this->encryptionMethod = stream.in_uint32_le(); /* 1 = 40-bit, 2 = 128-bit */
                 this->encryptionLevel = stream.in_uint32_le();  /* 1 = low, 2 = medium, 3 = high */
 
@@ -2339,7 +2418,11 @@ namespace GCC
                     this->serverRandomLen = 0;
                     this->encryptionLevel = 0;
                 }
-                TODO("add sanity check if crypto is NONE and length not 12")
+                if (((this->encryptionLevel == 0) || (this->encryptionMethod == 0))
+                && (this->length != 12)) {
+                    LOG(LOG_ERR, "SC_SECURITY bad header length, no encryption length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
                 if (this->length == 12) {
                     if ((this->encryptionLevel != 0)||(this->encryptionMethod != 0)){
                         LOG(LOG_ERR, "SC_SECURITY short header with encription method=%u level=%u",
@@ -2576,8 +2659,18 @@ namespace GCC
 
             void recv(Stream & stream)
             {
+                if (!stream.in_check_rem(12)){
+                    LOG(LOG_ERR, "CS_SECURITY short header");
+                    throw Error(ERR_GCC);
+                }
                 this->userDataType         = stream.in_uint16_le();
                 this->length               = stream.in_uint16_le();
+
+                if (this->length != 12){
+                    LOG(LOG_ERR, "CS_SECURITY bad header length=%d", this->length);
+                    throw Error(ERR_GCC);
+                }
+
                 this->encryptionMethods    = stream.in_uint32_le();
                 this->extEncryptionMethods = stream.in_uint32_le();
             }
