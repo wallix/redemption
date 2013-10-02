@@ -623,8 +623,10 @@ namespace GCC
             , version(0x00080001)
             , clientRequestedProtocols(0)
             , earlyCapabilityFlags(0)
+            BEGINBODY
             {
             }
+            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1402,8 +1404,10 @@ namespace GCC
             , length(12)
             , flags(0)
             , redirectedSessionID(0)
+            BEGINBODY
             {
             }
+            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1531,8 +1535,10 @@ namespace GCC
             , right(0)
             , bottom(0)
             , flags(0)
+            BEGINBODY
             {
             }
+            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1684,8 +1690,10 @@ namespace GCC
             : userDataType(CS_NET)
             , length(12)
             , channelCount(0)
+            BEGINBODY
             {
             }
+            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1805,8 +1813,10 @@ namespace GCC
             , length(12)
             , MCSChannelId(GCC::MCS_GLOBAL_CHANNEL)
             , channelCount(0)
+            BEGINBODY
             {
             }
+            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -2335,11 +2345,13 @@ namespace GCC
             , serverCertLen(184)
             , dwVersion(CERT_CHAIN_VERSION_1)
             , temporary(false)
+            BEGINBODY
             {
                 for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
                     this->x509.cert[i].cert = NULL;
                 }
             }
+            ENDBODY
 
             ~SCSecurity(){
                 for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
@@ -2649,8 +2661,10 @@ namespace GCC
             , length(12)
             , encryptionMethods(_40BIT_ENCRYPTION_FLAG | _128BIT_ENCRYPTION_FLAG)
             , extEncryptionMethods(0)
+            BEGINBODY
             {
             }
+            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -2685,7 +2699,6 @@ namespace GCC
                 LOG(LOG_INFO, "%s GCC User Data CS_SECURITY (%u bytes)", msg, this->length);
                 LOG(LOG_INFO, "CSSecGccUserData::encryptionMethods %u", this->encryptionMethods);
                 LOG(LOG_INFO, "CSSecGccUserData::extEncryptionMethods %u", this->extEncryptionMethods);
-
             }
         };
 

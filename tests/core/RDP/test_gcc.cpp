@@ -125,6 +125,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     BOOST_CHECK_EQUAL(12, sc_core2.length);
     BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
     BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
+    
+    sc_core2.log("Server Received");
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
@@ -164,10 +166,13 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
         BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
         BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
         BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
+
+        sc_net2.log("Server Received");
     }
     catch (const Error & e){
         BOOST_CHECK(false);
     };
+    
 }
 
 
@@ -206,6 +211,9 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
     BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                      , cs_net.channelDefArray[1].options);
+                     
+    cs_net.log("Client Received");
+                     
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
@@ -223,6 +231,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
     BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+    
+    sc_sec1.log("Server Received");
 }
 
 
@@ -241,6 +251,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+    
+    sc_sec1.log("Server Received");
 }
 
 
@@ -357,6 +369,9 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
                      , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
     BOOST_CHECK_EQUAL((uint32_t)GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2, sc_sec1.dwVersion);
     BOOST_CHECK_EQUAL(true, sc_sec1.temporary);
+
+    sc_sec1.log("Server Received");
+
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
@@ -400,20 +415,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
     BOOST_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
-
+    sc_sec1.log("Server Received");
 }
-
-
-TODO("Add some tests for CS_CLUSTER")
-
-// 04 c0 0c 00 -> TS_UD_HEADER::type = CS_CLUSTER (0xc004), length = 12 bytes
-
-// 0d 00 00 00 -> TS_UD_CS_CLUSTER::Flags = 0x0d
-// 0x0d
-// = 0x03 << 2 | 0x01
-// = REDIRECTION_VERSION4 << 2 | REDIRECTION_SUPPORTED
-
-// 00 00 00 00 -> TS_UD_CS_CLUSTER::RedirectedSessionID
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
 {
@@ -436,6 +439,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
     BOOST_CHECK_EQUAL(12, cs_cluster.length);
     BOOST_CHECK_EQUAL(13, cs_cluster.flags);
     BOOST_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
+    
+    cs_cluster.log("Client Received");
 }
 
 
@@ -487,24 +492,41 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
     cs_core.recv(stream);
     BOOST_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
     BOOST_CHECK_EQUAL(216, cs_core.length);
+    
+    cs_core.log("Client Received");
 }
 
 
-
-
-
-
-TODO("Add tests for CS_SECURITY")
-
 // 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes
 
-// 1b 00 00 00 -> TS_UD_CS_SEC::encryptionMethods
-// 0x1b
-// = 0x01 | 0x02 | 0x08 | 0x10
-// = 40BIT_ENCRYPTION_FLAG | 128BIT_ENCRYPTION_FLAG |
-// 56BIT_ENCRYPTION_FLAG | FIPS_ENCRYPTION_FLAG
 
-// 00 00 00 00 -> TS_UD_CS_SEC::extEncryptionMethods
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
+{
+    const char indata[] =
+        "\x02\xc0"         // CS_SECURITY
+        "\x0c\x00"         // 12 bytes user Data
+
+        "\x1b\x00\x00\x00" // TS_UD_CS_SEC::encryptionMethods
+                           // 0x1b = 0x01 | 0x02 | 0x08 | 0x10 
+                           // = 40BIT_ENCRYPTION_FLAG 
+                           // | 128BIT_ENCRYPTION_FLAG 
+                           // | 56BIT_ENCRYPTION_FLAG 
+                           // | FIPS_ENCRYPTION_FLAG
+        "\x00\x00\x00\x00" // TS_UD_CS_SEC::extEncryptionMethods
+    ;
+
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::CSSecurity cs_security;
+    cs_security.recv(stream);
+    BOOST_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
+    BOOST_CHECK_EQUAL(12, cs_security.length);
+    BOOST_CHECK_EQUAL(27, cs_security.encryptionMethods);
+    BOOST_CHECK_EQUAL(0, cs_security.extEncryptionMethods);
+    
+    cs_security.log("Client Received");
+}
 
 
 
