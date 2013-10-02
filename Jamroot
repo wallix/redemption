@@ -96,6 +96,7 @@ project redemption
 #    <cxxflags>-Wlong-long
     <cxxflags>-O3
     <cxxflags>-Wuninitialized
+    <cxxflags>-fpie
     <define>PUBLIC
    : default-build release
 
