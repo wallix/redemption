@@ -53,8 +53,6 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     keymap.init_layout(info.keylayout);
 
     FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "OK", 0);
-    keymap.push_kevent(Keymap2::KEVENT_TAB); // move focus to OK
-    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 

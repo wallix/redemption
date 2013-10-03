@@ -31,17 +31,23 @@ public:
     WidgetLabel label;
     int state;
     notify_event_t event;
+    int fg_color;
+    int bg_color;
+    int focus_color;
     bool logo;
 
     WidgetFlatButton(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
-                 NotifyApi* notifier, const char * text, bool auto_resize = true,
-                 int group_id = 0, int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS,
+                     NotifyApi* notifier, const char * text, bool auto_resize = true,
+                     int group_id = 0, int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS,
                      int xtext = 0, int ytext = 0, bool logo = false
                      /*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)
     , state(0)
     , event(NOTIFY_SUBMIT)
+    , fg_color(fgcolor)
+    , bg_color(bgcolor)
+    , focus_color(WINBLUE)
     , logo(logo)
     {
         this->rect.cx = this->label.cx() + 3;
@@ -83,21 +89,27 @@ public:
 
     void update_draw_state(const Rect& clip)
     {
-
+        // Label color
         if (this->logo) {
             if (this->has_focus) {
-                this->label.fg_color = WABGREEN_BIS;
-                this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                    this->dx(), this->dy(), this->cx(), this->cy()
-                    )), this->label.bg_color), this->rect);
+                this->label.fg_color = this->focus_color;
             }
             else {
-                this->label.fg_color = WHITE;
-                this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                    this->dx(), this->dy(), this->cx(), this->cy()
-                    )), this->label.bg_color), this->rect);
+                this->label.fg_color = this->fg_color;
             }
         }
+        else {
+            if (this->has_focus) {
+                this->label.bg_color = this->focus_color;
+            }
+            else {
+                this->label.bg_color = this->bg_color;
+            }
+        }
+        // background
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy(), this->cx(), this->cy()
+            )), this->label.bg_color), this->rect);
 
         if (this->state & 1)  {
             ++this->label.rect.x;
@@ -118,41 +130,23 @@ public:
         if (this->logo)
             return;
 
+        // border
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               this->dx(), this->dy(), this->cx() - 2, 2
-              )), WHITE), this->rect);
+              )), this->fg_color), this->rect);
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               this->dx(), this->dy() + 2, 2, this->cy() - 2
-              )), WHITE), this->rect);
+              )), this->fg_color), this->rect);
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               this->dx() + this->cx() - 2, this->dy(), 2, this->cy()
-              )), WHITE), this->rect);
+              )), this->fg_color), this->rect);
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               this->dx(), this->dy() + this->cy() - 2, this->cx(), 2
-              )), WHITE), this->rect);
-
-        if (this->has_focus) {
-            //top
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx(), this->dy(), this->cx(), 2
-                  )), WABGREEN_BIS), this->rect);
-            //left
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx(), this->dy(), 2, this->cy()
-                  )), WABGREEN_BIS), this->rect);
-            //right
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx() + this->cx() - 2, this->dy(), 2, this->cy()
-                  )), WABGREEN_BIS), this->rect);
-            //bottom
-            this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-                  this->dx(), this->dy() + this->cy() - 2, this->cx(), 2
-                  )), WABGREEN_BIS), this->rect);
-        }
+              )), this->fg_color), this->rect);
 
     }
 
