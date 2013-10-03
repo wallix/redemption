@@ -51,10 +51,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 0;
-    int16_t y = 0;
 
-    FlatDialog flat_dialog(drawable, x, y, parent, notifier, "test1",
+    FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test1",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -66,21 +64,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog1.png");
 
-    // char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x2b\x42\x09\x08\xdb\x16\xac\x0a\x02\xad"
-    //     "\x3f\x13\xe4\xa6\xa2\x3f\x9d\x52\x61\xa6"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
-
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xa4\xdf\x36\xbc\xf7\x73\xd2\x64\x2c\x72"
-                   "\xa0\xfd\x44\xbc\x01\x7b\x16\x94\x79\x4c"
+                   "\x2d\x49\x10\x1d\x1a\x32\x33\x21\x60\x2c"
+                   "\x3a\x1d\xf3\x72\x7c\xc7\x41\xd3\x6d\x24"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 
 }
 
@@ -91,10 +82,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 10;
-    int16_t y = 100;
 
-    FlatDialog flat_dialog(drawable, x, y, parent, notifier, "test2",
+    FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test2",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -110,18 +99,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog2.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //                "\xcc\xd9\x69\xc0\x0c\x8a\x18\xea\x84\x1a"
-    //                "\x98\x05\x75\x64\xd2\xe0\xfe\x33\xa3\xf1"
-    //                )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x06\x66\x4f\x75\x53\x1f\x57\x7b\x20\xde"
-                   "\x95\xe3\x9b\x98\xa2\xa7\xd7\xe0\xae\xdf"
+                   "\xbe\xdc\x51\xe5\x3f\x17\x87\xa2\x5e\x57"
+                   "\x57\x77\xc8\xab\x74\xd1\x44\x67\x73\x6a"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
@@ -131,10 +116,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = -10;
-    int16_t y = 500;
 
-    FlatDialog flat_dialog(drawable, x, y, parent, notifier, "test3",
+    FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test3",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -150,31 +133,25 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog3.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x2b\x42\x09\x08\xdb\x16\xac\x0a\x02\xad"
-    //     "\x3f\x13\xe4\xa6\xa2\x3f\x9d\x52\x61\xa6"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x99\x0f\x52\x98\x0a\xa0\x7b\x43\xc1\xba"
-                   "\x03\x90\x5b\x18\x1e\xcc\xd5\xf9\xec\x54"
+                   "\xab\xf6\x15\x4e\xf6\x00\xcf\xb1\xba\x72"
+                   "\xc7\x45\x21\x71\xdc\x87\x99\x29\xcd\xdc"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
 {
-    TestDraw drawable(800, 600);
+    TestDraw drawable(1280, 1024);
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 1280, 1024);
     NotifyApi * notifier = NULL;
-    int16_t x = 770;
-    int16_t y = 500;
 
-    FlatDialog flat_dialog(drawable, x, y, parent, notifier, "test4",
+    FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test4",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -190,31 +167,25 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog4.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x3e\xd3\x61\xa2\xe8\x24\x78\x30\x91\xa8"
-    //     "\x09\x7d\x0d\x4f\x83\x9e\x3b\xfa\xe6\xd3"
-    //                )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xe7\xab\xf1\xd1\xcf\xfc\xbb\xf1\x01\x52"
-                   "\x2e\x9d\xb2\xf8\x50\x21\xef\xaf\xc0\xe8"
+                   "\xa4\x3f\xae\x5e\x0c\x62\x18\x35\x12\x4e"
+                   "\x97\xb2\x9d\xf3\x0a\x21\x3b\xaa\x16\xa8"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
 {
-    TestDraw drawable(800, 600);
+    TestDraw drawable(640, 480);
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 640, 480);
     NotifyApi * notifier = NULL;
-    int16_t x = -20;
-    int16_t y = -7;
 
-    FlatDialog flat_dialog(drawable, x, y, parent, notifier, "test5",
+    FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test5",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -230,31 +201,25 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog5.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x2b\x42\x09\x08\xdb\x16\xac\x0a\x02\xad"
-    //     "\x3f\x13\xe4\xa6\xa2\x3f\x9d\x52\x61\xa6"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xea\x0d\x85\xe8\xde\x9c\x76\x03\xf1\xff"
-                   "\x44\xde\xa4\xc9\x1f\x67\x8b\x86\x89\x8f"
+                   "\x23\x3e\xc8\xac\x9e\x89\x32\x4a\xc7\x13"
+                   "\xb5\xe8\x55\xf9\x55\x0c\x61\xf8\x1f\x56"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
 {
-    TestDraw drawable(800, 600);
+    TestDraw drawable(350, 500);
 
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
+    WidgetScreen parent(drawable, 300, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 760;
-    int16_t y = -7;
 
-    FlatDialog flat_dialog(drawable, x, y, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable, 350, 500, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -270,18 +235,15 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog6.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x2b\x42\x09\x08\xdb\x16\xac\x0a\x02\xad"
-    //     "\x3f\x13\xe4\xa6\xa2\x3f\x9d\x52\x61\xa6"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xea\x0d\x85\xe8\xde\x9c\x76\x03\xf1\xff"
-                   "\x44\xde\xa4\xc9\x1f\x67\x8b\x86\x89\x8f"
+                   "\x60\x53\x42\x70\xfb\xc5\x95\xd8\xa7\xef"
+                   "\x07\xe8\x5d\xab\xbc\xb1\xf7\x7a\xb6\x6e"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
@@ -291,10 +253,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 760;
-    int16_t y = -7;
 
-    FlatDialog flat_dialog(drawable, x, y, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable, 300, 600, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -310,18 +270,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog7.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x2b\x42\x09\x08\xdb\x16\xac\x0a\x02\xad"
-    //     "\x3f\x13\xe4\xa6\xa2\x3f\x9d\x52\x61\xa6"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xea\x0d\x85\xe8\xde\x9c\x76\x03\xf1\xff"
-                   "\x44\xde\xa4\xc9\x1f\x67\x8b\x86\x89\x8f"
+                   "\x6f\x5e\xaa\x7b\xaa\x85\x86\x9a\x32\x6c"
+                   "\xd3\x2e\xa2\x2b\xde\x76\x35\xd6\x3b\x50"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
@@ -331,10 +287,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    int16_t x = 0;
-    int16_t y = 0;
 
-    FlatDialog flat_dialog(drawable, x, y, parent, notifier, "test6",
+    FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test6",
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
@@ -350,18 +304,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog8.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x96\xff\xd9\x05\x44\x9b\x19\x2b\x07\xeb"
-    //     "\x28\x2c\xf2\xc4\x82\x16\x1d\x36\x06\x70"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xb3\x33\x3a\xa5\xe8\xba\xaa\xd2\x48\xbe"
-                   "\x20\x97\x62\xf3\x73\xb8\x8c\x7f\x27\x73"
+                   "\xb1\x4f\x44\xde\x94\x93\x7c\x72\x48\xc1"
+                   "\x15\x50\x5f\x45\xa5\xb4\xcf\x9f\x21\x73"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
@@ -406,18 +356,14 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-1-button-ok.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x75\xb0\xc0\x5b\xb9\x6c\x89\xb1\xdb\x71"
-    //     "\xc1\x91\x85\xbb\x58\xf8\x38\x40\x81\x40"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x8e\x1c\xef\x0f\xe2\xd8\x46\x00\xbb\x76"
-                   "\xea\x6a\x41\xa8\xd2\xfe\xec\x64\x78\x9f"
+                   "\x09\x03\x4f\xf6\x6b\xbf\xe2\x9c\xf0\xee"
+                   "\x89\x5c\x88\x5b\x63\xe8\x39\x4e\xe4\xef"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
@@ -431,18 +377,14 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-2-button-ok.png");
 
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\xa6\x6f\x34\x42\x49\x3c\x36\x5b\x8f\x80"
-    //     "\xc5\xca\xb6\xb3\x24\x66\x9e\x78\x5f\xb1"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x3a\xe0\xc2\x68\xa5\xe0\xb7\x6e\xfd\xcb"
-                   "\xe8\x82\x5f\xb5\x56\xe1\xcb\xf4\xde\x04"
+                   "\xed\xa6\x0c\x8e\xbc\xab\xdf\x81\x63\xd9"
+                   "\xaf\x19\x24\x80\x7e\x65\x98\xe9\x94\xab"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 
     x = flat_dialog.cancel->rect.x + flat_dialog.cancel->rect.cx / 2 ;
     y = flat_dialog.cancel->rect.y + flat_dialog.cancel->rect.cy / 2 ;
@@ -455,19 +397,15 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-3-button-cancel.png");
 
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\xef\x7d\xc6\x6f\xaf\x9b\xf4\x62\x37\x44"
-    //     "\x5d\xbe\x44\x5b\x33\x81\x46\x53\xdd\x00"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x26\xe8\xbb\x12\xed\xa1\x95\x30\x86\x69"
-                   "\x71\x76\xb4\x5f\xf2\xa2\x6d\xb1\xd0\xc9"
+                   "\xee\x26\x6b\x3c\x2b\x33\x01\x18\xf5\xca"
+                   "\x87\x41\xd2\xce\x00\x17\xf9\x2f\xbd\xb2"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
     BOOST_CHECK(notifier.sender == &flat_dialog);

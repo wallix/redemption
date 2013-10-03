@@ -29,6 +29,7 @@
 #include "label.hpp"
 #include "multiline.hpp"
 #include "translation.hpp"
+#include "widget2_rect.hpp"
 
 #include <vector>
 
@@ -46,6 +47,7 @@ public:
     WidgetMultiLine diagnostic_lines;
     WidgetLabel timeleft_label;
     WidgetLabel timeleft_value;
+    WidgetRect separator;
 
     int bgcolor;
 private:
@@ -73,6 +75,7 @@ public:
     , timeleft_label(drawable, (width - 600) / 2, 0, *this, NULL,
                      "Time left:", true, -12, fgcolor, bgcolor)
     , timeleft_value(drawable, 0, 0, *this, NULL, NULL, true, -12, fgcolor, bgcolor)
+    , separator(drawable, Rect(0, 0, width, 2), *this, this, -12, LIGHT_BLUE)
     , bgcolor(bgcolor)
     , prev_time(0)
     {
@@ -92,16 +95,26 @@ public:
         this->cancel.set_button_x((this->cx() - this->cancel.cx()) / 2);
         this->connection_closed_label.rect.x = (this->cx() - this->connection_closed_label.cx()) / 2;
 
+        this->separator.rect.x = (this->cx() - 600) / 2;
+        this->separator.rect.cx = 600;
+
         this->add_widget(&this->connection_closed_label);
         this->add_widget(&this->cancel);
         this->add_widget(&this->diagnostic);
         this->add_widget(&this->diagnostic_lines);
+        this->add_widget(&this->separator);
 
         uint16_t px = this->diagnostic.cx() + 10;
 
         int y = this->dy() + 10;
         // this->img.rect.y = y;
         // y += this->img.cy() + 20;
+
+        this->connection_closed_label.rect.y = y;
+        y += this->connection_closed_label.cy();
+
+        this->separator.rect.y = y + 3;
+        y += 30;
 
         if (username && *username) {
             this->add_widget(&this->username_label);
@@ -120,10 +133,6 @@ public:
             this->target_label_value.rect.y = y;
             y += this->target_label.cy() + 20;
         }
-
-        this->connection_closed_label.rect.y = y;
-        y += this->connection_closed_label.cy() + 20;
-
         this->diagnostic.rect.y = y;
         if (this->diagnostic.cx() > this->cx() - (px + 10)) {
             y += this->diagnostic.cy() + 10;

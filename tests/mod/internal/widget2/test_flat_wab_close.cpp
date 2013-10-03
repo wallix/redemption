@@ -43,109 +43,7 @@
 #undef OUTPUT_FILE_PATH
 #define OUTPUT_FILE_PATH "/tmp/"
 
-
-struct TestDraw : DrawApi
-{
-    RDPDrawable gd;
-    Font font;
-
-    TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h)
-    , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
-    {}
-
-    virtual void draw(const RDPOpaqueRect& cmd, const Rect& rect)
-    {
-        this->gd.draw(cmd, rect);
-    }
-
-    virtual void draw(const RDPScrBlt&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPDestBlt&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
-    {
-        this->gd.draw(cmd, rect);
-    }
-
-    virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
-    {
-        this->gd.draw(cmd, rect, bmp);
-    }
-
-    virtual void draw(const RDPMem3Blt& cmd, const Rect& rect, const Bitmap& bmp)
-    {
-        this->gd.draw(cmd, rect, bmp);
-    }
-
-    virtual void draw(const RDPLineTo&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPGlyphIndex&, const Rect&, const GlyphCache * gly_cache)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPBrushCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPColCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPGlyphCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void begin_update()
-    {}
-
-    virtual void end_update()
-    {}
-
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
-    {
-        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
-    }
-
-    virtual void text_metrics(const char* text, int& width, int& height)
-    {
-        height = 0;
-        width = 0;
-        uint32_t uni[256];
-        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-        if (len_uni){
-            for (size_t index = 0; index < len_uni; index++) {
-                FontChar *font_item = this->gd.get_font(this->font, uni[index]);
-                // width += font_item->incby;
-                width += font_item->width + 2;
-                height = std::max(height, font_item->height);
-            }
-            width -= 1;
-        }
-    }
-
-    void save_to_png(const char * filename)
-    {
-        std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
-        fclose(file);
-    }
-};
-
+#include "fake_draw.hpp"
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
 {
@@ -179,18 +77,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
     BOOST_CHECK(1);
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\xc4\x46\x5c\xc2\x19\xfd\x24\x7b\x66\xa9"
-    //     "\x28\x2d\x3f\xfe\xf6\x7d\x0d\x62\x25\xfa"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xb7\x12\xc9\xbe\xea\xa1\xc3\x2f\x4e\x5b"
-                   "\x8e\x81\xdc\x4f\x79\xe0\xfa\x1d\x36\xa3"
+                   "\xeb\x51\xf6\xe4\x19\x6c\x20\x50\xae\x33"
+                   "\xb0\xf7\x12\x06\x4a\x83\x06\x40\x88\x8f"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
@@ -231,18 +125,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close2.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x6a\x67\xa0\x60\x91\xe2\xcd\x44\x4b\x33"
-    //     "\x86\xc0\x99\x3b\x47\x68\x3b\x21\x80\x69"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xcc\x30\xbf\x17\x9e\x61\x1f\xc7\x31\xac"
-                   "\x70\xe8\x71\x55\x7b\x9c\xbe\x4e\x35\x1a"
+                   "\x4a\xb4\x8c\x03\x2a\xaf\x15\x92\x9c\xed"
+                   "\x05\xd7\x2b\x6e\xc2\xfd\xcf\x5e\x20\xd7"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
@@ -262,112 +152,18 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close3.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\xbb\xeb\x86\x43\x8e\xe4\xa4\x1f\xd9\x83"
-    //     "\x0a\xe4\x6a\xb5\x40\xc2\xa7\x24\x43\xe3"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x24\xe0\x51\xc3\xe4\x28\xcd\x2a\x83\xf9"
-                   "\x27\x12\x8d\x7c\x3b\xd9\x70\x55\xf0\xab"
+                   "\x87\xb8\xd7\x33\x1f\x29\x7e\xb1\x61\x05"
+                   "\xb2\xb7\xaa\x1b\xaa\x71\x3c\x36\xf8\x94"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
-BOOST_AUTO_TEST_CASE(TraceFlatWabClose4)
-{
-    TestDraw drawable(800, 600);
 
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
 
-    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-                                    "abc<br>def");
-
-    // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
-
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close4.png");
-
-    char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\xbb\xeb\x86\x43\x8e\xe4\xa4\x1f\xd9\x83"
-    //     "\x0a\xe4\x6a\xb5\x40\xc2\xa7\x24\x43\xe3"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
-    if (!check_sig(drawable.gd.drawable, message,
-                   "\x24\xe0\x51\xc3\xe4\x28\xcd\x2a\x83\xf9"
-                   "\x27\x12\x8d\x7c\x3b\xd9\x70\x55\xf0\xab"
-                   )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-}
-
-BOOST_AUTO_TEST_CASE(TraceFlatWabClose5)
-{
-    TestDraw drawable(800, 600);
-
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
-
-    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-                                    "abc<br>def");
-
-    // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
-
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close5.png");
-
-    char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\xbb\xeb\x86\x43\x8e\xe4\xa4\x1f\xd9\x83"
-    //     "\x0a\xe4\x6a\xb5\x40\xc2\xa7\x24\x43\xe3"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
-    if (!check_sig(drawable.gd.drawable, message,
-                   "\x24\xe0\x51\xc3\xe4\x28\xcd\x2a\x83\xf9"
-                   "\x27\x12\x8d\x7c\x3b\xd9\x70\x55\xf0\xab"
-                   )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-}
-
-BOOST_AUTO_TEST_CASE(TraceFlatWabClose6)
-{
-    TestDraw drawable(800, 600);
-
-    // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
-
-    FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-                                    "abc<br>def");
-
-    // ask to widget to redraw at it's current position
-    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
-
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close6.png");
-
-    char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\xbb\xeb\x86\x43\x8e\xe4\xa4\x1f\xd9\x83"
-    //     "\x0a\xe4\x6a\xb5\x40\xc2\xa7\x24\x43\xe3"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
-    if (!check_sig(drawable.gd.drawable, message,
-                   "\x24\xe0\x51\xc3\xe4\x28\xcd\x2a\x83\xf9"
-                   "\x27\x12\x8d\x7c\x3b\xd9\x70\x55\xf0\xab"
-                   )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
-}
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 {
@@ -386,18 +182,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close7.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x52\x55\x4e\xf9\x74\x66\xef\x2b\x62\x12"
-    //     "\x37\xc7\x95\xce\x24\xbe\x23\xb5\x74\xb5"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xa0\x14\x4c\x4f\x3c\x08\x98\x7f\x62\x08"
-                   "\x4b\xc6\xba\x64\x97\xe9\x9d\xc5\xac\x47"
+                   "\x47\xa6\x7e\x4b\xf7\x48\x3b\x94\xb0\x7f"
+                   "\xad\x4f\xc4\xba\xeb\xbc\x11\x62\x77\x5e"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
@@ -420,16 +212,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close8.png");
 
     char message[1024];
-    // if (!check_sig(drawable.gd.drawable, message,
-    //     "\x31\x82\xdc\x89\xfd\xda\x77\xc1\xf9\xa1"
-    //     "\x44\x23\xdb\xc5\x09\xae\xb9\xb7\x2b\x35"
-    // )){
-    //     BOOST_CHECK_MESSAGE(false, message);
-    // }
+
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xe0\xb8\xb4\x24\x90\xd7\xcd\x81\xbb\x28"
-                   "\xeb\x85\x43\xe5\x7f\xcd\x37\x5a\x77\x94"
+                   "\x3a\x57\x03\x57\x9a\x68\x07\xbd\x16\xd3"
+                   "\x0d\xe1\x95\xf3\xf5\x0e\x1a\x9e\xec\xf9"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
 }
