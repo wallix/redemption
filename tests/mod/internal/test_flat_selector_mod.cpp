@@ -45,12 +45,36 @@ BOOST_AUTO_TEST_CASE(TestSelectorMod)
     Inifile             ini;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
-    keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
     TODO("provide data for selector and write an actual scenarized test (use case)")
 
     FlatSelectorMod d(ini, front, 800, 600);
+
+    ini.globals.target_user.set_from_acl("tartempion");
+    ini.globals.target_device.set_from_acl("K2000");
+    ini.context.target_protocol.set_from_acl("TCP/IP");
+    ini.context.end_time.set_from_acl("never");
+
+    ini.context.selector_lines_per_page.set_from_acl("1");
+
+    ini.context.selector_current_page.set_from_acl("1");
+    ini.context.selector_number_of_pages.set_from_acl("2");
+    d.refresh_context(ini);
+
+    d.refresh_device();
+
+    keymap.init_layout(info.keylayout);
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
 }

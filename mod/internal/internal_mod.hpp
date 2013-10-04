@@ -159,7 +159,6 @@ public:
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
                                        int16_t param1, int16_t param2)
     {
-        LOG(LOG_INFO, "overloaded by subclasses");
     }
 };
 

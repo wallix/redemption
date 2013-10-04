@@ -50,7 +50,7 @@ def list_modules():
                 extension = '.h'
             yield module, name, extension
         else:
-            if line[0] != '\n' and line[0] != '#': 
+            if line[0] != '\n' and line[0] != '#':
                 print "Line '%s' does not match in coverage.reference" % line
                 sys.exit(-1)
 
@@ -62,7 +62,7 @@ class Cover:
         self.verbose = 1
 
     def cover(self, module, name, extension):
-        print "Computing coverage for %s" % module 
+        print "Computing coverage for %s" % module
         cmd1 = ["bjam", "coverage", "test_%s" % name]
         cmd2 = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
         cmd3 = ["etags", "-o", "coverage/%s/%s%s.TAGS" % (module, name, extension), "%s%s" % (module, extension)]
@@ -122,12 +122,15 @@ class Cover:
                     if int(res.group(2)) in self.modules[module].functions:
                         print "current function found at %d" % int(res.group(2))
                         current_function = int(res.group(2))
- 
+
                     # ignore comments
-                    if re.match('^\s+//', res.group(3)):
+                    if re.match('^\s*//', res.group(3)):
                         continue
                     # ignore blank lines
                     if re.match('^\s+$', res.group(3)):
+                        continue
+                    #ignore case statement of switch
+                    if re.match('^\s*(case|default)', res.group(3)):
                         continue
                     # At least one identifier or number on the line (ie: ignore alone brackets)
                     if re.match('^.*[a-zA-Z0-9]', res.group(3)) is None:
@@ -185,12 +188,12 @@ for m in cover.modules:
     for fnl in sorted(cover.modules[m].functions):
         fn = cover.modules[m].functions[fnl]
         if fn.covered_lines == 0:
-            print "WARNING: NO COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension, 
+            print "WARNING: NO COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension,
                                                 fnl, fn.name, fn.covered_lines, fn.total_lines)
         elif fn.covered_lines * 100 < fn.total_lines * 50:
-            print "WARNING: LOW COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension, 
+            print "WARNING: LOW COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension,
                                                 fnl, fn.name, fn.covered_lines, fn.total_lines)
         else:
-            print "COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension, 
+            print "COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension,
                                                 fnl, fn.name, fn.covered_lines, fn.total_lines)
 

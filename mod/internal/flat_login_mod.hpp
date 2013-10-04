@@ -83,11 +83,6 @@ public:
         }
     }
 
-    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
-                                       int16_t /*param1*/, int16_t /*param2*/)
-    {
-    }
-
     virtual void draw_event(time_t now)
     {
         this->event.reset();

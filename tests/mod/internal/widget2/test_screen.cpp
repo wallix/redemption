@@ -300,5 +300,27 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
+    wscreen.show_tooltip(NULL, "tooltip test", 30, 35);
+
+    wscreen.rdp_input_invalidate(wscreen.rect);
+    // drawable.save_to_png(OUTPUT_FILE_PATH "screen12.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xd8\x49\xdf\x92\x09\xbc\x0d\xf7\x57\x11"
+                   "\x61\x24\x84\x0e\x3e\x93\x56\x37\xfc\x04"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    wscreen.show_tooltip(NULL, NULL, 30, 35);
+    wscreen.rdp_input_invalidate(wscreen.rect);
+    // drawable.save_to_png(OUTPUT_FILE_PATH "screen13.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xf9\x47\x9e\x37\xd2\x04\x8c\xec\xf6\xe9"
+                   "\xb6\xc9\x57\xb2\xe2\x34\x8d\xc7\x06\x5c"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
     wscreen.clear();
+
+
 }

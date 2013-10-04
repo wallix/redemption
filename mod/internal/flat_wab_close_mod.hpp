@@ -77,13 +77,14 @@ public:
     , timeout(Timeout(now, ini.globals.close_timeout))
     , showtimer(showtimer)
     {
+        BEGINBODY
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
         this->screen.add_widget(&this->close_widget);
-
-        // this->close_widget.set_widget_focus(&this->close_widget.cancel);
+        this->close_widget.set_widget_focus(&this->close_widget.cancel);
         this->screen.set_widget_focus(&this->close_widget);
 
         this->screen.refresh(this->screen.rect);
+        ENDBODY
     }
 
     virtual ~FlatWabCloseMod()
@@ -116,11 +117,6 @@ public:
             this->event.reset();
             break;
         }
-    }
-
-    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
-                                       int16_t /*param1*/, int16_t /*param2*/)
-    {
     }
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)

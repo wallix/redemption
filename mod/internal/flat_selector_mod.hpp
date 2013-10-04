@@ -72,11 +72,6 @@ public:
         this->screen.clear();
     }
 
-    virtual void rdp_input_invalidate(const Rect& r)
-    {
-        this->selector.refresh(this->selector.rect);
-    }
-
     void ask_page()
     {
         this->ini.context_ask(AUTHID_SELECTOR);
@@ -286,11 +281,6 @@ public:
         else {
             this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
-    }
-
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
-                                       int16_t param1, int16_t param2)
-    {
     }
 
 

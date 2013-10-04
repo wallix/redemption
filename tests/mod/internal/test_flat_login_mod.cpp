@@ -56,4 +56,3 @@ BOOST_AUTO_TEST_CASE(TestDialogMod)
     FlatLoginMod d(ini, front, 800, 600);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }
-

@@ -61,10 +61,8 @@ public:
         }
         else if (this->tooltip == NULL) {
             this->tooltip = new WidgetTooltip(this->drawable,
-                                              x,
-                                              y,
-                                              *this,
-                                              widget,
+                                              x, y,
+                                              *this, widget,
                                               text);
             int w = this->tooltip->get_tooltip_cx();
             int h = this->tooltip->get_tooltip_cy();
