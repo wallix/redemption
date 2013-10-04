@@ -166,6 +166,14 @@ struct Rect {
         return Rect(max_x, max_y, min_right - max_x, min_bottom - max_y);
     }
 
+    bool has_intersection(const Rect & in) const
+    {
+        return (this->cx &&
+            (std::min<int>(in.x + in.cx, this->x + this->cx) -
+                 std::max(in.x, this->x) > 0)
+        );
+    }
+
     // Ensemblist difference
     void difference(const Rect & a, RectIterator & it) const
     {

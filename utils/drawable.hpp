@@ -72,11 +72,16 @@ struct Drawable {
     uint16_t        save_mouse_x;
     uint16_t        save_mouse_y;
 
+    Rect tracked_area;
+    bool tracked_area_changed;
+
     Drawable(int width, int height)
     : width(width)
     , height(height)
     , rowsize(width * Bpp)
     , pix_len(this->rowsize * height)
+    , tracked_area(0, 0, 0, 0)
+    , tracked_area_changed(false)
     {
         static const Mouse_t default_mouse_cursor[] =
         {
@@ -776,6 +781,10 @@ struct Drawable {
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
 
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
+
         const uint8_t Bpp = ::nbbytes(bmp.original_bpp);
         uint8_t * target = this->first_pixel(trect);
         const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) + srcx * Bpp;
@@ -820,6 +829,10 @@ struct Drawable {
             return;
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
 
         const uint8_t   Bpp = ::nbbytes(bmp.original_bpp);
         uint8_t       * target = this->first_pixel(trect);
@@ -900,6 +913,10 @@ struct Drawable {
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
 
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
+
         const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
         uint8_t       * target = this->first_pixel(trect);
         const uint8_t * source = bmp.data() + (bmp.cy - 1) * (bmp.bmp_size / bmp.cy);
@@ -954,6 +971,10 @@ struct Drawable {
             return;
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
 
         const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
         uint8_t *       target = this->first_pixel(trect);
@@ -1019,6 +1040,11 @@ struct Drawable {
     void black_color(const Rect & rect)
     {
         const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * p = this->first_pixel(trect);
         const size_t step = this->rowsize;
         const size_t rect_rowsize = trect.cx * this->Bpp;
@@ -1029,7 +1055,12 @@ struct Drawable {
 
     void white_color(const Rect & rect)
     {
+        if (tracked_area.has_intersection(rect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * p = this->first_pixel(rect);
+
         const size_t step = this->rowsize;
         const size_t rect_rowsize = rect.cx * this->Bpp;
         for (int j = 0; j < rect.cy ; j++, p += step){
@@ -1040,6 +1071,11 @@ struct Drawable {
     void invert_color(const Rect & rect)
     {
         const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * p = this->first_pixel(trect);
         const size_t rect_rowsize = trect.cx * this->Bpp;
         const size_t step = this->rowsize - rect_rowsize;
@@ -1056,6 +1092,10 @@ struct Drawable {
     // also we already swapped color if we are using BGR instead of RGB
     void opaquerect(const Rect & rect, const uint32_t color)
     {
+        if (tracked_area.has_intersection(rect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * const base = this->first_pixel(rect);
         uint8_t * p = base;
 
@@ -1075,6 +1115,11 @@ struct Drawable {
     void patblt_op(const Rect & rect, const uint32_t color)
     {
         Op op;
+
+        if (tracked_area.has_intersection(rect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * const base = this->first_pixel(rect);
         uint8_t * p = base;
         uint8_t p0 = color & 0xFF;
@@ -1301,6 +1346,11 @@ struct Drawable {
         const uint32_t back_color, const uint32_t fore_color)
     {
         Op op;
+
+        if (tracked_area.has_intersection(rect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * const base = this->first_pixel(rect);
         uint8_t *       p    = base;
 
@@ -1486,6 +1536,11 @@ struct Drawable {
     void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
     {
         Op op;
+
+        if (tracked_area.has_intersection(drect)) {
+            tracked_area_changed = true;
+        }
+
         const int16_t deltax = (int16_t)(srcx - drect.x);
         const int16_t deltay = (int16_t)(srcy - drect.y);
         const Rect srect = drect.offset(deltax, deltay);
@@ -1652,6 +1707,10 @@ struct Drawable {
 
         const Rect line_clip = clip.intersect(Rect(0, 0, this->width, this->height));
 
+        if (tracked_area.has_intersection(line_clip)) {
+            tracked_area_changed = true;
+        }
+
         // Prep
         int x = startx;
         int y = starty;
@@ -1786,11 +1845,13 @@ struct Drawable {
         }
     }
 
+protected:
     uint8_t * pixel_start_data(int x, int y, size_t i) {
         return this->data +
                ((this->line_of_mouse(i).y + y) * this->width + this->line_of_mouse(i).x + x) * 3;
     }
 
+public:
     void trace_timestamp(tm & now)
     {
         char    * timezone;
