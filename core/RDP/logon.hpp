@@ -746,47 +746,28 @@ struct InfoPacket {
         this->flags |= INFO_ENABLEWINDOWSKEY;
         this->flags |= INFO_LOGONNOTIFY;
 
-        size_t len;
-
-        len = UTF8Len(domain);
-        this->cbDomain = len * 2; // This size excludes the length of the mandatory null terminator.
-        memcpy(this->Domain, domain, len);
-        this->Domain[len] = 0;
-
-        len = UTF8Len(username);
-        this->cbUserName = len * 2; // This size excludes the length of the mandatory null terminator.
-        memcpy(this->UserName, username, len);
-        this->UserName[len] = 0;
-
-        len = UTF8Len(password);
-        this->cbPassword = len * 2; // This size excludes the length of the mandatory null terminator.
-        memcpy(this->Password, password, len);
-        this->Password[len] = 0;
-
-        len = UTF8Len(program);
-        this->cbAlternateShell = len * 2; // This size excludes the length of the mandatory null terminator.
-        memcpy(this->AlternateShell, program, len);
-        this->AlternateShell[len] = 0;
-
-        len = UTF8Len(directory);
-        this->cbWorkingDir = len * 2; // This size excludes the length of the mandatory null terminator.
-        memcpy(this->WorkingDir, directory, len);
-        this->WorkingDir[len] = 0;
+        this->cbDomain         = UTF8ToUTF8LCopy(this->Domain,
+            sizeof(this->Domain), (const uint8_t *)domain) * 2;
+        this->cbUserName       = UTF8ToUTF8LCopy(this->UserName,
+            sizeof(this->UserName), (const uint8_t *)username) * 2;
+        this->cbPassword       = UTF8ToUTF8LCopy(this->Password,
+            sizeof(this->Password), (const uint8_t *)password) * 2;
+        this->cbAlternateShell = UTF8ToUTF8LCopy(this->AlternateShell,
+            sizeof(this->AlternateShell), (const uint8_t *)program) * 2;
+        this->cbWorkingDir     = UTF8ToUTF8LCopy(this->WorkingDir,
+            sizeof(this->WorkingDir), (const uint8_t *)directory) * 2;
 
         if (performanceFlags) {
             this->extendedInfoPacket.performanceFlags = performanceFlags;
         }
 
         if (clientAddr){
-            len = UTF8Len(clientAddr);
-            this->extendedInfoPacket.cbClientAddress = (len + 1) * 2; // This size include " the length of the mandatory null terminator.
-            memcpy(this->extendedInfoPacket.clientAddress, clientAddr, len);
-            this->extendedInfoPacket.clientAddress[len] = 0;
+            this->extendedInfoPacket.cbClientAddress = (UTF8ToUTF8LCopy(this->extendedInfoPacket.clientAddress,
+                sizeof(this->extendedInfoPacket.clientAddress), (const uint8_t *)clientAddr) + 1) * 2;
         }
     }
 
     void emit(Stream & stream) {
-
         this->flags |= ((this->Password[1]|this->Password[0]) != 0) * INFO_AUTOLOGON;
         this->flags |= (this->rdp5_support != 0 ) * ( INFO_LOGONERRORS | INFO_NOAUDIOPLAYBACK );
 

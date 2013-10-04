@@ -334,8 +334,8 @@ private:
 
         void set_line_focus_color(Line & line) {
             if (this->has_focus) {
-                line.set_bg_color(WABGREEN_BIS);
-                line.set_fg_color(BLACK);
+                line.set_bg_color(WINBLUE);
+                line.set_fg_color(WHITE);
             }
             else {
                 line.set_bg_color(this->current_bg_color);

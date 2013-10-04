@@ -552,4 +552,24 @@ static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len,
     return i_t;
 }
 
+// Copy as many characters from source to dest fitting in dest buffer.
+// Returns the number of UTF8 characters copied.
+// The destination string will always be 0 terminated.
+// The buffer after final 0 is not padded.
+TODO("Create a unit tested for this function.")
+static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size,
+    const uint8_t * source)
+{
+    size_t number_of_char = UTF8Len(source);
+    size_t source_len     = strlen((const char *)source);
+    TODO("It's always possible that memcpy make a partial copy of UTF8 character.")
+    if (source_len > dest_size - 1)
+    {
+        source_len = dest_size - 1;
+    }
+    memcpy(dest, source, source_len);
+    dest[source_len] = 0;
+    return number_of_char;
+}
+
 #endif
