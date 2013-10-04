@@ -34,6 +34,7 @@
 
 #include "internal/widget2/flat_login.hpp"
 #include "internal/widget2/screen.hpp"
+#include "internal/widget2/notify_api.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
@@ -58,12 +59,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x42\xd5\x14\x43\x4d\xbd\xc1\x21\xc7\x2b"
-        "\xee\x9b\x25\xb9\x94\x21\x1e\x9d\x62\x53"
+                   "\x58\xa3\xe3\x51\xa5\x43\x4f\xe9\xc5\x75"
+                   "\x5a\x3c\x07\x2b\x11\xda\xcc\x77\x1e\xb7"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -86,12 +87,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
                                       flat_login.cx(),
                                       flat_login.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x62\x4e\x13\x69\x10\x15\x4c\xdd\x7f\x2a"
-        "\x86\x2d\x08\x42\x00\xc3\xa0\xf8\x81\xd3"
+                   "\x1e\x89\x37\x39\x23\xb1\x11\x8e\x65\xe8"
+                   "\x36\x69\xdb\x26\x05\x81\xbf\x9f\xaf\xd2"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -99,13 +100,48 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 
 BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 {
+    ClientInfo info(1, true, true);
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
+
+
     TestDraw drawable(800, 600);
+    struct Notify : NotifyApi {
+        Widget2* sender;
+        notify_event_t event;
+
+        Notify()
+        : sender(0)
+        , event(0)
+        {}
+
+        virtual void notify(Widget2* sender, notify_event_t event)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
 
     // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test3");
+    FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3");
+
+    flat_login.set_widget_focus(&flat_login.password_edit);
+
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+    keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate
+    flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    BOOST_CHECK(notifier.sender == &flat_login);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -113,18 +149,26 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
                                       flat_login.cx(),
                                       flat_login.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xa6\x4c\xe8\xbb\x18\x5c\x91\xb3\x06\x20"
-        "\x26\x67\x40\xcf\x11\xdc\xad\xca\x4d\x2e"
+                   "\x01\x90\x48\xd0\xde\xd0\x57\x22\xd6\x19"
+                   "\xcc\x49\x52\x50\x2a\x2a\x96\x2d\x43\x71"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+
+    notifier.sender = 0;
+    notifier.event = 0;
+    keymap.push_kevent(Keymap2::KEVENT_ESC); // enterto validate
+    flat_login.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    BOOST_CHECK(notifier.sender == &flat_login);
+    BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 }
 
-BOOST_AUTO_TEST_CASE(TraceFlatLogin4)
+BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 {
     TestDraw drawable(800, 600);
 
@@ -140,68 +184,27 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin4)
                                       flat_login.cx(),
                                       flat_login.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login4.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\xb0\x72\x79\xa3\xa5\xba\x02\xd9\x10\xa7"
-        "\x6a\x55\x7e\xca\x5d\xb0\x1f\xc6\xab\xcb"
+                   "\x3d\xd7\x84\x8c\x14\xb3\xaa\x12\xe8\xb5"
+                   "\xbe\x85\xbd\x59\xf6\xbd\x78\xc7\xa1\x88"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-}
 
-BOOST_AUTO_TEST_CASE(TraceFlatLogin5)
-{
-    TestDraw drawable(800, 600);
+    flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
+                               flat_login.helpicon.centerx(), flat_login.helpicon.centery(), NULL);
 
-    // FlatLogin is a flat_login widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
-
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test5");
-
-    // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
-                                      0 + flat_login.dy(),
-                                      flat_login.cx(),
-                                      flat_login.cy()));
-
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login5.png");
-
-    char message[1024];
+    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
     if (!check_sig(drawable.gd.drawable, message,
-        "\x9a\x05\xed\x85\x44\xd9\xb6\xac\x35\xba"
-        "\xca\x4c\x38\xa4\x3c\x35\x09\xe3\xb2\x1e"
+                   "\x65\xb2\x05\xce\xad\xde\x9d\x36\x45\x9d"
+                   "\x58\xd2\x3f\x45\x28\x4a\x20\xf0\x09\x2f"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-}
 
-BOOST_AUTO_TEST_CASE(TraceFlatLogin6)
-{
-    TestDraw drawable(800, 600);
-
-    // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable, 800, 600);
-    NotifyApi * notifier = NULL;
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6");
-
-    // ask to widget to redraw at it's current position
-    flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
-                                      0 + flat_login.dy(),
-                                      flat_login.cx(),
-                                      flat_login.cy()));
-
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login6.png");
-
-    char message[1024];
-    if (!check_sig(drawable.gd.drawable, message,
-        "\x61\x63\x76\x6c\xf2\xab\x72\x06\x8d\x49"
-        "\x6f\x4c\xa3\x9d\x95\xd6\x76\x3e\x80\x27"
-    )){
-        BOOST_CHECK_MESSAGE(false, message);
-    }
 }
 
 BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
@@ -219,12 +222,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
                                       flat_login.cx(),
                                       flat_login.cy()));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x94\x4c\x47\xf5\x74\x1f\x42\x1b\x4a\xf2"
-        "\x0e\xf3\x5e\x0a\x01\x92\x02\x39\x10\xbd"
+                   "\x0b\xb9\xb7\xd1\x9b\x85\xab\x3b\xd5\x79"
+                   "\xb1\x6c\xdd\x61\x65\x96\x9e\x00\x7f\x8f"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -245,12 +248,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
                                       30,
                                       10));
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login8.png");
+    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-        "\x70\x47\x33\xfc\x5e\x87\x63\x8b\x0c\x2f"
-        "\x0b\x65\x69\xd8\x92\x9b\x58\x18\xee\x09"
+                   "\x31\x82\xdc\x89\xfd\xda\x77\xc1\xf9\xa1"
+                   "\x44\x23\xdb\xc5\x09\xae\xb9\xb7\x2b\x35"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -276,10 +279,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
             this->event = event;
         }
     } notifier;
-    int16_t x = 10;
-    int16_t y = 10;
 
-    FlatLogin flat_login(drawable, x, y, parent, &notifier, "test6");
+    FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6");
 }
 
 

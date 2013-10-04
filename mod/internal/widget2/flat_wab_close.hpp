@@ -67,7 +67,7 @@ public:
                    "Target:", true, -12, fgcolor, bgcolor)
     , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12, fgcolor, bgcolor)
     , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed"), true, -13, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, *this, this, TR("close"), true, -14, WHITE, DARK_BLUE_BIS, 6, 2)
+    , cancel(drawable, 0, 0, *this, this, TR("close"), true, -14, fgcolor, bgcolor, 6, 2)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL,
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, 0, 0, *this, NULL,

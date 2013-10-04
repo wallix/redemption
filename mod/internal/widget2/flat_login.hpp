@@ -49,7 +49,7 @@ public:
               bool focus_on_password = false,
               int group_id = 0,
               const char * login = 0, const char * password = 0,
-              int fgcolor = WHITE, int bgcolor = DARK_BLUE_WIN,
+              int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS,
               const char * label_text_login = "Login",
               const char * label_text_password = "Password")
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
@@ -59,7 +59,7 @@ public:
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
         , version_label(drawable, 0, 0, *this, NULL, caption, true, -15, fgcolor, bgcolor)
-        , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, WHITE, DARK_BLUE_BIS, 6, 2)
+        , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, fgcolor, bgcolor, 6, 2)
         , fgcolor(fgcolor)
         , bgcolor(bgcolor)
     {
@@ -166,17 +166,6 @@ public:
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {
                 this->show_tooltip(wid, TR("help_message")
-                                   // "You must be authenticated before using this<br>"
-                                   // "session.<br>"
-                                   // "<br>"
-                                   // "Enter a valid username in the username edit box.<br>"
-                                   // "Enter the password in the password edit box.<br>"
-                                   // "<br>"
-                                   // "Both the username and password are case<br>"
-                                   // "sensitive.<br>"
-                                   // "<br>"
-                                   // "Contact your system administrator if you are<br>"
-                                   // "having problems logging on."
                                    , x, y);
             }
         }
