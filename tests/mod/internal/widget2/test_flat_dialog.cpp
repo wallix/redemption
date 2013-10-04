@@ -316,6 +316,14 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
 
 BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 {
+    ClientInfo info(1, true, true);
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
+
     TestDraw drawable(800, 600);
 
     WidgetScreen parent(drawable, 800, 600);
@@ -408,6 +416,16 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
 
 
     flat_dialog.rdp_input_mouse(MOUSE_FLAG_BUTTON1, x, y, NULL);
+    BOOST_CHECK(notifier.sender == &flat_dialog);
+    BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
+
+    notifier.sender = 0;
+    notifier.event = 0;
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+    keymap.push_kevent(Keymap2::KEVENT_ESC);
+    flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
     BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 }

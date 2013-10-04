@@ -221,3 +221,94 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     }
 
 }
+
+BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
+{
+    ClientInfo info(1, true, true);
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
+
+    struct Notify : NotifyApi {
+        Widget2* sender;
+        notify_event_t event;
+
+        Notify()
+        : sender(0)
+        , event(0)
+        {}
+
+        virtual void notify(Widget2* sender, notify_event_t event)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
+    TestDraw drawable(800, 600);
+
+    // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+
+    FlatWabClose flat_wab_close(drawable, 800, 600, parent, &notifier,
+                                "abc<br>def", 0, "tartempion", "caufield",
+                                WHITE, DARK_BLUE_BIS, true);
+
+    flat_wab_close.refresh_timeleft(183);
+
+    // ask to widget to redraw at it's current position
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit1.png");
+
+    char message[1024];
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x50\x7f\x52\x59\x31\x72\x66\x4d\xed\x2b"
+                   "\x1c\x24\x71\xf3\x01\xf0\x2e\x1b\x05\x10"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    flat_wab_close.refresh_timeleft(49);
+    flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit2.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x0b\x7e\xc3\xa8\xcc\x91\x8f\x63\x0b\xea"
+                   "\xdd\x75\x97\xd7\xe7\xe4\x88\x6a\xdf\x83"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                                   flat_wab_close.cancel.centerx(),
+                                   flat_wab_close.cancel.centery(), NULL);
+    flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                                   flat_wab_close.cancel.centerx(),
+                                   flat_wab_close.cancel.centery(), NULL);
+
+    BOOST_CHECK(notifier.sender == &flat_wab_close);
+    BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit3.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x0b\x7e\xc3\xa8\xcc\x91\x8f\x63\x0b\xea"
+                   "\xdd\x75\x97\xd7\xe7\xe4\x88\x6a\xdf\x83"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    notifier.sender = 0;
+    notifier.event = 0;
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+    keymap.push_kevent(Keymap2::KEVENT_ESC);
+    flat_wab_close.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+
+}
