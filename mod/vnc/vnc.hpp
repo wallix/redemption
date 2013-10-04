@@ -444,7 +444,6 @@ struct mod_vnc : public mod_api {
 
             this->t->send(stream.get_data(), 4 + (new_encoding ? 5 : 3) * 4);
 */
-            this->t->send(stream.get_data(), 4 + 4);
         }
 
         TODO("Maybe the resize should be done in session ?")
