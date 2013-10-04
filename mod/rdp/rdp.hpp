@@ -3417,6 +3417,9 @@ struct mod_rdp : public mod_api {
                     this->bpp = bitmap_caps.preferredBitsPerPixel;
                     this->front_width = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
+
+                    this->orders.create_cache_bitmap(this->bpp, 0x258, nbbytes(this->bpp) * 0x100,
+                        0x12c, nbbytes(this->bpp) * 0x400, 0x106, nbbytes(this->bpp) * 0x1000);
                 }
                 break;
             case CAPSTYPE_ORDER:

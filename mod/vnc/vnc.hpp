@@ -704,11 +704,11 @@ struct mod_vnc : public mod_api {
             update_context.data_remain.reset();
         }
 
-        uint16_t tile_cx;
-        uint16_t tile_cy;
-        uint8_t  tile_data[16384];    // max size with 16 bpp
-        uint16_t tile_data_length;
-        uint16_t tile_data_length_remain;
+        uint16_t   tile_cx;
+        uint16_t   tile_cy;
+        uint8_t    tile_data[16384];    // max size with 16 bpp
+        uint16_t   tile_data_length;
+        uint16_t   tile_data_length_remain;
 
         uint8_t  * remaining_data        = NULL;
         uint16_t   remaining_data_length = 0;
@@ -720,6 +720,8 @@ struct mod_vnc : public mod_api {
             {
                 tile_cx = std::min<uint16_t>(update_context.cx_remain, 64);
                 tile_cy = std::min<uint16_t>(update_context.cy_remain, 64);
+
+                const uint8_t * tile_data_p = tile_data;
 
                 tile_data_length = tile_cx * tile_cy * update_context.Bpp;
                 if (tile_data_length > sizeof(tile_data))
@@ -751,15 +753,7 @@ struct mod_vnc : public mod_api {
                         throw Error(ERR_VNC_NEED_MORE_DATA);
                     }
 
-                    uncompressed_data_buffer.in_copy_bytes(tile_data, tile_data_length);
-
-                    this->front.begin_update();
-                    this->front.draw_vnc(
-                        Rect(update_context.tile_x, update_context.tile_y,
-                            tile_cx, tile_cy),
-                        this->bpp, this->palette332, tile_data,
-                        tile_data_length);
-                    this->front.end_update();
+                    tile_data_p = uncompressed_data_buffer.in_uint8p(tile_data_length);
                 }
                 else if (subencoding == 1)
                 {
@@ -773,32 +767,17 @@ struct mod_vnc : public mod_api {
                         throw Error(ERR_VNC_NEED_MORE_DATA);
                     }
 
-                    uint8_t cpixel_pattern[4];
-
-                    uncompressed_data_buffer.in_copy_bytes(cpixel_pattern,
-                        update_context.Bpp);
+                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(update_context.Bpp);
 
                     uint8_t * tmp_tile_data = tile_data;
 
-                    tile_data_length_remain = tile_data_length;
-
-                    while (tile_data_length_remain >= update_context.Bpp)
-                    {
+                    for (int i = 0; i < tile_cx; i++, tmp_tile_data += update_context.Bpp)
                         memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
 
-                        tmp_tile_data           += update_context.Bpp;
-                        tile_data_length_remain -= update_context.Bpp;
-                    }
+                    uint16_t line_size = tile_cx * update_context.Bpp;
 
-                    REDASSERT(!tile_data_length_remain);
-
-                    this->front.begin_update();
-                    this->front.draw_vnc(
-                        Rect(update_context.tile_x, update_context.tile_y,
-                            tile_cx, tile_cy),
-                        this->bpp, this->palette332, tile_data,
-                        tile_data_length);
-                    this->front.end_update();
+                    for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size)
+                        memcpy(tmp_tile_data, tile_data, line_size);
                 }
                 else if ((subencoding >= 2) && (subencoding <= 16))
                 {
@@ -809,20 +788,18 @@ struct mod_vnc : public mod_api {
                             subencoding);
                     }
 
-                    uint8_t palette[4 * 32];
-                    uint8_t palette_count = subencoding;
+                    const uint8_t * palette;
+                    const uint8_t   palette_count = subencoding;
+                    const uint16_t  palette_size  = palette_count * update_context.Bpp;
 
-                    if (uncompressed_data_buffer.in_remain() <
-                        palette_count * update_context.Bpp)
+                    if (uncompressed_data_buffer.in_remain() < palette_size)
                     {
                         throw Error(ERR_VNC_NEED_MORE_DATA);
                     }
 
-                    uncompressed_data_buffer.in_copy_bytes(palette,
-                        palette_count * update_context.Bpp);
+                    palette = uncompressed_data_buffer.in_uint8p(palette_size);
 
-                    uint8_t  packed_pixels[2048];
-                    uint16_t packed_pixels_length;
+                    uint16_t   packed_pixels_length;
 
                     if (palette_count == 2)
                     {
@@ -837,29 +814,21 @@ struct mod_vnc : public mod_api {
                         packed_pixels_length = (tile_cx + 1) / 2 * tile_cy;
                     }
 
-                    if (packed_pixels_length > sizeof(packed_pixels))
-                    {
-                        LOG(LOG_ERR,
-                            "VNC Encoding: ZRLE, packed pixels buffer too small (%u < %u)",
-                            sizeof(packed_pixels), packed_pixels_length);
-                        throw Error(ERR_BUFFER_TOO_SMALL);
-                    }
-
                     if (uncompressed_data_buffer.in_remain() < packed_pixels_length)
                     {
                         throw Error(ERR_VNC_NEED_MORE_DATA);
                     }
 
-                    uncompressed_data_buffer.in_copy_bytes(packed_pixels, packed_pixels_length);
+                    const uint8_t * packed_pixels = uncompressed_data_buffer.in_uint8p(packed_pixels_length);
 
                     uint8_t * tmp_tile_data = tile_data;
 
                     tile_data_length_remain = tile_data_length;
 
-                    uint8_t   pixel_remain         = tile_cx;
-                    uint8_t * packed_pixels_remain = packed_pixels;
-                    uint8_t   current              = 0;
-                    uint8_t   index                = 0;
+                    uint8_t         pixel_remain         = tile_cx;
+                    const uint8_t * packed_pixels_remain = packed_pixels;
+                    uint8_t         current              = 0;
+                    uint8_t         index                = 0;
 
                     uint8_t palette_index;
 
@@ -912,21 +881,13 @@ struct mod_vnc : public mod_api {
                             pixel_remain = tile_cx;
                         }
 
-                        uint8_t * cpixel_pattern = palette + palette_index * update_context.Bpp;
+                        const uint8_t * cpixel_pattern = palette + palette_index * update_context.Bpp;
 
                         memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
 
                         tmp_tile_data           += update_context.Bpp;
                         tile_data_length_remain -= update_context.Bpp;
                     }
-
-                    this->front.begin_update();
-                    this->front.draw_vnc(
-                        Rect(update_context.tile_x, update_context.tile_y,
-                            tile_cx, tile_cy),
-                        this->bpp, this->palette332, tile_data,
-                        tile_data_length);
-                    this->front.end_update();
                 }
                 else if ((subencoding >= 17) && (subencoding <= 127))
                 {
@@ -946,15 +907,13 @@ struct mod_vnc : public mod_api {
 
                     while (tile_data_length_remain >= update_context.Bpp)
                     {
-                        uint8_t cpixel_pattern[4];
 
                         if (uncompressed_data_buffer.in_remain() < update_context.Bpp)
                         {
                             throw Error(ERR_VNC_NEED_MORE_DATA);
                         }
 
-                        uncompressed_data_buffer.in_copy_bytes(cpixel_pattern,
-                            update_context.Bpp);
+                        const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(update_context.Bpp);
 
                         run_length = 1;
 
@@ -989,14 +948,6 @@ struct mod_vnc : public mod_api {
 
                     REDASSERT(!run_length);
                     REDASSERT(!tile_data_length_remain);
-
-                    this->front.begin_update();
-                    this->front.draw_vnc(
-                        Rect(update_context.tile_x, update_context.tile_y,
-                            tile_cx, tile_cy),
-                        this->bpp, this->palette332, tile_data,
-                        tile_data_length);
-                    this->front.end_update();
                 }
                 else if (subencoding == 129)
                 {
@@ -1009,15 +960,16 @@ struct mod_vnc : public mod_api {
                         LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
                     }
 
-                    uint8_t palette[4 * 256];
-                    uint8_t palette_count = subencoding - 128;
+                    const uint8_t  * palette;
+                    const uint8_t    palette_count = subencoding - 128;
+                    const uint16_t   palette_size  = palette_count * update_context.Bpp;
 
-                    if (uncompressed_data_buffer.in_remain() < palette_count * update_context.Bpp)
+                    if (uncompressed_data_buffer.in_remain() < palette_size)
                     {
                         throw Error(ERR_VNC_NEED_MORE_DATA);
                     }
 
-                    uncompressed_data_buffer.in_copy_bytes(palette, palette_count * update_context.Bpp);
+                    palette = uncompressed_data_buffer.in_uint8p(palette_size);
 
                     tile_data_length_remain = tile_data_length;
 
@@ -1031,8 +983,8 @@ struct mod_vnc : public mod_api {
                             throw Error(ERR_VNC_NEED_MORE_DATA);
                         }
 
-                        uint8_t   palette_index  = uncompressed_data_buffer.in_uint8();
-                        uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * update_context.Bpp;
+                        uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
+                        const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * update_context.Bpp;
 
                         run_length = 1;
 
@@ -1070,15 +1022,15 @@ struct mod_vnc : public mod_api {
 
                     REDASSERT(!run_length);
                     REDASSERT(!tile_data_length_remain);
-
-                    this->front.begin_update();
-                    this->front.draw_vnc(
-                        Rect(update_context.tile_x, update_context.tile_y,
-                            tile_cx, tile_cy),
-                        this->bpp, this->palette332, tile_data,
-                        tile_data_length);
-                    this->front.end_update();
                 }
+
+                this->front.begin_update();
+                this->front.draw_vnc(
+                    Rect(update_context.tile_x, update_context.tile_y,
+                        tile_cx, tile_cy),
+                    this->bpp, this->palette332, tile_data_p,
+                    tile_data_length);
+                this->front.end_update();
 
                 update_context.cx_remain -= tile_cx;
                 update_context.tile_x    += tile_cx;
