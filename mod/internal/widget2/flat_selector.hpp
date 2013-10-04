@@ -36,6 +36,7 @@
 
 class WidgetSelectorFlat : public WidgetParent
 {
+
     class Line : public Widget2 {
     public:
         WidgetLabel group;
@@ -46,32 +47,23 @@ class WidgetSelectorFlat : public WidgetParent
         int border_color;
 
 
-        Line(DrawApi & drawable, Widget2& parent, NotifyApi* notifier,
-             int x, int y, int lcy, uint h_border,
-             int group_w, int target_w, int protocol_w, int closetime_w,
-             const char * device_group, const char * target_label,
-             const char * protocol, const char * closetime,
-             int fgcolor, int bgcolor, int x_text, int y_text)
+        Line(DrawApi & drawable, Widget2& parent, NotifyApi* notifier, int x, int y, int lcy,
+             uint h_border, int group_w, int target_w, int protocol_w, int closetime_w,
+             const char * device_group, const char * target_label, const char * protocol,
+             const char * closetime, int fgcolor, int bgcolor, int x_text, int y_text)
             : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w,
                                      lcy + h_border), parent, notifier)
-            , group(WidgetLabel(drawable, x, y,
-                                parent, notifier,
-                                device_group, false, 0,
+            , group(WidgetLabel(drawable, x, y, parent, notifier, device_group, false, 0,
                                 fgcolor, bgcolor, x_text, y_text))
-            , target(WidgetLabel(drawable, x + group_w, y,
-                                 parent, notifier,
-                                 target_label, false, 0,
+            , target(WidgetLabel(drawable, x + group_w, y, parent, notifier, target_label, false, 0,
                                  fgcolor, bgcolor, x_text, y_text))
-            , protocol(WidgetLabel(drawable, x + group_w + target_w, y,
-                                   parent, notifier,
-                                   protocol, false, 0,
-                                   fgcolor, bgcolor, x_text, y_text))
-            , closetime(WidgetLabel(drawable, x + group_w + target_w + protocol_w, y,
-                                    parent, notifier,
-                                    closetime, false, 0,
-                                    fgcolor, bgcolor, x_text, y_text))
+            , protocol(WidgetLabel(drawable, x + group_w + target_w, y, parent, notifier, protocol,
+                                   false, 0, fgcolor, bgcolor, x_text, y_text))
+            , closetime(WidgetLabel(drawable, x + group_w + target_w + protocol_w, y, parent, notifier,
+                                    closetime, false, 0, fgcolor, bgcolor, x_text, y_text))
             , h_border(h_border)
             , border_color(bgcolor)
+        BEGINBODY
         {
             this->group.rect.cx     = group_w;
             this->target.rect.cx    = target_w;
@@ -82,6 +74,7 @@ class WidgetSelectorFlat : public WidgetParent
             this->protocol.rect.cy  = lcy;
             this->closetime.rect.cy = lcy;
         }
+        ENDBODY
 
         ~Line() {}
 
@@ -92,17 +85,12 @@ class WidgetSelectorFlat : public WidgetParent
             this->protocol.refresh(new_clip.intersect(this->protocol.rect));
             this->closetime.refresh(new_clip.intersect(this->closetime.rect));
             if (this->h_border) {
-                this->drawable.draw(
-                                    RDPOpaqueRect(
-                                                  Rect(
-                                                       this->rect.x,
+                this->drawable.draw(RDPOpaqueRect(Rect(this->rect.x,
                                                        this->rect.y + this->group.rect.cy,
                                                        this->rect.cx,
-                                                       this->h_border
-                                                       ),
-                                                  this->border_color
-                                                  ), clip
-                                    );
+                                                       this->h_border),
+                                                  this->border_color),
+                                    clip);
             }
         }
 
@@ -114,13 +102,14 @@ class WidgetSelectorFlat : public WidgetParent
             this->border_color       = bg_color;
         }
         void set_fg_color(int fg_color) {
+            BEGINBODY
             this->group.fg_color     = fg_color;
             this->target.fg_color    = fg_color;
             this->protocol.fg_color  = fg_color;
             this->closetime.fg_color = fg_color;
+            ENDBODY
         }
     };
-
 public:
     typedef enum {
         COLUMN_UNKNOWN,
@@ -208,8 +197,10 @@ private:
             , over_index(-1u)
             , click_interval()
         {
+            BEGINBODY
             int w;
             this->drawable.text_metrics("Lp", w, this->h_text);
+            ENDBODY
         }
 
         void set_x(int x) {
@@ -286,7 +277,6 @@ private:
                 case COLUMN_CLOSETIME:
                     return this->labels[this->over_index]->closetime.get_text();
                 default:
-                    return "";
                     break;
                 }
             }
@@ -323,15 +313,6 @@ private:
             this->current_index = -1u;
         }
 
-        void init_current_index(uint idx)
-        {
-            if (idx < this->labels.size()) {
-                this->current_index = idx;
-                this->labels[idx]->set_bg_color(this->current_bg_color);
-                this->labels[idx]->set_fg_color(this->current_fg_color);
-            }
-        }
-
         void set_line_focus_color(Line & line) {
             if (this->has_focus) {
                 line.set_bg_color(WINBLUE);
@@ -357,8 +338,10 @@ private:
                                                                : this->fg_color2);
                     this->refresh(this->labels[previous_index]->rect);
                 }
-                this->set_line_focus_color(*this->labels[idx]);
-                this->refresh(this->labels[this->current_index]->rect);
+                if (this->current_index < this->labels.size()) {
+                    this->set_line_focus_color(*this->labels[this->current_index]);
+                    this->refresh(this->labels[this->current_index]->rect);
+                }
             }
         }
 
@@ -407,7 +390,6 @@ private:
             case COLUMN_CLOSETIME:
                 return this->closetime_w;
             default:
-                return 0;
                 break;
             }
             return 0;
@@ -461,6 +443,7 @@ private:
         }
 
         virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
+
         {
             if (keymap->nb_kevent_available() > 0){
                 switch (keymap->top_kevent()){
@@ -501,7 +484,9 @@ private:
                     break;
                 }
             }
+            ENDBODY
         }
+
     };
 
 public:

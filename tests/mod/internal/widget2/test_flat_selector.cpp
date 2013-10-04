@@ -95,6 +95,60 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     }
 }
 
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
+{
+    TestDraw drawable(640, 480);
+
+    // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 640, 480);
+    NotifyApi * notifier = NULL;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1");
+
+    selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.27",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.33",
+                        "RDP", "2013-04-20 19:56:50");
+
+    selector.selector_lines.set_current_index(0);
+
+    // ask to widget to redraw at it's current position
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize1.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x78\x3c\x32\x0a\x2b\x3a\x61\xe2\xda\x7c"
+                   "\x4f\x01\x95\x87\xec\x96\x98\x17\x0f\x3b"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    selector.selector_lines.set_current_index(1);
+
+    // ask to widget to redraw at it's current position
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-resize2.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x52\x57\x5d\x4c\xd8\xe5\x16\xc5\x71\x98"
+                   "\xc8\x89\xd4\xad\x94\x9f\xc9\x97\x1a\xe3"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+}
+
+
 BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat2)
 {
     TestDraw drawable(800, 600);
@@ -309,6 +363,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatEventSelect)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
+    int x = selector.selector_lines.rect.x + 5;
+    int y = selector.selector_lines.rect.y + 3;
+    selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, NULL);
+    x += selector.selector_lines.group_w;
+    selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, NULL);
+    x += selector.selector_lines.target_w;
+    selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, NULL);
+    x += selector.selector_lines.protocol_w;
+    selector.rdp_input_mouse(MOUSE_FLAG_MOVE, x, y, NULL);
+
+
 }
 
 
@@ -473,6 +538,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
+    keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_LEFT_ARROW);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
