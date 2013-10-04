@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
                              "text has been changed !");
     parent.rdp_input_invalidate(parent.rect);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen4.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x21\x9b\x78\xfb\x81\x2f\x4e\xc5\xf8\xa9"
