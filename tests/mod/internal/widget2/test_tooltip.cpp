@@ -142,5 +142,19 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
+    parent.tooltip->set_text("Test tooltip<br>"
+                             "Text modification<br>"
+                             "text has been changed !");
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen4.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x21\x9b\x78\xfb\x81\x2f\x4e\xc5\xf8\xa9"
+                   "\xb3\x13\x01\xca\x36\x3d\x14\x6a\xb1\x91"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
     parent.clear();
 }

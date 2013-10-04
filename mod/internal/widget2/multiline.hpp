@@ -71,6 +71,11 @@ public:
 
     void set_text(const char * text)
     {
+        if (this->auto_resize) {
+            this->rect.cx = 0;
+            this->rect.cy = 0;
+        }
+
         const char * str = 0;
         char * pbuf = this->buffer;
         line_t * line = this->lines;
