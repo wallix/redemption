@@ -57,6 +57,7 @@ enum {
     ERR_TRANSPORT_SEEK_FAILED,
 
     ERR_TRANSPORT_TLS_CONNECT_FAILED = 1600,
+    ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED,
 
     ERR_ACL_UNEXPECTED_IN_ITEM_OUT = 1700,
     ERR_ACL_MESSAGE_TOO_BIG,
@@ -286,14 +287,17 @@ class Error {
 
     const char * errmsg() {
         switch(this->id) {
-        case NO_ERROR :
+        case NO_ERROR:
             snprintf(errstr, sizeof(errstr), "No error");
             break;
-        case ERR_TRANSPORT_OPEN_FAILED :
+        case ERR_SESSION_UNKNOWN_BACKEND:
+            snprintf(errstr, sizeof(errstr), "Unknown Backend");
+            break;
+        case ERR_TRANSPORT_OPEN_FAILED:
             snprintf(errstr, sizeof(errstr), "Open file failed");
             break;
-        case ERR_SESSION_UNKNOWN_BACKEND :
-            snprintf(errstr, sizeof(errstr), "Unknown Backend");
+        case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
+            snprintf(errstr, sizeof(errstr), "TLS certificate changed");
             break;
         case ERR_VNC_CONNECTION_ERROR:
             snprintf(errstr, sizeof(errstr), "VNC connection error.");

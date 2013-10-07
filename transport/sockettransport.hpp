@@ -896,37 +896,16 @@ class SocketTransport : public Transport {
             || (0 != strcmp(issuer_existing, issuer))
             || (0 != strcmp(subject_existing, subject))
             || (0 != strcmp(fingerprint_existing, fingerprint))) {
-/*
-                if (this->error_message_buffer && this->error_message_len) {
-                    snprintf(this->error_message_buffer, this->error_message_len,
-                        "The certificate for host %s:%d has changed\n\n"
-                        "Previous Certificate\n"
-                        "\tIssuer = \"%s\"\n"
-                        "\tSubject = \"%s\"\n"
-                        "\tFingerprint = \"%s\"\n\n"
-                        "New Certificate\n"
-                        "\tIssuer = \"%s\"\n"
-                        "\tSubject = \"%s\"\n"
-                        "\tFingerprint = \"%s\"\n",
-                        this->ip_address, this->port,
-                        issuer_existing, subject_existing, fingerprint_existing,
-                        issuer, subject, fingerprint);
-                    this->error_message_buffer[this->error_message_len - 1] = 0;
-                }
-*/
                 if (this->error_message) {
                     char buff[256];
                     snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
                              this->ip_address, this->port);
                     this->error_message->copy_c_str(buff);
-                    // snprintf(const_cast<char *>(this->error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
-                    //     "The certificate for host %s:%d has changed!",
-                    //     this->ip_address, this->port);
                 }
                 LOG(LOG_ERR, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                     this->ip_address, this->port,
                     issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
-                throw Error(ERR_TRANSPORT, 0);
+                throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED, 0);
             }
 
             if (issuer               != NULL) { free(issuer              ); }
