@@ -701,13 +701,8 @@ public:
         this->to_send_set.insert(AUTHID_PROXY_TYPE);
         this->to_send_set.insert(AUTHID_DISPLAY_MESSAGE);
         this->to_send_set.insert(AUTHID_ACCEPT_MESSAGE);
-        this->to_send_set.insert(AUTHID_HOST);
-        this->to_send_set.insert(AUTHID_TARGET);
-        this->to_send_set.insert(AUTHID_AUTH_USER);
         this->to_send_set.insert(AUTHID_PASSWORD);
         this->to_send_set.insert(AUTHID_REPORTING);
-        this->to_send_set.insert(AUTHID_TARGET_USER);
-        this->to_send_set.insert(AUTHID_TARGET_DEVICE);
         this->to_send_set.insert(AUTHID_TARGET_PROTOCOL);
         this->to_send_set.insert(AUTHID_SELECTOR);
         this->to_send_set.insert(AUTHID_SELECTOR_GROUP_FILTER);
@@ -730,20 +725,30 @@ public:
         this->globals.capture_chunk.set(false);
 
 
+        this->to_send_set.insert(AUTHID_AUTH_USER);
+        this->globals.auth_user.attach_ini(this,              AUTHID_AUTH_USER);
         this->globals.auth_user.set_from_cstr("");
+
+        this->to_send_set.insert(AUTHID_HOST);
+        this->globals.host.attach_ini(this,                   AUTHID_HOST);
         this->globals.host.set_from_cstr("");
-        this->globals.target_device.set_from_cstr("");
+
+        this->to_send_set.insert(AUTHID_TARGET);
+        this->globals.target.attach_ini(this,                 AUTHID_TARGET);
+        this->globals.target.set_from_cstr("");
+
+        this->to_send_set.insert(AUTHID_TARGET_USER);
+        this->globals.target_user.attach_ini(this,            AUTHID_TARGET_USER);
         this->globals.target_user.set_from_cstr("");
+
+        this->globals.target_application.attach_ini(this,     AUTHID_TARGET_APPLICATION);
         this->globals.target_application.set_from_cstr("");
 
-        this->globals.auth_user.attach_ini(this,AUTHID_AUTH_USER);
-        this->globals.host.attach_ini(this,AUTHID_HOST);
-        this->globals.target.attach_ini(this,AUTHID_TARGET);
-        this->globals.target_device.attach_ini(this,AUTHID_TARGET_DEVICE);
-        this->globals.target_user.attach_ini(this,AUTHID_TARGET_USER);
-        this->globals.target_application.attach_ini(this,AUTHID_TARGET_APPLICATION);
+        this->to_send_set.insert(AUTHID_TARGET_DEVICE);
+        this->globals.target_device.attach_ini(this,          AUTHID_TARGET_DEVICE);
+        this->globals.target_device.set_from_cstr("");
 
-        this->globals.enable_file_encryption.attach_ini(this,AUTHID_OPT_FILE_ENCRYPTION);
+        this->globals.enable_file_encryption.attach_ini(this, AUTHID_OPT_FILE_ENCRYPTION);
         this->globals.enable_file_encryption.set(false);
 
         // Init globals
@@ -772,17 +777,16 @@ public:
         strcpy(this->globals.png_path, PNG_PATH);
         strcpy(this->globals.wrm_path, WRM_PATH);
 
-        this->globals.alternate_shell.attach_ini(this,AUTHID_ALTERNATE_SHELL);
-        this->globals.shell_working_directory.attach_ini(this,AUTHID_SHELL_WORKING_DIRECTORY);
+        this->globals.alternate_shell.attach_ini(this, AUTHID_ALTERNATE_SHELL);
+        this->globals.shell_working_directory.attach_ini(this, AUTHID_SHELL_WORKING_DIRECTORY);
 
         this->globals.alternate_shell.set_empty();
         this->globals.shell_working_directory.set_empty();
 
-
-        this->globals.codec_id.attach_ini(this,AUTHID_OPT_CODEC_ID);
-        this->globals.movie.attach_ini(this,AUTHID_OPT_MOVIE);
-        this->globals.movie_path.attach_ini(this,AUTHID_OPT_MOVIE_PATH);
-        this->globals.video_quality.attach_ini(this,AUTHID_VIDEO_QUALITY);
+        this->globals.codec_id.attach_ini(this, AUTHID_OPT_CODEC_ID);
+        this->globals.movie.attach_ini(this, AUTHID_OPT_MOVIE);
+        this->globals.movie_path.attach_ini(this, AUTHID_OPT_MOVIE_PATH);
+        this->globals.video_quality.attach_ini(this, AUTHID_VIDEO_QUALITY);
 
         this->globals.codec_id.set_from_cstr("flv");
         this->globals.movie.set(false);

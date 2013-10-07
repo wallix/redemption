@@ -936,6 +936,10 @@ class Engine(object):
         self.wab_login = None
         self.user = lambda: 1
         self.user.preferredLanguage = 'en'
+        self._trace_encryption = False
+
+    def get_trace_encryption(self):
+        return self._trace_encryption
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type):
         """

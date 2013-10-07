@@ -11,6 +11,19 @@ class Engine(object):
         self.wabengine = None
         self.session_id  = None
         self.auth_x509 = None
+        self._trace_encryption = None
+
+    def get_trace_encryption(self):
+        try:
+            from wabconfig import Config
+            conf = Config("wabengine")
+            self._trace_encryption = True if conf['trace'] == u'cryptofile' else False # u'localfile'
+            return self._trace_encryption
+        except Exception, e:
+            import traceback
+            Logger().info("Reading configuration file section 'wabengine', key 'trace' failed : %s" % traceback.format_exc(e))
+        return False
+
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type):
         """

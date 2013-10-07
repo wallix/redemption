@@ -108,8 +108,6 @@ struct FieldObserver : public ConfigurationHolder {
          *******************************************************
          */
         bool has_changed() {
-            // if (!this->asked)
-            //     this->use();
             return this->modified;
         }
         /**************************
@@ -165,21 +163,8 @@ struct FieldObserver : public ConfigurationHolder {
                 LOG(LOG_INFO, "sending %s=ASK", key);
             }
             else {
-                // BASE64 TRY
                 const char * tmp = this->get_value();
-                // size_t tmp_len = strlen(tmp);
-                // unsigned char output[1024];
-                // size_t encoded_len;
-                // if (this->ini) {
-                //     encoded_len = this->ini->b64.encode(output, sizeof(output), (const unsigned char*)tmp, tmp_len);
-                //     output[encoded_len] = 0;
-                // }
-                // if (this->ini) {
-                //     n = snprintf(buff, size, "%s\n!%s\n",key,output);
-                // }
-                // else {
                 n = snprintf(buff, size, "%s\n!%s\n",key,tmp);
-                // }
                 if ((strncasecmp("password", (char*)key, 8) == 0)
                     ||(strncasecmp("target_password", (char*)key, 15) == 0)){
                     LOG(LOG_INFO, "sending %s=<hidden>", key);
