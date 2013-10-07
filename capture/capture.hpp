@@ -42,6 +42,7 @@ public:
     OutFilenameTransport * png_trans;
     StaticCapture        * psc;
 
+    TODO("wrm_trans and crypto_wrm_trans should be one and the same (and crypto status hidden)")
     OutmetaTransport       * wrm_trans;
     CryptoOutmetaTransport * crypto_wrm_trans;
     BmpCache               * pnc_bmp_cache;
@@ -139,14 +140,13 @@ public:
         delete this->png_trans;
 
         delete this->pnc;
-        if (this->enable_file_encryption == false) {
+        if (this->enable_file_encryption){
+            delete this->crypto_wrm_trans;
+        } 
+        else {
             delete this->wrm_trans;
         }
-        else {
-            delete this->crypto_wrm_trans;
-        }
         delete this->pnc_bmp_cache;
-
         delete this->drawable;
 
         clear_files_flv_meta_png(this->png_path.c_str(), this->basename.c_str());
@@ -154,11 +154,11 @@ public:
 
     void request_full_cleaning()
     {
-        if (this->enable_file_encryption == false) {
-            this->wrm_trans->request_full_cleaning();
+        if (this->enable_file_encryption){
+            this->crypto_wrm_trans->request_full_cleaning();
         }
         else {
-            this->crypto_wrm_trans->request_full_cleaning();
+            this->wrm_trans->request_full_cleaning();
         }
     }
 

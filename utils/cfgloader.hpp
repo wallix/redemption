@@ -143,8 +143,8 @@ struct ConfigurationLoader {
             const char * sep = endkey;
             for (--endkey; endkey >= startkey ; endkey--) {
                 if (!isspace(*endkey)) {
-                    TODO("RZ: Possible buffer overflow if length of key is larger than 128 bytes")
-                        memcpy(key, startkey, endkey - startkey + 1);
+                    TODO("RZ: Possible buffer overflow if length of key is larger than 128 bytes");
+                    memcpy(key, startkey, endkey - startkey + 1);
                     key[endkey - startkey + 1] = 0;
 
                     const char * startvalue = sep + 1;

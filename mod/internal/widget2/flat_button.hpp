@@ -50,10 +50,8 @@ public:
     , focus_color(WINBLUE)
     , logo(logo)
     {
-        BEGINBODY
         this->rect.cx = this->label.cx() + 3;
         this->rect.cy = this->label.cy() + 3;
-        ENDBODY
     }
 
     virtual ~WidgetFlatButton()

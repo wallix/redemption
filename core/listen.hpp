@@ -131,7 +131,7 @@ struct Listen {
         // throw some exception to signal to outside world listen failed
     }
 
-    TODO("Some values (server, timeout) become only necessary when calling check")
+    TODO("Some values (server, timeout) become only necessary when calling check");
     void run() {
         while (1) {
             fd_set rfds;

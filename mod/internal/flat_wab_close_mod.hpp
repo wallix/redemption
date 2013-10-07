@@ -77,14 +77,12 @@ public:
     , timeout(Timeout(now, ini.globals.close_timeout))
     , showtimer(showtimer)
     {
-        BEGINBODY
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
         this->screen.add_widget(&this->close_widget);
         this->close_widget.set_widget_focus(&this->close_widget.cancel);
         this->screen.set_widget_focus(&this->close_widget);
 
         this->screen.refresh(this->screen.rect);
-        ENDBODY
     }
 
     virtual ~FlatWabCloseMod()

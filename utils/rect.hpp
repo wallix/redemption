@@ -40,12 +40,12 @@ struct Rect {
         virtual void callback(const Rect & rect) = 0;
     };
 
-    TODO("Right should be included inside rect (and undefined for empty rect)")
+    TODO("Right should be included inside rect (and undefined for empty rect)");
     uint16_t right() const {
         return (uint16_t)(this->x + this->cx);
     }
 
-    TODO("Bottom should be included inside rect (and undefined for empty rect)")
+    TODO("Bottom should be included inside rect (and undefined for empty rect)");
     uint16_t bottom() const {
         return (uint16_t)(this->y + this->cy);
     }

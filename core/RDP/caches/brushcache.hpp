@@ -53,7 +53,7 @@ struct BrushCache {
     {
     }
 
-    TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
+    TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object");
     int reset(struct ClientInfo & client_info)
     {
         /* set whole struct to zero */

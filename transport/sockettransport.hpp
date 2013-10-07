@@ -427,7 +427,7 @@ class SocketTransport : public Transport {
         return;
     }
 
-    virtual void enable_client_tls() throw (Error)
+    virtual void enable_client_tls(bool ignore_certificate_change) throw (Error)
     {
         if (this->tls) {
             TODO("this should be an error, no need to commute two times to TLS")
@@ -905,7 +905,18 @@ class SocketTransport : public Transport {
                 LOG(LOG_ERR, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
                     this->ip_address, this->port,
                     issuer_existing, subject_existing, fingerprint_existing, issuer, subject, fingerprint);
-                throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED, 0);
+
+                if (!ignore_certificate_change) {
+                    throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED, 0);
+                }
+
+                ::unlink(filename);
+
+                LOG(LOG_INFO, "dumping X509 peer certificate\n");
+                fp = ::fopen(filename, "w+");
+                PEM_write_X509(fp, px509);
+                ::fclose(fp);
+                LOG(LOG_INFO, "dumped X509 peer certificate\n");
             }
 
             if (issuer               != NULL) { free(issuer              ); }

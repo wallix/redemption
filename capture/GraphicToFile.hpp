@@ -167,8 +167,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     ~GraphicToFile(){
     }
 
+    REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event");
     virtual void timestamp(const timeval& now)
-    REDOC("Update timestamp but send nothing, the timestamp will be sent later with the next effective event")
     {
         uint64_t old_timer = this->timer.tv_sec * 1000000ULL + this->timer.tv_usec;
         uint64_t current_timer = now.tv_sec * 1000000ULL + now.tv_usec;
@@ -540,7 +540,7 @@ public:
         this->trans->send(header);
 
         TODO("why several send ? one should be enough. See that")
-        
+
         BStream payload(16);
         payload.out_uint16_le(this->mouse_x);
         payload.out_uint16_le(this->mouse_y);

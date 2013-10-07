@@ -29,7 +29,7 @@
 #undef SHARE_PATH
 #define SHARE_PATH "./tests/fixtures"
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "internal/flat_dialog_mod.hpp"

@@ -196,6 +196,7 @@ int main(int argc, char * argv[]) {
                     NULL,               // error message
                     false,              // disconnect on logon user change
                     0,                  // open session timeout
+                    0,                  // on server certificate change
                     true,               // enable transparent mode
                     output_filename.c_str());
         mod.event.obj = client_sck;
