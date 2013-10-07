@@ -100,6 +100,8 @@ class Cover:
                     self.modules[module].functions[int(startline)] = Function(name, int(startline))
 
             current_function = None
+            search_begin_body = False
+            brackets_count = 0
             for line in open(fgcov):
                 res = re.match(r'^.*(\d+)[:]\s*BEGINBODY(.*)$', line)
                 if res and current_function:
@@ -119,9 +121,34 @@ class Cover:
 
                 res = re.match(r'^\s*(#####|[-]|\d+)[:]\s*(\d+)[:](.*)$', line)
                 if res:
+                    if current_function and search_begin_body:
+                        if res.group(3).count('{'):
+                            search_begin_body = False
+                        else:
+                            continue
+
                     if int(res.group(2)) in self.modules[module].functions:
                         print "current function found at %d" % int(res.group(2))
                         current_function = int(res.group(2))
+                        self.modules[module].functions[current_function].total_lines += 1
+                        if not res.group(1) in ('#####', "-"):
+                            self.modules[module].functions[current_function].covered_lines += 1
+                        brackets_count = res.group(3).count('{')
+                        if brackets_count > 0:
+                            brackets_count -= res.group(3).count('}')
+                            if brackets_count <= 0:
+                                current_function = None
+                        else:
+                            search_begin_body = True
+                        continue
+
+                    if current_function and not search_begin_body:
+                        brackets_count += res.group(3).count('{')
+                        brackets_count -= res.group(3).count('}')
+                        if brackets_count <= 0:
+                            brackets_count = 0
+                            current_function = None
+                            continue
 
                     # ignore comments
                     if re.match('^\s*//', res.group(3)):
@@ -142,6 +169,7 @@ class Cover:
                     if not res.group(1) in ('#####', "-"):
                         if current_function:
                             self.modules[module].functions[current_function].covered_lines += 1
+
 
             if self.verbose > 0:
                 print "computing coverage for %s : done" % module
