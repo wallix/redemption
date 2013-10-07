@@ -101,15 +101,16 @@ namespace rndfa {
         return false;
     }
 
-    const unsigned NORMAL = 0;
-    const unsigned ANY_CHARACTER = 1 << 8;
-    const unsigned SPLIT = 1 << 9;
-    const unsigned CAPTURE_OPEN = 1 << 10;
-    const unsigned CAPTURE_CLOSE = 1 << 11;
-    const unsigned SPECIAL_CHECK = 1 << 12;
-    const unsigned EPSILONE = 1 << 13;
-    const unsigned FIRST = 1 << 14;
-    const unsigned LAST = 1 << 15;
+    const unsigned NORMAL           = 0;
+    const unsigned ANY_CHARACTER    = 1 << 8;
+    const unsigned SPLIT            = 1 << 9;
+    const unsigned CAPTURE_OPEN     = 1 << 10;
+    const unsigned CAPTURE_CLOSE    = 1 << 11;
+    const unsigned SPECIAL_CHECK    = 1 << 12;
+    const unsigned EPSILONE         = 1 << 13;
+    const unsigned FIRST            = 1 << 14;
+    const unsigned LAST             = 1 << 15;
+    const unsigned FINISH              = 1 << 16;
 
     struct StateBase
     {
@@ -144,6 +145,9 @@ namespace rndfa {
             else if (this->type & (SPLIT|CAPTURE_CLOSE|CAPTURE_OPEN)){
                 os << (this->is_split() ? "(split)" : this->type == CAPTURE_OPEN ? "(open)" : "(close)");
             }
+            else if (this->type == FINISH) {
+                os << "@";
+            }
             else {
                 os << "'" << utf_char(this->utfc) << "'";
             }
@@ -167,6 +171,9 @@ namespace rndfa {
         bool is_epsilone() const
         { return this->type == EPSILONE; }
 
+        bool is_finish() const
+        { return this->type == FINISH; }
+
         size_t utfc;
 
         unsigned type;
@@ -184,6 +191,34 @@ namespace rndfa {
     }
 
     typedef StateBase State;
+
+    struct StateFinish : StateBase
+    {
+        StateFinish()
+        : StateBase(FINISH)
+        {}
+
+        virtual ~StateFinish()
+        {}
+
+        virtual bool check(size_t /*c*/)
+        {
+            /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
+            return true;
+        }
+
+        virtual StateBase * clone() const
+        {
+            return new StateFinish;
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "Finish";
+        }
+    };
+
+    StateFinish state_finish = StateFinish();
 
     struct StateRange : StateBase
     {
@@ -412,8 +447,10 @@ namespace rndfa {
             }
         };
 
+        StateMachine2(const StateMachine2&) /*= delete*/;
+
     public:
-        explicit StateMachine2(StateBase * st)
+        explicit StateMachine2(StateBase * st = 0)
         : nb_capture(0)
         , idx_trace(-1u)
         , idx_trace_free(0)
@@ -547,7 +584,7 @@ namespace rndfa {
 
         void push_state(RangeList* l, StateBase * st, unsigned step)
         {
-            if (st && st->id != step) {
+            if (st && st->id != step/* && st != &state_finish*/) {
                 st->id = step;
                 if (st->is_split()) {
                     this->push_state(l, st->out1, step);
@@ -582,8 +619,12 @@ namespace rndfa {
             /**///std::cout << "-- " << (l) << std::endl;
             for (StateList * first = l->first, * last = l->last; first < last; ++first) {
                 /**///std::cout << first->st->num << ("\t") << first->st << ("\t") << first->next << std::endl;
-                if (0 == first->st->out1) {
+                if (0 == first->st->out1) { //TODO unless ?
                     continue ;
+                }
+                if (first->st->out1 == &state_finish) {
+                    first->next = 0;
+                    continue;
                 }
                 RangeList * luse = this->find_range_list(first->st->out1);
                 /**///std::cout << "[" << luse << "]" << std::endl;
@@ -722,7 +763,7 @@ namespace rndfa {
     private:
         void push_state(StateBase * st)
         {
-            if (st && st->id != -1u) {
+            if (st && st->id != -1u/* && st != &state_finish*/) {
                 st->id = -1u;
                 st->num = this->vec.size();
                 if (st->is_cap()) {
@@ -809,6 +850,9 @@ namespace rndfa {
 #ifdef DISPLAY_TRACE
                         this->sm.display_elem_state_list(*first, 0);
 #endif
+                        if ( ! first->next && first->st == &state_finish) {
+                            continue ;
+                        }
                         return first->next;
                     }
                 }
@@ -828,7 +872,7 @@ namespace rndfa {
 
                 utf_consumer consumer(s);
 
-                while (consumer.valid() && l > (void*)2){
+                while (consumer.valid() && l > (void*)1){
 #ifdef DISPLAY_TRACE
                     std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
 #endif
@@ -836,16 +880,15 @@ namespace rndfa {
                     ++this->step_id;
                 }
 
-                if ((0 == l && (check_end ? !consumer.valid() : 1)) || l == (RangeList*)2) {
+                if ((0 == l && (check_end ? !consumer.valid() : 1))) {
                     return true;
                 }
-
                 if ((RangeList*)1 == l || consumer.valid()) {
                     return false;
                 }
 
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (first->st->type == LAST) {
+                    if (first->st->type == LAST || first->st == &state_finish) {
                         return true;
                     }
                 }
@@ -908,7 +951,7 @@ namespace rndfa {
 
                 for (Info* ifirst = pal1->begin(), * ilast = pal1->end(); ifirst != ilast ; ++ifirst) {
                     for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
-                        if (first->st->type == LAST) {
+                        if (first->st->type == LAST || first->st == &state_finish) {
                             return true;
                         }
                     }
@@ -1342,10 +1385,20 @@ namespace rndfa {
         }
     }
 
+    void append_state_whitout_finish(StateBase * st, std::vector<StateBase*>& sts)
+    {
+        if (st && st->id != -4u && st != &state_finish) {
+            st->id = -4u;
+            sts.push_back(st);
+            append_state_whitout_finish(st->out1, sts);
+            append_state_whitout_finish(st->out2, sts);
+        }
+    }
+
     void free_st(StateBase * st)
     {
         std::vector<StateBase*> sts;
-        append_state(st, sts);
+        append_state_whitout_finish(st, sts);
         std::for_each(sts.begin(), sts.end(), StateDeleter());
     }
 
@@ -1421,6 +1474,16 @@ namespace rndfa {
             }
         };
 
+        struct selected {
+            static StateBase ** next_pst(StateBase ** pst)
+            {
+                if (*pst && *pst != &state_finish) {
+                    pst = &(*pst)->out1;
+                }
+                return pst;
+            }
+        };
+
         StateBase st(0);
         StateBase ** pst = &st.out1;
         StateBase ** st_one = 0;
@@ -1435,9 +1498,7 @@ namespace rndfa {
         while (c) {
             /**///std::cout << "c: " << (c) << std::endl;
             if (c == '^' || c == '$') {
-                if (*pst) {
-                    pst = &(*pst)->out1;
-                }
+                pst = selected::next_pst(pst);
                 *pst = new StateBorder(c == '^');
                 if (st_one) {
                     *st_one = *pst;
@@ -1452,9 +1513,7 @@ namespace rndfa {
             }
 
             if (!is_meta_char(consumer, c)) {
-                if (*pst) {
-                    pst = &(*pst)->out1;
-                }
+                pst = selected::next_pst(pst);
                 if (!(*pst = str2stchar(consumer, c, msg_err))) {
                     return FreeState::invalide(st);
                 }
@@ -1490,7 +1549,7 @@ namespace rndfa {
                         break;
                     }
                     case '*':
-                        *pst = new_split(0, *pst);
+                        *pst = new_split(&state_finish, *pst);
                         if (prev_st_one) {
                             *prev_st_one = *pst;
                             prev_st_one = 0;
@@ -1499,7 +1558,7 @@ namespace rndfa {
                         pst = &(*pst)->out1;
                         break;
                     case '+':
-                        (*pst)->out1 = new_split(0, *pst);
+                        (*pst)->out1 = new_split(&state_finish, *pst);
                         pst = &(*pst)->out1->out1;
                         break;
                     case '|':
@@ -1530,9 +1589,7 @@ namespace rndfa {
                                 }
                                 else if (m) {
                                     ContextClone cloner(*pst);
-                                    if (*pst) {
-                                        pst = &(*pst)->out1;
-                                    }
+                                    pst = selected::next_pst(pst);
                                     while (--m) {
                                         *pst = cloner.clone();
                                         pst = &(*pst)->out1;
@@ -1596,9 +1653,7 @@ namespace rndfa {
                                 else {
                                     --end;
                                     ContextClone cloner(*pst);
-                                    if (*pst) {
-                                        pst = &(*pst)->out1;
-                                    }
+                                    pst = selected::next_pst(pst);
                                     while (--m) {
                                         *pst = cloner.clone();
                                         pst = &(*pst)->out1;
@@ -1622,9 +1677,7 @@ namespace rndfa {
                         else {
                             /**///std::cout << ("fixe ") << m << std::endl;
                             ContextClone cloner(*pst);
-                            if (*pst) {
-                                pst = &(*pst)->out1;
-                            }
+                            pst = selected::next_pst(pst);
                             while (--m) {
                                 /**///std::cout << ("clone") << std::endl;
                                 *pst = cloner.clone();
@@ -1643,16 +1696,12 @@ namespace rndfa {
                         }
 
                         if (ismatch) {
-                            if (*pst) {
-                                pst = &(*pst)->out1;
-                            }
+                            pst = selected::next_pst(pst);
                             *pst = new StateBase(CAPTURE_CLOSE);
                         }
                         else if (besplit != pesplit) {
                             has_epsilone = true;
-                            if (*pst) {
-                                pst = &(*pst)->out1;
-                            }
+                            pst = selected::next_pst(pst);
                             *pst = new StateBase(ismatch ? CAPTURE_CLOSE : EPSILONE);
                         }
 
@@ -1674,7 +1723,7 @@ namespace rndfa {
                             }
                         }
 
-                        return IntermendaryState(st.out1, *pst ? &(*pst)->out1 : pst);
+                        return IntermendaryState(st.out1, pst);
                         break;
                     default:
                         //TODO impossible
@@ -1689,9 +1738,7 @@ namespace rndfa {
                             consumer.s += 2;
                             IntermendaryState intermendary = intermendary_str2reg(consumer, has_epsilone, msg_err, recusive+1, false);
                             if (intermendary.first) {
-                                if (*pst) {
-                                    pst = &(*pst)->out1;
-                                }
+                                pst = selected::next_pst(pst);
                                 *pst= intermendary.first;
                                 if (st_one) {
                                     *st_one = *pst;
@@ -1707,9 +1754,7 @@ namespace rndfa {
                         }
                         IntermendaryState intermendary = intermendary_str2reg(consumer, has_epsilone, msg_err, recusive+1);
                         if (intermendary.first) {
-                            if (*pst) {
-                                pst = &(*pst)->out1;
-                            }
+                            pst = selected::next_pst(pst);
                             *pst = new StateBase(CAPTURE_OPEN, 0, intermendary.first);
                             if (st_one) {
                                 *st_one = *pst;
@@ -1752,7 +1797,7 @@ namespace rndfa {
         }
     }
 
-    StateBase* str2reg(const char * s, const char * * msg_err = 0)
+    StateBase* str2reg(const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
     {
         bool has_epsilone = false;
         const char * err = 0;
@@ -1762,7 +1807,9 @@ namespace rndfa {
             if (msg_err) {
                 *msg_err = err;
             }
-            has_epsilone = false;
+            if (pos_err) {
+                *pos_err = consumer.s - s;
+            }
         }
         else if (has_epsilone) {
             typedef std::vector<StateBase*> states_t;
@@ -1788,6 +1835,7 @@ namespace rndfa {
 
     class Regex
     {
+    public:
         struct Parser {
             const char * err;
             unsigned pos_err;
@@ -1802,22 +1850,11 @@ namespace rndfa {
             Parser(const char * s)
             : err(0)
             , pos_err(0)
-            , st(0)
-            {
-                bool has_epsilone = false;
-                utf_consumer consumer(s);
-                this->st = intermendary_str2reg(consumer, has_epsilone, this->err).first;
-                if (this->err) {
-                    this->pos_err = consumer.s - s;
-                }
-                else if (has_epsilone) {
-                    typedef std::vector<StateBase*> states_t;
-                    states_t removed;
-                    remove_epsilone(st, removed);
-                    std::for_each(removed.begin(), removed.end(), StateDeleter());
-                }
-            }
+            , st(str2reg(s, &this->err, &this->pos_err))
+            {}
         };
+
+    private:
         Parser parser;
         StateMachine2 sm;
 
