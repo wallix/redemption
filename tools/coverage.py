@@ -72,12 +72,13 @@ class Cover:
         subprocess.call("mkdir -p coverage/%s" % module, shell=True)
         res = subprocess.Popen(cmd3, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
 
-        status = subprocess.call("mv *.gcov coverage/%s" % module, shell=True)
-        if status & 0x255 != 0:
+        try:
+            subprocess.check_call("mv *.gcov coverage/%s" % module, shell=True)
+        except:
+            print "Failed to compute coverage for module"
             print " ".join(cmd1)
             print " ".join(cmd2)
             print " ".join(cmd3)
-            sys.exit(0)
 
 
     def compute_coverage(self, module, name, extension):

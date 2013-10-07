@@ -1837,6 +1837,8 @@ struct mod_rdp : public mod_api {
                     LOG(LOG_INFO, "Connection to server Already closed", e.id);
                 };
                 this->event.signal = BACK_EVENT_NEXT;
+
+                throw;
             }
         }
 

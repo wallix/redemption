@@ -68,6 +68,7 @@ class Sesman():
         self._proto_filter             = u''
         self._selector                 = u'False'
         self.shared                    = {}
+        self._enable_encryption        = self.engine.get_trace_encryption()
 
         self._reporting                = u''
 
@@ -110,6 +111,7 @@ class Sesman():
             self.path = u""
             kv[u'is_rec'] = u'False'
             kv[u'rec_path'] = u""
+            kv[u'file_encryption'] = u"False"
             if isRecorded:
                 try:
                     os.stat(RECORD_PATH)
@@ -123,19 +125,21 @@ class Sesman():
                     # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
                     # NB :  backslashes are replaced by pipes for IE compatibility
                     random.seed(self.pid)
-                    self.path = ( u"%s@%s,%s@%s,%s,%s,%s" % ( self._wab_login
-                                                        , self._ip_client
-                                                        , self._target_login
-                                                        , self._target_device
-                                                        , strftime("%Y%m%d-%H%M%S")
-                                                        , gethostname()
-                                                        , random.randint(1000, 9999)
-                                                        )
-                                ).replace(unichr(92), u"")
+
+                    #keeping code synchronized with wabengine/src/common/data.py
+                    video_path =  u"%s@%s," % ( self._wab_login, self._ip_client)
+                    video_path += u"%s@%s," % (self._target_login, self._target_device)
+                    video_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
+                    video_path += u"%s," % gethostname()
+                    video_path += u"%s" % random.randint(1000, 9999)
+                    video_path = video_path.replace(unichr(92), u"")
+                    self.path = video_path
+
                     Logger().debug(u"This session will be recorded in %s" % self.path)
 
                     self.full_path = RECORD_PATH + self.path
                     kv[u'is_rec'] = True
+                    kv[u"file_encryption"] = u'True' if self._enable_encryption else u'False'
                     #TODO remove .flv extention and adapt ReDemPtion proxy code
                     kv[u'rec_path'] = u"%s.flv" % (self.full_path)
                     Logger().info("sesmanconf[sesman]<<<%s>>>" % SESMANCONF[u'sesman']);
