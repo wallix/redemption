@@ -31,5 +31,5 @@
 
 BOOST_AUTO_TEST_CASE(TestBitmapUpdate)
 {
-    RDPBitmapData b;   
+    RDPBitmapData b;
 }

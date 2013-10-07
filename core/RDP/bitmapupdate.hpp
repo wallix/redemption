@@ -160,6 +160,18 @@ enum {
 //  (0x0001) flag is present in the Flags field, but the
 //  NO_BITMAP_COMPRESSION_HDR (0x0400) flag is not.
 
+    // cbCompFirstRowSize (2 bytes): A 16-bit, unsigned integer. The field MUST
+    // be set to 0x0000.
+
+    // cbCompMainBodySize (2 bytes): A 16-bit, unsigned integer. The size in bytes
+    // of the compressed bitmap data (which follows this header).
+
+    // cbScanWidth (2 bytes): A 16-bit, unsigned integer. The width of the bitmap
+    // (which follows this header) in pixels (this value MUST be divisible by 4).
+
+    // cbUncompressedSize (2 bytes): A 16-bit, unsigned integer. The size in bytes
+    // of the bitmap data (which follows this header) after it has been decompressed.
+
 // bitmapDataStream (variable): A variable-length array of bytes describing a
 //  bitmap image. Bitmap data is either compressed or uncompressed, depending
 //  on whether the BITMAP_COMPRESSION flag is present in the Flags field.
@@ -183,6 +195,7 @@ struct RDPBitmapData {
     uint16_t height;
     uint16_t bits_per_pixel;
     uint16_t flags;
+    
     uint16_t bitmap_length;
 
     // Compressed Data Header (TS_CD_HEADER)

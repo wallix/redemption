@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include "log.hpp"
 
-REDOC("Check if some string is valid utf8, zero terminated")
+REDOC("Check if some string is valid utf8, zero terminated");
 static inline size_t UTF8Check(const uint8_t * source, size_t len)
 {
     size_t i = 0;
@@ -83,7 +83,7 @@ UTF8Check_exit:
 }
 
 
-REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
+REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before");
 static inline size_t UTF8Len(const uint8_t * source)
 {
     size_t len = 0;
@@ -100,7 +100,7 @@ static inline size_t UTF8Len(const char * source)
 }
 
 
-REDOC("UTF8GetLen find the number of bytes of the len first characters of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
+REDOC("UTF8GetLen find the number of bytes of the len first characters of input. It assumes input is valid utf8, zero terminated (that has been checked before).");
 static inline size_t UTF8GetPos(uint8_t * source, size_t len)
 {
     len += 1;
@@ -115,7 +115,7 @@ static inline size_t UTF8GetPos(uint8_t * source, size_t len)
     return i;
 }
 
-REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
+REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).");
 static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
 {
     size_t    len = 0;
@@ -151,7 +151,7 @@ static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
     return len;
 }
 
-REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.")
+REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.");
 static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
 {
     source[UTF8GetPos(source, len)] = 0;
@@ -164,7 +164,7 @@ static inline void UTF8TruncateAtPos(char * source, size_t len)
 
 
 REDOC("UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before")
-REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
+REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert");
 static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source)
 {
     len += 1;
@@ -190,14 +190,14 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
 
 
 REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
-TODO("Naive immplementation, not working for complex cases")
+TODO("Naive immplementation, not working for complex cases");
 static inline size_t UTF8CharNbBytes(const uint8_t * source)
 {
     uint8_t c = *source;
     return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
 }
 
-REDOC("UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before")
+REDOC("UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before");
 static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
 {
     len += 1;
@@ -218,7 +218,7 @@ static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
 
 
 REDOC("UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before")
-REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert")
+REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert");
 static inline bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_char, size_t max_source)
 {
     uint8_t lo = to_insert_char & 0xFF;
@@ -408,7 +408,7 @@ UTF8toUnicode_exit:
 }
 
 TODO("API may be clearer if we always return a len and an error code in case of failure (error defaulting to 0)"
-     "Another option could be to be to return a negative value in cas of error like other C functions")
+     "Another option could be to be to return a negative value in cas of error like other C functions");
 static inline bool UTF8toUnicodeWithCheck(const uint8_t ** s, size_t s_len, uint32_t ** t, size_t t_len)
 {
     bool res = false;
@@ -556,7 +556,7 @@ static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len,
 // Returns the number of UTF8 characters copied.
 // The destination string will always be 0 terminated.
 // The buffer after final 0 is not padded.
-TODO("Create a unit tested for this function.")
+TODO("Create a unit tested for this function.");
 static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size,
     const uint8_t * source)
 {

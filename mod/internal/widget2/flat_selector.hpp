@@ -63,7 +63,6 @@ class WidgetSelectorFlat : public WidgetParent
                                     closetime, false, 0, fgcolor, bgcolor, x_text, y_text))
             , h_border(h_border)
             , border_color(bgcolor)
-        BEGINBODY
         {
             this->group.rect.cx     = group_w;
             this->target.rect.cx    = target_w;
@@ -74,9 +73,10 @@ class WidgetSelectorFlat : public WidgetParent
             this->protocol.rect.cy  = lcy;
             this->closetime.rect.cy = lcy;
         }
-        ENDBODY
 
-        ~Line() {}
+        ~Line()
+        {
+        }
 
         virtual void draw(const Rect& clip) {
             Rect new_clip = clip.intersect(this->rect);
@@ -102,12 +102,10 @@ class WidgetSelectorFlat : public WidgetParent
             this->border_color       = bg_color;
         }
         void set_fg_color(int fg_color) {
-            BEGINBODY
             this->group.fg_color     = fg_color;
             this->target.fg_color    = fg_color;
             this->protocol.fg_color  = fg_color;
             this->closetime.fg_color = fg_color;
-            ENDBODY
         }
     };
 public:
@@ -197,10 +195,8 @@ private:
             , over_index(-1u)
             , click_interval()
         {
-            BEGINBODY
             int w;
             this->drawable.text_metrics("Lp", w, this->h_text);
-            ENDBODY
         }
 
         void set_x(int x) {
@@ -484,7 +480,6 @@ private:
                     break;
                 }
             }
-            ENDBODY
         }
 
     };
