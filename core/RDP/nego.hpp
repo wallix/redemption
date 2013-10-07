@@ -85,7 +85,7 @@ struct RdpNego
         this->username[127] = 0;
     }
 
-    void server_event()
+    void server_event(bool ignore_certificate_change)
     {
         switch (this->state){
         case NEGO_STATE_INITIAL:
@@ -101,11 +101,11 @@ struct RdpNego
         default:
         case NEGO_STATE_TLS:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
-            this->recv_connection_confirm();
+            this->recv_connection_confirm(ignore_certificate_change);
         break;
         case NEGO_STATE_RDP:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_RDP");
-            this->recv_connection_confirm();
+            this->recv_connection_confirm(ignore_certificate_change);
         break;
         }
     }
@@ -219,7 +219,7 @@ struct RdpNego
 // |                                      | 5.4.5.2).                          |
 // +--------------------------------------+------------------------------------+
 
-    void recv_connection_confirm()
+    void recv_connection_confirm(bool ignore_certificate_change)
     {
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm");
         BStream stream(65536);
@@ -236,7 +236,7 @@ struct RdpNego
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
-                this->trans->enable_client_tls();
+                this->trans->enable_client_tls(ignore_certificate_change);
                 this->state = NEGO_STATE_FINAL;
             }
             else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
@@ -254,7 +254,7 @@ struct RdpNego
             TODO("Other cases are errors, set an appropriate error message");
         }
         else {
-            if (x224.rdp_neg_type == X224::RDP_NEG_RSP 
+            if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_RDP){
                 this->state = NEGO_STATE_FINAL;
             }
@@ -304,10 +304,10 @@ struct RdpNego
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
 
-        X224::CR_TPDU_Send(stream, cookie, 
-            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE), 
-            0, 
-            this->tls?(X224::PROTOCOL_TLS|X224::PROTOCOL_RDP):(X224::PROTOCOL_RDP)); 
+        X224::CR_TPDU_Send(stream, cookie,
+            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
+            0,
+            this->tls?(X224::PROTOCOL_TLS|X224::PROTOCOL_RDP):(X224::PROTOCOL_RDP));
         this->trans->send(stream);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }

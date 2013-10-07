@@ -166,6 +166,8 @@ struct mod_rdp : public mod_api {
     redemption::string end_session_reason;
     redemption::string end_session_message;
 
+    unsigned on_server_certificate_change;
+
     mod_rdp( Transport * trans
            , const char * target_user
            , const char * target_password
@@ -189,6 +191,7 @@ struct mod_rdp : public mod_api {
            , redemption::string * error_message = NULL
            , bool disconnect_on_logon_user_change = false
            , uint32_t open_session_timeout = 0
+           , unsigned on_server_certificate_change = 0
            , bool enable_transparent_mode = false
            , const char * output_filename = ""
            )
@@ -233,6 +236,7 @@ struct mod_rdp : public mod_api {
         , open_session_timeout(open_session_timeout)
         , open_session_timeout_checker(0)
         , output_filename(output_filename)
+        , on_server_certificate_change(on_server_certificate_change)
     {
         if (this->verbose & 1)
         {
@@ -545,7 +549,7 @@ struct mod_rdp : public mod_api {
                     }
                     switch (this->nego.state){
                     default:
-                        this->nego.server_event();
+                        this->nego.server_event(this->on_server_certificate_change == 1);
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         {
@@ -1461,7 +1465,7 @@ struct mod_rdp : public mod_api {
 
                         if (mcs.type == MCS::MCSPDU_DisconnectProviderUltimatum){
                             LOG(LOG_ERR, "mod_rdp: got MCS DisconnectProviderUltimatum");
-                            throw Error(ERR_MCS);
+                            throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
                         }
 
                         SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->encryptionLevel);
@@ -1838,7 +1842,10 @@ struct mod_rdp : public mod_api {
                 };
                 this->event.signal = BACK_EVENT_NEXT;
 
-                throw;
+                if (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED)
+                {
+                    throw;
+                }
             }
         }
 

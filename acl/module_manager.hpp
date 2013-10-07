@@ -662,7 +662,8 @@ public:
                         this->ini.mod_rdp.rdp_compression,
                         &this->ini.context.auth_error_message,
                         this->ini.mod_rdp.disconnect_on_logon_user_change,
-                        this->ini.mod_rdp.open_session_timeout
+                        this->ini.mod_rdp.open_session_timeout,
+                        this->ini.mod_rdp.on_server_certificate_change
                     );
                     this->mod->event.obj = client_sck;
 
