@@ -566,7 +566,7 @@ private:
 
 
 
-    TODO("move that function to external definition")
+    TODO("move that function to external definition");
 
     const char * get_opcode(uint8_t opcode){
         enum {
@@ -1025,7 +1025,7 @@ public:
         return 0;
     }
 
-    TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.")
+    TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.");
     void compress(Stream & outbuffer) const
     {
         if (this->data_compressed) {

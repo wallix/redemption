@@ -744,7 +744,7 @@ public:
         this->out_uint8(enumerated);
     }
 
-    TODO("looks like it really is not an input function as we check we are getting what we expect")
+    TODO("looks like it really is not an input function as we check we are getting what we expect");
     void in_per_object_identifier(const uint8_t * oid)
     {
         uint16_t length = this->in_per_length();
@@ -847,7 +847,7 @@ public:
 
 //    NOTE – The fragmentation procedures may apply after 16K, 32K, 48K, or 64K octets.
 
-TODO("check if implementation below is conforming to obfuscated text above (I have not the faintest idea of what it means). This looks like a piece of what could be called administrative joke, isn't it. And lawyers should be forbidden to write specs documents...")
+    TODO("check if implementation below is conforming to obfuscated text above (I have not the faintest idea of what it means). This looks like a piece of what could be called administrative joke, isn't it. And lawyers should be forbidden to write specs documents...");
     bool check_per_octet_string(uint8_t * oct_str, uint32_t length, uint32_t min)
     {
         uint16_t mlength = this->in_per_length();

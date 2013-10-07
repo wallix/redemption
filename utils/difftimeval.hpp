@@ -40,8 +40,8 @@ static inline uint64_t ustime() {
     return ustime(tvtime());
 }
 
+REDOC("as gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.");
 static inline uint64_t difftimeval(const timeval& endtime, const timeval& starttime)
-REDOC("as gettimeofday is not monotonic we may get surprising results (overflow). In these case we choose to send 0.")
 {
     uint64_t d = ustime(endtime) - ustime(starttime);
     return (d > 0x100000000LL)?0:d;

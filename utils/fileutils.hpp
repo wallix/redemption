@@ -275,7 +275,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
 
 
 
-TODO("Add unit tests for recursive_create_directory")
+TODO("Add unit tests for recursive_create_directory");
 static inline int recursive_create_directory(const char *directory, mode_t mode, const int groupid, uint32_t verbose = 255) {
     int    status;
     char * copy_directory;

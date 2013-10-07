@@ -16,7 +16,7 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
    Author(s): Christophe Grosjean
-   
+
    This module know how to draw and image and flush it to some transport as a PNG file
    It called it image_capture as at some later time we may choose to make it work
    with some other target image format.
@@ -109,13 +109,11 @@ public:
                    this->drawable.rowsize);
         ::transport_dump_png24(&this->trans, scaled_data,
                      this->scaled_width, this->scaled_height,
-                     this->scaled_width * 3,
-                     true
-                    );
+                     this->scaled_width * 3, true);
         free(scaled_data);
     }
 
-    TODO("move scale_data to Drawable")
+    TODO("move scale_data to Drawable");
     static void scale_data(uint8_t *dest, const uint8_t *src,
                             unsigned int dest_width, unsigned int src_width,
                             unsigned int dest_height, unsigned int src_height,
@@ -159,7 +157,7 @@ public:
             }
         }
     }
-    
+
 };
 
 #endif
