@@ -449,17 +449,39 @@ struct apply_rwl_impl
     typedef std::vector<rwl_property*>::const_iterator prop_iterator;
     typedef std::vector<rwl_target*>::const_iterator target_iterator;
 
-    value_t get_value(std::vector<widget_values*>& /*v*/, widget_values& w, const rwl_value& val)
+    struct IsName
+    {
+        const std::string& s;
+
+        IsName(const std::string& s)
+        : s(s)
+        {}
+
+        bool operator()(widget_values * w) const
+        {
+            return w->id == s;
+        }
+    };
+
+    value_t get_value(std::vector<widget_values*>& v, widget_values& w, const rwl_value& val)
     {
         if (val.type == 't') {
             this->name_ref.assign(val.value.s.first, val.value.s.last);
             return widget_get_value(w, this->name_ref);
         }
         //if (val.type == 'l') {
-        //    this->name_ref.clear();
-        //    for (const char **first = val.value.func.first, **last = val.value.func.last; first != last; ++first) {
-        //        this->name_ref.append(*first, *(first+1));
-        //    }
+        //   typedef std::vector<widget_values*>::iterator iterator;
+        //   this->name_ref.assign(val.value.s.first, val.value.s.last);
+        //   iterator first = std::find_if(v.begin(), v.end(), IsName(this->name_ref));
+        //   if (first == v.end()) {
+        //       //TODO error
+        //       std::cout << ("id not find") << std::endl;
+        //   }
+        //
+        //   this->name_ref.clear();
+        //   for (const char **first = val.value.func.first, **last = val.value.func.last; first != last; ++first) {
+        //       this->name_ref.append(*first, *(first+1));
+        //   }
         //
         //}
         //if (val.type == 'f') {
