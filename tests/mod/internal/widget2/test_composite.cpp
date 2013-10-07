@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -76,7 +77,7 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPGlyphIndex&, const Rect&)
+    virtual void draw(const RDPGlyphIndex&, const Rect&, const GlyphCache * gly_cache)
     {
         BOOST_CHECK(false);
     }
@@ -127,10 +128,10 @@ public:
     int color;
 
     WidgetCompositeRect(TestDraw & drawable)
-    : WidgetComposite(&drawable, Rect(0, 0,
+    : WidgetComposite(drawable, Rect(0, 0,
                                       drawable.gd.drawable.width,
                                       drawable.gd.drawable.height),
-                      NULL, NULL)
+                      *this, NULL)
     , color(0x27642F)
     {}
 
@@ -139,7 +140,7 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        this->drawable->draw(RDPOpaqueRect(clip, color), this->rect);
+        this->drawable.draw(RDPOpaqueRect(clip, color), this->rect);
         this->WidgetComposite::draw(clip);
     }
 };
@@ -152,23 +153,23 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
 
     WidgetCompositeRect wcomposite(drawable);
     WidgetRect wrect1(drawable, Rect(0,0,100,100),
-                      &wcomposite, notifier, id++, CYAN);
+                      wcomposite, notifier, id++, CYAN);
     WidgetRect wrect2(drawable, Rect(0,100,100,100),
-                      &wcomposite, notifier, id++, RED);
+                      wcomposite, notifier, id++, RED);
     WidgetRect wrect3(drawable, Rect(100,100,100,100),
-                      &wcomposite, notifier, id++, BLUE);
+                      wcomposite, notifier, id++, BLUE);
     WidgetRect wrect4(drawable, Rect(300,300,100,100),
-                      &wcomposite, notifier, id++, GREEN);
+                      wcomposite, notifier, id++, GREEN);
     WidgetRect wrect5(drawable, Rect(700,-50,100,100),
-                      &wcomposite, notifier, id++, WHITE);
+                      wcomposite, notifier, id++, WHITE);
     WidgetRect wrect6(drawable, Rect(-50,550,100,100),
-                      &wcomposite, notifier, id++, GREY);
-    wcomposite.child_list.push_back(&wrect1);
-    wcomposite.child_list.push_back(&wrect2);
-    wcomposite.child_list.push_back(&wrect3);
-    wcomposite.child_list.push_back(&wrect4);
-    wcomposite.child_list.push_back(&wrect5);
-    wcomposite.child_list.push_back(&wrect6);
+                      wcomposite, notifier, id++, GREY);
+    wcomposite.add_widget(&wrect1);
+    wcomposite.add_widget(&wrect2);
+    wcomposite.add_widget(&wrect3);
+    wcomposite.add_widget(&wrect4);
+    wcomposite.add_widget(&wrect5);
+    wcomposite.add_widget(&wrect6);
 
     // ask to widget to redraw at position 150,500 and of size 800x600
     wcomposite.rdp_input_invalidate(Rect(150 + wcomposite.dx(),
@@ -212,5 +213,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetComposite)
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+    wcomposite.clear();
 }
 

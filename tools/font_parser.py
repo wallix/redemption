@@ -6,8 +6,8 @@
 # ReDemPtion.
 #
 # HINTs:
-# - Each FV1 glyph is sketched in a bitmap whose dimensions are mutiples of 8. For PIL glyphes are not, they have to be
-#   padded. By convention, they are padded to left and bottom.
+# - Each FV1 glyph is sketched in a bitmap whose dimensions are mutiples of 8. As PIL glyphes width are not
+#   multiple of 8 they have to be padded. By convention, they are padded to left and bottom.
 # - The glyphs are not antialiased.
 # - The police is variable sized
 # - Thus, each pixel in a sketch is represented by only one bit
@@ -20,7 +20,7 @@
 #      * style (always '1')
 # - Individual glyph informations are :
 #      * width (a round multiple of 8 ; theorically it should be based on PIL ABC.abcB; but after some experimentation,
-#        it have been based on PIL size.x, for esthetical reasons as lack of space between characters)
+#        it has been based on PIL size.x, for esthetical reasons as lack of space between characters)
 #      * height (a round multiple of 8 ; based on PIL size.y)
 #      * baseline (negative value of height)
 #      * offset (based on PIL ABC.abcA - this is the space before the character)
@@ -44,7 +44,7 @@ import sys
 import codecs
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout)
 
-FONT_SIZE = 11
+FONT_SIZE = 18
 CHARSET_SIZE = 0x4e00
 
 ########################################################################################################################

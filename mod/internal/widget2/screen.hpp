@@ -15,132 +15,103 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP)
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_SCREEN_HPP
 
 #include "composite.hpp"
+#include "tooltip.hpp"
 
 #include <typeinfo>
 
-class FocusPropagation {
-    class minivector {
-        Widget2* data[32];
-        size_t data_size;
-
-    public:
-        minivector()
-        : data_size(0)
-        {}
-
-        void clear()
-        { this->data_size = 0; }
-
-        size_t size() const
-        { return this->data_size; }
-
-        void push_back(Widget2 * w)
-        { this->data[this->data_size++] = w; }
-
-        Widget2 * & operator[](size_t n)
-        { return data[n]; }
-    };
-
-    minivector focus_parents;
-    minivector new_focus_parents;
-
-public:
-    FocusPropagation()
-    {}
-
-    void active_focus(Widget2 * screen, Widget2 * new_focused, int policy = 0)
-    {
-        Widget2 * w2 = new_focused->parent;
-        if (0 == w2) {
-            return ;
-        }
-
-        this->new_focus_parents.clear();
-        this->focus_parents.clear();
-        Widget2 * w = screen;
-        while (w->widget_with_focus && w->widget_with_focus->has_focus && w->focus_flag != Widget2::FORCE_FOCUS) {
-            this->focus_parents.push_back(w);
-            w = w->widget_with_focus;
-        }
-        if (w != screen && Widget2::FORCE_FOCUS != w->focus_flag) {
-            Widget2 ** last = &this->focus_parents[this->focus_parents.size()];
-            this->new_focus_parents.push_back(new_focused);
-            switch (new_focused->focus_flag) {
-                case Widget2::NORMAL_FOCUS:
-                    while (w2) {
-                        this->new_focus_parents.push_back(w2);
-                        if (std::find<>(&this->focus_parents[0], last, w2) != last) {
-                            for (size_t n = this->new_focus_parents.size() - 1; n > 0; --n) {
-                                if (this->new_focus_parents[n]->widget_with_focus != this->new_focus_parents[n-1]) {
-                                    this->new_focus_parents[n]->switch_focus_with(this->new_focus_parents[n-1], policy);
-                                }
-                                else if (false == this->new_focus_parents[n]->has_focus) {
-                                    this->new_focus_parents[n-1]->focus(0, policy);
-                                }
-                            }
-                            break;
-                        }
-                        w2 = w2->parent;
-                    }
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-};
-
-class WidgetScreen : public WidgetComposite
+class WidgetScreen : public WidgetParent
 {
-    Widget2 * widget_pressed;
-    FocusPropagation focus_propagation;
-
 public:
+    WidgetTooltip * tooltip;
+    Widget2 * current_over;
+
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
-    : WidgetComposite(&drawable, Rect(0, 0, width, height), NULL, notifier)
-    , widget_pressed(0)
+        : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
+        , tooltip(NULL)
+        , current_over(NULL)
     {
+        this->impl = new CompositeTable;
+        this->tab_flag = IGNORE_TAB;
     }
 
     virtual ~WidgetScreen()
-    {}
+    {
+        if (this->tooltip) {
+            delete this->tooltip;
+            this->tooltip = NULL;
+        }
+    }
+
+    void show_tooltip(Widget2 * widget, const char * text, int x, int y, int = 10) {
+        if (text == NULL) {
+            if (this->tooltip) {
+                this->remove_widget(this->tooltip);
+                this->refresh(this->tooltip->rect);
+                delete this->tooltip;
+                this->tooltip = NULL;
+            }
+        }
+        else if (this->tooltip == NULL) {
+            this->tooltip = new WidgetTooltip(this->drawable,
+                                              x, y,
+                                              *this, widget,
+                                              text);
+            int w = this->tooltip->get_tooltip_cx();
+            int h = this->tooltip->get_tooltip_cy();
+            int sw = this->rect.cx;
+            int posx = ((x + w) > sw)?(sw - w):x;
+            int posy = (y > h)?(y - h):0;
+            this->tooltip->set_tooltip_xy(posx, posy);
+
+            this->add_widget(this->tooltip);
+            this->refresh(this->tooltip->rect);
+        }
+    }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        Widget2 * tmp_widget_with_focus = this->widget_with_focus;
-        bool same_window = this->widget_with_focus && this->widget_with_focus->rect.contains_pt(x, y);
-        Widget2 * w = same_window ? this->widget_with_focus->widget_at_pos(x, y) : this->child_at_pos(x, y);
-        if (device_flags == MOUSE_FLAG_BUTTON1) {
-            if (this->widget_pressed && w != this->widget_pressed) {
-                this->widget_pressed->rdp_input_mouse(device_flags, x, y, keymap);
+        Widget2 * w = this->last_widget_at_pos(x, y);
+        if (this->current_over != w) {
+            if (w != NULL) {
+                this->drawable.set_pointer(w->pointer_flag);
             }
             else {
-                this->widget_pressed = 0;
+                this->drawable.set_pointer(NORMAL_POINTER);
             }
+            this->current_over = w;
         }
-        if (w) {
-            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
-                this->widget_pressed = w;
-                focus_propagation.active_focus(this, w, 2);
-                if (!same_window && tmp_widget_with_focus->focus_flag != Widget2::FORCE_FOCUS) {
-                    w->refresh(tmp_widget_with_focus->rect);
+        if (this->tooltip) {
+            if (device_flags & MOUSE_FLAG_MOVE) {
+                // Widget2 * w = this->last_widget_at_pos(x, y);
+                if (w != this->tooltip->notifier) {
+                    this->hide_tooltip();
                 }
             }
-            w->rdp_input_mouse(device_flags, x, y, keymap);
+            if (device_flags & (MOUSE_FLAG_BUTTON1)) {
+                this->hide_tooltip();
+            }
         }
+        WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
     }
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
     {
-        if (this != this->widget_with_focus) {
-            this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+        if (this->tooltip) {
+            this->hide_tooltip();
+        }
+        if (this->tab_flag != IGNORE_TAB) {
+            WidgetParent::rdp_input_scancode(param1, param2, param3, param4, keymap);
+        }
+        else if (this->current_focus) {
+            this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
         }
 
         for (uint32_t n = keymap->nb_kevent_available(); n ; --n) {
@@ -150,9 +121,23 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        this->WidgetComposite::draw(clip);
-        this->WidgetComposite::draw_inner_free(clip, BLACK);
+        Rect new_clip = clip.intersect(this->rect);
+        this->impl->draw(new_clip);
+        this->draw_inner_free(clip, BLACK);
     }
+
+
+    virtual void draw_inner_free(const Rect& clip, int bg_color) {
+        Region region;
+        region.rects.push_back(clip);
+
+        this->impl->draw_inner_free(clip, bg_color, region);
+
+        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+        }
+    }
+
 };
 
 #endif

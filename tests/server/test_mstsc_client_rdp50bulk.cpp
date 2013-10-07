@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     BOOST_CHECK_EQUAL(1, front.up_and_running);
     TestCardMod mod(front, front.client_info.width, front.client_info.height);
-    mod.draw_event();
+    mod.draw_event(time(NULL));
 
 //     sleep(5);
 //     shutdown(one_shot_server.sck, 2);

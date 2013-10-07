@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -14,12 +14,11 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
+   Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Javier Caverni
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    header file. Check object, used to check file's existance
-
 */
 
 #ifndef _REDEMPTION_CORE_CHECK_FILES_HPP_
@@ -34,99 +33,209 @@
 
 TODO("merge that with find and unlink")
 
-struct Check_files{
+struct CheckFileList
+{
+    const char * filename;
+    const char * directory;
+    bool         need_be_readable;
+    bool         need_be_writeable;
+    bool         is_readable;
+    bool         is_writeable;
+};
 
-    bool ad24b;
-    bool ad256;
-    bool cursor0;
-    bool cursor1;
-    bool sans;
-    bool logo;
-    bool wallix_logo;
-    bool keys;
-    bool config_file;
+static CheckFileList user_check_file_list[] =
+{
+    { RDPPROXY_INI, CFG_PATH, true,  false, false, false },
 
-    Check_files(){
-        this->ad24b = false;
-        this->cursor0 = false;
-        this->cursor1 = false;
-        this->sans = false;
-        this->logo = false;
-        this->keys = false;
-        this->config_file = false;
+    // End of list.
+    { NULL,         NULL,     false, false, false, false }
+};
+
+static CheckFileList euser_check_file_list[] =
+{
+    { LOGIN_LOGO24,             SHARE_PATH,      true,  false, false, false },
+    { CURSOR0,                  SHARE_PATH,      true,  false, false, false },
+    { CURSOR1,                  SHARE_PATH,      true,  false, false, false },
+    { DEFAULT_FONT_NAME,        SHARE_PATH,      true,  false, false, false },
+    { REDEMPTION_LOGO24,        SHARE_PATH,      true,  false, false, false },
+    { "Philips_PM5544_640.png", SHARE_PATH,      true,  false, false, false },
+    { "ad8b.png",               SHARE_PATH,      true,  false, false, false },
+
+    // Directory.
+    { "",                       CERTIF_PATH,     false, true,  false, false },
+
+    // Directory.
+    { "",                       RECORD_PATH,     false, true,  false, false },
+
+    // Directory.
+//    { "",                       RECORD_TMP_PATH, false, true,  false, false },
+
+    { RDPPROXY_INI,             CFG_PATH,        true,  false, false, false },
+    { RDPPROXY_KEY,             CFG_PATH,        true,  false, false, false },
+    { RDPPROXY_CRT,             CFG_PATH,        true,  false, false, false },
+    { DH1024_PEM,               CFG_PATH,        true,  false, false, false },
+
+    // End of list.
+    { NULL,              NULL,            false, false, false, false }
+};
+
+struct CheckFile {
+    static bool check(CheckFileList * check_file_list) {
+        char full_path[1024];
+        bool result;
+
+        result = true;
+
+        for (CheckFileList * tmp_check_list = check_file_list;
+             tmp_check_list->filename; tmp_check_list++)
+        {
+            if (!tmp_check_list->need_be_readable && !tmp_check_list->need_be_writeable)
+            {
+                REDASSERT(false);
+
+                continue;
+            }
+
+            if (::strlen(tmp_check_list->directory) + 1 +
+                ::strlen(tmp_check_list->filename) >= sizeof(full_path))
+            {
+                REDASSERT(false);
+
+                continue;
+            }
+
+            ::snprintf(full_path, sizeof(full_path), "%s/%s",
+                tmp_check_list->directory, tmp_check_list->filename);
+
+            tmp_check_list->is_readable = false;
+            if (tmp_check_list->need_be_readable)
+            {
+                if (!::eaccess(full_path, R_OK))
+                {
+                    tmp_check_list->is_readable = true;
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+
+            tmp_check_list->is_writeable = false;
+            if (tmp_check_list->need_be_writeable)
+            {
+                if (!::eaccess(full_path, W_OK))
+                {
+                    tmp_check_list->is_writeable = true;
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+        }
+
+        return result;
     }
 
-    bool check_share(){
-        using namespace std;
-        string login_1(LOGIN_LOGO24);
-        string cursor_arrow(CURSOR0);
-        string cursor_pointer(CURSOR1);
-        string font(FONT1);
-        string logo(REDEMPTION_LOGO24);
+    static void ShowErrors(CheckFileList * check_file_list, uid_t euid, gid_t egid)
+    {
+        for (CheckFileList * tmp_check_list = check_file_list;
+             tmp_check_list->filename; tmp_check_list++)
+        {
+            const char * accessibility = NULL;
 
-        DIR * dirp = opendir(SHARE_PATH);
-        if (!dirp){
-            cerr << "Error opening " SHARE_PATH " directory : "
-                      << strerror(errno)
-                      << endl;
-            return 0;
-        }
-        struct dirent * d = readdir(dirp);
-        while (d){
-            string line(d->d_name);
-            if (login_1.compare(line) == 0){
-                this->ad24b = true;
+            if (tmp_check_list->need_be_readable && !tmp_check_list->is_readable &&
+                tmp_check_list->need_be_writeable && !tmp_check_list->is_writeable)
+            {
+                accessibility = "read/write";
             }
-            if(cursor_arrow.compare(line) == 0){
-                this->cursor0 = true;
+            else if (tmp_check_list->need_be_readable && !tmp_check_list->is_readable)
+            {
+                accessibility = "read";
             }
-            if(cursor_pointer.compare(line) == 0){
-                this->cursor1 = true;
+            else if (tmp_check_list->need_be_writeable && !tmp_check_list->is_writeable)
+            {
+                accessibility = "write";
             }
-            if(font.compare(line) == 0){
-                this->sans = true;
+            else
+            {
+                continue;
             }
-            if(logo.compare(line) == 0){
-                this->logo = true;
-            }
-            d = readdir(dirp);
-        }
-        closedir(dirp);
 
-        return this->ad24b
-            && this->cursor0
-            && this->cursor1
-            && this->sans
-            && this->logo;
+            if (*tmp_check_list->filename)
+            {
+                LOG(LOG_ERR,
+                    "User (euid=%u egid=%u) has no %s access to file \"%s/%s\"",
+                    euid, egid, accessibility, tmp_check_list->directory,
+                    tmp_check_list->filename);
+            }
+            else
+            {
+                LOG(LOG_ERR,
+                    "User (euid=%u egid=%u) has no %s access to directory \"%s\"",
+                    euid, egid, accessibility, tmp_check_list->directory);
+            }
+        }
     }
 
-    bool check_etc(){
-        using namespace std;
-        string keys(RSAKEYS_INI);
-        string config_file(RDPPROXY_INI);
+    static void ShowAll(CheckFileList * check_file_list, uid_t euid, gid_t egid)
+    {
+        for (CheckFileList * tmp_check_list = check_file_list;
+             tmp_check_list->filename; tmp_check_list++)
+        {
+            const char * accessibility = NULL;
 
-        DIR * dirp = opendir(CFG_PATH);
-        if (!dirp){
-            cerr << "Error opening " CFG_PATH " directory : "
-                      << strerror(errno)
-                      << endl;
-            return 0;
-        }
-        struct dirent * d = readdir(dirp);
-        while (d){
-            string line(d->d_name);
-            if (keys.compare(line) == 0){
-                this->keys = true;
+            if (!tmp_check_list->need_be_readable && !tmp_check_list->need_be_writeable)
+            {
+                continue;
             }
-            if(config_file.compare(line) == 0){
-                this->config_file = true;
-            }
-            d = readdir(dirp);
-        }
-        closedir(dirp);
 
-        return this->keys
-            && this->config_file;
+            if (tmp_check_list->need_be_readable && !tmp_check_list->is_readable &&
+                tmp_check_list->need_be_writeable && !tmp_check_list->is_writeable)
+            {
+                accessibility = "read/write";
+            }
+            else if (tmp_check_list->need_be_readable && !tmp_check_list->is_readable)
+            {
+                accessibility = "read";
+            }
+            else if (tmp_check_list->need_be_writeable && !tmp_check_list->is_writeable)
+            {
+                accessibility = "write";
+            }
+            else
+            {
+                if (*tmp_check_list->filename)
+                {
+                    LOG(LOG_INFO,
+                        "File \"%s\" at \"%s\" is present and accessible by user (euid=%u egid=%u) ... yes",
+                        tmp_check_list->filename, tmp_check_list->directory, euid,
+                        egid);
+                }
+                else
+                {
+                    LOG(LOG_INFO,
+                        "Directory \"%s\" is present and accessible by user (euid=%u egid=%u) ... yes",
+                        tmp_check_list->directory, euid, egid);
+                }
+
+                continue;
+            }
+
+            if (*tmp_check_list->filename)
+            {
+                LOG(LOG_INFO,
+                    "User (euid=%u egid=%u) has no %s access to file \"%s/%s\"",
+                    euid, egid, accessibility, tmp_check_list->directory,
+                    tmp_check_list->filename);
+            }
+            else
+            {
+                LOG(LOG_INFO,
+                    "User (euid=%u egid=%u) has no %s access to directory \"%s\"",
+                    euid, egid, accessibility, tmp_check_list->directory);
+            }
+        }
     }
 };
 

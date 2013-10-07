@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE(TestSeqInmeta)
     // the next call to sq_get_trans() will open a new trans for reading using this file
 
     BOOST_CHECK(true); // do not remove : this test is to force opening boost test pipe before performing open
-    timeval tv_begin;
-    timeval tv_end;
+    timeval tv_begin = {};
+    timeval tv_end = {};
     unsigned int chunk_num;
     char path[1024];    
 

@@ -103,6 +103,7 @@ enum {
     META_FILE           = 1006,
     NEXT_FILE_ID        = 1007,
     TIMESTAMP           = 1008,
+    POINTER             = 1009,
     LAST_IMAGE_CHUNK    = 0x1000,   // 4096
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
     SAVE_STATE          = 0x1002,   // 4098
@@ -345,7 +346,8 @@ public:
         this->lineto = cmd;
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+        const GlyphCache * gly_cache)
     {
         this->reserve_order(297);
         RDPOrderCommon newcommon(RDP::GLYPHINDEX, clip);
@@ -368,8 +370,7 @@ public:
 
     virtual void draw(const RDPGlyphCache & cmd)
     {
-        TODO(" compute actual size instead of a majoration as below")
-        this->reserve_order(1000);
+        this->reserve_order(cmd.total_order_size() + 16 /* majoration */);
         cmd.emit(this->stream_orders);
     }
 

@@ -32,9 +32,8 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include </usr/include/openssl/ssl.h>
-#include </usr/include/openssl/err.h>
 
+#include "openssl_tls.hpp"
 #include "error.hpp"
 #include "log.hpp"
 #include "fileutils.hpp"
@@ -47,13 +46,20 @@
 class Transport {
 public:
     timeval future;
+
     uint32_t seqno;
+
     uint64_t total_received;
     uint64_t last_quantum_received;
+
     uint64_t total_sent;
     uint64_t last_quantum_sent;
+
     uint64_t quantum_count;
+
     bool status;
+
+    bool full_cleaning_requested;
 
     Transport() :
         seqno(0),
@@ -62,7 +68,8 @@ public:
         total_sent(0),
         last_quantum_sent(0),
         quantum_count(0),
-        status(true)
+        status(true),
+        full_cleaning_requested(false)
     {}
 
     virtual ~Transport()
@@ -70,9 +77,9 @@ public:
     }
 
     void tick() {
-        quantum_count++;
-        last_quantum_received = 0;
-        last_quantum_sent = 0;
+        this->quantum_count++;
+        this->last_quantum_received = 0;
+        this->last_quantum_sent = 0;
     }
 
     void reset_quantum_sent() {
@@ -141,6 +148,11 @@ public:
     {
         this->seqno++;
         return true;
+    }
+
+    virtual void request_full_cleaning()
+    {
+        this->full_cleaning_requested = true;
     }
 };
 

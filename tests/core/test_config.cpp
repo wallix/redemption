@@ -77,6 +77,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -155,15 +157,17 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
@@ -304,6 +308,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -384,15 +390,17 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_OK)));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL)));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_HELP)));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_CLOSE)));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_REFUSED)));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.context_get_value(AUTHID_TRANS_LOGIN)));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.context_get_value(AUTHID_TRANS_LOGIN)));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.context_get_value(AUTHID_TRANS_USERNAME)));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.context_get_value(AUTHID_TRANS_PASSWORD)));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.context_get_value(AUTHID_TRANS_PASSWORD)));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.context_get_value(AUTHID_TRANS_TARGET)));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.context_get_value(AUTHID_TRANS_DIAGNOSTIC)));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.context_get_value(AUTHID_TRANS_CONNECTION_CLOSED)));
@@ -540,6 +548,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -620,15 +630,17 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
@@ -673,10 +685,17 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "tls_support=no\n"
                           "rdp_compression=yes\n"
                           "\n"
+                          "[mod_rdp]\n"
+                          "disconnect_on_logon_user_change=yes\n"
+                          "open_session_timeout=45\n"
+                          "\n"
                           "[video]\n"
                           "hash_path=/mnt/wab/hash\n"
                           "record_path=/mnt/wab/recorded/rdp\n"
                           "record_tmp_path=/mnt/tmp/wab/recorded/rdp\n"
+                          "ocr_interval=50\n"
+                          "ocr_on_title_bar_only=yes\n"
+                          "ocr_max_unrecog_char_rate=50\n"
                           "\n"
                           "[debug]\n"
                           "log_type=file\n"
@@ -722,7 +741,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(600,                              ini.video.break_interval);
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
-    BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(50,                               ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(true,                             ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(50,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -804,15 +825,17 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(45,                               ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
@@ -854,6 +877,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "connection_closed=Connexion\\ fermée\n"
                           "[mod_rdp]\n"
                           "rdp_compression=yes\n"
+                          "[mod_rdp]\n"
+                          "disconnect_on_logon_user_change=no\n"
+                          "open_session_timeout=30\n"
                           "[video]\n"
                           "hash_path=/mnt/wab/hash/\n"
                           "record_path=/mnt/wab/recorded/rdp/\n"
@@ -898,6 +924,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -977,15 +1005,17 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(30,                               ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.translation.connection_closed.get_cstr()));
@@ -1062,6 +1092,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -1146,15 +1178,17 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
@@ -1222,6 +1256,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -1303,15 +1339,17 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
@@ -1372,6 +1410,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -1453,15 +1493,17 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
@@ -1522,6 +1564,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -1602,15 +1646,17 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
@@ -1671,6 +1717,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -1751,15 +1799,17 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
@@ -1810,6 +1860,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(600000000l,                       ini.globals.flv_break_interval);
     BOOST_CHECK_EQUAL(1000000L,                         ini.globals.flv_frame_interval);
     BOOST_CHECK_EQUAL(100,                              ini.video.ocr_interval);
+    BOOST_CHECK_EQUAL(false,                            ini.video.ocr_on_title_bar_only);
+    BOOST_CHECK_EQUAL(40,                               ini.video.ocr_max_unrecog_char_rate);
 
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
@@ -1890,15 +1942,17 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help"),              std::string(ini.translation.button_help.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("login"),             std::string(ini.translation.login.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("password"),          std::string(ini.translation.password.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));

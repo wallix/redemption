@@ -65,6 +65,7 @@
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
+#include "RDP/SaveSessionInfoPDU.hpp"
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
@@ -80,7 +81,7 @@ enum {
 class Front : public FrontAPI {
     using FrontAPI::draw;
 public:
-    enum {
+    enum CaptureState {
           CAPTURE_STATE_UNKNOWN
         , CAPTURE_STATE_STARTED
         , CAPTURE_STATE_PAUSED
@@ -296,9 +297,20 @@ public:
             else {
                 LOG(LOG_INFO, "Resizing client to : %d x %d x %d", width, height, this->client_info.bpp);
 
+                if (this->capture)
+                {
+                    CaptureState original_capture_state = this->capture_state;
+
+                    this->stop_capture();
+                    this->start_capture(width, height, *this->ini);
+
+                    this->capture_state = original_capture_state;
+                }
+
                 this->client_info.width = width;
                 this->client_info.height = height;
 
+                TODO("Why are we not calling this->flush() instead ? Looks dubious.")
                 // send buffered orders
                 this->orders->flush();
 
@@ -321,12 +333,12 @@ public:
         return res;
     }
 
-    void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+    void server_set_pointer(const Pointer & cursor)
     {
         int cache_idx = 0;
-        switch (this->pointer_cache.add_pointer(data, mask, x, y, cache_idx)){
+        switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
-            this->send_pointer(cache_idx, data, mask, x, y);
+            this->send_pointer(cache_idx, cursor);
         break;
         default:
         case POINTER_ALLREADY_SENT:
@@ -394,7 +406,12 @@ public:
                             font_item->height,
                             font_item->data);
 
-                        this->draw(cmd);
+                        this->orders->draw(cmd);
+
+                        if (  this->capture
+                           && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                            this->capture->draw(cmd);
+                        }
                     }
                     break;
                     default:
@@ -407,7 +424,7 @@ public:
                 total_height = std::max(total_height, font_item->height);
             }
 
-            const Rect bk(x, y, total_width + 1, total_height);
+            const Rect bk(x, y, total_width + 1, total_height + 1);
 
              RDPGlyphIndex glyphindex(
                 f, // cache_id
@@ -421,14 +438,13 @@ public:
                 // brush
                 RDPBrush(0, 0, 3, 0xaa,
                     (const uint8_t *)"\xaa\x55\xaa\x55\xaa\x55\xaa\x55"),
-    //            this->brush,
                 x,  // glyph_x
                 y + total_height, // glyph_y
                 part_len * 2, // data_len in bytes
                 data // data
             );
 
-            this->draw(glyphindex, clip);
+            this->draw(glyphindex, clip, NULL);
 
             x += total_width;
         }
@@ -444,27 +460,28 @@ public:
         }
 
         if (ini.globals.movie.get()) {
-//            this->stop_capture();
             LOG(LOG_INFO, "---<>  Front::start_capture  <>---");
             struct timeval now = tvtime();
 
             if (this->verbose & 1) {
-                LOG(LOG_INFO, "movie_path = %s\n",    ini.globals.movie_path.get_cstr());
-                LOG(LOG_INFO, "codec_id = %s\n",      ini.globals.codec_id.get_cstr());
+                LOG(LOG_INFO, "movie_path    = %s\n", ini.globals.movie_path.get_cstr());
+                LOG(LOG_INFO, "codec_id      = %s\n", ini.globals.codec_id.get_cstr());
                 LOG(LOG_INFO, "video_quality = %s\n", ini.globals.video_quality.get_cstr());
-                LOG(LOG_INFO, "auth_user = %s\n",     ini.globals.auth_user.get_cstr());
-                LOG(LOG_INFO, "host = %s\n",          ini.globals.host.get_cstr());
+                LOG(LOG_INFO, "auth_user     = %s\n", ini.globals.auth_user.get_cstr());
+                LOG(LOG_INFO, "host          = %s\n", ini.globals.host.get_cstr());
                 LOG(LOG_INFO, "target_device = %s\n", ini.globals.target_device.get().c_str());
-                LOG(LOG_INFO, "target_user = %s\n",   ini.globals.target_user.get_cstr());
+                LOG(LOG_INFO, "target_user   = %s\n", ini.globals.target_user.get_cstr());
             }
 
             char path[1024];
             char basename[1024];
             char extension[128];
-            strcpy(path, WRM_PATH "/"); // default value, actual one should come from movie_path
+            strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
-            strcpy(extension, ""); // extension is currently ignored
-            canonical_path(ini.globals.movie_path.get_cstr(), path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension));
+            strcpy(extension, "");          // extension is currently ignored
+            canonical_path(ini.globals.movie_path.get_cstr(), path,
+                sizeof(path), basename, sizeof(basename), extension,
+                sizeof(extension));
             this->capture = new Capture( now, width, height
                                        , ini.video.record_path
                                        , ini.video.record_tmp_path
@@ -498,7 +515,6 @@ public:
         this->capture->resume();
         this->capture->capture_event.set();
         this->capture_state = CAPTURE_STATE_STARTED;
-
     }
 
     void update_config(Inifile & ini){
@@ -591,21 +607,13 @@ public:
 
     void init_pointers()
     {
-        pointer_item pointer0(POINTER_CURSOR0);
-        this->pointer_cache.add_pointer_static(&pointer0, 0);
-        this->send_pointer(0,
-                         pointer0.data,
-                         pointer0.mask,
-                         pointer0.x,
-                         pointer0.y);
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
+        this->pointer_cache.add_pointer_static(pointer0, 0);
+        this->send_pointer(0, pointer0);
 
-        pointer_item pointer1(POINTER_CURSOR1);
-        this->pointer_cache.add_pointer_static(&pointer1, 1);
-        this->send_pointer(1,
-                 pointer1.data,
-                 pointer1.mask,
-                 pointer1.x,
-                 pointer1.y);
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
+        this->pointer_cache.add_pointer_static(pointer1, 1);
+        this->send_pointer(1, pointer1);
     }
 
     virtual void begin_update()
@@ -702,6 +710,42 @@ public:
         stream.mark_end();
     }
 
+/*
+    void SendLogonInfo(const uint8_t * user_name)
+    {
+        BStream stream(65536);
+        ShareData sdata_out(stream);
+        sdata_out.emit_begin(PDUTYPE2_SAVE_SESSION_INFO, this->share_id,
+            RDP::STREAM_MED);
+
+        RDP::SaveSessionInfoPDUData_Send ssipdu(stream, RDP::INFOTYPE_LOGON);
+        RDP::LogonInfoVersion1_Send      liv1(stream,
+                                              reinterpret_cast<const uint8_t *>(""),
+                                              user_name, getpid());
+
+        stream.mark_end();
+
+        // Packet trailer
+        sdata_out.emit_end();
+
+        BStream sctrl_header(256);
+        ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+            this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+
+        HStream target_stream(1024, 65536);
+        target_stream.out_copy_bytes(sctrl_header);
+        target_stream.out_copy_bytes(stream);
+        target_stream.mark_end();
+
+        if ((this->verbose & (128|8)) == (128|8)){
+            LOG(LOG_INFO, "Sec clear payload to send:");
+            hexdump_d(target_stream.get_data(), target_stream.size());
+        }
+
+        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+    }
+*/
+
     void send_global_palette() throw (Error)
     {
         if (!this->palette_sent && (this->client_info.bpp == 8)){
@@ -728,17 +772,12 @@ public:
                 target_stream.out_copy_bytes(stream);
                 target_stream.mark_end();
 
-                BStream sec_header(256);
-
                 if (this->verbose & 128) {
                     LOG(LOG_INFO, "Sec clear payload to send:");
                     hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
-                SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-                target_stream.copy_to_head(sec_header);
-
-                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+                this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
             }
             else {
                 HStream stream(1024, 65536);
@@ -889,12 +928,8 @@ public:
 //    color pointer, as specified in [T128] section 8.14.3. This pointer update
 //    is used for both monochrome and color pointers in RDP.
 
-    void GenerateColorPointerUpdateData( Stream & stream
-                                       , int cache_idx
-                                       , uint8_t * data
-                                       , uint8_t * mask
-                                       , int x
-                                       , int y) {
+    void GenerateColorPointerUpdateData(Stream & stream, int cache_idx, const Pointer & cursor)
+    {
 //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
 //      entry in the pointer cache in which to store the pointer image. The
 //      number of cache entries is negotiated using the Pointer Capability Set
@@ -912,32 +947,32 @@ public:
 //            xPos (2 bytes): A 16-bit, unsigned integer. The x-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(x);
+        stream.out_uint16_le(cursor.x);
 
 //            yPos (2 bytes): A 16-bit, unsigned integer. The y-coordinate
 //              relative to the top-left corner of the server's desktop.
 
-        stream.out_uint16_le(y);
+        stream.out_uint16_le(cursor.y);
 
 //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer in
 //      pixels (the maximum allowed pointer width is 32 pixels).
 
-        stream.out_uint16_le(32);
+        stream.out_uint16_le(cursor.width);
 
 //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
 //      in pixels (the maximum allowed pointer height is 32 pixels).
 
-        stream.out_uint16_le(32);
+        stream.out_uint16_le(cursor.height);
 
 //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the andMaskData field.
 
-        stream.out_uint16_le(128);
+        stream.out_uint16_le(cursor.mask_size());
 
 //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of
 //      the xorMaskData field.
 
-        stream.out_uint16_le(32*32*3);
+        stream.out_uint16_le(cursor.data_size());
 
 //    xorMaskData (variable): Variable number of bytes: Contains the 24-bpp,
 //      bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte
@@ -945,7 +980,7 @@ public:
 //      is being sent, then each scan-line will consume 10 bytes (3 pixels per
 //      scan-line multiplied by 3 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(data, 32*32*3);
+        stream.out_copy_bytes(cursor.data, cursor.data_size());
 
 //    andMaskData (variable): Variable number of bytes: Contains the 1-bpp,
 //      bottom-up AND mask scan-line data. The AND mask is padded to a 2-byte
@@ -953,17 +988,17 @@ public:
 //      is being sent, then each scan-line will consume 2 bytes (7 pixels per
 //      scan-line multiplied by 1 bpp, rounded up to the next even number of
 //      bytes).
-        stream.out_copy_bytes(mask, 128); /* mask */
+        stream.out_copy_bytes(cursor.mask, cursor.mask_size()); /* mask */
 
 //    colorPointerData (1 byte): Single byte representing unused padding.
 //      The contents of this byte should be ignored.
         stream.mark_end();
     }
 
-    virtual void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask, int x, int y) throw(Error)
-    {
-        if (this->verbose & 4){
-            LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)", cache_idx, x, y);
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) throw(Error) {
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "Front::send_pointer(cache_idx=%u x=%u y=%u)",
+                cache_idx, cursor.x, cursor.y);
         }
 
         if (this->server_fastpath_update_support == false) {
@@ -976,69 +1011,71 @@ public:
             stream.out_uint16_le(RDP_POINTER_COLOR);
             stream.out_uint16_le(0); /* pad */
 
-            GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
+            GenerateColorPointerUpdateData(stream, cache_idx, cursor);
 
             // Packet trailer
             sdata.emit_end();
 
             BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
             HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
-            if (((this->verbose & 4)!=0)&&((this->verbose & 4)!=0)){
+            if (this->verbose & 4) {
                 LOG(LOG_INFO, "Sec clear payload to send:");
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream sec_header(256);
-
-            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            target_stream.copy_to_head(sec_header);
-
-            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+            this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL,
+                target_stream);
         }
         else {
             HStream stream(1024, 65536);
 
-            if (this->verbose & 4){
+            if (this->verbose & 4) {
                 LOG(LOG_INFO, "Front::send_pointer: fast-path");
             }
 
             size_t header_size = FastPath::Update_Send::GetSize(0);
 
-            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
+            stream.out_clear_bytes(header_size);    // Fast-Path Update (TS_FP_UPDATE structure) size
 
-            GenerateColorPointerUpdateData(stream, cache_idx, data, mask, x, y);
+            GenerateColorPointerUpdateData(stream, cache_idx, cursor);
 
             SubStream Upd_s(stream, 0, header_size);
 
-            FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - header_size
-                                     , FastPath::FASTPATH_UPDATETYPE_COLOR
-                                     , FastPath::FASTPATH_FRAGMENT_SINGLE
-                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
-                                     , 0
-                                     );
+            FastPath::Update_Send Upd(Upd_s,
+                                      stream.size() - header_size,
+                                      FastPath::FASTPATH_UPDATETYPE_COLOR,
+                                      FastPath::FASTPATH_FRAGMENT_SINGLE,
+                                      /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0,
+                                      0);
 
             BStream fastpath_header(256);
 
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  fastpath_header
-                , stream
-                , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
-                , this->encrypt
-                );
+                fastpath_header,
+                stream,
+                ((this->client_info.encryptionLevel > 1) ?
+                 FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
+                this->encrypt);
             this->trans->send(fastpath_header, stream);
         }
 
-        if (this->verbose & 4){
+        if (this->capture &&
+            (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->send_pointer(cache_idx, cursor);
+        }
+
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::send_pointer done");
         }
-    }
+    }   // void send_pointer(int cache_idx, uint8_t* data, uint8_t* mask,
+        //     int hotspot_x, hotspot_int y)
 
 //    2.2.9.1.1.4.5    New Pointer Update (TS_POINTERATTRIBUTE)
 //    ---------------------------------------------------------
@@ -1071,9 +1108,8 @@ public:
 //      cached using either the Color Pointer Update (section 2.2.9.1.1.4.4) or
 //      New Pointer Update (section 2.2.9.1.1.4.5).
 
-    virtual void set_pointer(int cache_idx) throw(Error)
-    {
-        if (this->verbose & 4){
+    virtual void set_pointer(int cache_idx) {
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::set_pointer(cache_idx=%u)", cache_idx);
         }
 
@@ -1081,7 +1117,8 @@ public:
             BStream stream(65536);
 
             ShareData sdata(stream);
-            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id, RDP::STREAM_MED);
+            sdata.emit_begin(PDUTYPE2_POINTER, this->share_id,
+                RDP::STREAM_MED);
 
             // Payload
             stream.out_uint16_le(RDP_POINTER_CACHED);
@@ -1093,35 +1130,32 @@ public:
             sdata.emit_end();
 
             BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
             HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
             target_stream.out_copy_bytes(stream);
             target_stream.mark_end();
 
-            if ((this->verbose & (128|4)) == (128|4)){
+            if (this->verbose & (128 | 4)) {
                 LOG(LOG_INFO, "Sec clear payload to send:");
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream sec_header(256);
-
-            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            target_stream.copy_to_head(sec_header);
-
-            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+            this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL,
+                target_stream);
         }
         else {
             HStream stream(1024, 65536);
 
-            if (this->verbose & 4){
+            if (this->verbose & 4) {
                 LOG(LOG_INFO, "Front::set_pointer: fast-path");
             }
 
             size_t header_size = FastPath::Update_Send::GetSize(0);
 
-            stream.out_clear_bytes(header_size); // Fast-Path Update (TS_FP_UPDATE structure) size
+            stream.out_clear_bytes(header_size);    // Fast-Path Update (TS_FP_UPDATE structure) size
 
             // Payload
             stream.out_uint16_le(cache_idx);
@@ -1129,33 +1163,39 @@ public:
 
             SubStream Upd_s(stream, 0, header_size);
 
-            FastPath::Update_Send Upd( Upd_s
-                                     , stream.size() - header_size
-                                     , FastPath::FASTPATH_UPDATETYPE_CACHED
-                                     , FastPath::FASTPATH_FRAGMENT_SINGLE
-                                     , /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0
-                                     , 0
-                                     );
+            FastPath::Update_Send Upd(Upd_s,
+                                      stream.size() - header_size,
+                                      FastPath::FASTPATH_UPDATETYPE_CACHED,
+                                      FastPath::FASTPATH_FRAGMENT_SINGLE,
+                                      /*FastPath:: FASTPATH_OUTPUT_COMPRESSION_USED*/0,
+                                      0);
 
             BStream fastpath_header(256);
 
              // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
             FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                  fastpath_header
-                , stream
-                , ((this->client_info.encryptionLevel > 1) ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
-                , this->encrypt
-                );
+                fastpath_header,
+                stream,
+                ((this->client_info.encryptionLevel > 1) ?
+                 FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
+                this->encrypt);
             this->trans->send(fastpath_header, stream);
         }
 
-        if (this->verbose & 4){
+        if (this->capture &&
+            (this->capture_state == CAPTURE_STATE_STARTED)) {
+            this->capture->set_pointer(cache_idx);
+        }
+
+        if (this->verbose & 4) {
             LOG(LOG_INFO, "Front::set_pointer done");
         }
-    }
+    }   // void set_pointer(int cache_idx)
 
     void incoming(Callback & cb) throw(Error)
     {
+        unsigned expected;
+
         if (this->verbose & 4){
             LOG(LOG_INFO, "Front::incoming()");
         }
@@ -1183,7 +1223,7 @@ public:
             {
                 BStream stream(65536);
                 X224::RecvFactory fac_x224(*this->trans, stream);
-                X224::CR_TPDU_Recv x224(*this->trans, stream);
+                X224::CR_TPDU_Recv x224(*this->trans, stream, *this->ini);
                 if (x224._header_size != (size_t)(stream.size())){
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                                  " %d bytes remains", stream.size() - x224._header_size);
@@ -1292,26 +1332,27 @@ public:
                             cs_core.log("Received from Client");
                         }
 
-                        client_info.width = cs_core.desktopWidth;
-                        client_info.height = cs_core.desktopHeight;
-                        client_info.keylayout = cs_core.keyboardLayout;
-                        client_info.build = cs_core.clientBuild;
+                        this->client_info.width     = cs_core.desktopWidth;
+                        this->client_info.height    = cs_core.desktopHeight;
+                        this->client_info.keylayout = cs_core.keyboardLayout;
+                        this->client_info.build     = cs_core.clientBuild;
                         for (size_t i = 0; i < 16 ; i++){
-                            client_info.hostname[i] = cs_core.clientName[i];
+                            this->client_info.hostname[i] = cs_core.clientName[i];
                         }
-                        client_info.bpp = 8;
+                        this->client_info.bpp = 8;
                         switch (cs_core.postBeta2ColorDepth){
                         case 0xca01:
-                            client_info.bpp = (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                            this->client_info.bpp =
+                                (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
                         break;
                         case 0xca02:
-                            client_info.bpp = 15;
+                            this->client_info.bpp = 15;
                         break;
                         case 0xca03:
-                            client_info.bpp = 16;
+                            this->client_info.bpp = 16;
                         break;
                         case 0xca04:
-                            client_info.bpp = 24;
+                            this->client_info.bpp = 24;
                         break;
                         default:
                         break;
@@ -1347,7 +1388,7 @@ public:
                     {
                         GCC::UserData::CSCluster cs_cluster;
                         cs_cluster.recv(f.payload);
-                        client_info.console_session =
+                        this->client_info.console_session =
                             (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
                         if (this->verbose & 1) {
                             cs_cluster.log("Receiving from Client");
@@ -1452,7 +1493,7 @@ public:
                 uint8_t rsa_keys_pub_exp[4] = { 0x01, 0x00, 0x01, 0x00 };
 
                 sc_sec1.encryptionMethod = this->encrypt.encryptionMethod;
-                sc_sec1.encryptionLevel = client_info.encryptionLevel;
+                sc_sec1.encryptionLevel = this->client_info.encryptionLevel;
                 sc_sec1.serverRandomLen = 32;
                 this->gen->random(this->server_random, 32);
                 memcpy(sc_sec1.serverRandom, this->server_random, 32);
@@ -1802,7 +1843,8 @@ public:
                         hexdump_d(stream.get_data(), stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
+                    SEC::Sec_Send sec(sec_header, stream,
+                        SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
                     stream.copy_to_head(sec_header);
 
                     this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
@@ -1896,7 +1938,8 @@ public:
                     hexdump_d(stream.get_data(), stream.size());
                 }
 
-                SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
+                SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT,
+                    this->encrypt, 0);
                 stream.copy_to_head(sec_header);
 
                 this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
@@ -2000,7 +2043,8 @@ public:
                         hexdump_d(stream.get_data(), stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
+                    SEC::Sec_Send sec(sec_header, stream,
+                        SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
                     stream.copy_to_head(sec_header);
 
                     this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
@@ -2062,7 +2106,7 @@ public:
                         LOG(LOG_INFO, "Unexpected CONFIRMACTIVE PDU");
                     }
                     {
-                        const unsigned expected = 6; /* share_id(4) + originatorId(2) */
+                        expected = 6; /* shareId(4) + originatorId(2) */
                         if (!sctrl.payload.in_check_rem(expected)){
                             LOG(LOG_ERR, "Truncated CONFIRMACTIVE PDU, need=%u remains=%u",
                                 expected, sctrl.payload.in_remain());
@@ -2071,9 +2115,12 @@ public:
                         uint32_t share_id = sctrl.payload.in_uint32_le();
                         uint16_t originatorId = sctrl.payload.in_uint16_le();
                         this->process_confirm_active(sctrl.payload);
+(void)share_id;
+(void)originatorId;
                     }
                     if (!sctrl.payload.check_end()){
-                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u", sctrl.payload.in_remain());
+                        LOG(LOG_ERR, "Trailing data after CONFIRMACTIVE PDU remains=%u",
+                            sctrl.payload.in_remain());
                         throw Error(ERR_MCS_PDU_TRAILINGDATA);
                     }
                     break;
@@ -2166,6 +2213,12 @@ public:
                 uint8_t eventCode;
 
                 for (uint8_t i = 0; i < cfpie.numEvents; i++){
+                    if (!cfpie.payload.in_check_rem(1)){
+                        LOG(LOG_ERR, "Truncated Fast-Path input event PDU, need=1 remains=%u",
+                            cfpie.payload.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+
                     byte = cfpie.payload.in_uint8();
 
                     eventCode  = (byte & 0xE0) >> 5;
@@ -2246,7 +2299,9 @@ public:
 */
 
                         default:
-                            LOG(LOG_INFO, "Front::Received unexpected fast-path PUD, eventCode = %u", eventCode);
+                            LOG(LOG_INFO,
+                                "Front::Received unexpected fast-path PUD, eventCode = %u",
+                                eventCode);
                             throw Error(ERR_RDP_FASTPATH);
                         break;
                     }
@@ -2256,7 +2311,8 @@ public:
                 }
 
                 if (cfpie.payload.in_remain() != 0) {
-                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u", cfpie.payload.in_remain());
+                    LOG(LOG_WARNING, "Front::Received fast-path PUD, remains=%u",
+                        cfpie.payload.in_remain());
                 }
                 break;
             }
@@ -2321,7 +2377,7 @@ public:
                         channel.log(mcs.channelId);
                     }
 
-                    const unsigned expected = 8; /* length(4) + flags(4) */
+                    expected = 8; /* length(4) + flags(4) */
                     if (!sec.payload.in_check_rem(expected)){
                         LOG(LOG_ERR, "Front::incoming::data truncated, need=%u remains=%u",
                             expected, sec.payload.in_remain());
@@ -2370,9 +2426,19 @@ public:
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU");
                             }
                             {
+                                expected = 6;   /* shareId(4) + originatorId(2) */
+                                if (!sctrl.payload.in_check_rem(expected)){
+                                    LOG(LOG_ERR,
+                                        "Truncated Confirm active PDU data, need=%u remains=%u",
+                                        expected, sctrl.payload.in_remain());
+                                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                                }
+
                                 uint32_t share_id = sctrl.payload.in_uint32_le();
                                 uint16_t originatorId = sctrl.payload.in_uint16_le();
                                 this->process_confirm_active(sctrl.payload);
+(void)share_id;
+(void)originatorId;
                             }
                             // reset caches, etc.
                             this->reset();
@@ -2400,7 +2466,14 @@ public:
                             if (this->verbose & 8){
                                 LOG(LOG_INFO, "Front received DATAPDU done");
                             }
-                            TODO("check all received data consumed")
+
+                            if (!sctrl.payload.check_end())
+                            {
+                                LOG(LOG_ERR,
+                                    "Trailing data after DATAPDU: remains=%u",
+                                    sctrl.payload.in_remain());
+                                throw Error(ERR_MCS_PDU_TRAILINGDATA);
+                            }
                             break;
                         case PDUTYPE_DEACTIVATEALLPDU:
                             if (this->verbose & 1){
@@ -2416,41 +2489,51 @@ public:
                             LOG(LOG_WARNING, "Front received unknown PDU type in session_data (%d)\n", sctrl.pdu_type1);
                             break;
                         }
+
                         TODO("check all sctrl.payload data is consumed")
                         sec.payload.p = sctrl.payload.p;
                     }
                 }
-                TODO("check all data have been consumed")
+
+                if (!sec.payload.check_end())
+                {
+                    LOG(LOG_ERR,
+                        "Trailing data after SEC: remains=%u",
+                        sec.payload.in_remain());
+                    throw Error(ERR_SEC_TRAILINGDATA);
+                }
             }
         }
         break;
         }
     }
 
-    void send_data_indication(uint16_t channelId, HStream & stream) {
+    void send_data_indication(uint16_t channelId, HStream & stream)
+    {
         BStream x224_header(256);
         BStream mcs_header(256);
 
-        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
-                                        , stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
+                                         1, 3, stream.size(),
+                                         MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
-        TODO("shouldn't there be sec layer here ? even if it's disabled when there is not encryption server to client ?")
-//        this->trans->send(x224_header, mcs_header, sec_header, stream);
         this->trans->send(x224_header, mcs_header, stream);
     }
 
-    void send_data_indication_ex(uint16_t channelId, HStream & stream) {
+    void send_data_indication_ex(uint16_t channelId, HStream & stream)
+    {
         BStream x224_header(256);
         BStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec( sec_header, stream, 0, this->encrypt
-                         , this->client_info.encryptionLevel);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
+                          this->client_info.encryptionLevel);
         stream.copy_to_head(sec_header);
 
-        MCS::SendDataIndication_Send mcs( mcs_header, this->userid, channelId, 1, 3
-                                        , stream.size(), MCS::PER_ENCODING);
+        MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
+                                         1, 3, stream.size(),
+                                         MCS::PER_ENCODING);
 
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
@@ -2491,7 +2574,8 @@ public:
             sdata.emit_end();
 
             BStream sctrl_header(256);
-            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
+            ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
+                this->userid + GCC::MCS_USERCHANNEL_BASE, stream.size());
 
             HStream target_stream(1024, 65536);
             target_stream.out_copy_bytes(sctrl_header);
@@ -2503,12 +2587,7 @@ public:
                 hexdump_d(target_stream.get_data(), target_stream.size());
             }
 
-            BStream sec_header(256);
-
-            SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-            target_stream.copy_to_head(sec_header);
-
-            this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+            this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
         }
         else {
             if (this->verbose & 4){
@@ -2558,15 +2637,14 @@ public:
         stream.out_uint16_le(4); /* 4 chars for RDP\0 */
 
         /* 2 bytes size after num caps, set later */
-        uint8_t * caps_size_ptr = stream.p;
+        uint32_t caps_size_offset = stream.get_offset();
         stream.out_clear_bytes(2);
+
         stream.out_copy_bytes("RDP", 4);
 
         /* 4 byte num caps, set later */
-        uint8_t * caps_count_ptr = stream.p;
+        uint32_t caps_count_offset = stream.get_offset();
         stream.out_clear_bytes(4);
-
-        uint8_t * caps_ptr = stream.p;
 
         CapabilitySets cap_sets;
 
@@ -2674,19 +2752,11 @@ public:
         input_caps.emit(stream);
         caps_count++;
 
-        TODO("Check if this padding is necessary and, if so, how it should actually be computed. Padding is usually here for memory alignment purpose but this one looks strange")
-        stream.out_clear_bytes(4); /* pad */
+        size_t caps_size = stream.get_offset() - caps_count_offset;
+        stream.set_out_uint16_le(caps_size, caps_size_offset);
+        stream.set_out_uint32_le(caps_count, caps_count_offset);
 
-        size_t caps_size = stream.p - caps_ptr;
-        TODO("change this using set_out_uint16_le")
-        caps_size_ptr[0] = caps_size;
-        caps_size_ptr[1] = caps_size >> 8;
-
-        TODO("change this using set_out_uint32_le")
-        caps_count_ptr[0] = caps_count;
-        caps_count_ptr[1] = caps_count >> 8;
-        caps_count_ptr[2] = caps_count >> 16;
-        caps_count_ptr[3] = caps_count >> 24;
+        stream.out_clear_bytes(4); /* sessionId(4). This field is ignored by the client. */
         stream.mark_end();
 
         BStream sctrl_header(256);
@@ -2702,12 +2772,7 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     }
 
     /* store the number of client cursor cache in client_info */
@@ -2809,8 +2874,13 @@ public:
                     this->client_info.bpp    =
                           (this->client_bitmap_caps.preferredBitsPerPixel >= 24)
                         ? 24 : this->client_bitmap_caps.preferredBitsPerPixel;
-                    this->client_info.width  = this->client_bitmap_caps.desktopWidth;
-                    this->client_info.height = this->client_bitmap_caps.desktopHeight;
+                    // Fixed bug in rdesktop
+                    // Desktop size in Client Core Data != Desktop size in Bitmap Capability Set
+                    if (!this->client_info.width || !this->client_info.height)
+                    {
+                        this->client_info.width  = this->client_bitmap_caps.desktopWidth;
+                        this->client_info.height = this->client_bitmap_caps.desktopHeight;
+                    }
                 }
                 break;
             case CAPSTYPE_ORDER: { /* 3 */
@@ -2914,35 +2984,19 @@ public:
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
-//                    BmpCache2Caps bmpcache2_caps;
-//                    bmpcache2_caps.recv(stream, capset_length);
-//                    bmpcache2_caps.log("Receiving from client");
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "Receiving from client CAPSTYPE_BITMAPCACHE_REV2");
-                    }
+                    BmpCache2Caps cap;
+                    cap.recv(stream, capset_length);
+                    cap.log("Receiving from client");
 
-                    /* bitmap_cache_persist_enable(2) + ignored(2) + cache1_entries(4) + cache2_entries(4) +
-                     * cache3_entries(4)
-                     */
-                    const unsigned expected = 16;
-                    if (!stream.in_check_rem(expected)){
-                        LOG(LOG_ERR, "Truncated CAPSTYPE_BITMAPCACHE_REV2, need=%u remains=%u",
-                            expected, stream.in_remain());
-                        throw Error(ERR_MCS_PDU_TRUNCATED);
-                    }
-
-                    if (this->verbose) {
-                        LOG(LOG_INFO, "capset_bmpcache2");
-                    }
+                    TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
                     this->client_info.bitmap_cache_version = 2;
                     int Bpp = nbbytes(this->client_info.bpp);
-                    this->client_info.bitmap_cache_persist_enable = stream.in_uint16_le();
-                    stream.in_skip_bytes(2); /* number of caches in set, 3 */
-                    this->client_info.cache1_entries = stream.in_uint32_le();
+                    this->client_info.bitmap_cache_persist_enable = cap.cacheFlags;
+                    this->client_info.cache1_entries = cap.bitmapCache0CellInfo;
                     this->client_info.cache1_size = 256 * Bpp;
-                    this->client_info.cache2_entries = stream.in_uint32_le();
+                    this->client_info.cache2_entries = cap.bitmapCache1CellInfo;
                     this->client_info.cache2_size = 1024 * Bpp;
-                    this->client_info.cache3_entries = (stream.in_uint32_le() & 0x7fffffff);
+                    this->client_info.cache3_entries = (cap.bitmapCache2CellInfo & 0x7fffffff);
                     this->client_info.cache3_size = 4096 * Bpp;
                 }
                 break;
@@ -2972,16 +3026,19 @@ public:
                 }
                 break;
             case CAPSETTYPE_COMPDESK: { /* 25 */
-                    CompDeskCaps compdesk_caps;
-                    compdesk_caps.recv(stream, capset_length);
+                    CompDeskCaps cap;
+                    cap.recv(stream, capset_length);
                     if (this->verbose) {
-                        compdesk_caps.log("Receiving from client");
+                        cap.log("Receiving from client");
                     }
                 }
                 break;
-            case CAPSETTYPE_MULTIFRAGMENTUPDATE: /* 26 */
-                if (this->verbose) {
-                    LOG(LOG_INFO, "Receiving from client CAPSETTYPE_MULTIFRAGMENTUPDATE");
+            case CAPSETTYPE_MULTIFRAGMENTUPDATE: { /* 26 */
+                    MultiFragmentUpdateCaps cap;
+                    cap.recv(stream, capset_length);
+                    if (this->verbose) {
+                        cap.log("Receiving from client");
+                    }
                 }
                 break;
             case CAPSETTYPE_LARGE_POINTER: /* 27 */
@@ -3017,9 +3074,9 @@ public:
             stream.p = next;
         }
         // After Capabilities read optional SessionId
-        TODO("Check if sessionId is actually optional or not, rdesktop does not send it")
         if (stream.in_remain() >= 4){
-            uint32_t sessionId = stream.in_uint32_le(); /* Session Id */
+            // From the documentation SessionId is ignored by client.
+            stream.in_skip_bytes(4); /* Session Id */
         }
         if (this->verbose & 1){
             LOG(LOG_INFO, "process_confirm_active done p=%p end=%p", stream.p, stream.end);
@@ -3098,8 +3155,8 @@ public:
         sdata.emit_begin(PDUTYPE2_SYNCHRONIZE, this->share_id, RDP::STREAM_MED);
 
         // Payload
-        stream.out_uint16_le(1); /* messageType */
-        stream.out_uint16_le(1002); /* control id */
+        stream.out_uint16_le(1);    // messageType
+        stream.out_uint16_le(1002); // control id
         stream.mark_end();
 
         // Packet trailer
@@ -3118,17 +3175,13 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_synchronize done");
         }
     }
+
 
 // 2.2.1.15.1 Control PDU Data (TS_CONTROL_PDU)
 // ============================================
@@ -3184,12 +3237,7 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_control action=%u", action);
@@ -3251,12 +3299,7 @@ public:
             hexdump_d(target_stream.get_data(), target_stream.size());
         }
 
-        BStream sec_header(256);
-
-        SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        target_stream.copy_to_head(sec_header);
-
-        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_fontmap");
@@ -3266,6 +3309,7 @@ public:
     /* PDUTYPE_DATAPDU */
     void process_data(Stream & stream, Callback & cb) throw (Error)
     {
+        unsigned expected;
         if (this->verbose & 8){
             LOG(LOG_INFO, "Front::process_data(...)");
         }
@@ -3298,6 +3342,13 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_CONTROL");
             }
             {
+                expected = 8;   /* action(2) + grantId(2) + controlId(4) */
+                if (!sdata_in.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Control PDU data, need=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 int action = sdata_in.payload.in_uint16_le();
                 sdata_in.payload.in_skip_bytes(2); /* user id */
                 sdata_in.payload.in_skip_bytes(4); /* control id */
@@ -3409,6 +3460,13 @@ public:
                 LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
             }
             {
+                expected = 4;   /* messageType(2) + targetUser(4) */
+                if (!sdata_in.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Synchronize PDU data, need=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 uint16_t messageType = sdata_in.payload.in_uint16_le();
                 uint16_t controlId = sdata_in.payload.in_uint16_le();
                 if (this->verbose & 8){
@@ -3444,10 +3502,25 @@ public:
             // bottom (2 bytes): A 16-bit, unsigned integer. The lower bound of the rectangle.
 
             {
+                expected = 4;   /* numberOfAreas(1) + pad3Octects(3) */
+                if (!sdata_in.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 size_t numberOfAreas = sdata_in.payload.in_uint8();
                 sdata_in.payload.in_skip_bytes(3);
 
+                expected = numberOfAreas * 8;   /* numberOfAreas * (left(2) + top(2) + right(2) + bottom(2)) */
+                if (!sdata_in.payload.in_check_rem(expected)){
+                    LOG(LOG_ERR, "Truncated Refresh rect PDU data, need=%u remains=%u",
+                        expected, sdata_in.payload.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
                 for (size_t i = 0; i < numberOfAreas ; i++){
+
                     int left = sdata_in.payload.in_uint16_le();
                     int top = sdata_in.payload.in_uint16_le();
                     int right = sdata_in.payload.in_uint16_le();
@@ -3516,12 +3589,7 @@ public:
                     hexdump_d(target_stream.get_data(), target_stream.size());
                 }
 
-                BStream sec_header(256);
-
-                SEC::Sec_Send sec(sec_header, target_stream, 0, this->encrypt, this->client_info.encryptionLevel);
-                target_stream.copy_to_head(sec_header);
-
-                this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+                this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
             }
         break;
         case PDUTYPE2_SHUTDOWN_DENIED:  // Shutdown Request Denied PDU (section 2.2.2.3.1)
@@ -3567,6 +3635,13 @@ public:
 
         // entrySize (2 bytes): A 16-bit, unsigned integer. The entry size. This
         // field SHOULD be set to 0x0032 (50 bytes).
+
+            expected = 8;   /* numberFonts(2) + totalNumFonts(2) + listFlags(2) + entrySize(2) */
+            if (!sdata_in.payload.in_check_rem(expected)){
+                LOG(LOG_ERR, "Truncated Font list PDU data, need=%u remains=%u",
+                    expected, sdata_in.payload.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
 
             sdata_in.payload.in_uint16_le(); /* numberFont -> 0*/
             sdata_in.payload.in_uint16_le(); /* totalNumFonts -> 0 */
@@ -3623,6 +3698,13 @@ public:
             if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST");
             }
+
+            if (!sdata_in.payload.in_check_rem(sdata_in.len)){
+                LOG(LOG_ERR, "Truncated Persistent key list PDU data, need=%u remains=%u",
+                    sdata_in.len, sdata_in.payload.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
             sdata_in.payload.in_skip_bytes(sdata_in.len);
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
@@ -3694,7 +3776,6 @@ public:
             LOG(LOG_INFO, "send_deactive");
         }
 
-        BStream sec_header(256);
         HStream stream(1024, 1024 + 256);
         ShareControl_Send(stream, PDUTYPE_DEACTIVATEALLPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, 0);
 
@@ -3703,10 +3784,7 @@ public:
             hexdump_d(stream.get_data(), stream.size());
         }
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
-        stream.copy_to_head(sec_header);
-
-        this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
+        this->send_data_indication_ex(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->verbose & 1){
             LOG(LOG_INFO, "send_deactive done");
@@ -4057,7 +4135,7 @@ public:
         }
     }
 
-    void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         if (!clip.isempty() && !clip.intersect(cmd.bk).isempty()){
             this->send_global_palette();
@@ -4070,24 +4148,84 @@ public:
                 new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
             }
 
+            if (gly_cache)
+            {
+                bool has_delta_byte = (!new_cmd.ui_charinc && !(new_cmd.fl_accel & 0x20/*SO_CHAR_INC_EQUAL_BM_BASE*/));
+                for (uint8_t i = 0; i < new_cmd.data_len;)
+                {
+                    if (new_cmd.data[i] <= 0xFD)
+                    {
+//                      LOG(LOG_INFO, "Index in the fragment cache=%u", new_cmd.data[i]);
+                        FontChar * fc = gly_cache->char_items[new_cmd.cache_id][new_cmd.data[i]].font_item;
+                        REDASSERT(fc);
+                        int g_idx = this->glyph_cache.find_glyph(fc, new_cmd.cache_id);
+                        REDASSERT(g_idx >= 0);
+                        new_cmd.data[i] = static_cast<uint8_t>(g_idx);
+                        if (has_delta_byte)
+                        {
+                            if (new_cmd.data[++i] == 0x80)
+                            {
+                                i += 3;
+                            }
+                            else
+                            {
+                                i++;
+                            }
+                        }
+                    }
+                    else if (new_cmd.data[i] == 0xFE)
+                    {
+                        LOG(LOG_INFO, "Front::draw(RDPGlyphIndex, ...): Unsupported data");
+                        throw Error(ERR_RDP_UNSUPPORTED);
+                    }
+                    else if (new_cmd.data[i] == 0xFF)
+                    {
+                        i += 3;
+                        REDASSERT(i == new_cmd.data_len);
+                    }
+                }
+            }
+
             // this may change the brush and send it to to remote cache
             this->cache_brush(new_cmd.brush);
 
-            this->orders->draw(new_cmd, clip);
+            this->orders->draw(new_cmd, clip, gly_cache);
 
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)){
-                RDPGlyphIndex new_cmd24 = cmd;
+                RDPGlyphIndex new_cmd24 = /*cmd*/new_cmd;
                 new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
                 new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
-                this->capture->draw(new_cmd24, clip);
+                this->capture->draw(new_cmd24, clip, gly_cache);
             }
         }
     }
 
     void draw(const RDPGlyphCache & cmd)
     {
-        this->orders->draw(cmd);
+        FontChar font_item(cmd.glyphData_x, cmd.glyphData_y,
+            cmd.glyphData_cx, cmd.glyphData_cy, -1);
+        memcpy(font_item.data, cmd.glyphData_aj, font_item.datasize());
+
+        int cacheidx = 0;
+
+        if (this->glyph_cache.add_glyph(&font_item, cmd.cacheId, cacheidx) ==
+            GlyphCache::GLYPH_ADDED_TO_CACHE)
+        {
+            RDPGlyphCache cmd2(cmd.cacheId, 1, cacheidx,
+                            cmd.glyphData_x,
+                            cmd.glyphData_y,
+                            cmd.glyphData_cx,
+                            cmd.glyphData_cy,
+                            cmd.glyphData_aj);
+
+            this->orders->draw(cmd2);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                this->capture->draw(cmd2);
+            }
+        }
     }
 
     virtual void flush() {

@@ -31,7 +31,6 @@
 
 #include "RDP/protocol.hpp"
 
-//#include "RDP/orders/RDPOrdersNames.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
@@ -42,6 +41,8 @@
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+
+#include "RDP/caches/bmpcache.hpp"
 
 /* orders */
 struct rdp_orders {
@@ -59,8 +60,9 @@ struct rdp_orders {
     BGRPalette cache_colormap[6];
     BGRPalette global_palette;
 
-    TODO("CGR: this cache_bitmap here looks strange. At least it's size should be negotiated. And why is it not managed by the other cache management code ? This probably hide some kind of problem. See when working on cache secondary order primitives.")
-    const Bitmap * cache_bitmap[3][10000];
+    BmpCache * bmp_cache;
+
+    GlyphCache gly_cache;
 
     uint32_t verbose;
 
@@ -78,10 +80,10 @@ struct rdp_orders {
             , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
             , glyph_index( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
                          , (uint8_t *)"")
+            , bmp_cache(NULL)
             , verbose(verbose)
             , recv_bmp_cache_count(0)
             , recv_order_count(0) {
-        memset(this->cache_bitmap,   0, sizeof(this->cache_bitmap));
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
     }
@@ -99,26 +101,31 @@ struct rdp_orders {
         this->glyph_index = RDPGlyphIndex( 0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1)
                                          , RDPBrush(), 0, 0, 0, (uint8_t *)"");
 
-        this->destory_cache_bitmap();
+        if (this->bmp_cache) {
+            this->bmp_cache->reset();
+        }
 
-        memset(this->cache_bitmap,   0, sizeof(this->cache_bitmap));
         memset(this->cache_colormap, 0, sizeof(this->cache_colormap));
         memset(this->global_palette, 0, sizeof(this->global_palette));
     }
 
     ~rdp_orders() {
-        this->destory_cache_bitmap();
+        if (this->bmp_cache) {
+            delete this->bmp_cache;
+        }
     }
 
-private:
-    void destory_cache_bitmap() {
-        for (uint8_t cid = 0; cid < 3; cid++) {
-            for (uint16_t cidx = 0 ; cidx < 10000; cidx++) {
-                if (this->cache_bitmap[cid][cidx]) {
-                    delete this->cache_bitmap[cid][cidx];
-                }
-            }
+    void create_cache_bitmap(const uint8_t bpp, uint16_t small_entries,
+        uint16_t small_size, uint16_t medium_entries, uint16_t medium_size,
+        uint16_t big_entries, uint16_t big_size)
+    {
+        if (this->bmp_cache) {
+            delete this->bmp_cache;
+            this->bmp_cache = NULL;
         }
+
+        this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size,
+            big_entries, big_size);
     }
 
 public:
@@ -133,11 +140,7 @@ public:
 
         this->recv_bmp_cache_count++;
 
-        TODO("CGR: add cache_id, cache_idx range check, and also size check based on cache size by type and uncompressed bitmap size")
-        if (this->cache_bitmap[bmp.id][bmp.idx]) {
-            delete this->cache_bitmap[bmp.id][bmp.idx];
-        }
-        this->cache_bitmap[bmp.id][bmp.idx] = bmp.bmp;
+        this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp);
         if (this->verbose & 64) {
             LOG( LOG_ERR
                , "rdp_orders_process_bmpcache bitmap id=%u idx=%u cx=%u cy=%u bmp_size=%u original_bpp=%u bpp=%u"
@@ -153,6 +156,7 @@ public:
         memcpy(fi.data, data, fi.datasize());
 
         RDPGlyphCache cmd(font, 1, character, fi.offset, fi.baseline, fi.width, fi.height, fi.data);
+        this->gly_cache.set_glyph(cmd);
         mod->draw(cmd);
     }
 
@@ -260,7 +264,7 @@ public:
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
-                    mod->draw(this->glyph_index, cmd_clip);
+                    mod->draw(this->glyph_index, cmd_clip, &this->gly_cache);
                     break;
                 case DESTBLT:
                     this->destblt.receive(stream, header);
@@ -292,7 +296,7 @@ public:
                             assert(false);
                         }
                         const Bitmap * bitmap =
-                            this->cache_bitmap[this->memblt.cache_id & 0x3][this->memblt.cache_idx];
+                            this->bmp_cache->get(this->memblt.cache_id & 0x3, this->memblt.cache_idx);
                         TODO("CGR: check if bitmap has the right palette...")
                         TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
                         if (bitmap) {
@@ -310,7 +314,7 @@ public:
                             assert(false);
                         }
                         const Bitmap * bitmap =
-                            this->cache_bitmap[this->mem3blt.cache_id & 0x3][this->mem3blt.cache_idx];
+                            this->bmp_cache->get(this->memblt.cache_id & 0x3, this->memblt.cache_idx);
                         TODO("CGR: check if bitmap has the right palette...")
                         TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
                         if (bitmap) {

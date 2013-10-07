@@ -25,8 +25,8 @@
 #define BOOST_TEST_MODULE TestGCC
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGPRINT
 #include "log.hpp"
-#define LOGNULL
 
 #include "transport.hpp"
 #include "testtransport.hpp"
@@ -57,7 +57,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     const char gcc_conference_create_request_expected[] =
     // conference_create_request_header
-    "\x00\x05\x00\x14\x7C\x00\x01\x81\x2A\x00\x08\x00\x10\x00\x01\xC0"
+    "\x00\x05\x00\x14\x7C\x00\x01"
+    "\x81\x2A\x00\x08\x00\x10\x00\x01\xC0"
     "\x00\x44\x75\x63\x61"
     "\x81\x1c" // User data length
     // header
@@ -93,9 +94,20 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     BStream gcc_header(65536);
     GCC::Create_Request_Send(gcc_header, stream.size());
-
-    t.send(gcc_header.get_data(), gcc_header.size());
-//    t.send(stream.get_data(), stream.size());
+    t.send(gcc_header);
+    
+    BStream stream2(65536);
+    stream2.out_copy_bytes(gcc_conference_create_request_expected, 
+                  sizeof(gcc_conference_create_request_expected)-1); // -1 to ignore final 0
+    stream2.mark_end();
+    stream2.rewind();
+    
+    try {
+        GCC::Create_Request_Recv header(stream2);
+    } catch(Error & e) {
+        BOOST_CHECK(false);
+    };
+    
 //    BOOST_CHECK(t.get_status());
 }
 
@@ -125,6 +137,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_core)
     BOOST_CHECK_EQUAL(12, sc_core2.length);
     BOOST_CHECK_EQUAL(0x0080004, sc_core2.version);
     BOOST_CHECK_EQUAL(0, sc_core2.clientRequestedProtocols);
+    
+    sc_core2.log("Server Received");
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
@@ -152,16 +166,25 @@ BOOST_AUTO_TEST_CASE(Test_gcc_sc_net)
     BOOST_CHECK(0 == memcmp(expected, stream.get_data(), 12));
 
     stream.p = stream.get_data();
-    GCC::UserData::SCNet sc_net2;
 
-    sc_net2.recv(stream);
-    BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
-    BOOST_CHECK_EQUAL(16, sc_net2.length);
-    BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
-    BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
-    BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
-    BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
-    BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
+    try {
+        GCC::UserData::SCNet sc_net2;
+
+        sc_net2.recv(stream);
+        BOOST_CHECK_EQUAL(SC_NET, sc_net2.userDataType);
+        BOOST_CHECK_EQUAL(16, sc_net2.length);
+        BOOST_CHECK_EQUAL(1003, sc_net2.MCSChannelId);
+        BOOST_CHECK_EQUAL(3, sc_net2.channelCount);
+        BOOST_CHECK_EQUAL(1004, sc_net2.channelDefArray[0].id);
+        BOOST_CHECK_EQUAL(1005, sc_net2.channelDefArray[1].id);
+        BOOST_CHECK_EQUAL(1006, sc_net2.channelDefArray[2].id);
+
+        sc_net2.log("Server Received");
+    }
+    catch (const Error & e){
+        BOOST_CHECK(false);
+    };
+    
 }
 
 
@@ -200,7 +223,30 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
     BOOST_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
                      , cs_net.channelDefArray[1].options);
+                     
+    cs_net.log("Client Received");
+                     
 }
+
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_ServerProprietaryCertificate)
+{
+    const char indata[] =
+        /* 0000 */ "\x02\x0c\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+    ;
+
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::SCSecurity sc_sec1;
+    sc_sec1.recv(stream);
+    BOOST_CHECK_EQUAL(SC_SECURITY, sc_sec1.userDataType);
+    BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
+    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
+    BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+    
+    sc_sec1.log("Server Received");
+}
+
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
 {
@@ -217,6 +263,8 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_no_crypt)
     BOOST_CHECK_EQUAL(sizeof(indata) - 1, sc_sec1.length);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionMethod);
     BOOST_CHECK_EQUAL(0, sc_sec1.encryptionLevel);
+    
+    sc_sec1.log("Server Received");
 }
 
 
@@ -333,6 +381,9 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp5)
                      , sc_sec1.serverRandom, sc_sec1.serverRandomLen));
     BOOST_CHECK_EQUAL((uint32_t)GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_2, sc_sec1.dwVersion);
     BOOST_CHECK_EQUAL(true, sc_sec1.temporary);
+
+    sc_sec1.log("Server Received");
+
 }
 
 BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
@@ -376,85 +427,118 @@ BOOST_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_rdp4)
     BOOST_CHECK_EQUAL(false, sc_sec1.temporary);
     BOOST_CHECK_EQUAL(0x31415352, sc_sec1.proprietaryCertificate.RSAPK.magic); // magic is really ASCII string 'RSA1'
 
+    sc_sec1.log("Server Received");
+}
 
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_cluster)
+{
+    const char indata[] =
+        "\x04\xc0"         // CS_CLUSTER
+        "\x0c\x00"         // 12 bytes user Data
+        "\x0d\x00\x00\x00" // TS_UD_CS_CLUSTER::Flags = 0x0d
+        // 0x0d
+        // = 0x03 << 2 | 0x01
+        // = REDIRECTION_VERSION4 << 2 | REDIRECTION_SUPPORTED
+        "\x00\x00\x00\x00" // TS_UD_CS_CLUSTER::RedirectedSessionID
+    ;
+
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::CSCluster cs_cluster;
+    cs_cluster.recv(stream);
+    BOOST_CHECK_EQUAL(CS_CLUSTER, cs_cluster.userDataType);
+    BOOST_CHECK_EQUAL(12, cs_cluster.length);
+    BOOST_CHECK_EQUAL(13, cs_cluster.flags);
+    BOOST_CHECK_EQUAL(0, cs_cluster.redirectedSessionID);
+    
+    cs_cluster.log("Client Received");
 }
 
 
-TODO("Add tests for CS_SECURITY")
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_core)
+{
+    const char indata[] =
+        "\x01\xc0"         // TS_UD_HEADER::type = CS_CORE (0xc001)
+        "\xd8\x00"         // length = 216 bytes
+        "\x04\x00\x08\x00" // TS_UD_CS_CORE::version = 0x0008004
+        "\x00\x05"         // TS_UD_CS_CORE::desktopWidth = 1280
+        "\x00\x04"         // TS_UD_CS_CORE::desktopHeight = 1024
+        "\x01\xca"         // TS_UD_CS_CORE::colorDepth = RNS_UD_COLOR_8BPP (0xca01)
+        "\x03\xaa"         // TS_UD_CS_CORE::SASSequence
+        "\x09\x04\x00\x00" // TS_UD_CS_CORE::keyboardLayout = 0x409 = 1033 = English (US)
+        "\xce\x0e\x00\x00" // TS_UD_CS_CORE::clientBuild = 3790
+                           // TS_UD_CS_CORE::clientName = ELTONS-TEST2
+        "\x45\x00\x4c\x00\x54\x00\x4f\x00\x4e\x00\x53\x00\x2d\x00\x44\x00"
+        "\x45\x00\x56\x00\x32\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x04\x00\x00\x00" // TS_UD_CS_CORE::keyboardType
+        "\x00\x00\x00\x00" // TS_UD_CS_CORE::keyboardSubtype
+        "\x0c\x00\x00\x00" // TS_UD_CS_CORE::keyboardFunctionKey
+                           // TS_UD_CS_CORE::imeFileName = ""
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x01\xca"         // TS_UD_CS_CORE::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (0xca01)
+        "\x01\x00"         // TS_UD_CS_CORE::clientProductId
+        "\x00\x00\x00\x00" // TS_UD_CS_CORE::serialNumber
+        "\x18\x00"         // TS_UD_CS_CORE::highColorDepth = 24 bpp
+        "\x07\x00"         // TS_UD_CS_CORE::supportedColorDepths
+                           //0x07 = 0x01 | 0x02 | 0x04 = RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT
+        "\x01\x00"         // TS_UD_CS_CORE::earlyCapabilityFlags
+                           //0x01 = RNS_UD_CS_SUPPORT_ERRINFO_PDU
+                           //TS_UD_CS_CORE::clientDigProductId = "69712-783-0357974-42714"
+        "\x36\x00\x39\x00\x37\x00\x31\x00\x32\x00\x2d\x00\x37\x00\x38\x00"
+        "\x33\x00\x2d\x00\x30\x00\x33\x00\x35\x00\x37\x00\x39\x00\x37\x00"
+        "\x34\x00\x2d\x00\x34\x00\x32\x00\x37\x00\x31\x00\x34\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00"             // TS_UD_CS_CORE::connectionType = 0 (not used as RNS_UD_CS_VALID_CONNECTION_TYPE not set)
+        "\x00"             // TS_UD_CS_CORE::pad1octet
+        "\x00\x00\x00\x00" // TS_UD_CS_CORE::serverSelectedProtocol
+    ;
+
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::CSCore cs_core;
+    cs_core.recv(stream);
+    BOOST_CHECK_EQUAL(CS_CORE, cs_core.userDataType);
+    BOOST_CHECK_EQUAL(216, cs_core.length);
+    
+    cs_core.log("Client Received");
+}
+
 
 // 02 c0 0c 00 -> TS_UD_HEADER::type = CS_SECURITY (0xc002), length = 12 bytes
 
-// 1b 00 00 00 -> TS_UD_CS_SEC::encryptionMethods
-// 0x1b
-// = 0x01 | 0x02 | 0x08 | 0x10
-// = 40BIT_ENCRYPTION_FLAG | 128BIT_ENCRYPTION_FLAG |
-// 56BIT_ENCRYPTION_FLAG | FIPS_ENCRYPTION_FLAG
 
-// 00 00 00 00 -> TS_UD_CS_SEC::extEncryptionMethods
+BOOST_AUTO_TEST_CASE(Test_gcc_user_data_cs_security)
+{
+    const char indata[] =
+        "\x02\xc0"         // CS_SECURITY
+        "\x0c\x00"         // 12 bytes user Data
 
+        "\x1b\x00\x00\x00" // TS_UD_CS_SEC::encryptionMethods
+                           // 0x1b = 0x01 | 0x02 | 0x08 | 0x10 
+                           // = 40BIT_ENCRYPTION_FLAG 
+                           // | 128BIT_ENCRYPTION_FLAG 
+                           // | 56BIT_ENCRYPTION_FLAG 
+                           // | FIPS_ENCRYPTION_FLAG
+        "\x00\x00\x00\x00" // TS_UD_CS_SEC::extEncryptionMethods
+    ;
 
-TODO("Add some tests for CS_CLUSTER")
+    GeneratorTransport gt(indata, sizeof(indata) - 1);
+    BStream stream(256);
+    gt.recv(&stream.end, sizeof(indata) - 1);
+    GCC::UserData::CSSecurity cs_security;
+    cs_security.recv(stream);
+    BOOST_CHECK_EQUAL(CS_SECURITY, cs_security.userDataType);
+    BOOST_CHECK_EQUAL(12, cs_security.length);
+    BOOST_CHECK_EQUAL(27, cs_security.encryptionMethods);
+    BOOST_CHECK_EQUAL(0, cs_security.extEncryptionMethods);
+    
+    cs_security.log("Client Received");
+}
 
-
-// 04 c0 0c 00 -> TS_UD_HEADER::type = CS_CLUSTER (0xc004), length = 12 bytes
-
-// 0d 00 00 00 -> TS_UD_CS_CLUSTER::Flags = 0x0d
-// 0x0d
-// = 0x03 << 2 | 0x01
-// = REDIRECTION_VERSION4 << 2 | REDIRECTION_SUPPORTED
-
-// 00 00 00 00 -> TS_UD_CS_CLUSTER::RedirectedSessionID
-
-TODO("Add some tests for CS_CORE")
-
-
-//01 c0 d8 00 -> TS_UD_HEADER::type = CS_CORE (0xc001), length = 216 bytes
-
-//04 00 08 00 -> TS_UD_CS_CORE::version = 0x0008004
-//00 05 -> TS_UD_CS_CORE::desktopWidth = 1280
-//00 04 -> TS_UD_CS_CORE::desktopHeight = 1024
-//01 ca -> TS_UD_CS_CORE::colorDepth = RNS_UD_COLOR_8BPP (0xca01)
-//03 aa -> TS_UD_CS_CORE::SASSequence
-//09 04 00 00 -> TS_UD_CS_CORE::keyboardLayout = 0x409 = 1033 = English (US)
-//ce 0e 00 00 -> TS_UD_CS_CORE::clientBuild = 3790
-
-//45 00 4c 00 54 00 4f 00 4e 00 53 00 2d 00 44 00
-//45 00 56 00 32 00 00 00 00 00 00 00 00 00 00 00 -> TS_UD_CS_CORE::clientName = ELTONS-TEST2
-
-//04 00 00 00 -> TS_UD_CS_CORE::keyboardType
-//00 00 00 00 -> TS_UD_CS_CORE::keyboardSubtype
-//0c 00 00 00 -> TS_UD_CS_CORE::keyboardFunctionKey
-
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ->
-//TS_UD_CS_CORE::imeFileName = ""
-
-//01 ca -> TS_UD_CS_CORE::postBeta2ColorDepth = RNS_UD_COLOR_8BPP (0xca01)
-
-//01 00 -> TS_UD_CS_CORE::clientProductId
-//00 00 00 00 -> TS_UD_CS_CORE::serialNumber
-//18 00 -> TS_UD_CS_CORE::highColorDepth = 24 bpp
-
-//07 00 -> TS_UD_CS_CORE::supportedColorDepths
-//0x07
-//= 0x01 | 0x02 | 0x04
-//= RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT
-
-//01 00 -> TS_UD_CS_CORE::earlyCapabilityFlags
-//0x01
-//= RNS_UD_CS_SUPPORT_ERRINFO_PDU
-
-//36 00 39 00 37 00 31 00 32 00 2d 00 37 00 38 00
-//33 00 2d 00 30 00 33 00 35 00 37 00 39 00 37 00
-//34 00 2d 00 34 00 32 00 37 00 31 00 34 00 00 00
-//00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 ->
-//TS_UD_CS_CORE::clientDigProductId = "69712-783-0357974-42714"
-
-//00 -> TS_UD_CS_CORE::connectionType = 0 (not used as RNS_UD_CS_VALID_CONNECTION_TYPE not set)
-//00 -> TS_UD_CS_CORE::pad1octet
-
-//00 00 00 00 -> TS_UD_CS_CORE::serverSelectedProtocol
 
 

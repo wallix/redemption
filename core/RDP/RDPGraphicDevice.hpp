@@ -42,6 +42,8 @@
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
 #include "RDP/bitmapupdate.hpp"
+#include "RDP/caches/fontcache.hpp"
+#include "RDP/pointer.hpp"
 
 struct RDPGraphicDevice {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
@@ -50,23 +52,32 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPScrBlt     & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPDestBlt    & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPPatBlt     & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPMemBlt     & cmd, const Rect & clip, const Bitmap & bmp) = 0;
-    virtual void draw(const RDPMem3Blt    & cmd, const Rect & clip, const Bitmap & bmp) = 0;
+    virtual void draw(const RDPMemBlt     & cmd, const Rect & clip,
+        const Bitmap & bmp) = 0;
+    virtual void draw(const RDPMem3Blt    & cmd, const Rect & clip,
+        const Bitmap & bmp) = 0;
     virtual void draw(const RDPLineTo     & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+     const GlyphCache * gly_cache) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders")
     virtual void draw(const RDPBrushCache & cmd) {}
     virtual void draw(const RDPColCache   & cmd) {}
     virtual void draw(const RDPGlyphCache & cmd) {}
 
-    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) {}
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+        size_t size, const Bitmap & bmp) {}
 
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
-    virtual void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
-                         , bool no_timestamp, bool ignore_frame_in_timeval) {}
+    virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
+        bool pointer_already_displayed, bool no_timestamp,
+        bool ignore_frame_in_timeval) {}
+
+    virtual void server_set_pointer(const Pointer & cursor) {}
+    virtual void send_pointer(int cache_idx, const uint8_t * data,
+        const uint8_t * mask, int hotspot_x, int hotspot_y) {}
+    virtual void set_pointer(int cache_idx) {}
 
 protected:
     // this to avoid calling constructor of base abstract class

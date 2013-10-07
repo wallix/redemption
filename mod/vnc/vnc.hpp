@@ -39,6 +39,7 @@
 #include "channel_list.hpp"
 
 #include "RDP/clipboard.hpp"
+#include "RDP/pointer.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -85,6 +86,8 @@ struct mod_vnc : public mod_api {
 
     bool opt_clipboard;  // true clipboard available, false clipboard unavailable
 
+    z_stream zstrm;
+
     //==============================================================================================================
     mod_vnc( Transport * t
            , const char * username
@@ -108,6 +111,14 @@ struct mod_vnc : public mod_api {
             , opt_clipboard(clipboard) {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Connecting to VNC Server");
+
+        memset(&zstrm, 0, sizeof(zstrm));
+        if (inflateInit(&this->zstrm) != Z_OK)
+        {
+            LOG(LOG_ERR, "vnc zlib initialization failed");
+            throw Error(ERR_VNC_ZLIB_INITIALIZATION);
+        }
+
         init_palette332(this->palette332);
         this->t = t;
         keymapSym.init_layout_sym(keylayout);
@@ -120,8 +131,6 @@ struct mod_vnc : public mod_api {
         this->vnc_desktop = 0;
         memset(this->username, 0, 256);
         memset(this->password, 0, 256);
-
-//        this->clip_chanid = 0;
 
         memcpy(this->username, username, sizeof(this->username)-1);
         this->username[sizeof(this->username)-1] = 0;
@@ -171,7 +180,7 @@ struct mod_vnc : public mod_api {
                 this->t->recv(&stream.end, 4);
                 int i = stream.in_uint32_be();
                 if (i != 0) {
-                    LOG(LOG_INFO, "vnc password failed\n");
+                    LOG(LOG_ERR, "vnc password failed");
                     throw Error(ERR_VNC_CONNECTION_ERROR);
                 } else {
                     LOG(LOG_INFO, "vnc password ok\n");
@@ -179,6 +188,7 @@ struct mod_vnc : public mod_api {
             }
             break;
             default:
+                LOG(LOG_ERR, "vnc unexpected security level");
                 throw Error(ERR_VNC_CONNECTION_ERROR);
         }
         this->t->send("\x01", 1); /* share flag */
@@ -282,6 +292,7 @@ struct mod_vnc : public mod_api {
             int lg = stream.in_uint32_be();
 
             if (lg > 255 || lg < 0) {
+                LOG(LOG_ERR, "VNC connection error");
                 throw Error(ERR_VNC_CONNECTION_ERROR);
             }
             char * end = this->mod_name;
@@ -411,17 +422,28 @@ struct mod_vnc : public mod_api {
             BStream stream(32768);
             stream.out_uint8(2);
             stream.out_uint8(0);
-//            stream.out_uint16_be(3);
+
             stream.out_uint16_be(new_encoding ? 4 : 3);
             if (new_encoding) {
-                stream.out_uint32_be(2);        /* RRE */
+                stream.out_uint32_be(2);        // RRE
             }
-            stream.out_uint32_be(0);            /* raw */
-            stream.out_uint32_be(1);            /* copy rect */
-            stream.out_uint32_be(0xffffff11);   /* cursor */
+            stream.out_uint32_be(0);            // raw
+            stream.out_uint32_be(1);            // copy rect
+            stream.out_uint32_be(0xffffff11);   // cursor
 
-//            this->t->send(stream.get_data(), 4 + 3 * 4);
             this->t->send(stream.get_data(), 4 + (new_encoding ? 4 : 3) * 4);
+/*
+            stream.out_uint16_be(new_encoding ? 5 : 3);
+            if (new_encoding) {
+                stream.out_uint32_be(16);       // ZRLE
+                stream.out_uint32_be(2);        // RRE
+            }
+            stream.out_uint32_be(0);            // raw
+            stream.out_uint32_be(1);            // copy rect
+            stream.out_uint32_be(0xffffff11);   // cursor
+
+            this->t->send(stream.get_data(), 4 + (new_encoding ? 5 : 3) * 4);
+*/
         }
 
         TODO("Maybe the resize should be done in session ?")
@@ -442,20 +464,18 @@ struct mod_vnc : public mod_api {
             break;
         }
 
-        TODO(" define some constants  not need to use dynamic data")
 //        /* set almost null cursor, this is the little dot cursor */
-        uint8_t rdp_cursor_data[32 * (32 * 3)];
-        uint8_t rdp_cursor_mask[32 * (32 / 8)];
-        memset(rdp_cursor_data, 0, 32 * (32 * 3));
-        memset(rdp_cursor_data + (32 * (32 * 3) - 1 * 32 * 3), 0xff, 9);
-        memset(rdp_cursor_data + (32 * (32 * 3) - 2 * 32 * 3), 0xff, 9);
-        memset(rdp_cursor_data + (32 * (32 * 3) - 3 * 32 * 3), 0xff, 9);
-        memset(rdp_cursor_mask, 0xff, 32 * (32 / 8));
-
-        this->front.server_set_pointer(3, 3, rdp_cursor_data, rdp_cursor_mask);
+        struct Pointer cursor;
+        cursor.x = 3;
+        cursor.y = 3;
+        memset(cursor.data + 31 * (32 * 3), 0xff, 9);
+        memset(cursor.data + 30 * (32 * 3), 0xff, 9);
+        memset(cursor.data + 29 * (32 * 3), 0xff, 9);
+        memset(cursor.mask, 0xff, 32 * (32 / 8));
+        this->front.server_set_pointer(cursor);
 
         if (error) {
-            LOG(LOG_INFO, "error - problem connecting\n");
+            LOG(LOG_ERR, "error - problem connecting\n");
             throw Error(ERR_VNC_CONNECTION_ERROR);
         }
 
@@ -472,7 +492,10 @@ struct mod_vnc : public mod_api {
     } // Constructor
 
     //==============================================================================================================
-    virtual ~mod_vnc(){}
+    virtual ~mod_vnc()
+    {
+        inflateEnd(&this->zstrm);
+    }
     //==============================================================================================================
 
     //==============================================================================================================
@@ -597,7 +620,7 @@ struct mod_vnc : public mod_api {
     } // rdp_input_invalidate
 
     //==============================================================================================================
-    virtual void draw_event(void)
+    virtual void draw_event(time_t now)
     {
         if (this->verbose) {
             LOG(LOG_INFO, "vnc::draw_event");
@@ -639,6 +662,401 @@ struct mod_vnc : public mod_api {
     } // draw_event
 
     private:
+    struct ZRLEUpdateContext
+    {
+        uint8_t Bpp;
+
+        uint16_t x;
+        uint16_t cx;
+
+        uint16_t cx_remain;
+        uint16_t cy_remain;
+
+        uint16_t tile_x;
+        uint16_t tile_y;
+
+        BStream data_remain;
+
+        union
+        {
+            int i;
+        };
+
+        ZRLEUpdateContext() : data_remain(16384) {}
+    };
+    void lib_framebuffer_update_zrle(HStream & uncompressed_data_buffer,
+        ZRLEUpdateContext & update_context)
+    {
+        if (this->verbose) {
+            LOG(LOG_INFO,
+                "VNC Encoding: ZRLE, uncompressed length=%lu remaining data size=%lu",
+                uncompressed_data_buffer.in_remain(),
+                update_context.data_remain.size());
+        }
+
+        if (update_context.data_remain.size())
+        {
+            uncompressed_data_buffer.copy_to_head(
+                update_context.data_remain.get_data(),
+                update_context.data_remain.size());
+            uncompressed_data_buffer.p = uncompressed_data_buffer.get_data();
+
+            update_context.data_remain.reset();
+        }
+
+        uint16_t   tile_cx;
+        uint16_t   tile_cy;
+        uint8_t    tile_data[16384];    // max size with 16 bpp
+        uint16_t   tile_data_length;
+        uint16_t   tile_data_length_remain;
+
+        uint8_t  * remaining_data        = NULL;
+        uint16_t   remaining_data_length = 0;
+        uint8_t    subencoding           = 127;     // Unauthorized value
+
+        try
+        {
+            while (uncompressed_data_buffer.in_remain())
+            {
+                tile_cx = std::min<uint16_t>(update_context.cx_remain, 64);
+                tile_cy = std::min<uint16_t>(update_context.cy_remain, 64);
+
+                const uint8_t * tile_data_p = tile_data;
+
+                tile_data_length = tile_cx * tile_cy * update_context.Bpp;
+                if (tile_data_length > sizeof(tile_data))
+                {
+                    LOG(LOG_ERR,
+                        "VNC Encoding: ZRLE, tile buffer too small (%u < %u)",
+                        sizeof(tile_data), tile_data_length);
+                    throw Error(ERR_BUFFER_TOO_SMALL);
+                }
+
+                remaining_data        = uncompressed_data_buffer.p;
+                remaining_data_length = uncompressed_data_buffer.in_remain();
+
+                subencoding = uncompressed_data_buffer.in_uint8();
+
+                if (this->verbose) {
+                    LOG(LOG_INFO, "VNC Encoding: ZRLE, subencoding = %d",
+                        subencoding);
+                }
+
+                if (!subencoding)
+                {
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Raw pixel data");
+                    }
+
+                    if (uncompressed_data_buffer.in_remain() < tile_data_length)
+                    {
+                        throw Error(ERR_VNC_NEED_MORE_DATA);
+                    }
+
+                    tile_data_p = uncompressed_data_buffer.in_uint8p(tile_data_length);
+                }
+                else if (subencoding == 1)
+                {
+                    if (this->verbose) {
+                        LOG(LOG_INFO,
+                            "VNC Encoding: ZRLE, Solid tile (single color)");
+                    }
+
+                    if (uncompressed_data_buffer.in_remain() < update_context.Bpp)
+                    {
+                        throw Error(ERR_VNC_NEED_MORE_DATA);
+                    }
+
+                    const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(update_context.Bpp);
+
+                    uint8_t * tmp_tile_data = tile_data;
+
+                    for (int i = 0; i < tile_cx; i++, tmp_tile_data += update_context.Bpp)
+                        memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
+
+                    uint16_t line_size = tile_cx * update_context.Bpp;
+
+                    for (int i = 1; i < tile_cy; i++, tmp_tile_data += line_size)
+                        memcpy(tmp_tile_data, tile_data, line_size);
+                }
+                else if ((subencoding >= 2) && (subencoding <= 16))
+                {
+                    if (this->verbose) {
+                        LOG(LOG_INFO,
+                            "VNC Encoding: ZRLE, Packed palette types, "
+                                "palette size=%d",
+                            subencoding);
+                    }
+
+                    const uint8_t * palette;
+                    const uint8_t   palette_count = subencoding;
+                    const uint16_t  palette_size  = palette_count * update_context.Bpp;
+
+                    if (uncompressed_data_buffer.in_remain() < palette_size)
+                    {
+                        throw Error(ERR_VNC_NEED_MORE_DATA);
+                    }
+
+                    palette = uncompressed_data_buffer.in_uint8p(palette_size);
+
+                    uint16_t   packed_pixels_length;
+
+                    if (palette_count == 2)
+                    {
+                        packed_pixels_length = (tile_cx + 7) / 8 * tile_cy;
+                    }
+                    else if ((palette_count == 3) || (palette_count == 4))
+                    {
+                        packed_pixels_length = (tile_cx + 3) / 4 * tile_cy;
+                    }
+                    else// if ((palette_count >= 5) && (palette_count <= 16))
+                    {
+                        packed_pixels_length = (tile_cx + 1) / 2 * tile_cy;
+                    }
+
+                    if (uncompressed_data_buffer.in_remain() < packed_pixels_length)
+                    {
+                        throw Error(ERR_VNC_NEED_MORE_DATA);
+                    }
+
+                    const uint8_t * packed_pixels = uncompressed_data_buffer.in_uint8p(packed_pixels_length);
+
+                    uint8_t * tmp_tile_data = tile_data;
+
+                    tile_data_length_remain = tile_data_length;
+
+                    uint8_t         pixel_remain         = tile_cx;
+                    const uint8_t * packed_pixels_remain = packed_pixels;
+                    uint8_t         current              = 0;
+                    uint8_t         index                = 0;
+
+                    uint8_t palette_index;
+
+                    while (tile_data_length_remain >= update_context.Bpp)
+                    {
+                        pixel_remain--;
+
+                        if (!index)
+                        {
+                            current = *packed_pixels_remain;
+                            packed_pixels_remain++;
+                        }
+
+                        if (palette_count == 2)
+                        {
+                            palette_index = (current & 0x80) >> 7;
+                            current <<= 1;
+                            index++;
+
+                            if (!pixel_remain || (index > 7))
+                            {
+                                index = 0;
+                            }
+                        }
+                        else if ((palette_count == 3) || (palette_count == 4))
+                        {
+                            palette_index = (current & 0xC0) >> 6;
+                            current <<= 2;
+                            index++;
+
+                            if (!pixel_remain || (index > 3))
+                            {
+                                index = 0;
+                            }
+                        }
+                        else// if ((palette_count >= 5) && (palette_count <= 16))
+                        {
+                            palette_index = (current & 0xF0) >> 4;
+                            current <<= 4;
+                            index++;
+
+                            if (!pixel_remain || (index > 1))
+                            {
+                                index = 0;
+                            }
+                        }
+
+                        if (!pixel_remain)
+                        {
+                            pixel_remain = tile_cx;
+                        }
+
+                        const uint8_t * cpixel_pattern = palette + palette_index * update_context.Bpp;
+
+                        memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
+
+                        tmp_tile_data           += update_context.Bpp;
+                        tile_data_length_remain -= update_context.Bpp;
+                    }
+                }
+                else if ((subencoding >= 17) && (subencoding <= 127))
+                {
+                    LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
+                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                }
+                else if (subencoding == 128)
+                {
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Plain RLE");
+                    }
+
+                    tile_data_length_remain = tile_data_length;
+
+                    uint16_t   run_length    = 0;
+                    uint8_t  * tmp_tile_data = tile_data;
+
+                    while (tile_data_length_remain >= update_context.Bpp)
+                    {
+
+                        if (uncompressed_data_buffer.in_remain() < update_context.Bpp)
+                        {
+                            throw Error(ERR_VNC_NEED_MORE_DATA);
+                        }
+
+                        const uint8_t * cpixel_pattern = uncompressed_data_buffer.in_uint8p(update_context.Bpp);
+
+                        run_length = 1;
+
+                        while (true)
+                        {
+                            if (uncompressed_data_buffer.in_remain() < 1)
+                            {
+                                throw Error(ERR_VNC_NEED_MORE_DATA);
+                            }
+
+                            uint8_t byte_value = uncompressed_data_buffer.in_uint8();
+                            run_length += byte_value;
+
+                            if (byte_value != 255)
+                                break;
+                        }
+
+                        // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
+
+                        while ((tile_data_length_remain >= update_context.Bpp) && run_length)
+                        {
+                            memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
+
+                            tmp_tile_data           += update_context.Bpp;
+                            tile_data_length_remain -= update_context.Bpp;
+
+                            run_length--;
+                        }
+                    }
+
+                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
+
+                    REDASSERT(!run_length);
+                    REDASSERT(!tile_data_length_remain);
+                }
+                else if (subencoding == 129)
+                {
+                    LOG(LOG_ERR, "VNC Encoding: ZRLE, unused");
+                    throw Error(ERR_VNC_ZRLE_PROTOCOL);
+                }
+                else
+                {
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "VNC Encoding: ZRLE, Palette RLE");
+                    }
+
+                    const uint8_t  * palette;
+                    const uint8_t    palette_count = subencoding - 128;
+                    const uint16_t   palette_size  = palette_count * update_context.Bpp;
+
+                    if (uncompressed_data_buffer.in_remain() < palette_size)
+                    {
+                        throw Error(ERR_VNC_NEED_MORE_DATA);
+                    }
+
+                    palette = uncompressed_data_buffer.in_uint8p(palette_size);
+
+                    tile_data_length_remain = tile_data_length;
+
+                    uint16_t   run_length    = 0;
+                    uint8_t  * tmp_tile_data = tile_data;
+
+                    while (tile_data_length_remain >= update_context.Bpp)
+                    {
+                        if (uncompressed_data_buffer.in_remain() < 1)
+                        {
+                            throw Error(ERR_VNC_NEED_MORE_DATA);
+                        }
+
+                        uint8_t         palette_index  = uncompressed_data_buffer.in_uint8();
+                        const uint8_t * cpixel_pattern = palette + (palette_index & 0x7F) * update_context.Bpp;
+
+                        run_length = 1;
+
+                        if (palette_index & 0x80)
+                        {
+                            while (true)
+                            {
+                                if (uncompressed_data_buffer.in_remain() < 1)
+                                {
+                                    throw Error(ERR_VNC_NEED_MORE_DATA);
+                                }
+
+                                uint8_t byte_value = uncompressed_data_buffer.in_uint8();
+                                run_length += byte_value;
+
+                                if (byte_value != 255)
+                                    break;
+                            }
+                        }
+
+                        // LOG(LOG_INFO, "VNC Encoding: ZRLE, run length=%u", run_length);
+
+                        while ((tile_data_length_remain >= update_context.Bpp) && run_length)
+                        {
+                            memcpy(tmp_tile_data, cpixel_pattern, update_context.Bpp);
+
+                            tmp_tile_data           += update_context.Bpp;
+                            tile_data_length_remain -= update_context.Bpp;
+
+                            run_length--;
+                        }
+                    }
+
+                    // LOG(LOG_INFO, "VNC Encoding: ZRLE, run_length=%u", run_length);
+
+                    REDASSERT(!run_length);
+                    REDASSERT(!tile_data_length_remain);
+                }
+
+                this->front.begin_update();
+                this->front.draw_vnc(
+                    Rect(update_context.tile_x, update_context.tile_y,
+                        tile_cx, tile_cy),
+                    this->bpp, this->palette332, tile_data_p,
+                    tile_data_length);
+                this->front.end_update();
+
+                update_context.cx_remain -= tile_cx;
+                update_context.tile_x    += tile_cx;
+
+                if (!update_context.cx_remain)
+                {
+                    update_context.cx_remain =  update_context.cx;
+                    update_context.cy_remain -= tile_cy;
+
+                    update_context.tile_x =  update_context.x;
+                    update_context.tile_y += tile_cy;
+                }
+            }
+        }
+        catch (Error & e)
+        {
+            if (e.id != ERR_VNC_NEED_MORE_DATA)
+                throw;
+            else
+            {
+                update_context.data_remain.out_copy_bytes(remaining_data,
+                    remaining_data_length);
+                update_context.data_remain.mark_end();
+            }
+        }
+    }
     //==============================================================================================================
     void lib_framebuffer_update() throw (Error) {
     //==============================================================================================================
@@ -691,7 +1109,7 @@ struct mod_vnc : public mod_api {
                 this->front.end_update();
             }
             break;
-            case 2:
+            case 2: /* RRE */
             {
 //LOG(LOG_INFO, "VNC Encoding: RRE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
                 uint8_t * raw = (uint8_t *)malloc(cx * cy * Bpp);
@@ -767,6 +1185,74 @@ struct mod_vnc : public mod_api {
                 free(raw);
             }
             break;
+            case 5: /* Hextile */
+LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+            break;
+            case 16:    /* ZRLE */
+            {
+//LOG(LOG_INFO, "VNC Encoding: ZRLE, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, x, y, cx, cy);
+                this->t->recv(&stream.end, 4);
+
+                uint32_t zlib_compressed_data_length = stream.in_uint32_be();
+
+                if (this->verbose)
+                {
+                    LOG(LOG_INFO, "VNC Encoding: ZRLE, compressed length = %u",
+                        zlib_compressed_data_length);
+                }
+
+                if (zlib_compressed_data_length > 65536)
+                {
+                    LOG(LOG_ERR,
+                        "VNC Encoding: ZRLE, compressed data buffer too small "
+                            "(65536 < %lu)",
+                        zlib_compressed_data_length);
+                    throw Error(ERR_BUFFER_TOO_SMALL);
+                }
+
+                BStream zlib_compressed_data(65536);
+                this->t->recv(&zlib_compressed_data.end,
+                    zlib_compressed_data_length);
+                REDASSERT(zlib_compressed_data.in_remain() == zlib_compressed_data_length);
+
+                ZRLEUpdateContext zrle_update_context;
+
+                zrle_update_context.Bpp       = Bpp;
+                zrle_update_context.x         = x;
+                zrle_update_context.cx        = cx;
+                zrle_update_context.cx_remain = cx;
+                zrle_update_context.cy_remain = cy;
+                zrle_update_context.tile_x    = x;
+                zrle_update_context.tile_y    = y;
+
+                zstrm.avail_in = zlib_compressed_data_length;
+                zstrm.next_in  = zlib_compressed_data.get_data();
+
+                while (zstrm.avail_in > 0)
+                {
+                    HStream zlib_uncompressed_data_buffer(16384, 49152);
+
+                    zstrm.avail_out = zlib_uncompressed_data_buffer.get_capacity();
+                    zstrm.next_out  = zlib_uncompressed_data_buffer.get_data();
+
+                    int zlib_result = inflate(&zstrm, Z_NO_FLUSH);
+
+                    if (zlib_result != Z_OK)
+                    {
+                        LOG(LOG_ERR, "vnc zlib decompression failed (%d)", zlib_result);
+                        throw Error(ERR_VNC_ZLIB_INFLATE);
+                    }
+
+                    zlib_uncompressed_data_buffer.out_skip_bytes(
+                        zlib_uncompressed_data_buffer.get_capacity() - zstrm.avail_out);
+                    zlib_uncompressed_data_buffer.mark_end();
+                    zlib_uncompressed_data_buffer.rewind();
+
+                    this->lib_framebuffer_update_zrle(
+                        zlib_uncompressed_data_buffer, zrle_update_context);
+                }
+            }
+            break;
             case 0xffffff11: /* cursor */
             TODO(" see why we get these empty rects ?")
             if (cx > 0 && cy > 0) {
@@ -807,35 +1293,37 @@ struct mod_vnc : public mod_api {
                 const uint8_t *vnc_pointer_data = stream.in_uint8p(sz_pixel_array);
                 const uint8_t *vnc_pointer_mask = stream.in_uint8p(sz_bitmask);
 
-                uint8_t rdp_cursor_mask[32 * (32 / 8)] = {};
-                uint8_t rdp_cursor_data[32 * (32 * 3)] = {};
+                struct Pointer cursor;
+                cursor.x = 3;
+                cursor.y = 3;
 
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
                 if (cx == 1 && cy == 1) {
-                    memset(rdp_cursor_data, 0, sizeof(rdp_cursor_data));
-                    rdp_cursor_data[2883] = 0xFF;
-                    rdp_cursor_data[2884] = 0xFF;
-                    rdp_cursor_data[2885] = 0xFF;
-                    memset(rdp_cursor_mask, 0xFF, sizeof(rdp_cursor_mask));
-                    rdp_cursor_mask[116] = 0x1F;
-                    rdp_cursor_mask[120] = 0x1F;
-                    rdp_cursor_mask[124] = 0x1F;
+                    TODO("Appearence of this 1x1 cursor looks broken, check what we actually get")
+                    memset(cursor.data, 0, sizeof(cursor.data));
+                    cursor.data[2883] = 0xFF;
+                    cursor.data[2884] = 0xFF;
+                    cursor.data[2885] = 0xFF;
+                    memset(cursor.mask, 0xFF, sizeof(cursor.mask));
+                    cursor.mask[116] = 0x1F;
+                    cursor.mask[120] = 0x1F;
+                    cursor.mask[124] = 0x1F;
                 }
                 else {
                     // clear target cursor mask
                     for (size_t tmpy = 0; tmpy < 32; tmpy++) {
                         for (size_t mask_x = 0; mask_x < nbbytes(32); mask_x++) {
-                            rdp_cursor_mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
+                            cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
                         }
                     }
-                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask use is 1 bit per pixel arrays")
+                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays")
                     // copy vnc pointer and mask to rdp pointer and mask
 
                     for (int yy = 0; yy < cy; yy++) {
                         for (int xx = 0 ; xx < cx ; xx++){
                             if (vnc_pointer_mask[yy * nbbytes(cx) + xx / 8 ] & (0x80 >> (xx&7))){
                                 if ((yy < 32) && (xx < 32)){
-                                    rdp_cursor_mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
+                                    cursor.mask[(31-yy) * nbbytes(32) + (xx / 8)] &= ~(0x80 >> (xx&7));
                                     int pixel = 0;
                                     for (int tt = 0 ; tt < Bpp; tt++){
                                         pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
@@ -844,9 +1332,9 @@ struct mod_vnc : public mod_api {
                                     int red   = (pixel >> this->red_shift) & red_max;
                                     int green = (pixel >> this->green_shift) & green_max;
                                     int blue  = (pixel >> this->blue_shift) & blue_max;
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);;
-                                    rdp_cursor_data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
+                                    cursor.data[((31-yy) * 32 + xx) * 3 + 0] = (red << 3) | (red >> 2);
+                                    cursor.data[((31-yy) * 32 + xx) * 3 + 1] = (green << 2) | (green >> 4);
+                                    cursor.data[((31-yy) * 32 + xx) * 3 + 2] = (blue << 3) | (blue >> 2);
                                 }
                             }
                         }
@@ -858,12 +1346,12 @@ struct mod_vnc : public mod_api {
                 }
 TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
                 this->front.begin_update();
-                this->front.server_set_pointer(x, y, rdp_cursor_data, rdp_cursor_mask);
+                this->front.server_set_pointer(cursor);
                 this->front.end_update();
             }
             break;
             default:
-                LOG(LOG_INFO, "unexpected encoding %8x in lib_frame_buffer", encoding);
+                LOG(LOG_ERR, "unexpected encoding %8x in lib_frame_buffer", encoding);
                 throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
                 break;
             }
@@ -1178,7 +1666,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                 const unsigned expected = 10; /* msgFlags(2) + datalen(4) + requestedFormatId(4) */
                 if (!stream.in_check_rem(expected)) {
-                    LOG( LOG_INFO
+                    LOG( LOG_ERR
                        , "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_REQUEST data, need=%u remains=%u"
                        , expected, stream.in_remain());
                     throw Error(ERR_VNC);
@@ -1264,7 +1752,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!stream.in_check_rem(format_data_response_pdu.dataLen)) {
-                            LOG( LOG_INFO
+                            LOG( LOG_ERR
                                , "mod_vnc::send_to_vnc truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%u remains=%u"
                                , format_data_response_pdu.dataLen, stream.in_remain());
                             throw Error(ERR_VNC);
@@ -1288,7 +1776,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         // Virtual channel data span in multiple Virtual Channel PDUs.
 
                         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
-                            LOG(LOG_INFO, "mod_vnc::send_to_vnc flag CHANNEL_FLAG_FIRST expected");
+                            LOG(LOG_ERR, "mod_vnc::send_to_vnc flag CHANNEL_FLAG_FIRST expected");
                             throw Error(ERR_VNC);
                         }
 
@@ -1322,7 +1810,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                     }
 
                     if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) != 0) {
-                        LOG(LOG_INFO, "mod_vnc::send_to_vnc flag CHANNEL_FLAG_FIRST unexpected");
+                        LOG(LOG_ERR, "mod_vnc::send_to_vnc flag CHANNEL_FLAG_FIRST unexpected");
                         throw Error(ERR_VNC);
                     }
 
@@ -1410,8 +1898,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {
-        this->front.draw(cmd, clip);
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
+        this->front.draw(cmd, clip, gly_cache);
     }
 
     virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor

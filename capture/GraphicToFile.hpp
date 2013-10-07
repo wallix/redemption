@@ -481,10 +481,16 @@ public:
         this->RDPSerializer::draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    virtual void draw(const RDPGlyphCache & cmd)
     {
-        this->drawable.draw(cmd, clip);
-        this->RDPSerializer::draw(cmd, clip);
+        this->drawable.draw(cmd);
+        this->RDPSerializer::draw(cmd);
+    }
+
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
+    {
+        this->drawable.draw(cmd, clip, gly_cache);
+        this->RDPSerializer::draw(cmd, clip, gly_cache);
     }
 
 protected:
@@ -517,6 +523,55 @@ public:
         this->bitmap_count = 0;
         this->stream_bitmaps.reset();
     }
-};
+
+    virtual void send_pointer(int cache_idx, const Pointer & cursor) {
+        this->drawable.send_pointer(cache_idx, cursor);
+
+        BStream header(8);
+        size_t size =   2           // mouse x
+                      + 2           // mouse y
+                      + 1           // cache index
+                      + 1           // hotspot x
+                      + 1           // hotspot y
+                      + 32 * 32 * 3 // data
+                      + 128         // mask
+                      ;
+        WRMChunk_Send chunk(header, POINTER, size, 0);
+        this->trans->send(header);
+
+        TODO("why several send ? one should be enough. See that")
+        
+        BStream payload(16);
+        payload.out_uint16_le(this->mouse_x);
+        payload.out_uint16_le(this->mouse_y);
+        payload.out_uint8(cache_idx);
+        payload.out_uint8(cursor.x);
+        payload.out_uint8(cursor.y);
+        payload.mark_end();
+        this->trans->send(payload);
+
+        this->trans->send(cursor.data, cursor.data_size());
+        this->trans->send(cursor.mask, cursor.mask_size());
+    }
+
+    virtual void set_pointer(int cache_idx) {
+        this->drawable.set_pointer(cache_idx);
+
+        BStream header(8);
+        size_t size =   2                   // mouse x
+                      + 2                   // mouse y
+                      + 1                   // cache index
+                      ;
+        WRMChunk_Send chunk(header, POINTER, size, 0);
+        this->trans->send(header);
+
+        BStream payload(16);
+        payload.out_uint16_le(this->mouse_x);
+        payload.out_uint16_le(this->mouse_y);
+        payload.out_uint8(cache_idx);
+        payload.mark_end();
+        this->trans->send(payload);
+    }
+};  // struct GraphicToFile
 
 #endif

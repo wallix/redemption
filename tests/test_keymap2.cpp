@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Meng Tan
 
    Unit test to keymap object
    Using lib boost functions, some tests need to be added
@@ -231,6 +231,50 @@ BOOST_AUTO_TEST_CASE(TestDeadKeys)
     keymap.event(0xC000, 0x12, decoded_data); // 'e'
     BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
     BOOST_CHECK_EQUAL(0xEA, keymap.get_char()); // ê
+
+    // consecutive deadkey
+    keymap.event(0x0000, 0x1A, decoded_data); // '^' down dead key
+    keymap.event(0xC000, 0x1A, decoded_data); // '^' up dead key
+    keymap.event(0x0000, 0x1A, decoded_data); // '^' down dead key
+    keymap.event(0xC000, 0x1A, decoded_data); // '^' up dead key
+    BOOST_CHECK_EQUAL(2, keymap.nb_char_available());
+    BOOST_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
+    BOOST_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
+
+    // deadkey with non-comboable printed character
+    keymap.event(0x0000, 0x1A, decoded_data); // '^' down dead key
+    keymap.event(0xC000, 0x1A, decoded_data); // '^' up dead key
+    keymap.event(0x0000, 0x11, decoded_data); // 'z'
+    keymap.event(0xC000, 0x11, decoded_data); // 'z'
+    BOOST_CHECK_EQUAL(2, keymap.nb_char_available());
+    BOOST_CHECK_EQUAL(0x5E, keymap.get_char()); // ^
+    BOOST_CHECK_EQUAL(0x7A, keymap.get_char()); // z
+
+    // deadkey with special key
+    keymap.event(0x0000, 0x1A, decoded_data); // '^' down dead key
+    keymap.event(0xC000, 0x1A, decoded_data); // '^' up dead key
+    keymap.event(0x0000, 0x0F, decoded_data); // TAB
+    keymap.event(0xC000, 0x0F, decoded_data); // TAB
+    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    BOOST_CHECK_EQUAL(1, keymap.nb_kevent_available());
+    BOOST_CHECK_EQUAL(0x02, keymap.get_kevent()); // KEVENT_TAB
+    // the deadkey is still pending
+    keymap.event(0x0000, 0x12, decoded_data); // 'e'
+    keymap.event(0xC000, 0x12, decoded_data); // 'e'
+    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
+    BOOST_CHECK_EQUAL(0xEA, keymap.get_char()); // ê
+
+    // deadkey with Backspace deletes the deadkey
+    keymap.event(0x0000, 0x1A, decoded_data); // '^' down dead key
+    keymap.event(0xC000, 0x1A, decoded_data); // '^' up dead key
+    keymap.event(0x0000, 0x0E, decoded_data); // BACKSPACE
+    keymap.event(0xC000, 0x0E, decoded_data); // BACKSPACE
+    BOOST_CHECK_EQUAL(0, keymap.nb_char_available());
+    BOOST_CHECK_EQUAL(0, keymap.nb_kevent_available());
+    keymap.event(0x0000, 0x12, decoded_data); // 'e'
+    keymap.event(0xC000, 0x12, decoded_data); // 'e'
+    BOOST_CHECK_EQUAL(1, keymap.nb_char_available());
+    BOOST_CHECK_EQUAL(0x65, keymap.get_char()); // e
 
 
     // Autorepeat

@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,6 +28,7 @@
 #include "log.hpp"
 
 #include "internal/widget2/multiline.hpp"
+#include "internal/widget2/screen.hpp"
 // #include "internal/widget2/widget_composite.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
@@ -36,114 +38,17 @@
 #ifndef FIXTURES_PATH
 # define FIXTURES_PATH
 #endif
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
 
-struct TestDraw : DrawApi
-{
-    RDPDrawable gd;
-    Font font;
-
-    TestDraw(uint16_t w, uint16_t h)
-    : gd(w, h)
-    , font(FIXTURES_PATH "/dejavu-sans-10.fv1")
-    {}
-
-    virtual void draw(const RDPOpaqueRect& cmd, const Rect& rect)
-    {
-        this->gd.draw(cmd, rect);
-    }
-
-    virtual void draw(const RDPScrBlt&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPDestBlt&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPPatBlt&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPMemBlt& cmd, const Rect& rect, const Bitmap& bmp)
-    {
-        this->gd.draw(cmd, rect, bmp);
-    }
-
-    virtual void draw(const RDPMem3Blt& cmd, const Rect& rect, const Bitmap& bmp)
-    {
-        this->gd.draw(cmd, rect, bmp);
-    }
-
-    virtual void draw(const RDPLineTo&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPGlyphIndex&, const Rect&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPBrushCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPColCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void draw(const RDPGlyphCache&)
-    {
-        BOOST_CHECK(false);
-    }
-
-    virtual void begin_update()
-    {}
-
-    virtual void end_update()
-    {}
-
-    virtual void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip)
-    {
-        this->gd.server_draw_text(x, y, text, fgcolor, bgcolor, clip, this->font);
-    }
-
-    virtual void text_metrics(const char* text, int& width, int& height)
-    {
-        height = 0;
-        width = 0;
-        uint32_t uni[256];
-        size_t len_uni = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
-        if (len_uni){
-            for (size_t index = 0; index < len_uni; index++) {
-                FontChar *font_item = this->gd.get_font(this->font, uni[index]);
-                width += font_item->width + 2;
-                height = std::max(height, font_item->height);
-            }
-            width -= 2;
-        }
-    }
-
-    void save_to_png(const char * filename)
-    {
-        std::FILE * file = fopen(filename, "w+");
-        dump_png24(file, this->gd.drawable.data, this->gd.drawable.width,
-                   this->gd.drawable.height, this->gd.drawable.rowsize, true);
-        fclose(file);
-    }
-};
+#include "fake_draw.hpp"
 
 BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
 {
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -171,12 +76,14 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "multiline.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-    "\xee\xa2\x81\x4c\x50\xf0\x0d\x1e\x13\x42\x3e\xa2\x08\xf8\xc6\x7c\xea\x1d\x84\x87"
-    )){
+                   "\x06\x2b\x02\xe5\x16\x1e\x08\xd2\xe8\x66"
+                   "\xb6\x9b\xeb\xad\xdb\x98\xa3\x2b\x75\x7b"
+    // "\xee\xa2\x81\x4c\x50\xf0\x0d\x1e\x13\x42\x3e\xa2\x08\xf8\xc6\x7c\xea\x1d\x84\x87"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 }
@@ -186,7 +93,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -209,7 +116,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine2)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -224,7 +131,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -247,7 +154,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine3)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -262,7 +169,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -285,7 +192,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine4)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -300,7 +207,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -323,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine5)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -338,7 +245,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -361,7 +268,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLine6)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -376,7 +283,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -399,7 +306,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
                                          wmultiline.cx(),
                                          wmultiline.cy()));
 
-    //drawable.save_to_png("/tmp/multiline7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -414,7 +321,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -437,7 +344,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
                                          30,
                                          10));
 
-    //drawable.save_to_png("/tmp/multiline8.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -452,7 +359,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     TestDraw drawable(800, 600);
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int fg_color = BLUE;
     int bg_color = CYAN;
@@ -473,7 +380,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wmultiline.rdp_input_invalidate(wmultiline.rect);
 
-    //drawable.save_to_png("/tmp/multiline9.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "multiline9.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,

@@ -23,6 +23,7 @@
 
 #include "drawable.hpp"
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
 
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/orders/RDPOrdersCommon.hpp"
@@ -43,16 +44,23 @@ class RDPDrawable : public RDPGraphicDevice {
 public:
     Drawable drawable;
 
+    DrawablePointerCache ptr_cache;
+    GlyphCache           gly_cache;
+
     RDPDrawable(const uint16_t width, const uint16_t height)
     : drawable(width, height)
     {
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
+        this->ptr_cache.add_pointer_static(pointer0, 0);
+
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
+        this->ptr_cache.add_pointer_static(pointer1, 1);
     }
 
     virtual void set_row(size_t rownum, const uint8_t * data)
     {
         memcpy(this->drawable.data + this->drawable.rowsize * rownum, data, this->drawable.rowsize);
     }
-
 
     virtual uint8_t * get_row(size_t rownum)
     {
@@ -63,7 +71,6 @@ public:
     {
         return this->drawable.rowsize;
     }
-
 
     uint32_t RGBtoBGR(uint32_t color)
     {
@@ -98,8 +105,21 @@ public:
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
-        const uint32_t color = this->RGBtoBGR(cmd.back_color);
-        this->drawable.patblt(trect, cmd.rop, color);
+        if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03))
+        {
+            uint8_t brush_data[8];
+            memcpy(brush_data, cmd.brush.extra, 7);
+            brush_data[7] = cmd.brush.hatch;
+
+            const uint32_t back_color = this->RGBtoBGR(cmd.back_color);
+            const uint32_t fore_color = this->RGBtoBGR(cmd.fore_color);
+            this->drawable.patblt_ex(trect, cmd.rop, back_color, fore_color, brush_data);
+        }
+        else
+        {
+            const uint32_t color = this->RGBtoBGR(cmd.back_color);
+            this->drawable.patblt(trect, cmd.rop, color);
+        }
     }
 
     void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp)
@@ -128,6 +148,14 @@ public:
                 , cmd.srcy + (rect.y  - cmd.rect.y)
                 , 0, false);
         break;
+        case 0x22:  // dest = dest AND (NOT source)
+        case 0x66:  // dest = source XOR dest (SRCINVERT)
+        case 0xEE:  // dest = source OR dest (SRCPAINT)
+            this->drawable.mem_blt_ex(rect, bmp
+                , cmd.srcx + (rect.x - cmd.rect.x)
+                , cmd.srcy + (rect.y - cmd.rect.y)
+                , cmd.rop, false);
+            break;
         default:
             // should not happen
         break;
@@ -216,10 +244,132 @@ public:
         }
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip) {}
+    virtual void draw(const RDPGlyphCache & cmd)
+    {
+        this->gly_cache.set_glyph(cmd);
+    }
+
+    void draw_glyph(Bitmap & bmp, FontChar * fc, size_t offset_x, uint32_t color)
+    {
+        uint8_t * bmp_data    = bmp.data_bitmap.get() + (offset_x + 1) * 3 + bmp.line_size * (fc->height - 1);
+        uint8_t * fc_data     = fc->data;
+        uint8_t   fc_bit_mask = 128;
+
+        for (int y = 0; y < fc->height; y++)
+        {
+            for (int x = 0; x < fc->width; x++)
+            {
+                if (fc_bit_mask & (*fc_data))
+                {
+                    bmp_data[x * 3    ] = color;
+                    bmp_data[x * 3 + 1] = color >> 8;
+                    bmp_data[x * 3 + 2] = color >> 16;
+//                  printf("X");
+                }
+//              else
+//              {
+//                  printf(".");
+//              }
+
+                fc_bit_mask >>= 1;
+                if (!fc_bit_mask)
+                {
+                    fc_data++;
+                    fc_bit_mask = 128;
+                }
+            }
+
+            bmp_data -= bmp.line_size;
+//          printf("\n");
+        }
+    }
+
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
+        const GlyphCache * gly_cache)
+    {
+        Bitmap glyph_fragments(24, NULL, cmd.bk.cx, cmd.bk.cy);
+
+        {
+            const uint32_t color = this->RGBtoBGR(cmd.fore_color);
+
+            uint8_t * base = glyph_fragments.data_bitmap.get();
+            uint8_t * p    = base;
+
+            for (size_t x = 0; x < glyph_fragments.cx; x++)
+            {
+                p[0] = color;
+                p[1] = color >> 8;
+                p[2] = color >> 16;
+
+                p += 3;
+            }
+
+            uint8_t * target = base;
+
+            for (size_t y = 1; y < glyph_fragments.cy; y++)
+            {
+                target += glyph_fragments.line_size;
+                memcpy(target, base, glyph_fragments.line_size);
+            }
+        }
+
+        {
+            bool has_delta_byte = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+
+            StaticStream aj(cmd.data, cmd.data_len);
+
+            uint16_t draw_pos = 0;
+
+            while (aj.in_remain())
+            {
+                uint8_t  data     = aj.in_uint8();
+                if (data <= 0xFD)
+                {
+                    FontChar * fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
+                    if (!fc)
+                    {
+                        LOG(LOG_INFO, "RDPDrawabke::draw(RDPGlyphIndex, ...): Unknown glyph=%u", data);
+                        REDASSERT(fc);
+                    }
+
+                    if (has_delta_byte)
+                    {
+                        data = aj.in_uint8();
+                        if (data == 0x80)
+                        {
+                            draw_pos += aj.in_uint16_le();
+                        }
+                        else
+                        {
+                            draw_pos += data;
+                        }
+                    }
+
+                    if (fc)
+                    {
+                        this->draw_glyph(glyph_fragments, fc, draw_pos, this->RGBtoBGR(cmd.back_color));
+                    }
+                }
+                else if (data == 0xFE)
+                {
+                    LOG(LOG_INFO, "RDPDrawabke::draw(RDPGlyphIndex, ...): Unsupported data");
+                    throw Error(ERR_RDP_UNSUPPORTED);
+                }
+                else if (data == 0xFF)
+                {
+                    aj.in_skip_bytes(2);
+                    REDASSERT(!aj.in_remain());
+                }
+            }
+        }
+
+        this->drawable.draw_bitmap(
+            Rect(cmd.glyph_x, cmd.glyph_y - cmd.bk.cy, cmd.bk.cx, cmd.bk.cy), glyph_fragments,
+            false);
+    }
+
     virtual void draw(const RDPBrushCache & cmd) {}
     virtual void draw(const RDPColCache & cmd) {}
-    virtual void draw(const RDPGlyphCache & cmd) {}
 
     virtual void set_row(uint16_t r, uint8_t * row){
         memcpy(this->drawable.data + this->drawable.rowsize * r, row, this->drawable.rowsize);
@@ -238,6 +388,7 @@ public:
 
     void server_draw_text(int16_t x, int16_t y, const char* text, uint32_t fgcolor, uint32_t bgcolor, const Rect& clip, Font& font)
     {
+        TODO("Merge common code with Front::server_draw_text()");
         if (text[0] != 0) {
             Rect screen_rect = clip.intersect(this->drawable.width, this->drawable.height);
             if (screen_rect.isempty()){
@@ -245,6 +396,7 @@ public:
             }
 
             fgcolor = RGBtoBGR(fgcolor);
+            bgcolor = RGBtoBGR(bgcolor);
             uint32_t uni[128];
             size_t part_len = UTF8toUnicode(reinterpret_cast<const uint8_t *>(text), uni, sizeof(uni)/sizeof(uni[0]));
 
@@ -280,9 +432,8 @@ public:
         }
     }
 
-    virtual void draw( const RDPBitmapData & bitmap_data, const uint8_t * data
-                     , size_t size, const Bitmap & bmp) {
-
+    virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
+            size_t size, const Bitmap & bmp) {
         Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top
                     , bitmap_data.dest_right - bitmap_data.dest_left + 1
                     , bitmap_data.dest_bottom - bitmap_data.dest_top + 1);
@@ -292,12 +443,28 @@ public:
         this->drawable.draw_bitmap(trect, bmp, false);
     }
 
-    virtual void dump_png24(Transport * trans, bool bgr){
-            ::transport_dump_png24(trans, this->drawable.data,
-                     this->drawable.width, this->drawable.height,
-                     this->drawable.rowsize,
-                     bgr
-                    );
+    virtual void send_pointer(int cache_idx, const Pointer & cursor)
+    {
+        this->ptr_cache.add_pointer_static(cursor, cache_idx);
+
+        drawable_Pointer & dcursor = this->ptr_cache.Pointers[cache_idx];
+        this->drawable.set_mouse_cursor(
+            dcursor.contiguous_mouse_pixels, dcursor.mouse_cursor,
+            dcursor.x, dcursor.y);
+    }
+
+    virtual void set_pointer(int cache_idx) {
+        drawable_Pointer & Pointer = this->ptr_cache.Pointers[cache_idx];
+        this->drawable.set_mouse_cursor(
+            Pointer.contiguous_mouse_pixels, Pointer.mouse_cursor,
+            Pointer.x, Pointer.y);
+    }
+
+    virtual void dump_png24(Transport * trans, bool bgr) {
+        ::transport_dump_png24(trans, this->drawable.data,
+            this->drawable.width, this->drawable.height,
+            this->drawable.rowsize,
+            bgr);
     }
 };
 

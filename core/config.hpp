@@ -97,55 +97,26 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)")
 #endif
 
 TODO("move these into configuration")
-#define LOGIN_LOGO24 "ad24b.bmp"
-//#define LOGIN_LOGO24 "ad24b.png"
+#define LOGIN_LOGO24 "ad24b.png"
+#define LOGIN_WAB_BLUE "wablogoblue.png"
+#define HELP_ICON "helpicon.png"
 #define CURSOR0 "cursor0.cur"
 #define CURSOR1 "cursor1.cur"
 #define FONT1 "sans-10.fv1"
-#define REDEMPTION_LOGO24 "xrdp24b-redemption.bmp"
-//#define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
+#define REDEMPTION_LOGO24 "xrdp24b-redemption.png"
 #define LOCKFILE "rdpproxy.pid"
+
 
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
 
+#define RDPPROXY_CRT "rdpproxy.crt"
+#define RDPPROXY_KEY "rdpproxy.key"
+#define DH1024_PEM "dh1024.pem"
+#define DH2048_PEM "dh2048.pem"
+#define DH_PEM DH2048_PEM
+
 using namespace std;
-
-/*
-  static inline bool bool_from_string(string str)
-  {
-  return (boost::iequals(string("1"),str))
-  || (boost::iequals(string("yes"),str))
-  || (boost::iequals(string("on"),str))
-  || (boost::iequals(string("true"),str));
-  }
-*/
-
-static inline bool bool_from_cstr(const char * str)
-{
-    return (0 == strcasecmp("1",str))
-        || (0 == strcasecmp("yes",str))
-        || (0 == strcasecmp("on",str))
-        || (0 == strcasecmp("true",str));
-}
-
-static inline unsigned level_from_cstr(const char * str)
-{ // low = 0, medium = 1, high = 2
-    unsigned res = 0;
-    if (0 == strcasecmp("medium", str)) { res = 1; }
-    else if (0 == strcasecmp("high",   str)) { res = 2; }
-    return res;
-}
-
-static inline unsigned logtype_from_cstr(const char * str)
-{ // null = 0, print = 1, syslog = 2, file = 3, encryptedfile = 4
-    unsigned res = 0;
-    if (0 == strcasecmp("print",         str)) { res = 1; }
-    else if (0 == strcasecmp("syslog",        str)) { res = 2; }
-    else if (0 == strcasecmp("file",          str)) { res = 3; }
-    else if (0 == strcasecmp("encryptedfile", str)) { res = 4; }
-    return res;
-}
 
 static inline bool check_name(const char * str)
 {
@@ -193,6 +164,8 @@ typedef enum
         AUTHID_TRANS_CONNECTION_CLOSED,
         AUTHID_TRANS_HELP_MESSAGE,
 
+        AUTHID_LANGUAGE,
+
         // Options
         AUTHID_OPT_CLIPBOARD,           // clipboard
         AUTHID_OPT_DEVICEREDIRECTION,   // device_redirection
@@ -239,6 +212,8 @@ typedef enum
         AUTHID_TARGET,          // ip_target
         AUTHID_PASSWORD,        // password
 
+        AUTHID_REPORTING,       // reporting message (client -> server)
+
         AUTHID_AUTHCHANNEL_ANSWER,  // WabLauncher target answer
         AUTHID_AUTHCHANNEL_RESULT,  // WabLauncher session result
         AUTHID_AUTHCHANNEL_TARGET,  // WabLauncher target request
@@ -284,6 +259,7 @@ typedef enum
 #define STRAUTHID_TRANS_DIAGNOSTIC         "trans_diagnostic"
 #define STRAUTHID_TRANS_CONNECTION_CLOSED  "trans_connection_closed"
 #define STRAUTHID_TRANS_HELP_MESSAGE       "trans_help_message"
+#define STRAUTHID_LANGUAGE                 "language"
 // Options
 #define STRAUTHID_OPT_CLIPBOARD            "clipboard"
 #define STRAUTHID_OPT_DEVICEREDIRECTION    "device_redirection"
@@ -325,6 +301,8 @@ typedef enum
 #define STRAUTHID_HOST                     "ip_client"
 #define STRAUTHID_TARGET                   "ip_target"
 #define STRAUTHID_PASSWORD                 "password"
+
+#define STRAUTHID_REPORTING                "reporting"
 
 TODO("This is not a translation but auth_channel answer, change key name in sesman")
 #define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
@@ -370,6 +348,8 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_TRANS_DIAGNOSTIC,
     STRAUTHID_TRANS_CONNECTION_CLOSED,
     STRAUTHID_TRANS_HELP_MESSAGE,
+
+    STRAUTHID_LANGUAGE,
 
     // Options
     STRAUTHID_OPT_CLIPBOARD,            // clipboard
@@ -417,6 +397,8 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_TARGET,           // ip_target
     STRAUTHID_PASSWORD,         // password
 
+    STRAUTHID_REPORTING,        // reporting message (client -> server)
+
     STRAUTHID_AUTHCHANNEL_ANSWER,   // WabLauncher target answer
     STRAUTHID_AUTHCHANNEL_RESULT,   // WabLauncher session result
     STRAUTHID_AUTHCHANNEL_TARGET,   // WabLauncher target request
@@ -446,6 +428,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_AUTHENTICATION_CHALLENGE,
 };
+
 static inline authid_t authid_from_string(const char * strauthid) {
 
     std::string str = std::string(strauthid);
@@ -481,12 +464,12 @@ struct Inifile : public FieldObserver {
         // BEGIN globals
         bool bitmap_cache;                // default true
         bool bitmap_compression;          // default true
-        int port;                         // default 3389
+        int  port;                        // default 3389
         bool nomouse;
         bool notimestamp;
-        int encryptionLevel;              // 0=low, 1=medium, 2=high
+        int  encryptionLevel;             // 0=low, 1=medium, 2=high
         char authip[255];                 //
-        int authport;                     //
+        int  authport;                    //
         bool autovalidate;                // dialog autovalidation for test
 
         // keepalive and no traffic auto deconnexion
@@ -496,12 +479,12 @@ struct Inifile : public FieldObserver {
 
         bool internal_domain;
 
-        char dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
-        char auth_channel[512];
+        char      dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
+        char      auth_channel[512];
         BoolField enable_file_encryption; // AUTHID_OPT_FILE_ENCRYPTION //
-        char listen_address[256];
-        bool enable_ip_transparent;
-        char certificate_password[256];
+        char      listen_address[256];
+        bool      enable_ip_transparent;
+        char      certificate_password[256];
 
         char png_path[1024];
         char wrm_path[1024];
@@ -511,10 +494,10 @@ struct Inifile : public FieldObserver {
         StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY //
 
         StringField codec_id;                 // AUTHID_OPT_CODEC_ID //
-        BoolField movie;                      // AUTHID_OPT_MOVIE //
+        BoolField   movie;                      // AUTHID_OPT_MOVIE //
         StringField movie_path;               // AUTHID_OPT_MOVIE_PATH //
         StringField video_quality;            // AUTHID_VIDEO_QUALITY //
-        bool enable_bitmap_update;
+        bool        enable_bitmap_update;
         // END globals
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
@@ -531,6 +514,7 @@ struct Inifile : public FieldObserver {
 
         bool tls_fallback_legacy;
         bool tls_support;
+        bool bogus_neg_request; // needed to connect with jrdp, based on bogus X224 layer code
 
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
@@ -540,24 +524,33 @@ struct Inifile : public FieldObserver {
 
     struct {
         bool rdp_compression;
+
+        bool disconnect_on_logon_user_change;
+
+        uint32_t open_session_timeout;
     } mod_rdp;
 
     // Section "video"
     struct {
         unsigned capture_flags;   // 1 PNG capture, 2 WRM
         // video opt from capture_flags
-        bool capture_png;
-        bool capture_wrm;
-        bool capture_flv;
-        bool capture_ocr;
+        bool     capture_png;
+        bool     capture_wrm;
+        bool     capture_flv;
+        bool     capture_ocr;
 
         unsigned ocr_interval;
+        bool     ocr_on_title_bar_only;
+        unsigned ocr_max_unrecog_char_rate; // expressed in percentage,
+                                            //     0   - all of characters need be recognized
+                                            //     100 - accept all results
+
         unsigned png_interval;    // time between 2 png captures (in 1/10 seconds)
         unsigned capture_groupid;
         unsigned frame_interval;  // time between 2 frame captures (in 1/100 seconds)
         unsigned break_interval;  // time between 2 wrm movies (in seconds)
         unsigned png_limit;       // number of png captures to keep
-        char replay_path[1024];
+        char     replay_path[1024];
 
         int l_bitrate;            // bitrate for low quality
         int l_framerate;          // framerate for low quality
@@ -607,6 +600,7 @@ struct Inifile : public FieldObserver {
         uint32_t widget;
         uint32_t input;
 
+        uint32_t pass_dialog_box;
         int log_type;
         char log_file_path[1024]; // log file location
     } debug;
@@ -625,12 +619,14 @@ struct Inifile : public FieldObserver {
         StringField diagnostic;             // AUTHID_TRANS_DIAGNOSTIC
         StringField connection_closed;      // AUTHID_TRANS_CONNECTION_CLOSED
         StringField help_message;           // AUTHID_TRANS_HELP_MESSAGE
+
+        StringField language;
     } translation;
 
     // section "context"
     struct {
-        unsigned           selector_focus;           //  --
-        char               movie[1024];              //  --
+        unsigned           selector_focus;           // --
+        char               movie[1024];              // --
 
         UnsignedField      opt_bitrate;              // AUTHID_OPT_BITRATE //
         UnsignedField      opt_framerate;            // AUTHID_OPT_FRAMERATE //
@@ -644,7 +640,6 @@ struct Inifile : public FieldObserver {
         // because SocketTransport and ReplayMod take it as argument on
         // constructor and modify it as a redemption::string
         redemption::string auth_error_message;       // AUTHID_AUTH_ERROR_MESSAGE --
-
 
         BoolField          selector;                 // AUTHID_SELECTOR //
         UnsignedField      selector_current_page;    // AUTHID_SELECTOR_CURRENT_PAGE //
@@ -660,6 +655,7 @@ struct Inifile : public FieldObserver {
 
         StringField        password;                 // AUTHID_PASSWORD //
 
+        StringField        reporting;                // AUTHID_REPORTING //
 
         StringField        authchannel_answer;       // AUTHID_AUTHCHANNEL_ANSWER //
         StringField        authchannel_result;       // AUTHID_AUTHCHANNEL_RESULT //
@@ -694,6 +690,7 @@ struct Inifile : public FieldObserver {
     } context;
 
     struct IniAccounts account;
+
 public:
     Inifile() : FieldObserver() {
         this->init();
@@ -708,6 +705,7 @@ public:
         this->to_send_set.insert(AUTHID_TARGET);
         this->to_send_set.insert(AUTHID_AUTH_USER);
         this->to_send_set.insert(AUTHID_PASSWORD);
+        this->to_send_set.insert(AUTHID_REPORTING);
         this->to_send_set.insert(AUTHID_TARGET_USER);
         this->to_send_set.insert(AUTHID_TARGET_DEVICE);
         this->to_send_set.insert(AUTHID_TARGET_PROTOCOL);
@@ -779,8 +777,6 @@ public:
 
         this->globals.alternate_shell.set_empty();
         this->globals.shell_working_directory.set_empty();
-        // this->globals.alternate_shell[0]         = 0;
-        // this->globals.shell_working_directory[0] = 0;
 
 
         this->globals.codec_id.attach_ini(this,AUTHID_OPT_CODEC_ID);
@@ -817,11 +813,16 @@ public:
         this->client.performance_flags_force_not_present = 0;
         this->client.tls_fallback_legacy                 = false;
         this->client.tls_support                         = true;
+        this->client.bogus_neg_request                   = false;
         this->client.rdp_compression                     = false;
         // End Section "client"
 
         // Begin section "mod_rdp"
         this->mod_rdp.rdp_compression = false;
+
+        this->mod_rdp.disconnect_on_logon_user_change = false;
+
+        this->mod_rdp.open_session_timeout = 0;
         // End Section "mod_rdp"
 
         // Begin section video
@@ -831,7 +832,10 @@ public:
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
-        this->video.ocr_interval    = 100;        // 1 every second
+        this->video.ocr_interval                = 100;      // 1 every second
+        this->video.ocr_on_title_bar_only       = false;
+        this->video.ocr_max_unrecog_char_rate   = 40;
+
         this->video.png_interval    = 3000;
         this->video.capture_groupid = 33;
         this->video.frame_interval  = 40;         // 2,5 frame per second
@@ -885,6 +889,7 @@ public:
 
         this->debug.log_type          = 2; // syslog by default
         this->debug.log_file_path[0]  = 0;
+        this->debug.pass_dialog_box   = 0;
         // End Section "debug"
 
         // Begin Section "translation"
@@ -893,13 +898,14 @@ public:
         this->translation.button_help.set_from_cstr("Help");
         this->translation.button_close.set_from_cstr("Close");
         this->translation.button_refused.set_from_cstr("Refused");
-        this->translation.login.set_from_cstr("login");
+        this->translation.login.set_from_cstr("Login");
         this->translation.username.set_from_cstr("username");
-        this->translation.password.set_from_cstr("password");
+        this->translation.password.set_from_cstr("Password");
         this->translation.target.set_from_cstr("target");
         this->translation.diagnostic.set_from_cstr("diagnostic");
         this->translation.connection_closed.set_from_cstr("Connection closed");
         this->translation.help_message.set_from_cstr("Help message");
+
 
         this->translation.button_ok.attach_ini(this,AUTHID_TRANS_BUTTON_OK);
         this->translation.button_cancel.attach_ini(this,AUTHID_TRANS_BUTTON_CANCEL);
@@ -913,6 +919,9 @@ public:
         this->translation.diagnostic.attach_ini(this,AUTHID_TRANS_DIAGNOSTIC);
         this->translation.connection_closed.attach_ini(this,AUTHID_TRANS_CONNECTION_CLOSED);
         this->translation.help_message.attach_ini(this,AUTHID_TRANS_HELP_MESSAGE);
+
+        this->translation.language.set_from_cstr("en");
+        this->translation.language.attach_ini(this,AUTHID_LANGUAGE);
         // End Section "translation"
 
         // Begin section "context"
@@ -928,23 +937,12 @@ public:
         this->context.opt_bitrate.attach_ini(this,AUTHID_OPT_BITRATE);
         this->context.opt_framerate.attach_ini(this,AUTHID_OPT_FRAMERATE);
         this->context.opt_qscale.attach_ini(this,AUTHID_OPT_QSCALE);
-        // this->context.opt_bitrate                 = 40000;
-        // this->context.opt_framerate               = 5;
-        // this->context.opt_qscale                  = 15;
-
-
 
         this->context.opt_bpp.set(24);
         this->context.opt_height.set(600);
         this->context.opt_width.set(800);
-        // this->context.opt_bpp                     = 24;
-        // this->context.opt_height                  = 600;
-        // this->context.opt_width                   = 800;
 
         this->context.auth_error_message.empty();
-        // this->context.auth_error_message.attach_ini(this,AUTHID_AUTH_ERROR_MESSAGE);
-        // this->context.auth_error_message.empty();
-
 
         this->context.selector.set(false);
         this->context.selector_current_page.set(1);
@@ -971,34 +969,14 @@ public:
         this->context.target_protocol.set_from_cstr("RDP");
         this->context.target_protocol.ask();
 
-
-        // this->globals.state_host.asked                    = false;
-        // this->globals.state_host.modified                    = true;
-
-        // this->globals.state_target.asked                  = false;
-        // this->globals.state_target.modified                  = true;
-
-
-        // this->globals.state_auth_user.asked               = true;
-        // this->globals.state_auth_user.modified               = true;
-
         this->context.password.set_empty();
-
         this->context.password.ask();
-        // this->context.state_password.asked                = true;
-        // this->context.state_password.modified                = true;
 
+        this->context.reporting.set_empty();
 
         this->context.authchannel_answer.set_empty();
         this->context.authchannel_result.set_empty();
         this->context.authchannel_target.set_empty();
-
-
-        // this->context.state_accept_message.asked          = false;
-        // this->context.state_accept_message.modified          = true;
-
-        // this->context.state_display_message.asked         = false;
-        // this->context.state_display_message.modified         = true;
 
 
         this->context.message.set_empty();
@@ -1008,7 +986,6 @@ public:
         this->context.display_message.set_empty();
 
         this->context.rejected.set_empty();
-        // this->context.rejected.set_from_cstr("Connection refused by authentifier.");
         this->context.rejected.attach_ini(this, AUTHID_REJECTED);
 
         this->context.authenticated.set(false);
@@ -1016,16 +993,7 @@ public:
 
         this->context.keepalive.set(false);
 
-        // this->context.state_proxy_type.asked              = false;
-        // this->context.state_proxy_type.modified              = true;
-
-
-
         this->context.proxy_type.set_from_cstr("RDP");
-
-
-        // this->context.state_trace_seal.asked              = false;
-        // this->context.state_trace_seal.modified              = true;
 
         this->context.trace_seal.set_empty();
 
@@ -1037,20 +1005,12 @@ public:
         this->context.end_date_cnx.attach_ini(this, AUTHID_END_DATE_CNX);
         this->context.end_time.attach_ini(this, AUTHID_END_TIME);
 
-
-
         this->context.mode_console.set_from_cstr("allow");
         this->context.timezone.set(-3600);
         this->context.mode_console.attach_ini(this, AUTHID_MODE_CONSOLE);
         this->context.timezone.attach_ini(this, AUTHID_TIMEZONE);
 
-
-
         this->context.real_target_device.set_empty();
-
-        // this->context.state_real_target_device.asked              = false;
-        // this->context.state_real_target_device.modified              = true;
-
 
         this->context.authentication_challenge.set_empty();
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
@@ -1065,13 +1025,14 @@ public:
         this->context.selector_group_filter.attach_ini(this,AUTHID_SELECTOR_GROUP_FILTER);
         this->context.selector_proto_filter.attach_ini(this,AUTHID_SELECTOR_PROTO_FILTER);
         this->context.selector_lines_per_page.attach_ini(this,AUTHID_SELECTOR_LINES_PER_PAGE);
-        //this->context.selector_lines_per_page.use();
 
         this->context.target_password.attach_ini(this,AUTHID_TARGET_PASSWORD);
         this->context.target_protocol.attach_ini(this,AUTHID_TARGET_PROTOCOL);
         this->context.target_port.attach_ini(this,AUTHID_TARGET_PORT);
 
         this->context.password.attach_ini(this,AUTHID_PASSWORD);
+
+        this->context.reporting.attach_ini(this,AUTHID_REPORTING);
 
         this->context.accept_message.attach_ini(this,AUTHID_ACCEPT_MESSAGE);
         this->context.display_message.attach_ini(this,AUTHID_DISPLAY_MESSAGE);
@@ -1085,112 +1046,6 @@ public:
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
     };
-
-/*
-    void cparse(istream & ifs){
-        const size_t maxlen = 256;
-        char line[maxlen];
-        char context[128] = {0};
-        bool truncated = false;
-        while (ifs.good()){
-            ifs.getline(line, maxlen);
-            if (ifs.fail() && ifs.gcount() == (maxlen-1)){
-                if (!truncated){
-                    LOG(LOG_INFO, "Line too long in configuration file");
-                    hexdump(line, maxlen-1);
-                }
-                ifs.clear();
-                truncated = true;
-                continue;
-            }
-            if (truncated){
-                truncated = false;
-                continue;
-            }
-            this->parseline(line, context);
-        };
-    }
-
-    void parseline(const char * line, char * context)
-    {
-        char key[128];
-        char value[128];
-
-        const char * startkey = line;
-        for (; *startkey ; startkey++) {
-            if (!isspace(*startkey)){
-                if (*startkey == '['){
-                    const char * startcontext = startkey + 1;
-                    const char * endcontext = strchr(startcontext, ']');
-                    if (endcontext){
-                        memcpy(context, startcontext, endcontext - startcontext);
-                        context[endcontext - startcontext] = 0;
-                    }
-                    return;
-                }
-                break;
-            }
-        }
-        const char * endkey = strchr(startkey, '=');
-        if (endkey && endkey != startkey){
-            const char * sep = endkey;
-            for (--endkey; endkey >= startkey ; endkey--) {
-                if (!isspace(*endkey)){
-                    TODO("RZ: Possible buffer overflow if length of key is larger than 128 bytes")
-                        memcpy(key, startkey, endkey - startkey + 1);
-                    key[endkey - startkey + 1] = 0;
-
-                    const char * startvalue = sep + 1;
-                    for ( ; *startvalue ; startvalue++) {
-                        if (!isspace(*startvalue)){
-                            break;
-                        }
-                    }
-                    const char * endvalue;
-*/
-                    /*
-                      for (endvalue = startvalue; *endvalue ; endvalue++) {
-                      TODO("RZ: Support space in value")
-                      if (isspace(*endvalue) || *endvalue == '#'){
-                      break;
-                      }
-                      }
-                      TODO("RZ: Possible buffer overflow if length of value is larger than 128 bytes")
-                      memcpy(value, startvalue, endvalue - startvalue + 1);
-                      value[endvalue - startvalue + 1] = 0;
-                    */
-/*
-                    char *curvalue = value;
-                    for (endvalue = startvalue; *endvalue ; endvalue++) {
-                        if (isspace(*endvalue) || *endvalue == '#'){
-                            break;
-                        }
-                        else if ((*endvalue == '\\') && *(endvalue + 1)) {
-                            if (endvalue > startvalue) {
-                                memcpy(curvalue, startvalue, endvalue - startvalue);
-                                curvalue += (endvalue - startvalue);
-                            }
-
-                            endvalue++;
-
-                            *curvalue++ = *endvalue;
-
-                            startvalue = endvalue + 1;
-                        }
-                    }
-                    if (endvalue > startvalue) {
-                        memcpy(curvalue, startvalue, endvalue - startvalue);
-                        curvalue += (endvalue - startvalue);
-                    }
-                    *curvalue = 0;
-
-                    this->setglobal_from_file(key, value, context);
-                    break;
-                }
-            }
-        }
-    }
-*/
 
     virtual void set_value(const char * context, const char * key, const char * value)
     {
@@ -1307,6 +1162,9 @@ public:
             else if (0 == strcmp(key, "tls_support")){
                 this->client.tls_support = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "bogus_neg_request")){
+                this->client.bogus_neg_request = bool_from_cstr(value);
+            }
             else if (0 == strcmp(key, "clipboard")){
                 this->client.clipboard.set_from_cstr(value);
             }
@@ -1321,6 +1179,12 @@ public:
             if (0 == strcmp(key, "rdp_compression")) {
                 this->mod_rdp.rdp_compression = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "disconnect_on_logon_user_change")) {
+                this->mod_rdp.disconnect_on_logon_user_change = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "open_session_timeout")){
+                this->mod_rdp.open_session_timeout = ulong_from_cstr(value);
+            }
         }
         else if (0 == strcmp(context, "video")){
             if (0 == strcmp(key, "capture_flags")){
@@ -1331,7 +1195,13 @@ public:
                 this->video.capture_ocr = 0 != (this->video.capture_flags & 8);
             }
             else if (0 == strcmp(key, "ocr_interval")){
-                this->video.ocr_interval   = ulong_from_cstr(value);
+                this->video.ocr_interval                = ulong_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "ocr_on_title_bar_only")){
+                this->video.ocr_on_title_bar_only       = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "ocr_max_unrecog_char_rate")){
+                this->video.ocr_max_unrecog_char_rate   = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "png_interval")){
                 this->video.png_interval   = ulong_from_cstr(value);
@@ -1468,6 +1338,9 @@ public:
             else if (0 == strcmp(key, "log_type")){
                 this->debug.log_type = logtype_from_cstr(value);
             }
+            else if (0 == strcmp(key, "pass_dialog_box")){
+                this->debug.pass_dialog_box = ulong_from_cstr(value);
+            }
             else if (0 == strcmp(key, "log_file_path")){
                 strncpy(this->debug.log_file_path, value, sizeof(this->debug.log_file_path));
                 this->debug.log_file_path[sizeof(this->debug.log_file_path) - 1] = 0;
@@ -1477,7 +1350,13 @@ public:
             }
         }
         else if (0 == strcmp(context, "translation")){
-            if (0 == strcmp(key, "button_ok")){
+            if (0 == strcmp(key, "language")){
+                if ((0 == strcmp(value, "en")) ||
+                    (0 == strcmp(value, "fr"))) {
+                    this->translation.language.set_from_cstr(value);
+                }
+            }
+            else if (0 == strcmp(key, "button_ok")){
                 this->translation.button_ok.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "button_cancel")){
@@ -1546,8 +1425,15 @@ public:
         authid_t authid = authid_from_string(strauthid);
         if (authid != AUTHID_UNKNOWN) {
             try {
-                BaseField * field = this->field_list.at(authid);
-                field->set_from_acl(value);
+                if (authid == AUTHID_AUTH_ERROR_MESSAGE)
+                {
+                    this->context.auth_error_message.copy_c_str(value);
+                }
+                else
+                {
+                    BaseField * field = this->field_list.at(authid);
+                    field->set_from_acl(value);
+                }
             }
             catch (const std::out_of_range & oor){
                 LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
@@ -1621,7 +1507,7 @@ public:
     const char * context_get_value(authid_t authid) {
         const char * pszReturn = "";
 
-        LOG(LOG_WARNING, "Getting value for authid=%d", authid);
+//        LOG(LOG_INFO, "Getting value for authid=%d", authid);
         switch (authid)
             {
             case AUTHID_AUTH_ERROR_MESSAGE:
@@ -1707,16 +1593,10 @@ public:
         return false;
     }
 
-/*
-    void cparse(const char * filename) {
-        ifstream inifile(filename);
-        this->cparse(inifile);
-    }
-*/
-
     void parse_username(const char * username)
     {
-        //        LOG(LOG_INFO, "parse_username(%s)", username);
+/*
+//        LOG(LOG_INFO, "parse_username(%s)", username);
         TODO("These should be results of the parsing function, not storing it away immediately in context. Mixing context management and parsing is not right");
         char target_user[256];
         char target_device[256];
@@ -1820,10 +1700,9 @@ public:
             }
         }
 
-        if (*target_user == 0)
-            {
-                this->context_ask(AUTHID_TARGET_USER);
-            }
+        if (*target_user == 0) {
+            this->context_ask(AUTHID_TARGET_USER);
+        }
         else {
             this->context_set_value(AUTHID_TARGET_USER, target_user);
         }
@@ -1845,6 +1724,14 @@ public:
         else {
             this->context_set_value(AUTHID_AUTH_USER, auth_user);
         }
+*/
+        this->context_ask(AUTHID_SELECTOR);
+        LOG(LOG_INFO, "asking for selector");
+
+        this->context_set_value(AUTHID_AUTH_USER, username);
+        this->context_ask(AUTHID_TARGET_USER);
+        this->context_ask(AUTHID_TARGET_DEVICE);
+        this->context_ask(AUTHID_TARGET_PROTOCOL);
     }
 };
 

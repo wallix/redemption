@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_RWL_MOD_HPP
@@ -23,7 +24,6 @@
 
 #include "front_api.hpp"
 #include "config.hpp"
-#include "widget2/msgbox.hpp"
 #include "widget2/rwl_rectangle.hpp"
 #include "internal_mod.hpp"
 
@@ -47,36 +47,38 @@ public:
         style.borders.left = style.borders.right = style.borders.bottom = style.borders.top;
         style.focus_borders = style.inactive_focus_borders = style.inactive_borders = style.borders;
 
-        RwlRectangle * img = new RwlImage(*this, 0, 0, SHARE_PATH"/"REDEMPTION_LOGO24, style);
+        RwlRectangle * img = new RwlImage(*this, this->screen, 0, SHARE_PATH"/"REDEMPTION_LOGO24, style);
         img->rect.x = width - img->cx();
         img->rect.y = height - img->cy();
-        this->screen.child_list.push_back(img);
+        this->screen.add_widget(img);
 
-        RwlRectangle * zone = new RwlRectangle(*this, 0, 0, style);
+        RwlRectangle * zone = new RwlRectangle(*this, this->screen, 0, style);
         zone->rect.cx = 100;
         zone->rect.cy = 100;
-        this->screen.child_list.push_back(zone);
+        this->screen.add_widget(zone);
 
-        zone = new RwlRectangle(*this, 0, 0, style);
+        zone = new RwlRectangle(*this, this->screen, 0, style);
         zone->rect.x = 100;
         zone->rect.y = 100;
         zone->rect.cx = 100;
         zone->rect.cy = 100;
-        this->screen.child_list.push_back(zone);
+        this->screen.add_widget(zone);
 
         style.color = YELLOW;
-        zone = new RwlRectangle(*this, 0, 0, style);
+        zone = new RwlRectangle(*this, this->screen, 0, style);
         zone->rect.y = 100;
         zone->rect.cx = 100;
         zone->rect.cy = 100;
-        this->screen.child_list.push_back(zone);
+        this->screen.add_widget(zone);
 
 //         this->screen.set_widget_focus(&this->window_dialog);
         this->screen.refresh(this->screen.rect);
     }
 
     virtual ~RwlMod()
-    {}
+    {
+        this->screen.clear();
+    }
 
     virtual void rdp_input_scancode(long int param1, long int param2,
                                     long int param3, long int param4, Keymap2* keymap)
@@ -94,15 +96,16 @@ public:
         }
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+
+    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
+                                       int16_t /*param1*/, int16_t /*param2*/)
     {
-        return;
     }
 
-    virtual void notify(Widget2* sender, notify_event_t event, long unsigned int param, long unsigned int param2)
+    virtual void notify(Widget2* sender, notify_event_t event)
     {}
 
-    virtual void draw_event()
+    virtual void draw_event(time_t now)
     {
         this->event.reset();
     }

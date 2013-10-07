@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_WIDGET2_WIDGET_COMPOSITE_HPP_)
@@ -27,303 +28,325 @@
 #include "keymap2.hpp"
 #include <region.hpp>
 
-class WidgetComposite : public Widget2
-{
-    typedef std::vector<Widget2*>::iterator position_t;
+class CompositeInterface {
 public:
-    std::vector<Widget2*> child_list;
+    virtual ~CompositeInterface() {}
+    virtual void add_widget(Widget2 * w) = 0;
+    virtual void remove_widget(Widget2 * w) = 0;
+    virtual void clear() = 0;
+    virtual void move_xy(int16_t x, int16_t y) = 0;
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) = 0;
+    virtual Widget2 * next_focus(Widget2 * current_focus) = 0;
+    virtual Widget2 * previous_focus(Widget2 * current_focus) = 0;
+    virtual void draw(const Rect& clip) = 0;
+    virtual void draw_inner_free(const Rect& clip, int bg_color, Region & region) = 0;
+};
 
-    WidgetComposite(DrawApi * drawable, const Rect& rect, Widget2 * parent,
-                    NotifyApi * notifier, int group_id = 0)
-    : Widget2(drawable, rect, parent, notifier, group_id)
-    , child_list()
+
+class WidgetParent : public Widget2 {
+    Widget2 * pressed;
+protected:
+    CompositeInterface * impl;
+public:
+    Widget2 * current_focus;
+
+    WidgetParent(DrawApi & drawable, const Rect& rect, Widget2 & parent,
+                 NotifyApi * notifier, int group_id = 0)
+        : Widget2(drawable, rect, parent, notifier, group_id)
+        , pressed(NULL)
+        , impl(NULL)
+        , current_focus(NULL)
     {
-        this->tab_flag = DELEGATE_CONTROL_TAB;
     }
 
-    virtual ~WidgetComposite()
+    ~WidgetParent() {
+        if (this->impl) {
+            delete this->impl;
+            this->impl = NULL;
+        }
+    }
+
+    void set_widget_focus(Widget2 * new_focused)
     {
-        for (size_t i = 0; i < this->child_list.size(); ++i) {
-            if (this->child_list[i]->parent == this) {
-                this->child_list[i]->parent = 0;
+        if (this->current_focus) {
+            this->current_focus->blur();
+        }
+        this->current_focus = new_focused;
+        this->current_focus->focus();
+    }
+
+    virtual void focus()
+    {
+        if (!this->has_focus){
+            this->has_focus = true;
+            this->send_notify(NOTIFY_FOCUS_BEGIN);
+            if (this->current_focus) {
+                this->current_focus->focus();
             }
+            this->refresh(this->rect);
         }
     }
 
-    virtual void set_xy(int16_t x, int16_t y)
+    virtual void blur()
     {
-        int16_t xx = x - this->dx();
-        int16_t yy = y - this->dy();
-        for (size_t i = 0, max = this->child_list.size(); i < max; ++i) {
-            Widget2 * w = this->child_list[i];
-            w->set_xy(xx + w->dx(), yy + w->dy());
+        if (this->has_focus){
+            this->has_focus = false;
+            this->send_notify(NOTIFY_FOCUS_END);
+            if (this->current_focus) {
+                this->current_focus->blur();
+            }
+            this->refresh(this->rect);
         }
-        Widget2::set_xy(x, y);
+    }
+    virtual void add_widget(Widget2 * w) {
+        this->impl->add_widget(w);
+    }
+    virtual void remove_widget(Widget2 * w) {
+        this->impl->remove_widget(w);
+    }
+    virtual void clear() {
+        this->impl->clear();
     }
 
-    virtual void set_wh(uint16_t width, uint16_t height)
-    {
-        for (size_t i = 0, max = this->child_list.size(); i < max; ++i) {
-            Widget2 * w = this->child_list[i];
-            w->set_wh(width, height);
+    virtual bool next_focus() {
+        Widget2 * next = this->impl->next_focus(this->current_focus);
+        if (next) {
+            this->set_widget_focus(next);
+            return true;
         }
-        Widget2::set_wh(width, height);
+        return false;
     }
 
-    virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
-    {
+    virtual bool previous_focus() {
+        Widget2 * previous = this->impl->previous_focus(this->current_focus);
+        if (previous) {
+            this->set_widget_focus(previous);
+            return true;
+        }
+        return false;
+    }
+
+    virtual Widget2 * widget_at_pos(int16_t x, int16_t y) {
         if (!this->rect.contains_pt(x, y))
             return 0;
-        Widget2 * ret = this->child_at_pos(x, y);
-        return ret ? ret : this;
+        if (this->current_focus) {
+            if (this->current_focus->rect.contains_pt(x, y)) {
+                return this->current_focus;
+            }
+        }
+        return this->impl->widget_at_pos(x, y);
+    }
+
+    virtual void rdp_input_scancode(long param1, long param2, long param3,
+                                    long param4, Keymap2 * keymap)
+    {
+        if (keymap->nb_kevent_available() > 0) {
+            switch (keymap->top_kevent()) {
+            case Keymap2::KEVENT_TAB:
+                //std::cout << ("tab") << '\n';
+                keymap->get_kevent();
+                this->next_focus();
+                break;
+            case Keymap2::KEVENT_BACKTAB:
+                //std::cout << ("backtab") << '\n';
+                keymap->get_kevent();
+                this->previous_focus();
+                break;
+            default:
+                if (this->current_focus)
+                    this->current_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+                break;
+            }
+        }
     }
 
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
     {
-        if (this->rect.contains_pt(x, y)) {
-            Widget2 * w = this->child_at_pos(x,y);
-            if (w) {
-                w->rdp_input_mouse(device_flags, x, y, keymap);
+        Widget2 * w = this->widget_at_pos(x, y);
+
+        // Mouse clic release
+        // w could be null if mouse is located at an empty space
+        if (device_flags == MOUSE_FLAG_BUTTON1) {
+            if (this->pressed
+                && (w != this->pressed)) {
+                this->pressed->rdp_input_mouse(device_flags, x, y, keymap);
             }
         }
-    }
-
-    //BEGIN focus manager @{
-    position_t next_position_of_widget_with_focus()
-    {
-        return std::find(this->child_list.begin(), this->child_list.end(),
-                         this->widget_with_focus);
-    }
-
-    virtual bool next_focus(int policy)
-    {
-        struct focus_manager {
-            static position_t next_in(position_t first, position_t last, int policy)
-            {
-                for (; first < last; ++first) {
-                    if ((*first)->tab_flag & NORMAL_TAB) {
-                        break ;
-                    }
-                    if ((*first)->tab_flag & DELEGATE_CONTROL_TAB) {
-                        if ((*first)->next_focus(policy)) {
-                            break ;
-                        }
-                    }
+        if (w){
+            // get focus when mouse clic
+            if (device_flags == (MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN)) {
+                this->pressed = w;
+                if ((w->focus_flag != IGNORE_FOCUS) && (w != this->current_focus)){
+                    this->set_widget_focus(w);
                 }
-                return first;
             }
-        };
-
-        if (this->widget_with_focus != NULL && this->widget_with_focus != this) {
-            if (this->widget_with_focus->next_focus(policy)) {
-                return true;
-            }
-        }
-
-        position_t pos = this->next_position_of_widget_with_focus();
-        if (pos != this->child_list.end()) {
-            position_t pos2 = focus_manager::next_in(pos+1, this->child_list.end(), policy);
-            bool ok = (pos2 != this->child_list.end());
-            if (!ok) {
-                pos2 = focus_manager::next_in(this->child_list.begin(), pos, policy);
-                ok = (pos2 != pos);
-            }
-            if (ok) {
-                if (this->widget_with_focus != *pos2) {
-                    this->switch_focus_with(*pos2, policy);
-                }
-                return true;
-            }
-        } else {
-            pos = focus_manager::next_in(this->child_list.begin(), this->child_list.end(), policy);
-            if (pos != this->child_list.end()) {
-                this->switch_focus_with(*pos, policy);
-                return true;
-            }
-        }
-
-        if ((!this->tab_flag & NO_DELEGATE_PARENT) && this->parent) {
-            this->parent->next_focus(policy);
-        }
-        return false;
-    }
-
-    position_t previous_position_of_widget_with_focus()
-    {
-        position_t first = this->child_list.begin();
-        position_t last = this->child_list.end();
-        --first;
-        while (--last != first && *last != this->widget_with_focus) {
-        }
-        return last;
-    }
-
-    virtual bool previous_focus(int policy)
-    {
-        struct focus_manager {
-            static position_t previous_in(position_t first, position_t last, int policy)
-            {
-                for (; first != last; --first) {
-                    if ((*first)->tab_flag & NORMAL_TAB) {
-                        break ;
-                    }
-                    if ((*first)->tab_flag & DELEGATE_CONTROL_TAB) {
-                        if ((*first)->previous_focus(policy)) {
-                            break ;
-                        }
-                    }
-                }
-                return first;
-            }
-        };
-
-        if (this->widget_with_focus != NULL && this->widget_with_focus != this) {
-            if (this->widget_with_focus->previous_focus(policy)) {
-                return true;
-            }
-        }
-
-        position_t pos = this->previous_position_of_widget_with_focus();
-        if (pos != this->child_list.begin()-1) {
-            position_t pos2 = focus_manager::previous_in(pos-1, this->child_list.begin()-1, policy);
-            bool ok = (pos2 != this->child_list.begin()-1);
-            if (!ok) {
-                pos2 = focus_manager::previous_in(this->child_list.end()-1, pos, policy);
-                ok = (pos2 != pos);
-            }
-            if (ok) {
-                if (this->widget_with_focus != *pos2) {
-                    this->switch_focus_with(*pos2, policy);
-                }
-                return true;
-            }
-        } else {
-            pos = focus_manager::previous_in(this->child_list.end()-1, this->child_list.begin()-1, policy);
-            if (pos != this->child_list.begin()-1) {
-                this->switch_focus_with(*pos, policy);
-                return true;
-            }
-        }
-
-        if ((!this->tab_flag & NO_DELEGATE_PARENT) && this->parent) {
-            this->parent->previous_focus(policy);
-        }
-        return false;
-    }
-    //END focus manager @}
-
-    virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
-    {
-        if (this->widget_with_focus != NULL && this->widget_with_focus != this) {
-            this->widget_with_focus->rdp_input_scancode(param1, param2, param3, param4, keymap);
+            w->rdp_input_mouse(device_flags, x, y, keymap);
         }
         else {
-            Widget2::rdp_input_scancode(param1, param2, param3, param4, keymap);
+            Widget2::rdp_input_mouse(device_flags, x, y, keymap);
         }
     }
 
-    bool detach_widget(Widget2 * widget, bool active_previous_widget = false)
-    {
-        for (size_t i = 0; i < this->child_list.size(); ++i) {
-            if (this->child_list[i] == widget) {
-                if (widget->parent == this) {
-                    widget->parent = 0;
-                }
-                this->child_list[i] = this->child_list[this->child_list.size()-1];
-                this->child_list.pop_back();
+};
 
-                if (active_previous_widget) {
-                    if (this->old_widget_with_focus == widget) {
-                        this->old_widget_with_focus = NULL;
-                    }
-                    if (this->widget_with_focus == widget) {
-                        this->widget_with_focus = this->old_widget_with_focus;
-                        if (this->widget_with_focus) {
-                            this->widget_with_focus->focus(widget);
-                        }
-                    }
+
+class CompositeTable : public CompositeInterface {
+    enum {
+        AUTOSIZE = 256
+    };
+
+    Widget2 * child_list[AUTOSIZE];
+    size_t size;
+
+public:
+    CompositeTable()
+        : size(0)
+    {
+    }
+
+    void add_widget(Widget2 * w) {
+        if (this->size >= AUTOSIZE)
+            return;
+        this->child_list[this->size] = w;
+        this->size++;
+    }
+
+    void remove_widget(Widget2 * w) {
+        bool found = false;
+        for (size_t i = 0; i < this->size; ++i) {
+            if (!found) {
+                if (w == this->child_list[i]) {
+                    found = true;
+                    this->child_list[i] = NULL;
                 }
-                return true;
+            }
+            else {
+                this->child_list[i-1] = this->child_list[i];
             }
         }
-        return false;
+        if (found) {
+            this->child_list[this->size] = NULL;
+            this->size--;
+        }
     }
+    void clear() {
+        this->size = 0;
+    };
 
-    virtual void notify(Widget2* widget, notify_event_t event, long unsigned int param, long unsigned int param2)
-    {
-        if (event == NOTIFY_FOCUS_BEGIN) {
-            Widget2 * old = this->widget_with_focus;
-            this->widget_with_focus = widget;
-            if (this->parent && this->parent->widget_with_focus != this) {
-                this->focus(old);
+    void move_xy(int16_t x, int16_t y) {
+        for (size_t i = 0, max = this->size; i < max; ++i) {
+            Widget2 * w = this->child_list[i];
+            w->set_xy(x + w->dx(), y + w->dy());
+        }
+    }
+    Widget2 * widget_at_pos(int16_t x, int16_t y) {
+        Widget2 * ret = 0;
+        for (size_t i = 0; i < this->size && ret == 0; ++i){
+            if (this->child_list[i]->rect.contains_pt(x, y)){
+                ret = this->child_list[i];
             }
         }
-        else {
-            Widget2::notify(widget, event, param, param2);
-        }
+        return ret;
     }
 
-    virtual void draw(const Rect& clip)
+    void draw(const Rect& clip)
     {
-        Rect new_clip = clip.intersect(this->rect);
-        std::size_t size = this->child_list.size();
-
-        for (std::size_t i = 0; i < size; ++i) {
+        for (size_t i = 0; i < this->size; ++i) {
             Widget2 *w = this->child_list[i];
-            w->refresh(new_clip.intersect(w->rect));
+            w->refresh(clip.intersect(w->rect));
         }
     }
 
-    void draw_inner_free(const Rect& clip, int bg_color)
+    void draw_inner_free(const Rect& clip, int bg_color, Region & region)
     {
-        Region region;
-        region.rects.push_back(clip);
-
-        for (std::size_t i = 0, size = this->child_list.size(); i < size; ++i) {
+        for (size_t i = 0; i < this->size; ++i) {
             Rect rect = clip.intersect(this->child_list[i]->rect);
 
             if (!rect.isempty()) {
                 region.subtract_rect(rect);
             }
         }
-
-        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
-            this->drawable->draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+    }
+    size_t find(Widget2 * w) {
+        size_t pos = 0;
+        for (pos = 0; pos < this->size; ++pos) {
+            if (this->child_list[pos] == w) {
+                break;
+            }
         }
+        return (pos == this->size)?0:pos;
+    }
+    size_t next(size_t n) {
+        return (n >= this->size - 1)?0:(n+1);
+    }
+    size_t prev(size_t n) {
+        return (n == 0)?(this->size - 1):(n-1);
     }
 
-protected:
-    size_t direct_idx_focused() const
-    {
-        for (std::size_t i = 0; i < this->child_list.size(); ++i)
-        {
-            if (this->child_list[i]->has_focus)
-                return i;
+    Widget2 * next_focus(Widget2 * current_focus) {
+        Widget2 * current = current_focus;
+        size_t current_pos = this->find(current);
+        size_t next = this->next(current_pos);
+        while (((this->child_list[next]->tab_flag == Widget2::IGNORE_TAB)
+                || (this->child_list[next]->focus_flag == Widget2::IGNORE_FOCUS))
+               && (next != current_pos)) {
+            next = this->next(next);
         }
-        return -1;
+        if (next != current_pos) {
+            return this->child_list[next];
+        }
+        return NULL;
+    }
+    Widget2 * previous_focus(Widget2 * current_focus) {
+        Widget2 * current = current_focus;
+        size_t current_pos = this->find(current);
+        size_t prev = this->prev(current_pos);
+        while (((this->child_list[prev]->tab_flag == Widget2::IGNORE_TAB)
+                || (this->child_list[prev]->focus_flag == Widget2::IGNORE_FOCUS))
+               && (prev != current_pos)) {
+            prev = this->prev(prev);
+        }
+        if (prev != current_pos) {
+            return this->child_list[prev];
+        }
+        return NULL;
     }
 
-    Widget2 * get_child_by_group_id(int group_id) const
-    {
-        for (size_t i = 0; i < this->child_list.size(); i++)
-        {
-            struct Widget2 * w = this->child_list[i];
-            if (w->group_id == group_id)
-                return w;
-        }
-        return 0;
-    }
-
-    virtual Widget2 * child_at_pos(int16_t x, int16_t y)
-    {
-        Widget2 * ret = 0;
-        std::size_t size = this->child_list.size();
-        for (std::size_t i = 0; i < size && ret == 0; ++i)
-        {
-            ret = this->child_list[i]->widget_at_pos(x, y);
-        }
-        return ret;
-    }
 };
 
+
+// WidgetComposite is a WidgetParent and use Delegation to an implementation of CompositeInterface
+class WidgetComposite: public WidgetParent {
+
+public:
+
+    WidgetComposite(DrawApi & drawable, const Rect& rect, Widget2 & parent,
+                             NotifyApi * notifier, int group_id = 0)
+    : WidgetParent(drawable, rect, parent, notifier, group_id)
+    {
+        this->impl = new CompositeTable;
+    }
+
+    ~WidgetComposite() {
+    }
+
+
+    virtual void draw(const Rect& clip) {
+        Rect new_clip = clip.intersect(this->rect);
+        this->impl->draw(new_clip);
+    }
+
+    virtual void draw_inner_free(const Rect& clip, int bg_color) {
+        Region region;
+        region.rects.push_back(clip);
+
+        this->impl->draw_inner_free(clip, bg_color, region);
+
+        for (std::size_t i = 0, size = region.rects.size(); i < size; ++i) {
+            this->drawable.draw(RDPOpaqueRect(region.rects[i], bg_color), region.rects[i]);
+        }
+    }
+
+
+};
 #endif

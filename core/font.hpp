@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages
+   Author(s): Christophe Grosjean, Javier Caverni, Dominique Lafages,
+              Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Font header file
@@ -29,66 +30,96 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
-
-#include "log.hpp"
-#include "stream.hpp"
 #include <unistd.h>
 #include <limits.h>
 #include <bits/posix1_lim.h>
+
+#include "log.hpp"
+#include "stream.hpp"
 #include "bitfu.hpp"
 
 //##############################################################################
 struct FontChar
 //##############################################################################
 {
-    int offset;   // leading whistespace before char
-    int baseline; // real -height (probably unused for now)
-    int width;    // width of glyph actually containing pixels
-    int height;   // height of glyph (in pixels)
-    int incby;    // width of glyph (in pixels) including leading and trailing whitespaces
+    int       offset;   // leading whistespace before char
+    int       baseline; // real -height (probably unused for now)
+    int       width;    // width of glyph actually containing pixels
+    int       height;   // height of glyph (in pixels)
+    int       incby;    // width of glyph (in pixels) including leading and trailing whitespaces
     uint8_t * data;
 
     // Constructor
     //==============================================================================
     FontChar(int offset, int baseline, int width, int height, int incby)
     //==============================================================================
-        : offset(   offset )
-        , baseline( baseline )
-        , width(    width )
-        , height(   height )
-        , incby(    incby )
-        , data(     new uint8_t[ this->datasize() ] )
+        : offset(offset)
+        , baseline(baseline)
+        , width(width)
+        , height(height)
+        , incby(incby)
+        , data(new uint8_t[this->datasize()])
     //------------------------------------------------------------------------------
     {
+    }
+
+    // Copy constructor
+    //==============================================================================
+    FontChar(const FontChar & other)
+    //==============================================================================
+        : offset(other.offset)
+        , baseline(other.baseline)
+        , width(other.width)
+        , height(other.height)
+        , incby(other.incby)
+        , data(new uint8_t[other.datasize()])
+    //------------------------------------------------------------------------------
+    {
+        memcpy(this->data, other.data, other.datasize());
     }
 
     // Destructor
     //==============================================================================
     ~FontChar(){
     //==============================================================================
-       delete [] this->data;
+        delete [] this->data;
     }
 
     //==============================================================================
-    inline int datasize() const {
+    inline int datasize() const
     //==============================================================================
-        return align4(this->height * nbbytes(this->width));
+    {
+        return align4(nbbytes(this->width) * this->height);
     }
 
     /* compare the two font items returns 1 if they match */
     //==============================================================================
-    int item_compare(struct FontChar* glyph)
+    int item_compare(struct FontChar * glyph, bool ignore_incby = false)
     //==============================================================================
     {
-        return glyph
+        bool result =
+               glyph
             && (this->offset == glyph->offset)
             && (this->baseline == glyph->baseline)
             && (this->width == glyph->width)
             && (this->height == glyph->height)
-            && (this->incby == glyph->incby)
+            && (!ignore_incby || (this->incby == glyph->incby))
             && (0 == memcmp(this->data, glyph->data, glyph->datasize()));
-    }
 
+        if (result && !ignore_incby)
+        {
+            if ((this->incby < 0) && (glyph->incby >= 0))
+            {
+                this->incby = glyph->incby;
+            }
+            else if ((this->incby >= 0) && (glyph->incby < 0))
+            {
+                glyph->incby = this->incby;
+            }
+        }
+
+        return result;
+    }
 }; // END STRUCT - FontChar
 
 
@@ -119,14 +150,13 @@ TODO(" NUM_GLYPHS is misleading it's actually number of glyph in font. Using it 
 struct Font
 //##############################################################################
 {
-TODO("Pass font name as parameter in constructor")
 #ifndef DEFAULT_FONT_NAME
-#define DEFAULT_FONT_NAME "dejavu_11.fv1"
+#define DEFAULT_FONT_NAME "dejavu_14.fv1"
 #endif
 
     enum {
            NUM_GLYPHS = 0x4e00
-         };
+    };
 
     struct FontChar * font_items[NUM_GLYPHS];
     char name[32];
@@ -218,7 +248,7 @@ TODO("Pass font name as parameter in constructor")
                     if (size_to_read > 0){
                         TODO("Create a pack_left function in stream to do this")
                         //-----------------------------------------------------
-                        memcpy(stream.get_data(), stream.p, remaining);
+                        memmove(stream.get_data(), stream.p, remaining);
                         stream.p = stream.get_data();
                         stream.end = stream.p + remaining;
                         //-----------------------------------------------------
@@ -250,7 +280,7 @@ TODO("Pass font name as parameter in constructor")
                     }
                 }
 
-    //                LOG(LOG_INFO, "Reading definition for glyph %u", index);
+//                LOG(LOG_INFO, "Reading definition for glyph %u", index);
                 int width = stream.in_sint16_le(); // >>> 2 bytes for glyph width
                 int height = stream.in_sint16_le(); // >>> 2 bytes for glyph height
 
@@ -313,7 +343,6 @@ ErrorReadingFontFile:
         }
         return this->font_items[charnum] != NULL;
     }
-
 }; // END STRUCT - Font
 
 #endif

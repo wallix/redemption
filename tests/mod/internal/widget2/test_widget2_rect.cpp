@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2012
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,11 +28,15 @@
 #include "log.hpp"
 
 #include "internal/widget2/widget2_rect.hpp"
+#include "internal/widget2/screen.hpp"
 #include "png.hpp"
 #include "ssl_calls.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "check_sig.hpp"
 #include "callback.hpp"
+
+#undef OUTPUT_FILE_PATH
+#define OUTPUT_FILE_PATH "/tmp/"
 
 struct TestDraw : DrawApi
 {
@@ -76,7 +81,7 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPGlyphIndex&, const Rect&)
+    virtual void draw(const RDPGlyphIndex&, const Rect&, const GlyphCache * gly_cache)
     {
         BOOST_CHECK(false);
     }
@@ -126,7 +131,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 800x600 at position 0,0 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+
     NotifyApi * notifier = NULL;
     int id = 0; // unique identifier of widget used par parent, it will be sent back in case of event
     int color = 0xCCF604; /* BGR */
@@ -139,7 +145,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -154,7 +160,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -167,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect2)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect2.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect2.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -182,7 +189,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position -100,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -195,7 +203,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect3)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect3.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect3.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -210,7 +218,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,500 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -223,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect4)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect4.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect4.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -238,7 +247,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -251,7 +261,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect5)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect5.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect5.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -266,7 +276,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -279,7 +290,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRect6)
                                     wrect.cx(),
                                     wrect.cy()));
 
-    //drawable.save_to_png("/tmp/rect6.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect6.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -294,7 +305,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 300,200 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -307,7 +319,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip)
                                     100,
                                     100));
 
-    //drawable.save_to_png("/tmp/rect7.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect7.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -322,7 +334,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
     TestDraw drawable(800, 600);
 
     // WidgetRect is a monochrome rectangular widget of size 200x200 at position 700,-100 in it's parent context
-    Widget2* parent = NULL;
+    WidgetScreen parent(drawable, 800, 600);
+
     NotifyApi * notifier = NULL;
     int id = 0; /* identifiant unique du widget pour le parent (renvoyé au parent en cas d'événement) */
     int bgcolor = 0xCCF604; /* BGR */
@@ -335,7 +348,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
                                     50,
                                     50));
 
-    //drawable.save_to_png("/tmp/rect8.png");
+    //drawable.save_to_png(OUTPUT_FILE_PATH "rect8.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -343,71 +356,6 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRectClip2)
         "\x37\xff\xa0\xff\x20\x3d\x8e\x28\x37\xc8")){
         BOOST_CHECK_MESSAGE(false, message);
     }
-}
-
-BOOST_AUTO_TEST_CASE(TraceWidgetRectEvent)
-{
-    struct WidgetReceiveEvent : public Widget2 {
-        Widget2* sender;
-        NotifyApi::notify_event_t event;
-
-        WidgetReceiveEvent()
-        : Widget2(NULL, Rect(), NULL, NULL)
-        , sender(NULL)
-        , event(0)
-        {}
-
-        virtual void draw(const Rect&)
-        {}
-
-        virtual void notify(Widget2* sender, NotifyApi::notify_event_t event,
-                            unsigned long, unsigned long)
-        {
-            this->sender = sender;
-            this->event = event;
-        }
-    } widget_for_receive_event;
-
-    Widget2* parent = &widget_for_receive_event;
-    TestDraw drawable(800, 600);
-    NotifyApi * notifier = NULL;
-
-    WidgetRect wrect(drawable, Rect(), parent, notifier);
-
-    Keymap2 keymap;
-    const int layout = 0x040C;
-    keymap.init_layout(layout);
-
-    // rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
-    wrect.rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, 0, &keymap);
-
-    TODO("j'ai un gros doute sur les choix faits pour le support des événements sur les widgets"
-         "les choix actuels me semblent incorrects, mais ke n'ai pas encore mis le doigt"
-         "sur le problème")
-    TODO("les méthodes explicites notify_parent/notify_self ne semblent pas du tout objet")
-    TODO("Mélange bizarre entre ce qui arrive de l'extérieur = rdp_input_xxx"
-         "et la notification vers l'extérieur d'un événement widget."
-         "les deux espaces d'événements devraint être séparés.")
-    TODO("le problème conceptuel actuel est à régler absolument avant d'aller plus loin"
-         "sinon la confusion ne va faire que s'aggraver")
-
-    TODO("ce sont des tests verifiant un comportement technique = pas des vrais tests")
-    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    // BOOST_CHECK(widget_for_receive_event.event == MOUSE_FLAG_BUTTON1);
-
-    wrect.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, 0);
-    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    // BOOST_CHECK(widget_for_receive_event.event == MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN);
-
-    //virtual void rdp_input_scancode(long param1, long param2, long device_flags, long time, Keymap2 * keymap){
-    wrect.rdp_input_scancode(16, 0, 0x0000, 538384894, &keymap);
-    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    // BOOST_CHECK(widget_for_receive_event.event == KEYDOWN);
-
-    wrect.rdp_input_scancode(16, 0, 0xC000, 538384920, &keymap);
-    // BOOST_CHECK(widget_for_receive_event.sender == &wrect);
-    // BOOST_CHECK(widget_for_receive_event.event == KEYUP);
-
 }
 
 TODO("As soon as composite widgets will be available, we will have to check these tests"

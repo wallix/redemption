@@ -111,7 +111,7 @@
 //  cache. If this bit is set, 64-bit keys MUST be sent by the server.
 
 enum {
-    CAPLEN_BITMAPCACHE_REV2 = 28
+    CAPLEN_BITMAPCACHE_REV2 = 40
 };
 
 struct BmpCache2Caps : public Capability {
@@ -147,19 +147,25 @@ struct BmpCache2Caps : public Capability {
         stream.out_uint32_le(this->bitmapCache2CellInfo);
         stream.out_uint32_le(this->bitmapCache3CellInfo);
         stream.out_uint32_le(this->bitmapCache4CellInfo);
+        stream.out_clear_bytes(12);
     }
 
     void recv(Stream & stream, uint16_t len){
         this->len = len;
+        if (len != CAPLEN_BITMAPCACHE_REV2 || !stream.in_check_rem(len)) {
+            LOG(LOG_ERR, "Broken CAPSTYPE_BITMAPCACHE_REV2, need=%u (%u) remains=%u",
+                    CAPLEN_BITMAPCACHE_REV2, len, stream.in_remain());
+                    throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
         this->cacheFlags    = stream.in_uint16_le();
         this->pad1          = stream.in_uint8();
         this->numCellCaches = stream.in_uint8();
-        TODO("Check NumCellCaches to know if we must read CellInfo or not ? Check actual windows servers behaviors")
         this->bitmapCache0CellInfo = stream.in_uint32_le();
         this->bitmapCache1CellInfo = stream.in_uint32_le();
         this->bitmapCache2CellInfo = stream.in_uint32_le();
         this->bitmapCache3CellInfo = stream.in_uint32_le();
         this->bitmapCache4CellInfo = stream.in_uint32_le();
+        stream.in_skip_bytes(12);
       }
 
     void log(const char * msg){
@@ -167,10 +173,15 @@ struct BmpCache2Caps : public Capability {
         LOG(LOG_INFO, "BitmapCache2 caps::cacheFlags %u", this->cacheFlags);
         LOG(LOG_INFO, "BitmapCache2 caps::pad1 %u", this->pad1);
         LOG(LOG_INFO, "BitmapCache2 caps::numCellCache %u", this->numCellCaches);
+        if (this->numCellCaches < 1){ return; }
         LOG(LOG_INFO, "BitmapCache2 caps::bitampCache0CellInfo %u", this->bitmapCache0CellInfo);
+        if (this->numCellCaches < 2){ return; }
         LOG(LOG_INFO, "BitmapCache2 caps::bitampCache1CellInfo %u", this->bitmapCache1CellInfo);
+        if (this->numCellCaches < 3){ return; }
         LOG(LOG_INFO, "BitmapCache2 caps::bitampCache2CellInfo %u", this->bitmapCache2CellInfo);
+        if (this->numCellCaches < 4){ return; }
         LOG(LOG_INFO, "BitmapCache2 caps::bitampCache3CellInfo %u", this->bitmapCache3CellInfo);
+        if (this->numCellCaches < 5){ return; }
         LOG(LOG_INFO, "BitmapCache2 caps::bitampCache4CellInfo %u", this->bitmapCache4CellInfo);
     }
 };

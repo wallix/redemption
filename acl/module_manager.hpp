@@ -29,22 +29,21 @@
 #include "config.hpp"
 #include "netutils.hpp"
 #include "mod_api.hpp"
+#include "auth_api.hpp"
 #include "null/null.hpp"
 #include "rdp/rdp.hpp"
 #include "vnc/vnc.hpp"
 #include "xup/xup.hpp"
-#include "transitory/transitory.hpp"
-#include "cli/cli_mod.hpp"
 #include "internal/bouncer2_mod.hpp"
 #include "internal/test_card_mod.hpp"
 #include "internal/replay_mod.hpp"
-#include "internal/selector_mod.hpp"
-#include "internal/wab_close_mod.hpp"
-#include "internal/dialog_mod.hpp"
-#include "internal/login_mod.hpp"
 #include "internal/rwl_mod.hpp"
-#include "internal/rwl_login_mod.hpp"
 #include "front.hpp"
+
+#include "internal/flat_login_mod.hpp"
+#include "internal/flat_selector_mod.hpp"
+#include "internal/flat_wab_close_mod.hpp"
+#include "internal/flat_dialog_mod.hpp"
 
 enum {
     MODULE_EXIT,
@@ -60,7 +59,6 @@ enum {
     MODULE_INTERNAL_WIDGET2_MESSAGE,
     MODULE_INTERNAL_WIDGET2_LOGIN,
     MODULE_INTERNAL_WIDGET2_RWL,
-    MODULE_INTERNAL_WIDGET2_RWL_LOGIN,
     MODULE_INTERNAL_CARD,
     MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
     MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
@@ -75,8 +73,9 @@ enum {
 
 class MMApi
 {
-    public:
+public:
     mod_api * mod;
+
     bool last_module;
     bool connected;
 
@@ -84,7 +83,7 @@ class MMApi
             , connected(false) {}
     ~MMApi() {}
     virtual void remove_mod() = 0;
-    virtual void new_mod(int target_module, time_t now) = 0;
+    virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
     virtual void record() = 0;
     virtual int next_module() = 0;
     virtual int get_mod_from_protocol() = 0;
@@ -98,8 +97,6 @@ class MMApi
     virtual bool is_connected() {
         return this->connected;
     }
-//    virtual bool is_close_box() { return false; }
-
 };
 
 class MMIni : public MMApi {
@@ -110,9 +107,9 @@ public:
                           , verbose(ini.debug.auth) {}
     virtual ~MMIni() {}
     virtual void remove_mod() {};
-    virtual void new_mod(int target_module, time_t now) {
-        printf("new mod %d at time: %d\n", static_cast<int>(target_module), static_cast<int>(now));
-        switch(target_module) {
+    virtual void new_mod(int target_module, time_t now, auth_api * acl) {
+        LOG(LOG_INFO, "new mod %d at time: %d\n", static_cast<int>(target_module), static_cast<int>(now));
+        switch (target_module) {
         case MODULE_VNC:
         case MODULE_XUP:
         case MODULE_RDP:
@@ -131,7 +128,7 @@ public:
             this->ini.context.auth_error_message.copy_c_str(auth_error_message);
         }
         this->remove_mod();
-        this->new_mod(MODULE_INTERNAL_CLOSE, now);
+        this->new_mod(MODULE_INTERNAL_CLOSE, now, NULL);
         signal = BACK_EVENT_NONE;
     }
 
@@ -141,6 +138,9 @@ public:
         }
         // Initialy, it no protocol known and get_value should provide "ASK".
         const char * protocol = this->ini.context.target_protocol.get_value();
+        if (this->verbose & 0x10) {
+            LOG(LOG_INFO, "auth::get_mod_from_protocol protocol=\"%s\"", protocol);
+        }
         if (ini.globals.internal_domain) {
             const char * target = this->ini.globals.target_device.get_cstr();
             if (0 == strncmp(target, "autotest", 8)) {
@@ -153,6 +153,20 @@ public:
                 LOG(LOG_INFO, "auth::get_mod_from_protocol RDP");
             }
             res = MODULE_RDP;
+        }
+        else if (this->connected && 0 == strncasecmp(protocol, "RDP", 4) &&
+            !((mod_rdp *)this->mod)->end_session_reason.is_empty() &&
+            !strncmp(((mod_rdp *)this->mod)->end_session_reason.c_str(), "CONNECTION_FAILED", 17)
+            ) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol RDP (connected)");
+            }
+
+            this->remove_mod();
+            this->connected = false;
+
+            this->ini.context.target_protocol.set_from_acl("_TRANSITORY");
+            res = MODULE_TRANSITORY;
         }
         else if (!this->connected && 0 == strncasecmp(protocol, "APP", 4)) {
             if (this->verbose & 0x4) {
@@ -171,6 +185,12 @@ public:
                 LOG(LOG_INFO, "auth::get_mod_from_protocol XUP");
             }
             res = MODULE_XUP;
+        }
+        else if (!this->connected && 0 == strncasecmp(protocol, "_TRANSITORY", 11)) {
+            if (this->verbose & 0x4) {
+                LOG(LOG_INFO, "auth::get_mod_from_protocol _TRANSITORY");
+            }
+            res = MODULE_TRANSITORY;
         }
         else if (strncasecmp(protocol, "INTERNAL", 8) == 0) {
             const char * target = this->ini.globals.target_device.get_cstr();
@@ -208,22 +228,22 @@ public:
                 }
                 res = MODULE_INTERNAL_WIDGET2_LOGIN;
             }
-            else if (0 == strcmp(target, "rwl_login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
-            }
             else if (0 == strcmp(target, "rwl")) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL login");
                 }
                 res = MODULE_INTERNAL_WIDGET2_RWL;
             }
-            else if (0 == strcmp(target, "close") || 0 == strcmp(target, "widget2_close")) {
+            else if (0 == strncmp(target, "close", 5) || 0 == strncmp(target, "widget2_close", 13)) {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL close");
                 }
+                const char * separator_position = strchr(target, ':');
+                if (separator_position)
+                {
+                    this->ini.globals.target_device.set_from_acl(separator_position + 1);
+                }
+
                 res = MODULE_INTERNAL_CLOSE;
             }
             else if (0 == strcmp(target, "widget2_dialog")) {
@@ -250,12 +270,6 @@ public:
                 }
                 res = MODULE_INTERNAL_WIDGET2_RWL;
             }
-            else if (0 == strcmp(target, "widget2_rwl_login")) {
-                if (this->verbose & 0x4) {
-                    LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL widget2_rwl_login");
-                }
-                res = MODULE_INTERNAL_WIDGET2_RWL_LOGIN;
-            }
             else {
                 if (this->verbose & 0x4) {
                     LOG(LOG_INFO, "auth::get_mod_from_protocol INTERNAL card");
@@ -279,13 +293,6 @@ public:
 
     int next_module() {
         LOG(LOG_INFO, "----------> ACL next_module <--------");
-        // if (!this->ini.context.rejected.get().is_empty()) {
-        //     this->ini.context.auth_error_message.copy_str(this->ini.context.rejected.get());
-        //     this->ini.context.rejected.set_empty();
-        //     LOG(LOG_INFO, "MODULE_INTERNAL_CLOSE");
-        //     return MODULE_INTERNAL_CLOSE;
-        // }
-        // else
         if (this->ini.context_is_asked(AUTHID_AUTH_USER)
             ||  this->ini.context_is_asked(AUTHID_PASSWORD)) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
@@ -378,10 +385,10 @@ public:
         delete this->no_mod;
     }
 
-    virtual void new_mod(int target_module, time_t now)
+    virtual void new_mod(int target_module, time_t now, auth_api * acl)
     {
         LOG(LOG_INFO, "target_module=%u", target_module);
-
+        if (this->last_module) this->front.stop_capture();
         switch (target_module)
             {
             case MODULE_INTERNAL_BOUNCER2:
@@ -418,7 +425,8 @@ public:
                 break;
             case MODULE_INTERNAL_WIDGET2_SELECTOR:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
-                this->mod = new SelectorMod(this->ini,
+                this->mod = new FlatSelectorMod(this->ini,
+                            // new SelectorMod(this->ini,
                                             this->front,
                                             this->front.client_info.width,
                                             this->front.client_info.height
@@ -433,11 +441,14 @@ public:
                     if (this->ini.context.auth_error_message.is_empty()) {
                         this->ini.context.auth_error_message.copy_c_str("Connection to server ended");
                     }
-                    this->mod = new WabCloseMod(this->ini,
+                    this->mod = new FlatWabCloseMod(this->ini,
+                                // new WabCloseMod(this->ini,
                                                 this->front,
                                                 this->front.client_info.width,
                                                 this->front.client_info.height,
-                                                now);
+                                                now,
+                                                true
+                                                );
                     this->front.init_pointers();
                 }
                 LOG(LOG_INFO, "ModuleManager::internal module Close ready");
@@ -450,14 +461,16 @@ public:
                     const char * message = this->ini.context.message.get_cstr();
                     const char * button = this->ini.translation.button_refused.get_cstr();
                     const char * caption = "Information";
-                    this->mod = new DialogMod(
+                    this->mod = new FlatDialogMod(
+                                // new DialogMod(
                                               this->ini,
                                               this->front,
                                               this->front.client_info.width,
                                               this->front.client_info.height,
                                               caption,
                                               message,
-                                              button
+                                              button,
+                                              now
                                               );
                     LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Accept Message' ready");
                 }
@@ -469,21 +482,54 @@ public:
                     const char * message = this->ini.context.message.get_cstr();
                     const char * button = NULL;
                     const char * caption = "Information";
-                    this->mod = new DialogMod(
+                    this->mod = new FlatDialogMod(
+                                // new DialogMod(
                                               this->ini,
                                               this->front,
                                               this->front.client_info.width,
                                               this->front.client_info.height,
                                               caption,
                                               message,
-                                              button
+                                              button,
+                                              now
                                               );
                     LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
                 }
                 break;
             case MODULE_INTERNAL_WIDGET2_LOGIN:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-                this->mod = new LoginMod(
+                if (this->ini.context_is_asked(AUTHID_TARGET_USER)
+                    ||  this->ini.context_is_asked(AUTHID_TARGET_DEVICE)){
+                    if (this->ini.context_is_asked(AUTHID_AUTH_USER)){
+                        this->ini.account.username[0] = 0;
+                    }
+                    else {
+                        strncpy(this->ini.account.username,
+                                this->ini.globals.auth_user.get_cstr(),
+                                // this->ini.context_get_value(AUTHID_AUTH_USER, NULL, 0),
+                                sizeof(this->ini.account.username));
+                        this->ini.account.username[sizeof(this->ini.account.username) - 1] = 0;
+                    }
+                }
+                else if (this->ini.context_is_asked(AUTHID_AUTH_USER)) {
+                    this->ini.account.username[0] = 0;
+                }
+                else {
+                    TODO("check this! Assembling parts to get user login with target is not obvious"
+                         "method used below il likely to show @: if target fields are empty")
+                    char buffer[255];
+                    snprintf( buffer, sizeof(buffer), "%s@%s:%s%s%s"
+                            , this->ini.globals.target_user.get_cstr()
+                            , this->ini.globals.target_device.get_cstr()
+                            , this->ini.context.target_protocol.get_cstr()
+                            , (!this->ini.context.target_protocol.is_empty() ? ":" : "")
+                            , this->ini.globals.auth_user.get_cstr()
+                            );
+                    strcpy(this->ini.account.username, buffer);
+                }
+
+                this->mod = new FlatLoginMod(
+                            // new LoginMod(
                                          this->ini,
                                          this->front,
                                          this->front.client_info.width,
@@ -499,15 +545,6 @@ public:
                                        this->front.client_info.height);
                 LOG(LOG_INFO, "ModuleManager::internal module Login ready");
                 break;
-            case MODULE_INTERNAL_WIDGET2_RWL_LOGIN:
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-                this->mod = new RwlLoginMod(
-                                            this->ini,
-                                            this->front,
-                                            this->front.client_info.width,
-                                            this->front.client_info.height);
-                LOG(LOG_INFO, "ModuleManager::internal module Login ready");
-                break;
 
             case MODULE_XUP:
                 {
@@ -517,7 +554,6 @@ public:
                     }
 
                     int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                                //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                                 this->ini.context.target_port.get(),
                                                 4, 1000,
                                                 this->ini.debug.mod_xup);
@@ -530,7 +566,6 @@ public:
                     SocketTransport * t = new SocketTransport(name
                                                               , client_sck
                                                               , this->ini.globals.target_device.get_cstr()
-                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                                                               , this->ini.context.target_port.get()
                                                               , this->ini.debug.mod_xup);
                     this->mod_transport = t;
@@ -582,7 +617,6 @@ public:
                     static const char * name = "RDP Target";
 
                     int client_sck = ip_connect(this->ini.globals.target_device.get_cstr(),
-                                                //this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0),
                                                 this->ini.context.target_port.get(),
                                                 3, 1000,
                                                 this->ini.debug.mod_rdp);
@@ -597,7 +631,6 @@ public:
                                                               name
                                                               , client_sck
                                                               , this->ini.globals.target_device.get_cstr()
-                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                                                               , this->ini.context.target_port.get()
                                                               , this->ini.debug.mod_rdp
                                                               , &this->ini.context.auth_error_message
@@ -606,32 +639,31 @@ public:
 
                     this->ini.context.auth_error_message.copy_c_str("failed authentification on remote RDP host");
                     UdevRandom gen;
-                    this->mod = new mod_rdp(t
-                                            , this->ini.globals.target_user.get_cstr()
-                                            , this->ini.context.target_password.get_cstr()
-                                            //, this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                            //, this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
-                                            , "0.0.0.0"  // client ip is silenced
-                                            , this->front
-                                            // , hostname
-                                            , true
-                                            , client_info
-                                            , &gen
-                                            , this->front.keymap.key_flags
-//                                            , this->acl   // we give mod_rdp a direct access to sesman for auth_channel channel
-                                            , &this->ini.context.authchannel_target
-                                            , &this->ini.context.authchannel_result
-                                            , this->ini.globals.auth_channel
-                                            , this->ini.globals.alternate_shell.get_cstr()
-                                            , this->ini.globals.shell_working_directory.get_cstr()
-                                            , this->ini.client.clipboard.get()
-                                            , true          // support fast-path
-                                            , true          // support mem3blt
-                                            , this->ini.globals.enable_bitmap_update
-                                            , this->ini.debug.mod_rdp
-                                            , true          // support new pointer
-                                            , this->ini.mod_rdp.rdp_compression
-                                            );
+                    this->mod = new mod_rdp(
+                        t,
+                        this->ini.globals.target_user.get_cstr(),
+                        this->ini.context.target_password.get_cstr(),
+                        "0.0.0.0",  // client ip is silenced
+                        this->front,
+                        true,
+                        client_info,
+                        &gen,
+                        this->front.keymap.key_flags,
+                        acl,
+                        this->ini.globals.auth_channel,
+                        this->ini.globals.alternate_shell.get_cstr(),
+                        this->ini.globals.shell_working_directory.get_cstr(),
+                        this->ini.client.clipboard.get(),
+                        true,          // support fast-path
+                        true,          // support mem3blt
+                        this->ini.globals.enable_bitmap_update,
+                        this->ini.debug.mod_rdp,
+                        true,          // support new pointer
+                        this->ini.mod_rdp.rdp_compression,
+                        &this->ini.context.auth_error_message,
+                        this->ini.mod_rdp.disconnect_on_logon_user_change,
+                        this->ini.mod_rdp.open_session_timeout
+                    );
                     this->mod->event.obj = client_sck;
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
@@ -661,7 +693,6 @@ public:
                     SocketTransport * t = new SocketTransport(name
                                                               , client_sck
                                                               , this->ini.globals.target_device.get_cstr()
-                                                              //, this->ini.context_get_value(AUTHID_TARGET_DEVICE, NULL, 0)
                                                               , this->ini.context.target_port.get()
                                                               , this->ini.debug.mod_vnc);
                     this->mod_transport = t;
@@ -671,8 +702,6 @@ public:
                     this->mod = new mod_vnc(t
                                             , this->ini.globals.target_user.get_cstr()
                                             , this->ini.context.target_password.get_cstr()
-                                            // , this->ini.context_get_value(AUTHID_TARGET_USER, NULL, 0)
-                                            // , this->ini.context_get_value(AUTHID_TARGET_PASSWORD, NULL, 0)
                                             , this->front
                                             , this->front.client_info.width
                                             , this->front.client_info.height
@@ -696,7 +725,6 @@ public:
                 }
             }
         if (this->connected) this->record();
-        if (this->last_module) this->front.stop_capture();
     }
 
     // Check movie start/stop/pause

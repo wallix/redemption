@@ -25,8 +25,7 @@
 
 #include "rio.h"
 #include "netutils.hpp"
-#include </usr/include/openssl/ssl.h>
-#include </usr/include/openssl/err.h>
+#include "openssl_tls.hpp"
 
 extern "C" {
     struct RIOSocketTLS {
@@ -58,7 +57,7 @@ extern "C" {
         return RIO_ERROR_OK;
     }
 
-    static inline size_t rio_m_RIOSocketTLS_recv(RIOSocketTLS * self, void * data, size_t len)
+    static inline ssize_t rio_m_RIOSocketTLS_recv(RIOSocketTLS * self, void * data, size_t len)
     {
         char * pbuffer = (char*)data;
         size_t remaining_len = len;
@@ -111,7 +110,7 @@ extern "C" {
                     TODO("replace this with actual error management, EOF is not even an option for sockets")
                     TODO("Manage actual errors, check possible values")
                     rio_m_RIOSocketTLS_destructor(self);
-                    return (RIO_ERROR)-RIO_ERROR_ANY;
+                    return -RIO_ERROR_ANY;
                 }
                 break;
             }
@@ -154,7 +153,7 @@ extern "C" {
                         LOG(LOG_INFO, "%s", ERR_error_string(error, NULL));
                     }
                     rio_m_RIOSocketTLS_destructor(self);
-                    return (RIO_ERROR)-RIO_ERROR_ANY;
+                    return -RIO_ERROR_ANY;
                 }
             }
         }

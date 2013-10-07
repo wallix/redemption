@@ -25,14 +25,12 @@
 #define _REDEMPTION_CORE_FRONT_API_HPP_
 
 #include "channel_list.hpp"
-#include "RDP/RDPGraphicDevice.hpp"
+#include "draw_api.hpp"
 #include "stream.hpp"
 
-class FrontAPI : public RDPGraphicDevice {
+class FrontAPI : public DrawApi {
     public:
-    using RDPGraphicDevice::draw;
-
-    virtual void draw_vnc( const Rect & rect
+    virtual void draw_vnc(const Rect & rect
                          , const uint8_t bpp
                          , const BGRPalette & palette332
                          , const uint8_t * raw
@@ -41,25 +39,11 @@ class FrontAPI : public RDPGraphicDevice {
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const = 0;
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data
                                 , size_t length, size_t chunk_size, int flags) = 0;
-/*
-    virtual void send_pointer(int cache_idx, uint8_t * data, uint8_t * mask, int x, int y)
-      throw(Error) = 0;
-    virtual void set_pointer(int cache_idx) throw(Error) = 0;
-*/
-    virtual void server_set_pointer(int x, int y, uint8_t * data, uint8_t * mask) = 0;
 
     virtual void send_global_palette() throw(Error) = 0;
     virtual void set_mod_palette(const BGRPalette & palette) = 0;
 
-    virtual void begin_update() = 0;
-    virtual void end_update() = 0;
-
-    virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor
-                                 , uint32_t bgcolor, const Rect & clip) = 0;
-    virtual void text_metrics(const char * text, int & width, int & height) = 0;
-
     virtual int server_resize(int width, int height, int bpp) = 0;
-
     virtual void update_config(const timeval & now, const Inifile & ini) {}
 
     int mouse_x;
@@ -72,6 +56,8 @@ class FrontAPI : public RDPGraphicDevice {
         , mouse_y(0)
         , notimestamp(notimestamp)
         , nomouse(nomouse) {}
+
+    virtual void send_data_indication_ex(uint16_t channelId, HStream & stream) {}
 };
 
 #endif

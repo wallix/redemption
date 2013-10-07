@@ -39,7 +39,7 @@
 #include "front_api.hpp"
 #include "client_info.hpp"
 #include "vnc/vnc.hpp"
-
+#include "RDP/pointer.hpp"
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
-        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip)
+        virtual void draw(const RDPGlyphIndex& cmd, const Rect& clip, const GlyphCache * gly_cache)
         {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
-        virtual void server_set_pointer(int x, int y, uint8_t* data, uint8_t* mask)
+        virtual void server_set_pointer(const Pointer & cursor)
         {
             if (verbose > 10){
                 LOG(LOG_INFO, "--------- FRONT ------------------------");
@@ -477,13 +477,13 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     BOOST_CHECK_EQUAL(mod->front_width, 1024);
     BOOST_CHECK_EQUAL(mod->front_height, 768);
 
-//    mod->draw_event();
+//    mod->draw_event(time(NULL));
 ////    BOOST_CHECK(t.status);
 
-//    mod->draw_event();
+//    mod->draw_event(time(NULL));
 ////    BOOST_CHECK(t.status);
 
-//    mod->draw_event();
+//    mod->draw_event(time(NULL));
 ////    BOOST_CHECK(t.status);
 
 }

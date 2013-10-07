@@ -53,6 +53,7 @@ BOOST_AUTO_TEST_CASE(TestColors)
         0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFFFFFF,
     };
 
+    BOOST_CHECK_EQUAL(0, color_decode(0, 1, palette));
     BOOST_CHECK_EQUAL(0, color_decode(0, 8, palette));
     BOOST_CHECK_EQUAL(0xFFFFFF, color_decode(0xFF, 8, palette));
 
@@ -68,10 +69,24 @@ BOOST_AUTO_TEST_CASE(TestColors)
     BOOST_CHECK_EQUAL(0x00FF00, color_decode(0x07E0, 16, palette));
     BOOST_CHECK_EQUAL(0x0000FF, color_decode(0x001F, 16, palette));
 
+    BOOST_CHECK_EQUAL(0xFF, color_encode(0xFFFFFF, 8));
+    BOOST_CHECK_EQUAL(0xE0, color_encode(0xFF0000, 8)); // -> 1F ?!
+    BOOST_CHECK_EQUAL(0x1C, color_encode(0x00FF00, 8));
+    BOOST_CHECK_EQUAL(0x03, color_encode(0x0000FF, 8)); // -> 0xF800 ?!
+
+    BOOST_CHECK_EQUAL(0x7FFF, color_encode(0xFFFFFF, 15));
+    BOOST_CHECK_EQUAL(0x001F, color_encode(0xFF0000, 15)); // -> 1F ?!
+    BOOST_CHECK_EQUAL(0x03E0, color_encode(0x00FF00, 15));
+    BOOST_CHECK_EQUAL(0x7C00, color_encode(0x0000FF, 15)); // -> 0xF800 ?!
+
     BOOST_CHECK_EQUAL(0xFFFF, color_encode(0xFFFFFF, 16));
     BOOST_CHECK_EQUAL(0x001F, color_encode(0xFF0000, 16)); // -> 1F ?!
     BOOST_CHECK_EQUAL(0x07E0, color_encode(0x00FF00, 16));
     BOOST_CHECK_EQUAL(0xF800, color_encode(0x0000FF, 16)); // -> 0xF800 ?!
+
+
+    BOOST_CHECK_EQUAL(0xF0F0F0, color_encode(0xF0F0F0, 24));
+    BOOST_CHECK_EQUAL(0x0F0F0F, color_encode(0x0F0F0F, 32));
 
 
     BOOST_CHECK_EQUAL(0, color_decode(0, 24, palette));
@@ -79,5 +94,16 @@ BOOST_AUTO_TEST_CASE(TestColors)
     BOOST_CHECK_EQUAL(0xFF0000, color_decode(0xFF0000, 24, palette));
     BOOST_CHECK_EQUAL(0x00FF00, color_decode(0x00FF00, 24, palette));
     BOOST_CHECK_EQUAL(0x0000FF, color_decode(0x0000FF, 24, palette));
+
+
+    BOOST_CHECK_EQUAL(0x563412, RGBtoBGR(0x123456));
+
+
+    BOOST_CHECK_EQUAL(0xFFFFFF, color_decode_opaquerect(0xFFFFFF, 8, palette));
+    BOOST_CHECK_EQUAL(0x000000, color_decode_opaquerect(0xFF0000, 15, palette));
+    BOOST_CHECK_EQUAL(0x00E3FF, color_decode_opaquerect(0x00FF00, 16, palette));
+    BOOST_CHECK_EQUAL(0x0000FF, color_decode_opaquerect(0x0000FF, 24, palette));
+
+    init_palette332((BGRPalette &)palette);
 
 }

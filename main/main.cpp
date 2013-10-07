@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
               Olivier Hervieu, Martin Potier, Raphael Zhou
-   Based on xrdp Copyright (C) Jay Sorg 2004-2010
+              and Meng Tan
 
    main program
 */
@@ -37,6 +37,7 @@
 #include "version.hpp"
 
 #include "config.hpp"
+#include "font.hpp"
 #include "check_files.hpp"
 #include "mainloop.hpp"
 #include "log.hpp"
@@ -100,24 +101,20 @@ int shutdown(const char * pid_file)
     /* read the rdpproxy.pid file */
     fd = -1;
     cout << "looking if pid_file " << pid_file <<  " exists\n";
-//  if ((0 == access(pid_file, F_OK))) { /* rdpproxy.pid */
-//   /*Code related to g_file_open os_call*/
-//   fd =  open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-//   if (fd == -1) {
-//       /* can't open read / write, try to open read only */
-//       fd =  open(pid_file, O_RDONLY);
-//   }
-//
-    fd =  open(pid_file, O_RDONLY);
+    if ((0 == access(pid_file, F_OK))) {
+        fd =  open(pid_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+        if (fd == -1) {
+            /* can't open read / write, try to open read only */
+            fd =  open(pid_file, O_RDONLY);
+        }
+    }
     if (fd == -1) {
-      // file does not exist.
-        return 1;
+        return 1; // file does not exist.
     }
     cout << "reading pid_file " << pid_file << "\n";
     memset(text, 0, 32);
     if (read(fd, text, 31) < 0){
         cout << "failed to read pid file\n";
-        //cout << "pid =" << text << "\n";
     }
     else{
         pid = atoi(text);
@@ -138,10 +135,10 @@ int shutdown(const char * pid_file)
                     res = kill(pid,0);
                 }
                 if ((errno != ESRCH) || (res == 0)){
-	            // if errno != ESRCH, pid is still running
-		    cout << "Error stopping process id " << pid << "\n";
-		}
-	    }
+                    // if errno != ESRCH, pid is still running
+                    cout << "Error stopping process id " << pid << "\n";
+                }
+            }
         }
     }
     close(fd);
@@ -151,7 +148,6 @@ int shutdown(const char * pid_file)
     DIR * d = opendir("/var/run/redemption");
     if (d){
         size_t path_len = strlen("/var/run/redemption/");
-
         size_t file_len = pathconf("/var/run/redemption/", _PC_NAME_MAX) + 1;
         char * buffer = (char*)malloc(file_len + path_len);
         strcpy(buffer, "/var/run/redemption/");
@@ -196,22 +192,23 @@ const char * copyright_notice =
     "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
     "Copyright (C) Wallix 2010-2013.\n"
     "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
-    "Martin Potier, Dominique Lafages, Jonathan Poelen and Raphael Zhou\n"
+    "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou\n"
+    "and Meng Tan\n"
     "\n"
     ;
 
 int main(int argc, char** argv)
 {
-    bool check_share_files = false;
-    bool check_etc_files = false;
     int fd;
     int pid;
     char text[256];
     setlocale(LC_CTYPE, "C");
-    Check_files cfc;
 
     unsigned uid = getuid();
     unsigned gid = getgid();
+
+    unsigned euid = uid;
+    unsigned egid = gid;
 
     po::options_description desc("Options");
     desc.add_options()
@@ -224,9 +221,9 @@ int main(int argc, char** argv)
     // -nodaemon" -n
     ("nodaemon,n", "don't fork into background")
 
-    ("uid,u", po::value<unsigned>(&uid), "run with given uid")
+    ("uid,u", po::value<unsigned>(&euid), "run with given uid")
 
-    ("gid,g", po::value<unsigned>(&gid), "run with given gid")
+    ("gid,g", po::value<unsigned>(&egid), "run with given gid")
 
 //    ("trace,t", "trace behaviour")
 
@@ -266,33 +263,48 @@ int main(int argc, char** argv)
         cout << "Version " VERSION "\n" << endl;
         _exit(0);
     }
-    if (options.count("check")) {
-        check_share_files = cfc.check_share();
-        check_etc_files = cfc.check_etc();
-        std::clog << boolalpha;
-        clog <<
-        LOGIN_LOGO24   " is present at " SHARE_PATH     " .... " << cfc.ad24b       << "\n"
-        CURSOR0        " is present at " SHARE_PATH     " .... " << cfc.cursor0     << "\n"
-        CURSOR1        " is present at " SHARE_PATH     " .... " << cfc.cursor1     << "\n"
-        FONT1          " is present at " SHARE_PATH     " .... " << cfc.sans        << "\n"
-        REDEMPTION_LOGO24  " is present at " SHARE_PATH " .... " << cfc.logo        << "\n"
-        RSAKEYS_INI    " is present at " CFG_PATH       "..... " << cfc.keys        << "\n"
-        RDPPROXY_INI   " is present at " CFG_PATH       "..... " << cfc.config_file << "\n"
-        ;
 
-        if (!(check_share_files && check_etc_files)){
-            std::clog << boolalpha;
-            clog <<
-            "Share files test result: " << check_share_files << ".\n"
-            << "Etc files test result: " << check_etc_files <<  ".\n"
-            << "Please verify that all tests passed. If not, "
-            "you may need to remove " PID_PATH "/redemption/" LOCKFILE " or "
-            "reinstall rdpproxy if some configuration files are missing.\n";
+    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
+
+    bool user_check_file_result  =
+        ((uid != euid) || (gid != egid)) ?
+        CheckFile::check(user_check_file_list) : true;
+/*
+    setgid(egid);
+    setuid(euid);
+*/
+    bool euser_check_file_result = CheckFile::check(euser_check_file_list);
+/*
+    setgid(gid);
+    setuid(uid);
+*/
+
+    if (options.count("check")) {
+        if ((uid != euid) || (gid != egid))
+        {
+            CheckFile::ShowAll(user_check_file_list, uid, gid);
+        }
+        CheckFile::ShowAll(euser_check_file_list, euid, egid);
+
+        if (!user_check_file_result || !euser_check_file_result)
+        {
+            LOG(LOG_INFO,
+                "Please verify that all tests passed. If not, "
+                    "you may need to remove " PID_PATH "/redemption/"
+                    LOCKFILE " or reinstall rdpproxy if some configuration "
+                    "files are missing.");
         }
         _exit(0);
     }
-
-    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
+    else if (!user_check_file_result || !euser_check_file_result)
+    {
+        if ((uid != euid) || (gid != egid))
+        {
+            CheckFile::ShowErrors(user_check_file_list, euid, egid);
+        }
+        CheckFile::ShowErrors(euser_check_file_list, euid, egid);
+        _exit(0);
+    }
 
     if (options.count("inetd")) {
         redemption_new_session();
@@ -309,8 +321,8 @@ int main(int argc, char** argv)
         TODO("check only for relevant errors (exists with expected permissions is OK)");
     }
 
-    if (chown(PID_PATH "/redemption", uid, gid) < 0){
-        LOG(LOG_INFO, "Failed to set owner %u.%u to " PID_PATH "/redemption", uid, gid);
+    if (chown(PID_PATH "/redemption", euid, egid) < 0){
+        LOG(LOG_INFO, "Failed to set owner %u.%u to " PID_PATH "/redemption", euid, egid);
         exit(1);
     }
 
@@ -351,12 +363,12 @@ int main(int argc, char** argv)
     ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
     if (!ini.globals.enable_ip_transparent) {
-        setgid(gid);
-        setuid(uid);
+        setgid(egid);
+        setuid(euid);
     }
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, uid, gid);
+    redemption_main_loop(ini, euid, egid);
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */

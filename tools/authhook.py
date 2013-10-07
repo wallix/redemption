@@ -163,7 +163,7 @@ class User(object):
                 continue
             # multiply number of entries by 15 to test pagination
             all_services.append(target)
-            all_groups.append(service.protocol.lower())
+            all_groups.append(service.protocol.lower() + service.protocol.lower() + service.protocol.lower())
             all_protos.append(service.protocol)
             all_endtimes.append(service.endtime)
         _number_of_pages = 1
@@ -176,10 +176,10 @@ class User(object):
         print "lines per page = ",_lines_per_page
         _start_of_page = _current_page * _lines_per_page
         _end_of_page = _start_of_page + _lines_per_page
-        answer['proto_dest'] = " ".join(all_protos[_start_of_page:_end_of_page])
+        answer['proto_dest'] = "\x01".join(all_protos[_start_of_page:_end_of_page])
         answer['end_time'] = ";".join(all_endtimes[_start_of_page:_end_of_page])
-        answer['target_login'] = " ".join(all_groups[_start_of_page:_end_of_page])
-        answer['target_device'] = " ".join(all_services[_start_of_page:_end_of_page])
+        answer['target_login'] = "\x01".join(all_groups[_start_of_page:_end_of_page])
+        answer['target_device'] = "\x01".join(all_services[_start_of_page:_end_of_page])
         answer['selector_number_of_pages'] = str(_number_of_pages)
         answer['selector_current_page'] = _current_page + 1
 
@@ -249,7 +249,7 @@ class Authentifier(object):
                 pass
         self.dic.update(_data)
 
-        answer = {'authenticated': 'false', 'clipboard' : 'true', 'file_encryption' : 'true', 'trans_cancel' : 'Annuler', 'trans_ok' : 'Oui', 'width' : '1280', 'height' : '1024', 'bpp' : '8'}
+        answer = {'authenticated': 'false', 'clipboard' : 'true', 'file_encryption' : 'true', 'trans_cancel' : 'Cancel', 'trans_ok' : 'Ok', 'width' : '1280', 'height' : '1024', 'bpp' : '8'}
         _login = self.dic.get('login')
         if _login != MAGICASK:
             for user in self.users:
@@ -305,7 +305,7 @@ server3450.listen(5)
 
 servers = [server3350, server3450]
 wsockets = []
-manager ={}
+manager = {}
 
 users = [
     User('one', 'one', [
@@ -321,7 +321,8 @@ users = [
         Service('w2008', '10.10.46.114', r'administrator', PASSWORD6, 'RDP', '3389'),
         Service('Vnc', '10.10.46.70', 'any', PASSWORD2, 'VNC', '5900'),
         Service('Vnc', '10.10.46.70', 'nobody', PASSWORD3, 'VNC', '5900'),
-        Service('xp', '10.10.46.111', r'qa\administrateur', PASSWORD1, 'RDP', '3389'),
+        Service('xp', '10.10.46.111', r'qa\administrateur_oapzdjiadaoinddshfpiosqhfsquioq',
+                PASSWORD1, 'RDP', '3389'),
         Service('seven', '10.10.46.116', r'qa\administrateur', PASSWORD1, 'RDP', '3389'),
         Service('w2003', '10.10.46.70', r'test_unicode', PASSWORD4, 'RDP', '3389'),
         Service('xp', '10.10.47.58', r'xavier', PASSWORD7, 'RDP', '3389'),

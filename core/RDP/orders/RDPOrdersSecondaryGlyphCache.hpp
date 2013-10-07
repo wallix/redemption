@@ -105,7 +105,6 @@ class RDPGlyphCache {
 
     RDPGlyphCache() : cGlyphs(1), glyphData_aj(NULL)
     {
-
     }
 
     RDPGlyphCache( uint8_t  cacheId
@@ -125,11 +124,10 @@ class RDPGlyphCache {
         , glyphData_cx(glyphData_cx)
         , glyphData_cy(glyphData_cy)
     {
-        size_t size = align4(nbbytes(glyphData_cx) * glyphData_cy);
+        size_t size = this->datasize();
         this->glyphData_aj = (uint8_t*)malloc(size);
         memcpy(this->glyphData_aj, glyphData_aj, size);
     }
-
 
     ~RDPGlyphCache()
     {
@@ -138,10 +136,24 @@ class RDPGlyphCache {
         }
     }
 
+    inline int datasize() const
+    {
+        return align4(nbbytes(this->glyphData_cx) * this->glyphData_cy);
+    }
+
+    int total_order_size() const
+    {
+        return 18 + /* controlFlags(1) + orderLength(2) + extraFlags(2) + orderType(1) +
+                     *     cacheId(1) + cGlyphs(1) + cacheIndex(2) + x(2) + y(2) + cx(2) +
+                     *     cy(2)
+                     */
+               this->datasize();
+    }
+
     void emit(Stream & stream) const
     {
         using namespace RDP;
-        size_t size = align4(nbbytes(this->glyphData_cx) * this->glyphData_cy);
+        size_t size = this->datasize();
 
         uint8_t control = STANDARD | SECONDARY;
         stream.out_uint8(control);
@@ -162,7 +174,7 @@ class RDPGlyphCache {
 
     void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
-        // using namespace RDP;
+        using namespace RDP;
 
         // uint8_t cacheIndex = stream.in_uint8();
         // this->bpp = stream.in_uint8();
@@ -172,6 +184,19 @@ class RDPGlyphCache {
         // this->size = stream.in_uint8();
         // this->data = (uint8_t *)malloc(this->size);
         // memcpy(this->data, stream.in_uint8p(this->size), this->size);
+
+        this->cacheId              = stream.in_uint8();
+        this->cGlyphs              = stream.in_uint8();
+        this->glyphData_cacheIndex = stream.in_uint16_le();
+        this->glyphData_x          = stream.in_uint16_le();
+        this->glyphData_y          = stream.in_uint16_le();
+        this->glyphData_cx         = stream.in_uint16_le();
+        this->glyphData_cy         = stream.in_uint16_le();
+
+        size_t size = align4(nbbytes(this->glyphData_cx) * this->glyphData_cy);
+
+        this->glyphData_aj = (uint8_t *)malloc(size);
+        memcpy(this->glyphData_aj, stream.in_uint8p(size), size);
     }
 
     bool operator==(const RDPColCache & other) const {

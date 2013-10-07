@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_MULTILINE_HPP)
@@ -43,12 +44,12 @@ public:
     int fg_color;
 
 public:
-    WidgetMultiLine(DrawApi& drawable, int16_t x, int16_t y, Widget2* parent,
+    WidgetMultiLine(DrawApi& drawable, int16_t x, int16_t y, Widget2& parent,
                     NotifyApi* notifier, const char * text,
                     bool auto_resize = true,
                     int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                     int xtext = 0, int ytext = 0)
-    : Widget2(&drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , x_text(xtext)
     , y_text(ytext)
     , cy_text(0)
@@ -70,6 +71,11 @@ public:
 
     void set_text(const char * text)
     {
+        if (this->auto_resize) {
+            this->rect.cx = 0;
+            this->rect.cy = 0;
+        }
+
         const char * str = 0;
         char * pbuf = this->buffer;
         line_t * line = this->lines;
@@ -83,7 +89,7 @@ public:
             *pbuf = '\0';
             ++pbuf;
             int h;
-            this->drawable->text_metrics(line->str, line->cx, h);
+            this->drawable.text_metrics(line->str, line->cx, h);
             if (h > this->cy_text)
                 this->cy_text = h;
             if (this->auto_resize) {
@@ -112,11 +118,11 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        int dy = this->dy();
-        this->drawable->draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
+        int dy = this->dy() + this->y_text;
+        this->drawable.draw(RDPOpaqueRect(clip, this->bg_color), this->rect);
         for (line_t * line = this->lines; line->str; ++line) {
             dy += this->y_text;
-            this->drawable->server_draw_text(this->x_text + this->dx(),
+            this->drawable.server_draw_text(this->x_text + this->dx(),
                                              dy,
                                              line->str,
                                              this->fg_color,

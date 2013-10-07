@@ -179,7 +179,6 @@ struct Session {
                 }
 
                 try {
-
                     if (this->front->up_and_running) {
                         if (this->ini->video.inactivity_pause
                             && mm.connected
@@ -189,7 +188,7 @@ struct Session {
 
                         // Process incoming module trafic
                         if (mm.mod->event.is_set(rfds)) {
-                            mm.mod->draw_event();
+                            mm.mod->draw_event(now);
 
                             if (mm.mod->event.signal != BACK_EVENT_NONE) {
                                 signal = mm.mod->event.signal;

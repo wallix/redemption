@@ -23,7 +23,7 @@
 #ifndef _REDEMPTION_TRANSPORT_RIO_RIO_H_
 #define _REDEMPTION_TRANSPORT_RIO_RIO_H_
 
-#include </usr/include/openssl/ssl.h>
+#include "openssl_tls.hpp"
 
 extern "C" {
     typedef enum {
@@ -207,6 +207,9 @@ extern "C" {
 
     RIO * rio_new_crypto(RIO_ERROR * error, const char * file, int oflag);
     RIO_ERROR rio_init_crypto(RIO * self, const char * file, int oflag);
+
+    ssize_t sq_outtracker_unlink(SQ * seq);
+    ssize_t sq_cryptoouttracker_unlink(SQ * seq);
 }
 
 #endif

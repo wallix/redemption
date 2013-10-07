@@ -15,7 +15,8 @@
  *
  *   Product name: redemption, a FLOSS RDP proxy
  *   Copyright (C) Wallix 2010-2013
- *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
+ *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen,
+ *              Meng Tan
  */
 
 #ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_RWL_RECTANGLE_HPP
@@ -24,7 +25,7 @@
 #include "composite.hpp"
 #include "draw_api.hpp"
 
-class RwlRectangle : public WidgetComposite
+class RwlRectangle : public WidgetParent
 {
 public:
     struct Style {
@@ -49,9 +50,9 @@ public:
     Style style;
 
 public:
-    RwlRectangle(DrawApi& drawable, Widget2* parent, NotifyApi* notifier,
+    RwlRectangle(DrawApi& drawable, Widget2& parent, NotifyApi* notifier,
                  const Style& basestyle, int group_id = 0)
-    : WidgetComposite(&drawable, Rect(), parent, notifier, group_id)
+    : WidgetParent(drawable, Rect(), parent, notifier, group_id)
     , style(basestyle)
     {}
 
@@ -69,7 +70,7 @@ public:
 
     virtual void draw(const Rect& clip)
     {
-        this->drawable->draw(
+        this->drawable.draw(
             RDPOpaqueRect(
                 clip,
                 this->style.color
@@ -93,7 +94,7 @@ class RwlImage : public RwlRectangle
     Bitmap bmp;
 
 public:
-    RwlImage(DrawApi& drawable, Widget2* parent, NotifyApi* notifier,
+    RwlImage(DrawApi& drawable, Widget2& parent, NotifyApi* notifier,
              const char * filename, const Style& basestyle, int group_id = 0)
     : RwlRectangle(drawable, parent, notifier, basestyle, group_id)
     , bmp(filename)
@@ -116,7 +117,7 @@ public:
         Rect newclip = inner_clip.intersect(clip);
         int16_t mx = std::max<int16_t>(newclip.x, 0);
         int16_t my = std::max<int16_t>(newclip.y, 0);
-        this->drawable->draw(
+        this->drawable.draw(
             RDPMemBlt(
                 0,
                 Rect(mx, my, newclip.cx, newclip.cy),

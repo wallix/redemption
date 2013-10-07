@@ -1178,11 +1178,6 @@ public:
         return this->body_capacity;
     }
 
-protected:
-    static const uint8_t * get_buffer_ptr(const Stream & stream) {
-        return stream.buffer_ptr;
-    }
-
 public:
     size_t get_head_capacity() const {
         return this->head_capacity;
@@ -1196,8 +1191,9 @@ public:
         return this->write_ptr - this->data_ptr;
     }
 
-protected:
     uint8_t * buffer_ptr;
+
+protected:
     uint8_t * data_ptr;
 
     size_t    head_capacity;
@@ -1268,30 +1264,21 @@ public:
 
 protected:
     void init(const size_t head_cap, const size_t body_cap) {
-        size_t cap      = head_cap + body_cap;
-        size_t capacity = this->head_capacity + this->body_capacity;
+        const size_t cap      = head_cap + body_cap;
 
-        if (cap > capacity) {
-            if (this->buffer_ptr != &(this->auto_buffer[0])) {
-                free(this->buffer_ptr);
-            }   // if (this->buffer_ptr != &(this->auto_buffer[0]))
-
-            if (cap > AUTOSIZE) {
-                this->buffer_ptr = (uint8_t *)malloc(cap);
+        if (cap > (this->head_capacity + this->body_capacity)) {
+            if (this->buffer_ptr != this->auto_buffer) { free(this->buffer_ptr); }
+            this->buffer_ptr = static_cast<uint8_t*>((cap > AUTOSIZE)?malloc(cap):this->auto_buffer);
+            if (!this->buffer_ptr){
+                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", (int)cap);
+                throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
             }
-            else {  // if (cap > AUTOSIZE)
-                this->buffer_ptr = &(this->auto_buffer[0]);
-            }
-        }   // if (cap > capacity)
-
+        }
         this->data_ptr = this->buffer_ptr + head_cap;
-
         this->head_capacity = head_cap;
         this->body_capacity = body_cap;
-
-        this->read_ptr  =
-        this->write_ptr = this->data_ptr;
-    }   // void init(size_t head_cap, size_t body_cap)
+        this->read_ptr  = this->write_ptr = this->data_ptr;
+    }
 
 protected:
     uint8_t auto_buffer[AUTOSIZE];
@@ -1333,8 +1320,7 @@ public:
         }
 
         this->buffer_ptr =
-        this->data_ptr   = const_cast<uint8_t *>(  this->get_buffer_ptr(stream)
-                                                 + stream.get_head_capacity() + offset);
+        this->data_ptr   = const_cast<uint8_t *>(stream.buffer_ptr + stream.get_head_capacity() + offset);
 
         this->head_capacity = 0;
         this->body_capacity = (size == 0) ? (stream.get_body_capacity() - offset) : size;

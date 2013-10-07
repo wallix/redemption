@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(TestSeqOutfilename)
     // (ie: after a call to sq_next() user *must* call sq_get_trans(), the previous trans can't be used any more)
     // the next call to sq_get_trans() will open a new trans with name containing the new count
 
-    timeval tv;
+    timeval tv = {};
 
     RIO_ERROR status = RIO_ERROR_OK;    
     const int groupid = 0;

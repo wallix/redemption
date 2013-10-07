@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestSQIntracker
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "rio/rio.h"
@@ -79,8 +79,8 @@ BOOST_AUTO_TEST_CASE(TestSeqIntracker)
     RIO_ERROR status = rio_init_generator(&tracker, trackerdata, sizeof(trackerdata) - 1);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
-    timeval tv_begin;
-    timeval tv_end;
+    timeval tv_begin = {};
+    timeval tv_end = {};
     unsigned int chunk_num;
     char path[1024];
 
@@ -172,8 +172,8 @@ BOOST_AUTO_TEST_CASE(TestSeqIntracker1)
     RIO_ERROR status = rio_init_generator(&tracker, trackerdata, sizeof(trackerdata) - 1);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
-    timeval tv_begin;
-    timeval tv_end;
+    timeval tv_begin = {};
+    timeval tv_end = {};
     unsigned int chunk_num;
     char path[1024];
 
@@ -265,8 +265,8 @@ BOOST_AUTO_TEST_CASE(TestSeqIntracker2)
     RIO_ERROR status = rio_init_generator(&tracker, trackerdata, sizeof(trackerdata) - 1);
     BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
 
-    timeval tv_begin;
-    timeval tv_end;
+    timeval tv_begin = {};
+    timeval tv_end = {};
     unsigned int chunk_num;
     char path[1024];
 

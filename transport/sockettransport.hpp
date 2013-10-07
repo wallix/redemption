@@ -23,6 +23,7 @@
 #ifndef _REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP_
 #define _REDEMPTION_TRANSPORT_SOCKETTRANSPORT_HPP_
 
+#include "config.hpp"
 #include "transport.hpp"
 #include "rio/rio.h"
 #include "string.hpp"
@@ -373,7 +374,7 @@ class SocketTransport : public Transport {
         DH *ret=0;
         BIO *bio;
 
-        if ((bio=BIO_new_file(CFG_PATH "/dh1024.pem","r")) == NULL){
+        if ((bio=BIO_new_file(CFG_PATH "/" DH_PEM,"r")) == NULL){
             BIO_printf(bio_err,"Couldn't open DH file\n");
             ERR_print_errors(bio_err);
             exit(0);
@@ -786,8 +787,8 @@ class SocketTransport : public Transport {
         // ensures the certificate directory exists
         if (recursive_create_directory(CERTIF_PATH "/", S_IRWXU|S_IRWXG, 0) != 0) {
             LOG(LOG_ERR, "Failed to create certificate directory: " CERTIF_PATH "/");
-            if (error_message) {
-                error_message->copy_c_str("Failed to create certificate directory: \"" CERTIF_PATH "/\"");
+            if (this->error_message) {
+                this->error_message->copy_c_str("Failed to create certificate directory: \"" CERTIF_PATH "/\"");
             }
             throw Error(ERR_TRANSPORT, 0);
         }
@@ -804,10 +805,10 @@ class SocketTransport : public Transport {
             if (errno != ENOENT) {
                 // failed to open stored certificate file
                 LOG(LOG_ERR, "Failed to open stored certificate: \"%s\"\n", filename);
-                if (error_message) {
-                    error_message->copy_c_str("Failed to open stored certificate: \"");
-                    error_message->concatenate_c_str(filename);
-                    error_message->concatenate_c_str("\"\n");
+                if (this->error_message) {
+                    this->error_message->copy_c_str("Failed to open stored certificate: \"");
+                    this->error_message->concatenate_c_str(filename);
+                    this->error_message->concatenate_c_str("\"\n");
                 }
                 throw Error(ERR_TRANSPORT, 0);
             }
@@ -824,10 +825,10 @@ class SocketTransport : public Transport {
             if (!px509Existing) {
                 // failed to read stored certificate file
                 LOG(LOG_ERR, "Failed to read stored certificate: \"%s\"\n", filename);
-                if (error_message) {
-                    error_message->copy_c_str("Failed to read stored certificate: \"");
-                    error_message->concatenate_c_str(filename);
-                    error_message->concatenate_c_str("\"\n");
+                if (this->error_message) {
+                    this->error_message->copy_c_str("Failed to read stored certificate: \"");
+                    this->error_message->concatenate_c_str(filename);
+                    this->error_message->concatenate_c_str("\"\n");
                 }
                 throw Error(ERR_TRANSPORT, 0);
             }
@@ -913,12 +914,12 @@ class SocketTransport : public Transport {
                     this->error_message_buffer[this->error_message_len - 1] = 0;
                 }
 */
-                if (error_message) {
+                if (this->error_message) {
                     char buff[256];
                     snprintf(buff, sizeof(buff), "The certificate for host %s:%d has changed!",
                              this->ip_address, this->port);
-                    error_message->copy_c_str(buff);
-                    // snprintf(const_cast<char *>(error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
+                    this->error_message->copy_c_str(buff);
+                    // snprintf(const_cast<char *>(this->error_message->c_str()), STRING_STATIC_BUFFER_SIZE,
                     //     "The certificate for host %s:%d has changed!",
                     //     this->ip_address, this->port);
                 }
@@ -1145,7 +1146,9 @@ class SocketTransport : public Transport {
 
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0) {
-            LOG(LOG_WARNING, "SocketTransport::Send failed errno=%u [%s]", errno, strerror(errno));        
+            LOG(LOG_WARNING,
+                "SocketTransport::Send failed on %s (%d) errno=%u [%s]",
+                this->name, this->sck, errno, strerror(errno));
             throw Error(ERR_TRANSPORT_WRITE_FAILED);
         }
         if (res < (ssize_t)len) {

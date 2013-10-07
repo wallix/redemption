@@ -36,7 +36,7 @@
 #include <sys/socket.h>
 #include <ctype.h>
 #include "log.hpp"
-
+#include "error.hpp"
 
 static inline int filesize(const char * path)
 {
@@ -52,23 +52,34 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
                                  , char * basename, size_t basename_len, char * extension
                                  , size_t extension_len, uint32_t verbose = 255)
 {
-    TODO("add overflow checking of path and basename len")
     const char * end_of_path = strrchr(fullpath, '/');
     if (end_of_path){
-        memcpy(path, fullpath, end_of_path + 1 - fullpath);
-        path[end_of_path + 1 - fullpath] = 0;
+        if ((size_t)(end_of_path + 1 - fullpath) <= path_len) {
+            memcpy(path, fullpath, end_of_path + 1 - fullpath);
+            path[end_of_path + 1 - fullpath] = 0;
+        }
+        else if (verbose >= 255) {
+            LOG(LOG_ERR, "canonical_path : Path too long for the buffer\n");
+        }
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
         if (start_of_extension){
-            strcpy(extension, start_of_extension);
+            snprintf(extension, extension_len, "%s", start_of_extension);
+            //strcpy(extension, start_of_extension);
             if (start_of_extension > end_of_path + 1){
-                memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
-                basename[start_of_extension - end_of_path - 1] = 0;
+                if ((size_t)(start_of_extension - end_of_path - 1) <= basename_len) {
+                    memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
+                    basename[start_of_extension - end_of_path - 1] = 0;
+                }
+                else if (verbose >= 255) {
+                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
+                }
             }
             // else no basename : leave output buffer for name untouched
         }
         else {
             if (end_of_path[1]){
-                strcpy(basename, end_of_path + 1);
+                snprintf(basename, basename_len, "%s", end_of_path + 1);
+                //strcpy(basename, end_of_path + 1);
                 // default extension : leave whatever is in extension output buffer
             }
             else {
@@ -81,16 +92,23 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
         // default path : leave whatever is in path output buffer
         const char * start_of_extension = strrchr(fullpath, '.');
         if (start_of_extension){
-            strcpy(extension, start_of_extension);
+            snprintf(extension, extension_len, "%s", start_of_extension);
+            // strcpy(extension, start_of_extension);
             if (start_of_extension > fullpath){
-                memcpy(basename, fullpath, start_of_extension - fullpath);
-                basename[start_of_extension - fullpath] = 0;
+                if ((size_t)(start_of_extension - fullpath) <= basename_len) {
+                    memcpy(basename, fullpath, start_of_extension - fullpath);
+                    basename[start_of_extension - fullpath] = 0;
+                }
+                else if (verbose >= 255) {
+                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
+                }
             }
             // else no basename : leave output buffer for name untouched
         }
         else {
             if (fullpath[0]){
-                strcpy(basename, fullpath);
+                snprintf(basename, basename_len, "%s", fullpath);
+                // strcpy(basename, fullpath);
                 // default extension : leave whatever is in extension output buffer
             }
             else {
@@ -104,34 +122,28 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
     }
 }
 
-static inline char * pathncpy(char * dest, const char * src, size_t n) {
-    size_t       i;
-    size_t       n_adjusted;
-    char       * dest_char;
-    const char * src_char;
-
-    if (n >= 1) {
-        for (  i = 0, dest_char = dest, src_char = src, n_adjusted = n - 1
-             ; (i < n_adjusted) && (*src_char != '\0')
-             ; i++, dest_char++, src_char++) {
-            *dest_char = *src_char;
-        }
-
-        if (   (i > 0)
-            && (*(dest_char - 1) != '/')
-            && (i < n_adjusted)) {
-            *dest_char = '/';
-
-            i++;
-            dest_char++;
-        }
-
-        for (; i < n; i++, dest_char++) {
-            *dest_char = '\0';
+static inline char * pathncpy(char * dest, const char * src, const size_t n) {
+    TODO("use error return value instead of raisong an exception. The returned pointer is only used in tests, not code anyway");
+    size_t src_len = strnlen(src, n);
+    if (src_len >= n) {
+        LOG(LOG_INFO, "can't copy path, no room in dest path (available %d): %s\n", static_cast<int>(n), src);
+        throw Error(ERR_PATH_TOO_LONG);
+    }
+    if ((src_len == 0) && (n >= 3)){
+        memcpy(dest, "./", 3);
+    }
+    else {
+        memcpy(dest, src, src_len + 1);
+        if (src[src_len - 1] != '/') {
+            if (src_len + 1 >= n) {
+                LOG(LOG_INFO, "can't copy path, no room in dest path to add trailing slash: %s\n", src);
+                throw Error(ERR_PATH_TOO_LONG);
+            }
+            dest[src_len] = '/';
+            dest[src_len+1] = 0;
         }
     }
-
-   return dest;
+    return dest;
 }
 
 static inline void clear_files_flv_meta_png(const char * path, const char * prefix, uint32_t verbose = 255)

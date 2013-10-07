@@ -28,8 +28,7 @@
 #include "colors.hpp"
 #include "rect.hpp"
 
-struct Drawable
-{
+struct Drawable {
     static const std::size_t Bpp = 3;
 
     uint16_t width;
@@ -39,21 +38,80 @@ struct Drawable
     uint8_t * data;
 
     enum {
-        ts_width = 133,
-        ts_height = 11,
-        size_str_timestamp = 20
+        char_width  = 7,
+        char_height = 12
+    };
+
+    enum {
+        ts_max_length = 32
+    };
+
+    enum {
+        ts_width = ts_max_length * char_width,
+        ts_height = char_height,
+        size_str_timestamp = ts_max_length + 1
     };
 
     uint8_t timestamp_save[ts_width * ts_height * 3];
     uint8_t timestamp_data[ts_width * ts_height * 3];
     char previous_timestamp[size_str_timestamp];
+    uint8_t previous_timestamp_length;
+
+    struct Mouse_t {
+        int      y;
+        int      x;
+        int      lg;
+        const char * line;
+    };
+
+    size_t          contiguous_mouse_pixels;
+    const Mouse_t * mouse_cursor;
+    uint8_t         mouse_hotspot_x;
+    uint8_t         mouse_hotspot_y;
+    uint8_t         save_mouse[1024];
+    uint16_t        save_mouse_x;
+    uint16_t        save_mouse_y;
+
+    Rect tracked_area;
+    bool tracked_area_changed;
 
     Drawable(int width, int height)
     : width(width)
     , height(height)
     , rowsize(width * Bpp)
     , pix_len(this->rowsize * height)
+    , tracked_area(0, 0, 0, 0)
+    , tracked_area_changed(false)
     {
+        static const Mouse_t default_mouse_cursor[] =
+        {
+            {0,  0, 3 * 1,  "\x00\x00\x00"},
+            {1,  0, 3 * 2,  "\x00\x00\x00\x00\x00\x00"},
+            {2,  0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
+            {3,  0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {4,  0, 3 * 5,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {5,  0, 3 * 6,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {6,  0, 3 * 7,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {7,  0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {8,  0, 3 * 9,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {9,  0, 3 * 10, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {10, 0, 3 * 11, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {11, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {12, 0, 3 * 12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
+            {13, 0, 3 * 8,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {14, 0, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {14, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {15, 0, 3 * 3,  "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
+            {15, 5, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
+            {16, 1, 3 * 1,  "\x00\x00\x00"},
+            {16, 6, 3 * 4,  "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"}
+        };
+
+        this->contiguous_mouse_pixels = 20;
+        this->mouse_cursor            = default_mouse_cursor;
+        this->mouse_hotspot_x         = 0;
+        this->mouse_hotspot_y         = 0;
+
         if (!this->pix_len) {
             throw Error(ERR_RECORDER_EMPTY_IMAGE);
         }
@@ -64,9 +122,8 @@ struct Drawable
         std::fill<>(this->data, this->data + this->pix_len, 0);
 
         memset(this->timestamp_data, 0xFF, sizeof(this->timestamp_data));
-        memset(this->previous_timestamp, 'X', sizeof(this->previous_timestamp));
-        //memset(this->timestamp_data, 0x00, sizeof(this->timestamp_data));
-        //memset(this->previous_timestamp, ' ', len_str_timestamp);
+        memset(this->previous_timestamp, 0x07, sizeof(this->previous_timestamp));
+        this->previous_timestamp_length = 0;
     }
 
     ~Drawable()
@@ -144,187 +201,174 @@ struct Drawable
         return this->width * this->height;
     }
 
-    struct Mouse_t{
-        uint8_t y;
-        uint8_t x;
-        uint8_t lg;
-        const char * line;
-    };
-
-    enum { contiguous_mouse_pixels = 20 };
-
-    const Mouse_t & line_of_mouse(size_t i)
+    int _posch_12x7(char ch)
     {
-        static const Mouse_t mouse_cursor[contiguous_mouse_pixels] =
-        {
-            {0,  0, 3*1, "\x00\x00\x00"},
-            {1,  0, 3*2, "\x00\x00\x00\x00\x00\x00"},
-            {2,  0, 3*3, "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
-            {3,  0, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {4,  0, 3*5, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {5,  0, 3*6, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {6,  0, 3*7, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {7,  0, 3*8, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {8,  0, 3*9, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {9,  0, 3*10, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {10, 0, 3*11, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {11, 0, 3*12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {12, 0, 3*12, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"},
-            {13, 0, 3*8, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {14, 0, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {14, 5, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {15, 0, 3*3, "\x00\x00\x00\xFF\xFF\xFF\x00\x00\x00"},
-            {15, 5, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"},
-            {16, 1, 3*1, "\x00\x00\x00"},
-            {16, 6, 3*4, "\x00\x00\x00\xFF\xFF\xFF\xFF\xFF\xFF\x00\x00\x00"}
-        };
-        return mouse_cursor[i];
+        return char_width * char_height *
+        (isdigit(ch)  ? ch-'0'
+        : isupper(ch) ? ch - 'A' + 14
+        : ch == '-'   ? 10
+        : ch == ':'   ? 11
+        : ch == 0x07  ? 13
+        :               12);
     }
 
-    enum { mouse_height = 17 };
-
-    uint8_t save_mouse[1024];
-    uint16_t save_mouse_x;
-    uint16_t save_mouse_y;
-
-    char * pixel_start_data(int x, int y, size_t i)
-    {
-        return (char*)this->data + ((this->line_of_mouse(i).y + y) * this->width + this->line_of_mouse(i).x + x) * 3;
-    }
-
-    int _posch(char ch)
-    {
-        return 7 * 11 *
-        (isdigit(ch) ? ch-'0'
-        : ch == '-'  ?    10
-        : ch == ':'  ?    11
-        : ch == 'X'  ?    13
-        :                 12);
-    }
-
-    void draw_11x7_digits(uint8_t * rgbpixbuf, unsigned width, unsigned lg_message, const char * message, const char * old_message)
-    {
+    void draw_12x7_digits(uint8_t * rgbpixbuf, unsigned width, unsigned lg_message,
+            const char * message, const char * old_message) {
         const char * digits =
         "       "
-        "  XX   "
-        " X  X  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " X  X  "
-        "  XX   "
         "       "
-
-        "       "
-        "  XX   "
-        " XXX   "
-        "X XX   "
-        "  XX   "
-        "  XX   "
-        "  XX   "
-        "  XX   "
-        "  XX   "
-        "XXXXXX "
-        "       "
-
-        "       "
-        " XXXX  "
-        "XX  XX "
-        "XX  XX "
-        "    XX "
         "  XXX  "
-        " XX    "
-        "XX     "
-        "XX     "
-        "XXXXXX "
+        " X   X "
+        " X   X "
+        " X   X "
+        " X   X "
+        " X   X "
+        "  XXX  "
+        "       "
+        "       "
         "       "
 
-
         "       "
-        "XXXXXX "
-        "    XX "
-        "   XX  "
+        "       "
         "  XX   "
-        " XXXX  "
-        "    XX "
-        "    XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-
-        "       "
-        "    XX "
-        "   XXX "
-        "  XXXX "
-        " XX XX "
-        "XX  XX "
-        "XX  XX "
-        "XXXXXX "
-        "    XX "
-        "    XX "
-        "       "
-
-        "       "
-        "XXXXXX "
-        "XX     "
-        "XX     "
-        "XXXXX  "
-        "XX  XX "
-        "    XX "
-        "    XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-        "       "
-        " XXXX  "
-        "XX  XX "
-        "XX     "
-        "XX     "
-        "XXXXX  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-        "       "
-        "XXXXXX "
-        "    XX "
-        "    XX "
-        "   XX  "
-        "   XX  "
-        "  XX   "
-        "  XX   "
-        " XX    "
-        " XX    "
-        "       "
-
-        "       "
-        " XXXX  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " XXXX  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
-        " XXXX  "
-        "       "
-
-        "       "
-        " XXXX  "
-        "XX  XX "
-        "XX  XX "
-        "XX  XX "
+        " X X   "
+        "   X   "
+        "   X   "
+        "   X   "
+        "   X   "
         " XXXXX "
-        "    XX "
-        "    XX "
-        "XX  XX "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " XXX   "
+        "    X  "
+        "    X  "
+        "   X   "
+        "  X    "
+        " X     "
         " XXXX  "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " XXXX  "
+        "    X  "
+        "    X  "
+        "  XX   "
+        "    X  "
+        "    X  "
+        " XXX   "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "    X  "
+        "   XX  "
+        "  X X  "
+        " X  X  "
+        " XXXXX "
+        "    X  "
+        "    X  "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " XXXX  "
+        " X     "
+        " X     "
+        " XXX   "
+        "    X  "
+        "    X  "
+        " XXX   "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "   XXX "
+        "  X    "
+        " X     "
+        " X XX  "
+        " XX  X "
+        " X   X "
+        "  XXX  "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " XXXXX "
+        "    X  "
+        "    X  "
+        "   X   "
+        "  X    "
+        "  X    "
+        " X     "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "  XXX  "
+        " X   X "
+        " X  X  "
+        "  XXX  "
+        " X   X "
+        " X   X "
+        "  XXX  "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "  XXX  "
+        " X   X "
+        " X   X "
+        "  XXXX "
+        "     X "
+        "    X  "
+        " XXX   "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "       "
+        "       "
+        "       "
+        " XXXXX "
+        "       "
+        "       "
+        "       "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "       "
+        "  XX   "
+        "  XX   "
+        "       "
+        "  XX   "
+        "  XX   "
+        "       "
+        "       "
+        "       "
         "       "
 
         "       "
@@ -333,62 +377,377 @@ struct Drawable
         "       "
         "       "
         "       "
+        "       "
+        "       "
+        "       "
+        "       "
+        "       "
+        "       "
+
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+        "XXXXXXX"
+
+        "       "
+        "       "
+        "   X   "
+        "  X X  "
+        "  X X  "
+        " X   X "
+        " XXXXX "
+        " X   X "
+        "X     X"
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " XXXX  "
+        " X   X "
+        " X   X "
+        " XXXX  "
+        " X   X "
+        " X   X "
+        " XXXX  "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "  XXXX "
+        " X     "
+        "X      "
+        "X      "
+        "X      "
+        " X     "
+        "  XXXX "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " XXXX  "
+        " X   X "
+        " X   X "
+        " X   X "
+        " X   X "
+        " X   X "
+        " XXXX  "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " XXXXX "
+        " X     "
+        " X     "
+        " XXXX  "
+        " X     "
+        " X     "
+        " XXXXX "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " XXXXX "
+        " X     "
+        " X     "
+        " XXXX  "
+        " X     "
+        " X     "
+        " X     "
+        "       "
+        "       "
+        "       "
+
+        "       "   // G
+        "       "
+        "  XXXX "
+        " X     "
+        "X      "
+        "X   XX "
+        "X    X "
+        " X   X "
+        "  XXXX "
+        "       "
+        "       "
+        "       "
+
+        "       "   // H
+        "       "
+        " X   X "
+        " X   X "
+        " X   X "
+        " XXXXX "
+        " X   X "
+        " X   X "
+        " X   X "
+        "       "
+        "       "
+        "       "
+
+        "       "   // I
+        "       "
+        " XXXXX "
+        "   X   "
+        "   X   "
+        "   X   "
+        "   X   "
+        "   X   "
+        " XXXXX "
+        "       "
+        "       "
+        "       "
+
+        "       "   // J
+        "       "
+        "  XXX  "
+        "    X  "
+        "    X  "
+        "    X  "
+        "    X  "
+        "    X  "
+        " XXX   "
+        "       "
+        "       "
+        "       "
+
+        "       "   // K
+        "       "
+        " X   X "
+        " X  X  "
+        " X X   "
+        " XX    "
+        " X X   "
+        " X  X  "
+        " X   X "
+        "       "
+        "       "
+        "       "
+
+        "       "   // L
+        "       "
+        " X     "
+        " X     "
+        " X     "
+        " X     "
+        " X     "
+        " X     "
+        " XXXXX "
+        "       "
+        "       "
+        "       "
+
+        "       "   // M
+        "       "
+        "XX  XX "
+        "XX  XX "
+        "XX X X "
+        "X XX X "
+        "X XX X "
+        "X X  X "
+        "X    X "
+        "       "
+        "       "
+        "       "
+
+        "       "   // N
+        "       "
+        " X   X "
+        " XX  X "
+        " XXX X "
+        " X X X "
+        " X  XX "
+        " X  XX "
+        " X   X "
+        "       "
+        "       "
+        "       "
+
+        "       "   // O
+        "       "
+        " XXXX  "
+        "X    X "
+        "X    X "
+        "X    X "
+        "X    X "
+        "X    X "
+        " XXXX  "
+        "       "
+        "       "
+        "       "
+
+        "       "   // P
+        "       "
+        " XXXX  "
+        " X   X "
+        " X   X "
+        " XXXX  "
+        " X     "
+        " X     "
+        " X     "
+        "       "
+        "       "
+        "       "
+
+        "       "   // Q
+        "       "
+        " XXXX  "
+        "X    X "
+        "X    X "
+        "X    X "
+        "X    X "
+        "X    X "
+        " XXXX  "
+        "    XX "
+        "     XX"
+        "       "
+
+        "       "   // R
+        "       "
+        "XXXX   "
+        "X   X  "
+        "X   X  "
+        "XXXX   "
+        "X  X   "
+        "X   X  "
+        "X    X "
+        "       "
+        "       "
+        "       "
+
+        "       "   // S
+        "       "
+        "  XXXX "
+        " X     "
+        " X     "
+        "  XXX  "
+        "     X "
+        "     X "
+        " XXXX  "
+        "       "
+        "       "
+        "       "
+
+        "       "   // T
+        "       "
+        "XXXXXXX"
+        "   X   "
+        "   X   "
+        "   X   "
+        "   X   "
+        "   X   "
+        "   X   "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        " X   X "
+        " X   X "
+        " X   X "
+        " X   X "
+        " X   X "
+        " X   X "
+        "  XXX  "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "X     X"
+        " X   X "
+        " X   X "
+        " X   X "
+        "  X X  "
+        "  X X  "
+        "   X   "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "X     X"
+        "X  X  X"
+        "X  X  X"
+        " XX X X"
+        " XX XX "
+        " X  XX "
+        " X   X "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "X     X"
+        " X   X "
+        "  X X  "
+        "   X   "
+        "  X X  "
+        " X   X "
+        "X     X"
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "X     X"
+        " X   X "
+        "  X X  "
+        "   X   "
+        "   X   "
+        "   X   "
+        "   X   "
+        "       "
+        "       "
+        "       "
+
+        "       "
+        "       "
+        "XXXXXX "
+        "     X "
+        "    X  "
+        "   X   "
+        "  X    "
+        " X     "
         "XXXXXX "
         "       "
         "       "
         "       "
-        "       "
-
-        "       "
-        "       "
-        "  XX   "
-        " XXXX  "
-        "  XX   "
-        "       "
-        "       "
-        "  XX   "
-        " XXXX  "
-        "  XX   "
-        "       "
-
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-        "       "
-
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
-        "XXXXXXX"
         ;
         for (size_t i = 0 ; i < lg_message ; ++i){
             char newch = message[i];
             char oldch = old_message[i];
 
-
             if (newch != oldch){
-                const char * pnewch = digits + _posch(newch);
-                const char * poldch = digits + _posch(oldch);
+                const char * pnewch = digits + _posch_12x7(newch);
+                const char * poldch = digits + _posch_12x7(oldch);
 
                 unsigned br_pix = 0;
-                unsigned br_pixindex = i * (7 * 3);
+                unsigned br_pixindex = i * (char_width * 3);
 
-                for (size_t y = 0 ; y < 11 ; ++y, br_pix += 7, br_pixindex += width*3){
-                    for (size_t x = 0 ; x <  7 ; ++x){
+                for (size_t y = 0 ; y < char_height ; ++y, br_pix += char_width, br_pixindex += width*3){
+                    for (size_t x = 0 ; x <  char_width ; ++x){
                         unsigned pix = br_pix + x;
                         if (pnewch[pix] != poldch[pix]){
                             uint8_t pixcolorcomponent = (pnewch[pix] == 'X') ? 0xFF : 0;
@@ -422,6 +781,10 @@ struct Drawable
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
 
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
+
         const uint8_t Bpp = ::nbbytes(bmp.original_bpp);
         uint8_t * target = this->first_pixel(trect);
         const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) + srcx * Bpp;
@@ -445,6 +808,100 @@ struct Drawable
         }
     }
 
+    template <typename Op>
+    void memblt_op( const Rect & rect
+                  , const Bitmap & bmp
+                  , const uint16_t srcx
+                  , const uint16_t srcy
+                  , const bool bgr) {
+        Op op;
+
+        if (bmp.cx < srcx || bmp.cy < srcy){
+            return ;
+        }
+
+        const int16_t mincx = std::min<int16_t>(bmp.cx - srcx,
+            std::min<int16_t>(this->width - rect.x, rect.cx));
+        const int16_t mincy = std::min<int16_t>(bmp.cy - srcy,
+            std::min<int16_t>(this->height - rect.y, rect.cy));
+
+        if (mincx <= 0 || mincy <= 0){
+            return;
+        }
+        const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
+
+        const uint8_t   Bpp = ::nbbytes(bmp.original_bpp);
+        uint8_t       * target = this->first_pixel(trect);
+        const uint8_t * source = bmp.data() + (bmp.cy - srcy - 1) * (bmp.bmp_size / bmp.cy) +
+            srcx * Bpp;
+
+        int steptarget = (this->width - trect.cx) * 3;
+        int stepsource = (bmp.bmp_size / bmp.cy) + trect.cx * Bpp;
+
+        uint8_t s0, s1, s2;
+
+        for (int y = 0; y < trect.cy ; y++, target += steptarget, source -= stepsource){
+            for (int x = 0; x < trect.cx ; x++, target += 3, source += Bpp){
+                uint32_t px = source[Bpp-1];
+                for (int b = 1 ; b < Bpp ; b++){
+                    px = (px << 8) + source[Bpp-1-b];
+                }
+                uint32_t color = /* xormask ^ */color_decode(px, bmp.original_bpp, bmp.original_palette);
+                if (bgr){
+                    color = ((color << 16) & 0xFF0000) | (color & 0xFF00) |((color >> 16) & 0xFF);
+                }
+
+                s0 = color         & 0xFF;
+                s1 = (color >> 8 ) & 0xFF;
+                s2 = (color >> 16) & 0xFF;
+
+                target[0] = op(target[0], s0);
+                target[1] = op(target[1], s1);
+                target[2] = op(target[2], s2);
+            }
+        }
+    }
+
+    void mem_blt_ex( const Rect & rect
+                   , const Bitmap & bmp
+                   , const uint16_t srcx
+                   , const uint16_t srcy
+                   , uint8_t rop
+                   , const bool bgr) {
+        switch (rop) {
+            // +------+-------------------------------+
+            // | 0x22 | ROP: 0x00220326               |
+            // |      | RPN: DSna                     |
+            // +------+-------------------------------+
+            case 0x22:
+                this->memblt_op<Op_0x22>(rect, bmp, srcx, srcy, bgr);
+            break;
+            // +------+-------------------------------+
+            // | 0x66 | ROP: 0x00660046 (SRCINVERT)   |
+            // |      | RPN: DSx                      |
+            // +------+-------------------------------+
+            case 0x66:
+                this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
+            break;
+            // +------+-------------------------------+
+            // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
+            // |      | RPN: DSo                      |
+            // +------+-------------------------------+
+            case 0xEE:
+                this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
+            break;
+
+            default:
+                LOG(LOG_INFO, "Drawable::mem_blt_ex(): unimplemented rop=%X", rop);
+            break;
+        }
+    }
+
+
     void draw_bitmap(const Rect & rect, const Bitmap & bmp, bool bgr) {
         const int16_t mincx =
             std::min<int16_t>(bmp.cx, std::min<int16_t>(this->width  - rect.x, rect.cx));
@@ -455,6 +912,10 @@ struct Drawable
             return;
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
 
         const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
         uint8_t       * target = this->first_pixel(trect);
@@ -510,6 +971,10 @@ struct Drawable
             return;
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
 
         const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
         uint8_t *       target = this->first_pixel(trect);
@@ -575,6 +1040,11 @@ struct Drawable
     void black_color(const Rect & rect)
     {
         const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * p = this->first_pixel(trect);
         const size_t step = this->rowsize;
         const size_t rect_rowsize = trect.cx * this->Bpp;
@@ -585,7 +1055,12 @@ struct Drawable
 
     void white_color(const Rect & rect)
     {
+        if (tracked_area.has_intersection(rect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * p = this->first_pixel(rect);
+
         const size_t step = this->rowsize;
         const size_t rect_rowsize = rect.cx * this->Bpp;
         for (int j = 0; j < rect.cy ; j++, p += step){
@@ -596,6 +1071,11 @@ struct Drawable
     void invert_color(const Rect & rect)
     {
         const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
+
+        if (tracked_area.has_intersection(trect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * p = this->first_pixel(trect);
         const size_t rect_rowsize = trect.cx * this->Bpp;
         const size_t step = this->rowsize - rect_rowsize;
@@ -612,6 +1092,10 @@ struct Drawable
     // also we already swapped color if we are using BGR instead of RGB
     void opaquerect(const Rect & rect, const uint32_t color)
     {
+        if (tracked_area.has_intersection(rect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * const base = this->first_pixel(rect);
         uint8_t * p = base;
 
@@ -631,6 +1115,11 @@ struct Drawable
     void patblt_op(const Rect & rect, const uint32_t color)
     {
         Op op;
+
+        if (tracked_area.has_intersection(rect)) {
+            tracked_area_changed = true;
+        }
+
         uint8_t * const base = this->first_pixel(rect);
         uint8_t * p = base;
         uint8_t p0 = color & 0xFF;
@@ -741,7 +1230,6 @@ struct Drawable
     // mostly avoid clipping because we already took care of it
     void patblt(const Rect & rect, const uint8_t rop, const uint32_t color)
     {
-        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
         switch (rop){
             // +------+-------------------------------+
             // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |
@@ -850,6 +1338,74 @@ struct Drawable
             default:
                 // should not happen, do nothing
                 break;
+        }
+    }
+
+    template <typename Op>
+    void patblt_op_ex(const Rect & rect, const uint8_t * brush_data,
+        const uint32_t back_color, const uint32_t fore_color)
+    {
+        Op op;
+
+        if (tracked_area.has_intersection(rect)) {
+            tracked_area_changed = true;
+        }
+
+        uint8_t * const base = this->first_pixel(rect);
+        uint8_t *       p    = base;
+
+        uint8_t p0;
+        uint8_t p1;
+        uint8_t p2;
+
+        for (size_t y = 0; y < (size_t)rect.cy ; y++)
+        {
+            p = base + this->rowsize * y;
+            for (size_t x = 0; x < (size_t)rect.cx ; x++)
+            {
+                if (brush_data[(y + rect.y) % 8] & (1 << ((x + rect.x) % 8)))
+                {
+                    p0 = back_color         & 0xFF;
+                    p1 = (back_color >> 8)  & 0xFF;
+                    p2 = (back_color >> 16) & 0xFF;
+                }
+                else
+                {
+                    p0 = fore_color         & 0xFF;
+                    p1 = (fore_color >> 8)  & 0xFF;
+                    p2 = (fore_color >> 16) & 0xFF;
+                }
+
+                p[0] = op(p[0], p0);
+                p[1] = op(p[1], p1);
+                p[2] = op(p[2], p2);
+                p += 3;
+            }
+        }
+    }
+
+    void patblt_ex(const Rect & rect, const uint8_t rop,
+        const uint32_t back_color, const uint32_t fore_color,
+        const uint8_t * brush_data)
+    {
+        if (rop != 0xF0)
+        {
+            LOG(LOG_INFO, "Unsupported parameters for PatBlt Primary Drawing Order!");
+            this->patblt(rect, rop, back_color);
+        }
+
+        switch (rop)
+        {
+        // +------+-------------------------------+
+        // | 0xF0 | ROP: 0x00F00021 (PATCOPY)     |
+        // |      | RPN: P                        |
+        // +------+-------------------------------+
+        case 0xF0:
+            this->patblt_op_ex<Op_0xF0>(rect, brush_data, back_color, fore_color);
+            break;
+        default:
+            // should not happen, do nothing
+            break;
         }
     }
 
@@ -980,6 +1536,11 @@ struct Drawable
     void scr_blt_op(uint16_t srcx, uint16_t srcy, const Rect drect)
     {
         Op op;
+
+        if (tracked_area.has_intersection(drect)) {
+            tracked_area_changed = true;
+        }
+
         const int16_t deltax = (int16_t)(srcx - drect.x);
         const int16_t deltay = (int16_t)(srcy - drect.y);
         const Rect srect = drect.offset(deltax, deltay);
@@ -1106,32 +1667,6 @@ struct Drawable
                 // +------+-------------------------------+
             case 0xCC:
                 this->scr_blt_op<Op_0xCC>(srcx, srcy, drect);
-                //        {
-                    //            const signed int deltax = srcx - drect.x;
-                //            const signed int deltay = srcy - drect.y;
-                //            const Rect srect = drect.offset(deltax, deltay);
-                //            if (!srect.equal(drect)){
-                    //                const Rect & overlap = srect.intersect(drect);
-                //                if ((deltay >= 0)||(overlap.isempty())){
-                    //                    uint8_t * target = this->first_pixel(drect);
-                //                    uint8_t * source = this->first_pixel(srect);
-                //                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
-                    //                        memcpy(target, source, drect.cx * ::nbbytes(this->bpp));
-                //                        target += this->rowsize;
-                //                        source += this->rowsize;
-                //                    }
-                //                }
-                //                else if (deltay < 0){
-                    //                    uint8_t * target = this->beginning_of_last_line(drect);
-                //                    uint8_t * source = this->beginning_of_last_line(srect);
-                //                    for (size_t j = 0; j < (size_t)drect.cy ; j++) {
-                    //                        memcpy(target, source, drect.cx * ::nbbytes(this->bpp));
-                //                        target -= this->rowsize;
-                //                        source -= this->rowsize;
-                //                     }
-                //                }
-                //            }
-                //        }
                 break;
                 // +------+-------------------------------+
                 // | 0xDD | ROP: 0x00DD0228               |
@@ -1171,6 +1706,10 @@ struct Drawable
             };
 
         const Rect line_clip = clip.intersect(Rect(0, 0, this->width, this->height));
+
+        if (tracked_area.has_intersection(line_clip)) {
+            tracked_area_changed = true;
+        }
 
         // Prep
         int x = startx;
@@ -1239,52 +1778,106 @@ struct Drawable
         }
     }
 
-    void trace_mouse(uint16_t x, uint16_t y)
-    {
-        uint8_t * psave = this->save_mouse;
-        size_t nblines = std::max<uint16_t>(0, std::min<uint16_t>(this->contiguous_mouse_pixels, this->height - y));
-        for (size_t i = 0 ; i < nblines ; i++){
-            char * pixel_start = this->pixel_start_data(x, y, i);
-            unsigned lg = this->line_of_mouse(i).lg;
-            memcpy(psave, pixel_start, lg);
-            psave += lg;
-            memcpy(pixel_start, this->line_of_mouse(i).line, lg);
-        }
-        this->save_mouse_x = x;
-        this->save_mouse_y = y;
+    const Mouse_t & line_of_mouse(size_t i) {
+        return this->mouse_cursor[i];
     }
 
-    void clear_mouse()
-    {
+    void set_mouse_cursor(int contiguous_mouse_pixels,
+            const Mouse_t * mouse_cursor,
+            uint8_t hotspot_x, uint8_t hotspot_y) {
+        this->contiguous_mouse_pixels = contiguous_mouse_pixels;
+        this->mouse_cursor            = mouse_cursor;
+        this->mouse_hotspot_x         = hotspot_x;
+        this->mouse_hotspot_y         = hotspot_y;
+    }
+
+    void trace_mouse(uint16_t ux, uint16_t uy) {
+        this->save_mouse_x = ux;
+        this->save_mouse_y = uy;
+
         uint8_t * psave = this->save_mouse;
-        uint16_t x = this->save_mouse_x;
-        uint16_t y = this->save_mouse_y;
-        size_t nblines = std::max<uint16_t>(0, std::min<uint16_t>(this->contiguous_mouse_pixels, this->height - y));
-        for (size_t i = 0 ; i < nblines ; i++){
-            char * pixel_start = this->pixel_start_data(x,y, i);
-            unsigned lg = this->line_of_mouse(i).lg;
+        int       x     = ux - this->mouse_hotspot_x;
+        int       y     = uy - this->mouse_hotspot_y;
+
+        const uint8_t * data_end = this->data + this->height * this->width * 3;
+
+        for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
+            uint8_t  * pixel_start = this->pixel_start_data(x, y, i);
+            unsigned   lg          = this->line_of_mouse(i).lg;
+            int offset = 0;
+            if (pixel_start + lg <= this->data) continue;
+            if (pixel_start < this->data) {
+                offset = this->data - pixel_start;
+                lg -= offset;
+                pixel_start = this->data;
+            }
+            if (pixel_start > data_end) break;
+            if (pixel_start + lg >= data_end) {
+                lg = data_end - pixel_start;
+            }
+            memcpy(psave, pixel_start, lg);
+            psave += lg;
+            memcpy(pixel_start, this->line_of_mouse(i).line + offset, lg);
+        }
+    }
+
+    void clear_mouse() {
+        uint8_t * psave = this->save_mouse;
+        int       x     = this->save_mouse_x - this->mouse_hotspot_x;
+        int       y     = this->save_mouse_y - this->mouse_hotspot_y;
+
+        const uint8_t * data_end = this->data + this->height * this->width * 3;
+
+        for (size_t i = 0; i < this->contiguous_mouse_pixels; i++) {
+            uint8_t  * pixel_start = this->pixel_start_data(x, y, i);
+            unsigned   lg          = this->line_of_mouse(i).lg;
+            if (pixel_start + lg <= this->data) continue;
+            if (pixel_start < this->data) {
+                lg -= this->data - pixel_start;
+                pixel_start = this->data;
+            }
+            if (pixel_start > data_end) break;
+            if (pixel_start + lg >= data_end) {
+                lg = data_end - pixel_start;
+            }
             memcpy(pixel_start, psave, lg);
             psave += lg;
         }
     }
 
+protected:
+    uint8_t * pixel_start_data(int x, int y, size_t i) {
+        return this->data +
+               ((this->line_of_mouse(i).y + y) * this->width + this->line_of_mouse(i).x + x) * 3;
+    }
+
+public:
     void trace_timestamp(tm & now)
     {
-        char rawdate[size_str_timestamp];
-        snprintf(rawdate, size_str_timestamp, "%4d-%02d-%02d %02d:%02d:%02d",
-                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
-                 now.tm_hour, now.tm_min, now.tm_sec);
+        char    * timezone;
+        uint8_t   timestamp_length;
 
-        this->draw_11x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_timestamp);
+        timezone = (daylight ? tzname[1] : tzname[0]);
+
+        char rawdate[size_str_timestamp];
+        memset(rawdate, 0, sizeof(rawdate));
+        timestamp_length = 20 + strlen(timezone);
+        snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
+                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
+                 now.tm_hour, now.tm_min, now.tm_sec, timezone);
+
+        this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate,
+            this->previous_timestamp);
         memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
+        this->previous_timestamp_length = timestamp_length;
 
         uint8_t * tsave = this->timestamp_save;
         uint8_t* buf = this->data;
         int step = this->width * 3;
         for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(tsave, buf, ts_width*3);
-            tsave += ts_width*3;
-            memcpy(buf, this->timestamp_data + y*ts_width*3, ts_width*3);
+            memcpy(tsave, buf, timestamp_length*char_width*3);
+            tsave += timestamp_length*char_width*3;
+            memcpy(buf, this->timestamp_data + y*ts_width*3, timestamp_length*char_width*3);
         }
     }
 
@@ -1294,8 +1887,8 @@ struct Drawable
         int step = this->width * 3;
         uint8_t* buf = this->data;
         for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(buf, tsave, ts_width*3);
-            tsave += ts_width*3;
+            memcpy(buf, tsave, this->previous_timestamp_length*char_width*3);
+            tsave += this->previous_timestamp_length*char_width*3;
         }
     }
 
@@ -1303,23 +1896,32 @@ struct Drawable
          "we could just parametrize the position of the timestamp on the screen");
     void trace_pausetimestamp(tm & now)
     {
-        char rawdate[size_str_timestamp];
-        snprintf(rawdate, size_str_timestamp, "%4d-%02d-%02d %02d:%02d:%02d",
-                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
-                 now.tm_hour, now.tm_min, now.tm_sec);
+        char    * timezone;
+        uint8_t   timestamp_length;
 
-        this->draw_11x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate, this->previous_timestamp);
+        timezone = (daylight ? tzname[1] : tzname[0]);
+
+        char rawdate[size_str_timestamp];
+        memset(rawdate, 0, sizeof(rawdate));
+        timestamp_length = 20 + strlen(timezone);
+        snprintf(rawdate, timestamp_length + 1, "%4d-%02d-%02d %02d:%02d:%02d %s",
+                 now.tm_year+1900, now.tm_mon+1, now.tm_mday,
+                 now.tm_hour, now.tm_min, now.tm_sec, timezone);
+
+        this->draw_12x7_digits(this->timestamp_data, ts_width, size_str_timestamp-1, rawdate,
+            this->previous_timestamp);
         memcpy(this->previous_timestamp, rawdate, size_str_timestamp);
+        this->previous_timestamp_length = timestamp_length;
 
         uint8_t * tsave = this->timestamp_save;
         uint8_t* buf = this->data
             + (this->width * 3) * (this->height / 2)
-            + ((this->width - ts_width)*3) / 2 ;
+            + ((this->width - timestamp_length*char_width)*3) / 2 ;
         int step = this->width * 3;
         for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(tsave, buf, ts_width*3);
-            tsave += ts_width*3;
-            memcpy(buf, this->timestamp_data + y*ts_width*3, ts_width*3);
+            memcpy(tsave, buf, timestamp_length*char_width*3);
+            tsave += timestamp_length*char_width*3;
+            memcpy(buf, this->timestamp_data + y*ts_width*3, timestamp_length*char_width*3);
         }
     }
 
@@ -1329,13 +1931,12 @@ struct Drawable
         int step = this->width * 3;
         uint8_t* buf = this->data
             + (this->width * 3) * (this->height / 2)
-            + ((this->width - ts_width)*3) / 2 ;
+            + ((this->width - this->previous_timestamp_length*char_width)*3) / 2 ;
         for (size_t y = 0; y < ts_height ; ++y, buf += step){
-            memcpy(buf, tsave, ts_width*3);
-            tsave += ts_width*3;
+            memcpy(buf, tsave, this->previous_timestamp_length*char_width*3);
+            tsave += this->previous_timestamp_length*char_width*3;
         }
     }
-
 };
 
 #endif

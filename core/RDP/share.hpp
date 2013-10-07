@@ -456,10 +456,10 @@ struct ShareData
                 LOG(LOG_INFO, "ShareData::recv_begin: got unexpected compressed share data");
             }
 
-            uint32_t  roff = 0;
-            uint32_t  rlen = 0;
-            decompress_rdp( dec, this->payload.get_data(), this->payload.size()
-                          , this->compressedType, &roff, &rlen);
+            uint32_t roff = 0;
+            uint32_t rlen = 0;
+            dec->decompress_rdp(this->payload.get_data(), this->payload.size(),
+                this->compressedType, &roff, &rlen);
 
             this->payload.resize(StaticStream(dec->history_buf + roff, rlen), rlen);
         }

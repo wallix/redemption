@@ -30,6 +30,7 @@
 
 #include "transport.hpp"
 #include "RDP/caches/bmpcache.hpp"
+#include "RDP/caches/pointercache.hpp"
 #include "RDP/RDPGraphicDevice.hpp"
 #include "RDP/RDPDrawable.hpp"
 #include "RDP/RDPSerializer.hpp"
@@ -60,7 +61,9 @@ struct FileToGraphic
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
 
-    BmpCache * bmp_cache;
+    BmpCache     * bmp_cache;
+    PointerCache   ptr_cache;
+    GlyphCache     gly_cache;
 
     // variables used to read batch of orders "chunks"
     uint32_t chunk_size;
@@ -159,6 +162,12 @@ struct FileToGraphic
                 break;
             }
         }
+
+        Pointer pointer0(Pointer::POINTER_CURSOR0);
+        this->ptr_cache.add_pointer_static(pointer0, 0);
+
+        Pointer pointer1(Pointer::POINTER_CURSOR1);
+        this->ptr_cache.add_pointer_static(pointer1, 1);
     }
 
     ~FileToGraphic()
@@ -274,9 +283,20 @@ struct FileToGraphic
 //                    this->process_colormap(this->stream, control, header, mod);
                     break;
                 case TS_CACHE_GLYPH:
-                    LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
-//                    this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
-                    break;
+                {
+//                  LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_GLYPH (%d)", header.type);
+//                  this->rdp_orders_process_fontcache(this->stream, header.flags, mod);
+                    RDPGlyphCache cmd;
+                    cmd.receive(this->stream, control, header);
+                    if (this->verbose > 32){
+                        cmd.log(LOG_INFO);
+                    }
+                    this->gly_cache.set_glyph(cmd);
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(cmd);
+                    }
+                }
+                break;
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                     LOG(LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)", header.type);
                   break;
@@ -300,7 +320,7 @@ struct FileToGraphic
                 case RDP::GLYPHINDEX:
                     this->glyphindex.receive(this->stream, header);
                     for (size_t i = 0; i < this->nbconsumers ; i++){
-                        this->consumers[i]->draw(this->glyphindex, clip);
+                        this->consumers[i]->draw(this->glyphindex, clip, &this->gly_cache);
                     }
                     break;
                 case RDP::DESTBLT:
@@ -738,6 +758,42 @@ struct FileToGraphic
                                             , data
                                             , bitmap_data.bitmap_size()
                                             , bitmap);
+                }
+            }
+            break;
+            case POINTER:
+            {
+                uint8_t          cache_idx;
+
+                this->mouse_x = this->stream.in_uint16_le();
+                this->mouse_y = this->stream.in_uint16_le();
+                cache_idx     = this->stream.in_uint8();
+
+                if (  chunk_size - 8 /*header(8)*/
+                    > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
+                    struct Pointer cursor(Pointer::POINTER_NULL);
+                    cursor.x = this->stream.in_uint8();
+                    cursor.y = this->stream.in_uint8();
+                    stream.in_copy_bytes(cursor.data, 32 * 32 * 3);
+                    stream.in_copy_bytes(cursor.mask, 128);
+
+                    this->ptr_cache.add_pointer_static(cursor, cache_idx);
+
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
+                        this->consumers[i]->server_set_pointer(cursor);
+                    }
+                }
+                else {
+                    Pointer & pi = this->ptr_cache.Pointers[cache_idx];
+                    Pointer cursor(Pointer::POINTER_NULL);
+                    cursor.x = pi.x;
+                    cursor.y = pi.y;
+                    memcpy(cursor.data, pi.data, sizeof(pi.data));
+                    memcpy(cursor.mask, pi.mask, sizeof(pi.mask));
+
+                    for (size_t i = 0; i < this->nbconsumers; i++) {
+                        this->consumers[i]->server_set_pointer(cursor);
+                    }
                 }
             }
             break;

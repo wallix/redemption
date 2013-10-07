@@ -27,36 +27,36 @@
 #define BOOST_TEST_MODULE TestBitFu
 #include <boost/test/auto_unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
+#include "log.hpp"
 
 #include "bitfu.hpp"
 #include <stdio.h>
 
 //#include "rdtsc.hpp"
-
 //long long ustime() {
 //    struct timeval now;
 //    gettimeofday(&now, NULL);
 //    return (long long)now.tv_sec*1000000LL + (long long)now.tv_usec;
 //}
 
-//BOOST_AUTO_TEST_CASE(TestReversePerf)
-//{
-//    unsigned long long usec = ustime();
-//    unsigned long long cycles = rdtsc();
-//    const size_t max = 10000;
-//    uint32_t buf[max];
-//    for (size_t i = 0; i < max; i++){
-//        buf[i] = i;
-//    }
-//    for (size_t i = 0; i < 1000 ; i++){
-//        reverseit((uint8_t*)buf, max*sizeof(uint32_t));
-//    }
-//    unsigned long long elapusec = ustime() - usec;
-//    unsigned long long elapcyc = rdtsc() - cycles;
-//    printf("elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
-//}
+
+// out_bytes_be is only defined for 1 to 4 bytes
+BOOST_AUTO_TEST_CASE(TestAlign4)
+{
+//  uint8_t buffer[4] = {};
+    BOOST_CHECK_EQUAL(0x00, align4(0));
+    BOOST_CHECK_EQUAL(0x04, align4(1));
+    BOOST_CHECK_EQUAL(0x04, align4(2));
+    BOOST_CHECK_EQUAL(0x04, align4(3));
+    BOOST_CHECK_EQUAL(0x04, align4(4));
+    BOOST_CHECK_EQUAL(0x08, align4(5));
+    BOOST_CHECK_EQUAL(0x08, align4(6));
+    BOOST_CHECK_EQUAL(0x08, align4(7));
+    BOOST_CHECK_EQUAL(0x08, align4(8));
+    BOOST_CHECK_EQUAL(12, align4(9));
+}
+
 
 BOOST_AUTO_TEST_CASE(TestReverseEven)
 {
@@ -81,30 +81,86 @@ BOOST_AUTO_TEST_CASE(TestReverseOdd)
     BOOST_CHECK_EQUAL(buf[4], 1);
 }
 
-BOOST_AUTO_TEST_CASE(TestCompactToAlignedSizeComputing)
+BOOST_AUTO_TEST_CASE(TestNbBytes)
 {
-    BOOST_CHECK_EQUAL(800, row_size(800, 8));
-    BOOST_CHECK_EQUAL(1600, row_size(800, 16));
-    BOOST_CHECK_EQUAL(2400, row_size(800, 24));
-    BOOST_CHECK_EQUAL(3200, row_size(800, 32));
+    BOOST_CHECK_EQUAL(4, nbbytes(8*5-8));
+    BOOST_CHECK_EQUAL(4, nbbytes_large(8*5-8));
+    BOOST_CHECK_EQUAL(5, nbbytes(8*5-7));
+    BOOST_CHECK_EQUAL(5, nbbytes_large(8*5-7));
+    BOOST_CHECK_EQUAL(5, nbbytes(8*5-1));
+    BOOST_CHECK_EQUAL(5, nbbytes_large(8*5-1));
+    BOOST_CHECK_EQUAL(5, nbbytes(8*5));
+    BOOST_CHECK_EQUAL(5, nbbytes_large(8*5));
+    BOOST_CHECK_EQUAL(6, nbbytes(8*5+1));
+    BOOST_CHECK_EQUAL(6, nbbytes_large(8*5+1));
 
-    BOOST_CHECK_EQUAL(800, row_size(799, 8));
-    BOOST_CHECK_EQUAL(1600, row_size(799, 16));
-    BOOST_CHECK_EQUAL(2400, row_size(799, 24));
-    BOOST_CHECK_EQUAL(3196, row_size(799, 32));
+    BOOST_CHECK_EQUAL(320 % 256, nbbytes(320 * 8));
+    BOOST_CHECK_EQUAL(320, nbbytes_large(320 * 8));
+}
 
-    BOOST_CHECK_EQUAL(800, row_size(798, 8));
-    BOOST_CHECK_EQUAL(1596, row_size(798, 16));
-    BOOST_CHECK_EQUAL(2396, row_size(798, 24));
-    BOOST_CHECK_EQUAL(3192, row_size(798, 32));
+// out_bytes_be is only defined for 1 to 4 bytes
+BOOST_AUTO_TEST_CASE(TestOutBytesLe)
+{
+    uint8_t buffer[10] = {};
+    out_bytes_le(buffer, 3, 0xFFEEDDCC);
+    BOOST_CHECK_EQUAL(0xCC, buffer[0]);
+    BOOST_CHECK_EQUAL(0xDD, buffer[1]);
+    BOOST_CHECK_EQUAL(0xEE, buffer[2]);
+    BOOST_CHECK_EQUAL(0x00, buffer[3]);
 
-    BOOST_CHECK_EQUAL(800, row_size(797, 8));
-    BOOST_CHECK_EQUAL(1596, row_size(797, 16));
-    BOOST_CHECK_EQUAL(2392, row_size(797, 24));
-    BOOST_CHECK_EQUAL(3188, row_size(797, 32));
+    out_bytes_le(buffer, 4, 0xBBAA9988);
+    BOOST_CHECK_EQUAL(0x88, buffer[0]);
+    BOOST_CHECK_EQUAL(0x99, buffer[1]);
+    BOOST_CHECK_EQUAL(0xAA, buffer[2]);
+    BOOST_CHECK_EQUAL(0xBB, buffer[3]);
+}
 
-    BOOST_CHECK_EQUAL(796, row_size(796, 8));
-    BOOST_CHECK_EQUAL(1592, row_size(796, 16));
-    BOOST_CHECK_EQUAL(2388, row_size(796, 24));
-    BOOST_CHECK_EQUAL(3184, row_size(796, 32));
+
+// out_bytes_be is only defined for 1 to 4 bytes
+BOOST_AUTO_TEST_CASE(TestBufOutUint32)
+{
+    uint8_t buffer[4] = {};
+    buf_out_uint32(buffer, 0xFFEEDDCC);
+    BOOST_CHECK_EQUAL(0xCC, buffer[0]);
+    BOOST_CHECK_EQUAL(0xDD, buffer[1]);
+    BOOST_CHECK_EQUAL(0xEE, buffer[2]);
+    BOOST_CHECK_EQUAL(0xFF, buffer[3]);
+}
+
+
+// in_bytes_le is only defined for 1 to 4 bytes
+BOOST_AUTO_TEST_CASE(TestInBytesLe)
+{
+    uint8_t buffer[10] = {0xCC, 0xDD, 0xEE, 0xFF };
+    BOOST_CHECK_EQUAL(0xEEDDCC , in_bytes_le(3, buffer));
+
+    uint8_t buffer2[10] = {0x88, 0x99, 0xAA, 0xBB };
+    BOOST_CHECK_EQUAL(0xBBAA9988 , in_bytes_le(4, buffer2));
+}
+
+// in_bytes_be is only defined for 1 to 4 bytes
+BOOST_AUTO_TEST_CASE(TestInBytesBe)
+{
+    uint8_t buffer[10] = {0xCC, 0xDD, 0xEE, 0xFF };
+    BOOST_CHECK_EQUAL(0xCCDDEE , in_bytes_be(3, buffer));
+
+    uint8_t buffer2[10] = {0x88, 0x99, 0xAA, 0xBB };
+    BOOST_CHECK_EQUAL(0x8899AABB , in_bytes_be(4, buffer2));
+}
+
+// rmemcpy : the area must not overlap
+BOOST_AUTO_TEST_CASE(TestRmemcpy)
+{
+    uint8_t buffer[]   = {0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99 };
+    uint8_t dest[sizeof(buffer)] = {};
+    uint8_t expected[] = {0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0xFF, 0xEE, 0xDD, 0xCC };
+    rmemcpy(dest, buffer, sizeof(buffer));
+    BOOST_CHECK(0 == memcmp(dest, expected, sizeof(expected)));
+
+    uint8_t buffer2[]   = {0xCC, 0xDD, 0xEE };
+    uint8_t dest2[sizeof(buffer)] = {};
+    uint8_t expected2[] = {0xEE, 0xDD, 0xCC };
+    rmemcpy(dest2, buffer2, sizeof(buffer2));
+    BOOST_CHECK(0 == memcmp(dest2, expected2, sizeof(expected2)));
+
 }

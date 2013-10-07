@@ -48,7 +48,7 @@ static inline size_t UTF8Check(const uint8_t * source, size_t len)
                 // either continuation bytes without start byte or 5 or 6 bytes sequence after 0xFX
                 // both cases are errors.
                 goto UTF8Check_exit;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
                 if ((i+1 >= len)
                    ||((source[i]&0xFE) == 0xC0)
@@ -57,9 +57,9 @@ static inline size_t UTF8Check(const uint8_t * source, size_t len)
                 }
                 i+=1;
             break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-                if ((i+2 >= len) 
+                if ((i+2 >= len)
                    ||((source[i+1] >> 6) != 2)
                    ||((source[i+2] >> 6) != 2)){
                     goto UTF8Check_exit;
@@ -86,7 +86,7 @@ UTF8Check_exit:
 REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
 static inline size_t UTF8Len(const uint8_t * source)
 {
-    size_t len = 0; 
+    size_t len = 0;
     uint8_t c = 0;
     for (size_t i = 0 ; 0 != (c = source[i]) ; i++){
         len += ((c >> 6) == 2)?0:1;
@@ -115,6 +115,42 @@ static inline size_t UTF8GetPos(uint8_t * source, size_t len)
     return i;
 }
 
+REDOC("UTF8GetFirstCharLen returns the length in bytes of first character of input. It assumes input is valid utf8, zero terminated (that has been checked before).")
+static inline size_t UTF8GetFirstCharLen(const uint8_t * source)
+{
+    size_t    len = 0;
+    const uint8_t * p   = source;
+
+    while (*p)
+    {
+        switch (*p >> 6)
+        {
+        case 2:
+            len++;
+            p++;
+            break;
+
+        case 3:
+            if (len)
+            {
+                return len;
+            }
+            else
+            {
+                len++;
+                p++;
+            }
+            break;
+
+        default:
+        case 0:
+            return 1;
+        }
+    }
+
+    return len;
+}
+
 REDOC("UTF8TruncateAtLen assumes input is valid utf8, zero terminated, that has been checked before.")
 static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
 {
@@ -138,7 +174,7 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
         len -= ((c >> 6) == 2)?0:1;
         if (len == 0) { break; }
     }
-    
+
 
     size_t insertion_point = i;
     size_t end_point = insertion_point + strlen(reinterpret_cast<char *>(source+i));
@@ -146,7 +182,7 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
     if (end_point + to_insert_nbbytes + 1 > max_source){
         return false;
     }
-    
+
     memmove(source + insertion_point + to_insert_nbbytes, source + insertion_point, end_point - insertion_point + 1);
     memcpy(source + insertion_point, to_insert, to_insert_nbbytes);
     return true;
@@ -174,7 +210,7 @@ static inline void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
             size_t end_point = insertion_point + strlen(reinterpret_cast<char *>(source+i));
             uint32_t char_len = UTF8CharNbBytes(source+i);
             memmove(source + i, source + i + char_len, end_point - insertion_point + 1 - char_len);
-            break; 
+            break;
         }
     }
     return;
@@ -216,7 +252,7 @@ struct utf8_str {
 // UTF8toUTF16 never writes the trailing zero
 static inline size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_t t_len)
 {
-    size_t i_t = 0; 
+    size_t i_t = 0;
     uint32_t ucode = 0;
     unsigned c = 0;
     for (size_t i = 0; (ucode = c = source[i]) != 0 ; i++){
@@ -230,16 +266,16 @@ static inline size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_
 
                 ucode = c;
             break;
-            case 1: case 2: case 3: 
+            case 1: case 2: case 3:
             case 4: case 5: case 6: case 7:
             ucode = c;
             break;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
-            case 0xC: case 0xD: 
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */
+            case 0xC: case 0xD:
                 ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
                 i+=1;
             break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
                 ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=2;
@@ -266,7 +302,7 @@ UTF8toUTF16_exit:
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, size_t t_len)
 {
-    size_t i_t = 0; 
+    size_t i_t = 0;
     uint32_t ucode = 0;
     unsigned c = 0;
     for (size_t i = 0; (ucode = c = source[i]) != 0 ; i++){
@@ -280,16 +316,16 @@ static inline size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, 
 
                 ucode = c;
             break;
-            case 1: case 2: case 3: 
+            case 1: case 2: case 3:
             case 4: case 5: case 6: case 7:
             ucode = c;
             break;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
-            case 0xC: case 0xD: 
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */
+            case 0xC: case 0xD:
                 ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
                 i+=1;
             break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
                 ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=2;
@@ -340,15 +376,15 @@ static inline size_t UTF8toUnicode(const uint8_t * source, uint32_t * target, si
                 // should never happen, catched by test above
                 goto UTF8toUnicode_exit;
             break;
-            case 1: case 2: case 3: 
+            case 1: case 2: case 3:
             case 4: case 5: case 6: case 7:
             break;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
-            case 0xC: case 0xD: 
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */
+            case 0xC: case 0xD:
                 ucode = ((ucode & 0x1F) << 6)|(source[i+1] & 0x3F);
                 i+=1;
             break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
                 ucode = ((ucode & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
                 i+=2;
@@ -384,12 +420,12 @@ static inline bool UTF8toUnicodeWithCheck(const uint8_t ** s, size_t s_len, uint
     for (; i < s_len ; i++){
         unsigned c = source[i];
         switch (c >> 4){
-            case 0: case 1: case 2: case 3: 
+            case 0: case 1: case 2: case 3:
             case 4: case 5: case 6: case 7:
             ucode = c;
             break;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */ 
-            case 0xC: case 0xD: 
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */
+            case 0xC: case 0xD:
                 if ((i+1 >= s_len)
                    ||((c & 0xFE) == 0xC0)
                    ||((source[i+1] >> 6) != 2)){
@@ -398,9 +434,9 @@ static inline bool UTF8toUnicodeWithCheck(const uint8_t ** s, size_t s_len, uint
                 ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
                 i+=1;
             break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */ 
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-                if ((i+2 >= s_len) 
+                if ((i+2 >= s_len)
                    ||((source[i+1] >> 6) != 2)
                    ||((source[i+2] >> 6) != 2)){
                     goto UTF8toUnicode_exit;
@@ -438,7 +474,7 @@ UTF8toUnicode_exit:
 // do not write trailing 0
 static inline size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len)
 {
-    size_t i_t = 0; 
+    size_t i_t = 0;
     size_t i_s = 0;
     for (size_t i = 0 ; i < utf16_len ; i++){
         uint8_t lo = utf16_source[i_s];
@@ -479,7 +515,7 @@ static inline size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len,
 // do not write trailing 0
 static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len, uint8_t * utf8_target, size_t target_len)
 {
-    size_t i_t = 0; 
+    size_t i_t = 0;
     size_t i_s = 0;
     for (size_t i = 0 ; i < utf32_len ; i++){
         uint8_t lo = utf32_source[i_s];
@@ -514,6 +550,26 @@ static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len,
         }
     }
     return i_t;
+}
+
+// Copy as many characters from source to dest fitting in dest buffer.
+// Returns the number of UTF8 characters copied.
+// The destination string will always be 0 terminated.
+// The buffer after final 0 is not padded.
+TODO("Create a unit tested for this function.")
+static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size,
+    const uint8_t * source)
+{
+    size_t number_of_char = UTF8Len(source);
+    size_t source_len     = strlen((const char *)source);
+    TODO("It's always possible that memcpy make a partial copy of UTF8 character.")
+    if (source_len > dest_size - 1)
+    {
+        source_len = dest_size - 1;
+    }
+    memcpy(dest, source, source_len);
+    dest[source_len] = 0;
+    return number_of_char;
 }
 
 #endif

@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Jonathan Poelen
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Jonathan Poelen,
+              Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Use (implemented) basic RDP orders to draw some known test pattern
@@ -105,6 +106,7 @@ public:
 
         if (in_trans)
             delete in_trans;
+        this->screen.clear();
     }
 
     virtual void rdp_input_invalidate(const Rect & /*rect*/)
@@ -121,14 +123,14 @@ public:
     }
 
     virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
-                                       int16_t param1, int16_t /*param2*/)
+                                       int16_t /*param1*/, int16_t /*param2*/)
     {
     }
 
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)
-    virtual void draw_event()
+    virtual void draw_event(time_t now)
     {
         TODO("use system constants for sizes");
         TODO("RZ: Support encrypted recorded file.")

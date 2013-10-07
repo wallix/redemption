@@ -506,6 +506,25 @@ BOOST_AUTO_TEST_CASE(TestUTF8Check_valid_utf8_trailing_zero)
 
     // Check result
     BOOST_CHECK_EQUAL(5, UTF8Check(source, source_length));
-
 }
 
+
+
+BOOST_AUTO_TEST_CASE(TestUTF8GetFirstCharLen)
+{
+    uint8_t   source[] = "aÉ€𝄞";
+    uint8_t * p        = source;
+
+    BOOST_CHECK_EQUAL(10, strlen((const char *)p));
+
+    BOOST_CHECK_EQUAL(1, UTF8GetFirstCharLen(p));
+    p++;
+
+    BOOST_CHECK_EQUAL(2, UTF8GetFirstCharLen(p));
+    p += 2;
+
+    BOOST_CHECK_EQUAL(3, UTF8GetFirstCharLen(p));
+    p += 3;
+
+    BOOST_CHECK_EQUAL(4, UTF8GetFirstCharLen(p));
+}

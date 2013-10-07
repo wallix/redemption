@@ -73,7 +73,7 @@ public:
 
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
-    {  
+    {
         LOG(LOG_ERR, "OutFilenameTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
@@ -84,7 +84,7 @@ public:
         if (res != RIO_ERROR_OK){
             LOG(LOG_WARNING, "OutFilenameTransport::seek failed");
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
-        }    
+        }
     }
 
     virtual bool next()
@@ -147,7 +147,7 @@ public:
 
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
-    {  
+    {
         LOG(LOG_INFO, "OutFilenameTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }

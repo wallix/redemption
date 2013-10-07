@@ -27,8 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include "log.hpp"
 #define LOGNULL
+#include "log.hpp"
 
 #include "bitmap.hpp"
 #include "colors.hpp"
@@ -1984,15 +1984,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         BOOST_CHECK_EQUAL(0, memcmp(bmp2.data(), bmp.data(), 8192));
-
-
     }
-
-
-    //------- Decompressed ---------
-
-
-    //----------------------------
 
     {
         int bpp = 24;
@@ -3190,7 +3182,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        }
 //        printf("\n----------------------------\n");
 //        printf("\n");
-
     }
 
     {
@@ -3626,9 +3617,11 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 
         uint8_t sha1[20] = {};
         uint8_t expected_sha1[20] = {
-            0x7a, 0x33, 0x69, 0xdf, 0x41, 0xe9, 0xda, 0x77, 0x90, 0x46, 0xd4, 0x36, 0x15, 0xdf, 0xec, 0x31, 0xf2, 0x9a, 0x0a, 0x7c
+            0x6e, 0x2e, 0x64, 0xf6, 0x62, 0xb6, 0x42, 0x62, 0xe1, 0x3b, 0x43, 0x9b, 0xe5, 0xbd, 0xdb, 0x81,
+            0xc5, 0x4f, 0x8e, 0xbc,
         };
         bmp2.compute_sha1(sha1);
+//        hexdump_d(sha1, sizeof(sha1));
         BOOST_CHECK(0 == memcmp(expected_sha1, sha1, 20));
 //        printf("------- Decompressed ---------\n");
 //        for (size_t i = 0; i < bmp2.bmp_size ; i++){
@@ -3659,7 +3652,6 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //17_.............................................................................................................................................................................................
 
 // AFTER FIXING SPECIAL_FGBG_1 and FIXING SPECIAL_FGBG_2
-//------- Decompressed ---------
 //00_................................................................................................................................................................................................
 //01_................................................................................................................................................................................................
 //02_................................................................................................................................................................................................
@@ -3679,6 +3671,25 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //16_................................................................................................................................................................................................
 //17_................................................................................................................................................................................................
 
+// AFTER FIXING SPECIAL_FGBG_1 and FIXING SPECIAL_FGBG_2 (Bug #5301)
+//00_................................................................................................................................................................................................
+//01_................................................................................................................................................................................................
+//02_................................................................................................................................................................................................
+//03_................................................................................................................................................................................................
+//04_..OOOO..................................................................OO......................................OO....................OO...O...OO..OO..............OO...........................
+//05_.OO..OO...............................OO................................OO......................................OO....................OO...O...OO..OO..............OO...........................
+//06_OO....OO..............................OO................................OO.............................................................OO.OOO.OO...................OO...........................
+//07_OO....OO..OO..OO.OO...OO.OOOO...OOOO.OOOO..OO..OO..OOOO..OOOO........OOOOO..OOOO.......OOO...OOOO...OOO...OOO..OOO..OOOO...O.OOO.......OO.OOO.OO..OOO..O.OOO....OOOOO..OOOO.OO...O...OO.OOO.....
+//08_OO....OO..OO..OO..OO.OO.OO..OO..OO.O..OO...OO..OO..OO.O.OO..OO......OO..OO.OO..OO.....OO.OO.OO..OO.OO.OO.OO.OO..OO.OO..OO..OO..OO......OO.O.O.OO...OO..OO..OO..OO..OO.OO..OO.OO.OOO.OO.OO.OO....
+//09_OO....OO..OO..OO..OO.OO.OO..OO..OO....OO...OO..OO..OO...OO..OO......OO..OO.OO..OO.....OO....OO..OO.OO....OO.....OO.OO..OO..OO..OO......OO.O.O.OO...OO..OO..OO..OO..OO.OO..OO.OO.OOO.OO.OO.......
+//10_OO....OO..OO..OO..OO.OO.OOOOOO..OO....OO...OO..OO..OO...OOOOOO......OO..OO.OOOOOO......OOO..OOOOOO..OOO...OOO...OO.OO..OO..OO..OO.......O.O.O.O....OO..OO..OO..OO..OO.OO..OO.OO.O.O.OO..OOO.....
+//11_OO....OO..OO..OO...OOO..OO......OO....OO...OO..OO..OO...OO..........OO..OO.OO............OO.OO........OO....OO..OO.OO..OO..OO..OO.......OOO.OOO....OO..OO..OO..OO..OO.OO..OO..OOO.OOO.....OO....
+//12_.OO..OO...OO..OO...OOO..OO..OO..OO....OO...OO..OO..OO...OO..OO......OO..OO.OO..OO.....OO.OO.OO..OO.OO.OO.OO.OO..OO.OO..OO..OO..OO.......OO...OO....OO..OO..OO..OO..OO.OO..OO..OOO.OOO..OO.OO....
+//13_..OOOO.....OOOOO....O....OOOO...OO.....OO...OOOOO..OO....OOOO........OOOOO..OOOO.......OOO...OOOO...OOO...OOO...OO..OOOO...OO..OO.......OO...OO....OO..OO..OO...OOOOO..OOOO....O...O....OOO.....
+//14_................................................................................................................................................................................................
+//15_................................................................................................................................................................................................
+//16_................................................................................................................................................................................................
+//17_................................................................................................................................................................................................
    }
 
     {
@@ -3988,10 +3999,7 @@ BOOST_AUTO_TEST_CASE(TestBitmapCompress)
 //        printf("\n");
 
         BOOST_CHECK_EQUAL(0, memcmp(bmp2.data(), bmp.data(), sizeof(uncompressed)));
-
     }
-
-
 }
 
 BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
@@ -4004,78 +4012,52 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
 
     Bitmap::openfile_t res;
 
-    const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
+    // const char * filename = "sys/share/rdpproxy/xrdp24b.bmp";
+    const char * filename = "tests/fixtures/xrdp24b.bmp";
     res = bmp.check_file_type(filename);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_BMP);
 
-    const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
+    // const char * filename2 = "sys/share/rdpproxy/xrdp24b.jpg";
+    const char * filename2 = "tests/fixtures/xrdp24b.jpg";
     res = bmp.check_file_type(filename2);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
-    const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
+    // const char * filename3 = "sys/share/rdpproxy/xrdp24b.png";
+    const char * filename3 = "tests/fixtures/xrdp24b.png";
     res = bmp.check_file_type(filename3);
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_PNG);
 
     res = bmp.check_file_type("wrong/access/directory/image.png");
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
-    res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
+    // res = bmp.check_file_type("sys/share/rdpproxy/cursor1.cur");
+    res = bmp.check_file_type("tests/fixtures/cursor1.cur");
     BOOST_CHECK_EQUAL(res, Bitmap::OPEN_FILE_UNKNOWN);
 
-
-    {// OPEN PNG FILE
-        png_structp png_ptr;
-        png_infop info_ptr;
-        png_uint_32 width, height;
-        png_byte bit_depth, color_type, filter_type, interlace_type;
-
-        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-        if (!png_ptr) {
-            BOOST_CHECK(false);
-        }
-        info_ptr = png_create_info_struct(png_ptr);
-        if (!info_ptr) {
-            png_destroy_read_struct(&png_ptr, NULL, NULL);
-            BOOST_CHECK(false);
-        }
-
-        FILE * fd = fopen(filename3, "rb");
-        if (!fd) {
-            BOOST_CHECK(false);
-        }
-        png_init_io(png_ptr, fd);
-
-        png_read_info(png_ptr, info_ptr);
-
-        width = png_get_image_width(png_ptr, info_ptr);
-        height = png_get_image_height(png_ptr, info_ptr);
-        bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-        color_type = png_get_color_type(png_ptr, info_ptr);
-        filter_type = png_get_filter_type(png_ptr, info_ptr);
-        interlace_type = png_get_interlace_type(png_ptr, info_ptr);
-
-        BOOST_CHECK_EQUAL(width, 256);
-        BOOST_CHECK_EQUAL(height, 150);
-        BOOST_CHECK_EQUAL(bit_depth, 8);
-        BOOST_CHECK_EQUAL(color_type, 2);
-        BOOST_CHECK_EQUAL(filter_type, 0);
-        BOOST_CHECK_EQUAL(interlace_type, 0);
-        if (color_type & PNG_COLOR_TYPE_PALETTE) {
-            png_set_palette_to_rgb(png_ptr);
-        }
-        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-            png_set_gray_1_2_4_to_8 (png_ptr);
-        BOOST_CHECK_EQUAL(bit_depth, 8);
-
-
-
-        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-        fclose(fd);
-    }
 
     bool boolres = bmp.open_png_file(filename3);
     BOOST_CHECK_EQUAL(boolres, true);
 
+    try {
+        Bitmap file(filename);
+    }
+    catch (const Error & e){
+        // this test is not supposed to be executed
+        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
+    }
+
+    try {
+        Bitmap file(filename2);
+    }
+    catch (const Error & e){
+        // this test is supposed to be executed
+        BOOST_CHECK_EQUAL((uint32_t)ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE, (uint32_t)e.id);
+    }
+    try {
+        Bitmap file(filename3);
+    }
+    catch (const Error & e){
+        // this test is not supposed to be executed
+        BOOST_CHECK_EQUAL((uint32_t)0, (uint32_t)e.id);
+    }
 }
-
-

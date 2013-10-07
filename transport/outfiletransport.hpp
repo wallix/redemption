@@ -32,7 +32,7 @@ class OutFileTransport : public Transport {
     uint32_t verbose;
 
     OutFileTransport(int fd, unsigned verbose = 0)
-        : verbose(verbose) 
+        : verbose(verbose)
     {
         RIO_ERROR status = rio_init_outfile(&this->rio, fd);
         if (status != RIO_ERROR_OK){
@@ -41,7 +41,7 @@ class OutFileTransport : public Transport {
         }
     }
 
-    virtual ~OutFileTransport() 
+    virtual ~OutFileTransport()
     {
         rio_clear(&this->rio);
     }
@@ -57,12 +57,12 @@ class OutFileTransport : public Transport {
 
     using Transport::recv;
     virtual void recv(char**, size_t) throw (Error)
-    {  
+    {
         LOG(LOG_INFO, "OutFileTransport used for recv");
         throw Error(ERR_TRANSPORT_OUTPUT_ONLY_USED_FOR_SEND, 0);
     }
-    
-    virtual void seek(int64_t offset, int whence) throw (Error) 
+
+    virtual void seek(int64_t offset, int whence) throw (Error)
     {
         RIO_ERROR res = rio_seek(&this->rio, offset, whence);
         if (res != RIO_ERROR_OK){

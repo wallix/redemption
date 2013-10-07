@@ -230,13 +230,13 @@ public:
 
         if (res == OPEN_FILE_UNKNOWN) {
             LOG(LOG_ERR, "loading bitmap %s failed, Unknown format type", filename);
-            throw Error(ERR_BITMAP_LOAD_FAILED);
+            throw Error(ERR_BITMAP_LOAD_UNKNOWN_TYPE_FILE);
         }
         else if (res == OPEN_FILE_PNG) {
             bool bres = this->open_png_file(filename);
             if (!bres) {
                 LOG(LOG_ERR, "loading bitmap %s failed", filename);
-                throw Error(ERR_BITMAP_LOAD_FAILED);
+                throw Error(ERR_BITMAP_PNG_LOAD_FAILED);
             }
         }
         else {
@@ -463,13 +463,14 @@ public:
             LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
         }
         else if ((type1[0] == 'B') && (type1[1] == 'M')) {
-            LOG(LOG_INFO, "Widget_load: bitmap file [%s] is BMP file\n", filename);
+            LOG(LOG_INFO, "Widget_load: image file [%s] is BMP file\n", filename);
             res = OPEN_FILE_BMP;
         }
         else if (read(fd, &type1[2], 6) != 6) {
             LOG(LOG_ERR, "Widget_load: error bitmap file [%s] read error\n", filename);
         }
         else if (png_check_sig(reinterpret_cast<png_bytep>(type1), 8)) {
+            LOG(LOG_INFO, "Widget_load: image file [%s] is PNG file\n", filename);
             res = OPEN_FILE_PNG;
         }
         else {
@@ -481,16 +482,13 @@ public:
     } // openfile_t check_file_type(const char * filename)
 
     bool open_png_file(const char * filename) {
-        png_structp png_ptr;
-        png_infop info_ptr;
-        png_uint_32 width, height;
-        png_byte bit_depth, color_type;
 
-        png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
         if (!png_ptr) {
             return false;
         }
-        info_ptr = png_create_info_struct(png_ptr);
+
+        png_infop info_ptr = png_create_info_struct(png_ptr);
         if (!info_ptr) {
             png_destroy_read_struct(&png_ptr, NULL, NULL);
             return false;
@@ -504,44 +502,52 @@ public:
 
         png_read_info(png_ptr, info_ptr);
 
-        width = png_get_image_width(png_ptr, info_ptr);
-        height = png_get_image_height(png_ptr, info_ptr);
-        bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-        color_type = png_get_color_type(png_ptr, info_ptr);
+        png_uint_32 width = png_get_image_width(png_ptr, info_ptr);
+        png_uint_32 height = png_get_image_height(png_ptr, info_ptr);
+        png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
+        png_byte color_type = png_get_color_type(png_ptr, info_ptr);
 
-        if (color_type == PNG_COLOR_TYPE_PALETTE) {
+        if (color_type == PNG_COLOR_TYPE_PALETTE)
             png_set_palette_to_rgb(png_ptr);
-        }
-        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-            png_set_gray_1_2_4_to_8 (png_ptr);
 
+        if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+            png_set_gray_1_2_4_to_8(png_ptr);
+
+        if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS))
+            png_set_tRNS_to_alpha(png_ptr);
+
+        if (bit_depth == 16)
+            png_set_strip_16(png_ptr);
+        else if (bit_depth < 8)
+            png_set_packing(png_ptr);
+
+        png_read_update_info(png_ptr, info_ptr);
+
+        // THIS WORKS
         BStream stream(8192);
         int Bpp = 3;
-        size_t rowsize = width * Bpp;
-        size_t size = rowsize * height;
-        stream.init(size);
-
-        unsigned char * row = stream.get_data();
-        for (size_t k = 0 ; k < height ; ++k) {
-            png_read_row(png_ptr, row, NULL);
-            row += rowsize;
-        }
-
-        stream.end = stream.get_data() + size;
-        png_read_end(png_ptr, info_ptr);
-        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-        fclose(fd);
-
         this->cx = (uint16_t)width;
         this->cy = (uint16_t)height;
         this->line_size = this->cx * Bpp;
         this->bmp_size = this->line_size * this->cy;
+        stream.init(this->bmp_size);
+
+        unsigned char * row = stream.get_data();
+        for (size_t k = 0 ; k < this->cy ; ++k) {
+            png_read_row(png_ptr, row, NULL);
+            row += this->line_size;
+        }
+
+        stream.end = stream.get_data() + this->bmp_size;
+        png_read_end(png_ptr, info_ptr);
+        png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
+        fclose(fd);
 
         this->data_bitmap.alloc(this->bmp_size);
         uint8_t * dest = this->data_bitmap.get();
 
         for (unsigned y = 0; y < this->cy ; y++) {
-            for (unsigned x = 0 ; x < width; x++) {
+            for (unsigned x = 0 ; x < this->cx; x++) {
                 uint32_t pixel = 0;
                 uint8_t r = stream.in_uint8();
                 uint8_t g = stream.in_uint8();
@@ -551,6 +557,8 @@ public:
                 ::out_bytes_le(dest + (this->cy - y - 1) * this->line_size + x * Bpp, Bpp, pixel);
             }
         }
+
+
         return true;
     } // bool open_png_file(const char * filename)
 
@@ -664,11 +672,11 @@ private:
                         count = 1;
                     break;
                     case 0xFA:
-                        opcode = SPECIAL_FGBG_1;
+                        opcode = SPECIAL_FGBG_2;
                         count = 8;
                     break;
                     case 0xF9:
-                        opcode = SPECIAL_FGBG_2;
+                        opcode = SPECIAL_FGBG_1;
                         count = 8;
                     break;
                     case 0xF8:
@@ -742,11 +750,11 @@ private:
             break;
             case SPECIAL_FGBG_1:
                 mask = 1;
-                fom_mask = 7;
+                fom_mask = 3;
             break;
             case SPECIAL_FGBG_2:
                 mask = 1;
-                fom_mask = 3;
+                fom_mask = 5;
             break;
             case BICOLOR:
                 bicolor = 0;
@@ -1434,7 +1442,7 @@ public:
                 pmax = pmin + this->bmp_size;
             }
             else {
-                pmax = pmin + row_size(this->cx, this->original_bpp);
+                pmax = pmin + align4(this->cx * nbbytes(this->original_bpp));
             }
             while (p < pmax)
             {
@@ -1631,6 +1639,32 @@ public:
             else {
                 init_palette332(this->original_palette);
             }
+        }
+    }
+
+    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy)
+        : original_bpp(bpp)
+        , cx(align4(cx))
+        , cy(cy)
+        , line_size(this->cx * nbbytes(this->original_bpp))
+        , bmp_size(this->line_size * cy)
+        , data_bitmap()
+        , data_compressed(NULL)
+        , data_compressed_size(0)
+    {
+        this->data_bitmap.alloc(this->bmp_size);
+//        LOG(LOG_ERR, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
+        if (bpp == 8){
+            if (palette){
+                memcpy(&this->original_palette, palette, sizeof(BGRPalette));
+            }
+            else {
+                init_palette332(this->original_palette);
+            }
+        }
+
+        if (this->cx <= 0 || this->cy <= 0){
+            LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u bpp=%u", this->cx, this->cy, this->original_bpp);
         }
     }
 };

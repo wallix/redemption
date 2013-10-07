@@ -73,8 +73,8 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     rio_clear(&trans.rio); // ensure file is closed to have accurate values for size
 
-    BOOST_CHECK_EQUAL(3092, sq_outfilename_filesize(&(trans.seq), 0));
-    BOOST_CHECK_EQUAL(3108, sq_outfilename_filesize(&(trans.seq), 1));
+    BOOST_CHECK_EQUAL(3065, sq_outfilename_filesize(&(trans.seq), 0));
+    BOOST_CHECK_EQUAL(3083, sq_outfilename_filesize(&(trans.seq), 1));
     sq_outfilename_unlink(&(trans.seq), 0);
     sq_outfilename_unlink(&(trans.seq), 1);
 }

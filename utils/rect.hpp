@@ -148,7 +148,7 @@ struct Rect {
     }
 
     Rect right_side() const {
-        return Rect(this->x + this->cx - 1, this->cy, 1, this->cy);
+        return Rect(this->x + this->cx - 1, this->y, 1, this->cy);
     }
 
     Rect intersect(uint16_t width, uint16_t height) const
@@ -164,6 +164,14 @@ struct Rect {
         int min_bottom = std::min<int>(in.y + in.cy, this->y + this->cy);
 
         return Rect(max_x, max_y, min_right - max_x, min_bottom - max_y);
+    }
+
+    bool has_intersection(const Rect & in) const
+    {
+        return (this->cx &&
+            (std::min<int>(in.x + in.cx, this->x + this->cx) -
+                 std::max(in.x, this->x) > 0)
+        );
     }
 
     // Ensemblist difference

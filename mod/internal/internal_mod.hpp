@@ -113,9 +113,9 @@ public:
         this->front.draw(cmd, clip);
     }
 
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip)
+    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
-        this->front.draw(cmd, clip);
+        this->front.draw(cmd, clip, gly_cache);
     }
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
@@ -129,6 +129,12 @@ public:
         this->front.text_metrics(text, width, height);
     }
 
+    virtual void server_set_pointer(const Pointer & cursor) {
+        this->front.server_set_pointer(cursor);
+    }
+    virtual void set_pointer(int cache_idx) {
+        this->front.set_pointer(cache_idx);
+    }
 
     uint32_t convert_to_black(uint32_t color)
     {
@@ -150,14 +156,10 @@ public:
         this->screen.rdp_input_scancode(param1, param2, param3, param4, keymap);
     }
 
-    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2)
+    virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags,
+                                       int16_t param1, int16_t param2)
     {
-        LOG(LOG_INFO, "overloaded by subclasses");
-        return;
     }
-
-    // module got an internal event (like incoming data) and want to sent it outside
-    virtual void draw_event() = 0;
 };
 
 #endif

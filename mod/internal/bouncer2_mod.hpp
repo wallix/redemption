@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2011
-   Author(s): Christophe Grosjean, Martin Potier, Jonathan Poelen
+   Author(s): Christophe Grosjean, Martin Potier, Jonathan Poelen,
+              Meng Tan
 
    Bouncer test, high level API
 
@@ -49,7 +50,9 @@ public:
     }
 
     ~Bouncer2Mod()
-    {}
+    {
+        this->screen.clear();
+    }
 
     virtual void rdp_input_invalidate(const Rect & /*rect*/)
     {
@@ -69,11 +72,6 @@ public:
             return ;
         }
         this->interaction();
-    }
-
-    virtual void rdp_input_synchronize(uint32_t /*time*/, uint16_t /*device_flags*/,
-                                       int16_t /*param1*/, int16_t /*param2*/)
-    {
     }
 
     int interaction()
@@ -105,7 +103,7 @@ public:
     }
 
     // This should come from BACK!
-    virtual void draw_event()
+    virtual void draw_event(time_t now)
     {
         this->interaction();
         // Calculating new speedx and speedy
