@@ -439,14 +439,6 @@ namespace rndfa {
             }
         };
 
-        struct is_non_free_list {
-            bool operator()(const StateList& stl) const
-            {
-                /**///std::cout << (stl.next->first == stl.next->last) << std::endl;
-                return stl.next->first != stl.next->last;
-            }
-        };
-
         StateMachine2(const StateMachine2&) /*= delete*/;
 
     public:
@@ -458,43 +450,43 @@ namespace rndfa {
         , captures(0)
         , pcaptures(0)
         , traces(0)
-        , vec()
+        , states()
         , l1()
         , l2()
         , st_list(0)
         , st_range_list(0)
         {
             this->push_state(st);
-            if (this->vec.empty()) {
+            if (this->states.empty()) {
                 return ;
             }
             this->nb_capture /= 2;
-            l1.set_parray(new StateListByStep::Info[this->vec.size() * 2]);
-            l2.set_parray(l1.array + this->vec.size());
+            l1.set_parray(new StateListByStep::Info[this->states.size() * 2]);
+            l2.set_parray(l1.array + this->states.size());
 
-            if (!this->vec.empty())
+            if (!this->states.empty())
             {
                 {
-                    const unsigned matrix_size = this->vec.size() * this->vec.size();
+                    const unsigned matrix_size = this->states.size() * this->states.size();
                     this->st_list = new StateList[matrix_size];
                     std::memset(this->st_list, 0, matrix_size * sizeof * this->st_list);
                 }
 
                 {
-                    const unsigned size = this->vec.size();
+                    const unsigned size = this->states.size();
                     this->st_range_list = new RangeList[size];
                     this->st_range_list_last = this->st_range_list;
                     for (unsigned n = 0; n < size; ++n) {
                         RangeList& l = *this->st_range_list_last;
                         ++this->st_range_list_last;
                         l.st = 0;
-                        l.first = this->st_list + n * this->vec.size();
+                        l.first = this->st_list + n * this->states.size();
                         l.last = l.first;
                     }
                 }
 
                 if (this->nb_capture) {
-                    const unsigned col = this->vec.size() - this->nb_capture * 2;
+                    const unsigned col = this->states.size() - this->nb_capture * 2;
                     const unsigned matrix_size = col * this->nb_capture * 2;
 
                     this->captures = new StateBase const *[this->nb_capture * 2 + matrix_size];
@@ -504,7 +496,7 @@ namespace rndfa {
 
                     this->pcaptures = this->captures;
 
-                    for (state_iterator first = this->vec.begin(), last = this->vec.end(); first != last; ++first) {
+                    for (state_iterator first = this->states.begin(), last = this->states.end(); first != last; ++first) {
                         if ((*first)->is_cap()) {
                             *this->pcaptures = *first;
                             ++this->pcaptures;
@@ -577,14 +569,14 @@ namespace rndfa {
 
         void push_idx_trace(unsigned n)
         {
-            assert(this->pidx_trace_free <= this->idx_trace_free + this->vec.size() - this->nb_capture * 2);
+            assert(this->pidx_trace_free <= this->idx_trace_free + this->states.size() - this->nb_capture * 2);
             *this->pidx_trace_free = n;
             ++this->pidx_trace_free;
         }
 
         void push_state(RangeList* l, StateBase * st, unsigned step)
         {
-            if (st && st->id != step/* && st != &state_finish*/) {
+            if (st && st->id != step) {
                 st->id = step;
                 if (st->is_split()) {
                     this->push_state(l, st->out1, step);
@@ -619,7 +611,7 @@ namespace rndfa {
             /**///std::cout << "-- " << (l) << std::endl;
             for (StateList * first = l->first, * last = l->last; first < last; ++first) {
                 /**///std::cout << first->st->num << ("\t") << first->st << ("\t") << first->next << std::endl;
-                if (0 == first->st->out1) { //TODO unless ?
+                if (0 == first->st->out1) {
                     continue ;
                 }
                 if (first->st->out1 == &state_finish) {
@@ -679,7 +671,7 @@ namespace rndfa {
     public:
         bool exact_search(const char * s, bool check_end = true)
         {
-            if (this->vec.empty()) {
+            if (this->states.empty()) {
                 return false;
             }
             return Searching(*this).exact_search(s, check_end);
@@ -704,7 +696,7 @@ namespace rndfa {
 
         bool search(const char * s)
         {
-            if (this->vec.empty()) {
+            if (this->states.empty()) {
                 return false;
             }
             return Searching(*this).search(s);
@@ -763,14 +755,14 @@ namespace rndfa {
     private:
         void push_state(StateBase * st)
         {
-            if (st && st->id != -1u/* && st != &state_finish*/) {
+            if (st && st->id != -1u) {
                 st->id = -1u;
-                st->num = this->vec.size();
+                st->num = this->states.size();
                 if (st->is_cap()) {
                     st->num = this->nb_capture;
                     ++this->nb_capture;
                 }
-                this->vec.push_back(st);
+                this->states.push_back(st);
                 this->push_state(st->out1);
                 if (st->is_split()) {
                     this->push_state(st->out2);
@@ -972,7 +964,7 @@ namespace rndfa {
         void reset_trace()
         {
             this->pidx_trace_free = this->idx_trace_free;
-            const unsigned size = this->vec.size() - this->nb_capture * 2;
+            const unsigned size = this->states.size() - this->nb_capture * 2;
             for (unsigned i = 0; i < size; ++i, ++this->pidx_trace_free) {
                 *this->pidx_trace_free = i;
             }
@@ -1198,7 +1190,7 @@ namespace rndfa {
         const StateBase ** captures;
         const StateBase ** pcaptures;
         const char ** traces;
-        state_list vec;
+        state_list states;
         StateListByStep l1;
         StateListByStep l2;
 
@@ -1838,7 +1830,7 @@ namespace rndfa {
     public:
         struct Parser {
             const char * err;
-            unsigned pos_err;
+            size_t pos_err;
             StateBase * st;
 
             Parser(StateBase * st = 0)
@@ -1892,7 +1884,7 @@ namespace rndfa {
             return this->parser.err;
         }
 
-        unsigned position_error() const
+        size_t position_error() const
         {
             return this->parser.pos_err;
         }

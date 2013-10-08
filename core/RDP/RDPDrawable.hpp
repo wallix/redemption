@@ -219,28 +219,40 @@ public:
 
         if (startx == endx){
             this->drawable.vertical_line(lineto.back_mode,
-                                lineto.startx,
-                                (starty <= endy)?starty:endy,
-                                (starty <= endy)?endy:starty,
-                                color);
+                                         lineto.startx,
+                                         (starty <= endy)?starty:endy,
+                                         (starty <= endy)?endy:starty,
+                                         lineto.rop2,
+                                         color);
         }
         else if (starty == endy){
             this->drawable.horizontal_line(lineto.back_mode,
-                                  (startx <= endx)?startx:endx,
-                                  starty,
-                                  (startx <= endx)?endx:startx,
-                                  color);
+                                           (startx <= endx)?startx:endx,
+                                           starty,
+                                           (startx <= endx)?endx:startx,
+                                           lineto.rop2,
+                                           color);
 
         }
         else if (lineto.startx <= lineto.endx){
             this->drawable.line(lineto.back_mode,
-                       lineto.startx, lineto.starty, lineto.endx, lineto.endy,
-                       color, clip);
+                                lineto.startx,
+                                lineto.starty,
+                                lineto.endx,
+                                lineto.endy,
+                                lineto.rop2,
+                                color,
+                                clip);
         }
         else {
             this->drawable.line(lineto.back_mode,
-                       lineto.endx, lineto.endy, lineto.startx, lineto.starty,
-                       color, clip);
+                                lineto.endx,
+                                lineto.endy,
+                                lineto.startx,
+                                lineto.starty,
+                                lineto.rop2,
+                                color,
+                                clip);
         }
     }
 

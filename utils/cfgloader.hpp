@@ -113,7 +113,14 @@ struct ConfigurationLoader {
                 truncated = false;
                 continue;
             }
-            this->parseline(configuration_holder, line, context);
+            char * tmp_line = line;
+            while (((*tmp_line) == ' ') || ((*tmp_line) == '\t'))
+            {
+                tmp_line++;
+            }
+            if (*tmp_line == '#')
+                continue;
+            this->parseline(configuration_holder, tmp_line, context);
         };
     }
 
