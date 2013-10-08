@@ -159,7 +159,9 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -393,7 +395,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_OK)));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_CANCEL)));
@@ -634,7 +638,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -691,7 +697,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
                           "open_session_timeout=45\n"
-                          "on_server_certificate_change=1\n"
+                          "certificate_change_action=1\n"
+                          "\n"
+                          "[mod_vnc]\n"
+                          "encodings=16,2,0,1,-239\n"
                           "\n"
                           "[video]\n"
                           "hash_path=/mnt/wab/hash\n"
@@ -831,7 +840,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(45,                               ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string("16,2,0,1,-239"),     ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Annuler"),           std::string(ini.translation.button_cancel.get_cstr()));
@@ -885,7 +896,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=no\n"
                           "open_session_timeout=30\n"
-                          "on_server_certificate_change=0\n"
+                          "certificate_change_action=0\n"
                           "[video]\n"
                           "hash_path=/mnt/wab/hash/\n"
                           "record_path=/mnt/wab/recorded/rdp/\n"
@@ -1013,7 +1024,9 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(30,                               ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1187,7 +1200,9 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1349,7 +1364,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1504,7 +1521,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1658,7 +1677,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1812,7 +1833,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));
@@ -1956,7 +1979,9 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
-    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.on_server_certificate_change);
+    BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
 
     BOOST_CHECK_EQUAL(std::string("OK"),                std::string(ini.translation.button_ok.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Cancel"),            std::string(ini.translation.button_cancel.get_cstr()));

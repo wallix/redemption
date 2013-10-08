@@ -465,7 +465,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , info.keylayout
         , 0
         , true
-        , false /* RRE encoding */
+        , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
         , verbose);
     mod->event.set();
 
