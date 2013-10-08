@@ -546,6 +546,7 @@ struct Inifile : public FieldObserver {
         bool     capture_flv;
         bool     capture_ocr;
 
+        const char * ocr_filters[20];
         unsigned ocr_interval;
         bool     ocr_on_title_bar_only;
         unsigned ocr_max_unrecog_char_rate; // expressed in percentage,

@@ -470,8 +470,7 @@ public:
                                               caption,
                                               message,
                                               button,
-                                              now
-                                              );
+                                              now);
                     LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Accept Message' ready");
                 }
                 break;
@@ -491,8 +490,7 @@ public:
                                               caption,
                                               message,
                                               button,
-                                              now
-                                              );
+                                              now);
                     LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
                 }
                 break;
