@@ -707,7 +707,6 @@ public:
                                             , this->front.client_info.keylayout
                                             , this->front.keymap.key_flags
                                             , this->ini.client.clipboard.get()
-                                            , true /* RRE encoding */
                                             , this->ini.mod_vnc.encodings.c_str()
                                             , this->ini.debug.mod_vnc);
                     this->mod->event.obj = client_sck;

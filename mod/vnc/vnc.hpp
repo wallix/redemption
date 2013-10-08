@@ -98,7 +98,6 @@ struct mod_vnc : public mod_api {
            , int keylayout
            , int key_flags
            , bool clipboard
-           , bool new_encoding
            , const char * encodings
            , uint32_t verbose
            )
