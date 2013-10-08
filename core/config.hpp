@@ -841,6 +841,7 @@ public:
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
+        this->video.ocr_filters[0]              = NULL;
         this->video.ocr_interval                = 100;      // 1 every second
         this->video.ocr_on_title_bar_only       = false;
         this->video.ocr_max_unrecog_char_rate   = 40;
