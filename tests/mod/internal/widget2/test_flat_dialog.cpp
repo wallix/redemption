@@ -429,3 +429,84 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     BOOST_CHECK(notifier.sender == &flat_dialog);
     BOOST_CHECK(notifier.event == NOTIFY_CANCEL);
 }
+
+
+
+BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
+{
+    ClientInfo info(1, true, true);
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
+
+    TestDraw drawable(800, 600);
+
+    WidgetScreen parent(drawable, 800, 600);
+    struct Notify : NotifyApi {
+        Widget2* sender;
+        notify_event_t event;
+
+        Notify()
+        : sender(0)
+        , event(0)
+        {}
+
+        virtual void notify(Widget2* sender, notify_event_t event)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
+    FlatDialog flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
+                           "Lorem ipsum dolor sit amet, consectetur<br>"
+                           "adipiscing elit. Nam purus lacus, luctus sit<br>"
+                           "amet suscipit vel, posuere quis turpis. Sed<br>"
+                           "venenatis rutrum sem ac posuere. Phasellus<br>"
+                           "feugiat dui eu mauris adipiscing sodales.<br>"
+                           "Mauris rutrum molestie purus, in tempor lacus<br>"
+                           "tincidunt et. Sed eu ligula mauris, a rutrum<br>"
+                           "est. Vestibulum in nunc vel massa condimentum<br>"
+                           "iaculis nec in arcu. Pellentesque accumsan,<br>"
+                           "quam sit amet aliquam mattis, odio purus<br>"
+                           "porttitor tortor, sit amet tincidunt odio<br>"
+                           "erat ut ligula. Fusce sit amet mauris neque.<br>"
+                           "Sed orci augue, luctus in ornare sed,<br>"
+                           "adipiscing et arcu.", 0, "Ok", "Cancel", WHITE, DARK_BLUE_BIS,
+                           true);
+
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+
+
+    flat_dialog.challenge->set_text("challenge_test");
+
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(notifier.event == 0);
+
+    flat_dialog.rdp_input_invalidate(flat_dialog.rect);
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-challenge-1.png");
+
+    char message[1024];
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xe7\xd0\x1d\x55\x90\xb6\xc4\x7c\x22\xee"
+                   "\xb6\x7f\x8d\x0e\x0a\x55\xe4\x6d\x15\x27"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    flat_dialog.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    BOOST_CHECK(notifier.sender == &flat_dialog);
+    BOOST_CHECK(notifier.event == NOTIFY_SUBMIT);
+
+    notifier.sender = 0;
+    notifier.event = 0;
+
+}

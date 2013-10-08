@@ -87,3 +87,48 @@ BOOST_AUTO_TEST_CASE(TestDialogModReject)
     LOG(LOG_INFO, "%s\n", res);
     BOOST_CHECK(0 == strcmp("False", res));
 }
+
+BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
+{
+    ClientInfo info(1, true, true);
+    info.keylayout = 0x040C;
+    info.console_session = 0;
+    info.brush_cache_code = 0;
+    info.bpp = 24;
+    info.width = 800;
+    info.height = 600;
+
+    FakeFront front(info, 0);
+
+    Inifile             ini;
+
+    Keymap2 keymap;
+    keymap.init_layout(info.keylayout);
+
+    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0, true);
+
+
+    BStream decoded_data(256);
+    uint16_t keyboardFlags = 0 ;
+    uint16_t keyCode = 16; // key is 'a'
+
+    keymap.event(keyboardFlags, keyCode + 1, decoded_data);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode + 2, decoded_data);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, decoded_data);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, decoded_data);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, decoded_data);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+    keymap.event(keyboardFlags, keyCode, decoded_data);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    d.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    const char * res = ini.context_get_value(AUTHID_AUTHENTICATION_CHALLENGE);
+    LOG(LOG_INFO, "%s\n", res);
+    BOOST_CHECK(0 == strcmp("zeaaaa", res));
+}
