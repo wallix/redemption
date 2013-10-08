@@ -663,7 +663,7 @@ public:
                         &this->ini.context.auth_error_message,
                         this->ini.mod_rdp.disconnect_on_logon_user_change,
                         this->ini.mod_rdp.open_session_timeout,
-                        this->ini.mod_rdp.on_server_certificate_change
+                        this->ini.mod_rdp.certificate_change_action
                     );
                     this->mod->event.obj = client_sck;
 
@@ -710,6 +710,7 @@ public:
                                             , this->front.keymap.key_flags
                                             , this->ini.client.clipboard.get()
                                             , true /* RRE encoding */
+                                            , this->ini.mod_vnc.encodings.c_str()
                                             , this->ini.debug.mod_vnc);
                     this->mod->event.obj = client_sck;
 

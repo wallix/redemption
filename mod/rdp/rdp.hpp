@@ -166,7 +166,7 @@ struct mod_rdp : public mod_api {
     redemption::string end_session_reason;
     redemption::string end_session_message;
 
-    unsigned on_server_certificate_change;
+    unsigned certificate_change_action;
 
     mod_rdp( Transport * trans
            , const char * target_user
@@ -191,7 +191,7 @@ struct mod_rdp : public mod_api {
            , redemption::string * error_message = NULL
            , bool disconnect_on_logon_user_change = false
            , uint32_t open_session_timeout = 0
-           , unsigned on_server_certificate_change = 0
+           , unsigned certificate_change_action = 0
            , bool enable_transparent_mode = false
            , const char * output_filename = ""
            )
@@ -236,7 +236,7 @@ struct mod_rdp : public mod_api {
         , open_session_timeout(open_session_timeout)
         , open_session_timeout_checker(0)
         , output_filename(output_filename)
-        , on_server_certificate_change(on_server_certificate_change)
+        , certificate_change_action(certificate_change_action)
     {
         if (this->verbose & 1)
         {
@@ -549,7 +549,7 @@ struct mod_rdp : public mod_api {
                     }
                     switch (this->nego.state){
                     default:
-                        this->nego.server_event(this->on_server_certificate_change == 1);
+                        this->nego.server_event(this->certificate_change_action == 1);
                         break;
                     case RdpNego::NEGO_STATE_FINAL:
                         {

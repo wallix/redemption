@@ -99,6 +99,7 @@ struct mod_vnc : public mod_api {
            , int key_flags
            , bool clipboard
            , bool new_encoding
+           , const char * encodings
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -418,32 +419,37 @@ struct mod_vnc : public mod_api {
         // does not support the extension until it gets some extension-
         // -specific confirmation from the server.
         {
+            uint16_t number_of_encodings = 0;
+
             /* SetEncodings */
             BStream stream(32768);
             stream.out_uint8(2);
             stream.out_uint8(0);
 
-            stream.out_uint16_be(new_encoding ? 4 : 3);
-            if (new_encoding) {
-                stream.out_uint32_be(2);        // RRE
-            }
-            stream.out_uint32_be(0);            // raw
-            stream.out_uint32_be(1);            // copy rect
-            stream.out_uint32_be(0xffffff11);   // cursor
+            uint32_t number_of_encodings_offset = stream.get_offset();
+            stream.out_clear_bytes(2);
 
-            this->t->send(stream.get_data(), 4 + (new_encoding ? 4 : 3) * 4);
-/*
-            stream.out_uint16_be(new_encoding ? 5 : 3);
-            if (new_encoding) {
-                stream.out_uint32_be(16);       // ZRLE
-                stream.out_uint32_be(2);        // RRE
-            }
-            stream.out_uint32_be(0);            // raw
-            stream.out_uint32_be(1);            // copy rect
-            stream.out_uint32_be(0xffffff11);   // cursor
+            this->fill_encoding_types_buffer(encodings, stream, number_of_encodings, this->verbose);
 
-            this->t->send(stream.get_data(), 4 + (new_encoding ? 5 : 3) * 4);
-*/
+            if (!number_of_encodings)
+            {
+                if (this->verbose) {
+                    LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
+                }
+
+                stream.out_uint32_be(2);            // RRE
+                stream.out_uint32_be(0);            // raw
+                stream.out_uint32_be(1);            // copy rect
+                stream.out_uint32_be(0xffffff11);   // cursor
+
+                stream.set_out_uint16_be(4, number_of_encodings_offset);
+                this->t->send(stream.get_data(), 20/* 4 + 4 * 4 */);
+            }
+            else
+            {
+                stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
+                this->t->send(stream.get_data(), 4 + number_of_encodings * 4);
+            }
         }
 
         TODO("Maybe the resize should be done in session ?")
@@ -497,6 +503,46 @@ struct mod_vnc : public mod_api {
         inflateEnd(&this->zstrm);
     }
     //==============================================================================================================
+
+    static void fill_encoding_types_buffer(const char * encodings, Stream & stream, uint16_t & number_of_encodings, uint32_t verbose)
+    {
+        number_of_encodings = 0;
+
+        const char * tmp_encoding  = encodings;
+        int32_t      encoding_type;
+
+        if (verbose) {
+            LOG(LOG_INFO, "VNC Encodings=\"%s\"", encodings);
+        }
+
+        while (*tmp_encoding)
+        {
+            encoding_type = long_from_cstr(tmp_encoding);
+            if (verbose) {
+                LOG(LOG_INFO, "VNC Encoding type=0x%08X", encoding_type);
+            }
+            stream.out_uint32_be(*(uint32_t *)((void *)&encoding_type));
+            number_of_encodings++;
+
+            tmp_encoding = strchr(tmp_encoding, ',');
+            if (!tmp_encoding)
+            {
+                break;
+            }
+
+            while ((*tmp_encoding == ',') || (*tmp_encoding == ' ') || (*tmp_encoding == '\t'))
+                tmp_encoding++;
+        }
+    }
+
+    static long long_from_cstr(const char * str)
+    { // 10 = 10, 0x10 = 16
+        if ((*str == '0') && (*(str + 1) == 'x')){
+            return strtol(str + 2, 0, 16);
+        }
+
+        return atol(str);
+    }
 
     //==============================================================================================================
     void change_mouse_state( uint16_t x

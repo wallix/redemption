@@ -466,6 +466,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , 0
         , true
         , false /* RRE encoding */
+        , ""    /* encodings */
         , verbose);
     mod->event.set();
 
