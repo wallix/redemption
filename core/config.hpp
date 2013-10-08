@@ -529,8 +529,13 @@ struct Inifile : public FieldObserver {
 
         uint32_t open_session_timeout;
 
-        unsigned on_server_certificate_change;  // 0 - Interrupt connection, 1 - Replace certificate then continue
+        unsigned certificate_change_action;  // 0 - Interrupt connection, 1 - Replace certificate then continue
     } mod_rdp;
+
+    struct
+    {
+        redemption::string encodings;
+    } mod_vnc;
 
     // Section "video"
     struct {
@@ -831,8 +836,12 @@ public:
 
         this->mod_rdp.open_session_timeout = 0;
 
-        this->mod_rdp.on_server_certificate_change = 0;
+        this->mod_rdp.certificate_change_action = 0;
         // End Section "mod_rdp"
+
+        // Begin section "mod_vnc"
+        this->mod_vnc.encodings.empty();
+        // End Section "mod_vnc"
 
         // Begin section video
         this->video.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
@@ -1203,8 +1212,13 @@ public:
             else if (0 == strcmp(key, "open_session_timeout")) {
                 this->mod_rdp.open_session_timeout = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "on_server_certificate_change")) {
-                this->mod_rdp.on_server_certificate_change = ulong_from_cstr(value);
+            else if (0 == strcmp(key, "certificate_change_action")) {
+                this->mod_rdp.certificate_change_action = ulong_from_cstr(value);
+            }
+        }
+        else if (0 == strcmp(context, "mod_vnc")){
+            if (0 == strcmp(key, "encodings")) {
+                this->mod_vnc.encodings.copy_c_str(value);
             }
         }
         else if (0 == strcmp(context, "video")){

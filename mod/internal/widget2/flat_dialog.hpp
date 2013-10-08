@@ -27,6 +27,7 @@
 #include "multiline.hpp"
 #include "image.hpp"
 #include "widget2_rect.hpp"
+#include "edit.hpp"
 
 class FlatDialog : public WidgetParent
 {
@@ -34,6 +35,7 @@ public:
     WidgetImage img;
     WidgetLabel title;
     WidgetMultiLine dialog;
+    WidgetEdit * challenge;
     WidgetFlatButton ok;
     WidgetFlatButton * cancel;
     WidgetRect separator;
@@ -44,13 +46,14 @@ public:
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id = 0,
                const char * ok_text = "Ok", const char * cancel_text = "Cancel",
-               int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS
+               int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS, bool has_challenge = false
                )
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -8)
         , title(drawable, 0, 0, *this, NULL, caption, true, -9,
                 fgcolor, bgcolor, 5)
         , dialog(drawable, 0, 0, *this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
+        , challenge(NULL)
         , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12, fgcolor, bgcolor, 6, 2)
         , cancel(cancel_text ? new WidgetFlatButton(drawable, 0, 0, *this, this, cancel_text, true, -11, fgcolor, bgcolor, 6, 2) : NULL)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12, LIGHT_BLUE)
@@ -60,43 +63,62 @@ public:
 
         this->add_widget(&this->title);
         this->add_widget(&this->dialog);
-        this->add_widget(&this->ok);
         this->add_widget(&this->separator);
 
         const int total_width = std::max(this->dialog.cx(), this->title.cx());
-        const int total_height = this->title.cy() + this->dialog.cy() + this->ok.cy() + 20;
+        int total_height = this->title.cy() + this->dialog.cy() + this->ok.cy() + 20;
+        int y = 0;
         this->title.rect.x = (this->cx() - this->title.cx()) / 2;
         // this->title.rect.cx = total_width;
         this->separator.rect.x = (this->cx() - total_width) / 2;
         this->separator.rect.cx = total_width;
-        this->separator.rect.y = this->title.cy() + 3;
+        y = this->title.cy();
+        this->separator.rect.y = y + 3;
         this->dialog.rect.x = this->separator.rect.x;
-        this->dialog.rect.y = this->title.cy() + 10;
+        this->dialog.rect.y = y + 10;
 
+        y = this->dialog.dy() + this->dialog.cy() + 10;
+
+        if (has_challenge) {
+            this->challenge = new WidgetEdit(this->drawable, this->separator.rect.x + 10, y,
+                                             total_width - 20, *this, this, 0, -13,
+                                             BLACK, WHITE, -1u, 1, 1);
+            this->challenge->set_flat(true);
+            this->add_widget(this->challenge);
+            total_height += this->challenge->cy() + 10;
+            y += this->challenge->cy() + 10;
+            this->set_widget_focus(this->challenge);
+        }
+
+        this->add_widget(&this->ok);
+        y += 5;
         if (this->cancel) {
             this->add_widget(this->cancel);
 
             this->cancel->set_button_x(this->dialog.dx() + this->dialog.cx() - (this->cancel->cx() + 10));
             this->ok.set_button_x(this->cancel->dx() - (this->ok.cx() + 10));
 
-            this->ok.set_button_y(this->dialog.dy() + this->dialog.cy() + 15);
-            this->cancel->set_button_y(this->ok.dy());
+            this->ok.set_button_y(y);
+            this->cancel->set_button_y(y);
         }
         else {
             this->ok.set_button_x(this->dialog.dx() + this->dialog.cx() - (this->ok.cx() + 10));
-            this->ok.set_button_y(this->dialog.dy() + this->dialog.cy() + 15);
+            this->ok.set_button_y(y);
         }
-        this->impl->move_xy(0, (height - total_height) /2);
+        this->impl->move_xy(0, (height - total_height) / 2);
 
         this->img.rect.x = (this->cx() - this->img.cx()) / 2;
         this->img.rect.y = (3*(height - total_height) / 2 - this->img.cy()) / 2 + total_height;
         this->add_widget(&this->img);
 
-        this->set_widget_focus(&this->ok);
+        if (!has_challenge)
+            this->set_widget_focus(&this->ok);
     }
 
     virtual ~FlatDialog()
     {
+        if (this->challenge)
+            delete this->challenge;
         if (this->cancel)
             delete this->cancel;
         this->clear();
@@ -107,7 +129,8 @@ public:
             ((event == NOTIFY_SUBMIT) && (widget == this->cancel))) {
             this->send_notify(NOTIFY_CANCEL);
         }
-        else if ((event == NOTIFY_SUBMIT) && (widget == &this->ok)){
+        else if ((event == NOTIFY_SUBMIT) &&
+                 ((widget == &this->ok) || (widget == this->challenge))) {
             this->send_notify(NOTIFY_SUBMIT);
         }
         else {

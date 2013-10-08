@@ -103,22 +103,10 @@ class Cover:
             current_function = None
             search_begin_body = False
             brackets_count = 0
+            parentheses_count = 0
+            open_parentheses = False
+            block_executed = False
             for line in open(fgcov):
-                res = re.match(r'^.*(\d+)[:]\s*BEGINBODY(.*)$', line)
-                if res and current_function:
-                    if self.modules[module].functions[current_function].covered_lines > 0:
-                        self.modules[module].functions[current_function].covered_lines = 1
-                        self.modules[module].functions[current_function].total_lines = 1
-                    else:
-                        self.modules[module].functions[current_function].covered_lines = 0
-                        self.modules[module].functions[current_function].total_lines = 0
-
-                    continue
-
-                res = re.match(r'^.*(\d+)[:]\s*ENDBODY(.*)$', line)
-                if res:
-                    current_function = None
-                    continue
 
                 res = re.match(r'^\s*(#####|[-]|\d+)[:]\s*(\d+)[:](.*)$', line)
                 if res:
@@ -135,6 +123,7 @@ class Cover:
                         if not res.group(1) in ('#####', "-"):
                             self.modules[module].functions[current_function].covered_lines += 1
                         brackets_count = res.group(3).count('{')
+                        open_parentheses = False
                         if brackets_count > 0:
                             brackets_count -= res.group(3).count('}')
                             if brackets_count <= 0:
@@ -144,11 +133,30 @@ class Cover:
                         continue
 
                     if current_function and not search_begin_body:
+                        skip_line = False
+                        parentheses_count += res.group(3).count('(')
+                        parentheses_count -= res.group(3).count(')')
+                        if not open_parentheses:
+                            if parentheses_count > 0:
+                                open_parentheses = True
+                                block_executed = False
+                                self.modules[module].functions[current_function].total_lines += 1
+                        if open_parentheses:
+                            if not res.group(1) in ("#####", "-"):
+                                block_executed = True
+                            if (parentheses_count <= 0):
+                                if block_executed:
+                                    self.modules[module].functions[current_function].covered_lines += 1
+                                open_parentheses = False
+                                parentheses_count = 0
+                            skip_line = True
                         brackets_count += res.group(3).count('{')
                         brackets_count -= res.group(3).count('}')
                         if brackets_count <= 0:
                             brackets_count = 0
                             current_function = None
+                            skip_line = True
+                        if skip_line:
                             continue
 
                     # ignore comments
