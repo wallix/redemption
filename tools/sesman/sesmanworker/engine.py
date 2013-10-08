@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# class AuthenticationFailed(Exception): pass
+class AuthenticationFailed(Exception): pass
 
 from model import *
 from logger import Logger
@@ -873,6 +873,7 @@ class Engine(object):
             'is_x509_connected': False,
             'x509_authenticate': False,
             'password': 'apass',
+            'preferredLanguage': u'en',
             'rights':
             [
                 'notepaduser@NOTEPAD:APP'
@@ -883,6 +884,7 @@ class Engine(object):
             'is_x509_connected': False,
             'x509_authenticate': False,
             'password': 'internalpass',
+            'preferredLanguage': u'en',
             'rights':
             [
                 'itnl_internal@bouncer2:INTERNAL',
@@ -896,6 +898,7 @@ class Engine(object):
             'is_x509_connected': False,
             'x509_authenticate': False,
             'password': 'recpass',
+            'preferredLanguage': u'en',
             'rights':
             [
                 'rec_w2k_administrateur@10.10.46.64:RDP',
@@ -908,6 +911,23 @@ class Engine(object):
             'is_x509_connected': False,
             'x509_authenticate': False,
             'password': 'xpass',
+            'preferredLanguage': u'en',
+            'rights':
+            [
+                'w2k_administrateur@10.10.46.64:RDP',
+                'w2k3_any@10.10.46.70:VNC',
+                'w2k8_administrateur@qa@10.10.146.78:RDP',
+                'w2k8_admin@10.10.146.78:RDP',
+                'w2k8_qa\\administrateur@10.10.46.78:RDP',
+                'w2k8_qa\\administrateur@10.10.46.88:RDP'
+            ]
+        },
+        'fr':
+        {
+            'is_x509_connected': False,
+            'x509_authenticate': False,
+            'password': 'frpass',
+            'preferredLanguage': u'fr',
             'rights':
             [
                 'w2k_administrateur@10.10.46.64:RDP',
@@ -923,6 +943,7 @@ class Engine(object):
             'is_x509_connected': True,
             'x509_authenticate': True,
             'password': 'x509pass',
+            'preferredLanguage': u'en',
             'rights':
             [
                 'w2k8_administrateur@qa@10.10.146.78:RDP',
@@ -932,10 +953,12 @@ class Engine(object):
     }
 
     def __init__(self):
+        class User:
+            def __init__(self, preferredLanguage = u'en'):
+                self.preferredLanguage = preferredLanguage
         Logger().info("Engine constructor")
         self.wab_login = None
-        self.user = lambda: 1
-        self.user.preferredLanguage = 'en'
+        self.user = User()
         self._trace_encryption = False
 
     def get_trace_encryption(self):
@@ -960,7 +983,10 @@ class Engine(object):
     def x509_authenticate(self):
         print ('x509_authenticate(%s)' % self.wab_login)
         try:
-            return self.config_users[self.wab_login]['x509_authenticate']
+            if self.config_users[self.wab_login]['x509_authenticate']:
+                self.user.preferredLanguage = self.config_users[self.wab_login][u'preferredLanguage']
+                return True
+            return False
         except:
             self.wab_login = None
         return False
@@ -971,7 +997,9 @@ class Engine(object):
         try:
             print ('::::: %s' % (self.config_users[wab_login]))
             res = self.config_users[wab_login]['password'] == password
-            self.wab_login = wab_login
+            if res:
+                self.wab_login = wab_login
+                self.user.preferredLanguage = self.config_users[wab_login][u'preferredLanguage']
         except:
             pass
         return res

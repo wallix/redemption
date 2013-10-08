@@ -60,15 +60,24 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
 
     BOOST_CHECK(1);
 
+    Inifile ini;
+   
+    ini.translation.connection_closed.set_from_cstr("Connection closed");
+    ini.translation.button_close.set_from_cstr("Close");
+    ini.translation.username.set_from_cstr("Username");
+    ini.translation.target.set_from_cstr("Target");
+    ini.translation.diagnostic.set_from_cstr("Diagnostic");
+
     try {
 
         FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-                                    "abc<br>def", id, "rec", "rec");
+                                    "abc<br>def", id, "rec", "rec",
+                                    WHITE, DARK_BLUE_BIS, false, ini);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
+//    drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close.png");
 
     } catch (Error & e) {
         LOG(LOG_INFO, "e=%u", e.id);
@@ -95,6 +104,13 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
+    Inifile ini;
+    ini.translation.connection_closed.set_from_cstr("Connection closed");
+    ini.translation.button_close.set_from_cstr("Close");
+    ini.translation.username.set_from_cstr("Username");
+    ini.translation.target.set_from_cstr("Target");
+    ini.translation.diagnostic.set_from_cstr("Diagnostic");
+
     try {
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
         "Lorem ipsum dolor sit amet, consectetur<br>"
@@ -110,8 +126,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose2)
         "porttitor tortor, sit amet tincidunt odio<br>"
         "erat ut ligula. Fusce sit amet mauris neque.<br>"
         "Sed orci augue, luctus in ornare sed,<br>"
-        "adipiscing et arcu."
-    );
+        "adipiscing et arcu.",
+        0, 0, 0, WHITE, DARK_BLUE_BIS, false, ini);
 
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
     }
@@ -143,8 +159,16 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose3)
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
+    Inifile ini;
+    ini.translation.connection_closed.set_from_cstr("Connection closed");
+    ini.translation.button_close.set_from_cstr("Close");
+    ini.translation.username.set_from_cstr("Username");
+    ini.translation.target.set_from_cstr("Target");
+    ini.translation.diagnostic.set_from_cstr("Diagnostic");
+
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-                                    "abc<br>def");
+                                    "abc<br>def",
+                                    0, 0, 0, WHITE, DARK_BLUE_BIS, false, ini);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect);
@@ -173,8 +197,16 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip)
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
+    Inifile ini;
+    ini.translation.connection_closed.set_from_cstr("Connection closed");
+    ini.translation.button_close.set_from_cstr("Close");
+    ini.translation.username.set_from_cstr("Username");
+    ini.translation.target.set_from_cstr("Target");
+    ini.translation.diagnostic.set_from_cstr("Diagnostic");
+
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-                                    "abc<br>def");
+                                    "abc<br>def",
+                                    0, 0, 0, WHITE, DARK_BLUE_BIS, false, ini);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_wab_close.rdp_input_invalidate(flat_wab_close.rect.offset(20,0));
@@ -200,8 +232,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
+    Inifile ini;
+
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, notifier,
-                                    "abc<br>def");
+                                    "abc<br>def",
+                                    0, 0, 0, WHITE, DARK_BLUE_BIS, false, ini);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.dx(),
@@ -253,9 +288,17 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
 
+    Inifile ini;
+    ini.translation.connection_closed.set_from_cstr("Connection closed");
+    ini.translation.button_close.set_from_cstr("Close");
+    ini.translation.username.set_from_cstr("Username");
+    ini.translation.target.set_from_cstr("Target");
+    ini.translation.diagnostic.set_from_cstr("Diagnostic");
+    
+
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, &notifier,
                                 "abc<br>def", 0, "tartempion", "caufield",
-                                WHITE, DARK_BLUE_BIS, true);
+                                WHITE, DARK_BLUE_BIS, true, ini);
 
     flat_wab_close.refresh_timeleft(183);
 

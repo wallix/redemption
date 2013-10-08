@@ -20,6 +20,27 @@ def TR(key):
         Logger().warning(u"Variable parameters mismatch in '%s' message for key '%s' => '%s'" % (SESMANCONF.language, originalkey, message))
     return message
 
+def translations():
+    data = {}
+    for auth_key, conf_key in (
+        (u'trans_ok'               , u'OK'),
+        (u'trans_cancel'           , u'cancel'),
+        (u'trans_help'             , u'help'),
+        (u'trans_close'            , u'close'),
+        (u'trans_refused'          , u'refused'),
+        (u'trans_login'            , u'login'),
+        (u'trans_username'         , u'username'),
+        (u'trans_password'         , u'password'),
+        (u'trans_target'           , u'target'),
+        (u'trans_diagnostic'       , u'diagnostic'),
+        (u'trans_connection_closed', u'connection_closed'),
+        (u'trans_help_message'     , u'help_message'),
+        (u'trans_manager_close_cnx', u'trans_manager_close_cnx'),
+       ):
+        data[auth_key] =TR(conf_key)
+    return data
+
+
 ################################################################################
 class SesmanConfig(object):
 ################################################################################

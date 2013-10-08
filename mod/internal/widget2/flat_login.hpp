@@ -43,15 +43,17 @@ public:
     WidgetFlatButton helpicon;
     int fgcolor;
     int bgcolor;
+    Inifile & ini;
 
     FlatLogin(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
-              bool focus_on_password = false,
-              int group_id = 0,
-              const char * login = 0, const char * password = 0,
-              int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS,
-              const char * label_text_login = "Login",
-              const char * label_text_password = "Password")
+              bool focus_on_password,
+              int group_id,
+              const char * login, const char * password,
+              int fgcolor, int bgcolor,
+              const char * label_text_login,
+              const char * label_text_password,
+              Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11, fgcolor, bgcolor)
@@ -62,6 +64,7 @@ public:
         , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, fgcolor, bgcolor, 6, 2)
         , fgcolor(fgcolor)
         , bgcolor(bgcolor)
+        , ini(ini)
     {
         this->impl = new CompositeTable;
         this->add_widget(&this->helpicon);
@@ -165,8 +168,7 @@ public:
         if (device_flags == MOUSE_FLAG_MOVE) {
             Widget2 * wid = this->widget_at_pos(x, y);
             if (wid == &this->helpicon) {
-                this->show_tooltip(wid, TR("help_message")
-                                   , x, y);
+                this->show_tooltip(wid, TR("help_message", this->ini), x, y);
             }
         }
 

@@ -41,8 +41,9 @@ public:
         , login(*this, width, height, this->screen, this, "Redemption " VERSION,
                 ini.account.username[0] != 0,
                 0, 0, 0, WHITE, DARK_BLUE_BIS,
-                TR("login", &ini),
-                TR("password", &ini)
+                TR("login", ini),
+                TR("password", ini),
+                ini
                 )
         , ini(ini)
     {

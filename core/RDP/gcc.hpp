@@ -623,10 +623,8 @@ namespace GCC
             , version(0x00080001)
             , clientRequestedProtocols(0)
             , earlyCapabilityFlags(0)
-            BEGINBODY
             {
             }
-            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1055,13 +1053,11 @@ namespace GCC
             , connectionType(0)
             , pad1octet(0)
             , serverSelectedProtocol(0)
-            BEGINBODY
             {
                 bzero(this->clientName, 32);
                 bzero(this->imeFileName, 64);
                 bzero(this->clientDigProductId, 64);
             }
-            ENDBODY
 
             void recv(Stream & stream)
             {
@@ -1404,10 +1400,8 @@ namespace GCC
             , length(12)
             , flags(0)
             , redirectedSessionID(0)
-            BEGINBODY
             {
             }
-            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1535,10 +1529,8 @@ namespace GCC
             , right(0)
             , bottom(0)
             , flags(0)
-            BEGINBODY
             {
             }
-            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1558,7 +1550,7 @@ namespace GCC
                     LOG(LOG_ERR, "CSMonitor::recv short header");
                     throw Error(ERR_GCC);
                 }
-            
+
                 this->userDataType = stream.in_uint16_le();
                 this->length = stream.in_uint16_le();
 
@@ -1690,10 +1682,8 @@ namespace GCC
             : userDataType(CS_NET)
             , length(12)
             , channelCount(0)
-            BEGINBODY
             {
             }
-            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1710,7 +1700,7 @@ namespace GCC
 
             void recv(Stream & stream)
             {
-            
+
                 if (!stream.in_check_rem(8)){
                     LOG(LOG_ERR, "CSNet::recv short header");
                     throw Error(ERR_GCC);
@@ -1813,10 +1803,8 @@ namespace GCC
             , length(12)
             , MCSChannelId(GCC::MCS_GLOBAL_CHANNEL)
             , channelCount(0)
-            BEGINBODY
             {
             }
-            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -1851,7 +1839,7 @@ namespace GCC
 
                 this->MCSChannelId = stream.in_uint16_le();
                 this->channelCount = stream.in_uint16_le();
-                
+
                 if (this->length != (((this->channelCount + (this->channelCount & 1))<<1) + 8)){
                     LOG(LOG_ERR, "SCNet::recv bad header length=%d", this->length);
                     throw Error(ERR_GCC);
@@ -2322,10 +2310,8 @@ namespace GCC
                 , wPublicKeyBlobLen(92)
                 , wSignatureBlobType(BB_RSA_SIGNATURE_BLOB)
                 , wSignatureBlobLen(72)
-                BEGINBODY
                 {
                 }
-                ENDBODY
             } proprietaryCertificate;
 
             struct X509CertificateChain {
@@ -2345,13 +2331,11 @@ namespace GCC
             , serverCertLen(184)
             , dwVersion(CERT_CHAIN_VERSION_1)
             , temporary(false)
-            BEGINBODY
             {
                 for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
                     this->x509.cert[i].cert = NULL;
                 }
             }
-            ENDBODY
 
             ~SCSecurity(){
                 for (size_t i = 0 ; i < sizeof(this->x509.cert) / sizeof(this->x509.cert[0]) ; i++){
@@ -2661,10 +2645,8 @@ namespace GCC
             , length(12)
             , encryptionMethods(_40BIT_ENCRYPTION_FLAG | _128BIT_ENCRYPTION_FLAG)
             , extEncryptionMethods(0)
-            BEGINBODY
             {
             }
-            ENDBODY
 
             void emit(Stream & stream)
             {
@@ -2694,27 +2676,25 @@ namespace GCC
             }
 
             void log(const char * msg)
-            BEGINBODY
             {
                 // --------------------- Base Fields ---------------------------------------
                 LOG(LOG_INFO, "%s GCC User Data CS_SECURITY (%u bytes)", msg, this->length);
                 LOG(LOG_INFO, "CSSecGccUserData::encryptionMethods %u", this->encryptionMethods);
                 LOG(LOG_INFO, "CSSecGccUserData::extEncryptionMethods %u", this->extEncryptionMethods);
             }
-            ENDBODY
         };
 
 // 2.2.1.3.7 Client Message Channel Data (TS_UD_CS_MCS_MSGCHANNEL)
 // ===============================================================
 
 // The TS_UD_CS_MCS_MSGCHANNEL packet indicates support for the message channel which
-// is used to transport the Initiate Multitransport Request PDU (section 2.2.15.1). 
+// is used to transport the Initiate Multitransport Request PDU (section 2.2.15.1).
 // This packet is an Extended Client Data Block and MUST NOT be sent to a server which
-// does not advertise support for Extended Client Data Blocks by using the 
+// does not advertise support for Extended Client Data Blocks by using the
 // EXTENDED_CLIENT_DATA_SUPPORTED flag (0x00000001) as described in section 2.2.1.2.1.
 
-//    header (4 bytes): A GCC user data block header, as specified in User Data Header 
-// (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MCS_MSGCHANNEL 
+//    header (4 bytes): A GCC user data block header, as specified in User Data Header
+// (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MCS_MSGCHANNEL
 // (0xC006).
 
 //   flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for
@@ -2729,15 +2709,15 @@ namespace GCC
 // support for Extended Client Data Blocks by using the EXTENDED_CLIENT_DATA_SUPPORTED flag
 // (0x00000001) as described in section 2.2.1.2.1.
 
-//    header (4 bytes): A GCC user data block header, as specified in User Data Header 
-// (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MULTITRANSPORT 
+//    header (4 bytes): A GCC user data block header, as specified in User Data Header
+// (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MULTITRANSPORT
 // (0xC00A).
 
 //    flags (4 bytes): A 32-bit, unsigned integer that specifies protocols supported by the
 // client-side multitransport layer.
 
 // +----------------------------+------------------------------------------------------------+
-// | TRANSPORTTYPE_UDPFECR 0x01 | RDP-UDP Forward Error Correction (FEC) reliable transport  | 
+// | TRANSPORTTYPE_UDPFECR 0x01 | RDP-UDP Forward Error Correction (FEC) reliable transport  |
 // |                            | ([MS-RDPEUDP] sections 1 to 3).                            |
 // +----------------------------+------------------------------------------------------------+
 // | TRANSPORTTYPE_UDPFECL 0x04 | RDP-UDP FEC lossy transport ([MS-RDPEUDP] sections 1 to 3).|
@@ -2749,29 +2729,29 @@ namespace GCC
 // 2.2.1.3.9 Client Monitor Extended Data (TS_UD_CS_MONITOR_EX)
 // ============================================================
 
-// The TS_UD_CS_MONITOR_EX packet describes extended attributes of the client-side display 
-// monitor layout defined by the Client Monitor Data block (section 2.2.1.3.6). This packet 
+// The TS_UD_CS_MONITOR_EX packet describes extended attributes of the client-side display
+// monitor layout defined by the Client Monitor Data block (section 2.2.1.3.6). This packet
 // is an Extended Client Data Block and MUST NOT be sent to a server which does not advertise
-// support for Extended Client Data Blocks by using the EXTENDED_CLIENT_DATA_SUPPORTED flag 
+// support for Extended Client Data Blocks by using the EXTENDED_CLIENT_DATA_SUPPORTED flag
 // (0x00000001) as described in section 2.2.1.2.1.
 
-//    header (4 bytes): A GCC user data block header, as specified in User Data Header 
+//    header (4 bytes): A GCC user data block header, as specified in User Data Header
 // (section 2.2.1.3.1). The User Data Header type field MUST be set to CS_MONITOR_EX (0xC008).
 
-//    flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for 
+//    flags (4 bytes): A 32-bit, unsigned integer. This field is unused and reserved for
 // future use. It MUST be set to zero.
 
-//    monitorAttributeSize (4 bytes): A 32-bit, unsigned integer. The size, in bytes, of a 
-// single element in the monitorAttributesArray field. This field MUST be set to 20 bytes, 
+//    monitorAttributeSize (4 bytes): A 32-bit, unsigned integer. The size, in bytes, of a
+// single element in the monitorAttributesArray field. This field MUST be set to 20 bytes,
 // which is the size of the Monitor Attributes structure (section 2.2.1.3.9.1).
 
-//    monitorCount (4 bytes): A 32-bit, unsigned integer. The number of elements in the 
-// monitorAttributesArray field. This value MUST be the same as the monitorCount field 
+//    monitorCount (4 bytes): A 32-bit, unsigned integer. The number of elements in the
+// monitorAttributesArray field. This value MUST be the same as the monitorCount field
 // specified in the Client Monitor Data (section 2.2.1.3.6 block (section).
 
-//    monitorAttributesArray (variable): A variable-length array containing a series of 
-// TS_MONITOR_ATTRIBUTES structures (section 2.2.1.3.9.1) which describe extended attributes 
-// of each display monitor specified in the Client Monitor Data block. The number of 
+//    monitorAttributesArray (variable): A variable-length array containing a series of
+// TS_MONITOR_ATTRIBUTES structures (section 2.2.1.3.9.1) which describe extended attributes
+// of each display monitor specified in the Client Monitor Data block. The number of
 // TS_MONITOR_ATTRIBUTES structures is specified by the monitorCount field.
 
     }; /* namespace UserData */

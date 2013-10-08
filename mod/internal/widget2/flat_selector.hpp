@@ -533,20 +533,20 @@ public:
     WidgetSelectorFlat(DrawApi& drawable, const char * device_name,
                    uint16_t width, uint16_t height, Widget2 & parent, NotifyApi* notifier,
                    const char * current_page, const char * number_of_page,
-                   const char * filter_device = 0, const char * filter_target = 0,
-                   const char * filter_proto = 0)
+                   const char * filter_device, const char * filter_target,
+                   const char * filter_proto, Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , bgcolor(DARK_BLUE_BIS)
         , fgcolor(WHITE)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10,
                        this->fgcolor, this->bgcolor)
-        , device_target_label(drawable, 15, 0, *this, NULL, TR("target_group"), true, -10,
+        , device_target_label(drawable, 15, 0, *this, NULL, TR("target_group", ini), true, -10,
                               this->fgcolor, MEDIUM_BLUE, 5)
-        , target_label(drawable, 145, 0, *this, NULL, TR("target"), true, -10,
+        , target_label(drawable, 145, 0, *this, NULL, TR("target", ini), true, -10,
                        this->fgcolor, MEDIUM_BLUE, 5)
-        , protocol_label(drawable, 495, 0, *this, NULL, TR("protocol"), true, -10,
+        , protocol_label(drawable, 495, 0, *this, NULL, TR("protocol", ini), true, -10,
                          this->fgcolor, MEDIUM_BLUE, 5)
-        , close_time_label(drawable, 615, 0, *this, NULL, TR("close_time"), true, -10,
+        , close_time_label(drawable, 615, 0, *this, NULL, TR("close_time", ini), true, -10,
                            this->fgcolor, MEDIUM_BLUE, 5)
         , selector_lines(drawable, *this, this, 15, 0, 130, 350, 120, 170, -11,
                          BLACK, BLACK, WHITE, PALE_BLUE, LIGHT_BLUE, MEDIUM_BLUE,
@@ -572,9 +572,9 @@ public:
         , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15,
                     WHITE, DARK_BLUE_BIS, 6, 2, true)
           //END WidgetPager
-        , logout(drawable, 0, 0, *this, this, TR("logout"), true, -16, WHITE, DARK_BLUE_BIS, 6, 2)
-        , apply(drawable, 0, 0, *this, this, TR("filter"), true, -12, WHITE, DARK_BLUE_BIS, 6, 2)
-        , connect(drawable, 0, 0, *this, this, TR("connect"), true, -18, WHITE, DARK_BLUE_BIS, 6, 2)
+        , logout(drawable, 0, 0, *this, this, TR("logout", ini), true, -16, WHITE, DARK_BLUE_BIS, 6, 2)
+        , apply(drawable, 0, 0, *this, this, TR("filter", ini), true, -12, WHITE, DARK_BLUE_BIS, 6, 2)
+        , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18, WHITE, DARK_BLUE_BIS, 6, 2)
     {
         this->impl = new CompositeTable;
 

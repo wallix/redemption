@@ -529,8 +529,13 @@ struct Inifile : public FieldObserver {
 
         uint32_t open_session_timeout;
 
-        unsigned on_server_certificate_change;  // 0 - Interrupt connection, 1 - Replace certificate then continue
+        unsigned certificate_change_action;  // 0 - Interrupt connection, 1 - Replace certificate then continue
     } mod_rdp;
+
+    struct
+    {
+        redemption::string encodings;
+    } mod_vnc;
 
     // Section "video"
     struct {
@@ -831,8 +836,12 @@ public:
 
         this->mod_rdp.open_session_timeout = 0;
 
-        this->mod_rdp.on_server_certificate_change = 0;
+        this->mod_rdp.certificate_change_action = 0;
         // End Section "mod_rdp"
+
+        // Begin section "mod_vnc"
+        this->mod_vnc.encodings.empty();
+        // End Section "mod_vnc"
 
         // Begin section video
         this->video.capture_flags = 1; // 1 png, 2 wrm, 4 flv, 8 ocr
@@ -904,31 +913,40 @@ public:
 
         // Begin Section "translation"
         this->translation.button_ok.set_from_cstr("OK");
+        this->translation.button_ok.attach_ini(this, AUTHID_TRANS_BUTTON_OK);
+
         this->translation.button_cancel.set_from_cstr("Cancel");
+        this->translation.button_cancel.attach_ini(this, AUTHID_TRANS_BUTTON_CANCEL);
+
         this->translation.button_help.set_from_cstr("Help");
+        this->translation.button_help.attach_ini(this, AUTHID_TRANS_BUTTON_HELP);
+
         this->translation.button_close.set_from_cstr("Close");
+        this->translation.button_close.attach_ini(this, AUTHID_TRANS_BUTTON_CLOSE);
+
         this->translation.button_refused.set_from_cstr("Refused");
+        this->translation.button_refused.attach_ini(this, AUTHID_TRANS_BUTTON_REFUSED);
+
         this->translation.login.set_from_cstr("Login");
-        this->translation.username.set_from_cstr("username");
+        this->translation.login.attach_ini(this, AUTHID_TRANS_LOGIN);
+
+        this->translation.username.set_from_cstr("Username");
+        this->translation.username.attach_ini(this, AUTHID_TRANS_USERNAME);
+
         this->translation.password.set_from_cstr("Password");
-        this->translation.target.set_from_cstr("target");
-        this->translation.diagnostic.set_from_cstr("diagnostic");
+        this->translation.password.attach_ini(this, AUTHID_TRANS_PASSWORD);
+
+        this->translation.target.set_from_cstr("Target");
+        this->translation.target.attach_ini(this, AUTHID_TRANS_TARGET);
+
+        this->translation.diagnostic.set_from_cstr("Diagnostic");
+        this->translation.diagnostic.attach_ini(this, AUTHID_TRANS_DIAGNOSTIC);
+
         this->translation.connection_closed.set_from_cstr("Connection closed");
+        this->translation.connection_closed.attach_ini(this, AUTHID_TRANS_CONNECTION_CLOSED);
+
         this->translation.help_message.set_from_cstr("Help message");
-
-
-        this->translation.button_ok.attach_ini(this,AUTHID_TRANS_BUTTON_OK);
-        this->translation.button_cancel.attach_ini(this,AUTHID_TRANS_BUTTON_CANCEL);
-        this->translation.button_help.attach_ini(this,AUTHID_TRANS_BUTTON_HELP);
-        this->translation.button_close.attach_ini(this,AUTHID_TRANS_BUTTON_CLOSE);
-        this->translation.button_refused.attach_ini(this,AUTHID_TRANS_BUTTON_REFUSED);
-        this->translation.login.attach_ini(this,AUTHID_TRANS_LOGIN);
-        this->translation.username.attach_ini(this,AUTHID_TRANS_USERNAME);
-        this->translation.password.attach_ini(this,AUTHID_TRANS_PASSWORD);
-        this->translation.target.attach_ini(this,AUTHID_TRANS_TARGET);
-        this->translation.diagnostic.attach_ini(this,AUTHID_TRANS_DIAGNOSTIC);
-        this->translation.connection_closed.attach_ini(this,AUTHID_TRANS_CONNECTION_CLOSED);
-        this->translation.help_message.attach_ini(this,AUTHID_TRANS_HELP_MESSAGE);
+        this->translation.help_message.attach_ini(this, AUTHID_TRANS_HELP_MESSAGE);
 
         this->translation.language.set_from_cstr("en");
         this->translation.language.attach_ini(this,AUTHID_LANGUAGE);
@@ -1195,8 +1213,13 @@ public:
             else if (0 == strcmp(key, "open_session_timeout")) {
                 this->mod_rdp.open_session_timeout = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "on_server_certificate_change")) {
-                this->mod_rdp.on_server_certificate_change = ulong_from_cstr(value);
+            else if (0 == strcmp(key, "certificate_change_action")) {
+                this->mod_rdp.certificate_change_action = ulong_from_cstr(value);
+            }
+        }
+        else if (0 == strcmp(context, "mod_vnc")){
+            if (0 == strcmp(key, "encodings")) {
+                this->mod_vnc.encodings.copy_c_str(value);
             }
         }
         else if (0 == strcmp(context, "video")){

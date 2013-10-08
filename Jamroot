@@ -450,8 +450,8 @@ unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test ;
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test ;
-unit-test test_vnc : tests/mod/vnc/test_vnc.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_vnc : tests/mod/vnc/test_vnc.cpp openssl libboost_unit_test ;
+unit-test test_vnc : tests/mod/vnc/test_vnc.cpp openssl libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test ;
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test gcov : <variant>coverage ;

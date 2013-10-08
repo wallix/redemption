@@ -52,7 +52,8 @@ public:
                    ini.context.selector_number_of_pages.get_value(),
                    ini.context.selector_group_filter.get_cstr(),
                    ini.context.selector_device_filter.get_cstr(),
-                   ini.context.selector_proto_filter.get_cstr()
+                   ini.context.selector_proto_filter.get_cstr(),
+                   ini
                    )
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
