@@ -903,31 +903,40 @@ public:
 
         // Begin Section "translation"
         this->translation.button_ok.set_from_cstr("OK");
+        this->translation.button_ok.attach_ini(this, AUTHID_TRANS_BUTTON_OK);
+
         this->translation.button_cancel.set_from_cstr("Cancel");
+        this->translation.button_cancel.attach_ini(this, AUTHID_TRANS_BUTTON_CANCEL);
+
         this->translation.button_help.set_from_cstr("Help");
+        this->translation.button_help.attach_ini(this, AUTHID_TRANS_BUTTON_HELP);
+
         this->translation.button_close.set_from_cstr("Close");
+        this->translation.button_close.attach_ini(this, AUTHID_TRANS_BUTTON_CLOSE);
+
         this->translation.button_refused.set_from_cstr("Refused");
+        this->translation.button_refused.attach_ini(this, AUTHID_TRANS_BUTTON_REFUSED);
+
         this->translation.login.set_from_cstr("Login");
-        this->translation.username.set_from_cstr("username");
+        this->translation.login.attach_ini(this, AUTHID_TRANS_LOGIN);
+
+        this->translation.username.set_from_cstr("Username");
+        this->translation.username.attach_ini(this, AUTHID_TRANS_USERNAME);
+
         this->translation.password.set_from_cstr("Password");
-        this->translation.target.set_from_cstr("target");
-        this->translation.diagnostic.set_from_cstr("diagnostic");
+        this->translation.password.attach_ini(this, AUTHID_TRANS_PASSWORD);
+
+        this->translation.target.set_from_cstr("Target");
+        this->translation.target.attach_ini(this, AUTHID_TRANS_TARGET);
+
+        this->translation.diagnostic.set_from_cstr("Diagnostic");
+        this->translation.diagnostic.attach_ini(this, AUTHID_TRANS_DIAGNOSTIC);
+
         this->translation.connection_closed.set_from_cstr("Connection closed");
+        this->translation.connection_closed.attach_ini(this, AUTHID_TRANS_CONNECTION_CLOSED);
+
         this->translation.help_message.set_from_cstr("Help message");
-
-
-        this->translation.button_ok.attach_ini(this,AUTHID_TRANS_BUTTON_OK);
-        this->translation.button_cancel.attach_ini(this,AUTHID_TRANS_BUTTON_CANCEL);
-        this->translation.button_help.attach_ini(this,AUTHID_TRANS_BUTTON_HELP);
-        this->translation.button_close.attach_ini(this,AUTHID_TRANS_BUTTON_CLOSE);
-        this->translation.button_refused.attach_ini(this,AUTHID_TRANS_BUTTON_REFUSED);
-        this->translation.login.attach_ini(this,AUTHID_TRANS_LOGIN);
-        this->translation.username.attach_ini(this,AUTHID_TRANS_USERNAME);
-        this->translation.password.attach_ini(this,AUTHID_TRANS_PASSWORD);
-        this->translation.target.attach_ini(this,AUTHID_TRANS_TARGET);
-        this->translation.diagnostic.attach_ini(this,AUTHID_TRANS_DIAGNOSTIC);
-        this->translation.connection_closed.attach_ini(this,AUTHID_TRANS_CONNECTION_CLOSED);
-        this->translation.help_message.attach_ini(this,AUTHID_TRANS_HELP_MESSAGE);
+        this->translation.help_message.attach_ini(this, AUTHID_TRANS_HELP_MESSAGE);
 
         this->translation.language.set_from_cstr("en");
         this->translation.language.attach_ini(this,AUTHID_LANGUAGE);

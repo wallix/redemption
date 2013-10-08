@@ -52,12 +52,15 @@ public:
     int bgcolor;
 private:
     long prev_time;
+    
+    Inifile & ini;
 
 public:
     FlatWabClose(DrawApi& drawable, int16_t width, int16_t height, Widget2& parent,
-                   NotifyApi* notifier, const char * diagnostic_text, int group_id = 0,
-                   const char * username = 0, const char * target = 0,
-                   int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS, bool showtimer = false)
+                   NotifyApi* notifier, const char * diagnostic_text, int group_id,
+                   const char * username, const char * target,
+                   int fgcolor, int bgcolor, bool showtimer,
+                   Inifile & ini)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
     , username_label(drawable, (width - 600) / 2, 0, *this, NULL,
@@ -66,8 +69,8 @@ public:
     , target_label(drawable, (width - 600) / 2, 0, *this, NULL,
                    "Target:", true, -12, fgcolor, bgcolor)
     , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12, fgcolor, bgcolor)
-    , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed"), true, -13, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, *this, this, TR("close"), true, -14, fgcolor, bgcolor, 6, 2)
+    , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed", ini), true, -13, fgcolor, bgcolor)
+    , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14, fgcolor, bgcolor, 6, 2)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL,
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, 0, 0, *this, NULL,
@@ -78,17 +81,18 @@ public:
     , separator(drawable, Rect(0, 0, width, 2), *this, this, -12, LIGHT_BLUE)
     , bgcolor(bgcolor)
     , prev_time(0)
+    , ini(ini)
     {
         this->impl = new CompositeTable;
 
         char label[255];
-        snprintf(label, sizeof(label), "%s:", TR("username"));
+        snprintf(label, sizeof(label), "%s:", TR("username", ini));
         this->username_label.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("target"));
+        snprintf(label, sizeof(label), "%s:", TR("target", ini));
         this->target_label.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("diagnostic"));
+        snprintf(label, sizeof(label), "%s:", TR("diagnostic", ini));
         this->diagnostic.set_text(label);
-        snprintf(label, sizeof(label), "%s:", TR("timeleft"));
+        snprintf(label, sizeof(label), "%s:", TR("timeleft", ini));
         this->timeleft_label.set_text(label);
 
         // this->img.rect.x = (this->cx() - this->img.cx()) / 2;
@@ -182,9 +186,9 @@ public:
             char buff[256];
             snprintf(buff, sizeof(buff), "%2ld %s%s %s. ",
                      tl,
-                     seconds?TR("second"):TR("minute"),
+                     seconds?TR("second", this->ini):TR("minute", this->ini),
                      (tl <= 1)?"":"s",
-                     TR("before_closing")
+                     TR("before_closing", this->ini)
                      );
 
             Rect old = this->timeleft_value.rect;
