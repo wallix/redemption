@@ -884,7 +884,7 @@ public:
             this->out_copy_bytes(oct_str, length);
         }
         else {
-            TODO("Check this length, looks dubious")
+            TODO("Check this length, looks dubious");
             this->out_per_length(min);
             this->out_copy_bytes(oct_str, length);
             this->out_clear_bytes(min-length);
@@ -918,7 +918,7 @@ public:
 
     void out_per_numeric_string(uint8_t * num_str, uint16_t length, uint16_t min)
     {
-        TODO("Check this length computing, looks dubious")
+        TODO("Check this length computing, looks dubious");
         uint16_t mlength = (length - min >= 0) ? length - min : min;
 
         this->out_per_length(mlength);

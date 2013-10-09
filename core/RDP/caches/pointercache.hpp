@@ -49,7 +49,7 @@ struct PointerCache {
 
     ~PointerCache() {}
 
-    TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object")
+    TODO(" much duplicated code with constructor and destructor  create some intermediate functions or object");
     int reset(struct ClientInfo & client_info) {
         memset(this, 0, sizeof(struct PointerCache));
         this->pointer_cache_entries = client_info.pointer_cache_entries;

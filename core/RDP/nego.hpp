@@ -258,7 +258,7 @@ struct RdpNego
             && x224.rdp_neg_code == X224::PROTOCOL_RDP){
                 this->state = NEGO_STATE_FINAL;
             }
-            TODO("Check tpdu has no embedded negotiation code")
+            TODO("Check tpdu has no embedded negotiation code");
             this->state = NEGO_STATE_FINAL;
             TODO("Other cases are errors, set an appropriate error message");
         }

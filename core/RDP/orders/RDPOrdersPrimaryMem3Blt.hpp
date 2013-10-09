@@ -348,7 +348,7 @@ class RDPMem3Blt {
     }
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
-        TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions")
+        TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions");
         size_t lg = common.str(buffer, sz, !common.clip.contains(this->rect));
         lg  += snprintf(
             buffer+lg,

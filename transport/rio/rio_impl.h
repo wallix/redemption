@@ -66,16 +66,16 @@
 #include "rio/rio_infilename.h"
 #include "rio/rio_cryptoinfilename.h"
 
-TODO("add filter class sample")
-TODO("convert PNG transport to new format")
-TODO("check and enhance test coverage for lib")
-TODO("check possible memory leaks (using valgrind on tests)")
-TODO("check possible closes missing (especially when exiting on errors)")
-TODO("check possible problems related to error management")
-TODO("complete error lists with exhaustive possible system errors (and keep ERROR_ANY if we forget some)")
-TODO("write filter classes to compress or encrypt/decrypt data on the fly")
-TODO("write lib modification and tagging procedure")
-TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source")
+TODO("add filter class sample");
+TODO("convert PNG transport to new format");
+TODO("check and enhance test coverage for lib");
+TODO("check possible memory leaks (using valgrind on tests)");
+TODO("check possible closes missing (especially when exiting on errors)");
+TODO("check possible problems related to error management");
+TODO("complete error lists with exhaustive possible system errors (and keep ERROR_ANY if we forget some)");
+TODO("write filter classes to compress or encrypt/decrypt data on the fly");
+TODO("write lib modification and tagging procedure");
+TODO("create debian packager .deb (use git-builder as base sample) to build rio.deb package from github source");
 TODO("extension: metadata files could be used to store non filename lines (meta lines could start with some reserved characters like ; ou #)"
      "This would be handy for large metadata that may not fit on one line")
 

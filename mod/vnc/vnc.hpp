@@ -281,7 +281,7 @@ struct mod_vnc : public mod_api {
 
         // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
 
-        TODO(" not yet supported")
+        TODO(" not yet supported");
         // If the Tight Security Type is activated, the server init
         // message is extended with an interaction capabilities section.
 
@@ -468,7 +468,7 @@ struct mod_vnc : public mod_api {
             }
         }
 
-        TODO("Maybe the resize should be done in session ?")
+        TODO("Maybe the resize should be done in session ?");
         switch (this->front.server_resize(this->width, this->height, this->bpp)){
         case 0:
             // no resizing needed
@@ -502,7 +502,7 @@ struct mod_vnc : public mod_api {
         }
 
         LOG(LOG_INFO, "VNC connection complete, connected ok\n");
-        TODO("Clearing the front screen could be done in session")
+        TODO("Clearing the front screen could be done in session");
         this->front.begin_update();
         RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
         this->front.draw(orect, Rect(0, 0, this->width, this->height));
@@ -577,7 +577,7 @@ struct mod_vnc : public mod_api {
         this->t->send(stream.get_data(), 6);
     } // change_mouse_state
 
-    TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
+    TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?");
     //==============================================================================================================
     virtual void rdp_input_mouse( int device_flags
                                 , int x
@@ -621,7 +621,7 @@ struct mod_vnc : public mod_api {
                                    , Keymap2 * keymap
                                    ) {
     //==============================================================================================================
-        TODO("As down/up state is not stored in keymapSym, code below is quite dangerous")
+        TODO("As down/up state is not stored in keymapSym, code below is quite dangerous");
         keymapSym.event(device_flags, param1);
         int key = keymapSym.get_sym();
         if (key > 0) {
@@ -815,7 +815,7 @@ struct mod_vnc : public mod_api {
 
                 // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
 
-                TODO(" not yet supported")
+                TODO(" not yet supported");
                 // If the Tight Security Type is activated, the server init
                 // message is extended with an interaction capabilities section.
 
@@ -1003,7 +1003,7 @@ struct mod_vnc : public mod_api {
                     }
                 }
 
-                TODO("Maybe the resize should be done in session ?")
+                TODO("Maybe the resize should be done in session ?");
                 switch (this->front.server_resize(this->width, this->height, this->bpp)){
                 case 0:
                     // no resizing needed
@@ -1041,7 +1041,7 @@ struct mod_vnc : public mod_api {
                 this->front.server_set_pointer(cursor);
 
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
-                TODO("Clearing the front screen could be done in session")
+                TODO("Clearing the front screen could be done in session");
                 this->front.begin_update();
                 RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
                 this->front.draw(orect, Rect(0, 0, this->width, this->height));
@@ -1693,7 +1693,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
             }
             break;
             case 0xffffff11: /* cursor */
-            TODO(" see why we get these empty rects ?")
+            TODO(" see why we get these empty rects ?");
             if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
                 // ------------------------------
@@ -1738,7 +1738,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
 
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
                 if (cx == 1 && cy == 1) {
-                    TODO("Appearence of this 1x1 cursor looks broken, check what we actually get")
+                    TODO("Appearence of this 1x1 cursor looks broken, check what we actually get");
                     memset(cursor.data, 0, sizeof(cursor.data));
                     cursor.data[2883] = 0xFF;
                     cursor.data[2884] = 0xFF;
@@ -1755,7 +1755,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                             cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
                         }
                     }
-                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays")
+                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays");
                     // copy vnc pointer and mask to rdp pointer and mask
 
                     for (int yy = 0; yy < cy; yy++) {
@@ -1767,7 +1767,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                                     for (int tt = 0 ; tt < Bpp; tt++){
                                         pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
                                     }
-                                    TODO("temporary: force black cursor")
+                                    TODO("temporary: force black cursor");
                                     int red   = (pixel >> this->red_shift) & red_max;
                                     int green = (pixel >> this->green_shift) & green_max;
                                     int blue  = (pixel >> this->blue_shift) & blue_max;
@@ -1783,7 +1783,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                     if (x > 31) { x = 31; }
                     if (y > 31) { y = 31; }
                 }
-TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
+TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation");
                 this->front.begin_update();
                 this->front.server_set_pointer(cursor);
                 this->front.end_update();
@@ -2002,7 +2002,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
         // specific treatement depending on msgType
         BStream stream(chunk.size());
-        TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)")
+        TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)");
         stream.out_copy_bytes(chunk.get_data(), chunk.size());
         stream.mark_end();
         stream.rewind();
@@ -2024,7 +2024,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 if (this->opt_clipboard && format_list_pdu.contians_data_in_text_format) {
                     //--------------------------- Beginning of clipboard PDU Header ----------------------------
 
-                    TODO("Create a unit tested class for clipboard messages")
+                    TODO("Create a unit tested class for clipboard messages");
 
                     bool response_ok = true;
 
@@ -2067,8 +2067,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                                );
                 }
                 else {
-                    TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
-                    TODO("RZ: Create a unit tested class for clipboard messages")
+                    TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
+                    TODO("RZ: Create a unit tested class for clipboard messages");
 
                     bool response_ok = false;
 

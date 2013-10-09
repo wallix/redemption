@@ -562,7 +562,7 @@ static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size,
 {
     size_t number_of_char = UTF8Len(source);
     size_t source_len     = strlen((const char *)source);
-    TODO("It's always possible that memcpy make a partial copy of UTF8 character.")
+    TODO("It's always possible that memcpy make a partial copy of UTF8 character.");
     if (source_len > dest_size - 1)
     {
         source_len = dest_size - 1;

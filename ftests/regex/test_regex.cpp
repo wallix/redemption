@@ -38,7 +38,7 @@
 using namespace rndfa;
 
 inline void st_to_string(StateBase * st, std::ostream& os,
-                         const std::vector<StateBase*> states, unsigned depth = 0)
+                         const std::vector<StateBase*>& states, unsigned depth = 0)
 {
     size_t n = std::find(states.begin(), states.end(), st) - states.begin();
     os << std::string(depth, '\t') << n;

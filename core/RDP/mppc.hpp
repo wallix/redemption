@@ -1938,7 +1938,7 @@ struct rdp_mppc_enc {
 
         this->first_pkt = 1;
         this->historyBuffer = (char*) malloc(this->buf_len);
-        TODO("making it static and large enough should be good for both RDP4 and RDP5")
+        TODO("making it static and large enough should be good for both RDP4 and RDP5");
         memset(this->historyBuffer, 0, this->buf_len);
 
         this->outputBufferPlus = (char*) malloc(this->buf_len + 64 + 8);
@@ -2152,7 +2152,7 @@ struct rdp_mppc_enc {
         uint16_t * hash_table   = this->hash_table;     /* hash table for pattern matching                */
         char     * outputBuffer = this->outputBuffer;   /* points to enc->outputBuffer                    */
 
-        TODO("this memset should not be necessary")
+        TODO("this memset should not be necessary");
         memset(outputBuffer, 0, len);
 
         this->flags = PACKET_COMPR_TYPE_8K;

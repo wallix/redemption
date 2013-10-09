@@ -31,10 +31,10 @@
 // These are used to help coverage chain when function length autodetection (using ctags and gcov) fails
 
 #ifndef VERBOSE
-#define TODO(x)
+#define TODO(x);
 #else
 #define DO_PRAGMA(x) _Pragma (#x)
-#define TODO(x) DO_PRAGMA(message ("TODO - " x))
+#define TODO(x) DO_PRAGMA(message ("TODO - " x));
 #endif
 
 #define BOOM (*reinterpret_cast<int*>(0)=1)

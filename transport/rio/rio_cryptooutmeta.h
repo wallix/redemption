@@ -51,7 +51,7 @@ extern "C" {
                                                   const char * header1, const char * header2, const char* header3, timeval * tv,
                                                   const int groupid)
     {
-        TODO("use system constants for size")
+        TODO("use system constants for size");
         size_t res = snprintf(self->meta_filename, sizeof(self->meta_filename), "%s%s%s", path, filename, extension);
         size_t res2 = snprintf(self->hasher_filename, sizeof(self->hasher_filename), "%s%s%s", hash_path, filename, extension);
         if (res >= sizeof(self->meta_filename)){
@@ -116,7 +116,7 @@ extern "C" {
             TODO("check if sign returns some error");
             rio_sign(self->meta, hash, sizeof(hash), &res_len);
 
-            TODO("check errors when storing hash")
+            TODO("check errors when storing hash");
             RIOCrypto hasher;
             RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->hasher_filename, O_WRONLY);
             if (status != RIO_ERROR_OK){
@@ -210,7 +210,7 @@ extern "C" {
             TODO("check if sign returns some error");
             rio_sign(self->meta, hash, sizeof(hash), &res_len);
 
-            TODO("check errors when storing hash")
+            TODO("check errors when storing hash");
             RIOCrypto hasher;
             RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->hasher_filename, O_WRONLY);
             if (status != RIO_ERROR_OK){

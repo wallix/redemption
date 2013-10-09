@@ -292,7 +292,7 @@ public:
             }
 
             /* read file size */
-            TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.")
+            TODO("define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.");
                 BStream stream(8192);
             if (read(fd, stream.get_data(), 4) < 4){
                 LOG(LOG_ERR, "Widget_load: error read file size\n");
@@ -301,7 +301,7 @@ public:
             }
             stream.end = stream.get_data() + 4;
             {
-                TODO("Check what is this size ? header size ? used as fixed below ?")
+                TODO("Check what is this size ? header size ? used as fixed below ?");
                     /* uint32_t size = */ stream.in_uint32_le();
             }
 
@@ -314,7 +314,7 @@ public:
                 throw Error(ERR_BITMAP_LOAD_FAILED);
             }
             stream.end = stream.get_data() + 40;
-            TODO(" we should read header size and use it to read header instead of using magic constant 40")
+            TODO(" we should read header size and use it to read header instead of using magic constant 40");
                 header.size = stream.in_uint32_le();
             if (header.size != 40){
                 LOG(LOG_INFO, "Wrong header size: expected 40, got %d", header.size);
@@ -337,7 +337,7 @@ public:
 
             // compute pixel size (in Quartet) and read palette if needed
             int file_Qpp = 1;
-            TODO(" add support for loading of 16 bits bmp from file")
+            TODO(" add support for loading of 16 bits bmp from file");
                 switch (header.bit_count) {
                     // Qpp = groups of 4 bytes per pixel
                 case 24:
@@ -1619,13 +1619,13 @@ public:
                     src += src_nbbytes;
                     dest += Bpp;
                 }
-                TODO("padding code should not be necessary as source bmp width is already aligned")
+                TODO("padding code should not be necessary as source bmp width is already aligned");
                 if (this->line_size < bmp.cx * Bpp){
                     uint16_t padding = this->line_size - bmp.cx * Bpp;
                     bzero(dest, padding);
                     dest += padding;
                 }
-                TODO("padding code should not be necessary for source either as source bmp width is already aligned")
+                TODO("padding code should not be necessary for source either as source bmp width is already aligned");
                 src += bmp.line_size - bmp.cx * nbbytes(bmp.original_bpp);
             }
         }

@@ -191,7 +191,7 @@ class ssllib
                     "\x36\x36\x36\x36\x36\x36\x36\x36"
                   , 40));
         // Data we are signing
-        TODO("pass in a stream and factorize with code in decrypt")
+        TODO("pass in a stream and factorize with code in decrypt");
         sha1.update(FixedSizeStream(lenhdr, sizeof(lenhdr)));
         sha1.update(data);
 
@@ -298,7 +298,7 @@ struct CryptContext
                       , 40));
 
             // Data we are signing
-            TODO("pass in a stream and factorize with code in sign")
+            TODO("pass in a stream and factorize with code in sign");
             sha1.update(FixedSizeStream(this->key, keylen));
 
             uint8_t shasig[20];

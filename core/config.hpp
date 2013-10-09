@@ -42,22 +42,22 @@
 #include <fileutils.hpp>
 #include <string.hpp>
 
-TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)")
+TODO("move SHARE_PATH to configuration (still used in front, checkfiles, session, transparent, some internal mods)");
 #if !defined(SHARE_PATH)
 #define SHARE_PATH "/usr/local/share/rdpproxy"
 #endif
 
-TODO("move CFG_PATH to configuration (still used in main and sockettransport)")
+TODO("move CFG_PATH to configuration (still used in main and sockettransport)");
 #if !defined(CFG_PATH)
 #define CFG_PATH "/etc/rdpproxy"
 #endif
 
-TODO("move PID_PATH to configuration")
+TODO("move PID_PATH to configuration");
 #if !defined(PID_PATH)
 #define PID_PATH "/var/run"
 #endif
 
-TODO("move LICENSE_PATH to configuration (still used in mod/rdp and mod/rdp_transparent)")
+TODO("move LICENSE_PATH to configuration (still used in mod/rdp and mod/rdp_transparent)");
 #if !defined(LICENSE_PATH)
 #define LICENSE_PATH "/var/certs/redemption"
 #endif
@@ -78,12 +78,12 @@ TODO("move LICENSE_PATH to configuration (still used in mod/rdp and mod/rdp_tran
 #define WRM_PATH "/tmp"
 #endif
 
-TODO("move HASH_PATH to configuration (still used in front and recorder)")
+TODO("move HASH_PATH to configuration (still used in front and recorder)");
 #if !defined(HASH_PATH)
 #define HASH_PATH "/tmp/hash"
 #endif
 
-TODO("move CERTIF_PATH to configuration (still used in sockettransport)")
+TODO("move CERTIF_PATH to configuration (still used in sockettransport)");
 #if !defined(CERTIF_PATH)
 #define CERTIF_PATH "/etc/rdpproxy/certificate"
 #endif
@@ -96,7 +96,7 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)")
 #define RECORD_TMP_PATH "/var/rdpproxy/tmp"
 #endif
 
-TODO("move these into configuration")
+TODO("move these into configuration");
 #define LOGIN_LOGO24 "ad24b.png"
 #define LOGIN_WAB_BLUE "wablogoblue.png"
 #define HELP_ICON "helpicon.png"
@@ -304,7 +304,7 @@ typedef enum
 
 #define STRAUTHID_REPORTING                "reporting"
 
-TODO("This is not a translation but auth_channel answer, change key name in sesman")
+TODO("This is not a translation but auth_channel answer, change key name in sesman");
 #define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
 #define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
 #define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
@@ -671,7 +671,7 @@ struct Inifile : public FieldObserver {
 
         StringField        message;                  // AUTHID_MESSAGE //
 
-        TODO("why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button")
+        TODO("why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button");
         StringField        accept_message;           // AUTHID_ACCEPT_MESSAGE //
         StringField        display_message;          // AUTHID_DISPLAY_MESSAGE //
 
@@ -1606,7 +1606,7 @@ public:
     }
 
     bool context_get_bool(authid_t authid) {
-        TODO("ask related behavior is a problem. How do we make the difference between a False value and asked ?")
+        TODO("ask related behavior is a problem. How do we make the difference between a False value and asked ?");
         switch (authid)
             {
             case AUTHID_SELECTOR:

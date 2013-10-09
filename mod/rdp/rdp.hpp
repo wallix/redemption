@@ -300,14 +300,14 @@ struct mod_rdp : public mod_api {
         this->decrypt.encryptionMethod = 2; /* 128 bits */
         this->encrypt.encryptionMethod = 2; /* 128 bits */
 
-        TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log")
+        TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log");
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
             LOG(LOG_INFO, "mod_rdp: hostname too long! %u > %u", ::strlen(info.hostname), sizeof(this->hostname));
         }
         strncpy(this->hostname, info.hostname, 15);
         this->hostname[15] = 0;
 
-        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log")
+        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log");
         if (::strlen(target_user) >= sizeof(this->username)) {
             LOG(LOG_INFO, "mod_rdp: username too long! %u > %u", ::strlen(target_user), sizeof(this->username));
         }
@@ -600,7 +600,7 @@ struct mod_rdp : public mod_api {
 
                             // ------------------------------------------------------------
                             GCC::UserData::CSCluster cs_cluster;
-                            TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?")
+                            TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?");
 
                                 if (!this->nego.tls){
                                     if (this->console_session){
@@ -983,7 +983,7 @@ struct mod_rdp : public mod_api {
                                 X224::DT_TPDU_Recv x224(*this->nego.trans, x224_data);
                                 SubStream & mcs_cjcf_data = x224.payload;
                                 MCS::ChannelJoinConfirm_Recv mcs(mcs_cjcf_data, MCS::PER_ENCODING);
-                                TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list")
+                                TODO("If mcs.result is negative channel is not confirmed and should be removed from mod_channel list");
                                     if (this->verbose & 16){
                                         LOG(LOG_INFO, "cjcf[%u] = %u", index, mcs.channelId);
                                     }
@@ -1267,7 +1267,7 @@ struct mod_rdp : public mod_api {
 
                                     LIC::NewLicense_Recv lic(sec.payload, this->lic_layer_license_key);
 
-                                    TODO("CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that")
+                                    TODO("CGR: Save license to keep a local copy of the license of a remote server thus avoiding to ask it every time we connect. Not obvious files is the best choice to do that");
                                         this->state = MOD_RDP_CONNECTED;
 
                                     LOG(LOG_WARNING, "New license not saved");
@@ -1524,7 +1524,7 @@ struct mod_rdp : public mod_api {
                             else if (!this->enable_clipboard && !strcmp(mod_channel.name, CLIPBOARD_VIRTUAL_CHANNEL_NAME)) {
                                 // Clipboard is unavailable and is a Clipboard PDU
 
-                                TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
+                                TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
 
                                     if (this->verbose) {
                                         LOG(LOG_INFO, "mod_rdp clipboard PDU");
@@ -1685,28 +1685,28 @@ struct mod_rdp : public mod_api {
                                                 break;
                                             case PDUTYPE2_CONTROL:
                                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
-                                                TODO("CGR: Data should actually be consumed")
+                                                TODO("CGR: Data should actually be consumed");
                                                     sdata.payload.p = sdata.payload.end;
                                                 break;
                                             case PDUTYPE2_SYNCHRONIZE:
                                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
-                                                TODO("CGR: Data should actually be consumed")
+                                                TODO("CGR: Data should actually be consumed");
                                                     sdata.payload.p = sdata.payload.end;
                                                 break;
                                             case PDUTYPE2_POINTER:
                                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
                                                 this->process_pointer_pdu(sdata.payload, this);
-                                                TODO("CGR: Data should actually be consumed")
+                                                TODO("CGR: Data should actually be consumed");
                                                     sdata.payload.p = sdata.payload.end;
                                                 break;
                                             case PDUTYPE2_PLAY_SOUND:
                                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
-                                                TODO("CGR: Data should actually be consumed")
+                                                TODO("CGR: Data should actually be consumed");
                                                     sdata.payload.p = sdata.payload.end;
                                                 break;
                                             case PDUTYPE2_SAVE_SESSION_INFO:
                                                 if (this->verbose & 8){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
-                                                TODO("CGR: Data should actually be consumed")
+                                                TODO("CGR: Data should actually be consumed");
                                                 this->process_save_session_info(sdata.payload);
                                                 break;
                                             case PDUTYPE2_SET_ERROR_INFO_PDU:
@@ -1715,7 +1715,7 @@ struct mod_rdp : public mod_api {
                                                 break;
                                             default:
                                                 LOG(LOG_WARNING, "PDUTYPE2 unsupported tag=%u", sdata.pdutype2);
-                                                TODO("CGR: Data should actually be consumed")
+                                                TODO("CGR: Data should actually be consumed");
                                                     sdata.payload.p = sdata.payload.end;
                                                 break;
                                             }
@@ -1754,7 +1754,7 @@ struct mod_rdp : public mod_api {
     //    sourceDescriptor (variable): A variable-length array of bytes containing a source descriptor (see
     // [T128] section 8.4.1 for more information regarding source descriptors).
 
-                                        TODO("before skipping we should check we do not go outside current stream")
+                                        TODO("before skipping we should check we do not go outside current stream");
                                         sctrl.payload.in_skip_bytes(lengthSourceDescriptor);
 
     // numberCapabilities (2 bytes): A 16-bit, unsigned integer. The number of capability sets included in the
@@ -1803,8 +1803,8 @@ struct mod_rdp : public mod_api {
                                 case PDUTYPE_DEACTIVATEALLPDU:
                                     if (this->verbose & 128){ LOG(LOG_INFO, "PDUTYPE_DEACTIVATEALLPDU"); }
                                     LOG(LOG_INFO, "Deactivate All PDU");
-                                    TODO("CGR: Data should actually be consumed")
-                                        TODO("CGR: Check we are indeed expecting Synchronize... dubious")
+                                    TODO("CGR: Data should actually be consumed");
+                                        TODO("CGR: Check we are indeed expecting Synchronize... dubious");
                                         this->connection_finalization_state = WAITING_SYNCHRONIZE;
                                     break;
                                 case PDUTYPE_SERVER_REDIR_PKT:
@@ -1814,7 +1814,7 @@ struct mod_rdp : public mod_api {
                                     LOG(LOG_INFO, "unknown PDU %u", sctrl.pdu_type1);
                                     break;
                                 }
-                                TODO("check sctrl.payload is completely consumed")
+                                TODO("check sctrl.payload is completely consumed");
                             }
                         }
                     }
@@ -2135,7 +2135,7 @@ struct mod_rdp : public mod_api {
         case RDP_POINTER_MOVE:
             {
                 LOG(LOG_WARNING, "mod::rdp::RDP Pointer move not yet supported");
-                TODO("CGR: implement RDP_POINTER_MOVE")
+                TODO("CGR: implement RDP_POINTER_MOVE");
                     /* int x = */ stream.in_uint16_le();
                 /* int y = */ stream.in_uint16_le();
             }
@@ -3506,7 +3506,7 @@ struct mod_rdp : public mod_api {
         }
     }
 
-    TODO("CGR: duplicated code in front")
+    TODO("CGR: duplicated code in front");
     void send_synchronise() throw (Error)
     {
         if (this->verbose & 1){
@@ -3783,7 +3783,7 @@ public:
                 (unsigned)mlen, static_cast<unsigned>(dlen));
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
-        TODO("this is modifiying cursor in place: we should not do that.")
+        TODO("this is modifiying cursor in place: we should not do that.");
         memcpy(cursor.data, stream.in_uint8p(dlen), dlen);
         memcpy(cursor.mask, stream.in_uint8p(mlen), mlen);
 
@@ -3843,7 +3843,7 @@ public:
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
-        TODO("CGR: we should ensure we have data enough to create mask")
+        TODO("CGR: we should ensure we have data enough to create mask");
         uint8_t * end = stream.p + mlen;
         switch (bpp) {
         case 1 :
@@ -3875,7 +3875,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
         uint8_t * end = stream.p + dlen;
-        TODO("CGR: we should ensure we have data enough to create pointer")
+        TODO("CGR: we should ensure we have data enough to create pointer");
         switch (bpp) {
         case 1 :
         {
@@ -4179,7 +4179,7 @@ public:
                 }
             }
 
-            TODO("CGR: check which sanity checks should be done")
+            TODO("CGR: check which sanity checks should be done");
                 //            if (bufsize != bitmap.bmp_size){
                 //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
                 //                    bufsize, bitmap.bmp_size, width, height, bpp);
@@ -4217,7 +4217,7 @@ public:
                      );
             }
 
-            TODO("this is to protect rdesktop different color depth works with mstsc and xfreerdp")
+            TODO("this is to protect rdesktop different color depth works with mstsc and xfreerdp");
             if (!this->enable_bitmap_update
                || (bmpdata.bits_per_pixel != this->front_bpp)
                || ((bmpdata.bits_per_pixel == 8) && (this->front_bpp != 8))) {

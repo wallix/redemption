@@ -84,7 +84,7 @@ extern "C" {
                     if (len != remaining_len){
                         return len - remaining_len;
                     }
-                    TODO("replace this with actual error management, EOF is not even an option for sockets")
+                    TODO("replace this with actual error management, EOF is not even an option for sockets");
                     rio_m_RIOSocket_destructor(self);
                     return -RIO_ERROR_EOF;
                 case 0: /* no data received, socket closed */
@@ -142,7 +142,7 @@ extern "C" {
 
     static inline RIO_ERROR rio_m_RIOSocket_get_status(RIOSocket * self)
     {
-        TODO("when we will keep error value needed for recv we should return the stored error status")
+        TODO("when we will keep error value needed for recv we should return the stored error status");
         return RIO_ERROR_OK;
     }
 };
