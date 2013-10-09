@@ -180,7 +180,7 @@ int main(int argc, char** argv)
         count = in_wrm_trans_tmp.chunk_num;
     }
     catch (const Error & e) {
-        if (e.id == (unsigned)ERR_TRANSPORT_NO_MORE_DATA){
+        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)){
             printf("Asked time not found in mwrm file\n");
         };
         exit(-1);

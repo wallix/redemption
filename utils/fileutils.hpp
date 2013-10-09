@@ -161,13 +161,13 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
 /*
         if (file_len < 4000){
             if (verbose >= 255) {
-                LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", (unsigned)file_len);
+                LOG(LOG_WARNING, "File name length is in normal range (%u), using static buffer", static_cast<unsigned>(file_len));
             }
             file_len = 4000;
         }
         else {
             if (verbose >= 255) {
-                LOG(LOG_WARNING, "Max file name too large (%u), using dynamic buffer", (unsigned)file_len);
+                LOG(LOG_WARNING, "Max file name too large (%u), using dynamic buffer", static_cast<unsigned>(file_len));
             }
 
             char * buffer = (char*)malloc(file_len + path_len + 1);

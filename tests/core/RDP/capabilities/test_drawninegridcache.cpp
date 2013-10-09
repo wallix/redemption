@@ -36,11 +36,11 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawNineGridCacheEmit)
     drawninegridcache_caps.drawNineGridCacheSize = 2560;
     drawninegridcache_caps.drawNineGridCacheEntries = 256;
 
-    BOOST_CHECK_EQUAL(drawninegridcache_caps.capabilityType, (uint16_t)CAPSTYPE_DRAWNINEGRIDCACHE);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps.len, (uint16_t)CAPLEN_DRAWNINEGRIDCACHE);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridSupportLevel, (uint32_t) 0);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridCacheSize, (uint16_t) 2560);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridCacheEntries, (uint16_t) 256);
+    BOOST_CHECK_EQUAL(drawninegridcache_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_DRAWNINEGRIDCACHE));
+    BOOST_CHECK_EQUAL(drawninegridcache_caps.len, static_cast<uint16_t>(CAPLEN_DRAWNINEGRIDCACHE));
+    BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridSupportLevel, static_cast<uint32_t>(0));
+    BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridCacheSize, static_cast<uint16_t>(2560));
+    BOOST_CHECK_EQUAL(drawninegridcache_caps.drawNineGridCacheEntries, static_cast<uint16_t>(256));
 
     BStream stream(1024);
     drawninegridcache_caps.emit(stream);
@@ -49,14 +49,14 @@ BOOST_AUTO_TEST_CASE(TestCapabilityDrawNineGridCacheEmit)
 
     DrawNineGridCacheCaps drawninegridcache_caps2;
 
-    BOOST_CHECK_EQUAL(drawninegridcache_caps2.capabilityType, (uint16_t)CAPSTYPE_DRAWNINEGRIDCACHE);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps2.len, (uint16_t)CAPLEN_DRAWNINEGRIDCACHE);
+    BOOST_CHECK_EQUAL(drawninegridcache_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_DRAWNINEGRIDCACHE));
+    BOOST_CHECK_EQUAL(drawninegridcache_caps2.len, static_cast<uint16_t>(CAPLEN_DRAWNINEGRIDCACHE));
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_DRAWNINEGRIDCACHE, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_DRAWNINEGRIDCACHE, stream.in_uint16_le());
     drawninegridcache_caps2.recv(stream, CAPLEN_DRAWNINEGRIDCACHE);
 
-    BOOST_CHECK_EQUAL(drawninegridcache_caps2.drawNineGridSupportLevel, (uint32_t) 0);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps2.drawNineGridCacheSize, (uint16_t) 2560);
-    BOOST_CHECK_EQUAL(drawninegridcache_caps2.drawNineGridCacheEntries, (uint16_t) 256);
+    BOOST_CHECK_EQUAL(drawninegridcache_caps2.drawNineGridSupportLevel, static_cast<uint32_t>(0));
+    BOOST_CHECK_EQUAL(drawninegridcache_caps2.drawNineGridCacheSize, static_cast<uint16_t>(2560));
+    BOOST_CHECK_EQUAL(drawninegridcache_caps2.drawNineGridCacheEntries, static_cast<uint16_t>(256));
 }

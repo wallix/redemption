@@ -36,10 +36,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
     font_caps.fontSupportFlags = 32769;
     font_caps.pad2octets = 65535;
 
-    BOOST_CHECK_EQUAL(font_caps.capabilityType, (uint16_t)CAPSTYPE_FONT);
-    BOOST_CHECK_EQUAL(font_caps.len, (uint16_t)CAPLEN_FONT);
-    BOOST_CHECK_EQUAL(font_caps.fontSupportFlags, (uint16_t) 32769);
-    BOOST_CHECK_EQUAL(font_caps.pad2octets, (uint16_t) 65535);
+    BOOST_CHECK_EQUAL(font_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_FONT));
+    BOOST_CHECK_EQUAL(font_caps.len, static_cast<uint16_t>(CAPLEN_FONT));
+    BOOST_CHECK_EQUAL(font_caps.fontSupportFlags, static_cast<uint16_t>(32769));
+    BOOST_CHECK_EQUAL(font_caps.pad2octets, static_cast<uint16_t>(65535));
 
     BStream stream(1024);
     font_caps.emit(stream);
@@ -48,12 +48,12 @@ BOOST_AUTO_TEST_CASE(TestCapabilityFontEmit)
 
     FontCaps font_caps2;
 
-    BOOST_CHECK_EQUAL(font_caps2.capabilityType, (uint16_t)CAPSTYPE_FONT);
-    BOOST_CHECK_EQUAL(font_caps2.len, (uint16_t)CAPLEN_FONT);
+    BOOST_CHECK_EQUAL(font_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_FONT));
+    BOOST_CHECK_EQUAL(font_caps2.len, static_cast<uint16_t>(CAPLEN_FONT));
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_FONT, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_FONT, stream.in_uint16_le());
     font_caps2.recv(stream, CAPLEN_FONT);
 
-    BOOST_CHECK_EQUAL(font_caps2.fontSupportFlags, (uint16_t) 32769);
-    BOOST_CHECK_EQUAL(font_caps2.pad2octets, (uint16_t) 65535);
+    BOOST_CHECK_EQUAL(font_caps2.fontSupportFlags, static_cast<uint16_t>(32769));
+    BOOST_CHECK_EQUAL(font_caps2.pad2octets, static_cast<uint16_t>(65535));
 }

@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport)
         BOOST_CHECK_EQUAL(true, false);
     } catch (Error e) {
         BOOST_CHECK_EQUAL(p-buffer, 0);
-        BOOST_CHECK_EQUAL(e.id, (int)ERR_TRANSPORT_NO_MORE_DATA);
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_TRANSPORT_NO_MORE_DATA));
     };
 }
 
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TestGeneratorTransport2)
     } catch (Error e) {
         BOOST_CHECK_EQUAL(p-buffer, 12);
         BOOST_CHECK_EQUAL(0, strncmp(buffer, " we provide!", 12));
-        BOOST_CHECK_EQUAL(e.id, (int)ERR_TRANSPORT_NO_MORE_DATA);
+        BOOST_CHECK_EQUAL(e.id, static_cast<int>(ERR_TRANSPORT_NO_MORE_DATA));
     };
 }
 

@@ -192,7 +192,7 @@ public:
     void reserve_order(size_t asked_size)
     {
 //    LOG(LOG_INFO, "RDPSerializer::reserve_order");
-        size_t max_packet_size = std::min(this->stream_orders.get_capacity(), (size_t)16384);
+        size_t max_packet_size = std::min(this->stream_orders.get_capacity(), static_cast<size_t>(16384));
         size_t used_size = this->stream_orders.get_offset();
         if (this->ini.debug.primary_orders > 3){
             LOG( LOG_INFO
@@ -377,7 +377,7 @@ public:
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet
     void reserve_bitmap(size_t asked_size) {
-        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), (size_t)8192);
+        size_t max_packet_size = std::min(this->stream_bitmaps.get_capacity(), static_cast<size_t>(8192));
         size_t used_size       = this->stream_bitmaps.get_offset();
         if (this->ini.debug.primary_orders > 3) {
             LOG( LOG_INFO

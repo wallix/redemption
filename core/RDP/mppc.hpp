@@ -1270,7 +1270,7 @@ struct rdp_mppc_dec
             bits_left -=  i;
             if (i32 < 256)
             {
-                *history_ptr++ = (uint8_t)i32;
+                *history_ptr++ = static_cast<uint8_t>(i32);
             }
             else if (i32 > 256 && i32 < 289)
             {

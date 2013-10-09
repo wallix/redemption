@@ -35,9 +35,9 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBrushCacheEmit)
     BrushCacheCaps brushcache_caps;
     brushcache_caps.brushSupportLevel = BRUSH_COLOR_8X8;
 
-    BOOST_CHECK_EQUAL(brushcache_caps.capabilityType, (uint16_t)CAPSTYPE_BRUSH);
-    BOOST_CHECK_EQUAL(brushcache_caps.len, (uint16_t)CAPLEN_BRUSH);
-    BOOST_CHECK_EQUAL(brushcache_caps.brushSupportLevel, (uint32_t)BRUSH_COLOR_8X8);
+    BOOST_CHECK_EQUAL(brushcache_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_BRUSH));
+    BOOST_CHECK_EQUAL(brushcache_caps.len, static_cast<uint16_t>(CAPLEN_BRUSH));
+    BOOST_CHECK_EQUAL(brushcache_caps.brushSupportLevel, static_cast<uint32_t>(BRUSH_COLOR_8X8));
 
     BStream stream(1024);
     brushcache_caps.emit(stream);
@@ -47,12 +47,12 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBrushCacheEmit)
 
     BrushCacheCaps brushcache_caps2;
 
-    BOOST_CHECK_EQUAL(brushcache_caps2.capabilityType, (uint16_t)CAPSTYPE_BRUSH);
-    BOOST_CHECK_EQUAL(brushcache_caps2.len, (uint16_t)CAPLEN_BRUSH);
+    BOOST_CHECK_EQUAL(brushcache_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_BRUSH));
+    BOOST_CHECK_EQUAL(brushcache_caps2.len, static_cast<uint16_t>(CAPLEN_BRUSH));
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BRUSH, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BRUSH, stream.in_uint16_le());
     brushcache_caps2.recv(stream, CAPLEN_BRUSH);
 
-    BOOST_CHECK_EQUAL(brushcache_caps2.brushSupportLevel, (uint32_t)BRUSH_COLOR_8X8);
+    BOOST_CHECK_EQUAL(brushcache_caps2.brushSupportLevel, static_cast<uint32_t>(BRUSH_COLOR_8X8));
 }
