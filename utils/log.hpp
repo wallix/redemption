@@ -37,7 +37,7 @@
 #define TODO(x) DO_PRAGMA(message ("TODO - " x))
 #endif
 
-#define BOOM (*(int*)0=1)
+#define BOOM (*reinterpret_cast<int*>(0)=1)
 
 // REDASSERT behave like assert but instaed of calling abort it triggers a segfault
 // This is handy to get stacktrace while debugging.
@@ -132,14 +132,14 @@ static inline void hexdump(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "%.2x ", (unsigned char)data[j+i]);
+            line += sprintf(line, "%.2x ", static_cast<unsigned char>(data[j+i]));
         }
         if (i < 16){
-            line += sprintf(line, "%*c", (unsigned)((16-i)*3), ' ');
+            line += sprintf(line, "%*c", static_cast<unsigned>((16-i)*3), ' ');
         }
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = (unsigned)(data[j+i]);
+            unsigned char tmp = static_cast<unsigned>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')  || (tmp == '\\')){
                 tmp = '.';
             }
@@ -156,7 +156,7 @@ static inline void hexdump(const char * data, size_t size)
 
 static inline void hexdump(const unsigned char * data, size_t size)
 {
-    hexdump((const char*)data, size);
+    hexdump(reinterpret_cast<const char*>(data), size);
 }
 
 static inline void hexdump_d(const char * data, size_t size)
@@ -168,17 +168,17 @@ static inline void hexdump_d(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "0x%.2x, ", (unsigned char)data[j+i]);
+            line += sprintf(line, "0x%.2x, ", static_cast<unsigned char>(data[j+i]));
         }
         if (i < 16){
-            line += sprintf(line, "%*c", (unsigned)((16-i)*3), ' ');
+            line += sprintf(line, "%*c", static_cast<unsigned>((16-i)*3), ' ');
         }
 
         line += sprintf(line, " // ");
 
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = (unsigned)(data[j+i]);
+            unsigned char tmp = static_cast<unsigned>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
                 tmp = '.';
             }
@@ -195,7 +195,7 @@ static inline void hexdump_d(const char * data, size_t size)
 
 static inline void hexdump_d(const unsigned char * data, size_t size)
 {
-    hexdump_d((const char*)data, size);
+    hexdump_d(reinterpret_cast<const char*>(data), size);
 }
 
 static inline void hexdump_c(const char * data, size_t size)
@@ -207,16 +207,16 @@ static inline void hexdump_c(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "\\x%.2x", (unsigned char)data[j+i]);
+            line += sprintf(line, "\\x%.2x", static_cast<unsigned char>(data[j+i]));
         }
         line += sprintf(line, "\"");
         if (i < 16){
-            line += sprintf(line, "%*c", (unsigned)((16-i)*4), ' ');
+            line += sprintf(line, "%*c", static_cast<unsigned>((16-i)*4), ' ');
         }
         line += sprintf(line, " //");
         for (i = 0; i < 16; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = (unsigned)(data[j+i]);
+            unsigned char tmp = static_cast<unsigned>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~') || (tmp == '\\')){
                 tmp = '.';
             }
@@ -246,16 +246,16 @@ static inline void hexdump96_c(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "\\x%.2x", (unsigned char)data[j+i]);
+            line += sprintf(line, "\\x%.2x", static_cast<unsigned char>(data[j+i]));
         }
         line += sprintf(line, "\"");
         if (i < line_length){
-            line += sprintf(line, "%*c", (unsigned)((line_length-i)*4), ' ');
+            line += sprintf(line, "%*c", static_cast<unsigned>((line_length-i)*4), ' ');
         }
         line += sprintf(line, " //");
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = (unsigned)(data[j+i]);
+            unsigned char tmp = static_cast<unsigned>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')){
                 tmp = '.';
             }
@@ -285,16 +285,16 @@ static inline void hexdump8_c(const char * data, size_t size)
         size_t i = 0;
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            line += sprintf(line, "\\x%.2x", (unsigned char)data[j+i]);
+            line += sprintf(line, "\\x%.2x", static_cast<unsigned char>(data[j+i]));
         }
         line += sprintf(line, "\"");
         if (i < line_length){
-            line += sprintf(line, "%*c", (unsigned)((line_length-i)*4), ' ');
+            line += sprintf(line, "%*c", static_cast<unsigned>((line_length-i)*4), ' ');
         }
         line += sprintf(line, " //");
         for (i = 0; i < line_length; i++){
             if (j+i >= size){ break; }
-            unsigned char tmp = (unsigned)(data[j+i]);
+            unsigned char tmp = static_cast<unsigned>(data[j+i]);
             if ((tmp < ' ') || (tmp > '~')){
                 tmp = '.';
             }
@@ -311,7 +311,7 @@ static inline void hexdump8_c(const char * data, size_t size)
 
 static inline void hexdump8_c(const unsigned char * data, size_t size)
 {
-    hexdump8_c((const char*)data, size);
+    hexdump8_c(reinterpret_cast<const char*>(data), size);
 }
 
 #endif
