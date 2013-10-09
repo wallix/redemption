@@ -42,17 +42,50 @@ namespace rndfa {
         size_t utfc;
     };
 
-    std::ostream& operator<<(std::ostream& os, utf_char utf_c)
+    inline std::ostream& operator<<(std::ostream& os, utf_char utf_c)
     {
-        char c[sizeof(size_t)] = {utf_c.utfc & 0XFF};
-        char * p = c + 1;
-        size_t len = 1;
-        while ( utf_c.utfc >>= __CHAR_BIT__ ) {
-            ++len;
-            ++p;
+        char c[] = {
+            char((utf_c.utfc & 0XFF000000) >> 24),
+            char((utf_c.utfc & 0XFF0000) >> 16),
+            char((utf_c.utfc & 0XFF00) >> 8),
+            char(utf_c.utfc & 0XFF),
+        };
+        if (c[0]) {
+            return os.write(c, 4);
         }
-        std::reverse(c, p);
-        return os.write(c, len);
+        else if (c[1]) {
+            return os.write(c+1, 3);
+        }
+        else if (c[2]) {
+            return os.write(c+2, 2);
+        }
+        else
+            os.write(c+3, 1);
+        return os;
+    }
+
+    inline std::string& operator+=(std::string& str, utf_char utf_c)
+    {
+        char c[] = {
+            char((utf_c.utfc & 0XFF000000) >> 24),
+            char((utf_c.utfc & 0XFF0000) >> 16),
+            char((utf_c.utfc & 0XFF00) >> 8),
+            char(utf_c.utfc & 0XFF),
+        };
+        if (c[0]) {
+            str += c[0];
+            str += c[1];
+            str += c[2];
+        }
+        else if (c[1]) {
+            str += c[1];
+            str += c[2];
+        }
+        else if (c[2]) {
+            str += c[2];
+        }
+        str += c[3];
+        return str;
     }
 
     class utf_consumer
@@ -64,14 +97,24 @@ namespace rndfa {
 
         size_t bumpc()
         {
-            size_t cc = *this->s;
+            size_t c = *this->s & 0xFF;
             ++this->s;
-            while ((*this->s >> 6) == 2) {
-                cc <<= __CHAR_BIT__;
-                cc |= *this->s;
+            if ((*this->s & 0xFF) >> 6 == 2) {
+                c <<= 8;
+                c |= *this->s & 0xFF;
                 ++this->s;
+                if ((*this->s & 0xFF) >> 6 == 2) {
+                    c <<= 8;
+                    c |= *this->s & 0xFF;
+                    ++this->s;
+                    if ((*this->s & 0xFF) >> 6 == 2) {
+                        c <<= 8;
+                        c |= *this->s & 0xFF;
+                        ++this->s;
+                    }
+                }
             }
-            return cc;
+            return c;
         }
 
         size_t getc()
@@ -90,7 +133,7 @@ namespace rndfa {
         const char * s;
     };
 
-    bool utf_contains(const char * str, size_t c)
+    inline bool utf_contains(const char * str, size_t c)
     {
         utf_consumer consumer(str);
         while (consumer.valid()) {
@@ -184,7 +227,7 @@ namespace rndfa {
         StateBase *out2;
     };
 
-    std::ostream& operator<<(std::ostream& os, StateBase& st)
+    inline std::ostream& operator<<(std::ostream& os, StateBase& st)
     {
         st.display(os);
         return os;
@@ -958,7 +1001,7 @@ namespace rndfa {
                     }
                 }
 
-                return (RangeList*)1;
+                return reinterpret_cast<RangeList*>(1);
             }
 
             bool exact_search(const char * s, unsigned step_limit, bool check_end = true)
@@ -975,7 +1018,7 @@ namespace rndfa {
 
                 unsigned step_count = 0;
 
-                while (consumer.valid() && l > (void*)1){
+                while (consumer.valid() && l > reinterpret_cast<void*>(1)){
 #ifdef DISPLAY_TRACE
                     std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
 #endif
@@ -989,7 +1032,7 @@ namespace rndfa {
                 if ((0 == l && (check_end ? !consumer.valid() : 1))) {
                     return true;
                 }
-                if ((RangeList*)1 == l || consumer.valid()) {
+                if (reinterpret_cast<void*>(1) == l || consumer.valid()) {
                     return false;
                 }
 
@@ -1341,22 +1384,22 @@ namespace rndfa {
         RangeList st_range_beginning;
     };
 
-    StateBase * new_character(size_t c, StateBase * out1 = 0)
+    inline StateBase * new_character(size_t c, StateBase * out1 = 0)
     {
         return new StateBase(NORMAL, c, out1);
     }
 
-    StateBase * new_any(StateBase * out1 = 0)
+    inline StateBase * new_any(StateBase * out1 = 0)
     {
         return new StateBase(ANY_CHARACTER, 0, out1);
     }
 
-    StateBase * new_split(StateBase * out1 = 0, StateBase * out2 = 0)
+    inline StateBase * new_split(StateBase * out1 = 0, StateBase * out2 = 0)
     {
         return new StateBase(SPLIT, 0, out1, out2);
     }
 
-    StateBase * c2st(size_t c)
+    inline StateBase * c2st(size_t c)
     {
         switch (c) {
             case 'd': return new StateDigit;
@@ -1373,7 +1416,7 @@ namespace rndfa {
         }
     }
 
-    const char * check_interval(size_t a, size_t b)
+    inline const char * check_interval(size_t a, size_t b)
     {
         bool valid = ('0' <= a && a <= '9' && '0' <= b && b <= '9')
                   || ('a' <= a && a <= 'z' && 'a' <= b && b <= 'z')
@@ -1381,7 +1424,7 @@ namespace rndfa {
         return (valid && a <= b) ? 0 : "range out of order in character class";
     }
 
-    StateBase * str2stchar(utf_consumer & consumer, size_t c, const char * & msg_err)
+    inline StateBase * str2stchar(utf_consumer & consumer, size_t c, const char * & msg_err)
     {
         if (c == '\\' && consumer.valid()) {
             return c2st(consumer.bumpc());
@@ -1417,11 +1460,11 @@ namespace rndfa {
                                 case 't': str += '\t'; break;
                                 case 'r': str += '\r'; break;
                                 case 'v': str += '\v'; break;
-                                default : str += cc; break;
+                                default : str += utf_char(cc); break;
                             }
                         }
                         else {
-                            str += c;
+                            str += utf_char(c);
                         }
 
                         if ( ! consumer.valid()) {
@@ -1481,7 +1524,7 @@ namespace rndfa {
         return c == '.' ? new_any() : new_character(c);
     }
 
-    bool is_range_repetition(const char * s)
+    inline bool is_range_repetition(const char * s)
     {
         const char * begin = s;
         while (*s && '0' <= *s && *s <= '9') {
@@ -1500,7 +1543,7 @@ namespace rndfa {
         return *s && *s == '}';
     }
 
-    bool is_meta_char(utf_consumer & consumer, size_t c)
+    inline bool is_meta_char(utf_consumer & consumer, size_t c)
     {
         return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.s));
     }
@@ -1513,7 +1556,7 @@ namespace rndfa {
         }
     };
 
-    void append_state(StateBase * st, std::vector<StateBase*>& sts)
+    inline void append_state(StateBase * st, std::vector<StateBase*>& sts)
     {
         if (st && st->id != -4u) {
             st->id = -4u;
@@ -1523,7 +1566,7 @@ namespace rndfa {
         }
     }
 
-    void append_state_whitout_finish(StateBase * st, std::vector<StateBase*>& sts)
+    inline void append_state_whitout_finish(StateBase * st, std::vector<StateBase*>& sts)
     {
         if (st && st->id != -4u && st != &state_finish) {
             st->id = -4u;
@@ -1533,7 +1576,7 @@ namespace rndfa {
         }
     }
 
-    void free_st(StateBase * st)
+    inline void free_st(StateBase * st)
     {
         std::vector<StateBase*> sts;
         append_state_whitout_finish(st, sts);
@@ -1600,9 +1643,10 @@ namespace rndfa {
 
     typedef std::pair<StateBase*, StateBase**> IntermendaryState;
 
-    IntermendaryState intermendary_str2reg(utf_consumer & consumer,
-                                           bool & has_epsilone, const char * & msg_err,
-                                           int recusive = 0, bool ismatch = true)
+    inline IntermendaryState intermendary_str2reg(utf_consumer & consumer,
+                                                  bool & has_epsilone,
+                                                  const char * & msg_err,
+                                                  int recusive = 0, bool ismatch = true)
     {
         struct FreeState {
             static IntermendaryState invalide(StateBase& st)
@@ -1912,7 +1956,7 @@ namespace rndfa {
         return IntermendaryState(st.out1, pst);
     }
 
-    void remove_epsilone(StateBase * st, std::vector<StateBase*>& epsilone_sts)
+    inline void remove_epsilone(StateBase * st, std::vector<StateBase*>& epsilone_sts)
     {
         if (st && st->id != -3u) {
             st->id = -3u;
@@ -1930,7 +1974,8 @@ namespace rndfa {
         }
     }
 
-    StateBase* str2reg(const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
+    inline StateBase* str2reg(const char * s, const char * * msg_err = 0,
+                              size_t * pos_err = 0)
     {
         bool has_epsilone = false;
         const char * err = 0;
@@ -1953,7 +1998,7 @@ namespace rndfa {
         return st;
     }
 
-    void display_state(StateBase * st, unsigned depth = 0)
+    inline void display_state(StateBase * st, unsigned depth = 0)
     {
         if (st && st->id != -1u-1u) {
             std::string s(depth, '\t');

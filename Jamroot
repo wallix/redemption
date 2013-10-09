@@ -89,7 +89,7 @@ project redemption
     <include>FreeRDP/include
     <conditional>@defines
 #    <cxxflags>-pedantic
-#     <cxxflags>-Wconversion
+#    <cxxflags>-Wconversion
     <cxxflags>-Wvla
     <cxxflags>-Wstrict-aliasing=2
 #    <cxxflags>-Wold-style-cast
@@ -97,6 +97,32 @@ project redemption
     <cxxflags>-O3
     <cxxflags>-Wuninitialized
     <cxxflags>-Wnon-virtual-dtor
+#     <cxxflags>-Wall
+#     <cxxflags>-Wextra
+#     <cxxflags>-Wundef
+#     <cxxflags>-Wcast-align
+#     <cxxflags>-Wchar-subscripts
+#     <cxxflags>-Wformat-security
+#     <cxxflags>-Wunreachable-code
+#     <cxxflags>-Wformat
+#     <cxxflags>-Wformat=2
+#     <cxxflags>-Werror-implicit-function-declaration
+#     <cxxflags>-Wsequence-point
+#     <cxxflags>-Wreturn-type
+#     <cxxflags>-Wfloat-equal
+#     <cxxflags>-Wshadow
+#     <cxxflags>-Wpointer-arith
+#     <cxxflags>-Wsign-compare
+#     <cxxflags>-Wmissing-declarations
+#     <cxxflags>-Wmissing-format-attribute
+#     <cxxflags>-Wpacked
+#     <cxxflags>-Wredundant-decls
+#     <cxxflags>-Winline
+#     <cxxflags>-Wdouble-promotion
+#     <cxxflags>-Winit-self
+#     <cxxflags>-Wcast-qual
+#     <cxxflags>-Wold-style-cast
+#     <cxxflags>-Woverloaded-virtual
     <cxxflags>-fpie
     <define>PUBLIC
    : default-build release

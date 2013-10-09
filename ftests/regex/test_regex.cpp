@@ -57,10 +57,14 @@ std::string st_to_string(StateBase * st)
 {
     std::vector<StateBase*> states(1);
     append_state(st, states);
-    std::stringbuf sbuf;
-    std::ostream os(&sbuf);
+    std::ostringstream os;
     st_to_string(st, os, states);
-    return sbuf.str();
+    return os.str();
+}
+
+size_t multi_char(const char * c)
+{
+    return rndfa::utf_consumer(c).bumpc();
 }
 
 BOOST_AUTO_TEST_CASE(TestRegexState)
@@ -247,16 +251,24 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         Reg rgx("(\\d*)");
         BOOST_CHECK_EQUAL(st_to_string(&open1), rgx.to_string());
     }
+    {
+        StateBase st_c4(NORMAL, multi_char("Þ"));
+        StateBase st_c3(NORMAL, 'a', &st_c4);
+        StateBase st_c2(NORMAL, multi_char("Ë"), &st_c3);
+        StateBase st_c1(NORMAL, multi_char("¥"), &st_c2);
+        Reg rgx("¥ËaÞ");
+        BOOST_CHECK_EQUAL(st_to_string(&st_c1), rgx.to_string());
+    }
 }
 
 inline void regex_test(Regex & p_regex,
-                        const char * p_str,
-                        const int p_exact_result_search,
-                        const int p_result_search,
-                        const int p_exact_result_match,
-                        const Regex::range_matches & p_exact_match_result,
-                        const bool p_result_match,
-                        const Regex::range_matches & p_match_result)
+                       const char * p_str,
+                       const int p_exact_result_search,
+                       const int p_result_search,
+                       const int p_exact_result_match,
+                       const Regex::range_matches & p_exact_match_result,
+                       const bool p_result_match,
+                       const Regex::range_matches & p_match_result)
 {
     BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);
     BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);

@@ -123,6 +123,8 @@ int main(int argc, char **argv) {
                         }
                         int start = m[i].rm_so + (s - str);
                         int finish = m[i].rm_eo + (s - str);
+                        (void)start;
+                        (void)finish;
                         //std::cout.write(str+start, finish-start) << "\n";
                     }
                     s += m[0].rm_eo;
