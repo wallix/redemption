@@ -220,6 +220,106 @@ namespace rndfa {
 
     StateFinish state_finish = StateFinish();
 
+    struct StateRange : StateBase
+    {
+        StateRange(size_t r1, size_t r2, StateBase* out1 = 0, StateBase* out2 = 0)
+        : StateBase(NORMAL, r1, out1, out2)
+        , rend(r2)
+        {}
+
+        virtual ~StateRange()
+        {}
+
+        virtual bool check(size_t c)
+        {
+            /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
+            return this->utfc <= c && c <= rend;
+        }
+
+        virtual StateBase * clone() const
+        {
+            return new StateRange(this->utfc, this->rend);
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "[" << utf_char(this->utfc) << "-" << utf_char(this->rend) << "]";
+        }
+
+        size_t rend;
+    };
+
+    template<char Identifier, typename Trait>
+    struct StateIdentifier : StateBase
+    {
+        StateIdentifier(StateBase* out1 = 0, StateBase* out2 = 0)
+        : StateBase(NORMAL, 0, out1, out2)
+        {}
+
+        virtual ~StateIdentifier()
+        {}
+
+        virtual StateIdentifier * clone() const
+        {
+            return new StateIdentifier;
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "\\" << Identifier;
+        }
+
+        virtual bool check(size_t c)
+        { return Trait::check(c); }
+    };
+
+    struct IdentifierDigitTrait
+    {
+        static bool check(size_t c)
+        {
+            return ('0' <= c && c <= '9');
+        }
+    };
+
+    struct IdentifierWordTrait
+    {
+        static bool check(size_t c)
+        {
+            return ('a' <= c && c <= 'z')
+                || ('A' <= c && c <= 'Z')
+                || ('0' <= c && c <= '9')
+                || c == '_';
+        }
+    };
+
+    struct IdentifierSpaceTrait
+    {
+        static bool check(size_t c)
+        {
+            return (' ' == c || '\t' == c || '\n' == c);
+        }
+    };
+
+    template<typename Trait>
+    struct IdentifierNoTrait
+    {
+        static bool check(size_t c)
+        {
+            return !Trait::check(c);
+        }
+    };
+
+    typedef IdentifierNoTrait<IdentifierWordTrait>  IdentifierNoWordTrait;
+    typedef IdentifierNoTrait<IdentifierDigitTrait> IdentifierNoDigitTrait;
+    typedef IdentifierNoTrait<IdentifierSpaceTrait> IdentifierNoSpaceTrait;
+
+    typedef StateIdentifier<'w', IdentifierWordTrait>       StateWord;
+    typedef StateIdentifier<'W', IdentifierNoWordTrait>     IdentifierNoWord;
+    typedef StateIdentifier<'d', IdentifierDigitTrait>      StateDigit;
+    typedef StateIdentifier<'D', IdentifierNoDigitTrait>    IdentifierNoDigit;
+    typedef StateIdentifier<'s', IdentifierSpaceTrait>      StateSpace;
+    typedef StateIdentifier<'S', IdentifierNoSpaceTrait>    IdentifierNoSpace;
+
     struct StateCharacters : StateBase
     {
         StateCharacters(const std::string& s, StateBase* out1 = 0, StateBase* out2 = 0)
@@ -397,6 +497,38 @@ namespace rndfa {
         size_t begin;
         size_t end;
     };
+
+    template<char Identifier, typename Trait>
+    struct CheckerIdentifier : StateMultiTest::Checker
+    {
+        CheckerIdentifier()
+        {}
+
+        virtual ~CheckerIdentifier()
+        {}
+
+        virtual bool check(size_t c)
+        {
+            return Trait::check(c);
+        }
+
+        virtual Checker* clone() const
+        {
+            return new CheckerIdentifier;
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "\\" << Identifier;
+        }
+    };
+
+    typedef CheckerIdentifier<'w', IdentifierWordTrait>     CheckerWord;
+    typedef CheckerIdentifier<'W', IdentifierNoWordTrait>   CheckerNoWord;
+    typedef CheckerIdentifier<'d', IdentifierDigitTrait>    CheckerDigit;
+    typedef CheckerIdentifier<'D', IdentifierNoDigitTrait>  CheckerNoDigit;
+    typedef CheckerIdentifier<'s', IdentifierSpaceTrait>    CheckerSpace;
+    typedef CheckerIdentifier<'S', IdentifierNoSpaceTrait>  CheckerNoSpace;
 
 
     class StateMachine2
@@ -1224,29 +1356,35 @@ namespace rndfa {
         return new StateBase(SPLIT, 0, out1, out2);
     }
 
-    size_t c2rgxc(size_t c)
+    StateBase * c2st(size_t c)
     {
         switch (c) {
-            case 'n': return '\n';
-            case 't': return '\t';
-            case 'r': return '\r';
-            case 'v': return '\v';
-            default : return c;
+            case 'd': return new StateDigit;
+            case 'D': return new IdentifierNoDigit;
+            case 'w': return new StateWord;
+            case 'W': return new IdentifierNoWord;
+            case 's': return new StateSpace;
+            case 'S': return new IdentifierNoSpace;
+            case 'n': return new_character('\n');
+            case 't': return new_character('\t');
+            case 'r': return new_character('\r');
+            //case 'v': return new_character('\v');
+            default : return new_character(c);
         }
     }
 
     const char * check_interval(size_t a, size_t b)
     {
         bool valid = ('0' <= a && a <= '9' && '0' <= b && b <= '9')
-        || ('a' <= a && a <= 'z' && 'a' <= b && b <= 'z')
-        || ('A' <= a && a <= 'Z' && 'A' <= b && b <= 'Z');
+                  || ('a' <= a && a <= 'z' && 'a' <= b && b <= 'z')
+                  || ('A' <= a && a <= 'Z' && 'A' <= b && b <= 'Z');
         return (valid && a <= b) ? 0 : "range out of order in character class";
     }
 
     StateBase * str2stchar(utf_consumer & consumer, size_t c, const char * & msg_err)
     {
         if (c == '\\' && consumer.valid()) {
-            return new_character(c2rgxc(consumer.bumpc()));
+            return c2st(consumer.bumpc());
         }
 
         if (c == '[') {
@@ -1267,7 +1405,20 @@ namespace rndfa {
                     size_t prev_c = c;
                     while (c != ']' && c != '-') {
                         if (c == '\\') {
-                            str += c2rgxc(consumer.bumpc());
+                            size_t cc = consumer.bumpc();
+                            switch (cc) {
+                                case 'd': st->push_checker(new CheckerDigit); break;
+                                case 'D': st->push_checker(new CheckerNoDigit); break;
+                                case 'w': st->push_checker(new CheckerWord); break;
+                                case 'W': st->push_checker(new CheckerNoWord); break;
+                                case 's': st->push_checker(new CheckerSpace); break;
+                                case 'S': st->push_checker(new CheckerNoSpace); break;
+                                case 'n': str += '\n'; break;
+                                case 't': str += '\t'; break;
+                                case 'r': str += '\r'; break;
+                                case 'v': str += '\v'; break;
+                                default : str += cc; break;
+                            }
                         }
                         else {
                             str += c;

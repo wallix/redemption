@@ -238,6 +238,15 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
             BOOST_CHECK_EQUAL(st_to_string(&st_a4), rgx.to_string());
         }
     }
+    {
+        StateBase close1(CAPTURE_CLOSE);
+        StateDigit digit;
+        StateBase split(SPLIT, 0, &close1, &digit);
+        digit.out1 = &split;
+        StateBase open1(CAPTURE_OPEN, 0, &split);
+        Reg rgx("(\\d*)");
+        BOOST_CHECK_EQUAL(st_to_string(&open1), rgx.to_string());
+    }
 }
 
 inline void regex_test(Regex & p_regex,
