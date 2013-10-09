@@ -410,7 +410,7 @@ namespace MCS
         
         void out_ber_len(unsigned int v){
             if (v < 0x80){
-                this->stream.out_uint8((uint8_t)v);            
+                this->stream.out_uint8(static_cast<uint8_t>(v));            
             }
             else if (v < 0x100) {
                 this->stream.out_uint8(0x81);
@@ -426,18 +426,18 @@ namespace MCS
             this->stream.out_uint8(BER_TAG_INTEGER);
             if (v < 0x80) {
                 this->stream.out_uint8(1);
-                this->stream.out_uint8((uint8_t)v);
+                this->stream.out_uint8(static_cast<uint8_t>(v));
             }
             else if (v < 0xfff8) { // Actually ffff should also work, but it would break old code
                 this->stream.out_uint8(2);
                 this->stream.out_uint8((uint8_t)(v >> 8));
-                this->stream.out_uint8((uint8_t)v);
+                this->stream.out_uint8(static_cast<uint8_t>(v));
             }
             else {
                 this->stream.out_uint8(3);
                 this->stream.out_uint8((uint8_t)(v >> 16));
                 this->stream.out_uint8((uint8_t)(v >> 8));
-                this->stream.out_uint8((uint8_t)v);            
+                this->stream.out_uint8(static_cast<uint8_t>(v));            
             }
         }
 
@@ -454,7 +454,7 @@ namespace MCS
                 LOG(LOG_INFO, "Value too large for out_ber_len_uint7");
                 throw Error(ERR_STREAM_VALUE_TOO_LARGE_FOR_OUT_BER_LEN_UINT7);
             }
-            this->stream.out_uint8((uint8_t)v);
+            this->stream.out_uint8(static_cast<uint8_t>(v));
         }
 
         void set_out_ber_len_uint16(unsigned int v, size_t offset){
@@ -474,7 +474,7 @@ namespace MCS
                 this->stream.set_out_uint16_be(v, offset+1);
             }
             else {
-                (this->stream.get_data())[offset+0] = (uint8_t)v;
+                (this->stream.get_data())[offset+0] = static_cast<uint8_t>(v);
             }
         }
         

@@ -283,7 +283,7 @@ public:
 
     void out_2BUE(uint16_t v){
         if (v <= 127){
-            this->out_uint8((uint8_t)v);
+            this->out_uint8(static_cast<uint8_t>(v));
         }
         else {
             this->out_uint16_be(v|0x8000);
@@ -713,10 +713,10 @@ public:
             this->out_uint32_be(integer);
             break;
         case 2:
-            this->out_uint16_be((uint16_t)integer);
+            this->out_uint16_be(static_cast<uint16_t>(integer));
             break;
         default:
-            this->out_uint8((uint8_t)integer);
+            this->out_uint8(static_cast<uint8_t>(integer));
             break;
         }
     }
@@ -970,7 +970,7 @@ class BStream : public Stream {
             catch (...){
                 this->data = 0;
                 this->capacity = 0;
-                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", (int)v);
+                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(v));
                 throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
             }
         }
@@ -1011,7 +1011,7 @@ public:
             LOG( LOG_ERR
                , "reserved leading space too small : size available = %d, size asked = %d\n"
                , this->data_start - this->data
-               , (int)n);
+               , static_cast<int>(n));
             throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
         }
     }
@@ -1026,7 +1026,7 @@ public:
             LOG( LOG_ERR
                , "reserved leading space too small : size available = %d, size asked = %d\n"
                , this->data_start - this->data
-               , (int)n);
+               , static_cast<int>(n));
             throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
         }
     }
@@ -1042,7 +1042,7 @@ public:
             LOG( LOG_ERR
                , "reserved leading space too small : size available = %d, size asked = %d\n"
                , this->data_start - this->data
-               , (int)n);
+               , static_cast<int>(n));
             throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
         }
     }
@@ -1270,7 +1270,7 @@ protected:
             if (this->buffer_ptr != this->auto_buffer) { free(this->buffer_ptr); }
             this->buffer_ptr = static_cast<uint8_t*>((cap > AUTOSIZE)?malloc(cap):this->auto_buffer);
             if (!this->buffer_ptr){
-                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", (int)cap);
+                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(cap));
                 throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
             }
         }

@@ -160,7 +160,7 @@ class ssllib
         BN_mod_exp(&y, &x, &exp, &mod, ctx);
         outlen = BN_bn2bin(&y, out);
         reverseit(out, outlen);
-        if (outlen < (int)modulus_size){
+        if (outlen < static_cast<int>(modulus_size)){
             memset(out + outlen, 0, modulus_size - outlen);
         }
         BN_free(&y);

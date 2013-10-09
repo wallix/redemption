@@ -48,14 +48,14 @@ BOOST_AUTO_TEST_CASE(TestCapabilityInputEmit)
         test_input[i] = i;
     }
 
-    BOOST_CHECK_EQUAL(input_caps.capabilityType, (uint16_t)CAPSTYPE_INPUT);
-    BOOST_CHECK_EQUAL(input_caps.len, (uint16_t)CAPLEN_INPUT);
-    BOOST_CHECK_EQUAL(input_caps.inputFlags, (uint16_t) INPUT_FLAG_FASTPATH_INPUT2);
-    BOOST_CHECK_EQUAL(input_caps.pad2octetsA, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(input_caps.keyboardLayout, (uint32_t) 2);
-    BOOST_CHECK_EQUAL(input_caps.keyboardType, (uint32_t) 3);
-    BOOST_CHECK_EQUAL(input_caps.keyboardSubType, (uint32_t) 4);
-    BOOST_CHECK_EQUAL(input_caps.keyboardFunctionKey, (uint32_t) 5);
+    BOOST_CHECK_EQUAL(input_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_INPUT));
+    BOOST_CHECK_EQUAL(input_caps.len, static_cast<uint16_t>(CAPLEN_INPUT));
+    BOOST_CHECK_EQUAL(input_caps.inputFlags, static_cast<uint16_t>(INPUT_FLAG_FASTPATH_INPUT2));
+    BOOST_CHECK_EQUAL(input_caps.pad2octetsA, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(input_caps.keyboardLayout, static_cast<uint32_t>(2));
+    BOOST_CHECK_EQUAL(input_caps.keyboardType, static_cast<uint32_t>(3));
+    BOOST_CHECK_EQUAL(input_caps.keyboardSubType, static_cast<uint32_t>(4));
+    BOOST_CHECK_EQUAL(input_caps.keyboardFunctionKey, static_cast<uint32_t>(5));
     for (size_t i = 0; i< 32; i++){
         BOOST_CHECK_EQUAL(input_caps.imeFileName[i], test_input[i]);
     }
@@ -67,19 +67,19 @@ BOOST_AUTO_TEST_CASE(TestCapabilityInputEmit)
 
     InputCaps input_caps2;
 
-    BOOST_CHECK_EQUAL(input_caps2.capabilityType, (uint16_t)CAPSTYPE_INPUT);
-    BOOST_CHECK_EQUAL(input_caps2.len, (uint16_t)CAPLEN_INPUT);
+    BOOST_CHECK_EQUAL(input_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_INPUT));
+    BOOST_CHECK_EQUAL(input_caps2.len, static_cast<uint16_t>(CAPLEN_INPUT));
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_INPUT, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_INPUT, stream.in_uint16_le());
     input_caps2.recv(stream, CAPLEN_INPUT);
 
-    BOOST_CHECK_EQUAL(input_caps2.inputFlags, (uint16_t) INPUT_FLAG_FASTPATH_INPUT2);
-    BOOST_CHECK_EQUAL(input_caps2.pad2octetsA, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(input_caps2.keyboardLayout, (uint32_t) 2);
-    BOOST_CHECK_EQUAL(input_caps2.keyboardType, (uint32_t) 3);
-    BOOST_CHECK_EQUAL(input_caps2.keyboardSubType, (uint32_t) 4);
-    BOOST_CHECK_EQUAL(input_caps2.keyboardFunctionKey, (uint32_t) 5);
+    BOOST_CHECK_EQUAL(input_caps2.inputFlags, static_cast<uint16_t>(INPUT_FLAG_FASTPATH_INPUT2));
+    BOOST_CHECK_EQUAL(input_caps2.pad2octetsA, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(input_caps2.keyboardLayout, static_cast<uint32_t>(2));
+    BOOST_CHECK_EQUAL(input_caps2.keyboardType, static_cast<uint32_t>(3));
+    BOOST_CHECK_EQUAL(input_caps2.keyboardSubType, static_cast<uint32_t>(4));
+    BOOST_CHECK_EQUAL(input_caps2.keyboardFunctionKey, static_cast<uint32_t>(5));
     for (size_t i = 0; i< 32; i++){
         BOOST_CHECK_EQUAL(input_caps2.imeFileName[i], test_input[i]);
     }

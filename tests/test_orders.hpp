@@ -30,13 +30,13 @@ void check_datas(size_t lg_data, uint8_t * data,
 {
     size_t lg_min = std::min(lg_result,lg_data);
     if (lg_result != lg_data){
-        printf("Got      %u:", (unsigned)lg_data);
+        printf("Got      %u:", static_cast<unsigned>(lg_data));
         size_t j = 0;
         for (j = 0; j < lg_data; j++){
             printf(" %.2x,", data[j]);
         }
         printf("\n");
-        printf("Expected %u:", (unsigned)lg_result);
+        printf("Expected %u:", static_cast<unsigned>(lg_result));
         for (j = 0; j < lg_result; j++){
             printf(" %.2x,", expected_result[j]);
         }
@@ -59,12 +59,12 @@ void check_datas(size_t lg_data, uint8_t * data,
 
     for (size_t i = 0; i < lg_result; i++){
         if (expected_result[i] != data[i]){
-            printf("Got      %u:", (unsigned)lg_data);
+            printf("Got      %u:", static_cast<unsigned>(lg_data));
             for (size_t j = 0; j < lg_data; j++){
                 printf(" %.2x,", data[j]);
             }
             printf("\n");
-            printf("Expected %u:", (unsigned)lg_result);
+            printf("Expected %u:", static_cast<unsigned>(lg_result));
             for (size_t j = 0; j < lg_result; j++){
                 printf(" %.2x,", expected_result[j]);
             }

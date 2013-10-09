@@ -471,9 +471,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_AttachUserConfirm_with_userid)
     MCS::AttachUserConfirm_Recv mcs(stream, MCS::PER_ENCODING);
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_AttachUserConfirm , mcs.type);
-    BOOST_CHECK_EQUAL((uint8_t)0 , mcs.result);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(0) , mcs.result);
     BOOST_CHECK_EQUAL(true , mcs.initiator_flag);
-    BOOST_CHECK_EQUAL((uint16_t)1 , mcs.initiator);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1) , mcs.initiator);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_ChannelJoinRequest)
@@ -545,10 +545,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_ChannelJoinConfirm , mcs.type);
     BOOST_CHECK_EQUAL((uint8_t)MCS::RT_SUCCESSFUL , mcs.result);
-    BOOST_CHECK_EQUAL((uint16_t)3 , mcs.initiator);
-    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.requested);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(3) , mcs.initiator);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.requested);
     BOOST_CHECK_EQUAL(true , mcs.channelId_flag);
-    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
@@ -614,10 +614,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataRequest , mcs.type);
     BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
-    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
-    BOOST_CHECK_EQUAL((uint8_t)1 , mcs.dataPriority);
-    BOOST_CHECK_EQUAL((uint8_t)3 , mcs.segmentation);
-    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_size);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload_size);
 }
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
@@ -683,9 +683,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
 
     BOOST_CHECK_EQUAL((uint8_t)MCS::MCSPDU_SendDataIndication , mcs.type);
     BOOST_CHECK_EQUAL((uint16_t)3, mcs.initiator);
-    BOOST_CHECK_EQUAL((uint16_t)1004 , mcs.channelId);
-    BOOST_CHECK_EQUAL((uint8_t)1 , mcs.dataPriority);
-    BOOST_CHECK_EQUAL((uint8_t)3 , mcs.segmentation);
-    BOOST_CHECK_EQUAL((uint16_t)379 , mcs.payload_size);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(1004) , mcs.channelId);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(1) , mcs.dataPriority);
+    BOOST_CHECK_EQUAL(static_cast<uint8_t>(3) , mcs.segmentation);
+    BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload_size);
 }
 
