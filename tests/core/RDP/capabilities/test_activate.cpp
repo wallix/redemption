@@ -40,10 +40,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
 
     BOOST_CHECK_EQUAL(activation_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_ACTIVATION));
     BOOST_CHECK_EQUAL(activation_caps.len, static_cast<uint16_t>(CAPLEN_ACTIVATION));
-    BOOST_CHECK_EQUAL(activation_caps.helpKeyFlag, (uint16_t) 0);
-    BOOST_CHECK_EQUAL(activation_caps.helpKeyIndexFlag, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(activation_caps.helpExtendedKeyFlag, (uint16_t) 2);
-    BOOST_CHECK_EQUAL(activation_caps.windowManagerKeyFlag, (uint16_t) 3);
+    BOOST_CHECK_EQUAL(activation_caps.helpKeyFlag, static_cast<uint16_t>(0));
+    BOOST_CHECK_EQUAL(activation_caps.helpKeyIndexFlag, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(activation_caps.helpExtendedKeyFlag, static_cast<uint16_t>(2));
+    BOOST_CHECK_EQUAL(activation_caps.windowManagerKeyFlag, static_cast<uint16_t>(3));
 
     BStream stream(1024);
     activation_caps.emit(stream);
@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityActivationEmit)
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_ACTIVATION, stream.in_uint16_le());
     activation_caps2.recv(stream, CAPLEN_ACTIVATION);
 
-    BOOST_CHECK_EQUAL(activation_caps2.helpKeyFlag, (uint16_t) 0);
-    BOOST_CHECK_EQUAL(activation_caps2.helpKeyIndexFlag, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(activation_caps2.helpExtendedKeyFlag, (uint16_t) 2);
-    BOOST_CHECK_EQUAL(activation_caps2.windowManagerKeyFlag, (uint16_t) 3);
+    BOOST_CHECK_EQUAL(activation_caps2.helpKeyFlag, static_cast<uint16_t>(0));
+    BOOST_CHECK_EQUAL(activation_caps2.helpKeyIndexFlag, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(activation_caps2.helpExtendedKeyFlag, static_cast<uint16_t>(2));
+    BOOST_CHECK_EQUAL(activation_caps2.windowManagerKeyFlag, static_cast<uint16_t>(3));
 }

@@ -38,9 +38,9 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
 
     BOOST_CHECK_EQUAL(offscreencache_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_OFFSCREENCACHE));
     BOOST_CHECK_EQUAL(offscreencache_caps.len, static_cast<uint16_t>(CAPLEN_OFFSCREENCACHE));
-    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenSupportLevel, (uint32_t) 1);
-    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenCacheSize, (uint16_t) 7680);
-    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenCacheEntries, (uint16_t) 500);
+    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenSupportLevel, static_cast<uint32_t>(1));
+    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenCacheSize, static_cast<uint16_t>(7680));
+    BOOST_CHECK_EQUAL(offscreencache_caps.offscreenCacheEntries, static_cast<uint16_t>(500));
 
     BStream stream(1024);
     offscreencache_caps.emit(stream);
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_OFFSCREENCACHE, stream.in_uint16_le());
     offscreencache_caps2.recv(stream, CAPLEN_OFFSCREENCACHE);
 
-    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenSupportLevel, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenCacheSize, (uint16_t) 7680);
-    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenCacheEntries, (uint16_t) 500);
+    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenSupportLevel, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenCacheSize, static_cast<uint16_t>(7680));
+    BOOST_CHECK_EQUAL(offscreencache_caps2.offscreenCacheEntries, static_cast<uint16_t>(500));
 }

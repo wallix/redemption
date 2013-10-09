@@ -40,19 +40,19 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
 
     BOOST_CHECK_EQUAL(bitmap_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAP));
     BOOST_CHECK_EQUAL(bitmap_caps.len, static_cast<uint16_t>(CAPLEN_BITMAP));
-    BOOST_CHECK_EQUAL(bitmap_caps.preferredBitsPerPixel, (uint16_t)24);
-    BOOST_CHECK_EQUAL(bitmap_caps.receive1BitPerPixel, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps.receive4BitsPerPixel, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps.receive8BitsPerPixel, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps.desktopWidth, (uint16_t)800);
-    BOOST_CHECK_EQUAL(bitmap_caps.desktopHeight, (uint16_t)600);
-    BOOST_CHECK_EQUAL(bitmap_caps.pad2octets, (uint16_t)0);
-    BOOST_CHECK_EQUAL(bitmap_caps.desktopResizeFlag, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps.bitmapCompressionFlag, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps.highColorFlags, (uint8_t)0);
-    BOOST_CHECK_EQUAL(bitmap_caps.drawingFlags, (uint8_t)0);
-    BOOST_CHECK_EQUAL(bitmap_caps.multipleRectangleSupport, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps.pad2octetsB, (uint16_t)0);
+    BOOST_CHECK_EQUAL(bitmap_caps.preferredBitsPerPixel, static_cast<uint16_t>(24));
+    BOOST_CHECK_EQUAL(bitmap_caps.receive1BitPerPixel, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps.receive4BitsPerPixel, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps.receive8BitsPerPixel, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps.desktopWidth, static_cast<uint16_t>(800));
+    BOOST_CHECK_EQUAL(bitmap_caps.desktopHeight, static_cast<uint16_t>(600));
+    BOOST_CHECK_EQUAL(bitmap_caps.pad2octets, static_cast<uint16_t>(0));
+    BOOST_CHECK_EQUAL(bitmap_caps.desktopResizeFlag, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps.bitmapCompressionFlag, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps.highColorFlags, static_cast<uint8_t>(0));
+    BOOST_CHECK_EQUAL(bitmap_caps.drawingFlags, static_cast<uint8_t>(0));
+    BOOST_CHECK_EQUAL(bitmap_caps.multipleRectangleSupport, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps.pad2octetsB, static_cast<uint16_t>(0));
 
     BStream stream(1024);
     bitmap_caps.emit(stream);
@@ -69,17 +69,17 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
 
     bitmap_caps2.recv(stream, CAPLEN_BITMAP);
 
-    BOOST_CHECK_EQUAL(bitmap_caps2.preferredBitsPerPixel, (uint16_t)24);
-    BOOST_CHECK_EQUAL(bitmap_caps2.receive1BitPerPixel, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps2.receive4BitsPerPixel, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps2.receive8BitsPerPixel, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps2.desktopWidth, (uint16_t)800);
-    BOOST_CHECK_EQUAL(bitmap_caps2.desktopHeight, (uint16_t)600);
-    BOOST_CHECK_EQUAL(bitmap_caps2.pad2octets, (uint16_t)0);
-    BOOST_CHECK_EQUAL(bitmap_caps2.desktopResizeFlag, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps2.bitmapCompressionFlag, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps2.highColorFlags, (uint8_t)0);
-    BOOST_CHECK_EQUAL(bitmap_caps2.drawingFlags, (uint8_t)0);
-    BOOST_CHECK_EQUAL(bitmap_caps2.multipleRectangleSupport, (uint16_t)1);
-    BOOST_CHECK_EQUAL(bitmap_caps2.pad2octetsB, (uint16_t)0);
+    BOOST_CHECK_EQUAL(bitmap_caps2.preferredBitsPerPixel, static_cast<uint16_t>(24));
+    BOOST_CHECK_EQUAL(bitmap_caps2.receive1BitPerPixel, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps2.receive4BitsPerPixel, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps2.receive8BitsPerPixel, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps2.desktopWidth, static_cast<uint16_t>(800));
+    BOOST_CHECK_EQUAL(bitmap_caps2.desktopHeight, static_cast<uint16_t>(600));
+    BOOST_CHECK_EQUAL(bitmap_caps2.pad2octets, static_cast<uint16_t>(0));
+    BOOST_CHECK_EQUAL(bitmap_caps2.desktopResizeFlag, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps2.bitmapCompressionFlag, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps2.highColorFlags, static_cast<uint8_t>(0));
+    BOOST_CHECK_EQUAL(bitmap_caps2.drawingFlags, static_cast<uint8_t>(0));
+    BOOST_CHECK_EQUAL(bitmap_caps2.multipleRectangleSupport, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(bitmap_caps2.pad2octetsB, static_cast<uint16_t>(0));
 }

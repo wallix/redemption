@@ -47,17 +47,17 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
 
     BOOST_CHECK_EQUAL(general_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_GENERAL));
     BOOST_CHECK_EQUAL(general_caps.len, static_cast<uint16_t>(CAPLEN_GENERAL));
-    BOOST_CHECK_EQUAL(general_caps.os_major, (uint16_t) 0);
-    BOOST_CHECK_EQUAL(general_caps.os_minor, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(general_caps.protocolVersion, (uint16_t) 2);
-    BOOST_CHECK_EQUAL(general_caps.pad1, (uint16_t) 3);
-    BOOST_CHECK_EQUAL(general_caps.compressionType, (uint16_t) 4);
-    BOOST_CHECK_EQUAL(general_caps.extraflags, (uint16_t) 65535);
-    BOOST_CHECK_EQUAL(general_caps.updateCapability, (uint16_t) 6);
-    BOOST_CHECK_EQUAL(general_caps.remoteUnshare, (uint16_t) 7);
-    BOOST_CHECK_EQUAL(general_caps.compressionLevel, (uint16_t) 8);
-    BOOST_CHECK_EQUAL(general_caps.refreshRectSupport, (uint8_t) 1);
-    BOOST_CHECK_EQUAL(general_caps.suppressOutputSupport, (uint8_t) 1);
+    BOOST_CHECK_EQUAL(general_caps.os_major, static_cast<uint16_t>(0));
+    BOOST_CHECK_EQUAL(general_caps.os_minor, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(general_caps.protocolVersion, static_cast<uint16_t>(2));
+    BOOST_CHECK_EQUAL(general_caps.pad1, static_cast<uint16_t>(3));
+    BOOST_CHECK_EQUAL(general_caps.compressionType, static_cast<uint16_t>(4));
+    BOOST_CHECK_EQUAL(general_caps.extraflags, static_cast<uint16_t>(65535));
+    BOOST_CHECK_EQUAL(general_caps.updateCapability, static_cast<uint16_t>(6));
+    BOOST_CHECK_EQUAL(general_caps.remoteUnshare, static_cast<uint16_t>(7));
+    BOOST_CHECK_EQUAL(general_caps.compressionLevel, static_cast<uint16_t>(8));
+    BOOST_CHECK_EQUAL(general_caps.refreshRectSupport, static_cast<uint8_t>(1));
+    BOOST_CHECK_EQUAL(general_caps.suppressOutputSupport, static_cast<uint8_t>(1));
 
     BStream stream(1024);
     general_caps.emit(stream);
@@ -74,15 +74,15 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGeneralEmit)
 
     general_caps2.recv(stream, CAPLEN_GENERAL);
 
-    BOOST_CHECK_EQUAL(general_caps2.os_major, (uint16_t) 0);
-    BOOST_CHECK_EQUAL(general_caps2.os_minor, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(general_caps2.protocolVersion, (uint16_t) 2);
-    BOOST_CHECK_EQUAL(general_caps2.pad1, (uint16_t) 3);
-    BOOST_CHECK_EQUAL(general_caps2.compressionType, (uint16_t) 4);
-    BOOST_CHECK_EQUAL(general_caps2.extraflags, (uint16_t) 65535);
-    BOOST_CHECK_EQUAL(general_caps2.updateCapability, (uint16_t) 6);
-    BOOST_CHECK_EQUAL(general_caps2.remoteUnshare, (uint16_t) 7);
-    BOOST_CHECK_EQUAL(general_caps2.compressionLevel, (uint16_t) 8);
-    BOOST_CHECK_EQUAL(general_caps2.refreshRectSupport, (uint8_t) 1);
-    BOOST_CHECK_EQUAL(general_caps2.suppressOutputSupport, (uint8_t) 1);
+    BOOST_CHECK_EQUAL(general_caps2.os_major, static_cast<uint16_t>(0));
+    BOOST_CHECK_EQUAL(general_caps2.os_minor, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(general_caps2.protocolVersion, static_cast<uint16_t>(2));
+    BOOST_CHECK_EQUAL(general_caps2.pad1, static_cast<uint16_t>(3));
+    BOOST_CHECK_EQUAL(general_caps2.compressionType, static_cast<uint16_t>(4));
+    BOOST_CHECK_EQUAL(general_caps2.extraflags, static_cast<uint16_t>(65535));
+    BOOST_CHECK_EQUAL(general_caps2.updateCapability, static_cast<uint16_t>(6));
+    BOOST_CHECK_EQUAL(general_caps2.remoteUnshare, static_cast<uint16_t>(7));
+    BOOST_CHECK_EQUAL(general_caps2.compressionLevel, static_cast<uint16_t>(8));
+    BOOST_CHECK_EQUAL(general_caps2.refreshRectSupport, static_cast<uint8_t>(1));
+    BOOST_CHECK_EQUAL(general_caps2.suppressOutputSupport, static_cast<uint8_t>(1));
 }

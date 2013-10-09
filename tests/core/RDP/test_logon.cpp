@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestLogon)
     infoPacket.extendedInfoPacket.performanceFlags = PERF_DISABLE_WALLPAPER 
                                                    | 1 * ( PERF_DISABLE_FULLWINDOWDRAG | PERF_DISABLE_MENUANIMATIONS);
 
-    BOOST_CHECK_EQUAL(infoPacket.rdp5_support, (uint32_t)1);
+    BOOST_CHECK_EQUAL(infoPacket.rdp5_support, static_cast<uint32_t>(1));
     BOOST_CHECK_EQUAL(infoPacket.flags, (uint32_t)
         (INFO_MOUSE
         |INFO_DISABLECTRLALTDEL

@@ -1400,7 +1400,7 @@ public:
                     this->stream.out_uint8((uint8_t)(0xe0 | (in_count / 2)));
                 }
                 else if (in_count / 2 < 256 + 16){
-                    this->stream.out_uint8((uint8_t)0xe0);
+                    this->stream.out_uint8(static_cast<uint8_t>(0xe0));
                     this->stream.out_uint8((uint8_t)(in_count / 2 - 16));
                 }
                 else{

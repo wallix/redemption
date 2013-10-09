@@ -39,9 +39,9 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)
 
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAPCACHE_HOSTSUPPORT));
     BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.len, static_cast<uint16_t>(CAPLEN_BITMAPCACHE_HOSTSUPPORT));
-    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.cacheVersion, (uint8_t) 255);
-    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.pad1, (uint8_t) 255);
-    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.pad2, (uint16_t) 65535);
+    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.cacheVersion, static_cast<uint8_t>(255));
+    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.pad1, static_cast<uint8_t>(255));
+    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps.pad2, static_cast<uint16_t>(65535));
 
     BStream stream(1024);
     bitmapcachehostsupport_caps.emit(stream);
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BITMAPCACHE_HOSTSUPPORT, stream.in_uint16_le());
     bitmapcachehostsupport_caps2.recv(stream, CAPLEN_BITMAPCACHE_HOSTSUPPORT);
 
-    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.cacheVersion, (uint8_t) 255);
-    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.pad1, (uint8_t) 255);
-    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.pad2, (uint16_t) 65535);
+    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.cacheVersion, static_cast<uint8_t>(255));
+    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.pad1, static_cast<uint8_t>(255));
+    BOOST_CHECK_EQUAL(bitmapcachehostsupport_caps2.pad2, static_cast<uint16_t>(65535));
 }

@@ -40,10 +40,10 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
 
     BOOST_CHECK_EQUAL(control_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_CONTROL));
     BOOST_CHECK_EQUAL(control_caps.len, static_cast<uint16_t>(CAPLEN_CONTROL));
-    BOOST_CHECK_EQUAL(control_caps.controlFlags, (uint16_t) 0);
-    BOOST_CHECK_EQUAL(control_caps.remoteDetachFlag, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(control_caps.controlInterest, (uint16_t) 2);
-    BOOST_CHECK_EQUAL(control_caps.detachInterest, (uint16_t) 3);
+    BOOST_CHECK_EQUAL(control_caps.controlFlags, static_cast<uint16_t>(0));
+    BOOST_CHECK_EQUAL(control_caps.remoteDetachFlag, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(control_caps.controlInterest, static_cast<uint16_t>(2));
+    BOOST_CHECK_EQUAL(control_caps.detachInterest, static_cast<uint16_t>(3));
 
     BStream stream(1024);
     control_caps.emit(stream);
@@ -60,8 +60,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
 
     control_caps2.recv(stream, CAPLEN_CONTROL);
 
-    BOOST_CHECK_EQUAL(control_caps2.controlFlags, (uint16_t) 0);
-    BOOST_CHECK_EQUAL(control_caps2.remoteDetachFlag, (uint16_t) 1);
-    BOOST_CHECK_EQUAL(control_caps2.controlInterest, (uint16_t) 2);
-    BOOST_CHECK_EQUAL(control_caps2.detachInterest, (uint16_t) 3);
+    BOOST_CHECK_EQUAL(control_caps2.controlFlags, static_cast<uint16_t>(0));
+    BOOST_CHECK_EQUAL(control_caps2.remoteDetachFlag, static_cast<uint16_t>(1));
+    BOOST_CHECK_EQUAL(control_caps2.controlInterest, static_cast<uint16_t>(2));
+    BOOST_CHECK_EQUAL(control_caps2.detachInterest, static_cast<uint16_t>(3));
 }

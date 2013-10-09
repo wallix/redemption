@@ -37,8 +37,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySurfaceCommandsEmit)
 
     BOOST_CHECK_EQUAL(surfacecommands_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_SURFACE_COMMANDS));
     BOOST_CHECK_EQUAL(surfacecommands_caps.len, static_cast<uint16_t>(CAPLEN_SURFACE_COMMANDS));
-    BOOST_CHECK_EQUAL(surfacecommands_caps.cmdFlags, (uint32_t) 65536);
-    BOOST_CHECK_EQUAL(surfacecommands_caps.reserved, (uint32_t) 65536);
+    BOOST_CHECK_EQUAL(surfacecommands_caps.cmdFlags, static_cast<uint32_t>(65536));
+    BOOST_CHECK_EQUAL(surfacecommands_caps.reserved, static_cast<uint32_t>(65536));
 
     BStream stream(1024);
     surfacecommands_caps.emit(stream);
@@ -54,6 +54,6 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySurfaceCommandsEmit)
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_SURFACE_COMMANDS, stream.in_uint16_le());
     surfacecommands_caps2.recv(stream, CAPLEN_SURFACE_COMMANDS);
 
-    BOOST_CHECK_EQUAL(surfacecommands_caps2.cmdFlags, (uint32_t) 65536);
-    BOOST_CHECK_EQUAL(surfacecommands_caps2.reserved, (uint32_t) 65536);
+    BOOST_CHECK_EQUAL(surfacecommands_caps2.cmdFlags, static_cast<uint32_t>(65536));
+    BOOST_CHECK_EQUAL(surfacecommands_caps2.reserved, static_cast<uint32_t>(65536));
 }

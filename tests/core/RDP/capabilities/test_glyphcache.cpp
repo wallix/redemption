@@ -50,9 +50,9 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
     for (size_t i = 0; i< 40; i++){
         BOOST_CHECK_EQUAL(glyphsupport_caps.glyphCache[i], test_glyphCache[i]);
     }
-    BOOST_CHECK_EQUAL(glyphsupport_caps.fragCache, (uint32_t) 16777216);
-    BOOST_CHECK_EQUAL(glyphsupport_caps.glyphSupportLevel, (uint16_t) GLYPH_SUPPORT_FULL);
-    BOOST_CHECK_EQUAL(glyphsupport_caps.pad2octets, (uint16_t) 3);
+    BOOST_CHECK_EQUAL(glyphsupport_caps.fragCache, static_cast<uint32_t>(16777216));
+    BOOST_CHECK_EQUAL(glyphsupport_caps.glyphSupportLevel, static_cast<uint16_t>(GLYPH_SUPPORT_FULL));
+    BOOST_CHECK_EQUAL(glyphsupport_caps.pad2octets, static_cast<uint16_t>(3));
 
     BStream stream(1024);
     glyphsupport_caps.emit(stream);
@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
     for (size_t i = 0; i< 40; i++){
         BOOST_CHECK_EQUAL(glyphsupport_caps2.glyphCache[i], test_glyphCache[i]);
     }
-    BOOST_CHECK_EQUAL(glyphsupport_caps2.fragCache, (uint32_t) 16777216);
-    BOOST_CHECK_EQUAL(glyphsupport_caps2.glyphSupportLevel, (uint16_t) GLYPH_SUPPORT_FULL);
-    BOOST_CHECK_EQUAL(glyphsupport_caps2.pad2octets, (uint16_t) 3);
+    BOOST_CHECK_EQUAL(glyphsupport_caps2.fragCache, static_cast<uint32_t>(16777216));
+    BOOST_CHECK_EQUAL(glyphsupport_caps2.glyphSupportLevel, static_cast<uint16_t>(GLYPH_SUPPORT_FULL));
+    BOOST_CHECK_EQUAL(glyphsupport_caps2.pad2octets, static_cast<uint16_t>(3));
 }

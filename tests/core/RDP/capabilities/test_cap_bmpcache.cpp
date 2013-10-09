@@ -48,18 +48,18 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
 
     BOOST_CHECK_EQUAL(bmpcache_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAPCACHE));
     BOOST_CHECK_EQUAL(bmpcache_caps.len, static_cast<uint16_t>(CAPLEN_BITMAPCACHE));
-    BOOST_CHECK_EQUAL(bmpcache_caps.pad1, (uint32_t) 1);
-    BOOST_CHECK_EQUAL(bmpcache_caps.pad2, (uint32_t) 2);
-    BOOST_CHECK_EQUAL(bmpcache_caps.pad3, (uint32_t) 3);
-    BOOST_CHECK_EQUAL(bmpcache_caps.pad4, (uint32_t) 4);
-    BOOST_CHECK_EQUAL(bmpcache_caps.pad5, (uint32_t) 5);
-    BOOST_CHECK_EQUAL(bmpcache_caps.pad6, (uint32_t) 6);
-    BOOST_CHECK_EQUAL(bmpcache_caps.cache0Entries, (uint16_t) 200);
-    BOOST_CHECK_EQUAL(bmpcache_caps.cache0MaximumCellSize, (uint16_t) 32769);
-    BOOST_CHECK_EQUAL(bmpcache_caps.cache1Entries, (uint16_t) 600);
-    BOOST_CHECK_EQUAL(bmpcache_caps.cache1MaximumCellSize, (uint16_t) 32769);
-    BOOST_CHECK_EQUAL(bmpcache_caps.cache2Entries, (uint16_t) 65535);
-    BOOST_CHECK_EQUAL(bmpcache_caps.cache2MaximumCellSize, (uint16_t) 32769);
+    BOOST_CHECK_EQUAL(bmpcache_caps.pad1, static_cast<uint32_t>(1));
+    BOOST_CHECK_EQUAL(bmpcache_caps.pad2, static_cast<uint32_t>(2));
+    BOOST_CHECK_EQUAL(bmpcache_caps.pad3, static_cast<uint32_t>(3));
+    BOOST_CHECK_EQUAL(bmpcache_caps.pad4, static_cast<uint32_t>(4));
+    BOOST_CHECK_EQUAL(bmpcache_caps.pad5, static_cast<uint32_t>(5));
+    BOOST_CHECK_EQUAL(bmpcache_caps.pad6, static_cast<uint32_t>(6));
+    BOOST_CHECK_EQUAL(bmpcache_caps.cache0Entries, static_cast<uint16_t>(200));
+    BOOST_CHECK_EQUAL(bmpcache_caps.cache0MaximumCellSize, static_cast<uint16_t>(32769));
+    BOOST_CHECK_EQUAL(bmpcache_caps.cache1Entries, static_cast<uint16_t>(600));
+    BOOST_CHECK_EQUAL(bmpcache_caps.cache1MaximumCellSize, static_cast<uint16_t>(32769));
+    BOOST_CHECK_EQUAL(bmpcache_caps.cache2Entries, static_cast<uint16_t>(65535));
+    BOOST_CHECK_EQUAL(bmpcache_caps.cache2MaximumCellSize, static_cast<uint16_t>(32769));
 
     BStream stream(1024);
     bmpcache_caps.emit(stream);
@@ -75,16 +75,16 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BITMAPCACHE, stream.in_uint16_le());
     bmpcache_caps2.recv(stream, CAPLEN_BITMAPCACHE);
 
-    BOOST_CHECK_EQUAL(bmpcache_caps2.pad1, (uint32_t) 1);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.pad2, (uint32_t) 2);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.pad3, (uint32_t) 3);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.pad4, (uint32_t) 4);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.pad5, (uint32_t) 5);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.pad6, (uint32_t) 6);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.cache0Entries, (uint16_t) 200);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.cache0MaximumCellSize, (uint16_t) 32769);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.cache1Entries, (uint16_t) 600);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.cache1MaximumCellSize, (uint16_t) 32769);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.cache2Entries, (uint16_t) 65535);
-    BOOST_CHECK_EQUAL(bmpcache_caps2.cache2MaximumCellSize, (uint16_t) 32769);
+    BOOST_CHECK_EQUAL(bmpcache_caps2.pad1, static_cast<uint32_t>(1));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.pad2, static_cast<uint32_t>(2));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.pad3, static_cast<uint32_t>(3));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.pad4, static_cast<uint32_t>(4));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.pad5, static_cast<uint32_t>(5));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.pad6, static_cast<uint32_t>(6));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.cache0Entries, static_cast<uint16_t>(200));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.cache0MaximumCellSize, static_cast<uint16_t>(32769));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.cache1Entries, static_cast<uint16_t>(600));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.cache1MaximumCellSize, static_cast<uint16_t>(32769));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.cache2Entries, static_cast<uint16_t>(65535));
+    BOOST_CHECK_EQUAL(bmpcache_caps2.cache2MaximumCellSize, static_cast<uint16_t>(32769));
 }

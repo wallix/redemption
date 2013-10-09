@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
         uint8_t control = stream.in_uint8();
         BOOST_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
         RDPSecondaryOrderHeader header(stream);
-        BOOST_CHECK_EQUAL((uint16_t)33 - 7, header.order_length); // length after type - 7
+        BOOST_CHECK_EQUAL(static_cast<uint16_t>(33) - 7, header.order_length); // length after type - 7
         BOOST_CHECK_EQUAL((unsigned)0x08, header.flags);
         BOOST_CHECK_EQUAL((unsigned)TS_CACHE_BITMAP_UNCOMPRESSED, header.type);
 
