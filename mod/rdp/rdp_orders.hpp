@@ -297,8 +297,8 @@ public:
                         }
                         const Bitmap * bitmap =
                             this->bmp_cache->get(this->memblt.cache_id & 0x3, this->memblt.cache_idx);
-                        TODO("CGR: check if bitmap has the right palette...")
-                        TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
+                        TODO("CGR: check if bitmap has the right palette...");
+                        TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps");
                         if (bitmap) {
                             mod->draw(this->memblt, cmd_clip, *bitmap);
                         }
@@ -315,8 +315,8 @@ public:
                         }
                         const Bitmap * bitmap =
                             this->bmp_cache->get(this->mem3blt.cache_id & 0x3, this->mem3blt.cache_idx);
-                        TODO("CGR: check if bitmap has the right palette...")
-                        TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps")
+                        TODO("CGR: check if bitmap has the right palette...");
+                        TODO("CGR: 8 bits palettes should probabily be transmitted to front, not stored in bitmaps");
                         if (bitmap) {
                             mod->draw(this->mem3blt, cmd_clip, *bitmap);
                         }

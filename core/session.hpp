@@ -145,8 +145,8 @@ struct Session {
                 if (this->front->capture) {
                     this->front->capture->capture_event.add_to_fd_set(rfds, max, timeout);
                 }
-                TODO("Looks like acl and mod can be unified into a common class, where events can happen")
-                TODO("move ptr_auth_event to acl")
+                TODO("Looks like acl and mod can be unified into a common class, where events can happen");
+                TODO("move ptr_auth_event to acl");
                 if (this->acl) {
                     this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
                 }

@@ -90,13 +90,13 @@
 
 class RDPMemBlt {
     public:
-    TODO("Change to cache_id")
+    TODO("Change to cache_id");
     uint16_t cache_id;
     Rect rect;
     uint8_t rop;
     uint16_t srcx;
     uint16_t srcy;
-    TODO("Change to cache_idx")
+    TODO("Change to cache_idx");
     uint16_t cache_idx;
 
     static const uint8_t id(void)
@@ -213,7 +213,7 @@ class RDPMemBlt {
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
     {
-        TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions")
+        TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions");
         size_t lg = common.str(buffer, sz, !common.clip.contains(this->rect));
         lg  += snprintf(
             buffer+lg,

@@ -104,7 +104,7 @@ public:
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
-        TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.")
+        TODO(" PatBlt is not yet fully implemented. It is awkward to do because computing actual brush pattern is quite tricky (brushes are defined in a so complex way  with stripes  etc.) and also there is quite a lot of possible ternary operators  and how they are encoded inside rop3 bits is not obvious at first. We should begin by writing a pseudo patblt always using back_color for pattern. Then  work on correct computation of pattern and fix it.");
         if ((cmd.rop == 0xF0) && (cmd.brush.style == 0x03))
         {
             uint8_t brush_data[8];
@@ -196,7 +196,7 @@ public:
         //            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
         //            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy);
 
-        TODO("We should perform a true intersection between line and clip rectangle, not cheat as below.")
+        TODO("We should perform a true intersection between line and clip rectangle, not cheat as below.");
         // enlarge_to compute a new rect including old rect and added point
         const Rect & line_rect = Rect(lineto.startx, lineto.starty, 1, 1).enlarge_to(lineto.endx, lineto.endy);
         if (line_rect.intersect(clip).isempty()){

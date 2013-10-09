@@ -88,6 +88,17 @@ struct mod_vnc : public mod_api {
 
     z_stream zstrm;
 
+    enum {
+        WAIT_SECURITY_TYPES,
+        WAIT_CLIENT_UP_AND_RUNNING,
+        DO_INITIAL_CLEAR_SCREEN,
+        UP_AND_RUNNING
+    };
+
+    redemption::string encodings;
+
+    int state;
+
     //==============================================================================================================
     mod_vnc( Transport * t
            , const char * username
@@ -108,7 +119,8 @@ struct mod_vnc : public mod_api {
             , keymapSym(verbose)
             , incr(0)
             , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-            , opt_clipboard(clipboard) {
+            , opt_clipboard(clipboard)
+            , state(WAIT_SECURITY_TYPES) {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Connecting to VNC Server");
 
@@ -137,14 +149,17 @@ struct mod_vnc : public mod_api {
         memcpy(this->password, password, sizeof(this->password)-1);
         this->password[sizeof(this->password)-1] = 0;
 
-        int error = 0;
+//        int error = 0;
 
         /* protocol version */
-        BStream stream(32768);
+        BStream stream(512);
         this->t->recv(&stream.end, 12);
         this->t->send("RFB 003.003\n", 12);
 
-        /* sec type */
+        this->encodings.copy_c_str(encodings);
+
+/*
+        // sec type
         stream.init(8192);
         this->t->recv(&stream.end, 4);
         int security_level = stream.in_uint32_be();
@@ -152,29 +167,29 @@ struct mod_vnc : public mod_api {
                       security_level);
 
         switch (security_level){
-            case 1: /* none */
+            case 1: // none
                 break;
-            case 2: /* the password and the server random */
+            case 2: // the password and the server random
             {
                 LOG(LOG_INFO, "Receiving VNC Server Random");
                 stream.init(8192);
                 this->t->recv(&stream.end, 16);
 
-                /* taken from vncauth.c */
+                // taken from vncauth.c
                 {
                     char key[12];
 
-                    /* key is simply password padded with nulls */
+                    // key is simply password padded with nulls
                     memset(key, 0, sizeof(key));
                     strncpy(key, this->password, 8);
-                    rfbDesKey((unsigned char*)key, EN0); /* 0, encrypt */
+                    rfbDesKey((unsigned char*)key, EN0); // 0, encrypt
                     rfbDes((unsigned char*)stream.get_data(), (unsigned char*)stream.get_data());
                     rfbDes((unsigned char*)(stream.get_data() + 8), (unsigned char*)(stream.get_data() + 8));
                 }
                 LOG(LOG_INFO, "Sending Password");
                 this->t->send(stream.get_data(), 16);
 
-                /* sec result */
+                // sec result
                 LOG(LOG_INFO, "Waiting for password ack");
                 stream.init(8192);
                 this->t->recv(&stream.end, 4);
@@ -191,7 +206,7 @@ struct mod_vnc : public mod_api {
                 LOG(LOG_ERR, "vnc unexpected security level");
                 throw Error(ERR_VNC_CONNECTION_ERROR);
         }
-        this->t->send("\x01", 1); /* share flag */
+        this->t->send("\x01", 1); // share flag
 
         // 7.3.2   ServerInit
         // ------------------
@@ -266,13 +281,13 @@ struct mod_vnc : public mod_api {
 
         // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
 
-        TODO(" not yet supported")
+        TODO(" not yet supported");
         // If the Tight Security Type is activated, the server init
         // message is extended with an interaction capabilities section.
 
         {
             BStream stream(32768);
-            this->t->recv(&stream.end, 24); /* server init */
+            this->t->recv(&stream.end, 24); // server init
             this->width = stream.in_uint16_be();
             this->height = stream.in_uint16_be();
             this->bpp    = stream.in_uint8();
@@ -300,7 +315,7 @@ struct mod_vnc : public mod_api {
             this->mod_name[lg] = 0;
         }
 
-        /* should be connected */
+        // should be connected
 
         {
         // 7.4.1   SetPixelFormat
@@ -420,7 +435,7 @@ struct mod_vnc : public mod_api {
         {
             uint16_t number_of_encodings = 0;
 
-            /* SetEncodings */
+            // SetEncodings
             BStream stream(32768);
             stream.out_uint8(2);
             stream.out_uint8(0);
@@ -442,7 +457,9 @@ struct mod_vnc : public mod_api {
                 stream.out_uint32_be(0xffffff11);   // cursor
 
                 stream.set_out_uint16_be(4, number_of_encodings_offset);
-                this->t->send(stream.get_data(), 20/* 4 + 4 * 4 */);
+                this->t->send(stream.get_data(),
+                    20  // 4 + 4 * 4
+                    );
             }
             else
             {
@@ -451,7 +468,7 @@ struct mod_vnc : public mod_api {
             }
         }
 
-        TODO("Maybe the resize should be done in session ?")
+        TODO("Maybe the resize should be done in session ?");
         switch (this->front.server_resize(this->width, this->height, this->bpp)){
         case 0:
             // no resizing needed
@@ -469,7 +486,7 @@ struct mod_vnc : public mod_api {
             break;
         }
 
-//        /* set almost null cursor, this is the little dot cursor */
+        // set almost null cursor, this is the little dot cursor
         struct Pointer cursor;
         cursor.x = 3;
         cursor.y = 3;
@@ -485,7 +502,7 @@ struct mod_vnc : public mod_api {
         }
 
         LOG(LOG_INFO, "VNC connection complete, connected ok\n");
-        TODO("Clearing the front screen could be done in session")
+        TODO("Clearing the front screen could be done in session");
         this->front.begin_update();
         RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
         this->front.draw(orect, Rect(0, 0, this->width, this->height));
@@ -494,6 +511,7 @@ struct mod_vnc : public mod_api {
         this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
 
         this->lib_open_clip_channel();
+*/
     } // Constructor
 
     //==============================================================================================================
@@ -559,7 +577,7 @@ struct mod_vnc : public mod_api {
         this->t->send(stream.get_data(), 6);
     } // change_mouse_state
 
-    TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?")
+    TODO("It may be possible to change several mouse buttons at once ? Current code seems to perform several send if that occurs. Is it what we want ?");
     //==============================================================================================================
     virtual void rdp_input_mouse( int device_flags
                                 , int x
@@ -603,7 +621,7 @@ struct mod_vnc : public mod_api {
                                    , Keymap2 * keymap
                                    ) {
     //==============================================================================================================
-        TODO("As down/up state is not stored in keymapSym, code below is quite dangerous")
+        TODO("As down/up state is not stored in keymapSym, code below is quite dangerous");
         keymapSym.event(device_flags, param1);
         int key = keymapSym.get_sym();
         if (key > 0) {
@@ -670,39 +688,415 @@ struct mod_vnc : public mod_api {
         if (this->verbose) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
-        if (this->event.can_recv()){
-            BStream stream(1);
-            try {
-                this->t->recv(&stream.end, 1);
-                char type = stream.in_uint8(); /* message-type */
-                switch (type) {
-                    case 0: /* framebuffer update */
-                        this->lib_framebuffer_update();
-                    break;
-                    case 1: /* palette */
-                        this->lib_palette_update();
-                    break;
-                    case 3: /* clipboard */ /* ServerCutText */
-                        this->lib_clip_data();
+        switch (this->state)
+        {
+        case WAIT_SECURITY_TYPES:
+            {
+                BStream stream(32768);
+                // sec type
+                stream.init(8192);
+                this->t->recv(&stream.end, 4);
+                int security_level = stream.in_uint32_be();
+                LOG(LOG_INFO, "security level is %d (1 = none, 2 = standard)\n",
+                              security_level);
+
+                switch (security_level){
+                    case 1: // none
+                        break;
+                    case 2: // the password and the server random
+                    {
+                        LOG(LOG_INFO, "Receiving VNC Server Random");
+                        stream.init(8192);
+                        this->t->recv(&stream.end, 16);
+
+                        // taken from vncauth.c
+                        {
+                            char key[12];
+
+                            // key is simply password padded with nulls
+                            memset(key, 0, sizeof(key));
+                            strncpy(key, this->password, 8);
+                            rfbDesKey((unsigned char*)key, EN0); // 0, encrypt
+                            rfbDes((unsigned char*)stream.get_data(), (unsigned char*)stream.get_data());
+                            rfbDes((unsigned char*)(stream.get_data() + 8), (unsigned char*)(stream.get_data() + 8));
+                        }
+                        LOG(LOG_INFO, "Sending Password");
+                        this->t->send(stream.get_data(), 16);
+
+                        // sec result
+                        LOG(LOG_INFO, "Waiting for password ack");
+                        stream.init(8192);
+                        this->t->recv(&stream.end, 4);
+                        int i = stream.in_uint32_be();
+                        if (i != 0) {
+                            LOG(LOG_ERR, "vnc password failed");
+                            throw Error(ERR_VNC_CONNECTION_ERROR);
+                        } else {
+                            LOG(LOG_INFO, "vnc password ok\n");
+                        }
+                    }
                     break;
                     default:
-                        LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
+                        LOG(LOG_ERR, "vnc unexpected security level");
+                        throw Error(ERR_VNC_CONNECTION_ERROR);
+                }
+                this->t->send("\x01", 1); // share flag
+
+                // 7.3.2   ServerInit
+                // ------------------
+
+                // After receiving the ClientInit message, the server sends a
+                // ServerInit message. This tells the client the width and
+                // height of the server's framebuffer, its pixel format and the
+                // name associated with the desktop:
+
+                // framebuffer-width  : 2 bytes
+                // framebuffer-height : 2 bytes
+
+                // PIXEL_FORMAT       : 16 bytes
+                // VNC pixel_format capabilities
+                // -----------------------------
+                // Server-pixel-format specifies the server's natural pixel
+                // format. This pixel format will be used unless the client
+                // requests a different format using the SetPixelFormat message
+                // (SetPixelFormat).
+
+                // PIXEL_FORMAT::bits per pixel  : 1 byte
+                // PIXEL_FORMAT::color depth     : 1 byte
+
+                // Bits-per-pixel is the number of bits used for each pixel
+                // value on the wire. This must be greater than or equal to the
+                // depth which is the number of useful bits in the pixel value.
+                // Currently bits-per-pixel must be 8, 16 or 32. Less than 8-bit
+                // pixels are not yet supported.
+
+                // PIXEL_FORMAT::endianess       : 1 byte (0 = LE, 1 = BE)
+
+                // Big-endian-flag is non-zero (true) if multi-byte pixels are
+                // interpreted as big endian. Of course this is meaningless
+                // for 8 bits-per-pixel.
+
+                // PIXEL_FORMAT::true color flag : 1 byte
+                // PIXEL_FORMAT::red max         : 2 bytes
+                // PIXEL_FORMAT::green max       : 2 bytes
+                // PIXEL_FORMAT::blue max        : 2 bytes
+                // PIXEL_FORMAT::red shift       : 1 bytes
+                // PIXEL_FORMAT::green shift     : 1 bytes
+                // PIXEL_FORMAT::blue shift      : 1 bytes
+
+                // If true-colour-flag is non-zero (true) then the last six
+                // items specify how to extract the red, green and blue
+                // intensities from the pixel value. Red-max is the maximum
+                // red value (= 2^n - 1 where n is the number of bits used
+                // for red). Note this value is always in big endian order.
+                // Red-shift is the number of shifts needed to get the red
+                // value in a pixel to the least significant bit. Green-max,
+                // green-shift and blue-max, blue-shift are similar for green
+                // and blue. For example, to find the red value (between 0 and
+                // red-max) from a given pixel, do the following:
+
+                // * Swap the pixel value according to big-endian-flag (e.g.
+                // if big-endian-flag is zero (false) and host byte order is
+                // big endian, then swap).
+                // * Shift right by red-shift.
+                // * AND with red-max (in host byte order).
+
+                // If true-colour-flag is zero (false) then the server uses
+                // pixel values which are not directly composed from the red,
+                // green and blue intensities, but which serve as indices into
+                // a colour map. Entries in the colour map are set by the
+                // server using the SetColourMapEntries message
+                // (SetColourMapEntries).
+
+                // PIXEL_FORMAT::padding         : 3 bytes
+
+                // name-length        : 4 bytes
+                // name-string        : variable
+
+                // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
+
+                TODO(" not yet supported");
+                // If the Tight Security Type is activated, the server init
+                // message is extended with an interaction capabilities section.
+
+                {
+                    BStream stream(32768);
+                    this->t->recv(&stream.end, 24); // server init
+                    this->width = stream.in_uint16_be();
+                    this->height = stream.in_uint16_be();
+                    this->bpp    = stream.in_uint8();
+                    this->depth  = stream.in_uint8();
+                    this->endianess = stream.in_uint8();
+                    this->true_color_flag = stream.in_uint8();
+                    this->red_max = stream.in_uint16_be();
+                    this->green_max = stream.in_uint16_be();
+                    this->blue_max = stream.in_uint16_be();
+                    this->red_shift = stream.in_uint8();
+                    this->green_shift = stream.in_uint8();
+                    this->blue_shift = stream.in_uint8();
+                    stream.in_skip_bytes(3); // skip padding
+
+        //            LOG(LOG_INFO, "VNC received: width=%d height=%d bpp=%d depth=%d endianess=%d true_color=%d red_max=%d green_max=%d blue_max=%d red_shift=%d green_shift=%d blue_shift=%d", this->width, this->height, this->bpp, this->depth, this->endianess, this->true_color_flag, this->red_max, this->green_max, this->blue_max, this->red_shift, this->green_shift, this->blue_shift);
+
+                    int lg = stream.in_uint32_be();
+
+                    if (lg > 255 || lg < 0) {
+                        LOG(LOG_ERR, "VNC connection error");
+                        throw Error(ERR_VNC_CONNECTION_ERROR);
+                    }
+                    char * end = this->mod_name;
+                    this->t->recv(&end, lg);
+                    this->mod_name[lg] = 0;
+                }
+
+                // should be connected
+
+                {
+                // 7.4.1   SetPixelFormat
+                // ----------------------
+
+                // Sets the format in which pixel values should be sent in
+                // FramebufferUpdate messages. If the client does not send
+                // a SetPixelFormat message then the server sends pixel values
+                // in its natural format as specified in the ServerInit message
+                // (ServerInit).
+
+                // If true-colour-flag is zero (false) then this indicates that
+                // a "colour map" is to be used. The server can set any of the
+                // entries in the colour map using the SetColourMapEntries
+                // message (SetColourMapEntries). Immediately after the client
+                // has sent this message the colour map is empty, even if
+                // entries had previously been set by the server.
+
+                // Note that a client must not have an outstanding
+                // FramebufferUpdateRequest when it sends SetPixelFormat
+                // as it would be impossible to determine if the next *
+                // FramebufferUpdate is using the new or the previous pixel
+                // format.
+
+                    BStream stream(32768);
+                    // Set Pixel format
+                    stream.out_uint8(0);
+
+                    // Padding 3 bytes
+                    stream.out_uint8(0);
+                    stream.out_uint8(0);
+                    stream.out_uint8(0);
+
+                    // VNC pixel_format capabilities
+                    // -----------------------------
+                    // bits per pixel  : 1 byte
+                    // color depth     : 1 byte
+                    // endianess       : 1 byte (0 = LE, 1 = BE)
+                    // true color flag : 1 byte
+                    // red max         : 2 bytes
+                    // green max       : 2 bytes
+                    // blue max        : 2 bytes
+                    // red shift       : 1 bytes
+                    // green shift     : 1 bytes
+                    // blue shift      : 1 bytes
+                    // padding         : 3 bytes
+
+                    // 8 bpp
+                    // -----
+                    // "\x08\x08\x00"
+                    // "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                    // "\0\0\0"
+
+                    // 15 bpp
+                    // ------
+                    // "\x10\x0F\x00"
+                    // "\x01\x00\x1F\x00\x1F\x00\x1F\x0A\x05\x00"
+                    // "\0\0\0"
+
+                    // 24 bpp
+                    // ------
+                    // "\x20\x18\x00"
+                    // "\x01\x00\xFF\x00\xFF\x00\xFF\x10\x08\x00"
+                    // "\0\0\0"
+
+                    // 16 bpp
+                    // ------
+                    // "\x10\x10\x00"
+                    // "\x01\x00\x1F\x00\x2F\x00\x1F\x0B\x05\x00"
+                    // "\0\0\0"
+
+                    const char * pixel_format =
+                        "\x10" // bits per pixel  : 1 byte =  16
+                        "\x10" // color depth     : 1 byte =  16
+                        "\x00" // endianess       : 1 byte =  LE
+                        "\x01" // true color flag : 1 byte = yes
+                        "\x00\x1F" // red max     : 2 bytes = 31
+                        "\x00\x3F" // green max   : 2 bytes = 63
+                        "\x00\x1F" // blue max    : 2 bytes = 31
+                        "\x0B" // red shift       : 1 bytes = 11
+                        "\x05" // green shift     : 1 bytes =  5
+                        "\x00" // blue shift      : 1 bytes =  0
+                        "\0\0\0"; // padding      : 3 bytes
+                    stream.out_copy_bytes(pixel_format, 16);
+                    this->t->send(stream.get_data(), 20);
+
+                    this->bpp = 16;
+                    this->depth  = 16;
+                    this->endianess = 0;
+                    this->true_color_flag = 1;
+                    this->red_max       = 0x1F;
+                    this->green_max     = 0x3F;
+                    this->blue_max      = 0x1F;
+                    this->red_shift     = 0x0B;
+                    this->green_shift   = 0x05;
+                    this->blue_shift    = 0;
+                }
+
+                // 7.4.2   SetEncodings
+                // --------------------
+
+                // Sets the encoding types in which pixel data can be sent by
+                // the server. The order of the encoding types given in this
+                // message is a hint by the client as to its preference (the
+                // first encoding specified being most preferred). The server
+                // may or may not choose to make use of this hint. Pixel data
+                // may always be sent in raw encoding even if not specified
+                // explicitly here.
+
+                // In addition to genuine encodings, a client can request
+                // "pseudo-encodings" to declare to the server that it supports
+                // certain extensions to the protocol. A server which does not
+                // support the extension will simply ignore the pseudo-encoding.
+                // Note that this means the client must assume that the server
+                // does not support the extension until it gets some extension-
+                // -specific confirmation from the server.
+                {
+                    const char * encodings           = this->encodings.c_str();
+                    uint16_t     number_of_encodings = 0;
+
+                    // SetEncodings
+                    BStream stream(32768);
+                    stream.out_uint8(2);
+                    stream.out_uint8(0);
+
+                    uint32_t number_of_encodings_offset = stream.get_offset();
+                    stream.out_clear_bytes(2);
+
+                    this->fill_encoding_types_buffer(encodings, stream, number_of_encodings, this->verbose);
+
+                    if (!number_of_encodings)
+                    {
+                        if (this->verbose) {
+                            LOG(LOG_WARNING, "mdo_vnc: using default encoding types - RRE(2),Raw(0),CopyRect(1),Cursor pseudo-encoding(-239)");
+                        }
+
+                        stream.out_uint32_be(2);            // RRE
+                        stream.out_uint32_be(0);            // raw
+                        stream.out_uint32_be(1);            // copy rect
+                        stream.out_uint32_be(0xffffff11);   // cursor
+
+                        stream.set_out_uint16_be(4, number_of_encodings_offset);
+                        this->t->send(stream.get_data(),
+                            20  // 4 + 4 * 4
+                            );
+                    }
+                    else
+                    {
+                        stream.set_out_uint16_be(number_of_encodings, number_of_encodings_offset);
+                        this->t->send(stream.get_data(), 4 + number_of_encodings * 4);
+                    }
+                }
+
+                TODO("Maybe the resize should be done in session ?");
+                switch (this->front.server_resize(this->width, this->height, this->bpp)){
+                case 0:
+                    // no resizing needed
+                    this->state = DO_INITIAL_CLEAR_SCREEN;
+                    this->event.object_and_time = true;
+                    this->event.set(1000);
+                    break;
+                case 1:
+                    // resizing done
+                    this->front_width  = this->width;
+                    this->front_height = this->height;
+
+                    this->state = WAIT_CLIENT_UP_AND_RUNNING;
+                    this->event.object_and_time = true;
+                    break;
+                case -1:
+                    // resizing failed
+                    // thow an Error ?
+                    LOG(LOG_WARNING, "Older RDP client can't resize to server asked resolution, disconnecting");
+                    throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
+                    break;
                 }
             }
-            catch(const Error & e) {
-                LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
-                this->event.signal = BACK_EVENT_NEXT;
+            break;
+        case DO_INITIAL_CLEAR_SCREEN:
+            {
+                // set almost null cursor, this is the little dot cursor
+                struct Pointer cursor;
+                cursor.x = 3;
+                cursor.y = 3;
+                memset(cursor.data + 31 * (32 * 3), 0xff, 9);
+                memset(cursor.data + 30 * (32 * 3), 0xff, 9);
+                memset(cursor.data + 29 * (32 * 3), 0xff, 9);
+                memset(cursor.mask, 0xff, 32 * (32 / 8));
+                this->front.server_set_pointer(cursor);
+
+                LOG(LOG_INFO, "VNC connection complete, connected ok\n");
+                TODO("Clearing the front screen could be done in session");
+                this->front.begin_update();
+                RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
+                this->front.draw(orect, Rect(0, 0, this->width, this->height));
+                this->front.end_update();
+
+                this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
+
+                this->lib_open_clip_channel();
+
+                this->state = UP_AND_RUNNING;
+
+                this->event.object_and_time = false;
             }
-            catch(...) {
-                LOG(LOG_INFO, "unexpected exception raised in VNC");
-                this->event.signal = BACK_EVENT_NEXT;
+            break;
+        case UP_AND_RUNNING:
+            if (this->event.can_recv()) {
+                BStream stream(1);
+                try {
+                    this->t->recv(&stream.end, 1);
+                    char type = stream.in_uint8();  /* message-type */
+                    switch (type) {
+                        case 0: /* framebuffer update */
+                            this->lib_framebuffer_update();
+                        break;
+                        case 1: /* palette */
+                            this->lib_palette_update();
+                        break;
+                        case 3: /* clipboard */ /* ServerCutText */
+                            this->lib_clip_data();
+                        break;
+                        default:
+                            LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
+                        break;
+                    }
+                }
+                catch (const Error & e) {
+                    LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
+                    this->event.signal = BACK_EVENT_NEXT;
+                }
+                catch (...) {
+                    LOG(LOG_INFO, "unexpected exception raised in VNC");
+                    this->event.signal = BACK_EVENT_NEXT;
+                }
+                if (this->event.signal != BACK_EVENT_NEXT) {
+                    this->event.set(1000);
+                }
             }
-            if (this->event.signal != BACK_EVENT_NEXT){
-                this->event.set(1000);
+            else {
+                this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
             }
-        }
-        else {
-            this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
+            break;
+        default:
+            LOG(LOG_ERR, "Unknown state=%d", this->state);
+            throw Error(ERR_VNC);
+            break;
         }
     } // draw_event
 
@@ -1299,7 +1693,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
             }
             break;
             case 0xffffff11: /* cursor */
-            TODO(" see why we get these empty rects ?")
+            TODO(" see why we get these empty rects ?");
             if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
                 // ------------------------------
@@ -1344,7 +1738,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
 
                 // a VNC pointer of 1x1 size is not visible, so a default minimal pointer (dot pointer) is provided instead
                 if (cx == 1 && cy == 1) {
-                    TODO("Appearence of this 1x1 cursor looks broken, check what we actually get")
+                    TODO("Appearence of this 1x1 cursor looks broken, check what we actually get");
                     memset(cursor.data, 0, sizeof(cursor.data));
                     cursor.data[2883] = 0xFF;
                     cursor.data[2884] = 0xFF;
@@ -1361,7 +1755,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                             cursor.mask[tmpy*nbbytes(32) + mask_x] = 0xFF;
                         }
                     }
-                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays")
+                    TODO("The code below is likely to explain the yellow pointer: we ask for 16 bits for VNC, but we work with cursor as if it were 24 bits. We should use decode primitives and reencode it appropriately. Cursor has the right shape because the mask used is 1 bit per pixel arrays");
                     // copy vnc pointer and mask to rdp pointer and mask
 
                     for (int yy = 0; yy < cy; yy++) {
@@ -1373,7 +1767,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                                     for (int tt = 0 ; tt < Bpp; tt++){
                                         pixel += vnc_pointer_data[(yy * cx + xx) * Bpp + tt] << (8 * tt);
                                     }
-                                    TODO("temporary: force black cursor")
+                                    TODO("temporary: force black cursor");
                                     int red   = (pixel >> this->red_shift) & red_max;
                                     int green = (pixel >> this->green_shift) & green_max;
                                     int blue  = (pixel >> this->blue_shift) & blue_max;
@@ -1389,7 +1783,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                     if (x > 31) { x = 31; }
                     if (y > 31) { y = 31; }
                 }
-TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation")
+TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol limitation");
                 this->front.begin_update();
                 this->front.server_set_pointer(cursor);
                 this->front.end_update();
@@ -1608,7 +2002,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
         // specific treatement depending on msgType
         BStream stream(chunk.size());
-        TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)")
+        TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)");
         stream.out_copy_bytes(chunk.get_data(), chunk.size());
         stream.mark_end();
         stream.rewind();
@@ -1630,7 +2024,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                 if (this->opt_clipboard && format_list_pdu.contians_data_in_text_format) {
                     //--------------------------- Beginning of clipboard PDU Header ----------------------------
 
-                    TODO("Create a unit tested class for clipboard messages")
+                    TODO("Create a unit tested class for clipboard messages");
 
                     bool response_ok = true;
 
@@ -1673,8 +2067,8 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                                                );
                 }
                 else {
-                    TODO("RZ: Don't reject clipboard update, this can block rdesktop.")
-                    TODO("RZ: Create a unit tested class for clipboard messages")
+                    TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
+                    TODO("RZ: Create a unit tested class for clipboard messages");
 
                     bool response_ok = false;
 
@@ -1954,6 +2348,15 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
     virtual void text_metrics(const char * text, int & width, int & height) {
         this->front.text_metrics(text, width, height);
+    }
+
+    // Front calls this member function when it became up and running.
+    virtual void on_front_up_and_running()
+    {
+        if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
+            this->state = DO_INITIAL_CLEAR_SCREEN;
+            this->event.set(1000);
+        }
     }
 };
 

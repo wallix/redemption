@@ -164,7 +164,7 @@ extern "C" {
         if (!self->trans){
             char tmpname[1024];
             sq_im_SQOuttracker_get_name(self, tmpname, sizeof(tmpname), self->count);
-            TODO("add rights information to constructor")
+            TODO("add rights information to constructor");
             self->fd = ::open(tmpname, O_WRONLY|O_CREAT, S_IRUSR);
             if (self->fd < 0){
                 if (status) { *status = RIO_ERROR_CREAT; }

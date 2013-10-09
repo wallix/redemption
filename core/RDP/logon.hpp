@@ -902,7 +902,7 @@ struct InfoPacket {
         stream.in_uni_to_ascii_str(this->AlternateShell, this->cbAlternateShell, sizeof(this->AlternateShell));
         stream.in_uni_to_ascii_str(this->WorkingDir, this->cbWorkingDir, sizeof(this->WorkingDir));
 
-        TODO("Get extended data only if RDP is version 5 or above")
+        TODO("Get extended data only if RDP is version 5 or above");
         if (stream.p < stream.end) {
             this->rdp5_support = true;
             LOG(LOG_INFO, "RDP-5 Style logon");

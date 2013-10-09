@@ -848,7 +848,7 @@ namespace MCS
 
             this->payload.resize(this->ber_stream.stream, this->payload_size);
 
-            TODO("Octets below are part of GCC Conference User Data")
+            TODO("Octets below are part of GCC Conference User Data");
 
 // The payload is the USER_DATA block
             this->_header_size  = this->ber_stream.get_offset();
@@ -1059,7 +1059,7 @@ namespace MCS
 
             this->payload.resize(this->ber_stream.stream, this->payload_size);
 
-            TODO("Octets below are part of GCC Conference User Data")
+            TODO("Octets below are part of GCC Conference User Data");
 //            this->ber_stream.in_skip_bytes(23);
 
 // The payload is the USER_DATA block

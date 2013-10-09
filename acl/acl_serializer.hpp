@@ -95,8 +95,8 @@ public:
                 if (*stream.p == '\n') {
                     *stream.p = 0;
 
-                    if ((0 == strncasecmp((char*)value, "ask", 3))) {
-                        this->ini->ask_from_acl((char *)keyword);
+                    if ((0 == strncasecmp(reinterpret_cast<const char*>(value), "ask", 3))) {
+                        this->ini->ask_from_acl(reinterpret_cast<const char *>(keyword));
                         LOG(LOG_INFO, "receiving %s '%s'", value, keyword);
                     }
                     else {
@@ -110,14 +110,17 @@ public:
                         //                         (char *)output);
                         this->ini->set_from_acl((char *)keyword,
                                                 (char *)value + (value[0] == '!' ? 1 : 0));
-                        if ((strncasecmp("password",        (char *)keyword, 9 ) == 0) ||
-                            (strncasecmp("target_password", (char *)keyword, 16) == 0)) {
-                            LOG(LOG_INFO, "receiving '%s'=<hidden>", (char *)keyword);
+                        if ((strncasecmp("password", reinterpret_cast<const char*>(keyword),
+                                         9 ) == 0) ||
+                            (strncasecmp("target_password", reinterpret_cast<const char*>(keyword),
+                                         16) == 0)) {
+                            LOG(LOG_INFO, "receiving '%s'=<hidden>",
+                                reinterpret_cast<const char*>(keyword));
                         }
                         else {
                             LOG(LOG_INFO, "receiving '%s'='%s'",
                                 keyword,
-                                this->ini->context_get_value_by_string((char *)keyword));
+                                this->ini->context_get_value_by_string(reinterpret_cast<const char*>(keyword)));
                         }
                     }
 
@@ -128,7 +131,7 @@ public:
             }
         }
         LOG(LOG_WARNING, "Unexpected exit while parsing ACL message");
-        hexdump((char *)start, stream.p-start);
+        hexdump(reinterpret_cast<const char *>(start), stream.p-start);
         throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
     }
 
@@ -178,8 +181,8 @@ public:
         else {
             const char * tmp = this->ini->context_get_value(authid);
 
-            if ((strncasecmp("password", (char*)key, 8) == 0)
-                ||(strncasecmp("target_password", (char*)key, 15) == 0)){
+            if ((strncasecmp("password", static_cast<const char*>(key), 8) == 0)
+                ||(strncasecmp("target_password", static_cast<const char*>(key), 15) == 0)){
                 LOG(LOG_INFO, "sending (from authid) %s=<hidden>", key);
             }
             else {
@@ -195,7 +198,7 @@ public:
     void out_item_new(Stream & stream, Inifile::BaseField * bfield)
     {
         char tmp[65536];
-        const char * serialized = bfield->get_serialized(tmp,sizeof(tmp));
+        const char * serialized = bfield->get_serialized(tmp, sizeof(tmp));
         bfield->use();
         stream.out_copy_bytes(serialized,strlen(serialized));
     }
@@ -247,10 +250,6 @@ public:
         try {
             BStream stream(8192);
             stream.out_uint32_be(0);
-
-            // for (std::set<Inifile::BaseField *>::iterator it = list.begin(); it != list.end(); it++) {
-            //     this->out_item_new(stream, *it);
-            // }
 
             TODO("This involve copy of functor, find a simpler way")
             list.foreach(OutItemFunctor(this, stream));

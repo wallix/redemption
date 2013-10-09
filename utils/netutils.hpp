@@ -109,7 +109,7 @@ static inline int ip_connect(const char* ip, int port,
     u.s4.sin_addr.s_addr = inet_addr(ip);
 
     if (u.s4.sin_addr.s_addr == INADDR_NONE) {
-    TODO(" gethostbyname is obsolete use new function getnameinfo")
+    TODO(" gethostbyname is obsolete use new function getnameinfo");
         LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
         struct hostent *h = gethostbyname(ip);
         if (!h) {

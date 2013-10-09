@@ -123,7 +123,7 @@ struct FontChar
 }; // END STRUCT - FontChar
 
 
-TODO(" NUM_GLYPHS is misleading it's actually number of glyph in font. Using it to set size of a static array is quite dangerous as we shouldn't have to change code whenever we change font file.")
+TODO(" NUM_GLYPHS is misleading it's actually number of glyph in font. Using it to set size of a static array is quite dangerous as we shouldn't have to change code whenever we change font file.");
 
 
 /*
@@ -246,7 +246,7 @@ struct Font
                 unsigned remaining = stream.in_remain();
                 if (remaining < 1024){
                     if (size_to_read > 0){
-                        TODO("Create a pack_left function in stream to do this")
+                        TODO("Create a pack_left function in stream to do this");
                         //-----------------------------------------------------
                         memmove(stream.get_data(), stream.p, remaining);
                         stream.p = stream.get_data();
@@ -284,7 +284,7 @@ struct Font
                 int width = stream.in_sint16_le(); // >>> 2 bytes for glyph width
                 int height = stream.in_sint16_le(); // >>> 2 bytes for glyph height
 
-    TODO(" baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.")
+    TODO(" baseline is always -height (seen from the code of fontdump) looks strange. It means that baseline is probably not used in current code.");
 
                 int baseline = stream.in_sint16_le(); // >>> 2 bytes for glyph baseline
                 int offset = stream.in_sint16_le(); // >>> 2 bytes for glyph offset
@@ -308,7 +308,7 @@ struct Font
                 if (!stream.in_check_rem(datasize)) {
                     LOG(LOG_ERR
                        , "Error loading font %s: not enough data for definition of glyph %d (expected %d, got %d)\n"
-                       , file_path, index, datasize, (unsigned)stream.in_remain()
+                        , file_path, index, datasize, static_cast<unsigned>(stream.in_remain())
                        );
                     goto ErrorReadingFontFile;
                 }

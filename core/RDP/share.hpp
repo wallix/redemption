@@ -114,9 +114,9 @@ struct ShareControl_Recv
     SubStream payload;
     public:
     uint16_t totalLength;
-    TODO("rename to pduType")
+    TODO("rename to pduType");
     uint8_t pdu_type1;
-    TODO("Rename to PDUSource")
+    TODO("Rename to PDUSource");
     uint16_t mcs_channel;
 
     ShareControl_Recv(Stream & stream)

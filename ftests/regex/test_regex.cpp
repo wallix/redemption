@@ -37,8 +37,8 @@
 
 using namespace rndfa;
 
-void st_to_string(StateBase * st, std::ostream& os, const std::vector<StateBase*> states,
-                  unsigned depth = 0)
+inline void st_to_string(StateBase * st, std::ostream& os,
+                         const std::vector<StateBase*>& states, unsigned depth = 0)
 {
     size_t n = std::find(states.begin(), states.end(), st) - states.begin();
     os << std::string(depth, '\t') << n;
@@ -53,14 +53,18 @@ void st_to_string(StateBase * st, std::ostream& os, const std::vector<StateBase*
     }
 }
 
-std::string st_to_string(StateBase * st)
+inline std::string st_to_string(StateBase * st)
 {
     std::vector<StateBase*> states(1);
     append_state(st, states);
-    std::stringbuf sbuf;
-    std::ostream os(&sbuf);
+    std::ostringstream os;
     st_to_string(st, os, states);
-    return sbuf.str();
+    return os.str();
+}
+
+inline size_t multi_char(const char * c)
+{
+    return rndfa::utf_consumer(c).bumpc();
 }
 
 BOOST_AUTO_TEST_CASE(TestRegexState)
@@ -238,16 +242,112 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
             BOOST_CHECK_EQUAL(st_to_string(&st_a4), rgx.to_string());
         }
     }
+    {
+        StateBase close1(CAPTURE_CLOSE);
+        StateDigit digit;
+        StateBase split(SPLIT, 0, &close1, &digit);
+        digit.out1 = &split;
+        StateBase open1(CAPTURE_OPEN, 0, &split);
+        Reg rgx("(\\d*)");
+        BOOST_CHECK_EQUAL(st_to_string(&open1), rgx.to_string());
+    }
+    {
+        StateBase st_c4(NORMAL, multi_char("Þ"));
+        StateBase st_c3(NORMAL, 'a', &st_c4);
+        StateBase st_c2(NORMAL, multi_char("Ë"), &st_c3);
+        StateBase st_c1(NORMAL, multi_char("¥"), &st_c2);
+        Reg rgx("¥ËaÞ");
+        BOOST_CHECK_EQUAL(st_to_string(&st_c1), rgx.to_string());
+    }
 }
 
+BOOST_AUTO_TEST_CASE(TestRegexCheck)
+{
+    {
+        StateBase st(NORMAL, multi_char("Þ"));
+        BOOST_CHECK(st.check(multi_char("Þ")));
+        BOOST_CHECK( ! st.check('a'));
+    }
+    {
+        StateCharacters st("aÎbps");
+        BOOST_CHECK(st.check('a'));
+        BOOST_CHECK(st.check(multi_char("Î")));
+        BOOST_CHECK(st.check('b'));
+        BOOST_CHECK(st.check('p'));
+        BOOST_CHECK(st.check('s'));
+        BOOST_CHECK( ! st.check('t'));
+    }
+    {
+        StateRange st('e','g');
+        BOOST_CHECK(st.check('e'));
+        BOOST_CHECK(st.check('f'));
+        BOOST_CHECK(st.check('g'));
+        BOOST_CHECK( ! st.check('d'));
+        BOOST_CHECK( ! st.check('h'));
+    }
+    {
+        StateSpace st;
+        BOOST_CHECK(st.check(' '));
+        BOOST_CHECK(st.check('\t'));
+        BOOST_CHECK(st.check('\n'));
+        BOOST_CHECK( ! st.check('a'));
+    }
+    {
+        StateNoSpace st;
+        BOOST_CHECK( ! st.check(' '));
+        BOOST_CHECK( ! st.check('\t'));
+        BOOST_CHECK( ! st.check('\n'));
+        BOOST_CHECK(st.check('a'));
+    }
+    {
+        StateDigit st;
+        BOOST_CHECK(st.check('0'));
+        BOOST_CHECK(st.check('1'));
+        BOOST_CHECK(st.check('2'));
+        BOOST_CHECK(st.check('3'));
+        BOOST_CHECK(st.check('4'));
+        BOOST_CHECK(st.check('5'));
+        BOOST_CHECK(st.check('6'));
+        BOOST_CHECK(st.check('7'));
+        BOOST_CHECK(st.check('8'));
+        BOOST_CHECK(st.check('9'));
+        BOOST_CHECK( ! st.check('a'));
+    }
+    {
+        StateWord st;
+        BOOST_CHECK(st.check('0'));
+        BOOST_CHECK(st.check('9'));
+        BOOST_CHECK(st.check('a'));
+        BOOST_CHECK(st.check('z'));
+        BOOST_CHECK(st.check('A'));
+        BOOST_CHECK(st.check('Z'));
+        BOOST_CHECK(st.check('_'));
+        BOOST_CHECK( ! st.check('-'));
+        BOOST_CHECK( ! st.check(':'));
+    }
+    {
+        StateMultiTest st;
+        st.push_checker(new CheckerDigit);
+        st.push_checker(new CheckerString("abc"));
+        BOOST_CHECK(st.check('0'));
+        BOOST_CHECK(st.check('1'));
+        BOOST_CHECK(st.check('9'));
+        BOOST_CHECK(st.check('a'));
+        BOOST_CHECK(st.check('b'));
+        BOOST_CHECK(st.check('c'));
+        BOOST_CHECK( ! st.check('d'));
+    }
+}
+
+
 inline void regex_test(Regex & p_regex,
-                        const char * p_str,
-                        const int p_exact_result_search,
-                        const int p_result_search,
-                        const int p_exact_result_match,
-                        const Regex::range_matches & p_exact_match_result,
-                        const bool p_result_match,
-                        const Regex::range_matches & p_match_result)
+                       const char * p_str,
+                       const int p_exact_result_search,
+                       const int p_result_search,
+                       const int p_exact_result_match,
+                       const Regex::range_matches & p_exact_match_result,
+                       const bool p_result_match,
+                       const Regex::range_matches & p_match_result)
 {
     BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);
     BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);
