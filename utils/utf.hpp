@@ -554,22 +554,50 @@ static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len,
 
 // Copy as many characters from source to dest fitting in dest buffer.
 // Returns the number of UTF8 characters copied.
-// The destination string will always be 0 terminated.
+// The destination string will always be 0 terminated (dest_size 0 is forbidden)
 // The buffer after final 0 is not padded.
-TODO("Create a unit tested for this function.");
-static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size,
-    const uint8_t * source)
+static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uint8_t * source)
 {
-    size_t number_of_char = UTF8Len(source);
-    size_t source_len     = strlen((const char *)source);
-    TODO("It's always possible that memcpy make a partial copy of UTF8 character.")
-    if (source_len > dest_size - 1)
-    {
+    size_t source_len     = strlen(reinterpret_cast<const char *>(source));
+    if (source_len > dest_size - 1){
+        // rule out malformed UTF8 source, we need to check that or the following loop may never end
+        if ((source[0] & 0xC0) == 0x80) {
+            dest[0] = 0;
+            return 0;
+        }
         source_len = dest_size - 1;
+        while ((source[source_len] & 0xC0) == 0x80){
+            source_len--;
+        }
+        // we have found the beginning of last char
+        size_t lg = 0;
+        switch (source[source_len] >> 4){
+            case 8: case 9: case 0x0A: case 0x0B:
+                // these are bogus (continuation and should never happen with valid input)
+                break;
+            case 0: case 1: case 2: case 3:
+            case 4: case 5: case 6: case 7:
+                lg = 1;
+            break;
+            /* handle U+0080..U+07FF inline : 2 bytes sequences */
+            case 0xC: case 0xD:
+                lg = 2;
+            break;
+             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
+            case 0xE:
+                lg = 3;
+            break;
+            case 0xF:
+                lg = 4;
+            break;
+        }
+        if (source_len + lg < dest_size - 1){
+            source_len += lg;
+        }
     }
     memcpy(dest, source, source_len);
     dest[source_len] = 0;
-    return number_of_char;
+    return UTF8Len(dest); // number of char
 }
 
 #endif
