@@ -121,7 +121,6 @@ project redemption
 #     <cxxflags>-Wdouble-promotion
 #     <cxxflags>-Winit-self
 #     <cxxflags>-Wcast-qual
-#     <cxxflags>-Wold-style-cast
 #     <cxxflags>-Woverloaded-virtual
     <cxxflags>-fpie
     <define>PUBLIC

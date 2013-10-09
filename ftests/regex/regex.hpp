@@ -24,9 +24,10 @@
 #include <iostream>
 #include <vector>
 #include <utility>
+#include <algorithm>
 #include <cstring>
 #include <cassert>
-#include <algorithm>
+#include <cstdlib>
 
 ///TODO regex compiler ("..." -> C++)
 
@@ -46,9 +47,9 @@ namespace rndfa {
     {
         char c[] = {
             char((utf_c.utfc & 0XFF000000) >> 24),
-            char((utf_c.utfc & 0XFF0000) >> 16),
-            char((utf_c.utfc & 0XFF00) >> 8),
-            char(utf_c.utfc & 0XFF),
+            char((utf_c.utfc & 0X00FF0000) >> 16),
+            char((utf_c.utfc & 0X0000FF00) >> 8),
+            char((utf_c.utfc & 0X000000FF)),
         };
         if (c[0]) {
             return os.write(c, 4);
@@ -68,9 +69,9 @@ namespace rndfa {
     {
         char c[] = {
             char((utf_c.utfc & 0XFF000000) >> 24),
-            char((utf_c.utfc & 0XFF0000) >> 16),
-            char((utf_c.utfc & 0XFF00) >> 8),
-            char(utf_c.utfc & 0XFF),
+            char((utf_c.utfc & 0X00FF0000) >> 16),
+            char((utf_c.utfc & 0X0000FF00) >> 8),
+            char((utf_c.utfc & 0X000000FF)),
         };
         if (c[0]) {
             str += c[0];
@@ -92,24 +93,24 @@ namespace rndfa {
     {
     public:
         utf_consumer(const char * str)
-        : s(str)
+        : s(reinterpret_cast<const unsigned char *>(str))
         {}
 
         size_t bumpc()
         {
-            size_t c = *this->s & 0xFF;
+            size_t c = *this->s;
             ++this->s;
-            if ((*this->s & 0xFF) >> 6 == 2) {
+            if (*this->s >> 6 == 2) {
                 c <<= 8;
-                c |= *this->s & 0xFF;
+                c |= *this->s;
                 ++this->s;
-                if ((*this->s & 0xFF) >> 6 == 2) {
+                if (*this->s >> 6 == 2) {
                     c <<= 8;
-                    c |= *this->s & 0xFF;
+                    c |= *this->s;
                     ++this->s;
-                    if ((*this->s & 0xFF) >> 6 == 2) {
+                    if (*this->s >> 6 == 2) {
                         c <<= 8;
-                        c |= *this->s & 0xFF;
+                        c |= *this->s;
                         ++this->s;
                     }
                 }
@@ -117,12 +118,9 @@ namespace rndfa {
             return c;
         }
 
-        size_t getc()
+        size_t getc() const
         {
-            const char * tmp = this->s;
-            size_t c = this->bumpc();
-            this->s = tmp;
-            return c;
+            return utf_consumer(this->str()).bumpc();
         }
 
         bool valid() const
@@ -130,7 +128,17 @@ namespace rndfa {
             return *this->s;
         }
 
-        const char * s;
+        const char * str() const
+        {
+            return reinterpret_cast<const char *>(s);
+        }
+
+        void str(const char * str)
+        {
+            s = reinterpret_cast<const unsigned char *>(str);
+        }
+
+        const unsigned char * s;
     };
 
     inline bool utf_contains(const char * str, size_t c)
@@ -357,11 +365,11 @@ namespace rndfa {
     typedef IdentifierNoTrait<IdentifierSpaceTrait> IdentifierNoSpaceTrait;
 
     typedef StateIdentifier<'w', IdentifierWordTrait>       StateWord;
-    typedef StateIdentifier<'W', IdentifierNoWordTrait>     IdentifierNoWord;
+    typedef StateIdentifier<'W', IdentifierNoWordTrait>     StateNoWord;
     typedef StateIdentifier<'d', IdentifierDigitTrait>      StateDigit;
-    typedef StateIdentifier<'D', IdentifierNoDigitTrait>    IdentifierNoDigit;
+    typedef StateIdentifier<'D', IdentifierNoDigitTrait>    SateNoDigit;
     typedef StateIdentifier<'s', IdentifierSpaceTrait>      StateSpace;
-    typedef StateIdentifier<'S', IdentifierNoSpaceTrait>    IdentifierNoSpace;
+    typedef StateIdentifier<'S', IdentifierNoSpaceTrait>    StateNoSpace;
 
     struct StateCharacters : StateBase
     {
@@ -1304,7 +1312,7 @@ namespace rndfa {
 #endif
                         pal1->push_back(this->sm.st_range_list, *this->sm.pidx_trace_free);
                     }
-                    s = consumer.s;
+                    s = consumer.str();
                 }
 
                 if (!consumer.valid()) {
@@ -1403,11 +1411,11 @@ namespace rndfa {
     {
         switch (c) {
             case 'd': return new StateDigit;
-            case 'D': return new IdentifierNoDigit;
+            case 'D': return new SateNoDigit;
             case 'w': return new StateWord;
-            case 'W': return new IdentifierNoWord;
+            case 'W': return new StateNoWord;
             case 's': return new StateSpace;
-            case 'S': return new IdentifierNoSpace;
+            case 'S': return new StateNoSpace;
             case 'n': return new_character('\n');
             case 't': return new_character('\t');
             case 'r': return new_character('\r');
@@ -1442,9 +1450,9 @@ namespace rndfa {
                     str += '-';
                     c = consumer.bumpc();
                 }
-                const char * cs = consumer.s;
+                const unsigned char * cs = consumer.s;
                 while (consumer.valid() && c != ']') {
-                    const char * p = consumer.s;
+                    const unsigned char * p = consumer.s;
                     size_t prev_c = c;
                     while (c != ']' && c != '-') {
                         if (c == '\\') {
@@ -1459,7 +1467,7 @@ namespace rndfa {
                                 case 'n': str += '\n'; break;
                                 case 't': str += '\t'; break;
                                 case 'r': str += '\r'; break;
-                                case 'v': str += '\v'; break;
+                                //case 'v': str += '\v'; break;
                                 default : str += utf_char(cc); break;
                             }
                         }
@@ -1545,7 +1553,7 @@ namespace rndfa {
 
     inline bool is_meta_char(utf_consumer & consumer, size_t c)
     {
-        return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.s));
+        return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.str()));
     }
 
     struct StateDeleter
@@ -1758,7 +1766,7 @@ namespace rndfa {
                     case '{': {
                         /**///std::cout << ("{") << std::endl;
                         char * end = 0;
-                        unsigned m = strtoul(consumer.s, &end, 10);
+                        unsigned m = strtoul(consumer.str(), &end, 10);
                         /**///std::cout << ("end ") << *end << std::endl;
                         /**///std::cout << "m: " << (m) << std::endl;
                         if (*end != '}') {
@@ -1864,7 +1872,7 @@ namespace rndfa {
                             }
                             end -= 1;
                         }
-                        consumer.s = end + 1 + 1;
+                        consumer.str(end + 1 + 1);
                         /**///std::cout << "'" << (*consumer.s) << "'" << std::endl;
                         break;
                     }
@@ -1986,7 +1994,7 @@ namespace rndfa {
                 *msg_err = err;
             }
             if (pos_err) {
-                *pos_err = consumer.s - s;
+                *pos_err = consumer.str() - s;
             }
         }
         else if (has_epsilone) {
