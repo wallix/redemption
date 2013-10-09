@@ -626,11 +626,11 @@ public:
 
     virtual void end_update()
     {
-        if (this->verbose & 64){
+        if (this->verbose & 64) {
             LOG(LOG_INFO, "Front::end_update()");
         }
         this->order_level--;
-        if (this->order_level == 0){
+        if (this->up_and_running && (this->order_level == 0)) {
             this->flush();
         }
     }
