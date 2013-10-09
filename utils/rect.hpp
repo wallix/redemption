@@ -43,12 +43,12 @@ struct Rect {
 
     TODO("Right should be included inside rect (and undefined for empty rect)");
     uint16_t right() const {
-        return (uint16_t)(this->x + this->cx);
+        return static_cast<uint16_t>(this->x + this->cx);
     }
 
     TODO("Bottom should be included inside rect (and undefined for empty rect)");
     uint16_t bottom() const {
-        return (uint16_t)(this->y + this->cy);
+        return static_cast<uint16_t>(this->y + this->cy);
     }
 
     Rect() : x(0), y(0), cx(0), cy(0) {
@@ -132,8 +132,8 @@ struct Rect {
 
     Rect shrink(uint16_t margin) const {
         return Rect(this->x + margin, this->y + margin,
-                    (uint16_t)(this->cx - margin * 2),
-                    (uint16_t)(this->cy - margin * 2));
+                    static_cast<uint16_t>(this->cx - margin * 2),
+                    static_cast<uint16_t>(this->cy - margin * 2));
     }
 
     Rect upper_side() const {
@@ -182,10 +182,12 @@ struct Rect {
 
         if (!intersect.isempty()) {
             if (intersect.y  > this->y) {
-                it.callback(Rect(this->x, this->y, this->cx, (uint16_t)(intersect.y - this->y)));
+                it.callback(Rect(this->x, this->y, this->cx,
+                                 static_cast<uint16_t>(intersect.y - this->y)));
             }
             if (intersect.x > this->x) {
-                it.callback(Rect(this->x, intersect.y, (uint16_t)(intersect.x - this->x), intersect.cy));
+                it.callback(Rect(this->x, intersect.y,
+                                 static_cast<uint16_t>(intersect.x - this->x), intersect.cy));
             }
             if (this->x + this->cx > intersect.x + intersect.cx) {
                 it.callback(Rect(intersect.x + intersect.cx, intersect.y,

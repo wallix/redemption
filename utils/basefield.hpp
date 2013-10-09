@@ -164,8 +164,8 @@ struct FieldObserver : public ConfigurationHolder {
             else {
                 const char * tmp = this->get_value();
                 n = snprintf(buff, size, "%s\n!%s\n",key,tmp);
-                if ((strncasecmp("password", (char*)key, 8) == 0)
-                    ||(strncasecmp("target_password", (char*)key, 15) == 0)){
+                if ((strncasecmp("password", static_cast<const char*>(key), 8) == 0)
+                    ||(strncasecmp("target_password", static_cast<const char*>(key), 15) == 0)){
                     LOG(LOG_INFO, "sending %s=<hidden>", key);
                 }
                 else {

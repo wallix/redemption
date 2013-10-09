@@ -77,7 +77,7 @@ public:
             return this->ptr + 128;
         }
         void alloc(uint32_t size) {
-            this->ptr = (uint8_t*)malloc(size+128);
+            this->ptr = static_cast<uint8_t*>(malloc(size+128));
             this->ptr[0] = 1;
         }
         void use(const CountdownData & other)
@@ -393,8 +393,8 @@ public:
             }
 
             const uint8_t Bpp = 3;
-            this->cx = align4((uint16_t)(header.image_width));
-            this->cy = (uint16_t)header.image_height;
+            this->cx = align4(static_cast<uint16_t>(header.image_width));
+            this->cy = static_cast<uint16_t>(header.image_height);
             this->line_size = this->cx * Bpp;
             this->bmp_size = this->line_size * this->cy;
 
@@ -429,7 +429,8 @@ public:
                         break;
                     }
 
-                    uint32_t px = color_decode(pixel, (uint8_t)header.bit_count, palette1);
+                    uint32_t px = color_decode(pixel, static_cast<uint8_t>(header.bit_count),
+                                               palette1);
                     ::out_bytes_le(dest + y * this->line_size + x * Bpp, Bpp, px);
                 }
                 if (this->line_size > header.image_width * Bpp){
@@ -732,7 +733,7 @@ private:
                 }
             break;
             default:
-                opcode = (uint8_t)(code >> 5); // FILL, MIX, FOM, COLOR, COPY
+                opcode = static_cast<uint8_t>(code >> 5); // FILL, MIX, FOM, COLOR, COPY
                 count = code & 0x1f;
                 if (!count){
                     count = input[0] + 32; input++;
@@ -982,7 +983,7 @@ public:
         for (i = 0 ; i < count; i++, p += Bpp)
         {
             if (get_pixel(Bpp, p) != get_pixel_above(Bpp, pmin, p)){
-                mask[i>>3] |= (uint8_t)(0x01 << (i & 7));
+                mask[i>>3] |= static_cast<uint8_t>(0x01 << (i & 7));
             }
         }
     }
@@ -1045,14 +1046,14 @@ public:
             // =========================================================================
             void out_count(const int in_count, const int mask){
                 if (in_count < 32) {
-                    this->stream.out_uint8((uint8_t)((mask << 5) | in_count));
+                    this->stream.out_uint8(static_cast<uint8_t>((mask << 5) | in_count));
                 }
                 else if (in_count < 256 + 32){
-                    this->stream.out_uint8((uint8_t)(mask << 5));
-                    this->stream.out_uint8((uint8_t)(in_count - 32));
+                    this->stream.out_uint8(static_cast<uint8_t>(mask << 5));
+                    this->stream.out_uint8(static_cast<uint8_t>(in_count - 32));
                 }
                 else {
-                    this->stream.out_uint8((uint8_t)(0xf0 | mask));
+                    this->stream.out_uint8(static_cast<uint8_t>(0xf0 | mask));
                     this->stream.out_uint16_le(in_count);
                 }
             }
@@ -1151,11 +1152,11 @@ public:
             {
                 const uint8_t mask = 0x06;
                 if (in_count < 16) {
-                    this->stream.out_uint8((uint8_t)(0xc0 | in_count));
+                    this->stream.out_uint8(static_cast<uint8_t>(0xc0 | in_count));
                 }
                 else if (in_count < 256 + 16){
                     this->stream.out_uint8(0xc0);
-                    this->stream.out_uint8((uint8_t)(in_count - 16));
+                    this->stream.out_uint8(static_cast<uint8_t>(in_count - 16));
                 }
                 else {
                     this->stream.out_uint8(0xf0 | mask);
@@ -1245,10 +1246,10 @@ public:
                 if (in_count < 256){
                     if (in_count & 7){
                         this->stream.out_uint8(0x40);
-                        this->stream.out_uint8((uint8_t)(in_count - 1));
+                        this->stream.out_uint8(static_cast<uint8_t>(in_count - 1));
                     }
                     else{
-                        this->stream.out_uint8((uint8_t)(0x40 | (in_count >> 3)));
+                        this->stream.out_uint8(static_cast<uint8_t>(0x40 | (in_count >> 3)));
                     }
                 }
                 else{
@@ -1267,10 +1268,10 @@ public:
                 if (in_count < 256){
                     if (in_count & 0x87){
                         this->stream.out_uint8(0xD0);
-                        this->stream.out_uint8((uint8_t)(in_count - 1));
+                        this->stream.out_uint8(static_cast<uint8_t>(in_count - 1));
                     }
                     else{
-                        this->stream.out_uint8((uint8_t)(0xD0 | (in_count >> 3)));
+                        this->stream.out_uint8(static_cast<uint8_t>(0xD0 | (in_count >> 3)));
                     }
                 }
                 else{
@@ -1397,11 +1398,11 @@ public:
             {
                 const uint8_t mask = 0x08;
                 if (in_count / 2 < 16){
-                    this->stream.out_uint8((uint8_t)(0xe0 | (in_count / 2)));
+                    this->stream.out_uint8(static_cast<uint8_t>(0xe0 | (in_count / 2)));
                 }
                 else if (in_count / 2 < 256 + 16){
                     this->stream.out_uint8(static_cast<uint8_t>(0xe0));
-                    this->stream.out_uint8((uint8_t)(in_count / 2 - 16));
+                    this->stream.out_uint8(static_cast<uint8_t>(in_count / 2 - 16));
                 }
                 else{
                     this->stream.out_uint8(0xf0 | mask);
@@ -1561,7 +1562,7 @@ public:
 
         // Memoize result of compression
         this->data_compressed_size = out.stream.p - tmp_data_compressed;
-        this->data_compressed = (uint8_t*)malloc(this->data_compressed_size);
+        this->data_compressed = static_cast<uint8_t*>(malloc(this->data_compressed_size));
         if (this->data_compressed) {
             memcpy(this->data_compressed, tmp_data_compressed, this->data_compressed_size);
         }
@@ -1570,8 +1571,8 @@ public:
     void compute_sha1(uint8_t (&sig)[20]) const
     {
         SslSha1 sha1;
-        uint16_t rowsize = (uint16_t)(this->cx * nbbytes(this->original_bpp));
-        for (size_t y = 0; y < (size_t)this->cy; y++){
+        uint16_t rowsize = static_cast<uint16_t>(this->cx * nbbytes(this->original_bpp));
+        for (size_t y = 0; y < static_cast<size_t>(this->cy); y++){
             sha1.update(FixedSizeStream(this->data_bitmap.get() + y * rowsize, rowsize));
         }
         sha1.final(sig);
