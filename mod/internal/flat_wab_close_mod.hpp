@@ -43,7 +43,7 @@ private:
         {
             if (ini.context.selector.get()
                 && !ini.context.selector.is_asked()) {
-                snprintf(text, sizeof(text), "%s", TR("selector", &ini));
+                snprintf(text, sizeof(text), "%s", TR("selector", ini));
             }
             else {
                 if (::strlen(ini.globals.target_application.get_cstr())) {
@@ -72,7 +72,8 @@ public:
                     || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
                     NULL : temporary_text(ini).text,
                    WHITE, DARK_BLUE_BIS,
-                   showtimer
+                   showtimer,
+                   ini
                    )
     , timeout(Timeout(now, ini.globals.close_timeout))
     , showtimer(showtimer)

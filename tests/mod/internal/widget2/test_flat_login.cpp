@@ -53,8 +53,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
     int id = 0;
+    
+    Inifile ini;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test1", false, id, "rec", "rec");
+    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test1", 
+        false, id, "rec", "rec",
+        WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.rect);
@@ -79,7 +83,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test2");
+    Inifile ini;
+
+    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test2",
+         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -129,7 +136,9 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
     // FlatLogin is a flat_login widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
 
-    FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3");
+    Inifile ini;
+    FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3",
+         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
 
     flat_login.set_widget_focus(&flat_login.password_edit);
 
@@ -176,7 +185,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4");
+    Inifile ini;
+    ini.translation.help_message.set_from_cstr("");
+    
+
+    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4",
+         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -198,6 +212,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
                                flat_login.helpicon.centerx(), flat_login.helpicon.centery(), NULL);
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
+
     if (!check_sig(drawable.gd.drawable, message,
                    "\x65\xb2\x05\xce\xad\xde\x9d\x36\x45\x9d"
                    "\x58\xd2\x3f\x45\x28\x4a\x20\xf0\x09\x2f"
@@ -214,7 +229,11 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
     // FlatLogin is a flat_login widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6");
+
+    Inifile ini;
+
+    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
+         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -240,7 +259,10 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
     // FlatLogin is a flat_login widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6");
+    
+    Inifile ini;
+    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
+         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -279,8 +301,11 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
             this->event = event;
         }
     } notifier;
+    
+    Inifile ini;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6");
+    FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6",
+         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
 }
 
 

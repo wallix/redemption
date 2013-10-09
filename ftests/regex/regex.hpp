@@ -220,35 +220,6 @@ namespace rndfa {
 
     StateFinish state_finish = StateFinish();
 
-    struct StateRange : StateBase
-    {
-        StateRange(size_t r1, size_t r2, StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, r1, out1, out2)
-        , rend(r2)
-        {}
-
-        virtual ~StateRange()
-        {}
-
-        virtual bool check(size_t c)
-        {
-            /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
-            return this->utfc <= c && c <= rend;
-        }
-
-        virtual StateBase * clone() const
-        {
-            return new StateRange(this->utfc, this->rend);
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "[" << utf_char(this->utfc) << "-" << utf_char(this->rend) << "]";
-        }
-
-        size_t rend;
-    };
-
     struct StateCharacters : StateBase
     {
         StateCharacters(const std::string& s, StateBase* out1 = 0, StateBase* out2 = 0)
@@ -310,6 +281,7 @@ namespace rndfa {
             virtual bool check(size_t c) = 0;
             virtual Checker * clone() const = 0;
             virtual void display(std::ostream& os) const = 0;
+            virtual ~Checker() {}
         };
 
         std::vector<Checker*> checkers;
@@ -669,54 +641,58 @@ namespace rndfa {
         };
 
     public:
-        bool exact_search(const char * s, bool check_end = true)
+        bool exact_search(const char * s, unsigned step_limit, bool check_end = true)
         {
             if (this->states.empty()) {
                 return false;
             }
-            return Searching(*this).exact_search(s, check_end);
+            return Searching(*this).exact_search(s, step_limit, check_end);
         }
 
-        bool exact_search_with_trace(const char * s, bool check_end = true)
+        bool exact_search_with_trace(const char * s, unsigned step_limit,
+                                     bool check_end = true)
         {
             if (this->nb_capture == 0) {
-                return exact_search(s, check_end);
+                return exact_search(s, step_limit, check_end);
             }
-            return Matching(*this).match(s, DefaultMatchTracer(), Matching::is_exact());
+            return Matching(*this).match(s, step_limit, DefaultMatchTracer(),
+                                         Matching::is_exact());
         }
 
         template<typename Tracer>
-        bool exact_search_with_trace(const char * s, Tracer tracer, bool check_end = true)
+        bool exact_search_with_trace(const char * s, unsigned step_limit,
+                                     Tracer tracer, bool check_end = true)
         {
             if (this->nb_capture == 0) {
-                return exact_search(s, check_end);
+                return exact_search(s, step_limit, check_end);
             }
-            return Matching(*this).match<Tracer&>(s, tracer, Matching::is_exact());
+            return Matching(*this).match(s, step_limit, tracer, Matching::is_exact());
         }
 
-        bool search(const char * s)
+        bool search(const char * s, unsigned step_limit)
         {
             if (this->states.empty()) {
                 return false;
             }
-            return Searching(*this).search(s);
+            return Searching(*this).search(s, step_limit);
         }
 
-        bool search_with_trace(const char * s)
+        bool search_with_trace(const char * s, unsigned step_limit)
         {
             if (this->nb_capture == 0) {
-                return search(s);
+                return search(s, step_limit);
             }
-            return Matching(*this).match(s, DefaultMatchTracer(), Matching::is_not_exact());
+            return Matching(*this).match(s, step_limit, DefaultMatchTracer(),
+                                         Matching::is_not_exact());
         }
 
         template<typename Tracer>
-        bool search_with_trace(const char * s, Tracer tracer)
+        bool search_with_trace(const char * s, unsigned step_limit, Tracer tracer)
         {
             if (this->nb_capture == 0) {
-                return search(s);
+                return search(s, step_limit);
             }
-            return Matching(*this).match<Tracer&>(s, tracer, Matching::is_not_exact());
+            return Matching(*this).match(s, step_limit, tracer, Matching::is_not_exact());
         }
 
         range_matches match_result()
@@ -835,9 +811,10 @@ namespace rndfa {
 
             typedef StateListByStep::Info Info;
 
-            RangeList * step(size_t c, RangeList * l)
+            RangeList * step(size_t c, RangeList * l, unsigned & step_count)
             {
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
+                    ++step_count;
                     if (!first->st->is_cap() && first->st->check(c)) {
 #ifdef DISPLAY_TRACE
                         this->sm.display_elem_state_list(*first, 0);
@@ -852,7 +829,7 @@ namespace rndfa {
                 return (RangeList*)1;
             }
 
-            bool exact_search(const char * s, bool check_end = true)
+            bool exact_search(const char * s, unsigned step_limit, bool check_end = true)
             {
 #ifdef DISPLAY_TRACE
                 this->sm.display_dfa();
@@ -864,11 +841,16 @@ namespace rndfa {
 
                 utf_consumer consumer(s);
 
+                unsigned step_count = 0;
+
                 while (consumer.valid() && l > (void*)1){
 #ifdef DISPLAY_TRACE
                     std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
 #endif
-                    l = this->step(consumer.bumpc(), l);
+                    l = this->step(consumer.bumpc(), l, step_count);
+                    if (step_count >= step_limit) {
+                        return false;
+                    }
                     ++this->step_id;
                 }
 
@@ -888,9 +870,10 @@ namespace rndfa {
                 return false;
             }
 
-            unsigned step(size_t c, StateListByStep * l1, StateListByStep * l2)
+            unsigned step(size_t c, StateListByStep * l1, StateListByStep * l2, unsigned & step_count)
             {
                 for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
+                    ++step_count;
                     if (ifirst->rl->st->id == this->step_id) {
                         /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
                         continue;
@@ -898,6 +881,7 @@ namespace rndfa {
                     ifirst->rl->st->id = this->step_id;
 
                     for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
+                        ++step_count;
                         if (!first->st->is_cap() && first->st->check(c)) {
 #ifdef DISPLAY_TRACE
                             this->sm.display_elem_state_list(*first, 0);
@@ -912,7 +896,7 @@ namespace rndfa {
                 return -1u;
             }
 
-            bool search(const char * s)
+            bool search(const char * s, unsigned step_limit)
             {
 #ifdef DISPLAY_TRACE
                 this->sm.display_dfa();
@@ -928,12 +912,17 @@ namespace rndfa {
 
                 utf_consumer consumer(s);
 
+                unsigned step_count = 0;
+
                 while (consumer.valid()) {
 #ifdef DISPLAY_TRACE
                     std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
 #endif
-                    if (0 == this->step(consumer.bumpc(), pal1, pal2)) {
+                    if (0 == this->step(consumer.bumpc(), pal1, pal2, step_count)) {
                         return true;
+                    }
+                    if (step_count >= step_limit) {
+                        return false;
                     }
                     ++this->step_id;
                     std::swap(pal1, pal2);
@@ -1018,7 +1007,7 @@ namespace rndfa {
             template<typename Tracer>
             unsigned step(const char * s, size_t c,
                           StateListByStep * l1, StateListByStep * l2,
-                          Tracer& tracer)
+                          Tracer& tracer, unsigned & step_count)
             {
                 for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
                     if (ifirst->rl->st->id == this->step_id) {
@@ -1036,6 +1025,7 @@ namespace rndfa {
                     StateList * last = ifirst->rl->last;
 
                     for (; first != last; ++first) {
+                        ++step_count;
                         if (first->st->is_cap_open()) {
                             if (!this->sm.traces[ifirst->idx * (this->sm.nb_capture * 2) + first->st->num] && tracer.open(ifirst->idx, s, first->st->num)) {
 #ifdef DISPLAY_TRACE
@@ -1094,7 +1084,7 @@ namespace rndfa {
             struct is_not_exact { static const bool value = false; };
 
             template<typename Tracer, typename ExactMatch>
-            bool match(const char * s, Tracer tracer, ExactMatch)
+            bool match(const char * s, unsigned step_limit, Tracer tracer, ExactMatch)
             {
 #ifdef DISPLAY_TRACE
                 this->sm.display_dfa();
@@ -1112,16 +1102,21 @@ namespace rndfa {
 
                 utf_consumer consumer(s);
 
+                unsigned step_count = 0;
+
                 while (consumer.valid()) {
 #ifdef DISPLAY_TRACE
                     std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m" << std::endl;
 #endif
-                    if (-1u != (this->sm.idx_trace = this->step(s, consumer.bumpc(), pal1, pal2, tracer))) {
+                    if (-1u != (this->sm.idx_trace = this->step(s, consumer.bumpc(), pal1, pal2, tracer, step_count))) {
                         tracer.good(this->sm.idx_trace);
                         return false == ExactMatch::value || !consumer.getc();
                     }
                     if (pal2->empty()) {
                         break;
+                    }
+                    if (step_count >= step_limit) {
+                        return false;
                     }
                     ++this->step_id;
                     std::swap(pal1, pal2);
@@ -1306,7 +1301,7 @@ namespace rndfa {
                             if ((msg_err = check_interval(prev_c, c))) {
                                 return 0;
                             }
-                            if (str.size() > 1) {
+                            if (str.size()) {
                                 str.erase(str.size()-1);
                             }
                             st->push_checker(new CheckerInterval(prev_c, c));
@@ -1628,16 +1623,13 @@ namespace rndfa {
                                         }
                                         pst = &(*pst)->out1;
 
-                                        //TODO complexe
                                         while (--n) {
                                             *pst = cloner.clone();
-                                            tmp = st_one;
                                             *st_one = *pst;
                                             prev_st_one = st_one;
                                             st_one = &(*pst)->out1;
                                             *pst = new_split(0, *pst);
                                             *prev_st_one = *pst;
-                                            prev_st_one = tmp;
                                             pst = &(*pst)->out1;
                                         }
                                     }
@@ -1718,9 +1710,7 @@ namespace rndfa {
                         return IntermendaryState(st.out1, pst);
                         break;
                     default:
-                        //TODO impossible
-                        std::cout << ("error") << std::endl;
-                        break;
+                        return FreeState::invalide(st);
                     case '(':
                         if (*consumer.s == '?' && *(consumer.s+1) == ':') {
                             if (!*consumer.s || !(*consumer.s+1) || !(*consumer.s+2)) {
@@ -1849,21 +1839,25 @@ namespace rndfa {
     private:
         Parser parser;
         StateMachine2 sm;
+        unsigned step_limit;
 
     public:
-        Regex(const char * s)
+        Regex(const char * s, unsigned step_limit = 10000)
         : parser(s)
         , sm(this->parser.st)
+        , step_limit(step_limit)
         {}
 
-        Regex()
+        Regex(unsigned step_limit = 10000)
         : parser()
         , sm(0)
+        , step_limit(step_limit)
         {}
 
-        Regex(StateBase * st)
+        Regex(StateBase * st, unsigned step_limit = 10000)
         : parser(st)
         , sm(st)
+        , step_limit(step_limit)
         {}
 
         void reset(const char * s)
@@ -1894,7 +1888,7 @@ namespace rndfa {
         range_matches exact_match(const char * s, bool check_end = true)
         {
             range_matches ret;
-            if (this->sm.exact_search_with_trace(s, check_end)) {
+            if (this->sm.exact_search_with_trace(s, this->step_limit, check_end)) {
                 this->sm.append_match_result(ret);
             }
             return ret;
@@ -1904,7 +1898,7 @@ namespace rndfa {
         range_matches exact_match(const char * s, Tracer tracer, bool check_end = true)
         {
             range_matches ret;
-            if (this->sm.exact_search_with_trace<Tracer&>(s, tracer, check_end)) {
+            if (this->sm.exact_search_with_trace(s, this->step_limit, tracer, check_end)) {
                 this->sm.append_match_result(ret);
             }
             return ret;
@@ -1913,7 +1907,7 @@ namespace rndfa {
         range_matches match(const char * s)
         {
             range_matches ret;
-            if (this->sm.search_with_trace(s)) {
+            if (this->sm.search_with_trace(s, this->step_limit)) {
                 this->sm.append_match_result(ret);
             }
             return ret;
@@ -1923,7 +1917,7 @@ namespace rndfa {
         range_matches match(const char * s, Tracer tracer)
         {
             range_matches ret;
-            if (this->sm.search_with_trace<Tracer&>(s, tracer)) {
+            if (this->sm.search_with_trace(s, this->step_limit, tracer)) {
                 this->sm.append_match_result(ret);
             }
             return ret;
@@ -1931,34 +1925,34 @@ namespace rndfa {
 
         bool exact_search(const char * s, bool check_end = true)
         {
-            return this->sm.exact_search(s, check_end);
+            return this->sm.exact_search(s, this->step_limit, check_end);
         }
 
         bool search(const char * s)
         {
-            return this->sm.search(s);
+            return this->sm.search(s, this->step_limit);
         }
 
         bool exact_search_with_matches(const char * s, bool check_end = true)
         {
-            return this->sm.exact_search_with_trace(s, check_end);
+            return this->sm.exact_search_with_trace(s, this->step_limit, check_end);
         }
 
         template<typename Tracer>
         bool exact_search_with_matches(const char * s, Tracer tracer, bool check_end = true)
         {
-            return this->sm.exact_search_with_trace<Tracer&>(s, tracer, check_end);
+            return this->sm.exact_search_with_trace(s, tracer, check_end, this->step_limit);
         }
 
         bool search_with_matches(const char * s)
         {
-            return this->sm.search_with_trace(s);
+            return this->sm.search_with_trace(s, this->step_limit);
         }
 
         template<typename Tracer>
         bool search_with_matches(const char * s, Tracer tracer)
         {
-            return this->sm.search_with_trace<Tracer&>(s, tracer);
+            return this->sm.search_with_trace(s, this->step_limit, tracer);
         }
 
         range_matches match_result()

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <ctime>
-#include <vector>
 #include <sys/types.h>
 #include <regex.h>
 

@@ -42,7 +42,7 @@ public:
                   bool has_challenge = false)
     : InternalMod(front, width, height)
     , dialog_widget(*this, width, height, this->screen, this, caption, message,
-                    0, TR("OK", &ini), cancel_text, WHITE, DARK_BLUE_BIS, has_challenge)
+                    0, TR("OK", ini), cancel_text, WHITE, DARK_BLUE_BIS, has_challenge)
     , ini(ini)
     , timeout(Timeout(now, ini.debug.pass_dialog_box))
     {

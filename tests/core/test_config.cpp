@@ -169,10 +169,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -405,10 +405,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_CLOSE)));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_REFUSED)));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.context_get_value(AUTHID_TRANS_LOGIN)));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.context_get_value(AUTHID_TRANS_USERNAME)));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.context_get_value(AUTHID_TRANS_USERNAME)));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.context_get_value(AUTHID_TRANS_PASSWORD)));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.context_get_value(AUTHID_TRANS_TARGET)));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.context_get_value(AUTHID_TRANS_DIAGNOSTIC)));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.context_get_value(AUTHID_TRANS_TARGET)));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.context_get_value(AUTHID_TRANS_DIAGNOSTIC)));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.context_get_value(AUTHID_TRANS_CONNECTION_CLOSED)));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.context_get_value(AUTHID_TRANS_HELP_MESSAGE)));
 
@@ -648,10 +648,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -850,10 +850,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -1034,10 +1034,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -1210,10 +1210,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -1374,10 +1374,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -1531,10 +1531,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -1687,10 +1687,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -1843,10 +1843,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -1989,10 +1989,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string("Close"),             std::string(ini.translation.button_close.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Refused"),           std::string(ini.translation.button_refused.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Login"),             std::string(ini.translation.login.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("username"),          std::string(ini.translation.username.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Username"),          std::string(ini.translation.username.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Password"),          std::string(ini.translation.password.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("target"),            std::string(ini.translation.target.get_cstr()));
-    BOOST_CHECK_EQUAL(std::string("diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Target"),            std::string(ini.translation.target.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),        std::string(ini.translation.diagnostic.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Connection closed"), std::string(ini.translation.connection_closed.get_cstr()));
     BOOST_CHECK_EQUAL(std::string("Help message"),      std::string(ini.translation.help_message.get_cstr()));
 
@@ -2063,9 +2063,8 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     ini.context_set_value(AUTHID_TRANS_USERNAME,        "Nom de l'utilisateur");
     ini.context_set_value(AUTHID_TRANS_PASSWORD,        "Mot de passe");
     ini.context_set_value(AUTHID_TRANS_TARGET,          "Cible");
-    ini.context_set_value(AUTHID_TRANS_DIAGNOSTIC,      "diagnostique");
-    ini.context_set_value(AUTHID_TRANS_CONNECTION_CLOSED,
-                          "Connexion fermée");
+    ini.context_set_value(AUTHID_TRANS_DIAGNOSTIC,      "Diagnostic");
+    ini.context_set_value(AUTHID_TRANS_CONNECTION_CLOSED, "Connexion fermée");
     ini.context_set_value(AUTHID_TRANS_HELP_MESSAGE,    "Message d'aide");
 
     BOOST_CHECK_EQUAL(std::string("Ok"),                std::string(ini.context_get_value(AUTHID_TRANS_BUTTON_OK)));
@@ -2078,7 +2077,7 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
                       std::string(ini.context_get_value(AUTHID_TRANS_USERNAME)));
     BOOST_CHECK_EQUAL(std::string("Mot de passe"),      std::string(ini.context_get_value(AUTHID_TRANS_PASSWORD)));
     BOOST_CHECK_EQUAL(std::string("Cible"),             std::string(ini.context_get_value(AUTHID_TRANS_TARGET)));
-    BOOST_CHECK_EQUAL(std::string("diagnostique"),      std::string(ini.context_get_value(AUTHID_TRANS_DIAGNOSTIC)));
+    BOOST_CHECK_EQUAL(std::string("Diagnostic"),      std::string(ini.context_get_value(AUTHID_TRANS_DIAGNOSTIC)));
     BOOST_CHECK_EQUAL(std::string("Connexion fermée"),  std::string(ini.context_get_value(AUTHID_TRANS_CONNECTION_CLOSED)));
     BOOST_CHECK_EQUAL(std::string("Message d'aide"),    std::string(ini.context_get_value(AUTHID_TRANS_HELP_MESSAGE)));
 
