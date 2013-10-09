@@ -64,6 +64,7 @@ enum {
 
 struct RdpInput
 {
+    virtual ~RdpInput() {}
     virtual void rdp_input_scancode(long param1, long param2, long param3, long param4, Keymap2 * keymap) = 0;
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap) = 0;
     virtual void rdp_input_synchronize(uint32_t time, uint16_t device_flags, int16_t param1, int16_t param2) = 0;
@@ -72,6 +73,7 @@ struct RdpInput
 
 struct Callback : RdpInput
 {
+    virtual ~Callback() {}
     virtual void send_to_mod_channel(const char * const front_channel_name, Stream & chunk, size_t length, uint32_t flags)
     {
     }

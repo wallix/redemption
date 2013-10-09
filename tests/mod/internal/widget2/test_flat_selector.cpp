@@ -24,7 +24,7 @@
 #define BOOST_TEST_MODULE TestWidgetSelectorFlat
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "internal/widget2/flat_selector.hpp"
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     int16_t w = drawable.gd.drawable.width;
     int16_t h = drawable.gd.drawable.height;
     Inifile ini;
-    
+
     ini.translation.target.set_from_cstr("Target");
 
     WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);

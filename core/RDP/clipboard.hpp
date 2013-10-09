@@ -166,6 +166,7 @@ struct CliprdrHeader {
     uint16_t msgFlags;
     uint32_t dataLen;
 
+
     CliprdrHeader()
         : msgType(0)
         , msgFlags(0)
@@ -177,7 +178,7 @@ struct CliprdrHeader {
         , msgFlags(msgFlags)
         , dataLen(dataLen) {
     }   // CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
-
+    virtual ~CliprdrHeader() {}
     virtual void emit(Stream & stream) {
         stream.out_uint16_le(this->msgType);
         stream.out_uint16_le(this->msgFlags);
@@ -222,6 +223,8 @@ struct CliprdrHeader {
 struct ServerMonitorReadyPDU : public CliprdrHeader {
     ServerMonitorReadyPDU() : CliprdrHeader(CB_MONITOR_READY, 0, 0) {
     }   // ServerMonitorReadyPDU(bool response_ok)
+    virtual ~ServerMonitorReadyPDU() {}
+
 };  // struct ServerMonitorReadyPDU
 
 // [MS-RDPECLIP] 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
@@ -266,6 +269,7 @@ struct FormatListPDU : public CliprdrHeader {
     FormatListPDU()
         : CliprdrHeader(CB_FORMAT_LIST, 0, 0)
         , contians_data_in_text_format(false) {}
+    virtual ~FormatListPDU() {}
 
     virtual void emit(Stream & stream) {
         this->dataLen = 144;    /* (formatId(4) + formatName(32)) * 4 */
@@ -381,6 +385,7 @@ struct FormatListResponsePDU : public CliprdrHeader {
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
                        , 0) {
     }   // FormatListResponsePDU(bool response_ok)
+    virtual ~FormatListResponsePDU() {}
 };  // struct FormatListResponsePDU
 
 // [MS-RDPECLIP] 2.2.5.1 Format Data Request PDU (CLIPRDR_FORMAT_DATA_REQUEST)
@@ -421,6 +426,8 @@ struct FormatDataRequestPDU : public CliprdrHeader {
             : CliprdrHeader(CB_FORMAT_DATA_REQUEST, 0, 4)
             , requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
+
+    virtual ~FormatDataRequestPDU() {}
 
     virtual void emit(Stream & stream) {
         CliprdrHeader::emit(stream);
@@ -478,6 +485,7 @@ struct FormatDataResponsePDU : public CliprdrHeader {
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
                        , 0) {
     }
+    virtual ~FormatDataResponsePDU() {}
 
     virtual void emit(Stream & stream, const char * utf8_string) {
         stream.out_uint16_le(this->msgType);

@@ -37,6 +37,7 @@ struct Rect {
     uint16_t cy;
 
     struct RectIterator {
+        virtual ~RectIterator() {}
         virtual void callback(const Rect & rect) = 0;
     };
 

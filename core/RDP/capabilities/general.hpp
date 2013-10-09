@@ -210,6 +210,7 @@ struct GeneralCaps : public Capability {
     , suppressOutputSupport(0)
     {
     }
+    virtual ~GeneralCaps() {}
 
     void emit(Stream & stream){
         stream.out_uint16_le(this->capabilityType);

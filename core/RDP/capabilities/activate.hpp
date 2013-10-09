@@ -68,7 +68,7 @@ struct ActivationCaps : public Capability {
     , windowManagerKeyFlag(0)
     {
     }
-
+    virtual ~ActivationCaps() {}
     void emit(Stream & stream){
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);

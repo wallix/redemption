@@ -156,6 +156,7 @@ struct BitmapCaps : public Capability {
     , pad2octetsB(0)
     {
     }
+    virtual ~BitmapCaps() {}
 
     void emit(Stream & stream){
         stream.out_uint16_le(this->capabilityType);

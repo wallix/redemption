@@ -23,6 +23,7 @@
 
 class auth_api {
 public:
+    virtual ~auth_api() {}
     virtual void set_auth_channel_target(const char * target) = 0;
 
     virtual void set_auth_channel_result(const char * result) = 0;

@@ -74,6 +74,7 @@ enum {
 class MMApi
 {
 public:
+
     mod_api * mod;
 
     bool last_module;
@@ -81,7 +82,7 @@ public:
 
     MMApi() : last_module(false)
             , connected(false) {}
-    ~MMApi() {}
+    virtual ~MMApi() {}
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
     virtual void record() = 0;
