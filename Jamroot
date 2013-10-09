@@ -89,7 +89,7 @@ project redemption
     <include>FreeRDP/include
     <conditional>@defines
 #    <cxxflags>-pedantic
-#     <cxxflags>-Wconversion
+#    <cxxflags>-Wconversion
     <cxxflags>-Wvla
     <cxxflags>-Wstrict-aliasing=2
 #    <cxxflags>-Wold-style-cast
