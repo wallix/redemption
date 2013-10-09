@@ -308,7 +308,7 @@ struct Font
                 if (!stream.in_check_rem(datasize)) {
                     LOG(LOG_ERR
                        , "Error loading font %s: not enough data for definition of glyph %d (expected %d, got %d)\n"
-                       , file_path, index, datasize, (unsigned)stream.in_remain()
+                        , file_path, index, datasize, static_cast<unsigned>(stream.in_remain())
                        );
                     goto ErrorReadingFontFile;
                 }

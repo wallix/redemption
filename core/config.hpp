@@ -435,7 +435,7 @@ static inline authid_t authid_from_string(const char * strauthid) {
     authid_t res = AUTHID_UNKNOWN;
     for (int i = 0; i < MAX_AUTHID - 1 ; i++) {
         if (0 == authstr[i].compare(str)) {
-            res = (authid_t)(i + 1);
+            res = static_cast<authid_t>(i + 1);
             break;
         }
     }

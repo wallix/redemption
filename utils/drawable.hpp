@@ -1099,13 +1099,13 @@ struct Drawable {
         uint8_t * const base = this->first_pixel(rect);
         uint8_t * p = base;
 
-        for (size_t x = 0; x < (size_t)rect.cx ; x++){
+        for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++){
             p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
             p += 3;
         }
         uint8_t * target = base;
         size_t line_size = rect.cx * this->Bpp;
-        for (size_t y = 1; y < (size_t)rect.cy ; y++){
+        for (size_t y = 1; y < static_cast<size_t>(rect.cy) ; y++){
             target += this->rowsize;
             memcpy(target, base, line_size);
         }
@@ -1126,9 +1126,9 @@ struct Drawable {
         uint8_t p1 = (color >> 8) & 0xFF;
         uint8_t p2 = (color >> 16) & 0xFF;
 
-        for (size_t y = 0; y < (size_t)rect.cy ; y++){
+        for (size_t y = 0; y < static_cast<size_t>(rect.cy) ; y++){
             p = base + this->rowsize * y;
-            for (size_t x = 0; x < (size_t)rect.cx ; x++){
+            for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++){
                 p[0] = op(p[0], p0);
                 p[1] = op(p[1], p1);
                 p[2] = op(p[2], p2);
@@ -1358,10 +1358,10 @@ struct Drawable {
         uint8_t p1;
         uint8_t p2;
 
-        for (size_t y = 0; y < (size_t)rect.cy ; y++)
+        for (size_t y = 0; y < static_cast<size_t>(rect.cy) ; y++)
         {
             p = base + this->rowsize * y;
-            for (size_t x = 0; x < (size_t)rect.cx ; x++)
+            for (size_t x = 0; x < static_cast<size_t>(rect.cx) ; x++)
             {
                 if (brush_data[(y + rect.y) % 8] & (1 << ((x + rect.x) % 8)))
                 {
@@ -1541,8 +1541,8 @@ struct Drawable {
             tracked_area_changed = true;
         }
 
-        const int16_t deltax = (int16_t)(srcx - drect.x);
-        const int16_t deltay = (int16_t)(srcy - drect.y);
+        const int16_t deltax = static_cast<int16_t>(srcx - drect.x);
+        const int16_t deltay = static_cast<int16_t>(srcy - drect.y);
         const Rect srect = drect.offset(deltax, deltay);
         const Rect & overlap = srect.intersect(drect);
         uint8_t * target = ((deltay >= 0)||overlap.isempty())
@@ -1551,11 +1551,11 @@ struct Drawable {
         uint8_t * source = ((deltay >= 0)||overlap.isempty())
         ? this->first_pixel(srect)
         : this->beginning_of_last_line(srect);
-        const signed int to_nextrow = (signed int)(((deltay >= 0)||overlap.isempty())
+        const signed int to_nextrow = static_cast<signed int>(((deltay >= 0)||overlap.isempty())
         ?  this->rowsize
         : -this->rowsize);
         const signed to_nextpixel = ((deltay != 0)||(deltax >= 0))?this->Bpp:-this->Bpp;
-        const unsigned offset = (unsigned)(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(drect.cx - 1));
+        const unsigned offset = static_cast<unsigned>(((deltay != 0)||(deltax >= 0))?0:this->Bpp*(drect.cx - 1));
         for (size_t y = 0; y < drect.cy ; y++) {
             uint8_t * linetarget = target + offset;
             uint8_t * linesource = source + offset;

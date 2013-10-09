@@ -630,7 +630,11 @@ public:
             LOG(LOG_INFO, "Front::end_update()");
         }
         this->order_level--;
-        if (this->up_and_running && (this->order_level == 0)) {
+        if (!this->up_and_running) {
+            LOG(LOG_ERR, "Front is not up and running.");
+            throw Error(ERR_RDP_EXPECTING_CONFIRMACTIVEPDU);
+        }
+        if (this->order_level == 0) {
             this->flush();
         }
     }
@@ -3669,6 +3673,7 @@ public:
                 }
                 cb.rdp_input_up_and_running();
                 this->up_and_running = 1;
+                cb.on_front_up_and_running();
                 TODO("we should use accessors to set that, also not sure it's the right place to set it")
                 this->ini->context.opt_width.set(this->client_info.width);
                 this->ini->context.opt_height.set(this->client_info.height);

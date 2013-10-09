@@ -71,7 +71,8 @@ namespace CHANNELS {
 
         void log(unsigned index) const {
             LOG(LOG_INFO, "ChannelDef[%u]::(name = %s, flags = %8x, chanid = %u)",
-                index, this->name, (unsigned)this->flags, (unsigned)this->chanid);
+                index, this->name, static_cast<unsigned>(this->flags),
+                static_cast<unsigned>(this->chanid));
         }
     };
 

@@ -121,8 +121,8 @@ public:
     virtual void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
                          , bool no_timestamp, bool ignore_frame_in_timeval)
     {
-        if ((unsigned)difftimeval(now, this->start_static_capture)
-                >= (unsigned)this->inter_frame_interval_static_capture) {
+        if (static_cast<unsigned>(difftimeval(now, this->start_static_capture))
+            >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
             if (!pointer_already_displayed) { this->drawable.trace_mouse(x, y); }
             this->breakpoint(now);
             if (!pointer_already_displayed) { this->drawable.clear_mouse(); }

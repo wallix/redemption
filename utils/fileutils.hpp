@@ -54,7 +54,7 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
 {
     const char * end_of_path = strrchr(fullpath, '/');
     if (end_of_path){
-        if ((size_t)(end_of_path + 1 - fullpath) <= path_len) {
+        if (static_cast<size_t>(end_of_path + 1 - fullpath) <= path_len) {
             memcpy(path, fullpath, end_of_path + 1 - fullpath);
             path[end_of_path + 1 - fullpath] = 0;
         }
@@ -66,7 +66,7 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
             snprintf(extension, extension_len, "%s", start_of_extension);
             //strcpy(extension, start_of_extension);
             if (start_of_extension > end_of_path + 1){
-                if ((size_t)(start_of_extension - end_of_path - 1) <= basename_len) {
+                if (static_cast<size_t>(start_of_extension - end_of_path - 1) <= basename_len) {
                     memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
                     basename[start_of_extension - end_of_path - 1] = 0;
                 }
@@ -95,7 +95,7 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
             snprintf(extension, extension_len, "%s", start_of_extension);
             // strcpy(extension, start_of_extension);
             if (start_of_extension > fullpath){
-                if ((size_t)(start_of_extension - fullpath) <= basename_len) {
+                if (static_cast<size_t>(start_of_extension - fullpath) <= basename_len) {
                     memcpy(basename, fullpath, start_of_extension - fullpath);
                     basename[start_of_extension - fullpath] = 0;
                 }
@@ -190,7 +190,7 @@ static inline void clear_files_flv_meta_png(const char * path, const char * pref
         }
 
         size_t len = offsetof(struct dirent, d_name) + file_len;
-        struct dirent * entryp = (struct dirent *)malloc(len);
+        struct dirent * entryp = static_cast<struct dirent *>(malloc(len));
         if (!entryp){
             LOG(LOG_WARNING, "Memory allocation failed for entryp, exiting file cleanup code");
             return;
@@ -254,7 +254,7 @@ static inline int _internal_make_directory(const char *directory, mode_t mode, c
                 }
             }
             if (groupid){
-                if (chown(directory, (uid_t)-1, groupid) < 0){
+                if (chown(directory, static_cast<uid_t>(-1), groupid) < 0){
                     if (verbose >= 255) {
                         LOG(LOG_ERR, "can't set directory %s group to %u : %s [%u]", directory, groupid, strerror(errno), errno);
                     }

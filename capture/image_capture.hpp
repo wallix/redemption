@@ -102,7 +102,7 @@ public:
 
     void scale_dump24()
     {
-        uint8_t * scaled_data = (uint8_t *)malloc(this->scaled_width * this->scaled_height * 3);
+        uint8_t * scaled_data = static_cast<uint8_t *>(malloc(this->scaled_width * this->scaled_height * 3));
         scale_data(scaled_data, this->drawable.data,
                    this->scaled_width, this->drawable.width,
                    this->scaled_height, this->drawable.height,
