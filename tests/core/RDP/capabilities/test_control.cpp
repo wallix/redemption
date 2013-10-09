@@ -38,8 +38,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
     control_caps.controlInterest = 2;
     control_caps.detachInterest = 3;
 
-    BOOST_CHECK_EQUAL(control_caps.capabilityType, (uint16_t)CAPSTYPE_CONTROL);
-    BOOST_CHECK_EQUAL(control_caps.len, (uint16_t)CAPLEN_CONTROL);
+    BOOST_CHECK_EQUAL(control_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_CONTROL));
+    BOOST_CHECK_EQUAL(control_caps.len, static_cast<uint16_t>(CAPLEN_CONTROL));
     BOOST_CHECK_EQUAL(control_caps.controlFlags, (uint16_t) 0);
     BOOST_CHECK_EQUAL(control_caps.remoteDetachFlag, (uint16_t) 1);
     BOOST_CHECK_EQUAL(control_caps.controlInterest, (uint16_t) 2);
@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityControlEmit)
 
     ControlCaps control_caps2;
 
-    BOOST_CHECK_EQUAL(control_caps2.capabilityType, (uint16_t)CAPSTYPE_CONTROL);
-    BOOST_CHECK_EQUAL(control_caps2.len, (uint16_t)CAPLEN_CONTROL);
+    BOOST_CHECK_EQUAL(control_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_CONTROL));
+    BOOST_CHECK_EQUAL(control_caps2.len, static_cast<uint16_t>(CAPLEN_CONTROL));
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_CONTROL, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_CONTROL, stream.in_uint16_le());

@@ -1108,7 +1108,7 @@ class SocketTransport : public Transport {
         }
         *pbuffer += res;
 
-        if ((size_t)res < len){
+        if (static_cast<size_t>(res) < len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
 

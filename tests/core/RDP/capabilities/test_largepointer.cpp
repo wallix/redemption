@@ -34,8 +34,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
     LargePointerCaps largepointer_caps;
     largepointer_caps.largePointerSupportFlags = LARGE_POINTER_FLAG_96x96;
 
-    BOOST_CHECK_EQUAL(largepointer_caps.capabilityType, (uint16_t)CAPSETTYPE_LARGE_POINTER);
-    BOOST_CHECK_EQUAL(largepointer_caps.len, (uint16_t)CAPLEN_LARGE_POINTER);
+    BOOST_CHECK_EQUAL(largepointer_caps.capabilityType, static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER));
+    BOOST_CHECK_EQUAL(largepointer_caps.len, static_cast<uint16_t>(CAPLEN_LARGE_POINTER));
     BOOST_CHECK_EQUAL(largepointer_caps.largePointerSupportFlags, (uint16_t) 1);
 
     BStream stream(1024);
@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityLargePointerEmit)
 
     LargePointerCaps largepointer_caps2;
 
-    BOOST_CHECK_EQUAL(largepointer_caps2.capabilityType, (uint16_t)CAPSETTYPE_LARGE_POINTER);
-    BOOST_CHECK_EQUAL(largepointer_caps2.len, (uint16_t)CAPLEN_LARGE_POINTER);
+    BOOST_CHECK_EQUAL(largepointer_caps2.capabilityType, static_cast<uint16_t>(CAPSETTYPE_LARGE_POINTER));
+    BOOST_CHECK_EQUAL(largepointer_caps2.len, static_cast<uint16_t>(CAPLEN_LARGE_POINTER));
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSETTYPE_LARGE_POINTER, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_LARGE_POINTER, stream.in_uint16_le());

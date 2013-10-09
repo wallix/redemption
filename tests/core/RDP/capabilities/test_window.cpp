@@ -36,8 +36,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityWindowsListEmit)
     windowslist_caps.NumIconCaches = 255;
     windowslist_caps.NumIconCacheEntries = 65535;
 
-    BOOST_CHECK_EQUAL(windowslist_caps.capabilityType, (uint16_t)CAPSTYPE_WINDOW);
-    BOOST_CHECK_EQUAL(windowslist_caps.len, (uint16_t)CAPLEN_WINDOW);
+    BOOST_CHECK_EQUAL(windowslist_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
+    BOOST_CHECK_EQUAL(windowslist_caps.len, static_cast<uint16_t>(CAPLEN_WINDOW));
     BOOST_CHECK_EQUAL(windowslist_caps.WndSupportLevel, (uint32_t) 2);
     BOOST_CHECK_EQUAL(windowslist_caps.NumIconCaches, (uint8_t) 255);
     BOOST_CHECK_EQUAL(windowslist_caps.NumIconCacheEntries, (uint16_t) 65535);
@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityWindowsListEmit)
 
     WindowsListCaps windowslist_caps2;
 
-    BOOST_CHECK_EQUAL(windowslist_caps2.capabilityType, (uint16_t)CAPSTYPE_WINDOW);
-    BOOST_CHECK_EQUAL(windowslist_caps2.len, (uint16_t)CAPLEN_WINDOW);
+    BOOST_CHECK_EQUAL(windowslist_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_WINDOW));
+    BOOST_CHECK_EQUAL(windowslist_caps2.len, static_cast<uint16_t>(CAPLEN_WINDOW));
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_WINDOW, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_WINDOW, stream.in_uint16_le());

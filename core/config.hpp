@@ -445,7 +445,7 @@ static inline authid_t authid_from_string(const char * strauthid) {
 static inline const char * string_from_authid(authid_t authid) {
     if ((authid == AUTHID_UNKNOWN) || (authid >= MAX_AUTHID))
         return "";
-    return authstr[(unsigned)authid - 1].c_str();
+    return authstr[static_cast<unsigned>(authid) - 1].c_str();
 }
 
 #include "basefield.hpp"

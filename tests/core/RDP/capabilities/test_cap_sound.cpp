@@ -36,8 +36,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySoundEmit)
     sound_caps.soundFlags = 0;
     sound_caps.pad2octetsA = 1;
 
-    BOOST_CHECK_EQUAL(sound_caps.capabilityType, (uint16_t)CAPSTYPE_SOUND);
-    BOOST_CHECK_EQUAL(sound_caps.len, (uint16_t)CAPLEN_SOUND);
+    BOOST_CHECK_EQUAL(sound_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_SOUND));
+    BOOST_CHECK_EQUAL(sound_caps.len, static_cast<uint16_t>(CAPLEN_SOUND));
     BOOST_CHECK_EQUAL(sound_caps.soundFlags, (uint16_t) 0);
     BOOST_CHECK_EQUAL(sound_caps.pad2octetsA, (uint16_t) 1);
 
@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilitySoundEmit)
 
     SoundCaps sound_caps2;
 
-    BOOST_CHECK_EQUAL(sound_caps2.capabilityType, (uint16_t)CAPSTYPE_SOUND);
-    BOOST_CHECK_EQUAL(sound_caps2.len, (uint16_t)CAPLEN_SOUND);
+    BOOST_CHECK_EQUAL(sound_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_SOUND));
+    BOOST_CHECK_EQUAL(sound_caps2.len, static_cast<uint16_t>(CAPLEN_SOUND));
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_SOUND, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_SOUND, stream.in_uint16_le());
 

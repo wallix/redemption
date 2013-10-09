@@ -64,8 +64,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
         test_order_os[i] = i;
     }
 
-    BOOST_CHECK_EQUAL(order_caps.capabilityType, (uint16_t)CAPSTYPE_ORDER);
-    BOOST_CHECK_EQUAL(order_caps.len, (uint16_t)CAPLEN_ORDER);
+    BOOST_CHECK_EQUAL(order_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_ORDER));
+    BOOST_CHECK_EQUAL(order_caps.len, static_cast<uint16_t>(CAPLEN_ORDER));
     for (size_t i = 0; i< 16; i++){
         BOOST_CHECK_EQUAL(order_caps.terminalDescriptor[i], test_order_td[i]);
     }
@@ -95,8 +95,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityOrderEmit)
 
     OrderCaps order_caps2;
 
-    BOOST_CHECK_EQUAL(order_caps2.capabilityType, (uint16_t)CAPSTYPE_ORDER);
-    BOOST_CHECK_EQUAL(order_caps2.len, (uint16_t)CAPLEN_ORDER);
+    BOOST_CHECK_EQUAL(order_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_ORDER));
+    BOOST_CHECK_EQUAL(order_caps2.len, static_cast<uint16_t>(CAPLEN_ORDER));
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_ORDER, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_ORDER, stream.in_uint16_le());

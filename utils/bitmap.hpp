@@ -526,8 +526,8 @@ public:
         // THIS WORKS
         BStream stream(8192);
         int Bpp = 3;
-        this->cx = (uint16_t)width;
-        this->cy = (uint16_t)height;
+        this->cx = static_cast<uint16_t>(width);
+        this->cy = static_cast<uint16_t>(height);
         this->line_size = this->cx * Bpp;
         this->bmp_size = this->line_size * this->cy;
         stream.init(this->bmp_size);

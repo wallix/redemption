@@ -3473,7 +3473,7 @@ public:
                     LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE"
                                   " messageType=%u controlId=%u",
                                   (unsigned)messageType,
-                                  (unsigned)controlId);
+                                  static_cast<unsigned>(controlId));
                 }
                 this->send_synchronize();
             }

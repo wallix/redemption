@@ -486,7 +486,7 @@ struct mod_rdp : public mod_api {
     void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
                           , uint32_t flags) {
         if (this->verbose & 16) {
-            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%u chunk_size=%u", (unsigned)length
+            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%u chunk_size=%u", static_cast<unsigned>(length)
                  , (unsigned)chunk.size());
             channel.log(-1);
         }
@@ -3780,7 +3780,7 @@ public:
         if ((mlen > sizeof(cursor.mask)) || (dlen > sizeof(cursor.data))) {
             LOG(LOG_WARNING,
                 "mod_rdp::Bad length for color pointer mask_len=%u data_len=%u",
-                (unsigned)mlen, (unsigned)dlen);
+                (unsigned)mlen, static_cast<unsigned>(dlen));
             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
         }
         TODO("this is modifiying cursor in place: we should not do that.")

@@ -38,8 +38,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
     bitmap_caps.desktopHeight = 600;
     bitmap_caps.bitmapCompressionFlag = 1;
 
-    BOOST_CHECK_EQUAL(bitmap_caps.capabilityType, (uint16_t)CAPSTYPE_BITMAP);
-    BOOST_CHECK_EQUAL(bitmap_caps.len, (uint16_t)CAPLEN_BITMAP);
+    BOOST_CHECK_EQUAL(bitmap_caps.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAP));
+    BOOST_CHECK_EQUAL(bitmap_caps.len, static_cast<uint16_t>(CAPLEN_BITMAP));
     BOOST_CHECK_EQUAL(bitmap_caps.preferredBitsPerPixel, (uint16_t)24);
     BOOST_CHECK_EQUAL(bitmap_caps.receive1BitPerPixel, (uint16_t)1);
     BOOST_CHECK_EQUAL(bitmap_caps.receive4BitsPerPixel, (uint16_t)1);
@@ -61,8 +61,8 @@ BOOST_AUTO_TEST_CASE(TestCapabilityBitmapEmit)
 
     BitmapCaps bitmap_caps2;
 
-    BOOST_CHECK_EQUAL(bitmap_caps2.capabilityType, (uint16_t)CAPSTYPE_BITMAP);
-    BOOST_CHECK_EQUAL(bitmap_caps2.len, (uint16_t)CAPLEN_BITMAP);
+    BOOST_CHECK_EQUAL(bitmap_caps2.capabilityType, static_cast<uint16_t>(CAPSTYPE_BITMAP));
+    BOOST_CHECK_EQUAL(bitmap_caps2.len, static_cast<uint16_t>(CAPLEN_BITMAP));
 
     BOOST_CHECK_EQUAL((uint16_t)CAPSTYPE_BITMAP, stream.in_uint16_le());
     BOOST_CHECK_EQUAL((uint16_t)CAPLEN_BITMAP, stream.in_uint16_le());
