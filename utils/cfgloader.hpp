@@ -66,6 +66,7 @@ static inline unsigned logtype_from_cstr(const char * str)
 }
 
 struct ConfigurationHolder {
+    virtual ~ConfigurationHolder() {}
     virtual void set_value(const char * section, const char * key, const char * value) = 0;
 };
 

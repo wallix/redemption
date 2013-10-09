@@ -28,12 +28,13 @@
 class Server
 {
     public:
-    enum Server_status 
+    enum Server_status
     { START_OK        // Server started, ready to wait next incoming connecion
     , START_FAILED    // Server failed to start, but listener should wait for next incoming connection
     , START_WANT_STOP // Child process terminating or main process willing server to stop
     };
-    
+
+    virtual ~Server() {}
     virtual Server_status start(int sck) = 0;
 };
 

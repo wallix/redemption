@@ -36,7 +36,9 @@
 class Random
 {
     public:
-        virtual void random(void * dest, size_t size) = 0;
+    virtual ~Random() {}
+    virtual void random(void * dest, size_t size) = 0;
+
 };
 
 class LCGRandom : public Random
@@ -47,6 +49,8 @@ class LCGRandom : public Random
         : seed(seed)
         {
         }
+
+    virtual ~LCGRandom() {}
 
     virtual void random(void * dest, size_t size)
     {
@@ -67,6 +71,7 @@ class UdevRandom : public Random
     UdevRandom()
     {
     }
+    virtual ~UdevRandom() {}
 
     virtual void random(void * dest, size_t size)
     {

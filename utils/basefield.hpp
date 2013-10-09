@@ -26,7 +26,6 @@
 // #include "base64.hpp"
 
 struct FieldObserver : public ConfigurationHolder {
-
     /******************************************************
      * BaseField is an abstract class which carries:
      * - some flags indicating some meta state of the field.
@@ -438,6 +437,7 @@ protected:
 
 
 public:
+    virtual ~FieldObserver() {}
     // BASE64 TRY
     // Base64 b64;
 
