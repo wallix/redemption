@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_LOGIN_HPP
 
 #include "edit.hpp"
+#include "edit_valid.hpp"
 #include "label.hpp"
 #include "password.hpp"
 #include "multiline.hpp"
@@ -35,9 +36,9 @@ class FlatLogin : public WidgetParent
 public:
     WidgetImage img;
     WidgetLabel login_label;
-    WidgetEdit  login_edit;
+    WidgetEditValid  login_edit;
     WidgetLabel password_label;
-    WidgetPassword  password_edit;
+    WidgetEditValid  password_edit;
     WidgetLabel version_label;
 
     WidgetFlatButton helpicon;
@@ -47,8 +48,7 @@ public:
 
     FlatLogin(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
               NotifyApi* notifier, const char* caption,
-              bool focus_on_password,
-              int group_id,
+              bool focus_on_password, int group_id,
               const char * login, const char * password,
               int fgcolor, int bgcolor,
               const char * label_text_login,
@@ -57,9 +57,12 @@ public:
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11, fgcolor, bgcolor)
-        , login_edit(drawable, 0, 0, 400, *this, this, login, -12, BLACK, WHITE, -1u, 1, 1)
-        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
-        , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
+        , login_edit(drawable, 0, 0, 400, *this, this, login, -12,
+                     BLACK, WHITE, bgcolor, -1u, 1, 1)
+        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
+                         fgcolor, bgcolor)
+        , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
+                        BLACK, WHITE, bgcolor, -1u, 1, 1, true)
         , version_label(drawable, 0, 0, *this, NULL, caption, true, -15, fgcolor, bgcolor)
         , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, fgcolor, bgcolor, 6, 2)
         , fgcolor(fgcolor)
@@ -76,8 +79,6 @@ public:
         this->add_widget(&this->version_label);
 
 
-        this->login_edit.set_flat(true);
-        this->password_edit.set_flat(true);
         // Center bloc positionning
         // Login and Password boxes
         int cbloc_w = std::max(this->password_label.rect.cx + this->password_edit.rect.cx + 10,
@@ -85,9 +86,8 @@ public:
         int cbloc_h = std::max(this->password_label.rect.cy + this->login_label.rect.cy + 20,
                                this->password_edit.rect.cy + this->login_edit.rect.cy + 20);
 
-
-        int x_cbloc = (width  - cbloc_w)/2;
-        int y_cbloc = (height - cbloc_h)/2;
+        int x_cbloc = (width  - cbloc_w) / 2;
+        int y_cbloc = (height - cbloc_h) / 2;
 
         this->login_label.set_xy(x_cbloc, y_cbloc);
         this->password_label.set_xy(x_cbloc, height/2);

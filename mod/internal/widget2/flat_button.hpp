@@ -121,7 +121,6 @@ public:
             --this->label.rect.y;
             ++this->label.rect.cx;
             ++this->label.rect.cy;
-
         }
         else {
             this->label.draw(clip);
