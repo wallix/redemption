@@ -34,7 +34,7 @@ static inline uint16_t align4(int value)
 
 static inline uint8_t nbbytes(unsigned value)
 {
-    return (uint8_t)((value+7) / 8);
+    return static_cast<uint8_t>((value+7) / 8);
 }
 
 static inline uint32_t nbbytes_large(unsigned value)
@@ -45,7 +45,7 @@ static inline uint32_t nbbytes_large(unsigned value)
 static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned value)
 {
     for (uint8_t b = 0 ; b < nb ; ++b){
-        ptr[b] = (uint8_t)(value >> (8 * b));
+        ptr[b] = static_cast<uint8_t>(value >> (8 * b));
     }
 }
 

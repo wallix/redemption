@@ -73,7 +73,7 @@ public:
     {
         const unsigned zoom_width = (this->drawable.width * percent) / 100;
         const unsigned zoom_height = (this->drawable.height * percent) / 100;
-        TODO("we should limit percent to avoid images larger than 4096 x 4096")
+        TODO("we should limit percent to avoid images larger than 4096 x 4096");
         this->zoom_factor = percent;
         this->scaled_width = (zoom_width + 3) & 0xFFC;
         this->scaled_height = zoom_height;
@@ -91,7 +91,7 @@ public:
         }
     }
 
-    TODO("move dump png24 to Drawable")
+    TODO("move dump png24 to Drawable");
     void dump24(){
         ::transport_dump_png24(&this->trans, this->drawable.data,
                  this->drawable.width, this->drawable.height,
@@ -102,7 +102,7 @@ public:
 
     void scale_dump24()
     {
-        uint8_t * scaled_data = (uint8_t *)malloc(this->scaled_width * this->scaled_height * 3);
+        uint8_t * scaled_data = static_cast<uint8_t *>(malloc(this->scaled_width * this->scaled_height * 3));
         scale_data(scaled_data, this->drawable.data,
                    this->scaled_width, this->drawable.width,
                    this->scaled_height, this->drawable.height,
@@ -134,7 +134,7 @@ public:
             unsigned int x_pixels = dest_width;
             while (x_pixels-- > 0)
             {
-                TODO("we can perform both scaling and rgb/bgr swapping at the same time")
+                TODO("we can perform both scaling and rgb/bgr swapping at the same time");
                 dest[0] = x_src[0];
                 dest[1] = x_src[1];
                 dest[2] = x_src[2];

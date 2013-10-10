@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint8)
     // test reading of 8 bits data from Stream signed or unsigned is working
 
     Stream * s = new BStream(10);
-    memcpy(s->get_data(), (uint8_t*)"\1\xFE\xFD\4\5", 5);
+    memcpy(s->get_data(), reinterpret_cast<const uint8_t*>("\1\xFE\xFD\4\5"), 5);
     s->end += 5;
     // 5 characters are availables
     BOOST_CHECK(s->in_check_rem(5));
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
 
     Stream * s = new BStream(100);
     const char * data = "\1\0\xFE\xFF\xFF\xFD\xFF\xFC\xFB\xFF\0\1";
-    memcpy(s->get_data(), (uint8_t*)data, 12);
+    memcpy(s->get_data(), reinterpret_cast<const uint8_t*>(data), 12);
     s->end += 12;
 
     uint8_t * oldp = s->p;
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(TestStream_uint16)
     BOOST_CHECK(!s->in_check_rem(13));
 
     BOOST_CHECK_EQUAL(s->in_uint16_le(), 1);
-    BOOST_CHECK_EQUAL((unsigned long)oldp+2, ((unsigned long)s->p));
+    BOOST_CHECK_EQUAL(reinterpret_cast<uint8_t*>(oldp+2), reinterpret_cast<uint8_t*>(s->p));
 
     BOOST_CHECK_EQUAL(s->in_sint16_le(), -2); // FFFE == -2
     BOOST_CHECK_EQUAL(s->in_sint16_be(), -3); // FFFD == -3
@@ -145,13 +145,13 @@ BOOST_AUTO_TEST_CASE(TestStream_uint32)
 
     Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF";
-    memcpy(s->get_data(), (uint8_t*)data, 16);
+    memcpy(s->get_data(), reinterpret_cast<const uint8_t*>(data), 16);
     s->end += 16;
 
     uint8_t * oldp = s->p;
 
     BOOST_CHECK_EQUAL(s->in_uint32_le(), 1);
-    BOOST_CHECK_EQUAL((unsigned long)oldp+4, ((unsigned long)s->p));
+    BOOST_CHECK_EQUAL(reinterpret_cast<uint8_t*>(oldp+4), reinterpret_cast<uint8_t*>(s->p));
 
     BOOST_CHECK_EQUAL(s->in_uint32_be(), 0xFFFFFFFE);
     BOOST_CHECK_EQUAL(s->in_uint32_be(), 1);
@@ -172,13 +172,13 @@ BOOST_AUTO_TEST_CASE(TestStream_uint64)
 
     Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE\0\0\0\0\0\0\0\1\xFC\xFF\xFF\xFF\xFF\xFF\xFF\xFF";
-    memcpy(s->get_data(), (uint8_t*)data, 32);
+    memcpy(s->get_data(), reinterpret_cast<const uint8_t*>(data), 32);
     s->end += 32;
 
     uint8_t * oldp = s->p;
 
     BOOST_CHECK_EQUAL(s->in_uint64_le(), 1LL);
-    BOOST_CHECK_EQUAL((unsigned long)oldp+8, ((unsigned long)s->p));
+    BOOST_CHECK_EQUAL(reinterpret_cast<uint8_t*>(oldp+8), reinterpret_cast<uint8_t*>(s->p));
 
     BOOST_CHECK_EQUAL(s->in_uint64_be(), 0xFFFFFFFFFFFFFFFELL);
     BOOST_CHECK_EQUAL(s->in_uint64_be(), 1LL);
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_uint8p)
 
     Stream * s = new BStream(100);
     const char * data = "\1\0\0\0\xFF\xFF\xFF\xFE\0\0\0\1\xFC\xFF\xFF\xFF";
-    memcpy(s->get_data(), (uint8_t*)data, 16);
+    memcpy(s->get_data(), reinterpret_cast<const uint8_t*>(data), 16);
     s->end += 16;
 
     uint8_t * oldp = s->p;
@@ -229,7 +229,7 @@ BOOST_AUTO_TEST_CASE(TestStream_in_skip_bytes)
 
     BStream s(100);
     const char * data = "\0\1\2\3\4\5\6\7\x8\x9\xA\xB\xC\xD";
-    memcpy(s.get_data(), (uint8_t*)data, 14);
+    memcpy(s.get_data(), reinterpret_cast<const uint8_t*>(data), 14);
     s.end += 14;
 
     uint8_t * oldp = s.p;

@@ -31,7 +31,7 @@
 #include <dirent.h>
 #include <errno.h>
 
-TODO("merge that with find and unlink")
+TODO("merge that with find and unlink");
 
 struct CheckFileList
 {

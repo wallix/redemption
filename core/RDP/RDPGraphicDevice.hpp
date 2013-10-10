@@ -60,7 +60,7 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip,
      const GlyphCache * gly_cache) = 0;
 
-    TODO("The 3 methods below should not exist and cache access be done before calling drawing orders")
+    TODO("The 3 methods below should not exist and cache access be done before calling drawing orders");
     virtual void draw(const RDPBrushCache & cmd) {}
     virtual void draw(const RDPColCache   & cmd) {}
     virtual void draw(const RDPGlyphCache & cmd) {}

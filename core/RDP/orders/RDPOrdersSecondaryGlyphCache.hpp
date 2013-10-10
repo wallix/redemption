@@ -125,7 +125,7 @@ class RDPGlyphCache {
         , glyphData_cy(glyphData_cy)
     {
         size_t size = this->datasize();
-        this->glyphData_aj = (uint8_t*)malloc(size);
+        this->glyphData_aj = static_cast<uint8_t*>(malloc(size));
         memcpy(this->glyphData_aj, glyphData_aj, size);
     }
 
@@ -195,7 +195,7 @@ class RDPGlyphCache {
 
         size_t size = align4(nbbytes(this->glyphData_cx) * this->glyphData_cy);
 
-        this->glyphData_aj = (uint8_t *)malloc(size);
+        this->glyphData_aj = static_cast<uint8_t *>(malloc(size));
         memcpy(this->glyphData_aj, stream.in_uint8p(size), size);
     }
 

@@ -98,7 +98,7 @@ class SocketTransport : public Transport {
         char ip_address[128];
         int  port;
 
-        TODO("check if buffer is defined before accessing it")
+        TODO("check if buffer is defined before accessing it");
 
         redemption::string * error_message;
 
@@ -145,7 +145,7 @@ class SocketTransport : public Transport {
     virtual void enable_server_tls(const char * certificate_password) throw (Error)
     {
         if (this->tls) {
-            TODO("this should be an error, no need to commute two times to TLS")
+            TODO("this should be an error, no need to commute two times to TLS");
             return;
         }
         LOG(LOG_INFO, "RIO *::enable_server_tls() start");
@@ -398,12 +398,12 @@ class SocketTransport : public Transport {
 
         // return value: NULL: The creation of a new SSL structure failed. Check the error stack
         // to find out the reason.
-        TODO("add error management")
+        TODO("add error management");
         BIO * sbio = BIO_new_socket(this->sck, BIO_NOCLOSE);
         SSL * ssl = SSL_new(ctx);
         this->allocated_ssl = ssl;
 
-        TODO("I should probably not be doing that here ? Is it really necessary")
+        TODO("I should probably not be doing that here ? Is it really necessary");
         int flags = fcntl(this->sck, F_GETFL);
         fcntl(this->sck, F_SETFL, flags & ~(O_NONBLOCK));
 
@@ -430,7 +430,7 @@ class SocketTransport : public Transport {
     virtual void enable_client_tls(bool ignore_certificate_change) throw (Error)
     {
         if (this->tls) {
-            TODO("this should be an error, no need to commute two times to TLS")
+            TODO("this should be an error, no need to commute two times to TLS");
             return;
         }
         LOG(LOG_INFO, "Client TLS start");
@@ -640,11 +640,11 @@ class SocketTransport : public Transport {
 
         // return value: NULL: The creation of a new SSL structure failed. Check the error stack
         // to find out the reason.
-        TODO("add error management")
+        TODO("add error management");
         SSL * ssl = SSL_new(ctx);
         this->allocated_ssl = ssl;
 
-        TODO("I should probably not be doing that here ? Is it really necessary")
+        TODO("I should probably not be doing that here ? Is it really necessary");
         int flags = fcntl(this->sck, F_GETFL);
         fcntl(this->sck, F_SETFL, flags & ~(O_NONBLOCK));
 
@@ -668,7 +668,7 @@ class SocketTransport : public Transport {
         // 0 : The operation failed. Check the error stack to find out why.
         // 1 : The operation succeeded.
 
-        TODO("add error management")
+        TODO("add error management");
         SSL_set_fd(ssl, this->sck);
 
         LOG(LOG_INFO, "SSL_connect()");
@@ -1071,7 +1071,7 @@ class SocketTransport : public Transport {
     void disconnect(){
         rio_clear(&this->rio);
         LOG(LOG_INFO, "Socket %s (%d) : closing connection\n", this->name, this->sck);
-        TODO("add code to disconnect TLS if needed")
+        TODO("add code to disconnect TLS if needed");
         shutdown(this->sck, 2);
         close(this->sck);
         this->sck = 0;

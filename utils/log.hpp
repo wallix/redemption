@@ -31,10 +31,10 @@
 // These are used to help coverage chain when function length autodetection (using ctags and gcov) fails
 
 #ifndef VERBOSE
-#define TODO(x)
+#define TODO(x);
 #else
 #define DO_PRAGMA(x) _Pragma (#x)
-#define TODO(x) DO_PRAGMA(message ("TODO - " x))
+#define TODO(x) DO_PRAGMA(message ("TODO - " x));
 #endif
 
 #define BOOM (*reinterpret_cast<int*>(0)=1)
@@ -233,7 +233,7 @@ static inline void hexdump_c(const char * data, size_t size)
 
 static inline void hexdump_c(const unsigned char * data, size_t size)
 {
-    hexdump_c((const char*)data, size);
+    hexdump_c(reinterpret_cast<const char*>(data), size);
 }
 
 static inline void hexdump96_c(const char * data, size_t size)
@@ -272,7 +272,7 @@ static inline void hexdump96_c(const char * data, size_t size)
 
 static inline void hexdump96_c(const unsigned char * data, size_t size)
 {
-    hexdump96_c((const char*)data, size);
+    hexdump96_c(reinterpret_cast<const char*>(data), size);
 }
 
 static inline void hexdump8_c(const char * data, size_t size)

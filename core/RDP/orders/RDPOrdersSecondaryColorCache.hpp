@@ -140,7 +140,7 @@ class RDPColCache {
         for (size_t i = 0; i < 256 ; ++i){
             if (this->palette[i] != other.palette[i]){
                 printf("palette differs at index %d: %x != %x\n",
-                    (int)i, this->palette[i], other.palette[i]);
+                       static_cast<int>(i), this->palette[i], other.palette[i]);
                 return false;
             }
         }

@@ -378,7 +378,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16)
     BOOST_CHECK_EQUAL(target_length, nbbytes_utf16);
     for (size_t q = 0 ; q < target_length ; q++){
         if (expected_target[q] != target[q]){
-            printf("at %u: expected %u, got %u\n", (unsigned)q, expected_target[q] ,target[q]);
+            printf("at %u: expected %u, got %u\n", static_cast<unsigned>(q), expected_target[q] ,target[q]);
             BOOST_CHECK(false);
         }
     }
@@ -408,7 +408,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_control_character)
     BOOST_CHECK_EQUAL(target_length, nbbytes_utf16);
     for (size_t q = 0 ; q < target_length ; q++){
         if (expected_target[q] != target[q]){
-            printf("at %u: expected %u, got %u\n", (unsigned)q, expected_target[q] ,target[q]);
+            printf("at %u: expected %u, got %u\n", static_cast<unsigned>(q), expected_target[q] ,target[q]);
             BOOST_CHECK(false);
         }
     }
@@ -442,7 +442,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     BOOST_CHECK_EQUAL(target_lengthCr, nbbytes_utf16);
     for (size_t q = 0 ; q < target_lengthCr ; q++){
         if (expected_targetCr[q] != targetCr[q]){
-            printf("at %u: expected %u, got %u\n", (unsigned)q, expected_targetCr[q] ,targetCr[q]);
+            printf("at %u: expected %u, got %u\n", static_cast<unsigned>(q), expected_targetCr[q] ,targetCr[q]);
             BOOST_CHECK(false);
         }
     }
@@ -453,7 +453,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     BOOST_CHECK_EQUAL(target_lengthCrLf, nbbytes_utf16);
     for (size_t q = 0 ; q < target_lengthCrLf ; q++){
         if (expected_targetCrLf[q] != targetCrLf[q]){
-            printf("at %u: expected %u, got %u\n", (unsigned)q, expected_targetCrLf[q] ,targetCrLf[q]);
+            printf("at %u: expected %u, got %u\n", static_cast<unsigned>(q), expected_targetCrLf[q] ,targetCrLf[q]);
             BOOST_CHECK(false);
         }
     }
@@ -515,7 +515,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8GetFirstCharLen)
     uint8_t   source[] = "aÉ€𝄞";
     uint8_t * p        = source;
 
-    BOOST_CHECK_EQUAL(10, strlen((const char *)p));
+    BOOST_CHECK_EQUAL(10, strlen(reinterpret_cast<char *>(p)));
 
     BOOST_CHECK_EQUAL(1, UTF8GetFirstCharLen(p));
     p++;
@@ -527,4 +527,72 @@ BOOST_AUTO_TEST_CASE(TestUTF8GetFirstCharLen)
     p += 3;
 
     BOOST_CHECK_EQUAL(4, UTF8GetFirstCharLen(p));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8ToUTF8LCopy) 
+{
+    uint8_t   source[11] = "aÉ€𝄞"; // 0x61, |0xc3, 0x89, |0xe2, 0x82, 0xac,| 0xf0, 0x9d, 0x84, 0x9e,| 0x00
+
+    {
+        uint8_t dest[11] = {};
+        int res = UTF8ToUTF8LCopy(dest, 11, source);
+        BOOST_CHECK_EQUAL(4, res);
+    }
+
+    {
+        uint8_t dest[11] = {};
+        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
+        BOOST_CHECK_EQUAL(4, res);
+        BOOST_CHECK_EQUAL(10, strlen(reinterpret_cast<char *>(dest)));
+    }
+
+    {
+        uint8_t dest[10] = {};
+        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
+        BOOST_CHECK_EQUAL(3, res);
+        BOOST_CHECK_EQUAL(6, strlen(reinterpret_cast<char *>(dest)));
+    }
+
+    {
+        uint8_t dest[9] = {};
+        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
+        BOOST_CHECK_EQUAL(3, res);
+        BOOST_CHECK_EQUAL(6, strlen(reinterpret_cast<char *>(dest)));
+    }
+
+    {
+        uint8_t dest[7] = {};
+        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
+        BOOST_CHECK_EQUAL(3, res);
+        BOOST_CHECK_EQUAL(6, strlen(reinterpret_cast<char *>(dest)));
+    }
+
+    {
+        uint8_t dest[6] = {};
+        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
+        BOOST_CHECK_EQUAL(2, res);
+        BOOST_CHECK_EQUAL(3, strlen(reinterpret_cast<char *>(dest)));
+    }
+
+    {
+        uint8_t dest[5] = {};
+        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
+        BOOST_CHECK_EQUAL(2, res);
+        BOOST_CHECK_EQUAL(3, strlen(reinterpret_cast<char *>(dest)));
+    }
+
+    {
+        uint8_t dest[2] = {};
+        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
+        BOOST_CHECK_EQUAL(1, res);
+        BOOST_CHECK_EQUAL(1, strlen(reinterpret_cast<char *>(dest)));
+    }
+
+    {
+        uint8_t dest[1] = {};
+        int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
+        BOOST_CHECK_EQUAL(0, res);
+        BOOST_CHECK_EQUAL(0, strlen(reinterpret_cast<char *>(dest)));
+    }
+
 }

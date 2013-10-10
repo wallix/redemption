@@ -48,11 +48,11 @@ class WidgetSelectorFlat : public WidgetParent
 
 
         Line(DrawApi & drawable, Widget2& parent, NotifyApi* notifier, int x, int y, int lcy,
-             uint h_border, int group_w, int target_w, int protocol_w, int closetime_w,
+             int group_w, int target_w, int protocol_w, int closetime_w,
              const char * device_group, const char * target_label, const char * protocol,
              const char * closetime, int fgcolor, int bgcolor, int x_text, int y_text)
-            : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w,
-                                     lcy + h_border), parent, notifier)
+            : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w, lcy),
+                      parent, notifier)
             , group(WidgetLabel(drawable, x, y, parent, notifier, device_group, false, 0,
                                 fgcolor, bgcolor, x_text, y_text))
             , target(WidgetLabel(drawable, x + group_w, y, parent, notifier, target_label, false, 0,
@@ -84,14 +84,6 @@ class WidgetSelectorFlat : public WidgetParent
             this->target.refresh(new_clip.intersect(this->target.rect));
             this->protocol.refresh(new_clip.intersect(this->protocol.rect));
             this->closetime.refresh(new_clip.intersect(this->closetime.rect));
-            if (this->h_border) {
-                this->drawable.draw(RDPOpaqueRect(Rect(this->rect.x,
-                                                       this->rect.y + this->group.rect.cy,
-                                                       this->rect.cx,
-                                                       this->h_border),
-                                                  this->border_color),
-                                    clip);
-            }
         }
 
         void set_bg_color(int bg_color) {
@@ -287,8 +279,8 @@ private:
             bool b = this->labels.size() & 1;
 
             Line * line = new Line(this->drawable, *this, NULL,
-                                   0, this->labels.size() * (lcy + this->h_border), lcy,
-                                   this->h_border,
+                                   0, this->labels.size() * (lcy + this->h_border),
+                                   lcy + this->h_border,
                                    this->group_w, this->target_w, this->protocol_w, this->closetime_w,
                                    device_group, target_label, protocol, close_time,
                                    b ? this->fg_color1 : this->fg_color2,

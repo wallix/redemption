@@ -187,7 +187,7 @@ extern "C" {
         if (!self->trans){
             char tmpname[1024];
             sq_im_SQCryptoOuttracker_get_name(self, tmpname, sizeof(tmpname), self->count);
-            TODO("add rights information to constructor")
+            TODO("add rights information to constructor");
             self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
             if (self->groupid){
 //                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){

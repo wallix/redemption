@@ -263,12 +263,12 @@ enum {
                             stream.in_sint16_le(),
                             stream.in_uint16_le(),
                             stream.in_uint16_le());
-                          TODO(" see clip management")
+                          TODO(" see clip management");
 //                        this->server_set_clip(r);
                     }
                     break;
                     case 11: /* server_reset_clip */
-                          TODO(" see clip management")
+                          TODO(" see clip management");
 //                        this->server_reset_clip();
                     break;
                     case 12: /* server_set_fgcolor */

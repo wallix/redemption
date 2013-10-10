@@ -164,12 +164,12 @@ struct ConfigurationLoader {
                     const char * endvalue;
                     /*
                       for (endvalue = startvalue; *endvalue ; endvalue++) {
-                      TODO("RZ: Support space in value")
+                      TODO("RZ: Support space in value");
                       if (isspace(*endvalue) || *endvalue == '#'){
                       break;
                       }
                       }
-                      TODO("RZ: Possible buffer overflow if length of value is larger than 128 bytes")
+                      TODO("RZ: Possible buffer overflow if length of value is larger than 128 bytes");
                       memcpy(value, startvalue, endvalue - startvalue + 1);
                       value[endvalue - startvalue + 1] = 0;
                     */

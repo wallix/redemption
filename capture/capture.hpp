@@ -42,7 +42,7 @@ public:
     OutFilenameTransport * png_trans;
     StaticCapture        * psc;
 
-    TODO("wrm_trans and crypto_wrm_trans should be one and the same (and crypto status hidden)")
+    TODO("wrm_trans and crypto_wrm_trans should be one and the same (and crypto status hidden)");
     OutmetaTransport       * wrm_trans;
     CryptoOutmetaTransport * crypto_wrm_trans;
     BmpCache               * pnc_bmp_cache;

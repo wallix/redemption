@@ -176,7 +176,7 @@ struct GraphicsUpdatePDU : public RDPSerializer {
                 this->sdata_orders = new ShareData(this->stream_orders);
                 this->sdata_orders->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
             }
-            TODO("this is to kind of header, to be treated like other headers")
+            TODO("this is to kind of header, to be treated like other headers");
             this->stream_orders.out_uint16_le(RDP_UPDATE_ORDERS);
             this->stream_orders.out_clear_bytes(2); /* pad */
             this->offset_order_count = this->stream_orders.get_offset();
@@ -206,7 +206,7 @@ struct GraphicsUpdatePDU : public RDPSerializer {
                    , this->shareid);
             }
             this->sdata_bitmaps->emit_begin(PDUTYPE2_UPDATE, this->shareid, RDP::STREAM_MED);
-            TODO("this is to kind of header, to be treated like other headers")
+            TODO("this is to kind of header, to be treated like other headers");
             this->stream_bitmaps.out_uint16_le(RDP_UPDATE_BITMAP);
             this->offset_bitmap_count = this->stream_bitmaps.get_offset();
             this->stream_bitmaps.out_clear_bytes(2); /* number of bitmaps, set later */
