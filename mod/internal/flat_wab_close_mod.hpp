@@ -120,7 +120,7 @@ public:
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)
     {
-        TODO("bgcolor <-> fgcolor")
+        TODO("bgcolor <-> fgcolor");
         this->front.server_draw_text(x, y, text, bgcolor, fgcolor, clip);
     }
 };

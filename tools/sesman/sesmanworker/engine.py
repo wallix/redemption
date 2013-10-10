@@ -598,7 +598,7 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'any',
-                password = u'SecureLi',
+                password = PASSWORD4,
                 pubkey = None,
                 isKeyAuth = None
             ),

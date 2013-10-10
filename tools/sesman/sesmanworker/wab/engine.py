@@ -45,6 +45,7 @@ class Engine(object):
         try:
             self.wabengine = self.auth_x509.get_proxy()
             if self.wabengine is not None:
+                self.user = self.wabengine.who_am_i()
                 return True
         except AuthenticationFailed, e:
             pass
@@ -60,6 +61,7 @@ class Engine(object):
             self.client = SynClient('localhost', 'tcp:8803')
             self.wabengine = self.client.authenticate(wab_login, password, ip_client)
             if self.wabengine is not None:
+                self.user = self.wabengine.who_am_i()
                 return True
         except AuthenticationFailed, e:
             pass

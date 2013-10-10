@@ -455,17 +455,21 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         LOG(LOG_INFO, "--------- CREATION OF MOD VNC ------------------------");
     }
 
+    Inifile ini;
+
     struct mod_api * mod = new mod_vnc(
           &t
+        , ini
         , "10.10.3.103"
         , "SecureLinux"
         , front
         , info.width
         , info.height
         , info.keylayout
-        , 0
-        , true
+        , 0             /* key_flags */
+        , true          /* clipboard */
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
+        , false         /* allow authentification retries */
         , verbose);
     mod->event.set();
 

@@ -122,10 +122,10 @@ extern "C" {
         if (!self->trans){
             char tmpname[1024];
             sq_im_SQCryptoOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
-            TODO("add rights information to constructor")
+            TODO("add rights information to constructor");
             LOG(LOG_INFO, "opening file %s", tmpname);
             self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
-            TODO("maybe we should put groupid management into rio_new_crypto")
+            TODO("maybe we should put groupid management into rio_new_crypto");
             if (self->groupid){
 //                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
 //                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);

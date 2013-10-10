@@ -53,7 +53,7 @@ class Widget2 : public RdpInput, public NotifyApi
 {
 public:
 
-    TODO("using several booleans may be easier to read than flags")
+    TODO("using several booleans may be easier to read than flags");
     enum OptionTab {
         IGNORE_TAB           = 0x00,
         NORMAL_TAB           = 0x02,

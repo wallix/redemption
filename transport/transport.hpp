@@ -154,6 +154,8 @@ public:
     {
         this->full_cleaning_requested = true;
     }
+
+    virtual int get_native_object() { return -1; }
 };
 
 #endif

@@ -733,7 +733,7 @@ namespace LIC
 
             stream.in_copy_bytes(this->server_random, SEC_RANDOM_SIZE);
 
-            TODO("Add missing productInfo field")
+            TODO("Add missing productInfo field");
             stream.end = stream.p;
 
             if (stream.p != stream.end){
@@ -1239,7 +1239,7 @@ namespace LIC
 
             stream.in_skip_bytes(lenLicensingBlob); /* blobData */
 
-            TODO("Add missing fields")
+            TODO("Add missing fields");
             stream.end = stream.p;
 
         }
@@ -1884,7 +1884,7 @@ namespace LIC
 //            stream.out_copy_bytes(hwid, LIC::LICENSE_HWID_SIZE);
 //            stream.out_copy_bytes(signature, LIC::LICENSE_SIGNATURE_SIZE);
 
-            TODO("Add missing fields")
+            TODO("Add missing fields");
             stream.end = stream.p;
         }
     };

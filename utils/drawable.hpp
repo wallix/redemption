@@ -1081,7 +1081,7 @@ struct Drawable {
         const size_t step = this->rowsize - rect_rowsize;
         for (int j = 0; j < trect.cy ; j++, p += step){
             for (int i = 0; i < trect.cx ; i++, p += 3){
-                TODO("Applying inversion on blocks of 32 bits instead of bytes should be faster")
+                TODO("Applying inversion on blocks of 32 bits instead of bytes should be faster");
                 p[0] ^= 0xFF; p[1] ^= 0xFF; p[2] ^= 0xFF;
             }
         }
@@ -1201,7 +1201,7 @@ struct Drawable {
         }
     };
 
-    TODO("This one is a memset and should be simplified")
+    TODO("This one is a memset and should be simplified");
     struct Op_0xF0
     {
         uint8_t operator()(uint8_t target, uint8_t source)
@@ -1451,7 +1451,7 @@ struct Drawable {
     {
         uint8_t operator()(uint8_t target, uint8_t source)
         {
-            TODO("The templated function can be optimize in the case the target is not read.")
+            TODO("The templated function can be optimize in the case the target is not read.");
             (void)target;
             return ~source;
         }
@@ -1509,7 +1509,7 @@ struct Drawable {
     {
         uint8_t operator()(uint8_t target, uint8_t source)
         {
-            TODO("The templated function can be optimized because in the case the target is not read. See commented code in src_blt (and add performance benchmark)")
+            TODO("The templated function can be optimized because in the case the target is not read. See commented code in src_blt (and add performance benchmark)");
             (void)target;
             return source;
         }
@@ -1575,7 +1575,7 @@ struct Drawable {
     // because we already took care of it
     void scrblt(unsigned srcx, unsigned srcy, const Rect drect, uint8_t rop)
     {
-        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.")
+        TODO(" this switch contains much duplicated code  to merge it we should use a function template with a parameter that would be a function (the inner operator). Even if templates are often more of a problem than a solution  in this particular case I see no obvious better way.");
         switch (rop){
             // +------+-------------------------------+
             // | 0x00 | ROP: 0x00000042 (BLACKNESS)   |

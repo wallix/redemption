@@ -34,7 +34,7 @@ extern "C" {
         int fd;
         RIO * trans;
         RIO * tracker;
-//        TODO("CGR: check if name is used ?")
+//        TODO("CGR: check if name is used ?");
         char name[1024];
         char buffer[2048];
         int begin_line;
@@ -146,7 +146,7 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
         }
-        TODO("Add header sanity check")
+        TODO("Add header sanity check");
         memcpy(self->header1, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header1[self->eol-self->begin_line] = 0;
 
@@ -156,7 +156,7 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
         }
-        TODO("Add header sanity check")
+        TODO("Add header sanity check");
         memcpy(self->header2, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header2[self->eol-self->begin_line] = 0;
 
@@ -166,13 +166,13 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
         }
-        TODO("Add header sanity check")
+        TODO("Add header sanity check");
         memcpy(self->header3, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header3[self->eol-self->begin_line] = 0;
 
         // First real filename line
         self->begin_line = self->eol;
-        TODO("check what should happen if a file has no chunk")
+        TODO("check what should happen if a file has no chunk");
         self->rlstatus = sq_m_SQIntracker_readline(self);
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
@@ -305,7 +305,7 @@ extern "C" {
                 if (status) {*status = res;}
                 return NULL;
             }
-            TODO("add rights information to constructor")
+            TODO("add rights information to constructor");
             self->fd = ::open(self->line, O_RDONLY, S_IRUSR);
             if (self->fd < 0){
                 char full_path[2048];
@@ -352,7 +352,7 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
         }
-        TODO("CGR: check path_len")
+        TODO("CGR: check path_len");
         strcpy(path, self->line);
         if (begin) { *begin = self->start_tv; }
         if (end) { *end = self->stop_tv; }
@@ -369,7 +369,7 @@ extern "C" {
     struct SQCryptoIntracker {
         RIO * trans;
         RIO * tracker;
-//        TODO("CGR: check if name is used ?")
+//        TODO("CGR: check if name is used ?");
         char name[1024];
         char buffer[2048];
         int begin_line;
@@ -480,7 +480,7 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
         }
-        TODO("Add header sanity check")
+        TODO("Add header sanity check");
         memcpy(self->header1, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header1[self->eol-self->begin_line] = 0;
 
@@ -490,7 +490,7 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
         }
-        TODO("Add header sanity check")
+        TODO("Add header sanity check");
         memcpy(self->header2, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header2[self->eol-self->begin_line] = 0;
 
@@ -500,13 +500,13 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
         }
-        TODO("Add header sanity check")
+        TODO("Add header sanity check");
         memcpy(self->header3, self->buffer + self->begin_line, self->end_line-self->begin_line);
         self->header3[self->eol-self->begin_line] = 0;
 
         // First real filename line
         self->begin_line = self->eol;
-        TODO("check what should happen if a file has no chunk")
+        TODO("check what should happen if a file has no chunk");
         self->rlstatus = sq_m_SQCryptoIntracker_readline(self);
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
@@ -620,7 +620,7 @@ extern "C" {
                 if (status) {*status = res;}
                 return NULL;
             }
-            TODO("add rights information to constructor")
+            TODO("add rights information to constructor");
             self->trans = rio_new_crypto(&temp_status, self->line, O_RDONLY);
             if (temp_status){
                 char full_path[2048];
@@ -667,7 +667,7 @@ extern "C" {
         if (self->rlstatus != RIO_ERROR_OK){
             return self->rlstatus;
         }
-        TODO("CGR: check path_len")
+        TODO("CGR: check path_len");
         strcpy(path, self->line);
         if (begin) { *begin = self->start_tv; }
         if (end) { *end = self->stop_tv; }

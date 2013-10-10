@@ -31,7 +31,7 @@ static int password_cb0(char *buf, int num, int rwflag, void *userdata)
 
 static int rdp_serve(SSL_CTX * ctx, int sock, BIO *bio_err)
 {
-     TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL")
+     TODO("test behavior if we wai for receiving some data on unencrypted socket before commuting to SSL");
 
     char buf[1024];
     RIO rio;

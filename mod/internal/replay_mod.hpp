@@ -133,7 +133,7 @@ public:
     virtual void draw_event(time_t now)
     {
         TODO("use system constants for sizes");
-        TODO("RZ: Support encrypted recorded file.")
+        TODO("RZ: Support encrypted recorded file.");
         try
         {
             int i;

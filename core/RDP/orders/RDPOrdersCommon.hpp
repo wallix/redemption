@@ -839,7 +839,7 @@ public:
         return header;
     }
 
-    TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions")
+    TODO("remove flag in common.str to draw clip or not, it is confusing. Better to have 2 functions");
     size_t str(char * buffer, size_t sz, bool showclip = true) const
     {
         size_t lg = sz;

@@ -40,7 +40,7 @@ extern "C" {
 
     static inline RIO_ERROR sq_m_SQInmeta_constructor(SQInmeta * self, const char * prefix, const char * extension)
     {
-        TODO("Manage all actual open error with more details")
+        TODO("Manage all actual open error with more details");
         char tmpname[1024];
         char cp_path[1024];
         char cp_basename[1024];
@@ -145,7 +145,7 @@ extern "C" {
 
     static inline RIO_ERROR sq_m_SQCryptoInmeta_constructor(SQCryptoInmeta * self, const char * prefix, const char * extension)
     {
-        TODO("Manage all actual open error with more details")
+        TODO("Manage all actual open error with more details");
         char tmpname[1024];
         char cp_path[1024];
         char cp_basename[1024];

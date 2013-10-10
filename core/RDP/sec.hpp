@@ -31,7 +31,7 @@
 #include "client_info.hpp"
 
 
-TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.")
+TODO(" ssl calls introduce some dependency on ssl system library  injecting it in the sec object would be better.");
 #include "ssl_calls.hpp"
 
 namespace SEC
@@ -757,7 +757,7 @@ enum {
                     throw Error(ERR_SEC);
                 }
 
-                TODO("we should check signature")
+                TODO("we should check signature");
                 stream.in_skip_bytes(8); /* signature */
                 this->payload.resize(stream, stream.in_remain());
                 if (this->verbose >= 0x200){
@@ -807,7 +807,7 @@ enum {
                         throw Error(ERR_SEC);
                     }
 
-                    TODO("shouldn't we check signature ?")
+                    TODO("shouldn't we check signature ?");
                     stream.in_skip_bytes(8); /* signature */
                     this->payload.resize(stream, stream.in_remain());
                     if (this->verbose >= 0x200){

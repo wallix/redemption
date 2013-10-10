@@ -150,7 +150,7 @@ extern "C" {
         if (status && (*status != RIO_ERROR_OK)) { return self->trans; }
         if (!self->trans) {
             snprintf(self->tempnam, sizeof(self->tempnam), "%sred-XXXXXX.tmp", self->path);
-            TODO("add rights information to constructor")
+            TODO("add rights information to constructor");
             self->fd = ::mkostemps(self->tempnam, 4, O_WRONLY | O_CREAT);
             if (self->fd < 0) {
                 if (status) { *status = RIO_ERROR_CREAT; }
