@@ -26,9 +26,13 @@
 #define _REDEMPTION_UTILS_UTF_HPP_
 
 #include <stdint.h>
+#define LOGPRINT
 #include "log.hpp"
+#include "cast.hpp"
 
-REDOC("Check if some string is valid utf8, zero terminated");
+
+REDOC("Check if some string is valid utf8, zero terminated"
+      "Returns number of valid bytes");
 static inline size_t UTF8Check(const uint8_t * source, size_t len)
 {
     size_t i = 0;
@@ -96,11 +100,12 @@ static inline size_t UTF8Len(const uint8_t * source)
 
 static inline size_t UTF8Len(const char * source)
 {
-    return UTF8Len(reinterpret_cast<const uint8_t *>(source));
+    return UTF8Len(byte_ptr_cast(source));
 }
 
 
-REDOC("UTF8GetLen find the number of bytes of the len first characters of input. It assumes input is valid utf8, zero terminated (that has been checked before).");
+REDOC("UTF8GetLen find the number of bytes of the len first characters of input."
+      " It assumes input is valid utf8, zero terminated (that has been checked before).");
 static inline size_t UTF8GetPos(uint8_t * source, size_t len)
 {
     len += 1;

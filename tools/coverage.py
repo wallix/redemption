@@ -64,7 +64,7 @@ class Cover:
     def cover(self, module, name, extension):
         print "Computing coverage for %s" % module
         cmd1 = ["bjam", "coverage", "test_%s" % name]
-        cmd2 = ["gcov", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
+        cmd2 = ["gcov", "--unconditional-branches", "--all-blocks", "--branch-count", "--branch-probabilities", "--function-summaries", "-o", "bin/%s/coverage/%s%stest_%s.gcno" % (GCCVERSION, TESTSSUBDIR, "%s" % module[:-len(name)] if TESTSSUBDIR else '', name), "bin/%s/coverage/test_%s" % (GCCVERSION, name)]
         cmd3 = ["etags", "-o", "coverage/%s/%s%s.TAGS" % (module, name, extension), "%s%s" % (module, extension)]
 
         res = subprocess.Popen(cmd1, stdout=subprocess.PIPE, stderr = subprocess.STDOUT).communicate()[0]
@@ -165,8 +165,10 @@ class Cover:
                     # ignore blank lines
                     if re.match('^\s+$', res.group(3)):
                         continue
+                    if re.match(r'^.*(TODO|REDOC|BODY)', line):
+                        continue
                     #ignore case statement of switch
-                    if re.match('^\s*(case|default)', res.group(3)):
+                    if re.match('^\s*(case\s(.*):|default:|break;|goto)', res.group(3)):
                         continue
                     # At least one identifier or number on the line (ie: ignore alone brackets)
                     if re.match('^.*[a-zA-Z0-9]', res.group(3)) is None:

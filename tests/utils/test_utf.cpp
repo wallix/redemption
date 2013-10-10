@@ -49,6 +49,14 @@ BOOST_AUTO_TEST_CASE(TestUTF8Len)
     BOOST_CHECK_EQUAL(2, UTF8Len(source));
 }
 
+BOOST_AUTO_TEST_CASE(TestUTF8LenChar)
+{
+    char source[] = { 'a', 0xC3, 0xA9, 0};
+
+    BOOST_CHECK_EQUAL(2, UTF8Len(source));
+}
+
+
 BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos)
 {
     uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};
@@ -468,6 +476,46 @@ BOOST_AUTO_TEST_CASE(TestUTF8toUnicode)
     BOOST_CHECK_EQUAL(3, UTF8toUnicode(source, uni, sizeof(uni)/sizeof(uni[0])));
 }
 
+BOOST_AUTO_TEST_CASE(TestUTF8Check_zero)
+{
+    uint8_t source[] = {0x00};
+    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+
+    // Check result
+    BOOST_CHECK_EQUAL(1, UTF8Check(source, source_length));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8Check_control_characters)
+{
+    uint8_t source[] = {0x20, 0x00};
+    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+
+    // Check result
+    BOOST_CHECK_EQUAL(2, UTF8Check(source, source_length));
+}
+
+BOOST_AUTO_TEST_CASE(TestUTF8Check_continuation_at_start)
+{
+    uint8_t source[] = {0x82, 0x00};
+    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+
+   // Check result
+    BOOST_CHECK_EQUAL(0, UTF8Check(source, source_length));
+}
+
+
+BOOST_AUTO_TEST_CASE(TestUTF8Check_tilde)
+{
+    uint8_t source[] = {126};
+    size_t source_length = sizeof(source); // source_length is a buffer size, including trailing zero if any
+    // returns number of valid UTF8 characters (source buffer unchanged, no trailing zero added after broken part)
+
+    // Check result
+    BOOST_CHECK_EQUAL(1, UTF8Check(source, source_length));
+}
 
 BOOST_AUTO_TEST_CASE(TestUTF8Check_invalid_utf8)
 {
