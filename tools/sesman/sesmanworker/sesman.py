@@ -425,8 +425,12 @@ class Sesman():
                     return None, TR(u"auth_failed %s") % self._wab_login
 
             Logger().info("Setting user preferred language")
-            if self.engine.user:
-                self.language = self.engine.user.preferredLanguage
+            try:
+                if self.engine.user:
+                    self.language = self.engine.user.preferredLanguage
+            except Exception, e:
+                import traceback
+                Logger().info(">>>>>>>>>>>> %s " % traceback.format_exc(e))
                 
             Logger().info(u'lang=%s sesman=%s' % (self.language, self.engine.user.preferredLanguage))
                 
