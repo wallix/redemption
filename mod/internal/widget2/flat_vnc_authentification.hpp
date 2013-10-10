@@ -33,8 +33,10 @@
 class FlatVNCAuthentification : public WidgetParent
 {
 public:
-    WidgetLabel password_label;
-    WidgetPassword  password_edit;
+    WidgetLabel    message_label;
+    WidgetLabel    password_label;
+    WidgetPassword password_edit;
+    WidgetImage    img;
 
     int fgcolor;
     int bgcolor;
@@ -44,33 +46,47 @@ public:
               int group_id,
               const char * password,
               int fgcolor, int bgcolor,
+              const char * label_text_message,
               const char * label_text_password)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13, fgcolor, bgcolor)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
+        , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , fgcolor(fgcolor)
         , bgcolor(bgcolor)
     {
         this->impl = new CompositeTable;
-        this->add_widget(&this->password_edit);
+        this->add_widget(&this->message_label);
         this->add_widget(&this->password_label);
-
+        this->add_widget(&this->password_edit);
+        this->add_widget(&this->img);
 
         this->password_edit.set_flat(true);
         // Center bloc positionning
         // Login and Password boxes
-        int cbloc_w = this->password_label.rect.cx + this->password_edit.rect.cx + 10;
-        int cbloc_h = std::max(this->password_label.rect.cy,
-                               this->password_edit.rect.cy);
+        int cbloc_w = std::max<int>(this->message_label.rect.cx,
+            this->password_label.rect.cx + this->password_edit.rect.cx + 10);
+        int cbloc_h = this->message_label.rect.cy +
+            std::max(this->password_label.rect.cy, this->password_edit.rect.cy) + 20;
 
+        int x_cbloc = (width  - cbloc_w) / 2;
+        int y_cbloc = (height - cbloc_h) / 3;
 
-        int x_cbloc = (width  - cbloc_w)/2;
-        int y_cbloc = (height - cbloc_h)/2;
+        this->message_label.set_xy((width  - this->message_label.rect.cx) / 2, y_cbloc);
 
-        this->password_label.set_xy(x_cbloc, y_cbloc);
-        this->password_edit.set_xy(x_cbloc + this->password_label.rect.cx + 10, y_cbloc);
+        this->password_label.set_xy(x_cbloc, y_cbloc + this->message_label.rect.cy + 20);
+        this->password_edit.set_xy(x_cbloc + this->password_label.rect.cx + 10,
+            y_cbloc + this->message_label.rect.cy + 20);
 
         this->password_label.rect.y += (this->password_edit.cy() - this->password_label.cy()) / 2;
+
+        int bottom_height = (height - cbloc_h) / 2;
+        int bbloc_h = this->img.rect.cy/* + 10 + this->version_label.rect.cy*/;
+        int y_bbloc = ((bbloc_h + 10) > (bottom_height / 2))
+            ?(height - (bbloc_h + 10))
+            :(height/2 + cbloc_h/2 + bottom_height/2);
+        this->img.set_xy((width - this->img.rect.cx) / 2, y_bbloc);
     }
 
     virtual ~FlatVNCAuthentification()

@@ -129,7 +129,8 @@ struct mod_vnc : public InternalMod, public NotifyApi {
             : InternalMod(front, front_width, front_height)
             , challenge(*this, front_width, front_height, this->screen, this, "Redemption " VERSION,
                   0, 0, WHITE, DARK_BLUE_BIS,
-                  TR("password", ini))
+                  TR("Authentification required", ini),
+                  TR("VNC password", ini))
             , verbose(verbose)
             , keymapSym(verbose)
             , incr(0)
