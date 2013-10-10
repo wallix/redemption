@@ -58,7 +58,6 @@ struct mod_vnc : public InternalMod, public NotifyApi {
     FlatVNCAuthentification challenge;
 
     /* mod data */
-    FrontAPI & front;
     char mod_name[256];
     uint8_t mod_mouse_state;
     BGRPalette palette;
@@ -97,10 +96,13 @@ struct mod_vnc : public InternalMod, public NotifyApi {
     z_stream zstrm;
 
     enum {
-        WAIT_SECURITY_TYPES,
-        WAIT_CLIENT_UP_AND_RUNNING,
+        ASK_PASSWORD,
         DO_INITIAL_CLEAR_SCREEN,
-        UP_AND_RUNNING
+        RETRY_CONNECTION,
+        UP_AND_RUNNING,
+        WAIT_PASSWORD,
+        WAIT_SECURITY_TYPES,
+        WAIT_CLIENT_UP_AND_RUNNING
     };
 
     redemption::string encodings;
@@ -125,10 +127,9 @@ struct mod_vnc : public InternalMod, public NotifyApi {
            )
     //==============================================================================================================
             : InternalMod(front, front_width, front_height)
-            , challenge(front, front_width, front_height, this->screen, this, "Redemption " VERSION,
+            , challenge(*this, front_width, front_height, this->screen, this, "Redemption " VERSION,
                   0, 0, WHITE, DARK_BLUE_BIS,
                   TR("password", ini))
-            , front(front)
             , verbose(verbose)
             , keymapSym(verbose)
             , incr(0)
@@ -137,7 +138,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
             , state(WAIT_SECURITY_TYPES)
             , ini(ini) {
     //--------------------------------------------------------------------------------------------------------------
-        LOG(LOG_INFO, "Connecting to VNC Server");
+        LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
         memset(&zstrm, 0, sizeof(zstrm));
         if (inflateInit(&this->zstrm) != Z_OK)
@@ -164,12 +165,9 @@ struct mod_vnc : public InternalMod, public NotifyApi {
         memcpy(this->password, password, sizeof(this->password)-1);
         this->password[sizeof(this->password)-1] = 0;
 
-        /* protocol version */
-        BStream stream(512);
-        this->t->recv(&stream.end, 12);
-        this->t->send("RFB 003.003\n", 12);
-
         this->encodings.copy_c_str(encodings);
+
+        LOG(LOG_INFO, "Creation of new mod 'VNC' done");
     } // Constructor
 
     //==============================================================================================================
@@ -228,6 +226,10 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                            , bool set
                            ) {
     //==============================================================================================================
+        if (this->state != UP_AND_RUNNING) {
+            return;
+        }
+
         BStream stream(6);
         this->mod_mouse_state = set?(this->mod_mouse_state|button):(this->mod_mouse_state&~button); // set or clear bit
         stream.out_uint8(5);
@@ -245,7 +247,10 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                                 , Keymap2 * keymap
                                 ) {
     //==============================================================================================================
-        BStream stream(32768);
+        if (this->state == WAIT_PASSWORD) {
+            this->screen.rdp_input_mouse(device_flags, x, y, keymap);
+            return;
+        }
 
         if (device_flags & MOUSE_FLAG_MOVE) { /* 0x0800 */
             this->change_mouse_state(x, y, 0, true);
@@ -281,6 +286,15 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                                    , Keymap2 * keymap
                                    ) {
     //==============================================================================================================
+        if (this->state == WAIT_PASSWORD) {
+            this->screen.rdp_input_scancode(param1, param2, device_flags, param4, keymap);
+            return;
+        }
+
+        if (this->state != UP_AND_RUNNING) {
+            return;
+        }
+
         TODO("As down/up state is not stored in keymapSym, code below is quite dangerous");
         keymapSym.event(device_flags, param1);
         int key = keymapSym.get_sym();
@@ -298,6 +312,10 @@ struct mod_vnc : public InternalMod, public NotifyApi {
     //==============================================================================================================
     virtual void rdp_input_clip_data(uint8_t * data, uint32_t length) {
     //==============================================================================================================
+        if (this->state != UP_AND_RUNNING) {
+            return;
+        }
+
         BStream stream(length + 8);
 
         stream.out_uint8(6);                      // message-type : ClientCutText
@@ -320,7 +338,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
         if (this->verbose) {
             LOG( LOG_INFO
                , "KeymapSym::synchronize(time=%u, device_flags=%08x, param1=%04x, param1=%04x"
-                , time, device_flags, param1, param2);
+               , time, device_flags, param1, param2);
         }
         this->keymapSym.synchronize(param1);
     } // rdp_input_synchronize
@@ -328,6 +346,15 @@ struct mod_vnc : public InternalMod, public NotifyApi {
     //==============================================================================================================
     virtual void rdp_input_invalidate(const Rect & r) {
     //==============================================================================================================
+        if (this->state == WAIT_PASSWORD) {
+            this->screen.rdp_input_invalidate(r);
+            return;
+        }
+
+        if (this->state != UP_AND_RUNNING) {
+            return;
+        }
+
         if (!r.isempty()) {
             BStream stream(32768);
             /* FrambufferUpdateRequest */
@@ -350,22 +377,148 @@ struct mod_vnc : public InternalMod, public NotifyApi {
         }
         switch (this->state)
         {
+        case ASK_PASSWORD:
+            if (this->verbose) {
+                LOG(LOG_INFO, "state=ASK_PASSWORD");
+            }
+            this->screen.add_widget(&this->challenge);
+
+            this->screen.set_widget_focus(&this->challenge);
+
+            this->challenge.password_edit.set_text("");
+
+            this->challenge.set_widget_focus(&this->challenge.password_edit);
+
+            this->screen.refresh(this->screen.rect);
+
+            this->state = WAIT_PASSWORD;
+            break;
+        case DO_INITIAL_CLEAR_SCREEN:
+            {
+                if (this->verbose) {
+                    LOG(LOG_INFO, "state=DO_INITIAL_CLEAR_SCREEN");
+                }
+                // set almost null cursor, this is the little dot cursor
+                struct Pointer cursor;
+                cursor.x = 3;
+                cursor.y = 3;
+                memset(cursor.data + 31 * (32 * 3), 0xff, 9);
+                memset(cursor.data + 30 * (32 * 3), 0xff, 9);
+                memset(cursor.data + 29 * (32 * 3), 0xff, 9);
+                memset(cursor.mask, 0xff, 32 * (32 / 8));
+                this->front.server_set_pointer(cursor);
+
+                LOG(LOG_INFO, "VNC connection complete, connected ok\n");
+                TODO("Clearing the front screen could be done in session");
+                this->front.begin_update();
+                RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
+                this->front.draw(orect, Rect(0, 0, this->width, this->height));
+                this->front.end_update();
+
+                this->state = UP_AND_RUNNING;
+
+                this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
+
+                this->lib_open_clip_channel();
+
+                this->event.object_and_time = false;
+                if (this->verbose) {
+                    LOG(LOG_INFO, "VNC screen cleaning ok\n");
+                }
+            }
+            break;
+        case RETRY_CONNECTION:
+            if (this->verbose) {
+                LOG(LOG_INFO, "state=RETRY_CONNECTION");
+            }
+            try
+            {
+                this->t->connect();
+                this->event.obj = ((SocketTransport *)this->t)->sck;
+            }
+            catch (Error e)
+            {
+                throw Error(ERR_VNC_CONNECTION_ERROR);
+            }
+
+            this->state = WAIT_SECURITY_TYPES;
+            this->event.set();
+            break;
+        case UP_AND_RUNNING:
+            if (this->verbose) {
+                LOG(LOG_INFO, "state=UP_AND_RUNNING");
+            }
+            if (this->event.can_recv()) {
+                BStream stream(1);
+                try {
+                    this->t->recv(&stream.end, 1);
+                    char type = stream.in_uint8();  /* message-type */
+                    switch (type) {
+                        case 0: /* framebuffer update */
+                            this->lib_framebuffer_update();
+                        break;
+                        case 1: /* palette */
+                            this->lib_palette_update();
+                        break;
+                        case 3: /* clipboard */ /* ServerCutText */
+                            this->lib_clip_data();
+                        break;
+                        default:
+                            LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
+                        break;
+                    }
+                }
+                catch (const Error & e) {
+                    LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
+                    this->event.signal = BACK_EVENT_NEXT;
+                }
+                catch (...) {
+                    LOG(LOG_INFO, "unexpected exception raised in VNC");
+                    this->event.signal = BACK_EVENT_NEXT;
+                }
+                if (this->event.signal != BACK_EVENT_NEXT) {
+                    this->event.set(1000);
+                }
+            }
+            else {
+                this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
+            }
+            break;
+        case WAIT_PASSWORD:
+            if (this->verbose) {
+                LOG(LOG_INFO, "state=WAIT_PASSWORD");
+            }
+            this->event.object_and_time = false;
+            this->event.reset();
+            break;
         case WAIT_SECURITY_TYPES:
             {
+                if (this->verbose) {
+                    LOG(LOG_INFO, "state=WAIT_SECURITY_TYPES");
+                }
                 BStream stream(32768);
+
+                /* protocol version */
+                this->t->recv(&stream.end, 12);
+                this->t->send("RFB 003.003\n", 12);
+
                 // sec type
                 stream.init(8192);
                 this->t->recv(&stream.end, 4);
                 int security_level = stream.in_uint32_be();
-                LOG(LOG_INFO, "security level is %d (1 = none, 2 = standard)\n",
-                              security_level);
+                if (this->verbose) {
+                    LOG(LOG_INFO, "security level is %d (1 = none, 2 = standard)\n",
+                        security_level);
+                }
 
                 switch (security_level){
                     case 1: // none
                         break;
                     case 2: // the password and the server random
                     {
-                        LOG(LOG_INFO, "Receiving VNC Server Random");
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "Receiving VNC Server Random");
+                        }
                         stream.init(8192);
                         this->t->recv(&stream.end, 16);
 
@@ -380,19 +533,51 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                             rfbDes((unsigned char*)stream.get_data(), (unsigned char*)stream.get_data());
                             rfbDes((unsigned char*)(stream.get_data() + 8), (unsigned char*)(stream.get_data() + 8));
                         }
-                        LOG(LOG_INFO, "Sending Password");
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "Sending Password");
+                        }
                         this->t->send(stream.get_data(), 16);
 
                         // sec result
-                        LOG(LOG_INFO, "Waiting for password ack");
+                        if (this->verbose) {
+                            LOG(LOG_INFO, "Waiting for password ack");
+                        }
                         stream.init(8192);
                         this->t->recv(&stream.end, 4);
                         int i = stream.in_uint32_be();
                         if (i != 0) {
                             LOG(LOG_ERR, "vnc password failed");
-                            throw Error(ERR_VNC_CONNECTION_ERROR);
+
+                            // Optionnal
+                            try
+                            {
+                                this->t->recv(&stream.end, 4);
+                                uint32_t reason_length = stream.in_uint32_be();
+
+                                char   reason[256];
+                                char * preason = reason;
+
+                                this->t->recv(&preason, std::min<size_t>(sizeof(reason) - 1, reason_length));
+                                *preason = 0;
+
+                                LOG(LOG_INFO, "Reason for the connection failure: %s", preason);
+                            }
+                            catch (Error e)
+                            {
+                            }
+
+                            this->event.obj = -1;
+                            this->t->disconnect();
+
+                            this->state = ASK_PASSWORD;
+                            this->event.object_and_time = true;
+                            this->event.set();
+
+                            return;
                         } else {
-                            LOG(LOG_INFO, "vnc password ok\n");
+                            if (this->verbose) {
+                                LOG(LOG_INFO, "vnc password ok\n");
+                            }
                         }
                     }
                     break;
@@ -666,12 +851,18 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                 TODO("Maybe the resize should be done in session ?");
                 switch (this->front.server_resize(this->width, this->height, this->bpp)){
                 case 0:
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "no resizing needed");
+                    }
                     // no resizing needed
                     this->state = DO_INITIAL_CLEAR_SCREEN;
                     this->event.object_and_time = true;
                     this->event.set();
                     break;
                 case 1:
+                    if (this->verbose) {
+                        LOG(LOG_INFO, "resizing done");
+                    }
                     // resizing done
                     this->front_width  = this->width;
                     this->front_height = this->height;
@@ -686,71 +877,6 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                     throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
                     break;
                 }
-            }
-            break;
-        case DO_INITIAL_CLEAR_SCREEN:
-            {
-                // set almost null cursor, this is the little dot cursor
-                struct Pointer cursor;
-                cursor.x = 3;
-                cursor.y = 3;
-                memset(cursor.data + 31 * (32 * 3), 0xff, 9);
-                memset(cursor.data + 30 * (32 * 3), 0xff, 9);
-                memset(cursor.data + 29 * (32 * 3), 0xff, 9);
-                memset(cursor.mask, 0xff, 32 * (32 / 8));
-                this->front.server_set_pointer(cursor);
-
-                LOG(LOG_INFO, "VNC connection complete, connected ok\n");
-                TODO("Clearing the front screen could be done in session");
-                this->front.begin_update();
-                RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
-                this->front.draw(orect, Rect(0, 0, this->width, this->height));
-                this->front.end_update();
-
-                this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
-
-                this->lib_open_clip_channel();
-
-                this->state = UP_AND_RUNNING;
-
-                this->event.object_and_time = false;
-            }
-            break;
-        case UP_AND_RUNNING:
-            if (this->event.can_recv()) {
-                BStream stream(1);
-                try {
-                    this->t->recv(&stream.end, 1);
-                    char type = stream.in_uint8();  /* message-type */
-                    switch (type) {
-                        case 0: /* framebuffer update */
-                            this->lib_framebuffer_update();
-                        break;
-                        case 1: /* palette */
-                            this->lib_palette_update();
-                        break;
-                        case 3: /* clipboard */ /* ServerCutText */
-                            this->lib_clip_data();
-                        break;
-                        default:
-                            LOG(LOG_INFO, "unknown in vnc_lib_draw_event %d\n", type);
-                        break;
-                    }
-                }
-                catch (const Error & e) {
-                    LOG(LOG_INFO, "VNC Stopped [reason id=%u]", e.id);
-                    this->event.signal = BACK_EVENT_NEXT;
-                }
-                catch (...) {
-                    LOG(LOG_INFO, "unexpected exception raised in VNC");
-                    this->event.signal = BACK_EVENT_NEXT;
-                }
-                if (this->event.signal != BACK_EVENT_NEXT) {
-                    this->event.set(1000);
-                }
-            }
-            else {
-                this->rdp_input_invalidate(Rect(0, 0, this->width, this->height));
             }
             break;
         default:
@@ -775,11 +901,6 @@ struct mod_vnc : public InternalMod, public NotifyApi {
         uint16_t tile_y;
 
         BStream data_remain;
-
-        union
-        {
-            int i;
-        };
 
         ZRLEUpdateContext() : data_remain(16384) {}
     };
@@ -887,9 +1008,9 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                             subencoding);
                     }
 
-                    const uint8_t * palette;
-                    const uint8_t   palette_count = subencoding;
-                    const uint16_t  palette_size  = palette_count * update_context.Bpp;
+                    const uint8_t  * palette;
+                    const uint8_t    palette_count = subencoding;
+                    const uint16_t   palette_size  = palette_count * update_context.Bpp;
 
                     if (uncompressed_data_buffer.in_remain() < palette_size)
                     {
@@ -1637,6 +1758,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
         }
 
+        if (this->state == UP_AND_RUNNING) {
+            return;
+        }
+
         CHANNELS::ChannelDefArray    chanlist    = this->front.get_channel_list();
         const CHANNELS::ChannelDef * mod_channel = chanlist.get_by_name(front_channel_name);
 
@@ -1952,68 +2077,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         }
     } // send_to_vnc
 
-    virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
-                                      , size_t length, size_t chunk_size, int flags) {
-        const CHANNELS::ChannelDef * front_channel =
-            this->front.get_channel_list().get_by_name(mod_channel_name);
-        if (front_channel) {
-            this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
-        }
-    }
-
-    virtual void begin_update() {
-        this->front.begin_update();
-    }
-
-    virtual void end_update() {
-        this->front.begin_update();
-    }
-
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) {
-        this->front.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPScrBlt & cmd, const Rect & clip) {
-        this->front.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPDestBlt & cmd, const Rect & clip) {
-        this->front.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPPatBlt & cmd, const Rect & clip) {
-        this->front.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & bmp) {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bmp) {
-        this->front.draw(cmd, clip, bmp);
-    }
-
-    virtual void draw(const RDPLineTo& cmd, const Rect & clip) {
-        this->front.draw(cmd, clip);
-    }
-
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) {
-        this->front.draw(cmd, clip, gly_cache);
-    }
-
-    virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
-                                 , uint32_t bgcolor, const Rect & clip) {
-        this->front.server_draw_text(x, y, text, fgcolor, bgcolor, clip);
-    }
-
-    virtual void text_metrics(const char * text, int & width, int & height) {
-        this->front.text_metrics(text, width, height);
-    }
-
     // Front calls this member function when it became up and running.
     virtual void on_front_up_and_running()
     {
         if (this->state == WAIT_CLIENT_UP_AND_RUNNING) {
+            if (this->verbose) {
+                LOG(LOG_INFO, "Front up and running");
+            }
             this->state = DO_INITIAL_CLEAR_SCREEN;
             this->event.set();
         }
@@ -2027,6 +2097,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
             this->screen.clear();
 
+            memset(this->password, 0, 256);
+
+            memcpy(this->password, this->challenge.password_edit.get_text(), sizeof(this->password) - 1);
+            this->password[sizeof(this->password) - 1] = 0;
+
+            this->state = RETRY_CONNECTION;
+            this->event.set();
             break;
         case NOTIFY_CANCEL:
             this->event.signal = BACK_EVENT_NEXT;
