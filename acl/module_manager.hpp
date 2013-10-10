@@ -700,6 +700,7 @@ public:
                     this->ini.context.auth_error_message.copy_c_str("failed authentification on remote VNC host");
 
                     this->mod = new mod_vnc(t
+                                            , this->ini
                                             , this->ini.globals.target_user.get_cstr()
                                             , this->ini.context.target_password.get_cstr()
                                             , this->front
