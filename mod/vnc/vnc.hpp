@@ -434,7 +434,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
             try
             {
                 this->t->connect();
-                this->event.obj = ((SocketTransport *)this->t)->sck;
+                this->event.obj = this->t->get_native_object();
             }
             catch (Error e)
             {

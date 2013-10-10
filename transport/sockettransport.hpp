@@ -1156,6 +1156,10 @@ class SocketTransport : public Transport {
     {
         return rio_get_status(&this->rio) == RIO_ERROR_OK;
     }
+
+    virtual int get_native_object() {
+        return this->sck;
+    }
 };
 
 #endif
