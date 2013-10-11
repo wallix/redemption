@@ -89,18 +89,18 @@ class Sesman():
         self._saved_wab_login = self._wab_login
 
 
-    # CHECK VIDEO RECORDING
-    #===============================================================================
-    def check_video_recording(self, kv, isRecorded):
-    #===============================================================================
+    def check_video_recording(self, isRecorded):
         _status = True
         _error = u''
+        data_to_send = {
+              u'is_rec'         : u'False'
+            , u'rec_path'       : u""
+            , u'file_encryption': u"False"
+        }
+        
         try:
             self.full_path = u""
             self.path = u""
-            kv[u'is_rec'] = u'False'
-            kv[u'rec_path'] = u""
-            kv[u'file_encryption'] = u"False"
             if isRecorded:
                 try:
                     os.stat(RECORD_PATH)
@@ -127,11 +127,11 @@ class Sesman():
                     Logger().debug(u"This session will be recorded in %s" % self.path)
 
                     self.full_path = RECORD_PATH + self.path
-                    kv[u'is_rec'] = True
-                    kv[u"file_encryption"] = u'True' if self._enable_encryption else u'False'
+                    data_to_send[u'is_rec'] = True
+                    data_to_send[u"file_encryption"] = u'True' if self._enable_encryption else u'False'
                     #TODO remove .flv extention and adapt ReDemPtion proxy code
-                    kv[u'rec_path'] = u"%s.flv" % (self.full_path)
-                    Logger().info("sesmanconf[sesman]<<<%s>>>" % SESMANCONF[u'sesman']);
+                    data_to_send[u'rec_path'] = u"%s.flv" % (self.full_path)
+
                     record_warning = SESMANCONF[u'sesman'][u'record_warning'].lower()
                     if record_warning != 'false':
                         message =  u"Warning! Your remote session may be recorded and kept in electronic format."
@@ -140,14 +140,16 @@ class Sesman():
                                 message = f.read().decode('utf-8')
                         except Exception, e:
                             pass
-                        _data, _status, _error = self.interactive_message(cut_message(message), True)
+                        data_to_send[u'message'] = cut_message(message)
+
+                    _data, _status, _error = self.interactive_accept_message(data_to_send)
 
         except Exception, e:
             import traceback
             Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
             _status, _error = False, u"Connection closed by client"
 
-        return kv, _status, _error
+        return _status, _error
 
 
     def interactive_ask_x509_connection(self):
@@ -176,30 +178,43 @@ class Sesman():
 
         return _status
 
-    def interactive_message(self, message, ask = False):
+    def interactive_display_message(self, data_to_send):
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
-        data_to_send = { u'message'       : message
-                       , u'proto_dest'    : u'INTERNAL'
-                       , u'target_device' : self._target_device
-                       , u'target_login'  : self._target_login
-                       , u'target_password': u'Default'
-                       }
-        if ask:
-            data_to_send[u'accept_message'] = MAGICASK
-            data_to_send[u'display_message'] = u''
-        else:
-            data_to_send[u'display_message'] = MAGICASK
-            data_to_send[u'accept_message'] = u''
+        #TODO: we should not have to care about target login or device to display messages
+        # we should be able to send messages before or after defining target seamlessly
+        data_to_send.update({ u'proto_dest'    : u'INTERNAL'
+                            , u'target_device' : self._target_device
+                            , u'target_login'  : self._target_login
+                            , u'target_password': u'Default'
+                            , u'display_message': u''
+                            , u'accept_message': MAGICASK
+                            })
 
         self.send_data(data_to_send)
         _data, _status, _error = self.receive_data()
 
-        if ask:
-            if _data.get(u'accept_message') != u'True':
-                _status, _error = False, TR(u'message_not_validated')
-        else:
-            if _data.get(u'display_message') != u'True':
-                _status, _error = False, TR(u'not_display_message')
+        if _data.get(u'display_message') != u'True':
+            _status, _error = False, TR(u'not_display_message')
+
+        return _data, _status, _error
+
+    def interactive_accept_message(self, data_to_send):
+        u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
+        #TODO: we should not have to care about target login or device to display messages
+        # we should be able to send messages before or after defining target seamlessly
+        data_to_send.update({ u'proto_dest'    : u'INTERNAL'
+                            , u'target_device' : self._target_device
+                            , u'target_login'  : self._target_login
+                            , u'target_password': u'Default'
+                            , u'display_message': MAGICASK
+                            , u'accept_message': u''
+                            })
+        self.send_data(data_to_send)
+
+        _data, _status, _error = self.receive_data()
+        if _data.get(u'display_message') != u'True':
+            _status, _error = False, TR(u'not_display_message')
+
         return _data, _status, _error
 
 
@@ -246,7 +261,6 @@ class Sesman():
     # SEND CLOSE
     #===========================================================================z====
     def interactive_close(self, target, message):
-    #===============================================================================
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
         data_to_send = { u'error_message'  : message
                        , u'trans_ok'       : u'OK'
@@ -256,6 +270,8 @@ class Sesman():
                        , u'target_password': u'Default'
                        }
 
+        # If we send close we should expect authentifier socket will be closed by the other end
+        # No need to return some warning message if that happen
         self.send_data(data_to_send)
         _data, _status, _error = self.receive_data()
 
@@ -422,7 +438,7 @@ class Sesman():
                 # PASSWORD based Authentication
                 if (self._wab_password == MAGICASK
                 or not self.engine.password_authenticate(self._wab_login, self._ip_client, self._wab_password)):
-                    return None, TR(u"auth_failed %s") % self._wab_login
+                    return None, TR(u"auth_failed_wab %s") % self._wab_login
 
             try:
                 if self.engine.user:
@@ -457,7 +473,7 @@ class Sesman():
         except Exception, e:
             import traceback
             Logger().info("<<<%s>>>" % traceback.format_exc(e))
-            _status, _error = None, TR(u'auth_failed %s') % self._wab_login
+            _status, _error = None, TR(u'auth_failed_wab %s') % self._wab_login
 
         return _status, _error
 
@@ -722,18 +738,23 @@ class Sesman():
 
         # Dictionnary that will contain answer to client
 
-        kv = {}
 
         if _status:
             session_started = False
+
+            Logger().info(u"Check for password expiration warning")
+#            _status, _error = self.check_password_expiration()
+
+
+            Logger().info(u"Checking video")
+            _status, _error = self.check_video_recording(selected_target.authorization.isRecorded)
+
             Logger().info(u"Fetching protocol")
 
+            kv = {}
             kv[u'proto_dest'] = selected_target.resource.service.protocol.cn
             kv[u'target_port'] = selected_target.resource.service.port
             kv[u'timezone'] = str(altzone if daylight else timezone)
-
-            Logger().info(u"Checking video")
-            kv, _status, _error = self.check_video_recording(kv, selected_target.authorization.isRecorded)
 
             if _status:
                 kv[u'authenticated'] = u'True'
@@ -762,8 +783,9 @@ class Sesman():
                     tt = datetime.strptime(selected_target.deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
                     kv[u'timeclose'] = int(mktime(tt))
                     if not self.infinite_connection:
-                        message = TR(u'session_closed_at %s') % selected_target.deconnection_time
-                        _data, _status, _error = self.interactive_message(message)
+                        _data, _status, _error = self.interactive_display_message(
+                                {u'message': TR(u'session_closed_at %s') % selected_target.deconnection_time}
+                                )
 
             proto = 'RDP' if self._target_protocol != 'VNC' else 'VNC'
             kv[u'device_redirection'] = SESMANCONF[proto][u'device_redirection']

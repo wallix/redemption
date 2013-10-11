@@ -163,18 +163,19 @@ public:
 	this->selector.number_page.set_text(WidgetSelectorFlat::temporary_number_of_page(buffer).buffer);
 
 
-        uint16_t cy = this->selector.selector_lines.cy();
+        // uint16_t cy = this->selector.selector_lines.cy();
 
         this->selector.selector_lines.clear();
 
         this->refresh_device();
 
-        this->selector.refresh(Rect(
-                                    this->selector.selector_lines.dx(),
-                                    this->selector.selector_lines.dy(),
-                                    this->selector.selector_lines.get_total_w(),
-                                    std::max(cy, this->selector.selector_lines.cy())
-                                    ));
+        this->selector.refresh(this->selector.rect);
+        // this->selector.refresh(Rect(
+        //                             this->selector.selector_lines.dx(),
+        //                             this->selector.selector_lines.dy(),
+        //                             this->selector.selector_lines.get_total_w(),
+        //                             std::max(cy, this->selector.selector_lines.cy())
+        //                             ));
         this->selector.current_page.refresh(this->selector.current_page.rect);
         this->selector.number_page.refresh(this->selector.number_page.rect);
         this->event.reset();
@@ -186,7 +187,6 @@ public:
         char * targets   = const_cast<char *>(this->ini.globals.target_device.get_cstr());
         char * protocols = const_cast<char *>(this->ini.context.target_protocol.get_cstr());
         char * endtimes  = const_cast<char *>(this->ini.context.end_time.get_cstr());
-
         for (unsigned index = 0 ; index < this->ini.context.selector_lines_per_page.get(); index++) {
             size_t size_groups = proceed_item(groups, '\x01');
             if (!size_groups)
@@ -224,12 +224,14 @@ public:
             targets += size_targets + 1;
             protocols += size_protocols + 1;
             endtimes += size_endtimes + 1;
+
         }
 
         if (this->selector.selector_lines.labels.empty()) {
             this->selector.selector_lines.tab_flag = Widget2::IGNORE_TAB;
             this->selector.selector_lines.focus_flag = Widget2::IGNORE_FOCUS;
         } else {
+            this->selector.fit_columns();
             this->selector.selector_lines.tab_flag = Widget2::NORMAL_TAB;
             this->selector.selector_lines.focus_flag = Widget2::NORMAL_FOCUS;
             this->selector.selector_lines.set_current_index(0);

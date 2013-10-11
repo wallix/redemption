@@ -27,22 +27,25 @@
 
 class WidgetTooltip : public Widget2
 {
+    uint w_border;
+    uint h_border;
     WidgetMultiLine desc;
-
 public:
     WidgetTooltip(DrawApi & drawable, int16_t x, int16_t y, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
                   int fgcolor = BLACK, int bgcolor = 0x9fffff
                   )
         : Widget2(drawable, Rect(x, y, 100, 100), parent, notifier, 0)
-        , desc(WidgetMultiLine(drawable, 0, 0, *this, this, text, true, 0, fgcolor, bgcolor, 4, 1))
+        , w_border(10)
+        , h_border(10)
+        , desc(WidgetMultiLine(drawable, w_border, h_border, *this, this, text, true, 0, fgcolor, bgcolor, 0, 0))
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
-        this->rect.cx = this->desc.rect.cx;
-        this->rect.cy = this->desc.rect.cy;
-
+        this->rect.cx = this->desc.rect.cx + 2*w_border;
+        this->rect.cy = this->desc.rect.cy + 2*h_border;
     }
+
     virtual ~WidgetTooltip()
     {
     }
@@ -50,12 +53,13 @@ public:
     void set_text(const char * text)
     {
         this->desc.set_text(text);
-        this->rect.cx = this->desc.rect.cx;
-        this->rect.cy = this->desc.rect.cy;
+        this->rect.cx = this->desc.rect.cx + 2*w_border;
+        this->rect.cy = this->desc.rect.cy + 2*h_border;
     }
 
     virtual void draw(const Rect& clip)
     {
+        this->drawable.draw(RDPOpaqueRect(this->rect, desc.bg_color), clip);
         this->desc.draw(clip);
         this->draw_border(clip);
     }
@@ -70,8 +74,8 @@ public:
     void set_tooltip_xy(int x, int y) {
         this->rect.x = x;
         this->rect.y = y;
-        this->desc.rect.x = x;
-        this->desc.rect.y = y;
+        this->desc.rect.x = x + w_border;
+        this->desc.rect.y = y + h_border;
     }
 
     void draw_border(const Rect& clip)

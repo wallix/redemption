@@ -34,6 +34,7 @@ public:
         char * str;
         int cx;
     };
+
     char buffer[buffer_size];
     line_t lines[max_line];
     int x_text;
@@ -49,7 +50,7 @@ public:
                     bool auto_resize = true,
                     int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
                     int xtext = 0, int ytext = 0)
-    : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
+    : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
     , x_text(xtext)
     , y_text(ytext)
     , cy_text(0)

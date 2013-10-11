@@ -9,8 +9,9 @@ def parse_conf_file(conf, path):
     for section in conf:
         for key in conf[section]:
             try:
-                if parser.get(section, key):
-                    temp = parser.get(section, key)
+                cleankey = key.replace(" %s", "")
+                temp = parser.get(section, cleankey)
+                if temp:
                     if type(temp) is unicode:
                        conf[section][key] = temp
                     else:
