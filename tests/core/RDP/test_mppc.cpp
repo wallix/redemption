@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     struct rdp_mppc_dec * rmppc = new rdp_mppc_dec();
 
     /* setup encoder for RDP 5.0 */
-    struct rdp_mppc_enc * enc = new rdp_mppc_enc(PROTO_RDP_50);
+    struct rdp_mppc_50_enc * enc = new rdp_mppc_50_enc();
 
     int data_len = sizeof(decompressed_rd5_data);
     LOG(LOG_INFO, "test_mppc_enc: testing with embedded data of %d bytes", data_len);
@@ -94,9 +94,12 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     /* save starting time */
     gettimeofday(&start_time, NULL);
 
-    BOOST_CHECK_EQUAL(true, enc->compress_rdp(decompressed_rd5_data, data_len));
+    uint8_t  compressionFlags;
+    uint16_t datalen;
 
-    BOOST_CHECK(0 != (enc->flags & PACKET_COMPRESSED));
+    BOOST_CHECK_EQUAL(true, enc->compress(decompressed_rd5_data, data_len, compressionFlags, datalen));
+
+    BOOST_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
     BOOST_CHECK_EQUAL(true,
         rmppc->decompress_rdp_5((uint8_t*)enc->outputBuffer, enc->bytes_in_opb, enc->flags, &roff, &rlen));
     BOOST_CHECK_EQUAL(data_len, rlen);
@@ -143,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
 {
     #include "../../fixtures/test_mppc_2.hpp"
 
-    rdp_mppc_enc * mppc_enc = new rdp_mppc_enc(PROTO_RDP_50);
+    rdp_mppc_50_enc * mppc_enc = new rdp_mppc_50_enc();
 
 
     BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
@@ -153,7 +156,6 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
     BOOST_CHECK_EQUAL(sizeof(compressed_data),   3015);
 
 
-    mppc_enc->protocol_type = 2;
     memcpy(mppc_enc->historyBuffer,    historyBuffer,    mppc_enc->buf_len);
     memcpy(mppc_enc->outputBufferPlus, outputBufferPlus, mppc_enc->buf_len + 64);
     mppc_enc->historyOffset = 61499;
@@ -164,13 +166,15 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
     mppc_enc->first_pkt     = 0;
     memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
 
+    uint8_t  compressionFlags;
+    uint16_t datalen;
 
-    mppc_enc->compress_rdp(uncompressed_data, sizeof(uncompressed_data));
+    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen);
 
     int flags = PACKET_COMPRESSED;
 
-    BOOST_CHECK_EQUAL(flags, (mppc_enc->flags & PACKET_COMPRESSED));
-    BOOST_CHECK_EQUAL(3015,  mppc_enc->bytes_in_opb);
+    BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
+    BOOST_CHECK_EQUAL(3015,  datalen);
     BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc->outputBuffer
                                    , mppc_enc->bytes_in_opb));
 
@@ -181,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
 {
     #include "../../fixtures/test_mppc_3.hpp"
 
-    rdp_mppc_enc * mppc_enc = new rdp_mppc_enc(PROTO_RDP_50);
+    rdp_mppc_50_enc * mppc_enc = new rdp_mppc_50_enc();
 
 
     BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
@@ -191,7 +195,6 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
     BOOST_CHECK_EQUAL(sizeof(compressed_data),   8893);
 
 
-    mppc_enc->protocol_type = 2;
     memcpy(mppc_enc->historyBuffer,    historyBuffer,    mppc_enc->buf_len);
     memcpy(mppc_enc->outputBufferPlus, outputBufferPlus, mppc_enc->buf_len + 64);
     mppc_enc->historyOffset = 0;
@@ -202,14 +205,16 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
     mppc_enc->first_pkt     = 1;
     memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
 
+    uint8_t  compressionFlags;
+    uint16_t datalen;
 
-    mppc_enc->compress_rdp(uncompressed_data, sizeof(uncompressed_data));
+    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen);
 
     int flags = PACKET_COMPRESSED;
 
-    BOOST_CHECK_EQUAL(flags, (mppc_enc->flags & PACKET_COMPRESSED));
+    BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
 
-    BOOST_CHECK_EQUAL(8893,  mppc_enc->bytes_in_opb);
+    BOOST_CHECK_EQUAL(8893,  datalen);
     BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc->outputBuffer
                                    , mppc_enc->bytes_in_opb));
 

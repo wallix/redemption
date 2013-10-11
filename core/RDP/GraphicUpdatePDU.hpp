@@ -273,16 +273,12 @@ protected:
                 else {
                     this->stream_orders.mark_end();
 
-                    HStream compressed_buffer_stream_orders(1024, 65565);
+                    HStream  compressed_buffer_stream_orders(1024, 65565);
+                    uint8_t  compressionFlags;
+                    uint16_t datalen;
 
-                    this->mppc_enc->compress_rdp(
-                        this->buffer_stream_orders.get_data(),
-                        this->buffer_stream_orders.size());
-
-                    uint16_t datalen          =   (this->mppc_enc->flags & PACKET_COMPRESSED)
-                                                ? this->mppc_enc->bytes_in_opb : 0;
-                    uint8_t  compressionFlags =   (this->mppc_enc->flags & PACKET_COMPRESSED)
-                                                ? this->mppc_enc->flags : 0;
+                    this->mppc_enc->compress(this->buffer_stream_orders.get_data(), this->buffer_stream_orders.size(),
+                        compressionFlags, datalen);
 
                     size_t share_data_header_size = 12;
 
@@ -300,9 +296,8 @@ protected:
 
                     compressed_buffer_stream_orders.p += share_data_header_size;
 
-                    if (this->mppc_enc->flags & PACKET_COMPRESSED) {
-                        compressed_buffer_stream_orders.out_copy_bytes(
-                            this->mppc_enc->outputBuffer, this->mppc_enc->bytes_in_opb);
+                    if (compressionFlags & PACKET_COMPRESSED) {
+                        this->mppc_enc->get_compressed_data(compressed_buffer_stream_orders);
                     }
                     else {
                         compressed_buffer_stream_orders.out_copy_bytes(
@@ -372,26 +367,21 @@ protected:
                     this->trans->send(fastpath_header, this->buffer_stream_orders);
                 }
                 else {
-                    HStream compressed_buffer_stream_orders(1024, 65565);
+                    HStream  compressed_buffer_stream_orders(1024, 65565);
+                    uint8_t  compressionFlags;
+                    uint16_t datalen;
 
-                    this->mppc_enc->compress_rdp(
-                        this->buffer_stream_orders.get_data(),
-                        this->buffer_stream_orders.size());
+                    this->mppc_enc->compress(this->buffer_stream_orders.get_data(), this->buffer_stream_orders.size(),
+                        compressionFlags, datalen);
 
-                    if (!(this->mppc_enc->flags & PACKET_COMPRESSED)) {
+                    if (!(compressionFlags & PACKET_COMPRESSED)) {
+                        datalen     = this->buffer_stream_orders.size();
                         header_size = FastPath::Update_Send::GetSize(0);
                     }
 
                     SubStream Upd_s(compressed_buffer_stream_orders, 0, header_size);
 
-                    uint16_t datalen          =   (this->mppc_enc->flags & PACKET_COMPRESSED)
-                                                ? this->mppc_enc->bytes_in_opb
-                                                : this->buffer_stream_orders.size();
-                    uint8_t  compression      = (this->mppc_enc->flags & PACKET_COMPRESSED)
-                                                ? FastPath::FASTPATH_OUTPUT_COMPRESSION_USED
-                                                : 0 ;
-                    uint8_t  compressionFlags =   (this->mppc_enc->flags & PACKET_COMPRESSED)
-                                                ? this->mppc_enc->flags : 0;
+                    uint8_t compression = ((compressionFlags & PACKET_COMPRESSED) ? FastPath::FASTPATH_OUTPUT_COMPRESSION_USED : 0);
 
                     FastPath::Update_Send Upd( Upd_s
                                              , datalen
@@ -399,13 +389,12 @@ protected:
                                              , FastPath::FASTPATH_FRAGMENT_SINGLE
                                              , compression
                                              , compressionFlags
-                                            );
+                                             );
 
                     compressed_buffer_stream_orders.p += header_size;
 
-                    if (this->mppc_enc->flags & PACKET_COMPRESSED) {
-                        compressed_buffer_stream_orders.out_copy_bytes(
-                            this->mppc_enc->outputBuffer, this->mppc_enc->bytes_in_opb);
+                    if (compressionFlags & PACKET_COMPRESSED) {
+                        this->mppc_enc->get_compressed_data(compressed_buffer_stream_orders);
                     }
                     else {
                         compressed_buffer_stream_orders.out_copy_bytes(
@@ -518,26 +507,21 @@ protected:
                     this->trans->send(fastpath_header, this->buffer_stream_bitmaps);
                 }
                 else {
-                    HStream compressed_buffer_stream_bitmaps(1024, 65565);
+                    HStream  compressed_buffer_stream_bitmaps(1024, 65565);
+                    uint16_t datalen;
+                    uint8_t  compressionFlags;
 
-                    this->mppc_enc->compress_rdp(
-                        this->buffer_stream_bitmaps.get_data(),
-                        this->buffer_stream_bitmaps.size());
+                    this->mppc_enc->compress(this->buffer_stream_bitmaps.get_data(), this->buffer_stream_bitmaps.size(),
+                        compressionFlags, datalen);
 
-                    if (!(this->mppc_enc->flags & PACKET_COMPRESSED)) {
+                    if (!(compressionFlags & PACKET_COMPRESSED)) {
+                        datalen     = this->buffer_stream_bitmaps.size();
                         header_size = FastPath::Update_Send::GetSize(0);
                     }
 
                     SubStream Upd_s(compressed_buffer_stream_bitmaps, 0, header_size);
 
-                    uint16_t datalen          =   (this->mppc_enc->flags & PACKET_COMPRESSED)
-                                                ? this->mppc_enc->bytes_in_opb
-                                                : buffer_stream_bitmaps.size();
-                    uint8_t  compression      = (this->mppc_enc->flags & PACKET_COMPRESSED)
-                                                ? FastPath::FASTPATH_OUTPUT_COMPRESSION_USED
-                                                : 0 ;
-                    uint8_t  compressionFlags =   (this->mppc_enc->flags & PACKET_COMPRESSED)
-                                                ? this->mppc_enc->flags : 0;
+                    uint8_t compression = ((compressionFlags & PACKET_COMPRESSED) ? FastPath::FASTPATH_OUTPUT_COMPRESSION_USED : 0);
 
                     FastPath::Update_Send Upd( Upd_s
                                              , datalen
@@ -549,9 +533,8 @@ protected:
 
                     compressed_buffer_stream_bitmaps.p += header_size;
 
-                    if (this->mppc_enc->flags & PACKET_COMPRESSED) {
-                        compressed_buffer_stream_bitmaps.out_copy_bytes(
-                            this->mppc_enc->outputBuffer, this->mppc_enc->bytes_in_opb);
+                    if (compressionFlags & PACKET_COMPRESSED) {
+                        this->mppc_enc->get_compressed_data(compressed_buffer_stream_bitmaps);
                     }
                     else {
                         compressed_buffer_stream_bitmaps.out_copy_bytes(
