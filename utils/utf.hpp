@@ -26,7 +26,7 @@
 #define _REDEMPTION_UTILS_UTF_HPP_
 
 #include <stdint.h>
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 #include "cast.hpp"
 

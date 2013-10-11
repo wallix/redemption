@@ -535,6 +535,8 @@ struct Inifile : public FieldObserver {
     struct
     {
         redemption::string encodings;
+
+        bool allow_authentification_retries;
     } mod_vnc;
 
     // Section "video"
@@ -841,6 +843,8 @@ public:
 
         // Begin section "mod_vnc"
         this->mod_vnc.encodings.empty();
+
+        this->mod_vnc.allow_authentification_retries = false;
         // End Section "mod_vnc"
 
         // Begin section video
@@ -1220,6 +1224,9 @@ public:
         else if (0 == strcmp(context, "mod_vnc")){
             if (0 == strcmp(key, "encodings")) {
                 this->mod_vnc.encodings.copy_c_str(value);
+            }
+            else if (0 == strcmp(key, "allow_authentification_retries")) {
+                this->mod_vnc.allow_authentification_retries = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "video")){

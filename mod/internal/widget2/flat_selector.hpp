@@ -589,11 +589,6 @@ public:
         this->add_widget(&this->logout);
         this->add_widget(&this->connect);
 
-        this->filter_proto.set_flat(true);
-        this->filter_target.set_flat(true);
-        this->filter_device.set_flat(true);
-        this->current_page.set_flat(true);
-
         int dw = width - (this->selector_lines.rect.x + this->selector_lines.get_total_w() + 15);
         if (dw < 0) {
 

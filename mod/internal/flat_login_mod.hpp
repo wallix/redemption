@@ -70,7 +70,7 @@ public:
     {
         switch (event) {
         case NOTIFY_SUBMIT:
-            this->ini.parse_username(this->login.login_edit.label.buffer);
+            this->ini.parse_username(this->login.login_edit.get_text());
             this->ini.context_set_value(AUTHID_PASSWORD, this->login.password_edit.get_text());
             this->event.signal = BACK_EVENT_NEXT;
             this->event.set();

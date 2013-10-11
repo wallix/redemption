@@ -22,6 +22,7 @@
 #define REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_VNC_AUTHENTIFICATION_HPP
 
 #include "edit.hpp"
+#include "edit_valid.hpp"
 #include "label.hpp"
 #include "password.hpp"
 #include "multiline.hpp"
@@ -33,10 +34,10 @@
 class FlatVNCAuthentification : public WidgetParent
 {
 public:
-    WidgetLabel    message_label;
-    WidgetLabel    password_label;
-    WidgetPassword password_edit;
-    WidgetImage    img;
+    WidgetLabel     message_label;
+    WidgetLabel     password_label;
+    WidgetEditValid password_edit;
+    WidgetImage     img;
 
     int fgcolor;
     int bgcolor;
@@ -51,7 +52,7 @@ public:
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13, fgcolor, bgcolor)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
-        , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, -1u, 1, 1)
+        , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, bgcolor, -1u, 1, 1, true)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , fgcolor(fgcolor)
         , bgcolor(bgcolor)
@@ -62,7 +63,6 @@ public:
         this->add_widget(&this->password_edit);
         this->add_widget(&this->img);
 
-        this->password_edit.set_flat(true);
         // Center bloc positionning
         // Login and Password boxes
         int cbloc_w = std::max<int>(this->message_label.rect.cx,

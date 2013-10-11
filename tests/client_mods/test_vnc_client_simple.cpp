@@ -469,6 +469,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         , 0             /* key_flags */
         , true          /* clipboard */
         , "0,1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
+        , false         /* allow authentification retries */
         , verbose);
     mod->event.set();
 

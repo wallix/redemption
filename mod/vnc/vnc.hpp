@@ -111,6 +111,8 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 
     Inifile & ini;
 
+    bool allow_authentification_retries;
+
     //==============================================================================================================
     mod_vnc( Transport * t
            , Inifile & ini
@@ -123,6 +125,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
            , int key_flags
            , bool clipboard
            , const char * encodings
+           , bool allow_authentification_retries
            , uint32_t verbose
            )
     //==============================================================================================================
@@ -137,7 +140,8 @@ struct mod_vnc : public InternalMod, public NotifyApi {
             , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
             , opt_clipboard(clipboard)
             , state(WAIT_SECURITY_TYPES)
-            , ini(ini) {
+            , ini(ini)
+            , allow_authentification_retries(allow_authentification_retries || !(*password)) {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 
@@ -547,7 +551,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                         this->t->recv(&stream.end, 4);
                         int i = stream.in_uint32_be();
                         if (i != 0) {
-                            LOG(LOG_ERR, "vnc password failed");
+                            // vnc password failed
 
                             // Optionnal
                             try
@@ -567,14 +571,24 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                             {
                             }
 
-                            this->event.obj = -1;
-                            this->t->disconnect();
+                            if (this->allow_authentification_retries)
+                            {
+                                LOG(LOG_ERR, "vnc password failed");
 
-                            this->state = ASK_PASSWORD;
-                            this->event.object_and_time = true;
-                            this->event.set();
+                                this->event.obj = -1;
+                                this->t->disconnect();
 
-                            return;
+                                this->state = ASK_PASSWORD;
+                                this->event.object_and_time = true;
+                                this->event.set();
+
+                                return;
+                            }
+                            else
+                            {
+                                LOG(LOG_ERR, "vnc password failed");
+                                throw Error(ERR_VNC_CONNECTION_ERROR);
+                            }
                         } else {
                             if (this->verbose) {
                                 LOG(LOG_INFO, "vnc password ok\n");

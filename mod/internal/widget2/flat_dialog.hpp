@@ -83,7 +83,6 @@ public:
             this->challenge = new WidgetEdit(this->drawable, this->separator.rect.x + 10, y,
                                              total_width - 20, *this, this, 0, -13,
                                              BLACK, WHITE, -1u, 1, 1);
-            this->challenge->set_flat(true);
             this->add_widget(this->challenge);
             total_height += this->challenge->cy() + 10;
             y += this->challenge->cy() + 10;
