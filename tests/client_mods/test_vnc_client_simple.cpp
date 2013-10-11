@@ -27,8 +27,10 @@
 #define BOOST_TEST_MODULE TestVncClientSimple
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "test_orders.hpp"
+#undef SHARE_PATH
+#define SHARE_PATH FIXTURES_PATH
 
 #include "stream.hpp"
 #include "transport.hpp"
@@ -43,6 +45,7 @@
 
 BOOST_AUTO_TEST_CASE(TestDecodePacket)
 {
+    BOOST_CHECK(1);
 
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
