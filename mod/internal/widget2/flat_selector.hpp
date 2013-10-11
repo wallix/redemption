@@ -187,12 +187,48 @@ private:
             , over_index(-1u)
             , click_interval()
         {
-            int w;
+            int w = 0;
             this->drawable.text_metrics("Lp", w, this->h_text);
         }
 
         void set_x(int x) {
             this->rect.x = x;
+        }
+
+        void ajust_group_and_target_width(int width) {
+            int both_width = this->group_w + this->target_w;
+            this->group_w = both_width - width;
+            this->target_w = width;
+            for (size_t i = 0; i < this->labels.size(); ++i) {
+                this->labels[i]->target.rect.cx = width;
+                this->labels[i]->target.rect.x = this->rect.x + this->group_w;
+                this->labels[i]->group.rect.cx = this->group_w;
+            }
+        }
+
+        int get_target_maxwidth() {
+            int max = 0;
+            int h = 0;
+            int w = 0;
+            for (size_t i = 0; i < this->labels.size(); ++i) {
+                w = 0;
+                this->drawable.text_metrics(this->labels[i]->target.get_text(), w, h);
+                if (w > max)
+                    max = w;
+            }
+            return max;
+        }
+        int get_group_maxwidth() {
+            int max = 0;
+            int h = 0;
+            int w = 0;
+            for (size_t i = 0; i < this->labels.size(); ++i) {
+                w = 0;
+                this->drawable.text_metrics(this->labels[i]->group.get_text(), w, h);
+                if (w > max)
+                    max = w;
+            }
+            return max;
         }
         void set_group_w(int w) {
             this->group_w = w;
@@ -678,6 +714,55 @@ public:
     virtual ~WidgetSelectorFlat()
     {
         this->clear();
+    }
+
+    virtual void fit_columns() {
+        if (this->selector_lines.labels.size() > 0) {
+            int group_maxwidth = this->selector_lines.get_group_maxwidth();
+            int target_maxwidth = this->selector_lines.get_target_maxwidth();
+            this->fit_target_col(group_maxwidth + 10, target_maxwidth + 10);
+        }
+    }
+
+    virtual void fit_target_col(int group_width, int target_width) {
+        int h = 0;
+        int w = 0;
+        this->drawable.text_metrics(this->device_target_label.get_text(), w, h);
+        w += 10;
+        group_width = (group_width > w)?group_width:w;
+        bool group_fits = (group_width <= this->selector_lines.group_w);
+        bool target_fits = (target_width <= this->selector_lines.target_w);
+        int group_and_target_width = this->selector_lines.group_w + this->selector_lines.target_w;
+        int new_target_width = target_width;
+
+        if (group_fits && target_fits)
+            return;
+        if (!group_fits && !target_fits)
+            return;
+        if (group_fits && !target_fits) {
+            if ((group_and_target_width - target_width) > group_width ) {
+                new_target_width = target_width;
+            }
+            else {
+                new_target_width = group_and_target_width - group_width;
+            }
+        }
+        else if (!group_fits && target_fits) {
+            if ((group_and_target_width - group_width) > target_width) {
+                new_target_width = group_and_target_width - group_width;
+            }
+            else {
+                new_target_width = target_width;
+            }
+        }
+        int diff_target_width = this->target_label.cx() - new_target_width;
+        this->target_label.rect.cx -= diff_target_width;
+        this->target_label.rect.x += diff_target_width;
+        this->device_target_label.rect.cx += diff_target_width;
+        this->filter_target.set_edit_cx(this->filter_target.cx() - diff_target_width);
+        this->filter_target.set_edit_x(this->filter_target.dx() + diff_target_width);
+        this->filter_device.set_edit_cx(this->filter_device.cx() + diff_target_width);
+        this->selector_lines.ajust_group_and_target_width(new_target_width);
     }
 
     virtual void draw(const Rect& clip)
