@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     wscreen.show_tooltip(NULL, "tooltip test", 30, 35);
 
     wscreen.rdp_input_invalidate(wscreen.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "screen12.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "screen12.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\xf7\x64\xa8\x5b\x50\x00\xb1\x63\xfc\xb2"
                    "\x20\x1a\x8c\x9d\x45\x43\x6e\x95\x55\x06"

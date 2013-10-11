@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     flat_login.rdp_input_mouse(MOUSE_FLAG_MOVE,
                                flat_login.helpicon.centerx(), flat_login.helpicon.centery(), NULL);
 
-    drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
                    "\x6d\xa8\x2c\x54\x56\x52\x18\x9f\x27\xdd"
