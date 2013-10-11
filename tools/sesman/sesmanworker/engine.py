@@ -508,7 +508,7 @@ class Engine(object):
                     cn = u'win2'
                 )
             ],
-            target_groups = u'win1;win2',
+            target_groups = u'win1;win2;',
             resource = ResourceInfo(
                 device = DeviceInfo(
                     cn = u'10.10.46.78',

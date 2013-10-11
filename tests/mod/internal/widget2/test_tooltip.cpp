@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xa5\x2a\x2e\x7f\xb7\x8a\x52\x95\x5a\xdb"
-                   "\x85\xec\xb5\xae\x3b\xa6\x29\x0b\x60\xfb"
+                   "\x31\x91\x81\x07\x31\x0b\x13\x90\x2c\x97"
+                   "\x98\xb3\x52\x65\x92\xf8\x08\x42\xc2\xd5"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -118,8 +118,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xb3\xbf\x9a\x9b\x1e\xd5\x09\xb9\x1a\xaa"
-                   "\xf2\xaa\x32\x51\x24\x5d\x3f\xbc\x1d\xad"
+                   "\x38\x6d\x83\x65\xc3\x76\x03\x32\xb2\x18"
+                   "\xe8\x9c\x7d\xd1\xcb\xa1\xed\xa8\x61\x6a"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -136,8 +136,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x57\x94\x1e\x7a\x4a\x2e\x37\xfd\x2a\x2f"
-                   "\xb2\x5c\xca\x06\xd6\xdc\x7b\x40\x16\xfb"
+                   "\x9d\x9a\xca\x54\xc2\x12\x21\x7d\x04\x94"
+                   "\xa5\x4d\x42\x0c\x42\xd6\xd2\x7c\x3f\x26"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -150,8 +150,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
     // drawable.save_to_png(OUTPUT_FILE_PATH "tooltipscreen4.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x21\x9b\x78\xfb\x81\x2f\x4e\xc5\xf8\xa9"
-                   "\xb3\x13\x01\xca\x36\x3d\x14\x6a\xb1\x91"
+                   "\xf1\x95\xb1\x6f\x27\xaf\x57\xa5\xa1\x2a"
+                   "\xb8\x93\x59\x98\xdb\x02\x23\x64\x74\x50"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
