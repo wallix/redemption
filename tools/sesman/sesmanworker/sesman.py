@@ -438,7 +438,7 @@ class Sesman():
                 # PASSWORD based Authentication
                 if (self._wab_password == MAGICASK
                 or not self.engine.password_authenticate(self._wab_login, self._ip_client, self._wab_password)):
-                    return None, TR(u"auth_failed %s") % self._wab_login
+                    return None, TR(u"auth_failed_wab %s") % self._wab_login
 
             try:
                 if self.engine.user:
@@ -473,7 +473,7 @@ class Sesman():
         except Exception, e:
             import traceback
             Logger().info("<<<%s>>>" % traceback.format_exc(e))
-            _status, _error = None, TR(u'auth_failed %s') % self._wab_login
+            _status, _error = None, TR(u'auth_failed_wab %s') % self._wab_login
 
         return _status, _error
 
