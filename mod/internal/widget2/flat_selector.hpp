@@ -17,6 +17,7 @@
  *   Copyright (C) Wallix 2010-2013
  *   Author(s): Christophe Grosjean, Dominique Lafages, Jonathan Poelen,
  *              Meng Tan
+ *
  */
 
 #if !defined(REDEMPTION_MOD_INTERNAL_WIDGET2_FLAT_SELECTOR_HPP)
