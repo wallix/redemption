@@ -26,7 +26,83 @@
 #define LOGNULL
 #include "log.hpp"
 
+#include "RDP/mppc.hpp"
 
-BOOST_AUTO_TEST_CASE(TestXXX)
+BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
 {
+    #include "../../fixtures/test_mppc_2.hpp"
+
+    rdp_mppc_50_enc * mppc_enc = new rdp_mppc_50_enc();
+
+
+    BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
+    BOOST_CHECK_EQUAL(sizeof(outputBufferPlus),  mppc_enc->buf_len + 64);
+    BOOST_CHECK_EQUAL(sizeof(hash_table),        mppc_enc->buf_len * 2);
+    BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 4037);
+    BOOST_CHECK_EQUAL(sizeof(compressed_data),   3015);
+
+
+    memcpy(mppc_enc->historyBuffer,    historyBuffer,    mppc_enc->buf_len);
+    memcpy(mppc_enc->outputBufferPlus, outputBufferPlus, mppc_enc->buf_len + 64);
+    mppc_enc->historyOffset = 61499;
+    mppc_enc->buf_len       = 65536;
+    mppc_enc->bytes_in_opb  = 2834;
+    mppc_enc->flags         = 33;
+    mppc_enc->flagsHold     = 0;
+    mppc_enc->first_pkt     = 0;
+    memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
+
+    uint8_t  compressionFlags;
+    uint16_t datalen;
+
+    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen);
+
+    int flags = PACKET_COMPRESSED;
+
+    BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
+    BOOST_CHECK_EQUAL(3015,  datalen);
+    BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc->outputBuffer
+                                   , mppc_enc->bytes_in_opb));
+
+    delete(mppc_enc);
+}
+
+BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
+{
+    #include "../../fixtures/test_mppc_3.hpp"
+
+    rdp_mppc_50_enc * mppc_enc = new rdp_mppc_50_enc();
+
+
+    BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
+    BOOST_CHECK_EQUAL(sizeof(outputBufferPlus),  mppc_enc->buf_len + 64);
+    BOOST_CHECK_EQUAL(sizeof(hash_table),        mppc_enc->buf_len * 2);
+    BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 12851);
+    BOOST_CHECK_EQUAL(sizeof(compressed_data),   8893);
+
+
+    memcpy(mppc_enc->historyBuffer,    historyBuffer,    mppc_enc->buf_len);
+    memcpy(mppc_enc->outputBufferPlus, outputBufferPlus, mppc_enc->buf_len + 64);
+    mppc_enc->historyOffset = 0;
+    mppc_enc->buf_len       = 65536;
+    mppc_enc->bytes_in_opb  = 0;
+    mppc_enc->flags         = 0;
+    mppc_enc->flagsHold     = 0;
+    mppc_enc->first_pkt     = 1;
+    memcpy(mppc_enc->hash_table,       hash_table,       mppc_enc->buf_len * 2);
+
+    uint8_t  compressionFlags;
+    uint16_t datalen;
+
+    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen);
+
+    int flags = PACKET_COMPRESSED;
+
+    BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
+
+    BOOST_CHECK_EQUAL(8893,  datalen);
+    BOOST_CHECK_EQUAL(0,     memcmp( compressed_data, mppc_enc->outputBuffer
+                                   , mppc_enc->bytes_in_opb));
+
+    delete(mppc_enc);
 }
