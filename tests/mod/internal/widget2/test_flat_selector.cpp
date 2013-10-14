@@ -588,7 +588,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 {
     TestDraw drawable(800, 600);
 
@@ -634,7 +634,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust-1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-1.png");
 
     char message[1024];
 
@@ -666,7 +666,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust-2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-2.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x6d\x73\x5a\x99\xe2\x44\xe5\x0a\x09\x04"
                    "\x09\xa0\x82\x2d\xf9\xb8\x9c\x53\xa8\xea"
@@ -695,7 +695,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust-3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-3.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\xea\xac\x4e\x3f\xfe\x36\x95\xf6\x69\x1c"
                    "\x2c\x04\xb0\x24\x8f\xa1\x34\x3e\x3f\xa3"
@@ -723,11 +723,307 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust-4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-4.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x23\xcf\x81\x59\xfa\x63\xdb\x85\xea\x02"
                    "\x55\x24\x1e\xa5\xbc\x2f\x02\x6c\x82\xe4"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
+{
+    TestDraw drawable(640, 480);
+
+    // WidgetSelectorFlat is a selector widget of size 100x20 at position 10,7 in it's parent context
+    WidgetScreen parent(drawable, 640, 480);
+    NotifyApi * notifier = NULL;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+
+    Inifile ini;
+    // ini.translation.target.set_from_cstr("Target");
+
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+
+    selector.add_device("reptile", "snake@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "raven@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33azertyuiopŝdfghjklmx",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("reptile", "lezard@10.10.14.27",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("fish", "shark@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33",
+                        "VNC", "2013-04-20 19:56:50");
+
+    int curx = 0;
+    int cury = 0;
+
+    selector.selector_lines.set_current_index(0);
+
+    curx = selector.filter_device.centerx();
+    cury = selector.filter_device.centery();
+    selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                             curx, cury,
+                             NULL);
+    selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                             curx, cury,
+                             NULL);
+
+    selector.fit_columns();
+
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-1.png");
+
+    char message[1024];
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xa4\x95\x0f\xe8\x17\x4b\xd7\x05\xe5\xa8"
+                   "\xff\x37\x11\x5c\xee\x22\x68\x3e\x3a\x16"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+
+    selector.selector_lines.clear();
+
+    selector.add_device("reptile", "snake@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "raven@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bilkmdsqlkmlsdkmaklzeerd", "eagle@10.10.14.33azert",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("reptile", "lezard@10.10.14.27",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("fish", "shark@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.selector_lines.set_current_index(0);
+
+    selector.fit_columns();
+
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-2.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x0c\x4a\x35\x4e\x14\x47\xaa\xc4\x45\x23"
+                   "\x66\x66\xa1\x89\xd5\x4a\xa8\x0f\x19\x18"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+
+    selector.selector_lines.clear();
+
+    selector.add_device("reptile", "snake@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "raven@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("reptile", "lezard@10.10.14.27",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("bilkmdsd", "eagle@10.10.14.33azezakljemlkeakemelmakrtdslkazelknelkaznelkssdlqk",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("fish", "shark@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.selector_lines.set_current_index(0);
+
+    selector.fit_columns();
+
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-3.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x7a\x71\x3e\x26\x23\xee\x1d\x7e\x10\x4b"
+                   "\xc2\x7c\xbe\xe9\x37\xaa\x5e\x33\x37\xd5"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+    selector.selector_lines.clear();
+
+    selector.add_device("reptile", "snake@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "raven@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("reptile", "lezard@10.10.14.27",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("bilkmdsd", "eagle@10.10.14.33azezakljemlkeakemelmakrtdslkazelkn",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("fkljazelkjalkzjelakzejish", "shark@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.selector_lines.set_current_index(0);
+
+    selector.fit_columns();
+
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-4.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xaf\x94\x59\xd1\x45\x0e\xd9\x15\xe1\x82"
+                   "\xab\xb9\x69\xa3\xd2\xeb\xa5\x48\x16\x1e"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
+{
+    TestDraw drawable(1280, 1024);
+
+    // WidgetSelectorFlat is a selector widget of size 100x20 at position 10,7 in it's parent context
+    WidgetScreen parent(drawable, 1280, 1024);
+    NotifyApi * notifier = NULL;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+
+    Inifile ini;
+    // ini.translation.target.set_from_cstr("Target");
+
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+
+    selector.add_device("reptile", "snake@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "raven@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33azertyuiopŝdfghjklmx",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("reptile", "lezard@10.10.14.27",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("fish", "shark@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33",
+                        "VNC", "2013-04-20 19:56:50");
+
+    int curx = 0;
+    int cury = 0;
+
+    selector.selector_lines.set_current_index(0);
+
+    curx = selector.filter_device.centerx();
+    cury = selector.filter_device.centery();
+    selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                             curx, cury,
+                             NULL);
+    selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                             curx, cury,
+                             NULL);
+
+    selector.fit_columns();
+
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-1.png");
+
+    char message[1024];
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x75\xf9\x1b\xd3\xfb\xa7\x8f\xe1\xf1\xcb"
+                   "\x51\xde\x7a\xea\x0f\x25\x96\x82\x10\xe7"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+
+    selector.selector_lines.clear();
+
+    selector.add_device("reptile", "snake@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "raven@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bilkmdsqlkmlsdkmaklzeerd", "eagle@10.10.14.33azert",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("reptile", "lezard@10.10.14.27",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("fish", "shark@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.selector_lines.set_current_index(0);
+
+    selector.fit_columns();
+
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-2.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x4e\xb1\x2a\x7f\x44\x9d\xf3\xae\xb2\x69"
+                   "\xe1\xff\x20\x63\x82\x12\x35\xea\xea\x02"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+
+    selector.selector_lines.clear();
+
+    selector.add_device("reptile", "snake@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "raven@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("reptile", "lezard@10.10.14.27",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("bilkmdsd", "eagle@10.10.14.33azezakljemlkeakemelmakrtdslkazelknelkaznelkssdlqk",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("fish", "shark@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.selector_lines.set_current_index(0);
+
+    selector.fit_columns();
+
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-3.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xb7\x3d\x64\xff\xcd\x52\x27\xe0\xf3\x80"
+                   "\xf2\x54\x3d\x5c\x12\xdb\x00\xbc\xd6\xea"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+    selector.selector_lines.clear();
+
+    selector.add_device("reptile", "snake@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("birdsandoandjdanxqpa&éjmql&&,é", "raven@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("reptile", "lezard@10.10.14.27",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("bilkmdsd", "eagle@10.10.14.33azezakljemlkeakemelmakrtdslkazelkn",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.add_device("fkljazelkjalkzjelakzejish", "shark@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("bird", "eagle@10.10.14.33pezok&mlé,&m,qdns,nq&n&élkn&lnlnezl&ne&lkn&é",
+                        "VNC", "2013-04-20 19:56:50");
+    selector.selector_lines.set_current_index(0);
+
+    selector.fit_columns();
+
+    selector.rdp_input_invalidate(selector.rect);
+
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-4.png");
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xdd\x2c\x02\xe9\x31\xa0\xb8\x52\xc2\x0f"
+                   "\xb9\xde\x64\xfe\xbc\x0d\x13\xdb\xdd\x9d"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
 }
