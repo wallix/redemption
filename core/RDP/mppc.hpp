@@ -1892,11 +1892,6 @@ struct rdp_mppc_dec
 
 // (13) HistoryPtr (49) is not less than HistoryOffset (49), so we add the PACKET_COMPRESSED flag to the output packet and send the Output Buffer.
 
-enum {
-    PROTO_RDP_40 = 1,
-    PROTO_RDP_50 = 2
-};
-
 struct rdp_mppc_enc {
 protected:
     /**
