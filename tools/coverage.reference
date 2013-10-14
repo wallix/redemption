@@ -131,6 +131,9 @@ core/RDP/GraphicUpdatePDU 100 100
 core/RDP/lic 100 100
 core/RDP/logon 100 100
 core/RDP/mcs 100 100
+core/RDP/mppc 100 100
+core/RDP/mppc_40 100 100
+core/RDP/mppc_50 100 100
 core/RDP/nego 100 100
 core/RDP/orders/RDPOrdersCommon 100 100
 core/RDP/orders/RDPOrdersNames 100 100
