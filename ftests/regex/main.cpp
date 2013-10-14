@@ -172,8 +172,15 @@ int main(int argc, char **argv) {
     << (ismatch3 ? "good\n" : "fail\n")
     << d3 << " sec\n"
     << (ismatch4 ? "good\n" : "fail\n")
-    << d4 << " sec\n"
-    << std::endl;
+    << d4 << " sec\n";
+
+    std::vector<StateBase*> sts;
+    typedef std::vector<StateBase*>::iterator iterator;
+    append_state(st, sts);
+    set_reset_id(sts);
+    std::cout << "st_exact_search: " << st_exact_search(st, str) << "\n";
+    set_reset_id(sts);
+    std::cout << "st_search: " << st_search(st, str) << std::endl;
 
     if (ismatch3) {
         std::cout << ("with regex.h\n");

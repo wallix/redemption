@@ -157,7 +157,7 @@ public:
                 int opt;
                 unsigned int opt_len = sizeof(opt);
 
-                if (getsockopt(this->obj, SOL_SOCKET, SO_ERROR, (char*)(&opt), &opt_len) == 0) {
+                if (getsockopt(this->obj, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&opt), &opt_len) == 0) {
                     rv = (opt == 0);
                 }
             }

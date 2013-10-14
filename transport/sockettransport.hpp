@@ -41,7 +41,7 @@
         if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
         {
             unsigned long size = BIO_number_written(outBIO);
-            buffer = (char*)malloc(size + 1);
+            buffer = static_cast<char*>(malloc(size + 1));
             memset(buffer, 0, size + 1);
             BIO_read(outBIO, buffer, size);
         }
@@ -56,7 +56,7 @@
 
         X509_digest(xcert, EVP_sha1(), fp, &fp_len);
 
-        char * fp_buffer = (char*) malloc(3 * fp_len);
+        char * fp_buffer = static_cast<char*>(malloc(3 * fp_len));
         memset(fp_buffer, 0, 3 * fp_len);
 
         char * p = fp_buffer;
@@ -76,7 +76,7 @@
 static inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
 {
     printf("password cb num=%u\n", num);
-    const char * pass = (char*)userdata;
+    const char * pass = static_cast<const char*>(userdata);
     if(num < (int)strlen(pass)+1){
       return(0);
     }
@@ -993,7 +993,7 @@ class SocketTransport : public Transport {
 
         // export the public key to DER format
         int public_key_length = i2d_PublicKey(pkey, NULL);
-        uint8_t * public_key_data = (uint8_t *)malloc(public_key_length);
+        uint8_t * public_key_data = static_cast<uint8_t *>(malloc(public_key_length));
         LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
         uint8_t * tmp = public_key_data;
         i2d_PublicKey(pkey, &tmp);

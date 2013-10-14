@@ -762,12 +762,12 @@ enum {
                 this->payload.resize(stream, stream.in_remain());
                 if (this->verbose >= 0x200){
                     LOG(LOG_INFO, "Receiving encrypted TPDU");
-                    hexdump_c((char*)payload.get_data(), payload.size());
+                    hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
                 }
                 crypt.decrypt(this->payload);
                 if (this->verbose >= 0x80){
                     LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
-                    hexdump_c((char*)payload.get_data(), payload.size());
+                    hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
                 }
             }
             else{
@@ -812,12 +812,12 @@ enum {
                     this->payload.resize(stream, stream.in_remain());
                     if (this->verbose >= 0x200){
                         LOG(LOG_INFO, "Receiving encrypted TPDU");
-                        hexdump_c((char*)payload.get_data(), payload.size());
+                        hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
                     }
                     crypt.decrypt(this->payload);
                     if (this->verbose >= 0x80){
                         LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
-                        hexdump_c((char*)payload.get_data(), payload.size());
+                        hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
                     }
                 }
             }

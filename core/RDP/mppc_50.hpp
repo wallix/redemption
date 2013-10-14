@@ -56,15 +56,15 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
         this->buf_len = RDP_50_HIST_BUF_LEN;
 
         this->first_pkt = 1;
-        this->historyBuffer = (char*) malloc(this->buf_len);
+        this->historyBuffer = static_cast<char*>(malloc(this->buf_len));
         TODO("making it static and large enough should be good for both RDP4 and RDP5");
         memset(this->historyBuffer, 0, this->buf_len);
 
-        this->outputBufferPlus = (char*) malloc(this->buf_len + 64 + 8);
+        this->outputBufferPlus = static_cast<char*>(malloc(this->buf_len + 64 + 8));
         memset(this->outputBufferPlus, 0, this->buf_len + 64);
 
         this->outputBuffer = this->outputBufferPlus + 64;
-        this->hash_table = (uint16_t*) malloc(HASH_BUF_LEN * 2);
+        this->hash_table = static_cast<uint16_t*>(malloc(HASH_BUF_LEN * 2));
         memset(this->hash_table, 0, HASH_BUF_LEN * 2);
     }
 

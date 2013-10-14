@@ -62,17 +62,19 @@ struct Listen {
         /* reuse same port if a previous daemon was stopped */
         unsigned int option_len;
         int allow_reuse = 1;
-        setsockopt(this->sck, SOL_SOCKET, SO_REUSEADDR, (char*)&allow_reuse, sizeof(allow_reuse));
+        setsockopt(this->sck, SOL_SOCKET, SO_REUSEADDR,
+                   reinterpret_cast<const char*>(&allow_reuse), sizeof(allow_reuse));
 
         /* set snd buffer to at least 32 Kbytes */
         int snd_buffer_size;
         option_len = sizeof(snd_buffer_size);
         if (0 == getsockopt(this->sck, SOL_SOCKET, SO_SNDBUF,
-            (char*)&snd_buffer_size, &option_len)) {
+            reinterpret_cast<char*>(&snd_buffer_size), &option_len)) {
             if (snd_buffer_size < 32768) {
                 snd_buffer_size = 32768;
                 setsockopt(this->sck, SOL_SOCKET, SO_SNDBUF,
-                    (char*)&snd_buffer_size, sizeof(snd_buffer_size));
+                           reinterpret_cast<const char*>(&snd_buffer_size),
+                           sizeof(snd_buffer_size));
             }
         }
 

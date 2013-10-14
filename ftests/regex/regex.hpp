@@ -28,19 +28,21 @@
 #include <cstring>
 #include <cassert>
 #include <cstdlib>
+#include <stdint.h>
 
 ///TODO regex compiler ("..." -> C++)
 
 namespace rndfa {
     using std::size_t;
+    typedef uint32_t char_int;
 
     struct utf_char
     {
-        utf_char(size_t c)
+        utf_char(char_int c)
         : utfc(c)
         {}
 
-        size_t utfc;
+        char_int utfc;
     };
 
     inline std::ostream& operator<<(std::ostream& os, utf_char utf_c)
@@ -97,9 +99,9 @@ namespace rndfa {
         : s(reinterpret_cast<const unsigned char *>(str))
         {}
 
-        size_t bumpc()
+        char_int bumpc()
         {
-            size_t c = *this->s;
+            char_int c = *this->s;
             ++this->s;
             if (*this->s >> 6 == 2) {
                 c <<= 8;
@@ -119,7 +121,7 @@ namespace rndfa {
             return c;
         }
 
-        size_t getc() const
+        char_int getc() const
         {
             return utf_consumer(this->str()).bumpc();
         }
@@ -142,7 +144,7 @@ namespace rndfa {
         const unsigned char * s;
     };
 
-    inline bool utf_contains(const char * str, size_t c)
+    inline bool utf_contains(const char * str, char_int c)
     {
         utf_consumer consumer(str);
         while (consumer.valid()) {
@@ -166,7 +168,7 @@ namespace rndfa {
 
     struct StateBase
     {
-        StateBase(unsigned type, size_t c = 0, StateBase * out1 = 0, StateBase * out2 = 0)
+        StateBase(unsigned type, char_int c = 0, StateBase * out1 = 0, StateBase * out2 = 0)
         : utfc(c)
         , type(type)
         , id(0)
@@ -178,7 +180,7 @@ namespace rndfa {
         virtual ~StateBase()
         {}
 
-        virtual bool check(size_t c)
+        virtual bool check(char_int c)
         {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return (this->type == ANY_CHARACTER || this->utfc == c);
@@ -226,7 +228,7 @@ namespace rndfa {
         bool is_finish() const
         { return this->type == FINISH; }
 
-        size_t utfc;
+        char_int utfc;
 
         unsigned type;
         unsigned id;
@@ -253,7 +255,7 @@ namespace rndfa {
         virtual ~StateFinish()
         {}
 
-        virtual bool check(size_t /*c*/)
+        virtual bool check(char_int /*c*/)
         {
             /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
             return true;
@@ -274,7 +276,7 @@ namespace rndfa {
 
     struct StateRange : StateBase
     {
-        StateRange(size_t r1, size_t r2, StateBase* out1 = 0, StateBase* out2 = 0)
+        StateRange(char_int r1, char_int r2, StateBase* out1 = 0, StateBase* out2 = 0)
         : StateBase(NORMAL, r1, out1, out2)
         , rend(r2)
         {}
@@ -282,7 +284,7 @@ namespace rndfa {
         virtual ~StateRange()
         {}
 
-        virtual bool check(size_t c)
+        virtual bool check(char_int c)
         {
             /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
             return this->utfc <= c && c <= rend;
@@ -298,7 +300,7 @@ namespace rndfa {
             os << "[" << utf_char(this->utfc) << "-" << utf_char(this->rend) << "]";
         }
 
-        size_t rend;
+        char_int rend;
     };
 
     template<char Identifier, typename Trait>
@@ -321,13 +323,13 @@ namespace rndfa {
             os << "\\" << Identifier;
         }
 
-        virtual bool check(size_t c)
+        virtual bool check(char_int c)
         { return Trait::check(c); }
     };
 
     struct IdentifierDigitTrait
     {
-        static bool check(size_t c)
+        static bool check(char_int c)
         {
             return ('0' <= c && c <= '9');
         }
@@ -335,7 +337,7 @@ namespace rndfa {
 
     struct IdentifierWordTrait
     {
-        static bool check(size_t c)
+        static bool check(char_int c)
         {
             return ('a' <= c && c <= 'z')
                 || ('A' <= c && c <= 'Z')
@@ -346,7 +348,7 @@ namespace rndfa {
 
     struct IdentifierSpaceTrait
     {
-        static bool check(size_t c)
+        static bool check(char_int c)
         {
             return (' ' == c || '\t' == c || '\n' == c);
         }
@@ -355,7 +357,7 @@ namespace rndfa {
     template<typename Trait>
     struct IdentifierNoTrait
     {
-        static bool check(size_t c)
+        static bool check(char_int c)
         {
             return !Trait::check(c);
         }
@@ -382,7 +384,7 @@ namespace rndfa {
         virtual ~StateCharacters()
         {}
 
-        virtual bool check(size_t c)
+        virtual bool check(char_int c)
         {
             /**///std::cout << str;
             return utf_contains(this->str.c_str(), c);
@@ -410,7 +412,7 @@ namespace rndfa {
         virtual ~StateBorder()
         {}
 
-        virtual bool check(size_t /*c*/)
+        virtual bool check(char_int /*c*/)
         {
             /**///std::cout << (this->c == FIRST ? "^" : "$");
             return false;
@@ -430,7 +432,7 @@ namespace rndfa {
     struct StateMultiTest : StateBase
     {
         struct Checker {
-            virtual bool check(size_t c) = 0;
+            virtual bool check(char_int c) = 0;
             virtual Checker * clone() const = 0;
             virtual void display(std::ostream& os) const = 0;
             virtual ~Checker() {}
@@ -455,7 +457,7 @@ namespace rndfa {
             }
         }
 
-        virtual bool check(size_t c)
+        virtual bool check(char_int c)
         {
             for (checker_iterator first = this->checkers.begin(), last = this->checkers.end(); first != last; ++first) {
                 if ((*first)->check(c)) {
@@ -503,7 +505,7 @@ namespace rndfa {
         virtual ~CheckerString()
         {}
 
-        virtual bool check(size_t c)
+        virtual bool check(char_int c)
         {
             return utf_contains(this->str.c_str(), c);
         }
@@ -531,7 +533,7 @@ namespace rndfa {
         virtual ~CheckerInterval()
         {}
 
-        virtual bool check(size_t c)
+        virtual bool check(char_int c)
         {
             return this->begin <= c && c <= this->end;
         }
@@ -546,8 +548,8 @@ namespace rndfa {
             os << "[" << utf_char(this->begin) << "-" << utf_char(this->end) << "]";
         }
 
-        size_t begin;
-        size_t end;
+        char_int begin;
+        char_int end;
     };
 
     template<char Identifier, typename Trait>
@@ -559,7 +561,7 @@ namespace rndfa {
         virtual ~CheckerIdentifier()
         {}
 
-        virtual bool check(size_t c)
+        virtual bool check(char_int c)
         {
             return Trait::check(c);
         }
@@ -995,7 +997,7 @@ namespace rndfa {
 
             typedef StateListByStep::Info Info;
 
-            RangeList * step(size_t c, RangeList * l, unsigned & step_count)
+            RangeList * step(char_int c, RangeList * l, unsigned & step_count)
             {
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
                     ++step_count;
@@ -1054,7 +1056,7 @@ namespace rndfa {
                 return false;
             }
 
-            unsigned step(size_t c, StateListByStep * l1, StateListByStep * l2, unsigned & step_count)
+            unsigned step(char_int c, StateListByStep * l1, StateListByStep * l2, unsigned & step_count)
             {
                 for (Info* ifirst = l1->begin(), * ilast = l1->end(); ifirst != ilast ; ++ifirst) {
                     ++step_count;
@@ -1190,7 +1192,7 @@ namespace rndfa {
             typedef StateListByStep::Info Info;
 
             template<typename Tracer>
-            unsigned step(const char * s, size_t c,
+            unsigned step(const char * s, char_int c,
                           StateListByStep * l1, StateListByStep * l2,
                           Tracer& tracer, unsigned & step_count)
             {
@@ -1394,7 +1396,7 @@ namespace rndfa {
         RangeList st_range_beginning;
     };
 
-    inline StateBase * new_character(size_t c, StateBase * out1 = 0)
+    inline StateBase * new_character(char_int c, StateBase * out1 = 0)
     {
         return new StateBase(NORMAL, c, out1);
     }
@@ -1409,7 +1411,7 @@ namespace rndfa {
         return new StateBase(SPLIT, 0, out1, out2);
     }
 
-    inline StateBase * c2st(size_t c)
+    inline StateBase * c2st(char_int c)
     {
         switch (c) {
             case 'd': return new StateDigit;
@@ -1426,7 +1428,7 @@ namespace rndfa {
         }
     }
 
-    inline const char * check_interval(size_t a, size_t b)
+    inline const char * check_interval(char_int a, char_int b)
     {
         bool valid = ('0' <= a && a <= '9' && '0' <= b && b <= '9')
                   || ('a' <= a && a <= 'z' && 'a' <= b && b <= 'z')
@@ -1434,7 +1436,7 @@ namespace rndfa {
         return (valid && a <= b) ? 0 : "range out of order in character class";
     }
 
-    inline StateBase * str2stchar(utf_consumer & consumer, size_t c, const char * & msg_err)
+    inline StateBase * str2stchar(utf_consumer & consumer, char_int c, const char * & msg_err)
     {
         if (c == '\\' && consumer.valid()) {
             return c2st(consumer.bumpc());
@@ -1455,10 +1457,10 @@ namespace rndfa {
                 const unsigned char * cs = consumer.s;
                 while (consumer.valid() && c != ']') {
                     const unsigned char * p = consumer.s;
-                    size_t prev_c = c;
+                    char_int prev_c = c;
                     while (c != ']' && c != '-') {
                         if (c == '\\') {
-                            size_t cc = consumer.bumpc();
+                            char_int cc = consumer.bumpc();
                             switch (cc) {
                                 case 'd': st->push_checker(new CheckerDigit); break;
                                 case 'D': st->push_checker(new CheckerNoDigit); break;
@@ -1553,7 +1555,7 @@ namespace rndfa {
         return *s && *s == '}';
     }
 
-    inline bool is_meta_char(utf_consumer & consumer, size_t c)
+    inline bool is_meta_char(utf_consumer & consumer, char_int c)
     {
         return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.str()));
     }
@@ -1686,7 +1688,7 @@ namespace rndfa {
         StateBase ** besplit[50] = {0};
         StateBase *** pesplit = besplit;
 
-        size_t c = consumer.bumpc();
+        char_int c = consumer.bumpc();
 
         while (c) {
             /**///std::cout << "c: " << (c) << std::endl;
@@ -2021,6 +2023,226 @@ namespace rndfa {
             display_state(st->out2, depth+1);
         }
     }
+
+
+    inline bool st_exact_step(std::vector<StateBase*>& l1,
+                              std::vector<StateBase*>& l2,
+                              size_t c, utf_consumer & consumer, unsigned count)
+    {
+        struct add {
+            static bool impl(std::vector<StateBase*>& l, StateBase * st,
+                             bool is_end, unsigned count)
+            {
+                if (st->id == count) {
+                    return false;
+                }
+                st->id = count;
+                if (st->is_split()) {
+                    if (st->out1 && impl(l, st->out1, is_end, count)) {
+                        return true;
+                    }
+                    if (st->out2 && impl(l, st->out2, is_end, count)) {
+                        return true;
+                    }
+                }
+                else if (st->is_cap()) {
+                    if (st->out1) {
+                        return impl(l, st->out1, is_end, count);
+                    }
+                }
+                else if (st) {
+                    if (st->is_finish() || st->type == LAST) {
+                        if (is_end) {
+                            return true;
+                        }
+                    }
+                    else {
+                        l.push_back(st);
+                    }
+                }
+                return false;
+            }
+        };
+
+        const bool is_end = ! consumer.valid();
+        typedef std::vector<StateBase*>::iterator iterator;
+        for (iterator first = l1.begin(), last = l1.end(); first != last; ++first) {
+            if ( ! (*first)->is_cap() && (*first)->check(c)) {
+                if ( ! (*first)->out1 && ! (*first)->out2 && is_end) {
+                    return true;
+                }
+                if ((*first)->out1 && add::impl(l2, (*first)->out1, is_end, count)) {
+                    return true;
+                }
+                if ((*first)->out2 && add::impl(l2, (*first)->out2, is_end, count)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    inline void add_first(std::vector<StateBase*>& l,
+                          std::vector<StateBase*>& lfirst, StateBase * st)
+    {
+        if (st->is_split()) {
+            if (st->out1)
+                add_first(l, lfirst, st->out1);
+            if (st->out2)
+                add_first(l, lfirst, st->out2);
+        }
+        else if (st->is_cap()) {
+            if (st->out1) {
+                return add_first(l, lfirst, st->out1);
+            }
+        }
+        else if (st->type == FIRST) {
+            if (st->out1)
+                add_first(lfirst, lfirst, st->out1);
+        }
+        else {
+            l.push_back(st);
+        }
+    }
+
+    inline bool st_exact_search(StateBase * st, const char * s)
+    {
+        if ( ! st) {
+            return false;
+        }
+        std::vector<StateBase*> l1;
+        add_first(l1, l1, st);
+        if (l1.empty()) {
+            return false;
+        }
+        utf_consumer consumer(s);
+        std::vector<StateBase*> l2;
+        bool res = false;
+        unsigned count = 1;
+        while (consumer.valid() && !(res = st_exact_step(l1, l2, consumer.bumpc(), consumer, ++count))) {
+            if (l2.empty()) {
+                return false;
+            }
+            l1.swap(l2);
+            l2.clear();
+        }
+
+        if (consumer.valid()) {
+            return false;
+        }
+        if (res) {
+            return true;
+        }
+        return false;
+    }
+
+    inline bool st_step(std::vector<StateBase*>& l1,
+                        std::vector<StateBase*>& l2, size_t c, unsigned count)
+    {
+        struct add {
+            static bool impl(std::vector<StateBase*>& l, StateBase * st, unsigned count) {
+                if (st->is_finish()) {
+                    return true;
+                }
+                if (st->id == count) {
+                    return false;
+                }
+                st->id = count;
+                if (st->is_split()) {
+                    if (st->out1 && impl(l, st->out1, count)) {
+                        return true;
+                    }
+                    if (st->out2 && impl(l, st->out2, count)) {
+                        return true;
+                    }
+                }
+                else if (st->is_cap()) {
+                    if (st->out1) {
+                        return impl(l, st->out1, count);
+                    }
+                }
+                else if (st) {
+                    l.push_back(st);
+                }
+                return false;
+            }
+        };
+
+        typedef std::vector<StateBase*>::iterator iterator;
+        for (iterator first = l1.begin(), last = l1.end(); first != last; ++first) {
+            if ( ! (*first)->is_cap() && (*first)->check(c)) {
+                if ( ! (*first)->out1 && ! (*first)->out2) {
+                    return true;
+                }
+                if ((*first)->out1) {
+                    if (add::impl(l2, (*first)->out1, count)) {
+                        return true;
+                    }
+                }
+                if ((*first)->out2) {
+                    if (add::impl(l2, (*first)->out2, count)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    inline bool st_search(StateBase * st, const char * s)
+    {
+        if ( ! st) {
+            return false;
+        }
+        std::vector<StateBase*> lst;
+        std::vector<StateBase*> l1;
+        add_first(lst, l1, st);
+        if (l1.empty() && lst.empty()) {
+            return false;
+        }
+        utf_consumer consumer(s);
+        std::vector<StateBase*> l2;
+        bool res = false;
+        unsigned count = 1;
+        while (consumer.valid()) {
+            typedef std::vector<StateBase*>::iterator iterator;
+            for (iterator first = lst.begin(), last = lst.end(); first != last; ++first) {
+                if ((*first)->id != count) {
+                    l1.push_back(*first);
+                }
+            }
+            if (l1.empty()) {
+                return false;
+            }
+            l2.clear();
+            if ((res = st_step(l1, l2, consumer.bumpc(), ++count))) {
+                break ;
+            }
+            l1.swap(l2);
+        }
+        if (res) {
+            return true;
+        }
+        if (consumer.valid()) {
+            return false;
+        }
+        typedef std::vector<StateBase*>::iterator iterator;
+        for (iterator first = l1.begin(), last = l1.end(); first != last; ++first) {
+            if ((*first)->type == LAST) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    inline void st_reset_id(const std::vector<StateBase*> & sts)
+    {
+        typedef std::vector<StateBase*>::const_iterator iterator;
+        for (iterator first = sts.begin(), last = sts.end(); first != last; ++first) {
+            (*first)->id = 0;
+        }
+    }
+
 
     class Regex
     {
