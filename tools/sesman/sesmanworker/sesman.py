@@ -46,6 +46,8 @@ def mundane(value):
         return u'Unknown'
     return value
 
+DEBUG = True
+
 ################################################################################
 class Sesman():
 ################################################################################
@@ -88,10 +90,22 @@ class Sesman():
 
         self._saved_wab_login = self._wab_login
 
+    def check_password_expiration_date(self):
+        _status, _error = True, u''
+        try:
+            Logger().info("password_expiration_date = %s" % self.engine.password_expiration_date())
+            if self.engine.password_expiration_date():
+                _status, _error = self.interactive_display_message(
+                    {u'message': u'Your password will expire %s. Please change it.' % "soon"}
+                )
+        except Exception, e:
+            import traceback
+            Logger().info("<<<<%e>>>>" % traceback.format_exc(e))
+        return _status, _error
+
 
     def check_video_recording(self, isRecorded):
-        _status = True
-        _error = u''
+        _status, _error = True, u''
         data_to_send = {
               u'is_rec'         : u'False'
             , u'rec_path'       : u""
@@ -108,8 +122,7 @@ class Sesman():
                     try:
                         os.mkdir(RECORD_PATH)
                     except Exception:
-                        _status = False
-                        _error = TR(u'error_recording_path %s') % self._full_user_device_account
+                        _status, _error = False, TR(u'error_recording_path %s') % self._full_user_device_account
                 if _status:
                     # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
                     # NB :  backslashes are replaced by pipes for IE compatibility
@@ -142,7 +155,7 @@ class Sesman():
                             pass
                         data_to_send[u'message'] = cut_message(message)
 
-                    _data, _status, _error = self.interactive_accept_message(data_to_send)
+                    _status, _error = self.interactive_accept_message(data_to_send)
 
         except Exception, e:
             import traceback
@@ -183,11 +196,8 @@ class Sesman():
         #TODO: we should not have to care about target login or device to display messages
         # we should be able to send messages before or after defining target seamlessly
         data_to_send.update({ u'proto_dest'    : u'INTERNAL'
-                            , u'target_device' : self._target_device
-                            , u'target_login'  : self._target_login
-                            , u'target_password': u'Default'
-                            , u'display_message': u''
-                            , u'accept_message': MAGICASK
+                            , u'display_message': MAGICASK
+                            , u'accept_message': u''
                             })
 
         self.send_data(data_to_send)
@@ -196,36 +206,33 @@ class Sesman():
         if _data.get(u'display_message') != u'True':
             _status, _error = False, TR(u'not_display_message')
 
-        return _data, _status, _error
+        return _status, _error
 
     def interactive_accept_message(self, data_to_send):
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
         #TODO: we should not have to care about target login or device to display messages
         # we should be able to send messages before or after defining target seamlessly
         data_to_send.update({ u'proto_dest'    : u'INTERNAL'
-                            , u'target_device' : self._target_device
-                            , u'target_login'  : self._target_login
-                            , u'target_password': u'Default'
-                            , u'display_message': MAGICASK
-                            , u'accept_message': u''
+                            , u'accept_message': MAGICASK
+                            , u'display_message': u''
                             })
         self.send_data(data_to_send)
 
         _data, _status, _error = self.receive_data()
-        if _data.get(u'display_message') != u'True':
-            _status, _error = False, TR(u'not_display_message')
+        if _data.get(u'accept_message') != u'True':
+            _status, _error = False, TR(u'not_accept_message')
 
-        return _data, _status, _error
+        return _status, _error
 
 
-    # SEND DATA
-    #===============================================================================
     def send_data(self, data):
-    #===============================================================================
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
-        Logger().info(u'send_data lang=%s sesman=%s' % (self.language, SESMANCONF.language))
+        if DEBUG:
+            Logger().info(u'send_data (update)=%s' % (data))
 
+        if DEBUG:
+            Logger().info(u'send_data lang=%s sesman=%s' % (self.language, SESMANCONF.language))
 
         #if current language changed, send translations
         if self.language != SESMANCONF.language:
@@ -237,8 +244,8 @@ class Sesman():
             data[u'language'] = SESMANCONF.language
             data.update(translations())
 
-        Logger().info(u'send_data sending=%s' % (data))
-
+        if DEBUG:
+            Logger().info(u'send_data (full)=%s' % (data))
 
         # replace MAGICASK with ASK and send data on the wire            
         _list = []
@@ -250,6 +257,9 @@ class Sesman():
                 _pair = u"%s\nASK\n" % key
                 self.shared[key] = 'ASK'
             _list.append(_pair)
+
+        if DEBUG:
+           Logger().info(u'send_data (on the wire)=%s' % (_list))
 
         _r_data = u"".join(_list)
         _r_data = _r_data.encode('utf-8')
@@ -275,7 +285,7 @@ class Sesman():
         self.send_data(data_to_send)
         _data, _status, _error = self.receive_data()
 
-        return _data, _status, _error
+        return _status, _error
 
     # END METHOD - SEND MESSAGE
 
@@ -325,21 +335,19 @@ class Sesman():
 
             return
 
-        Logger().info(u"parse_username: done. wab_login=\"%s\" target_login=\"%s\" target_device=\"%s\" target_protocol=\"%s\"" % (wab_login, target_login, target_device, target_protocol))
+        Logger().info(
+            u"parse_username: done. wab_login=\"%s\" target_login=\"%s\" target_device=\"%s\" target_protocol=\"%s\"" % (
+                wab_login, target_login, target_device, target_protocol))
 
         self._wab_login       = wab_login
         self._target_login    = target_login
         self._target_device   = target_device
         self._target_protocol = target_protocol
 
-    # RECEIVE DATA
-    #===============================================================================
     def receive_data(self):
-    #===============================================================================
         u""" NB : Strings coming from the ReDemPtion proxy are UTF-8 encoded """
 
-        _status = True
-        _error = u''
+        _status, _error = True, u''
         _data = {}
         try:
             # Fetch Data from Redemption
@@ -364,6 +372,9 @@ class Sesman():
                 _status = False
                 _error = u"Error on parsing data %s" % e
 
+            if DEBUG:
+                Logger().info("received_data (on the wire) = %s" % _data)
+
         # may be actual socket error, or unpack or parsing failure
         # (because we got partial data). Whatever the case socket connection
         # with rdp proxy is now broken and must be terminated
@@ -374,7 +385,6 @@ class Sesman():
             self.shared.update(_data)
             _data = self.shared
             for key in _data:
-
                 if (_data[key][:3] == u'ASK'):
                     _data[key] = MAGICASK
                 elif (_data[key][:1] == u'!'):
@@ -382,6 +392,30 @@ class Sesman():
                 else:
                     # _data[key] unchanged
                     pass
+                    
+            self.context = { 
+                  u'login': self._wab_login
+                , u'password': self._wab_password
+                , u'ip_client': self._ip_client
+                , u'proxy_type': self._proxy_type
+                , u'selector': self._selector
+                , u'selector_group_filter': self._group_filter
+                , u'selector_device_filter': self._device_filter
+                , u'selector_proto_filter': self._proto_filter
+                , u'selector_current_page': u'1'
+                , u'selector_lines_per_page': u'0'
+                , u'target_login': self._target_login
+                , u'target_device': self._target_device
+                , u'target_protocol': self._target_protocol
+                , u'real_target_device': u''
+                , u'reporting': u''
+            }
+            
+            self.context.update(_data)
+
+            if DEBUG:
+                Logger().info("received_data (with cached) = %s" % self.context)
+
 
             self._wab_login =          _data.get(u'login', self._wab_login)
             self._wab_password =       _data.get(u'password', self._wab_password)
@@ -690,9 +724,10 @@ class Sesman():
                 tries = 5
                 Logger().info(u"Wab user '%s' authentication succeeded" % mundane(self._wab_login))
 
-                ###################
-                ### GET_SERVICE ###
-                ###################
+                # Warn password will expire soon for user
+                _status, _error = self.check_password_expiration_date()
+
+                # Get services for identified user
                 _status, _error = self.get_service()
 
         if tries <= 0:
@@ -733,21 +768,21 @@ class Sesman():
                     Logger().info(u"%s" % _error)
 
             except Exception, e:
-                _status = False
-                _error = u"Failed to get authorisations for %s" % self._full_user_device_account
+                _status, _error = False, u"Failed to get authorisations for %s" % self._full_user_device_account
 
         # Dictionnary that will contain answer to client
 
 
+        #TODO: looks like the code below should be done in the instance of some "selected_target" class
         if _status:
             session_started = False
 
-            Logger().info(u"Check for password expiration warning")
-#            _status, _error = self.check_password_expiration()
-
-
             Logger().info(u"Checking video")
             _status, _error = self.check_video_recording(selected_target.authorization.isRecorded)
+
+            if not _status:
+                Logger().info(u"Check video error : %s" % _error)
+
 
             Logger().info(u"Fetching protocol")
 
@@ -783,7 +818,7 @@ class Sesman():
                     tt = datetime.strptime(selected_target.deconnection_time, "%Y-%m-%d %H:%M:%S").timetuple()
                     kv[u'timeclose'] = int(mktime(tt))
                     if not self.infinite_connection:
-                        _data, _status, _error = self.interactive_display_message(
+                        _status, _error = self.interactive_display_message(
                                 {u'message': TR(u'session_closed_at %s') % selected_target.deconnection_time}
                                 )
 
@@ -968,7 +1003,7 @@ class Sesman():
 
             # Error
             if try_next:
-                _data, _status, _error = self.interactive_close(self.reporting_target, self.reporting_message)
+                _status, _error = self.interactive_close(self.reporting_target, self.reporting_message)
 
             try:
                 Logger().info(u"Close connection ...")

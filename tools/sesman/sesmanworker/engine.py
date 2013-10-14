@@ -960,9 +960,15 @@ class Engine(object):
         self.wab_login = None
         self.user = User()
         self._trace_encryption = False
+        self._password_expiration_date = "soon"
 
     def get_trace_encryption(self):
         return self._trace_encryption
+
+    def password_expiration_date(self):
+        _data = self.password_expiration_date
+        return False
+
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type):
         """

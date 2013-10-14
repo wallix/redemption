@@ -294,7 +294,17 @@ public:
 
     int next_module() {
         LOG(LOG_INFO, "----------> ACL next_module <--------");
-        if (this->ini.context_is_asked(AUTHID_AUTH_USER)
+        // Display or accept message is priority
+        if (this->ini.context_is_asked(AUTHID_DISPLAY_MESSAGE)) {
+            LOG(LOG_INFO, "==================> MODULE_DISPLAY");
+            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
+        }
+        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show confirmation message
+        else if (this->ini.context_is_asked(AUTHID_ACCEPT_MESSAGE)) {
+            LOG(LOG_INFO, "=================> MODULE_ACCEPT");
+            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
+        }
+        else if (this->ini.context_is_asked(AUTHID_AUTH_USER)
             ||  this->ini.context_is_asked(AUTHID_PASSWORD)) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
             return MODULE_INTERNAL_WIDGET2_LOGIN;
@@ -312,16 +322,6 @@ public:
                  ||  this->ini.context_is_asked(AUTHID_TARGET_USER)) {
             LOG(LOG_INFO, "===============> MODULE_LOGIN (2)");
             return MODULE_INTERNAL_WIDGET2_LOGIN;
-        }
-        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show message
-        else if (this->ini.context_is_asked(AUTHID_DISPLAY_MESSAGE)) {
-            LOG(LOG_INFO, "==================> MODULE_DISPLAY");
-            return MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
-        }
-        // AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER known, but acl asked to show confirmation message
-        else if (this->ini.context_is_asked(AUTHID_ACCEPT_MESSAGE)) {
-            LOG(LOG_INFO, "=================> MODULE_ACCEPT");
-            return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
         }
         // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
         // proceed with connection.
