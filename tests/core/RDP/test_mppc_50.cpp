@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
 
     BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
     BOOST_CHECK_EQUAL(sizeof(outputBufferPlus),  mppc_enc->buf_len + 64);
-    BOOST_CHECK_EQUAL(sizeof(hash_table),        HASH_BUF_LEN * 2);
+    BOOST_CHECK_EQUAL(sizeof(hash_table),        rdp_mppc_enc::HASH_BUF_LEN * 2);
     BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 4037);
     BOOST_CHECK_EQUAL(sizeof(compressed_data),   3015);
 
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
     mppc_enc->flags         = 33;
     mppc_enc->flagsHold     = 0;
     mppc_enc->first_pkt     = 0;
-    memcpy(mppc_enc->hash_table,       hash_table,       HASH_BUF_LEN * 2);
+    memcpy(mppc_enc->hash_table,       hash_table,       rdp_mppc_enc::HASH_BUF_LEN * 2);
 
     uint8_t  compressionFlags;
     uint16_t datalen;
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
 
     BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
     BOOST_CHECK_EQUAL(sizeof(outputBufferPlus),  mppc_enc->buf_len + 64);
-    BOOST_CHECK_EQUAL(sizeof(hash_table),        HASH_BUF_LEN * 2);
+    BOOST_CHECK_EQUAL(sizeof(hash_table),        rdp_mppc_enc::HASH_BUF_LEN * 2);
     BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 12851);
     BOOST_CHECK_EQUAL(sizeof(compressed_data),   8893);
 
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
     mppc_enc->flags         = 0;
     mppc_enc->flagsHold     = 0;
     mppc_enc->first_pkt     = 1;
-    memcpy(mppc_enc->hash_table,       hash_table,       HASH_BUF_LEN * 2);
+    memcpy(mppc_enc->hash_table,       hash_table,       rdp_mppc_enc::HASH_BUF_LEN * 2);
 
     uint8_t  compressionFlags;
     uint16_t datalen;

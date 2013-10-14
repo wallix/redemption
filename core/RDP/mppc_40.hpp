@@ -28,16 +28,39 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
     uint8_t  * history_buf_end;
     uint8_t  * history_ptr;
 
+    /**
+     * Initialize rdp_mppc_40_dec structure
+     */
     rdp_mppc_40_dec() {
-        this->history_buf = (uint8_t *)malloc(RDP_40_HIST_BUF_LEN);
-        memset(this->history_buf, 0, RDP_40_HIST_BUF_LEN);
+        this->history_buf = static_cast<uint8_t *>(calloc(RDP_40_HIST_BUF_LEN, 1));
 
         this->history_ptr     = this->history_buf;
         this->history_buf_end = this->history_buf + RDP_40_HIST_BUF_LEN - 1;
     }
 
-    ~rdp_mppc_40_dec() {
+    /**
+     * Deinitialize rdp_mppc_50_dec structure
+     */
+    virtual ~rdp_mppc_40_dec() {
         free(this->history_buf);
+    }
+
+    virtual void mini_dump()
+    {
+        LOG(LOG_INFO, "Type=RDP 4.0 bulk compressor");
+        LOG(LOG_INFO, "historyBuffer");
+        hexdump_d(this->history_buf,               16);
+        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+    }
+
+    virtual void dump()
+    {
+        LOG(LOG_INFO, "Type=RDP 4.0 bulk compressor");
+        LOG(LOG_INFO, "historyBuffer");
+        hexdump_d(this->history_buf,               RDP_40_HIST_BUF_LEN);
+        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
     }
 
     /**
@@ -51,9 +74,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
      *
      * @return        true on success, False on failure
      */
-    int decompress_40(uint8_t * cbuf, int len, int ctype, uint32_t * roff,
-        uint32_t * rlen)
-    {
+    int decompress_40(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
 //        LOG(LOG_INFO, "decompress_40");
 
         uint8_t  * src_ptr       = 0;       /* used while copying compressed data         */
@@ -72,24 +93,21 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
         uint8_t * history_ptr = this->history_ptr;
         *roff = history_ptr - this->history_buf;
 
-        if (ctype & PACKET_AT_FRONT)
-        {
+        if (ctype & PACKET_AT_FRONT) {
             /* place compressed data at start of history buffer */
             history_ptr       = this->history_buf;
             this->history_ptr = this->history_buf;
-            *roff = 0;
+            *roff             = 0;
         }
 
-        if (ctype & PACKET_FLUSHED)
-        {
+        if (ctype & PACKET_FLUSHED) {
             /* re-init history buffer */
             history_ptr = this->history_buf;
             memset(this->history_buf, 0, RDP_40_HIST_BUF_LEN);
             *roff = 0;
         }
 
-        if ((ctype & PACKET_COMPRESSED) != PACKET_COMPRESSED)
-        {
+        if ((ctype & PACKET_COMPRESSED) != PACKET_COMPRESSED) {
             /* data in cbuf is not compressed - copy to history buf as is */
             memcpy(history_ptr, cbuf, len);
             history_ptr       += len;
@@ -100,25 +118,21 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
 
         /* load initial data */
         int tmp = 24;
-        while (cptr < cbuf + len)
-        {
+        while (cptr < cbuf + len) {
             uint32_t i32 = *cptr++;
             d32       |= i32 << tmp;
             bits_left += 8;
             tmp       -= 8;
-            if (tmp < 0)
-            {
+            if (tmp < 0) {
                 break;
             }
         }
 
-        if (cptr < cbuf + len)
-        {
+        if (cptr < cbuf + len) {
             cur_uint8_t   = *cptr++;
             cur_bits_left = 8;
         }
-        else
-        {
+        else {
             cur_bits_left = 0;
         }
 
@@ -126,8 +140,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
         ** start uncompressing data in cbuf
         */
 
-        while (bits_left >= 8)
-        {
+        while (bits_left >= 8) {
             /*
                value 0xxxxxxx  = literal, not encoded
                value 10xxxxxx  = literal, encoded
@@ -143,32 +156,28 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
 
             copy_offset = 0;
 
-            if ((d32 & 0x80000000) == 0)
-            {
+            if ((d32 & 0x80000000) == 0) {
                 /* got a literal */
                 *history_ptr++ =   d32 >> 24;
                 d32            <<= 8;
                 bits_left      -=  8;
             }
-            else if ((d32 & 0xc0000000) == 0x80000000)
-            {
+            else if ((d32 & 0xc0000000) == 0x80000000) {
                 /* got encoded literal */
                 d32            <<= 2;
                 *history_ptr++ =   (d32 >> 25) | 0x80;
                 d32            <<= 7;
                 bits_left      -= 9;
             }
-            else if ((d32 & 0xf0000000) == 0xf0000000)
-            {
+            else if ((d32 & 0xf0000000) == 0xf0000000) {
                 /* got copy offset in range 0 - 63, */
                 /* with 6 bit copy offset */
                 d32         <<= 4;
                 copy_offset =   d32 >> 26;
                 d32         <<= 6;
-                bits_left   -= 10;
+                bits_left   -=  10;
             }
-            else if ((d32 & 0xf0000000) == 0xe0000000)
-            {
+            else if ((d32 & 0xf0000000) == 0xe0000000) {
                 /* got copy offset in range 64 - 319, */
                 /* with 8 bit copy offset */
                 d32         <<= 4;
@@ -177,8 +186,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
                 d32         <<= 8;
                 bits_left   -=  12;
             }
-            else if ((d32 & 0xe0000000) == 0xc0000000)
-            {
+            else if ((d32 & 0xe0000000) == 0xc0000000) {
                 /* got copy offset in range 320 - 8191, */
                 /* with 13 bits copy offset */
                 d32         <<= 3;
@@ -195,57 +203,48 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
             /* how may bits do we need to get? */
             int tmp2 = 32 - bits_left;
 
-            while (tmp2)
-            {
-                if (cur_bits_left < tmp2)
-                {
+            while (tmp2) {
+                if (cur_bits_left < tmp2) {
                     /* we have less bits than we need */
                     uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                     d32       |= i32 << ((32 - bits_left) - cur_bits_left);
                     bits_left += cur_bits_left;
                     tmp2      -= cur_bits_left;
-                    if (cptr < cbuf + len)
-                    {
+                    if (cptr < cbuf + len) {
                         /* more compressed data available */
                         cur_uint8_t   = *cptr++;
                         cur_bits_left = 8;
                     }
-                    else
-                    {
+                    else {
                         /* no more compressed data available */
                         tmp2          = 0;
                         cur_bits_left = 0;
                     }
                 }
-                else if (cur_bits_left > tmp2)
-                {
+                else if (cur_bits_left > tmp2) {
                     /* we have more bits than we need */
                     d32           |=  cur_uint8_t >> (8 - tmp2);
                     cur_uint8_t   <<= tmp2;
                     cur_bits_left -=  tmp2;
-                    bits_left     = 32;
+                    bits_left     =   32;
                     break;
                 }
-                else
-                {
+                else {
                     /* we have just the right amount of bits */
                     d32       |= cur_uint8_t >> (8 - tmp2);
                     bits_left =  32;
-                    if (cptr < cbuf + len)
-                    {
+                    if (cptr < cbuf + len) {
                         cur_uint8_t   = *cptr++;
                         cur_bits_left = 8;
                     }
-                    else
-                    {
+                    else {
                         cur_bits_left = 0;
                     }
                     break;
                 }
             }
 
-            if (!copy_offset)
-            {
+            if (!copy_offset) {
                 continue;
             }
 
@@ -270,85 +269,73 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
                4096...8191     111111111110 + 12 lower bits of L-o-M
             */
 
-            if ((d32 & 0x80000000) == 0)
-            {
+            if ((d32 & 0x80000000) == 0) {
                 /* lom is fixed to 3 */
                 lom       =   3;
                 d32       <<= 1;
                 bits_left -=  1;
             }
-            else if ((d32 & 0xc0000000) == 0x80000000)
-            {
+            else if ((d32 & 0xc0000000) == 0x80000000) {
                 /* 2 lower bits of LoM */
                 lom       =   ((d32 >> 28) & 0x03) + 4;
                 d32       <<= 4;
                 bits_left -=  4;
             }
-            else if ((d32 & 0xe0000000) == 0xc0000000)
-            {
+            else if ((d32 & 0xe0000000) == 0xc0000000) {
                 /* 3 lower bits of LoM */
                 lom       =   ((d32 >> 26) & 0x07) + 8;
                 d32       <<= 6;
                 bits_left -=  6;
             }
-            else if ((d32 & 0xf0000000) == 0xe0000000)
-            {
+            else if ((d32 & 0xf0000000) == 0xe0000000) {
                 /* 4 lower bits of LoM */
                 lom       =   ((d32 >> 24) & 0x0f) + 16;
                 d32       <<= 8;
                 bits_left -=  8;
             }
-            else if ((d32 & 0xf8000000) == 0xf0000000)
-            {
+            else if ((d32 & 0xf8000000) == 0xf0000000) {
                 /* 5 lower bits of LoM */
                 lom       =   ((d32 >> 22) & 0x1f) + 32;
                 d32       <<= 10;
                 bits_left -=  10;
             }
-            else if ((d32 & 0xfc000000) == 0xf8000000)
-            {
+            else if ((d32 & 0xfc000000) == 0xf8000000) {
                 /* 6 lower bits of LoM */
                 lom       =   ((d32 >> 20) & 0x3f) + 64;
                 d32       <<= 12;
                 bits_left -=  12;
             }
-            else if ((d32 & 0xfe000000) == 0xfc000000)
-            {
+            else if ((d32 & 0xfe000000) == 0xfc000000) {
                 /* 7 lower bits of LoM */
                 lom       =   ((d32 >> 18) & 0x7f) + 128;
                 d32       <<= 14;
                 bits_left -=  14;
             }
-            else if ((d32 & 0xff000000) == 0xfe000000)
-            {
+            else if ((d32 & 0xff000000) == 0xfe000000) {
                 /* 8 lower bits of LoM */
                 lom       =   ((d32 >> 16) & 0xff) + 256;
                 d32       <<= 16;
                 bits_left -=  16;
             }
-            else if ((d32 & 0xff800000) == 0xff000000)
-            {
+            else if ((d32 & 0xff800000) == 0xff000000) {
                 /* 9 lower bits of LoM */
                 lom       =   ((d32 >> 14) & 0x1ff) + 512;
                 d32       <<= 18;
                 bits_left -=  18;
             }
-            else if ((d32 & 0xffc00000) == 0xff800000)
-            {
+            else if ((d32 & 0xffc00000) == 0xff800000) {
                 /* 10 lower bits of LoM */
                 lom       =   ((d32 >> 12) & 0x3ff) + 1024;
                 d32       <<= 20;
                 bits_left -=  20;
             }
-            else if ((d32 & 0xffe00000) == 0xffc00000)
-            {
+            else if ((d32 & 0xffe00000) == 0xffc00000) {
                 /* 11 lower bits of LoM */
                 lom       =   ((d32 >> 10) & 0x7ff) + 2048;
                 d32       <<= 22;
                 bits_left -=  22;
             }
-            else if ((d32 & 0xfff00000) == 0xffe00000)
-            {
+            else if ((d32 & 0xfff00000) == 0xffe00000) {
                 /* 12 lower bits of LoM */
                 lom       =   ((d32 >> 8) & 0xfff) + 4096;
                 d32       <<= 24;
@@ -358,28 +345,23 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
             /* now that we have copy_offset and LoM, process them */
 
             src_ptr = history_ptr - copy_offset;
-            if (src_ptr >= this->history_buf)
-            {
+            if (src_ptr >= this->history_buf) {
                 /* data does not wrap around */
-                while (lom > 0)
-                {
+                while (lom > 0) {
                     *history_ptr++ = *src_ptr++;
                     lom--;
                 }
             }
-            else
-            {
+            else {
                 src_ptr = this->history_buf_end - (copy_offset - (history_ptr - this->history_buf));
                 src_ptr++;
-                while (lom && (src_ptr <= this->history_buf_end))
-                {
+                while (lom && (src_ptr <= this->history_buf_end)) {
                     *history_ptr++ = *src_ptr++;
                     lom--;
                 }
 
                 src_ptr = this->history_buf;
-                while (lom > 0)
-                {
+                while (lom > 0) {
                     *history_ptr++ = *src_ptr++;
                     lom--;
                 }
@@ -392,30 +374,25 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
             /* how many bits do we need to get? */
             int tmp3 = 32 - bits_left;
 
-            while (tmp3)
-            {
-                if (cur_bits_left < tmp3)
-                {
+            while (tmp3) {
+                if (cur_bits_left < tmp3) {
                     /* we have less bits than we need */
                     uint32_t i32 = cur_uint8_t >> (8 - cur_bits_left);
                     d32       |= i32 << ((32 - bits_left) - cur_bits_left);
                     bits_left += cur_bits_left;
                     tmp3      -= cur_bits_left;
-                    if (cptr < cbuf + len)
-                    {
+                    if (cptr < cbuf + len) {
                         /* more compressed data available */
                         cur_uint8_t   = *cptr++;
                         cur_bits_left = 8;
                     }
-                    else
-                    {
+                    else {
                         /* no more compressed data available */
                         tmp3          = 0;
                         cur_bits_left = 0;
                     }
                 }
-                else if (cur_bits_left > tmp3)
-                {
+                else if (cur_bits_left > tmp3) {
                     /* we have more bits than we need */
                     d32           |=  cur_uint8_t >> (8 - tmp3);
                     cur_uint8_t   <<= tmp3;
@@ -423,18 +400,15 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
                     bits_left     =   32;
                     break;
                 }
-                else
-                {
+                else {
                     /* we have just the right amount of bits */
                     d32       |= cur_uint8_t >> (8 - tmp3);
                     bits_left =  32;
-                    if (cptr < cbuf + len)
-                    {
+                    if (cptr < cbuf + len) {
                         cur_uint8_t   = *cptr++;
                         cur_bits_left = 8;
                     }
-                    else
-                    {
+                    else {
                         cur_bits_left = 0;
                     }
                     break;
@@ -453,11 +427,9 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
         uint32_t roff = 0;
         int      result;
 
-        rlen = 0;
-
+        rlen   = 0;
         result = this->decompress_40(cbuf, len, ctype, &roff, &rlen);
-
-        rdata = this->history_buf + roff;
+        rdata  = this->history_buf + roff;
 
         return result;
     }
@@ -476,7 +448,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
     uint16_t * hash_table;
 
     /**
-     * Initialize mppc_enc structure
+     * Initialize rdp_mppc_40_enc structure
      */
     rdp_mppc_40_enc() : rdp_mppc_enc() {
         this->historyBuffer     = NULL; /* contains uncompressed data */
@@ -492,21 +464,16 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
 
         this->buf_len = RDP_40_HIST_BUF_LEN;
 
-        this->first_pkt = 1;
-        this->historyBuffer = (char*) malloc(this->buf_len);
+        this->first_pkt        = 1;
         TODO("making it static and large enough should be good for both RDP4 and RDP5");
-        memset(this->historyBuffer, 0, this->buf_len);
-
-        this->outputBufferPlus = (char*) malloc(this->buf_len + 64 + 8);
-        memset(this->outputBufferPlus, 0, this->buf_len + 64);
-
-        this->outputBuffer = this->outputBufferPlus + 64;
-        this->hash_table = (uint16_t*) malloc(HASH_BUF_LEN * 2);
-        memset(this->hash_table, 0, HASH_BUF_LEN * 2);
+        this->historyBuffer    = static_cast<char *>(calloc(this->buf_len, 1));
+        this->outputBufferPlus = static_cast<char *>(calloc(this->buf_len + 64 + 8, 1));
+        this->outputBuffer     = this->outputBufferPlus + 64;
+        this->hash_table       = static_cast<uint16_t *>(calloc(rdp_mppc_enc::HASH_BUF_LEN, 2));
     }
 
     /**
-     * deinit mppc_enc structure
+     * Deinitialize rdp_mppc_40_enc structure
      */
     virtual ~rdp_mppc_40_enc() {
         free(this->historyBuffer);
@@ -529,7 +496,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
         LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
         LOG(LOG_INFO, "hash_table");
-        hexdump_d((uint8_t *)this->hash_table, 16);
+        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), 16);
     }
 
     virtual void dump() {
@@ -545,7 +512,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
         LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
         LOG(LOG_INFO, "hash_table");
-        hexdump_d((uint8_t *)this->hash_table, HASH_BUF_LEN * 2);
+        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), rdp_mppc_enc::HASH_BUF_LEN * 2);
     }
 
 // 3.1.8.4.1 RDP 4.0
@@ -620,8 +587,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
      *
      * @return  true on success, false on failure
      */
-    virtual bool compress_40(uint8_t * srcData, int len)
-    {
+    virtual bool compress_40(uint8_t * srcData, int len) {
 //        LOG(LOG_INFO, "compress_40");
 
         if ((srcData == NULL) || (len <= 0) || (len > this->buf_len))
@@ -642,12 +608,11 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
             this->flagsHold |= PACKET_AT_FRONT;
         }
 
-        if ((this->historyOffset + len + 2) >= this->buf_len)
-        {
+        if ((this->historyOffset + len + 2) >= this->buf_len) {
             /* historyBuffer cannot hold srcData - rewind it */
             this->historyOffset =  0;
             this->flagsHold     |= PACKET_AT_FRONT;
-            memset(hash_table, 0, HASH_BUF_LEN * 2);
+            memset(hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
         }
 
         /* add / append new data to historyBuffer */
@@ -729,12 +694,11 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
             ctr++;
         }
 
-        if (opb_index >= len)
-        {
+        if (opb_index >= len) {
             /* compressed data longer or same size than uncompressed data */
             /* give up */
             this->historyOffset = 0;
-            memset(hash_table, 0, HASH_BUF_LEN * 2);
+            memset(hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
             this->flagsHold |= PACKET_FLUSHED;
             this->first_pkt =  1;
 
@@ -751,8 +715,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         return true;
     }
 
-    virtual bool compress(uint8_t * srcData, int len, uint8_t & flags, uint16_t & compressedLength)
-    {
+    virtual bool compress(uint8_t * srcData, int len, uint8_t & flags, uint16_t & compressedLength) {
         bool compress_result = this->compress_40(srcData, len);
         if (this->flags & PACKET_COMPRESSED) {
             flags            = this->flags;
@@ -765,10 +728,8 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         return compress_result;
     }
 
-    virtual void get_compressed_data(Stream & stream) const
-    {
-        if (stream.room() < static_cast<size_t>(this->bytes_in_opb))
-        {
+    virtual void get_compressed_data(Stream & stream) const {
+        if (stream.room() < static_cast<size_t>(this->bytes_in_opb)) {
             LOG(LOG_ERR, "rdp_mppc_40_enc::get_compressed_data: Buffer too small");
             throw Error(ERR_BUFFER_TOO_SMALL);
         }

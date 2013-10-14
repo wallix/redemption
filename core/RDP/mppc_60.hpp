@@ -21,11 +21,6 @@
 #ifndef _REDEMPTION_CORE_RDP_MPPC_60_HPP_
 #define _REDEMPTION_CORE_RDP_MPPC_60_HPP_
 
-enum {
-    RDP6_HISTORY_BUF_SIZE  = 65536,
-    RDP6_OFFSET_CACHE_SIZE = 8
-};
-
 static uint8_t HuffLenLEC[] = {
     0x6, 0x6, 0x6, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x7, 0x8, 0x8, 0x8, 0x8, 0x8,
     0x8, 0x8, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x8, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9,
@@ -144,25 +139,54 @@ static uint16_t LOMBaseLUT[] = {
 };
 
 struct rdp_mppc_60_dec : public rdp_mppc_dec {
+protected:
+    static const size_t RDP_60_HIST_BUF_LEN      = 1024 * 64;
+    static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
+
+public:
     uint8_t  * history_buf;
     uint16_t * offset_cache;
     uint8_t  * history_buf_end;
     uint8_t  * history_ptr;
 
+    /**
+     * Initialize rdp_mppc_60_dec structure
+     */
     rdp_mppc_60_dec() {
-        this->history_buf = (uint8_t *)malloc(RDP6_HISTORY_BUF_SIZE);
-        memset(this->history_buf, 0, RDP6_HISTORY_BUF_SIZE);
-
-        this->offset_cache = (uint16_t *)malloc(RDP6_OFFSET_CACHE_SIZE);
-        memset(this->offset_cache, 0, RDP6_OFFSET_CACHE_SIZE);
-
+        this->history_buf     = static_cast<uint8_t *>(calloc(RDP_60_HIST_BUF_LEN, 1));
+        this->offset_cache    = static_cast<uint16_t *>(calloc(RDP_60_OFFSET_CACHE_SIZE, 1));
         this->history_ptr     = this->history_buf;
-        this->history_buf_end = this->history_buf + RDP6_HISTORY_BUF_SIZE - 1;
+        this->history_buf_end = this->history_buf + RDP_60_HIST_BUF_LEN - 1;
     }
 
+    /**
+     * Deinitialize rdp_mppc_60_dec structure
+     */
     virtual ~rdp_mppc_60_dec() {
         free(this->history_buf);
         free(this->offset_cache);
+    }
+
+    virtual void mini_dump()
+    {
+        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
+        LOG(LOG_INFO, "historyBuffer");
+        hexdump_d(this->history_buf, 16);
+        LOG(LOG_INFO, "offsetCache");
+        hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
+        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
+    }
+
+    virtual void dump()
+    {
+        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
+        LOG(LOG_INFO, "historyBuffer");
+        hexdump_d(this->history_buf, RDP_60_HIST_BUF_LEN);
+        LOG(LOG_INFO, "offsetCache");
+        hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
+        LOG(LOG_INFO, "historyPointerOffset=%d",   this->history_ptr - this->history_buf);
+        LOG(LOG_INFO, "historyBufferEndOffset=%d", this->history_buf_end - this->history_buf);
     }
 
 protected:
@@ -244,8 +268,7 @@ public:
      *
      * @return        True on success, False on failure
      */
-    int decompress_60(uint8_t * cbuf, int len, int ctype, uint32_t * roff,
-        uint32_t * rlen) {
+    int decompress_60(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
 //        LOG(LOG_INFO, "decompress_60");
 
         uint16_t * offset_cache;    /* Copy Offset cache                          */
@@ -291,8 +314,8 @@ public:
         if (ctype & PACKET_FLUSHED) {
             /* re-init history buffer */
             history_ptr = this->history_buf;
-            memset(this->history_buf, 0, RDP6_HISTORY_BUF_SIZE);
-            memset(offset_cache, 0, RDP6_OFFSET_CACHE_SIZE);
+            memset(this->history_buf, 0, RDP_60_HIST_BUF_LEN);
+            memset(offset_cache, 0, RDP_60_OFFSET_CACHE_SIZE);
             *roff = 0;
         }
 
@@ -354,8 +377,7 @@ public:
                 LUTIndex    = i32 - 257;
                 tmp         = CopyOffsetBitsLUT[LUTIndex];
                 copy_offset = CopyOffsetBaseLUT[LUTIndex] - 0x1;
-                if (tmp != 0)
-                {
+                if (tmp != 0) {
                     copy_offset += rdp_mppc_60_dec::transposebits(d32 & (0xffffffff << (32 - tmp)));
                 }
                 rdp_mppc_60_dec::cache_add(offset_cache, copy_offset);
@@ -365,8 +387,7 @@ public:
             else if ( i32 > 288 && i32 < 293) {
                 LUTIndex    = i32 - 289;
                 copy_offset = *(offset_cache + LUTIndex);
-                if (LUTIndex != 0)
-                {
+                if (LUTIndex != 0) {
                     rdp_mppc_60_dec::cache_swap(offset_cache, LUTIndex);
                 }
             }
@@ -435,8 +456,7 @@ public:
             bits_left -=  i;
             tmp       =   LOMBitsLUT[i32];
             lom       =   LOMBaseLUT[i32];
-            if(tmp != 0)
-            {
+            if(tmp != 0) {
                 lom += rdp_mppc_60_dec::transposebits(d32 & (0xffffffff << (32 - tmp)));
             }
             d32       <<= tmp;
@@ -525,7 +545,7 @@ public:
                 }
             }
 
-        }/* end while (bits_left >= 8) */
+        }   /* end while (bits_left >= 8) */
 
         if (ctype & PACKET_FLUSHED) {
             *rlen = history_ptr - this->history_buf;
@@ -543,11 +563,9 @@ public:
         uint32_t roff = 0;
         int      result;
 
-        rlen = 0;
-
+        rlen   = 0;
         result = this->decompress_60(cbuf, len, ctype, &roff, &rlen);
-
-        rdata = this->history_buf + roff;
+        rdata  = this->history_buf + roff;
 
         return result;
     }

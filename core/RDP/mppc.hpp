@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -203,6 +203,12 @@
 // |                        | first.                                          |
 // +------------------------+--------------------------------------------------+
 
+enum {
+    PACKET_COMPRESSED = 0x20,
+    PACKET_AT_FRONT   = 0x40,
+    PACKET_FLUSHED    = 0x80
+};
+
 // Data that is tagged as compressed (using the PACKET_COMPRESSED flag) MUST NOT
 // be larger in size than the original data. This implies that in a minority of
 // cases it is possible for compressed data to be the same size as the original
@@ -383,12 +389,6 @@
 
 /* Compression Types */
 
-enum {
-    PACKET_COMPRESSED = 0x20,
-    PACKET_AT_FRONT   = 0x40,
-    PACKET_FLUSHED    = 0x80
-};
-
 // See core/RDP/logon.hpp for documentation on compresson types
 
 //     to get PACKET_COMPR_TYPE: (flags & CompressonTypeMask) >> 9
@@ -400,34 +400,46 @@ enum {
     PACKET_COMPR_TYPE_RDP61 = 0x03,
 };
 
-struct rdp_mppc_dec
-{
+
+struct rdp_mppc_dec {
 protected:
+    /**
+     * Initialize rdp_mppc_dec structure
+     */
     rdp_mppc_dec() {}
 
 public:
+    /**
+     * Deinitialize rdp_mppc_dec structure
+     */
     virtual ~rdp_mppc_dec() {}
 
     virtual int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) = 0;
+
+    virtual void mini_dump() = 0;
+
+    virtual void dump() = 0;
 };  // rdp_mppc_dec
 
-#define HASH_BUF_LEN (1024 * 64)    /* 16 bit hash */
 
 struct rdp_mppc_enc {
+    static const size_t HASH_BUF_LEN = (1024 * 64); /* 16 bit hash table size */
+
 protected:
     /**
-     * Initialize mppc_enc structure
+     * Initialize rdp_mppc_enc structure
      */
     rdp_mppc_enc() {}
 
 public:
+    /**
+     * Deinitialize rdp_mppc_enc structure
+     */
     virtual ~rdp_mppc_enc() {}
 
-    static uint32_t signature(const char v[])
-    {
+    static uint32_t signature(const char v[]) {
         /* CRC16 defs */
-        static const uint16_t crc_table[256] =
-        {
+        static const uint16_t crc_table[256] = {
             0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
             0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
             0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
@@ -491,8 +503,7 @@ public:
         }
     }
 
-    static inline void encode_literal(char c, char * outputBuffer, int & bits_left,
-        int & opb_index) {
+    static inline void encode_literal(char c, char * outputBuffer, int & bits_left, int & opb_index) {
         rdp_mppc_enc::insert_n_bits(
             (c & 0x80) ? 9 : 8,
             (c & 0x80) ? (0x02 << 7) | (c & 0x7F) : c,
@@ -508,9 +519,11 @@ public:
     virtual void dump() = 0;
 };  // struct rdp_mppc_enc
 
+
 #include "mppc_40.hpp"
 #include "mppc_50.hpp"
 #include "mppc_60.hpp"
+
 
 struct rdp_mppc_unified_dec : public rdp_mppc_dec {
 protected:
@@ -520,6 +533,9 @@ protected:
 //    rdp_mppc_61_dec * dec_61;
 
 public:
+    /**
+     * Initialize rdp_mppc_unified_dec structure
+     */
     rdp_mppc_unified_dec() {
         this->dec_40 = NULL;
         this->dec_50 = NULL;
@@ -527,6 +543,9 @@ public:
 //        this->dec_61 = NULL;
     }
 
+    /**
+     * Deinitialize rdp_mppc_unified_dec structure
+     */
     virtual ~rdp_mppc_unified_dec() {
         if (this->dec_40) {
             delete this->dec_40;
@@ -543,6 +562,40 @@ public:
 /*
         if (this->dec_61) {
             delete this->dec_61;
+        }
+*/
+    }
+
+    virtual void mini_dump() {
+        if (this->dec_40) {
+            this->dec_40->mini_dump();
+        }
+        else if (this->dec_50) {
+            this->dec_50->mini_dump();
+        }
+        else if (this->dec_60) {
+            this->dec_60->mini_dump();
+        }
+/*
+        else if (this->dec_61) {
+            this->dec_61->mini_dump();
+        }
+*/
+    }
+
+    virtual void dump() {
+        if (this->dec_40) {
+            this->dec_40->dump();
+        }
+        else if (this->dec_50) {
+            this->dec_50->dump();
+        }
+        else if (this->dec_60) {
+            this->dec_60->dump();
+        }
+/*
+        else if (this->dec_61) {
+            this->dec_61->dump();
         }
 */
     }
