@@ -588,7 +588,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 {
     TestDraw drawable(800, 600);
 
@@ -634,7 +634,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust2-1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-1.png");
 
     char message[1024];
 
@@ -666,7 +666,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust2-2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-2.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x6d\x73\x5a\x99\xe2\x44\xe5\x0a\x09\x04"
                    "\x09\xa0\x82\x2d\xf9\xb8\x9c\x53\xa8\xea"
@@ -695,7 +695,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust-3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-3.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\xea\xac\x4e\x3f\xfe\x36\x95\xf6\x69\x1c"
                    "\x2c\x04\xb0\x24\x8f\xa1\x34\x3e\x3f\xa3"
@@ -723,7 +723,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust-4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-4.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x23\xcf\x81\x59\xfa\x63\xdb\x85\xea\x02"
                    "\x55\x24\x1e\xa5\xbc\x2f\x02\x6c\x82\xe4"
@@ -732,7 +732,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns)
     }
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns2)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 {
     TestDraw drawable(640, 480);
 
@@ -778,7 +778,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns2)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust2-1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-1.png");
 
     char message[1024];
 
@@ -811,7 +811,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns2)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust2-2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x0c\x4a\x35\x4e\x14\x47\xaa\xc4\x45\x23"
                    "\x66\x66\xa1\x89\xd5\x4a\xa8\x0f\x19\x18"
@@ -841,7 +841,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns2)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust2-3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-3.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x7a\x71\x3e\x26\x23\xee\x1d\x7e\x10\x4b"
                    "\xc2\x7c\xbe\xe9\x37\xaa\x5e\x33\x37\xd5"
@@ -870,7 +870,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns2)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust2-4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-4.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\xaf\x94\x59\xd1\x45\x0e\xd9\x15\xe1\x82"
                    "\xab\xb9\x69\xa3\xd2\xeb\xa5\x48\x16\x1e"
@@ -880,7 +880,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns2)
 
 }
 
-BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns3)
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 {
     TestDraw drawable(1280, 1024);
 
@@ -926,7 +926,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns3)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust3-1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-1.png");
 
     char message[1024];
 
@@ -959,7 +959,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns3)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust3-2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-2.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x4e\xb1\x2a\x7f\x44\x9d\xf3\xae\xb2\x69"
                    "\xe1\xff\x20\x63\x82\x12\x35\xea\xea\x02"
@@ -989,7 +989,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns3)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust3-3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-3.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\xb7\x3d\x64\xff\xcd\x52\x27\xe0\xf3\x80"
                    "\xf2\x54\x3d\x5c\x12\xdb\x00\xbc\xd6\xea"
@@ -1018,7 +1018,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns3)
 
     selector.rdp_input_invalidate(selector.rect);
 
-    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-ajust3-4.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-4.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\xdd\x2c\x02\xe9\x31\xa0\xb8\x52\xc2\x0f"
                    "\xb9\xde\x64\xfe\xbc\x0d\x13\xdb\xdd\x9d"
@@ -1027,4 +1027,3 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAjustColumns3)
     }
 
 }
-
