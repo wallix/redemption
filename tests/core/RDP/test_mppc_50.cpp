@@ -105,3 +105,31 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
 
     delete(mppc_enc);
 }
+
+BOOST_AUTO_TEST_CASE(TestRDP50BlukDecompression5)
+{
+    #include "../../fixtures/test_mppc_5.hpp"
+
+    rdp_mppc_50_dec * mppc_dec = new rdp_mppc_50_dec();
+
+
+    BOOST_CHECK_EQUAL(sizeof(compressed_data),   2053);
+    BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 3790);
+
+
+    memcpy(mppc_dec->history_buf, historyBuffer, RDP_50_HIST_BUF_LEN);
+    mppc_dec->history_buf_end = mppc_dec->history_buf + 65535;
+    mppc_dec->history_ptr     = mppc_dec->history_buf + 54626;
+
+    uint8_t  compressionFlags = 0x21;
+
+    const uint8_t * rdata;
+    uint32_t        rlen;
+
+    mppc_dec->decompress(compressed_data, sizeof(compressed_data), compressionFlags, rdata, rlen);
+
+    BOOST_CHECK_EQUAL(3790, rlen);
+    BOOST_CHECK_EQUAL(0,   memcmp(uncompressed_data, rdata, rlen));
+
+    delete(mppc_dec);
+}

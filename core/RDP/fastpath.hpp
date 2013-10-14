@@ -1116,13 +1116,6 @@ namespace FastPath {
 
             if (   (this->compression & FASTPATH_OUTPUT_COMPRESSION_USED)
                 && (this->compressionFlags & PACKET_COMPRESSED)) {
-/*
-                uint32_t roff = 0;
-                uint32_t rlen = 0;
-
-                dec->decompress_rdp(this->payload.get_data(), this->payload.size(),
-                    this->compressionFlags, &roff, &rlen);
-*/
                 const uint8_t * rdata;
                 uint32_t        rlen;
 

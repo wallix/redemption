@@ -169,7 +169,7 @@ public:
 
     virtual void mini_dump()
     {
-        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
+        LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf, 16);
         LOG(LOG_INFO, "offsetCache");
@@ -180,7 +180,7 @@ public:
 
     virtual void dump()
     {
-        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
+        LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf, RDP_60_HIST_BUF_LEN);
         LOG(LOG_INFO, "offsetCache");
