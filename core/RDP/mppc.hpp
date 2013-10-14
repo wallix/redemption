@@ -502,6 +502,10 @@ public:
     virtual bool compress(uint8_t * srcData, int len, uint8_t & flags, uint16_t & compressedLength) = 0;
 
     virtual void get_compressed_data(Stream & stream) const = 0;
+
+    virtual void mini_dump() = 0;
+
+    virtual void dump() = 0;
 };  // struct rdp_mppc_enc
 
 #include "mppc_40.hpp"

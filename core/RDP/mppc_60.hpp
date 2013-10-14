@@ -246,6 +246,8 @@ public:
      */
     int decompress_60(uint8_t * cbuf, int len, int ctype, uint32_t * roff,
         uint32_t * rlen) {
+//        LOG(LOG_INFO, "decompress_60");
+
         uint16_t * offset_cache;    /* Copy Offset cache                          */
         uint8_t  * history_ptr;     /* points to next free slot in bistory_buf    */
         uint32_t   d32;             /* we process 4 compressed uint8_ts at a time */

@@ -53,7 +53,7 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
      */
     int decompress_50(uint8_t * cbuf, int len, int ctype, uint32_t * roff,
         uint32_t * rlen) {
-//        LOG(LOG_INFO, "decompress_rdp_5");
+//        LOG(LOG_INFO, "decompress_50");
 
         uint8_t  * history_ptr;     /* points to next free slot in bistory_buf    */
         uint32_t   d32;             /* we process 4 compressed uint8_ts at a time */
@@ -521,11 +521,8 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
 
     /**
      * Initialize mppc_enc structure
-     *
-     * @param   protocol_type   PROTO_RDP_40 or PROTO_RDP_50
      */
-    rdp_mppc_50_enc() : rdp_mppc_enc()
-    {
+    rdp_mppc_50_enc() : rdp_mppc_enc() {
         this->historyBuffer     = NULL; /* contains uncompressed data */
         this->outputBuffer      = NULL; /* contains compressed data */
         this->outputBufferPlus  = NULL;
@@ -554,17 +551,15 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
 
     /**
      * deinit mppc_enc structure
-     *
-     * @param   enc  struct to be deinited
      */
-    ~rdp_mppc_50_enc()
-    {
+    virtual ~rdp_mppc_50_enc() {
         free(this->historyBuffer);
         free(this->outputBufferPlus);
         free(this->hash_table);
     }
 
-    void mini_dump() {
+    virtual void mini_dump() {
+        LOG(LOG_INFO, "Type=RDP 5.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer,         16);
         LOG(LOG_INFO, "outputBuffer");
@@ -574,14 +569,15 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
         LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
         LOG(LOG_INFO, "buf_len=%d",            this->buf_len);
         LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
-        LOG(LOG_INFO, "flags=0x%X",              this->flags);
-        LOG(LOG_INFO, "flagsHold=0x%X",          this->flagsHold);
+        LOG(LOG_INFO, "flags=0x%X",            this->flags);
+        LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
         LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
         LOG(LOG_INFO, "hash_table");
         hexdump_d((uint8_t *)this->hash_table, 16);
     }
 
-    void dump() {
+    virtual void dump() {
+        LOG(LOG_INFO, "Type=RDP 5.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer,         this->buf_len);
         LOG(LOG_INFO, "outputBufferPlus");
@@ -589,11 +585,11 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
         LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
         LOG(LOG_INFO, "buf_len=%d",            this->buf_len);
         LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
-        LOG(LOG_INFO, "flags=0x%X",              this->flags);
-        LOG(LOG_INFO, "flagsHold=0x%X",          this->flagsHold);
+        LOG(LOG_INFO, "flags=0x%X",            this->flags);
+        LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
         LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
         LOG(LOG_INFO, "hash_table");
-        hexdump_d((uint8_t *)this->hash_table, /*this->buf_len*/RDP_50_HIST_BUF_LEN * 2);
+        hexdump_d((uint8_t *)this->hash_table, HASH_BUF_LEN * 2);
     }
 
 // 3.1.8.4.2 RDP 5.0
@@ -664,7 +660,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
      */
     bool compress_50(uint8_t * srcData, int len)
     {
-//        LOG(LOG_INFO, "compress_rdp_5");
+//        LOG(LOG_INFO, "compress_50");
 
         if ((srcData == NULL) || (len <= 0) || (len > this->buf_len))
             return false;
