@@ -60,8 +60,9 @@ namespace rndfa {
         else if (c[2]) {
             return os.write(c+2, 2);
         }
-        else
+        else {
             os.write(c+3, 1);
+        }
         return os;
     }
 
@@ -647,7 +648,7 @@ namespace rndfa {
                     this->captures = new StateBase const *[this->nb_capture * 2 + matrix_size];
                     this->traces = reinterpret_cast<const char **>(this->captures + this->nb_capture * 2);
 
-                    this->idx_trace_free = new unsigned[col];
+                    this->idx_trace_free = new unsigned[col+1];
 
                     this->pcaptures = this->captures;
 
@@ -1002,7 +1003,7 @@ namespace rndfa {
 #ifdef DISPLAY_TRACE
                         this->sm.display_elem_state_list(*first, 0);
 #endif
-                        if ( ! first->next && first->st == &state_finish) {
+                        if ( ! first->next && first->st->is_finish()) {
                             continue ;
                         }
                         return first->next;
@@ -1045,7 +1046,7 @@ namespace rndfa {
                 }
 
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (first->st->type == LAST || first->st == &state_finish) {
+                    if (first->st->type == LAST || first->st->is_finish()) {
                         return true;
                     }
                 }
@@ -1115,7 +1116,7 @@ namespace rndfa {
 
                 for (Info* ifirst = pal1->begin(), * ilast = pal1->end(); ifirst != ilast ; ++ifirst) {
                     for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
-                        if (first->st->type == LAST || first->st == &state_finish) {
+                        if (first->st->type == LAST || first->st->is_finish()) {
                             return true;
                         }
                     }
@@ -1137,7 +1138,8 @@ namespace rndfa {
         {
             this->pidx_trace_free = this->idx_trace_free;
             const unsigned size = this->states.size() - this->nb_capture * 2;
-            for (unsigned i = 0; i < size; ++i, ++this->pidx_trace_free) {
+            //pidx_trace_free ∈ [0, size+1]
+            for (unsigned i = 0; i != size; ++i, ++this->pidx_trace_free) {
                 *this->pidx_trace_free = i;
             }
             std::memset(this->traces, 0,
@@ -1595,18 +1597,14 @@ namespace rndfa {
         std::vector<StateBase*> sts;
         std::vector<StateBase*> sts2;
         const StateBase * st;
-        StateBase * replicant;
-        size_t p1;
         size_t p2;
-        bool definied_out1;
-        bool definied_out2;
+        const bool definied_out1;
+        const bool definied_out2;
 
         ContextClone(const StateBase * st_base)
         : sts()
         , sts2()
         , st(st_base)
-        , replicant(0)
-        , p1(0)
         , definied_out1(st->out1)
         , definied_out2(st->out2)
         {
@@ -1622,12 +1620,12 @@ namespace rndfa {
 
         StateBase * clone()
         {
-            this->replicant = this->st->clone();
-            if (!(!this->definied_out1 && !this->definied_out2)) {
+            StateBase * replicant = this->simple_clone(this->st);
+            if (this->definied_out1 || this->definied_out2) {
                 typedef std::vector<StateBase*>::iterator iterator;
                 iterator last = this->sts.end();
                 for (iterator first = this->sts.begin(), first2 = sts2.begin(); last != this->sts.end(); ++first, ++first2) {
-                    *first2 = (*first)->clone();
+                    *first2 = this->simple_clone(*first);
                     (*first)->id = 0;
                 }
                 for (iterator first = this->sts.begin(), first2 = sts2.begin(); last != this->sts.end(); ++first, ++first2) {
@@ -1639,13 +1637,18 @@ namespace rndfa {
                     }
                 }
                 if (this->definied_out1) {
-                    this->replicant->out1 = this->sts2[p1];
+                    replicant->out1 = this->sts2[0];
                 }
                 if (this->definied_out2) {
-                    this->replicant->out2 = this->sts2[p2];
+                    replicant->out2 = this->sts2[p2];
                 }
             }
-            return this->replicant;
+            return replicant;
+        }
+
+        StateBase * simple_clone(const StateBase * st)
+        {
+            return st == &state_finish ? &state_finish : st->clone();
         }
     };
 
