@@ -30,6 +30,9 @@
 #include "log.hpp"
 #define LOGNULL
 
+#include "regex_parser.hpp"
+
+using namespace re;
 
 inline void st_to_string(StateBase * st, std::ostream& os,
                          const std::vector<StateBase*>& states, unsigned depth = 0)
@@ -78,24 +81,24 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
     };
 
     {
-        StateBase st_d(NORMAL, 'd');
-        StateBase st_c(NORMAL, 'c', &st_d);
-        StateBase st_b(NORMAL, 'b', &st_c);
-        StateBase st_a(NORMAL, 'a', &st_b);
+        StateNormal st_d('d');
+        StateNormal st_c('c', &st_d);
+        StateNormal st_b('b', &st_c);
+        StateNormal st_a('a', &st_b);
         Reg rgx("abcd");
         BOOST_CHECK_EQUAL(st_to_string(&st_a), rgx.to_string());
     }
     {
         StateBorder st_first(1);
         StateBorder st_last(0);
-        StateBase st_a(NORMAL, 'a', &st_last);
+        StateNormal st_a('a', &st_last);
         st_first.out1 = &st_a;
         Reg rgx("^a$");
         BOOST_CHECK_EQUAL(st_to_string(&st_first), rgx.to_string());
     }
     {
-        StateBase split(SPLIT);
-        StateBase st_a(NORMAL, 'a', &split);
+        StateSplit split;
+        StateNormal st_a('a', &split);
         split.out1 = &state_finish;
         split.out2 = &st_a;
         {
@@ -106,7 +109,7 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
             Reg rgx("a+");
             BOOST_CHECK_EQUAL(st_to_string(&st_a), rgx.to_string());
         }
-        StateBase st_b(NORMAL, 'b');
+        StateNormal st_b('b');
         split.out1 = &st_b;
         {
             Reg rgx("a*b");
@@ -141,95 +144,95 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         }
     }
     {
-        StateBase st_b(NORMAL, 'b');
-        StateBase st_a(NORMAL, 'a', &st_b);
-        StateBase split(SPLIT, 0, &st_b, &st_a);
+        StateNormal st_b('b');
+        StateNormal st_a('a', &st_b);
+        StateSplit split(&st_b, &st_a);
         Reg rgx("a?b");
         BOOST_CHECK_EQUAL(st_to_string(&split), rgx.to_string());
     }
     {
         StateBorder last(0);
-        StateBase close2(CAPTURE_CLOSE, 0, &last);
-        StateBase any(ANY_CHARACTER);
-        StateBase split_any(SPLIT, 0, &close2, &any);
+        StateClose close2(&last);
+        StateAny any;
+        StateSplit split_any(&close2, &any);
         any.out1 = &split_any;
 
-        StateBase open2(CAPTURE_OPEN, 0, &split_any);
-        StateBase st_d(NORMAL, 'd', &open2);
+        StateOpen open2(&split_any);
+        StateNormal st_d('d', &open2);
 
-        StateBase close1(CAPTURE_CLOSE, 0, &st_d);
-        StateBase st_c(NORMAL, 'c', &close1);
-        StateBase split_c(SPLIT, 0, &close1, &st_c);
+        StateClose close1(&st_d);
+        StateNormal st_c('c', &close1);
+        StateSplit split_c(&close1, &st_c);
 
-        StateBase st_b(NORMAL, 'b', &split_c);
-        StateBase split_b(SPLIT, 0, &split_c, &st_b);
+        StateNormal st_b('b', &split_c);
+        StateSplit split_b(&split_c, &st_b);
 
-        StateBase st_a(NORMAL, 'a', &split_b);
-        StateBase split_a(SPLIT, 0, &split_b, &st_a);
+        StateNormal st_a('a', &split_b);
+        StateSplit split_a(&split_b, &st_a);
 
-        StateBase open1(CAPTURE_OPEN, 0, &split_a);
+        StateOpen open1(&split_a);
 
         Reg rgx("(a?b?c?)d(.*)$");
         BOOST_CHECK_EQUAL(st_to_string(&open1), rgx.to_string());
     }
     {
-        StateBase st_a2(NORMAL, 'a');
-        StateBase split2(SPLIT, 0, 0, &st_a2);
-        StateBase st_a1(NORMAL, 'a', &split2);
-        StateBase split1(SPLIT, 0, &split2, &st_a1);
+        StateNormal st_a2('a');
+        StateSplit split2(0, &st_a2);
+        StateNormal st_a1('a', &split2);
+        StateSplit split1(&split2, &st_a1);
         Reg rgx("a{0,2}");
-        BOOST_CHECK_EQUAL(st_to_string(&split1), rgx.to_string());
+         BOOST_CHECK_EQUAL(st_to_string(&split1), rgx.to_string());
     }
     {
-        StateBase st_b(NORMAL, 'b');
-        StateBase split3(SPLIT, 0, &st_b);
-        StateBase st_a1(NORMAL, 'a', &split3);
-        StateBase st_a2(NORMAL, 'a', &split3);
-        StateBase split2(SPLIT, 0, &st_a1, &split3);
-        StateBase split1(SPLIT, 0, &st_a2, &split2);
-        StateBase st_a3(NORMAL, 'a', &split1);
-        StateBase st_a4(NORMAL, 'a', &st_a3);
+        StateNormal st_b('b');
+        StateSplit split3(&st_b);
+        StateNormal st_a1('a', &split3);
+        StateNormal st_a2('a', &split3);
+        StateSplit split2(&st_a1, &split3);
+        StateSplit split1(&st_a2, &split2);
+        StateNormal st_a3('a', &split1);
+        StateNormal st_a4('a', &st_a3);
         Reg rgx("a{2,4}b");
         BOOST_CHECK_EQUAL(st_to_string(&st_a4), rgx.to_string());
     }
     {
-        StateBase st_b(NORMAL, 'b');
-        StateBase st_a2(NORMAL, 'a');
-        StateBase split1(SPLIT, 0, &st_b, &st_a2);
+        StateNormal st_b('b');
+        StateNormal st_a2('a');
+        StateSplit split1(&st_b, &st_a2);
         st_a2.out1 = &split1;
         {
             Reg rgx("a{0,}b");
             BOOST_CHECK_EQUAL(st_to_string(&split1), rgx.to_string());
         }
-        StateBase st_a3(NORMAL, 'a', &split1);
-        StateBase st_a4(NORMAL, 'a', &st_a3);
+        StateNormal st_a3('a', &split1);
+        StateNormal st_a4('a', &st_a3);
         {
             Reg rgx("a{2,}b");
             BOOST_CHECK_EQUAL(st_to_string(&st_a4), rgx.to_string());
         }
     }
     {
-        StateBase st1(NORMAL, '}');
-        StateBase st2(NORMAL, '-', &st1);
-        StateBase st3(NORMAL, '2', &st2);
-        StateBase st4(NORMAL, '{', &st3);
-        StateBase st5(NORMAL, 'a', &st4);
+        StateNormal st1('}');
+        StateNormal st2('-', &st1);
+        StateNormal st3('2', &st2);
+        StateNormal st4('{', &st3);
+        StateNormal st5('a', &st4);
         Reg rgx("a{2-}");
         BOOST_CHECK_EQUAL(st_to_string(&st5), rgx.to_string());
     }
     {
-        StateBase st_b(NORMAL, 'b');
-        StateBase split2(SPLIT, 0, &state_finish, &st_b);
+        StateNormal st_b('b');
+        StateSplit split2(&state_finish, &st_b);
         st_b.out1 = &split2;
-        StateBase st_a2(NORMAL, 'a');
-        StateBase split1(SPLIT, 0, &split2, &st_a2);
+        StateNormal st_a2('a');
+        StateSplit split1(&split2, &st_a2);
         st_a2.out1 = &split1;
         {
             Reg rgx("a{0,}b*");
             BOOST_CHECK_EQUAL(st_to_string(&split1), rgx.to_string());
         }
-        StateBase st_a3(NORMAL, 'a', &split1);
-        StateBase st_a4(NORMAL, 'a', &st_a3);
+        StateNormal st_a3('a', &split1);
+        StateNormal st_a4('a', &st_a3);
         split1.out1 = &st_b;
         {
             Reg rgx("a{2,}b+");
@@ -237,19 +240,19 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         }
     }
     {
-        StateBase close1(CAPTURE_CLOSE);
+        StateClose close1;
         StateDigit digit;
-        StateBase split(SPLIT, 0, &close1, &digit);
+        StateSplit split(&close1, &digit);
         digit.out1 = &split;
-        StateBase open1(CAPTURE_OPEN, 0, &split);
+        StateOpen open1(&split);
         Reg rgx("(\\d*)");
         BOOST_CHECK_EQUAL(st_to_string(&open1), rgx.to_string());
     }
     {
-        StateBase st_c4(NORMAL, multi_char("Þ"));
-        StateBase st_c3(NORMAL, 'a', &st_c4);
-        StateBase st_c2(NORMAL, multi_char("Ë"), &st_c3);
-        StateBase st_c1(NORMAL, multi_char("¥"), &st_c2);
+        StateNormal st_c4(multi_char("Þ"));
+        StateNormal st_c3('a', &st_c4);
+        StateNormal st_c2(multi_char("Ë"), &st_c3);
+        StateNormal st_c1(multi_char("¥"), &st_c2);
         Reg rgx("¥ËaÞ");
         BOOST_CHECK_EQUAL(st_to_string(&st_c1), rgx.to_string());
     }

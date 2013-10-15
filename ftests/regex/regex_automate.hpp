@@ -165,7 +165,7 @@ namespace re {
     const unsigned EPSILONE         = 1 << 13;
     const unsigned FIRST            = 1 << 14;
     const unsigned LAST             = 1 << 15;
-    const unsigned FINISH              = 1 << 16;
+    const unsigned FINISH           = 1 << 16;
 
     struct StateBase
     {
@@ -470,6 +470,13 @@ namespace re {
     typedef IdentifierNoTrait<IdentifierWordTrait>  IdentifierNoWordTrait;
     typedef IdentifierNoTrait<IdentifierDigitTrait> IdentifierNoDigitTrait;
     typedef IdentifierNoTrait<IdentifierSpaceTrait> IdentifierNoSpaceTrait;
+
+    typedef StateIdentifier<'w', IdentifierWordTrait>       StateWord;
+    typedef StateIdentifier<'W', IdentifierNoWordTrait>     StateNoWord;
+    typedef StateIdentifier<'d', IdentifierDigitTrait>      StateDigit;
+    typedef StateIdentifier<'D', IdentifierNoDigitTrait>    SateNoDigit;
+    typedef StateIdentifier<'s', IdentifierSpaceTrait>      StateSpace;
+    typedef StateIdentifier<'S', IdentifierNoSpaceTrait>    StateNoSpace;
 
     struct StateCharacters : StateBase
     {
@@ -1508,14 +1515,6 @@ namespace re {
         return new StateSplit(out1, out2);
     }
 
-    struct StateDeleter
-    {
-        void operator()(StateBase * st) const
-        {
-            delete st;
-        }
-    };
-
     inline void append_state(StateBase * st, std::vector<StateBase*>& sts)
     {
         if (st && st->id != -4u) {
@@ -1526,6 +1525,7 @@ namespace re {
         }
     }
 
+    ///TODO remove
     inline void append_state_whitout_finish(StateBase * st, std::vector<StateBase*>& sts)
     {
         if (st && st->id != -4u && st != &state_finish) {
@@ -1536,6 +1536,15 @@ namespace re {
         }
     }
 
+    struct StateDeleter
+    {
+        void operator()(StateBase * st) const
+        {
+            delete st;
+        }
+    };
+
+    ///TODO remove
     inline void free_st(StateBase * st)
     {
         std::vector<StateBase*> sts;
@@ -1774,6 +1783,59 @@ namespace re {
             (*first)->id = 0;
         }
     }
+
+
+    struct States
+    {
+        std::vector<unsigned> indexes;
+        std::vector<StateBase *> sts;
+        StateBase * root;
+
+        States(StateBase * root)
+        : root(root)
+        {
+            append_state(this->root, this->sts);
+
+            typedef std::vector<StateBase *>::iterator state_iterator;
+            state_iterator first = this->sts.begin();
+            state_iterator last = this->sts.end();
+            for (unsigned n = 1; first != last; ++first, ++n) {
+                (*first)->num = n;
+            }
+
+            this->indexes.resize(this->sts.size(), 0);
+        }
+
+        struct Deleter
+        {
+            void operator()(StateBase * st) const
+            {
+                if (st != &state_finish) {
+                    delete st;
+                }
+            }
+        };
+
+        ~States()
+        {
+            std::for_each(this->sts.begin(), this->sts.end(), Deleter());
+        }
+
+        void reset()
+        {
+            std::fill(this->indexes.begin(), this->indexes.end(), 0);
+        }
+
+        void set_count_at(StateBase * st, unsigned count)
+        {
+            this->indexes[st->num] = count;
+        }
+
+    private:
+        States();
+        States(const States &);
+        States& operator=(const States &);
+    };
 }
 
 #endif

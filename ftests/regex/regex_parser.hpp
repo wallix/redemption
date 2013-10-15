@@ -21,16 +21,9 @@
 #ifndef REDEMPTION_FTESTS_REGEX_REGEX_PARSE_HPP
 #define REDEMPTION_FTESTS_REGEX_REGEX_PARSE_HPP
 
-#include "regex.hpp"
+#include "regex_automate.hpp"
 
 namespace re {
-
-    typedef StateIdentifier<'w', IdentifierWordTrait>       StateWord;
-    typedef StateIdentifier<'W', IdentifierNoWordTrait>     StateNoWord;
-    typedef StateIdentifier<'d', IdentifierDigitTrait>      StateDigit;
-    typedef StateIdentifier<'D', IdentifierNoDigitTrait>    SateNoDigit;
-    typedef StateIdentifier<'s', IdentifierSpaceTrait>      StateSpace;
-    typedef StateIdentifier<'S', IdentifierNoSpaceTrait>    StateNoSpace;
 
     inline StateBase * c2st(char_int c)
     {

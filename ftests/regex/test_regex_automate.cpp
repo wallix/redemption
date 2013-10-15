@@ -35,10 +35,15 @@
 
 using namespace re;
 
+inline size_t multi_char(const char * c)
+{
+    return re::utf_consumer(c).bumpc();
+}
+
 BOOST_AUTO_TEST_CASE(TestRegexCheck)
 {
     {
-        StateBase st(NORMAL, multi_char("Þ"));
+        StateNormal st(multi_char("Þ"));
         BOOST_CHECK(st.check(multi_char("Þ")));
         BOOST_CHECK( ! st.check('a'));
     }
