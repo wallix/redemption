@@ -35,7 +35,7 @@
 #include <vector>
 #include <sstream>
 
-using namespace rndfa;
+using namespace re;
 
 inline void st_to_string(StateBase * st, std::ostream& os,
                          const std::vector<StateBase*>& states, unsigned depth = 0)
@@ -64,7 +64,7 @@ inline std::string st_to_string(StateBase * st)
 
 inline size_t multi_char(const char * c)
 {
-    return rndfa::utf_consumer(c).bumpc();
+    return re::utf_consumer(c).bumpc();
 }
 
 BOOST_AUTO_TEST_CASE(TestRegexState)
@@ -878,7 +878,7 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     }
 
     const char * str = "abcdefg";
-    typedef rndfa::StateMachine2::range_t range_t;
+    typedef re::StateMachine2::range_t range_t;
     matches.push_back(range_t(str, str+3));
     matches.push_back(range_t(str+4, str+6));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
