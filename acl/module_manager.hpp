@@ -323,6 +323,10 @@ public:
             LOG(LOG_INFO, "===============> MODULE_LOGIN (2)");
             return MODULE_INTERNAL_WIDGET2_LOGIN;
         }
+        else if (this->ini.context_is_asked(AUTHID_TARGET_PASSWORD)){
+            LOG(LOG_INFO, "===============> WAIT WITH CURRENT MODULE");
+            return MODULE_TRANSITORY;
+        }
         // Authenticated = true, means we have : AUTH_USER, AUTH_PASSWORD, TARGET_DEVICE, TARGET_USER, TARGET_PASSWORD
         // proceed with connection.
         else if (this->ini.context.authenticated.get()) {
