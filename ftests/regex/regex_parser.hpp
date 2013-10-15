@@ -266,7 +266,7 @@ namespace re {
             }
         };
 
-        StateBase st(0);
+        StateEpsilone st;
         StateBase ** pst = &st.out1;
         StateBase ** st_one = 0;
         StateBase ** prev_st_one = 0;
@@ -476,12 +476,17 @@ namespace re {
 
                         if (ismatch) {
                             pst = selected::next_pst(pst);
-                            *pst = new StateBase(CAPTURE_CLOSE);
+                            *pst = new StateClose;
                         }
                         else if (besplit != pesplit) {
                             has_epsilone = true;
                             pst = selected::next_pst(pst);
-                            *pst = new StateBase(ismatch ? CAPTURE_CLOSE : EPSILONE);
+                            if (ismatch) {
+                                *pst = new StateClose;
+                            }
+                            else {
+                                *pst = new StateEpsilone;
+                            }
                         }
 
                         if (st_one) {
@@ -532,7 +537,7 @@ namespace re {
                         IntermendaryState intermendary = intermendary_str2reg(consumer, has_epsilone, msg_err, recusive+1);
                         if (intermendary.first) {
                             pst = selected::next_pst(pst);
-                            *pst = new StateBase(CAPTURE_OPEN, 0, intermendary.first);
+                            *pst = new StateOpen(intermendary.first);
                             if (st_one) {
                                 *st_one = *pst;
                                 prev_st_one = st_one;

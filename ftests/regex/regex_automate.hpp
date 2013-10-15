@@ -169,6 +169,7 @@ namespace re {
 
     struct StateBase
     {
+    protected:
         StateBase(unsigned type, char_int c = 0, StateBase * out1 = 0, StateBase * out2 = 0)
         : utfc(c)
         , type(type)
@@ -178,19 +179,13 @@ namespace re {
         , out2(out2)
         {}
 
+    public:
         virtual ~StateBase()
         {}
 
-        virtual bool check(char_int c)
-        {
-            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
-            return (this->type == ANY_CHARACTER || this->utfc == c);
-        }
+        virtual bool check(char_int c) = 0;
 
-        virtual StateBase * clone() const
-        {
-            return new StateBase(this->type, this->utfc);
-        }
+        virtual StateBase * clone() const = 0;
 
         virtual void display(std::ostream& os) const
         {
@@ -237,6 +232,114 @@ namespace re {
 
         StateBase *out1;
         StateBase *out2;
+    };
+
+    struct StateSplit : public StateBase
+    {
+        StateSplit(StateBase * out1 = 0, StateBase * out2 = 0)
+        : StateBase(SPLIT, 0, out1, out2)
+        {}
+
+        virtual StateBase * clone() const
+        {
+            return new StateSplit;
+        }
+
+        virtual bool check(char_int c)
+        {
+            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
+            return true;
+        }
+    };
+
+    struct StateNormal : public StateBase
+    {
+        StateNormal(char_int c, StateBase * out1 = 0, StateBase * out2 = 0)
+        : StateBase(ANY_CHARACTER, c, out1, out2)
+        {}
+
+        virtual StateBase * clone() const
+        {
+            return new StateNormal(this->utfc);
+        }
+
+        virtual bool check(char_int c)
+        {
+            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
+            return this->utfc == c;
+        }
+    };
+
+    struct StateAny : public StateBase
+    {
+        StateAny(StateBase * out1 = 0, StateBase * out2 = 0)
+        : StateBase(ANY_CHARACTER, '.', out1, out2)
+        {}
+
+        virtual StateBase * clone() const
+        {
+            return new StateAny();
+        }
+
+        virtual bool check(char_int c)
+        {
+            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
+            return true;
+        }
+    };
+
+    struct StateClose : public StateBase
+    {
+        StateClose(StateBase * out1 = 0, StateBase * out2 = 0)
+        : StateBase(CAPTURE_CLOSE, ')', out1, out2)
+        {}
+
+        virtual StateBase * clone() const
+        {
+            return new StateClose();
+        }
+
+        virtual bool check(char_int c)
+        {
+            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
+            return true;
+        }
+    };
+
+    struct StateOpen : public StateBase
+    {
+        StateOpen(StateBase * out1 = 0, StateBase * out2 = 0)
+        : StateBase(CAPTURE_OPEN, '(', out1, out2)
+        {}
+
+        virtual StateBase * clone() const
+        {
+            return new StateOpen();
+        }
+
+        virtual bool check(char_int c)
+        {
+            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
+            return true;
+        }
+    };
+
+    struct StateEpsilone : public StateBase
+    {
+        StateEpsilone(StateBase * out1 = 0, StateBase * out2 = 0)
+        : StateBase(EPSILONE, 0, out1, out2)
+        {}
+
+        virtual StateBase * clone() const
+        {
+            return new StateEpsilone();
+        }
+
+        virtual bool check(char_int c)
+        {
+            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
+            return true;
+        }
     };
 
     inline std::ostream& operator<<(std::ostream& os, StateBase& st)
@@ -1392,17 +1495,17 @@ namespace re {
 
     inline StateBase * new_character(char_int c, StateBase * out1 = 0)
     {
-        return new StateBase(NORMAL, c, out1);
+        return new StateNormal(c, out1);
     }
 
     inline StateBase * new_any(StateBase * out1 = 0)
     {
-        return new StateBase(ANY_CHARACTER, 0, out1);
+        return new StateAny(out1);
     }
 
     inline StateBase * new_split(StateBase * out1 = 0, StateBase * out2 = 0)
     {
-        return new StateBase(SPLIT, 0, out1, out2);
+        return new StateSplit(out1, out2);
     }
 
     struct StateDeleter
