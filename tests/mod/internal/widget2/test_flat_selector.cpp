@@ -543,6 +543,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     }
 
 
+
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
     keymap.push_kevent(Keymap2::KEVENT_TAB);
