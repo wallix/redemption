@@ -41,46 +41,28 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
 {
     struct Reg {
         Reg(const char * s)
-        : st(str2reg(s))
-        , reset(0)
-        {
-            append_state_whitout_finish(this->st, this->sts);
-        }
-
-        ~Reg()
-        {
-            std::for_each(this->sts.begin(), this->sts.end(), StateDeleter());
-        }
+        : stw(str2reg(s))
+        {}
 
         bool search(const char * s)
         {
-            this->preload();
-            return st_search(this->st, s);
+            this->stw.reset_num();
+            return st_search(this->stw, s);
         }
 
         bool exact_search(const char * s)
         {
-            this->preload();
-            return st_exact_search(this->st, s);
+            this->stw.reset_num();
+            return st_exact_search(this->stw, s);
         }
 
-        void preload()
-        {
-            if (this->reset) {
-                st_reset_id(this->sts);
-            }
-            this->reset = true;
-        }
-
-        StateBase * st;
-        bool reset;
-        std::vector<StateBase*> sts;
+        StatesWrapper stw;
     };
 
     {
         Reg reg("a");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search(""), false);
         BOOST_CHECK_EQUAL(reg.search("a"), true);
@@ -104,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("^a");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search(""), false);
         BOOST_CHECK_EQUAL(reg.search("a"), true);
@@ -128,7 +110,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("a$");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search(""), false);
         BOOST_CHECK_EQUAL(reg.search("a"), true);
@@ -152,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("^a$");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search(""), false);
         BOOST_CHECK_EQUAL(reg.search("a"), true);
@@ -176,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("a+");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search(""), false);
         BOOST_CHECK_EQUAL(reg.search("a"), true);
@@ -200,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg(".*a.*$");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search(""), false);
         BOOST_CHECK_EQUAL(reg.search("a"), true);
@@ -224,7 +206,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("aa+$");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search(""), false);
         BOOST_CHECK_EQUAL(reg.search("a"), false);
@@ -248,7 +230,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("aa*b?a");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search(""), false);
         BOOST_CHECK_EQUAL(reg.search("a"), false);
@@ -277,7 +259,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("[a-ce]");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search("a"), true);
         BOOST_CHECK_EQUAL(reg.search("b"), true);
@@ -292,7 +274,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("[^a-cd]");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search("a"), !true);
         BOOST_CHECK_EQUAL(reg.search("b"), !true);
@@ -305,7 +287,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("(a?b?c?)d(.*)$");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search("adefg"), true);
     }
@@ -313,7 +295,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("b?a{,1}c");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search("a{,1}c"), true);
         BOOST_CHECK_EQUAL(reg.exact_search("a{,1}c"), true);
@@ -322,7 +304,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("b?a{0,3}c");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search("ac"), true);
         BOOST_CHECK_EQUAL(reg.exact_search("ac"), true);
@@ -331,7 +313,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("b?a{2,4}c");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search("aaac"), true);
         BOOST_CHECK_EQUAL(reg.exact_search("aaac"), true);
@@ -340,7 +322,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("b?a{2,}c");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search("aaaaaaaac"), true);
         BOOST_CHECK_EQUAL(reg.exact_search("aaaaaaac"), true);
@@ -349,7 +331,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     {
         Reg reg("b?a{0,}c");
 
-        BOOST_CHECK(reg.st);
+        BOOST_CHECK(reg.stw.root);
 
         BOOST_CHECK_EQUAL(reg.search("c"), true);
         BOOST_CHECK_EQUAL(reg.exact_search("c"), true);
@@ -370,11 +352,9 @@ inline void regex_test(Regex & p_regex,
     BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);
     BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);
     BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);
-    Regex::range_matches exact_matches = p_regex.match_result();
-    BOOST_CHECK(exact_matches == p_exact_match_result);
+    BOOST_CHECK(p_regex.match_result() == p_exact_match_result);
     BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);
-    Regex::range_matches matches = p_regex.match_result();
-    BOOST_CHECK(matches == p_match_result);
+    BOOST_CHECK(p_regex.match_result() == p_match_result);
 }
 
 BOOST_AUTO_TEST_CASE(TestRegex)
