@@ -152,7 +152,7 @@ struct mod_rdp : public mod_api {
 
     size_t recv_bmp_update;
 
-    rdp_mppc_dec mppc_dec;
+    rdp_mppc_unified_dec mppc_dec;
 
     redemption::string * error_message;
 
@@ -348,19 +348,16 @@ struct mod_rdp : public mod_api {
     virtual ~mod_rdp()
     {
         if (this->acl && !this->end_session_reason.is_empty() &&
-            !this->end_session_message.is_empty())
-        {
+            !this->end_session_message.is_empty()) {
             this->acl->report(this->end_session_reason.c_str(),
                 this->end_session_message.c_str());
         }
 
-        if (this->lic_layer_license_data)
-        {
+        if (this->lic_layer_license_data) {
             free(this->lic_layer_license_data);
         }
 
-        if (this->verbose)
-        {
+        if (this->verbose) {
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp cache count  = %llu",
                 this->orders.recv_bmp_cache_count);
             LOG(LOG_INFO, "~mod_rdp(): Recv order count      = %llu",

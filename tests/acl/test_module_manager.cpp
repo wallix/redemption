@@ -74,6 +74,7 @@ BOOST_AUTO_TEST_CASE(TestModuleManagerNextMod)
     BOOST_CHECK(res == MODULE_INTERNAL_DIALOG_VALID_MESSAGE);
     ini.context.accept_message.set_from_cstr("message");
 
+    ini.context.target_password.set_from_cstr("securepassword");
     res = mm.next_module();
     BOOST_CHECK(res == MODULE_INTERNAL_CLOSE);
 

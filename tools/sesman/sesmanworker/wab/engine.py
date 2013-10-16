@@ -24,6 +24,9 @@ class Engine(object):
             Logger().info("Reading configuration file section 'wabengine', key 'trace' failed : %s" % traceback.format_exc(e))
         return False
 
+    def password_expiration_date(self):
+        _data = self.engine.password_expiration_info()
+        return True
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type):
         """

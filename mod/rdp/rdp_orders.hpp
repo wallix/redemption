@@ -41,6 +41,7 @@
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 
@@ -56,6 +57,7 @@ struct rdp_orders {
     RDPPatBlt      patblt;
     RDPLineTo      lineto;
     RDPGlyphIndex  glyph_index;
+    RDPPolyline    polyline;
 
     BGRPalette cache_colormap[6];
     BGRPalette global_palette;
@@ -321,6 +323,10 @@ public:
                             mod->draw(this->mem3blt, cmd_clip, *bitmap);
                         }
                     }
+                    break;
+                case POLYLINE:
+                    this->polyline.receive(stream, header);
+                    this->polyline.log(LOG_INFO, cmd_clip);
                     break;
                 default:
                     /* error unknown order */

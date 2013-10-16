@@ -746,6 +746,7 @@ public:
             case RECT:
             case SCREENBLT:
             case DESTBLT:
+            case POLYLINE:
             default:
                 size = 1;
         }
@@ -789,6 +790,9 @@ public:
         break;
         case GLYPHINDEX:
             assert(!(header.fields & ~0x3FFFFF));
+        break;
+        case POLYLINE:
+            assert(!(header.fields & ~0x7F));
         break;
         default:
             LOG(LOG_INFO, "Order is Unknown (%u)\n", this->order);

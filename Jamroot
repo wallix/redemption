@@ -289,6 +289,15 @@ unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_un
 unit-test test_mppc : tests/core/RDP/test_mppc.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_mppc : tests/core/RDP/test_mppc.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_mppc_40 : tests/core/RDP/test_mppc_40.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_mppc_40 : tests/core/RDP/test_mppc_40.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_mppc_50 : tests/core/RDP/test_mppc_50.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_mppc_50 : tests/core/RDP/test_mppc_50.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_mppc_60 : tests/core/RDP/test_mppc_60.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_mppc_60 : tests/core/RDP/test_mppc_60.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_gcc : tests/core/RDP/test_gcc.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_gcc : tests/core/RDP/test_gcc.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
@@ -841,6 +850,12 @@ unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit
 
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_regex_parser : ftests/regex/test_regex_parser.cpp libboost_unit_test ;
+unit-test test_regex_parser : ftests/regex/test_regex_parser.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_regex_automate : ftests/regex/test_regex_automate.cpp libboost_unit_test ;
+unit-test test_regex_automate : ftests/regex/test_regex_automate.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test ;
 unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test gcov : <variant>coverage ;

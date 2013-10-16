@@ -42,7 +42,7 @@ struct Tracer {
 int main(int argc, char **argv) {
     //std::ios::sync_with_stdio(false);
 
-    using namespace rndfa;
+    using namespace re;
 
     if (argc < 2) {
         std::cerr << argv[0] << (" regex [str]") << std::endl;
@@ -55,7 +55,9 @@ int main(int argc, char **argv) {
         std::cerr << msg << std::endl;
         return 2;
     }
-    display_state(st);
+    StatesWrapper stw(st);
+    display_state(stw, st);
+    stw.reset_num();
     std::cout.flush();
 
     if (argc < 3) {
@@ -172,8 +174,11 @@ int main(int argc, char **argv) {
     << (ismatch3 ? "good\n" : "fail\n")
     << d3 << " sec\n"
     << (ismatch4 ? "good\n" : "fail\n")
-    << d4 << " sec\n"
-    << std::endl;
+    << d4 << " sec\n";
+
+    std::cout << "st_exact_search: " << st_exact_search(stw, str) << "\n";
+    stw.reset_num();
+    std::cout << "st_search: " << st_search(stw, str) << std::endl;
 
     if (ismatch3) {
         std::cout << ("with regex.h\n");
@@ -196,4 +201,5 @@ int main(int argc, char **argv) {
         std::cout.flush();
     }
     regfree(&rgx);
+    stw.states.clear();
 }

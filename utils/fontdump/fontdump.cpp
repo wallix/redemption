@@ -164,9 +164,9 @@ font_dump(void)
         x1++;
     }
     x2 = g_font_size; /* font size */
-    write(fd, (char*)&x2, 2);
+    write(fd, static_cast<char*>(&x2), 2);
     x2 = 1; /* style */
-    write(fd, (char*)&x2, 2);
+    write(fd, static_cast<char*>(&x2), 2);
     /* pad */
     index1 = 0;
     while (index1 < 8) {
@@ -199,19 +199,19 @@ font_dump(void)
             Sleep(10);
             /* width */
             x2 = abc.abcB;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* height */
             x2 = sz.cy;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* baseline */
             x2 = -sz.cy;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* offset */
             x2 = abc.abcA;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* incby */
             x2 = sz.cx;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* pad */
             index1 = 0;
             while (index1 < 6) {
@@ -319,19 +319,19 @@ font_dump(void)
             /* write out a blank glyph here */
             /* width */
             x2 = 1;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* height */
             x2 = 1;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* baseline */
             x2 = 0;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* offset */
             x2 = 0;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* incby */
             x2 = 1;
-            write(fd, (char*)&x2, 2);
+            write(fd, static_cast<char*>(&x2), 2);
             /* pad */
             index1 = 0;
             while (index1 < 6) {
