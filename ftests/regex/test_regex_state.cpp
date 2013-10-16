@@ -31,7 +31,7 @@
 #define LOGNULL
 
 
-#include "regex_automate.hpp"
+#include "regex_state.hpp"
 
 using namespace re;
 

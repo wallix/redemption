@@ -268,5 +268,3 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
     }
 }
 
-
-// using namespace re;
