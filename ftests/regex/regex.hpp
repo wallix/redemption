@@ -55,6 +55,7 @@ namespace re {
         {
             this->sm.~StateMachine2();
             this->stw.~StatesWrapper();
+            this->err = 0;
             new (&this->stw) StatesWrapper(str2reg(s, &this->err, &this->pos_err));
             new (&this->sm) StateMachine2(this->stw);
         }

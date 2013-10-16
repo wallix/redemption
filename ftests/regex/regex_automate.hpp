@@ -727,12 +727,9 @@ namespace re {
             state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
             this->nb_capture = last - first_cap;
 
-            for (unsigned n = 0; first != first_cap; ++first, ++n) {
-                (*first)->num = n;
-                (*first)->id = 0;
-            }
             for (unsigned n = 0; first != last; ++first, ++n) {
                 (*first)->num = n;
+                (*first)->id = 0;
             }
 
             this->nums.resize(this->states.size(), 0);
@@ -853,7 +850,7 @@ namespace re {
             }
 
             {
-                unsigned step = 0;
+                unsigned step = 1;
                 this->init_list(this->st_range_list, this->stw.root, step);
             }
 
@@ -1384,22 +1381,23 @@ namespace re {
 
                     for (; first != last; ++first) {
                         ++step_count;
+                        unsigned num = first->st->num - (this->sm.stw.size() - this->sm.stw.nb_capture);
                         if (first->st->is_cap_open()) {
-                            if (!this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + first->st->num] && tracer.open(ifirst->idx, s, first->st->num)) {
+                            if (!this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] && tracer.open(ifirst->idx, s, num)) {
 #ifdef DISPLAY_TRACE
-                                std::cout << ifirst->idx << "  " << *first->st << "  " << first->st->num << std::endl;
+                                std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
 #endif
-                                ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + first->st->num] = s;
+                                ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
                             }
                             continue ;
                         }
 
                         if (first->st->is_cap_close()) {
-                            if (tracer.close(ifirst->idx, s, first->st->num)) {
+                            if (tracer.close(ifirst->idx, s, num)) {
 #ifdef DISPLAY_TRACE
-                                std::cout << ifirst->idx << "  " << *first->st << "  " << first->st->num << std::endl;
+                                std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
 #endif
-                                ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + first->st->num] = s;
+                                ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
                             }
                             continue ;
                         }
@@ -1505,13 +1503,14 @@ namespace re {
 
                         for (; first != last; ++first) {
                             if (first->st->is_cap_close()) {
-                                if (tracer.close(ifirst->idx, s, first->st->num)) {
+                                unsigned num = first->st->num - (this->sm.stw.size() - this->sm.stw.nb_capture);
+                                if (tracer.close(ifirst->idx, s, num)) {
 #ifdef DISPLAY_TRACE
-                                    std::cout << ifirst->idx << "  " << *first->st << "  " << first->st->num << std::endl;
+                                    std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
 #endif
                                     if (0 == first->st->out1) {
                                         this->sm.idx_trace = ifirst->idx;
-                                        ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + first->st->num] = s;
+                                        ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
                                         return true;
                                     }
                                 }
