@@ -252,7 +252,7 @@ namespace re {
             this->vec.push_back(st);
         }
 
-        FinishFreeList()
+        ~FinishFreeList()
         {
             std::for_each(this->vec.begin(), this->vec.end(), StateDeleter());
         }
@@ -583,7 +583,7 @@ namespace re {
         return IntermendaryState(st.out1, pst);
     }
 
-    bool st_compile(StatesWrapper & stw, const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
+    inline bool st_compile(StatesWrapper & stw, const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
     {
         bool has_epsilone = false;
         const char * err = 0;

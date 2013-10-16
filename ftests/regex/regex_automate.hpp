@@ -714,7 +714,7 @@ namespace re {
     {
         void operator()(StateBase * st) const
         {
-                delete st;
+            delete st;
         }
     };
 
@@ -1604,7 +1604,7 @@ namespace re {
     inline void display_state(StatesWrapper & stw)
     {
         stw.reset_num();
-        display_state(stw, 0);
+        display_state(stw, stw.root);
     }
 
 
