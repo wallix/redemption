@@ -267,8 +267,7 @@ namespace re {
         struct FreeState {
             static IntermendaryState invalide(StateBase& st)
             {
-                { StatesWrapper w; w.reset(st.out2); } //quick free
-                st.out2 = 0;
+                StatesWrapper w(st.out1); //quick free
                 return IntermendaryState(0,0);
             }
         };
