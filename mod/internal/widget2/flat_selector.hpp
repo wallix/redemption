@@ -34,6 +34,7 @@
 
 #include "flat_button.hpp"
 #include "translation.hpp"
+// #include "radio_list.hpp"
 
 class WidgetSelectorFlat : public WidgetParent
 {
@@ -542,6 +543,7 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
     //WidgetPager pager;
+    // WidgetRadioList radiolist;
 
 
 public:
@@ -604,6 +606,7 @@ public:
         , logout(drawable, 0, 0, *this, this, TR("logout", ini), true, -16, WHITE, DARK_BLUE_BIS, 6, 2)
         , apply(drawable, 0, 0, *this, this, TR("filter", ini), true, -12, WHITE, DARK_BLUE_BIS, 6, 2)
         , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18, WHITE, DARK_BLUE_BIS, 6, 2)
+        // , radiolist(drawable, this->device_label.lx() + 30, this->device_label.dy(), *this, this)
     {
         this->impl = new CompositeTable;
 
@@ -625,6 +628,12 @@ public:
         this->add_widget(&this->last_page);
         this->add_widget(&this->logout);
         this->add_widget(&this->connect);
+        // this->add_widget(&this->radiolist);
+
+        // radiolist.add_elem("Alphabetical");
+        // radiolist.add_elem("Last Used First");
+        // radiolist.add_elem("Most Used First");
+        // radiolist.select(0);
 
         int dw = width - (this->selector_lines.rect.x + this->selector_lines.get_total_w() + 15);
         if (dw < 0) {

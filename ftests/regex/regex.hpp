@@ -28,70 +28,49 @@ namespace re {
 
     class Regex
     {
-    public:
-        struct Parser {
-            const char * err;
-            size_t pos_err;
-            StateBase * st;
-
-            Parser(StateBase * st = 0)
-            : err(0)
-            , pos_err(0)
-            , st(st)
-            {}
-
-            Parser(const char * s)
-            : err(0)
-            , pos_err(0)
-            , st(str2reg(s, &this->err, &this->pos_err))
-            {}
-        };
-
-    private:
-        Parser parser;
+        const char * err;
+        size_t pos_err;
+        StatesWrapper stw;
         StateMachine2 sm;
         unsigned step_limit;
 
     public:
         Regex(const char * s, unsigned step_limit = 10000)
-        : parser(s)
-        , sm(this->parser.st)
-        , step_limit(step_limit)
-        {}
-
-        Regex(unsigned step_limit = 10000)
-        : parser()
-        , sm(0)
+        : err(0)
+        , pos_err(0)
+        , stw(str2reg(s, &this->err, &this->pos_err))
+        , sm(this->stw)
         , step_limit(step_limit)
         {}
 
         Regex(StateBase * st, unsigned step_limit = 10000)
-        : parser(st)
-        , sm(st)
+        : err(0)
+        , pos_err(0)
+        , stw(st)
+        , sm(this->stw)
         , step_limit(step_limit)
         {}
 
         void reset(const char * s)
         {
             this->sm.~StateMachine2();
-            free_st(this->parser.st);
-            new (&this->parser) Parser(s);
-            new (&this->sm) StateMachine2(this->parser.st);
+            this->stw.~StatesWrapper();
+            this->err = 0;
+            new (&this->stw) StatesWrapper(str2reg(s, &this->err, &this->pos_err));
+            new (&this->sm) StateMachine2(this->stw);
         }
 
         ~Regex()
-        {
-            free_st(this->parser.st);
-        }
+        {}
 
         const char * message_error() const
         {
-            return this->parser.err;
+            return this->err;
         }
 
         size_t position_error() const
         {
-            return this->parser.pos_err;
+            return this->pos_err;
         }
 
         typedef StateMachine2::range_matches range_matches;
@@ -173,7 +152,7 @@ namespace re {
 
         void display()
         {
-            display_state(this->parser.st);
+            display_state(this->stw);
         }
     };
 }

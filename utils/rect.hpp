@@ -232,7 +232,7 @@ class DeltaRect {
             && (abs(this->dwidth) < 128)
             && (abs(this->dheight) < 128)
             ;
-        }
+    }
 };
 
 

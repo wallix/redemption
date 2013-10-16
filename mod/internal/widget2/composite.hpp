@@ -59,7 +59,7 @@ public:
     {
     }
 
-    ~WidgetParent() {
+    virtual ~WidgetParent() {
         if (this->impl) {
             delete this->impl;
             this->impl = NULL;
@@ -321,7 +321,7 @@ class WidgetComposite: public WidgetParent {
 public:
 
     WidgetComposite(DrawApi & drawable, const Rect& rect, Widget2 & parent,
-                             NotifyApi * notifier, int group_id = 0)
+                    NotifyApi * notifier, int group_id = 0)
     : WidgetParent(drawable, rect, parent, notifier, group_id)
     {
         this->impl = new CompositeTable;
