@@ -161,11 +161,10 @@ namespace re {
     const unsigned SPLIT            = 1 << 9;
     const unsigned CAPTURE_OPEN     = 1 << 10;
     const unsigned CAPTURE_CLOSE    = 1 << 11;
-    const unsigned SPECIAL_CHECK    = 1 << 12;
-    const unsigned EPSILONE         = 1 << 13;
-    const unsigned FIRST            = 1 << 14;
-    const unsigned LAST             = 1 << 15;
-    const unsigned FINISH           = 1 << 16;
+    const unsigned EPSILONE         = 1 << 12;
+    const unsigned FIRST            = 1 << 13;
+    const unsigned LAST             = 1 << 14;
+    const unsigned FINISH           = 1 << 15;
 
     struct StateBase
     {
@@ -173,7 +172,6 @@ namespace re {
         StateBase(unsigned type, char_int c = 0, StateBase * out1 = 0, StateBase * out2 = 0)
         : utfc(c)
         , type(type)
-        , id(0)
         , num(0)
         , out1(out1)
         , out2(out2)
@@ -184,24 +182,8 @@ namespace re {
         {}
 
         virtual bool check(char_int c) const = 0;
-
         virtual StateBase * clone() const = 0;
-
-        virtual void display(std::ostream& os) const
-        {
-            if (this->type == ANY_CHARACTER) {
-                os << "any";
-            }
-            else if (this->type & (SPLIT|CAPTURE_CLOSE|CAPTURE_OPEN)){
-                os << (this->is_split() ? "(split)" : this->type == CAPTURE_OPEN ? "(open)" : "(close)");
-            }
-            else if (this->type == FINISH) {
-                os << "@";
-            }
-            else {
-                os << "'" << utf_char(this->utfc) << "'";
-            }
-        }
+        virtual void display(std::ostream& os) const = 0;
 
         bool is_border() const
         { return this->type & (FIRST|LAST); }
@@ -227,7 +209,6 @@ namespace re {
         char_int utfc;
 
         unsigned type;
-        unsigned id;
         unsigned num;
 
         StateBase *out1;
@@ -250,23 +231,33 @@ namespace re {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return false;
         }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "(split)";
+        }
     };
 
-    struct StateNormal : public StateBase
+    struct StateChar : public StateBase
     {
-        StateNormal(char_int c, StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(ANY_CHARACTER, c, out1, out2)
+        StateChar(char_int c, StateBase * out1 = 0, StateBase * out2 = 0)
+        : StateBase(NORMAL, c, out1, out2)
         {}
 
         virtual StateBase * clone() const
         {
-            return new StateNormal(this->utfc);
+            return new StateChar(this->utfc);
         }
 
         virtual bool check(char_int c) const
         {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return this->utfc == c;
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "'" << utf_char(this->utfc) << "'";
         }
     };
 
@@ -286,6 +277,11 @@ namespace re {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return true;
         }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "any";
+        }
     };
 
     struct StateClose : public StateBase
@@ -303,6 +299,11 @@ namespace re {
         {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return false;
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "(close)";
         }
     };
 
@@ -322,6 +323,11 @@ namespace re {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return false;
         }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "(open)";
+        }
     };
 
     struct StateEpsilone : public StateBase
@@ -339,6 +345,11 @@ namespace re {
         {
             /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return false;
+        }
+
+        virtual void display(std::ostream& os) const
+        {
+            os << "(epsilone)";
         }
     };
 
@@ -373,8 +384,6 @@ namespace re {
             os << "Finish";
         }
     };
-
-    StateFinish state_finish = StateFinish();
 
     struct StateRange : StateBase
     {
@@ -459,7 +468,7 @@ namespace re {
     };
 
     template<typename Trait>
-    struct IdentifierNoTrait
+    struct IdentifierNotTrait
     {
         static bool check(char_int c)
         {
@@ -467,16 +476,16 @@ namespace re {
         }
     };
 
-    typedef IdentifierNoTrait<IdentifierWordTrait>  IdentifierNoWordTrait;
-    typedef IdentifierNoTrait<IdentifierDigitTrait> IdentifierNoDigitTrait;
-    typedef IdentifierNoTrait<IdentifierSpaceTrait> IdentifierNoSpaceTrait;
+    typedef IdentifierNotTrait<IdentifierWordTrait>  IdentifierNotWordTrait;
+    typedef IdentifierNotTrait<IdentifierDigitTrait> IdentifierNotDigitTrait;
+    typedef IdentifierNotTrait<IdentifierSpaceTrait> IdentifierNotSpaceTrait;
 
     typedef StateIdentifier<'w', IdentifierWordTrait>       StateWord;
-    typedef StateIdentifier<'W', IdentifierNoWordTrait>     StateNoWord;
+    typedef StateIdentifier<'W', IdentifierNotWordTrait>    StateNoWord;
     typedef StateIdentifier<'d', IdentifierDigitTrait>      StateDigit;
-    typedef StateIdentifier<'D', IdentifierNoDigitTrait>    SateNoDigit;
+    typedef StateIdentifier<'D', IdentifierNotDigitTrait>   SateNotDigit;
     typedef StateIdentifier<'s', IdentifierSpaceTrait>      StateSpace;
-    typedef StateIdentifier<'S', IdentifierNoSpaceTrait>    StateNoSpace;
+    typedef StateIdentifier<'S', IdentifierNotSpaceTrait>   StateNotSpace;
 
     struct StateCharacters : StateBase
     {
@@ -549,7 +558,7 @@ namespace re {
 
 
         StateMultiTest(StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(SPECIAL_CHECK, 0, out1, out2)
+        : StateBase(NORMAL, 0, out1, out2)
         , checkers()
         , result_true_check(true)
         {}
@@ -682,24 +691,32 @@ namespace re {
     };
 
     typedef CheckerIdentifier<'w', IdentifierWordTrait>     CheckerWord;
-    typedef CheckerIdentifier<'W', IdentifierNoWordTrait>   CheckerNoWord;
+    typedef CheckerIdentifier<'W', IdentifierNotWordTrait>  CheckerNoWord;
     typedef CheckerIdentifier<'d', IdentifierDigitTrait>    CheckerDigit;
-    typedef CheckerIdentifier<'D', IdentifierNoDigitTrait>  CheckerNoDigit;
+    typedef CheckerIdentifier<'D', IdentifierNotDigitTrait> CheckerNotDigit;
     typedef CheckerIdentifier<'s', IdentifierSpaceTrait>    CheckerSpace;
-    typedef CheckerIdentifier<'S', IdentifierNoSpaceTrait>  CheckerNoSpace;
+    typedef CheckerIdentifier<'S', IdentifierNotSpaceTrait> CheckerNotSpace;
 
     typedef std::vector<const StateBase*> const_state_list_t;
     typedef std::vector<StateBase*> state_list_t;
 
     inline void append_state(StateBase * st, state_list_t& sts)
     {
-        if (st && st->id != -4u) {
-            st->id = -4u;
+        if (st && st->num != -1u) {
+            st->num = -1u;
             sts.push_back(st);
             append_state(st->out1, sts);
             append_state(st->out2, sts);
         }
     }
+
+    struct StateDeleter
+    {
+        void operator()(StateBase * st) const
+        {
+                delete st;
+        }
+    };
 
     class StatesWrapper
     {
@@ -713,15 +730,31 @@ namespace re {
         };
     public:
         state_list_t states;
-        const StateBase * const root;
+        StateBase * root;
         unsigned nb_capture;
 
-        explicit StatesWrapper(StateBase * root)
-        : root(root)
+        explicit StatesWrapper()
+        : root(0)
+        , nb_capture(0)
+        {}
+
+        explicit StatesWrapper(StateBase * st)
+        : root(st)
         , nb_capture(0)
         {
-            append_state(root, this->states);
+            append_state(st, this->states);
+        }
 
+        void reset(StateBase * st)
+        {
+            std::for_each(this->states.begin(), this->states.end(), StateDeleter());
+            this->states.clear();
+            this->root = st;
+            append_state(st, this->states);
+        }
+
+        void init_nums()
+        {
             state_list_t::iterator first = this->states.begin();
             state_list_t::iterator last = this->states.end();
             state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
@@ -729,25 +762,14 @@ namespace re {
 
             for (unsigned n = 0; first != last; ++first, ++n) {
                 (*first)->num = n;
-                (*first)->id = 0;
             }
 
             this->nums.resize(this->states.size(), 0);
         }
 
-        struct Deleter
-        {
-            void operator()(StateBase * st) const
-            {
-                if (st != &state_finish) {
-                    delete st;
-                }
-            }
-        };
-
         ~StatesWrapper()
         {
-            std::for_each(this->states.begin(), this->states.end(), Deleter());
+            std::for_each(this->states.begin(), this->states.end(), StateDeleter());
         }
 
         void reset_num()
@@ -775,7 +797,6 @@ namespace re {
         }
 
     private:
-        StatesWrapper();
         StatesWrapper(const StatesWrapper &);
         StatesWrapper& operator=(const StatesWrapper &);
     };
@@ -958,7 +979,7 @@ namespace re {
                 if (0 == first->st->out1) {
                     continue ;
                 }
-                if (first->st->out1 == &state_finish) {
+                if (first->st->out1->is_finish()) {
                     first->next = 0;
                     continue;
                 }
@@ -1566,48 +1587,6 @@ namespace re {
         RangeList * st_range_list_last;
         RangeList st_range_beginning;
     };
-
-    inline StateBase * new_character(char_int c, StateBase * out1 = 0)
-    {
-        return new StateNormal(c, out1);
-    }
-
-    inline StateBase * new_any(StateBase * out1 = 0)
-    {
-        return new StateAny(out1);
-    }
-
-    inline StateBase * new_split(StateBase * out1 = 0, StateBase * out2 = 0)
-    {
-        return new StateSplit(out1, out2);
-    }
-
-    ///TODO remove
-    inline void append_state_whitout_finish(StateBase * st, std::vector<StateBase*>& sts)
-    {
-        if (st && st->id != -4u && st != &state_finish) {
-            st->id = -4u;
-            sts.push_back(st);
-            append_state_whitout_finish(st->out1, sts);
-            append_state_whitout_finish(st->out2, sts);
-        }
-    }
-
-    struct StateDeleter
-    {
-        void operator()(StateBase * st) const
-        {
-            delete st;
-        }
-    };
-
-    ///TODO remove
-    inline void free_st(StateBase * st)
-    {
-        std::vector<StateBase*> sts;
-        append_state_whitout_finish(st, sts);
-        std::for_each(sts.begin(), sts.end(), StateDeleter());
-    }
 
     inline void display_state(StatesWrapper & stw, StateBase * st, unsigned depth = 0)
     {

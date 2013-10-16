@@ -41,8 +41,9 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
 {
     struct Reg {
         Reg(const char * s)
-        : stw(str2reg(s))
-        {}
+        {
+            st_compile(this->stw, s);
+        }
 
         bool search(const char * s)
         {
