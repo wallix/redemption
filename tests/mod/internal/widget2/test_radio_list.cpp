@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     radiolist.add_elem("Last Used First");
 
     parent.rdp_input_invalidate(parent.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            x, y, NULL);
     parent.rdp_input_invalidate(parent.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify2.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify2.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\x02\x41\x3f\x86\x0a\x68\xd3\x52\xb0\xce"
                    "\xe0\x2d\x74\xce\x7e\x5c\xf3\xd0\x64\xb5"
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
     parent.rdp_input_mouse((MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN),
                            x, y, NULL);
     parent.rdp_input_invalidate(parent.rect);
-    drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify3.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "radiolistnotify3.png");
     if (!check_sig(drawable.gd.drawable, message,
                    "\xd7\x7e\x9f\x6d\xff\xbf\x75\xa2\xe0\x51"
                    "\x7a\x84\xd6\xe5\x00\x7e\xac\x15\x5d\x83"
