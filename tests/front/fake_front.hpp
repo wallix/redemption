@@ -90,6 +90,12 @@ public:
         this->gd.draw(new_cmd24, clip, gly_cache);
     }
 
+    void draw(const RDPPolyline & cmd, const Rect & clip) {
+        RDPPolyline new_cmd24 = cmd;
+        new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const { return cl; }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data, size_t length

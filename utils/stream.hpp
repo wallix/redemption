@@ -242,6 +242,12 @@ public:
         return this->p - n;
     }
 
+    uint8_t * out_uint8p(unsigned int n) {
+        REDASSERT(this->has_room(n));
+        this->p+=n;
+        return this->p - n;
+    }
+
     void in_skip_bytes(unsigned int n) {
         REDASSERT(this->in_check_rem(n));
         this->p+=n;

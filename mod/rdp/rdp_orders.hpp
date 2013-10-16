@@ -326,7 +326,7 @@ public:
                     break;
                 case POLYLINE:
                     this->polyline.receive(stream, header);
-                    this->polyline.log(LOG_INFO, cmd_clip);
+                    mod->draw(this->polyline, cmd_clip);
                     break;
                 default:
                     /* error unknown order */

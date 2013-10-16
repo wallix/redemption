@@ -135,6 +135,14 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
+        virtual void draw(const RDPPolyline& cmd, const Rect& clip)
+        {
+            if (verbose > 10){
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
 
         virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const { return cl; }
         virtual void send_to_channel(const CHANNELS::ChannelDef & channel, uint8_t* data, size_t length, size_t chunk_size, int flags)

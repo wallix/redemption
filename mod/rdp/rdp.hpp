@@ -1964,6 +1964,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[UnusedIndex3]                    = 1;
         order_caps.orderSupport[UnusedIndex5]                    = 1;
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
+        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 0;
         order_caps.textFlags                                     = 0x06a1;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
         if (this->verbose) {
@@ -4330,6 +4331,11 @@ public:
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache)
     {
         this->front.draw(cmd, clip, gly_cache);
+    }
+
+    virtual void draw(const RDPPolyline& cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
     }
 
     virtual void server_draw_text(int16_t x, int16_t y, const char * text, uint32_t fgcolor, uint32_t bgcolor, const Rect & clip)

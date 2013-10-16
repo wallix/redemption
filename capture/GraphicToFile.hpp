@@ -493,6 +493,12 @@ public:
         this->RDPSerializer::draw(cmd, clip, gly_cache);
     }
 
+    virtual void draw(const RDPPolyline& cmd, const Rect & clip)
+    {
+        this->drawable.draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
+    }
+
 protected:
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {
