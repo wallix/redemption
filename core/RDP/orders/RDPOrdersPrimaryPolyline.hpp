@@ -185,7 +185,7 @@ public:
     uint32_t PenColor;
     uint8_t  NumDeltaEntries;
 
-    struct {
+    struct DeltaPoint {
         int16_t xDelta;
         int16_t yDelta;
     } deltaPoints [128];
@@ -202,6 +202,143 @@ public:
     , PenColor(0x00000000)
     , NumDeltaEntries(0) {
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
+    }
+
+    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const {
+        RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
+
+        TODO("check that");
+        if (!common.clip.contains_pt(this->xStart, this->yStart)) {
+            header.control |= RDP::BOUNDS;
+        }
+
+        header.control |= (is_1_byte(this->xStart - oldcmd.xStart) && is_1_byte(this->yStart - oldcmd.yStart)) * RDP::DELTA;
+
+        header.fields =
+                (this->xStart          != oldcmd.xStart         ) * 0x0001
+              | (this->yStart          != oldcmd.yStart         ) * 0x0002
+              | (this->bRop2           != oldcmd.bRop2          ) * 0x0004
+              | (this->BrushCacheEntry != oldcmd.BrushCacheEntry) * 0x0008
+              | (this->PenColor        != oldcmd.PenColor       ) * 0x0010
+              | (this->NumDeltaEntries != oldcmd.NumDeltaEntries) * 0x0020
+              | (
+                 (this->NumDeltaEntries != oldcmd.NumDeltaEntries) ||
+                 memcmp(this->deltaPoints, oldcmd.deltaPoints,
+                        this->NumDeltaEntries * sizeof(DeltaPoint))
+                                                                ) * 0x0040
+              ;
+
+        common.emit(stream, header, oldcommon);
+
+        header.emit_coord(stream, 0x0001, this->xStart, oldcmd.xStart);
+        header.emit_coord(stream, 0x0002, this->yStart, oldcmd.yStart);
+
+        if (header.fields & 0x0004) { stream.out_uint8(this->bRop2); }
+
+        if (header.fields & 0x0008) { stream.out_uint16_le(this->BrushCacheEntry); }
+
+        if (header.fields & 0x0010) {
+            stream.out_uint8(this->PenColor);
+            stream.out_uint8(this->PenColor >> 8);
+            stream.out_uint8(this->PenColor >> 16);
+        }
+
+        if (header.fields & 0x0020) { stream.out_uint8(this->NumDeltaEntries); }
+
+        if (header.fields & 0x0040) {
+            uint32_t offset_cbData = stream.get_offset();
+            stream.out_clear_bytes(1);
+
+            uint8_t * zeroBit = stream.out_uint8p((this->NumDeltaEntries + 3) / 4);
+            *zeroBit = 0;
+
+            for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
+                if (i && !(i % 4)) {
+                    zeroBit++;
+                    *zeroBit = 0;
+                }
+
+                if (!this->deltaPoints[i].xDelta) {
+                    *zeroBit |= (1 << (8 - (i % 4) * 2 - 1));
+                }
+                else {
+                    if (abs(this->deltaPoints[i].xDelta) > 0x3F) {
+                        uint16_t data;
+
+                        memcpy(&data, &this->deltaPoints[i].xDelta, sizeof(data));
+                        data |= 0x8000;
+
+                        if (this->deltaPoints[i].xDelta > 0) {
+                            data &= ~0x4000;
+                        }
+                        else {
+                            data |= 0x4000;
+                        }
+
+                        stream.out_uint16_be(data);
+                    }
+                    else {
+                        int8_t  _xDelta;
+                        uint8_t data;
+
+                        _xDelta = this->deltaPoints[i].xDelta;
+
+                        memcpy(&data, &_xDelta, sizeof(data));
+                        data &= ~0x80;
+
+                        if (this->deltaPoints[i].xDelta > 0) {
+                            data &= ~0x40;
+                        }
+                        else {
+                            data |= 0x40;
+                        }
+
+                        stream.out_uint8(data);
+                    }
+                }
+
+                if (!this->deltaPoints[i].yDelta) {
+                    *zeroBit |= (1 << (8 - (i % 4) * 2 - 2));
+                }
+                else {
+                    if (abs(this->deltaPoints[i].yDelta) > 0x3F) {
+                        uint16_t data;
+
+                        memcpy(&data, &this->deltaPoints[i].yDelta, sizeof(data));
+                        data |= 0x8000;
+
+                        if (this->deltaPoints[i].yDelta > 0) {
+                            data &= ~0x4000;
+                        }
+                        else {
+                            data |= 0x4000;
+                        }
+
+                        stream.out_uint16_be(data);
+                    }
+                    else {
+                        int8_t  _yDelta;
+                        uint8_t data;
+
+                        _yDelta = this->deltaPoints[i].yDelta;
+
+                        memcpy(&data, &_yDelta, sizeof(data));
+                        data &= ~0x80;
+
+                        if (this->deltaPoints[i].yDelta > 0) {
+                            data &= ~0x40;
+                        }
+                        else {
+                            data |= 0x40;
+                        }
+
+                        stream.out_uint8(data);
+                    }
+                }
+            }
+
+            stream.set_out_uint8(stream.get_offset() - offset_cbData - 1, offset_cbData);
+        }
     }
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {

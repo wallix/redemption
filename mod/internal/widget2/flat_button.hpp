@@ -197,15 +197,6 @@ public:
             }
         }
     }
-
-private:
-
-
-public:
-    virtual void blur()
-    {
-        Widget2::blur();
-    }
 };
 
 #endif

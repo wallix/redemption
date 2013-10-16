@@ -35,6 +35,7 @@
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "font.hpp"
 #include "png.hpp"
 
@@ -441,6 +442,26 @@ public:
                 }
                 x += font_item->width + 2;
             }
+        }
+    }
+
+    void draw(const RDPPolyline & cmd, const Rect & clip) {
+        uint32_t color = RGBtoBGR(cmd.PenColor);
+
+        (void)color;
+
+        int16_t startx = cmd.xStart;
+        int16_t starty = cmd.yStart;
+
+        int16_t endx;
+        int16_t endy;
+
+        for (uint8_t i; i < cmd.NumDeltaEntries; i++) {
+            endx = startx + cmd.deltaPoints[i].xDelta;
+            endx = starty + cmd.deltaPoints[i].yDelta;
+
+            startx = endx;
+            starty = endy;
         }
     }
 

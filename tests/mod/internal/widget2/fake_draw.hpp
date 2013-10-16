@@ -63,6 +63,11 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
+    virtual void draw(const RDPPolyline&, const Rect&)
+    {
+        BOOST_CHECK(false);
+    }
+
     virtual void begin_update()
     {}
 

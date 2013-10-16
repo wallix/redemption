@@ -811,6 +811,9 @@ unit-test test_number_edit : tests/mod/internal/widget2/test_number_edit.cpp png
 unit-test test_edit_valid : tests/mod/internal/widget2/test_edit_valid.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_edit_valid : tests/mod/internal/widget2/test_edit_valid.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_radio_list : tests/mod/internal/widget2/test_radio_list.cpp png z openssl crypto libboost_unit_test ;
+unit-test test_radio_list : tests/mod/internal/widget2/test_radio_list.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_flat_dialog : tests/mod/internal/widget2/test_flat_dialog.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 

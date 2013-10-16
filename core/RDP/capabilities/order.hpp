@@ -163,7 +163,7 @@
 // |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.14).    |
 // +------------------------------+--------------------------------------------+
 // | 0x14 TS_NEG_POLYGON_SC_INDEX | PolygonSC Primary Drawing Order (see       |
-// |                              | [MS-RDPEGDI] section 246028714a40ade0e9a85f88c942dd9431fb21d44.2.2.2.1.1.2.16) and |
+// |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.16) and |
 // |                              | PolygonCB Primary Drawing Order (see       |
 // |                              | [MS-RDPEGDI] section 2.2.2.2.1.1.2.17).    |
 // +------------------------------+--------------------------------------------+
