@@ -208,8 +208,21 @@ public:
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
         TODO("check that");
-        if (!common.clip.contains_pt(this->xStart, this->yStart)) {
+        int16_t pointx = this->xStart;
+        int16_t pointy = this->yStart;
+        if (!common.clip.contains_pt(pointx, pointy)) {
             header.control |= RDP::BOUNDS;
+        }
+        else {
+            for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
+                pointx = this->deltaPoints[i].xDelta;
+                pointy = this->deltaPoints[i].yDelta;
+
+                if (!common.clip.contains_pt(pointx, pointy)) {
+                    header.control |= RDP::BOUNDS;
+                    break;
+                }
+            }
         }
 
         header.control |= (is_1_byte(this->xStart - oldcmd.xStart) && is_1_byte(this->yStart - oldcmd.yStart)) * RDP::DELTA;
