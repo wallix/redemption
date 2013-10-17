@@ -40,7 +40,7 @@
 
 const char expected_stripped_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x02\x00\x20\x03\x58\x02\x18\x00" // WRM version = 2, width = 800, height=600, bpp=24
+           "\x03\x00\x20\x03\x58\x02\x18\x00" // WRM version = 3, width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // initial screen content PNG image
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 
 const char expected_stripped_wrm2[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x02\x00\x20\x03\x58\x02\x18\x00" // WRM version = 2, width = 800, height=600, bpp=24
+           "\x03\x00\x20\x03\x58\x02\x18\x00" // WRM version = 3, width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // initial screen content PNG image
