@@ -520,10 +520,9 @@ class Sesman():
         _status, _error = True, u''
         try:
             Logger().info("password_expiration_date = %s" % self.engine.password_expiration_date())
-            if self.engine.password_expiration_date():
-                _status, _error = self.interactive_display_message(
-                    {u'message': u'Your password will expire %s. Please change it.' % "soon"}
-                )
+            message = self.engine.password_expiration_date()
+            if message:
+                _status, _error = self.interactive_display_message({u'message': message})
         except Exception, e:
             import traceback
             Logger().info("<<<<%e>>>>" % traceback.format_exc(e))
