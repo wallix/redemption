@@ -25,7 +25,8 @@
 #define BOOST_TEST_MODULE TestWrmImageChunk
 #include <boost/test/auto_unit_test.hpp>
 
-// #define LOGNULL
+//#define LOGPRINT
+#define LOGNULL
 
 #include "test_orders.hpp"
 #include "transport.hpp"
@@ -38,7 +39,7 @@
 
 const char expected_Red_on_Blue_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x02\x00\x64\x00\x64\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
+           "\x03\x00\x64\x00\x64\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
 
 /* 0000 */ "\x00\x10\x75\x00\x00\x00\x01\x00"
@@ -133,12 +134,13 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
     }
     png_recorder.flush();
     BOOST_CHECK_EQUAL(298, sq_outfilename_filesize(&out_png_trans.seq, 0));
+
     sq_outfilename_unlink(&out_png_trans.seq, 0);
 }
 
 const char expected_reset_rect_wrm[] =
 /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-           "\x02\x00\x64\x00\x64\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
+           "\x03\x00\x64\x00\x64\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
 
 /* 0000 */ "\x00\x10\x75\x00\x00\x00\x01\x00"
@@ -159,7 +161,7 @@ const char expected_reset_rect_wrm[] =
            "\x11\x5f\x05\x05\xf6\xf6\xff\x00" // Red Rect
 
            // save orders cache
-/* 0000 */ "\x02\x10\xc2\x01\x00\x00\x01\x00"                                 //........
+/* 0000 */ "\x02\x10\xce\x01\x00\x00\x01\x00"                                 //........
 /* 0000 */ "\x0a\x00\x00\x00\x00\x01\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0010 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0020 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
@@ -187,7 +189,8 @@ const char expected_reset_rect_wrm[] =
 /* 0180 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 0190 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
 /* 01a0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-/* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"                         //..........
+/* 01b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
+/* 01c0 */ "\x00\x00\x00\x00\x00\x00"                                         //......
 
            "\xf0\x03\x10\x00\x00\x00\x01\x00" // 03F0: TIMESTAMP 0010: chunk_len=16 0001: 1 order
            "\x40\x0C\xAA\x3B\x00\x00\x00\x00" // 0x000000003BAA0C40 = 1001000000
@@ -224,8 +227,6 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     consumer.timestamp(now);
     consumer.draw(RDPOpaqueRect(scr.shrink(20), GREEN), scr);
     consumer.flush();
-
-
 }
 
 BOOST_AUTO_TEST_CASE(TestReloadOrderStates)
