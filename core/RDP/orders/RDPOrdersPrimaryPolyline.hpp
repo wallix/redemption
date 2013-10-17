@@ -204,6 +204,32 @@ public:
         ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
     }
 
+    RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, uint32_t PenColor,
+        uint8_t NumDeltaEntries, Stream & deltaPoints) {
+        this->xStart          = xStart;
+        this->yStart          = yStart;
+        this->bRop2           = bRop2;
+        this->BrushCacheEntry = BrushCacheEntry;
+        this->PenColor        = PenColor;
+        this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaPoints) / sizeof(this->deltaPoints[0]));
+        ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
+        for (int i = 0; i < this->NumDeltaEntries; i++) {
+            this->deltaPoints[i].xDelta = deltaPoints.in_sint16_le();
+            this->deltaPoints[i].yDelta = deltaPoints.in_sint16_le();
+        }
+    }
+
+    bool operator==(const RDPPolyline & other) const {
+        return  (this->xStart == other.xStart)
+             && (this->yStart == other.yStart)
+             && (this->bRop2 == other.bRop2)
+             && (this->BrushCacheEntry == other.BrushCacheEntry)
+             && (this->PenColor == other.PenColor)
+             && (this->NumDeltaEntries == other.NumDeltaEntries)
+             && !memcmp(this->deltaPoints, other.deltaPoints, sizeof(DeltaPoint) * this->NumDeltaEntries)
+             ;
+    }
+
     void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
@@ -449,7 +475,7 @@ public:
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf(buffer + lg, sz - lg,
-            "polyline(xStart=%d xStart=%d bRop2=0x%02X BrushCacheEntry=%d PenColor=%.6x "
+            "polyline(xStart=%d yStart=%d bRop2=0x%02X BrushCacheEntry=%d PenColor=%.6x "
                 "NumDeltaEntries=%d DeltaEntries=(",
             this->xStart, this->yStart, this->bRop2, this->BrushCacheEntry, this->PenColor, this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
