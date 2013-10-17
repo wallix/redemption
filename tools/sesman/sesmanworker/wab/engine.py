@@ -25,8 +25,15 @@ class Engine(object):
         return False
 
     def password_expiration_date(self):
-        _data = self.engine.password_expiration_info()
-        return True
+        _data = self.wabengine.check_password_expiration_info()
+        if _data[2]:
+            if days > 1:
+                #TODO: Add translations for these messages
+                return u'Your password will expire in %s days. Please change it.' % _data[0]
+            else:
+                #TODO: Add translations for these messages
+                return u'Your password will expire soon. Please change it.'
+        return False
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type):
         """
