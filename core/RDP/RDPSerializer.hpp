@@ -378,7 +378,7 @@ public:
 
     virtual void draw(const RDPPolyline & cmd, const Rect & clip)
     {
-        this->reserve_order(1000);
+        this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYLINE, clip);
         cmd.emit(this->stream_orders, newcommon, this->common, this->polyline);
         this->common = newcommon;
