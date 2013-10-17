@@ -4270,6 +4270,28 @@ public:
         }
     }
 
+    void draw(const RDPEllipseSC & cmd, const Rect & clip)
+    {
+        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()){
+
+            this->send_global_palette();
+
+            RDPEllipseSC new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp){
+                const BGRColor color24 = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+                new_cmd.color = color_encode(color24, this->client_info.bpp);
+            }
+            this->orders->draw(new_cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
+                RDPEllipseSC new_cmd24 = cmd;
+                new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
+                this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
     virtual void flush() {
         this->orders->flush();
         if (  this->capture

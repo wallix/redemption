@@ -135,6 +135,7 @@ struct RDPSerializer : public RDPGraphicDevice
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
     RDPPolyline polyline;
+    RDPEllipseSC ellipseSC;
     // state variables for gathering batch of orders
     size_t order_count;
     size_t chunk_flags;
@@ -175,6 +176,7 @@ struct RDPSerializer : public RDPGraphicDevice
     , glyphindex( 0, 0, 0, 0, 0, 0
                 , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t *)"")
     , polyline()
+    , ellipseSC()
     // state variables for a batch of orders
     , order_count(0)
     , bmp_cache(bmp_cache)
@@ -384,6 +386,16 @@ public:
         this->common = newcommon;
         this->polyline = cmd;
     }
+
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
+    {
+        this->reserve_order(26);
+        RDPOrderCommon newcommon(RDP::ELLIPSESC, clip);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->ellipseSC);
+        this->common = newcommon;
+        this->ellipseSC = cmd;
+    }
+
 
     // check if the next bitmap will fit in available packet size
     // if not send previous bitmaps we got and init a new packet

@@ -30,7 +30,7 @@
 #include "composite.hpp"
 #include "flat_button.hpp"
 #include "translation.hpp"
-
+#include "ellipse.hpp"
 class FlatLogin : public WidgetParent
 {
 public:

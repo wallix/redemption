@@ -27,6 +27,11 @@
 
 #include "colors.hpp"
 #include "rect.hpp"
+#include "ellipse.hpp"
+
+#include "difftimeval.hpp"
+#include "rdtsc.hpp"
+
 
 struct Drawable {
     static const std::size_t Bpp = 3;
@@ -1087,6 +1092,55 @@ struct Drawable {
         }
     }
 
+
+    // TODO WTF
+    uint64_t pos_xy(int x, int y) {
+        return (y * this->rowsize) + (x * this->Bpp);
+    }
+    void ellipse(const Ellipse & el, const uint8_t rop,
+                 const uint8_t fill, const uint32_t color) {
+        // LOG(LOG_INFO, "ellipse drawable color: %d", color);
+        // LOG(LOG_INFO, "ellipse rayon x: %d, rayon y: %d", el.radiusx, el.radiusy);
+        // LOG(LOG_INFO, "ellipse centre x: %d, centre y: %d", el.centerx, el.centery);
+        (void)rop;
+        (void)fill;
+        if (tracked_area.has_intersection(el.get_rect())) {
+            tracked_area_changed = true;
+        }
+        Rect cliped = el.get_rect().intersect(Rect(0, 0, this->width, this->height));
+        int x = 0;
+        int y = 0;
+        uint8_t * const base = this->data;
+        uint8_t * p = base;
+        // LOG(LOG_INFO, "ellipse drawable color: %d", color);
+        // LOG(LOG_INFO, "cliped  x: %d,  y: %d", cliped.x, cliped.y);
+        // LOG(LOG_INFO, "cliped  cx: %d, cy: %d", cliped.cx, cliped.cy);
+        // unsigned long long usec = ustime();
+        // unsigned long long cycles = rdtsc();
+        for (y = cliped.y; y < cliped.bottom(); ++y) {
+            int compare = el.radiusx * el.radiusx *
+                (el.radiusy * el.radiusy -
+                 (y - el.centery) * (y - el.centery));
+            bool next = false;
+            for (x = cliped.x; x < cliped.right(); ++x) {
+                int that = el.radiusy * el.radiusy *
+                    (x - el.centerx) * (x - el.centerx);
+                if (that <= compare) {
+                    if (!next) {
+                        next = true;
+                        p = base + this->pos_xy(x, y);
+                    }
+                    else {
+                        p +=3;
+                    }
+                    p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
+                }
+            }
+        }
+        // unsigned long long elapusec = ustime() - usec;
+        // unsigned long long elapcyc = rdtsc() - cycles;
+        // LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+    }
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
     // also we already swapped color if we are using BGR instead of RGB
@@ -1095,7 +1149,6 @@ struct Drawable {
         if (tracked_area.has_intersection(rect)) {
             tracked_area_changed = true;
         }
-
         uint8_t * const base = this->first_pixel(rect);
         uint8_t * p = base;
 

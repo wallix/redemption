@@ -1965,6 +1965,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[UnusedIndex5]                    = 1;
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
         order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 0;
+        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 0;
         order_caps.textFlags                                     = 0x06a1;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
         if (this->verbose) {
@@ -3693,8 +3694,8 @@ public:
     // 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE)
     // =========================================================================
 
-    // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is 
-    // the same as the updateHeader byte field specified in the Fast-Path Update 
+    // updateHeader (1 byte): An 8-bit, unsigned integer. The format of this field is
+    // the same as the updateHeader byte field specified in the Fast-Path Update
     // (section 2.2.9.1.2.1) structure. The updateCode bitfield (4 bits in size) MUST
     // be set to FASTPATH_UPDATETYPE_COLOR (9).
 
@@ -3707,14 +3708,14 @@ public:
     // Update structure.
 
     // colorPointerUpdateData (variable): Color pointer data. Both slow-path and
-    // fast-path utilize the same data format, a Color Pointer Update (section 
+    // fast-path utilize the same data format, a Color Pointer Update (section
     // 2.2.9.1.1.4.4) structure, to represent this information.
 
     // 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
     // =============================================================
 
-    // The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp 
-    // color pointer, as specified in [T128] section 8.14.3. This pointer update 
+    // The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp
+    // color pointer, as specified in [T128] section 8.14.3. This pointer update
     // is used for both monochrome and color pointers in RDP.
 
     //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
@@ -3730,7 +3731,7 @@ public:
     // in the Large Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG
     // was not set, the maximum allowed pointer width is 32 pixels.
 
-    //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer 
+    //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
     // in pixels. The maximum allowed pointer height is 96 pixels if the client
     // indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001)
     // in the Large Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG
@@ -3936,7 +3937,7 @@ public:
 
         unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
-        
+
         if (pointer_idx < 0){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
@@ -3958,18 +3959,18 @@ public:
 
         if (cursor.width > Pointer::MAX_WIDTH){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer width overflow (%d)", cursor.width);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);        
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
-        if (cursor.height > Pointer::MAX_HEIGHT){ 
+        if (cursor.height > Pointer::MAX_HEIGHT){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu pointer height overflow (%d)", cursor.height);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);        
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
         if ((unsigned)cursor.x >= cursor.width){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot x out of pointer (%d >= %d)", cursor.x, cursor.width);
             cursor.x = 0;
         }
-        
+
         if ((unsigned)cursor.y >= cursor.height){
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu hotspot y out of pointer (%d >= %d)", cursor.y, cursor.height);
             cursor.y = 0;
@@ -4334,6 +4335,11 @@ public:
     }
 
     virtual void draw(const RDPPolyline& cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPEllipseSC& cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
     }

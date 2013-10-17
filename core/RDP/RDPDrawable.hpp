@@ -36,6 +36,7 @@
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "font.hpp"
 #include "png.hpp"
 
@@ -83,6 +84,11 @@ public:
         const Rect & trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         const uint32_t color = this->RGBtoBGR(cmd.color);
         this->drawable.opaquerect(trect, color);
+    }
+
+    void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+        uint32_t bgrcolor = this->RGBtoBGR(cmd.color);
+        this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, bgrcolor);
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)

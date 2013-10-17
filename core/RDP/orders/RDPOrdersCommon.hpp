@@ -223,6 +223,7 @@ namespace RDP {
         MEMBLT     = 13,
         MEM3BLT    = 14,
         POLYLINE   = 22,
+        ELLIPSESC  = 25,
         GLYPHINDEX = 27,
     };
 
@@ -729,26 +730,25 @@ public:
         }
 
         size_t size = 1;
-        switch (this->order)
-        {
-            case MEM3BLT:
-            case GLYPHINDEX:
-                size = 3;
-                break;
-
-            case PATBLT:
-            case MEMBLT:
-            case LINE:
+        switch (this->order) {
+        case MEM3BLT:
+        case GLYPHINDEX:
+            size = 3;
+            break;
+        case PATBLT:
+        case MEMBLT:
+        case LINE:
             //case POLYGON2:
             //case ELLIPSE2:
-                size = 2;
-                break;
-            case RECT:
-            case SCREENBLT:
-            case DESTBLT:
-            case POLYLINE:
-            default:
-                size = 1;
+            size = 2;
+            break;
+        case RECT:
+        case SCREENBLT:
+        case DESTBLT:
+        case POLYLINE:
+        case ELLIPSESC:
+        default:
+            size = 1;
         }
         if (header.control & SMALL) {
             size = (size<=1)?0:size-1;
@@ -768,32 +768,35 @@ public:
         switch (this->order){
         case DESTBLT:
             assert(!(header.fields & ~0x1F));
-        break;
+            break;
         case PATBLT:
             assert(!(header.fields & ~0xFFF));
-        break;
+            break;
         case SCREENBLT:
             assert(!(header.fields & ~0x7F));
-        break;
+            break;
         case LINE:
             assert(!(header.fields & ~0x3FF));
-        break;
+            break;
         case RECT:
             assert(!(header.fields & ~0x7F));
-        break;
+            break;
         case DESKSAVE:
-        break;
+            break;
         case MEMBLT:
             assert(!(header.fields & ~0x1FF));
-        break;
+            break;
         case MEM3BLT:
-        break;
+            break;
         case GLYPHINDEX:
             assert(!(header.fields & ~0x3FFFFF));
-        break;
+            break;
         case POLYLINE:
             assert(!(header.fields & ~0x7F));
-        break;
+            break;
+        case ELLIPSESC:
+            assert(!(header.fields & ~0x7F));
+            break;
         default:
             LOG(LOG_INFO, "Order is Unknown (%u)\n", this->order);
             assert(false);
@@ -835,8 +838,8 @@ public:
 
                 this->clip.x = bounds[0];
                 this->clip.y = bounds[1];
-                this->clip.cx = bounds[2] - bounds[0] +1;
-                this->clip.cy = bounds[3] - bounds[1] +1;
+                this->clip.cx = bounds[2] - bounds[0] + 1;
+                this->clip.cy = bounds[3] - bounds[1] + 1;
             }
         }
 
