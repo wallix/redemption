@@ -851,11 +851,14 @@ unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_regex_state : ftests/regex/test_regex_state.cpp libboost_unit_test ;
+unit-test test_regex_state : ftests/regex/test_regex_state.cpp libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_regex_parser : ftests/regex/test_regex_parser.cpp libboost_unit_test ;
 unit-test test_regex_parser : ftests/regex/test_regex_parser.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex_automate : ftests/regex/test_regex_automate.cpp libboost_unit_test ;
-unit-test test_regex_automate : ftests/regex/test_regex_automate.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex_ndfa : ftests/regex/test_regex_ndfa.cpp libboost_unit_test ;
+unit-test test_regex_ndfa : ftests/regex/test_regex_ndfa.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test ;
 unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test gcov : <variant>coverage ;

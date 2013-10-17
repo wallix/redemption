@@ -29,16 +29,16 @@ namespace re {
     {
         switch (c) {
             case 'd': return new StateDigit;
-            case 'D': return new SateNoDigit;
+            case 'D': return new SateNotDigit;
             case 'w': return new StateWord;
             case 'W': return new StateNoWord;
             case 's': return new StateSpace;
-            case 'S': return new StateNoSpace;
-            case 'n': return new_character('\n');
-            case 't': return new_character('\t');
-            case 'r': return new_character('\r');
-            //case 'v': return new_character('\v');
-            default : return new_character(c);
+            case 'S': return new StateNotSpace;
+            case 'n': return new StateChar('\n');
+            case 't': return new StateChar('\t');
+            case 'r': return new StateChar('\r');
+            //case 'v': return new StateChar('\v');
+            default : return new StateChar(c);
         }
     }
 
@@ -50,7 +50,7 @@ namespace re {
         return (valid && a <= b) ? 0 : "range out of order in character class";
     }
 
-    inline StateBase * str2stchar(utf_consumer & consumer, char_int c, const char * & msg_err)
+    inline StateBase * st_compilechar(utf_consumer & consumer, char_int c, const char * & msg_err)
     {
         if (c == '\\' && consumer.valid()) {
             return c2st(consumer.bumpc());
@@ -77,11 +77,11 @@ namespace re {
                             char_int cc = consumer.bumpc();
                             switch (cc) {
                                 case 'd': st->push_checker(new CheckerDigit); break;
-                                case 'D': st->push_checker(new CheckerNoDigit); break;
+                                case 'D': st->push_checker(new CheckerNotDigit); break;
                                 case 'w': st->push_checker(new CheckerWord); break;
                                 case 'W': st->push_checker(new CheckerNoWord); break;
                                 case 's': st->push_checker(new CheckerSpace); break;
-                                case 'S': st->push_checker(new CheckerNoSpace); break;
+                                case 'S': st->push_checker(new CheckerNotSpace); break;
                                 case 'n': str += '\n'; break;
                                 case 't': str += '\t'; break;
                                 case 'r': str += '\r'; break;
@@ -147,7 +147,10 @@ namespace re {
             return st;
         }
 
-        return c == '.' ? new_any() : new_character(c);
+        if (c == '.') {
+            return new StateAny;
+        }
+        return new StateChar(c);
     }
 
     inline bool is_range_repetition(const char * s)
@@ -202,13 +205,13 @@ namespace re {
 
         StateBase * clone()
         {
-            StateBase * replicant = this->simple_clone(this->st);
+            StateBase * replicant = this->st->clone();
             if (this->definied_out1 || this->definied_out2) {
                 typedef std::vector<StateBase*>::iterator iterator;
                 iterator last = this->sts.end();
                 for (iterator first = this->sts.begin(), first2 = sts2.begin(); last != this->sts.end(); ++first, ++first2) {
-                    *first2 = this->simple_clone(*first);
-                    (*first)->id = 0;
+                    *first2 = (*first)->clone();
+                    (*first)->num = 0;
                 }
                 for (iterator first = this->sts.begin(), first2 = sts2.begin(); last != this->sts.end(); ++first, ++first2) {
                     if ((*first)->out1) {
@@ -227,33 +230,58 @@ namespace re {
             }
             return replicant;
         }
-
-        StateBase * simple_clone(const StateBase * st)
-        {
-            return st == &state_finish ? &state_finish : st->clone();
-        }
     };
 
     typedef std::pair<StateBase*, StateBase**> IntermendaryState;
 
-    inline IntermendaryState intermendary_str2reg(utf_consumer & consumer,
-                                                  bool & has_epsilone,
-                                                  const char * & msg_err,
-                                                  int recusive = 0, bool ismatch = true)
+    struct FinishFreeList
+    {
+        std::vector<StateBase *> vec;
+
+        StateBase * new_finish()
+        {
+            if (this->vec.empty()) {
+                return new StateFinish;
+            }
+            StateBase * ret = this->vec.back();
+            this->vec.pop_back();
+            return ret;
+        }
+
+        void free_finish(StateBase * st) {
+            this->vec.push_back(st);
+        }
+
+        ~FinishFreeList()
+        {
+            std::for_each(this->vec.begin(), this->vec.end(), StateDeleter());
+        }
+    };
+
+    inline IntermendaryState intermendary_st_compile(utf_consumer & consumer,
+                                                     FinishFreeList & ffl,
+                                                     bool & has_epsilone,
+                                                     const char * & msg_err,
+                                                     int recusive = 0, bool ismatch = true)
     {
         struct FreeState {
             static IntermendaryState invalide(StateBase& st)
             {
-                free_st(st.out2);
+                StatesWrapper w(st.out1); //quick free
                 return IntermendaryState(0,0);
             }
         };
 
         struct selected {
-            static StateBase ** next_pst(StateBase ** pst)
+            static StateBase ** next_pst(FinishFreeList & ffl, StateBase ** pst)
             {
-                if (*pst && *pst != &state_finish) {
-                    pst = &(*pst)->out1;
+                if (*pst) {
+                    if ((*pst)->is_finish()) {
+                        ffl.free_finish(*pst);
+                    }
+                    else {
+                        pst = &(*pst)->out1;
+                    }
                 }
                 return pst;
             }
@@ -273,7 +301,7 @@ namespace re {
         while (c) {
             /**///std::cout << "c: " << (c) << std::endl;
             if (c == '^' || c == '$') {
-                pst = selected::next_pst(pst);
+                pst = selected::next_pst(ffl, pst);
                 *pst = new StateBorder(c == '^');
                 if (st_one) {
                     *st_one = *pst;
@@ -288,8 +316,8 @@ namespace re {
             }
 
             if (!is_meta_char(consumer, c)) {
-                pst = selected::next_pst(pst);
-                if (!(*pst = str2stchar(consumer, c, msg_err))) {
+                pst = selected::next_pst(ffl, pst);
+                if (!(*pst = st_compilechar(consumer, c, msg_err))) {
                     return FreeState::invalide(st);
                 }
 
@@ -301,7 +329,7 @@ namespace re {
 
                 while ((c = consumer.bumpc()) && !is_meta_char(consumer, c)) {
                     pst = &(*pst)->out1;
-                    if (!(*pst = str2stchar(consumer, c, msg_err))) {
+                    if (!(*pst = st_compilechar(consumer, c, msg_err))) {
                         return FreeState::invalide(st);
                     }
                 }
@@ -315,7 +343,7 @@ namespace re {
                     case '?': {
                         StateBase ** tmp = st_one;
                         st_one = &(*pst)->out1;
-                        *pst = new_split(0, *pst);
+                        *pst = new StateSplit(0, *pst);
                         if (prev_st_one) {
                             *prev_st_one = *pst;
                             prev_st_one = tmp;
@@ -324,7 +352,7 @@ namespace re {
                         break;
                     }
                     case '*':
-                        *pst = new_split(&state_finish, *pst);
+                        *pst = new StateSplit(ffl.new_finish(), *pst);
                         if (prev_st_one) {
                             *prev_st_one = *pst;
                             prev_st_one = 0;
@@ -333,13 +361,13 @@ namespace re {
                         pst = &(*pst)->out1;
                         break;
                     case '+':
-                        (*pst)->out1 = new_split(&state_finish, *pst);
+                        (*pst)->out1 = new StateSplit(ffl.new_finish(), *pst);
                         pst = &(*pst)->out1->out1;
                         break;
                     case '|':
                         *pesplit = *pst ? &(*pst)->out1 : pst;
                         ++pesplit;
-                        bst->out1 = new_split(0, bst->out1);
+                        bst->out1 = new StateSplit(0, bst->out1);
                         bst = bst->out1;
                         if (st_one) {
                             *pesplit = st_one;
@@ -359,22 +387,22 @@ namespace re {
                             if (*(end+1) == '}') {
                                 /**///std::cout << ("infini") << std::endl;
                                 if (m == 1) {
-                                    (*pst)->out1 = new_split(0, *pst);
+                                    (*pst)->out1 = new StateSplit(0, *pst);
                                     pst = &(*pst)->out1->out1;
                                 }
                                 else if (m) {
                                     ContextClone cloner(*pst);
-                                    pst = selected::next_pst(pst);
+                                    pst = selected::next_pst(ffl, pst);
                                     while (--m) {
                                         *pst = cloner.clone();
                                         pst = &(*pst)->out1;
                                     }
-                                    *pst = new_split(0, cloner.clone());
+                                    *pst = new StateSplit(0, cloner.clone());
                                     (*pst)->out2->out1 = *pst;
                                     pst = &(*pst)->out1;
                                 }
                                 else {
-                                    *pst = new_split(0, *pst);
+                                    *pst = new StateSplit(0, *pst);
                                     if (prev_st_one) {
                                         *prev_st_one = *pst;
                                         prev_st_one = 0;
@@ -404,7 +432,7 @@ namespace re {
                                         ContextClone cloner(*pst);
                                         StateBase ** tmp = st_one;
                                         st_one = &(*pst)->out1;
-                                        *pst = new_split(0, *pst);
+                                        *pst = new StateSplit(0, *pst);
                                         if (prev_st_one) {
                                             *prev_st_one = *pst;
                                             prev_st_one = tmp;
@@ -416,7 +444,7 @@ namespace re {
                                             *st_one = *pst;
                                             prev_st_one = st_one;
                                             st_one = &(*pst)->out1;
-                                            *pst = new_split(0, *pst);
+                                            *pst = new StateSplit(0, *pst);
                                             *prev_st_one = *pst;
                                             pst = &(*pst)->out1;
                                         }
@@ -425,15 +453,15 @@ namespace re {
                                 else {
                                     --end;
                                     ContextClone cloner(*pst);
-                                    pst = selected::next_pst(pst);
+                                    pst = selected::next_pst(ffl, pst);
                                     while (--m) {
                                         *pst = cloner.clone();
                                         pst = &(*pst)->out1;
                                     }
 
-                                    StateBase * split = new_split();
+                                    StateBase * split = new StateSplit();
                                     while (n--) {
-                                        *pst = new_split(0, split);
+                                        *pst = new StateSplit(0, split);
                                         (*pst)->out1 = cloner.clone();
                                         (*pst)->out1->out1 = split;
                                         pst = &(*pst)->out2;
@@ -449,7 +477,7 @@ namespace re {
                         else {
                             /**///std::cout << ("fixe ") << m << std::endl;
                             ContextClone cloner(*pst);
-                            pst = selected::next_pst(pst);
+                            pst = selected::next_pst(ffl, pst);
                             while (--m) {
                                 /**///std::cout << ("clone") << std::endl;
                                 *pst = cloner.clone();
@@ -468,12 +496,12 @@ namespace re {
                         }
 
                         if (ismatch) {
-                            pst = selected::next_pst(pst);
+                            pst = selected::next_pst(ffl, pst);
                             *pst = new StateClose;
                         }
                         else if (besplit != pesplit) {
                             has_epsilone = true;
-                            pst = selected::next_pst(pst);
+                            pst = selected::next_pst(ffl, pst);
                             if (ismatch) {
                                 *pst = new StateClose;
                             }
@@ -511,9 +539,9 @@ namespace re {
                                 return FreeState::invalide(st);
                             }
                             consumer.s += 2;
-                            IntermendaryState intermendary = intermendary_str2reg(consumer, has_epsilone, msg_err, recusive+1, false);
+                            IntermendaryState intermendary = intermendary_st_compile(consumer, ffl, has_epsilone, msg_err, recusive+1, false);
                             if (intermendary.first) {
-                                pst = selected::next_pst(pst);
+                                pst = selected::next_pst(ffl, pst);
                                 *pst= intermendary.first;
                                 if (st_one) {
                                     *st_one = *pst;
@@ -527,9 +555,9 @@ namespace re {
                             }
                             break;
                         }
-                        IntermendaryState intermendary = intermendary_str2reg(consumer, has_epsilone, msg_err, recusive+1);
+                        IntermendaryState intermendary = intermendary_st_compile(consumer, ffl, has_epsilone, msg_err, recusive+1);
                         if (intermendary.first) {
-                            pst = selected::next_pst(pst);
+                            pst = selected::next_pst(ffl, pst);
                             *pst = new StateOpen(intermendary.first);
                             if (st_one) {
                                 *st_one = *pst;
@@ -554,31 +582,13 @@ namespace re {
         return IntermendaryState(st.out1, pst);
     }
 
-    inline void remove_epsilone(StateBase * st, std::vector<StateBase*>& epsilone_sts)
-    {
-        if (st && st->id != -3u) {
-            st->id = -3u;
-            StateBase * nst = st->out1;
-            while (nst && nst->is_epsilone()) {
-                if (nst->id != -3u) {
-                    epsilone_sts.push_back(nst);
-                    nst->id = -3u;
-                }
-                nst = nst->out1;
-            }
-            st->out1 = nst;
-            remove_epsilone(st->out1, epsilone_sts);
-            remove_epsilone(st->out2, epsilone_sts);
-        }
-    }
-
-    inline StateBase* str2reg(const char * s, const char * * msg_err = 0,
-                              size_t * pos_err = 0)
+    inline bool st_compile(StatesWrapper & stw, const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
     {
         bool has_epsilone = false;
         const char * err = 0;
         utf_consumer consumer(s);
-        StateBase * st = intermendary_str2reg(consumer, has_epsilone, err).first;
+        FinishFreeList ffl;
+        StateBase * st = intermendary_st_compile(consumer, ffl, has_epsilone, err).first;
         if (err) {
             if (msg_err) {
                 *msg_err = err;
@@ -586,14 +596,46 @@ namespace re {
             if (pos_err) {
                 *pos_err = consumer.str() - s;
             }
+            return false;
         }
-        else if (has_epsilone) {
-            typedef std::vector<StateBase*> states_t;
-            states_t removed;
-            remove_epsilone(st, removed);
-            std::for_each(removed.begin(), removed.end(), StateDeleter());
+
+        stw.reset(st);
+        state_list_t::iterator last = stw.states.end();
+        for (state_list_t::iterator first = stw.states.begin(); first != last; ++first) {
+            (*first)->num = 0;
         }
-        return st;
+
+        if (has_epsilone) {
+            for (state_list_t::iterator first = stw.states.begin(); first != last; ++first) {
+                StateBase * nst = (*first)->out1;
+                while (nst && nst->is_epsilone()) {
+                    if (nst->num != -3u) {
+                        nst->num = -3u;
+                    }
+                    nst = nst->out1;
+                }
+                (*first)->out1 = nst;
+            }
+            state_list_t::iterator first = stw.states.begin();
+            while (first != last && !(*first)->out1->is_epsilone()) {
+                ++first;
+            }
+            state_list_t::iterator result = first;
+            for (; first != last; ++first) {
+                if ((*first)->out1->is_epsilone()) {
+                    delete (*first)->out1;
+                }
+                else {
+                    *result = *first;
+                    ++result;
+                }
+            }
+            stw.states.resize(result - stw.states.begin());
+        }
+
+        stw.init_nums();
+
+        return true;
     }
 }
 

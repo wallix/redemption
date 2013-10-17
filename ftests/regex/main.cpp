@@ -49,15 +49,12 @@ int main(int argc, char **argv) {
         return 1;
     }
     const char * rgxstr = argv[1];
-    const char * msg = 0;
-    StateBase * st = str2reg(argv[1], &msg);
-    if (msg) {
-        std::cerr << msg << std::endl;
+    Regex regex(argv[1]);
+    if (regex.message_error()) {
+        std::cerr << regex.message_error() << std::endl;
         return 2;
     }
-    StatesWrapper stw(st);
-    display_state(stw, st);
-    stw.reset_num();
+    regex.display();
     std::cout.flush();
 
     if (argc < 3) {
@@ -67,7 +64,6 @@ int main(int argc, char **argv) {
         argv[1] = argv[2];
     }
 
-    Regex regex(st);
 
     //display_state(st);
 
@@ -176,9 +172,8 @@ int main(int argc, char **argv) {
     << (ismatch4 ? "good\n" : "fail\n")
     << d4 << " sec\n";
 
-    std::cout << "st_exact_search: " << st_exact_search(stw, str) << "\n";
-    stw.reset_num();
-    std::cout << "st_search: " << st_search(stw, str) << std::endl;
+    //std::cout << "st_exact_search: " << st_exact_search(regex.stw, str) << "\n";
+    //std::cout << "st_search: " << st_search(regex.stw, str) << std::endl;
 
     if (ismatch3) {
         std::cout << ("with regex.h\n");
@@ -201,5 +196,4 @@ int main(int argc, char **argv) {
         std::cout.flush();
     }
     regfree(&rgx);
-    stw.states.clear();
 }
