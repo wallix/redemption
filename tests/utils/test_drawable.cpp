@@ -122,6 +122,55 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 //        dump_png("/tmp/test_line_000_", gd.drawable);
 }
 
+BOOST_AUTO_TEST_CASE(TestPolyline)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    Rect screen_rect(0, 0, width, height);
+    RDPDrawable gd(width, height);
+    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), BLACK), screen_rect);
+
+    BStream deltaPoints(1024);
+
+    deltaPoints.out_sint16_le(0);
+    deltaPoints.out_sint16_le(20);
+
+    deltaPoints.out_sint16_le(160);
+    deltaPoints.out_sint16_le(0);
+
+    deltaPoints.out_sint16_le(0);
+    deltaPoints.out_sint16_le(-30);
+
+    deltaPoints.out_sint16_le(50);
+    deltaPoints.out_sint16_le(50);
+
+    deltaPoints.out_sint16_le(-50);
+    deltaPoints.out_sint16_le(50);
+
+    deltaPoints.out_sint16_le(0);
+    deltaPoints.out_sint16_le(-30);
+
+    deltaPoints.out_sint16_le(-160);
+    deltaPoints.out_sint16_le(0);
+
+    deltaPoints.mark_end();
+    deltaPoints.rewind();
+
+    gd.draw(RDPPolyline(158, 230, 0x06, 0, 0xFFFFFF, 7, deltaPoints), screen_rect);
+
+    char message[1024];
+    if (!check_sig(gd.drawable, message,
+    "\x32\x60\x8b\x02\xb9\xa2\x83\x27\x0f\xa9\x67\xef\x3c\x2e\xa0\x25\x69\x16\x02\x2b"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // uncomment to see result in png file
+//    dump_png("/tmp/test_polyline_000_", gd.drawable);
+}
+
 BOOST_AUTO_TEST_CASE(TestPatBlt)
 {
     // Create a simple capture image and dump it to file
