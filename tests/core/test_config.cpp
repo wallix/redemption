@@ -160,6 +160,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -397,6 +398,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -641,6 +643,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -701,6 +704,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "disconnect_on_logon_user_change=yes\n"
                           "open_session_timeout=45\n"
                           "certificate_change_action=1\n"
+                          "extra_orders=22"
                           "\n"
                           "[mod_vnc]\n"
                           "encodings=16,2,0,1,-239\n"
@@ -845,6 +849,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(45,                               ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string("22"),                ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string("16,2,0,1,-239"),     ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
@@ -1030,6 +1035,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(30,                               ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1207,6 +1213,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1372,6 +1379,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1530,6 +1538,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1687,6 +1696,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1844,6 +1854,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1991,6 +2002,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
+    BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
