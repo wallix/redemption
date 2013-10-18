@@ -1093,54 +1093,208 @@ struct Drawable {
     }
 
 
-    // TODO WTF
-    uint64_t pos_xy(int x, int y) {
+    uint pos_xy(int x, int y) {
         return (y * this->rowsize) + (x * this->Bpp);
     }
     void ellipse(const Ellipse & el, const uint8_t rop,
                  const uint8_t fill, const uint32_t color) {
-        // LOG(LOG_INFO, "ellipse drawable color: %d", color);
-        // LOG(LOG_INFO, "ellipse rayon x: %d, rayon y: %d", el.radiusx, el.radiusy);
-        // LOG(LOG_INFO, "ellipse centre x: %d, centre y: %d", el.centerx, el.centery);
-        (void)rop;
-        (void)fill;
+        LOG(LOG_INFO, "ellipse drawable color: %d", color);
+        LOG(LOG_INFO, "ellipse rayon x: %d, rayon y: %d", el.radiusx, el.radiusy);
+        LOG(LOG_INFO, "ellipse centre x: %d, centre y: %d", el.centerx, el.centery);
+        unsigned long long usec = ustime();
+        unsigned long long cycles = rdtsc();
+        this->ellipse_draw(el, rop, fill, color);
+        unsigned long long elapusec = ustime() - usec;
+        unsigned long long elapcyc = rdtsc() - cycles;
+        LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+    }
+
+    void ellipse_draw(const Ellipse & el, const uint8_t rop,
+                      const uint8_t fill, const uint32_t color) {
         if (tracked_area.has_intersection(el.get_rect())) {
             tracked_area_changed = true;
         }
-        Rect cliped = el.get_rect().intersect(Rect(0, 0, this->width, this->height));
-        int x = 0;
-        int y = 0;
-        uint8_t * const base = this->data;
-        uint8_t * p = base;
-        // LOG(LOG_INFO, "ellipse drawable color: %d", color);
-        // LOG(LOG_INFO, "cliped  x: %d,  y: %d", cliped.x, cliped.y);
-        // LOG(LOG_INFO, "cliped  cx: %d, cy: %d", cliped.cx, cliped.cy);
-        // unsigned long long usec = ustime();
-        // unsigned long long cycles = rdtsc();
-        for (y = cliped.y; y < cliped.bottom(); ++y) {
-            int compare = el.radiusx * el.radiusx *
-                (el.radiusy * el.radiusy -
-                 (y - el.centery) * (y - el.centery));
-            bool next = false;
-            for (x = cliped.x; x < cliped.right(); ++x) {
-                int that = el.radiusy * el.radiusy *
-                    (x - el.centerx) * (x - el.centerx);
-                if (that <= compare) {
-                    if (!next) {
-                        next = true;
-                        p = base + this->pos_xy(x, y);
-                    }
-                    else {
-                        p +=3;
-                    }
-                    p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
-                }
+        const int cX = el.centerx;
+        const int cY = el.centery;
+        const int rX = el.radiusx;
+        const int rY = el.radiusy;
+        const int rXcarre = rX*rX;
+        const int rYcarre = rY*rY;
+        int errX = 0;
+        int pX = rX;
+        int pY = 0;
+        int borX = rYcarre*rX;
+        int borY = 0;
+        this->colordot(cX+pX, cY, rop, color);
+        this->colordot(cX-pX, cY, rop, color);
+        if (fill) {
+            this->colorline(cX-pX + 1, cY, 2*pX - 1, rop, color);
+        }
+        if (errX > pX*rYcarre + rYcarre / 2) {
+            errX -= (2*pX - 1)*rYcarre;
+            pX--;
+            borX -= rYcarre;
+        }
+        errX += (2*pY + 1)*rXcarre;
+        pY++;
+        borY += rXcarre;
+        int lastchange = 0;
+        while (borX >= borY) {
+            lastchange = 0;
+            this->colordot(cX+pX, cY+pY, rop, color);
+            this->colordot(cX+pX, cY-pY, rop, color);
+            this->colordot(cX-pX, cY+pY, rop, color);
+            this->colordot(cX-pX, cY-pY, rop, color);
+            if (fill) {
+                this->colorline(cX-pX + 1, cY+pY, 2*pX - 1, rop, color);
+                this->colorline(cX-pX + 1, cY-pY, 2*pX - 1, rop, color);
+            }
+            if (errX > pX*rYcarre + rYcarre / 2) {
+                errX -= (2*pX - 1)*rYcarre;
+                pX--;
+                borX -= rYcarre;
+                lastchange = 1;
+            }
+            errX += (2*pY + 1)*rXcarre;
+            pY++;
+            borY += rXcarre;
+        }
+        int lastpX = pX + lastchange;
+        int lastpY = pY - 1;
+        int errY = 0;
+        pX = 0;
+        pY = rY;
+        this->colordot(cX, cY+pY, rop, color);
+        this->colordot(cX, cY-pY, rop, color);
+        if (errY > pY*rXcarre + rXcarre / 2) {
+            errY -= (2*pY - 1)*rXcarre;
+            pY--;
+            if (fill && pY >= lastpY) {
+                this->colorline(cX, cY + pY, 2*pX + 1, rop, color);
             }
         }
-        // unsigned long long elapusec = ustime() - usec;
-        // unsigned long long elapcyc = rdtsc() - cycles;
-        // LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+        errY += (2*pX + 1)*rYcarre;
+        pX++;
+        while ((fill && (pX < lastpX && pY > lastpY)) ||
+               (!fill && (pX < lastpX || pY > lastpY))) {
+            this->colordot(cX+pX, cY+pY, rop, color);
+            this->colordot(cX+pX, cY-pY, rop, color);
+            this->colordot(cX-pX, cY+pY, rop, color);
+            this->colordot(cX-pX, cY-pY, rop, color);
+            if (errY > pY*rXcarre + rXcarre / 2) {
+                errY -= (2*pY - 1)*rXcarre;
+                pY--;
+                if (fill && (pY > lastpY)) {
+                    this->colorline(cX-pX, cY+pY, 2*pX+1, rop, color);
+                    this->colorline(cX-pX, cY-pY, 2*pX+1, rop, color);
+                }
+            }
+            errY += (2*pX + 1)*rYcarre;
+            pX++;
+        }
     }
+    void colordot(int x, int y, uint8_t rop, int32_t color) {
+        if (!(x >= 0 &&
+              y >= 0 &&
+              x < this->width &&
+              y < this->height)) {
+            return;
+        }
+        uint8_t * p = this->data + this->pos_xy(x, y);
+        this->bRop2(p, rop, color);
+    }
+    void colorline(int x, int y, int l, uint8_t rop, int32_t color) {
+        if (!(y >= 0 &&
+              y < this->height)) {
+                return;
+        }
+        if (x < 0) {
+            l += x;
+            x = 0;
+        }
+        else if ((x + l) >= this->width) {
+            l = this->width - x;
+        }
+        uint8_t * p = this->data + this->pos_xy(x, y);
+        for (int i = 0; i < l; i++) {
+            this->bRop2(p, rop, color);
+            p += 3;
+        }
+    }
+    void bRop2(uint8_t * p, uint8_t rop, uint32_t color) {
+        switch (rop) {
+        case 0x01: // R2_BLACK
+            p[0] = 0x00; p[1] = 0x00; p[2] = 0x00;
+            break;
+        case 0x02: // R2_NOTMERGEPEN
+            p[0] = ~((p[0] + (color & 0xFF)) / 2);
+            p[1] = ~((p[1] + ((color >> 8) & 0xFF)) / 2);
+            p[2] = ~((p[2] + ((color >> 16) & 0xFF)) / 2);
+            break;
+        case 0x03: // R2_MASKNOTPEN
+            p[0] = p[0] & (~color & 0xFF);
+            p[1] = p[1] & (~(color >> 8) & 0xFF);
+            p[2] = p[2] & (~(color >> 16) & 0xFF);
+            break;
+        case 0x04: // R2_NOTCOPYPEN
+            p[0] = ~color; p[1] = ~(color >> 8); p[2] = ~(color >> 16);
+            break;
+        case 0x05: // R2_MASKPENNOT
+            p[0] = ~p[0] & (color & 0xFF);
+            p[1] = ~p[1] & ((color >> 8) & 0xFF);
+            p[2] = ~p[2] & ((color >> 16) & 0xFF);
+            break;
+        case 0x06:  // R2_NOT
+            p[0] = ~p[0]; p[1] = ~p[1]; p[2] = ~p[2];
+            break;
+        case 0x07:  // R2_XORPEN
+            p[0] = p[0] ^ (color & 0xFF);
+            p[1] = p[1] ^ ((color >> 8) & 0xFF);
+            p[2] = p[2] ^ ((color >> 16) & 0xFF);
+            break;
+        case 0x08:  // R2_NOTMASKPEN
+            p[0] = ~(p[0] & (color & 0xFF));
+            p[1] = ~(p[1] & ((color >> 8) & 0xFF));
+            p[2] = ~(p[2] & ((color >> 16) & 0xFF));
+            break;
+        case 0x09:  // R2_MASKPEN
+            p[0] = (p[0] & (color & 0xFF));
+            p[1] = (p[1] & ((color >> 8) & 0xFF));
+            p[2] = (p[2] & ((color >> 16) & 0xFF));
+            break;
+        case 0x0A:  // R2_NOTXORPEN
+            p[0] = ~(p[0] ^ (color & 0xFF));
+            p[1] = ~(p[1] ^ ((color >> 8) & 0xFF));
+            p[2] = ~(p[2] ^ ((color >> 16) & 0xFF));
+            break;
+        case 0x0B:  // R2_NOP
+            break;
+        case 0x0C:  // R2_MERGENOTPEN
+            p[0] = ((p[0] + (~color & 0xFF)) / 2);
+            p[1] = ((p[1] + (~(color >> 8) & 0xFF)) / 2);
+            p[2] = ((p[2] + (~(color >> 16) & 0xFF)) / 2);
+            break;
+        case 0x0D:  // R2_COPYPEN
+            p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
+            break;
+        case 0x0E:  // R2_MERGEPENNOT
+            p[0] = (((~p[0] & 0xFF) + (color & 0xFF)) / 2);
+            p[1] = (((~p[1] & 0xFF) + ((color >> 8) & 0xFF)) / 2);
+            p[2] = (((~p[2] & 0xFF) + ((color >> 16) & 0xFF)) / 2);
+            break;
+        case 0x0F:  // R2_MERGEPEN
+            p[0] = ((p[0] + (color & 0xFF)) / 2);
+            p[1] = ((p[1] + ((color >> 8) & 0xFF)) / 2);
+            p[2] = ((p[2] + ((color >> 16) & 0xFF)) / 2);
+            break;
+        case 0x10: // R2_WHITE
+            p[0] = 0xFF; p[1] = 0xFF; p[2] = 0xFF;
+        default:
+            p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
+            break;
+        }
+    }
+
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it
     // also we already swapped color if we are using BGR instead of RGB

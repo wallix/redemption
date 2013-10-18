@@ -106,6 +106,8 @@
 
 // Color (3 bytes): The foreground color described by using a Generic Color
 //  (section 2.2.2.2.1.1.1.8) structure.
+
+
 class RDPEllipseSC {
 public:
     Ellipse el;
@@ -141,13 +143,13 @@ public:
         }
 
         header.fields =
-            (  this->el.left()   != oldcmd.el.left()  ) * 0x0001
-            | (this->el.top()    != oldcmd.el.top()   ) * 0x0002
-            | (this->el.right()  != oldcmd.el.right() ) * 0x0004
-            | (this->el.bottom() != oldcmd.el.bottom()) * 0x0008
-            | (this->bRop2       != oldcmd.bRop2      ) * 0x0010
-            | (this->fillMode    != oldcmd.fillMode   ) * 0x0020
-            | (this->color       != oldcmd.color      ) * 0x0040;
+            ( this->el.left()   != oldcmd.el.left()  ) * 0x0001
+            |(this->el.top()    != oldcmd.el.top()   ) * 0x0002
+            |(this->el.right()  != oldcmd.el.right() ) * 0x0004
+            |(this->el.bottom() != oldcmd.el.bottom()) * 0x0008
+            |(this->bRop2       != oldcmd.bRop2      ) * 0x0010
+            |(this->fillMode    != oldcmd.fillMode   ) * 0x0020
+            |(this->color       != oldcmd.color      ) * 0x0040;
 
         common.emit(stream, header, oldcommon);
         header.emit_coord(stream, 0x0001, this->el.left(),   oldcmd.el.left());
@@ -165,12 +167,12 @@ public:
             stream.out_uint8(this->color >> 16);
         }
 
-        LOG(LOG_INFO, "RDPEllipseSC::emit: header fields=0x%02X", header.fields);
-        LOG(LOG_INFO, "RDPEllipseSC::emit: header color=0x%02X", this->color);
+        // LOG(LOG_INFO, "RDPEllipseSC::emit: header fields=0x%02X", header.fields);
+        // LOG(LOG_INFO, "RDPEllipseSC::emit: header color=0x%02X", this->color);
     }
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
-        LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
+        // LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
         int16_t  leftRect   = this->el.left();
         int16_t  topRect    = this->el.top();
         int16_t  rightRect  = this->el.right();
