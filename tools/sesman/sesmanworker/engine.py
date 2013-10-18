@@ -967,6 +967,7 @@ class Engine(object):
 
     def password_expiration_date(self):
         _data = self.password_expiration_date
+        #return u"Your password will expire soon."
         return False
 
 

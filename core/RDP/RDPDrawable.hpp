@@ -199,65 +199,67 @@ public:
      */
     void draw(const RDPLineTo & lineto, const Rect & clip)
     {
-        //        LOG(LOG_INFO, "back_mode=%d (%d,%d) -> (%d, %d) rop2=%d bg_color=%d clip=(%u, %u, %u, %u)",
-        //            lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy,
-        //            lineto.rop2, lineto.back_color, clip.x, clip.y, clip.cx, clip.cy);
+        drew_line(lineto.back_mode, lineto.startx, lineto.starty, lineto.endx, lineto.endy, lineto.rop2,
+            lineto.pen.color, clip);
+    }
 
+    void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart, int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
+        uint32_t PenColor, const Rect & clip) {
         TODO("We should perform a true intersection between line and clip rectangle, not cheat as below.");
         // enlarge_to compute a new rect including old rect and added point
-        const Rect & line_rect = Rect(lineto.startx, lineto.starty, 1, 1).enlarge_to(lineto.endx, lineto.endy);
+        const Rect & line_rect = Rect(nXStart, nYStart, 1, 1).enlarge_to(nXEnd, nYEnd);
         if (line_rect.intersect(clip).isempty()){
             //            LOG(LOG_INFO, "line_rect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
             return;
         }
 
         // Color handling
-        uint32_t color = RGBtoBGR(lineto.pen.color);
+        uint32_t color = RGBtoBGR(PenColor);
 
-        int startx = (lineto.startx >= clip.x + clip.cx)?clip.x + clip.cx-1:lineto.startx;
-        int endx = (lineto.endx >= clip.x + clip.cx)?clip.x + clip.cx-1:lineto.endx;
+        int startx = (nXStart >= clip.x + clip.cx)?clip.x + clip.cx-1:nXStart;
+        int endx = (nXEnd >= clip.x + clip.cx)?clip.x + clip.cx-1:nXEnd;
         startx = (startx & 0x8000)?0:startx;
         endx = (endx & 0x8000)?0:endx;
 
-        int starty = (lineto.starty >= clip.y + clip.cy)?clip.y + clip.cy - 1:lineto.starty;
-        int endy = (lineto.endy >= clip.y + clip.cy)?clip.y + clip.cy - 1:lineto.endy;
+        int starty = (nYStart >= clip.y + clip.cy)?clip.y + clip.cy - 1:nYStart;
+        int endy = (nYEnd >= clip.y + clip.cy)?clip.y + clip.cy - 1:nYEnd;
         starty = (starty & 0x8000)?0:starty;
         endy = (endy & 0x8000)?0:endy;
 
         if (startx == endx){
-            this->drawable.vertical_line(lineto.back_mode,
-                                         lineto.startx,
+            this->drawable.vertical_line(BackMode,
+                                         nXStart,
                                          (starty <= endy)?starty:endy,
                                          (starty <= endy)?endy:starty,
-                                         lineto.rop2,
+                                         bRop2,
                                          color);
         }
         else if (starty == endy){
-            this->drawable.horizontal_line(lineto.back_mode,
+            this->drawable.horizontal_line(BackMode,
                                            (startx <= endx)?startx:endx,
                                            starty,
                                            (startx <= endx)?endx:startx,
-                                           lineto.rop2,
+                                           bRop2,
                                            color);
 
         }
-        else if (lineto.startx <= lineto.endx){
-            this->drawable.line(lineto.back_mode,
-                                lineto.startx,
-                                lineto.starty,
-                                lineto.endx,
-                                lineto.endy,
-                                lineto.rop2,
+        else if (nXStart <= nXEnd){
+            this->drawable.line(BackMode,
+                                nXStart,
+                                nYStart,
+                                nXEnd,
+                                nYEnd,
+                                bRop2,
                                 color,
                                 clip);
         }
         else {
-            this->drawable.line(lineto.back_mode,
-                                lineto.endx,
-                                lineto.endy,
-                                lineto.startx,
-                                lineto.starty,
-                                lineto.rop2,
+            this->drawable.line(BackMode,
+                                nXEnd,
+                                nYEnd,
+                                nXStart,
+                                nYStart,
+                                bRop2,
                                 color,
                                 clip);
         }
@@ -452,19 +454,17 @@ public:
     }
 
     void draw(const RDPPolyline & cmd, const Rect & clip) {
-        uint32_t color = RGBtoBGR(cmd.PenColor);
-
-        (void)color;
-
         int16_t startx = cmd.xStart;
         int16_t starty = cmd.yStart;
 
         int16_t endx;
         int16_t endy;
 
-        for (uint8_t i; i < cmd.NumDeltaEntries; i++) {
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             endx = startx + cmd.deltaPoints[i].xDelta;
-            endx = starty + cmd.deltaPoints[i].yDelta;
+            endy = starty + cmd.deltaPoints[i].yDelta;
+
+            drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
 
             startx = endx;
             starty = endy;

@@ -48,6 +48,9 @@ def mundane(value):
 
 DEBUG = True
 
+class AuthentifierSocketClosed(Exception):
+    pass
+
 ################################################################################
 class Sesman():
 ################################################################################
@@ -105,7 +108,8 @@ class Sesman():
             data.update(translations())
 
         if DEBUG:
-            Logger().info(u'send_data (update)=%s' % (data))
+            import pprint
+            Logger().info(u'send_data (update)=%s' % (pprint.pformat(data)))
 
         # replace MAGICASK with ASK and send data on the wire            
         _list = []
@@ -118,7 +122,8 @@ class Sesman():
             _list.append(_pair)
 
         if DEBUG:
-           Logger().info(u'send_data (on the wire)=%s' % (_list))
+           import pprint
+           Logger().info(u'send_data (on the wire)=%s' % (pprint.pformat(_list)))
 
         _r_data = u"".join(_list)
         _r_data = _r_data.encode('utf-8')
@@ -134,12 +139,19 @@ class Sesman():
         _data = {}
         try:
             # Fetch Data from Redemption
-            _packet_size, = unpack(">L", self.proxy_conx.recv(4))
-            _data = self.proxy_conx.recv(_packet_size)
+            try:
+                _packet_size, = unpack(">L", self.proxy_conx.recv(4))
+                _data = self.proxy_conx.recv(_packet_size)
+            except Exception, e:
+                raise AuthentifierSocketClosed()
             _data = _data.decode('utf-8')
-        except Exception:
-            Logger().info(u"recv failed")
+        except AuthentifierSocketClosed, e:
+            raise
+        except Exception, e:
             _status, _error = False, u"Failed to read data from rdpproxy authentifier socket"
+            import traceback
+            Logger().info("%s <<<%s>>>" % (_error, traceback.format_exc(e)))
+            raise AuthentifierSocketClosed()
 
         if _status:
             _elem = _data.split('\n')
@@ -153,7 +165,8 @@ class Sesman():
                 _status, _error = False, u"Error while parsing received data %s" % e
 
             if DEBUG:
-                Logger().info("received_data (on the wire) = %s" % _data)
+                import pprint
+                Logger().info("received_data (on the wire) = %s" % (pprint.pformat(_data)))
 
         # may be actual socket error, or unpack or parsing failure
         # (because we got partial data). Whatever the case socket connection
@@ -520,13 +533,12 @@ class Sesman():
         _status, _error = True, u''
         try:
             Logger().info("password_expiration_date = %s" % self.engine.password_expiration_date())
-            if self.engine.password_expiration_date():
-                _status, _error = self.interactive_display_message(
-                    {u'message': u'Your password will expire %s. Please change it.' % "soon"}
-                )
+            message = self.engine.password_expiration_date()
+            if message:
+                _status, _error = self.interactive_display_message({u'message': message})
         except Exception, e:
             import traceback
-            Logger().info("<<<<%e>>>>" % traceback.format_exc(e))
+            Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
         return _status, _error
 
 
@@ -831,6 +843,9 @@ class Sesman():
                             break
 
                     Logger().debug(u"End Of Keep Alive")
+
+                except AuthentifierSocketClosed, e:
+                    Logger().info(u"RDP/VNC connection terminated by client")
 
                 except Exception, e:
                     Logger().info(u"RDP/VNC connection terminated by client: Exception")

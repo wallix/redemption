@@ -657,16 +657,19 @@ public:
                         this->ini.globals.alternate_shell.get_cstr(),
                         this->ini.globals.shell_working_directory.get_cstr(),
                         this->ini.client.clipboard.get(),
-                        true,          // support fast-path
-                        true,          // support mem3blt
+                        true,           // support fast-path
+                        true,           // support mem3blt
                         this->ini.globals.enable_bitmap_update,
                         this->ini.debug.mod_rdp,
-                        true,          // support new pointer
+                        true,           // support new pointer
                         this->ini.mod_rdp.rdp_compression,
                         &this->ini.context.auth_error_message,
                         this->ini.mod_rdp.disconnect_on_logon_user_change,
                         this->ini.mod_rdp.open_session_timeout,
-                        this->ini.mod_rdp.certificate_change_action
+                        this->ini.mod_rdp.certificate_change_action,
+                        false,          // Enable transparent mode
+                        "",             // output (configuration) filename
+                        this->ini.mod_rdp.extra_orders.c_str()
                     );
                     this->mod->event.obj = client_sck;
 

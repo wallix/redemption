@@ -197,7 +197,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     {
         BStream header(8);
         BStream payload(20);
-        payload.out_uint16_le(2); // WRM FORMAT VERSION2
+        payload.out_uint16_le(3); // WRM FORMAT VERSION 3
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
         payload.out_uint16_le(this->bpp);
@@ -329,7 +329,7 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint8     (this->mem3blt.brush.hatch);
         payload.out_copy_bytes(this->mem3blt.brush.extra, 7);
         payload.out_uint16_le (this->mem3blt.cache_idx);
-        //RDPLineTo lineto;
+        // RDPLineTo lineto;
         payload.out_uint8(this->lineto.back_mode);
         payload.out_uint16_le(this->lineto.startx);
         payload.out_uint16_le(this->lineto.starty);
@@ -368,6 +368,17 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
             sizeof(this->glyphindex.data)
                 - this->glyphindex.data_len);
         payload.out_copy_bytes(this->glyphindex.data, 256);
+        // RDPPolyline polyline;
+        payload.out_sint16_le(this->polyline.xStart);
+        payload.out_sint16_le(this->polyline.yStart);
+        payload.out_uint8(this->polyline.bRop2);
+        payload.out_uint16_le(this->polyline.BrushCacheEntry);
+        payload.out_uint32_le(this->polyline.PenColor);
+        payload.out_uint8(this->polyline.NumDeltaEntries);
+        for (uint8_t i = 0; i < this->polyline.NumDeltaEntries; i++) {
+            payload.out_sint16_le(this->polyline.deltaPoints[i].xDelta);
+            payload.out_sint16_le(this->polyline.deltaPoints[i].yDelta);
+        }
 
         //------------------------------ missing variable length ---------------
         payload.mark_end();

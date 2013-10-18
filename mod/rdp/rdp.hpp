@@ -168,6 +168,8 @@ struct mod_rdp : public mod_api {
 
     unsigned certificate_change_action;
 
+    bool enable_polyline;
+
     mod_rdp( Transport * trans
            , const char * target_user
            , const char * target_password
@@ -194,6 +196,7 @@ struct mod_rdp : public mod_api {
            , unsigned certificate_change_action = 0
            , bool enable_transparent_mode = false
            , const char * output_filename = ""
+           , const char * extra_orders = ""
            )
         : mod_api(info.width, info.height)
         , front(front)
@@ -237,6 +240,7 @@ struct mod_rdp : public mod_api {
         , open_session_timeout_checker(0)
         , output_filename(output_filename)
         , certificate_change_action(certificate_change_action)
+        , enable_polyline(false)
     {
         if (this->verbose & 1)
         {
@@ -258,6 +262,8 @@ struct mod_rdp : public mod_api {
                 }
             }
         }
+
+        this->configure_extra_orders(extra_orders);
 
         this->event.object_and_time = (this->open_session_timeout > 0);
 
@@ -364,6 +370,46 @@ struct mod_rdp : public mod_api {
                 this->orders.recv_order_count);
             LOG(LOG_INFO, "~mod_rdp(): Recv bmp update count = %llu",
                 this->recv_bmp_update);
+        }
+    }
+
+    void configure_extra_orders(const char * extra_orders) {
+        const char * tmp_extra_orders  = extra_orders;
+        uint8_t      order_number;
+
+        if (verbose) {
+            LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
+        }
+
+        while (*tmp_extra_orders)
+        {
+            order_number = long_from_cstr(tmp_extra_orders);
+            if (verbose) {
+                LOG(LOG_INFO, "VNC Extra orders number=%d", order_number);
+            }
+            switch (order_number) {
+            case 22:
+                if (verbose) {
+                    LOG(LOG_INFO, "VNC Extra orders=Polyline");
+                    this->enable_polyline = true;
+                }
+                break;
+
+            default:
+                if (verbose) {
+                    LOG(LOG_INFO, "VNC Unknown Extra orders");
+                }
+                break;
+            }
+
+            tmp_extra_orders = strchr(tmp_extra_orders, ',');
+            if (!tmp_extra_orders)
+            {
+                break;
+            }
+
+            while ((*tmp_extra_orders == ',') || (*tmp_extra_orders == ' ') || (*tmp_extra_orders == '\t'))
+                tmp_extra_orders++;
         }
     }
 
@@ -1964,7 +2010,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[UnusedIndex3]                    = 1;
         order_caps.orderSupport[UnusedIndex5]                    = 1;
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
-        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 0;
+        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 0;
         order_caps.textFlags                                     = 0x06a1;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)

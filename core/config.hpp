@@ -530,6 +530,8 @@ struct Inifile : public FieldObserver {
         uint32_t open_session_timeout;
 
         unsigned certificate_change_action;  // 0 - Interrupt connection, 1 - Replace certificate then continue
+
+        redemption::string extra_orders;
     } mod_rdp;
 
     struct
@@ -839,6 +841,8 @@ public:
         this->mod_rdp.open_session_timeout = 0;
 
         this->mod_rdp.certificate_change_action = 0;
+
+        this->mod_rdp.extra_orders.empty();
         // End Section "mod_rdp"
 
         // Begin section "mod_vnc"
@@ -1219,6 +1223,9 @@ public:
             }
             else if (0 == strcmp(key, "certificate_change_action")) {
                 this->mod_rdp.certificate_change_action = ulong_from_cstr(value);
+            }
+            if (0 == strcmp(key, "extra_orders")) {
+                this->mod_rdp.extra_orders.copy_c_str(value);
             }
         }
         else if (0 == strcmp(context, "mod_vnc")){

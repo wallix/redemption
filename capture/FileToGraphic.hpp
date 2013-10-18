@@ -99,6 +99,7 @@ struct FileToGraphic
     uint32_t verbose;
 
     bool mem3blt_support;
+    bool polyline_support;
 
     uint16_t info_version;
     uint16_t info_width;
@@ -146,6 +147,7 @@ struct FileToGraphic
         , max_order_count(0)
         , verbose(verbose)
         , mem3blt_support(false)
+        , polyline_support(false)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -408,6 +410,15 @@ struct FileToGraphic
                         }
                     }
                     break;
+                case RDP::POLYLINE:
+                    this->polyline.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->lineto.log(LOG_INFO, clip);
+                    }
+                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                        this->consumers[i]->draw(this->polyline, clip);
+                    }
+                    break;
                 default:
                     /* error unknown order */
                     LOG(LOG_ERR, "unsupported PRIMARY ORDER (%d)", this->common.order);
@@ -524,6 +535,7 @@ struct FileToGraphic
             {
                 this->info_version        = this->stream.in_uint16_le();
                 this->mem3blt_support     = (this->info_version > 1);
+                this->polyline_support    = (this->info_version > 2);
                 this->info_width          = this->stream.in_uint16_le();
                 this->info_height         = this->stream.in_uint16_le();
                 this->info_bpp            = this->stream.in_uint16_le();
@@ -669,6 +681,20 @@ struct FileToGraphic
                 this->glyphindex.glyph_y = this->stream.in_sint16_le();
                 this->glyphindex.data_len = this->stream.in_uint8();
                 this->stream.in_copy_bytes(this->glyphindex.data, 256);
+
+                // RDPPolyine polyline;
+                if (this->polyline_support) {
+                    this->polyline.xStart          = this->stream.in_sint16_le();
+                    this->polyline.yStart          = this->stream.in_sint16_le();
+                    this->polyline.bRop2           = this->stream.in_uint8();
+                    this->polyline.BrushCacheEntry = this->stream.in_uint16_le();
+                    this->polyline.PenColor        = this->stream.in_uint32_le();
+                    this->polyline.NumDeltaEntries = this->stream.in_uint8();
+                    for (uint8_t i = 0; i < this->polyline.NumDeltaEntries; i++) {
+                        this->polyline.deltaPoints[i].xDelta = this->stream.in_sint16_le();
+                        this->polyline.deltaPoints[i].yDelta = this->stream.in_sint16_le();
+                    }
+                }
             break;
 
             case LAST_IMAGE_CHUNK:

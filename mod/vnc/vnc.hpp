@@ -215,15 +215,6 @@ struct mod_vnc : public InternalMod, public NotifyApi {
         }
     }
 
-    static long long_from_cstr(const char * str)
-    { // 10 = 10, 0x10 = 16
-        if ((*str == '0') && (*(str + 1) == 'x')){
-            return strtol(str + 2, 0, 16);
-        }
-
-        return atol(str);
-    }
-
     //==============================================================================================================
     void change_mouse_state( uint16_t x
                            , uint16_t y

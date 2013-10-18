@@ -31,7 +31,7 @@
 #define LOGNULL
 
 
-#include "regex_automate.hpp"
+#include "regex_state.hpp"
 
 using namespace re;
 
@@ -43,9 +43,21 @@ inline size_t multi_char(const char * c)
 BOOST_AUTO_TEST_CASE(TestRegexCheck)
 {
     {
-        StateNormal st(multi_char("Þ"));
+        StateChar st(multi_char("Þ"));
         BOOST_CHECK(st.check(multi_char("Þ")));
         BOOST_CHECK( ! st.check('a'));
+    }
+    {
+        StateAny st;
+        BOOST_CHECK(st.check(multi_char("Þ")));
+        BOOST_CHECK(st.check('a'));
+        BOOST_CHECK(st.check('\1'));
+    }
+    {
+        StateFinish st;
+        BOOST_CHECK(st.check(multi_char("Þ")));
+        BOOST_CHECK(st.check('a'));
+        BOOST_CHECK(st.check('\1'));
     }
     {
         StateCharacters st("aÎbps");
@@ -72,7 +84,7 @@ BOOST_AUTO_TEST_CASE(TestRegexCheck)
         BOOST_CHECK( ! st.check('a'));
     }
     {
-        StateNoSpace st;
+        StateNotSpace st;
         BOOST_CHECK( ! st.check(' '));
         BOOST_CHECK( ! st.check('\t'));
         BOOST_CHECK( ! st.check('\n'));

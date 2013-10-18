@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
 {
     const char expected_stripped_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 2, width = 20, height=10, bpp=24
+               "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // Initial black PNG image
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 
     const char expected[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
+               "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // Initial black PNG image
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
     const char expected[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 2, width = 20, height=10, bpp=24
+               "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // Initial black PNG image
@@ -334,7 +334,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
 {
    const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24 PAD: 2 bytes
+               "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24 PAD: 2 bytes
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // Initial black PNG image
@@ -404,7 +404,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
 {
    const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
+               "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // Initial black PNG image
@@ -481,7 +481,7 @@ BOOST_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
 {
    const char source_wrm[] =
     /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
-               "\x02\x00\x14\x00\x0A\x00\x18\x00" // WRM version 2, width = 20, height=10, bpp=24
+               "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
 
 // Initial black PNG image
