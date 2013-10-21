@@ -38,6 +38,7 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
@@ -45,6 +46,7 @@
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/caches/fontcache.hpp"
 #include "RDP/pointer.hpp"
+#include "ellipse.hpp"
 
 struct RDPGraphicDevice {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
@@ -58,6 +60,7 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPLineTo     & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) = 0;
     virtual void draw(const RDPPolyline   & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPEllipseSC  & cmd, const Rect & clip) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders");
     virtual void draw(const RDPBrushCache & cmd) {}

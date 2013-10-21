@@ -142,7 +142,7 @@ public:
         delete this->pnc;
         if (this->enable_file_encryption){
             delete this->crypto_wrm_trans;
-        } 
+        }
         else {
             delete this->wrm_trans;
         }
@@ -326,6 +326,17 @@ public:
             this->drawable->draw(cmd, clip);
         }
     }
+
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
+    {
+        if (this->capture_wrm) {
+            this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable) {
+            this->drawable->draw(cmd, clip);
+        }
+    }
+
 
     virtual void server_set_pointer(const Pointer & cursor)
     {

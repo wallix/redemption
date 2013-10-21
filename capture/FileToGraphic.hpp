@@ -61,6 +61,7 @@ struct FileToGraphic
     RDPLineTo lineto;
     RDPGlyphIndex glyphindex;
     RDPPolyline polyline;
+    RDPEllipseSC ellipseSC;
 
     BmpCache     * bmp_cache;
     PointerCache   ptr_cache;
@@ -126,6 +127,7 @@ struct FileToGraphic
         , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
         , glyphindex(0, 0, 0, 0, 0, 0, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t*)"")
         , polyline()
+        , ellipseSC()
         , bmp_cache(NULL)
         // variables used to read batch of orders "chunks"
         , chunk_size(0)
