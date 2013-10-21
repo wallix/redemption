@@ -291,88 +291,27 @@ public:
             uint8_t * zeroBit = stream.out_uint8p((this->NumDeltaEntries + 3) / 4);
             *zeroBit = 0;
 
-            for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
-                if (i && !(i % 4)) {
-                    zeroBit++;
-                    *zeroBit = 0;
+            for (uint8_t i = 0, m4 = 0; i < this->NumDeltaEntries; i++, m4++) {
+                if (m4 == 4) {
+                    m4 = 0;
+                }
+
+                if (i && !m4) {
+                    *(++zeroBit) = 0;
                 }
 
                 if (!this->deltaPoints[i].xDelta) {
-                    *zeroBit |= (1 << (8 - (i % 4) * 2 - 1));
+                    *zeroBit |= (1 << (7 - m4 * 2));
                 }
                 else {
-                    if (abs(this->deltaPoints[i].xDelta) > 0x3F) {
-                        uint16_t data;
-
-                        memcpy(&data, &this->deltaPoints[i].xDelta, sizeof(data));
-                        data |= 0x8000;
-
-                        if (this->deltaPoints[i].xDelta > 0) {
-                            data &= ~0x4000;
-                        }
-                        else {
-                            data |= 0x4000;
-                        }
-
-                        stream.out_uint16_be(data);
-                    }
-                    else {
-                        int8_t  _xDelta;
-                        uint8_t data;
-
-                        _xDelta = this->deltaPoints[i].xDelta;
-
-                        memcpy(&data, &_xDelta, sizeof(data));
-                        data &= ~0x80;
-
-                        if (this->deltaPoints[i].xDelta > 0) {
-                            data &= ~0x40;
-                        }
-                        else {
-                            data |= 0x40;
-                        }
-
-                        stream.out_uint8(data);
-                    }
+                    stream.out_DEP(this->deltaPoints[i].xDelta);
                 }
 
                 if (!this->deltaPoints[i].yDelta) {
-                    *zeroBit |= (1 << (8 - (i % 4) * 2 - 2));
+                    *zeroBit |= (1 << (6 - m4 * 2));
                 }
                 else {
-                    if (abs(this->deltaPoints[i].yDelta) > 0x3F) {
-                        uint16_t data;
-
-                        memcpy(&data, &this->deltaPoints[i].yDelta, sizeof(data));
-                        data |= 0x8000;
-
-                        if (this->deltaPoints[i].yDelta > 0) {
-                            data &= ~0x4000;
-                        }
-                        else {
-                            data |= 0x4000;
-                        }
-
-                        stream.out_uint16_be(data);
-                    }
-                    else {
-                        int8_t  _yDelta;
-                        uint8_t data;
-
-                        _yDelta = this->deltaPoints[i].yDelta;
-
-                        memcpy(&data, &_yDelta, sizeof(data));
-                        data &= ~0x80;
-
-                        if (this->deltaPoints[i].yDelta > 0) {
-                            data &= ~0x40;
-                        }
-                        else {
-                            data |= 0x40;
-                        }
-
-                        stream.out_uint8(data);
-                    }
+                    stream.out_DEP(this->deltaPoints[i].yDelta);
                 }
             }
 
@@ -418,53 +357,24 @@ public:
             rgbData.in_skip_bytes(zeroBitsSize);
 
             uint8_t zeroBit = 0;
-            int16_t xDelta;
-            int16_t yDelta;
 
-            for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
-                if (!(i % 4)) {
+            for (uint8_t i = 0, m4 = 0; i < this->NumDeltaEntries; i++, m4++) {
+                if (m4 == 4) {
+                    m4 = 0;
+                }
+
+                if (!m4) {
                     zeroBit = zeroBits.in_uint8();
                     // LOG(LOG_INFO, "0x%02X", zeroBit);
                 }
-                if (!(zeroBit & 0x80)) {
-                    xDelta = rgbData.in_uint8();
-                    if (xDelta & 0x80)
-                    {
-                        xDelta = ((xDelta & 0x7F) << 8) + rgbData.in_uint8();
-                        if (xDelta & 0x4000)
-                            xDelta = - ((~(xDelta - 1)) & 0x7FFF);
-                    }
-                    else
-                    {
-                        if (xDelta & 0x40)
-                            xDelta = - ((~(xDelta - 1)) & 0x7F);
-                    }
-                }
-                else {
-                    xDelta = 0;
-                }
-                if (!(zeroBit & 0x40)) {
-                    yDelta = rgbData.in_uint8();
-                    if (yDelta & 0x80)
-                    {
-                        yDelta = ((yDelta & 0x7F) << 8) + rgbData.in_uint8();
-                        if (yDelta & 0x4000)
-                            yDelta = - ((~(yDelta - 1)) & 0x7FFF);
-                    }
-                    else
-                    {
-                        if (yDelta & 0x40)
-                            yDelta = - ((~(yDelta - 1)) & 0x7F);
-                    }
-                }
-                else {
-                    yDelta = 0;
-                }
 
-                // LOG(LOG_INFO, "RDPPolyline::receive: delta point=%d, %d", xDelta, yDelta);
+                this->deltaPoints[i].xDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
+                this->deltaPoints[i].yDelta = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
 
-                this->deltaPoints[i].xDelta = xDelta;
-                this->deltaPoints[i].yDelta = yDelta;
+/*
+                LOG(LOG_INFO, "RDPPolyline::receive: delta point=%d, %d",
+                    this->deltaPoints[i].xDelta, this->deltaPoints[i].yDelta);
+*/
 
                 zeroBit <<= 2;
             }
