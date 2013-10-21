@@ -130,6 +130,13 @@ public:
         , color(c)
     {}
 
+    bool operator==(const RDPEllipseSC & other) const {
+        return (this->el.equal(other.el)
+                && (this->bRop2 == other.bRop2)
+                && (this->fillMode == other.fillMode)
+                && (this->color == other.color));
+    }
+
     static const uint8_t id(void) {
         return RDP::ELLIPSESC;
     }
