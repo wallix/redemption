@@ -570,7 +570,7 @@ namespace re {
     public:
         void display_elem_state_list(const StateList& e, unsigned idx) const
         {
-            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t" << e.st->utfc << "\t"
+            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t"
             << *e.st << "\t" << (e.next) << "\033[0m" << std::endl;
         }
 
@@ -579,7 +579,7 @@ namespace re {
             for (; l < last && l->first != l->last; ++l) {
                 std::cout << l << "  st: " << l->st->num << (l->st->is_cap() ? " (cap)\n" : "\n");
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    std::cout << "\t" << first->st->num << "\t" << first->st->utfc << "\t"
+                    std::cout << "\t" << first->st->num << "\t"
                     << *first->st << "\t" << first->next << ("\n");
                 }
             }
@@ -823,8 +823,8 @@ namespace re {
         if (st && stw.get_num_at(st) != -2u) {
             std::string s(depth, '\t');
             std::cout
-            << s << "\033[33m" << st << "\t" << st->num << "\t" << st->utfc << "\t"
-            << *st << "\033[0m\n\t" << s << st->out1 << "\n\t" << s << st->out2 << "\n";
+            << s << "\033[33m" << st << "\t" << st->num << "\t" << *st
+            << "\033[0m\n\t" << s << st->out1 << "\n\t" << s << st->out2 << "\n";
             stw.set_num_at(st, -2u);
             display_state(stw, st->out1, depth+1);
             display_state(stw, st->out2, depth+1);
