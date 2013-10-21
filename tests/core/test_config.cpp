@@ -83,13 +83,13 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -319,13 +319,13 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -564,13 +564,13 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -769,13 +769,13 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -957,13 +957,13 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -1130,13 +1130,13 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -1299,13 +1299,13 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -1458,13 +1458,13 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -1617,13 +1617,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -1775,13 +1775,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);
@@ -1923,13 +1923,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(3,                                ini.video.png_limit);
 
     BOOST_CHECK_EQUAL(20000,                            ini.video.l_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.l_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.l_framerate);
     BOOST_CHECK_EQUAL(480,                              ini.video.l_height);
     BOOST_CHECK_EQUAL(640,                              ini.video.l_width);
     BOOST_CHECK_EQUAL(25,                               ini.video.l_qscale);
 
     BOOST_CHECK_EQUAL(40000,                            ini.video.m_bitrate);
-    BOOST_CHECK_EQUAL(1,                                ini.video.m_framerate);
+    BOOST_CHECK_EQUAL(5,                                ini.video.m_framerate);
     BOOST_CHECK_EQUAL(768,                              ini.video.m_height);
     BOOST_CHECK_EQUAL(1024,                             ini.video.m_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.m_qscale);

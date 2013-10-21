@@ -871,12 +871,12 @@ public:
         strcpy(this->video.replay_path, "/tmp/");
 
         this->video.l_bitrate   = 20000;
-        this->video.l_framerate = 1;
+        this->video.l_framerate = 5;
         this->video.l_height    = 480;
         this->video.l_width     = 640;
         this->video.l_qscale    = 25;
         this->video.m_bitrate   = 40000;
-        this->video.m_framerate = 1;
+        this->video.m_framerate = 5;
         this->video.m_height    = 768;
         this->video.m_width     = 1024;
         this->video.m_qscale    = 15;
