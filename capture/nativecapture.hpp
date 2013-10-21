@@ -192,6 +192,11 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
+    {
+        this->recorder.draw(cmd, clip);
+    }
+
     virtual void send_pointer(int cache_idx, const Pointer & cursor) {
         this->recorder.send_pointer(cache_idx, cursor);
     }

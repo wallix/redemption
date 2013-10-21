@@ -42,6 +42,7 @@
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 
 #include "RDP/caches/bmpcache.hpp"
 
@@ -58,6 +59,7 @@ struct rdp_orders {
     RDPLineTo      lineto;
     RDPGlyphIndex  glyph_index;
     RDPPolyline    polyline;
+    RDPEllipseSC   ellipseSC;
 
     BGRPalette cache_colormap[6];
     BGRPalette global_palette;
@@ -327,6 +329,10 @@ public:
                 case POLYLINE:
                     this->polyline.receive(stream, header);
                     mod->draw(this->polyline, cmd_clip);
+                    break;
+                case ELLIPSESC:
+                    this->ellipseSC.receive(stream, header);
+                    mod->draw(this->ellipseSC, cmd_clip);
                     break;
                 default:
                     /* error unknown order */

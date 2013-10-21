@@ -30,7 +30,7 @@
 #include "composite.hpp"
 #include "flat_button.hpp"
 #include "translation.hpp"
-
+#include "ellipse.hpp"
 class FlatLogin : public WidgetParent
 {
 public:
@@ -126,6 +126,7 @@ public:
     {
         this->impl->draw(clip);
         this->draw_inner_free(clip.intersect(this->rect), this->bgcolor);
+
     }
 
     virtual void draw_inner_free(const Rect& clip, int bg_color) {

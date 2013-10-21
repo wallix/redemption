@@ -48,15 +48,17 @@
 BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 {
     TestDraw drawable(800, 600);
+    // TestDraw drawable(1280, 1024);
 
     // FlatLogin is a flat_login widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
+    // WidgetScreen parent(drawable, 1280, 1024);
     NotifyApi * notifier = NULL;
     int id = 0;
 
     Inifile ini;
 
-    FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test1",
+    FlatLogin flat_login(drawable, parent.cx(), parent.cy(), parent, notifier, "test1",
         false, id, "rec", "rec",
         WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
 
@@ -214,8 +216,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x6d\xa8\x2c\x54\x56\x52\x18\x9f\x27\xdd"
-                   "\x33\x9e\xb5\x1a\x21\xfb\xea\x78\xd9\xf2"
+                   "\xf1\xe9\x9e\xa5\x45\xac\x18\x41\xce\x1c"
+                   "\x9e\x88\x08\x16\xb7\x88\x4a\xd9\x38\xdd"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

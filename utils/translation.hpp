@@ -62,15 +62,18 @@ private:
         fr_map["minute"] = "minute";
         fr_map["before_closing"] = "avant fermeture";
         fr_map["help_message"] =
-            "Vous devez vous authentifier avant d'utiliser<br>"
-            "cette session.<br>"
+            "Dans la zone de saisie login, entrez:<br>"
+            "- le nom de la machine cible et du compte<br>"
+            "  sous la forme login@serveur.<br>"
+            "- ou un nom de compte valide.<br>"
             "<br>"
-            "Entrez un nom de compte valide dans la zone<br>de saisie Identifiant.<br>"
-            "Entrez le mot de passe dans la zone de saisie <br>Mot de passe.<br>"
+            "Dans la zone de saisie mot de passe,<br>"
+            "entrez le mot de passe du compte.<br>"
             "<br>"
-            "Le nom de l'utilisateur et le mot de passe sont<br>sensible à la case.<br>"
+            "Les deux champs sont sensibles à la case.<br>"
             "<br>"
-            "Contactez votre administrateur système en cas<br>de problème pour vous connecter.";
+            "Contactez votre administrateur système en<br>"
+            "cas de problème pour vous connecter.";
         fr_map["selector"] = "Sélecteur";
     }
     void build_en_map() {
@@ -98,17 +101,17 @@ private:
         en_map["minute"] = "minute";
         en_map["before_closing"] = "before closing";
         en_map["help_message"] =
-            "You must be authenticated before using this<br>"
-            "session.<br>"
+            "In login edit box, enter:<br>"
+            "- target device and login as login@target.<br>"
+            "- or a valid authentication user.<br>"
             "<br>"
-            "Enter a valid username in the username edit box.<br>"
-            "Enter the password in the password edit box.<br>"
+            "In password edit box enter your password<br>"
+            "for user.<br>"
             "<br>"
-            "Both the username and password are case<br>"
-            "sensitive.<br>"
+            "Both fields are case sensitive.<br>"
             "<br>"
             "Contact your system administrator if you are<br>"
-            "having problems logging on.";
+            "experiencing problems.";
         fr_map["selector"] = "Selector";
     }
 

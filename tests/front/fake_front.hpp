@@ -17,7 +17,7 @@
    Copyright (C) Wallix 2010-2013
    Author(s): Christophe Grosjean
 
-   Fake Front class for Unit Testing 
+   Fake Front class for Unit Testing
 */
 
 #include "RDP/RDPDrawable.hpp"
@@ -93,6 +93,11 @@ public:
     void draw(const RDPPolyline & cmd, const Rect & clip) {
         RDPPolyline new_cmd24 = cmd;
         new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+    virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
+        RDPEllipseSC new_cmd24 = cmd;
+        new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
     }
 
