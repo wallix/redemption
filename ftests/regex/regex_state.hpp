@@ -42,7 +42,6 @@ namespace re {
 
     struct StateBase
     {
-    protected:
         StateBase(unsigned type, StateBase * out1 = 0, StateBase * out2 = 0)
         : type(type)
         , num(0)
@@ -79,12 +78,21 @@ namespace re {
         bool is_finish() const
         { return this->type == FINISH; }
 
+        bool is_terminate() const
+        { return this->type & (LAST|FINISH); }
+
         unsigned type;
         unsigned num;
 
         StateBase *out1;
         StateBase *out2;
     };
+
+    inline std::ostream& operator<<(std::ostream& os, const StateBase& st)
+    {
+        st.display(os);
+        return os;
+    }
 
     struct StateSplit : public StateBase
     {
@@ -221,12 +229,6 @@ namespace re {
             os << "(epsilone)";
         }
     };
-
-    inline std::ostream& operator<<(std::ostream& os, const StateBase& st)
-    {
-        st.display(os);
-        return os;
-    }
 
     struct StateFinish : StateBase
     {

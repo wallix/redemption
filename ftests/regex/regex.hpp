@@ -57,9 +57,9 @@ namespace re {
         };
         Parser parser;
         StateMachine2 sm;
+    public:
         unsigned step_limit;
 
-    public:
         Regex(unsigned step_limit = 10000)
         : parser()
         , sm(this->parser.stw)

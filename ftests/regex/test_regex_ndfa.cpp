@@ -48,13 +48,13 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
 
         bool search(const char * s)
         {
-            this->stw.reset_num();
+            this->stw.reset_nums();
             return st_search(this->stw, s);
         }
 
         bool exact_search(const char * s)
         {
-            this->stw.reset_num();
+            this->stw.reset_nums();
             return st_exact_search(this->stw, s);
         }
 
