@@ -91,9 +91,9 @@ and install (as administrator):
 
 Binaries are located in /usr/local/bin.
 
-To test it, edit the tools/sesmanworker/engine.py file to add a remote equipment
-and then
- $ python tools/WABRDAuthentifier
+To test it, edit the tools/sesman/sesmanworker/engine.py file to add a remote
+equipment and then
+ $ python tools/sesman/WABRDAuthentifier
  # /usr/local/bin/rdpproxy -nf
 
 Now, at that point you'll just have two servers waiting for connections
