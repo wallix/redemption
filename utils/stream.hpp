@@ -305,6 +305,73 @@ public:
         }
     }
 
+    // MS-RDPEGDI : 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
+    // ===================================================================
+
+    // ..., the delta value it  represents is encoded in a packed signed
+    //  format:
+
+    //  * If the high bit (0x80) is not set in the first encoding byte, the
+    //    field is 1 byte long and is encoded as a signed delta in the lower
+    //    7 bits of the byte.
+
+    //  * If the high bit of the first encoding byte is set, the lower 7 bits
+    //    of the first byte and the 8 bits of the next byte are concatenated
+    //    (the first byte containing the high-order bits) to create a 15-bit
+    //    signed delta value.
+
+    void out_DEP(int16_t point) {
+        if (abs(point) > 0x3F) {
+            uint16_t data;
+
+            memcpy(&data, &point, sizeof(data));
+            data |= 0x8000;
+
+            if (point > 0) {
+                data &= ~0x4000;
+            }
+            else {
+                data |= 0x4000;
+            }
+
+            this->out_uint16_be(data);
+        }
+        else {
+            int8_t  _yDelta;
+            uint8_t data;
+
+            _yDelta = point;
+
+            memcpy(&data, &_yDelta, sizeof(data));
+            data &= ~0x80;
+
+            if (point > 0) {
+                data &= ~0x40;
+            }
+            else {
+                data |= 0x40;
+            }
+
+            this->out_uint8(data);
+        }
+    }
+
+    int16_t in_DEP(void) {
+        int16_t point = this->in_uint8();
+        if (point & 0x80)
+        {
+            point = ((point & 0x7F) << 8) + this->in_uint8();
+            if (point & 0x4000)
+                point = - ((~(point - 1)) & 0x7FFF);
+        }
+        else
+        {
+            if (point & 0x40)
+                point = - ((~(point - 1)) & 0x7F);
+        }
+
+        return point;
+    }
 
     void out_sint8(char v) {
         REDASSERT(this->has_room(1));

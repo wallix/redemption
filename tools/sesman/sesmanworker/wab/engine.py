@@ -220,6 +220,11 @@ class Engine(object):
 
         return self.session_id
 
+    def update_session(self, hosttarget):
+        if self.session_id:
+            self.wabengine.update_session(self.session_id, hosttarget)
+
+
     def stop_session(self, result=True, diag=u"success", title=u"End session"):
         if self.session_id:
             self.wabengine.stop_session(self.session_id, result=result, diag=diag, title=title)
