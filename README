@@ -17,7 +17,7 @@ FAQ
 ---
 
 Q - Why did you fork xrdp instead of contributing to the project ?
---------------------------------------------------------------
+------------------------------------------------------------------
 
 Many reasons. The most important one being we wished to change so many things
 for our usage, we needed to have control on the project roadmap.
@@ -70,7 +70,7 @@ achieve the same kind of troubles with C using enough macro abstraction layers.
 Q - Why do you use bjam for ReDemPtion instead of make, cmake, scons, etc ?
 ---------------------------------------------------------------------------
 
-It is simple, more that could be thought at first signt, and bjam has the major
+It is simple, more that could be thought at first sight, and bjam has the major
 feature over make to keep source directories clean, all build related
 informations for all architecture are kept together in bin directory.
 
@@ -91,8 +91,9 @@ and install (as administrator):
 
 Binaries are located in /usr/local/bin.
 
-To test it, edit the utils/authhook.py file to add a remote equipment and then
- $ python utils/authhook.py
+To test it, edit the tools/sesmanworker/engine.py file to add a remote equipment
+and then
+ $ python tools/WABRDAuthentifier
  # /usr/local/bin/rdpproxy -nf
 
 Now, at that point you'll just have two servers waiting for connections
@@ -125,7 +126,7 @@ Q - Why are there so many #pragma messages when compiling ReDemPtion ?
 Because we put them there to avoid forgetting foreseen troubles. It also
 avoid stopping current coding to fix every bit of suspicious code on the fly,
 but to keep some physical trace (and show to readers) that some parts of the
-code or of the design are indeed suspicious. 
+code or of the design are indeed suspicious.
 
 The final goal is to remove them all, but we strongly believe that potential
 problems or architecture defects should not go unnoticed, even when compiler
