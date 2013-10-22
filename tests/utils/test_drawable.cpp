@@ -245,27 +245,27 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
 
     gd.draw(RDPEllipseSC(Rect(700, 888, 40, 30), RED, 0x0D, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(750, 888, 40, 30), GREEN, 0x0D, 0x01), screen_rect);
-    gd.draw(RDPEllipseSC(Rect(800, 888, 40, 30), YELLOW, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(800, 888, 40, 30), MEDIUM_BLUE, 0x06, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(850, 888, 40, 30), BLUE, 0x06, 0x01), screen_rect);
 
     gd.draw(RDPEllipseSC(Rect(700, 930, 30, 40), RED, 0x0D, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(750, 930, 30, 40), GREEN, 0x0D, 0x01), screen_rect);
-    gd.draw(RDPEllipseSC(Rect(800, 930, 30, 40), YELLOW, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(800, 930, 30, 40), MEDIUM_BLUE, 0x06, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(850, 930, 30, 40), BLUE, 0x06, 0x01), screen_rect);
 
     gd.draw(RDPEllipseSC(Rect(700, 600, 230, 140), RED, 0x0D, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(750, 530, 310, 240), GREEN, 0x07, 0x01), screen_rect);
-    gd.draw(RDPEllipseSC(Rect(800, 700, 130, 140), YELLOW, 0x0E, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(800, 700, 130, 140), MEDIUM_BLUE, 0x0E, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(880, 700, 130, 40), BLUE, 0x06, 0x01), screen_rect);
 
     gd.draw(RDPEllipseSC(Rect(600, 300, 120, 120), RED, 0x0D, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(650, 300, 130, 130), GREEN, 0x07, 0x01), screen_rect);
-    gd.draw(RDPEllipseSC(Rect(700, 300, 140, 140), YELLOW, 0x0E, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(700, 300, 140, 140), MEDIUM_BLUE, 0x0E, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(750, 300, 130, 130), BLUE, 0x06, 0x01), screen_rect);
 
     gd.draw(RDPEllipseSC(Rect(900, 20, 120, 130), RED, 0x0D, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(1000, 30, 120, 130), GREEN, 0x07, 0x01), screen_rect);
-    gd.draw(RDPEllipseSC(Rect(910, 200, 120, 140), YELLOW, 0x0E, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(910, 200, 120, 140), MEDIUM_BLUE, 0x0E, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(1000, 180, 140, 120), BLUE, 0x06, 0x01), screen_rect);
 
     gd.draw(RDPEllipseSC(Rect(1000, 400, 130, 140), RED, 0x0D, 0x00), screen_rect);
@@ -285,7 +285,8 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     gd.draw(RDPEllipseSC(Rect(350, 155, 30, 40), RED, 0x0C, 0x01), screen_rect);
     gd.draw(RDPEllipseSC(Rect(400, 10, 30, 40), RED, 0x0F, 0x01), screen_rect);
     gd.draw(RDPEllipseSC(Rect(400, 55, 30, 40), RED, 0x01, 0x01), screen_rect);
-    gd.draw(RDPEllipseSC(Rect(400, 105, 30, 40), RED, 0x0B, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(400, 105, 30, 40), RED, 0x10, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(400, 105, 30, 40), RED, 0x10, 0x0B), screen_rect);
     gd.draw(RDPEllipseSC(Rect(400, 155, 30, 40), RED, 0x06, 0x01), screen_rect);
 
     elapusec = ustime() - usec;
@@ -295,9 +296,9 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-                   "\xdd\x56\x6f\xa9\x0a\x82\x2c\x1c\x5c\xc5"
-                   "\x89\xc7\x9c\xd8\xda\x8e\x28\x98\xcb\xee"
-    )){
+                   "\xa7\xa0\x72\x43\x8a\x05\x86\xc7\xdd\xf6"
+                   "\x38\xc1\x7e\xa4\x9d\x20\x2a\x39\xdf\x4e"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
