@@ -587,7 +587,7 @@ class Sesman():
                     if record_warning != 'false':
                         message =  u"Warning! Your remote session may be recorded and kept in electronic format."
                         try:
-                            with open('/opt/wab/share/proxys/messages/motd.%s' % SESMANCONF.language) as f:
+                            with open('/opt/wab/share/proxys/messages/motd.%s' % self.language) as f:
                                 message = f.read().decode('utf-8')
                         except Exception, e:
                             pass
