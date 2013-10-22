@@ -436,5 +436,83 @@ BOOST_AUTO_TEST_CASE(TestOpaqueRect)
             "Ellipse Draw 9");
     }
 
+    {
+        BStream stream(1000);
+        RDPOrderCommon state_common(0, Rect(0, 0, 800, 600));
+        RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), 0xFFFFFF);
+
+        BOOST_CHECK_EQUAL(0, (stream.get_offset()));
+
+        RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
+        RDPEllipseSC(Rect(0, 0, 10, 10), 0xFFFFFF, 0x0A, 0x00).emit(stream, newcommon, state_common, state_ellipse);
+
+        uint8_t datas[5] = { CHANGE | STANDARD, ELLIPSESC,
+                             0x30, // brop2 and fillmode changed
+                             0x0A,
+                             0x00};
+        check_datas(stream.get_offset(), stream.get_data(), 5, datas, "ellipse draw 10");
+
+        stream.mark_end(); stream.p = stream.get_data();
+
+        RDPOrderCommon common_cmd = state_common;
+        uint8_t control = stream.in_uint8();
+        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+
+        BOOST_CHECK_EQUAL((uint8_t)ELLIPSESC, common_cmd.order);
+
+        RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
+        cmd.receive(stream, header);
+
+        check<RDPEllipseSC>(common_cmd, cmd,
+            RDPOrderCommon(ELLIPSESC, Rect(0, 0, 800, 600)),
+            RDPEllipseSC(Rect(0, 0, 10, 10), 0xFFFFFF, 0x0A, 0x00),
+            "ellipse draw 10");
+    }
+
+
+    {
+        BStream stream(1000);
+        RDPOrderCommon state_common(ELLIPSESC, Rect(0, 0, 800, 600));
+        RDPEllipseSC state_ellipse(Rect(0, 0, 10, 10), 0xFFFFFF);
+
+        RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
+        RDPEllipseSC(Rect(5, 0, 810, 605), 0x102030, 0x0E, 0x00).emit(stream, newcommon, state_common, state_ellipse);
+
+        uint8_t datas[13] = {
+            STANDARD | BOUNDS | LASTBOUNDS,
+            0x7D,   // x, w, h, r, g, b coordinates rbop and fillmode changed
+            0x05, 0, // x = 0x005 = 5
+            0x2F, 3,   // right = 815
+            0x5C, 2,   // bottom = 604
+            0x0E,
+            0x00,
+            0x30, 0x20, 0x10,  // RGB colors
+        };
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 13, datas, "Ellipse Draw 11");
+
+        stream.mark_end(); stream.p = stream.get_data();
+
+        RDPOrderCommon common_cmd = state_common;
+        uint8_t control = stream.in_uint8();
+        BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
+        RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
+
+        BOOST_CHECK_EQUAL((uint8_t)ELLIPSESC, common_cmd.order);
+
+        RDPEllipseSC cmd(Rect(0, 0, 10, 10), 0xFFFFFF);
+        cmd.receive(stream, header);
+
+        check<RDPEllipseSC>(common_cmd, cmd,
+            RDPOrderCommon(ELLIPSESC, Rect(0, 0, 800, 600)),
+            RDPEllipseSC(Rect(5, 0, 810, 605), 0x102030, 0x0E, 0x00),
+            "Ellipse Draw 11");
+    }
+
+
+    RDPEllipseSC nullellipse;
+    BOOST_CHECK(nullellipse.id() == ELLIPSESC);
+    nullellipse.log(1, Rect());
+    nullellipse.print(Rect());
 }
 

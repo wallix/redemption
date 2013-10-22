@@ -84,6 +84,14 @@ void dump_png(const char * prefix, const Drawable & data)
     ::dump_png24(f, data.data, data.width, data.height, data.rowsize, true);
     ::fclose(f);
 }
+void save_to_png(const char * filename, const Drawable & data)
+{
+    FILE * file = fopen(filename, "w+");
+    dump_png24(file, data.data, data.width,
+               data.height, data.rowsize, true);
+    fclose(file);
+}
+
 
 BOOST_AUTO_TEST_CASE(TestLineTo)
 {
@@ -168,7 +176,133 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     }
 
     // uncomment to see result in png file
-//    dump_png("/tmp/test_polyline_000_", gd.drawable);
+    // dump_png("/tmp/test_polyline_000_", gd.drawable);
+}
+
+BOOST_AUTO_TEST_CASE(TestEllipse)
+{
+    uint16_t width = 1280;
+    uint16_t height = 1024;
+    Rect screen_rect(0, 0, width, height);
+    RDPDrawable gd(width, height);
+    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), LIGHT_GREEN), screen_rect);
+
+    unsigned long long usec = ustime();
+    unsigned long long cycles = rdtsc();
+
+    gd.draw(RDPEllipseSC(Rect(2, 200, 540, 32), BLUE, 0x06, 0x01), screen_rect);
+
+    unsigned long long elapusec = ustime() - usec;
+    unsigned long long elapcyc = rdtsc() - cycles;
+    LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+
+    usec = ustime();
+    cycles = rdtsc();
+
+    gd.draw(RDPEllipseSC(Rect(100, 2, 40, 400), RED, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(2, 300, 540, 32), BLUE, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(200, 2, 40, 400), RED, 0x06, 0x00), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(2, 600, 540, 32), BLUE, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(200, 500, 40, 401), RED, 0x0D, 0x00), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(2, 610, 540, 32), BLUE, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(300, 500, 40, 401), RED, 0x0D, 0x01), screen_rect);
+
+
+
+    gd.draw(RDPEllipseSC(Rect(700, 12, 6, 6), BLUE, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(715, 12, 6, 6), BLUE, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(730, 12, 6, 6), BLUE, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(745, 12, 6, 6), BLUE, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(700, 28, 5, 5), GREEN, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(715, 28, 5, 5), GREEN, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(730, 28, 5, 5), GREEN, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(745, 28, 5, 5), GREEN, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(800, 12, 8, 8), BLUE, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(815, 12, 8, 8), BLUE, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(830, 12, 8, 8), BLUE, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(845, 12, 8, 8), BLUE, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(800, 38, 15, 15), GREEN, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(815, 38, 15, 15), GREEN, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(830, 38, 15, 15), GREEN, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(845, 38, 15, 15), GREEN, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(800, 88, 5, 15), GREEN, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(815, 88, 5, 15), GREEN, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(830, 88, 5, 15), GREEN, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(845, 88, 5, 15), GREEN, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(700, 88, 10, 10), GREEN, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(715, 88, 10, 10), GREEN, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(730, 88, 10, 10), GREEN, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(745, 88, 10, 10), GREEN, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(700, 888, 40, 30), RED, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(750, 888, 40, 30), GREEN, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(800, 888, 40, 30), YELLOW, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(850, 888, 40, 30), BLUE, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(700, 930, 30, 40), RED, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(750, 930, 30, 40), GREEN, 0x0D, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(800, 930, 30, 40), YELLOW, 0x06, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(850, 930, 30, 40), BLUE, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(700, 600, 230, 140), RED, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(750, 530, 310, 240), GREEN, 0x07, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(800, 700, 130, 140), YELLOW, 0x0E, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(880, 700, 130, 40), BLUE, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(600, 300, 120, 120), RED, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(650, 300, 130, 130), GREEN, 0x07, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(700, 300, 140, 140), YELLOW, 0x0E, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(750, 300, 130, 130), BLUE, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(900, 20, 120, 130), RED, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(1000, 30, 120, 130), GREEN, 0x07, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(910, 200, 120, 140), YELLOW, 0x0E, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(1000, 180, 140, 120), BLUE, 0x06, 0x01), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(1000, 400, 130, 140), RED, 0x0D, 0x00), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(1100, 550, 140, 130), BLUE, 0x0D, 0x00), screen_rect);
+
+    gd.draw(RDPEllipseSC(Rect(1030, 430, 65, 70), RED, 0x0D, 0x00), screen_rect);
+
+    // binary raster operations
+
+    gd.draw(RDPEllipseSC(Rect(300, 10, 30, 40), RED, 0x02, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(300, 55, 30, 40), RED, 0x03, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(300, 105, 30, 40), RED, 0x04, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(300, 155, 30, 40), RED, 0x05, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(350, 10, 30, 40), RED, 0x08, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(350, 55, 30, 40), RED, 0x09, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(350, 105, 30, 40), RED, 0x0A, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(350, 155, 30, 40), RED, 0x0C, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(400, 10, 30, 40), RED, 0x0F, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(400, 55, 30, 40), RED, 0x01, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(400, 105, 30, 40), RED, 0x0B, 0x01), screen_rect);
+    gd.draw(RDPEllipseSC(Rect(400, 155, 30, 40), RED, 0x06, 0x01), screen_rect);
+
+    elapusec = ustime() - usec;
+    elapcyc = rdtsc() - cycles;
+
+    LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+
+    char message[1024];
+    if (!check_sig(gd.drawable, message,
+                   "\xdd\x56\x6f\xa9\x0a\x82\x2c\x1c\x5c\xc5"
+                   "\x89\xc7\x9c\xd8\xda\x8e\x28\x98\xcb\xee"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // uncomment to see result in png file
+    // save_to_png("/tmp/test_ellipse_001.png", gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestPatBlt)

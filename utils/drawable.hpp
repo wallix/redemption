@@ -1096,20 +1096,8 @@ struct Drawable {
     uint pos_xy(int x, int y) {
         return (y * this->rowsize) + (x * this->Bpp);
     }
-    void ellipse(const Ellipse & el, const uint8_t rop,
-                 const uint8_t fill, const uint32_t color) {
-        LOG(LOG_INFO, "ellipse drawable color: %d", color);
-        LOG(LOG_INFO, "ellipse rayon x: %d, rayon y: %d", el.radiusx, el.radiusy);
-        LOG(LOG_INFO, "ellipse centre x: %d, centre y: %d", el.centerx, el.centery);
-        unsigned long long usec = ustime();
-        unsigned long long cycles = rdtsc();
-        this->ellipse_draw(el, rop, fill, color);
-        unsigned long long elapusec = ustime() - usec;
-        unsigned long long elapcyc = rdtsc() - cycles;
-        LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
-    }
 
-    void ellipse_draw(const Ellipse & el, const uint8_t rop,
+    void ellipse(const Ellipse & el, const uint8_t rop,
                       const uint8_t fill, const uint32_t color) {
         if (tracked_area.has_intersection(el.get_rect())) {
             tracked_area_changed = true;
@@ -1130,7 +1118,7 @@ struct Drawable {
         if (fill) {
             this->colorline(cX-pX + 1, cY, 2*pX - 1, rop, color);
         }
-        if (errX > pX*rYcarre + rYcarre / 2) {
+        if (errX > pX*rYcarre) {
             errX -= (2*pX - 1)*rYcarre;
             pX--;
             borX -= rYcarre;
@@ -1139,7 +1127,7 @@ struct Drawable {
         pY++;
         borY += rXcarre;
         int lastchange = 0;
-        while (borX >= borY) {
+        while ((borX > borY) && (pY <= rY)) {
             lastchange = 0;
             this->colordot(cX+pX, cY+pY, rop, color);
             this->colordot(cX+pX, cY-pY, rop, color);
@@ -1149,7 +1137,7 @@ struct Drawable {
                 this->colorline(cX-pX + 1, cY+pY, 2*pX - 1, rop, color);
                 this->colorline(cX-pX + 1, cY-pY, 2*pX - 1, rop, color);
             }
-            if (errX > pX*rYcarre + rYcarre / 2) {
+            if (errX > pX*rYcarre) {
                 errX -= (2*pX - 1)*rYcarre;
                 pX--;
                 borX -= rYcarre;
@@ -1164,24 +1152,28 @@ struct Drawable {
         int errY = 0;
         pX = 0;
         pY = rY;
-        this->colordot(cX, cY+pY, rop, color);
-        this->colordot(cX, cY-pY, rop, color);
-        if (errY > pY*rXcarre + rXcarre / 2) {
-            errY -= (2*pY - 1)*rXcarre;
-            pY--;
-            if (fill && pY >= lastpY) {
-                this->colorline(cX, cY + pY, 2*pX + 1, rop, color);
+        if ((fill && ((pX < lastpX) && (pY > lastpY))) ||
+            (!fill && ((pX < lastpX) || (pY > lastpY)))) {
+            this->colordot(cX, cY+pY, rop, color);
+            this->colordot(cX, cY-pY, rop, color);
+            if (errY > pY*rXcarre) {
+                errY -= (2*pY - 1)*rXcarre;
+                pY--;
+                if (fill && pY > lastpY) {
+                    this->colorline(cX, cY + pY, 2*pX + 1, rop, color);
+                }
             }
+            errY += (2*pX + 1)*rYcarre;
+            pX++;
         }
-        errY += (2*pX + 1)*rYcarre;
-        pX++;
-        while ((fill && (pX < lastpX && pY > lastpY)) ||
-               (!fill && (pX < lastpX || pY > lastpY))) {
+        while (((fill && (pX <= lastpX && pY > lastpY)) ||
+                (!fill && ((pX < lastpX) || (pY > lastpY)))) &&
+               (pX <= rX)) {
             this->colordot(cX+pX, cY+pY, rop, color);
             this->colordot(cX+pX, cY-pY, rop, color);
             this->colordot(cX-pX, cY+pY, rop, color);
             this->colordot(cX-pX, cY-pY, rop, color);
-            if (errY > pY*rXcarre + rXcarre / 2) {
+            if (errY > pY*rXcarre) {
                 errY -= (2*pY - 1)*rXcarre;
                 pY--;
                 if (fill && (pY > lastpY)) {
@@ -1201,6 +1193,7 @@ struct Drawable {
             return;
         }
         uint8_t * p = this->data + this->pos_xy(x, y);
+        // p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
         this->bRop2(p, rop, color);
     }
     void colorline(int x, int y, int l, uint8_t rop, int32_t color) {
@@ -1217,6 +1210,7 @@ struct Drawable {
         }
         uint8_t * p = this->data + this->pos_xy(x, y);
         for (int i = 0; i < l; i++) {
+            // p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
             this->bRop2(p, rop, color);
             p += 3;
         }
