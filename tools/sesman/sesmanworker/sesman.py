@@ -46,7 +46,7 @@ def mundane(value):
         return u'Unknown'
     return value
 
-DEBUG = True
+DEBUG = False
 
 class AuthentifierSocketClosed(Exception):
     pass
@@ -777,6 +777,13 @@ class Sesman():
                         ctime(),
                         None
                         )
+                  
+                        
+                self.engine.update_session(
+                            "%s@%s:%s" % ( physical_target.account.login
+                                         , physical_target.resource.device.cn
+                                         , physical_target.resource.service.protocol.cn))
+
 
                 if not _status:
                     Logger().info( u"(%s):%s:REJECTED : %s" \
