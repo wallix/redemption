@@ -14,7 +14,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
+   Copyright (C) Wallix 2013
    Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen,
               Meng Tan
 
@@ -26,7 +26,9 @@
 #include <algorithm>
 #include <iosfwd>
 #include <stdint.h>
+#include "rect.hpp"
 #include "log.hpp"
+
 
 #define SQ(X) X*X
 
@@ -37,10 +39,11 @@ struct Ellipse {
     uint16_t radiusy;
 
     Ellipse() : centerx(0), centery(0), radiusx(0), radiusy(0) {}
+
     Ellipse(int centerx, int centery, uint16_t radiusx, uint16_t radiusy)
         : centerx(centerx), centery(centery), radiusx(radiusx), radiusy(radiusy)
     {
-        if (((radiusx-1)|(radiusy-1)) & 0x8000){
+        if (((radiusx-1)|(radiusy-1)) & 0x8000) {
             this->centerx = 0;
             this->centery = 0;
             this->radiusx = 0;
@@ -55,14 +58,14 @@ struct Ellipse {
         , radiusy(rect.cy / 2)
     {}
 
-    int16_t right() const {
-        return this->centerx + this->radiusx;
-    }
     int16_t left() const {
         return this->centerx - this->radiusx;
     }
     int16_t top() const {
         return this->centery - this->radiusy;
+    }
+    int16_t right() const {
+        return this->centerx + this->radiusx;
     }
     int16_t bottom() const {
         return this->centery + this->radiusy;
@@ -85,7 +88,7 @@ struct Ellipse {
         return (SQ((x - this->centerx) / this->radiusx) +
                 SQ((y - this->centery) / this->radiusy)) <= 1;
     }
-    bool equal(const Ellipse & other) {
+    bool equal(const Ellipse & other) const {
         return (other.centerx == this->centerx &&
                 other.centery == this->centery &&
                 other.radiusx == this->radiusx &&

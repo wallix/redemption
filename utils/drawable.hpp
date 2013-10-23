@@ -893,11 +893,25 @@ struct Drawable {
                 this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
             break;
             // +------+-------------------------------+
+            // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
+            // |      | RPN: DSa                      |
+            // +------+-------------------------------+
+            case 0x88:
+                this->memblt_op<Op_0x88>(rect, bmp, srcx, srcy, bgr);
+            break;
+            // +------+-------------------------------+
             // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
             // |      | RPN: DSo                      |
             // +------+-------------------------------+
             case 0xEE:
-                this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
+                this->memblt_op<Op_0xEE>(rect, bmp, srcx, srcy, bgr);
+            break;
+            // +------+-------------------------------+
+            // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
+            // |      | RPN: DSno                     |
+            // +------+-------------------------------+
+            case 0xBB:
+                this->memblt_op<Op_0xBB>(rect, bmp, srcx, srcy, bgr);
             break;
 
             default:
@@ -1093,27 +1107,190 @@ struct Drawable {
     }
 
 
-    uint pos_xy(int x, int y) {
-        return (y * this->rowsize) + (x * this->Bpp);
-    }
-    void ellipse(const Ellipse & el, const uint8_t rop,
-                 const uint8_t fill, const uint32_t color) {
-        LOG(LOG_INFO, "ellipse drawable color: %d", color);
-        LOG(LOG_INFO, "ellipse rayon x: %d, rayon y: %d", el.radiusx, el.radiusy);
-        LOG(LOG_INFO, "ellipse centre x: %d, centre y: %d", el.centerx, el.centery);
-        unsigned long long usec = ustime();
-        unsigned long long cycles = rdtsc();
-        this->ellipse_draw(el, rop, fill, color);
-        unsigned long long elapusec = ustime() - usec;
-        unsigned long long elapcyc = rdtsc() - cycles;
-        LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
-    }
 
-    void ellipse_draw(const Ellipse & el, const uint8_t rop,
+// 2.2.2.2.1.1.1.6 Binary Raster Operation (ROP2_OPERATION)
+//  The ROP2_OPERATION structure is used to define how the bits in a destination bitmap and a
+//  selected brush or pen are combined by using Boolean operators.
+// rop2Operation (1 byte): An 8-bit, unsigned integer. A raster-operation code that describes a
+//  Boolean operation, in Reverse Polish Notation, to perform on the bits in a destination
+//  bitmap (D) and selected brush or pen (P). This operation is a combination of the AND (a), OR
+//  (o), NOT (n), and XOR (x) Boolean operators.
+
+    struct Op2_0x01 // R2_BLACK 0
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return 0x00;
+        }
+    };
+    struct Op2_0x02 // R2_NOTMERGEPEN DPon
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target | source);
+        }
+    };
+    struct Op2_0x03 // R2_MASKNOTPEN DPna
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return (target & ~source);
+        }
+    };
+    struct Op2_0x04 // R2_NOTCOPYPEN Pn
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~source;
+        }
+    };
+    struct Op2_0x05 // R2_MASKPENNOT PDna
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return (source & ~target);
+        }
+    };
+    struct Op2_0x06 // R2_NOT Dn
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~target;
+        }
+    };
+    struct Op2_0x07 // R2_XORPEN DPx
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return (target ^ source);
+        }
+    };
+    struct Op2_0x08 // R2_NOTMASKPEN DPan
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target & source);
+        }
+    };
+    struct Op2_0x09 // R2_MASKPEN DPa
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return (target & source);
+        }
+    };
+    struct Op2_0x0A // R2_NOTXORPEN DPxn
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return ~(target ^ source);
+        }
+    };
+    // struct Op2_0x0B // R2_NOP D
+    // {
+    //     uint8_t operator()(uint8_t target, uint8_t source)
+    //     {
+    //         return target;
+    //     }
+    // };
+    struct Op2_0x0C // R2_MERGENOTPEN DPno
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return (target | ~source);
+        }
+    };
+    struct Op2_0x0D // R2_COPYPEN P
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return source;
+        }
+    };
+    struct Op2_0x0E // R2_MERGEPENNOT PDno
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return (source | ~target);
+        }
+    };
+    struct Op2_0x0F // R2_MERGEPEN PDo
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return (target | source);
+        }
+    };
+    struct Op2_0x10 // R2_WHITE 1
+    {
+        uint8_t operator()(uint8_t target, uint8_t source)
+        {
+            return 0xFF;
+        }
+    };
+
+    void ellipse(const Ellipse & el, const uint8_t rop,
                       const uint8_t fill, const uint32_t color) {
         if (tracked_area.has_intersection(el.get_rect())) {
             tracked_area_changed = true;
         }
+        switch (rop) {
+        case 0x01: // R2_BLACK
+            this->draw_ellipse<Op2_0x01>(el, fill, color);
+            break;
+        case 0x02: // R2_NOTMERGEPEN
+            this->draw_ellipse<Op2_0x02>(el, fill, color);
+            break;
+        case 0x03: // R2_MASKNOTPEN
+            this->draw_ellipse<Op2_0x03>(el, fill, color);
+            break;
+        case 0x04: // R2_NOTCOPYPEN
+            this->draw_ellipse<Op2_0x04>(el, fill, color);
+            break;
+        case 0x05: // R2_MASKPENNOT
+            this->draw_ellipse<Op2_0x05>(el, fill, color);
+            break;
+        case 0x06:  // R2_NOT
+            this->draw_ellipse<Op2_0x06>(el, fill, color);
+            break;
+        case 0x07:  // R2_XORPEN
+            this->draw_ellipse<Op2_0x07>(el, fill, color);
+            break;
+        case 0x08:  // R2_NOTMASKPEN
+            this->draw_ellipse<Op2_0x08>(el, fill, color);
+            break;
+        case 0x09:  // R2_MASKPEN
+            this->draw_ellipse<Op2_0x09>(el, fill, color);
+            break;
+        case 0x0A:  // R2_NOTXORPEN
+            this->draw_ellipse<Op2_0x0A>(el, fill, color);
+            break;
+        case 0x0B:  // R2_NOP
+            break;
+        case 0x0C:  // R2_MERGENOTPEN
+            this->draw_ellipse<Op2_0x0C>(el, fill, color);
+            break;
+        case 0x0D:  // R2_COPYPEN
+            this->draw_ellipse<Op2_0x0D>(el, fill, color);
+            break;
+        case 0x0E:  // R2_MERGEPENNOT
+            this->draw_ellipse<Op2_0x0E>(el, fill, color);
+            break;
+        case 0x0F:  // R2_MERGEPEN
+            this->draw_ellipse<Op2_0x0F>(el, fill, color);
+            break;
+        case 0x10: // R2_WHITE
+            this->draw_ellipse<Op2_0x10>(el, fill, color);
+            break;
+        default:
+            this->draw_ellipse<Op2_0x0D>(el, fill, color);
+            break;
+        }
+    }
+
+    template<typename Op2>
+    void draw_ellipse(const Ellipse & el, const uint8_t fill, const uint32_t color) {
+        Op2 op;
         const int cX = el.centerx;
         const int cY = el.centery;
         const int rX = el.radiusx;
@@ -1125,12 +1302,12 @@ struct Drawable {
         int pY = 0;
         int borX = rYcarre*rX;
         int borY = 0;
-        this->colordot(cX+pX, cY, rop, color);
-        this->colordot(cX-pX, cY, rop, color);
+        this->colordot(cX+pX, cY, color, op);
+        this->colordot(cX-pX, cY, color, op);
         if (fill) {
-            this->colorline(cX-pX + 1, cY, 2*pX - 1, rop, color);
+            this->colorline(cX-pX + 1, cY, 2*pX - 1, color, op);
         }
-        if (errX > pX*rYcarre + rYcarre / 2) {
+        if (errX > pX*rYcarre) {
             errX -= (2*pX - 1)*rYcarre;
             pX--;
             borX -= rYcarre;
@@ -1139,17 +1316,17 @@ struct Drawable {
         pY++;
         borY += rXcarre;
         int lastchange = 0;
-        while (borX >= borY) {
+        while ((borX > borY) && (pY <= rY)) {
             lastchange = 0;
-            this->colordot(cX+pX, cY+pY, rop, color);
-            this->colordot(cX+pX, cY-pY, rop, color);
-            this->colordot(cX-pX, cY+pY, rop, color);
-            this->colordot(cX-pX, cY-pY, rop, color);
+            this->colordot(cX+pX, cY+pY, color, op);
+            this->colordot(cX+pX, cY-pY, color, op);
+            this->colordot(cX-pX, cY+pY, color, op);
+            this->colordot(cX-pX, cY-pY, color, op);
             if (fill) {
-                this->colorline(cX-pX + 1, cY+pY, 2*pX - 1, rop, color);
-                this->colorline(cX-pX + 1, cY-pY, 2*pX - 1, rop, color);
+                this->colorline(cX-pX + 1, cY+pY, 2*pX - 1, color, op);
+                this->colorline(cX-pX + 1, cY-pY, 2*pX - 1, color, op);
             }
-            if (errX > pX*rYcarre + rYcarre / 2) {
+            if (errX > pX*rYcarre) {
                 errX -= (2*pX - 1)*rYcarre;
                 pX--;
                 borX -= rYcarre;
@@ -1164,36 +1341,45 @@ struct Drawable {
         int errY = 0;
         pX = 0;
         pY = rY;
-        this->colordot(cX, cY+pY, rop, color);
-        this->colordot(cX, cY-pY, rop, color);
-        if (errY > pY*rXcarre + rXcarre / 2) {
-            errY -= (2*pY - 1)*rXcarre;
-            pY--;
-            if (fill && pY >= lastpY) {
-                this->colorline(cX, cY + pY, 2*pX + 1, rop, color);
+        if ((fill && ((pX < lastpX) && (pY > lastpY))) ||
+            (!fill && ((pX < lastpX) || (pY > lastpY)))) {
+            this->colordot(cX, cY+pY, color, op);
+            this->colordot(cX, cY-pY, color, op);
+            if (errY > pY*rXcarre) {
+                errY -= (2*pY - 1)*rXcarre;
+                pY--;
+                if (fill && pY > lastpY) {
+                    this->colorline(cX, cY + pY, 2*pX + 1, color, op);
+                }
             }
+            errY += (2*pX + 1)*rYcarre;
+            pX++;
         }
-        errY += (2*pX + 1)*rYcarre;
-        pX++;
-        while ((fill && (pX < lastpX && pY > lastpY)) ||
-               (!fill && (pX < lastpX || pY > lastpY))) {
-            this->colordot(cX+pX, cY+pY, rop, color);
-            this->colordot(cX+pX, cY-pY, rop, color);
-            this->colordot(cX-pX, cY+pY, rop, color);
-            this->colordot(cX-pX, cY-pY, rop, color);
-            if (errY > pY*rXcarre + rXcarre / 2) {
+        while (((fill && (pX <= lastpX && pY > lastpY)) ||
+                (!fill && ((pX < lastpX) || (pY > lastpY)))) &&
+               (pX <= rX)) {
+            this->colordot(cX+pX, cY+pY, color, op);
+            this->colordot(cX+pX, cY-pY, color, op);
+            this->colordot(cX-pX, cY+pY, color, op);
+            this->colordot(cX-pX, cY-pY, color, op);
+            if (errY > pY*rXcarre) {
                 errY -= (2*pY - 1)*rXcarre;
                 pY--;
                 if (fill && (pY > lastpY)) {
-                    this->colorline(cX-pX, cY+pY, 2*pX+1, rop, color);
-                    this->colorline(cX-pX, cY-pY, 2*pX+1, rop, color);
+                    this->colorline(cX-pX, cY+pY, 2*pX+1, color, op);
+                    this->colorline(cX-pX, cY-pY, 2*pX+1, color, op);
                 }
             }
             errY += (2*pX + 1)*rYcarre;
             pX++;
         }
     }
-    void colordot(int x, int y, uint8_t rop, int32_t color) {
+    uint pos_xy(int x, int y) {
+        return (y * this->rowsize) + (x * this->Bpp);
+    }
+
+    template <typename Op2>
+    void colordot(int x, int y, int32_t color, Op2 op2) {
         if (!(x >= 0 &&
               y >= 0 &&
               x < this->width &&
@@ -1201,9 +1387,12 @@ struct Drawable {
             return;
         }
         uint8_t * p = this->data + this->pos_xy(x, y);
-        this->bRop2(p, rop, color);
+        p[0] = op2(p[0], color); p[1] = op2(p[1], color >> 8); p[2] = op2(p[2], color >> 16);
+        // this->bRop2(p, color);
     }
-    void colorline(int x, int y, int l, uint8_t rop, int32_t color) {
+
+    template <typename Op2>
+    void colorline(int x, int y, int l, int32_t color, Op2 op2) {
         if (!(y >= 0 &&
               y < this->height)) {
                 return;
@@ -1217,83 +1406,14 @@ struct Drawable {
         }
         uint8_t * p = this->data + this->pos_xy(x, y);
         for (int i = 0; i < l; i++) {
-            this->bRop2(p, rop, color);
+            p[0] = op2(p[0], color);
+            p[1] = op2(p[1], color >> 8);
+            p[2] = op2(p[2], color >> 16);
+            // this->bRop2(p, color);
             p += 3;
         }
     }
-    void bRop2(uint8_t * p, uint8_t rop, uint32_t color) {
-        switch (rop) {
-        case 0x01: // R2_BLACK
-            p[0] = 0x00; p[1] = 0x00; p[2] = 0x00;
-            break;
-        case 0x02: // R2_NOTMERGEPEN
-            p[0] = ~((p[0] + (color & 0xFF)) / 2);
-            p[1] = ~((p[1] + ((color >> 8) & 0xFF)) / 2);
-            p[2] = ~((p[2] + ((color >> 16) & 0xFF)) / 2);
-            break;
-        case 0x03: // R2_MASKNOTPEN
-            p[0] = p[0] & (~color & 0xFF);
-            p[1] = p[1] & (~(color >> 8) & 0xFF);
-            p[2] = p[2] & (~(color >> 16) & 0xFF);
-            break;
-        case 0x04: // R2_NOTCOPYPEN
-            p[0] = ~color; p[1] = ~(color >> 8); p[2] = ~(color >> 16);
-            break;
-        case 0x05: // R2_MASKPENNOT
-            p[0] = ~p[0] & (color & 0xFF);
-            p[1] = ~p[1] & ((color >> 8) & 0xFF);
-            p[2] = ~p[2] & ((color >> 16) & 0xFF);
-            break;
-        case 0x06:  // R2_NOT
-            p[0] = ~p[0]; p[1] = ~p[1]; p[2] = ~p[2];
-            break;
-        case 0x07:  // R2_XORPEN
-            p[0] = p[0] ^ (color & 0xFF);
-            p[1] = p[1] ^ ((color >> 8) & 0xFF);
-            p[2] = p[2] ^ ((color >> 16) & 0xFF);
-            break;
-        case 0x08:  // R2_NOTMASKPEN
-            p[0] = ~(p[0] & (color & 0xFF));
-            p[1] = ~(p[1] & ((color >> 8) & 0xFF));
-            p[2] = ~(p[2] & ((color >> 16) & 0xFF));
-            break;
-        case 0x09:  // R2_MASKPEN
-            p[0] = (p[0] & (color & 0xFF));
-            p[1] = (p[1] & ((color >> 8) & 0xFF));
-            p[2] = (p[2] & ((color >> 16) & 0xFF));
-            break;
-        case 0x0A:  // R2_NOTXORPEN
-            p[0] = ~(p[0] ^ (color & 0xFF));
-            p[1] = ~(p[1] ^ ((color >> 8) & 0xFF));
-            p[2] = ~(p[2] ^ ((color >> 16) & 0xFF));
-            break;
-        case 0x0B:  // R2_NOP
-            break;
-        case 0x0C:  // R2_MERGENOTPEN
-            p[0] = ((p[0] + (~color & 0xFF)) / 2);
-            p[1] = ((p[1] + (~(color >> 8) & 0xFF)) / 2);
-            p[2] = ((p[2] + (~(color >> 16) & 0xFF)) / 2);
-            break;
-        case 0x0D:  // R2_COPYPEN
-            p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
-            break;
-        case 0x0E:  // R2_MERGEPENNOT
-            p[0] = (((~p[0] & 0xFF) + (color & 0xFF)) / 2);
-            p[1] = (((~p[1] & 0xFF) + ((color >> 8) & 0xFF)) / 2);
-            p[2] = (((~p[2] & 0xFF) + ((color >> 16) & 0xFF)) / 2);
-            break;
-        case 0x0F:  // R2_MERGEPEN
-            p[0] = ((p[0] + (color & 0xFF)) / 2);
-            p[1] = ((p[1] + ((color >> 8) & 0xFF)) / 2);
-            p[2] = ((p[2] + ((color >> 16) & 0xFF)) / 2);
-            break;
-        case 0x10: // R2_WHITE
-            p[0] = 0xFF; p[1] = 0xFF; p[2] = 0xFF;
-        default:
-            p[0] = color; p[1] = color >> 8; p[2] = color >> 16;
-            break;
-        }
-    }
+
 
     // low level opaquerect,
     // mostly avoid clipping because we already took care of it

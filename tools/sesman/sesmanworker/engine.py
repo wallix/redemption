@@ -1103,6 +1103,8 @@ class Engine(object):
         self.patterns_notify = u""
         return
 
+    def update_session(self, target31):
+        pass
 
     def stop_session(self, result=True, diag=u"success", title=u"End session"):
         pass
