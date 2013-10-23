@@ -1098,6 +1098,9 @@ class Engine(object):
     def start_session(self, target31, pid):
         return "SESSIONID-0000"
 
+    def update_session(self, target31):
+        pass
+
     def stop_session(self, result=True, diag=u"success", title=u"End session"):
         pass
 

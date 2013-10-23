@@ -130,6 +130,21 @@ public:
         , color(c)
     {}
 
+    RDPEllipseSC(const Rect & r, int c, uint8_t rop, uint8_t fill)
+        : el(Ellipse(r))
+        , bRop2(rop)
+        , fillMode(fill)
+        , color(c)
+    {}
+
+
+    bool operator==(const RDPEllipseSC & other) const {
+        return (this->el.equal(other.el)
+                && (this->bRop2 == other.bRop2)
+                && (this->fillMode == other.fillMode)
+                && (this->color == other.color));
+    }
+
     static const uint8_t id(void) {
         return RDP::ELLIPSESC;
     }
@@ -143,7 +158,7 @@ public:
         }
 
         header.fields =
-            ( this->el.left()   != oldcmd.el.left()  ) * 0x0001
+            (this->el.left()   != oldcmd.el.left()  ) * 0x0001
             |(this->el.top()    != oldcmd.el.top()   ) * 0x0002
             |(this->el.right()  != oldcmd.el.right() ) * 0x0004
             |(this->el.bottom() != oldcmd.el.bottom()) * 0x0008
