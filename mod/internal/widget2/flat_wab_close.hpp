@@ -52,7 +52,7 @@ public:
     int bgcolor;
 private:
     long prev_time;
-    
+
     Inifile & ini;
 
 public:
