@@ -157,6 +157,8 @@ public:
         break;
         case 0x22:  // dest = dest AND (NOT source)
         case 0x66:  // dest = source XOR dest (SRCINVERT)
+        case 0x88:  // dest = source AND dest (SRCAND)
+        case 0xBB:  // dest = (NOT source) OR dest (MERGEPAINT)
         case 0xEE:  // dest = source OR dest (SRCPAINT)
             this->drawable.mem_blt_ex(rect, bmp
                 , cmd.srcx + (rect.x - cmd.rect.x)
@@ -165,6 +167,7 @@ public:
             break;
         default:
             // should not happen
+            // LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
         break;
         }
     }
@@ -349,7 +352,7 @@ public:
                     FontChar * fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
                     if (!fc)
                     {
-                        LOG(LOG_INFO, "RDPDrawabke::draw(RDPGlyphIndex, ...): Unknown glyph=%u", data);
+                        LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph=%u", data);
                         REDASSERT(fc);
                     }
 
@@ -373,7 +376,7 @@ public:
                 }
                 else if (data == 0xFE)
                 {
-                    LOG(LOG_INFO, "RDPDrawabke::draw(RDPGlyphIndex, ...): Unsupported data");
+                    LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unsupported data");
                     throw Error(ERR_RDP_UNSUPPORTED);
                 }
                 else if (data == 0xFF)
