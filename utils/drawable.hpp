@@ -893,11 +893,25 @@ struct Drawable {
                 this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
             break;
             // +------+-------------------------------+
+            // | 0x88 | ROP: 0x008800C6 (SRCAND)      |
+            // |      | RPN: DSa                      |
+            // +------+-------------------------------+
+            case 0x88:
+                this->memblt_op<Op_0x88>(rect, bmp, srcx, srcy, bgr);
+            break;
+            // +------+-------------------------------+
             // | 0xEE | ROP: 0x00EE0086 (SRCPAINT)    |
             // |      | RPN: DSo                      |
             // +------+-------------------------------+
             case 0xEE:
-                this->memblt_op<Op_0x66>(rect, bmp, srcx, srcy, bgr);
+                this->memblt_op<Op_0xEE>(rect, bmp, srcx, srcy, bgr);
+            break;
+            // +------+-------------------------------+
+            // | 0xBB | ROP: 0x00BB0226 (MERGEPAINT)  |
+            // |      | RPN: DSno                     |
+            // +------+-------------------------------+
+            case 0xBB:
+                this->memblt_op<Op_0xBB>(rect, bmp, srcx, srcy, bgr);
             break;
 
             default:
