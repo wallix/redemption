@@ -43,90 +43,29 @@ inline size_t multi_char(const char * c)
 BOOST_AUTO_TEST_CASE(TestRegexCheck)
 {
     {
-        StateChar st(multi_char("Þ"));
+        State st(RANGE, multi_char("Þ"), multi_char("Þ"));
         BOOST_CHECK(st.check(multi_char("Þ")));
         BOOST_CHECK( ! st.check('a'));
     }
     {
-        StateAny st;
+        State st(RANGE, 0, -1u);
         BOOST_CHECK(st.check(multi_char("Þ")));
         BOOST_CHECK(st.check('a'));
         BOOST_CHECK(st.check('\1'));
     }
     {
-        StateFinish st;
+        State st(FINISH);
         BOOST_CHECK(st.check(multi_char("Þ")));
         BOOST_CHECK(st.check('a'));
         BOOST_CHECK(st.check('\1'));
     }
     {
-        StateCharacters st("aÎbps");
-        BOOST_CHECK(st.check('a'));
-        BOOST_CHECK(st.check(multi_char("Î")));
-        BOOST_CHECK(st.check('b'));
-        BOOST_CHECK(st.check('p'));
-        BOOST_CHECK(st.check('s'));
-        BOOST_CHECK( ! st.check('t'));
-    }
-    {
-        StateRange st('e','g');
+        State st(RANGE, 'e','g');
         BOOST_CHECK(st.check('e'));
         BOOST_CHECK(st.check('f'));
         BOOST_CHECK(st.check('g'));
         BOOST_CHECK( ! st.check('d'));
         BOOST_CHECK( ! st.check('h'));
-    }
-    {
-        StateSpace st;
-        BOOST_CHECK(st.check(' '));
-        BOOST_CHECK(st.check('\t'));
-        BOOST_CHECK(st.check('\n'));
-        BOOST_CHECK( ! st.check('a'));
-    }
-    {
-        StateNotSpace st;
-        BOOST_CHECK( ! st.check(' '));
-        BOOST_CHECK( ! st.check('\t'));
-        BOOST_CHECK( ! st.check('\n'));
-        BOOST_CHECK(st.check('a'));
-    }
-    {
-        StateDigit st;
-        BOOST_CHECK(st.check('0'));
-        BOOST_CHECK(st.check('1'));
-        BOOST_CHECK(st.check('2'));
-        BOOST_CHECK(st.check('3'));
-        BOOST_CHECK(st.check('4'));
-        BOOST_CHECK(st.check('5'));
-        BOOST_CHECK(st.check('6'));
-        BOOST_CHECK(st.check('7'));
-        BOOST_CHECK(st.check('8'));
-        BOOST_CHECK(st.check('9'));
-        BOOST_CHECK( ! st.check('a'));
-    }
-    {
-        StateWord st;
-        BOOST_CHECK(st.check('0'));
-        BOOST_CHECK(st.check('9'));
-        BOOST_CHECK(st.check('a'));
-        BOOST_CHECK(st.check('z'));
-        BOOST_CHECK(st.check('A'));
-        BOOST_CHECK(st.check('Z'));
-        BOOST_CHECK(st.check('_'));
-        BOOST_CHECK( ! st.check('-'));
-        BOOST_CHECK( ! st.check(':'));
-    }
-    {
-        StateMultiTest st;
-        st.push_checker(new CheckerDigit);
-        st.push_checker(new CheckerString("abc"));
-        BOOST_CHECK(st.check('0'));
-        BOOST_CHECK(st.check('1'));
-        BOOST_CHECK(st.check('9'));
-        BOOST_CHECK(st.check('a'));
-        BOOST_CHECK(st.check('b'));
-        BOOST_CHECK(st.check('c'));
-        BOOST_CHECK( ! st.check('d'));
     }
 }
 

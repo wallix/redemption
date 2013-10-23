@@ -45,7 +45,7 @@ namespace re {
                 st_compile(this->stw, s, &this->err, &this->pos_err);
             }
 
-            Parser(StateBase * st)
+            Parser(State * st)
             : err(0)
             , pos_err(0)
             {
@@ -72,7 +72,7 @@ namespace re {
         , step_limit(step_limit)
         {}
 
-        Regex(StateBase * st, unsigned step_limit = 10000)
+        Regex(State * st, unsigned step_limit = 10000)
         : parser(st)
         , sm(this->parser.stw)
         , step_limit(step_limit)

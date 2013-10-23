@@ -115,6 +115,19 @@ namespace re {
             return c;
         }
 
+        size_t length() const
+        {
+            size_t len = 0;
+            const unsigned char * p = this->s;
+            while (*p) {
+                if ((*++p >> 6 == 2) && (*++p >> 6 == 2) && (*++p >> 6 == 2)) {
+                    ++p;
+                }
+                ++len;
+            }
+            return len;
+        }
+
         char_int getc() const
         {
             return utf_consumer(this->str()).bumpc();

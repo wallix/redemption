@@ -30,10 +30,10 @@
 
 namespace re {
 
-    typedef std::vector<const StateBase*> const_state_list_t;
-    typedef std::vector<StateBase*> state_list_t;
+    typedef std::vector<const State*> const_state_list_t;
+    typedef std::vector<State*> state_list_t;
 
-    inline void append_state(StateBase * st, state_list_t& sts)
+    inline void append_state(State * st, state_list_t& sts)
     {
         //if (st && st->num != -1u) {
         //    st->num = -1u;
@@ -85,7 +85,7 @@ namespace re {
 
     struct StateDeleter
     {
-        void operator()(StateBase * st) const
+        void operator()(State * st) const
         {
             delete st;
         }
@@ -96,14 +96,14 @@ namespace re {
         std::vector<unsigned> nums;
 
         struct IsCapture {
-            bool operator()(const StateBase * st) const
+            bool operator()(const State * st) const
             {
                 return ! st->is_cap();
             }
         };
     public:
         state_list_t states;
-        StateBase * root;
+        State * root;
         unsigned nb_capture;
 
         explicit StatesWrapper()
@@ -111,14 +111,14 @@ namespace re {
         , nb_capture(0)
         {}
 
-        explicit StatesWrapper(StateBase * st)
+        explicit StatesWrapper(State * st)
         : root(st)
         , nb_capture(0)
         {
             append_state(st, this->states);
         }
 
-        void reset(StateBase * st)
+        void reset(State * st)
         {
             std::for_each(this->states.begin(), this->states.end(), StateDeleter());
             this->states.clear();
@@ -150,14 +150,14 @@ namespace re {
             std::fill(this->nums.begin(), this->nums.end(), 0);
         }
 
-        void set_num_at(const StateBase * st, unsigned count)
+        void set_num_at(const State * st, unsigned count)
         {
             assert(st == this->states[st->num]);
             assert(this->states.size() > st->num);
             this->nums[st->num] = count;
         }
 
-        unsigned get_num_at(const StateBase * st) const
+        unsigned get_num_at(const State * st) const
         {
             assert(st == this->states[st->num]);
             assert(this->states.size() > st->num);

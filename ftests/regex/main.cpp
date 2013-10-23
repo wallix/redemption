@@ -172,8 +172,11 @@ int main(int argc, char **argv) {
     << (ismatch4 ? "good\n" : "fail\n")
     << d4 << " sec\n";
 
-    //std::cout << "st_exact_search: " << st_exact_search(regex.stw, str) << "\n";
-    //std::cout << "st_search: " << st_search(regex.stw, str) << std::endl;
+    StatesWrapper stw;
+    st_compile(stw, rgxstr);
+    std::cout << "st_exact_search: " << st_exact_search(stw, str) << "\n";
+    stw.reset_nums();
+    std::cout << "st_search: " << st_search(stw, str) << std::endl;
 
     if (ismatch3) {
         std::cout << ("with regex.h\n");

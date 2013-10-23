@@ -90,7 +90,7 @@ namespace re {
                 const unsigned col = count_st - this->stw.nb_capture;
                 const unsigned matrix_size = col * this->stw.nb_capture;
 
-                this->captures = new StateBase const *[this->stw.nb_capture + matrix_size];
+                this->captures = new State const *[this->stw.nb_capture + matrix_size];
                 this->traces = reinterpret_cast<const char **>(this->captures + this->stw.nb_capture);
 
                 this->idx_trace_free = new unsigned[col+1];
@@ -169,7 +169,7 @@ namespace re {
             ++this->pidx_trace_free;
         }
 
-        void push_state(RangeList* l, const StateBase * st, unsigned step)
+        void push_state(RangeList* l, const State * st, unsigned step)
         {
             if (st && this->stw.get_num_at(st) != step) {
                 this->stw.set_num_at(st, step);
@@ -187,7 +187,7 @@ namespace re {
             }
         }
 
-        RangeList* find_range_list(const StateBase * st)
+        RangeList* find_range_list(const State * st)
         {
             /**///std::cout << (__FUNCTION__) << std::endl;
             for (RangeList * l = this->st_range_list; l < this->st_range_list_last && l->st; ++l) {
@@ -198,7 +198,7 @@ namespace re {
             return 0;
         }
 
-        void init_list(RangeList* l, const StateBase * st, unsigned& step)
+        void init_list(RangeList* l, const State * st, unsigned& step)
         {
             /**///std::cout << (__FUNCTION__) << std::endl;
             l->st = st;
@@ -330,14 +330,14 @@ namespace re {
             ranges.reserve(this->stw.nb_capture / 2);
             TraceRange trace = this->get_trace();
 
-            const StateBase ** pst = this->captures;
+            const State ** pst = this->captures;
             while (pst < this->pcaptures) {
                 while ((*pst)->is_cap_close()) {
                     if (++pst >= this->pcaptures) {
                         return ;
                     }
                 }
-                const StateBase ** pbst = pst;
+                const State ** pbst = pst;
                 unsigned n = 1;
                 while (++pst < this->pcaptures && ((*pst)->is_cap_open() ? ++n : --n)) {
                 }
@@ -777,7 +777,7 @@ namespace re {
         friend class Matching;
         friend class Searching;
 
-        typedef std::vector<StateBase*> state_list;
+        typedef std::vector<State*> state_list;
         typedef state_list::iterator state_iterator;
 
         StatesWrapper & stw;
@@ -785,15 +785,15 @@ namespace re {
         unsigned idx_trace;
         unsigned * idx_trace_free;
         unsigned * pidx_trace_free;
-        const StateBase ** captures;
-        const StateBase ** pcaptures;
+        const State ** captures;
+        const State ** pcaptures;
         const char ** traces;
         StateListByStep l1;
         StateListByStep l2;
 
         struct StateList
         {
-            const StateBase * st;
+            const State * st;
             RangeList * next;
         };
 
@@ -801,7 +801,7 @@ namespace re {
 
         struct RangeList
         {
-            const StateBase * st;
+            const State * st;
             StateList * first;
             StateList * last;
         };
@@ -811,7 +811,7 @@ namespace re {
         RangeList st_range_beginning;
     };
 
-    inline void display_state(StatesWrapper & stw, StateBase * st, unsigned depth = 0)
+    inline void display_state(StatesWrapper & stw, State * st, unsigned depth = 0)
     {
         if (st && stw.get_num_at(st) != -2u) {
             std::string s(depth, '\t');
@@ -835,7 +835,7 @@ namespace re {
                               StatesWrapper & stw, size_t c, utf_consumer & consumer, unsigned count)
     {
         struct add {
-            static bool impl(const_state_list_t & l, const StateBase * st,
+            static bool impl(const_state_list_t & l, const State * st,
                              StatesWrapper & stw, bool is_end, unsigned count)
             {
                 if (stw.get_num_at(st) == count) {
@@ -886,7 +886,7 @@ namespace re {
         return false;
     }
 
-    inline void add_first(const_state_list_t & l, const_state_list_t & lfirst, const StateBase * st)
+    inline void add_first(const_state_list_t & l, const_state_list_t & lfirst, const State * st)
     {
         if (st->is_split()) {
             if (st->out1) {
@@ -946,7 +946,7 @@ namespace re {
                         StatesWrapper & stw, size_t c, unsigned count)
     {
         struct add {
-            static bool impl(const_state_list_t& l, const StateBase * st, StatesWrapper & stw, unsigned count) {
+            static bool impl(const_state_list_t& l, const State * st, StatesWrapper & stw, unsigned count) {
                 if (st->is_finish()) {
                     return true;
                 }
