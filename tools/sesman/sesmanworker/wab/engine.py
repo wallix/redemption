@@ -208,12 +208,12 @@ class Engine(object):
         # Logger().info("app_params=%r" % rrr)
         return app_params
 
-    def start_session(self, target31, pid):
+    def start_session(self, auth, pid):
         try:
             from wabengine.common.interface import IPBSessionHandler
             from wabengine.common.utils import ProcessSessionHandler
             wab_engine_session_handler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
-            self.session_id = self.wabengine.start_session(target31, wab_engine_session_handler)
+            self.session_id = self.wabengine.start_session(auth, wab_engine_session_handler)
         except Exception, e:
             import traceback
             Logger().info("<<<<%s>>>>" % e)
@@ -221,8 +221,38 @@ class Engine(object):
         return self.session_id
 
     def update_session(self, hosttarget):
-        if self.session_id:
-            self.wabengine.update_session(self.session_id, hosttarget)
+        try:
+            if self.session_id:
+                self.wabengine.update_session(self.session_id, hosttarget)
+        except Exception, e:
+            import traceback
+            Logger().info("<<<<%s>>>>" % e)
+
+
+    def get_restrictions(self, auth):
+        try:
+            restrictions = self.wabengine.get_proxy_restrictions(auth)
+            kill_patterns = []
+            notify_patterns = []
+            for restriction in restrictions:
+                if not restriction.subprotocol:
+                    Logger().error("No subprotocol in restriction!")
+                    continue
+                if restriction.subprotocol.cn == u'RDP':
+                    Logger().debug("adding restriction %s %s %s" % (restriction.action, restriction.data, restriction.subprotocol.cn))
+                    if restriction.action == 'kill':
+                        kill_patterns.append(restriction.data)
+                    elif restriction.action == 'notify':
+                        notify_patterns.append(restriction.data)
+
+            self.patterns_kill = u"|".join(kill_patterns)
+            self.patterns_notify = u"|".join(notify_patterns)
+            Logger().info("kill_patterns = [%s]" % (self.patterns_kill))
+            Logger().info("notify_patterns = [%s]" % (self.patterns_notify))
+        except Exception, e:
+            import traceback
+            Logger().info("<<<<%s>>>>" % e)
+        
 
 
     def stop_session(self, result=True, diag=u"success", title=u"End session"):
