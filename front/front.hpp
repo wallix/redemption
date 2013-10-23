@@ -2699,10 +2699,10 @@ public:
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
         order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
-        // order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
-        // order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 1;
-        // order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 1;
-        // order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
+        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 1;
+        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 1;
+        order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
         order_caps.orderSupport[UnusedIndex3] = 1;
         order_caps.textFlags = 0x06a1;
         order_caps.pad4octetsB = 0x0f4240;
