@@ -786,8 +786,8 @@ struct Drawable {
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
 
-        if (tracked_area.has_intersection(trect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(trect)) {
+            this->tracked_area_changed = true;
         }
 
         const uint8_t Bpp = ::nbbytes(bmp.original_bpp);
@@ -835,8 +835,8 @@ struct Drawable {
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
 
-        if (tracked_area.has_intersection(trect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(trect)) {
+            this->tracked_area_changed = true;
         }
 
         const uint8_t   Bpp = ::nbbytes(bmp.original_bpp);
@@ -918,8 +918,8 @@ struct Drawable {
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
 
-        if (tracked_area.has_intersection(trect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(trect)) {
+            this->tracked_area_changed = true;
         }
 
         const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
@@ -977,8 +977,8 @@ struct Drawable {
         }
         const Rect & trect = Rect(rect.x, rect.y, mincx, mincy);
 
-        if (tracked_area.has_intersection(trect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(trect)) {
+            this->tracked_area_changed = true;
         }
 
         const uint8_t   Bpp    = ::nbbytes(bmp.original_bpp);
@@ -1046,8 +1046,8 @@ struct Drawable {
     {
         const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
 
-        if (tracked_area.has_intersection(trect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(trect)) {
+            this->tracked_area_changed = true;
         }
 
         uint8_t * p = this->first_pixel(trect);
@@ -1060,8 +1060,8 @@ struct Drawable {
 
     void white_color(const Rect & rect)
     {
-        if (tracked_area.has_intersection(rect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(rect)) {
+            this->tracked_area_changed = true;
         }
 
         uint8_t * p = this->first_pixel(rect);
@@ -1077,8 +1077,8 @@ struct Drawable {
     {
         const Rect & trect = rect.intersect(Rect(0, 0, this->width, this->height));
 
-        if (tracked_area.has_intersection(trect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(trect)) {
+            this->tracked_area_changed = true;
         }
 
         uint8_t * p = this->first_pixel(trect);
@@ -1217,8 +1217,8 @@ struct Drawable {
 
     void ellipse(const Ellipse & el, const uint8_t rop,
                       const uint8_t fill, const uint32_t color) {
-        if (tracked_area.has_intersection(el.get_rect())) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(el.get_rect())) {
+            this->tracked_area_changed = true;
         }
         switch (rop) {
         case 0x01: // R2_BLACK
@@ -1406,8 +1406,8 @@ struct Drawable {
     // also we already swapped color if we are using BGR instead of RGB
     void opaquerect(const Rect & rect, const uint32_t color)
     {
-        if (tracked_area.has_intersection(rect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(rect)) {
+            this->tracked_area_changed = true;
         }
         uint8_t * const base = this->first_pixel(rect);
         uint8_t * p = base;
@@ -1429,8 +1429,8 @@ struct Drawable {
     {
         Op op;
 
-        if (tracked_area.has_intersection(rect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(rect)) {
+            this->tracked_area_changed = true;
         }
 
         uint8_t * const base = this->first_pixel(rect);
@@ -1660,8 +1660,8 @@ struct Drawable {
     {
         Op op;
 
-        if (tracked_area.has_intersection(rect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(rect)) {
+            this->tracked_area_changed = true;
         }
 
         uint8_t * const base = this->first_pixel(rect);
@@ -1850,8 +1850,8 @@ struct Drawable {
     {
         Op op;
 
-        if (tracked_area.has_intersection(drect)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(drect)) {
+            this->tracked_area_changed = true;
         }
 
         const int16_t deltax = static_cast<int16_t>(srcx - drect.x);
@@ -2020,8 +2020,8 @@ struct Drawable {
 
         const Rect line_clip = clip.intersect(Rect(0, 0, this->width, this->height));
 
-        if (tracked_area.has_intersection(line_clip)) {
-            tracked_area_changed = true;
+        if (this->tracked_area.has_intersection(line_clip)) {
+            this->tracked_area_changed = true;
         }
 
         // Prep

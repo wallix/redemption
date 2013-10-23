@@ -158,7 +158,7 @@ public:
         }
 
         header.fields =
-            (this->el.left()   != oldcmd.el.left()  ) * 0x0001
+            ( this->el.left()   != oldcmd.el.left()  ) * 0x0001
             |(this->el.top()    != oldcmd.el.top()   ) * 0x0002
             |(this->el.right()  != oldcmd.el.right() ) * 0x0004
             |(this->el.bottom() != oldcmd.el.bottom()) * 0x0008
