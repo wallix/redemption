@@ -709,10 +709,10 @@ class Sesman():
                 kv[u'session_id'] = self.engine.start_session(selected_target, self.pid)
                 _status, _error = self.engine.write_trace(self.full_path)
                 self.engine.get_restrictions(selected_target)
-                if self.engine.kill_patterns:
-                    self.send_data({ u'kill_pattern': self.engine.kill_patterns })
-                if self.engine.notify_patterns:
-                    self.send_data({ u'notify_pattern': self.engine.notify_patterns })
+                if self.engine.pattern_kill:
+                    self.send_data({ u'pattern_kill': self.engine.pattern_kill })
+                if self.engine.pattern_notify:
+                    self.send_data({ u'pattern_notify': self.engine.pattern_notify })
 
             if _status:
                 Logger().info(u"Checking timeframe")

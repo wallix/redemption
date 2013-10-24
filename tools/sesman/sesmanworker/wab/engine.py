@@ -245,14 +245,14 @@ class Engine(object):
                     elif restriction.action == 'notify':
                         notify_patterns.append(restriction.data)
 
-            self.patterns_kill = u"|".join(kill_patterns)
-            self.patterns_notify = u"|".join(notify_patterns)
-            Logger().info("kill_patterns = [%s]" % (self.patterns_kill))
-            Logger().info("notify_patterns = [%s]" % (self.patterns_notify))
+            self.pattern_kill = u"|".join(kill_patterns)
+            self.pattern_notify = u"|".join(notify_patterns)
+            Logger().info("pattern_kill = [%s]" % (self.pattern_kill))
+            Logger().info("pattern_notify = [%s]" % (self.pattern_notify))
         except Exception, e:
             import traceback
             Logger().info("<<<<%s>>>>" % e)
-        
+
 
 
     def stop_session(self, result=True, diag=u"success", title=u"End session"):
