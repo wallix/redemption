@@ -68,6 +68,7 @@ class Sesman():
 
         self.engine = engine.Engine()
 
+        # shared should be read from sesman but never written except when sending
         self.shared                    = {}
 
         self._full_user_device_account = u'Unknown'
@@ -94,6 +95,7 @@ class Sesman():
         self.shared[u'target_protocol'] = MAGICASK
 
 
+    #TODO: is may be possible to delay sending data until the next input through receive_data
     def send_data(self, data):
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
@@ -706,6 +708,11 @@ class Sesman():
                 # Add connection to the observer
                 kv[u'session_id'] = self.engine.start_session(selected_target, self.pid)
                 _status, _error = self.engine.write_trace(self.full_path)
+                self.engine.get_restrictions(selected_target)
+                if self.engine.kill_patterns:
+                    self.send_data({ u'kill_pattern': self.engine.kill_patterns })
+                if self.engine.notify_patterns:
+                    self.send_data({ u'notify_pattern': self.engine.notify_patterns })
 
             if _status:
                 Logger().info(u"Checking timeframe")

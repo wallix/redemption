@@ -1095,8 +1095,13 @@ class Engine(object):
 #        Logger().info("get_app_params done = %s" % res)
         return res
 
-    def start_session(self, target31, pid):
+    def start_session(self, target, pid):
         return "SESSIONID-0000"
+
+    def get_restrictions(self, target):
+        self.patterns_kill = u""
+        self.patterns_notify = u""
+        return
 
     def update_session(self, target31):
         pass
