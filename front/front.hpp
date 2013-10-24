@@ -489,7 +489,9 @@ public:
                                        , true
                                        , ini
                                        );
-
+            if (this->nomouse) {
+                this->capture->set_pointer_display();
+            }
             this->capture->capture_event.set();
             this->capture_state = CAPTURE_STATE_STARTED;
         }
@@ -1195,6 +1197,12 @@ public:
             LOG(LOG_INFO, "Front::set_pointer done");
         }
     }   // void set_pointer(int cache_idx)
+
+    virtual void set_pointer_display() {
+        if (this->capture) {
+            this->capture->set_pointer_display();
+        }
+    }
 
     void incoming(Callback & cb) throw(Error)
     {

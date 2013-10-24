@@ -337,7 +337,6 @@ public:
         }
     }
 
-
     virtual void server_set_pointer(const Pointer & cursor)
     {
         int cache_idx = 0;
@@ -367,6 +366,15 @@ public:
         }
         else if (this->capture_drawable) {
             this->drawable->set_pointer(cache_idx);
+        }
+    }
+
+    virtual void set_pointer_display() {
+        if (this->capture_wrm) {
+            this->pnc->set_pointer_display();
+        }
+        else if (this->capture_drawable) {
+            this->drawable->set_pointer_display();
         }
     }
 };

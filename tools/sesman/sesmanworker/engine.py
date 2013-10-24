@@ -1099,8 +1099,8 @@ class Engine(object):
         return "SESSIONID-0000"
 
     def get_restrictions(self, target):
-        self.patterns_kill = u""
-        self.patterns_notify = u""
+        self.pattern_kill = u""
+        self.pattern_notify = u""
         return
 
     def update_session(self, target31):
