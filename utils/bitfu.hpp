@@ -58,8 +58,8 @@ static inline void buf_out_uint32(uint8_t* buffer, int value)
   buffer[3] = (value >> 24) & 0xff;
 }
 
-TODO("only defined for 1 to 4 bytes : rename to in_uint32_from_nb_bytes_le ?");
-static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
+// this name because the fonction below is only defined for 1 to 4/8 bytes (works on underlying unsigned)
+static inline unsigned in_uint32_from_nb_bytes_le(const uint8_t nb, const uint8_t * ptr)
 {
     unsigned res = 0;
     for (int b = 0 ; b < nb ; ++b){
@@ -68,8 +68,9 @@ static inline unsigned in_bytes_le(const uint8_t nb, const uint8_t * ptr)
     return res;
 }
 
-TODO("only defined for 1 to 4 bytes : rename to in_uint32_from_nb_bytes_be ?");
-static inline unsigned in_bytes_be(const uint8_t nb, const uint8_t * ptr)
+
+// this name because the fonction below is only defined for 1 to 4/8 bytes (works on underlying unsigned)
+static inline unsigned in_uint32_from_nb_bytes_be(const uint8_t nb, const uint8_t * ptr)
 {
     unsigned res = 0;
     for (int b = 0 ; b < nb ; ++b){

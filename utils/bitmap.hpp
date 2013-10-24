@@ -759,21 +759,21 @@ private:
             break;
             case BICOLOR:
                 bicolor = 0;
-                color1 = in_bytes_le(Bpp, input);
+                color1 = this->get_pixel(Bpp, input);
                 input += Bpp;
-                color2 = in_bytes_le(Bpp, input);
+                color2 = this->get_pixel(Bpp, input);
                 input += Bpp;
                 break;
             case COLOR:
-                color2 = in_bytes_le(Bpp, input);
+                color2 = this->get_pixel(Bpp, input);
                 input += Bpp;
                 break;
             case MIX_SET:
-                mix = in_bytes_le(Bpp, input);
+                mix = this->get_pixel(Bpp, input);
                 input += Bpp;
             break;
             case FOM_SET:
-                mix = in_bytes_le(Bpp, input);
+                mix = this->get_pixel(Bpp, input);
                 input += Bpp;
                 mask = 1;
                 fom_mask = input[0]; input++;
@@ -786,7 +786,7 @@ private:
             if ((opcode == FILL)
             && (opcode == lastopcode)
             && (out != pmin + this->line_size)){
-                yprev = (out - this->line_size < pmin) ? 0 : in_bytes_le(Bpp, out - this->line_size);
+                yprev = (out - this->line_size < pmin) ? 0 : this->get_pixel(Bpp, out - this->line_size);
                 out_bytes_le(out, Bpp, yprev ^ mix);
                 count--;
                 out += Bpp;
@@ -806,7 +806,7 @@ private:
                     LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
                     throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
                 }
-                yprev = (out - this->line_size < pmin) ? 0 : in_bytes_le(Bpp, out - this->line_size);
+                yprev = (out - this->line_size < pmin) ? 0 : this->get_pixel(Bpp, out - this->line_size);
 
                 switch (opcode) {
                 case FILL:
@@ -836,7 +836,7 @@ private:
                     out_bytes_le(out, Bpp, color2);
                     break;
                 case COPY:
-                    out_bytes_le(out, Bpp, in_bytes_le(Bpp, input));
+                    out_bytes_le(out, Bpp, this->get_pixel(Bpp, input));
                     input += Bpp;
                     break;
                 case BICOLOR:
@@ -886,7 +886,7 @@ public:
 
     unsigned get_pixel(const uint8_t Bpp, const uint8_t * const p) const
     {
-        return in_bytes_le(Bpp, p);
+        return in_uint32_from_nb_bytes_le(Bpp, p);
     }
 
     unsigned get_pixel_above(const uint8_t Bpp, const uint8_t * pmin, const uint8_t * const p) const
@@ -1607,7 +1607,7 @@ public:
 
             for (size_t y = 0; y < bmp.cy ; y++) {
                 for (size_t x = 0; x < bmp.cx ; x++) {
-                    uint32_t pixel = in_bytes_le(src_nbbytes, src);
+                    uint32_t pixel = in_uint32_from_nb_bytes_le(src_nbbytes, src);
 
                     pixel = color_decode(pixel, bmp.original_bpp, bmp.original_palette);
                     if (out_bpp == 16 || out_bpp == 15 || out_bpp == 8){
