@@ -321,25 +321,25 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     bool ignore_frame_in_timeval = false;
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 1));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 2));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     BOOST_CHECK_EQUAL(3052, sq_outfilename_filesize(seq, 0));
     BOOST_CHECK_EQUAL(3061, sq_outfilename_filesize(seq, 1));
     BOOST_CHECK_EQUAL(3057, sq_outfilename_filesize(seq, 2));
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 3));
 
-    now.tv_sec++; consumer.snapshot(now, 0, 0, true, true, ignore_frame_in_timeval);
+    now.tv_sec++; consumer.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
     rio_clear(&trans.rio);
     BOOST_CHECK_EQUAL(-1, sq_outfilename_filesize(seq, 0));

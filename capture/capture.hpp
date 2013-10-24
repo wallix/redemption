@@ -192,18 +192,15 @@ public:
         }
     }
 
-    void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
-                 , bool no_timestamp, bool ignore_frame_in_timeval) {
+    void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
         if (this->capture_png) {
-            this->psc->snapshot( now, x, y, pointer_already_displayed, no_timestamp
-                               , ignore_frame_in_timeval);
+            this->psc->snapshot( now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->psc->time_to_wait);
         }
         if (this->capture_wrm) {
-            this->pnc->snapshot( now, x, y, pointer_already_displayed, no_timestamp
-                               , ignore_frame_in_timeval);
+            this->pnc->snapshot( now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->pnc->time_to_wait);
         }
     }

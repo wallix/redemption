@@ -57,20 +57,20 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 
     RDPOpaqueRect cmd(Rect(0, 0, 800, 600), RED);
     drawable.draw(cmd, screen_rect);
-    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec++;
 
     RDPOpaqueRect cmd1(Rect(100, 100, 200, 200), BLUE);
     drawable.draw(cmd1, screen_rect);
-    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec++;
-    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec++;
 
     rio_clear(&trans.rio); // ensure file is closed to have accurate values for size

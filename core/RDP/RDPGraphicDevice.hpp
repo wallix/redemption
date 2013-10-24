@@ -73,7 +73,6 @@ struct RDPGraphicDevice {
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
-        bool pointer_already_displayed, bool no_timestamp,
         bool ignore_frame_in_timeval) {}
 
     virtual void server_set_pointer(const Pointer & cursor) {}
