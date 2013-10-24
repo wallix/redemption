@@ -208,6 +208,17 @@ class Engine(object):
         # Logger().info("app_params=%r" % rrr)
         return app_params
 
+    def get_target_password(self, target_device):
+        Logger().info("get_target_password: target_device=%s" % target_device)
+        target_password = self.wabengine.get_target_password(target_device)
+        Logger().info("get_target_password done")
+        return target_password
+
+    def release_target_password(self, target_device):
+        Logger().info("release_target_password: target_device=%s" % target_device)
+        self.wabengine.release_target_password(target_device)
+        Logger().info("release_target_password done")
+
     def start_session(self, auth, pid):
         try:
             from wabengine.common.interface import IPBSessionHandler

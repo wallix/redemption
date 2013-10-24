@@ -748,6 +748,7 @@ class Sesman():
             for physical_target in (self.engine.get_effective_target(selected_target.service_login)
                                      if selected_target.resource.application else [selected_target]):
                 if not _status:
+                    physical_target = None
                     break
 
                 if selected_target.resource.application:
@@ -759,8 +760,9 @@ class Sesman():
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
 
-                kv[u'target_password'] = physical_target.account.password
-                if not physical_target.account.password:
+                password_of_target = self.engine.get_target_password(physical_target)
+                kv[u'target_password'] = password_of_target
+                if not password_of_target:
                     kv[u'target_password'] = u''
                     Logger().info(u"auto logon is disabled")
 
@@ -867,6 +869,11 @@ class Sesman():
 
                 if not try_next:
                     break;
+                else:
+                    self.engine.release_target_password(physical_target)
+
+            if not (physical_target is None):
+                self.engine.release_target_password(physical_target)
 
             Logger().info(u"Stop session ...")
 
