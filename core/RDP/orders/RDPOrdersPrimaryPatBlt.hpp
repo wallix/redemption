@@ -1025,7 +1025,7 @@ class RDPPatBlt {
         return RDP::PATBLT;
     }
 
-    RDPPatBlt(const Rect rect, uint8_t rop,
+    RDPPatBlt(const Rect & rect, uint8_t rop,
               uint32_t back_color, uint32_t fore_color,
               const RDPBrush & brush) :
         rect(rect),

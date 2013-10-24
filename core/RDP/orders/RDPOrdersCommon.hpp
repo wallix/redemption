@@ -224,6 +224,7 @@ namespace RDP {
         MEM3BLT    = 14,
         POLYLINE   = 22,
         ELLIPSESC  = 25,
+        ELLIPSECB  = 26,
         GLYPHINDEX = 27,
     };
 

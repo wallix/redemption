@@ -37,6 +37,7 @@
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "font.hpp"
 #include "png.hpp"
 
@@ -206,13 +207,14 @@ public:
             lineto.pen.color, clip);
     }
 
-    void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart, int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
-        uint32_t PenColor, const Rect & clip) {
+    void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
+                   int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
+                   uint32_t PenColor, const Rect & clip) {
         TODO("We should perform a true intersection between line and clip rectangle, not cheat as below.");
         // enlarge_to compute a new rect including old rect and added point
         const Rect & line_rect = Rect(nXStart, nYStart, 1, 1).enlarge_to(nXEnd, nYEnd);
         if (line_rect.intersect(clip).isempty()){
-            //            LOG(LOG_INFO, "line_rect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
+            // LOG(LOG_INFO, "line_ect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
             return;
         }
 

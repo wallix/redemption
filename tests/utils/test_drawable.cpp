@@ -14,7 +14,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2011
+   Copyright (C) Wallix 2011-2013
    Author(s): Christophe Grosjean, Martin Potier
 
    Unit test of Drawing primitive used to create snapshot/movies
@@ -201,6 +201,13 @@ BOOST_AUTO_TEST_CASE(TestEllipse)
     cycles = rdtsc();
 
     gd.draw(RDPEllipseSC(Rect(100, 2, 40, 400), RED, 0x06, 0x01), screen_rect);
+
+    elapusec = ustime() - usec;
+    elapcyc = rdtsc() - cycles;
+    LOG(LOG_INFO, "elapsed time = %llu %llu %f\n", elapusec, elapcyc, (double)elapcyc / (double)elapusec);
+
+    usec = ustime();
+    cycles = rdtsc();
 
     gd.draw(RDPEllipseSC(Rect(2, 300, 540, 32), BLUE, 0x06, 0x00), screen_rect);
     gd.draw(RDPEllipseSC(Rect(200, 2, 40, 400), RED, 0x06, 0x00), screen_rect);
