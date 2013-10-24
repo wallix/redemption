@@ -75,11 +75,14 @@ public:
     uint64_t inter_frame_interval_static_capture;
     uint64_t time_to_wait;
 
+    bool pointer_displayed;
+
     StaticCapture(const timeval & now, Transport & trans, SQ * seq, unsigned width, unsigned height, bool clear_png, const Inifile & ini, Drawable & drawable)
     : ImageCapture(trans, width, height, drawable)
     , clear_png(clear_png)
     , seq(seq)
     , time_to_wait(0)
+    , pointer_displayed(false)
     {
         this->start_static_capture = now;
         this->conf.png_interval = 3000; // png interval is in 1/10 s, default value, 1 static snapshot every 5 minutes
@@ -123,9 +126,10 @@ public:
     {
         if (static_cast<unsigned>(difftimeval(now, this->start_static_capture))
             >= static_cast<unsigned>(this->inter_frame_interval_static_capture)) {
-            if (!pointer_already_displayed) { this->drawable.trace_mouse(x, y); }
+REDASSERT(pointer_already_displayed == this->pointer_displayed);
+            if (!this->pointer_displayed) { this->drawable.trace_mouse(x, y); }
             this->breakpoint(now);
-            if (!pointer_already_displayed) { this->drawable.clear_mouse(); }
+            if (!this->pointer_displayed) { this->drawable.clear_mouse(); }
             this->time_to_wait = this->inter_frame_interval_static_capture;
         }
         else {
@@ -173,6 +177,10 @@ public:
 
     virtual void flush()
     {
+    }
+
+    virtual void set_pointer_display() {
+        this->pointer_displayed = true;
     }
 };
 

@@ -81,6 +81,8 @@ struct RDPGraphicDevice {
         const uint8_t * mask, int hotspot_x, int hotspot_y) {}
     virtual void set_pointer(int cache_idx) {}
 
+    virtual void set_pointer_display() {}
+
 protected:
     // this to avoid calling constructor of base abstract class
     RDPGraphicDevice() {}

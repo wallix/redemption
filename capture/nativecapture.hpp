@@ -67,6 +67,8 @@ public:
     uint32_t nb_file;
     uint64_t time_to_wait;
 
+    bool pointer_displayed;
+
     NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable, const Inifile & ini)
     : width(width)
     , height(height)
@@ -75,6 +77,7 @@ public:
     , recorder(now, &trans, width, height, 24, bmp_cache, drawable, ini)
     , nb_file(0)
     , time_to_wait(0)
+    , pointer_displayed(false)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
@@ -113,7 +116,8 @@ public:
                 >= this->inter_frame_interval_native_capture) {
             this->recorder.timestamp(now);
             this->time_to_wait = this->inter_frame_interval_native_capture;
-            if (!pointer_already_displayed) {
+REDASSERT(pointer_already_displayed == this->pointer_displayed);
+            if (!this->pointer_displayed) {
                 this->recorder.mouse(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
             }
             this->start_native_capture = now;
@@ -203,6 +207,10 @@ public:
 
     virtual void set_pointer(int cache_idx) {
         this->recorder.set_pointer(cache_idx);
+    }
+
+    virtual void set_pointer_display() {
+        this->pointer_displayed = true;
     }
 
 private:

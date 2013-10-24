@@ -3872,6 +3872,7 @@ public:
                 struct Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
+                this->front.set_pointer_display();
                 this->set_pointer_display();
             }
             break;
