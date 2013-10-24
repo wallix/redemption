@@ -487,6 +487,7 @@ public:
                                        , ini.video.record_tmp_path
                                        , ini.video.hash_path, basename
                                        , true
+                                       , false
                                        , ini
                                        );
             if (this->nomouse) {

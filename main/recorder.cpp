@@ -211,7 +211,7 @@ int main(int argc, char** argv)
 
     Capture capture( player.record_now, player.screen_rect.cx, player.screen_rect.cy
                    , outfile_path, outfile_path, ini.video.hash_path, outfile_basename, false
-                   , ini);
+                   , false, ini);
     if (capture.capture_png){
         capture.psc->zoom(zoom);
     }

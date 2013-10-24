@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.video.capture_wrm = true;
         ini.video.capture_png = true;
         ini.globals.enable_file_encryption.set(false);
-        Capture capture(now, scr.cx, scr.cy, "./", "./", "/tmp/", "capture", false, ini);
+        Capture capture(now, scr.cx, scr.cy, "./", "./", "/tmp/", "capture", false, false, ini);
 
         bool ignore_frame_in_timeval = false;
 
