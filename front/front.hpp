@@ -70,13 +70,13 @@
 #include "front_api.hpp"
 #include "genrandom.hpp"
 
+#include "auth_api.hpp"
 
 enum {
     FRONT_DISCONNECTED,
     FRONT_CONNECTING,
     FRONT_RUNNING,
 };
-
 
 class Front : public FrontAPI {
     using FrontAPI::draw;
@@ -150,6 +150,8 @@ public:
 
     rdp_mppc_enc * mppc_enc;
 
+    auth_api * authentifier;
+
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random * gen
@@ -189,6 +191,7 @@ public:
         , bitmap_update_count(0)
         , server_capabilities_filename(server_capabilities_filename)
         , mppc_enc(0)
+        , authentifier(NULL)
     {
         // init TLS
         // --------------------------------------------------------
@@ -301,8 +304,9 @@ public:
                 {
                     CaptureState original_capture_state = this->capture_state;
 
+                    auth_api * authentifier = this->authentifier;
                     this->stop_capture();
-                    this->start_capture(width, height, *this->ini);
+                    this->start_capture(width, height, *this->ini, authentifier);
 
                     this->capture_state = original_capture_state;
                 }
@@ -451,7 +455,7 @@ public:
     }
 
     // ===========================================================================
-    void start_capture(int width, int height, Inifile & ini)
+    void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
         if (this->capture) {
             LOG(LOG_INFO, "Front::start_capture: session capture is already started");
@@ -488,6 +492,7 @@ public:
                                        , ini.video.hash_path, basename
                                        , true
                                        , false
+                                       , authentifier
                                        , ini
                                        );
             if (this->nomouse) {
@@ -495,6 +500,8 @@ public:
             }
             this->capture->capture_event.set();
             this->capture_state = CAPTURE_STATE_STARTED;
+
+            this->authentifier = authentifier;
         }
     }
 
@@ -542,6 +549,7 @@ public:
     {
         if (this->capture){
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
+            this->authentifier = NULL;
             delete this->capture;
             this->capture = 0;
 

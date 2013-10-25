@@ -31,6 +31,8 @@
 #include "wait_obj.hpp"
 #include "RDP/pointer.hpp"
 
+#include "auth_api.hpp"
+
 class Capture : public RDPGraphicDevice {
 public:
     const bool capture_wrm;
@@ -59,7 +61,7 @@ public:
 
     Capture( const timeval & now, int width, int height, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, bool no_timestamp,  Inifile & ini)
+           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini)
             : capture_wrm(ini.video.capture_wrm)
             , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
             , capture_png(ini.video.png_limit > 0)

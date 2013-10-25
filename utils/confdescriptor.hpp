@@ -27,7 +27,7 @@
 #include "parser.hpp"
 #include "cfgloader.hpp"
 
-#include "general.hpp"
+#include "RDP/capabilities/general.hpp"
 
 TODO("We could probably use templated Entries instead of InputType_t and StorageType_t enums, this with also avoid combinatorial explosion."
      "Well, not really, but the compiler will do the work.")
@@ -39,19 +39,26 @@ enum InputType_t {
 };
 
 enum StorageType_t {
-    STORAGE_BYTE
+    STORAGE_BYTE,
     STORAGE_UINT16
 };
 
-class Entry {
-    char           key[64];
-    ParserType_t   parser_type;
-    InputType_t    input_type;
-    void         * storage;
+struct Entry {
+    char            key[64];
+    InputType_t     input_type;
+    StorageType_t   storage_type;
+    void          * storage;
 
-    Entry(const char * key, ParserType_t parser_type, StorageType_t input_type, void * storage)
-    : parser_type(parser_type)
-    , input_type(input_type)
+    Entry()
+    : input_type(INPUT_BOOLEAN)
+    , storage_type(STORAGE_BYTE)
+    , storage(NULL) {
+        ::memset(this->key, 0, sizeof(this->key));
+    }
+
+    Entry(const char * key, InputType_t input_type, StorageType_t storage_type, void * storage)
+    : input_type(input_type)
+    , storage_type(storage_type)
     , storage(storage) {
         size_t length = sizeof(this->key) - 1;
         strncpy(this->key, key, length);
@@ -66,7 +73,7 @@ class Entry {
         if (!this->match(key)) {
             return false;
         }
-        switch (this->parser_type) {
+        switch (this->input_type) {
             case INPUT_BOOLEAN: {
                 unsigned long result = bool_from_cstr(value);
                 this->store(result);
@@ -87,7 +94,7 @@ class Entry {
     }
 
     void store(unsigned long value) {
-        switch (value) {
+        switch (this->storage_type) {
             case STORAGE_BYTE:
                 static_cast<uint8_t *>(this->storage)[0]  = static_cast<uint8_t>(value);
             break;
@@ -99,7 +106,7 @@ class Entry {
 };
 
 TODO("We also have to define BitmapCaps and OrderCaps loaders, then we will be able to use this in capability_sets.hpp")
-class GeneralCapsLoader : public ConfigurationHolder
+struct GeneralCapsLoader : public ConfigurationHolder
 {
     char name[64];
 
@@ -162,14 +169,13 @@ class GeneralCapsLoader : public ConfigurationHolder
         TODO("parsing like this is very, very inefficient, change that later")
 
         if (!this->match(section)) {
-            return false;
+            return;
         }
         for (size_t i = 0; i < NUMBER_OF_CAPS; i++) {
             if (this->entries[i].set_value(key, value)) {
-                return true;
+                return;
             }
         }
-        return false;
     }
 };
 

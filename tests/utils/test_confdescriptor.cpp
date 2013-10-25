@@ -26,14 +26,25 @@
 #include "log.hpp"
 #define LOGNULL
 
+using namespace std;
+
 #include "confdescriptor.hpp"
 
-BOOST_AUTO_TEST_CASE(TestConfigFromFile)
+BOOST_AUTO_TEST_CASE(TestConfigDescriptorFromFile)
 {
     GeneralCaps       generalcaps;
-    GeneralCapsLoader generalcaps_loader;
+    GeneralCapsLoader generalcaps_loader(generalcaps);
 
     ConfigurationLoader cfg_loader(generalcaps_loader, FIXTURES_PATH "/capsset.ini");
 
-    BOOST_CHECK_EQUAL(generalcaps.extraFlags, 1025);
+    BOOST_CHECK_EQUAL(generalcaps.os_major,              1);
+    BOOST_CHECK_EQUAL(generalcaps.os_minor,              3);
+    BOOST_CHECK_EQUAL(generalcaps.protocolVersion,       512);
+    BOOST_CHECK_EQUAL(generalcaps.compressionType,       0);
+    BOOST_CHECK_EQUAL(generalcaps.extraflags,            1025);
+    BOOST_CHECK_EQUAL(generalcaps.updateCapability,      0);
+    BOOST_CHECK_EQUAL(generalcaps.remoteUnshare,         0);
+    BOOST_CHECK_EQUAL(generalcaps.compressionLevel,      0);
+    BOOST_CHECK_EQUAL(generalcaps.refreshRectSupport,    1);
+    BOOST_CHECK_EQUAL(generalcaps.suppressOutputSupport, 1);
 }

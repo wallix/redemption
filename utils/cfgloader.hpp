@@ -22,6 +22,7 @@
 #define _REDEMPTION_UTILS_CFG_LOADER_HPP_
 
 #include <istream>
+#include <fstream>
 
 #include "log.hpp"
 #include "parser.hpp"
