@@ -306,8 +306,7 @@ typedef enum
 
 #define STRAUTHID_REPORTING                "reporting"
 
-TODO("This is not a translation but auth_channel answer, change key name in sesman");
-#define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
+#define STRAUTHID_AUTHCHANNEL_ANSWER       "auth_channel_answer"
 #define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
 #define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
 
