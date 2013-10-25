@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 
    Configuration file descriptor objects
-
 */
 
 #ifndef _REDEMPTION_UTILS_CONFDESCRIPTOR_HPP__
@@ -26,71 +25,71 @@
 
 #include "log.hpp"
 #include "parser.hpp"
+#include "cfgloader.hpp"
+
+#include "general.hpp"
 
 TODO("We could probably use templated Entries instead of InputType_t and StorageType_t enums, this with also avoid combinatorial explosion."
      "Well, not really, but the compiler will do the work.")
 
-enum InputType_t
-{
+enum InputType_t {
     INPUT_BOOLEAN,
     INPUT_UNSIGNED,
     INPUT_LEVEL,
 };
 
-enum StorageType_t
-{
+enum StorageType_t {
     STORAGE_BYTE
     STORAGE_UINT16
 };
 
-class Entry 
-{
-    char key[64];
-    ParserType_t parser_type;
-    InputType_t input_type;
-    void * storage;
-    
-    Entry(const char * key, ParserType_t parser_type, StorageType_t input_type, void * storage) 
+class Entry {
+    char           key[64];
+    ParserType_t   parser_type;
+    InputType_t    input_type;
+    void         * storage;
+
+    Entry(const char * key, ParserType_t parser_type, StorageType_t input_type, void * storage)
     : parser_type(parser_type)
     , input_type(input_type)
-    , storage(storage)
-    {
-        strncpy(this->key, key, sizeof(this->key));
+    , storage(storage) {
+        size_t length = sizeof(this->key) - 1;
+        strncpy(this->key, key, length);
+        this->key[length] = 0;
     }
 
     bool match(const char * key) {
-        return 0 == strncasecmp(this->key, key, sizeof(this->key)); 
+        return 0 == strncasecmp(this->key, key, sizeof(this->key));
     }
 
     bool set_value(const char * key, const char * value) {
         if (!this->match(key)) {
             return false;
         }
-        switch (this->parser_type) 
-        {
-            case INPUT_BOOLEAN:{
+        switch (this->parser_type) {
+            case INPUT_BOOLEAN: {
                 unsigned long result = bool_from_cstr(value);
                 this->store(result);
             }
             break;
-            case INPUT_UNSIGNED:{
+            case INPUT_UNSIGNED: {
                 unsigned long result = ulong_from_cstr(value);
                 this->store(result);
             }
             break;
-            case INPUT_LEVEL:{
-                unsigned long level = level_from_cstr(value);
-                this->store(result);
+            case INPUT_LEVEL: {
+                unsigned long level  = level_from_cstr(value);
+                this->store(level);
             }
             break;
         }
         return true;
     }
-    
+
     void store(unsigned long value) {
-        switch (value){
+        switch (value) {
             case STORAGE_BYTE:
-                static_cast<uint8_t *>(this->storage)[0] = static_cast<uint8_t>(value);
+                static_cast<uint8_t *>(this->storage)[0]  = static_cast<uint8_t>(value);
             break;
             case STORAGE_UINT16:
                 static_cast<uint16_t *>(this->storage)[0] = static_cast<uint16_t>(value);
@@ -99,9 +98,8 @@ class Entry
     }
 };
 
-TODO("We also have to define BitmapCaps and OrderCaps loaders, then we will be able to use this in capability_sets.hpp") 
-
-class GeneralCapsLoader 
+TODO("We also have to define BitmapCaps and OrderCaps loaders, then we will be able to use this in capability_sets.hpp")
+class GeneralCapsLoader : public ConfigurationHolder
 {
     char name[64];
 
@@ -120,64 +118,104 @@ class GeneralCapsLoader
     };
 
     Entry entries[NUMBER_OF_CAPS];
-    
-    GeneralCapsLoader(GeneralCaps & caps) 
+
+    GeneralCapsLoader(GeneralCaps & caps)
     {
-        
         strncpy(this->name, "General Capability Set", sizeof(this->name));
-        
-        this->entries[AUTHID_GENERALCAPS_OS_MAJOR] = 
+
+        this->entries[AUTHID_GENERALCAPS_OS_MAJOR] =
             Entry("osMajorType", INPUT_UNSIGNED, STORAGE_UINT16, &caps.os_major);
-        
-        this->entries[AUTHID_GENERALCAPS_OS_MINOR] = 
+
+        this->entries[AUTHID_GENERALCAPS_OS_MINOR] =
             Entry("osMinorType", INPUT_UNSIGNED, STORAGE_UINT16, &caps.os_minor);
-        
-        this->entries[AUTHID_GENERALCAPS_PROTOCOLVERSION] = 
+
+        this->entries[AUTHID_GENERALCAPS_PROTOCOLVERSION] =
             Entry("protocolVersion", INPUT_UNSIGNED, STORAGE_UINT16, &caps.protocolVersion);
-        
-        this->entries[AUTHID_GENERALCAPS_COMPRESSIONTYPE] = 
+
+        this->entries[AUTHID_GENERALCAPS_COMPRESSIONTYPE] =
             Entry("generalCompressionTypes", INPUT_UNSIGNED, STORAGE_UINT16, &caps.compressionType);
-        
-        this->entries[AUTHID_GENERALCAPS_EXTRAFLAGS] = 
+
+        this->entries[AUTHID_GENERALCAPS_EXTRAFLAGS] =
             Entry("extraFlags", INPUT_UNSIGNED, STORAGE_UINT16, &caps.extraflags);
-        
-        this->entries[AUTHID_GENERALCAPS_UPDATECAPABILITY] = 
+
+        this->entries[AUTHID_GENERALCAPS_UPDATECAPABILITY] =
             Entry("updateCapabilityFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.updateCapability);
-        
-        this->entries[AUTHID_GENERALCAPS_REMOTEUNSHARE] = 
+
+        this->entries[AUTHID_GENERALCAPS_REMOTEUNSHARE] =
             Entry("remoteUnshareFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.remoteUnshare);
-        
-        this->entries[AUTHID_GENERALCAPS_COMPRESSIONLEVEL] = 
+
+        this->entries[AUTHID_GENERALCAPS_COMPRESSIONLEVEL] =
             Entry("generalCompressionLevel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.compressionLevel);
-        
-        this->entries[AUTHID_GENERALCAPS_REFRESHRECTSUPPORT] = 
+
+        this->entries[AUTHID_GENERALCAPS_REFRESHRECTSUPPORT] =
             Entry("refreshRectSupport", INPUT_UNSIGNED, STORAGE_BYTE, &caps.refreshRectSupport);
-        
-        this->entries[AUTHID_GENERALCAPS_SUPPRESSOUTPUTSUPPORT] = 
+
+        this->entries[AUTHID_GENERALCAPS_SUPPRESSOUTPUTSUPPORT] =
             Entry("suppressOutputSupport", INPUT_UNSIGNED, STORAGE_BYTE, &caps.suppressOutputSupport);
     }
 
-    virtual bool match(const char * name) 
-    {
-        return 0 == strncasecmp(this->name, name, sizeof(this->name)); 
+    virtual bool match(const char * name) {
+        return 0 == strncasecmp(this->name, name, sizeof(this->name));
     }
-    
-    void set_value(const char * section, const char * key, const char * value) 
-    {
+
+    virtual void set_value(const char * section, const char * key, const char * value) {
         TODO("parsing like this is very, very inefficient, change that later")
 
         if (!this->match(section)) {
             return false;
         }
-        for (size_t i = 0 ; i < NUMBER_OF_CAPS ; i++){
-            if (this->entries[i].set_value(key, value)){
+        for (size_t i = 0; i < NUMBER_OF_CAPS; i++) {
+            if (this->entries[i].set_value(key, value)) {
                 return true;
             }
         }
         return false;
     }
-
 };
-#endif
+
+/*
+        AUTHID_BITMAPCAPS_PREFERREDBITSPERPIXEL,
+        AUTHID_BITMAPCAPS_RECEIVE1BITPERPIXEL,
+        AUTHID_BITMAPCAPS_RECEIVE4BITPERPIXEL,
+        AUTHID_BITMAPCAPS_RECEIVE8BITPERPIXEL,
+        AUTHID_BITMAPCAPS_DESKTOPWIDTH,
+        AUTHID_BITMAPCAPS_DESKTOPHEIGHT,
+        AUTHID_BITMAPCAPS_DESKTOPRESIZEFLAG,
+        AUTHID_BITMAPCAPS_BITMAPCOMPRESSIONFLAG,
+        AUTHID_BITMAPCAPS_HIGHCOLORFLAGS,
+        AUTHID_BITMAPCAPS_DRAWINGFLAGS,
+        AUTHID_BITMAPCAPS_MULTIPLERECTANGLESUPPORT,
+
+        AUTHID_ORDERCAPS_DESKTOPSAVEXGRANULARITY,
+        AUTHID_ORDERCAPS_DESKTOPSAVEYGRANULARITY,
+        AUTHID_ORDERCAPS_MAXIMUMORDERLEVEL,
+        AUTHID_ORDERCAPS_NUMBERFONTS,
+        AUTHID_ORDERCAPS_ORDERFLAGS,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_DSTBLT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_PATBLT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_SCRBLT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_MEMBLT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_MEM3BLT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_DRAWNINEGRID,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_LINETO,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_MULTIDRAWNINEGRID,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_SAVEBITMAP,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_MULTIDSTBLT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_MULTIPATBLT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_MULTISCRBLT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_MULTIOPAQUERECT,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_FASTINDEX,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_POLYGONSC,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_POLYGONCB,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_POLYLINE,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_FASTGLYPH,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_ELLIPSESC,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_ELLIPSECB,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_GLYPHINDEX,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_TEXTFLAGS,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_ORDERSUPPORTEXFLAGS,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_DESKTOPSAVESIZE,
+        AUTHID_ORDERCAPS_ORDERSUPPORT_TEXTANSICODEPAGE,
+*/
 
 #endif

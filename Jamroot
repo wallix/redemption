@@ -370,8 +370,11 @@ unit-test test_cipher : tests/core/test_cipher.cpp libboost_unit_test gcov : <va
 unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test ;
 unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_config : tests/core/test_config.cpp libboost_unit_test ;
-unit-test test_config : tests/core/test_config.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_config : tests/core/test_confdescriptor.cpp libboost_unit_test ;
+unit-test test_config : tests/core/test_confdescriptor.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_confdescriptor : tests/core/test_config.cpp libboost_unit_test ;
+unit-test test_confdescriptor : tests/core/test_config.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_constants : tests/core/test_constants.cpp libboost_unit_test ;
 unit-test test_constants : tests/core/test_constants.cpp libboost_unit_test gcov : <variant>coverage ;
