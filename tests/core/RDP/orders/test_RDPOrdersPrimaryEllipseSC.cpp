@@ -24,7 +24,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestOrderOpaqueRect
+#define BOOST_TEST_MODULE TestOrderEllipseSC
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
 
@@ -33,7 +33,7 @@
 
 #include "test_orders.hpp"
 
-BOOST_AUTO_TEST_CASE(TestOpaqueRect)
+BOOST_AUTO_TEST_CASE(TestEllipseSC)
 {
     using namespace RDP;
 

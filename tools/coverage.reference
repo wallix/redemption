@@ -148,6 +148,7 @@ core/RDP/orders/RDPOrdersPrimaryPatBlt 100 100
 core/RDP/orders/RDPOrdersPrimaryScrBlt 100 100
 core/RDP/orders/RDPOrdersPrimaryPolyline 100 100
 core/RDP/orders/RDPOrdersPrimaryEllipseSC 100 100
+core/RDP/orders/RDPOrdersPrimaryEllipseCB 100 100
 core/RDP/orders/RDPOrdersSecondaryBmpCache 100 100
 core/RDP/orders/RDPOrdersSecondaryBrushCache 100 100
 core/RDP/orders/RDPOrdersSecondaryColorCache 100 100

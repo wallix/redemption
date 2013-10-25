@@ -220,7 +220,7 @@ public:
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
     {
-        using namespace RDP;
+        // using namespace RDP;
         int16_t  leftRect   = this->el.left();
         int16_t  topRect    = this->el.top();
         int16_t  rightRect  = this->el.right();
@@ -258,7 +258,7 @@ public:
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf(buffer + lg, sz - lg,
-                       "ellipseSC(leftRect=%d topRect=%d rightRect=%d bottomRect=%d bRop2=0x%02X "
+                       "ellipseCB(leftRect=%d topRect=%d rightRect=%d bottomRect=%d bRop2=0x%02X "
                        "fillMode=%d backColor=%.6x foreColor=%.6x"
                        "brush.org_x=%d brush.org_y=%d "
                        "brush.style=%d brush.hatch=%d)",

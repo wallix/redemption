@@ -739,6 +739,7 @@ public:
         case PATBLT:
         case MEMBLT:
         case LINE:
+        case ELLIPSECB:
             //case POLYGON2:
             //case ELLIPSE2:
             size = 2;
@@ -797,6 +798,9 @@ public:
             break;
         case ELLIPSESC:
             assert(!(header.fields & ~0x7F));
+            break;
+        case ELLIPSECB:
+            assert(!(header.fields & ~0x1FFF));
             break;
         default:
             LOG(LOG_INFO, "Order is Unknown (%u)\n", this->order);
