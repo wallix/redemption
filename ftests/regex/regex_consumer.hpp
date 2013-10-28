@@ -96,6 +96,9 @@ namespace re {
         char_int bumpc()
         {
             char_int c = *this->s;
+            if (!c) {
+                return c;
+            }
             ++this->s;
             if (*this->s >> 6 == 2) {
                 c <<= 8;
