@@ -92,6 +92,12 @@ public:
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, bgrcolor);
     }
 
+    TODO("This will draw a standard ellipse without brush style");
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+        uint32_t bgrcolor = this->RGBtoBGR(cmd.back_color);
+        this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, bgrcolor);
+    }
+
     void draw(const RDPScrBlt & cmd, const Rect & clip)
     {
         // Destination rectangle : drect

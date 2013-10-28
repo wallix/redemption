@@ -336,6 +336,16 @@ public:
         }
     }
 
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
+    {
+        if (this->capture_wrm) {
+            this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable) {
+            this->drawable->draw(cmd, clip);
+        }
+    }
+
     virtual void server_set_pointer(const Pointer & cursor)
     {
         int cache_idx = 0;

@@ -38,6 +38,10 @@
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
+
 
 #include "error.hpp"
 #include "config.hpp"
@@ -194,6 +198,11 @@ public:
     }
 
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip)
+    {
+        this->recorder.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }

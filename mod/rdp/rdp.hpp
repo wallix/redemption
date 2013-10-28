@@ -2017,6 +2017,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[UnusedIndex5]                    = 1;
         order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
 
         order_caps.textFlags                                     = 0x06a1;
@@ -4415,6 +4416,11 @@ public:
     }
 
     virtual void draw(const RDPEllipseSC& cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPEllipseCB& cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
     }

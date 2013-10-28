@@ -516,6 +516,13 @@ public:
         this->RDPSerializer::draw(cmd, clip);
     }
 
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
+    {
+        this->drawable.draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
+    }
+
+
 protected:
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {

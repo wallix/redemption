@@ -101,6 +101,13 @@ public:
         this->gd.draw(new_cmd24, clip);
     }
 
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+        RDPEllipseCB new_cmd24 = cmd;
+        new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+        new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
     virtual const CHANNELS::ChannelDefArray & get_channel_list(void) const { return cl; }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t * data, size_t length

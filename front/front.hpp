@@ -4311,6 +4311,34 @@ public:
         }
     }
 
+    void draw(const RDPEllipseCB & cmd, const Rect & clip)
+    {
+        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()){
+
+            this->send_global_palette();
+
+            RDPEllipseCB new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp){
+                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+                new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
+
+                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+                new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
+
+            }
+            this->orders->draw(new_cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
+                RDPEllipseCB new_cmd24 = cmd;
+                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+                this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
+
     virtual void flush() {
         this->orders->flush();
         if (  this->capture
