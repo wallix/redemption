@@ -90,7 +90,7 @@ namespace re {
                 case SPLIT: os << "(split)"; break;
                 case FIRST: os << "^"; break;
                 case LAST: os << "$"; break;
-                default: os << "?"; break;
+                default: os << "???"; break;
             }
         }
 
@@ -110,7 +110,7 @@ namespace re {
         { return this->type == SPLIT; }
 
         bool is_epsilone() const
-        { return this->type == EPSILONE; }
+        { return this->type == EPSILONE || (this->type == FINISH && this->out1); }
 
         bool is_finish() const
         { return this->type == FINISH; }

@@ -54,12 +54,6 @@ BOOST_AUTO_TEST_CASE(TestRegexCheck)
         BOOST_CHECK(st.check('\1'));
     }
     {
-        State st(FINISH);
-        BOOST_CHECK(st.check(multi_char("Þ")));
-        BOOST_CHECK(st.check('a'));
-        BOOST_CHECK(st.check('\1'));
-    }
-    {
         State st(RANGE, 'e','g');
         BOOST_CHECK(st.check('e'));
         BOOST_CHECK(st.check('f'));

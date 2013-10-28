@@ -130,26 +130,22 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         }
     }
     {
-        State range(RANGE, 'a', 'c');
         State st_f(RANGE, 'f', 'f');
-        State split(SPLIT, 0, 0, &range, &st_f);
+        State range(RANGE, 'a', 'c', &st_f);
         Reg rgx("[a-cf]");
-        BOOST_CHECK_EQUAL(st_to_string(&split), rgx.to_string());
+        BOOST_CHECK_EQUAL(st_to_string(&range), rgx.to_string());
     }
     {
-        State range1(RANGE, 'a', 'c');
-        State range2(RANGE, 'y', 'z');
-        State split1(SPLIT, 0, 0, &range1, &range2);
-        State range3(RANGE, 'f', 'h');
-        State split2(SPLIT, 0, 0, &split1, &range3);
         State st_t(RANGE, 'f', 'f');
-        State split3(SPLIT, 0, 0, &split2, &st_t);
         State st_f(RANGE, 't', 't');
-        State split4(SPLIT, 0, 0, &split3, &st_f);
+        State split1(SPLIT, 0, 0, &st_f, &st_t);
         State st_v(RANGE, 'v', 'v');
-        State split5(SPLIT, 0, 0, &split4, &st_v);
+        State split2(SPLIT, 0, 0, &st_v, &split1);
+        State range3(RANGE, 'f', 'h', &split2);
+        State range2(RANGE, 'y', 'z', &range3);
+        State range1(RANGE, 'a', 'c', &range2);
         Reg rgx("[ta-cfy-zf-hv]");
-        BOOST_CHECK_EQUAL(st_to_string(&split5), rgx.to_string());
+        BOOST_CHECK_EQUAL(st_to_string(&range1), rgx.to_string());
     }
     {
         State left(RANGE, 0, 't'-1);

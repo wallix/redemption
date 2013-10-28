@@ -128,6 +128,20 @@ namespace re {
         return (valid && a <= b) ? 0 : "range out of order in character class";
     }
 
+    struct VectorRange
+    {
+        typedef std::pair<char_int, char_int> range_t;
+        std::vector<range_t> ranges;
+
+        void push(char_int left, char_int right) {
+            ranges.push_back(range_t(left, right));
+        }
+
+        void push(char_int c) {
+            this->push(c,c);
+        }
+    };
+
     inline State ** st_compilechar(State ** pst, utf_consumer & consumer, char_int c, const char * & msg_err)
     {
         if (c == '\\' && consumer.valid()) {
@@ -135,18 +149,19 @@ namespace re {
         }
 
         if (c == '[') {
-            State * eps = new_epsilone();
-            State st(0, 0, 0, eps, eps);
-            State * cst = &st;
+//             State * eps = new_epsilone();
+//             State st(0, 0, 0, eps, eps);
+//             State * cst = &st;
             bool reverse_result = false;
-            std::vector<char_int> characters;
+//             std::vector<char_int> characters;
+            VectorRange ranges;
             if (consumer.valid() && (c = consumer.bumpc()) != ']') {
                 if (c == '^') {
                     reverse_result = true;
                     c = consumer.bumpc();
                 }
                 if (c == '-') {
-                    characters.push_back('-');
+                    ranges.push('-');
                     c = consumer.bumpc();
                 }
                 const unsigned char * cs = consumer.s;
@@ -156,47 +171,45 @@ namespace re {
                     while (c != ']' && c != '-') {
                         if (c == '\\') {
                             char_int cc = consumer.bumpc();
-                            if (cst->out1 != eps) {
-                                cst->out2 = new_split(eps, eps);
-                                cst = cst->out2;
-                            }
                             switch (cc) {
                                 case 'd':
+                                    ranges.push('0',    '9');
+                                    break;
                                 case 'D':
-                                    if ((cc == 'd') != reverse_result) {
-                                        cst->out1 = new_range('0','9', eps);
-                                    }
-                                    else {
-                                        ident_D(&cst->out1, eps);
-                                    }
+                                    ranges.push(0,      '0'-1);
+                                    ranges.push('9'+1,  -1u);
+                                    break;
+                                case 'w':
+                                    ranges.push('a',    'z');
+                                    ranges.push('A',    'Z');
+                                    ranges.push('0',    '9');
+                                    ranges.push('_');
                                     break;
                                 case 'W':
-                                case 'w':
-                                    if ((cc == 'w') != reverse_result) {
-                                        ident_w(&cst->out1, eps);
-                                    }
-                                    else {
-                                        ident_W(&cst->out1, eps);
-                                    }
+                                    ranges.push(0,      '0'-1);
+                                    ranges.push('9'+1,  'A'-1);
+                                    ranges.push('Z'+1,  '_'-1);
+                                    ranges.push('_'+1,  'a'-1);
+                                    ranges.push('z'+1,  -1u);
                                     break;
                                 case 's':
-                                case 'S':
-                                    if ((cc == 's') != reverse_result) {
-                                        ident_s(&cst->out1, eps);
-                                    }
-                                    else {
-                                        ident_S(&cst->out1, eps);
-                                    }
+                                    ranges.push(' ');
+                                    ranges.push('\t',   '\v');
                                     break;
-                                case 'n': characters.push_back('\n'); break;
-                                case 't': characters.push_back('\t'); break;
-                                case 'r': characters.push_back('\r'); break;
-                                case 'v': characters.push_back('\v'); break;
-                                default : characters.push_back(cc); break;
+                                case 'S':
+                                    ranges.push(0,      '\t'-1);
+                                    ranges.push('\v'+1, ' '-1);
+                                    ranges.push(' '+1,  -1u);
+                                    break;
+                                case 'n': ranges.push('\n'); break;
+                                case 't': ranges.push('\t'); break;
+                                case 'r': ranges.push('\r'); break;
+                                case 'v': ranges.push('\v'); break;
+                                default : ranges.push(cc); break;
                             }
                         }
                         else {
-                            characters.push_back(c);
+                            ranges.push(c);
                         }
 
                         if ( ! consumer.valid()) {
@@ -209,32 +222,34 @@ namespace re {
 
                     if (c == '-') {
                         if (cs == consumer.s) {
-                            characters.push_back('-');
+                            ranges.push('-');
                         }
                         else if (!consumer.valid()) {
                             msg_err = "missing terminating ]";
                             return 0;
                         }
                         else if (consumer.getc() == ']') {
-                            characters.push_back('-');
+                            ranges.push('-');
                             consumer.bumpc();
                         }
                         else if (consumer.s == p) {
-                            characters.push_back('-');
+                            ranges.push('-');
                         }
                         else {
                             c = consumer.bumpc();
                             if ((msg_err = check_interval(prev_c, c))) {
                                 return 0;
                             }
-                            if (characters.size()) {
-                                characters.pop_back();
+                            if (ranges.ranges.size()) {
+                                ranges.ranges.pop_back();
                             }
-                            if (cst->out1 != eps) {
-                                cst->out2 = new_split(eps, eps);
-                                cst = cst->out2;
+                            if (reverse_result) {
+                                ranges.push(0,prev_c-1);
+                                ranges.push(c+1,-1u);
                             }
-                            cst->out1 = new_range(prev_c, c);
+                            else {
+                                ranges.push(prev_c, c);
+                            }
                             cs = consumer.s;
                             if (consumer.valid()) {
                                 c = consumer.bumpc();
@@ -244,38 +259,45 @@ namespace re {
                 }
             }
 
-            if (!characters.empty()) {
-                std::sort(characters.begin(), characters.end());
-                typedef std::vector<char_int>::iterator iterator;
-                iterator first = characters.begin();
-                iterator last = characters.end();
-                char_int cl = *first;
-                while (++first != last && (*first == cl || *(first+1) == cl))
-                    ;
-                State * stc = new_range(cl, *(first-1), eps);
-                while (first != last) {
-                    char_int cl = *first;
-                    while (++first != last && (*first == cl || *(first+1) == cl))
-                        ;
-                    stc = new_split(new_range(cl, *(first-1), eps), stc);
-                }
-
-                if (cst->out1 == eps) {
-                    cst->out1 = stc;
-                }
-                else {
-                    cst->out1 = new_split(stc, cst->out1);
-                }
-            }
-
-            if (c != ']') {
-                msg_err = "missing terminating ]";
-                StatesWrapper w(st.out1); //quick free
-                return pst;
-            }
-
-            *pst = st.out1;
-            return &eps->out1;
+//             if (!characters.empty()) {
+//                 std::sort(characters.begin(), characters.end());
+//                 typedef std::vector<char_int>::iterator iterator;
+//                 iterator first = characters.begin();
+//                 iterator last = characters.end();
+//                 char_int cl = *first;
+//                 while ((first+1) != last && *(first+1) == cl)
+//                     ++first;
+//                 State * stc = reverse_result
+//                 ? new_split(new_range(0,cl-1, eps), new_range(*first+1,-1u, eps))
+//                 : new_range(cl, *first, eps);
+//                 while (++first != last) {
+//                     char_int cl = *first;
+//                     while ((first+1) != last && *(first+1) == cl)
+//                         ++first;
+//                     if (reverse_result) {
+//                         stc = new_split(new_range(0,cl-1, eps), new_split(new_range(*first+1,-1u, eps), stc));
+//                     }
+//                     else {
+//                         stc = new_split(new_range(cl, *first, eps), stc);
+//                     }
+//                 }
+//
+//                 if (cst->out1 == eps) {
+//                     cst->out1 = stc;
+//                 }
+//                 else {
+//                     cst->out1 = new_split(stc, cst->out1);
+//                 }
+//             }
+//
+//             if (c != ']') {
+//                 msg_err = "missing terminating ]";
+//                 StatesWrapper w(st.out1); //quick free
+//                 return pst;
+//             }
+//
+//             *pst = st.out1;
+//             return &eps->out1;
         }
 
         return &(*pst = (c == '.') ? new_any() : new_character(c))->out1;
@@ -403,21 +425,6 @@ namespace re {
             }
         };
 
-        struct selected {
-            static State ** next_pst(FinishFreeList & ffl, State ** pst)
-            {
-                if (*pst) {
-                    if ((*pst)->is_finish()) {
-                        ffl.free_finish(*pst);
-                    }
-                    else {
-                        pst = &(*pst)->out1;
-                    }
-                }
-                return pst;
-            }
-        };
-
         State st(EPSILONE);
         State ** pst = &st.out1;
         State ** spst = pst;
@@ -429,7 +436,6 @@ namespace re {
         while (c) {
             /**///std::cout << "c: " << (c) << std::endl;
             if (c == '^' || c == '$') {
-                pst = selected::next_pst(ffl, pst);
                 *pst = c == '^' ? new_begin() : new_last();
 
                 if ((c = consumer.bumpc()) && !is_meta_char(consumer, c)) {
@@ -439,7 +445,6 @@ namespace re {
             }
 
             if (!is_meta_char(consumer, c)) {
-                pst = selected::next_pst(ffl, pst);
                 do {
                     spst = pst;
                     if (!(pst = st_compilechar(pst, consumer, c, msg_err))) {
@@ -453,8 +458,9 @@ namespace re {
             else {
                 switch (c) {
                     case '?': {
-                        *pst = new_epsilone();
+                        *pst = ffl.new_finish();
                         *spst = new_split(*pst, *spst);
+                        pst = &(*pst)->out1;
                         spst = pst;
                         break;
                     }
@@ -467,7 +473,7 @@ namespace re {
                     case '+':
                         *pst = new_split(ffl.new_finish(), *spst);
                         spst = pst;
-                        pst = &(*pst)->out1->out1;
+                        pst = &(*pst)->out1;
                         break;
                     case '|':
                         if (!eps) {
@@ -493,7 +499,6 @@ namespace re {
                                 }
                                 else if (m) {
                                     ContextClone cloner(*pst);
-                                    pst = selected::next_pst(ffl, pst);
                                     while (--m) {
                                         *pst = cloner.clone();
                                         pst = &(*pst)->out1;
@@ -540,7 +545,6 @@ namespace re {
                                 else {
                                     --end;
                                     ContextClone cloner(*pst);
-                                    pst = selected::next_pst(ffl, pst);
                                     while (--m) {
                                         *pst = cloner.clone();
                                         pst = &(*pst)->out1;
@@ -564,7 +568,6 @@ namespace re {
                         else {
                             /**///std::cout << ("fixe ") << m << std::endl;
                             ContextClone cloner(*pst);
-                            pst = selected::next_pst(ffl, pst);
                             while (--m) {
                                 /**///std::cout << ("clone") << std::endl;
                                 *pst = cloner.clone();
@@ -582,7 +585,6 @@ namespace re {
                             return FreeState::invalide(st);
                         }
 
-                        pst = selected::next_pst(ffl, pst);
                         *pst = eps;
                         pst = &(*pst)->out1;
                         return IntermendaryState(bst == &st ? st.out1 : bst, pst);
@@ -598,7 +600,6 @@ namespace re {
                             consumer.s += 2;
                             IntermendaryState intermendary = intermendary_st_compile(consumer, ffl, msg_err, recusive+1);
                             if (intermendary.first) {
-                                pst = selected::next_pst(ffl, pst);
                                 *pst= intermendary.first;
                                 pst = intermendary.second;
                             }
@@ -609,7 +610,6 @@ namespace re {
                         }
                         IntermendaryState intermendary = intermendary_st_compile(consumer, ffl, msg_err, recusive+1);
                         if (intermendary.first) {
-                            pst = selected::next_pst(ffl, pst);
                             *pst = new_cap_open(intermendary.first);
                             pst = intermendary.second;
                             *pst = new_cap_close();
@@ -667,13 +667,13 @@ namespace re {
                 (*first)->out1 = nst;
             }
             state_list_t::iterator first = stw.states.begin();
-            while (first != last && (*first)->out1 && !(*first)->out1->is_epsilone()) {
+            while (first != last && !(*first)->is_epsilone()) {
                 ++first;
             }
             state_list_t::iterator result = first;
             for (; first != last; ++first) {
-                if ((*first)->out1 && (*first)->out1->is_epsilone()) {
-                    delete (*first)->out1;
+                if ((*first)->is_epsilone()) {
+                    delete *first;
                 }
                 else {
                     *result = *first;
