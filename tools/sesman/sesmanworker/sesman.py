@@ -46,7 +46,7 @@ def mundane(value):
         return u'Unknown'
     return value
 
-DEBUG = True
+DEBUG = False
 
 class AuthentifierSocketClosed(Exception):
     pass
@@ -68,6 +68,7 @@ class Sesman():
 
         self.engine = engine.Engine()
 
+        # shared should be read from sesman but never written except when sending
         self.shared                    = {}
 
         self._full_user_device_account = u'Unknown'
@@ -94,6 +95,7 @@ class Sesman():
         self.shared[u'target_protocol'] = MAGICASK
 
 
+    #TODO: is may be possible to delay sending data until the next input through receive_data
     def send_data(self, data):
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
@@ -587,7 +589,7 @@ class Sesman():
                     if record_warning != 'false':
                         message =  u"Warning! Your remote session may be recorded and kept in electronic format."
                         try:
-                            with open('/opt/wab/share/proxys/messages/motd.%s' % SESMANCONF.language) as f:
+                            with open('/opt/wab/share/proxys/messages/motd.%s' % self.language) as f:
                                 message = f.read().decode('utf-8')
                         except Exception, e:
                             pass
@@ -706,6 +708,11 @@ class Sesman():
                 # Add connection to the observer
                 kv[u'session_id'] = self.engine.start_session(selected_target, self.pid)
                 _status, _error = self.engine.write_trace(self.full_path)
+                self.engine.get_restrictions(selected_target)
+                if self.engine.pattern_kill:
+                    self.send_data({ u'pattern_kill': self.engine.pattern_kill })
+                if self.engine.pattern_notify:
+                    self.send_data({ u'pattern_notify': self.engine.pattern_notify })
 
             if _status:
                 Logger().info(u"Checking timeframe")
@@ -741,6 +748,7 @@ class Sesman():
             for physical_target in (self.engine.get_effective_target(selected_target.service_login)
                                      if selected_target.resource.application else [selected_target]):
                 if not _status:
+                    physical_target = None
                     break
 
                 if selected_target.resource.application:
@@ -752,8 +760,9 @@ class Sesman():
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
 
-                kv[u'target_password'] = physical_target.account.password
-                if not physical_target.account.password:
+                password_of_target = self.engine.get_target_password(physical_target)
+                kv[u'target_password'] = password_of_target
+                if not password_of_target:
                     kv[u'target_password'] = u''
                     Logger().info(u"auto logon is disabled")
 
@@ -777,6 +786,13 @@ class Sesman():
                         ctime(),
                         None
                         )
+                  
+                        
+                self.engine.update_session(
+                            "%s@%s:%s" % ( physical_target.account.login
+                                         , physical_target.resource.device.cn
+                                         , physical_target.resource.service.protocol.cn))
+
 
                 if not _status:
                     Logger().info( u"(%s):%s:REJECTED : %s" \
@@ -853,6 +869,11 @@ class Sesman():
 
                 if not try_next:
                     break;
+                else:
+                    self.engine.release_target_password(physical_target)
+
+            if not (physical_target is None):
+                self.engine.release_target_password(physical_target)
 
             Logger().info(u"Stop session ...")
 

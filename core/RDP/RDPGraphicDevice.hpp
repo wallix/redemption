@@ -39,6 +39,7 @@
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "RDP/orders/RDPOrdersSecondaryColorCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
@@ -61,6 +62,7 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) = 0;
     virtual void draw(const RDPPolyline   & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPEllipseSC  & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPEllipseCB  & cmd, const Rect & clip) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders");
     virtual void draw(const RDPBrushCache & cmd) {}
@@ -73,13 +75,14 @@ struct RDPGraphicDevice {
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
-        bool pointer_already_displayed, bool no_timestamp,
         bool ignore_frame_in_timeval) {}
 
     virtual void server_set_pointer(const Pointer & cursor) {}
     virtual void send_pointer(int cache_idx, const uint8_t * data,
         const uint8_t * mask, int hotspot_x, int hotspot_y) {}
     virtual void set_pointer(int cache_idx) {}
+
+    virtual void set_pointer_display() {}
 
 protected:
     // this to avoid calling constructor of base abstract class

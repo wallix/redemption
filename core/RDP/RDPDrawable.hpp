@@ -37,6 +37,7 @@
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
 #include "font.hpp"
 #include "png.hpp"
 
@@ -89,6 +90,12 @@ public:
     void draw(const RDPEllipseSC & cmd, const Rect & clip) {
         uint32_t bgrcolor = this->RGBtoBGR(cmd.color);
         this->drawable.ellipse(cmd.el, cmd.bRop2, cmd.fillMode, bgrcolor);
+    }
+
+    TODO("This will draw a standard ellipse without brush style");
+    void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+        uint32_t bgrcolor = this->RGBtoBGR(cmd.back_color);
+        this->drawable.ellipse(cmd.el, cmd.brop2, cmd.fill_mode, bgrcolor);
     }
 
     void draw(const RDPScrBlt & cmd, const Rect & clip)
@@ -157,6 +164,8 @@ public:
         break;
         case 0x22:  // dest = dest AND (NOT source)
         case 0x66:  // dest = source XOR dest (SRCINVERT)
+        case 0x88:  // dest = source AND dest (SRCAND)
+        case 0xBB:  // dest = (NOT source) OR dest (MERGEPAINT)
         case 0xEE:  // dest = source OR dest (SRCPAINT)
             this->drawable.mem_blt_ex(rect, bmp
                 , cmd.srcx + (rect.x - cmd.rect.x)
@@ -165,6 +174,7 @@ public:
             break;
         default:
             // should not happen
+            // LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
         break;
         }
     }
@@ -203,13 +213,14 @@ public:
             lineto.pen.color, clip);
     }
 
-    void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart, int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
-        uint32_t PenColor, const Rect & clip) {
+    void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
+                   int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
+                   uint32_t PenColor, const Rect & clip) {
         TODO("We should perform a true intersection between line and clip rectangle, not cheat as below.");
         // enlarge_to compute a new rect including old rect and added point
         const Rect & line_rect = Rect(nXStart, nYStart, 1, 1).enlarge_to(nXEnd, nYEnd);
         if (line_rect.intersect(clip).isempty()){
-            //            LOG(LOG_INFO, "line_rect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
+            // LOG(LOG_INFO, "line_ect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
             return;
         }
 
@@ -349,7 +360,7 @@ public:
                     FontChar * fc = this->gly_cache.char_items[cmd.cache_id][data].font_item;
                     if (!fc)
                     {
-                        LOG(LOG_INFO, "RDPDrawabke::draw(RDPGlyphIndex, ...): Unknown glyph=%u", data);
+                        LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unknown glyph=%u", data);
                         REDASSERT(fc);
                     }
 
@@ -373,7 +384,7 @@ public:
                 }
                 else if (data == 0xFE)
                 {
-                    LOG(LOG_INFO, "RDPDrawabke::draw(RDPGlyphIndex, ...): Unsupported data");
+                    LOG(LOG_INFO, "RDPDrawable::draw(RDPGlyphIndex, ...): Unsupported data");
                     throw Error(ERR_RDP_UNSUPPORTED);
                 }
                 else if (data == 0xFF)

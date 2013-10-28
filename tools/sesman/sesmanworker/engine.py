@@ -694,7 +694,7 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-        'w2k8_admin@10.10.146.78:RDP' : RightInfo(
+        'w2k8_admin@10.10.46.78:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'admin',
@@ -867,6 +867,69 @@ class Engine(object):
         }
     }
 
+    config_target_password = [
+        TargetPasswordInfo(
+            account = u'administrateur',
+            resource = u'10.10.46.64',
+            protocol = u'RDP',
+            password = PASSWORD3
+        ),
+        TargetPasswordInfo(
+            account = u'admin',
+            resource = u'10.10.46.78',
+            protocol = u'RDP',
+            password = u'BadPassword'
+        ),
+        TargetPasswordInfo(
+            account = u'administrateur@qa',
+            resource = u'10.10.146.78',
+            protocol = u'RDP',
+            password = PASSWORD1
+        ),
+        TargetPasswordInfo(
+            account = u'any',
+            resource = u'10.10.46.70',
+            protocol = u'VNC',
+            password = PASSWORD4
+        ),
+        TargetPasswordInfo(
+            account = u'internal',
+            resource = u'bouncer2',
+            protocol = u'INTERNAL',
+            password = u'internal'
+        ),
+        TargetPasswordInfo(
+            account = u'internal',
+            resource = u'test_card',
+            protocol = u'INTERNAL',
+            password = u'internal'
+        ),
+        TargetPasswordInfo(
+            account = u'internal',
+            resource = u'widget2_message',
+            protocol = u'INTERNAL',
+            password = u'internal'
+        ),
+        TargetPasswordInfo(
+            account = u'replay',
+            resource = u'autotest',
+            protocol = u'INTERNAL',
+            password = u'password'
+        ),
+        TargetPasswordInfo(
+            account = u'qa\\administrateur',
+            resource = u'10.10.46.78',
+            protocol = u'RDP',
+            password = PASSWORD1
+        ),
+        TargetPasswordInfo(
+            account = u'qa\\administrateur',
+            resource = u'10.10.46.88',
+            protocol = u'RDP',
+            password = PASSWORD1
+        ),
+    ]
+
     config_users = {
         'a':
         {
@@ -877,6 +940,18 @@ class Engine(object):
             'rights':
             [
                 'notepaduser@NOTEPAD:APP'
+            ]
+        },
+        'bad':
+        {
+            'is_x509_connected': False,
+            'x509_authenticate': False,
+            'password': 'bad',
+            'preferredLanguage': u'en',
+            'rights':
+            [
+                'w2k8_administrateur@qa@10.10.146.78:RDP',
+                'w2k8_admin@10.10.46.78:RDP',
             ]
         },
         'internal':
@@ -916,10 +991,8 @@ class Engine(object):
             [
                 'w2k_administrateur@10.10.46.64:RDP',
                 'w2k3_any@10.10.46.70:VNC',
-                'w2k8_administrateur@qa@10.10.146.78:RDP',
-                'w2k8_admin@10.10.146.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.78:RDP',
-                'w2k8_qa\\administrateur@10.10.46.88:RDP'
+                'w2k8_qa\\administrateur@10.10.46.88:RDP',
             ]
         },
         'fr':
@@ -932,8 +1005,6 @@ class Engine(object):
             [
                 'w2k_administrateur@10.10.46.64:RDP',
                 'w2k3_any@10.10.46.70:VNC',
-                'w2k8_administrateur@qa@10.10.146.78:RDP',
-                'w2k8_admin@10.10.146.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.88:RDP'
             ]
@@ -1095,8 +1166,34 @@ class Engine(object):
 #        Logger().info("get_app_params done = %s" % res)
         return res
 
-    def start_session(self, target31, pid):
+    def get_target_password(self, target_device):
+        res = None
+        try:
+            for p in self.config_target_password:
+                if (p.account == target_device.account.login and
+                   p.resource == target_device.resource.device.cn and
+                   p.protocol == target_device.resource.service.protocol.cn):
+                    res = p.password
+        except Exception, e:
+            import traceback
+            Logger().info("%s" % traceback.format_exc(e))
+        Logger().info("get_target_password done = %s" % res)
+        return res
+
+    def release_target_password(self, target_device):
+        Logger().info("release_target_password done")
+        pass
+
+    def start_session(self, target, pid):
         return "SESSIONID-0000"
+
+    def get_restrictions(self, target):
+        self.pattern_kill = u""
+        self.pattern_notify = u""
+        return
+
+    def update_session(self, target31):
+        pass
 
     def stop_session(self, result=True, diag=u"success", title=u"End session"):
         pass

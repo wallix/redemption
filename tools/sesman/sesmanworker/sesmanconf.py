@@ -37,7 +37,7 @@ def translations():
         (u'trans_help_message'     , u'help_message'),
         (u'trans_manager_close_cnx', u'trans_manager_close_cnx'),
        ):
-        data[auth_key] =TR(conf_key)
+        data[auth_key] = TR(conf_key)
     return data
 
 

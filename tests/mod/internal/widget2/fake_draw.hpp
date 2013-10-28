@@ -17,6 +17,10 @@ struct TestDraw : DrawApi
         this->gd.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPScrBlt&, const Rect&)
     {
         BOOST_CHECK(false);
