@@ -131,7 +131,10 @@ namespace re {
     struct VectorRange
     {
         typedef std::pair<char_int, char_int> range_t;
-        std::vector<range_t> ranges;
+        typedef std::vector<range_t> container_type;
+        typedef container_type::iterator iterator;
+
+        container_type ranges;
 
         void push(char_int left, char_int right) {
             ranges.push_back(range_t(left, right));
@@ -149,11 +152,7 @@ namespace re {
         }
 
         if (c == '[') {
-//             State * eps = new_epsilone();
-//             State st(0, 0, 0, eps, eps);
-//             State * cst = &st;
             bool reverse_result = false;
-//             std::vector<char_int> characters;
             VectorRange ranges;
             if (consumer.valid() && (c = consumer.bumpc()) != ']') {
                 if (c == '^') {
@@ -243,13 +242,7 @@ namespace re {
                             if (ranges.ranges.size()) {
                                 ranges.ranges.pop_back();
                             }
-                            if (reverse_result) {
-                                ranges.push(0,prev_c-1);
-                                ranges.push(c+1,-1u);
-                            }
-                            else {
-                                ranges.push(prev_c, c);
-                            }
+                            ranges.push(prev_c, c);
                             cs = consumer.s;
                             if (consumer.valid()) {
                                 c = consumer.bumpc();
@@ -259,45 +252,69 @@ namespace re {
                 }
             }
 
-//             if (!characters.empty()) {
-//                 std::sort(characters.begin(), characters.end());
-//                 typedef std::vector<char_int>::iterator iterator;
-//                 iterator first = characters.begin();
-//                 iterator last = characters.end();
-//                 char_int cl = *first;
-//                 while ((first+1) != last && *(first+1) == cl)
-//                     ++first;
-//                 State * stc = reverse_result
-//                 ? new_split(new_range(0,cl-1, eps), new_range(*first+1,-1u, eps))
-//                 : new_range(cl, *first, eps);
-//                 while (++first != last) {
-//                     char_int cl = *first;
-//                     while ((first+1) != last && *(first+1) == cl)
-//                         ++first;
-//                     if (reverse_result) {
-//                         stc = new_split(new_range(0,cl-1, eps), new_split(new_range(*first+1,-1u, eps), stc));
-//                     }
-//                     else {
-//                         stc = new_split(new_range(cl, *first, eps), stc);
-//                     }
-//                 }
-//
-//                 if (cst->out1 == eps) {
-//                     cst->out1 = stc;
-//                 }
-//                 else {
-//                     cst->out1 = new_split(stc, cst->out1);
-//                 }
-//             }
-//
-//             if (c != ']') {
-//                 msg_err = "missing terminating ]";
-//                 StatesWrapper w(st.out1); //quick free
-//                 return pst;
-//             }
-//
-//             *pst = st.out1;
-//             return &eps->out1;
+            if (ranges.ranges.empty() || c != ']') {
+                msg_err = "missing terminating ]";
+                return pst;
+            }
+
+            if (ranges.ranges.size() == 1) {
+                if (reverse_result) {
+                    State * eps = new_epsilone();
+                    *pst = new_split(new_range(0, ranges.ranges[0].first-1, eps),
+                                     new_range(ranges.ranges[0].second+1, -1u, eps));
+                    return &eps->out1;
+                }
+                else {
+                    *pst = new_range(ranges.ranges[0].first, ranges.ranges[0].second);
+                    return &(*pst)->out1;
+                }
+            }
+
+            std::sort(ranges.ranges.begin(), ranges.ranges.end());
+
+            VectorRange::iterator first = ranges.ranges.begin();
+            VectorRange::iterator last = ranges.ranges.end();
+            VectorRange::iterator result = first;
+
+            if (first != last) {
+                while (++first != last && !(result->second + 1 >= first->first)) {
+                    ++result;
+                }
+                for (; first != last; ++first) {
+                    if (result->second + 1 >= first->first) {
+                        if (result->second < first->second) {
+                            result->second = first->second;
+                        }
+                    }
+                    else {
+                        ++result;
+                        *result = *first;
+                    }
+                }
+                ++result;
+                ranges.ranges.resize(ranges.ranges.size() - (last - result));
+            }
+
+            State * eps = new_epsilone();
+            first = ranges.ranges.begin();
+            if (reverse_result) {
+                State * st = new_range(0, first->first-1, eps);
+                char_int cr = first->second;
+                while (++first != result) {
+                    st = new_split(st, new_range(cr+1, first->first-1, eps));
+                    cr = first->second;
+                }
+                st = new_split(st, new_range(cr+1, -1u, eps));
+                *pst = st;
+            }
+            else {
+                State * st = new_range(first->first, first->second, eps);
+                while (++first != result) {
+                    st = new_split(st, new_range(first->first, first->second, eps));
+                }
+                *pst = st;
+            }
+            return &eps->out1;
         }
 
         return &(*pst = (c == '.') ? new_any() : new_character(c))->out1;
