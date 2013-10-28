@@ -132,20 +132,20 @@ BOOST_AUTO_TEST_CASE(TestBufOutUint32)
 BOOST_AUTO_TEST_CASE(TestInBytesLe)
 {
     uint8_t buffer[10] = {0xCC, 0xDD, 0xEE, 0xFF };
-    BOOST_CHECK_EQUAL(0xEEDDCC , in_bytes_le(3, buffer));
+    BOOST_CHECK_EQUAL(0xEEDDCC , in_uint32_from_nb_bytes_le(3, buffer));
 
     uint8_t buffer2[10] = {0x88, 0x99, 0xAA, 0xBB };
-    BOOST_CHECK_EQUAL(0xBBAA9988 , in_bytes_le(4, buffer2));
+    BOOST_CHECK_EQUAL(0xBBAA9988 , in_uint32_from_nb_bytes_le(4, buffer2));
 }
 
 // in_bytes_be is only defined for 1 to 4 bytes
 BOOST_AUTO_TEST_CASE(TestInBytesBe)
 {
     uint8_t buffer[10] = {0xCC, 0xDD, 0xEE, 0xFF };
-    BOOST_CHECK_EQUAL(0xCCDDEE , in_bytes_be(3, buffer));
+    BOOST_CHECK_EQUAL(0xCCDDEE , in_uint32_from_nb_bytes_be(3, buffer));
 
     uint8_t buffer2[10] = {0x88, 0x99, 0xAA, 0xBB };
-    BOOST_CHECK_EQUAL(0x8899AABB , in_bytes_be(4, buffer2));
+    BOOST_CHECK_EQUAL(0x8899AABB , in_uint32_from_nb_bytes_be(4, buffer2));
 }
 
 // rmemcpy : the area must not overlap

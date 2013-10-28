@@ -31,6 +31,8 @@
 #include "wait_obj.hpp"
 #include "RDP/pointer.hpp"
 
+#include "auth_api.hpp"
+
 class Capture : public RDPGraphicDevice {
 public:
     const bool capture_wrm;
@@ -59,7 +61,7 @@ public:
 
     Capture( const timeval & now, int width, int height, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
-           , bool clear_png, Inifile & ini)
+           , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini)
             : capture_wrm(ini.video.capture_wrm)
             , capture_drawable(ini.video.capture_wrm||(ini.video.png_limit > 0))
             , capture_png(ini.video.png_limit > 0)
@@ -192,18 +194,15 @@ public:
         }
     }
 
-    void snapshot( const timeval & now, int x, int y, bool pointer_already_displayed
-                 , bool no_timestamp, bool ignore_frame_in_timeval) {
+    void snapshot( const timeval & now, int x, int y, bool ignore_frame_in_timeval) {
         this->capture_event.reset();
 
         if (this->capture_png) {
-            this->psc->snapshot( now, x, y, pointer_already_displayed, no_timestamp
-                               , ignore_frame_in_timeval);
+            this->psc->snapshot( now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->psc->time_to_wait);
         }
         if (this->capture_wrm) {
-            this->pnc->snapshot( now, x, y, pointer_already_displayed, no_timestamp
-                               , ignore_frame_in_timeval);
+            this->pnc->snapshot( now, x, y, ignore_frame_in_timeval);
             this->capture_event.update(this->pnc->time_to_wait);
         }
     }
@@ -337,7 +336,6 @@ public:
         }
     }
 
-
     virtual void server_set_pointer(const Pointer & cursor)
     {
         int cache_idx = 0;
@@ -367,6 +365,15 @@ public:
         }
         else if (this->capture_drawable) {
             this->drawable->set_pointer(cache_idx);
+        }
+    }
+
+    virtual void set_pointer_display() {
+        if (this->capture_wrm) {
+            this->pnc->set_pointer_display();
+        }
+        else if (this->capture_drawable) {
+            this->drawable->set_pointer_display();
         }
     }
 };

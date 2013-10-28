@@ -480,6 +480,9 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_ACCEPT_MESSAGE));
     BOOST_CHECK_EQUAL(false,                            ini.context_is_asked(AUTHID_DISPLAY_MESSAGE));
 
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_PATTERN_KILL)));
+    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_PATTERN_NOTIFY)));
+
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_MESSAGE)));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_ACCEPT_MESSAGE)));
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context_get_value(AUTHID_DISPLAY_MESSAGE)));
@@ -2311,6 +2314,15 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
     BOOST_CHECK_EQUAL(std::string("result"),            std::string(ini.context.authchannel_result.get_cstr()));
 
     BOOST_CHECK_EQUAL(std::string("result"),            std::string(ini.context_get_value(AUTHID_AUTHCHANNEL_RESULT)));
+
+    // regex
+    ini.context_set_value(AUTHID_PATTERN_KILL,         "Explorer");
+    BOOST_CHECK_EQUAL(std::string("Explorer"),         std::string(ini.context.pattern_kill.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Explorer"),         std::string(ini.context_get_value(AUTHID_PATTERN_KILL)));
+
+    ini.context_set_value(AUTHID_PATTERN_NOTIFY,       "Word");
+    BOOST_CHECK_EQUAL(std::string("Word"),         std::string(ini.context.pattern_notify.get_cstr()));
+    BOOST_CHECK_EQUAL(std::string("Word"),         std::string(ini.context_get_value(AUTHID_PATTERN_NOTIFY)));
 
 
     // message

@@ -85,7 +85,6 @@ public:
     virtual ~MMApi() {}
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
-    virtual void record() = 0;
     virtual int next_module() = 0;
     virtual int get_mod_from_protocol() = 0;
     virtual void invoke_close_box(const char * auth_error_message,
@@ -120,7 +119,6 @@ public:
             break;
         };
     };
-    virtual void record() {};
 
     virtual void invoke_close_box(const char * auth_error_message,
                                   BackEvent_t & signal, time_t now) {
@@ -360,7 +358,6 @@ public:
     Front & front;
     mod_api * no_mod;
     Transport * mod_transport;
-
 
     ModuleManager(Front & front, Inifile & ini)
         : MMIni(ini)
@@ -733,19 +730,19 @@ public:
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
             }
-        if (this->connected) this->record();
+        if (this->connected) this->record(acl);
     }
 
     // Check movie start/stop/pause
-    void record()
+    void record(auth_api * acl)
     {
         if (this->ini.globals.movie.get()) {
             //TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)") DONE ?
             if (this->front.capture_state == Front::CAPTURE_STATE_UNKNOWN) {
-                this->front.start_capture(this->front.client_info.width
-                                   , this->front.client_info.height
-                                   , this->ini
-                                   );
+                this->front.start_capture(this->front.client_info.width,
+                                          this->front.client_info.height,
+                                          this->ini,
+                                          acl);
                 this->mod->rdp_input_invalidate(Rect( 0, 0, this->front.client_info.width, this->front.client_info.height));
             }
             else if (this->front.capture_state == Front::CAPTURE_STATE_PAUSED) {

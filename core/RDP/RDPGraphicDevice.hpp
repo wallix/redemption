@@ -73,13 +73,14 @@ struct RDPGraphicDevice {
     virtual void input(const timeval & now, Stream & input_data_32) {}
 
     virtual void snapshot(const timeval & now, int mouse_x, int mouse_y,
-        bool pointer_already_displayed, bool no_timestamp,
         bool ignore_frame_in_timeval) {}
 
     virtual void server_set_pointer(const Pointer & cursor) {}
     virtual void send_pointer(int cache_idx, const uint8_t * data,
         const uint8_t * mask, int hotspot_x, int hotspot_y) {}
     virtual void set_pointer(int cache_idx) {}
+
+    virtual void set_pointer_display() {}
 
 protected:
     // this to avoid calling constructor of base abstract class

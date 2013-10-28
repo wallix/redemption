@@ -81,7 +81,6 @@ public:
 struct mod_api : public Callback, public DrawApi {
     wait_obj event;
     RDPPen   pen;
-    bool     pointer_displayed;
 
     uint16_t front_width;
     uint16_t front_height;
@@ -90,7 +89,6 @@ struct mod_api : public Callback, public DrawApi {
         : event(-1)
         , front_width(front_width)
         , front_height(front_height) {
-        this->pointer_displayed = false;
         this->event.set(0);
     }
 
@@ -109,14 +107,6 @@ struct mod_api : public Callback, public DrawApi {
     // it usually perform some task identical to what constructor does
     // henceforth it should often be called by constructors
     virtual void refresh_context(Inifile & ini) {}
-
-    bool get_pointer_displayed() {
-        return this->pointer_displayed;
-    }
-
-    void set_pointer_display() {
-        this->pointer_displayed = true;
-    }
 };
 
 #endif
