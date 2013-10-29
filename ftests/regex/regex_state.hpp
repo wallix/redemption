@@ -32,21 +32,18 @@
 namespace re {
 
     const unsigned NORMAL           = 0;
-    const unsigned ANY_CHARACTER    = 1 << 8;
+    const unsigned FINISH           = 1 << 8;
     const unsigned SPLIT            = 1 << 9;
     const unsigned CAPTURE_OPEN     = 1 << 10;
     const unsigned CAPTURE_CLOSE    = 1 << 11;
     const unsigned EPSILONE         = 1 << 12;
     const unsigned FIRST            = 1 << 13;
     const unsigned LAST             = 1 << 14;
-    const unsigned FINISH           = 1 << 15;
 
     struct StateBase
     {
-    protected:
-        StateBase(unsigned type, char_int c = 0, StateBase * out1 = 0, StateBase * out2 = 0)
-        : utfc(c)
-        , type(type)
+        StateBase(unsigned type, StateBase * out1 = 0, StateBase * out2 = 0)
+        : type(type)
         , num(0)
         , out1(out1)
         , out2(out2)
@@ -81,7 +78,8 @@ namespace re {
         bool is_finish() const
         { return this->type == FINISH; }
 
-        char_int utfc;
+        bool is_terminate() const
+        { return this->type & (LAST|FINISH); }
 
         unsigned type;
         unsigned num;
@@ -90,10 +88,16 @@ namespace re {
         StateBase *out2;
     };
 
+    inline std::ostream& operator<<(std::ostream& os, const StateBase& st)
+    {
+        st.display(os);
+        return os;
+    }
+
     struct StateSplit : public StateBase
     {
         StateSplit(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(SPLIT, 0, out1, out2)
+        : StateBase(SPLIT, out1, out2)
         {}
 
         virtual StateBase * clone() const
@@ -103,7 +107,6 @@ namespace re {
 
         virtual bool check(char_int /*c*/) const
         {
-            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return false;
         }
 
@@ -116,30 +119,33 @@ namespace re {
     struct StateChar : public StateBase
     {
         StateChar(char_int c, StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(NORMAL, c, out1, out2)
+        : StateBase(NORMAL, out1, out2)
+        , uc(c)
         {}
 
         virtual StateBase * clone() const
         {
-            return new StateChar(this->utfc);
+            return new StateChar(this->uc);
         }
 
         virtual bool check(char_int c) const
         {
-            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
-            return this->utfc == c;
+            return this->uc == c;
         }
 
         virtual void display(std::ostream& os) const
         {
-            os << "'" << utf_char(this->utfc) << "'";
+            os << "'" << utf_char(this->uc) << "'";
         }
+
+    private:
+        char_int uc;
     };
 
     struct StateAny : public StateBase
     {
         StateAny(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(ANY_CHARACTER, '.', out1, out2)
+        : StateBase(NORMAL, out1, out2)
         {}
 
         virtual StateBase * clone() const
@@ -149,7 +155,6 @@ namespace re {
 
         virtual bool check(char_int /*c*/) const
         {
-            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return true;
         }
 
@@ -162,7 +167,7 @@ namespace re {
     struct StateClose : public StateBase
     {
         StateClose(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(CAPTURE_CLOSE, ')', out1, out2)
+        : StateBase(CAPTURE_CLOSE, out1, out2)
         {}
 
         virtual StateBase * clone() const
@@ -172,7 +177,6 @@ namespace re {
 
         virtual bool check(char_int /*c*/) const
         {
-            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return false;
         }
 
@@ -185,7 +189,7 @@ namespace re {
     struct StateOpen : public StateBase
     {
         StateOpen(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(CAPTURE_OPEN, '(', out1, out2)
+        : StateBase(CAPTURE_OPEN, out1, out2)
         {}
 
         virtual StateBase * clone() const
@@ -195,7 +199,6 @@ namespace re {
 
         virtual bool check(char_int /*c*/) const
         {
-            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return false;
         }
 
@@ -208,7 +211,7 @@ namespace re {
     struct StateEpsilone : public StateBase
     {
         StateEpsilone(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(EPSILONE, 0, out1, out2)
+        : StateBase(EPSILONE, out1, out2)
         {}
 
         virtual StateBase * clone() const
@@ -218,7 +221,6 @@ namespace re {
 
         virtual bool check(char_int /*c*/) const
         {
-            /**///std::cout << num << ": " << char(this->c & ANY_CHARACTER ? '.' : this->c&0xFF);
             return false;
         }
 
@@ -227,12 +229,6 @@ namespace re {
             os << "(epsilone)";
         }
     };
-
-    inline std::ostream& operator<<(std::ostream& os, const StateBase& st)
-    {
-        st.display(os);
-        return os;
-    }
 
     struct StateFinish : StateBase
     {
@@ -262,9 +258,10 @@ namespace re {
 
     struct StateRange : StateBase
     {
-        StateRange(char_int r1, char_int r2, StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, r1, out1, out2)
-        , rend(r2)
+        StateRange(char_int c1, char_int c2, StateBase* out1 = 0, StateBase* out2 = 0)
+        : StateBase(NORMAL, out1, out2)
+        , uc_first(c1)
+        , uc_last(c2)
         {}
 
         virtual ~StateRange()
@@ -273,27 +270,29 @@ namespace re {
         virtual bool check(char_int c) const
         {
             /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
-            return this->utfc <= c && c <= rend;
+            return this->uc_first <= c && c <= this->uc_last;
         }
 
         virtual StateBase * clone() const
         {
-            return new StateRange(this->utfc, this->rend);
+            return new StateRange(this->uc_first, this->uc_last);
         }
 
         virtual void display(std::ostream& os) const
         {
-            os << "[" << utf_char(this->utfc) << "-" << utf_char(this->rend) << "]";
+            os << "[" << utf_char(this->uc_first) << "-" << utf_char(this->uc_last) << "]";
         }
 
-        char_int rend;
+
+        char_int uc_first;
+        char_int uc_last;
     };
 
     template<char Identifier, typename Trait>
     struct StateIdentifier : StateBase
     {
         StateIdentifier(StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, 0, out1, out2)
+        : StateBase(NORMAL, out1, out2)
         {}
 
         virtual ~StateIdentifier()
@@ -365,7 +364,7 @@ namespace re {
     struct StateCharacters : StateBase
     {
         StateCharacters(const std::string& s, StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, 0, out1, out2)
+        : StateBase(NORMAL, out1, out2)
         , str(s)
         {}
 
@@ -433,7 +432,7 @@ namespace re {
 
 
         StateMultiTest(StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, 0, out1, out2)
+        : StateBase(NORMAL, out1, out2)
         , checkers()
         , result_true_check(true)
         {}

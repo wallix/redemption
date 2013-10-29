@@ -330,3 +330,12 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     }
     regex_test(regex, "c", 1, 1, 1, matches, 1, matches);
 }
+
+
+BOOST_AUTO_TEST_CASE(TestRegexLimit)
+{
+    re::Regex regex("aaa");
+    BOOST_CHECK(regex.search("bbbbbbbbbbbbbbbbbbbbaaaaa"));
+    regex.step_limit = 40;
+    BOOST_CHECK( ! regex.search("bbbbbbbbbbbbbbbbbbbbaaaaa"));
+}

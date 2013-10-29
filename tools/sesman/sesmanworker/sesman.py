@@ -105,7 +105,7 @@ class Sesman():
                 SESMANCONF.language = self.language
             else:
                 self.language = SESMANCONF.language
-            
+
             data[u'language'] = SESMANCONF.language
             data.update(translations())
 
@@ -113,7 +113,7 @@ class Sesman():
             import pprint
             Logger().info(u'send_data (update)=%s' % (pprint.pformat(data)))
 
-        # replace MAGICASK with ASK and send data on the wire            
+        # replace MAGICASK with ASK and send data on the wire
         _list = []
         for key, value in data.iteritems():
             self.shared[key] = value
@@ -186,7 +186,7 @@ class Sesman():
                     # _data[key] unchanged
                     pass
             self.shared.update(_data)
-                    
+
         return _data, _status, _error
 
     def parse_username(self):
@@ -325,7 +325,7 @@ class Sesman():
             except Exception, e:
                 import traceback
                 Logger().info("<<<%s>>>" % traceback.format_exc(e))
-                
+
             Logger().info(u'lang=%s sesman=%s' % (self.language, self.engine.user.preferredLanguage))
 
             # When user is authentified check if licence tokens are available
@@ -551,7 +551,7 @@ class Sesman():
             , u'rec_path'       : u""
             , u'file_encryption': u"False"
         }
-        
+
         try:
             self.full_path = u""
             self.path = u""
@@ -786,8 +786,8 @@ class Sesman():
                         ctime(),
                         None
                         )
-                  
-                        
+
+
                 self.engine.update_session(
                             "%s@%s:%s" % ( physical_target.account.login
                                          , physical_target.resource.device.cn
@@ -853,6 +853,9 @@ class Sesman():
                                     try_next = True
 
                                     break
+                                elif _reporting_reason == u'FINDPATTERN_KILL':
+                                    Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
+                                    break
 
                         else: # (if self.proxy_conx in r)
                             Logger().error(u'break connection')
@@ -915,6 +918,13 @@ class Sesman():
             self.engine.NotifyFilesystemIsFullOrUsedAtXPercent(message, 100)
         elif reason == u'SESSION_EXCEPTION':
             pass
+        elif (reason == u'FINDPATTERN_KILL') or (reason == u'FINDPATTERN_NOTIFY'):
+            pattern = message.split(u'|')
+            regexp = pattern[0]
+            string = pattern[1]
+#            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
+#                (regexp, string, self.shared[u'login'], self.shared[u'target_login'], self.shared[u'target_device']))
+            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared[u'login'], self.shared[u'target_login'], self.shared[u'target_device'])
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))

@@ -23,6 +23,7 @@
 
 #include <ostream>
 #include <stdint.h>
+#include <cstdio>
 
 namespace re {
 
@@ -32,19 +33,19 @@ namespace re {
     struct utf_char
     {
         utf_char(char_int c)
-        : utfc(c)
+        : uc(c)
         {}
 
-        char_int utfc;
+        char_int uc;
     };
 
     inline std::ostream& operator<<(std::ostream& os, utf_char utf_c)
     {
         char c[] = {
-            char((utf_c.utfc & 0XFF000000) >> 24),
-            char((utf_c.utfc & 0X00FF0000) >> 16),
-            char((utf_c.utfc & 0X0000FF00) >> 8),
-            char((utf_c.utfc & 0X000000FF)),
+            char((utf_c.uc & 0XFF000000) >> 24),
+            char((utf_c.uc & 0X00FF0000) >> 16),
+            char((utf_c.uc & 0X0000FF00) >> 8),
+            char((utf_c.uc & 0X000000FF)),
         };
         if (c[0]) {
             return os.write(c, 4);
@@ -64,10 +65,10 @@ namespace re {
     inline std::string& operator+=(std::string& str, utf_char utf_c)
     {
         char c[] = {
-            char((utf_c.utfc & 0XFF000000) >> 24),
-            char((utf_c.utfc & 0X00FF0000) >> 16),
-            char((utf_c.utfc & 0X0000FF00) >> 8),
-            char((utf_c.utfc & 0X000000FF)),
+            char((utf_c.uc & 0XFF000000) >> 24),
+            char((utf_c.uc & 0X00FF0000) >> 16),
+            char((utf_c.uc & 0X0000FF00) >> 8),
+            char((utf_c.uc & 0X000000FF)),
         };
         if (c[0]) {
             str += c[0];
@@ -95,6 +96,9 @@ namespace re {
         char_int bumpc()
         {
             char_int c = *this->s;
+            if (!c) {
+                return c;
+            }
             ++this->s;
             if (*this->s >> 6 == 2) {
                 c <<= 8;

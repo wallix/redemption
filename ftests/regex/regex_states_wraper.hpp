@@ -35,11 +35,51 @@ namespace re {
 
     inline void append_state(StateBase * st, state_list_t& sts)
     {
-        if (st && st->num != -1u) {
-            st->num = -1u;
-            sts.push_back(st);
-            append_state(st->out1, sts);
-            append_state(st->out2, sts);
+        //if (st && st->num != -1u) {
+        //    st->num = -1u;
+        //    sts.push_back(st);
+        //    append_state(st->out1, sts);
+        //    append_state(st->out2, sts);
+        //}
+
+        if (!st) {
+            return ;
+        }
+
+        state_list_t stack;
+        stack.reserve(16);
+        sts.reserve(32);
+
+        st->num = -1u;
+        sts.push_back(st);
+        stack.push_back(st);
+
+        while (!stack.empty()) {
+            st = stack.back();
+            while (st->out1 && st->out1->num != -1u) {
+                st = st->out1;
+                stack.push_back(st);
+                sts.push_back(st);
+                st->num = -1u;
+            }
+            st = st->out2;
+            if (st && st->num != -1u) {
+                stack.push_back(st);
+                sts.push_back(st);
+                st->num = -1u;
+                continue;
+            }
+            stack.pop_back();
+            while (!stack.empty()) {
+                st = stack.back()->out2;
+                if (st && st->num != -1u) {
+                    stack.push_back(st);
+                    sts.push_back(st);
+                    st->num = -1u;
+                    break;
+                }
+                stack.pop_back();
+            }
         }
     }
 
@@ -105,7 +145,7 @@ namespace re {
             std::for_each(this->states.begin(), this->states.end(), StateDeleter());
         }
 
-        void reset_num()
+        void reset_nums()
         {
             std::fill(this->nums.begin(), this->nums.end(), 0);
         }

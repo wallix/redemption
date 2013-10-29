@@ -40,7 +40,7 @@ inline void st_to_string(StatesWrapper & stw, StateBase * st,
     size_t n = std::find(stw.states.begin(), stw.states.end(), st) - stw.states.begin() + 1;
     os << std::string(depth, '\t') << n;
     if (st && stw.get_num_at(st) != -30u) {
-        os << "\t" << st->utfc << "\t" << *st << "\n";
+        os << "\t" << *st << "\n";
         stw.set_num_at(st, -30u);
         st_to_string(stw, st->out1, os, depth+1);
         st_to_string(stw, st->out2, os, depth+1);

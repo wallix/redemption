@@ -60,7 +60,7 @@ namespace re {
         , st_list(0)
         , st_range_list(0)
         {
-            if ( ! this->stw.root) {
+            if (this->stw.states.empty()) {
                 return ;
             }
 
@@ -224,7 +224,7 @@ namespace re {
                         ++le;
                     }
                     first->next = le;
-                    init_list(le, first->st->out1, ++step);
+                    this->init_list(le, first->st->out1, ++step);
                 }
             }
         }
@@ -266,7 +266,7 @@ namespace re {
     public:
         bool exact_search(const char * s, unsigned step_limit, bool check_end = true)
         {
-            if ( ! this->stw.root) {
+            if (this->stw.states.empty()) {
                 return false;
             }
             return Searching(*this).exact_search(s, step_limit, check_end);
@@ -294,7 +294,7 @@ namespace re {
 
         bool search(const char * s, unsigned step_limit)
         {
-            if ( ! this->stw.root) {
+            if (this->stw.states.empty()) {
                 return false;
             }
             return Searching(*this).search(s, step_limit);
@@ -376,9 +376,6 @@ namespace re {
                 ++this->parray;
             }
 
-            Info& operator[](int n) const
-            { return this->array[n]; }
-
             Info * begin() const
             { return this->array; }
 
@@ -393,9 +390,6 @@ namespace re {
 
             bool empty() const
             { return this->array == this->parray; }
-
-            size_t size() const
-            { return this->parray - this->array; }
 
             void clear()
             { this->parray = this->array; }
@@ -467,7 +461,7 @@ namespace re {
                 }
 
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (first->st->type == LAST || first->st->is_finish()) {
+                    if (first->st->is_terminate()) {
                         return true;
                     }
                 }
@@ -537,7 +531,7 @@ namespace re {
 
                 for (Info* ifirst = pal1->begin(), * ilast = pal1->end(); ifirst != ilast ; ++ifirst) {
                     for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
-                        if (first->st->type == LAST || first->st->is_finish()) {
+                        if (first->st->is_terminate()) {
                             return true;
                         }
                     }
@@ -570,7 +564,7 @@ namespace re {
     public:
         void display_elem_state_list(const StateList& e, unsigned idx) const
         {
-            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t" << e.st->utfc << "\t"
+            std::cout << "\t\033[33m" << idx << "\t" << e.st->num << "\t"
             << *e.st << "\t" << (e.next) << "\033[0m" << std::endl;
         }
 
@@ -579,7 +573,7 @@ namespace re {
             for (; l < last && l->first != l->last; ++l) {
                 std::cout << l << "  st: " << l->st->num << (l->st->is_cap() ? " (cap)\n" : "\n");
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    std::cout << "\t" << first->st->num << "\t" << first->st->utfc << "\t"
+                    std::cout << "\t" << first->st->num << "\t"
                     << *first->st << "\t" << first->next << ("\n");
                 }
             }
@@ -794,7 +788,6 @@ namespace re {
         const StateBase ** captures;
         const StateBase ** pcaptures;
         const char ** traces;
-//         state_list states;
         StateListByStep l1;
         StateListByStep l2;
 
@@ -823,8 +816,8 @@ namespace re {
         if (st && stw.get_num_at(st) != -2u) {
             std::string s(depth, '\t');
             std::cout
-            << s << "\033[33m" << st << "\t" << st->num << "\t" << st->utfc << "\t"
-            << *st << "\033[0m\n\t" << s << st->out1 << "\n\t" << s << st->out2 << "\n";
+            << s << "\033[33m" << st << "\t" << st->num << "\t" << *st
+            << "\033[0m\n\t" << s << st->out1 << "\n\t" << s << st->out2 << "\n";
             stw.set_num_at(st, -2u);
             display_state(stw, st->out1, depth+1);
             display_state(stw, st->out2, depth+1);
@@ -833,7 +826,7 @@ namespace re {
 
     inline void display_state(StatesWrapper & stw)
     {
-        stw.reset_num();
+        stw.reset_nums();
         display_state(stw, stw.root);
     }
 
@@ -863,7 +856,7 @@ namespace re {
                     }
                 }
                 else if (st) {
-                    if (st->is_finish() || st->type == LAST) {
+                    if (st->is_terminate()) {
                         if (is_end) {
                             return true;
                         }
@@ -896,19 +889,22 @@ namespace re {
     inline void add_first(const_state_list_t & l, const_state_list_t & lfirst, const StateBase * st)
     {
         if (st->is_split()) {
-            if (st->out1)
+            if (st->out1) {
                 add_first(l, lfirst, st->out1);
-            if (st->out2)
+            }
+            if (st->out2) {
                 add_first(l, lfirst, st->out2);
+            }
         }
         else if (st->is_cap()) {
             if (st->out1) {
-                return add_first(l, lfirst, st->out1);
+                add_first(l, lfirst, st->out1);
             }
         }
         else if (st->type == FIRST) {
-            if (st->out1)
+            if (st->out1) {
                 add_first(lfirst, lfirst, st->out1);
+            }
         }
         else {
             l.push_back(st);
