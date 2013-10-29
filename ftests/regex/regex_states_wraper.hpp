@@ -91,6 +91,14 @@ namespace re {
         }
     };
 
+    struct IsEpsilone
+    {
+        bool operator()(State * st) const
+        {
+            return st->is_epsilone();
+        }
+    };
+
     class StatesWrapper
     {
         std::vector<unsigned> nums;
@@ -124,6 +132,34 @@ namespace re {
             this->states.clear();
             this->root = st;
             append_state(st, this->states);
+
+            state_list_t::iterator last = this->states.end();
+            if (std::find_if(this->states.begin(), last, IsEpsilone()) != last) {
+                for (state_list_t::iterator first = this->states.begin(); first != last; ++first) {
+                    State * nst = (*first)->out1;
+                    while (nst && nst->is_epsilone()) {
+                        nst = nst->out1;
+                    }
+                    (*first)->out1 = nst;
+                }
+                state_list_t::iterator first = this->states.begin();
+                while (first != last && !(*first)->is_epsilone()) {
+                    ++first;
+                }
+                state_list_t::iterator result = first;
+                for (; first != last; ++first) {
+                    if ((*first)->is_epsilone()) {
+                        delete *first;
+                    }
+                    else {
+                        *result = *first;
+                        ++result;
+                    }
+                }
+                this->states.resize(result - this->states.begin());
+            }
+
+            this->init_nums();
         }
 
         void init_nums()

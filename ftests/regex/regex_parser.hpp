@@ -586,11 +586,10 @@ namespace re {
                         else {
                             if (1 != m) {
                                 /**///std::cout << ("fixe ") << m << std::endl;
-                                State * e = new_epsilone();
-                                *pst = e;
+                                State e(EPSILONE);
+                                *pst = &e;
                                 ContextClone cloner(*spst);
-                                std::size_t idx = cloner.get_idx(e);
-                                pst = &e->out1;
+                                std::size_t idx = cloner.get_idx(&e);
                                 while (--m) {
                                     /**///std::cout << ("clone") << std::endl;
                                     *pst = cloner.clone();
@@ -672,42 +671,7 @@ namespace re {
             }
             return false;
         }
-
         stw.reset(st);
-        state_list_t::iterator last = stw.states.end();
-        bool has_epsilone = false;
-        for (state_list_t::iterator first = stw.states.begin(); first != last; ++first) {
-            (*first)->num = 0;
-            has_epsilone = has_epsilone || (*first)->is_epsilone();
-        }
-
-        if (has_epsilone) {
-            for (state_list_t::iterator first = stw.states.begin(); first != last; ++first) {
-                State * nst = (*first)->out1;
-                while (nst && nst->is_epsilone()) {
-                    nst = nst->out1;
-                }
-                (*first)->out1 = nst;
-            }
-            state_list_t::iterator first = stw.states.begin();
-            while (first != last && !(*first)->is_epsilone()) {
-                ++first;
-            }
-            state_list_t::iterator result = first;
-            for (; first != last; ++first) {
-                if ((*first)->is_epsilone()) {
-                    delete *first;
-                }
-                else {
-                    *result = *first;
-                    ++result;
-                }
-            }
-            stw.states.resize(result - stw.states.begin());
-        }
-
-        stw.init_nums();
-
         return true;
     }
 }

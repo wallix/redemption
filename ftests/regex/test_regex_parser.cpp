@@ -189,6 +189,18 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         BOOST_CHECK_EQUAL(st_to_string(&open1), rgx.to_string());
     }
     {
+        State st_d1(RANGE, '1', '9');
+        State st_01(RANGE, '0', '0', &st_d1);
+        State st_d2(RANGE, '1', '9', &st_01);
+        State st_02(RANGE, '0', '0', &st_d2);
+        State st_d3(RANGE, '1', '9', &st_02);
+        State st_03(RANGE, '0', '0', &st_d3);
+        State st_d4(RANGE, '1', '9', &st_03);
+        State st_04(RANGE, '0', '0', &st_d4);
+        Reg rgx("(?:0[1-9]){4}");
+        BOOST_CHECK_EQUAL(st_to_string(&st_04), rgx.to_string());
+    }
+    {
         State finish(FINISH);
         State st_a2(RANGE, 'a', 'a', &finish);
         State split2(SPLIT, 0, 0, &finish, &st_a2);
