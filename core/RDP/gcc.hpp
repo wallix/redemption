@@ -1079,7 +1079,7 @@ namespace GCC
                 this->desktopHeight = stream.in_uint16_le();
                 this->colorDepth = stream.in_uint16_le();
                 this->SASSequence = stream.in_uint16_le();
-                this->keyboardLayout =stream.in_uint32_le();
+                this->keyboardLayout = stream.in_uint32_le();
                 this->clientBuild = stream.in_uint32_le();
                 // utf16 hostname fixed length,
                 // including mandatory terminal 0
