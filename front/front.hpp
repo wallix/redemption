@@ -70,13 +70,13 @@
 #include "front_api.hpp"
 #include "genrandom.hpp"
 
+#include "auth_api.hpp"
 
 enum {
     FRONT_DISCONNECTED,
     FRONT_CONNECTING,
     FRONT_RUNNING,
 };
-
 
 class Front : public FrontAPI {
     using FrontAPI::draw;
@@ -150,6 +150,8 @@ public:
 
     rdp_mppc_enc * mppc_enc;
 
+    auth_api * authentifier;
+
     Front ( Transport * trans
           , const char * default_font_name // SHARE_PATH "/" DEFAULT_FONT_NAME
           , Random * gen
@@ -189,6 +191,7 @@ public:
         , bitmap_update_count(0)
         , server_capabilities_filename(server_capabilities_filename)
         , mppc_enc(0)
+        , authentifier(NULL)
     {
         // init TLS
         // --------------------------------------------------------
@@ -301,8 +304,9 @@ public:
                 {
                     CaptureState original_capture_state = this->capture_state;
 
+                    auth_api * authentifier = this->authentifier;
                     this->stop_capture();
-                    this->start_capture(width, height, *this->ini);
+                    this->start_capture(width, height, *this->ini, authentifier);
 
                     this->capture_state = original_capture_state;
                 }
@@ -451,7 +455,7 @@ public:
     }
 
     // ===========================================================================
-    void start_capture(int width, int height, Inifile & ini)
+    void start_capture(int width, int height, Inifile & ini, auth_api * authentifier)
     {
         if (this->capture) {
             LOG(LOG_INFO, "Front::start_capture: session capture is already started");
@@ -487,11 +491,17 @@ public:
                                        , ini.video.record_tmp_path
                                        , ini.video.hash_path, basename
                                        , true
+                                       , false
+                                       , authentifier
                                        , ini
                                        );
-
+            if (this->nomouse) {
+                this->capture->set_pointer_display();
+            }
             this->capture->capture_event.set();
             this->capture_state = CAPTURE_STATE_STARTED;
+
+            this->authentifier = authentifier;
         }
     }
 
@@ -524,14 +534,12 @@ public:
         }
     }
 
-    void periodic_snapshot(bool pointer_is_displayed)
+    void periodic_snapshot()
     {
         if (  this->capture
            && (this->capture_state == CAPTURE_STATE_STARTED)){
             struct timeval now = tvtime();
             this->capture->snapshot( now, this->mouse_x, this->mouse_y
-                                   , pointer_is_displayed | this->nomouse
-                                   , this->notimestamp
                                    , false  // ignore frame in time interval
                                    );
         }
@@ -541,6 +549,7 @@ public:
     {
         if (this->capture){
             LOG(LOG_INFO, "---<>   Front::stop_capture  <>---");
+            this->authentifier = NULL;
             delete this->capture;
             this->capture = 0;
 
@@ -1195,6 +1204,12 @@ public:
             LOG(LOG_INFO, "Front::set_pointer done");
         }
     }   // void set_pointer(int cache_idx)
+
+    virtual void set_pointer_display() {
+        if (this->capture) {
+            this->capture->set_pointer_display();
+        }
+    }
 
     void incoming(Callback & cb) throw(Error)
     {
@@ -2693,12 +2708,16 @@ public:
         order_caps.pad4octetsA = 0x40420f00;
         order_caps.numberFonts = 0x2f;
         order_caps.orderFlags = 0x22;
-        order_caps.orderSupport[TS_NEG_DSTBLT_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
-        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX] = (this->mem3blt_support ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_LINETO_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->mem3blt_support ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 1;
+        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 1;
+        order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
         order_caps.orderSupport[UnusedIndex3] = 1;
         order_caps.textFlags = 0x06a1;
         order_caps.pad4octetsB = 0x0f4240;
@@ -4292,6 +4311,34 @@ public:
         }
     }
 
+    void draw(const RDPEllipseCB & cmd, const Rect & clip)
+    {
+        if (!clip.isempty() && !clip.intersect(cmd.el.get_rect()).isempty()){
+
+            this->send_global_palette();
+
+            RDPEllipseCB new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp){
+                const BGRColor back_color24 = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+                new_cmd.back_color = color_encode(back_color24, this->client_info.bpp);
+
+                const BGRColor fore_color24 = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+                new_cmd.fore_color = color_encode(fore_color24, this->client_info.bpp);
+
+            }
+            this->orders->draw(new_cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)){
+                RDPEllipseCB new_cmd24 = cmd;
+                new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
+                new_cmd24.fore_color = color_decode_opaquerect(cmd.fore_color, this->mod_bpp, this->mod_palette);
+                this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
+
     virtual void flush() {
         this->orders->flush();
         if (  this->capture
@@ -4331,6 +4378,10 @@ public:
             this->memblt_mod_palette[i] = RGBtoBGR(palette[i]);
         }
         this->palette_sent = false;
+    }
+
+    virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) {
+        proxy_order_caps[idx] &= this->client_order_caps.orderSupport[idx];
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data

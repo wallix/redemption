@@ -102,6 +102,19 @@ class AppParamsInfo(Right):
         self.params = params
         self.authmechanism = authmechanism
 
+class TargetPasswordInfo(Right):
+    attributes = [
+          ('account',            None, u"".__class__, None)
+        , ('resource',           None, u"".__class__, None)
+        , ('protocol',           None, u"".__class__, None)
+    ]
+
+    def __init__(self, account, resource, protocol, password):
+        self.account = account
+        self.resource = resource
+        self.protocol = protocol
+        self.password = password
+
 class ResourceInfo(Right):
     attributes = [
          ('device',             None, DeviceInfo     , None)

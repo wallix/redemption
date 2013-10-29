@@ -136,6 +136,7 @@ struct RDPSerializer : public RDPGraphicDevice
     RDPGlyphIndex glyphindex;
     RDPPolyline polyline;
     RDPEllipseSC ellipseSC;
+    RDPEllipseCB ellipseCB;
     // state variables for gathering batch of orders
     size_t order_count;
     size_t chunk_flags;
@@ -177,6 +178,7 @@ struct RDPSerializer : public RDPGraphicDevice
                 , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t *)"")
     , polyline()
     , ellipseSC()
+    , ellipseCB(Rect(), 0, 0, 0, 0, RDPBrush())
     // state variables for a batch of orders
     , order_count(0)
     , bmp_cache(bmp_cache)
@@ -394,6 +396,15 @@ public:
         cmd.emit(this->stream_orders, newcommon, this->common, this->ellipseSC);
         this->common = newcommon;
         this->ellipseSC = cmd;
+    }
+
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
+    {
+        this->reserve_order(54);
+        RDPOrderCommon newcommon(RDP::ELLIPSECB, clip);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->ellipseCB);
+        this->common = newcommon;
+        this->ellipseCB = cmd;
     }
 
 

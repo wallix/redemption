@@ -50,6 +50,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     Inifile ini;
     RDPDrawable drawable(800, 600);
     NativeCapture consumer(now, trans, 800, 600, bmp_cache, drawable, ini);
+
+    consumer.set_pointer_display();
+
     ini.video.frame_interval = 100; // one snapshot by second
     ini.video.break_interval = 5;   // one WRM file every 5 seconds
     consumer.update_config(ini);
@@ -57,9 +60,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleBreakpoint)
     bool ignore_frame_in_timeval = false;
 
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
-    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     now.tv_sec += 6;
-    consumer.snapshot(now, 10, 10, true, false, ignore_frame_in_timeval);
+    consumer.snapshot(now, 10, 10, ignore_frame_in_timeval);
     rio_clear(&trans.rio);
 
     BOOST_CHECK_EQUAL((unsigned)1544, (unsigned)sq_outfilename_filesize(&(trans.seq), 0));

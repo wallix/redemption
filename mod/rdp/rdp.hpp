@@ -23,7 +23,7 @@
 */
 
 #ifndef _REDEMPTION_MOD_RDP_RDP_HPP_
-#define _REDEMPTION_MOD_RDP_RDP_HPP__
+#define _REDEMPTION_MOD_RDP_RDP_HPP_
 
 #include <unistd.h>
 #include <string.h>
@@ -169,6 +169,7 @@ struct mod_rdp : public mod_api {
     unsigned certificate_change_action;
 
     bool enable_polyline;
+    bool enable_ellipsesc;
 
     mod_rdp( Transport * trans
            , const char * target_user
@@ -241,6 +242,7 @@ struct mod_rdp : public mod_api {
         , output_filename(output_filename)
         , certificate_change_action(certificate_change_action)
         , enable_polyline(false)
+        , enable_ellipsesc(false)
     {
         if (this->verbose & 1)
         {
@@ -385,19 +387,23 @@ struct mod_rdp : public mod_api {
         {
             order_number = long_from_cstr(tmp_extra_orders);
             if (verbose) {
-                LOG(LOG_INFO, "VNC Extra orders number=%d", order_number);
+                LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
             switch (order_number) {
             case 22:
                 if (verbose) {
-                    LOG(LOG_INFO, "VNC Extra orders=Polyline");
-                    this->enable_polyline = true;
+                    LOG(LOG_INFO, "RDP Extra orders=Polyline");
                 }
+                this->enable_polyline = true;
                 break;
-
+            case 25:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=EllipseSC");
+                }
+                this->enable_ellipsesc = true;
             default:
                 if (verbose) {
-                    LOG(LOG_INFO, "VNC Unknown Extra orders");
+                    LOG(LOG_INFO, "RDP Unknown Extra orders");
                 }
                 break;
             }
@@ -2009,11 +2015,34 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
         order_caps.orderSupport[UnusedIndex3]                    = 1;
         order_caps.orderSupport[UnusedIndex5]                    = 1;
-        order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
         order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 0;
+        order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
+
         order_caps.textFlags                                     = 0x06a1;
         order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)
+
+        // Apparently, these primary drawing orders are supported
+        // by both rdesktop and xfreerdp :
+        // TS_NEG_DSTBLT_INDEX
+        // TS_NEG_PATBLT_INDEX
+        // TS_NEG_SCRBLT_INDEX
+        // TS_NEG_MEMBLT_INDEX
+        // TS_NEG_LINETO_INDEX
+        // others orders may not be supported.
+
+        // intersect with client order capabilities
+        // which may not be supported by clients.
+        this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX,
+                                         order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_INDEX_INDEX, order_caps.orderSupport);
+
+        // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
+        //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
         if (this->verbose) {
             order_caps.log("Sending order caps to server");
         }
@@ -3872,6 +3901,7 @@ public:
                 struct Pointer cursor;
                 memset(cursor.mask, 0xff, sizeof(cursor.mask));
                 this->front.server_set_pointer(cursor);
+                this->front.set_pointer_display();
                 this->set_pointer_display();
             }
             break;
@@ -4386,6 +4416,11 @@ public:
     }
 
     virtual void draw(const RDPEllipseSC& cmd, const Rect & clip)
+    {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPEllipseCB& cmd, const Rect & clip)
     {
         this->front.draw(cmd, clip);
     }

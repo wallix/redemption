@@ -516,6 +516,13 @@ public:
         this->RDPSerializer::draw(cmd, clip);
     }
 
+    virtual void draw(const RDPEllipseCB & cmd, const Rect & clip)
+    {
+        this->drawable.draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
+    }
+
+
 protected:
     virtual void flush_bitmaps() {
         if (this->bitmap_count > 0) {
@@ -561,8 +568,6 @@ public:
                       ;
         WRMChunk_Send chunk(header, POINTER, size, 0);
         this->trans->send(header);
-
-        TODO("why several send ? one should be enough. See that");
 
         BStream payload(16);
         payload.out_uint16_le(this->mouse_x);

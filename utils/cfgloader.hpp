@@ -22,57 +22,10 @@
 #define _REDEMPTION_UTILS_CFG_LOADER_HPP_
 
 #include <istream>
+#include <fstream>
 
 #include "log.hpp"
-
-static inline unsigned ulong_from_cstr(const char * str)
-{ // 10 = 10, 0x10 = 16
-    if ((*str == '0') && (*(str + 1) == 'x')){
-        return strtol(str + 2, 0, 16);
-    }
-
-    return atol(str);
-}
-
-static inline long long_from_cstr(const char * str)
-{ // 10 = 10, 0x10 = 16
-    if ((*str == '0') && (*(str + 1) == 'x')){
-        return strtol(str + 2, 0, 16);
-    }
-
-    return atol(str);
-}
-
-static inline signed _long_from_cstr(const char * str)
-{
-    return atol(str);
-}
-
-static inline bool bool_from_cstr(const char * str)
-{
-    return (0 == strcasecmp("1",str))
-        || (0 == strcasecmp("yes",str))
-        || (0 == strcasecmp("on",str))
-        || (0 == strcasecmp("true",str));
-}
-
-static inline unsigned level_from_cstr(const char * str)
-{ // low = 0, medium = 1, high = 2
-    unsigned res = 0;
-    if (0 == strcasecmp("medium", str)) { res = 1; }
-    else if (0 == strcasecmp("high",   str)) { res = 2; }
-    return res;
-}
-
-static inline unsigned logtype_from_cstr(const char * str)
-{ // null = 0, print = 1, syslog = 2, file = 3, encryptedfile = 4
-    unsigned res = 0;
-    if (0 == strcasecmp("print",         str)) { res = 1; }
-    else if (0 == strcasecmp("syslog",        str)) { res = 2; }
-    else if (0 == strcasecmp("file",          str)) { res = 3; }
-    else if (0 == strcasecmp("encryptedfile", str)) { res = 4; }
-    return res;
-}
+#include "parser.hpp"
 
 struct ConfigurationHolder {
     virtual ~ConfigurationHolder() {}

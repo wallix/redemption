@@ -18,10 +18,11 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSESC_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSESC_HPP_
+#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSECB_HPP_
+#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYELLIPSECB_HPP_
 
 #include "ellipse.hpp"
+
 // 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
 // =========================================
 // The COORD_FIELD structure is used to describe a value in the range -32768
@@ -49,15 +50,15 @@
 //   the current value. The 2-byte format is simply the full value of the
 //   field that MUST replace the previous value.
 
-// 2.2.2.2.1.1.2.19 EllipseSC (ELLIPSE_SC_ORDER)
+// 2.2.2.2.1.1.2.20 EllipseCB (ELLIPSE_CB_ORDER)
 // =============================================
-// The EllipseSC Primary Drawing Order encodes a single, solid-color ellipse.
+// The EllipseCB Primary Drawing Order encodes a color brush ellipse.
 
-// Encoding order number: 25 (0x19)
-// Negotiation order number: 25 (0x19)
-// Number of fields: 7
-// Number of field encoding bytes: 1
-// Maximum encoded field length: 13 bytes
+// Encoding order number: 26 (0x1A)
+// Negotiation order number: 26 (0x1A)
+// Number of fields: 13
+// Number of field encoding bytes: 2
+// Maximum encoded field length: 27 bytes
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -67,11 +68,18 @@
 // +---------------+---------------+---------------+---------------+
 // |      RightRect (variable)     |     BottomRect (variable)     |
 // +---------------+---------------+---------------+---------------+
-// |     bRop2     |    FillMode   |           Color               |
+// |     bRop2     |    FillMode   |         BackColor             |
 // |   (optional)  |   (optional)  |         (optional)            |
 // +---------------+---------------+---------------+---------------+
-// |      ...      |
-// +---------------+
+// |      ...      |             ForeColor (optional)              |
+// +---------------+---------------+---------------+---------------+
+// |  BrushOrgX    |  BrushOrgY    |  BrushStyle   |  BrushHatch   |
+// |  (optional)   |  (optional)   |  (optional)   |  (optional)   |
+// +---------------+---------------+---------------+---------------+
+// |                     BrushExtra (optional)                     |
+// +-----------------------------------------------+---------------+
+// |                    ...                        |
+// +-----------------------------------------------+
 
 // LeftRect (variable): The left coordinate of the inclusive rectangle for
 //  the ellipse specified by using a Coord Field (section 2.2.2.2.1.1.1.1).
@@ -94,9 +102,6 @@
 // +-----------+----------------------------------------------------+
 // | Value     | Meaning                                            |
 // +-----------+----------------------------------------------------+
-// | NOFILLL   | A polyline ellipse (that is, a non-filled ellipse) |
-// | 0x00      | MUST be drawn.                                     |
-// +-----------+----------------------------------------------------+
 // | ALTERNATE | See section 2.2.2.2.1.1.1.9 for an explanation of  |
 // | 0x01      | this value.                                        |
 // +-----------+----------------------------------------------------+
@@ -104,67 +109,91 @@
 // | 0x02      | this value.                                        |
 // +-----------+----------------------------------------------------+
 
-// Color (3 bytes): The foreground color described by using a Generic Color
+// BackColor (3 bytes): The background color described by using a Generic Color
 //  (section 2.2.2.2.1.1.1.8) structure.
 
+// ForeColor (3 bytes): The foreground color described by using a Generic Color
+//  (section 2.2.2.2.1.1.1.8) structure.
 
-class RDPEllipseSC {
+// BrushOrgX (1 byte): An 8-bit, signed integer. The x-coordinate of the point
+//  where the top leftmost pixel of a brush pattern MUST be anchored.
+
+// BrushOrgY (1 byte): An 8-bit, signed integer. The y-coordinate of the point
+//  where the top leftmost pixel of a brush pattern MUST be anchored.
+
+// BrushStyle (1 byte): An 8-bit, unsigned integer. The contents and format of
+//  this field are the same as the BrushStyle field of the PatBlt
+//  (section 2.2.2.2.1.1.2.3) Primary Drawing Order.
+
+// BrushHatch (1 byte): An 8-bit, unsigned integer. The contents and format of
+//  this field are the same as the BrushHatch field of the PatBlt
+//  (section 2.2.2.2.1.1.2.3) Primary Drawing Order.
+
+// BrushExtra (7 bytes): A byte array of length 7. The contents and format of
+//  this field are the same as the BrushExtra field of the PatBlt
+//  (section 2.2.2.2.1.1.2.3) Primary Drawing Order.
+
+
+class RDPEllipseCB {
 public:
     Ellipse el;
-    uint8_t  bRop2;
-    uint8_t  fillMode;
-    uint32_t color;
+    uint8_t  brop2;
+    uint8_t  fill_mode;
+    uint32_t back_color;
+    uint32_t fore_color;
+    RDPBrush brush;
 
-    RDPEllipseSC()
-        : el(Ellipse())
-        , bRop2(0x0)
-        , fillMode(0x0)
-        , color(0x000000)
-    {}
+    static const uint8_t id(void)
+    {
+        return RDP::ELLIPSECB;
+    }
 
+    RDPEllipseCB(const Rect & rect, uint8_t rop, uint8_t fill,
+                 uint32_t back_color, uint32_t fore_color,
+                 const RDPBrush & brush) :
+        el(Ellipse(rect)),
+        brop2(rop),
+        fill_mode(fill),
+        back_color(back_color),
+        fore_color(fore_color),
+        brush(brush)
+    {
+    }
 
-    RDPEllipseSC(const Rect & r, int c)
-        : el(Ellipse(r))
-        , bRop2(0x0D)
-        , fillMode(0x01)
-        , color(c)
-    {}
-
-    RDPEllipseSC(const Rect & r, int c, uint8_t rop, uint8_t fill)
-        : el(Ellipse(r))
-        , bRop2(rop)
-        , fillMode(fill)
-        , color(c)
-    {}
-
-
-    bool operator==(const RDPEllipseSC & other) const {
+    bool operator==(const RDPEllipseCB & other) const {
         return (this->el.equal(other.el)
-                && (this->bRop2 == other.bRop2)
-                && (this->fillMode == other.fillMode)
-                && (this->color == other.color));
+                && (this->brop2 == other.brop2)
+                && (this->fill_mode == other.fill_mode)
+                && (this->back_color == other.back_color)
+                && (this->fore_color == other.fore_color)
+                && (this->brush == other.brush));
     }
 
-    static const uint8_t id(void) {
-        return RDP::ELLIPSESC;
-    }
-
-    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
-              const RDPEllipseSC & oldcmd) const {
-        RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
+    void emit(Stream & stream,
+              RDPOrderCommon & common,
+              const RDPOrderCommon & oldcommon,
+              const RDPEllipseCB & oldcmd) const
+    {
+        using namespace RDP;
+        RDPPrimaryOrderHeader header(STANDARD, 0);
 
         if (!common.clip.contains(this->el.get_rect())){
-            header.control |= RDP::BOUNDS;
+            header.control |= BOUNDS;
         }
-
         header.fields =
             ( this->el.left()   != oldcmd.el.left()  ) * 0x0001
             |(this->el.top()    != oldcmd.el.top()   ) * 0x0002
             |(this->el.right()  != oldcmd.el.right() ) * 0x0004
             |(this->el.bottom() != oldcmd.el.bottom()) * 0x0008
-            |(this->bRop2       != oldcmd.bRop2      ) * 0x0010
-            |(this->fillMode    != oldcmd.fillMode   ) * 0x0020
-            |(this->color       != oldcmd.color      ) * 0x0040;
+            |(this->brop2       != oldcmd.brop2      ) * 0x0010
+            |(this->fill_mode   != oldcmd.fill_mode  ) * 0x0020
+            |(this->back_color  != oldcmd.back_color ) * 0x0040
+            |(this->fore_color  != oldcmd.fore_color ) * 0x0080
+            |(this->brush.org_x != oldcmd.brush.org_x) * 0x0100
+            |(this->brush.org_y != oldcmd.brush.org_y) * 0x0200
+            |(this->brush.style != oldcmd.brush.style) * 0x0400
+            |(this->brush.hatch != oldcmd.brush.hatch) * 0x0800
+            |(memcmp(this->brush.extra, oldcmd.brush.extra, 7) != 0) * 0x1000;
 
         common.emit(stream, header, oldcommon);
         header.emit_coord(stream, 0x0001, this->el.left(),   oldcmd.el.left());
@@ -172,22 +201,26 @@ public:
         header.emit_coord(stream, 0x0004, this->el.right(),  oldcmd.el.right());
         header.emit_coord(stream, 0x0008, this->el.bottom(), oldcmd.el.bottom());
 
-        if (header.fields & 0x0010) { stream.out_uint8(this->bRop2); }
+        if (header.fields & 0x0010) { stream.out_uint8(this->brop2); }
 
-        if (header.fields & 0x0020) { stream.out_uint8(this->fillMode); }
+        if (header.fields & 0x0020) { stream.out_uint8(this->fill_mode); }
 
         if (header.fields & 0x0040) {
-            stream.out_uint8(this->color);
-            stream.out_uint8(this->color >> 8);
-            stream.out_uint8(this->color >> 16);
+            stream.out_uint8(this->back_color);
+            stream.out_uint8(this->back_color >> 8);
+            stream.out_uint8(this->back_color >> 16);
         }
-
-        // LOG(LOG_INFO, "RDPEllipseSC::emit: header fields=0x%02X", header.fields);
-        // LOG(LOG_INFO, "RDPEllipseSC::emit: header color=0x%02X", this->color);
+        if (header.fields & 0x0080) {
+            stream.out_uint8(this->fore_color);
+            stream.out_uint8(this->fore_color >> 8);
+            stream.out_uint8(this->fore_color >> 16);
+        }
+        header.emit_brush(stream, 0x0100, this->brush, oldcmd.brush);
     }
 
-    void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
-        // LOG(LOG_INFO, "RDPEllipseSC::receive: header fields=0x%02X", header.fields);
+    void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    {
+        // using namespace RDP;
         int16_t  leftRect   = this->el.left();
         int16_t  topRect    = this->el.top();
         int16_t  rightRect  = this->el.right();
@@ -200,32 +233,45 @@ public:
         this->el = Ellipse(Rect(leftRect, topRect, rightRect - leftRect, bottomRect - topRect));
 
         if (header.fields & 0x0010) {
-            this->bRop2  = stream.in_uint8();
+            this->brop2  = stream.in_uint8();
         }
         if (header.fields & 0x0020) {
-            this->fillMode  = stream.in_uint8();
+            this->fill_mode  = stream.in_uint8();
         }
         if (header.fields & 0x0040) {
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
-            this->color = r + (g << 8) + (b << 16);
+            this->back_color = r + (g << 8) + (b << 16);
         }
+        if (header.fields & 0x0080) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->fore_color = r + (g << 8) + (b << 16);
+        }
+
+        header.receive_brush(stream, 0x0100, this->brush);
     }
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf(buffer + lg, sz - lg,
-            "ellipseSC(leftRect=%d topRect=%d rightRect=%d bottomRect=%d bRop2=0x%02X "
-            "fillMode=%d Color=%.6x)",
+                       "ellipseCB(leftRect=%d topRect=%d rightRect=%d bottomRect=%d bRop2=0x%02X "
+                       "fillMode=%d backColor=%.6x foreColor=%.6x"
+                       "brush.org_x=%d brush.org_y=%d "
+                       "brush.style=%d brush.hatch=%d)",
                        this->el.left(), this->el.top(), this->el.right(), this->el.bottom(),
-                       this->bRop2, this->fillMode, this->color);
+                       this->brop2, this->fill_mode, this->back_color, this->fore_color,
+                       this->brush.org_x, this->brush.org_y,
+                       this->brush.style, this->brush.hatch);
         if (lg >= sz) {
             return sz;
         }
         return lg;
     }
+
     void log(int level, const Rect & clip) const {
         char buffer[2048];
         this->str(buffer, sizeof(buffer), RDPOrderCommon(this->id(), clip));

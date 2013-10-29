@@ -68,12 +68,12 @@ BOOST_AUTO_TEST_CASE(TestPatBlt)
         uint8_t datas[30] = {
             CHANGE | STANDARD | BOUNDS | LASTBOUNDS,
             PATBLT,
-            0xFF, 0x0F,  // x, y, cx, cy, rop, colors and brush changed
-            0x2C, 0x01,  // x = 300
-            0x90, 0x01,  // y = 400
-            0x32, 0x00,  // cx = 50
-            0x3c, 0x00,  // cy = 60
-            0xFF,        // rop
+            0xFF, 0x0F,        // x, y, cx, cy, rop, colors and brush changed
+            0x2C, 0x01,        // x = 300
+            0x90, 0x01,        // y = 400
+            0x32, 0x00,        // cx = 50
+            0x3c, 0x00,        // cy = 60
+            0xFF,              // rop
             0x30, 0x20, 0x10,  // back_color
             0x33, 0x22, 0x11,  // fore_color
             0x03,        // brush.org_x

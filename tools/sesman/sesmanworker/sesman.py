@@ -46,7 +46,7 @@ def mundane(value):
         return u'Unknown'
     return value
 
-DEBUG = True
+DEBUG = False
 
 class AuthentifierSocketClosed(Exception):
     pass
@@ -68,6 +68,7 @@ class Sesman():
 
         self.engine = engine.Engine()
 
+        # shared should be read from sesman but never written except when sending
         self.shared                    = {}
 
         self._full_user_device_account = u'Unknown'
@@ -94,6 +95,7 @@ class Sesman():
         self.shared[u'target_protocol'] = MAGICASK
 
 
+    #TODO: is may be possible to delay sending data until the next input through receive_data
     def send_data(self, data):
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
@@ -103,7 +105,7 @@ class Sesman():
                 SESMANCONF.language = self.language
             else:
                 self.language = SESMANCONF.language
-            
+
             data[u'language'] = SESMANCONF.language
             data.update(translations())
 
@@ -111,7 +113,7 @@ class Sesman():
             import pprint
             Logger().info(u'send_data (update)=%s' % (pprint.pformat(data)))
 
-        # replace MAGICASK with ASK and send data on the wire            
+        # replace MAGICASK with ASK and send data on the wire
         _list = []
         for key, value in data.iteritems():
             self.shared[key] = value
@@ -184,7 +186,7 @@ class Sesman():
                     # _data[key] unchanged
                     pass
             self.shared.update(_data)
-                    
+
         return _data, _status, _error
 
     def parse_username(self):
@@ -323,7 +325,7 @@ class Sesman():
             except Exception, e:
                 import traceback
                 Logger().info("<<<%s>>>" % traceback.format_exc(e))
-                
+
             Logger().info(u'lang=%s sesman=%s' % (self.language, self.engine.user.preferredLanguage))
 
             # When user is authentified check if licence tokens are available
@@ -549,7 +551,7 @@ class Sesman():
             , u'rec_path'       : u""
             , u'file_encryption': u"False"
         }
-        
+
         try:
             self.full_path = u""
             self.path = u""
@@ -587,7 +589,7 @@ class Sesman():
                     if record_warning != 'false':
                         message =  u"Warning! Your remote session may be recorded and kept in electronic format."
                         try:
-                            with open('/opt/wab/share/proxys/messages/motd.%s' % SESMANCONF.language) as f:
+                            with open('/opt/wab/share/proxys/messages/motd.%s' % self.language) as f:
                                 message = f.read().decode('utf-8')
                         except Exception, e:
                             pass
@@ -706,6 +708,11 @@ class Sesman():
                 # Add connection to the observer
                 kv[u'session_id'] = self.engine.start_session(selected_target, self.pid)
                 _status, _error = self.engine.write_trace(self.full_path)
+                self.engine.get_restrictions(selected_target)
+                if self.engine.pattern_kill:
+                    self.send_data({ u'pattern_kill': self.engine.pattern_kill })
+                if self.engine.pattern_notify:
+                    self.send_data({ u'pattern_notify': self.engine.pattern_notify })
 
             if _status:
                 Logger().info(u"Checking timeframe")
@@ -741,6 +748,7 @@ class Sesman():
             for physical_target in (self.engine.get_effective_target(selected_target.service_login)
                                      if selected_target.resource.application else [selected_target]):
                 if not _status:
+                    physical_target = None
                     break
 
                 if selected_target.resource.application:
@@ -752,8 +760,9 @@ class Sesman():
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
 
-                kv[u'target_password'] = physical_target.account.password
-                if not physical_target.account.password:
+                password_of_target = self.engine.get_target_password(physical_target)
+                kv[u'target_password'] = password_of_target
+                if not password_of_target:
                     kv[u'target_password'] = u''
                     Logger().info(u"auto logon is disabled")
 
@@ -777,6 +786,13 @@ class Sesman():
                         ctime(),
                         None
                         )
+
+
+                self.engine.update_session(
+                            "%s@%s:%s" % ( physical_target.account.login
+                                         , physical_target.resource.device.cn
+                                         , physical_target.resource.service.protocol.cn))
+
 
                 if not _status:
                     Logger().info( u"(%s):%s:REJECTED : %s" \
@@ -837,6 +853,9 @@ class Sesman():
                                     try_next = True
 
                                     break
+                                elif _reporting_reason == u'FINDPATTERN_KILL':
+                                    Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
+                                    break
 
                         else: # (if self.proxy_conx in r)
                             Logger().error(u'break connection')
@@ -853,6 +872,11 @@ class Sesman():
 
                 if not try_next:
                     break;
+                else:
+                    self.engine.release_target_password(physical_target)
+
+            if not (physical_target is None):
+                self.engine.release_target_password(physical_target)
 
             Logger().info(u"Stop session ...")
 
@@ -894,6 +918,13 @@ class Sesman():
             self.engine.NotifyFilesystemIsFullOrUsedAtXPercent(message, 100)
         elif reason == u'SESSION_EXCEPTION':
             pass
+        elif (reason == u'FINDPATTERN_KILL') or (reason == u'FINDPATTERN_NOTIFY'):
+            pattern = message.split(u'|')
+            regexp = pattern[0]
+            string = pattern[1]
+#            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
+#                (regexp, string, self.shared[u'login'], self.shared[u'target_login'], self.shared[u'target_device']))
+            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared[u'login'], self.shared[u'target_login'], self.shared[u'target_device'])
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))

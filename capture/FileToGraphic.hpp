@@ -530,7 +530,6 @@ struct FileToGraphic
             }
             break;
             case META_FILE:
-            TODO("meta should contain some WRM version identifier");
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk");
             {
                 this->info_version        = this->stream.in_uint16_le();
@@ -861,8 +860,7 @@ struct FileToGraphic
                     send_initial_image = false;
                 }
                 for (size_t i = 0; i < this->nbconsumers ; i++) {
-                    this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y, false
-                                                , false, this->ignore_frame_in_timeval);
+                    this->consumers[i]->snapshot( this->record_now, this->mouse_x, this->mouse_y, this->ignore_frame_in_timeval);
                 }
 
                 this->ignore_frame_in_timeval = false;

@@ -49,41 +49,41 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
         ini.video.capture_wrm = true;
         ini.video.capture_png = true;
         ini.globals.enable_file_encryption.set(false);
-        Capture capture(now, scr.cx, scr.cy, "./", "./", "/tmp/", "capture", false, ini);
+        Capture capture(now, scr.cx, scr.cy, "./", "./", "/tmp/", "capture", false, false, NULL, ini);
 
         bool ignore_frame_in_timeval = false;
 
         capture.draw(RDPOpaqueRect(scr, GREEN), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, false, false, ignore_frame_in_timeval);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), BLUE), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, false, false, ignore_frame_in_timeval);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), WHITE), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, false, false, ignore_frame_in_timeval);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), RED), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, false, false, ignore_frame_in_timeval);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), BLACK), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, false, false, ignore_frame_in_timeval);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), PINK), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, false, false, ignore_frame_in_timeval);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
         capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), WABGREEN), scr);
         now.tv_sec++;
-        capture.snapshot(now, 0, 0, false, false, ignore_frame_in_timeval);
+        capture.snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.flush(); // to close last wrm
 

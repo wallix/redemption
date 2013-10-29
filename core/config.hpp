@@ -219,6 +219,8 @@ typedef enum
         AUTHID_AUTHCHANNEL_TARGET,  // WabLauncher target request
 
         AUTHID_MESSAGE, // warning_message
+        AUTHID_PATTERN_KILL,   // regex to close connexion
+        AUTHID_PATTERN_NOTIFY, // regex to notify to authentifier
 
         AUTHID_ACCEPT_MESSAGE,  // display a dialog to valid a message
         AUTHID_DISPLAY_MESSAGE, // display a dialog box with a message
@@ -304,12 +306,13 @@ typedef enum
 
 #define STRAUTHID_REPORTING                "reporting"
 
-TODO("This is not a translation but auth_channel answer, change key name in sesman");
-#define STRAUTHID_AUTHCHANNEL_ANSWER       "trans_auth_channel"
+#define STRAUTHID_AUTHCHANNEL_ANSWER       "auth_channel_answer"
 #define STRAUTHID_AUTHCHANNEL_RESULT       "auth_channel_result"
 #define STRAUTHID_AUTHCHANNEL_TARGET       "auth_channel_target"
 
 #define STRAUTHID_MESSAGE                  "message"
+#define STRAUTHID_PATTERN_KILL             "pattern_kill"
+#define STRAUTHID_PATTERN_NOTIFY           "pattern_notify"
 
 #define STRAUTHID_ACCEPT_MESSAGE           "accept_message"
 #define STRAUTHID_DISPLAY_MESSAGE          "display_message"
@@ -403,7 +406,9 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_AUTHCHANNEL_RESULT,   // WabLauncher session result
     STRAUTHID_AUTHCHANNEL_TARGET,   // WabLauncher target request
 
-    STRAUTHID_MESSAGE,  // warning_message
+    STRAUTHID_MESSAGE,        // warning_message
+    STRAUTHID_PATTERN_KILL,   // regex to close connexion
+    STRAUTHID_PATTERN_NOTIFY, // regex to notify to authentifier
 
     STRAUTHID_ACCEPT_MESSAGE,   // display a dialog to valid a message
     STRAUTHID_DISPLAY_MESSAGE,  // display a dialog box with a message
@@ -674,6 +679,8 @@ struct Inifile : public FieldObserver {
         StringField        authchannel_target;       // AUTHID_AUTHCHANNEL_TARGET //
 
         StringField        message;                  // AUTHID_MESSAGE //
+        StringField        pattern_kill;             // AUTHID_ PATTERN_KILL //
+        StringField        pattern_notify;           // AUTHID_ PATTERN_NOTIFY //
 
         TODO("why are the field below Strings ? They should be booleans. As they can only contain True/False to know if a user clicked on a button");
         StringField        accept_message;           // AUTHID_ACCEPT_MESSAGE //
@@ -871,12 +878,12 @@ public:
         strcpy(this->video.replay_path, "/tmp/");
 
         this->video.l_bitrate   = 20000;
-        this->video.l_framerate = 1;
+        this->video.l_framerate = 5;
         this->video.l_height    = 480;
         this->video.l_width     = 640;
         this->video.l_qscale    = 25;
         this->video.m_bitrate   = 40000;
-        this->video.m_framerate = 1;
+        this->video.m_framerate = 5;
         this->video.m_height    = 768;
         this->video.m_width     = 1024;
         this->video.m_qscale    = 15;
@@ -1017,6 +1024,12 @@ public:
 
         this->context.message.set_empty();
         this->context.message.attach_ini(this, AUTHID_MESSAGE);
+
+        this->context.pattern_kill.set_empty();
+        this->context.pattern_kill.attach_ini(this, AUTHID_PATTERN_KILL);
+
+        this->context.pattern_notify.set_empty();
+        this->context.pattern_notify.attach_ini(this, AUTHID_PATTERN_NOTIFY);
 
         this->context.accept_message.set_empty();
         this->context.display_message.set_empty();
