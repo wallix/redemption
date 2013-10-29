@@ -574,7 +574,9 @@ class Sesman():
                     video_path += u"%s," % (strftime("%Y%m%d-%H%M%S"))
                     video_path += u"%s," % gethostname()
                     video_path += u"%s" % random.randint(1000, 9999)
-                    video_path = video_path.replace(unichr(92), u"")
+                    # remove all "dangerous" characters in filename
+                    import re
+                    video_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", video_path) 
                     self.path = video_path
 
                     Logger().debug(u"This session will be recorded in %s" % self.path)

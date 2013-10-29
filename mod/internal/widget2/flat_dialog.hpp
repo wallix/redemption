@@ -28,6 +28,7 @@
 #include "image.hpp"
 #include "widget2_rect.hpp"
 #include "edit.hpp"
+#include "password.hpp"
 
 class FlatDialog : public WidgetParent
 {
