@@ -49,12 +49,6 @@ int main(int argc, char **argv) {
         return 1;
     }
     const char * rgxstr = argv[1];
-    {
-        StatesWrapper stw;
-        st_compile(stw, argv[1]);
-        display_state(stw);
-        return 0;
-    }
     Regex regex(argv[1]);
     if (regex.message_error()) {
         std::cerr << regex.message_error() << std::endl;

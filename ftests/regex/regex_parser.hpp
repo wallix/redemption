@@ -484,13 +484,10 @@ namespace re {
                             /**///std::cout << ("reste") << std::endl;
                             if (*(end+1) == '}') {
                                 /**///std::cout << ("infini") << std::endl;
-                                if (m <= 1) {
+                                if (m == 1) {
                                     *pst = new_split(new_finish(), *spst);
                                     spst = pst;
                                     pst = &(*pst)->out1->out1;
-                                    if (m == 0) {
-                                        spst = pst;
-                                    }
                                 }
                                 else if (m) {
                                     State * e = new_epsilone();
@@ -505,6 +502,12 @@ namespace re {
                                     }
                                     *pst = new_split(e, *lst);
                                     pst = &e->out1;
+                                }
+                                else {
+                                    *spst = new_split(new_finish(), *spst);
+                                    *pst = *spst;
+                                    pst = &(*spst)->out1->out1;
+                                    spst = pst;
                                 }
                             }
                             else {
@@ -526,20 +529,21 @@ namespace re {
                                     if (n != 1) {
                                         /**///std::cout << ("n != 1") << std::endl;
                                         State * e = new_finish();
-                                        *pst = e;
+                                        State * split = new_split();
+                                        *pst = split;
                                         ContextClone cloner(*spst);
-                                        State * cst = new_split(*spst, e);
-                                        State * cstfirst = cst;
-                                        std::size_t idx = cloner.get_idx(e);
+                                        std::size_t idx = cloner.get_idx(split);
+                                        split->out1 = e;
+                                        State * cst = split;
 
                                         while (--n) {
-                                            State * tmp = cloner.clone();
-                                            cloner.sts2[idx]->out1 = cst->out1;
-                                            cst = new_split(tmp, cst);
+                                            cst->out2 = cloner.clone();
+                                            cst = cloner.sts2[idx];
+                                            cst->out1 = e;
                                         }
-                                        std::swap(cstfirst->out1, cstfirst->out2);
+                                        cst->type = EPSILONE;
                                         pst = &e->out1;
-                                        *spst = cst;
+                                        *spst = new_split(e, *spst);
                                     }
                                     else {
                                         *pst = new_finish();
@@ -552,9 +556,9 @@ namespace re {
                                     if (n != 1) {
                                         State * e = new_epsilone();
                                         *pst = e;
-                                        pst = &e->out1;
                                         ContextClone cloner(*spst);
                                         std::size_t idx = cloner.get_idx(e);
+                                        pst = &e->out1;
                                         State * lst = e;
                                         while (--m) {
                                             *pst = cloner.clone();
@@ -584,9 +588,9 @@ namespace re {
                                 /**///std::cout << ("fixe ") << m << std::endl;
                                 State * e = new_epsilone();
                                 *pst = e;
-                                pst = &e->out1;
                                 ContextClone cloner(*spst);
                                 std::size_t idx = cloner.get_idx(e);
+                                pst = &e->out1;
                                 while (--m) {
                                     /**///std::cout << ("clone") << std::endl;
                                     *pst = cloner.clone();

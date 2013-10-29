@@ -189,20 +189,20 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         BOOST_CHECK_EQUAL(st_to_string(&open1), rgx.to_string());
     }
     {
-        State st_a2(RANGE, 'a', 'a');
-        State split2(SPLIT, 0, 0, 0, &st_a2);
+        State finish(FINISH);
+        State st_a2(RANGE, 'a', 'a', &finish);
+        State split2(SPLIT, 0, 0, &finish, &st_a2);
         State st_a1(RANGE, 'a', 'a', &split2);
-        State split1(SPLIT, 0, 0, &split2, &st_a1);
+        State split1(SPLIT, 0, 0, &finish, &st_a1);
         Reg rgx("a{0,2}");
         BOOST_CHECK_EQUAL(st_to_string(&split1), rgx.to_string());
     }
     {
         State st_b(RANGE, 'b', 'b');
-        State split3(SPLIT, 0, 0, &st_b);
-        State st_a1(RANGE, 'a', 'a', &split3);
-        State st_a2(RANGE, 'a', 'a', &split3);
-        State split2(SPLIT, 0, 0, &st_a1, &split3);
-        State split1(SPLIT, 0, 0, &st_a2, &split2);
+        State st_a1(RANGE, 'a', 'a', &st_b);
+        State split2(SPLIT, 0, 0, &st_b, &st_a1);
+        State st_a2(RANGE, 'a', 'a', &split2);
+        State split1(SPLIT, 0, 0, &st_b, &st_a2);
         State st_a3(RANGE, 'a', 'a', &split1);
         State st_a4(RANGE, 'a', 'a', &st_a3);
         Reg rgx("a{2,4}b");
@@ -217,11 +217,10 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
             Reg rgx("a{0,}b");
             BOOST_CHECK_EQUAL(st_to_string(&split1), rgx.to_string());
         }
-        State st_a3(RANGE, 'a', 'a', &split1);
-        State st_a4(RANGE, 'a', 'a', &st_a3);
+        State st_a3(RANGE, 'a', 'a', &st_a2);
         {
             Reg rgx("a{2,}b");
-            BOOST_CHECK_EQUAL(st_to_string(&st_a4), rgx.to_string());
+            BOOST_CHECK_EQUAL(st_to_string(&st_a3), rgx.to_string());
         }
     }
     {
@@ -234,8 +233,8 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         BOOST_CHECK_EQUAL(st_to_string(&st5), rgx.to_string());
     }
     {
-        State st_b(RANGE, 'b', 'b');
         State finish(FINISH);
+        State st_b(RANGE, 'b', 'b');
         State split2(SPLIT, 0, 0, &finish, &st_b);
         st_b.out1 = &split2;
         State st_a2(RANGE, 'a', 'a');
@@ -245,12 +244,11 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
             Reg rgx("a{0,}b*");
             BOOST_CHECK_EQUAL(st_to_string(&split1), rgx.to_string());
         }
-        State st_a3(RANGE, 'a', 'a', &split1);
-        State st_a4(RANGE, 'a', 'a', &st_a3);
         split1.out1 = &st_b;
+        State st_a3(RANGE, 'a', 'a', &st_a2);
         {
             Reg rgx("a{2,}b+");
-            BOOST_CHECK_EQUAL(st_to_string(&st_a4), rgx.to_string());
+            BOOST_CHECK_EQUAL(st_to_string(&st_a3), rgx.to_string());
         }
     }
     {
