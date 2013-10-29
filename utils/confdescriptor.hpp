@@ -28,6 +28,8 @@
 #include "cfgloader.hpp"
 
 #include "RDP/capabilities/general.hpp"
+#include "RDP/capabilities/cap_bitmap.hpp"
+#include "RDP/capabilities/order.hpp"
 
 TODO("We could probably use templated Entries instead of InputType_t and StorageType_t enums, this with also avoid combinatorial explosion."
      "Well, not really, but the compiler will do the work.")
@@ -40,7 +42,8 @@ enum InputType_t {
 
 enum StorageType_t {
     STORAGE_BYTE,
-    STORAGE_UINT16
+    STORAGE_UINT16,
+    STORAGE_UINT32
 };
 
 struct Entry {
@@ -101,6 +104,9 @@ struct Entry {
             case STORAGE_UINT16:
                 static_cast<uint16_t *>(this->storage)[0] = static_cast<uint16_t>(value);
             break;
+            case STORAGE_UINT32:
+                static_cast<uint32_t *>(this->storage)[0] = static_cast<uint32_t>(value);
+            break;
         }
     }
 };
@@ -121,6 +127,7 @@ struct GeneralCapsLoader : public ConfigurationHolder
         AUTHID_GENERALCAPS_COMPRESSIONLEVEL,
         AUTHID_GENERALCAPS_REFRESHRECTSUPPORT,
         AUTHID_GENERALCAPS_SUPPRESSOUTPUTSUPPORT,
+
         NUMBER_OF_CAPS
     };
 
@@ -179,11 +186,15 @@ struct GeneralCapsLoader : public ConfigurationHolder
     }
 };
 
-/*
+struct BitmapCapsLoader : public ConfigurationHolder
+{
+    char name[64];
+
+    enum {
         AUTHID_BITMAPCAPS_PREFERREDBITSPERPIXEL,
         AUTHID_BITMAPCAPS_RECEIVE1BITPERPIXEL,
-        AUTHID_BITMAPCAPS_RECEIVE4BITPERPIXEL,
-        AUTHID_BITMAPCAPS_RECEIVE8BITPERPIXEL,
+        AUTHID_BITMAPCAPS_RECEIVE4BITSPERPIXEL,
+        AUTHID_BITMAPCAPS_RECEIVE8BITSPERPIXEL,
         AUTHID_BITMAPCAPS_DESKTOPWIDTH,
         AUTHID_BITMAPCAPS_DESKTOPHEIGHT,
         AUTHID_BITMAPCAPS_DESKTOPRESIZEFLAG,
@@ -192,6 +203,69 @@ struct GeneralCapsLoader : public ConfigurationHolder
         AUTHID_BITMAPCAPS_DRAWINGFLAGS,
         AUTHID_BITMAPCAPS_MULTIPLERECTANGLESUPPORT,
 
+        NUMBER_OF_CAPS
+    };
+
+    Entry entries[NUMBER_OF_CAPS];
+
+    BitmapCapsLoader(BitmapCaps & caps)
+    {
+        strncpy(this->name, "Bitmap Capability Set", sizeof(this->name));
+
+        this->entries[AUTHID_BITMAPCAPS_PREFERREDBITSPERPIXEL] =
+            Entry("preferredBitsPerPixel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.preferredBitsPerPixel);
+
+        this->entries[AUTHID_BITMAPCAPS_RECEIVE1BITPERPIXEL] =
+            Entry("receive1BitPerPixel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.receive1BitPerPixel);
+
+        this->entries[AUTHID_BITMAPCAPS_RECEIVE4BITSPERPIXEL] =
+            Entry("receive4BitsPerPixel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.receive4BitsPerPixel);
+
+        this->entries[AUTHID_BITMAPCAPS_RECEIVE8BITSPERPIXEL] =
+            Entry("receive8BitsPerPixel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.receive8BitsPerPixel);
+
+        this->entries[AUTHID_BITMAPCAPS_DESKTOPWIDTH] =
+            Entry("desktopWidth", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopWidth);
+
+        this->entries[AUTHID_BITMAPCAPS_DESKTOPHEIGHT] =
+            Entry("desktopHeight", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopHeight);
+
+        this->entries[AUTHID_BITMAPCAPS_BITMAPCOMPRESSIONFLAG] =
+            Entry("bitmapCompressionFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.bitmapCompressionFlag);
+
+        this->entries[AUTHID_BITMAPCAPS_HIGHCOLORFLAGS] =
+            Entry("highColorFlags", INPUT_UNSIGNED, STORAGE_BYTE, &caps.highColorFlags);
+
+        this->entries[AUTHID_BITMAPCAPS_DRAWINGFLAGS] =
+            Entry("drawingFlags", INPUT_UNSIGNED, STORAGE_BYTE, &caps.drawingFlags);
+
+        this->entries[AUTHID_BITMAPCAPS_BITMAPCOMPRESSIONFLAG] =
+            Entry("multipleRectangleSupport", INPUT_UNSIGNED, STORAGE_UINT16, &caps.multipleRectangleSupport);
+    }
+
+    virtual bool match(const char * name) {
+        return 0 == strncasecmp(this->name, name, sizeof(this->name));
+    }
+
+    virtual void set_value(const char * section, const char * key, const char * value) {
+        TODO("parsing like this is very, very inefficient, change that later")
+
+        if (!this->match(section)) {
+            return;
+        }
+        for (size_t i = 0; i < NUMBER_OF_CAPS; i++) {
+            if (this->entries[i].set_value(key, value)) {
+                return;
+            }
+        }
+    }
+};
+
+struct OrderCapsLoader : public ConfigurationHolder
+{
+    char name[64];
+
+    enum {
         AUTHID_ORDERCAPS_DESKTOPSAVEXGRANULARITY,
         AUTHID_ORDERCAPS_DESKTOPSAVEYGRANULARITY,
         AUTHID_ORDERCAPS_MAXIMUMORDERLEVEL,
@@ -218,10 +292,124 @@ struct GeneralCapsLoader : public ConfigurationHolder
         AUTHID_ORDERCAPS_ORDERSUPPORT_ELLIPSESC,
         AUTHID_ORDERCAPS_ORDERSUPPORT_ELLIPSECB,
         AUTHID_ORDERCAPS_ORDERSUPPORT_GLYPHINDEX,
-        AUTHID_ORDERCAPS_ORDERSUPPORT_TEXTFLAGS,
-        AUTHID_ORDERCAPS_ORDERSUPPORT_ORDERSUPPORTEXFLAGS,
-        AUTHID_ORDERCAPS_ORDERSUPPORT_DESKTOPSAVESIZE,
-        AUTHID_ORDERCAPS_ORDERSUPPORT_TEXTANSICODEPAGE,
-*/
+        AUTHID_ORDERCAPS_TEXTFLAGS,
+        AUTHID_ORDERCAPS_ORDERSUPPORTEXFLAGS,
+        AUTHID_ORDERCAPS_DESKTOPSAVESIZE,
+        AUTHID_ORDERCAPS_TEXTANSICODEPAGE,
+
+        NUMBER_OF_CAPS
+    };
+
+    Entry entries[NUMBER_OF_CAPS];
+
+    OrderCapsLoader(OrderCaps & caps)
+    {
+        strncpy(this->name, "Order Capability Set", sizeof(this->name));
+
+        this->entries[AUTHID_ORDERCAPS_DESKTOPSAVEXGRANULARITY] =
+            Entry("desktopSaveXGranularity", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopSaveXGranularity);
+
+        this->entries[AUTHID_ORDERCAPS_DESKTOPSAVEYGRANULARITY] =
+            Entry("desktopSaveYGranularity", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopSaveYGranularity);
+
+        this->entries[AUTHID_ORDERCAPS_MAXIMUMORDERLEVEL] =
+            Entry("maximumOrderLevel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.maximumOrderLevel);
+
+        this->entries[AUTHID_ORDERCAPS_NUMBERFONTS] =
+            Entry("numberFonts", INPUT_UNSIGNED, STORAGE_UINT16, &caps.numberFonts);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERFLAGS] =
+            Entry("orderFlags", INPUT_UNSIGNED, STORAGE_UINT16, &caps.orderFlags);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_DSTBLT] =
+            Entry("TS_NEG_DSTBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_DSTBLT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_PATBLT] =
+            Entry("TS_NEG_PATBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_PATBLT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_SCRBLT] =
+            Entry("TS_NEG_SCRBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_SCRBLT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_MEMBLT] =
+            Entry("TS_NEG_MEMBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MEMBLT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_MEM3BLT] =
+            Entry("TS_NEG_MEM3BLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MEM3BLT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_DRAWNINEGRID] =
+            Entry("TS_NEG_DRAWNINEGRID_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_LINETO] =
+            Entry("TS_NEG_LINETO_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_LINETO_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_MULTIDRAWNINEGRID] =
+            Entry("TS_NEG_MULTI_DRAWNINEGRID_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_SAVEBITMAP] =
+            Entry("TS_NEG_SAVEBITMAP_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_SAVEBITMAP_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_MULTIDSTBLT] =
+            Entry("TS_NEG_MULTIDSTBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_MULTIPATBLT] =
+            Entry("TS_NEG_MULTIPATBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_MULTISCRBLT] =
+            Entry("TS_NEG_MULTISCRBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_MULTIOPAQUERECT] =
+            Entry("TS_NEG_MULTIOPAQUERECT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_FASTINDEX] =
+            Entry("TS_NEG_FAST_INDEX_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_FAST_INDEX_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_POLYGONSC] =
+            Entry("TS_NEG_POLYGON_SC_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_POLYGONCB] =
+            Entry("TS_NEG_POLYGON_CB_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_POLYLINE] =
+            Entry("TS_NEG_POLYLINE_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_POLYLINE_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_FASTGLYPH] =
+            Entry("TS_NEG_FAST_GLYPH_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_ELLIPSESC] =
+            Entry("TS_NEG_ELLIPSE_SC_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_ELLIPSECB] =
+            Entry("TS_NEG_ELLIPSE_CB_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORT_GLYPHINDEX] =
+            Entry("TS_NEG_INDEX_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_INDEX_INDEX]);
+
+        this->entries[AUTHID_ORDERCAPS_ORDERSUPPORTEXFLAGS] =
+            Entry("orderSupportExFlags", INPUT_UNSIGNED, STORAGE_UINT16, &caps.orderSupportExFlags);
+
+        this->entries[AUTHID_ORDERCAPS_DESKTOPSAVESIZE] =
+            Entry("desktopSaveSize", INPUT_UNSIGNED, STORAGE_UINT32, &caps.desktopSaveSize);
+
+        this->entries[AUTHID_ORDERCAPS_TEXTANSICODEPAGE] =
+            Entry("textANSICodePage", INPUT_UNSIGNED, STORAGE_UINT16, &caps.textANSICodePage);
+    }
+
+    virtual bool match(const char * name) {
+        return 0 == strncasecmp(this->name, name, sizeof(this->name));
+    }
+
+    virtual void set_value(const char * section, const char * key, const char * value) {
+        TODO("parsing like this is very, very inefficient, change that later")
+
+        if (!this->match(section)) {
+            return;
+        }
+        for (size_t i = 0; i < NUMBER_OF_CAPS; i++) {
+            if (this->entries[i].set_value(key, value)) {
+                return;
+            }
+        }
+    }
+};
 
 #endif

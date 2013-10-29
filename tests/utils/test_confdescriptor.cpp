@@ -48,3 +48,61 @@ BOOST_AUTO_TEST_CASE(TestConfigDescriptorFromFile)
     BOOST_CHECK_EQUAL(generalcaps.refreshRectSupport,    1);
     BOOST_CHECK_EQUAL(generalcaps.suppressOutputSupport, 1);
 }
+
+BOOST_AUTO_TEST_CASE(TestConfigDescriptorFromFile1)
+{
+    BitmapCaps       bitmapcaps;
+    BitmapCapsLoader bitmapcaps_loader(bitmapcaps);
+
+    ConfigurationLoader cfg_loader(bitmapcaps_loader, FIXTURES_PATH "/capsset.ini");
+
+    BOOST_CHECK_EQUAL(bitmapcaps.preferredBitsPerPixel,    8);
+    BOOST_CHECK_EQUAL(bitmapcaps.receive1BitPerPixel,      1);
+    BOOST_CHECK_EQUAL(bitmapcaps.receive4BitsPerPixel,      1);
+    BOOST_CHECK_EQUAL(bitmapcaps.receive8BitsPerPixel,      1);
+    BOOST_CHECK_EQUAL(bitmapcaps.desktopWidth,             1024);
+    BOOST_CHECK_EQUAL(bitmapcaps.desktopHeight,            768);
+    BOOST_CHECK_EQUAL(bitmapcaps.desktopResizeFlag,        1);
+    BOOST_CHECK_EQUAL(bitmapcaps.bitmapCompressionFlag,    1);
+    BOOST_CHECK_EQUAL(bitmapcaps.highColorFlags,           0);
+    BOOST_CHECK_EQUAL(bitmapcaps.drawingFlags,             0);
+    BOOST_CHECK_EQUAL(bitmapcaps.multipleRectangleSupport, 1);
+}
+
+BOOST_AUTO_TEST_CASE(TestConfigDescriptorFromFile2)
+{
+    OrderCaps       ordercaps;
+    OrderCapsLoader ordercaps_loader(ordercaps);
+
+    ConfigurationLoader cfg_loader(ordercaps_loader, FIXTURES_PATH "/capsset.ini");
+
+    BOOST_CHECK_EQUAL(ordercaps.desktopSaveXGranularity,                       1);
+    BOOST_CHECK_EQUAL(ordercaps.desktopSaveYGranularity,                       20);
+    BOOST_CHECK_EQUAL(ordercaps.maximumOrderLevel,                             1);
+    BOOST_CHECK_EQUAL(ordercaps.numberFonts,                                   0);
+    BOOST_CHECK_EQUAL(ordercaps.orderFlags,                                    34);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_DSTBLT_INDEX],             1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_PATBLT_INDEX],             1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_SCRBLT_INDEX],             1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_MEMBLT_INDEX],             1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_MEM3BLT_INDEX],            1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX],       0);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_LINETO_INDEX],             1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX], 0);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_SAVEBITMAP_INDEX],         1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX],        1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_MULTIPATBLT_INDEX],        1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_MULTISCRBLT_INDEX],        1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX],    1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_FAST_INDEX_INDEX],         1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_POLYGON_SC_INDEX],         1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_POLYGON_CB_INDEX],         1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_POLYLINE_INDEX],           1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_FAST_GLYPH_INDEX],         1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX],         1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX],         1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_INDEX_INDEX],              1);
+    BOOST_CHECK_EQUAL(ordercaps.orderSupportExFlags,                           0);
+    BOOST_CHECK_EQUAL(ordercaps.desktopSaveSize,                               1000000);
+    BOOST_CHECK_EQUAL(ordercaps.textANSICodePage,                              0);
+}
