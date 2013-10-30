@@ -378,7 +378,7 @@ BOOST_AUTO_TEST_CASE(TestOneRedScreen)
 BOOST_AUTO_TEST_CASE(TestSmallImage)
 {
     const int groupid = 0;
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, 0x100);
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "sample", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 20, 10);
     RDPDrawable drawable(20, 10);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
@@ -418,7 +418,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, 0x100);
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);
@@ -542,7 +542,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
 {
     BOOST_CHECK(1);
     const int groupid = 0;
-    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, 0x100);
+    OutFilenameTransport trans(SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "bogus", ".png", groupid, NULL, 0x100);
     Rect scr(0, 0, 800, 600);
     RDPDrawable drawable(800, 600);
     ImageCapture d(trans, scr.cx, scr.cy, drawable.drawable);

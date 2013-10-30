@@ -37,8 +37,13 @@ public:
             const char * const filename,
             const char * const extension,
             const int groupid,
+            auth_api * authentifier = NULL,
             unsigned verbose = 0)
     {
+        if (authentifier) {
+            this->set_authentifier(*authentifier);
+        }
+
         RIO_ERROR status1 = sq_init_outfilename(&this->seq, format, prefix, filename, extension, groupid);
         if (status1 != RIO_ERROR_OK){
             LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", status1);
@@ -61,6 +66,7 @@ public:
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0){
+            LOG(LOG_INFO, "Write to transport failed (F): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }
@@ -135,6 +141,7 @@ public:
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0){
+            LOG(LOG_INFO, "Write to transport failed: code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }

@@ -35,10 +35,14 @@ public:
     SQ  * seq;
 
     OutmetaTransport(const char * path, const char * basename, timeval now,
-        uint16_t width, uint16_t height, const int groupid,
+        uint16_t width, uint16_t height, const int groupid, auth_api * authentifier = NULL,
         unsigned verbose = 0)
     : seq(NULL)
     {
+        if (authentifier) {
+            this->set_authentifier(*authentifier);
+        }
+
         char filename[1024];
         snprintf(filename, sizeof(filename), "%s-%06u", basename, getpid());
         char header1[64];
@@ -47,6 +51,7 @@ public:
             filename, ".mwrm", header1, "0", "", &now, groupid);
         if (status < 0)
         {
+            LOG(LOG_INFO, "Write to transport failed (M): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }
@@ -69,6 +74,7 @@ public:
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0)
         {
+            LOG(LOG_INFO, "Write to transport failed (M): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }
@@ -85,6 +91,7 @@ public:
         RIO_ERROR res = rio_seek(&this->rio, offset, whence);
         if (res != RIO_ERROR_OK)
         {
+            LOG(LOG_INFO, "Set position within transport failed: code=%d", errno);
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
@@ -115,9 +122,13 @@ public:
 
     CryptoOutmetaTransport(const char * path, const char * hash_path,
         const char * basename, timeval now, uint16_t width, uint16_t height,
-        const int groupid, unsigned verbose = 0)
+        const int groupid, auth_api * authentifier = NULL, unsigned verbose = 0)
     : seq(NULL)
     {
+        if (authentifier) {
+            this->set_authentifier(*authentifier);
+        }
+
         char filename[1024];
         snprintf(filename, sizeof(filename), "%s-%06u", basename, getpid());
         char header1[64];
@@ -127,6 +138,7 @@ public:
             &now, groupid);
         if (status < 0)
         {
+            LOG(LOG_INFO, "Write to transport failed (MC): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }
@@ -149,6 +161,8 @@ public:
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0)
         {
+            LOG(LOG_INFO, "Write to transport failed (MC): code=%d", errno);
+            this->authentifier.report("")
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }
@@ -162,6 +176,7 @@ public:
 
     virtual void seek(int64_t offset, int whence) throw(Error)
     {
+        LOG(LOG_INFO, "Set position within transport failed: code=%d", errno);
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 
