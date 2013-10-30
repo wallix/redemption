@@ -170,6 +170,7 @@ struct mod_rdp : public mod_api {
 
     bool enable_polyline;
     bool enable_ellipsesc;
+    bool enable_ellipsecb;
 
     mod_rdp( Transport * trans
            , const char * target_user
@@ -243,6 +244,7 @@ struct mod_rdp : public mod_api {
         , certificate_change_action(certificate_change_action)
         , enable_polyline(false)
         , enable_ellipsesc(false)
+        , enable_ellipsecb(false)
     {
         if (this->verbose & 1)
         {
@@ -401,6 +403,13 @@ struct mod_rdp : public mod_api {
                     LOG(LOG_INFO, "RDP Extra orders=EllipseSC");
                 }
                 this->enable_ellipsesc = true;
+                break;
+            case 26:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=EllipseCB");
+                }
+                this->enable_ellipsecb = true;
+                break;
             default:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Unknown Extra orders");
@@ -2017,7 +2026,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[UnusedIndex5]                    = 1;
         order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb ? 1 : 0);
         order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
 
         order_caps.textFlags                                     = 0x06a1;
@@ -2039,6 +2048,7 @@ struct mod_rdp : public mod_api {
                                          order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX, order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX, order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_INDEX_INDEX, order_caps.orderSupport);
 
         // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",

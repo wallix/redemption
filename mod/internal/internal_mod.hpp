@@ -59,12 +59,15 @@ public:
         return this->screen.rect;
     }
 
-    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t* data, size_t length, size_t chunk_size, int flags)
-    {
+    virtual void send_to_front_channel(const char * const mod_channel_name, uint8_t * data, size_t length, size_t chunk_size,
+        int flags) {
         const CHANNELS::ChannelDef * front_channel =
             this->front.get_channel_list().get_by_name(mod_channel_name);
-        if (front_channel){
+        if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+        }
+        else {
+            LOG(LOG_ERR, "Channel \"%s\" is not fonud!", mod_channel_name);
         }
     }
 

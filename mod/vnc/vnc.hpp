@@ -405,7 +405,6 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                 this->front.server_set_pointer(cursor);
 
                 LOG(LOG_INFO, "VNC connection complete, connected ok\n");
-                TODO("Clearing the front screen could be done in session");
                 this->front.begin_update();
                 RDPOpaqueRect orect(Rect(0, 0, this->width, this->height), 0);
                 this->front.draw(orect, Rect(0, 0, this->width, this->height));
@@ -666,7 +665,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 
                 // The text encoding used for name-string is historically undefined but it is strongly recommended to use UTF-8 (see String Encodings for more details).
 
-                TODO(" not yet supported");
+                TODO("not yet supported");
                 // If the Tight Security Type is activated, the server init
                 // message is extended with an interaction capabilities section.
 
@@ -854,7 +853,6 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                     }
                 }
 
-                TODO("Maybe the resize should be done in session ?");
                 switch (this->front.server_resize(this->width, this->height, this->bpp)){
                 case 0:
                     if (this->verbose) {
@@ -1480,7 +1478,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
             }
             break;
             case 0xffffff11: /* cursor */
-            TODO(" see why we get these empty rects ?");
+            TODO("see why we get these empty rects ?");
             if (cx > 0 && cy > 0) {
                 // 7.7.2   Cursor Pseudo-encoding
                 // ------------------------------
@@ -1764,7 +1762,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             LOG(LOG_INFO, "mod_vnc::send_to_mod_channel");
         }
 
-        if (this->state == UP_AND_RUNNING) {
+        if (this->state != UP_AND_RUNNING) {
             return;
         }
 
@@ -1792,11 +1790,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         }
 
         // specific treatement depending on msgType
-        BStream stream(chunk.size());
-        TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)");
-        stream.out_copy_bytes(chunk.get_data(), chunk.size());
-        stream.mark_end();
-        stream.rewind();
+        SubStream stream(chunk, 0, chunk.size());
 
         RDPECLIP::RecvFactory recv_factory(stream);
 

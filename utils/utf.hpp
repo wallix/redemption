@@ -412,6 +412,7 @@ UTF8toUnicode_exit:
     return i_t;
 }
 
+/*
 TODO("API may be clearer if we always return a len and an error code in case of failure (error defaulting to 0)"
      "Another option could be to be to return a negative value in cas of error like other C functions");
 static inline bool UTF8toUnicodeWithCheck(const uint8_t ** s, size_t s_len, uint32_t ** t, size_t t_len)
@@ -429,7 +430,7 @@ static inline bool UTF8toUnicodeWithCheck(const uint8_t ** s, size_t s_len, uint
             case 4: case 5: case 6: case 7:
             ucode = c;
             break;
-            /* handle U+0080..U+07FF inline : 2 bytes sequences */
+            // handle U+0080..U+07FF inline : 2 bytes sequences
             case 0xC: case 0xD:
                 if ((i+1 >= s_len)
                    ||((c & 0xFE) == 0xC0)
@@ -439,7 +440,7 @@ static inline bool UTF8toUnicodeWithCheck(const uint8_t ** s, size_t s_len, uint
                 ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
                 i+=1;
             break;
-             /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
+             // handle U+8FFF..U+FFFF inline : 3 bytes sequences
             case 0xE:
                 if ((i+2 >= s_len)
                    ||((source[i+1] >> 6) != 2)
@@ -474,6 +475,7 @@ UTF8toUnicode_exit:
     *t = target + i_t;
     return res;
 }
+*/
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
