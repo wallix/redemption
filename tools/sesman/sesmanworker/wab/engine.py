@@ -5,6 +5,8 @@ from logger import Logger
 
 from model import RightInfo, UserInfo
 
+ERPM = False
+
 class Engine(object):
 
     def __init__(self):
@@ -209,10 +211,17 @@ class Engine(object):
         return app_params
 
     def get_target_password(self, target_device):
-        Logger().info("get_target_password: target_device=%s" % target_device)
-        target_password = self.wabengine.get_target_password(target_device)
-        Logger().info("get_target_password done")
-        return target_password
+        if ERPM:
+            Logger().info("get_target_password: target_device=%s" % target_device)
+            target_password = self.wabengine.get_target_password(target_device)
+            Logger().info("get_target_password done")
+            return target_password
+        else:
+            password = target_device.account.password
+            if not target_device.account.password:
+                password = u''
+            return password
+
 
     def release_target_password(self, target_device):
         Logger().info("release_target_password: target_device=%s" % target_device)

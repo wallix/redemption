@@ -216,7 +216,9 @@ public:
     void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
                    int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
                    uint32_t PenColor, const Rect & clip) {
-        TODO("We should perform a true intersection between line and clip rectangle, not cheat as below.");
+        TODO("We should perform a true intersection between line and clip rectangle,"
+             " not cheat as below."
+             " Seems really buggy if a end point is outside of the clip");
         // enlarge_to compute a new rect including old rect and added point
         const Rect & line_rect = Rect(nXStart, nYStart, 1, 1).enlarge_to(nXEnd, nYEnd);
         if (line_rect.intersect(clip).isempty()){
