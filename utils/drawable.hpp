@@ -217,6 +217,7 @@ struct Drawable {
         :               12);
     }
 
+
     void draw_12x7_digits(uint8_t * rgbpixbuf, unsigned width, unsigned lg_message,
             const char * message, const char * old_message) {
         const char * digits =

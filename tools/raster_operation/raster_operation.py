@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest
 import re
+import sys
 
 binop = {
     'a': lambda a, b: "(%s & %s)" % (a , b),
@@ -60,11 +61,33 @@ class TerRop:
     break;""" % (self.hexa, name, self.hexa, argstring)
         return result
 
+class BinRop:
+    def __init__(self, hexa, rpn):
+        self.hexa = hexa
+        self.rpn = rpn
+
+    def print_functor(self):
+        expr = polish_eval(self.rpn)
+        result = """struct Op2_%s  // %s
+{
+    uint8_t operator()(uint8_t dest, uint8_t pen)
+    {
+        return %s;
+    }
+};
+""" % (self.hexa, self.rpn, expr)
+        return result
+
+    def print_case(self, name, args):
+        argstring = "(" + ", ".join(args) + ")"
+        result = """case %s:
+    this->%s<Op2_%s>%s;
+    break;""" % (self.hexa, name, self.hexa, argstring)
+        return result
+
 
 def print_switch(ropl, name, args):
-    cases = []
-    for rop in ropl:
-        cases.append(rop.print_case(name, args))
+    cases = [rop.print_case(name, args) for rop in ropl]
     result = """switch(rop) {
 %s
 default:
@@ -81,18 +104,28 @@ def write_rop3(ropl, output_path, fname, args):
     f.write(print_switch(ropl, fname, args))
     f.close()
 
+def write_struct(ropl, output_path):
+    f = open(output_path, "w")
+    for rop in ropl:
+        f.write(rop.print_functor())
+    f.close()
+
+def write_switch(ropl, output_path, fname, args):
+    f = open(output_path, "w")
+    f.write(print_switch(ropl, fname, args))
+    f.close()
+
 def read_rop3(file_path):
     f = open(file_path)
+    ropclass = TerRop
+    if 'ROP2' in f.readline():
+        ropclass = BinRop
     g = f.read().split('\n')
-    hexalist = []
-    oplist = []
-    for line in g:
-        if re.match(r'^0x', line):
-            hexalist.append(line)
-        elif re.match(r'^RPN', line):
-            oplist.append(line.split(" ")[1])
+    hexalist = [line for line in g if re.match(r'^0x', line)]
+    oplist = [line.split(" ")[1] for line in g if re.match(r'^RPN', line)]
     f.close()
-    return map(TerRop, hexalist, oplist)
+    return map(ropclass, hexalist, oplist)
+
 
 class TestPolishEval(unittest.TestCase):
     def test1(self):
@@ -103,7 +136,17 @@ class TestPolishEval(unittest.TestCase):
         self.assertEqual("~(pen | (dest ^ source))", polish_eval('PDSxon'))
         self.assertEqual("~(pen | (source & ~dest))", polish_eval('PSDnaon'))
 
-if __name__ == '__main__':
-    rop_list = read_rop3("rop3.txt")
-    write_rop3(rop_list, "rop3.hpp", "draw_ellipse", ["el", "fill", "fore_color", "back_color"])
-    # unittest.main()
+# if __name__ == '__main__':
+#     rop_list = read_rop3("rop3.txt")
+#     write_rop3(rop_list, "rop3.hpp", "draw_ellipse", ["el", "fill", "color"])
+#     # unittest.main()
+
+option = sys.argv[1]
+target = sys.argv[2]
+target_name = target.split(".")[0]
+if option == 'switch':
+    rop_list = read_rop3(target)
+    write_switch(rop_list, target_name + "_switch.hpp", sys.argv[3], sys.argv[4:])
+elif option == 'struct':
+    rop_list = read_rop3(target)
+    write_struct(rop_list, target_name + "_struct.hpp")
