@@ -109,18 +109,6 @@ static inline int ip_connect(const char* ip, int port,
     u.s4.sin_addr.s_addr = inet_addr(ip);
 
     if (u.s4.sin_addr.s_addr == INADDR_NONE) {
-/*
-    TODO(" gethostbyname is obsolete use new function getnameinfo");
-        LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
-        struct hostent *h = gethostbyname(ip);
-        if (!h) {
-            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
-                ip, errno, strerror(errno));
-            return -1;
-        }
-        u.s4.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
-LOG(LOG_INFO, "s_addr=%lu", u.s4.sin_addr.s_addr);
-*/
         struct addrinfo * addr_info = NULL;
         int               result    = getaddrinfo(ip, NULL, NULL, &addr_info);
 

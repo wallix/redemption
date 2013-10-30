@@ -97,14 +97,6 @@ BOOST_AUTO_TEST_CASE(TestSocketTransport)
     ucs.s4.sin_port = htons(4444);
     ucs.s4.sin_addr.s_addr = inet_addr(ip);
     if (ucs.s4.sin_addr.s_addr == INADDR_NONE) {
-/*
-        struct hostent *h = gethostbyname(ip);
-        if (!h) {
-            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n", ip, errno, strerror(errno));
-            run = false;
-        }
-        ucs.s4.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
-*/
         struct addrinfo * addr_info = NULL;
         int               result    = getaddrinfo(ip, NULL, NULL, &addr_info);
 

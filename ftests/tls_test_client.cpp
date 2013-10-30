@@ -33,16 +33,6 @@ int tcp_connect(const char *host, int port)
     ucs.s4.sin_family = AF_INET;
     ucs.s4.sin_port = htons(port);
 
-/*
-    struct hostent *hp = gethostbyname(host);
-
-    if(!hp){
-        fprintf(stderr,"Failed searching DNS for host");
-        exit(0);
-    }
-
-    ucs.s4.sin_addr = *(struct in_addr*)hp->h_addr_list[0];
-*/
     struct addrinfo * addr_info = NULL;
     int               result    = getaddrinfo(host, NULL, NULL, &addr_info);
 
