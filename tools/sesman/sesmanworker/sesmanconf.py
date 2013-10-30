@@ -87,7 +87,7 @@ class SesmanConfig(object):
             , u'unexpected_error'       : u"Erreur inattendue"
             , u'unexpected_error_key %s': u"Erreur inattendue sur la clef %s"
             , u'auth_failed_wab %s'     : u"Echec de l'authentification pour l'utilisateur du wab %s"
-            , u'error_recording_path %s': u"Impossible d'obtenir le répertoire d'enregistrement %s"
+            , u'error_creating_record_path %s': u"Impossible d'obtenir le répertoire d'enregistrement %s"
             , u'session_recorded'       : u"Attention! Votre session va être enregistrée dans un format électronique."
             , u'failed_select_target %s': u"Impossible d'obtenir le protocole cible pour %s"
             , u'valid_authorisation'    : u"Veuillez valider l'autorisation sur votre navigateur"
@@ -120,6 +120,23 @@ class SesmanConfig(object):
             , u'trans_manager_close_cnx': u"Le gestionnaire de session a coupé la connexion"
             , u'changepassword'         : u"Vous devez changer votre mot de passe<br>"
                                          +u"pour vous connecter."
+                                         
+            , u"Connection closed by client": u'Connection terminée par le client'
+            , u"Empty user, try again": u"Utilisteur non défini, reessayez."
+            , u"Error while retreiving rights for user %s": u"Erreur de récupération des droits de l'utilisateur %s"
+            , u"Failed to get authorisations for %s":  u"Erreur de récupération des autorisations de %s"
+            , u"Invalid user, try again": u"Utilisateur non valide, réessayez."
+            , u"No error": u"Pas d'erreur"
+            , u"Target %s not found in user rights": u"Cible %s inconnu dans les droits de l'utilisateur"
+            , u"Target unreachable": u"Target unreachable"
+            , u"Too many login failures or selector orders, closing": u"Trop de login incorrect, fermeture"
+            , u"Trace writer failed for %s": u"Echec de l'enregistrement des traces pour %s"
+            , u"x509 browser authentication not validated by user": u"Authentification X509 via le navigateur non validée."
+            , u'not_accept_message':u"Echec d'affichage du mot de passe de confirmation"
+            , u'Unknown proxy type': u'Type de proxy inconnu'
+            , u'Username_parse_error %s': u"Erreur de parsing du nom d'utilisateur %s"
+            , u'Your password will expire in %s days. Please change it.': u'Votre mot de passe expirera dans %s jours. Vous devriez le changer.'
+            , u'Your password will expire soon. Please change it.': u"L'expiration de votre mot de passe est imminente. Saisissez un nouveau mot de passe."
             }
         , u'en':
             { u'login'                  : u"login"
@@ -141,7 +158,7 @@ class SesmanConfig(object):
             , u'unexpected_error'       : u"Unexpected error"
             , u'unexpected_error_key %s': u"Unexpected error %s checking keys"
             , u'auth_failed_wab %s'     : u"Authentication failed for wab user %s"
-            , u'error_recording_path %s': u"Failed to get recording path for %s"
+            , u'error_creating_record_path %s': u"Failed to get recording path for %s"
             , u'session_recorded'       : u"Warning! Your remote session will be recorded and kept in electronic format."
             , u'failed_select_target %s': u"Failed to select target protocol for %s"
             , u'valid_authorisation'    : u"Validate your authorisation on your browser"
@@ -178,6 +195,22 @@ class SesmanConfig(object):
             , u'forceChangePwd'         : u"You must change your password"
             , u'trans_manager_close_cnx': u"Connection closed by manager"
             , u'changepassword'         : u"You must change your password to login"
+            , u"Connection closed by client": u"Connection closed by client"
+            , u"Empty user, try again": u"Empty user, try again"
+            , u"Error while retreiving rights for user %s": u"Error while retreiving rights for user %s"
+            , u"Failed to get authorisations for %s":  u"Failed to get authorisations for %s"
+            , u"Invalid user, try again": u"Invalid user, try again"
+            , u"No error": u"No error"
+            , u"Target %s not found in user rights": u"Target %s not found in user rights"
+            , u"Target unreachable": u"Target unreachable"
+            , u"Too many login failures or selector orders, closing": u"Too many login failures or selector orders, closing"
+            , u"Trace writer failed for %s": u"Trace writer failed for %s"
+            , u"x509 browser authentication not validated by user": u"x509 browser authentication not validated by user"
+            , u'not_accept_message':u'Unable to display confirmation message'
+            , u'Unknown proxy type': u'Unknown proxy type'
+            , u'Username_parse_error %s': u'Username_parse_error %s'
+            , u'Your password will expire in %s days. Please change it.': u'Your password will expire in %s days. Please change it.'
+            , u'Your password will expire soon. Please change it.': u'Your password will expire soon. Please change it.'
             }
         }
 

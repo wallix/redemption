@@ -1031,14 +1031,12 @@ class Engine(object):
         self.wab_login = None
         self.user = User()
         self._trace_encryption = False
-        self._password_expiration_date = "soon"
 
     def get_trace_encryption(self):
         return self._trace_encryption
 
     def password_expiration_date(self):
-        _data = self.password_expiration_date
-        #return u"Your password will expire soon."
+        #return false or number of days
         return False
 
 

@@ -61,8 +61,6 @@ class Sesman():
     #===============================================================================
         self.proxy_conx  = conn
         self.addr        = addr
-        self._error      = None
-        self.path        = None
         self.full_path   = None
         self._license_ok = None
 
@@ -150,21 +148,24 @@ class Sesman():
         except AuthentifierSocketClosed, e:
             raise
         except Exception, e:
-            _status, _error = False, u"Failed to read data from rdpproxy authentifier socket"
-            import traceback
-            Logger().info("%s <<<%s>>>" % (_error, traceback.format_exc(e)))
+#            import traceback
+#            Logger().info("%s <<<%s>>>" % (u"Failed to read data from rdpproxy authentifier socket", traceback.format_exc(e)))
             raise AuthentifierSocketClosed()
 
         if _status:
             _elem = _data.split('\n')
 
             if len(_elem) & 1 == 0:
-                _status, _error = False, u"Odd number of items in authentication protocol"
+                Logger().info(u"Odd number of items in authentication protocol")
+                _status = False
+
         if _status:
             try:
                 _data = dict(zip(_elem[0::2], _elem[1::2]))
             except Exception, e:
-                _status, _error = False, u"Error while parsing received data %s" % e
+                import traceback
+                Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
+                _status = False
 
             if DEBUG:
                 import pprint
@@ -250,9 +251,6 @@ class Sesman():
         return _status, _error
 
     def interactive_accept_message(self, data_to_send):
-        u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
-        #TODO: we should not have to care about target login or device to display messages
-        # we should be able to send messages before or after defining target seamlessly
         data_to_send.update({ u'proto_dest'    : u'INTERNAL'
                             , u'accept_message': MAGICASK
                             , u'display_message': u''
@@ -267,7 +265,6 @@ class Sesman():
 
 
     def interactive_close(self, target, message):
-        u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
         data_to_send = { u'error_message'  : message
                        , u'trans_ok'       : u'OK'
                        , u'proto_dest'     : u'INTERNAL'
@@ -341,7 +338,7 @@ class Sesman():
                 import traceback
                 Logger().info("<<<%s>>>" % traceback.format_exc(e))
                 # NB : this exception may be raised because the user must change his password
-                return False, TR(u"Error while retreiving rights for user %s" % self.shared[u'login'])
+                return False, TR(u"Error while retreiving rights for user %s") % self.shared[u'login']
 
         except engine.AuthenticationFailed, e:
             import traceback
@@ -362,7 +359,7 @@ class Sesman():
         u""" Send service pages to proxy until the selected service is returned.
         """
 
-        _status, _error = None, u"No error"
+        _status, _error = None, TR(u"No error")
         Logger().info(u"get_service %s" % (_status))
 
         while _status is None:
@@ -470,7 +467,7 @@ class Sesman():
 
                         _status, _error = self.parse_username()
                         if not _status:
-                            Logger().info(u"Invalid user %s, try again", self.shared[u'login'])
+                            Logger().info(u"Invalid user %s, try again" % self.shared[u'login'])
                             return None, TR(u"Invalid user, try again")
 
                         _status = None # One more loop
@@ -500,7 +497,7 @@ class Sesman():
                                                                        )
                     _status = True
                 else:
-                    _status, _error = False, u"Target unreachable"
+                    _status, _error = False, TR(u"Target unreachable")
 
             else:
                 self.send_data({u'login': MAGICASK})
@@ -534,9 +531,12 @@ class Sesman():
     def check_password_expiration_date(self):
         _status, _error = True, u''
         try:
-            Logger().info("password_expiration_date = %s" % self.engine.password_expiration_date())
-            message = self.engine.password_expiration_date()
-            if message:
+            days = self.engine.password_expiration_date()
+            if not message is False:
+                if days == 0:
+                    message = TR(u'Your password will expire soon. Please change it.')
+                else:
+                    message = TR(u'Your password will expire in %s days. Please change it.') % days
                 _status, _error = self.interactive_display_message({u'message': message})
         except Exception, e:
             import traceback
@@ -545,6 +545,8 @@ class Sesman():
 
 
     def check_video_recording(self, isRecorded):
+        Logger().info(u"Checking video")
+
         _status, _error = True, u''
         data_to_send = {
               u'is_rec'         : u'False'
@@ -554,7 +556,7 @@ class Sesman():
 
         try:
             self.full_path = u""
-            self.path = u""
+            video_path = u""
             if isRecorded:
                 try:
                     os.stat(RECORD_PATH)
@@ -562,7 +564,8 @@ class Sesman():
                     try:
                         os.mkdir(RECORD_PATH)
                     except Exception:
-                        _status, _error = False, TR(u'error_recording_path %s') % self._full_user_device_account
+                        Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
+                        _status, _error = False, TR(u'error_creating_record_path %s') % RECORD_PATH
                 if _status:
                     # Naming convention : {username}@{userip},{account}@{devicename},YYYYMMDD-HHMMSS,{wabhostname},{uid}
                     # NB :  backslashes are replaced by pipes for IE compatibility
@@ -577,11 +580,10 @@ class Sesman():
                     # remove all "dangerous" characters in filename
                     import re
                     video_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", video_path) 
-                    self.path = video_path
 
-                    Logger().debug(u"This session will be recorded in %s" % self.path)
+                    Logger().info(u"Session will be recorded in %s" % video_path)
 
-                    self.full_path = RECORD_PATH + self.path
+                    self.full_path = RECORD_PATH + video_path
                     data_to_send[u'is_rec'] = True
                     data_to_send[u"file_encryption"] = u'True' if self._enable_encryption else u'False'
                     #TODO remove .flv extention and adapt ReDemPtion proxy code
@@ -602,7 +604,7 @@ class Sesman():
         except Exception, e:
             import traceback
             Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
-            _status, _error = False, u"Connection closed by client"
+            _status, _error = False, TR(u"Connection closed by client")
 
         return _status, _error
 
@@ -640,8 +642,8 @@ class Sesman():
                 _status, _error = self.get_service()
 
         if tries <= 0:
-            Logger().info(u"Too many login failures %s" % (_status))
-            _status, _error = False, u"Too many login failures or selector orders, closing"
+            Logger().info(u"Too many login failures")
+            _status, _error = False, TR(u"Too many login failures or selector orders, closing")
 
         if _status:
             Logger().info(u"Asking service %s@%s" % (self.shared[u'target_login'], self.shared[u'target_device']))
@@ -669,15 +671,15 @@ class Sesman():
                         selected_target = self.get_selected_target(u'VNC')
 
                 if not selected_target:
-                    _status = False
-                    _error = u"Target (%s@%s:%s) not found in user rights" % ( self.shared[u'target_login']
-                                                                        , self.shared[u'target_device']
-                                                                        , self.shared[u'proto_dest']
-                                                                        )
-                    Logger().info(u"%s" % _error)
+                    _target = u"%s@%s:%s" % ( self.shared[u'target_login']
+                                            , self.shared[u'target_device']
+                                            , self.shared[u'proto_dest'])
+                    _error_log = u"Target %s not found in user rights" % target
+                    Logger().info(u"%s" % _error_log)
+                    _status, _error = False, TR(u"Target %s not found in user rights") % target
 
             except Exception, e:
-                _status, _error = False, u"Failed to get authorisations for %s" % self._full_user_device_account
+                _status, _error = False, TR(u"Failed to get authorisations for %s") % self._full_user_device_account
 
         # Dictionnary that will contain answer to client
 
@@ -686,12 +688,7 @@ class Sesman():
         if _status:
             session_started = False
 
-            Logger().info(u"Checking video")
             _status, _error = self.check_video_recording(selected_target.authorization.isRecorded)
-
-            if not _status:
-                Logger().info(u"Check video error : %s" % _error)
-
 
             Logger().info(u"Fetching protocol")
 
@@ -762,123 +759,122 @@ class Sesman():
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
 
-                password_of_target = self.engine.get_target_password(physical_target)
-                kv[u'target_password'] = password_of_target
-                if not password_of_target:
-                    kv[u'target_password'] = u''
-                    Logger().info(u"auto logon is disabled")
+                try: 
+                    password_of_target = self.engine.get_target_password(physical_target)
+                    kv[u'target_password'] = password_of_target
+                    if not password_of_target:
+                        kv[u'target_password'] = u''
+                        Logger().info(u"auto logon is disabled")
 
-                if not _status:
-                    break
+                    if not _status:
+                        break
 
-                self._physical_target_device = physical_target.resource.device.host
+                    self._physical_target_device = physical_target.resource.device.host
 
-                Logger().info(u"Send critic notification (every attempt to connect to some physical node)")
-                if selected_target.authorization.isCritical:
-                    import socket
-                    self.engine.NotifyConnectionToCriticalEquipment(
-                        (u'APP' if selected_target.resource.application
-                             else selected_target.resource.service.protocol.cn),
-                        self.shared[u'login'],
-                        socket.getfqdn(self.shared[u'ip_client']),
-                        self.shared[u'ip_client'],
-                        self.shared[u'target_login'],
-                        self.shared[u'target_device'],
-                        physical_target.resource.device.host,
-                        ctime(),
-                        None
-                        )
-
-
-                self.engine.update_session(
-                            "%s@%s:%s" % ( physical_target.account.login
-                                         , physical_target.resource.device.cn
-                                         , physical_target.resource.service.protocol.cn))
+                    Logger().info(u"Send critic notification (every attempt to connect to some physical node)")
+                    if selected_target.authorization.isCritical:
+                        import socket
+                        self.engine.NotifyConnectionToCriticalEquipment(
+                            (u'APP' if selected_target.resource.application
+                                 else selected_target.resource.service.protocol.cn),
+                            self.shared[u'login'],
+                            socket.getfqdn(self.shared[u'ip_client']),
+                            self.shared[u'ip_client'],
+                            self.shared[u'target_login'],
+                            self.shared[u'target_device'],
+                            physical_target.resource.device.host,
+                            ctime(),
+                            None
+                            )
 
 
-                if not _status:
-                    Logger().info( u"(%s):%s:REJECTED : %s" \
-                                   % ( mundane(self.shared[u'ip_client'])
-                                     , mundane(self.shared[u'login'])
-                                     , _error
+                    self.engine.update_session(
+                                "%s@%s:%s" % ( physical_target.account.login
+                                             , physical_target.resource.device.cn
+                                             , physical_target.resource.service.protocol.cn))
+
+
+                    if not _status:
+                        Logger().info( u"(%s):%s:REJECTED : User message: \"%s\"" 
+                                       % ( mundane(self.shared[u'ip_client'])
+                                         , mundane(self.shared[u'login'])
+                                         , _error
+                                         )
                                      )
-                                 )
 
-                    kv = { u"login": u""
-                         , u'password': u""
-                         , u'target_login': u""
-                         , u'target_password': u""
-                         , u'target_device': u""
-                         , u'authenticated': u'False'
-                         , u'selector': u"undefined"
-                         , u'rejected': _error
-                         }
+                        kv = { u"login": u""
+                             , u'password': u""
+                             , u'target_login': u""
+                             , u'target_password': u""
+                             , u'target_device': u""
+                             , u'authenticated': u'False'
+                             , u'selector': u"undefined"
+                             , u'rejected': _error
+                             }
 
-                try_next = False
+                    try_next = False
 
-                try:
-                    ###########
-                    # SEND KV #
-                    ###########
-                    self.send_data(kv)
+                    try:
+                        ###########
+                        # SEND KV #
+                        ###########
+                        self.send_data(kv)
 
-                    Logger().info(u"Added connection to active WAB services")
+                        Logger().info(u"Added connection to active WAB services")
 
-                    # Looping on keepalived socket
-                    while True:
-                        Logger().info(u"Waiting on proxy")
-                        r, w, x = select([self.proxy_conx], [], [], 60)
+                        # Looping on keepalived socket
+                        while True:
+                            Logger().info(u"Waiting on proxy")
+                            r, w, x = select([self.proxy_conx], [], [], 60)
 
-                        if self.proxy_conx in r:
-                            _proxy_data, _status, _error = self.receive_data();
+                            if self.proxy_conx in r:
+                                _proxy_data, _status, _error = self.receive_data();
 
-                            if _proxy_data.get(u'keepalive') == MAGICASK:
-                                self.send_data({u'keepalive': u'True'})
+                                if _proxy_data.get(u'keepalive') == MAGICASK:
+                                    self.send_data({u'keepalive': u'True'})
 
-                            if _proxy_data.get(u'reporting'):
-                                _reporting      = _proxy_data.get(u'reporting')
-                                _reporting_data = _reporting[_reporting.index(':') + 1:]
+                                if _proxy_data.get(u'reporting'):
+                                    _reporting      = _proxy_data.get(u'reporting')
+                                    _reporting_data = _reporting[_reporting.index(':') + 1:]
 
-                                _reporting_reason  = _reporting[:_reporting.index(':')]
-                                _reporting_target  = _reporting_data[:_reporting_data.index(':')]
-                                _reporting_message = _reporting_data[_reporting_data.index(':') + 1:]
+                                    _reporting_reason  = _reporting[:_reporting.index(':')]
+                                    _reporting_target  = _reporting_data[:_reporting_data.index(':')]
+                                    _reporting_message = _reporting_data[_reporting_data.index(':') + 1:]
 
-                                Logger().info(u"Reporting: reason=\"%s\" target=\"%s\" message=\"%s\"" % (_reporting_reason, _reporting_target, _reporting_message))
+                                    Logger().info(u"Reporting: reason=\"%s\" target=\"%s\" message=\"%s\"" % (_reporting_reason, _reporting_target, _reporting_message))
 
-                                self.process_report(_reporting_reason, _reporting_target, _reporting_message)
+                                    self.process_report(_reporting_reason, _reporting_target, _reporting_message)
 
-                                if _reporting_reason == u'CONNECTION_FAILED':
-                                    self.reporting_reason  = _reporting_reason
-                                    self.reporting_target  = _reporting_target
-                                    self.reporting_message = _reporting_message
+                                    if _reporting_reason == u'CONNECTION_FAILED':
+                                        self.reporting_reason  = _reporting_reason
+                                        self.reporting_target  = _reporting_target
+                                        self.reporting_message = _reporting_message
 
-                                    try_next = True
+                                        try_next = True
+                                        break
 
-                                    break
-                                elif _reporting_reason == u'FINDPATTERN_KILL':
-                                    Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
-                                    break
+                                    elif _reporting_reason == u'FINDPATTERN_KILL':
+                                        Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
+                                        break
 
-                        else: # (if self.proxy_conx in r)
-                            Logger().error(u'break connection')
-                            break
+                            else: # (if self.proxy_conx in r)
+                                Logger().error(u'break connection')
+                                break
 
-                    Logger().debug(u"End Of Keep Alive")
+                        Logger().debug(u"End Of Keep Alive")
 
-                except AuthentifierSocketClosed, e:
-                    Logger().info(u"RDP/VNC connection terminated by client")
+                    except AuthentifierSocketClosed, e:
+                        Logger().info(u"RDP/VNC connection terminated by client")
 
-                except Exception, e:
-                    Logger().info(u"RDP/VNC connection terminated by client: Exception")
-                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                    except Exception, e:
+                        Logger().info(u"RDP/VNC connection terminated by client: Exception")
+                        Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
 
-                if not try_next:
-                    break;
-                else:
-                    self.engine.release_target_password(physical_target)
-
-            if not (physical_target is None):
-                self.engine.release_target_password(physical_target)
+                    if not try_next:
+                        break;
+                finally:
+                    if not (physical_target is None):
+                        self.engine.release_target_password(physical_target)
 
             Logger().info(u"Stop session ...")
 
@@ -930,7 +926,7 @@ class Sesman():
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
-
+                
     def kill_handler(self, signum, frame):
         if signum == signal.SIGUSR1:
             self.kill()
