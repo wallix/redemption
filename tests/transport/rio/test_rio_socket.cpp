@@ -128,12 +128,34 @@ BOOST_AUTO_TEST_CASE(TestSocket)
     ucs.s4.sin_port = htons(port);
     ucs.s4.sin_addr.s_addr = inet_addr(ip);
     if (ucs.s4.sin_addr.s_addr == INADDR_NONE) {
+/*
         struct hostent *h = gethostbyname(ip);
         if (!h) {
             LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n", ip, errno, strerror(errno));
             run = false;
         }
         ucs.s4.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
+*/
+        struct addrinfo * addr_info = NULL;
+        int               result    = getaddrinfo(ip, NULL, NULL, &addr_info);
+
+        if (result) {
+            int          _error;
+            const char * _strerror;
+
+            if (result == EAI_SYSTEM) {
+                _error    = errno;
+                _strerror = strerror(errno);
+            }
+            else {
+                _error    = result;
+                _strerror = gai_strerror(result);
+            }
+            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
+                ip, _error, _strerror);
+            run = false;
+        }
+        ucs.s4.sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
     }
     fcntl(client_sck, F_SETFL, fcntl(client_sck, F_GETFL) | O_NONBLOCK);
 

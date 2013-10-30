@@ -109,6 +109,7 @@ static inline int ip_connect(const char* ip, int port,
     u.s4.sin_addr.s_addr = inet_addr(ip);
 
     if (u.s4.sin_addr.s_addr == INADDR_NONE) {
+/*
     TODO(" gethostbyname is obsolete use new function getnameinfo");
         LOG(LOG_INFO, "Asking ip to DNS for %s\n", ip);
         struct hostent *h = gethostbyname(ip);
@@ -118,6 +119,28 @@ static inline int ip_connect(const char* ip, int port,
             return -1;
         }
         u.s4.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
+LOG(LOG_INFO, "s_addr=%lu", u.s4.sin_addr.s_addr);
+*/
+        struct addrinfo * addr_info = NULL;
+        int               result    = getaddrinfo(ip, NULL, NULL, &addr_info);
+
+        if (result) {
+            int          _error;
+            const char * _strerror;
+
+            if (result == EAI_SYSTEM) {
+                _error    = errno;
+                _strerror = strerror(errno);
+            }
+            else {
+                _error    = result;
+                _strerror = gai_strerror(result);
+            }
+            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
+                ip, _error, _strerror);
+            return -1;
+        }
+        u.s4.sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
     }
 
     fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) | O_NONBLOCK);

@@ -32,8 +32,8 @@
 
 // This test is somewhat tricky
 // The goal is to check that SocketTransport objects are working as expected
-// in order to achieve that we have to 
-// - create a listening socket, 
+// in order to achieve that we have to
+// - create a listening socket,
 // - connect a client socket to it
 // - accept connected client socket
 // - send data at one side
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestSocket)
     uint8_t buffer[1024];
     memset(buffer, 0, sizeof(buffer));
     uint8_t * p = buffer;
-    
+
     int nb_recv_sck = 0;
     // 10 should be enough for testing
     int recv_sck[10];
@@ -128,12 +128,34 @@ BOOST_AUTO_TEST_CASE(TestSocket)
     ucs.s4.sin_port = htons(port);
     ucs.s4.sin_addr.s_addr = inet_addr(ip);
     if (ucs.s4.sin_addr.s_addr == INADDR_NONE) {
+/*
         struct hostent *h = gethostbyname(ip);
         if (!h) {
             LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n", ip, errno, strerror(errno));
             run = false;
         }
         ucs.s4.sin_addr.s_addr = *((int*)(*(h->h_addr_list)));
+*/
+        struct addrinfo * addr_info = NULL;
+        int               result    = getaddrinfo(ip, NULL, NULL, &addr_info);
+
+        if (result) {
+            int          _error;
+            const char * _strerror;
+
+            if (result == EAI_SYSTEM) {
+                _error    = errno;
+                _strerror = strerror(errno);
+            }
+            else {
+                _error    = result;
+                _strerror = gai_strerror(result);
+            }
+            LOG(LOG_ERR, "DNS resolution failed for %s with errno =%d (%s)\n",
+                ip, _error, _strerror);
+            run = false;
+        }
+        ucs.s4.sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
     }
     fcntl(client_sck, F_SETFL, fcntl(client_sck, F_GETFL) | O_NONBLOCK);
 
@@ -152,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TestSocket)
         BOOST_CHECK_EQUAL(true, true);
         int max = listener_sck;
         FD_SET(max, &rfds);
-        
+
         for (int i = 0 ; i < nb_recv_sck ; i++){
             FD_SET(recv_sck[i], &rfds);
             if (recv_sck[i] > max){ max = recv_sck[i]; }
@@ -162,7 +184,7 @@ BOOST_AUTO_TEST_CASE(TestSocket)
         if (client_sck > max){ max = client_sck; }
 
         int num = select(max + 1, &rfds, &wfds, 0, &timeout);
-    
+
         switch (num) {
         // +++++++++++++++ SELECT TIMEOUT ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         case 0: // this is timeout : as everything is automated it should never happen
@@ -193,7 +215,7 @@ BOOST_AUTO_TEST_CASE(TestSocket)
                             BOOST_CHECK_EQUAL(RIO_ERROR_OK, status);
                             return;
                         }
-                        
+
                     }
                 }
                 else {
