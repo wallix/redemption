@@ -22,8 +22,7 @@
 #define REDEMPTION_REGEX_STATE_HPP
 
 #include <ostream>
-#include <vector>
-#include <string>
+#include <algorithm>
 
 #include "regex_consumer.hpp"
 
@@ -144,6 +143,12 @@ namespace re {
         bool is_range() const
         { return this->type == RANGE; }
 
+        bool is_simple_char() const
+        { return this->is_range() && this->data.range.l == this->data.range.r; }
+
+        bool is_sequence() const
+        { return this->type == SEQUENCE; }
+
         unsigned type;
         unsigned num;
 
@@ -206,6 +211,33 @@ namespace re {
         State * ret = new State(SEQUENCE, 0, 0, out1);
         ret->data.sequence = s;
         return ret;
+    }
+
+    inline char_int * new_string_int(char_int c, std::size_t count) {
+        char_int * s = new char_int[count + 1];
+        std::fill(s, s + count, c);
+        *(s+count) = 0;
+        return s;
+    }
+
+    inline char_int * new_string_int(const char_int * str, std::size_t count) {
+        std::size_t len = std::char_traits<char_int>::length(str);
+        char_int * ret = new char_int[count * len + 1];
+        char_int * p = ret;
+        while (count--) {
+            std::copy(str, str + len, ret);
+            p += len;
+        }
+        *p = 0;
+        return ret;
+    }
+
+    inline State * new_sequence(char_int c, std::size_t count, State * out1 = 0) {
+        return new_sequence(new_string_int(c, count), out1);
+    }
+
+    inline State * new_sequence(const char_int * str, std::size_t count, State * out1 = 0) {
+        return new_sequence(new_string_int(str, count), out1);
     }
 
 }

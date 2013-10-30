@@ -457,7 +457,7 @@ namespace re {
 
         static State * copy(const State * st) {
             if (st->type == SEQUENCE) {
-                return new_sequence(st->data.sequence);
+                return new_sequence(new_string_int(st->data.sequence, 1));
             }
             return new State(st->type, st->data.range.l, st->data.range.r);
         }
@@ -551,17 +551,26 @@ namespace re {
                                     pst = &(*pst)->out1->out1;
                                 }
                                 else if (m) {
-                                    State * e = new_epsilone();
-                                    *pst = e;
-                                    ContextClone cloner(*spst);
-                                    std::size_t idx = cloner.get_idx(e);
-                                    State ** lst = &e->out1;
-                                    while (--m) {
-                                        *pst = cloner.clone();
-                                        lst = pst;
-                                        pst = &cloner.sts2[idx]->out1;
+                                    State * e = new_finish();
+                                    if (m > 2 && (*spst)->out1 == *pst && (*spst)->is_simple_char()) {
+                                        State * lst = new_sequence((*spst)->data.range.l, m,
+                                                                   new_split(e, *spst));
+                                        (*spst)->out1 = e;
+                                        *spst = lst;
                                     }
-                                    *pst = new_split(e, *lst);
+                                    else {
+                                        State * e = new_finish();
+                                        *pst = e;
+                                        ContextClone cloner(*spst);
+                                        std::size_t idx = cloner.get_idx(e);
+                                        State ** lst = &e->out1;
+                                        while (--m) {
+                                            *pst = cloner.clone();
+                                            lst = pst;
+                                            pst = &cloner.sts2[idx]->out1;
+                                        }
+                                        *pst = new_split(e, *lst);
+                                    }
                                     pst = &e->out1;
                                 }
                                 else {
@@ -614,27 +623,41 @@ namespace re {
                                 }
                                 else {
                                     --end;
-                                    State * e = new_epsilone();
-                                    *pst = e;
-                                    ContextClone cloner(*spst);
-                                    std::size_t idx = cloner.get_idx(e);
-                                    pst = &e->out1;
-                                    State * lst = e;
-                                    while (--m) {
-                                        *pst = cloner.clone();
-                                        lst = cloner.sts2[idx];
-                                        pst = &lst->out1;
-                                    }
-
                                     State * finish = new_finish();
-                                    while (n--) {
-                                        lst->type = SPLIT;
-                                        lst->out1 = finish;
-                                        lst->out2 = cloner.clone();
-                                        lst = cloner.sts2[idx];
+                                    if ((*spst)->out1 == *pst && (*spst)->is_simple_char()) {
+                                        char_int cst = (*spst)->data.range.l;
+                                        (*spst)->out1 = finish;
+                                        State * lst = new_split(finish, *spst);
+                                        *spst = new_sequence(cst, m, lst);
+                                        if (n != 1) {
+                                            while (--n) {
+                                                lst->out1 = new_split(finish, new_character(cst, finish));
+                                                lst = lst->out1;
+                                            }
+                                        }
                                     }
-                                    lst->out1 = finish;
-                                    lst->type = EPSILONE;
+                                    else {
+                                        State * e = new_epsilone();
+                                        *pst = e;
+                                        ContextClone cloner(*spst);
+                                        std::size_t idx = cloner.get_idx(e);
+                                        pst = &e->out1;
+                                        State * lst = e;
+                                        while (--m) {
+                                            *pst = cloner.clone();
+                                            lst = cloner.sts2[idx];
+                                            pst = &lst->out1;
+                                        }
+
+                                        while (n--) {
+                                            lst->type = SPLIT;
+                                            lst->out1 = finish;
+                                            lst->out2 = cloner.clone();
+                                            lst = cloner.sts2[idx];
+                                        }
+                                        lst->out1 = finish;
+                                        lst->type = EPSILONE;
+                                    }
                                     pst = &finish->out1;
                                 }
                             }
@@ -645,15 +668,29 @@ namespace re {
                         }
                         else {
                             if (1 != m) {
-                                /**///std::cout << ("fixe ") << m << std::endl;
-                                State e(EPSILONE);
-                                *pst = &e;
-                                ContextClone cloner(*spst);
-                                std::size_t idx = cloner.get_idx(&e);
-                                while (--m) {
-                                    /**///std::cout << ("clone") << std::endl;
-                                    *pst = cloner.clone();
-                                    pst = &cloner.sts2[idx]->out1;
+                                if ((*spst)->out1 == *pst && ((*spst)->is_simple_char()/* || (*spst)->is_sequence()*/)) {
+                                    ///TODO "(?:abc){2}" "abc" -> (epsilone)
+                                    /*if ((*spst)->is_sequence()) {
+                                        const char_int * s = (*spst)->data.sequence;
+                                        (*spst)->data.sequence = new_string_int(s, m);
+                                        delete [] s;
+                                    }
+                                    else*/ {
+                                        (*spst)->type = SEQUENCE;
+                                        (*spst)->data.sequence = new_string_int((*spst)->data.range.l, m);
+                                    }
+                                }
+                                else {
+                                    /**///std::cout << ("fixe ") << m << std::endl;
+                                    State e(EPSILONE);
+                                    *pst = &e;
+                                    ContextClone cloner(*spst);
+                                    std::size_t idx = cloner.get_idx(&e);
+                                    while (--m) {
+                                        /**///std::cout << ("clone") << std::endl;
+                                        *pst = cloner.clone();
+                                        pst = &cloner.sts2[idx]->out1;
+                                    }
                                 }
                             }
                             end -= 1;
