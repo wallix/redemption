@@ -24,133 +24,57 @@
 #include "error.hpp"
 #include "log.hpp"
 
-#define STRING_STATIC_BUFFER_SIZE 1024
-
 namespace redemption {
 
-
-TODO("remove this class. This is no better than C++ STL String class."
-     "Remove it completely or at least make it a thin wrapper over C++ String class."
-    )
 class string {
-protected:
-    char static_buffer[STRING_STATIC_BUFFER_SIZE];
-
-    char   * buffer_pointer;
-    size_t   buffer_length;     /* Size of buffer pointed by buffer_pointer. */
+private:
+    std::string internal_string;
 
 public:
-    string() {
-        this->static_buffer[0] = 0;
+    string() : internal_string() {}
 
-        this->buffer_pointer = this->static_buffer;
-        this->buffer_length  = sizeof(this->static_buffer);
-    }
+    string(const char * source) : internal_string(source) {}
 
-    string(const char * source) {
-        this->static_buffer[0] = 0;
+    string(const string & source) : internal_string(source.internal_string) {}
 
-        this->buffer_pointer = this->static_buffer;
-        this->buffer_length  = sizeof(this->static_buffer);
+private:
+    string & operator=(const char * source);
 
-        this->copy_c_str(source);
-    }
-
-    string(const string & source) {
-        this->static_buffer[0] = 0;
-
-        this->buffer_pointer = this->static_buffer;
-        this->buffer_length  = sizeof(this->static_buffer);
-
-        this->copy_c_str(source.buffer_pointer);
-    }
-
-protected:
-    string & operator=(const char * source) {
-        return (*this);
-    }
-
-    string & operator=(const string & source) {
-        return (*this);
-    }
+    string & operator=(const string & source);
 
 public:
-    virtual ~string() {
-        if (this->buffer_pointer != this->static_buffer) {
-            delete [] this->buffer_pointer;
-        }
-    }
+    virtual ~string() {}
 
     const char * c_str() const {
-        return this->buffer_pointer;
+        return this->internal_string.c_str();
     }
 
     void concatenate_c_str(const char * source) {
-        size_t source_length  = ::strlen(source);
-        size_t content_length = ::strlen(this->buffer_pointer);
-
-        this->realloc_memory(content_length + source_length + 1, true);
-
-        ::strcpy(this->buffer_pointer + content_length, source);
+        this->internal_string += source;
     }
 
     void concatenate_str(const string & source) {
-        this->concatenate_c_str(source.buffer_pointer);
+        this->internal_string += source.internal_string;
     }
 
     void copy_c_str(const char * source) {
-        size_t source_length = ::strlen(source);
-
-        this->realloc_memory(source_length + 1, false);
-
-        ::strcpy(this->buffer_pointer, source);
+        this->internal_string = source;
     }
 
     void copy_str(const string & source) {
-        this->copy_c_str(source.buffer_pointer);
+        this->internal_string = source.internal_string;
     }
 
     void empty() {
-        this->buffer_pointer[0] = 0;
+        this->internal_string.clear();
     }
 
     bool is_empty() const {
-        return (this->buffer_pointer[0] == 0);
+        return this->internal_string.empty();
     }
 
     size_t length() const {
-        return ::strlen(this->buffer_pointer);
-    }
-
-protected:
-    // Ensure that the buffer is large enough to hold size bytes.
-    void realloc_memory(size_t size, bool preserve_content) {
-        if (this->buffer_length < size) {
-            // Rounds new buffer length up to alignment boundary of 1024
-            //     bytes.
-            size_t new_buffer_length =
-                ((size / 1024) + ((size % 1024) ? 1 : 0)) * 1024;
-
-            char * new_buffer_pointer = new char[new_buffer_length];
-            if (!new_buffer_pointer) {
-                LOG(LOG_ERR, "Memory allocation failed");
-                throw Error(ERR_MEMORY_ALLOCATION_FAILED);
-            }
-
-            if (preserve_content) {
-               ::strcpy(new_buffer_pointer, this->buffer_pointer);
-            }
-
-            if (this->buffer_pointer != this->static_buffer) {
-                delete [] this->buffer_pointer;
-            }
-            else {
-                this->static_buffer[0] = 0;
-            }
-
-            this->buffer_pointer = new_buffer_pointer;
-            this->buffer_length  = new_buffer_length;
-        }
+        return this->internal_string.length();
     }
 };  // class string
 

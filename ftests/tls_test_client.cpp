@@ -32,15 +32,27 @@ int tcp_connect(const char *host, int port)
     memset(&ucs, 0, sizeof(ucs));
     ucs.s4.sin_family = AF_INET;
     ucs.s4.sin_port = htons(port);
-    
-    struct hostent *hp = gethostbyname(host);
-    
-    if(!hp){
-        fprintf(stderr,"Failed searching DNS for host");
+
+    struct addrinfo * addr_info = NULL;
+    int               result    = getaddrinfo(host, NULL, NULL, &addr_info);
+
+    if (result) {
+        int          _error;
+        const char * _strerror;
+
+        if (result == EAI_SYSTEM) {
+            _error    = errno;
+            _strerror = strerror(errno);
+        }
+        else {
+            _error    = result;
+            _strerror = gai_strerror(result);
+        }
+        fprintf(stderr, "DNS resolution failed for %s with errno =%d (%s)\n",
+            host, _error, _strerror);
         exit(0);
     }
-
-    ucs.s4.sin_addr = *(struct in_addr*)hp->h_addr_list[0];
+    ucs.s4.sin_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr;
 
     int sock=socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock < 0){
@@ -75,7 +87,7 @@ static int rdp_request(SSL_CTX *ctx, int sock, BIO *bio_err)
 
     printf("HELLO sent, going TLS\n");
 
-    
+
     SSL *ssl = SSL_new(ctx);
     BIO *sbio = BIO_new_socket(sock, BIO_NOCLOSE);
     SSL_set_bio(ssl, sbio, sbio);
@@ -100,7 +112,7 @@ static int rdp_request(SSL_CTX *ctx, int sock, BIO *bio_err)
 
     rio_clear(&rio);
     rio_init_socket_tls(&rio, ssl);
-    
+
     ssize_t len = rio_recv(&rio, buf, 29);
     if (len < 0){
         printf("len=%d\n", static_cast<int>(len));
@@ -116,7 +128,7 @@ static int rdp_request(SSL_CTX *ctx, int sock, BIO *bio_err)
     fwrite(buf,1,len,stdout);
 
     rio_clear(&rio);
-    
+
     r=SSL_shutdown(ssl);
     switch(r){
       case 1:
@@ -130,7 +142,7 @@ static int rdp_request(SSL_CTX *ctx, int sock, BIO *bio_err)
         exit(0);
       }
     }
-    
+
     SSL_free(ssl);
     return(0);
 }
@@ -221,7 +233,7 @@ int main(int argc, char ** argv)
 
     SSL_library_init();
     SSL_load_error_strings();
-  
+
     BIO *bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
     SSL_CTX *ctx = SSL_CTX_new(SSLv23_method());
 
