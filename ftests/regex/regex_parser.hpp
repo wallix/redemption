@@ -145,8 +145,90 @@ namespace re {
         }
     };
 
+    inline char_int get_c(utf_consumer & consumer, char_int c)
+    {
+        if (c != '[' && c != '.') {
+            if (c == '\\') {
+                char_int c2 = consumer.getc();
+                switch (c2) {
+                    case 0:
+                        return '\\';
+                    case 'd':
+                    case 'D':
+                    case 'w':
+                    case 'W':
+                    case 's':
+                    case 'S':
+                        return 0;
+                    case 'n': return '\n';
+                    case 't': return '\t';
+                    case 'r': return '\r';
+                    //case 'v': return '\v';
+                    default : return c2;
+                }
+            }
+            return c;
+        }
+        return 0;
+    }
+
+    inline bool is_range_repetition(const char * s)
+    {
+        const char * begin = s;
+        while (*s && '0' <= *s && *s <= '9') {
+            ++s;
+        }
+        if (begin == s || !*s || (*s != ',' && *s != '}')) {
+            return false;
+        }
+        if (*s == '}') {
+            return true;
+        }
+        begin = ++s;
+        while (*s && '0' <= *s && *s <= '9') {
+            ++s;
+        }
+        return *s && *s == '}';
+    }
+
+    inline bool is_meta_char(utf_consumer & consumer, char_int c)
+    {
+        return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.str()));
+    }
+
     inline State ** st_compilechar(State ** pst, utf_consumer & consumer, char_int c, const char * & msg_err)
     {
+        if (consumer.valid())
+        {
+            unsigned n = 0;
+            char_int c2 = c;
+            utf_consumer cons = consumer;
+            while (get_c(cons, c2)) {
+                ++n;
+                if (!(c2 = cons.bumpc())) {
+                    break;
+                }
+                if (is_meta_char(cons, c2)) {
+                    if (c2 == '*' || c2 == '+' || c2 == '?') {
+                        --n;
+                    }
+                    break;
+                }
+            }
+            if (n > 1) {
+                char_int * str = new char_int[n+1];
+                char_int * p = str;
+                *p = c;
+                cons = consumer;
+                while (--n) {
+                    *++p = get_c(cons, cons.bumpc());
+                }
+                *++p = 0;
+                consumer.s = cons.s;
+                return &(*pst = new_sequence(str))->out1;
+            }
+        }
+
         if (c == '\\' && consumer.valid()) {
             return c2st(pst, consumer.bumpc());
         }
@@ -320,30 +402,6 @@ namespace re {
         return &(*pst = (c == '.') ? new_any() : new_character(c))->out1;
     }
 
-    inline bool is_range_repetition(const char * s)
-    {
-        const char * begin = s;
-        while (*s && '0' <= *s && *s <= '9') {
-            ++s;
-        }
-        if (begin == s || !*s || (*s != ',' && *s != '}')) {
-            return false;
-        }
-        if (*s == '}') {
-            return true;
-        }
-        begin = ++s;
-        while (*s && '0' <= *s && *s <= '9') {
-            ++s;
-        }
-        return *s && *s == '}';
-    }
-
-    inline bool is_meta_char(utf_consumer & consumer, char_int c)
-    {
-        return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.str()));
-    }
-
 
     struct ContextClone {
         std::vector<State*> sts;
@@ -398,7 +456,10 @@ namespace re {
         }
 
         static State * copy(const State * st) {
-            return new State(st->type, st->range.l, st->range.r);
+            if (st->type == SEQUENCE) {
+                return new_sequence(st->data.sequence);
+            }
+            return new State(st->type, st->data.range.l, st->data.range.r);
         }
     };
 
@@ -553,29 +614,28 @@ namespace re {
                                 }
                                 else {
                                     --end;
-                                    if (n != 1) {
-                                        State * e = new_epsilone();
-                                        *pst = e;
-                                        ContextClone cloner(*spst);
-                                        std::size_t idx = cloner.get_idx(e);
-                                        pst = &e->out1;
-                                        State * lst = e;
-                                        while (--m) {
-                                            *pst = cloner.clone();
-                                            lst = cloner.sts2[idx];
-                                            pst = &lst->out1;
-                                        }
-
-                                        State * finish = new_finish();
-                                        while (n--) {
-                                            lst->type = SPLIT;
-                                            lst->out1 = finish;
-                                            lst->out2 = cloner.clone();
-                                            lst = cloner.sts2[idx];
-                                        }
-                                        lst->out1 = finish;
-                                        pst = &finish->out1;
+                                    State * e = new_epsilone();
+                                    *pst = e;
+                                    ContextClone cloner(*spst);
+                                    std::size_t idx = cloner.get_idx(e);
+                                    pst = &e->out1;
+                                    State * lst = e;
+                                    while (--m) {
+                                        *pst = cloner.clone();
+                                        lst = cloner.sts2[idx];
+                                        pst = &lst->out1;
                                     }
+
+                                    State * finish = new_finish();
+                                    while (n--) {
+                                        lst->type = SPLIT;
+                                        lst->out1 = finish;
+                                        lst->out2 = cloner.clone();
+                                        lst = cloner.sts2[idx];
+                                    }
+                                    lst->out1 = finish;
+                                    lst->type = EPSILONE;
+                                    pst = &finish->out1;
                                 }
                             }
                         }

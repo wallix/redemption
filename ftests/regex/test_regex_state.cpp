@@ -44,22 +44,32 @@ BOOST_AUTO_TEST_CASE(TestRegexCheck)
 {
     {
         State st(RANGE, multi_char("Þ"), multi_char("Þ"));
-        BOOST_CHECK(st.check(multi_char("Þ")));
-        BOOST_CHECK( ! st.check('a'));
+        BOOST_CHECK(st.check(multi_char("Þ"), 0));
+        BOOST_CHECK( ! st.check('a', 0));
     }
     {
         State st(RANGE, 0, -1u);
-        BOOST_CHECK(st.check(multi_char("Þ")));
-        BOOST_CHECK(st.check('a'));
-        BOOST_CHECK(st.check('\1'));
+        BOOST_CHECK(st.check(multi_char("Þ"), 0));
+        BOOST_CHECK(st.check('a', 0));
+        BOOST_CHECK(st.check('\1', 0));
     }
     {
         State st(RANGE, 'e','g');
-        BOOST_CHECK(st.check('e'));
-        BOOST_CHECK(st.check('f'));
-        BOOST_CHECK(st.check('g'));
-        BOOST_CHECK( ! st.check('d'));
-        BOOST_CHECK( ! st.check('h'));
+        BOOST_CHECK(st.check('e', 0));
+        BOOST_CHECK(st.check('f', 0));
+        BOOST_CHECK(st.check('g', 0));
+        BOOST_CHECK( ! st.check('d', 0));
+        BOOST_CHECK( ! st.check('h', 0));
+    }
+    {
+        State st(SEQUENCE);
+        char_int seq[] = {'a','b','c',0};
+        utf_consumer consumer("abc");
+        st.data.sequence = seq;
+        BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
+        consumer.str("abcd");
+        BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
+        st.data.sequence = 0;
     }
 }
 

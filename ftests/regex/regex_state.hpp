@@ -39,17 +39,13 @@ namespace re {
     const unsigned EPSILONE         = 1 << 12;
     const unsigned FIRST            = 1 << 13;
     const unsigned LAST             = 1 << 14;
+    const unsigned SEQUENCE         = 1 << 15;
 
 
     struct Range
     {
         char_int l;
         char_int r;
-
-        Range(char_int left, char_int right)
-        : l(left)
-        , r(right)
-        {}
 
         bool contains(char_int c) const {
             return this->l <= c && c <= this->r;
@@ -63,26 +59,53 @@ namespace re {
         , num(0)
         , out1(out1)
         , out2(out2)
-        , range(range_left, range_right)
-        {}
+        {
+            this->data.range.l = range_left;
+            this->data.range.r = range_right;
+        }
 
-        bool check(char_int c) const {
-            return range.contains(c);
+        ~State()
+        {
+            if (this->type == SEQUENCE) {
+                delete[] this->data.sequence;
+            }
+        }
+
+        unsigned check(char_int c, utf_consumer consumer) const {
+            if (this->type == SEQUENCE) {
+                if (c == this->data.sequence[0]) {
+                    const char_int * s = this->data.sequence + 1;
+                    while (*s && *s == consumer.bumpc()) {
+                        ++s;
+                    }
+                    return *s ? 0 : s - this->data.sequence;
+                }
+                return 0;
+            }
+            return this->data.range.contains(c) ? 1 : 0;
         }
 
         void display(std::ostream& os) const {
             switch (this->type) {
                 case RANGE:
-                    if (this->range.l == 0 && this->range.r == char_int(-1u)) {
+                    if (this->data.range.l == 0 && this->data.range.r == char_int(-1u)) {
                         os << ".";
                     }
-                    else if (this->range.l == this->range.r) {
-                        os << "[" << this->range.l << "] '" << utf_char(this->range.l) << "'";
+                    else if (this->data.range.l == this->data.range.r) {
+                        os << "[" << this->data.range.l << "] '" << utf_char(this->data.range.l) << "'";
                     }
                     else {
-                        os << "[" << this->range.l << "-" << this->range.r << "] ['" << utf_char(this->range.l) << "'-'" << utf_char(this->range.r) << "']";
+                        os << "[" << this->data.range.l << "-" << this->data.range.r << "] ['" << utf_char(this->data.range.l) << "'-'" << utf_char(this->data.range.r) << "']";
                     }
                     break;
+                case SEQUENCE: {
+                    os << '"';
+                    for (const char_int * p = this->data.sequence; *p; ++p) {
+                        os << utf_char(*p);
+                    }
+                    os << '"';
+                    break;
+                }
                 case CAPTURE_CLOSE: os << ")"; break;
                 case CAPTURE_OPEN: os << "("; break;
                 case EPSILONE: os << "(epsilone)"; break;
@@ -127,7 +150,10 @@ namespace re {
         State *out1;
         State *out2;
 
-        Range range;
+        union {
+            Range range;
+            const char_int * sequence;
+        } data;
     };
 
     inline std::ostream& operator<<(std::ostream& os, const State& st)
@@ -174,6 +200,12 @@ namespace re {
 
     inline State * new_last() {
         return new State(LAST, 0, 0);
+    }
+
+    inline State * new_sequence(const char_int * s, State * out1 = 0) {
+        State * ret = new State(SEQUENCE, 0, 0, out1);
+        ret->data.sequence = s;
+        return ret;
     }
 
 }
