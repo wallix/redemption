@@ -54,6 +54,4 @@
 #include "capabilities/virchan.hpp"
 #include "capabilities/window.hpp"
 
-#include "capabilities/capability_sets.hpp"
-
 #endif
