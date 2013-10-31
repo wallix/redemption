@@ -35,7 +35,7 @@ def translations():
         (u'trans_diagnostic'       , u'diagnostic'),
         (u'trans_connection_closed', u'connection_closed'),
         (u'trans_help_message'     , u'help_message'),
-        (u'trans_manager_close_cnx', u'trans_manager_close_cnx'),
+        (u'trans_manager_close_cnx', u'manager_close_cnx'),
        ):
         data[auth_key] = TR(conf_key)
     return data
@@ -117,7 +117,7 @@ class SesmanConfig(object):
                                # +u"Le nom de l'utilisateur et le mot de passe sont sensible à la case.<br>"
                                # +u"Contactez votre administrateur système en cas de problème pour vous connecter."
             , u'forceChangePwd'         : u"Vous devez changer votre mot de passe"
-            , u'trans_manager_close_cnx': u"Le gestionnaire de session a coupé la connexion"
+            , u'manager_close_cnx': u"Le gestionnaire de session a coupé la connexion"
             , u'changepassword'         : u"Vous devez changer votre mot de passe<br>"
                                          +u"pour vous connecter."
                                          
@@ -193,7 +193,7 @@ class SesmanConfig(object):
                                 # +u"Contact your system administrator if you are<br>"
                                 # +u"experiencing problems logging on."
             , u'forceChangePwd'         : u"You must change your password"
-            , u'trans_manager_close_cnx': u"Connection closed by manager"
+            , u'manager_close_cnx': u"Connection closed by manager"
             , u'changepassword'         : u"You must change your password to login"
             , u"Connection closed by client": u"Connection closed by client"
             , u"Empty user, try again": u"Empty user, try again"

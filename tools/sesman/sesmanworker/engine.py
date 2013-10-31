@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from sesmanconf import TR
+
 class AuthenticationFailed(Exception): pass
 
 from model import *
