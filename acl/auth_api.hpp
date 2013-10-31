@@ -40,10 +40,10 @@ class NullAuthentifier : public auth_api {
 };
 
 
-NullAuthentifier & get_null_authentifier() {
+NullAuthentifier * get_null_authentifier() {
     static NullAuthentifier auth;
 
-    return auth;
+    return &auth;
 }
 
 #endif  // #ifndef _REDEMPTION_ACL_AUTH_API_HPP_

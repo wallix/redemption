@@ -28,8 +28,9 @@
 
 class OutFilenameTransport : public Transport {
 public:
-    SQ seq;
-    RIO rio;
+    SQ   seq;
+    RIO  rio;
+    char path[512];
 
     OutFilenameTransport(
             SQ_FORMAT format,
@@ -41,7 +42,7 @@ public:
             unsigned verbose = 0)
     {
         if (authentifier) {
-            this->set_authentifier(*authentifier);
+            this->set_authentifier(authentifier);
         }
 
         RIO_ERROR status1 = sq_init_outfilename(&this->seq, format, prefix, filename, extension, groupid);
@@ -54,6 +55,10 @@ public:
             LOG(LOG_ERR, "rio outsequence initialisation failed (%u)", status2);
             throw Error(ERR_TRANSPORT);
         }
+
+        size_t max_path_length = sizeof(path) - 1;
+        strncpy(this->path, prefix, max_path_length);
+        this->path[max_path_length] = 0;
     }
 
     ~OutFilenameTransport()
@@ -66,6 +71,12 @@ public:
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0){
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", this->path);
+                this->authentifier->report("FILESYSTEM_FULL", message);
+            }
+
             LOG(LOG_INFO, "Write to transport failed (F): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
@@ -108,8 +119,9 @@ public:
 
 class CryptoOutFilenameTransport : public Transport {
 public:
-    SQ seq;
-    RIO rio;
+    SQ   seq;
+    RIO  rio;
+    char path[512];
 
     CryptoOutFilenameTransport(
             SQ_FORMAT format,
@@ -117,8 +129,13 @@ public:
             const char * const filename,
             const char * const extension,
             const int groupid,
+            auth_api * authentifier = NULL,
             unsigned verbose = 0)
     {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
         RIO_ERROR status1 = sq_init_cryptooutfilename(&this->seq, format, prefix, filename, extension, groupid);
         if (status1 != RIO_ERROR_OK){
             LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", status1);
@@ -129,6 +146,10 @@ public:
             LOG(LOG_ERR, "rio outsequence initialisation failed (%u)", status2);
             throw Error(ERR_TRANSPORT);
         }
+
+        size_t max_path_length = sizeof(path) - 1;
+        strncpy(this->path, prefix, max_path_length);
+        this->path[max_path_length] = 0;
     }
 
     ~CryptoOutFilenameTransport()
@@ -141,7 +162,13 @@ public:
     virtual void send(const char * const buffer, size_t len) throw (Error) {
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0){
-            LOG(LOG_INFO, "Write to transport failed: code=%d", errno);
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", this->path);
+                this->authentifier->report("FILESYSTEM_FULL", message);
+            }
+
+            LOG(LOG_INFO, "Write to transport failed (CF): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }

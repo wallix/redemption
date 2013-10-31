@@ -61,7 +61,7 @@ public:
 
     bool full_cleaning_requested;
 
-    auth_api & authentifier;
+    auth_api * authentifier;
 
     Transport() :
         seqno(0),
@@ -79,7 +79,7 @@ public:
     {
     }
 
-    void set_authentifier(auth_api & authentifier) {
+    void set_authentifier(auth_api * authentifier) {
         this->authentifier = authentifier;
     }
 
