@@ -1790,13 +1790,6 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
         }
 
         // specific treatement depending on msgType
-/*
-        BStream stream(chunk.size());
-        TODO("Avoid useless buffer copy, parse data (we shoudl probably pass a (sub)stream instead)");
-        stream.out_copy_bytes(chunk.get_data(), chunk.size());
-        stream.mark_end();
-        stream.rewind();
-*/
         SubStream stream(chunk, 0, chunk.size());
 
         RDPECLIP::RecvFactory recv_factory(stream);

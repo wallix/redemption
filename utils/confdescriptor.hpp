@@ -230,6 +230,9 @@ struct BitmapCapsLoader : public ConfigurationHolder
         this->entries[AUTHID_BITMAPCAPS_DESKTOPHEIGHT] =
             Entry("desktopHeight", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopHeight);
 
+        this->entries[AUTHID_BITMAPCAPS_DESKTOPRESIZEFLAG] =
+            Entry("desktopResizeFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopResizeFlag);
+
         this->entries[AUTHID_BITMAPCAPS_BITMAPCOMPRESSIONFLAG] =
             Entry("bitmapCompressionFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.bitmapCompressionFlag);
 
@@ -239,7 +242,7 @@ struct BitmapCapsLoader : public ConfigurationHolder
         this->entries[AUTHID_BITMAPCAPS_DRAWINGFLAGS] =
             Entry("drawingFlags", INPUT_UNSIGNED, STORAGE_BYTE, &caps.drawingFlags);
 
-        this->entries[AUTHID_BITMAPCAPS_BITMAPCOMPRESSIONFLAG] =
+        this->entries[AUTHID_BITMAPCAPS_MULTIPLERECTANGLESUPPORT] =
             Entry("multipleRectangleSupport", INPUT_UNSIGNED, STORAGE_UINT16, &caps.multipleRectangleSupport);
     }
 
