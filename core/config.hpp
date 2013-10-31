@@ -163,6 +163,7 @@ typedef enum
         AUTHID_TRANS_DIAGNOSTIC,
         AUTHID_TRANS_CONNECTION_CLOSED,
         AUTHID_TRANS_HELP_MESSAGE,
+        AUTHID_TRANS_MANAGER_CLOSE_CNX,
 
         AUTHID_LANGUAGE,
 
@@ -261,6 +262,7 @@ typedef enum
 #define STRAUTHID_TRANS_DIAGNOSTIC         "trans_diagnostic"
 #define STRAUTHID_TRANS_CONNECTION_CLOSED  "trans_connection_closed"
 #define STRAUTHID_TRANS_HELP_MESSAGE       "trans_help_message"
+#define STRAUTHID_TRANS_MANAGER_CLOSE_CNX  "trans_manager_close_cnx"
 #define STRAUTHID_LANGUAGE                 "language"
 // Options
 #define STRAUTHID_OPT_CLIPBOARD            "clipboard"
@@ -351,6 +353,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_TRANS_DIAGNOSTIC,
     STRAUTHID_TRANS_CONNECTION_CLOSED,
     STRAUTHID_TRANS_HELP_MESSAGE,
+    STRAUTHID_TRANS_MANAGER_CLOSE_CNX,
 
     STRAUTHID_LANGUAGE,
 
@@ -636,6 +639,7 @@ struct Inifile : public FieldObserver {
         StringField diagnostic;             // AUTHID_TRANS_DIAGNOSTIC
         StringField connection_closed;      // AUTHID_TRANS_CONNECTION_CLOSED
         StringField help_message;           // AUTHID_TRANS_HELP_MESSAGE
+        StringField manager_close_cnx;      // AUTHID_TRANS_MANAGER_CLOSE_CNX
 
         StringField language;
     } translation;
@@ -962,6 +966,9 @@ public:
 
         this->translation.help_message.set_from_cstr("Help message");
         this->translation.help_message.attach_ini(this, AUTHID_TRANS_HELP_MESSAGE);
+
+        this->translation.manager_close_cnx.set_from_cstr("Connection closed by manager");
+        this->translation.manager_close_cnx.attach_ini(this, AUTHID_TRANS_MANAGER_CLOSE_CNX);
 
         this->translation.language.set_from_cstr("en");
         this->translation.language.attach_ini(this,AUTHID_LANGUAGE);

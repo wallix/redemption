@@ -61,6 +61,7 @@ private:
         fr_map["second"] = "seconde";
         fr_map["minute"] = "minute";
         fr_map["before_closing"] = "avant fermeture";
+        fr_map["manager_close_cnx"] = "Le gestionnaire de session a coupé la connexion";
         fr_map["help_message"] =
             "Dans la zone de saisie login, entrez:<br>"
             "- le nom de la machine cible et du compte<br>"
@@ -100,6 +101,7 @@ private:
         en_map["second"] = "second";
         en_map["minute"] = "minute";
         en_map["before_closing"] = "before closing";
+        en_map["manager_close_cnx"] = "Connection closed by manager";
         en_map["help_message"] =
             "In login edit box, enter:<br>"
             "- target device and login as login@target.<br>"
@@ -196,6 +198,9 @@ static inline const char * TR(const char * key, Inifile & ini) {
     }
     else if (0 == strcmp(key, "help_message")) {
         res = ini.translation.help_message.get_cstr();
+    }
+    else if (0 == strcmp(key, "manager_close_cnx")) {
+        res = ini.translation.manager_close_cnx.get_cstr();
     }
     const char * lang = ini.translation.language.get_cstr();
     if (0 == strcmp("fr", lang)) {

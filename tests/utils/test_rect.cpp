@@ -344,4 +344,77 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(r.intersect(15,115), Rect(10, 110, 5, 5));
     }
 
+
+    {
+        // Test intersection of a rect with a line (defined by its end points)
+
+        Rect r(100, 200, 300, 150);
+        BOOST_CHECK_EQUAL(false, r.intersect_line(50, 50, 60, 110)); // false UL UL
+        BOOST_CHECK_EQUAL(false, r.intersect_line(50, 50, 150, 100)); // false UL U
+        BOOST_CHECK_EQUAL(false, r.intersect_line(50, 50, 150, 105)); // false UL UR
+        BOOST_CHECK_EQUAL(false, r.intersect_line(50, 50, 70, 300)); // false UL L
+        BOOST_CHECK_EQUAL(false, r.intersect_line(50, 50, 70, 400)); // false UL DL
+        BOOST_CHECK_EQUAL(true, r.intersect_line(50, 50, 170, 300)); // true UL IN
+        BOOST_CHECK_EQUAL(true, r.intersect_line(50, 50, 405, 300)); // true UL R
+        BOOST_CHECK_EQUAL(true, r.intersect_line(50, 50, 200, 500)); // true UL D
+        BOOST_CHECK_EQUAL(true, r.intersect_line(50, 50, 500, 500)); // true UL DR
+
+        BOOST_CHECK_EQUAL(false, r.intersect_line(150, 50, 60, 110)); // false U UL
+        BOOST_CHECK_EQUAL(false, r.intersect_line(150, 50, 150, 100)); // false U U
+        BOOST_CHECK_EQUAL(false, r.intersect_line(150, 50, 150, 105)); // false U UR
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 50, 70, 300)); // true U L
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 50, 70, 400)); // true U DL
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 50, 170, 300)); // true U IN
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 50, 405, 300)); // true U R
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 50, 200, 500)); // true U D
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 50, 500, 500)); // true U DR
+
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 60, 110)); // true IN UL
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 150, 100)); // true IN U
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 150, 105)); // true IN UR
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 70, 300)); // true IN L
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 70, 400)); // true IN DL
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 170, 300)); // true IN IN
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 405, 300)); // true IN R
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 200, 500)); // true IN D
+        BOOST_CHECK_EQUAL(true, r.intersect_line(150, 250, 500, 500)); // true IN DR
+
+        LineEquation equa(300, 100, 50, 300);
+        BOOST_CHECK_EQUAL(true, equa.resolve(r));
+        BOOST_CHECK_EQUAL(equa.aXin, 175);
+        BOOST_CHECK_EQUAL(equa.aYin, 200);
+        BOOST_CHECK_EQUAL(equa.bXin, 100);
+        BOOST_CHECK_EQUAL(equa.bYin, 260);
+
+        equa = LineEquation(50, 215, 250, 215);
+        BOOST_CHECK_EQUAL(true, equa.resolve(r));
+        BOOST_CHECK_EQUAL(equa.aXin, 100);
+        BOOST_CHECK_EQUAL(equa.aYin, 215);
+        BOOST_CHECK_EQUAL(equa.bXin, 250);
+        BOOST_CHECK_EQUAL(equa.bYin, 215);
+
+        equa = LineEquation(50, 215, 500, 215);
+        BOOST_CHECK_EQUAL(true, equa.resolve(r));
+        BOOST_CHECK_EQUAL(equa.aXin, 100);
+        BOOST_CHECK_EQUAL(equa.aYin, 215);
+        BOOST_CHECK_EQUAL(equa.bXin, 400);
+        BOOST_CHECK_EQUAL(equa.bYin, 215);
+
+        equa = LineEquation(50, 400, 450, 400);
+        BOOST_CHECK_EQUAL(false, equa.resolve(r));
+        BOOST_CHECK_EQUAL(equa.aXin, 0);
+        BOOST_CHECK_EQUAL(equa.aYin, 0);
+        BOOST_CHECK_EQUAL(equa.bXin, 0);
+        BOOST_CHECK_EQUAL(equa.bYin, 0);
+
+        equa = LineEquation(150, 100, 450, 400);
+        BOOST_CHECK_EQUAL(true, equa.resolve(r));
+        BOOST_CHECK_EQUAL(equa.aXin, 250);
+        BOOST_CHECK_EQUAL(equa.aYin, 200);
+        BOOST_CHECK_EQUAL(equa.bXin, 400);
+        BOOST_CHECK_EQUAL(equa.bYin, 350);
+
+
+    }
+
 }
