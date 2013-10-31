@@ -23,7 +23,8 @@
 #define BOOST_TEST_MODULE TestInmetaRIO
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "rio/rio.h"

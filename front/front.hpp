@@ -2559,6 +2559,7 @@ public:
         this->trans->send(x224_header, mcs_header, stream);
     }
 
+/*
     void send_server_update(HStream & data) {
         BStream fastpath_header(256);
 
@@ -2569,6 +2570,27 @@ public:
             , this->encrypt
             );
         this->trans->send(fastpath_header, data);
+    }
+*/
+    virtual void send_fastpath_data(Stream & data) {
+        HStream stream(1024, 1024 + 65536);
+
+        stream.out_copy_bytes(data.get_data(), data.size());
+        stream.mark_end();
+
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "Front::send_data: fast-path");
+        }
+
+        BStream fastpath_header(256);
+
+        FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+            fastpath_header,
+            stream,
+            ((this->client_info.encryptionLevel > 1) ?
+             FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
+            this->encrypt);
+        this->trans->send(fastpath_header, stream);
     }
 
     /*****************************************************************************/

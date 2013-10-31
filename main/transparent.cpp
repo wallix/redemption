@@ -189,7 +189,7 @@ int main(int argc, char * argv[]) {
                     true,               // clipboard
                     true,               // fast-path
                     true,               // mem3blt
-                    false,              // bitmap update
+                    true,               // bitmap update
                     ini.debug.mod_rdp,  // Verbose
                     true,               // new pointer
                     true,               // rdp compression
