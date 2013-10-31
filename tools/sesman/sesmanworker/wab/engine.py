@@ -6,6 +6,7 @@ from wabengine.common.exception import AuthenticationFailed
 from logger import Logger
 
 from model import RightInfo, UserInfo
+from sesmanconf import TR, SESMANCONF, translations
 
 ERPM = False
 

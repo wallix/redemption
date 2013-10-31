@@ -2024,7 +2024,7 @@ struct Drawable {
     }
 
     // nor horizontal nor vertical, use Bresenham
-    void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const uint8_t rop, const uint32_t color, const Rect & clip)
+    void line(const int mix_mode, const int startx, const int starty, const int endx, const int endy, const uint8_t rop, const uint32_t color)
     {
         // Color handling
         uint8_t col[3] =
@@ -2033,9 +2033,8 @@ struct Drawable {
             , static_cast<uint8_t>(color >> 16)
             };
 
-        const Rect line_clip = clip.intersect(Rect(0, 0, this->width, this->height));
-
-        if (this->tracked_area.has_intersection(line_clip)) {
+        const Rect & line_rect = Rect(startx, starty, 1, 1).enlarge_to(endx, endy);
+        if (this->tracked_area.has_intersection(line_rect)) {
             this->tracked_area_changed = true;
         }
 
@@ -2048,19 +2047,17 @@ struct Drawable {
         int err = dx - dy;
 
         while (true){
-            if (line_clip.contains_pt(x, y)){
-                uint8_t * const p = this->data + (y * this->width + x) * this->Bpp;
-                for (uint8_t b = 0 ; b < this->Bpp; b++){
-                    switch (rop)
+            uint8_t * const p = this->data + (y * this->width + x) * this->Bpp;
+            for (uint8_t b = 0 ; b < this->Bpp; b++){
+                switch (rop)
                     {
                     case 0x06:  // R2_NOT
                         p[b] = ~p[b];
-                    break;
+                        break;
                     default:
                         p[b] = col[b];
-                    break;
+                        break;
                     }
-                }
             }
 
             if ((x >= endx) && (y == endy)){

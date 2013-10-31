@@ -31,14 +31,19 @@
 class OutmetaTransport : public Transport
 {
 public:
-    RIO   rio;
-    SQ  * seq;
+    RIO    rio;
+    SQ   * seq;
+    char   path[512];
 
     OutmetaTransport(const char * path, const char * basename, timeval now,
-        uint16_t width, uint16_t height, const int groupid,
+        uint16_t width, uint16_t height, const int groupid, auth_api * authentifier = NULL,
         unsigned verbose = 0)
     : seq(NULL)
     {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
         char filename[1024];
         snprintf(filename, sizeof(filename), "%s-%06u", basename, getpid());
         char header1[64];
@@ -47,8 +52,19 @@ public:
             filename, ".mwrm", header1, "0", "", &now, groupid);
         if (status < 0)
         {
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", this->path);
+                this->authentifier->report("FILESYSTEM_FULL", message);
+            }
+
+            LOG(LOG_INFO, "Write to transport failed (M): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
+
+        size_t max_path_length = sizeof(path) - 1;
+        strncpy(this->path, path, max_path_length);
+        this->path[max_path_length] = 0;
     }
 
     ~OutmetaTransport()
@@ -69,6 +85,13 @@ public:
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0)
         {
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", this->path);
+                this->authentifier->report("FILESYSTEM_FULL", message);
+            }
+
+            LOG(LOG_INFO, "Write to transport failed (M): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }
@@ -85,6 +108,7 @@ public:
         RIO_ERROR res = rio_seek(&this->rio, offset, whence);
         if (res != RIO_ERROR_OK)
         {
+            LOG(LOG_INFO, "Set position within transport failed: code=%d", errno);
             throw Error(ERR_TRANSPORT_SEEK_FAILED, errno);
         }
     }
@@ -112,12 +136,17 @@ class CryptoOutmetaTransport : public Transport
 public:
     RIO   rio;
     SQ  * seq;
+    char  path[512];
 
     CryptoOutmetaTransport(const char * path, const char * hash_path,
         const char * basename, timeval now, uint16_t width, uint16_t height,
-        const int groupid, unsigned verbose = 0)
+        const int groupid, auth_api * authentifier = NULL, unsigned verbose = 0)
     : seq(NULL)
     {
+        if (authentifier) {
+            this->set_authentifier(authentifier);
+        }
+
         char filename[1024];
         snprintf(filename, sizeof(filename), "%s-%06u", basename, getpid());
         char header1[64];
@@ -127,8 +156,19 @@ public:
             &now, groupid);
         if (status < 0)
         {
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", this->path);
+                this->authentifier->report("FILESYSTEM_FULL", message);
+            }
+
+            LOG(LOG_INFO, "Write to transport failed (CM): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
+
+        size_t max_path_length = sizeof(path) - 1;
+        strncpy(this->path, path, max_path_length);
+        this->path[max_path_length] = 0;
     }
 
     ~CryptoOutmetaTransport()
@@ -149,6 +189,13 @@ public:
         ssize_t res = rio_send(&this->rio, buffer, len);
         if (res < 0)
         {
+            if (errno == ENOSPC) {
+                char message[1024];
+                snprintf(message, sizeof(message), "100|%s", this->path);
+                this->authentifier->report("FILESYSTEM_FULL", message);
+            }
+
+            LOG(LOG_INFO, "Write to transport failed (CM): code=%d", errno);
             throw Error(ERR_TRANSPORT_WRITE_FAILED, errno);
         }
     }
@@ -162,6 +209,7 @@ public:
 
     virtual void seek(int64_t offset, int whence) throw(Error)
     {
+        LOG(LOG_INFO, "Set position within transport failed: code=%d", errno);
         throw Error(ERR_TRANSPORT_SEEK_NOT_AVAILABLE);
     }
 

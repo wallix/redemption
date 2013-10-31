@@ -208,8 +208,139 @@ struct Rect {
     friend inline std::ostream & operator<<(std::ostream& os, const Rect &r) {
         return os << "(" << r.x << ", " << r.y << ", " << r.cx << ", " << r.cy << ")";
     }
+
+    enum {
+        UP = 0x01,
+        DOWN = 0x02,
+        LEFT = 0x04,
+        RIGHT = 0x08
+    };
+    // Region of a point outside rect
+    // 0x00 means inside
+    int region_pt(int x, int y) const {
+        int res = 0;
+        if (x < this->x) {
+            res |= LEFT;
+        }
+        else if (x > this->x + this->cx) {
+            res |= RIGHT;
+        }
+        if (y < this->y) {
+            res |= UP;
+        }
+        else if (y > this->y + this->cy) {
+            res |= DOWN;
+        }
+        return res;
+    }
+
+    bool intersect_line(int aX, int aY, int bX, int bY) const {
+        int aPosition = this->region_pt(aX, aY);
+        int bPosition = this->region_pt(bX, bY);
+        return !(aPosition & bPosition);
+    }
+
+
 };
 
+struct LineEquation {
+    int aX;
+    int aY;
+    int bX;
+    int bY;
+
+    int dX;
+    int dY;
+    int c;
+
+    int aXin;
+    int aYin;
+    int bXin;
+    int bYin;
+
+    LineEquation(int aX, int aY, int bX, int bY)
+        : aX(aX)
+        , aY(aY)
+        , bX(bX)
+        , bY(bY)
+        , dX(aX - bX)
+        , dY(aY - bY)
+        , c(bY*aX - aY*bX)
+        , aXin(0)
+        , aYin(0)
+        , bXin(0)
+        , bYin(0)
+    {
+    }
+
+    int compute_x(int y) {
+        return (this->dX*y - this->c) / this->dY;
+    }
+
+    int compute_y(int x) {
+        return (this->dY*x + this->c) / this->dX;
+    }
+
+    void compute_intersection(const Rect & rect, int region, int & x, int & y) {
+        int interX = 0;
+        int interY = 0;
+        if (region & Rect::LEFT) {
+            int tmp = this->compute_y(rect.x);
+            if (tmp >= rect.y && tmp <= (rect.y + rect.cy)) {
+                interX = rect.x;
+                interY = tmp;
+            }
+        }
+        else if (region & Rect::RIGHT) {
+            int tmp = this->compute_y(rect.x + rect.cx);
+            if (tmp >= rect.y && tmp <= (rect.y + rect.cy)) {
+                interX = rect.x + rect.cx;
+                interY = tmp;
+            }
+        }
+        if (region & Rect::UP) {
+            int tmp = this->compute_x(rect.y);
+            if (tmp >= rect.x && tmp <= (rect.x + rect.cx)) {
+                interX = tmp;
+                interY = rect.y;
+            }
+        }
+        else if (region & Rect::DOWN) {
+            int tmp = this->compute_x(rect.y + rect.cy);
+            if (tmp >= rect.x && tmp <= (rect.x + rect.cx)) {
+                interX = tmp;
+                interY = rect.y + rect.cy;
+            }
+        }
+        x = interX;
+        y = interY;
+    }
+
+    bool resolve(const Rect & rect) {
+        if (!rect.intersect_line(this->aX, this->aY, this->bX, this->bY))
+            return false;
+        int aPosition = rect.region_pt(this->aX, this->aY);
+        int bPosition = rect.region_pt(this->bX, this->bY);
+        if (!aPosition) {
+            this->aXin = this->aX;
+            this->aYin = this->aY;
+        }
+        else {
+            this->compute_intersection(rect, aPosition, this->aXin, this->aYin);
+        }
+
+        if (!bPosition) {
+            this->bXin = this->bX;
+            this->bYin = this->bY;
+        }
+        else {
+            this->compute_intersection(rect, bPosition, this->bXin, this->bYin);
+        }
+        return true;
+    }
+
+
+};
 
 // helper class used to compute differences between two rectangles
 class DeltaRect {

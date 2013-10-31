@@ -71,25 +71,25 @@ class Sesman():
 
         self._full_user_device_account = u'Unknown'
 
-        self.shared[u'selector_group_filter']            = u''
-        self.shared[u'selector_device_filter']           = u''
-        self.shared[u'selector_proto_filter']            = u''
-        self.shared[u'selector']                         = u'False'
-        self.shared[u'selector_current_page']            = u'1'
-        self.shared[u'selector_lines_per_page']          = u'0'
-        self.shared[u'real_target_device']               = MAGICASK
-        self.shared[u'reporting'] = u''
+        self.shared[u'selector_group_filter']   = u''
+        self.shared[u'selector_device_filter']  = u''
+        self.shared[u'selector_proto_filter']   = u''
+        self.shared[u'selector']                = u'False'
+        self.shared[u'selector_current_page']   = u'1'
+        self.shared[u'selector_lines_per_page'] = u'0'
+        self.shared[u'real_target_device']      = MAGICASK
+        self.shared[u'reporting']               = u''
 
-        self._enable_encryption        = self.engine.get_trace_encryption()
-        self.language = None
+        self._enable_encryption = self.engine.get_trace_encryption()
+        self.language           = None
 
         self.pid = os.getpid()
 
-        self.shared[u'target_login']  = MAGICASK
-        self.shared[u'target_device'] = MAGICASK
-        self.shared[u'login']         = MAGICASK
-        self.shared[u'ip_client']     = MAGICASK
-        self.shared[u'proxy_type']    = MAGICASK
+        self.shared[u'target_login']    = MAGICASK
+        self.shared[u'target_device']   = MAGICASK
+        self.shared[u'login']           = MAGICASK
+        self.shared[u'ip_client']       = MAGICASK
+        self.shared[u'proxy_type  ']    = MAGICASK
         self.shared[u'target_protocol'] = MAGICASK
 
 
@@ -579,7 +579,7 @@ class Sesman():
                     video_path += u"%s" % random.randint(1000, 9999)
                     # remove all "dangerous" characters in filename
                     import re
-                    video_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", video_path) 
+                    video_path = re.sub(r'[^-A-Za-z0-9_@,.]', u"", video_path)
 
                     Logger().info(u"Session will be recorded in %s" % video_path)
 
@@ -759,7 +759,7 @@ class Sesman():
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
 
-                try: 
+                try:
                     password_of_target = self.engine.get_target_password(physical_target)
                     kv[u'target_password'] = password_of_target
                     if not password_of_target:
@@ -795,7 +795,7 @@ class Sesman():
 
 
                     if not _status:
-                        Logger().info( u"(%s):%s:REJECTED : User message: \"%s\"" 
+                        Logger().info( u"(%s):%s:REJECTED : User message: \"%s\""
                                        % ( mundane(self.shared[u'ip_client'])
                                          , mundane(self.shared[u'login'])
                                          , _error
@@ -913,7 +913,11 @@ class Sesman():
         elif reason == u'OPEN_SESSION_SUCCESSFUL':
             pass
         elif reason == u'FILESYSTEM_FULL':
-            self.engine.NotifyFilesystemIsFullOrUsedAtXPercent(message, 100)
+            data = message.split(u'|')
+            used       = data[0]
+            filesystem = data[1]
+
+            self.engine.NotifyFilesystemIsFullOrUsedAtXPercent(filesystem, used)
         elif reason == u'SESSION_EXCEPTION':
             pass
         elif (reason == u'FINDPATTERN_KILL') or (reason == u'FINDPATTERN_NOTIFY'):
@@ -926,7 +930,7 @@ class Sesman():
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
-                
+
     def kill_handler(self, signum, frame):
         if signum == signal.SIGUSR1:
             self.kill()
