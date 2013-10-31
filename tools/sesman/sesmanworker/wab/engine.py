@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from sesmanconf import TR
+
 from wabengine.common.exception import AuthenticationFailed
 from logger import Logger
 
