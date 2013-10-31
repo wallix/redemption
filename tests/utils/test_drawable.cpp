@@ -118,17 +118,19 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
     gd.draw(RDPLineTo(0, 639, 0, 639, 768, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
     gd.draw(RDPLineTo(0, 0, 479, 1024, 479, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
 
-    gd.draw(RDPLineTo(10, 0, 10, 1024, 479, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect);
+    gd.draw(RDPLineTo(10, 0, 10, 1024, 479, BLUE, 0xCC, RDPPen(0, 1, PINK)), screen_rect.shrink(5));
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-    "\xa1\x00\x41\x4c\x4f\x87\x9b\x27\x75\xec\x0c\x8b\xef\xe5\x78\x85\xc3\xb2\xb1\x03"
-    )){
+                   "\x1c\x41\x1d\xab\xe8\x8c\x5b\x40\xd1\x7b"
+                   "\x62\xa2\xb0\x68\x0e\x5c\x36\x55\xae\x24"
+                   )){
         BOOST_CHECK_MESSAGE(false, message);
     }
 
     // uncomment to see result in png file
-//        dump_png("/tmp/test_line_000_", gd.drawable);
+    // save_to_png("/tmp/test_line_000.png", gd.drawable);
+    // dump_png("/tmp/test_line_005_", gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestPolyline)
