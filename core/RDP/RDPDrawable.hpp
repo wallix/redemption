@@ -216,8 +216,6 @@ public:
     void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
                    int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
                    uint32_t PenColor, const Rect & clip) {
-        // enlarge_to compute a new rect including old rect and added point
-
         // Color handling
         uint32_t color = RGBtoBGR(PenColor);
 

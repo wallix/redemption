@@ -209,6 +209,27 @@ struct Rect {
         return os << "(" << r.x << ", " << r.y << ", " << r.cx << ", " << r.cy << ")";
     }
 
+    //             |                         |
+    //             |                         |
+    //             |                         |
+    //    UP       |         UP              |      UP
+    //    LEFT     |                         |      RIGHT
+    //             |                         |
+    //-------------+-------------------------+--------------------
+    //             |                         |
+    //             |                         |
+    //             |                         |
+    //    LEFT     |          IN             |     RIGHT
+    //             |         Rect            |
+    //             |                         |
+    //             |                         |
+    //-------------+-------------------------+-------------------
+    //             |                         |
+    //    DOWN     |         DOWN            |     DOWN
+    //    LEFT     |                         |     RIGHT
+    //             |                         |
+    //             |                         |
+
     enum {
         UP = 0x01,
         DOWN = 0x02,
@@ -233,6 +254,7 @@ struct Rect {
         }
         return res;
     }
+
 
     bool intersect_line(int aX, int aY, int bX, int bY) const {
         int aPosition = this->region_pt(aX, aY);
