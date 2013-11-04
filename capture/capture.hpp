@@ -86,7 +86,7 @@ public:
             }
 
             this->png_trans = new OutFilenameTransport( SQF_PATH_FILE_PID_COUNT_EXTENSION, png_path
-                                                      , basename, ".png", ini.video.capture_groupid);
+                                                      , basename, ".png", ini.video.capture_groupid, authentifier);
             this->psc = new StaticCapture( now, *this->png_trans, &(this->png_trans->seq), width, height
                                          , clear_png, ini, this->drawable->drawable);
         }
@@ -111,14 +111,16 @@ public:
             if (this->enable_file_encryption) {
                 this->crypto_wrm_trans = new CryptoOutmetaTransport( wrm_path, hash_path, basename, now
                                                                    , width, height
-                                                                   , ini.video.capture_groupid);
+                                                                   , ini.video.capture_groupid
+                                                                   , authentifier);
                 this->pnc = new NativeCapture( now, *this->crypto_wrm_trans, width, height
                                              , *this->pnc_bmp_cache, *this->drawable, ini);
             }
             else
             {
                 this->wrm_trans = new OutmetaTransport( wrm_path, basename, now, width, height
-                                                      , ini.video.capture_groupid);
+                                                      , ini.video.capture_groupid
+                                                      , authentifier);
                 this->pnc = new NativeCapture( now, *this->wrm_trans, width, height, *this->pnc_bmp_cache
                                              , *this->drawable, ini);
             }

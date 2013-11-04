@@ -24,11 +24,26 @@
 class auth_api {
 public:
     virtual ~auth_api() {}
-    virtual void set_auth_channel_target(const char * target) = 0;
 
+    virtual void set_auth_channel_target(const char * target) = 0;
     virtual void set_auth_channel_result(const char * result) = 0;
 
     virtual void report(const char * reason, const char * message) = 0;
 };
+
+
+class NullAuthentifier : public auth_api {
+    virtual void set_auth_channel_target(const char * target) {}
+    virtual void set_auth_channel_result(const char * result) {}
+
+    virtual void report(const char * reason, const char * message) {}
+};
+
+
+NullAuthentifier * get_null_authentifier() {
+    static NullAuthentifier auth;
+
+    return &auth;
+}
 
 #endif  // #ifndef _REDEMPTION_ACL_AUTH_API_HPP_

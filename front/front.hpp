@@ -62,6 +62,7 @@
 #include "callback.hpp"
 #include "colors.hpp"
 #include "bitfu.hpp"
+#include "confdescriptor.hpp"
 
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
@@ -2559,6 +2560,7 @@ public:
         this->trans->send(x224_header, mcs_header, stream);
     }
 
+/*
     void send_server_update(HStream & data) {
         BStream fastpath_header(256);
 
@@ -2569,6 +2571,27 @@ public:
             , this->encrypt
             );
         this->trans->send(fastpath_header, data);
+    }
+*/
+    virtual void send_fastpath_data(Stream & data) {
+        HStream stream(1024, 1024 + 65536);
+
+        stream.out_copy_bytes(data.get_data(), data.size());
+        stream.mark_end();
+
+        if (this->verbose & 4) {
+            LOG(LOG_INFO, "Front::send_data: fast-path");
+        }
+
+        BStream fastpath_header(256);
+
+        FastPath::ServerUpdatePDU_Send SvrUpdPDU(
+            fastpath_header,
+            stream,
+            ((this->client_info.encryptionLevel > 1) ?
+             FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
+            this->encrypt);
+        this->trans->send(fastpath_header, stream);
     }
 
     /*****************************************************************************/
@@ -2665,18 +2688,14 @@ public:
         uint32_t caps_count_offset = stream.get_offset();
         stream.out_clear_bytes(4);
 
-        CapabilitySets cap_sets;
-
-        if (!this->server_capabilities_filename.is_empty()) {
-            ConfigurationLoader cfg_loader(cap_sets, this->server_capabilities_filename.c_str());
-        }
-
         GeneralCaps general_caps;
         if (this->server_fastpath_update_support) {
             general_caps.extraflags |= FASTPATH_OUTPUT_SUPPORTED;
         }
         if (!this->server_capabilities_filename.is_empty()) {
-            general_caps = cap_sets.general_caps;
+            GeneralCapsLoader generalcaps_loader(general_caps);
+
+            ConfigurationLoader cfg_loader(generalcaps_loader, this->server_capabilities_filename.c_str());
         }
         if (this->verbose) {
             general_caps.log("Sending to client");
@@ -2689,7 +2708,9 @@ public:
         bitmap_caps.desktopWidth = this->client_info.width;
         bitmap_caps.desktopHeight = this->client_info.height;
         if (!this->server_capabilities_filename.is_empty()) {
-            bitmap_caps = cap_sets.bitmap_caps;
+            BitmapCapsLoader bitmapcaps_loader(bitmap_caps);
+
+            ConfigurationLoader cfg_loader(bitmapcaps_loader, this->server_capabilities_filename.c_str());
         }
         if (this->verbose) {
             bitmap_caps.log("Sending to client");
@@ -2724,7 +2745,9 @@ public:
         order_caps.desktopSaveSize = 0x0f4240;
         order_caps.pad2octetsC = 1;
         if (!this->server_capabilities_filename.is_empty()) {
-            order_caps = cap_sets.order_caps;
+            OrderCapsLoader ordercaps_loader(order_caps);
+
+            ConfigurationLoader cfg_loader(ordercaps_loader, this->server_capabilities_filename.c_str());
         }
         if (this->verbose) {
             order_caps.log("Sending to client");

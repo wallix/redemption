@@ -1,9 +1,12 @@
 #!/usr/bin/python
 
+from sesmanconf import TR
+
 from wabengine.common.exception import AuthenticationFailed
 from logger import Logger
 
 from model import RightInfo, UserInfo
+from sesmanconf import TR, SESMANCONF, translations
 
 ERPM = False
 
@@ -29,12 +32,7 @@ class Engine(object):
     def password_expiration_date(self):
         _data = self.wabengine.check_password_expiration_info()
         if _data[2]:
-            if _data[0] > 1:
-                #TODO: Add translations for these messages
-                return u'Your password will expire in %s days. Please change it.' % _data[0]
-            else:
-                #TODO: Add translations for these messages
-                return u'Your password will expire soon. Please change it.'
+            return _data[0]
         return False
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type):
@@ -281,7 +279,7 @@ class Engine(object):
 
     def write_trace(self, video_path):
         try:
-            _status, _error = True, u"no error"
+            _status, _error = True, TR(u"No error")
             if video_path:
                 # Notify WabEngine with Trace file descriptor
                 trace = self.wabengine.get_trace_writer(self.session_id, trace_type=u"rdptrc")
@@ -290,6 +288,6 @@ class Engine(object):
         except Exception, e:
             import traceback
             Logger().info("<<<<<<%s>>>>>" % traceback.format_exc(e))
-            _status, _error = False, u"Trace writer failed for %s" % video_path
+            _status, _error = False, TR(u"Trace writer failed for %s") % video_path
 
         return _status, _error

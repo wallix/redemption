@@ -41,7 +41,7 @@
 #include "rio/rio.h"
 #include "rio/rio_impl.h"
 #include "stream.hpp"
-
+#include "auth_api.hpp"
 
 class Transport {
 public:
@@ -61,6 +61,8 @@ public:
 
     bool full_cleaning_requested;
 
+    auth_api * authentifier;
+
     Transport() :
         seqno(0),
         total_received(0),
@@ -69,11 +71,16 @@ public:
         last_quantum_sent(0),
         quantum_count(0),
         status(true),
-        full_cleaning_requested(false)
+        full_cleaning_requested(false),
+        authentifier(get_null_authentifier())
     {}
 
     virtual ~Transport()
     {
+    }
+
+    void set_authentifier(auth_api * authentifier) {
+        this->authentifier = authentifier;
     }
 
     void tick() {

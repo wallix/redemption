@@ -1444,6 +1444,12 @@ struct mod_rdp : public mod_api {
 
                         if (f.fast_path) {
                             FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
+                            if (this->enable_transparent_mode) {
+                                this->front.send_fastpath_data(su.payload);
+
+                                break;
+                            }
+
                             while (su.payload.in_remain()) {
                                 FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
 

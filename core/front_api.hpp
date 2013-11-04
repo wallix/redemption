@@ -58,6 +58,7 @@ class FrontAPI : public DrawApi {
         , nomouse(nomouse) {}
 
     virtual void send_data_indication_ex(uint16_t channelId, HStream & stream) {}
+    virtual void send_fastpath_data(Stream & data) {}
 
     virtual void intersect_order_caps(int idx, uint8_t * proxy_order_caps) {}
 };

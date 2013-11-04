@@ -216,32 +216,27 @@ public:
     void drew_line(uint16_t BackMode, int16_t nXStart, int16_t nYStart,
                    int16_t nXEnd, int16_t nYEnd, uint8_t bRop2,
                    uint32_t PenColor, const Rect & clip) {
-        TODO("We should perform a true intersection between line and clip rectangle,"
-             " not cheat as below."
-             " Seems really buggy if a end point is outside of the clip");
-        // enlarge_to compute a new rect including old rect and added point
-        const Rect & line_rect = Rect(nXStart, nYStart, 1, 1).enlarge_to(nXEnd, nYEnd);
-        if (line_rect.intersect(clip).isempty()){
-            // LOG(LOG_INFO, "line_ect(%u, %u, %u, %u)", line_rect.x, line_rect.y, line_rect.cx, line_rect.cy);
-            return;
-        }
-
         // Color handling
         uint32_t color = RGBtoBGR(PenColor);
 
-        int startx = (nXStart >= clip.x + clip.cx)?clip.x + clip.cx-1:nXStart;
-        int endx = (nXEnd >= clip.x + clip.cx)?clip.x + clip.cx-1:nXEnd;
-        startx = (startx & 0x8000)?0:startx;
-        endx = (endx & 0x8000)?0:endx;
-
-        int starty = (nYStart >= clip.y + clip.cy)?clip.y + clip.cy - 1:nYStart;
-        int endy = (nYEnd >= clip.y + clip.cy)?clip.y + clip.cy - 1:nYEnd;
-        starty = (starty & 0x8000)?0:starty;
-        endy = (endy & 0x8000)?0:endy;
+        LineEquation equa(nXStart, nYStart, nXEnd, nYEnd);
+        int startx = 0;
+        int starty = 0;
+        int endx = 0;
+        int endy = 0;
+        if (equa.resolve(clip)) {
+            startx = equa.aXin;
+            starty = equa.aYin;
+            endx = equa.bXin;
+            endy = equa.bYin;
+        }
+        else {
+            return;
+        }
 
         if (startx == endx){
             this->drawable.vertical_line(BackMode,
-                                         nXStart,
+                                         startx,
                                          (starty <= endy)?starty:endy,
                                          (starty <= endy)?endy:starty,
                                          bRop2,
@@ -256,26 +251,25 @@ public:
                                            color);
 
         }
-        else if (nXStart <= nXEnd){
+        else if (startx <= endx){
             this->drawable.line(BackMode,
-                                nXStart,
-                                nYStart,
-                                nXEnd,
-                                nYEnd,
+                                startx,
+                                starty,
+                                endx,
+                                endy,
                                 bRop2,
-                                color,
-                                clip);
+                                color);
         }
         else {
             this->drawable.line(BackMode,
-                                nXEnd,
-                                nYEnd,
-                                nXStart,
-                                nYStart,
+                                endx,
+                                endy,
+                                startx,
+                                starty,
                                 bRop2,
-                                color,
-                                clip);
+                                color);
         }
+
     }
 
     virtual void draw(const RDPGlyphCache & cmd)

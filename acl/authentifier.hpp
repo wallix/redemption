@@ -33,6 +33,7 @@
 #include "netutils.hpp"
 #include "acl_serializer.hpp"
 #include "module_manager.hpp"
+#include "translation.hpp"
 
 class KeepAlive {
     // Keep alive Variables
@@ -341,7 +342,12 @@ public:
         } catch (...) {
             // acl connection lost
             this->ini->context.authenticated.set(false);
-            this->ini->context.rejected.set_from_cstr("Connection closed by manager (ACL closed)");
+            if (ini) {
+                this->ini->context.rejected.set_from_cstr(TR("manager_close_cnx", *ini));
+            }
+            else {
+                this->ini->context.rejected.set_from_cstr("Connection closed by manager");
+            }
         }
     }
 

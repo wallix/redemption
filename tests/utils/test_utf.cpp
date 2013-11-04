@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8Len)
 
 BOOST_AUTO_TEST_CASE(TestUTF8LenChar)
 {
-    char source[] = { 'a', 0xC3, 0xA9, 0};
+    uint8_t source[] = { 'a', 0xC3, 0xA9, 0};
 
     BOOST_CHECK_EQUAL(2, UTF8Len(source));
 }
