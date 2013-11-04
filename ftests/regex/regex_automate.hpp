@@ -933,7 +933,7 @@ namespace re {
                 }
                 else if (st) {
                     if (st->is_terminate()) {
-                        if (count_consume > 1) {
+                        if (count_consume > 0) {
                             l.push_back(st_step_elem_t(st, count_consume));
                         }
                         else if (is_end) {
@@ -941,22 +941,22 @@ namespace re {
                         }
                     }
                     else {
-                        l.push_back(st_step_elem_t(st, count_consume-1));
+                        l.push_back(st_step_elem_t(st, count_consume));
                     }
                 }
                 return false;
             }
 
             static bool push_next(st_step_range_list_t & l, const State * st,
-                                  StatesWrapper & stw, bool is_end, unsigned count, unsigned count_consume)
+                                  StatesWrapper & stw, bool is_end, unsigned count)
             {
                 if ( ! st->out1 && ! st->out2 && is_end) {
                     return true;
                 }
-                if (st->out1 && impl(l, st->out1, stw, is_end, count, count_consume)) {
+                if (st->out1 && impl(l, st->out1, stw, is_end, count, 0)) {
                     return true;
                 }
-                if (st->out2 && impl(l, st->out2, stw, is_end, count, count_consume)) {
+                if (st->out2 && impl(l, st->out2, stw, is_end, count, 0)) {
                     return true;
                 }
                 return false;
@@ -966,9 +966,15 @@ namespace re {
         const bool is_end = ! consumer.valid();
         unsigned r;
         for (st_step_range_iterator first = l1.begin(), last = l1.end(); first != last; ++first) {
+#ifdef DISPLAY_TRACE
+            std::cout << (*first->first) << std::endl;
+#endif
             if (first->second) {
+#ifdef DISPLAY_TRACE
+                std::cout << "continue " << first->second << std::endl;
+#endif
                 if (!--first->second) {
-                    if (add::push_next(l2, first->first, stw, is_end, count, 0)) {
+                    if (add::push_next(l2, first->first, stw, is_end, count)) {
                         return true;
                     }
                 }
@@ -978,11 +984,13 @@ namespace re {
                 continue;
             }
             if ( ! first->first->is_cap() && (r = first->first->check(c, consumer))) {
+#ifdef DISPLAY_TRACE
+                std::cout << "ok" << std::endl;
+#endif
                 if (r != 1) {
                     l2.push_back(st_step_elem_t(first->first, r-1));
-                    continue;
                 }
-                if (add::push_next(l2, first->first, stw, is_end, count, r)) {
+                else if (add::push_next(l2, first->first, stw, is_end, count)) {
                     return true;
                 }
             }
@@ -1020,6 +1028,11 @@ namespace re {
         if ( ! stw.root) {
             return false;
         }
+
+#ifdef DISPLAY_TRACE
+        display_state(stw);
+#endif
+
         st_step_range_list_t l1;
         add_first(l1, l1, stw.root);
         if (l1.empty()) {
@@ -1030,6 +1043,9 @@ namespace re {
         bool res = false;
         unsigned count = 1;
         while (consumer.valid() && !(res = st_exact_step(l1, l2, stw, consumer.bumpc(), consumer, ++count))) {
+#ifdef DISPLAY_TRACE
+            std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
+#endif
             if (l2.empty()) {
                 return false;
             }
@@ -1086,6 +1102,9 @@ namespace re {
                 continue;
             }
             if ( ! first->first->is_cap() && (r = first->first->check(c, consumer))) {
+#ifdef DISPLAY_TRACE
+            std::cout << (*first->first) << std::endl;
+#endif
                 if ( ! first->first->out1 && ! first->first->out2) {
                     return true;
                 }
@@ -1110,6 +1129,10 @@ namespace re {
             return false;
         }
 
+#ifdef DISPLAY_TRACE
+        display_state(stw);
+#endif
+
         st_step_range_list_t lst;
         st_step_range_list_t l1;
         add_first(lst, l1, stw.root);
@@ -1121,6 +1144,9 @@ namespace re {
         bool res = false;
         unsigned count = 1;
         while (consumer.valid()) {
+#ifdef DISPLAY_TRACE
+            std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
+#endif
             for (st_step_range_iterator first = lst.begin(), last = lst.end(); first != last; ++first) {
                 if (stw.get_num_at(first->first) != count) {
                     l1.push_back(*first);

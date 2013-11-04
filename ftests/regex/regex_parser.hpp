@@ -553,13 +553,12 @@ namespace re {
                                 else if (m) {
                                     State * e = new_finish();
                                     if (m > 2 && (*spst)->out1 == *pst && (*spst)->is_simple_char()) {
-                                        State * lst = new_sequence((*spst)->data.range.l, m,
-                                                                   new_split(e, *spst));
+                                        (*spst)->type = SEQUENCE;
+                                        (*spst)->data.sequence = new_string_int((*spst)->data.range.l, m);
                                         (*spst)->out1 = e;
-                                        *spst = lst;
+                                        *spst = new_split(e, *spst);
                                     }
                                     else {
-                                        State * e = new_finish();
                                         *pst = e;
                                         ContextClone cloner(*spst);
                                         std::size_t idx = cloner.get_idx(e);
@@ -624,17 +623,15 @@ namespace re {
                                 else {
                                     --end;
                                     State * finish = new_finish();
-                                    if ((*spst)->out1 == *pst && (*spst)->is_simple_char()) {
+                                    if (m > 1 && (*spst)->out1 == *pst && (*spst)->is_simple_char()) {
                                         char_int cst = (*spst)->data.range.l;
-                                        (*spst)->out1 = finish;
-                                        State * lst = new_split(finish, *spst);
-                                        *spst = new_sequence(cst, m, lst);
-                                        if (n != 1) {
-                                            while (--n) {
-                                                lst->out1 = new_split(finish, new_character(cst, finish));
-                                                lst = lst->out1;
-                                            }
+                                        (*spst)->type = SEQUENCE;
+                                        (*spst)->data.sequence = new_string_int(cst, m);
+                                        State * lst = finish;
+                                        while (n--) {
+                                            lst = new_split(finish, new_character(cst, lst));
                                         }
+                                        (*spst)->out1 = lst;
                                     }
                                     else {
                                         State * e = new_epsilone();

@@ -215,10 +215,12 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         State split2(SPLIT, 0, 0, &st_b, &st_a1);
         State st_a2(RANGE, 'a', 'a', &split2);
         State split1(SPLIT, 0, 0, &st_b, &st_a2);
-        State st_a3(RANGE, 'a', 'a', &split1);
-        State st_a4(RANGE, 'a', 'a', &st_a3);
+        State st_a3(SEQUENCE, 0, 0, &split1);
+        char_int seq[] = {'a','a',0};
+        st_a3.data.sequence = seq;
         Reg rgx("a{2,4}b");
-        BOOST_CHECK_EQUAL(st_to_string(&st_a4), rgx.to_string());
+        BOOST_CHECK_EQUAL(st_to_string(&st_a3), rgx.to_string());
+        st_a3.data.sequence = 0;
     }
     {
         State st_b(RANGE, 'b', 'b');
