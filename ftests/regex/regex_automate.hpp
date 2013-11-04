@@ -55,8 +55,6 @@ namespace re {
         , captures(0)
         , pcaptures(0)
         , traces(0)
-        , l1()
-        , l2()
         , st_list(0)
         , st_range_list(0)
         {
@@ -65,9 +63,8 @@ namespace re {
             }
 
             const size_t count_st = this->stw.size();
-            l1.set_parray(new StateListByStep::Info[count_st * 2]);
-            l2.set_parray(l1.array + count_st);
-
+            l1.reserve(count_st);
+            l2.reserve(count_st);
             {
                 const size_t matrix_size = count_st * count_st;
                 this->st_list = new StateList[matrix_size];
@@ -145,7 +142,6 @@ namespace re {
             delete [] this->st_range_list;
             delete [] this->captures;
             delete [] this->idx_trace_free;
-            delete [] this->l1.array;
         }
 
     private:
@@ -352,51 +348,47 @@ namespace re {
         }
 
     private:
-        struct StateListByStep
-        {
-            struct Info {
-                RangeList * rl;
-                unsigned idx;
-            };
+        struct StepRange {
+            const RangeList * rl;
+            unsigned consume;
+            unsigned idx;
 
-            StateListByStep()
-            : array(0)
+            StepRange(const RangeList * l, unsigned count_consume, unsigned id)
+            : rl(l)
+            , consume(count_consume)
+            , idx(id)
             {}
+        };
+        struct StepRangeList {
 
-            void push_back(RangeList* val, unsigned idx)
-            {
-                this->parray->rl = val;
-                this->parray->idx = idx;
-                ++this->parray;
-            }
+            typedef std::vector<StepRange> container_type;
+            typedef container_type::iterator iterator;
 
-            void push_back(RangeList* val)
-            {
-                this->parray->rl = val;
-                ++this->parray;
-            }
+            void push_back(RangeList* val, unsigned count_consume, unsigned id = 0)
+            { this->list.push_back(StepRange(val, count_consume, id)); }
 
-            Info * begin() const
-            { return this->array; }
+            void push_back(const StepRange & x)
+            { this->list.push_back(x); }
 
-            Info * end() const
-            { return this->parray; }
+            iterator begin()
+            { return this->list.begin(); }
 
-            void set_parray(Info * p)
-            {
-                this->array = p;
-                this->parray = p;
-            }
+            iterator end()
+            { return this->list.end(); }
 
             bool empty() const
-            { return this->array == this->parray; }
+            { return this->list.empty(); }
 
             void clear()
-            { this->parray = this->array; }
+            { this->list.clear(); }
 
-            Info * array;
-            Info * parray;
+            void reserve(std::size_t count)
+            { this->list.reserve(count); }
+
+            container_type list;
         };
+
+        typedef StepRangeList::iterator StepRangeIterator;
 
         struct Searching
         {
@@ -407,8 +399,6 @@ namespace re {
             : sm(sm)
             , step_id(1)
             {}
-
-            typedef StateListByStep::Info Info;
 
             RangeList * step(char_int c, utf_consumer & consumer, RangeList * l, unsigned & step_count)
             {
@@ -475,24 +465,11 @@ namespace re {
                 return false;
             }
 
-            struct StepRange {
-                const RangeList * rl;
-                unsigned consume;
-
-                StepRange(const RangeList * l)
-                : rl(l)
-                , consume(0)
-                {}
-            };
-
-            typedef std::vector<StepRange> step_range_list_t;
-            typedef step_range_list_t::iterator step_range_iterator;
-
             unsigned step(char_int c, utf_consumer & consumer, StatesWrapper & stw,
-                          step_range_list_t & l1, step_range_list_t & l2, unsigned & step_count)
+                          StepRangeList & l1, StepRangeList & l2, unsigned & step_count)
             {
                 unsigned r;
-                for (step_range_iterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
+                for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
                     ++step_count;
                     if (stw.get_num_at(ifirst->rl->st) == this->step_id) {
                         /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
@@ -516,8 +493,7 @@ namespace re {
                                 return 0;
                             }
 
-                            l2.push_back(first->next);
-                            l2.back().consume = r - 1;
+                            l2.push_back(first->next, r - 1);
                         }
                     }
                 }
@@ -530,18 +506,13 @@ namespace re {
                 this->sm.display_dfa();
 #endif
 
-                //this->sm.l1.clear();
-                //this->sm.l2.clear();
+                this->sm.l1.clear();
+                this->sm.l2.clear();
                 this->sm.reset_id();
-                step_range_list_t l1;
-                step_range_list_t l2;
 
-                //StateListByStep * pal1 = &this->sm.l1;
-                //StateListByStep * pal2 = &this->sm.l2;
-                step_range_list_t * pal1 = &l1;
-                step_range_list_t * pal2 = &l2;
-                //this->sm.l1.push_back(&this->sm.st_range_beginning);
-                l1.push_back(&this->sm.st_range_beginning);
+                StepRangeList * pal1 = &this->sm.l1;
+                StepRangeList * pal2 = &this->sm.l2;
+                this->sm.l1.push_back(&this->sm.st_range_beginning, 0);
 
                 utf_consumer consumer(s);
 
@@ -560,10 +531,10 @@ namespace re {
                     ++this->step_id;
                     std::swap(pal1, pal2);
                     pal2->clear();
-                    pal1->push_back(this->sm.st_range_list);
+                    pal1->push_back(this->sm.st_range_list, 0);
                 }
 
-                for (step_range_iterator ifirst = pal1->begin(), ilast = pal1->end(); ifirst != ilast; ++ifirst) {
+                for (StepRangeIterator ifirst = pal1->begin(), ilast = pal1->end(); ifirst != ilast; ++ifirst) {
                     for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
                         if (first->st->is_terminate()) {
                             return true;
@@ -636,29 +607,12 @@ namespace re {
             , step_id(1)
             {}
 
-            typedef StateListByStep::Info Info;
-
-            struct StepRange {
-                const RangeList * rl;
-                unsigned consume;
-                unsigned idx;
-
-                StepRange(const RangeList * l, unsigned id, unsigned count_consume = 0)
-                : rl(l)
-                , consume(count_consume)
-                , idx(id)
-                {}
-            };
-
-            typedef std::vector<StepRange> step_range_list_t;
-            typedef step_range_list_t::iterator step_range_iterator;
-
             template<typename Tracer>
             unsigned step(const char * s, char_int c, utf_consumer & consumer,
-                          step_range_list_t & l1, step_range_list_t & l2,
+                          StepRangeList & l1, StepRangeList & l2,
                           Tracer& tracer, unsigned & step_count)
             {
-                for (step_range_iterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
+                for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
                     ++step_count;
                     if (ifirst->consume) {
                         if (--ifirst->consume) {
@@ -714,7 +668,7 @@ namespace re {
                             if (0 == first->next) {
                                 /**///std::cout << "idx: " << (ifirst->idx) << std::endl;
                                 if (count_consume > 1) {
-                                    l2.push_back(StepRange(first->next, ifirst->idx, count_consume-1));
+                                    l2.push_back(first->next, count_consume-1, ifirst->idx);
                                     continue;
                                 }
                                 return ifirst->idx;
@@ -728,7 +682,7 @@ namespace re {
 #ifdef DISPLAY_TRACE
                             std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m" << std::endl;
 #endif
-                            l2.push_back(StepRange(first->next, idx, count_consume-1));
+                            l2.push_back(first->next, count_consume-1, idx);
                             ++new_trace;
                         }
                     }
@@ -754,19 +708,14 @@ namespace re {
                 this->sm.display_dfa();
 #endif
 
-                //this->sm.l1.clear();
-                //this->sm.l2.clear();
+                this->sm.l1.clear();
+                this->sm.l2.clear();
                 this->sm.reset_id();
-                step_range_list_t l1;
-                step_range_list_t l2;
                 this->sm.reset_trace();
 
-                //StateListByStep * pal1 = &this->sm.l1;
-                //StateListByStep * pal2 = &this->sm.l2;
-                step_range_list_t * pal1 = &l1;
-                step_range_list_t * pal2 = &l2;
-                //this->sm.l1.push_back(&this->sm.st_range_beginning, *--this->sm.pidx_trace_free);
-                l1.push_back(StepRange(&this->sm.st_range_beginning, *--this->sm.pidx_trace_free));
+                StepRangeList * pal1 = &this->sm.l1;
+                StepRangeList * pal2 = &this->sm.l2;
+                this->sm.l1.push_back(&this->sm.st_range_beginning, 0, *--this->sm.pidx_trace_free);
                 tracer.start(*this->sm.pidx_trace_free);
 
                 utf_consumer consumer(s);
@@ -796,13 +745,13 @@ namespace re {
 #ifdef DISPLAY_TRACE
                         std::cout << "\t\033[32m-> " << *this->sm.pidx_trace_free << "\033[0m" << std::endl;
 #endif
-                        pal1->push_back(StepRange(this->sm.st_range_list, *this->sm.pidx_trace_free));
+                        pal1->push_back(this->sm.st_range_list, 0, *this->sm.pidx_trace_free);
                     }
                     s = consumer.str();
                 }
 
                 if (!consumer.valid()) {
-                    for (step_range_iterator ifirst = pal1->begin(), ilast = pal1->end(); ifirst != ilast; ++ifirst) {
+                    for (StepRangeIterator ifirst = pal1->begin(), ilast = pal1->end(); ifirst != ilast; ++ifirst) {
                         if (ifirst->consume && ifirst->consume-1) {
                             continue ;
                         }
@@ -860,8 +809,8 @@ namespace re {
         const State ** captures;
         const State ** pcaptures;
         const char ** traces;
-        StateListByStep l1;
-        StateListByStep l2;
+        StepRangeList l1;
+        StepRangeList l2;
 
         struct StateList
         {
@@ -905,7 +854,7 @@ namespace re {
 
     typedef std::pair<const State*, unsigned> st_step_elem_t;
     typedef std::vector<st_step_elem_t> st_step_range_list_t;
-    typedef st_step_range_list_t::iterator st_step_range_iterator;
+    typedef st_step_range_list_t::iterator st_step_range_iterator_t;
 
     inline bool st_exact_step(st_step_range_list_t & l1, st_step_range_list_t & l2,
                               StatesWrapper & stw, size_t c, utf_consumer & consumer, unsigned count)
@@ -965,7 +914,7 @@ namespace re {
 
         const bool is_end = ! consumer.valid();
         unsigned r;
-        for (st_step_range_iterator first = l1.begin(), last = l1.end(); first != last; ++first) {
+        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
 #ifdef DISPLAY_TRACE
             std::cout << (*first->first) << std::endl;
 #endif
@@ -1096,7 +1045,7 @@ namespace re {
         };
 
         unsigned r;
-        for (st_step_range_iterator first = l1.begin(), last = l1.end(); first != last; ++first) {
+        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
             if (first->second && --first->second) {
                 l2.push_back(*first);
                 continue;
@@ -1147,7 +1096,7 @@ namespace re {
 #ifdef DISPLAY_TRACE
             std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
 #endif
-            for (st_step_range_iterator first = lst.begin(), last = lst.end(); first != last; ++first) {
+            for (st_step_range_iterator_t first = lst.begin(), last = lst.end(); first != last; ++first) {
                 if (stw.get_num_at(first->first) != count) {
                     l1.push_back(*first);
                 }
@@ -1167,7 +1116,7 @@ namespace re {
         if (consumer.valid()) {
             return false;
         }
-        for (st_step_range_iterator first = l1.begin(), last = l1.end(); first != last; ++first) {
+        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
             if (first->first->type == LAST) {
                 return true;
             }
