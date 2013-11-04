@@ -225,7 +225,7 @@ namespace re {
         char_int * ret = new char_int[count * len + 1];
         char_int * p = ret;
         while (count--) {
-            std::copy(str, str + len, ret);
+            std::copy(str, str + len, p);
             p += len;
         }
         *p = 0;

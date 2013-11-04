@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
     bool ismatch3 = false;
     bool ismatch4 = false;
     double d1, d2, d3, d4;
+    bool validregexec = false;
 
     const char * str = argc > 1 ? argv[1] : "abcdef";
 
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
 # define ITERATION 100000
 #endif
     {
-        regexec(&rgx, str, 1, regmatch, 0); //NOTE preload
+        validregexec = regexec(&rgx, str, 1, regmatch, 0) == 0; //NOTE preload
         //BEGIN
         std::clock_t start_time = std::clock();
         for (size_t i = 0; i < ITERATION; ++i) {
@@ -178,7 +179,7 @@ int main(int argc, char **argv) {
     stw.reset_nums();
     std::cout << "st_search: " << st_search(stw, str) << std::endl;
 
-    if (ismatch3) {
+    if (validregexec && ismatch3) {
         std::cout << ("with regex.h\n");
         for (unsigned i = 1; i < sizeof(regmatch)/sizeof(regmatch[0]); i++) {
             if (regmatch[i].rm_so == -1) {

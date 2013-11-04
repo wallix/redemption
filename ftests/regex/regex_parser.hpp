@@ -465,6 +465,26 @@ namespace re {
 
     typedef std::pair<State*, State**> IntermendaryState;
 
+    inline bool is_unique_string_state(State * first, State * last)
+    {
+        return (first->out1 == last && first->is_simple_char())
+            || (first->is_sequence()
+                && (!first->out1 || (first->out1->is_epsilone() && first->out1->out1 == last)));
+    }
+
+    inline void transform_to_sequence(State * st, size_t m)
+    {
+        if (st->is_simple_char()) {
+            st->data.sequence = new_string_int(st->data.range.l, m);
+        }
+        else {
+            const char_int * seq = st->data.sequence;
+            st->data.sequence = new_string_int(seq, m);
+            delete [] seq;
+        }
+        st->type = SEQUENCE;
+    }
+
     inline IntermendaryState intermendary_st_compile(utf_consumer & consumer,
                                                      const char * & msg_err,
                                                      int recusive = 0/*, bool ismatch = true*/)
@@ -552,9 +572,8 @@ namespace re {
                                 }
                                 else if (m) {
                                     State * e = new_finish();
-                                    if (m > 2 && (*spst)->out1 == *pst && (*spst)->is_simple_char()) {
-                                        (*spst)->type = SEQUENCE;
-                                        (*spst)->data.sequence = new_string_int((*spst)->data.range.l, m);
+                                    if (m > 2 && is_unique_string_state(*spst, *pst)) {
+                                        transform_to_sequence(*spst, m);
                                         (*spst)->out1 = e;
                                         *spst = new_split(e, *spst);
                                     }
@@ -623,14 +642,21 @@ namespace re {
                                 else {
                                     --end;
                                     State * finish = new_finish();
-                                    if (m > 1 && (*spst)->out1 == *pst && (*spst)->is_simple_char()) {
-                                        char_int cst = (*spst)->data.range.l;
-                                        (*spst)->type = SEQUENCE;
-                                        (*spst)->data.sequence = new_string_int(cst, m);
+                                    if (m > 1 && is_unique_string_state(*spst, *pst)) {
                                         State * lst = finish;
-                                        while (n--) {
-                                            lst = new_split(finish, new_character(cst, lst));
+                                        if ((*spst)->is_simple_char()) {
+                                            char_int cst = (*spst)->data.range.l;
+                                            while (n--) {
+                                                lst = new_split(finish, new_character(cst, lst));
+                                            }
                                         }
+                                        else {
+                                            const char_int * sst = (*spst)->data.sequence;
+                                            while (n--) {
+                                                lst = new_split(finish, new_sequence(sst, 1, lst));
+                                            }
+                                        }
+                                        transform_to_sequence(*spst, m);
                                         (*spst)->out1 = lst;
                                     }
                                     else {
@@ -665,17 +691,8 @@ namespace re {
                         }
                         else {
                             if (1 != m) {
-                                if ((*spst)->out1 == *pst && ((*spst)->is_simple_char()/* || (*spst)->is_sequence()*/)) {
-                                    ///TODO "(?:abc){2}" "abc" -> (epsilone)
-                                    /*if ((*spst)->is_sequence()) {
-                                        const char_int * s = (*spst)->data.sequence;
-                                        (*spst)->data.sequence = new_string_int(s, m);
-                                        delete [] s;
-                                    }
-                                    else*/ {
-                                        (*spst)->type = SEQUENCE;
-                                        (*spst)->data.sequence = new_string_int((*spst)->data.range.l, m);
-                                    }
+                                if (is_unique_string_state(*spst, *pst)) {
+                                    transform_to_sequence(*spst, m);
                                 }
                                 else {
                                     /**///std::cout << ("fixe ") << m << std::endl;
