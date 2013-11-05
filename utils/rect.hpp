@@ -230,7 +230,7 @@ struct Rect {
     //             |                         |
     //             |                         |
 
-    enum {
+    enum  t_region {
         IN = 0x00,
         UP = 0x01,
         DOWN = 0x02,
@@ -239,8 +239,8 @@ struct Rect {
     };
     // Region of a point outside rect
     // 0x00 means inside
-    int region_pt(int x, int y) const {
-        int res = 0;
+    t_region region_pt(int x, int y) const {
+        int res = IN;
         if (x < this->x) {
             res |= LEFT;
         }
@@ -253,7 +253,7 @@ struct Rect {
         else if (y > this->y + this->cy) {
             res |= DOWN;
         }
-        return res;
+        return static_cast<t_region>(res);
     }
 
 };
