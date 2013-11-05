@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier, Poelen Jonathan
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+              Martin Potier, Poelen Jonathan, Raphael Zhou, Meng Tan
 */
 
 #ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
@@ -225,10 +226,10 @@ public:
         int endx = 0;
         int endy = 0;
         if (equa.resolve(clip)) {
-            startx = equa.aXin;
-            starty = equa.aYin;
-            endx = equa.bXin;
-            endy = equa.bYin;
+            startx = equa.segin.a.x;
+            starty = equa.segin.a.y;
+            endx = equa.segin.b.x;
+            endy = equa.segin.b.y;
         }
         else {
             return;
