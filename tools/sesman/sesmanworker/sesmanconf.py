@@ -72,7 +72,7 @@ class SesmanConfig(object):
             , u'target'                 : u"compte cible"
             , u'password'               : u"mot de passe"
             , u'diagnostic'             : u"diagnostic"
-            , u'connection_closed'      : u"connexion fermée"
+            , u'connection_closed'      : u"Connexion fermée"
             , u'OK'                     : u"OK"
             , u'cancel'                 : u"Abandon"
             , u'help'                   : u"Aide"
@@ -120,7 +120,7 @@ class SesmanConfig(object):
             , u'manager_close_cnx': u"Le gestionnaire de session a coupé la connexion"
             , u'changepassword'         : u"Vous devez changer votre mot de passe<br>"
                                          +u"pour vous connecter."
-                                         
+
             , u"Connection closed by client": u'Connection terminée par le client'
             , u"Empty user, try again": u"Utilisteur non défini, reessayez."
             , u"Error while retreiving rights for user %s": u"Erreur de récupération des droits de l'utilisateur %s"

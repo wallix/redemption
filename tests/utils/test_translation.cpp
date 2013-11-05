@@ -58,6 +58,10 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     BOOST_CHECK_EQUAL(std::string(TR("second", ini)),            std::string("second"));
     BOOST_CHECK_EQUAL(std::string(TR("minute", ini)),            std::string("minute"));
     BOOST_CHECK_EQUAL(std::string(TR("before_closing", ini)),    std::string("before closing"));
+    BOOST_CHECK_EQUAL(std::string(TR("manager_close_cnx", ini)),
+                      std::string("Connection closed by manager"));
+    BOOST_CHECK_EQUAL(std::string(TR("end_connection", ini)),
+                      std::string("End of connection"));
     BOOST_CHECK_EQUAL(std::string(TR("help_message", ini)),
                       std::string(
                                   "In login edit box, enter:<br>"
@@ -86,6 +90,7 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     ini.translation.help_message.set_from_cstr("");
     ini.translation.username.set_from_cstr("");
     ini.translation.target.set_from_cstr("");
+    ini.translation.manager_close_cnx.set_from_cstr("");
 
     BOOST_CHECK_EQUAL(std::string(TR("login", ini)),              std::string("Identifiant"));
     BOOST_CHECK_EQUAL(std::string(TR("password", ini)),           std::string("Mot de passe"));
@@ -109,6 +114,10 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     BOOST_CHECK_EQUAL(std::string(TR("second", ini)),             std::string("seconde"));
     BOOST_CHECK_EQUAL(std::string(TR("minute", ini)),             std::string("minute"));
     BOOST_CHECK_EQUAL(std::string(TR("before_closing", ini)),     std::string("avant fermeture"));
+    BOOST_CHECK_EQUAL(std::string(TR("manager_close_cnx", ini)),
+                      std::string("Le gestionnaire de session a coupé la connexion"));
+    BOOST_CHECK_EQUAL(std::string(TR("end_connection", ini)),
+                      std::string("Connexion terminée"));
     BOOST_CHECK_EQUAL(std::string(TR("help_message", ini)),
                       std::string("Dans la zone de saisie login, entrez:<br>"
                                   "- le nom de la machine cible et du compte<br>"
