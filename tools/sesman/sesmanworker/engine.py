@@ -995,7 +995,7 @@ class Engine(object):
             password = PASSWORD1
         ),
         TargetPasswordInfo(
-            account = u'administrateur@qa',
+            account = u'qa\\administrateur',
             resource = u'10.10.46.70',
             protocol = u'RDP',
             password = PASSWORD1
@@ -1282,6 +1282,10 @@ class Engine(object):
 
     def get_target_password(self, target_device):
         res = None
+        Logger().info("get_target_password ...")
+        Logger().info("account =%s" % target_device.account.login)
+        Logger().info("resource=%s" % target_device.resource.device.cn)
+        Logger().info("protocol=%s" % target_device.resource.service.protocol.cn)
         try:
             for p in self.config_target_password:
                 if (p.account == target_device.account.login and
