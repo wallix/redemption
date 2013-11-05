@@ -15,7 +15,8 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier, Poelen Jonathan
+   Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat,
+              Martin Potier, Poelen Jonathan, Raphael Zhou, Meng Tan
 */
 
 #ifndef _REDEMPTION_CORE_RDP_RDPDRAWABLE_HPP_
@@ -225,10 +226,10 @@ public:
         int endx = 0;
         int endy = 0;
         if (equa.resolve(clip)) {
-            startx = equa.aXin;
-            starty = equa.aYin;
-            endx = equa.bXin;
-            endy = equa.bYin;
+            startx = equa.segin.a.x;
+            starty = equa.segin.a.y;
+            endx = equa.segin.b.x;
+            endy = equa.segin.b.y;
         }
         else {
             return;
@@ -438,9 +439,9 @@ public:
                 x += font_item->width + 2;
             }
 
-            for (; index < part_len && x < screen_rect.x + screen_rect.cx; index++) {
+            for (; index < part_len && x < screen_rect.right(); index++) {
                 font_item = this->get_font(font, uni[index]);
-                int16_t cy = std::min<int16_t>(y + font_item->height, screen_rect.y + screen_rect.cy) - y;
+                int16_t cy = std::min<int16_t>(y + font_item->height, screen_rect.bottom()) - y;
                 int i = 0;
                 for (int yy = 0 ; yy < cy; yy++) {
                     unsigned char oc = 1<<7;
@@ -449,7 +450,7 @@ public:
                             oc = 1 << 7;
                             ++i;
                         }
-                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.x + screen_rect.cx && font_item->data[i + yy] & oc) {
+                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.right() && font_item->data[i + yy] & oc) {
                             this->drawable.opaquerect(Rect(x + xx, y + yy, 1, 1), fgcolor);
                         }
                         oc >>= 1;

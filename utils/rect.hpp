@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Rect class : Copyright (C) Christophe Grosjean 2009
@@ -41,14 +41,12 @@ struct Rect {
         virtual void callback(const Rect & rect) = 0;
     };
 
-    TODO("Right should be included inside rect (and undefined for empty rect)");
-    uint16_t right() const {
-        return static_cast<uint16_t>(this->x + this->cx);
+    int16_t right() const {
+        return static_cast<int16_t>(this->x + this->cx);
     }
 
-    TODO("Bottom should be included inside rect (and undefined for empty rect)");
-    uint16_t bottom() const {
-        return static_cast<uint16_t>(this->y + this->cy);
+    int16_t bottom() const {
+        return static_cast<int16_t>(this->y + this->cy);
     }
 
     Rect() : x(0), y(0), cx(0), cy(0) {
@@ -59,8 +57,6 @@ struct Rect {
     {
         // fast detection of overflow, works for valid width/height range 0..4096
         if (((width-1)|(height-1)) & 0x8000){
-            this->x = 0;
-            this->y = 0;
             this->cx = 0;
             this->cy = 0;
         }
@@ -68,9 +64,9 @@ struct Rect {
 
     bool contains_pt(int x, int y) const {
         return    x  >= this->x
-               && y  >= this->y
-               && x < (this->x + this->cx)
-               && y < (this->y + this->cy);
+                && y  >= this->y
+                && x   < this->right()
+                && y   < this->bottom();
     }
 
     // special cases: contains returns true
@@ -78,16 +74,16 @@ struct Rect {
     // - if inner rect is empty
     bool contains(const Rect & inner) const {
         return (inner.x >= this->x
-             && inner.y >= this->y
-             && inner.x + inner.cx <= this->x + this->cx
-             && inner.y + inner.cy <= this->y + this->cy);
+              && inner.y >= this->y
+              && inner.right() <= this->right()
+              && inner.bottom() <= this->bottom());
     }
 
     bool equal(const Rect & other) const {
         return (other.x == this->x
              && other.y == this->y
-             && other.x + other.cx == this->x + this->cx
-             && other.y + other.cy == this->y + this->cy);
+             && other.right() == this->right()
+             && other.bottom() == this->bottom());
     }
 
     bool operator==(const Rect &other) const {
@@ -120,8 +116,8 @@ struct Rect {
         else {
             const int x0 = std::min<int>(this->x, x);
             const int y0 = std::min<int>(this->y, y);
-            const int x1 = std::max<int>(this->x + this->cx - 1, x);
-            const int y1 = std::max<int>(this->y + this->cy - 1, y);
+            const int x1 = std::max<int>(this->right() - 1, x);
+            const int y1 = std::max<int>(this->bottom() - 1, y);
             return Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
         }
     }
@@ -161,18 +157,15 @@ struct Rect {
     {
         int max_x = std::max(in.x, this->x);
         int max_y = std::max(in.y, this->y);
-        int min_right = std::min<int>(in.x + in.cx, this->x + this->cx);
-        int min_bottom = std::min<int>(in.y + in.cy, this->y + this->cy);
+        int min_right = std::min<int>(in.right(), this->right());
+        int min_bottom = std::min<int>(in.bottom(), this->bottom());
 
         return Rect(max_x, max_y, min_right - max_x, min_bottom - max_y);
     }
 
     bool has_intersection(const Rect & in) const
     {
-        return (this->cx &&
-            (std::min<int>(in.x + in.cx, this->x + this->cx) -
-                 std::max(in.x, this->x) > 0)
-        );
+        return (this->cx && (std::min<int>(in.right(), this->right()) - std::max(in.x, this->x) > 0));
     }
 
     // Ensemblist difference
@@ -182,22 +175,20 @@ struct Rect {
 
         if (!intersect.isempty()) {
             if (intersect.y  > this->y) {
-                it.callback(Rect(this->x, this->y, this->cx,
-                                 static_cast<uint16_t>(intersect.y - this->y)));
+                it.callback(Rect(this->x, this->y, 
+                                this->cx, static_cast<uint16_t>(intersect.y - this->y)));
             }
             if (intersect.x > this->x) {
                 it.callback(Rect(this->x, intersect.y,
                                  static_cast<uint16_t>(intersect.x - this->x), intersect.cy));
             }
-            if (this->x + this->cx > intersect.x + intersect.cx) {
-                it.callback(Rect(intersect.x + intersect.cx, intersect.y,
-                                this->x + this->cx - (intersect.x + intersect.cx),
-                                intersect.cy));
+            if (this->right() > intersect.right()) {
+                it.callback(Rect(intersect.right(), intersect.y, 
+                                 static_cast<uint16_t>(this->right() - (intersect.right())), intersect.cy));
             }
-            if (this->y + this->cy > intersect.y + intersect.cy) {
-                it.callback(Rect(this->x, intersect.y + intersect.cy,
-                                this->cx,
-                                this->y + this->cy - (intersect.y + intersect.cy)));
+            if (this->y + this->cy > intersect.bottom()) {
+                it.callback(Rect(this->x, intersect.bottom(), 
+                                this->cx, static_cast<uint16_t>(this->bottom() - (intersect.bottom()))));
             }
         }
         else {
@@ -216,13 +207,13 @@ struct Rect {
     //    LEFT     |                         |      RIGHT
     //             |                         |
     //-------------+-------------------------+--------------------
-    //             |                         |
-    //             |                         |
-    //             |                         |
-    //    LEFT     |          IN             |     RIGHT
-    //             |         Rect            |
-    //             |                         |
-    //             |                         |
+    //             |/ / / / / / / / / / / / /|
+    //             | / / / / / / / / / / / / |
+    //             |/ / / / / / / / / / / / /|
+    //    LEFT     | / / / /   IN  / / / / / |     RIGHT
+    //             |/ / / / / Rect  / / / / /|
+    //             | / / / / / / / / / / / / |
+    //             |/ / / / / / / / / / / / /|
     //-------------+-------------------------+-------------------
     //             |                         |
     //    DOWN     |         DOWN            |     DOWN
@@ -230,7 +221,8 @@ struct Rect {
     //             |                         |
     //             |                         |
 
-    enum {
+    enum  t_region {
+        IN = 0x00,
         UP = 0x01,
         DOWN = 0x02,
         LEFT = 0x04,
@@ -238,8 +230,8 @@ struct Rect {
     };
     // Region of a point outside rect
     // 0x00 means inside
-    int region_pt(int x, int y) const {
-        int res = 0;
+    t_region region_pt(int x, int y) const {
+        int res = IN;
         if (x < this->x) {
             res |= LEFT;
         }
@@ -252,46 +244,45 @@ struct Rect {
         else if (y > this->y + this->cy) {
             res |= DOWN;
         }
-        return res;
+        return static_cast<t_region>(res);
     }
 
+};
+struct Point {
+    int x;
+    int y;
 
-    bool intersect_line(int aX, int aY, int bX, int bY) const {
-        int aPosition = this->region_pt(aX, aY);
-        int bPosition = this->region_pt(bX, bY);
-        return !(aPosition & bPosition);
-    }
-
+    Point(int x, int y)
+        : x(x)
+        , y(y)
+    {}
 
 };
 
+struct Segment {
+    Point a;
+    Point b;
+
+    Segment(const Point & a, const Point & b)
+        : a(a)
+        , b(b)
+    {}
+};
+
 struct LineEquation {
-    int aX;
-    int aY;
-    int bX;
-    int bY;
+    Segment seg;
+    Segment segin;
 
     int dX;
     int dY;
     int c;
 
-    int aXin;
-    int aYin;
-    int bXin;
-    int bYin;
-
     LineEquation(int aX, int aY, int bX, int bY)
-        : aX(aX)
-        , aY(aY)
-        , bX(bX)
-        , bY(bY)
+        : seg(Segment(Point(aX, aY), Point(bX, bY)))
+        , segin(Segment(Point(0, 0), Point(0, 0)))
         , dX(aX - bX)
         , dY(aY - bY)
         , c(bY*aX - aY*bX)
-        , aXin(0)
-        , aYin(0)
-        , bXin(0)
-        , bYin(0)
     {
     }
 
@@ -303,65 +294,74 @@ struct LineEquation {
         return (this->dY*x + this->c) / this->dX;
     }
 
-    void compute_intersection(const Rect & rect, int region, int & x, int & y) {
+    bool compute_intersection(const Rect & rect, int region, int & x, int & y) {
         int interX = 0;
         int interY = 0;
+        bool found = false;
         if (region & Rect::LEFT) {
-            int tmp = this->compute_y(rect.x);
-            if (tmp >= rect.y && tmp <= (rect.y + rect.cy)) {
+            int tmpy = this->compute_y(rect.x);
+            if (tmpy >= rect.y && tmpy <= (rect.bottom())) {
+                found = true;
                 interX = rect.x;
-                interY = tmp;
+                interY = tmpy;
             }
         }
         else if (region & Rect::RIGHT) {
-            int tmp = this->compute_y(rect.x + rect.cx);
-            if (tmp >= rect.y && tmp <= (rect.y + rect.cy)) {
-                interX = rect.x + rect.cx;
-                interY = tmp;
+            int tmpy = this->compute_y(rect.right());
+            if (tmpy >= rect.y && tmpy <= (rect.bottom())) {
+                found = true;
+                interX = rect.right();
+                interY = tmpy;
             }
         }
         if (region & Rect::UP) {
-            int tmp = this->compute_x(rect.y);
-            if (tmp >= rect.x && tmp <= (rect.x + rect.cx)) {
-                interX = tmp;
+            int tmpx = this->compute_x(rect.y);
+            if (tmpx >= rect.x && tmpx <= (rect.right())) {
+                found = true;
+                interX = tmpx;
                 interY = rect.y;
             }
         }
         else if (region & Rect::DOWN) {
-            int tmp = this->compute_x(rect.y + rect.cy);
-            if (tmp >= rect.x && tmp <= (rect.x + rect.cx)) {
-                interX = tmp;
-                interY = rect.y + rect.cy;
+            int tmpx = this->compute_x(rect.bottom());
+            if (tmpx >= rect.x && tmpx <= (rect.right())) {
+                found = true;
+                interX = tmpx;
+                interY = rect.bottom();
             }
         }
-        x = interX;
-        y = interY;
+        if (found) {
+            x = interX;
+            y = interY;
+        }
+        return found;
     }
 
     bool resolve(const Rect & rect) {
-        if (!rect.intersect_line(this->aX, this->aY, this->bX, this->bY))
+        int aPosition = rect.region_pt(this->seg.a.x, this->seg.a.y);
+        int bPosition = rect.region_pt(this->seg.b.x, this->seg.b.y);
+
+        if (aPosition & bPosition) {
             return false;
-        int aPosition = rect.region_pt(this->aX, this->aY);
-        int bPosition = rect.region_pt(this->bX, this->bY);
+        }
+        bool exist = true;
         if (!aPosition) {
-            this->aXin = this->aX;
-            this->aYin = this->aY;
+            this->segin.a.x = this->seg.a.x;
+            this->segin.a.y = this->seg.a.y;
         }
         else {
-            this->compute_intersection(rect, aPosition, this->aXin, this->aYin);
+            exist &= this->compute_intersection(rect, aPosition, this->segin.a.x, this->segin.a.y);
         }
 
         if (!bPosition) {
-            this->bXin = this->bX;
-            this->bYin = this->bY;
+            this->segin.b.x = this->seg.b.x;
+            this->segin.b.y = this->seg.b.y;
         }
         else {
-            this->compute_intersection(rect, bPosition, this->bXin, this->bYin);
+            exist &= this->compute_intersection(rect, bPosition, this->segin.b.x, this->segin.b.y);
         }
-        return true;
+        return exist;
     }
-
-
 };
 
 // helper class used to compute differences between two rectangles

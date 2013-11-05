@@ -65,7 +65,8 @@ public:
                       , basename, sizeof(basename)
                       , extension, sizeof(extension)
                       );
-        sprintf(prefix, "%s%s", path, basename);
+        TODO("put a log if buffer overflowed and throw some exception");
+        snprintf(prefix,  sizeof(prefix), "%s%s", path, basename);
 
         this->in_trans = new InByMetaSequenceTransport(prefix, extension);
         timeval begin_capture; begin_capture.tv_sec = 0; begin_capture.tv_usec = 0;
