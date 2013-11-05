@@ -220,12 +220,12 @@ namespace re {
                 char_int * p = str;
                 *p = c;
                 cons = consumer;
-                while (--n) {
+                for (unsigned i = 1; i != n; ++i) {
                     *++p = get_c(cons, cons.bumpc());
                 }
                 *++p = 0;
                 consumer.s = cons.s;
-                return &(*pst = new_sequence(str))->out1;
+                return &(*pst = new_sequence(str, n))->out1;
             }
         }
 
@@ -457,7 +457,7 @@ namespace re {
 
         static State * copy(const State * st) {
             if (st->type == SEQUENCE) {
-                return new_sequence(new_string_int(st->data.sequence, 1));
+                return new_sequence(new_string_sequence(st->data.sequence, 1));
             }
             return new State(st->type, st->data.range.l, st->data.range.r);
         }
@@ -475,11 +475,11 @@ namespace re {
     inline void transform_to_sequence(State * st, size_t m)
     {
         if (st->is_simple_char()) {
-            st->data.sequence = new_string_int(st->data.range.l, m);
+            st->data.sequence = new_string_sequence(st->data.range.l, m);
         }
         else {
-            const char_int * seq = st->data.sequence;
-            st->data.sequence = new_string_int(seq, m);
+            const char_int * seq = st->data.sequence.s;
+            st->data.sequence = new_string_sequence(st->data.sequence, m);
             delete [] seq;
         }
         st->type = SEQUENCE;
@@ -487,7 +487,7 @@ namespace re {
 
     inline IntermendaryState intermendary_st_compile(utf_consumer & consumer,
                                                      const char * & msg_err,
-                                                     int recusive = 0/*, bool ismatch = true*/)
+                                                     int recusive = 0)
     {
         struct FreeState {
             static IntermendaryState invalide(State& st)
@@ -651,9 +651,10 @@ namespace re {
                                             }
                                         }
                                         else {
-                                            const char_int * sst = (*spst)->data.sequence;
                                             while (n--) {
-                                                lst = new_split(finish, new_sequence(sst, 1, lst));
+                                                lst = new_split(finish, new_sequence(
+                                                    new_string_sequence((*spst)->data.sequence, 1), lst
+                                                ));
                                             }
                                         }
                                         transform_to_sequence(*spst, m);

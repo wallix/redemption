@@ -255,8 +255,61 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     const char * str = "abcdefg";
     typedef re::StateMachine2::range_t range_t;
     matches.push_back(range_t(str, str+3));
-    matches.push_back(range_t(str+4, str+6));
+    matches.push_back(range_t(str+4, str+7));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+
+//     str_regex = "(a?b?c?)d(.*)";
+//     regex.reset(str_regex);
+//     if (regex.message_error()) {
+//         std::ostringstream os;
+//         os << str_regex << (regex.message_error())
+//         << " at offset " << regex.position_error();
+//         BOOST_CHECK_MESSAGE(false, os.str());
+//     }
+//     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+// //
+//     str_regex = "(a?b?c?)d(.*)h";
+//     regex.reset(str_regex);
+//     if (regex.message_error()) {
+//         std::ostringstream os;
+//         os << str_regex << (regex.message_error())
+//         << " at offset " << regex.position_error();
+//         BOOST_CHECK_MESSAGE(false, os.str());
+//     }
+//     str = "abcdefgh";
+//     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+//
+//     str_regex = "(a?b?c?)d(.*)h$";
+//     regex.reset(str_regex);
+//     if (regex.message_error()) {
+//         std::ostringstream os;
+//         os << str_regex << (regex.message_error())
+//         << " at offset " << regex.position_error();
+//         BOOST_CHECK_MESSAGE(false, os.str());
+//     }
+//     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+//
+//     str_regex = "(a?b?c?)d(.*)gh";
+//     regex.reset(str_regex);
+//     if (regex.message_error()) {
+//         std::ostringstream os;
+//         os << str_regex << (regex.message_error())
+//         << " at offset " << regex.position_error();
+//         BOOST_CHECK_MESSAGE(false, os.str());
+//     }
+//     str = "abcdefgh";
+//     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+//
+//     str_regex = "(a?b?c?)d(.*)gh$";
+//     regex.reset(str_regex);
+//     if (regex.message_error()) {
+//         std::ostringstream os;
+//         os << str_regex << (regex.message_error())
+//         << " at offset " << regex.position_error();
+//         BOOST_CHECK_MESSAGE(false, os.str());
+//     }
+//     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+
 
     regex.reset("a{0}");
     if (!regex.message_error()) {

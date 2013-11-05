@@ -51,6 +51,41 @@ namespace re {
         }
     };
 
+    struct SequenceString
+    {
+        const char_int * s;
+        size_t len;
+
+        SequenceString(const char_int * str, size_t slen)
+        : s(str)
+        , len(slen)
+        {}
+    };
+
+    struct Sequence
+    {
+        const char_int * s;
+        size_t len;
+
+        unsigned contains(char_int c, utf_consumer consumer) const {
+            if (c == this->s[0]) {
+                const char_int * s = this->s + 1;
+                while (*s && *s == consumer.bumpc()) {
+                    ++s;
+                }
+                return *s ? 0 : s - this->s;
+            }
+            return 0;
+        }
+
+        Sequence & operator=(const SequenceString& ss)
+        {
+            this->s = ss.s;
+            this->len = ss.len;
+            return *this;
+        }
+    };
+
     struct State
     {
         State(unsigned type, char_int range_left = 0, char_int range_right = 0, State * out1 = 0, State * out2 = 0)
@@ -66,20 +101,13 @@ namespace re {
         ~State()
         {
             if (this->type == SEQUENCE) {
-                delete[] this->data.sequence;
+                delete[] this->data.sequence.s;
             }
         }
 
         unsigned check(char_int c, utf_consumer consumer) const {
             if (this->type == SEQUENCE) {
-                if (c == this->data.sequence[0]) {
-                    const char_int * s = this->data.sequence + 1;
-                    while (*s && *s == consumer.bumpc()) {
-                        ++s;
-                    }
-                    return *s ? 0 : s - this->data.sequence;
-                }
-                return 0;
+                return this->data.sequence.contains(c, consumer);
             }
             return this->data.range.contains(c) ? 1 : 0;
         }
@@ -99,7 +127,7 @@ namespace re {
                     break;
                 case SEQUENCE: {
                     os << '"';
-                    for (const char_int * p = this->data.sequence; *p; ++p) {
+                    for (const char_int * p = this->data.sequence.s; *p; ++p) {
                         os << utf_char(*p);
                     }
                     os << '"';
@@ -157,7 +185,7 @@ namespace re {
 
         union {
             Range range;
-            const char_int * sequence;
+            Sequence sequence;
         } data;
     };
 
@@ -207,21 +235,25 @@ namespace re {
         return new State(LAST, 0, 0);
     }
 
-    inline State * new_sequence(const char_int * s, State * out1 = 0) {
+    inline State * new_sequence(const char_int * s, size_t len, State * out1 = 0) {
         State * ret = new State(SEQUENCE, 0, 0, out1);
-        ret->data.sequence = s;
+        ret->data.sequence.s = s;
+        ret->data.sequence.len = len;
         return ret;
     }
 
-    inline char_int * new_string_int(char_int c, std::size_t count) {
+    inline State * new_sequence(const SequenceString & ss, State * out1 = 0) {
+        return new_sequence(ss.s, ss.len, out1);
+    }
+
+    inline SequenceString new_string_sequence(char_int c, std::size_t count) {
         char_int * s = new char_int[count + 1];
         std::fill(s, s + count, c);
         *(s+count) = 0;
-        return s;
+        return SequenceString(s, count);
     }
 
-    inline char_int * new_string_int(const char_int * str, std::size_t count) {
-        std::size_t len = std::char_traits<char_int>::length(str);
+    inline SequenceString new_string_sequence(const char_int * str, std::size_t len, std::size_t count) {
         char_int * ret = new char_int[count * len + 1];
         char_int * p = ret;
         while (count--) {
@@ -229,15 +261,19 @@ namespace re {
             p += len;
         }
         *p = 0;
-        return ret;
+        return SequenceString(ret, count * len);
+    }
+
+    inline SequenceString new_string_sequence(const char_int * str, std::size_t count) {
+        return new_string_sequence(str, std::char_traits<char_int>::length(str), count);
+    }
+
+    inline SequenceString new_string_sequence(const Sequence & seq, std::size_t count) {
+        return new_string_sequence(seq.s, seq.len, count);
     }
 
     inline State * new_sequence(char_int c, std::size_t count, State * out1 = 0) {
-        return new_sequence(new_string_int(c, count), out1);
-    }
-
-    inline State * new_sequence(const char_int * str, std::size_t count, State * out1 = 0) {
-        return new_sequence(new_string_int(str, count), out1);
+        return new_sequence(new_string_sequence(c, count), out1);
     }
 
 }

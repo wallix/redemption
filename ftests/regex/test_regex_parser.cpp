@@ -91,10 +91,10 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
     {
         char_int seq[] = {'a','b','c','d',0};
         State st(SEQUENCE);
-        st.data.sequence = seq;
+        st.data.sequence.s = seq;
         Reg rgx("abcd");
         BOOST_CHECK_EQUAL(st_to_string(&st), rgx.to_string());
-        st.data.sequence = 0;
+        st.data.sequence.s = 0;
     }
     {
         State st_first(FIRST);
@@ -217,10 +217,10 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         State split1(SPLIT, 0, 0, &st_b, &st_a2);
         State st_a3(SEQUENCE, 0, 0, &split1);
         char_int seq[] = {'a','a',0};
-        st_a3.data.sequence = seq;
+        st_a3.data.sequence.s = seq;
         Reg rgx("a{2,4}b");
         BOOST_CHECK_EQUAL(st_to_string(&st_a3), rgx.to_string());
-        st_a3.data.sequence = 0;
+        st_a3.data.sequence.s = 0;
     }
     {
         State st_b(RANGE, 'b', 'b');
@@ -248,10 +248,10 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
     {
         char_int seq[] = {'a','{','2','-','}',0};
         State st(SEQUENCE);
-        st.data.sequence = seq;
+        st.data.sequence.s = seq;
         Reg rgx("a{2-}");
         BOOST_CHECK_EQUAL(st_to_string(&st), rgx.to_string());
-        st.data.sequence = 0;
+        st.data.sequence.s = 0;
     }
     {
         State finish(FINISH);
@@ -284,10 +284,10 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
     {
         char_int seq[] = {multi_char("¥"),multi_char("Ë"),'a',multi_char("Þ"),0};
         State st(SEQUENCE);
-        st.data.sequence = seq;
+        st.data.sequence.s = seq;
         Reg rgx("¥ËaÞ");
         BOOST_CHECK_EQUAL(st_to_string(&st), rgx.to_string());
-        st.data.sequence = 0;
+        st.data.sequence.s = 0;
     }
 }
 

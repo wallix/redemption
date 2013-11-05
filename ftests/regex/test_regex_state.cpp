@@ -65,11 +65,11 @@ BOOST_AUTO_TEST_CASE(TestRegexCheck)
         State st(SEQUENCE);
         char_int seq[] = {'a','b','c',0};
         utf_consumer consumer("abc");
-        st.data.sequence = seq;
+        st.data.sequence.s = seq;
         BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
         consumer.str("abcd");
         BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
-        st.data.sequence = 0;
+        st.data.sequence.s = 0;
     }
 }
 

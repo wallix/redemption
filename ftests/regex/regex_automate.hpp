@@ -49,6 +49,7 @@ namespace re {
     public:
         explicit StateMachine2(StatesWrapper & state_wrapper)
         : stw(state_wrapper)
+        , nodes(this->stw.size())
         , idx_trace(-1u)
         , idx_trace_free(0)
         , pidx_trace_free(0)
@@ -57,14 +58,28 @@ namespace re {
         , traces(0)
         , st_list(0)
         , st_range_list(0)
+        , len_states(this->stw.size(), 0) //unused
         {
             if (this->stw.states.empty()) {
                 return ;
             }
 
-            const size_t count_st = this->stw.size();
+            {
+                state_list_t::iterator first = this->stw.states.begin();
+                state_list_t::iterator last = this->stw.states.end();
+                std::vector<unsigned>::iterator lenit = this->len_states.begin();
+                for (; first != last; ++first, ++lenit) {
+                    if ((*first)->is_sequence()) {
+                        *lenit = (*first)->data.sequence.len;
+                        this->nodes += *lenit - 1;
+                    }
+                }
+            }
+
+            const size_t count_st = ++this->nodes;
             l1.reserve(count_st);
             l2.reserve(count_st);
+
             {
                 const size_t matrix_size = count_st * count_st;
                 this->st_list = new StateList[matrix_size];
@@ -160,7 +175,7 @@ namespace re {
 
         void push_idx_trace(unsigned n)
         {
-            assert(this->pidx_trace_free <= this->idx_trace_free + this->stw.size() - this->stw.nb_capture);
+            assert(this->pidx_trace_free <= this->idx_trace_free + this->nodes - this->stw.nb_capture);
             *this->pidx_trace_free = n;
             ++this->pidx_trace_free;
         }
@@ -324,6 +339,7 @@ namespace re {
         void append_match_result(range_matches& ranges) const
         {
             ranges.reserve(this->stw.nb_capture / 2);
+
             TraceRange trace = this->get_trace();
 
             const State ** pst = this->captures;
@@ -557,8 +573,8 @@ namespace re {
         void reset_trace()
         {
             this->pidx_trace_free = this->idx_trace_free;
-            const unsigned size = this->stw.size() - this->stw.nb_capture;
-            //pidx_trace_free ∈ [0, size+1]
+            const unsigned size = this->nodes - this->stw.nb_capture;
+            //NOTE pidx_trace_free ∈ [0, size+1]
             for (unsigned i = 0; i != size; ++i, ++this->pidx_trace_free) {
                 *this->pidx_trace_free = i;
             }
@@ -612,8 +628,11 @@ namespace re {
                           StepRangeList & l1, StepRangeList & l2,
                           Tracer& tracer, unsigned & step_count)
             {
+                unsigned new_trace;
                 for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
                     ++step_count;
+                    new_trace = 0;
+
                     if (ifirst->consume) {
                         if (--ifirst->consume) {
                             l2.push_back(*ifirst);
@@ -622,6 +641,7 @@ namespace re {
                         if (ifirst->rl == 0) {
                             return ifirst->idx;
                         }
+                        ++new_trace;
                     }
                     if (this->sm.stw.get_num_at(ifirst->rl->st) == this->step_id) {
 #ifdef DISPLAY_TRACE
@@ -632,7 +652,6 @@ namespace re {
                         continue;
                     }
 
-                    unsigned new_trace = 0;
                     this->sm.stw.set_num_at(ifirst->rl->st, this->step_id);
                     StateList * first = ifirst->rl->first;
                     StateList * last = ifirst->rl->last;
@@ -645,7 +664,7 @@ namespace re {
 #ifdef DISPLAY_TRACE
                                 std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
 #endif
-                                ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
+                                this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
                             }
                             continue ;
                         }
@@ -655,9 +674,20 @@ namespace re {
 #ifdef DISPLAY_TRACE
                                 std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
 #endif
-                                ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
+                                this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
+                            }
+                            if (!consumer.valid() && first->st->out1 && first->st->out1->type == LAST) {
+                                ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num];
+                                return ifirst->idx;
                             }
                             continue ;
+                        }
+
+                        if (first->st->type == LAST) {
+                            if (!consumer.valid()) {
+                                return ifirst->idx;
+                            }
+                            continue;
                         }
 
                         if (unsigned count_consume = first->st->check(c, consumer)) {
@@ -686,6 +716,7 @@ namespace re {
                             ++new_trace;
                         }
                     }
+
                     if (0 == new_trace) {
 #ifdef DISPLAY_TRACE
                         std::cout << "\t\033[35mx " << ifirst->idx << "\033[0m" << std::endl;
@@ -728,7 +759,7 @@ namespace re {
 #endif
                     if (-1u != (this->sm.idx_trace = this->step(s, consumer.bumpc(), consumer, *pal1, *pal2, tracer, step_count))) {
                         tracer.good(this->sm.idx_trace);
-                        return false == ExactMatch::value || !consumer.getc();
+                        return false == ExactMatch::value || !consumer.valid();
                     }
                     if (pal2->empty()) {
                         break;
@@ -774,9 +805,9 @@ namespace re {
 #ifdef DISPLAY_TRACE
                                     std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
 #endif
-                                    if (0 == first->st->out1) {
+                                    if (0 == first->next) {
                                         this->sm.idx_trace = ifirst->idx;
-                                        ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
+                                        this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
                                         return true;
                                     }
                                 }
@@ -798,11 +829,9 @@ namespace re {
         friend class Matching;
         friend class Searching;
 
-        typedef std::vector<State*> state_list;
-        typedef state_list::iterator state_iterator;
-
         StatesWrapper & stw;
 
+        unsigned nodes;
         unsigned idx_trace;
         unsigned * idx_trace_free;
         unsigned * pidx_trace_free;
@@ -830,6 +859,8 @@ namespace re {
         RangeList * st_range_list;
         RangeList * st_range_list_last;
         RangeList st_range_beginning;
+
+        std::vector<unsigned> len_states;
     };
 
     inline void display_state(StatesWrapper & stw, State * st, unsigned depth = 0)
@@ -978,9 +1009,9 @@ namespace re {
             return false;
         }
 
-#ifdef DISPLAY_TRACE
-        display_state(stw);
-#endif
+// #ifdef DISPLAY_TRACE
+//         display_state(stw);
+// #endif
 
         st_step_range_list_t l1;
         add_first(l1, l1, stw.root);
@@ -1078,9 +1109,9 @@ namespace re {
             return false;
         }
 
-#ifdef DISPLAY_TRACE
-        display_state(stw);
-#endif
+// #ifdef DISPLAY_TRACE
+//         display_state(stw);
+// #endif
 
         st_step_range_list_t lst;
         st_step_range_list_t l1;
