@@ -133,7 +133,7 @@ public:
     virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
                                  , uint32_t bgcolor, const Rect & clip) {}
 
-    virtual void text_metrics(const char * text, int & width, int & height) {}
+    virtual void text_metrics(const char * text, int & width, int & height) { width = 0; height = 0; }
 
     virtual int server_resize(int width, int height, int bpp) {
         this->mod_bpp = bpp;

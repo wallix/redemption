@@ -34,11 +34,11 @@
 class FlatLogin : public WidgetParent
 {
 public:
-    WidgetImage img;
+    WidgetEditValid  password_edit;
     WidgetLabel login_label;
     WidgetEditValid  login_edit;
+    WidgetImage img;
     WidgetLabel password_label;
-    WidgetEditValid  password_edit;
     WidgetLabel version_label;
 
     WidgetFlatButton helpicon;
@@ -55,14 +55,12 @@ public:
               const char * label_text_password,
               Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
+        , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, bgcolor, -1u, 1, 1, true)
         , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11, fgcolor, bgcolor)
         , login_edit(drawable, 0, 0, 400, *this, this, login, -12,
                      BLACK, WHITE, bgcolor, -1u, 1, 1)
-        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
-                         fgcolor, bgcolor)
-        , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
-                        BLACK, WHITE, bgcolor, -1u, 1, 1, true)
+        , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
+        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
         , version_label(drawable, 0, 0, *this, NULL, caption, true, -15, fgcolor, bgcolor)
         , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, fgcolor, bgcolor, 6, 2)
         , fgcolor(fgcolor)

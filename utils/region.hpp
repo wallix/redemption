@@ -53,10 +53,8 @@ struct Region {
                 else {
                     const Rect a(rect1.x, rect1.y, rect1.cx, sect.y - rect1.y);
                     const Rect b(rect1.x, sect.y, sect.x - rect1.x, sect.cy);
-                    const Rect c(sect.x + sect.cx, sect.y,
-                                  rect1.x + rect1.cx - sect.x - sect.cx, sect.cy);
-                    const Rect d(rect1.x, sect.y + sect.cy,
-                                  rect1.cx, rect1.y + rect1.cy - sect.y - sect.cy);
+                    const Rect c(sect.right(), sect.y, rect1.right() - sect.right(), sect.cy);
+                    const Rect d(rect1.x, sect.bottom(), rect1.cx, rect1.bottom() - sect.bottom());
                     if (!a.isempty()){
                         new_rects.push_back(a);
                     }

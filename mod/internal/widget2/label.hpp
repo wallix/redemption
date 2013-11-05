@@ -49,15 +49,12 @@ public:
     , y_text(ytext)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
-    , auto_resize(auto_resize)
+    , auto_resize(auto_resize) 
     , w_border(x_text)
     , h_border(y_text)
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
-
-        this->rect.cx = 0;
-        this->rect.cy = 0;
         this->set_text(text);
     }
 
@@ -73,7 +70,7 @@ public:
             memcpy(this->buffer, text, max);
             this->buffer[max] = 0;
             if (this->auto_resize) {
-                int w,h;
+                int w, h;
                 this->drawable.text_metrics(this->buffer, w, h);
                 this->rect.cx = this->x_text * 2 + w;
                 this->rect.cy = this->y_text * 2 + h;
