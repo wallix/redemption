@@ -119,10 +119,10 @@ BOOST_AUTO_TEST_CASE(TestRect)
         Rect res = i1.intersect(i2);
         BOOST_CHECK_EQUAL(true, res.isempty());
         // Is it necessary to force empty rect to be canonical ?
-        BOOST_CHECK_EQUAL(0, res.x);
-        BOOST_CHECK_EQUAL(0, res.y);
-        BOOST_CHECK_EQUAL(0, res.right());
-        BOOST_CHECK_EQUAL(0, res.bottom());
+        BOOST_CHECK_EQUAL(20, res.x);
+        BOOST_CHECK_EQUAL(110, res.y);
+        BOOST_CHECK_EQUAL(20, res.right());
+        BOOST_CHECK_EQUAL(110, res.bottom());
     }
 
 

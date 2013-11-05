@@ -29,10 +29,12 @@
 #include <algorithm>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "test_orders.hpp"
 
 #include "stream.hpp"
 #include "transport.hpp"
+#include "sockettransport.hpp"
 #include "testtransport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
@@ -67,15 +69,15 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
     const char * name = "RDP XP Target";
 
-//     int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
-//     redemption::string error_message;
-//     SocketTransport t( name
-//                      , client_sck
-//                      , "10.10.47.175"
-//                      , 3389
-//                      , verbose
-//                      , &error_message
-//                      );
+    // int client_sck = ip_connect("10.10.47.175", 3389, 3, 1000, verbose);
+    // redemption::string error_message;
+    // SocketTransport t( name
+    //                  , client_sck
+    //                  , "10.10.47.175"
+    //                  , 3389
+    //                  , verbose
+    //                  , &error_message
+    //                  );
 
 
     #include "fixtures/dump_xp_mem3blt.hpp"
@@ -152,15 +154,15 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
     const char * name = "RDP W2008 Target";
 
-//    int client_sck = ip_connect("10.10.46.78", 3389, 3, 1000, verbose);
-//    redemption::string error_message;
-//    SocketTransport t( name
-//                     , client_sck
-//                     , "10.10.46.78"
-//                     , 3389
-//                     , verbose
-//                     , &error_message
-//                     );
+    // int client_sck = ip_connect("10.10.46.78", 3389, 3, 1000, verbose);
+    // redemption::string error_message;
+    // SocketTransport t( name
+    //                  , client_sck
+    //                  , "10.10.46.78"
+    //                  , 3389
+    //                  , verbose
+    //                  , &error_message
+    //                  );
 
     #include "fixtures/dump_w2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
@@ -229,15 +231,15 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 
     const char * name = "RDP W2003 Target";
 
-//     int client_sck = ip_connect("10.10.47.205", 3389, 3, 1000, verbose);
-//     redemption::string error_message;
-//     SocketTransport t( name
-//                      , client_sck
-//                      , "10.10.46.64"
-//                      , 3389
-//                      , verbose
-//                      , &error_message
-//                      );
+    // int client_sck = ip_connect("10.10.47.205", 3389, 3, 1000, verbose);
+    // redemption::string error_message;
+    // SocketTransport t( name
+    //                  , client_sck
+    //                  , "10.10.46.64"
+    //                  , 3389
+    //                  , verbose
+    //                  , &error_message
+    //                  );
 
 
     #include "fixtures/dump_w2003_mem3blt.hpp"
@@ -316,15 +318,15 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     const char * name = "RDP W2000 Target";
 
-//    int client_sck = ip_connect("10.10.46.64", 3389, 3, 1000, verbose);
-//    redemption::string error_message;
-//    SocketTransport t( name
-//                     , client_sck
-//                     , "10.10.46.64"
-//                     , 3389
-//                     , verbose
-//                     , &error_message
-//                     );
+    // int client_sck = ip_connect("10.10.46.64", 3389, 3, 1000, verbose);
+    // redemption::string error_message;
+    // SocketTransport t( name
+    //                  , client_sck
+    //                  , "10.10.46.64"
+    //                  , 3389
+    //                  , verbose
+    //                  , &error_message
+    //                  );
 
     #include "fixtures/dump_w2000_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
