@@ -241,14 +241,6 @@ namespace re {
         }
 
     public:
-        typedef std::pair<const char **, const char **> TraceRange;
-
-        TraceRange get_trace() const
-        {
-            char const ** strace = this->traces + this->idx_trace * this->stw.nb_capture;
-            return TraceRange(strace, strace + this->stw.nb_capture);
-        }
-
         typedef std::pair<const char *, const char *> range_t;
         typedef std::vector<range_t> range_matches;
 
@@ -274,13 +266,23 @@ namespace re {
             {}
         };
 
+        template<bool V> struct ExactMatch { static const bool value = V; };
+        template<bool V> struct ActiveCapture { static const bool value = V; };
+
     public:
         bool exact_search(const char * s, unsigned step_limit, bool check_end = true)
         {
             if (this->stw.states.empty()) {
                 return false;
             }
-            return Searching(*this).exact_search(s, step_limit, check_end);
+            if (check_end) {
+                return this->match(s, step_limit, DefaultMatchTracer(),
+                                   ExactMatch<true>(), ActiveCapture<false>());
+            }
+            else {
+                return this->match(s, step_limit, DefaultMatchTracer(),
+                                   ExactMatch<false>(), ActiveCapture<false>());
+            }
         }
 
         bool exact_search_with_trace(const char * s, unsigned step_limit,
@@ -289,8 +291,8 @@ namespace re {
             if (this->stw.nb_capture == 0) {
                 return exact_search(s, step_limit, check_end);
             }
-            return Matching(*this).match(s, step_limit, DefaultMatchTracer(),
-                                         Matching::is_exact());
+            return this->match(s, step_limit, DefaultMatchTracer(),
+                               ExactMatch<true>(), ActiveCapture<true>());
         }
 
         template<typename Tracer>
@@ -300,7 +302,7 @@ namespace re {
             if (this->stw.nb_capture == 0) {
                 return exact_search(s, step_limit, check_end);
             }
-            return Matching(*this).match(s, step_limit, tracer, Matching::is_exact());
+            return this->match(s, step_limit, tracer, ExactMatch<true>(), ActiveCapture<true>());
         }
 
         bool search(const char * s, unsigned step_limit)
@@ -308,7 +310,7 @@ namespace re {
             if (this->stw.states.empty()) {
                 return false;
             }
-            return Searching(*this).search(s, step_limit);
+            return this->match(s, step_limit, DefaultMatchTracer(), ExactMatch<false>(), ActiveCapture<false>());
         }
 
         bool search_with_trace(const char * s, unsigned step_limit)
@@ -316,8 +318,7 @@ namespace re {
             if (this->stw.nb_capture == 0) {
                 return search(s, step_limit);
             }
-            return Matching(*this).match(s, step_limit, DefaultMatchTracer(),
-                                         Matching::is_not_exact());
+            return this->match(s, step_limit, DefaultMatchTracer(), ExactMatch<false>(), ActiveCapture<true>());
         }
 
         template<typename Tracer>
@@ -326,7 +327,7 @@ namespace re {
             if (this->stw.nb_capture == 0) {
                 return search(s, step_limit);
             }
-            return Matching(*this).match(s, step_limit, tracer, Matching::is_not_exact());
+            return this->match(s, step_limit, tracer, ExactMatch<false>(), ActiveCapture<true>());
         }
 
         range_matches match_result()
@@ -338,9 +339,13 @@ namespace re {
 
         void append_match_result(range_matches& ranges) const
         {
+            if (this->idx_trace == -1u) {
+                return ;
+            }
+
             ranges.reserve(this->stw.nb_capture / 2);
 
-            TraceRange trace = this->get_trace();
+            const char ** trace = this->traces + this->idx_trace * this->stw.nb_capture;
 
             const State ** pst = this->captures;
             while (pst < this->pcaptures) {
@@ -353,214 +358,16 @@ namespace re {
                 unsigned n = 1;
                 while (++pst < this->pcaptures && ((*pst)->is_cap_open() ? ++n : --n)) {
                 }
-                if (trace.first[pst - this->captures]) {
+                /**///std::cout << (trace[pst - this->captures] - trace[pbst - this->captures]) << std::endl;
+                if (trace[pst - this->captures]) {
                     ranges.push_back(range_t(
-                        trace.first[pbst - this->captures],
-                        trace.first[pst - this->captures]
+                        trace[pbst - this->captures],
+                        trace[pst - this->captures]
                     ));
                 }
                 pst = ++pbst;
             }
         }
-
-    private:
-        struct StepRange {
-            const RangeList * rl;
-            unsigned consume;
-            unsigned idx;
-
-            StepRange(const RangeList * l, unsigned count_consume, unsigned id)
-            : rl(l)
-            , consume(count_consume)
-            , idx(id)
-            {}
-        };
-        struct StepRangeList {
-
-            typedef std::vector<StepRange> container_type;
-            typedef container_type::iterator iterator;
-
-            void push_back(RangeList* val, unsigned count_consume, unsigned id = 0)
-            { this->list.push_back(StepRange(val, count_consume, id)); }
-
-            void push_back(const StepRange & x)
-            { this->list.push_back(x); }
-
-            iterator begin()
-            { return this->list.begin(); }
-
-            iterator end()
-            { return this->list.end(); }
-
-            bool empty() const
-            { return this->list.empty(); }
-
-            void clear()
-            { this->list.clear(); }
-
-            void reserve(std::size_t count)
-            { this->list.reserve(count); }
-
-            container_type list;
-        };
-
-        typedef StepRangeList::iterator StepRangeIterator;
-
-        struct Searching
-        {
-            StateMachine2 &sm;
-            unsigned step_id;
-
-            Searching(StateMachine2& sm)
-            : sm(sm)
-            , step_id(1)
-            {}
-
-            RangeList * step(char_int c, utf_consumer & consumer, RangeList * l, unsigned & step_count)
-            {
-                unsigned r;
-                for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    ++step_count;
-                    if (!first->st->is_cap() && (r = first->st->check(c, consumer))) {
-#ifdef DISPLAY_TRACE
-                        this->sm.display_elem_state_list(*first, 0);
-#endif
-                        if ( ! first->next && first->st->is_finish()) {
-                            continue ;
-                        }
-                        if (r != 1) {
-                            while (--r) {
-                                consumer.bumpc();
-                            }
-                        }
-                        return first->next;
-                    }
-                }
-
-                return reinterpret_cast<RangeList*>(1);
-            }
-
-            bool exact_search(const char * s, unsigned step_limit, bool check_end = true)
-            {
-#ifdef DISPLAY_TRACE
-                this->sm.display_dfa();
-#endif
-
-                this->sm.reset_id();
-
-                RangeList * l = &this->sm.st_range_beginning;
-
-                utf_consumer consumer(s);
-
-                unsigned step_count = 0;
-
-                while (consumer.valid() && l > reinterpret_cast<void*>(1)){
-#ifdef DISPLAY_TRACE
-                    std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
-#endif
-                    l = this->step(consumer.bumpc(), consumer, l, step_count);
-                    if (step_count >= step_limit) {
-                        return false;
-                    }
-                    ++this->step_id;
-                }
-
-                if ((0 == l && (check_end ? !consumer.valid() : 1))) {
-                    return true;
-                }
-                if (reinterpret_cast<void*>(1) == l || consumer.valid()) {
-                    return false;
-                }
-
-                for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (first->st->is_terminate()) {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            unsigned step(char_int c, utf_consumer & consumer, StatesWrapper & stw,
-                          StepRangeList & l1, StepRangeList & l2, unsigned & step_count)
-            {
-                unsigned r;
-                for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
-                    ++step_count;
-                    if (stw.get_num_at(ifirst->rl->st) == this->step_id) {
-                        /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
-                        continue;
-                    }
-                    stw.set_num_at(ifirst->rl->st, this->step_id);
-
-                    if (ifirst->consume) {
-                        --ifirst->consume;
-                        l2.push_back(*ifirst);
-                        continue;
-                    }
-
-                    for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
-                        ++step_count;
-                        if (!first->st->is_cap() && (r = first->st->check(c, consumer))) {
-#ifdef DISPLAY_TRACE
-                            this->sm.display_elem_state_list(*first, 0);
-#endif
-                            if (0 == first->next) {
-                                return 0;
-                            }
-
-                            l2.push_back(first->next, r - 1);
-                        }
-                    }
-                }
-                return -1u;
-            }
-
-            bool search(const char * s, unsigned step_limit)
-            {
-#ifdef DISPLAY_TRACE
-                this->sm.display_dfa();
-#endif
-
-                this->sm.l1.clear();
-                this->sm.l2.clear();
-                this->sm.reset_id();
-
-                StepRangeList * pal1 = &this->sm.l1;
-                StepRangeList * pal2 = &this->sm.l2;
-                this->sm.l1.push_back(&this->sm.st_range_beginning, 0);
-
-                utf_consumer consumer(s);
-
-                unsigned step_count = 0;
-
-                while (consumer.valid()) {
-#ifdef DISPLAY_TRACE
-                    std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
-#endif
-                    if (0 == this->step(consumer.bumpc(), consumer, this->sm.stw, *pal1, *pal2, step_count)) {
-                        return true;
-                    }
-                    if (step_count >= step_limit) {
-                        return false;
-                    }
-                    ++this->step_id;
-                    std::swap(pal1, pal2);
-                    pal2->clear();
-                    pal1->push_back(this->sm.st_range_list, 0);
-                }
-
-                for (StepRangeIterator ifirst = pal1->begin(), ilast = pal1->end(); ifirst != ilast; ++ifirst) {
-                    for (StateList * first = ifirst->rl->first, * last = ifirst->rl->last; first != last; ++first) {
-                        if (first->st->is_terminate()) {
-                            return true;
-                        }
-                    }
-                }
-
-                return false;
-            }
-        };
 
     private:
         void reset_id()
@@ -580,6 +387,7 @@ namespace re {
             }
             std::memset(this->traces, 0,
                         size * this->stw.nb_capture * sizeof this->traces[0]);
+            this->idx_trace = -1u;
         }
 
     public:
@@ -613,58 +421,112 @@ namespace re {
         }
 
     private:
-        struct Matching
+        struct StepRangeList {
+            struct StepRange {
+                const RangeList * rl;
+                unsigned consume;
+                unsigned idx;
+
+                StepRange(const RangeList * l, unsigned count_consume, unsigned id)
+                : rl(l)
+                , consume(count_consume)
+                , idx(id)
+                {}
+
+                StepRange(const RangeList * l, unsigned count_consume)
+                : rl(l)
+                , consume(count_consume)
+                {}
+            };
+
+            typedef std::vector<StepRange> container_type;
+            typedef container_type::iterator iterator;
+
+            void push_back(RangeList* val, unsigned count_consume, unsigned id = 0)
+            { this->list.push_back(StepRange(val, count_consume, id)); }
+
+            void push_back(const StepRange & x)
+            { this->list.push_back(x); }
+
+            iterator begin()
+            { return this->list.begin(); }
+
+            iterator end()
+            { return this->list.end(); }
+
+            bool empty() const
+            { return this->list.empty(); }
+
+            void clear()
+            { this->list.clear(); }
+
+            void reserve(std::size_t count)
+            { this->list.reserve(count); }
+
+            container_type list;
+        };
+
+        typedef StepRangeList::iterator StepRangeIterator;
+
+        template<typename Tracer, bool exact_match, bool active_capture>
+        unsigned step(const char * s, char_int c, utf_consumer & consumer,
+                      StepRangeList & l1, StepRangeList & l2, Tracer tracer,
+                      ExactMatch<exact_match>, ActiveCapture<active_capture>)
         {
-            StateMachine2 &sm;
-            unsigned step_id;
-
-            Matching(StateMachine2& sm)
-            : sm(sm)
-            , step_id(1)
-            {}
-
-            template<typename Tracer>
-            unsigned step(const char * s, char_int c, utf_consumer & consumer,
-                          StepRangeList & l1, StepRangeList & l2,
-                          Tracer& tracer, unsigned & step_count)
-            {
-                unsigned new_trace;
-                for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
-                    ++step_count;
+            unsigned new_trace;
+            for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
+                ++this->step_count;
+                if (active_capture) {
                     new_trace = 0;
+                }
 
-                    if (ifirst->consume) {
-                        if (--ifirst->consume) {
-                            l2.push_back(*ifirst);
-                            continue ;
-                        }
-                        if (ifirst->rl == 0) {
-                            return ifirst->idx;
-                        }
+                if (ifirst->consume) {
+                    if (!--ifirst->consume && (exact_match == false || !consumer.valid())) {
+                        return active_capture ? ifirst->idx : 0;
+                    }
+#ifdef DISPLAY_TRACE
+                    std::cout << "\t\033[35mreinsert (" << ifirst->consume << ") " << (ifirst->idx) << "\033[0m\n";
+#endif
+                    l2.push_back(*ifirst);
+                    if (active_capture) {
                         ++new_trace;
                     }
-                    if (this->sm.stw.get_num_at(ifirst->rl->st) == this->step_id) {
+                    continue ;
+                }
+
+                if (this->stw.get_num_at(ifirst->rl->st) == this->step_id) {
 #ifdef DISPLAY_TRACE
-                        std::cout << "\t\033[35mdup " << (ifirst->idx) << "\033[0m\n";
+                    std::cout << "\t\033[35mdup " << (ifirst->idx) << "\033[0m\n";
 #endif
+                    if (active_capture) {
                         tracer.fail(ifirst->idx);
-                        this->sm.push_idx_trace(ifirst->idx);
-                        continue;
+                        this->push_idx_trace(ifirst->idx);
+                    }
+                    continue;
+                }
+
+                this->stw.set_num_at(ifirst->rl->st, this->step_id);
+                StateList * first = ifirst->rl->first;
+                StateList * last = ifirst->rl->last;
+
+                for (; first != last; ++first) {
+                    ++this->step_count;
+
+                    if (!active_capture && first->st->is_cap()) {
+                        if (!exact_match && first->next == 0) {
+                            return 0;
+                        }
+                        continue ;
                     }
 
-                    this->sm.stw.set_num_at(ifirst->rl->st, this->step_id);
-                    StateList * first = ifirst->rl->first;
-                    StateList * last = ifirst->rl->last;
-
-                    for (; first != last; ++first) {
-                        ++step_count;
-                        unsigned num = first->st->num - (this->sm.stw.size() - this->sm.stw.nb_capture);
+                    if (active_capture) {
+                        unsigned num = first->st->num - (this->stw.size() - this->stw.nb_capture);
                         if (first->st->is_cap_open()) {
-                            if (!this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] && tracer.open(ifirst->idx, s, num)) {
+                            if (!this->traces[ifirst->idx * this->stw.nb_capture + num] && tracer.open(ifirst->idx, s, num)) {
 #ifdef DISPLAY_TRACE
                                 std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
 #endif
-                                this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
+                                this->traces[ifirst->idx * this->stw.nb_capture + num] = s;
                             }
                             continue ;
                         }
@@ -674,160 +536,209 @@ namespace re {
 #ifdef DISPLAY_TRACE
                                 std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
 #endif
-                                this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
+                                this->traces[ifirst->idx * this->stw.nb_capture + num] = s;
                             }
                             if (!consumer.valid() && first->st->out1 && first->st->out1->type == LAST) {
-                                ++this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num];
-                                return ifirst->idx;
+                                ++this->traces[ifirst->idx * this->stw.nb_capture + num];
+                                //return ifirst->idx;
                             }
                             continue ;
                         }
+                    }
 
-                        if (first->st->type == LAST) {
-                            if (!consumer.valid()) {
-                                return ifirst->idx;
+                    if ( ! active_capture && first->st->is_finish()) {
+                        if ( ! exact_match) {
+                            return 0;
+                        }
+                        continue;
+                    }
+
+                    if (unsigned count_consume = first->st->check(c, consumer)) {
+#ifdef DISPLAY_TRACE
+                        this->display_elem_state_list(*first, ifirst->idx);
+#endif
+
+                        if (0 == first->next) {
+                            /**///std::cout << "idx: " << (ifirst->idx) << std::endl;
+                            if (count_consume > 1) {
+                                if (active_capture) {
+                                    l2.push_back(first->next, count_consume - 1, ifirst->idx);
+                                }
+                                else {
+                                    l2.push_back(first->next, count_consume - 1);
+                                }
+                                continue;
+                            }
+                            if (exact_match == false || !consumer.valid()) {
+                                return active_capture ? ifirst->idx : 0;
                             }
                             continue;
                         }
 
-                        if (unsigned count_consume = first->st->check(c, consumer)) {
-#ifdef DISPLAY_TRACE
-                            this->sm.display_elem_state_list(*first, ifirst->idx);
-#endif
-
-                            if (0 == first->next) {
-                                /**///std::cout << "idx: " << (ifirst->idx) << std::endl;
-                                if (count_consume > 1) {
-                                    l2.push_back(first->next, count_consume-1, ifirst->idx);
-                                    continue;
-                                }
-                                return ifirst->idx;
-                            }
-
+                        if (active_capture) {
                             unsigned idx = ifirst->idx;
                             if (new_trace) {
-                                idx = this->sm.pop_idx_trace(ifirst->idx);
+                                idx = this->pop_idx_trace(ifirst->idx);
                                 tracer.new_id(ifirst->idx, idx);
                             }
 #ifdef DISPLAY_TRACE
                             std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m" << std::endl;
 #endif
-                            l2.push_back(first->next, count_consume-1, idx);
+                            l2.push_back(first->next, count_consume - 1, idx);
                             ++new_trace;
                         }
-                    }
-
-                    if (0 == new_trace) {
-#ifdef DISPLAY_TRACE
-                        std::cout << "\t\033[35mx " << ifirst->idx << "\033[0m" << std::endl;
-#endif
-                        tracer.fail(ifirst->idx);
-                        this->sm.push_idx_trace(ifirst->idx);
+                        else {
+                            l2.push_back(first->next, count_consume - 1);
+                        }
                     }
                 }
 
-                return -1u;
+                if (active_capture && 0 == new_trace) {
+#ifdef DISPLAY_TRACE
+                    std::cout << "\t\033[35mx " << ifirst->idx << "\033[0m" << std::endl;
+#endif
+                    tracer.fail(ifirst->idx);
+                    this->push_idx_trace(ifirst->idx);
+                }
             }
 
-            struct is_exact { static const bool value = true; };
-            struct is_not_exact { static const bool value = false; };
+            return -1u;
+        }
 
-            template<typename Tracer, typename ExactMatch>
-            bool match(const char * s, unsigned step_limit, Tracer tracer, ExactMatch)
-            {
+        template<typename Tracer, bool exact_match, bool active_capture>
+        bool match(const char * s, unsigned step_limit, Tracer tracer,
+                   ExactMatch<exact_match>, ActiveCapture<active_capture>)
+        {
 #ifdef DISPLAY_TRACE
-                this->sm.display_dfa();
+            this->display_dfa();
 #endif
+            this->step_count = 0;
+            this->step_id = 1;
 
-                this->sm.l1.clear();
-                this->sm.l2.clear();
-                this->sm.reset_id();
-                this->sm.reset_trace();
+            this->l1.clear();
+            this->l2.clear();
+            this->reset_id();
+            if (active_capture) {
+                this->reset_trace();
+            }
 
-                StepRangeList * pal1 = &this->sm.l1;
-                StepRangeList * pal2 = &this->sm.l2;
-                this->sm.l1.push_back(&this->sm.st_range_beginning, 0, *--this->sm.pidx_trace_free);
-                tracer.start(*this->sm.pidx_trace_free);
+            StepRangeList * pal1 = &this->l1;
+            StepRangeList * pal2 = &this->l2;
+            if (active_capture) {
+                this->l1.push_back(&this->st_range_beginning, 0, *--this->pidx_trace_free);
+                tracer.start(*this->pidx_trace_free);
+            }
+            else {
+                this->l1.push_back(&this->st_range_beginning, 0);
+            }
 
-                utf_consumer consumer(s);
+            utf_consumer consumer(s);
 
-                unsigned step_count = 0;
-
-                while (consumer.valid()) {
+            while (consumer.valid()) {
 #ifdef DISPLAY_TRACE
-                    std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m" << std::endl;
+                std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m" << std::endl;
 #endif
-                    if (-1u != (this->sm.idx_trace = this->step(s, consumer.bumpc(), consumer, *pal1, *pal2, tracer, step_count))) {
-                        tracer.good(this->sm.idx_trace);
-                        return false == ExactMatch::value || !consumer.valid();
+                const unsigned result = this->step(s, consumer.bumpc(), consumer,
+                                                   *pal1, *pal2, tracer,
+                                                   ExactMatch<exact_match>(),
+                                                   ActiveCapture<active_capture>());
+                if (-1u != result) {
+                    if (active_capture) {
+                        this->idx_trace = result;
+                        tracer.good(result);
                     }
-                    if (pal2->empty()) {
-                        break;
-                    }
-                    if (step_count >= step_limit) {
-                        return false;
-                    }
-                    ++this->step_id;
-                    std::swap(pal1, pal2);
-                    pal2->clear();
-                    if (false == ExactMatch::value) {
-                        --this->sm.pidx_trace_free;
-                        assert(this->sm.pidx_trace_free >= this->sm.idx_trace_free);
+                    return false == exact_match || !consumer.valid();
+                }
+                if (exact_match == true && pal2->empty()) {
+                    return false;
+                }
+                if (this->step_count >= step_limit) {
+                    return false;
+                }
+                ++this->step_id;
+                std::swap(pal1, pal2);
+                pal2->clear();
+                if (false == exact_match) {
+                    if (active_capture) {
+                        --this->pidx_trace_free;
+                        assert(this->pidx_trace_free >= this->idx_trace_free);
 #ifdef DISPLAY_TRACE
-                        std::cout << "\t\033[32m-> " << *this->sm.pidx_trace_free << "\033[0m" << std::endl;
+                        std::cout << "\t\033[32m-> " << *this->pidx_trace_free << "\033[0m" << std::endl;
 #endif
-                        pal1->push_back(this->sm.st_range_list, 0, *this->sm.pidx_trace_free);
+                        pal1->push_back(this->st_range_list, 0, *this->pidx_trace_free);
                     }
+                    else {
+                        pal1->push_back(this->st_range_list, 0);
+                    }
+                }
+                if (active_capture) {
                     s = consumer.str();
                 }
+            }
 
-                if (!consumer.valid()) {
-                    for (StepRangeIterator ifirst = pal1->begin(), ilast = pal1->end(); ifirst != ilast; ++ifirst) {
-                        if (ifirst->consume && ifirst->consume-1) {
+#ifdef DISPLAY_TRACE
+                std::cout << "\033[35mconsumer.valid(): '" << consumer.valid() << "'\033[0m" << std::endl;
+#endif
+
+            if (!consumer.valid()) {
+                for (StepRangeIterator ifirst = pal1->begin(), ilast = pal1->end(); ifirst != ilast; ++ifirst) {
+                    if (ifirst->consume) {
+                        if (ifirst->consume != 1) {
                             continue ;
                         }
 
-                        if (this->sm.stw.get_num_at(ifirst->rl->st) == this->step_id) {
+                        if (ifirst->rl == 0) {
+                            return true;
+                        }
+                    }
+
+                    if (active_capture) {
+                        if (this->stw.get_num_at(ifirst->rl->st) == this->step_id) {
                             /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
                             tracer.fail(ifirst->idx);
-                            this->sm.push_idx_trace(ifirst->idx);
+                            //this->push_idx_trace(ifirst->idx);
                             continue;
                         }
+                        this->stw.set_num_at(ifirst->rl->st, this->step_id);
+                    }
 
-                        this->sm.stw.set_num_at(ifirst->rl->st, this->step_id);
-                        StateList * first = ifirst->rl->first;
-                        StateList * last = ifirst->rl->last;
+                    StateList * first = ifirst->rl->first;
+                    StateList * last = ifirst->rl->last;
 
-                        for (; first != last; ++first) {
-                            if (first->st->is_cap_close()) {
-                                unsigned num = first->st->num - (this->sm.stw.size() - this->sm.stw.nb_capture);
-                                if (tracer.close(ifirst->idx, s, num)) {
-#ifdef DISPLAY_TRACE
-                                    std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
-#endif
-                                    if (0 == first->next) {
-                                        this->sm.idx_trace = ifirst->idx;
-                                        this->sm.traces[ifirst->idx * this->sm.stw.nb_capture + num] = s;
-                                        return true;
-                                    }
+                    for (; first != last; ++first) {
+                        if (first->st->is_cap_close()) {
+                            if (!active_capture) {
+                                if (first->next == 0) {
+                                    return true;
                                 }
                                 continue ;
                             }
-
-                            if (first->st->type == LAST) {
-                                this->sm.idx_trace = ifirst->idx;
-                                return true;
+                            unsigned num = first->st->num - (this->stw.size() - this->stw.nb_capture);
+                            if (tracer.close(ifirst->idx, s, num)) {
+#ifdef DISPLAY_TRACE
+                                std::cout << ifirst->idx << "  " << *first->st << "  " << num << std::endl;
+#endif
+                                if (0 == first->next) {
+                                    this->idx_trace = ifirst->idx;
+                                    this->traces[ifirst->idx * this->stw.nb_capture + num] = s;
+                                    return true;
+                                }
                             }
+                            continue ;
+                        }
+
+                        if (first->st->is_terminate()) {
+                            if (active_capture) {
+                                this->idx_trace = ifirst->idx;
+                            }
+                            return true;
                         }
                     }
                 }
-
-                return false;
             }
-        };
 
-        friend class Matching;
-        friend class Searching;
+            return false;
+        }
 
         StatesWrapper & stw;
 
@@ -861,6 +772,9 @@ namespace re {
         RangeList st_range_beginning;
 
         std::vector<unsigned> len_states;
+
+        unsigned step_id;
+        unsigned step_count;
     };
 
     inline void display_state(StatesWrapper & stw, State * st, unsigned depth = 0)

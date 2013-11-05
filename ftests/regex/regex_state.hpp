@@ -224,7 +224,7 @@ namespace re {
     }
 
     inline State * new_finish(State * out1 = 0) {
-        return new State(FINISH, 0, char_int(-1u), out1);
+        return new State(FINISH, 0, 0, out1);
     }
 
     inline State * new_begin(State * out1 = 0) {
