@@ -349,7 +349,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
         // Test intersection of a rect with a line (defined by its end points)
 
         Rect r(100, 200, 300, 150);
-        BOOST_CHECK_EQUAL(Rect::LEFT | Rect::UP   , r.region_pt(50 , 50 ));
+        BOOST_CHECK(Rect::LEFT | Rect::UP   == r.region_pt(50 , 50 ));
         BOOST_CHECK_EQUAL(Rect::LEFT | Rect::UP   , r.region_pt(60 , 110));
         BOOST_CHECK_EQUAL(Rect::UP                , r.region_pt(150, 100));
         BOOST_CHECK_EQUAL(Rect::UP | Rect::RIGHT  , r.region_pt(432, 103));
