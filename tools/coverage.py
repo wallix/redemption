@@ -35,9 +35,10 @@ class Module:
         self.extension = '.hpp'
         if '/rio/' in self.name:
             self.extension = '.h'
-        self.lines = 0
-        self.covered = 0
         self.functions = {}
+
+    def total_functions(self):
+        len(self.functions)
 
 
 def list_modules():
@@ -60,6 +61,7 @@ class Cover:
         self.bestcoverage = {} # module: (lincov, lintotal)
         self.functions = {}
         self.verbose = 1
+        self.all = False
 
     def cover(self, module, name, extension):
         print "Computing coverage for %s" % module
@@ -193,6 +195,7 @@ class Cover:
             self.cover(module, name, extension)
         for module, name, extension in list_modules():
             self.compute_coverage(module, name, extension)
+        self.all = True
 
     def covercurrent(self):
         for module, name, extension in list_modules():
@@ -223,16 +226,36 @@ else:
         sys.exit(0)
 
 print "Coverage Results:"
+g_covered = 0
+g_no_coverage = 0
+g_low_coverage = 0
+g_total_number = 0
 for m in cover.modules:
+    covered = 0
+    no_coverage = 0
+    low_coverage = 0
+    total_number = 0
     for fnl in sorted(cover.modules[m].functions):
         fn = cover.modules[m].functions[fnl]
+        total_number += 1
         if fn.covered_lines == 0:
             print "WARNING: NO COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension,
                                                 fnl, fn.name, fn.covered_lines, fn.total_lines)
+            no_coverage += 1
         elif fn.covered_lines * 100 < fn.total_lines * 50:
             print "WARNING: LOW COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension,
                                                 fnl, fn.name, fn.covered_lines, fn.total_lines)
+            low_coverage += 1
         else:
             print "COVERAGE %s%s:%s [%s] %s/%s" % (m, cover.modules[m].extension,
                                                 fnl, fn.name, fn.covered_lines, fn.total_lines)
-
+            covered += 1
+    print "MODULE %s : %s COVERED, %s LOW_COVERAGE, %s NO_COVERAGE in %s TOTAL" % (m, covered,
+                                                low_coverage, no_coverage, total_number)
+    g_covered += covered
+    g_no_coverage += no_coverage
+    g_low_coverage += low_coverage
+    g_total_number += total_number
+if cover.all:
+    print "ALL MODULES : %s COVERED, %s LOW_COVERAGE, %s NO_COVERAGE in %s TOTAL" % (g_covered,
+                                                g_low_coverage, g_no_coverage, g_total_number)
