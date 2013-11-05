@@ -122,8 +122,8 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-                   "\x1c\x41\x1d\xab\xe8\x8c\x5b\x40\xd1\x7b"
-                   "\x62\xa2\xb0\x68\x0e\x5c\x36\x55\xae\x24"
+                   "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf"
+                   "\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
