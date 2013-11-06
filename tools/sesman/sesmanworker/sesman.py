@@ -531,8 +531,8 @@ class Sesman():
     def check_password_expiration_date(self):
         _status, _error = True, u''
         try:
-            days = self.engine.password_expiration_date()
-            if not message is False:
+            notify, days = self.engine.password_expiration_date()
+            if notify:
                 if days == 0:
                     message = TR(u'Your password will expire soon. Please change it.')
                 else:
@@ -752,6 +752,9 @@ class Sesman():
 
                 if selected_target.resource.application:
                     app_params = self.engine.get_app_params(selected_target.service_login, physical_target)
+                    if not app_params:
+                        continue
+
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
                     kv[u'shell_working_directory'] = app_params.workingdir
                     kv[u'target_application'] = selected_target.service_login
