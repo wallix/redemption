@@ -126,17 +126,19 @@ struct RDPSerializer : public RDPGraphicDevice
 
     // Internal state of orders
     RDPOrderCommon common;
-    RDPDestBlt destblt;
-    RDPPatBlt patblt;
-    RDPScrBlt scrblt;
-    RDPOpaqueRect opaquerect;
-    RDPMemBlt memblt;
-    RDPMem3Blt mem3blt;
-    RDPLineTo lineto;
-    RDPGlyphIndex glyphindex;
-    RDPPolyline polyline;
-    RDPEllipseSC ellipseSC;
-    RDPEllipseCB ellipseCB;
+    RDPDestBlt     destblt;
+    RDPMultiDstBlt multidstblt;
+    RDPPatBlt      patblt;
+    RDPScrBlt      scrblt;
+    RDPOpaqueRect  opaquerect;
+    RDPMemBlt      memblt;
+    RDPMem3Blt     mem3blt;
+    RDPLineTo      lineto;
+    RDPGlyphIndex  glyphindex;
+    RDPPolyline    polyline;
+    RDPEllipseSC   ellipseSC;
+    RDPEllipseCB   ellipseCB;
+
     // state variables for gathering batch of orders
     size_t order_count;
     size_t chunk_flags;
@@ -168,6 +170,7 @@ struct RDPSerializer : public RDPGraphicDevice
     // Internal state of orders
     , common(RDP::PATBLT, Rect(0, 0, 1, 1))
     , destblt(Rect(), 0)
+    , multidstblt()
     , patblt(Rect(), 0, 0, 0, RDPBrush())
     , scrblt(Rect(), 0, 0, 0)
     , opaquerect(Rect(), 0)
@@ -261,6 +264,17 @@ public:
         this->common = newcommon;
         this->destblt = cmd;
         if (this->ini.debug.primary_orders){
+            cmd.log(LOG_INFO, common.clip);
+        }
+    }
+
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect &clip) {
+        this->reserve_order(395 * 2);
+        RDPOrderCommon newcommon(RDP::MULTIDSTBLT, clip);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->multidstblt);
+        this->common      = newcommon;
+        this->multidstblt = cmd;
+        if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }
     }
@@ -380,12 +394,11 @@ public:
         cmd.emit(this->stream_orders);
     }
 
-    virtual void draw(const RDPPolyline & cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPPolyline & cmd, const Rect & clip) {
         this->reserve_order(256);
         RDPOrderCommon newcommon(RDP::POLYLINE, clip);
         cmd.emit(this->stream_orders, newcommon, this->common, this->polyline);
-        this->common = newcommon;
+        this->common   = newcommon;
         this->polyline = cmd;
     }
 

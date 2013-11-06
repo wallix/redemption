@@ -55,6 +55,10 @@ public:
         this->gd.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) {
         RDPPatBlt new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
@@ -95,6 +99,7 @@ public:
         new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
     }
+
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
         RDPEllipseSC new_cmd24 = cmd;
         new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);

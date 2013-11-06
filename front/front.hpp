@@ -3883,6 +3883,17 @@ public:
         }
     }
 
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        if (!clip.isempty() &&
+            !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
+            this->orders->draw(cmd, clip);
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                this->capture->draw(cmd, clip);
+            }
+        }
+    }
+
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
@@ -4091,7 +4102,7 @@ public:
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
-//LOG(LOG_INFO, "Mem3Blt::rop = %X", cmd.rop);
+        // LOG(LOG_INFO, "Mem3Blt::rop = %X", cmd.rop);
         if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
             return;
         }
@@ -4281,10 +4292,9 @@ public:
         minx = maxx = previousx = cmd.xStart;
         miny = maxy = previousy = cmd.yStart;
 
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++)
-        {
-            previousx += cmd.deltaPoints[i].xDelta;
-            previousy += cmd.deltaPoints[i].yDelta;
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            previousx += cmd.deltaEncodedPoints[i].xDelta;
+            previousy += cmd.deltaEncodedPoints[i].yDelta;
 
             minx = std::min(minx, previousx);
             miny = std::min(miny, previousy);
@@ -4296,7 +4306,7 @@ public:
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
             RDPPolyline new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp){
+            if (this->client_info.bpp != this->mod_bpp) {
                 const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette);
                 new_cmd.PenColor = color_encode(pen_color24, this->client_info.bpp);
             }
@@ -4304,7 +4314,7 @@ public:
             this->orders->draw(new_cmd, clip);
 
             if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)){
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
                 RDPPolyline new_cmd24 = cmd;
                 new_cmd24.PenColor = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette);
                 this->capture->draw(new_cmd24, clip);

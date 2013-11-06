@@ -77,13 +77,12 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         polyline.emit(stream, newcommon, state_common, state_polyline);
 
         BOOST_CHECK_EQUAL((uint8_t)POLYLINE, newcommon.order);
-        BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), newcommon.clip);
+        BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), newcommon.clip);
 
         uint8_t datas[] = {
-            CHANGE | STANDARD | BOUNDS,
+            CHANGE | STANDARD,
             POLYLINE,
-            0x67, 0x0C,
-            0xFF, 0x03, 0xFF, 0x02,
+            0x67,
             0x9E, 0x00, 0xE6, 0x00, // xStart = 158, yStart = 203
             0x0D,                   // bRop2
             0x07,                   // NumDeltaEntries
@@ -91,7 +90,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
             0x98, 0x24, 0x14, 0x80, 0xA0, 0x62, 0x32, 0x32,
             0x4E, 0x32, 0x62, 0xFF, 0x60
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), sizeof(datas), datas, "Polyline 1");
+        check_datas(stream.p - stream.get_data(), stream.get_data(), sizeof(datas), datas, "Polyline 1");
 
         stream.mark_end(); stream.p = stream.get_data();
 
@@ -100,10 +99,10 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         BOOST_CHECK_EQUAL(true, !!(control & STANDARD));
         RDPPrimaryOrderHeader header = common_cmd.receive(stream, control);
 
-        BOOST_CHECK_EQUAL((uint8_t)0x0D, header.control);
+        BOOST_CHECK_EQUAL((uint8_t)0x09, header.control);
         BOOST_CHECK_EQUAL((uint32_t)0x67, header.fields);
         BOOST_CHECK_EQUAL((uint8_t)POLYLINE, common_cmd.order);
-        BOOST_CHECK_EQUAL(Rect(0, 0, 1024, 768), common_cmd.clip);
+        BOOST_CHECK_EQUAL(Rect(0, 0, 0, 0), common_cmd.clip);
 
         RDPPolyline cmd = state_polyline;
         cmd.receive(stream, header);
@@ -135,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         deltaPoints.rewind();
 
         check<RDPPolyline>(common_cmd, cmd,
-            RDPOrderCommon(POLYLINE, Rect(0, 0, 1024, 768)),
+            RDPOrderCommon(POLYLINE, Rect(0, 0, 0, 0)),
             RDPPolyline(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints),
             "Polyline 1");
     }

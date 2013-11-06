@@ -34,6 +34,7 @@
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -163,6 +164,11 @@ public:
     }
 
     virtual void draw(const RDPDestBlt & cmd, const Rect & clip)
+    {
+        this->recorder.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
     }

@@ -55,6 +55,7 @@ struct rdp_orders {
     RDPOpaqueRect  opaquerect;
     RDPScrBlt      scrblt;
     RDPDestBlt     destblt;
+    RDPMultiDstBlt multidstblt;
     RDPPatBlt      patblt;
     RDPLineTo      lineto;
     RDPGlyphIndex  glyph_index;
@@ -273,6 +274,10 @@ public:
                 case DESTBLT:
                     this->destblt.receive(stream, header);
                     mod->draw(this->destblt, cmd_clip);
+                    break;
+                case MULTIDSTBLT:
+                    this->multidstblt.receive(stream, header);
+                    mod->draw(this->multidstblt, cmd_clip);
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
