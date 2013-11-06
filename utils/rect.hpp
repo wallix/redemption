@@ -175,7 +175,7 @@ struct Rect {
 
         if (!intersect.isempty()) {
             if (intersect.y  > this->y) {
-                it.callback(Rect(this->x, this->y, 
+                it.callback(Rect(this->x, this->y,
                                 this->cx, static_cast<uint16_t>(intersect.y - this->y)));
             }
             if (intersect.x > this->x) {
@@ -183,11 +183,11 @@ struct Rect {
                                  static_cast<uint16_t>(intersect.x - this->x), intersect.cy));
             }
             if (this->right() > intersect.right()) {
-                it.callback(Rect(intersect.right(), intersect.y, 
+                it.callback(Rect(intersect.right(), intersect.y,
                                  static_cast<uint16_t>(this->right() - (intersect.right())), intersect.cy));
             }
             if (this->y + this->cy > intersect.bottom()) {
-                it.callback(Rect(this->x, intersect.bottom(), 
+                it.callback(Rect(this->x, intersect.bottom(),
                                 this->cx, static_cast<uint16_t>(this->bottom() - (intersect.bottom()))));
             }
         }
@@ -235,13 +235,13 @@ struct Rect {
         if (x < this->x) {
             res |= LEFT;
         }
-        else if (x > this->x + this->cx) {
+        else if (x >= this->right()) {
             res |= RIGHT;
         }
         if (y < this->y) {
             res |= UP;
         }
-        else if (y > this->y + this->cy) {
+        else if (y >= this->bottom()) {
             res |= DOWN;
         }
         return static_cast<t_region>(res);
@@ -300,34 +300,34 @@ struct LineEquation {
         bool found = false;
         if (region & Rect::LEFT) {
             int tmpy = this->compute_y(rect.x);
-            if (tmpy >= rect.y && tmpy <= (rect.bottom())) {
+            if (tmpy >= rect.y && tmpy < (rect.bottom())) {
                 found = true;
                 interX = rect.x;
                 interY = tmpy;
             }
         }
         else if (region & Rect::RIGHT) {
-            int tmpy = this->compute_y(rect.right());
-            if (tmpy >= rect.y && tmpy <= (rect.bottom())) {
+            int tmpy = this->compute_y(rect.right() - 1);
+            if (tmpy >= rect.y && tmpy < (rect.bottom())) {
                 found = true;
-                interX = rect.right();
+                interX = rect.right() - 1;
                 interY = tmpy;
             }
         }
         if (region & Rect::UP) {
             int tmpx = this->compute_x(rect.y);
-            if (tmpx >= rect.x && tmpx <= (rect.right())) {
+            if (tmpx >= rect.x && tmpx < (rect.right())) {
                 found = true;
                 interX = tmpx;
                 interY = rect.y;
             }
         }
         else if (region & Rect::DOWN) {
-            int tmpx = this->compute_x(rect.bottom());
-            if (tmpx >= rect.x && tmpx <= (rect.right())) {
+            int tmpx = this->compute_x(rect.bottom() - 1);
+            if (tmpx >= rect.x && tmpx < (rect.right())) {
                 found = true;
                 interX = tmpx;
-                interY = rect.bottom();
+                interY = rect.bottom() - 1;
             }
         }
         if (found) {
