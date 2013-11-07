@@ -68,10 +68,10 @@ class SesmanConfig(object):
             , u'record_warning'     : u'True'
             }
         , u'fr':
-            { u'login'                  : u"login"
+            { u'login'                  : u"Login"
             , u'target'                 : u"Compte cible"
-            , u'password'               : u"mot de passe"
-            , u'diagnostic'             : u"diagnostic"
+            , u'password'               : u"Mot de passe"
+            , u'diagnostic'             : u"Diagnostic"
             , u'connection_closed'      : u"Connexion fermée"
             , u'OK'                     : u"OK"
             , u'cancel'                 : u"Abandon"
@@ -139,11 +139,11 @@ class SesmanConfig(object):
             , u'Your password will expire soon. Please change it.': u"L'expiration de votre mot de passe est imminente. Saisissez un nouveau mot de passe."
             }
         , u'en':
-            { u'login'                  : u"login"
-            , u'target'                 : u"target"
-            , u'password'               : u"password"
-            , u'diagnostic'             : u"diagnostic"
-            , u'connection_closed'      : u"connection closed"
+            { u'login'                  : u"Login"
+            , u'target'                 : u"Target"
+            , u'password'               : u"Password"
+            , u'diagnostic'             : u"Diagnostic"
+            , u'connection_closed'      : u"Connection closed"
             , u'OK'                     : u"OK"
             , u'cancel'                 : u"Cancel"
             , u'help'                   : u"Help"

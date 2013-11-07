@@ -154,6 +154,8 @@ public:
             this->add_widget(&this->timeleft_value);
             this->timeleft_label.rect.y = y;
             this->timeleft_value.rect.y = y;
+            if (this->timeleft_label.cx() + 10 > px)
+                px = this->timeleft_label.cx() + 10;
             this->timeleft_value.rect.x =
                 this->username_label.dx() + px;
             y += this->timeleft_label.cy() + 20;
