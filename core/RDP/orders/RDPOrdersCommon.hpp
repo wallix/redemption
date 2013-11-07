@@ -222,6 +222,8 @@ namespace RDP {
         DESKSAVE   = 11,
         MEMBLT     = 13,
         MEM3BLT    = 14,
+        POLYGONSC  = 20,
+        POLYGONCB  = 21,
         POLYLINE   = 22,
         ELLIPSESC  = 25,
         ELLIPSECB  = 26,
@@ -747,6 +749,7 @@ public:
         case RECT:
         case SCREENBLT:
         case DESTBLT:
+        case POLYGONSC:
         case POLYLINE:
         case ELLIPSESC:
         default:
@@ -792,6 +795,9 @@ public:
             break;
         case GLYPHINDEX:
             assert(!(header.fields & ~0x3FFFFF));
+            break;
+        case POLYGONSC:
+            assert(!(header.fields & ~0x7F));
             break;
         case POLYLINE:
             assert(!(header.fields & ~0x7F));
