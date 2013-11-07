@@ -1,24 +1,24 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+    This program is free software; you can redistribute it and/or modify it
+     under the terms of the GNU General Public License as published by the
+     Free Software Foundation; either version 2 of the License, or (at your
+     option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-   GNU General Public License for more details.
+    This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+     Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+    You should have received a copy of the GNU General Public License along
+     with this program; if not, write to the Free Software Foundation, Inc.,
+     675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean
+    Product name: redemption, a FLOSS RDP proxy
+    Copyright (C) Wallix 2013
+    Author(s): Christophe Grosjean, Raphael Zhou
 
-   Unit test to RDP Orders coder/decoder
-   Using lib boost functions for testing
+    Unit test to RDP Orders coder/decoder
+    Using lib boost functions for testing
 */
 
 #define BOOST_AUTO_TEST_MAIN
@@ -27,7 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
 
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
@@ -82,7 +83,7 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         uint8_t datas[] = {
             CHANGE | STANDARD,
             POLYLINE,
-            0x67,
+            0x67,                   // header fields
             0x9E, 0x00, 0xE6, 0x00, // xStart = 158, yStart = 203
             0x0D,                   // bRop2
             0x07,                   // NumDeltaEntries
@@ -136,6 +137,6 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
         check<RDPPolyline>(common_cmd, cmd,
             RDPOrderCommon(POLYLINE, Rect(0, 0, 0, 0)),
             RDPPolyline(158, 230, 0x0D, 0, 0x000000, 7, deltaPoints),
-            "Polyline 1");
+            "Polyline 2");
     }
 }

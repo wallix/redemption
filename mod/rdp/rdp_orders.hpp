@@ -265,7 +265,7 @@ public:
                                         ? this->common.clip
                                         : Rect(0, 0, mod->front_width, mod->front_height)
                                         );
-//                LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
+                // LOG(LOG_INFO, "/* order=%d ordername=%s */", this->common.order, ordernames[this->common.order]);
                 switch (this->common.order) {
                 case GLYPHINDEX:
                     this->glyph_index.receive(stream, header);
@@ -278,6 +278,7 @@ public:
                 case MULTIDSTBLT:
                     this->multidstblt.receive(stream, header);
                     mod->draw(this->multidstblt, cmd_clip);
+                    // this->multidstblt.log(LOG_INFO, cmd_clip);
                     break;
                 case PATBLT:
                     this->patblt.receive(stream, header);

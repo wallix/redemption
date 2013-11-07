@@ -389,8 +389,8 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         for (uint8_t i = 0; i < this->multidstblt.nDeltaEntries; i++) {
             payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].leftDelta);
             payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].topDelta);
-            payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].widthDelta);
-            payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].heightDelta);
+            payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].width);
+            payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].height);
         }
 
         //------------------------------ missing variable length ---------------

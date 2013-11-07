@@ -718,10 +718,10 @@ struct FileToGraphic
                     this->multidstblt.bRop          = this->stream.in_uint8();
                     this->multidstblt.nDeltaEntries = this->stream.in_uint8();
                     for (uint8_t i = 0; i < this->multidstblt.nDeltaEntries; i++) {
-                        this->multidstblt.deltaEncodedRectangles[i].leftDelta   = this->stream.in_sint16_le();
-                        this->multidstblt.deltaEncodedRectangles[i].topDelta    = this->stream.in_sint16_le();
-                        this->multidstblt.deltaEncodedRectangles[i].widthDelta  = this->stream.in_sint16_le();
-                        this->multidstblt.deltaEncodedRectangles[i].heightDelta = this->stream.in_sint16_le();
+                        this->multidstblt.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
+                        this->multidstblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
+                        this->multidstblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
+                        this->multidstblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
                     }
                 }
             break;

@@ -212,8 +212,8 @@ public:
     struct DeltaEncodedRectangle {
         int16_t leftDelta;
         int16_t topDelta;
-        int16_t widthDelta;
-        int16_t heightDelta;
+        int16_t width;
+        int16_t height;
     } deltaEncodedRectangles[45];
 
     static const uint8_t id(void) {
@@ -240,10 +240,10 @@ public:
     , nDeltaEntries(nDeltaEntries) {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
         for (int i = 0; i < this->nDeltaEntries; i++) {
-            this->deltaEncodedRectangles[i].leftDelta   = deltaEncodedRectangles.in_sint16_le();
-            this->deltaEncodedRectangles[i].topDelta    = deltaEncodedRectangles.in_sint16_le();
-            this->deltaEncodedRectangles[i].widthDelta  = deltaEncodedRectangles.in_sint16_le();
-            this->deltaEncodedRectangles[i].heightDelta = deltaEncodedRectangles.in_sint16_le();
+            this->deltaEncodedRectangles[i].leftDelta = deltaEncodedRectangles.in_sint16_le();
+            this->deltaEncodedRectangles[i].topDelta  = deltaEncodedRectangles.in_sint16_le();
+            this->deltaEncodedRectangles[i].width     = deltaEncodedRectangles.in_sint16_le();
+            this->deltaEncodedRectangles[i].height    = deltaEncodedRectangles.in_sint16_le();
         }
     }
 
@@ -261,11 +261,10 @@ public:
     void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPMultiDstBlt & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
-        TODO("check that");
-        int16_t nLeftRect = this->nLeftRect;
-        int16_t nTopRect  = this->nTopRect;
-        int16_t nWidth    = this->nWidth;
-        int16_t nHeight   = this->nHeight;
+        int16_t nLeftRect = 0;
+        int16_t nTopRect  = 0;
+        int16_t nWidth    = 0;
+        int16_t nHeight   = 0;
         if (!common.clip.contains(Rect(nLeftRect, nTopRect, nWidth, nHeight))) {
             header.control |= RDP::BOUNDS;
         }
@@ -273,8 +272,8 @@ public:
             for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
                 nLeftRect += this->deltaEncodedRectangles[i].leftDelta;
                 nTopRect  += this->deltaEncodedRectangles[i].topDelta;
-                nWidth    += this->deltaEncodedRectangles[i].widthDelta;
-                nHeight   += this->deltaEncodedRectangles[i].heightDelta;
+                nWidth    =  this->deltaEncodedRectangles[i].width;
+                nHeight   =  this->deltaEncodedRectangles[i].height;
 
                 if (!common.clip.contains(Rect(nLeftRect, nTopRect, nWidth, nHeight))) {
                     header.control |= RDP::BOUNDS;
@@ -303,9 +302,9 @@ public:
         common.emit(stream, header, oldcommon);
 
         header.emit_coord(stream, 0x0001, this->nLeftRect, oldcmd.nLeftRect);
-        header.emit_coord(stream, 0x0002, this->nTopRect, oldcmd.nTopRect);
-        header.emit_coord(stream, 0x0004, this->nTopRect, oldcmd.nWidth);
-        header.emit_coord(stream, 0x0008, this->nTopRect, oldcmd.nHeight);
+        header.emit_coord(stream, 0x0002, this->nTopRect,  oldcmd.nTopRect);
+        header.emit_coord(stream, 0x0004, this->nWidth,    oldcmd.nWidth);
+        header.emit_coord(stream, 0x0008, this->nHeight,   oldcmd.nHeight);
 
         if (header.fields & 0x0010) { stream.out_uint8(this->bRop); }
 
@@ -341,18 +340,18 @@ public:
                     stream.out_DEP(this->deltaEncodedRectangles[i].topDelta);
                 }
 
-                if (!this->deltaEncodedRectangles[i].widthDelta) {
+                if (!this->deltaEncodedRectangles[i].width) {
                     *zeroBit |= (1 << (5 - m2 * 4));
                 }
                 else {
-                    stream.out_DEP(this->deltaEncodedRectangles[i].widthDelta);
+                    stream.out_DEP(this->deltaEncodedRectangles[i].width);
                 }
 
-                if (!this->deltaEncodedRectangles[i].heightDelta) {
+                if (!this->deltaEncodedRectangles[i].height) {
                     *zeroBit |= (1 << (4 - m2 * 4));
                 }
                 else {
-                    stream.out_DEP(this->deltaEncodedRectangles[i].heightDelta);
+                    stream.out_DEP(this->deltaEncodedRectangles[i].height);
                 }
             }
 
@@ -375,7 +374,6 @@ public:
         if (header.fields & 0x0020) {
             this->nDeltaEntries = stream.in_uint8();
         }
-
 
         if (header.fields & 0x0040) {
             uint16_t cbData = stream.in_uint16_le();
@@ -403,15 +401,15 @@ public:
                     // LOG(LOG_INFO, "0x%02X", zeroBit);
                 }
 
-                this->deltaEncodedRectangles[i].leftDelta   = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
-                this->deltaEncodedRectangles[i].topDelta    = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
-                this->deltaEncodedRectangles[i].widthDelta  = (!(zeroBit & 0x20) ? rgbData.in_DEP() : 0);
-                this->deltaEncodedRectangles[i].heightDelta = (!(zeroBit & 0x10) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedRectangles[i].leftDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedRectangles[i].topDelta  = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedRectangles[i].width     = (!(zeroBit & 0x20) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedRectangles[i].height    = (!(zeroBit & 0x10) ? rgbData.in_DEP() : 0);
 
 /*
                 LOG(LOG_INFO, "RDPMultiDstBlt::receive: delta rectangle=(%d, %d, %d, %d)",
                     this->deltaEncodedRectangles[i].leftDelta, this->deltaEncodedRectangles[i].topDelta,
-                    this->deltaEncodedRectangles[i].widthDelta, , this->deltaEncodedRectangles[i].heightDelta);
+                    this->deltaEncodedRectangles[i].width, this->deltaEncodedRectangles[i].height);
 */
 
                 zeroBit <<= 4;
@@ -431,8 +429,8 @@ public:
                 lg += snprintf(buffer + lg, sz - lg, " ");
             }
             lg += snprintf(buffer + lg, sz - lg, "(%d, %d, %d, %d)", this->deltaEncodedRectangles[i].leftDelta,
-                this->deltaEncodedRectangles[i].topDelta, this->deltaEncodedRectangles[i].widthDelta,
-                this->deltaEncodedRectangles[i].heightDelta);
+                this->deltaEncodedRectangles[i].topDelta, this->deltaEncodedRectangles[i].width,
+                this->deltaEncodedRectangles[i].height);
         }
         lg += snprintf(buffer + lg, sz - lg, "))");
         if (lg >= sz) {

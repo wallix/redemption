@@ -126,8 +126,8 @@ public:
         for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
             cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
             cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
-            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].widthDelta;
-            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].heightDelta;
+            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
+            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
             const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
             this->drawable.destblt(trect, cmd.bRop);
         }
