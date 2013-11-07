@@ -182,6 +182,46 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
     // dump_png("/tmp/test_polyline_000_", gd.drawable);
 }
 
+BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    Rect screen_rect(0, 0, width, height);
+    RDPDrawable gd(width, height);
+    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect);
+
+    BStream deltaRectangles(1024);
+
+    deltaRectangles.out_sint16_le(100);
+    deltaRectangles.out_sint16_le(100);
+    deltaRectangles.out_sint16_le(10);
+    deltaRectangles.out_sint16_le(10);
+
+    for (int i = 0; i < 19; i++) {
+        deltaRectangles.out_sint16_le(10);
+        deltaRectangles.out_sint16_le(10);
+        deltaRectangles.out_sint16_le(10);
+        deltaRectangles.out_sint16_le(10);
+    }
+
+    deltaRectangles.mark_end();
+    deltaRectangles.rewind();
+
+    gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles), screen_rect);
+
+    char message[1024];
+    if (!check_sig(gd.drawable, message,
+    "\x3d\x83\xd7\x7e\x0b\x3e\xf4\xd1\x53\x50\x33\x94\x1e\x11\x46\x9c\x60\x76\xd7\x0a"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // uncomment to see result in png file
+    //dump_png("/tmp/test_multidstblt_000_", gd.drawable);
+}
+
 BOOST_AUTO_TEST_CASE(TestEllipse)
 {
     uint16_t width = 1280;
