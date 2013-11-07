@@ -30,6 +30,7 @@
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
@@ -114,6 +115,22 @@ public:
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         this->drawable.destblt(trect, cmd.rop);
+    }
+
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
+    {
+        const Rect clip_drawable_cmd_intersect = clip.intersect(this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+
+        Rect cmd_rect(0, 0, 0, 0);
+
+        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
+            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
+            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
+            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
+            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
+            const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
+            this->drawable.destblt(trect, cmd.bRop);
+        }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect & clip)
@@ -469,8 +486,8 @@ public:
         int16_t endy;
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            endx = startx + cmd.deltaPoints[i].xDelta;
-            endy = starty + cmd.deltaPoints[i].yDelta;
+            endx = startx + cmd.deltaEncodedPoints[i].xDelta;
+            endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
             drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
 

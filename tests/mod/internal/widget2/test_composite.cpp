@@ -57,6 +57,10 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
+    virtual void draw(const RDPMultiDstBlt &, const Rect &) {
+        BOOST_CHECK(false);
+    }
+
     virtual void draw(const RDPPatBlt&, const Rect&)
     {
         BOOST_CHECK(false);
@@ -97,8 +101,7 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPPolyline&, const Rect&)
-    {
+    virtual void draw(const RDPPolyline &, const Rect &) {
         BOOST_CHECK(false);
     }
 

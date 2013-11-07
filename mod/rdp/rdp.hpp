@@ -171,6 +171,7 @@ struct mod_rdp : public mod_api {
     bool enable_polyline;
     bool enable_ellipsesc;
     bool enable_ellipsecb;
+    bool enable_multidstblt;
 
     mod_rdp( Transport * trans
            , const char * target_user
@@ -245,6 +246,7 @@ struct mod_rdp : public mod_api {
         , enable_polyline(false)
         , enable_ellipsesc(false)
         , enable_ellipsecb(false)
+        , enable_multidstblt(false)
     {
         if (this->verbose & 1)
         {
@@ -392,6 +394,12 @@ struct mod_rdp : public mod_api {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
             switch (order_number) {
+            case 15:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=MultiDstBlt");
+                }
+                this->enable_multidstblt = true;
+                break;
             case 22:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Extra orders=Polyline");
@@ -2022,6 +2030,7 @@ struct mod_rdp : public mod_api {
         order_caps.numberFonts                                   = 0x147;
         order_caps.orderFlags                                    = 0x2a;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt ? 1 : 0);
         order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
@@ -2049,6 +2058,7 @@ struct mod_rdp : public mod_api {
 
         // intersect with client order capabilities
         // which may not be supported by clients.
+        this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX, order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX, order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX,
                                          order_caps.orderSupport);
@@ -4401,6 +4411,10 @@ public:
         this->front.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->front.draw(cmd, clip);
@@ -4426,8 +4440,7 @@ public:
         this->front.draw(cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPPolyline& cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPPolyline& cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
