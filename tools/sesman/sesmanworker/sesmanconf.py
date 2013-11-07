@@ -69,7 +69,7 @@ class SesmanConfig(object):
             }
         , u'fr':
             { u'login'                  : u"login"
-            , u'target'                 : u"compte cible"
+            , u'target'                 : u"Compte cible"
             , u'password'               : u"mot de passe"
             , u'diagnostic'             : u"diagnostic"
             , u'connection_closed'      : u"Connexion fermée"

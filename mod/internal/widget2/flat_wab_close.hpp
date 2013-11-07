@@ -155,7 +155,7 @@ public:
             this->timeleft_label.rect.y = y;
             this->timeleft_value.rect.y = y;
             this->timeleft_value.rect.x =
-                this-> timeleft_label.dx() + this->timeleft_label.cx() + 20;
+                this->username_label.dx() + px;
             y += this->timeleft_label.cy() + 20;
         }
 
