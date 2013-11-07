@@ -139,6 +139,7 @@ core/RDP/nego 100 100
 core/RDP/orders/RDPOrdersCommon 100 100
 core/RDP/orders/RDPOrdersNames 100 100
 core/RDP/orders/RDPOrdersPrimaryDestBlt 100 100
+core/RDP/orders/RDPOrdersPrimaryMultiDstBlt 100 100
 core/RDP/orders/RDPOrdersPrimaryGlyphIndex 100 100
 core/RDP/orders/RDPOrdersPrimaryLineTo 100 100
 core/RDP/orders/RDPOrdersPrimaryMem3Blt 100 100
