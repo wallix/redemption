@@ -360,7 +360,7 @@ namespace GCC
     // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
     // by the source GCC Provider to be locally unique. It is used to
     // identify the returned UserIDIndication PDU. The Result parameter
-    // include " GCC-specific failure information sourced directly from
+    // includes " GCC-specific failure information sourced directly from
     // the Result parameter in the GCC-Conference-Create response primitive.
     // If the Result parameter is anything except successful, the Result
     // parameter in the MCS-Connect-Provider response is set to
