@@ -635,6 +635,9 @@ unit-test test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrim
 unit-test test_RDPOrdersPrimaryPolygonSC : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp libboost_unit_test ;
 unit-test test_RDPOrdersPrimaryPolygonSC : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_RDPOrdersPrimaryPolygonCB : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryPolygonCB : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_RDPOrdersPrimaryPolyline : tests/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp libboost_unit_test ;
 unit-test test_RDPOrdersPrimaryPolyline : tests/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp libboost_unit_test gcov : <variant>coverage ;
 

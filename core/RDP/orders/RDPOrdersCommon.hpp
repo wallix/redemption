@@ -637,8 +637,8 @@ private:
             case PATBLT:
             case MEMBLT:
             case LINE:
-                //case POLYGON2:
-                //case ELLIPSE2:
+            case POLYGONCB:
+            case ELLIPSECB:
                 size = 2;
                 break;
             case RECT:
@@ -743,8 +743,7 @@ public:
         case MEMBLT:
         case LINE:
         case ELLIPSECB:
-            //case POLYGON2:
-            //case ELLIPSE2:
+        case POLYGONCB:
             size = 2;
             break;
         case RECT:
@@ -802,6 +801,9 @@ public:
             break;
         case POLYGONSC:
             assert(!(header.fields & ~0x7F));
+            break;
+        case POLYGONCB:
+            assert(!(header.fields & ~0x1FFF));
             break;
         case POLYLINE:
             assert(!(header.fields & ~0x7F));
