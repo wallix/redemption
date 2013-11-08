@@ -82,7 +82,6 @@ class Sesman():
 
         self._enable_encryption = self.engine.get_trace_encryption()
         self.language           = None
-
         self.pid = os.getpid()
 
         self.shared[u'target_login']    = MAGICASK
@@ -91,7 +90,20 @@ class Sesman():
         self.shared[u'ip_client']       = MAGICASK
         self.shared[u'proxy_type  ']    = MAGICASK
         self.shared[u'target_protocol'] = MAGICASK
+        self.shared[u'keyboard_layout'] = MAGICASK
 
+    def set_language_from_keylayout(self):
+        self.language = SESMANCONF.language
+        french_layouts = [0x0000040C, # French (France)
+                          0x00000C0C, # French (Canada) Canadian French (Legacy)
+                          0x0000080C, # French (Belgium)
+                          0x0001080C, # French (Belgium) Belgian (Comma)
+                          0x0000100C] # French (Switzerland)
+        keylayout = 0
+        if self.shared[u'keyboard_layout'] != MAGICASK:
+            keylayout = int(self.shared[u'keyboard_layout'])
+        if keylayout in french_layouts:
+            self.language = 'fr'
 
     #TODO: is may be possible to delay sending data until the next input through receive_data
     def send_data(self, data):
@@ -99,10 +111,9 @@ class Sesman():
 
         #if current language changed, send translations
         if self.language != SESMANCONF.language:
-            if self.language:
-                SESMANCONF.language = self.language
-            else:
-                self.language = SESMANCONF.language
+            if not self.language:
+                self.set_language_from_keylayout()
+            SESMANCONF.language = self.language
 
             data[u'language'] = SESMANCONF.language
             data.update(translations())

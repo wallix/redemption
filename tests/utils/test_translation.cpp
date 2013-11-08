@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
     BOOST_CHECK_EQUAL(std::string(TR("manager_close_cnx", ini)),
                       std::string("Le gestionnaire de session a coupé la connexion"));
     BOOST_CHECK_EQUAL(std::string(TR("end_connection", ini)),
-                      std::string("Connexion terminée"));
+                      std::string("Fin de Connexion"));
     BOOST_CHECK_EQUAL(std::string(TR("help_message", ini)),
                       std::string("Dans la zone de saisie login, entrez:<br>"
                                   "- le nom de la machine cible et du compte<br>"

@@ -146,6 +146,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -384,6 +385,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -632,6 +634,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -838,6 +841,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("/var/log/redemption.log"),
                       std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
@@ -1024,6 +1028,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
@@ -1202,6 +1207,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
@@ -1368,6 +1374,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -1527,6 +1534,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(4,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -1685,6 +1693,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -1843,6 +1852,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -1991,6 +2001,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);

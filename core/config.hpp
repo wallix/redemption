@@ -168,6 +168,7 @@ typedef enum
         AUTHID_LANGUAGE,
 
         // Options
+        AUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
         AUTHID_OPT_CLIPBOARD,           // clipboard
         AUTHID_OPT_DEVICEREDIRECTION,   // device_redirection
         AUTHID_OPT_FILE_ENCRYPTION,     // file encryption
@@ -265,6 +266,7 @@ typedef enum
 #define STRAUTHID_TRANS_MANAGER_CLOSE_CNX  "trans_manager_close_cnx"
 #define STRAUTHID_LANGUAGE                 "language"
 // Options
+#define STRAUTHID_KEYBOARD_LAYOUT          "keyboard_layout"
 #define STRAUTHID_OPT_CLIPBOARD            "clipboard"
 #define STRAUTHID_OPT_DEVICEREDIRECTION    "device_redirection"
 #define STRAUTHID_OPT_FILE_ENCRYPTION      "file_encryption"
@@ -358,6 +360,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_LANGUAGE,
 
     // Options
+    STRAUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
     STRAUTHID_OPT_CLIPBOARD,            // clipboard
     STRAUTHID_OPT_DEVICEREDIRECTION,    // device_redirection
     STRAUTHID_OPT_FILE_ENCRYPTION,      // file encryption
@@ -514,6 +517,7 @@ struct Inifile : public FieldObserver {
 
     // section "client"
     struct {
+        UnsignedField keyboard_layout;    // AUTHID_KEYBOARD_LAYOUT
         bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default
 
         uint32_t performance_flags_default;
@@ -526,6 +530,7 @@ struct Inifile : public FieldObserver {
 
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
+
 
         bool rdp_compression;
     } client;
@@ -828,6 +833,10 @@ public:
         strcpy(this->account.password,    "");
 
         // Begin Section "client".
+        this->client.keyboard_layout.attach_ini(this, AUTHID_KEYBOARD_LAYOUT);
+        this->client.keyboard_layout.set(0);
+        this->to_send_set.insert(AUTHID_KEYBOARD_LAYOUT);
+
         this->client.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         this->client.device_redirection.attach_ini(this,AUTHID_OPT_DEVICEREDIRECTION);
         this->client.clipboard.set(true);

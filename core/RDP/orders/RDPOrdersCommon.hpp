@@ -29,8 +29,8 @@
 #include "bitmap.hpp"
 #include "client_info.hpp"
 
-//MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
-//====================================================================
+// MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
+// ====================================================================
 
 //  All primary drawing orders MUST conform to the structure and rules defined
 //  in section 2.2.2.2.1.1.2.

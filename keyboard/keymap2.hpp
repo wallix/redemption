@@ -877,7 +877,7 @@ struct Keymap2
         bool found = false;
         for (uint8_t i = 0 ; i < sizeof(keylayouts)/sizeof(keylayouts[0]); i++) {
             if (keylayouts[i]->LCID == LCID){
-                keylayout_WORK = keylayouts[i];
+                this->keylayout_WORK = keylayouts[i];
                 found = true;
                 break;
             }
