@@ -33,7 +33,7 @@
 // abstract: Check if some code point is a valid char or not (some UNICODE ranges are forbiden)
 // input: c = 32 bits Unicode codepoint
 // output: true or false
-bool UTF32isValid(uint32_t c)
+static inline bool UTF32isValid(uint32_t c)
 {
     // Note: FFFE and FFFF are specifically permitted by the
     // Unicode standard for application internal use, but are not
