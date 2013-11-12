@@ -94,6 +94,19 @@ public:
         this->gd.draw(new_cmd24, clip, gly_cache);
     }
 
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        RDPPolygonSC new_cmd24 = cmd;
+        new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        RDPPolygonCB new_cmd24 = cmd;
+        new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
+        new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
     void draw(const RDPPolyline & cmd, const Rect & clip) {
         RDPPolyline new_cmd24 = cmd;
         new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);

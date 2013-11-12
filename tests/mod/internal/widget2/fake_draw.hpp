@@ -75,6 +75,14 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
+    virtual void draw(const RDPPolygonSC &, const Rect &) {
+        BOOST_CHECK(false);
+    }
+
+    virtual void draw(const RDPPolygonCB &, const Rect &) {
+        BOOST_CHECK(false);
+    }
+
     virtual void draw(const RDPPolyline &, const Rect &) {
         BOOST_CHECK(false);
     }

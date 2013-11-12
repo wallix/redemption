@@ -37,6 +37,8 @@
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
@@ -494,6 +496,51 @@ public:
             startx = endx;
             starty = endy;
         }
+    }
+
+    TODO("this functions only draw polygon borders but do not fill "
+         "them with solid color.");
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        int16_t startx = cmd.xStart;
+        int16_t starty = cmd.yStart;
+
+        int16_t endx;
+        int16_t endy;
+
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            endx = startx + cmd.deltaPoints[i].xDelta;
+            endy = starty + cmd.deltaPoints[i].yDelta;
+
+            drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+
+            startx = endx;
+            starty = endy;
+        }
+        endx = cmd.xStart;
+        endy = cmd.yStart;
+        drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+    }
+    TODO("this functions only draw polygon borders but do not fill "
+         "them with brush color.");
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        int16_t startx = cmd.xStart;
+        int16_t starty = cmd.yStart;
+
+        int16_t endx;
+        int16_t endy;
+
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            endx = startx + cmd.deltaPoints[i].xDelta;
+            endy = starty + cmd.deltaPoints[i].yDelta;
+
+            drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
+
+            startx = endx;
+            starty = endy;
+        }
+        endx = cmd.xStart;
+        endy = cmd.yStart;
+        drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,

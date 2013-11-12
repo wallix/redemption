@@ -4286,6 +4286,81 @@ public:
         }
     }
 
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        int16_t minx, miny, maxx, maxy, previousx, previousy;
+
+        minx = maxx = previousx = cmd.xStart;
+        miny = maxy = previousy = cmd.yStart;
+
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            previousx += cmd.deltaPoints[i].xDelta;
+            previousy += cmd.deltaPoints[i].yDelta;
+
+            minx = std::min(minx, previousx);
+            miny = std::min(miny, previousy);
+
+            maxx = std::max(maxx, previousx);
+            maxy = std::max(maxy, previousy);
+        }
+        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
+
+        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
+            RDPPolygonSC new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp) {
+                const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette);
+                new_cmd.BrushColor = color_encode(pen_color24, this->client_info.bpp);
+            }
+
+            this->orders->draw(new_cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                RDPPolygonSC new_cmd24 = cmd;
+                new_cmd24.BrushColor = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette);
+                this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        int16_t minx, miny, maxx, maxy, previousx, previousy;
+
+        minx = maxx = previousx = cmd.xStart;
+        miny = maxy = previousy = cmd.yStart;
+
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            previousx += cmd.deltaPoints[i].xDelta;
+            previousy += cmd.deltaPoints[i].yDelta;
+
+            minx = std::min(minx, previousx);
+            miny = std::min(miny, previousy);
+
+            maxx = std::max(maxx, previousx);
+            maxy = std::max(maxy, previousy);
+        }
+        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
+
+        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
+            RDPPolygonCB new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp) {
+                const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette);
+                new_cmd.foreColor = color_encode(fore_pen_color24, this->client_info.bpp);
+                const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette);
+                new_cmd.backColor = color_encode(back_pen_color24, this->client_info.bpp);
+            }
+
+            this->orders->draw(new_cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                RDPPolygonCB new_cmd24 = cmd;
+                new_cmd24.foreColor = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette);
+                new_cmd24.backColor = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette);
+                this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
     void draw(const RDPPolyline & cmd, const Rect & clip) {
         int16_t minx, miny, maxx, maxy, previousx, previousy;
 

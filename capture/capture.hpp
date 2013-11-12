@@ -327,6 +327,26 @@ public:
         }
     }
 
+    virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
+    {
+        if (this->capture_wrm) {
+            this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable) {
+            this->drawable->draw(cmd, clip);
+        }
+    }
+
+    virtual void draw(const RDPPolygonCB & cmd, const Rect & clip)
+    {
+        if (this->capture_wrm) {
+            this->pnc->draw(cmd, clip);
+        }
+        else if (this->capture_drawable) {
+            this->drawable->draw(cmd, clip);
+        }
+    }
+
     virtual void draw(const RDPPolyline & cmd, const Rect & clip)
     {
         if (this->capture_wrm) {

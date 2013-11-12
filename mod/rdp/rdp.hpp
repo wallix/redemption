@@ -168,6 +168,8 @@ struct mod_rdp : public mod_api {
 
     unsigned certificate_change_action;
 
+    bool enable_polygonsc;
+    bool enable_polygoncb;
     bool enable_polyline;
     bool enable_ellipsesc;
     bool enable_ellipsecb;
@@ -243,6 +245,8 @@ struct mod_rdp : public mod_api {
         , open_session_timeout_checker(0)
         , output_filename(output_filename)
         , certificate_change_action(certificate_change_action)
+        , enable_polygonsc(false)
+        , enable_polygoncb(false)
         , enable_polyline(false)
         , enable_ellipsesc(false)
         , enable_ellipsecb(false)
@@ -399,6 +403,18 @@ struct mod_rdp : public mod_api {
                     LOG(LOG_INFO, "RDP Extra orders=MultiDstBlt");
                 }
                 this->enable_multidstblt = true;
+                break;
+            case 20:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=PolygonSC");
+                }
+                this->enable_polygonsc = true;
+                break;
+            case 21:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=PolygonCB");
+                }
+                this->enable_polygoncb = true;
                 break;
             case 22:
                 if (verbose) {
@@ -2041,6 +2057,8 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
         order_caps.orderSupport[UnusedIndex3]                    = 1;
         order_caps.orderSupport[UnusedIndex5]                    = 1;
+        order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]          = (this->enable_polygonsc ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]          = (this->enable_polygoncb ? 1 : 0);
         order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb ? 1 : 0);
@@ -2061,13 +2079,15 @@ struct mod_rdp : public mod_api {
         // intersect with client order capabilities
         // which may not be supported by clients.
         this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,     order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX,
                                          order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,   order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX, order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_INDEX_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,      order_caps.orderSupport);
 
         // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
         //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
@@ -4441,6 +4461,15 @@ public:
     {
         this->front.draw(cmd, clip, gly_cache);
     }
+
+    virtual void draw(const RDPPolygonSC& cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPolygonCB& cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
 
     virtual void draw(const RDPPolyline& cmd, const Rect & clip) {
         this->front.draw(cmd, clip);

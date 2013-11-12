@@ -142,6 +142,20 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
                 LOG(LOG_INFO, "========================================\n");
             }
         }
+        virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+            if (verbose > 10) {
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
+        virtual void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+            if (verbose > 10) {
+                LOG(LOG_INFO, "--------- FRONT ------------------------");
+                cmd.log(LOG_INFO, clip);
+                LOG(LOG_INFO, "========================================\n");
+            }
+        }
         virtual void draw(const RDPPolyline & cmd, const Rect & clip) {
             if (verbose > 10) {
                 LOG(LOG_INFO, "--------- FRONT ------------------------");

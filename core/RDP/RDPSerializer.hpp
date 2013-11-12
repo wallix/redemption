@@ -135,6 +135,8 @@ struct RDPSerializer : public RDPGraphicDevice
     RDPMem3Blt     mem3blt;
     RDPLineTo      lineto;
     RDPGlyphIndex  glyphindex;
+    RDPPolygonSC   polygonSC;
+    RDPPolygonCB   polygonCB;
     RDPPolyline    polyline;
     RDPEllipseSC   ellipseSC;
     RDPEllipseCB   ellipseCB;
@@ -179,6 +181,8 @@ struct RDPSerializer : public RDPGraphicDevice
     , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
     , glyphindex( 0, 0, 0, 0, 0, 0
                 , Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, (uint8_t *)"")
+    , polygonSC()
+    , polygonCB()
     , polyline()
     , ellipseSC()
     , ellipseCB(Rect(), 0, 0, 0, 0, RDPBrush())
@@ -392,6 +396,22 @@ public:
     {
         this->reserve_order(cmd.total_order_size() + 16 /* majoration */);
         cmd.emit(this->stream_orders);
+    }
+
+    virtual void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        this->reserve_order(256);
+        RDPOrderCommon newcommon(RDP::POLYGONSC, clip);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->polygonSC);
+        this->common    = newcommon;
+        this->polygonSC = cmd;
+    }
+
+    virtual void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        this->reserve_order(256);
+        RDPOrderCommon newcommon(RDP::POLYGONCB, clip);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->polygonCB);
+        this->common    = newcommon;
+        this->polygonCB = cmd;
     }
 
     virtual void draw(const RDPPolyline & cmd, const Rect & clip) {

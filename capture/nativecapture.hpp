@@ -39,6 +39,8 @@
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
@@ -196,6 +198,16 @@ public:
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
             size_t size, const Bitmap & bmp) {
         this->recorder.draw(bitmap_data, data, size, bmp);
+    }
+
+    virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
+    {
+        this->recorder.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPolygonCB & cmd, const Rect & clip)
+    {
+        this->recorder.draw(cmd, clip);
     }
 
     virtual void draw(const RDPPolyline & cmd, const Rect & clip)
