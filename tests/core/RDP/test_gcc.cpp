@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     stream.out_copy_bytes(gcc_user_data, sizeof(gcc_user_data)-1); // -1 to ignore final 0
     stream.mark_end();
 
-    BStream gcc_header(65536);
+    OutPerBStream gcc_header(65536);
     GCC::Create_Request_Send(gcc_header, stream.size());
     t.send(gcc_header);
     

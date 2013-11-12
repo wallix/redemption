@@ -28,8 +28,8 @@
 #include <errno.h>
 #include <algorithm>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 #include "test_orders.hpp"
 
 #include "stream.hpp"
@@ -54,6 +54,7 @@
 
 BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 {
+    BOOST_CHECK(1);
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -65,6 +66,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 511;
 
+    BOOST_CHECK(1);
     FakeFront front(info, verbose);
 
     const char * name = "RDP XP Target";
@@ -90,55 +92,62 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp(
-        &t,
-        "xavier",
-        "SecureLinux",
-        "10.10.9.161",
-        front,
-        false,      // tls
-        info,
-        &gen,
-        7,          // key flags
-        NULL,       // auth_api
-        "",         // auth channel
-        "",         // alternate_shell
-        "",         // shell_working_directory
-        true,       // clipboard
-        false,      // fast-path support
-        true,       // mem3blt support
-        false,      // bitmap update support
-        verbose,
-        false       // enable new pointer
-    );
+    try {
+        BOOST_CHECK(1);
+        struct mod_api * mod = new mod_rdp(
+            &t,
+            "xavier",
+            "SecureLinux",
+            "10.10.9.161",
+            front,
+            false,      // tls
+            info,
+            &gen,
+            7,          // key flags
+            NULL,       // auth_api
+            "",         // auth channel
+            "",         // alternate_shell
+            "",         // shell_working_directory
+            true,       // clipboard
+            false,      // fast-path support
+            true,       // mem3blt support
+            false,      // bitmap update support
+            verbose,
+            false       // enable new pointer
+        );
 
-    if (verbose > 2){
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
+        if (verbose > 2){
+            LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
+        }
+        BOOST_CHECK(t.get_status());
+        BOOST_CHECK_EQUAL(mod->front_width, 800);
+        BOOST_CHECK_EQUAL(mod->front_height, 600);
+
+        uint32_t count = 0;
+        BackEvent_t res = BACK_EVENT_NONE;
+        BOOST_CHECK(1);
+        while (res == BACK_EVENT_NONE){
+            LOG(LOG_INFO, "=======================> count=%u", count);
+
+            if (count++ >= 25) break;
+    //        if (count == 10){
+    //            front.dump_png("trace_xp_10_");
+    //        }
+    //        if (count == 20){
+    //            front.dump_png("trace_xp_20_");
+    //        }
+            mod->draw_event(time(NULL));
+        }
     }
-    BOOST_CHECK(t.get_status());
-    BOOST_CHECK_EQUAL(mod->front_width, 800);
-    BOOST_CHECK_EQUAL(mod->front_height, 600);
-
-    uint32_t count = 0;
-    BackEvent_t res = BACK_EVENT_NONE;
-    while (res == BACK_EVENT_NONE){
-        LOG(LOG_INFO, "=======================> count=%u", count);
-
-        if (count++ >= 25) break;
-//        if (count == 10){
-//            front.dump_png("trace_xp_10_");
-//        }
-//        if (count == 20){
-//            front.dump_png("trace_xp_20_");
-//        }
-        mod->draw_event(time(NULL));
-    }
-
+    catch (const Error & e) {
+        LOG(LOG_INFO, "=======================> Exception raised=%u", e.id);
+    };
 //    front.dump_png("trace_xp_");
 }
 
 BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
+    BOOST_CHECK(1);
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -215,6 +224,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
 BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 {
+    BOOST_CHECK(1);
 
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
@@ -302,6 +312,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 
 BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 {
+    BOOST_CHECK(1);
 
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;

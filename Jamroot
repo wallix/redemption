@@ -286,6 +286,9 @@ unit-test test_fileutils : tests/utils/test_fileutils.cpp libboost_unit_test gco
 unit-test test_x224 : tests/core/RDP/test_x224.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_x224 : tests/core/RDP/test_x224.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_out_per_bstream : tests/core/RDP/test_out_per_bstream.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_out_per_bstream : tests/core/RDP/test_out_per_bstream.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 

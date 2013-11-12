@@ -300,7 +300,7 @@ namespace FastPath {
                 + data.size()
                 ;
 
-            stream.out_per_length(length);
+            stream.out_2BUE(length);
 
             if (fipsInformation != NULL) {
                 stream.out_copy_bytes(fipsInformation->get_data(), 4);
@@ -878,7 +878,7 @@ namespace FastPath {
                 ;
             length += ((length >= 127) ? 2 : 1);                  // length
 
-            stream.out_per_length(length);
+            stream.out_2BUE(length);
 
             if (fipsInformation != NULL) {
                 stream.out_copy_bytes(fipsInformation->get_data(), 4);

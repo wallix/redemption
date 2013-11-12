@@ -27,6 +27,7 @@
 #include <algorithm>
 
 #include "stream.hpp"
+#include "RDP/out_per_bstream.hpp"
 
 namespace MCS
 {
@@ -1177,7 +1178,7 @@ namespace MCS
 
     struct ErectDomainRequest_Send
     {
-        ErectDomainRequest_Send(Stream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
+        ErectDomainRequest_Send(OutPerBStream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
@@ -2317,7 +2318,7 @@ namespace MCS
 
     struct SendDataRequest_Send
     {
-        SendDataRequest_Send(Stream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
+        SendDataRequest_Send(OutPerBStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
@@ -2418,7 +2419,7 @@ namespace MCS
 
     struct SendDataIndication_Send
     {
-        SendDataIndication_Send(Stream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
+        SendDataIndication_Send(OutPerBStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");

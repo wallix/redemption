@@ -26,6 +26,7 @@
 #include "RDP/share.hpp"
 #include "RDP/sec.hpp"
 #include "RDP/gcc.hpp"
+#include "RDP/out_per_bstream.hpp"
 
 namespace RDP {
 
@@ -202,7 +203,7 @@ struct RefreshRectPDU {
         target_stream.mark_end();
 
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header,

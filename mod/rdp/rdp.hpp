@@ -574,7 +574,7 @@ struct mod_rdp : public mod_api {
     void send_data_request(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
 
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
                                       3, stream.size(), MCS::PER_ENCODING);
@@ -587,7 +587,7 @@ struct mod_rdp : public mod_api {
     void send_data_request_ex(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
@@ -740,7 +740,7 @@ struct mod_rdp : public mod_api {
                             }
                             // ------------------------------------------------------------
 
-                            BStream gcc_header(65536);
+                            OutPerBStream gcc_header(65536);
                             GCC::Create_Request_Send(gcc_header, stream.size());
 
                             BStream mcs_header(65536);
@@ -987,11 +987,13 @@ struct mod_rdp : public mod_api {
                     }
                     {
                         BStream x224_header(256);
-                        HStream mcs_data(256, 512);
+                        OutPerBStream mcs_header(256);
+                        HStream data(512, 512);
+                        data.mark_end();
 
-                        MCS::ErectDomainRequest_Send mcs(mcs_data, 0, 0, MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header, mcs_data.size());
-                        this->nego.trans->send(x224_header, mcs_data);
+                        MCS::ErectDomainRequest_Send mcs(mcs_header, 0, 0, MCS::PER_ENCODING);
+                        X224::DT_TPDU_Send(x224_header, mcs_header.size());
+                        this->nego.trans->send(x224_header, mcs_header, data);
                     }
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "Send MCS::AttachUserRequest");

@@ -91,6 +91,7 @@ core/font 100 100
 core/front_api 100 100
 core/listen 100 100
 core/mainloop 100 100
+core/RDP/out_per_bstream 100 100
 core/RDP/bitmapupdate 100 100
 core/RDP/caches/bmpcache 100 100
 core/RDP/caches/brushcache 100 100

@@ -682,34 +682,9 @@ public:
         return length;
     }
 
-    void out_per_length(uint16_t length)
-    {
-        if (length & 0xFF80){
-            this->out_uint16_be(length|0x8000);
-        }
-        else {
-            this->out_uint8(length);
-        }
-    }
-
-    void set_out_per_length(uint16_t length, size_t offset)
-    {
-        if (length & 0xFF80){
-            this->set_out_uint16_be(length|0x8000, offset);
-        }
-        else {
-            this->set_out_uint8(length, offset);
-        }
-    }
-
     uint8_t in_per_choice()
     {
         return this->in_uint8();
-    }
-
-    void out_per_choice(uint8_t choice)
-    {
-        this->out_uint8(choice);
     }
 
     uint8_t in_per_selection()
@@ -717,29 +692,14 @@ public:
         return this->in_uint8();
     }
 
-    void out_per_selection(uint8_t selection)
-    {
-        this->out_uint8(selection);
-    }
-
     uint8_t in_per_number_of_sets()
     {
         return this->in_uint8();
     }
 
-    void out_per_number_of_sets(uint8_t number)
-    {
-        this->out_uint8(number);
-    }
-
     void in_per_padding(uint8_t length)
     {
         this->in_skip_bytes(length);
-    }
-
-    void out_per_padding(uint8_t length)
-    {
-        this->out_clear_bytes(length);
     }
 
     uint32_t in_per_integer()
@@ -777,31 +737,9 @@ public:
         return 0;
     }
 
-    void out_per_integer(uint32_t integer)
-    {
-        uint8_t length = (integer & 0xFFFF0000)?4:(integer & 0xFF00)?2:1;
-        this->out_per_length(length);
-        switch (length){
-        case 4:
-            this->out_uint32_be(integer);
-            break;
-        case 2:
-            this->out_uint16_be(static_cast<uint16_t>(integer));
-            break;
-        default:
-            this->out_uint8(static_cast<uint8_t>(integer));
-            break;
-        }
-    }
-
     uint16_t in_per_integer16(uint16_t min)
     {
         return this->in_uint16_be() + min;
-    }
-
-    void out_per_integer16(uint16_t integer, uint16_t min)
-    {
-        this->out_uint16_be(integer+min);
     }
 
     uint8_t in_per_enumerated(uint8_t count)
@@ -809,12 +747,6 @@ public:
         uint8_t enumerated = this->in_uint8();
         REDASSERT(enumerated <= count);
         return enumerated;
-    }
-
-    void out_per_enumerated(uint8_t enumerated, uint8_t count)
-    {
-        REDASSERT(enumerated <= count);
-        this->out_uint8(enumerated);
     }
 
     TODO("looks like it really is not an input function as we check we are getting what we expect");
@@ -846,22 +778,6 @@ public:
                && a_oid_3 == oid[3]
                && a_oid_4 == oid[4]
                && a_oid_5 == oid[5]);
-    }
-
-    void out_per_object_identifier(const uint8_t * oid)
-    {
-        const uint8_t t12 = (oid[0] << 4) & (oid[1] & 0x0F);
-        this->out_per_length(5); // length
-        this->out_uint8(t12);    // first two tuples
-        this->out_uint8(oid[2]); // tuple 3
-        this->out_uint8(oid[3]); // tuple 4
-        this->out_uint8(oid[4]); // tuple 5
-        this->out_uint8(oid[5]); // tuple 6
-    }
-
-    void out_per_string(uint8_t * str, uint32_t length)
-    {
-        this->out_copy_bytes(str, length);
     }
 
 //    16 Encoding the octetstring type
@@ -950,20 +866,6 @@ public:
         }
     }
 
-    void out_per_octet_string(const uint8_t * oct_str, uint32_t length, uint32_t min)
-    {
-        if (length >= min){
-            this->out_per_length(length - min);
-            this->out_copy_bytes(oct_str, length);
-        }
-        else {
-            TODO("Check this length, looks dubious");
-            this->out_per_length(min);
-            this->out_copy_bytes(oct_str, length);
-            this->out_clear_bytes(min-length);
-        }
-    }
-
     // Note by CGR:
     // As far as I understand numeric string is some octet_string with alphabet
     // constraint stating that all chars should be numbers.
@@ -987,22 +889,6 @@ public:
         uint16_t mlength = this->in_per_length();
         uint16_t length = (mlength + min + 1) >> 1;
         this->in_skip_bytes(length);
-    }
-
-    void out_per_numeric_string(uint8_t * num_str, uint16_t length, uint16_t min)
-    {
-        TODO("Check this length computing, looks dubious");
-        uint16_t mlength = (length - min >= 0) ? length - min : min;
-
-        this->out_per_length(mlength);
-
-        for (uint16_t i = 0; i < length; i += 2)
-        {
-            uint8_t c1 = num_str[i] - '0';
-            uint8_t c2 = ((i + 1) < length) ? num_str[i + 1] - '0': 0;
-
-            this->out_uint8((c1 << 4) | c2);
-        }
     }
 };
 
@@ -1060,7 +946,7 @@ public:
     HStream(size_t reserved_leading_space, size_t total_size = AUTOSIZE)
             : BStream(total_size)
             , reserved_leading_space(reserved_leading_space) {
-        if (reserved_leading_space >= total_size) {
+        if (reserved_leading_space > total_size) {
             LOG( LOG_ERR
                , "failed to allocate buffer : total_size=%u, reserved_leading_space=%u\n"
                , total_size, reserved_leading_space);

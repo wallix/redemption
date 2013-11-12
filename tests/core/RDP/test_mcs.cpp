@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
 
 BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
 {
-    BStream stream(1024);
+    OutPerBStream stream(1024);
     size_t length = 5;
     int subheight = 0;
     int subinterval = 0;
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
 {
-    BStream stream(1024);
+    OutPerBStream stream(1024);
     size_t length = 8;
     MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
@@ -622,7 +622,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
 {
-    BStream stream(1024);
+    OutPerBStream stream(1024);
     size_t length = 8;
     MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());

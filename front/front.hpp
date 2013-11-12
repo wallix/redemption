@@ -2531,7 +2531,7 @@ public:
     void send_data_indication(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
 
         MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
                                          1, 3, stream.size(),
@@ -2544,7 +2544,7 @@ public:
     void send_data_indication_ex(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
