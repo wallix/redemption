@@ -374,6 +374,14 @@ enum {
         this->front.draw(cmd, clip, gly_cache);
     }
 
+    virtual void draw(const RDPPolygonSC& cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPolygonCB& cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPolyline& cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }

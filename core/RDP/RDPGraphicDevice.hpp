@@ -38,6 +38,8 @@
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
@@ -62,6 +64,8 @@ struct RDPGraphicDevice {
     virtual void draw(const RDPMem3Blt     & cmd, const Rect & clip, const Bitmap & bmp) = 0;
     virtual void draw(const RDPLineTo      & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPGlyphIndex  & cmd, const Rect & clip, const GlyphCache * gly_cache) = 0;
+    virtual void draw(const RDPPolygonSC   & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPolygonCB   & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPPolyline    & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPEllipseSC   & cmd, const Rect & clip) = 0;
     virtual void draw(const RDPEllipseCB   & cmd, const Rect & clip) = 0;

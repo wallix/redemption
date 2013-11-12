@@ -94,11 +94,11 @@ class Sesman():
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
-        french_layouts = [0x0000040C, # French (France)
+        french_layouts = {0x0000040C, # French (France)
                           0x00000C0C, # French (Canada) Canadian French (Legacy)
                           0x0000080C, # French (Belgium)
                           0x0001080C, # French (Belgium) Belgian (Comma)
-                          0x0000100C] # French (Switzerland)
+                          0x0000100C} # French (Switzerland)
         keylayout = 0
         if self.shared[u'keyboard_layout'] != MAGICASK:
             keylayout = int(self.shared[u'keyboard_layout'])
