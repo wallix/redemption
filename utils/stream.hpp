@@ -298,12 +298,23 @@ public:
 
     void set_out_2BUE(uint16_t v, size_t offset){
         if (v <= 127){
-            this->set_out_uint8((uint8_t)v, offset);
+            this->set_out_uint8(static_cast<uint8_t>(v), offset);
         }
         else {
             this->set_out_uint16_be(v|0x8000, offset);
         }
     }
+
+    uint16_t in_2BUE()
+    {
+        uint16_t length = this->in_uint8();
+        if (length & 0x80){
+            length = ((length & 0x7F) << 8);
+            length += this->in_uint8();
+        }
+        return length;
+    }
+
 
     // MS-RDPEGDI : 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
     // ===================================================================
@@ -645,16 +656,6 @@ public:
     // PER encoding rules support methods
     // =========================================================================
 
-    uint16_t in_per_length()
-    {
-        uint16_t length = this->in_uint8();
-        if (length & 0x80){
-            length = ((length & 0x7F) << 8);
-            length += this->in_uint8();
-        }
-        return length;
-    }
-
     uint16_t in_per_length_with_check(bool & result)
     {
         uint16_t length = 0;
@@ -682,48 +683,12 @@ public:
         return length;
     }
 
-    uint8_t in_per_choice()
-    {
-        return this->in_uint8();
-    }
-
-    uint8_t in_per_selection()
-    {
-        return this->in_uint8();
-    }
-
-    uint8_t in_per_number_of_sets()
-    {
-        return this->in_uint8();
-    }
-
-    void in_per_padding(uint8_t length)
-    {
-        this->in_skip_bytes(length);
-    }
-
-    uint32_t in_per_integer()
-    {
-        switch (this->in_per_length()){
-        case 0: // 0 is bogus bug rdesktop sends that...
-        case 1:
-            return this->in_uint8();
-        case 2:
-            return this->in_uint16_be();
-        case 4:
-            return this->in_uint32_be();
-        default:
-            REDASSERT(0);
-            return 0;
-        }
-    }
-
     uint32_t in_per_integer_with_check(bool & result)
     {
         uint16_t len = this->in_per_length_with_check(result);
         if (result){
             switch (len){
-            case 0: // 0 is bogus bug rdesktop sends that...
+            case 0: // 0 is bogus but rdesktop sends that...
             case 1:
                 return this->in_uint8();
             case 2:
@@ -735,160 +700,6 @@ public:
 
         REDASSERT(0);
         return 0;
-    }
-
-    uint16_t in_per_integer16(uint16_t min)
-    {
-        return this->in_uint16_be() + min;
-    }
-
-    uint8_t in_per_enumerated(uint8_t count)
-    {
-        uint8_t enumerated = this->in_uint8();
-        REDASSERT(enumerated <= count);
-        return enumerated;
-    }
-
-    TODO("looks like it really is not an input function as we check we are getting what we expect");
-    void in_per_object_identifier(const uint8_t * oid)
-    {
-        uint16_t length = this->in_per_length();
-        (void)length;
-        REDASSERT(length == 5);
-
-        uint8_t t12 = this->in_uint8(); /* first two tuples */
-        uint8_t a_oid_0 = (t12 >> 4);
-        uint8_t a_oid_1 = (t12 & 0x0F);
-        uint8_t a_oid_2 = this->in_uint8(); /* tuple 3 */
-        uint8_t a_oid_3 = this->in_uint8(); /* tuple 4 */
-        uint8_t a_oid_4 = this->in_uint8(); /* tuple 5 */
-        uint8_t a_oid_5 = this->in_uint8(); /* tuple 6 */
-
-        // this is to silent warnings when not in debug mode
-        (void)a_oid_0;
-        (void)a_oid_1;
-        (void)a_oid_2;
-        (void)a_oid_3;
-        (void)a_oid_4;
-        (void)a_oid_5;
-
-        REDASSERT(a_oid_0 == oid[0]
-               && a_oid_1 == oid[1]
-               && a_oid_2 == oid[2]
-               && a_oid_3 == oid[3]
-               && a_oid_4 == oid[4]
-               && a_oid_5 == oid[5]);
-    }
-
-//    16 Encoding the octetstring type
-//    ================================
-//    NOTE – Octet strings of fixed length less than or equal to two octets are
-//    not octet-aligned. All other octet strings are octet-aligned in the ALIGNED
-//    variant. Fixed length octet strings encode with no length octets if they
-//    are shorter than 64K. For unconstrained octet strings the length is
-//    explicitly encoded (with fragmentation if necessary).
-
-//    16.1 PER-visible constraints can only constrain the length of the octetstring.
-
-//    16.2 Let the maximum number of octets in the octetstring (as determined by
-//    PER-visible constraints on the length) be "ub" and the minimum number of
-//    octets be "lb". If there is no finite maximum we say that "ub" is unset.
-//    If there is no constraint on the minimum then "lb" has the value zero.
-//    Let the length of the actual octetstring value to be encoded be "n" octets.
-
-//    16.3 If there is a PER-visible size constraint and an extension marker is
-//    present in it, a single bit shall be added to the field-list in a bit-field
-//    of length one. The bit shall be set to 1 if the length of this encoding is
-//    not within the range of the extension root, and zero otherwise. In the
-//    former case 16.8 shall be invoked to add the length as a semi-constrained
-//    whole number to the field-list, followed by the octetstring value. In the
-//    latter case the length and value shall be encoded as if the extension
-//    marker is not present.
-
-//    16.4 If an extension marker is not present in the constraint specification
-//    of the octetstring type, then 16.5 to 16.8 apply.
-
-//    16.5 If the octetstring is constrained to be of zero length ("ub" equals
-//    zero), then it shall not be encoded (no additions to the field-list),
-//    completing the procedures of this clause.
-
-//    16.6 If all values of the octetstring are constrained to be of the same
-//    length ("ub" equals "lb") and that length is less than or equal to two
-//    octets, the octetstring shall be placed in a bit-field with a number of
-//    bits equal to the constrained length "ub" multiplied by eight which shall
-//    be appended to the field-list with no length determinant, completing the
-//    procedures of this clause.
-
-//    16.7 If all values of the octetstring are constrained to be of the same
-//    length ("ub" equals "lb") and that length is greater than two octets but
-//    less than 64K, then the octetstring shall be placed in a bit-field
-//    (octet-aligned in the ALIGNED variant) with the constrained length "ub"
-//    octets which shall be appended to the field-list with no length determinant,
-//    completing the procedures of this clause.
-
-//    16.8 If 16.5 to 16.7 do not apply, the octetstring shall be placed in a
-//    bit-field (octet-aligned in the ALIGNED variant) of length "n" octets and
-//    the procedures of 10.9 shall be invoked to add this bit-field (octet-aligned
-//    in the ALIGNED variant) of "n" octets to the field-list, preceded by a
-//    length determinant equal to "n" octets as a constrained whole number if "ub"
-//    is set, and as a semi-constrained whole number if "ub" is unset. "lb" is
-//    as determined above.
-
-//    NOTE – The fragmentation procedures may apply after 16K, 32K, 48K, or 64K octets.
-
-    TODO("check if implementation below is conforming to obfuscated text above (I have not the faintest idea of what it means). This looks like a piece of what could be called administrative joke, isn't it. And lawyers should be forbidden to write specs documents...");
-    bool check_per_octet_string(uint8_t * oct_str, uint32_t length, uint32_t min)
-    {
-        uint16_t mlength = this->in_per_length();
-        if (mlength != std::min(length, min)){
-            return false;
-        }
-        if (!this->in_check_rem(length)){
-            return false;
-        }
-        this->out_skip_bytes(mlength);
-        return 0 == memcmp(this->p - length, oct_str, length);
-    }
-
-    // return actual string size
-    uint32_t in_per_octet_string(uint8_t * oct_str, uint32_t length, uint32_t min)
-    {
-        uint16_t mlength = this->in_per_length();
-        REDASSERT(mlength <= length);
-        if (mlength >= min){
-            this->in_copy_bytes(oct_str, mlength);
-            return mlength;
-        }
-        else {
-            this->in_copy_bytes(oct_str, mlength);
-            bzero(oct_str + mlength, min - mlength);
-            return min;
-        }
-    }
-
-    // Note by CGR:
-    // As far as I understand numeric string is some octet_string with alphabet
-    // constraint stating that all chars should be numbers.
-    // Chars are encoded in a restricted alphabet (one that can encode every
-    // digits representation, 4 bits for each number should thus be enough).
-
-    // 3.6.16 known-multiplier character string type: A restricted character
-    // string type where the number of octets in the encoding is a known fixed
-    // multiple of the number of characters in the character string for all
-    // permitted character string values. The known-multiplier character string
-    // types are IA5String, PrintableString, VisibleString, NumericString,
-    // UniversalString and BMPString.
-
-    // I should check in ISO 6093:1985, Information processing
-    // – Representation of numerical values in character strings for
-    // information interchange.
-
-
-    void skip_per_numeric_string(uint8_t min)
-    {
-        uint16_t mlength = this->in_per_length();
-        uint16_t length = (mlength + min + 1) >> 1;
-        this->in_skip_bytes(length);
     }
 };
 

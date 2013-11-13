@@ -245,10 +245,16 @@ namespace GCC
         SubStream payload;
 
         Create_Request_Recv(Stream & stream) {
+            if (!stream.in_check_rem(23)){
+                LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.size());
+                throw Error(ERR_GCC);
+            }
+            
             // Key select object (0) of type OBJECT_IDENTIFIER
             // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
             stream.in_skip_bytes(7);
-            uint16_t length_with_header = stream.in_per_length();
+            
+            uint16_t length_with_header = stream.in_2BUE();
 
             // ConnectGCCPDU
             // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
@@ -259,7 +265,7 @@ namespace GCC
             // h221NonStandard, client-to-server H.221 key, "Duca"
 
             stream.in_skip_bytes(12);
-            uint16_t length = stream.in_per_length();
+            uint16_t length = stream.in_2BUE();
 
             if (length_with_header != length + 14){
                 LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header+data length %u %u", length, length_with_header);
@@ -469,8 +475,13 @@ namespace GCC
         SubStream payload;
 
         Create_Response_Recv(Stream & stream) {
+            if (!stream.in_check_rem(23)){
+                LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
+                throw Error(ERR_GCC);
+            }
+            
             stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
-            size_t length = stream.in_per_length();
+            size_t length = stream.in_2BUE();
             if (length != stream.size() - stream.get_offset()){
                 LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
                     length, stream.size() - stream.get_offset());

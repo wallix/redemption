@@ -1216,7 +1216,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_ErectDomainRequest;
-            bool in_result;
+            bool in_result = false;
             this->subHeight = stream.in_per_integer_with_check(in_result);
             if (!in_result){
                 LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
