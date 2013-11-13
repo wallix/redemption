@@ -1153,8 +1153,7 @@ class Engine(object):
 
     def password_expiration_date(self):
         #return false or number of days
-        return False
-
+        return False, 0
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type):
         """
@@ -1298,8 +1297,9 @@ class Engine(object):
         Logger().info("get_target_password done = %s" % res)
         return res
 
-    def release_target_password(self, target_device):
-        Logger().info("release_target_password done")
+    def release_target_password(self, target_device, reason):
+        Logger().info("release_target_password done: target_device=\"%s\" reason=\"%s\"" %
+            (target_device, reason))
         pass
 
     def start_session(self, target, pid):

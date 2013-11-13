@@ -21,7 +21,6 @@
 #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_
 #define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYMULTIDSTBLT_HPP_
 
-
 // 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
 // =========================================
 // The COORD_FIELD structure is used to describe a value in the range -32768

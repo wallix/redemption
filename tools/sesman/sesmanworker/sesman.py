@@ -94,11 +94,11 @@ class Sesman():
 
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
-        french_layouts = {0x0000040C, # French (France)
+        french_layouts = [0x0000040C, # French (France)
                           0x00000C0C, # French (Canada) Canadian French (Legacy)
                           0x0000080C, # French (Belgium)
                           0x0001080C, # French (Belgium) Belgian (Comma)
-                          0x0000100C} # French (Switzerland)
+                          0x0000100C] # French (Switzerland)
         keylayout = 0
         if self.shared[u'keyboard_layout'] != MAGICASK:
             keylayout = int(self.shared[u'keyboard_layout'])
@@ -773,6 +773,8 @@ class Sesman():
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
 
+                release_reason = u''
+
                 try:
                     password_of_target = self.engine.get_target_password(physical_target)
                     kv[u'target_password'] = password_of_target
@@ -865,30 +867,36 @@ class Sesman():
                                         self.reporting_message = _reporting_message
 
                                         try_next = True
+                                        release_reason = u'Connexion failed'
                                         break
 
                                     elif _reporting_reason == u'FINDPATTERN_KILL':
                                         Logger().info(u"RDP connection terminated. Reason: Kill pattern detected")
+                                        release_reason = u'Kill pattern detected'
                                         break
 
                             else: # (if self.proxy_conx in r)
                                 Logger().error(u'break connection')
+                                release_reason = u'Break connection'
                                 break
 
                         Logger().debug(u"End Of Keep Alive")
 
                     except AuthentifierSocketClosed, e:
                         Logger().info(u"RDP/VNC connection terminated by client")
+                        release_reason = u"RDP/VNC connection terminated by client"
 
                     except Exception, e:
                         Logger().info(u"RDP/VNC connection terminated by client: Exception")
                         Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                        release_reason = u"RDP/VNC connection terminated by client: Exception"
 
                     if not try_next:
+                        release_reason = u"RDP/VNC connection terminated by client"
                         break;
                 finally:
                     if not (physical_target is None):
-                        self.engine.release_target_password(physical_target)
+                        self.engine.release_target_password(physical_target, release_reason)
 
             Logger().info(u"Stop session ...")
 
