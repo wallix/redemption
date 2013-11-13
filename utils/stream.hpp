@@ -682,25 +682,6 @@ public:
         }
         return length;
     }
-
-    uint32_t in_per_integer_with_check(bool & result)
-    {
-        uint16_t len = this->in_per_length_with_check(result);
-        if (result){
-            switch (len){
-            case 0: // 0 is bogus but rdesktop sends that...
-            case 1:
-                return this->in_uint8();
-            case 2:
-                return this->in_uint16_be();
-            case 4:
-                return this->in_uint32_be();
-            }
-        }
-
-        REDASSERT(0);
-        return 0;
-    }
 };
 
 // BStream is for "buffering stream", as this stream allocate a work buffer.

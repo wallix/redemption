@@ -1216,16 +1216,48 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_ErectDomainRequest;
-            bool in_result = false;
-            this->subHeight = stream.in_per_integer_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
-                throw Error(ERR_MCS);
+            
+            {
+                bool in_result = false;
+                uint16_t len = stream.in_per_length_with_check(in_result);
+                if (!in_result){
+                    LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
+                    throw Error(ERR_MCS);
+                }
+                // case len = 0 is theoretically forbidden but rdesktop send that (treat it as 1)
+                if (len == 0) {
+                    len = 1;
+                }
+                if (len > 4) {
+                    LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
+                    throw Error(ERR_MCS);
+                }
+                if (!stream.in_check_rem(len)) {
+                    LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
+                    throw Error(ERR_MCS);
+                }
+                this->subHeight = stream.in_bytes_be(len);
             }
-            this->subInterval = stream.in_per_integer_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
-                throw Error(ERR_MCS);
+            {
+                bool in_result = false;
+                uint16_t len = stream.in_per_length_with_check(in_result);
+                if (!in_result){
+                    LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
+                    throw Error(ERR_MCS);
+                }
+                // case len = 0 is theoretically forbidden but rdesktop send that (treat it as 1)
+                if (len == 0) {
+                    len = 1;
+                }
+                if (len > 4) {
+                    LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
+                    throw Error(ERR_MCS);
+                }
+                if (!stream.in_check_rem(len)) {
+                    LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
+                    throw Error(ERR_MCS);
+                }
+                this->subInterval = stream.in_bytes_be(len);
             }
         }
     };
