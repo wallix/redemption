@@ -1218,12 +1218,11 @@ namespace MCS
             this->type = MCS::MCSPDU_ErectDomainRequest;
             
             {
-                bool in_result = false;
-                uint16_t len = stream.in_per_length_with_check(in_result);
-                if (!in_result){
-                    LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
+                if (!stream.in_check_rem(2)) {
+                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subHeight len : (need 2, available %u)", stream.size());
                     throw Error(ERR_MCS);
                 }
+                uint16_t len = stream.in_2BUE();
                 // case len = 0 is theoretically forbidden but rdesktop send that (treat it as 1)
                 if (len == 0) {
                     len = 1;
@@ -1239,12 +1238,11 @@ namespace MCS
                 this->subHeight = stream.in_bytes_be(len);
             }
             {
-                bool in_result = false;
-                uint16_t len = stream.in_per_length_with_check(in_result);
-                if (!in_result){
-                    LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
+                if (!stream.in_check_rem(2)) {
+                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subInterval len : (need 2, available %u)", stream.size());
                     throw Error(ERR_MCS);
                 }
+                uint16_t len = stream.in_2BUE();
                 // case len = 0 is theoretically forbidden but rdesktop send that (treat it as 1)
                 if (len == 0) {
                     len = 1;
@@ -2416,13 +2414,11 @@ namespace MCS
                 // low 4 bits of magic are padding
 
                 // length of payload, per_encoded
-                bool in_result;
-                this->payload_size = stream.in_per_length_with_check(in_result);
-                if (!in_result){
+                if (!stream.in_check_rem(2)){
                     LOG(LOG_ERR, "Truncated SendDataRequest data: payload length");
                     throw Error(ERR_MCS);
                 }
-
+                this->payload_size = stream.in_2BUE();
                 this->_header_size = stream.get_offset();
 
                 if (!stream.in_check_rem(this->payload_size)){
@@ -2515,13 +2511,11 @@ namespace MCS
                 // low 4 bits of magic are padding
 
                 // length of payload, per_encoded
-                bool in_result;
-                this->payload_size = stream.in_per_length_with_check(in_result);
-                if (!in_result){
+                if (!stream.in_check_rem(2)){
                     LOG(LOG_ERR, "Truncated SendDataIndication data: payload length");
                     throw Error(ERR_MCS);
                 }
-
+                this->payload_size = stream.in_2BUE();
                 this->_header_size = stream.get_offset();
 
                 if (!stream.in_check_rem(this->payload_size)){

@@ -650,38 +650,6 @@ public:
         this->out_der_length(length);
         this->out_copy_bytes(str, length);
     }
-
-
-    // =========================================================================
-    // PER encoding rules support methods
-    // =========================================================================
-
-    uint16_t in_per_length_with_check(bool & result)
-    {
-        uint16_t length = 0;
-
-        result = true;
-        if (this->in_check_rem(1)){
-            length = this->in_uint8();
-            if (length & 0x80){
-                if (this->in_check_rem(1)){
-                    length = ((length & 0x7F) << 8);
-                    length += this->in_uint8();
-                }
-                else {
-                    // error
-                    LOG(LOG_ERR, "Truncated PER length (need=1, remain=0)");
-                    length = 0;
-                    result = false;
-                }
-            }
-        }
-        else {
-            LOG(LOG_ERR, "Truncated PER length (need=1, remain=0)");
-            result = false;
-        }
-        return length;
-    }
 };
 
 // BStream is for "buffering stream", as this stream allocate a work buffer.
