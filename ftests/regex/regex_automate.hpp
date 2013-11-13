@@ -239,30 +239,23 @@ namespace re {
             for (l = tmp; l != last; ++l) {
                 if (l->st) {
                     ++this->step_id;
-                    l->next_is_finish = l->next == false || this->next_is_finish<false>(l->st->out1);
-                }
-            }
-            for (l = tmp; l != last; ++l) {
-                if (l->st) {
-                    ++this->step_id;
-                    l->next_is_terminate = l->next_is_finish || this->next_is_finish<true>(l->st->out1);
+                    l->next_is_finish = l->next == false || this->next_is_finish(l->st->out1);
                 }
             }
         }
 
-        template<bool CheckTerminate>
         bool next_is_finish(const State * st)
         {
-            if (!st || (CheckTerminate && st->is_terminate())) {
+            if (!st) {
                 return true;
             }
             if (this->valid_and_set(st)) {
                 if (st->is_split()) {
-                    const bool ret = this->next_is_finish<CheckTerminate>(st->out1);
-                    return ( ! ret) ?this->next_is_finish<CheckTerminate>(st->out2) : ret;
+                    const bool ret = this->next_is_finish(st->out1);
+                    return ( ! ret) ?this->next_is_finish(st->out2) : ret;
                 }
                 else if (st->is_cap()) {
-                    return this->next_is_finish<CheckTerminate>(st->out1);
+                    return this->next_is_finish(st->out1);
                 }
             }
             return false;
@@ -310,7 +303,6 @@ namespace re {
                     l->last->st = st;
                     l->last->num_open = num_open;
                     l->last->num_close = -1u;
-                    //l->last->num = this->num++;
                     ++l->last;
                 }
             }
@@ -749,8 +741,6 @@ namespace re {
                         }
 
                         if (exact_match ? first->next_is_finish && !consumer.valid() : first->next_is_finish) {
-//                         if (first->next_is_finish && (!exact_match || !consumer.valid())) {
-//                         if (!exact_match && !consumer.valid()) {
                             return active_capture ? ifirst->idx : 0;
                         }
                     }
@@ -786,19 +776,6 @@ namespace re {
             }
 
             utf_consumer consumer(s);
-
-//             if (!consumer.valid()) {
-//                 StateList * first = this->st_range_beginning.first;
-//                 for (; first != this->st_range_beginning.last; ++first) {
-//                     if (first->st->is_terminate()) {
-//                         if (active_capture) {
-//                             this->idx_trace = 0;
-//                         }
-//                         return true;
-//                     }
-//                 }
-//                 return false;
-//             }
 
             StepRangeList * pal1 = &this->l1;
             StepRangeList * pal2 = &this->l2;
@@ -897,7 +874,6 @@ namespace re {
                     StateList * last = ifirst->rl->last;
 
                     for (; first != last; ++first) {
-                        //if (first->next_is_terminate) {
                         if (first->st->is_terminate()) {
                             if (active_capture) {
                                 this->idx_trace = ifirst->idx;
@@ -931,7 +907,6 @@ namespace re {
             unsigned num_open;
             unsigned num_close;
             bool next_is_finish;
-            bool next_is_terminate;
         };
 
         StateList * st_list;
