@@ -57,24 +57,25 @@ namespace re {
         };
         Parser parser;
         StateMachine2 sm;
+
     public:
         unsigned step_limit;
 
         Regex(unsigned step_limit = 10000)
         : parser()
-        , sm(this->parser.stw)
+        , sm(this->parser.stw.states)
         , step_limit(step_limit)
         {}
 
         Regex(const char * s, unsigned step_limit = 10000)
         : parser(s)
-        , sm(this->parser.stw)
+        , sm(this->parser.stw.states)
         , step_limit(step_limit)
         {}
 
         Regex(State * st, unsigned step_limit = 10000)
         : parser(st)
-        , sm(this->parser.stw)
+        , sm(this->parser.stw.states)
         , step_limit(step_limit)
         {}
 
@@ -84,7 +85,7 @@ namespace re {
             this->parser.~Parser();
             this->parser.err = 0;
             new (&this->parser) Parser(s);
-            new (&this->sm) StateMachine2(this->parser.stw);
+            new (&this->sm) StateMachine2(this->parser.stw.states);
         }
 
         ~Regex()
@@ -177,9 +178,9 @@ namespace re {
             return this->sm.match_result();
         }
 
-        void display()
+        void display() const
         {
-            display_state(this->parser.stw);
+            this->sm.display_states();
         }
     };
 }

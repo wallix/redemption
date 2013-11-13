@@ -103,23 +103,6 @@ namespace re {
         return c2range(pst, eps, 0,'\t'-1, '\v'+1,' '-1, ' '+1,-1u);
     }
 
-    inline State ** c2st(State ** pst, char_int c)
-    {
-        switch (c) {
-            case 'd': return &(*pst = new_range('0','9'))->out1;
-            case 'D': return ident_D(pst, new_epsilone());
-            case 'w': return ident_w(pst, new_epsilone());
-            case 'W': return ident_W(pst, new_epsilone());
-            case 's': return ident_s(pst, new_epsilone());
-            case 'S': return ident_S(pst, new_epsilone());
-            case 'n': return &(*pst = new_character('\n'))->out1;
-            case 't': return &(*pst = new_character('\t'))->out1;
-            case 'r': return &(*pst = new_character('\r'))->out1;
-            case 'v': return &(*pst = new_character('\v'))->out1;
-            default : return &(*pst = new_character(c))->out1;
-        }
-    }
-
     inline const char * check_interval(char_int a, char_int b)
     {
         bool valid = ('0' <= a && a <= '9' && '0' <= b && b <= '9')
@@ -230,7 +213,20 @@ namespace re {
         }
 
         if (c == '\\' && consumer.valid()) {
-            return c2st(pst, consumer.bumpc());
+            c = consumer.bumpc();
+            switch (c) {
+                case 'd': return &(*pst = new_range('0','9'))->out1;
+                case 'D': return ident_D(pst, new_epsilone());
+                case 'w': return ident_w(pst, new_epsilone());
+                case 'W': return ident_W(pst, new_epsilone());
+                case 's': return ident_s(pst, new_epsilone());
+                case 'S': return ident_S(pst, new_epsilone());
+                case 'n': return &(*pst = new_character('\n'))->out1;
+                case 't': return &(*pst = new_character('\t'))->out1;
+                case 'r': return &(*pst = new_character('\r'))->out1;
+                case 'v': return &(*pst = new_character('\v'))->out1;
+                default : return &(*pst = new_character(c))->out1;
+            }
         }
 
         if (c == '[') {

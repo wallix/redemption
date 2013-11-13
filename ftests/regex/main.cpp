@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
 #endif
         std::clock_t start_time = std::clock();
         for (size_t i = 0; i < ITERATION; ++i) {
-            ismatch2 = regex.search(str);
+            ismatch2 = regex.exact_search(str);
         }
         d2 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
     }
@@ -195,7 +195,9 @@ int main(int argc, char **argv) {
         Regex::range_matches match_result = regex.match_result();
         typedef Regex::range_matches::iterator iterator;
         for (iterator first = match_result.begin(), last = match_result.end(); first != last; ++first) {
-            (std::cout << "\tmatch: '").write(first->first, first->second-first->first) << "'\n";
+            if (first->first) {
+                (std::cout << "\tmatch: '").write(first->first, first->second-first->first) << "'\n";
+            }
         }
         std::cout.flush();
     }

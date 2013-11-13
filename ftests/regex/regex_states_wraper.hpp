@@ -99,8 +99,7 @@ namespace re {
         }
     };
 
-    class StatesWrapper
-    {
+    class StatesValue {
         std::vector<unsigned> nums;
 
         struct IsCapture {
@@ -109,19 +108,61 @@ namespace re {
                 return ! st->is_cap();
             }
         };
+
+    public:
+        unsigned nb_capture;
+        state_list_t & states;
+
+        StatesValue(state_list_t & sts)
+        : states(sts)
+        {
+            state_list_t::iterator first = this->states.begin();
+            state_list_t::iterator last = this->states.end();
+            state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
+            this->nb_capture = last - first_cap;
+
+            for (unsigned n = 0; first != last; ++first, ++n) {
+                (*first)->num = n;
+            }
+
+            this->nums.resize(this->states.size(), 0);
+        }
+
+        ~StatesValue()
+        {}
+
+        void reset_nums()
+        {
+            std::fill(this->nums.begin(), this->nums.end(), 0);
+        }
+
+        void set_num_at(const State * st, unsigned count)
+        {
+            assert(st == this->states[st->num]);
+            assert(this->states.size() > st->num);
+            this->nums[st->num] = count;
+        }
+
+        unsigned get_num_at(const State * st) const
+        {
+            assert(st == this->states[st->num]);
+            assert(this->states.size() > st->num);
+            return this->nums[st->num];
+        }
+    };
+
+    class StatesWrapper
+    {
     public:
         state_list_t states;
         State * root;
-        unsigned nb_capture;
 
         explicit StatesWrapper()
         : root(0)
-        , nb_capture(0)
         {}
 
         explicit StatesWrapper(State * st)
         : root(st)
-        , nb_capture(0)
         {
             append_state(st, this->states);
         }
@@ -158,51 +199,11 @@ namespace re {
                 }
                 this->states.resize(result - this->states.begin());
             }
-
-            this->init_nums();
-        }
-
-        void init_nums()
-        {
-            state_list_t::iterator first = this->states.begin();
-            state_list_t::iterator last = this->states.end();
-            state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
-            this->nb_capture = last - first_cap;
-
-            for (unsigned n = 0; first != last; ++first, ++n) {
-                (*first)->num = n;
-            }
-
-            this->nums.resize(this->states.size(), 0);
         }
 
         ~StatesWrapper()
         {
             std::for_each(this->states.begin(), this->states.end(), StateDeleter());
-        }
-
-        void reset_nums()
-        {
-            std::fill(this->nums.begin(), this->nums.end(), 0);
-        }
-
-        void set_num_at(const State * st, unsigned count)
-        {
-            assert(st == this->states[st->num]);
-            assert(this->states.size() > st->num);
-            this->nums[st->num] = count;
-        }
-
-        unsigned get_num_at(const State * st) const
-        {
-            assert(st == this->states[st->num]);
-            assert(this->states.size() > st->num);
-            return this->nums[st->num];
-        }
-
-        size_t size() const
-        {
-            return this->states.size();
         }
 
     private:

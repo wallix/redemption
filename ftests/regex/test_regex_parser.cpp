@@ -34,16 +34,16 @@
 
 using namespace re;
 
-inline void st_to_string(StatesWrapper & stw, State * st,
+inline void st_to_string(const state_list_t & states, StatesValue & stval, State * st,
                          std::ostream& os, unsigned depth = 0)
 {
-    size_t n = std::find(stw.states.begin(), stw.states.end(), st) - stw.states.begin() + 1;
+    size_t n = std::find(states.begin(), states.end(), st) - states.begin() + 1;
     os << std::string(depth, '\t') << n;
-    if (st && stw.get_num_at(st) != -30u) {
+    if (st && stval.get_num_at(st) != -30u) {
         os << "\t" << *st << "\n";
-        stw.set_num_at(st, -30u);
-        st_to_string(stw, st->out1, os, depth+1);
-        st_to_string(stw, st->out2, os, depth+1);
+        stval.set_num_at(st, -30u);
+        st_to_string(states, stval, st->out1, os, depth+1);
+        st_to_string(states, stval, st->out2, os, depth+1);
     }
     else {
         os << "\n";
@@ -52,19 +52,21 @@ inline void st_to_string(StatesWrapper & stw, State * st,
 
 inline std::string st_to_string(StatesWrapper & stw)
 {
+    if (stw.states.empty()) {
+        return "\n";
+    }
     std::ostringstream os;
-    st_to_string(stw, stw.root, os);
+    StatesValue stval(stw.states);
+    st_to_string(stw.states, stval, stw.states.front(), os);
     return os.str();
 }
 
 inline std::string st_to_string(State * st)
 {
-    std::ostringstream os;
     StatesWrapper stw(st);
-    stw.init_nums();
-    st_to_string(stw, stw.root, os);
+    std::string ret = st_to_string(stw);
     stw.states.clear();
-    return os.str();
+    return ret;
 }
 
 inline size_t multi_char(const char * c)
