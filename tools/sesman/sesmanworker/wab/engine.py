@@ -264,7 +264,7 @@ class Engine(object):
             (target_device, reason))
         try:
             if ERPM:
-                self.wabengine.release_target_password(target_device)
+                self.wabengine.release_target_password(target_device, reason)
             Logger().info("release_target_password done")
         except Exception, e:
             import traceback
