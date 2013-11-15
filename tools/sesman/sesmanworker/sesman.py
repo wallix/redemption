@@ -224,8 +224,6 @@ class Sesman():
         """ Send a message to the proxy to prompt the user to validate x509 in his browser
             Wait until the user clicks Ok in Proxy prompt or until timeout
         """
-        Logger().info(u"interactive_ask_x509_connection")
-
         _status = False
         data_to_send = ({ u'message' : TR(u'valid_authorisation')
                        , u'password': u'x509'
