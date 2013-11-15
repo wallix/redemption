@@ -46,7 +46,7 @@ def mundane(value):
         return u'Unknown'
     return value
 
-DEBUG = True
+DEBUG = False
 
 class AuthentifierSocketClosed(Exception):
     pass
@@ -59,6 +59,10 @@ class Sesman():
     #===============================================================================
     def __init__(self, conn, addr):
     #===============================================================================
+        if SESMANCONF[u'sesman'][u'DEBUG'].lower() == u'true':
+            global DEBUG
+            DEBUG = True
+
         self.proxy_conx  = conn
         self.addr        = addr
         self.full_path   = None
@@ -179,8 +183,9 @@ class Sesman():
             try:
                 _data = dict(zip(_elem[0::2], _elem[1::2]))
             except Exception, e:
-                import traceback
-                Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
+                if DEBUG:
+                    import traceback
+                    Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
                 _status = False
 
             if DEBUG:
@@ -341,8 +346,9 @@ class Sesman():
                 if self.engine.user:
                     self.language = self.engine.user.preferredLanguage
             except Exception, e:
-                import traceback
-                Logger().info("<<<%s>>>" % traceback.format_exc(e))
+                if DEBUG:
+                    import traceback
+                    Logger().info("<<<%s>>>" % traceback.format_exc(e))
 
             Logger().info(u'lang=%s sesman=%s' % (self.language, self.engine.user.preferredLanguage))
 
@@ -355,19 +361,22 @@ class Sesman():
                 # Then get user rights (reachable targets)
                 self.engine.get_proxy_rights([u'RDP', u'VNC'])
             except Exception, e:
-                import traceback
-                Logger().info("<<<%s>>>" % traceback.format_exc(e))
+                if DEBUG:
+                    import traceback
+                    Logger().info("<<<%s>>>" % traceback.format_exc(e))
                 # NB : this exception may be raised because the user must change his password
                 return False, TR(u"Error while retreiving rights for user %s") % wab_login
 
         except engine.AuthenticationFailed, e:
-            import traceback
-            Logger().info("<<<%s>>>" % traceback.format_exc(e))
+            if DEBUG:
+                import traceback
+                Logger().info("<<<%s>>>" % traceback.format_exc(e))
             _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
 
         except Exception, e:
-            import traceback
-            Logger().info("<<<%s>>>" % traceback.format_exc(e))
+            if DEBUG:
+                import traceback
+                Logger().info("<<<%s>>>" % traceback.format_exc(e))
             _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
 
         return _status, _error
@@ -402,9 +411,10 @@ class Sesman():
                                                                , target_device
                                                                , wab_login
                                                                )
-                data_to_send = { u'target_login': target_login
-                               , u'target_device': target_device
-                               , u'proto_dest': proto_dest
+                data_to_send = { u'login'                   : wab_login 
+                               , u'target_login'            : target_login
+                               , u'target_device'           : target_device
+                               , u'proto_dest'              : proto_dest
                                }
                 self.send_data(data_to_send)
                 _status = True
@@ -450,7 +460,8 @@ class Sesman():
                             target_device = u""
                             proto_dest = u""
                             
-                            data_to_send = { u'target_login'            : target_login
+                            data_to_send = { u'login'                   : wab_login 
+                                           , u'target_login'            : target_login
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
                                            , u'end_time'                : u""
@@ -485,7 +496,8 @@ class Sesman():
                             target_device = u"\x01".join(all_target_device)
                             proto_dest = u"\x01".join(all_proto_dest)
 
-                            data_to_send = { u'target_login'            : target_login
+                            data_to_send = { u'login'                   : wab_login
+                                           , u'target_login'            : target_login
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
                                            , u'end_time'                : u";".join(all_end_time)
@@ -521,8 +533,9 @@ class Sesman():
 
                         _status = None # One more loop
                     except Exception, e:
-                        import traceback
-                        Logger().info(u"Unexpected error in selector pagination %s" % traceback.format_exc(e))
+                        if DEBUG:
+                            import traceback
+                            Logger().info(u"Unexpected error in selector pagination %s" % traceback.format_exc(e))
                         return False, u"Unexpected error in selector pagination"
                 elif len(services) == 1:
                     s = services[0]
@@ -590,8 +603,9 @@ class Sesman():
                     message = TR(u'Your password will expire in %s days. Please change it.') % days
                 _status, _error = self.interactive_display_message({u'message': message})
         except Exception, e:
-            import traceback
-            Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+            if DEBUG:
+                import traceback
+                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
         return _status, _error
 
 
@@ -653,8 +667,9 @@ class Sesman():
                     _status, _error = self.interactive_accept_message(data_to_send)
 
         except Exception, e:
-            import traceback
-            Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+            if DEBUG:
+                import traceback
+                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
             _status, _error = False, TR(u"Connection closed by client")
 
         return _status, _error
@@ -927,8 +942,10 @@ class Sesman():
                         release_reason = u"RDP/VNC connection terminated by client"
 
                     except Exception, e:
-                        Logger().info(u"RDP/VNC connection terminated by client: Exception")
-                        Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                        if DEBUG:
+                            import traceback
+                            Logger().info(u"RDP/VNC connection terminated by client")
+                            Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
                         release_reason = u"RDP/VNC connection terminated by client: Exception"
 
                     if not try_next:
@@ -956,8 +973,9 @@ class Sesman():
 
                 Logger().info(u"Close connection done.")
             except IOError:
-                Logger().info(u"Close connection: Exception")
-                Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
+                if DEBUG:
+                    Logger().info(u"Close connection: Exception")
+                    Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
 
     # END METHOD - START
 
