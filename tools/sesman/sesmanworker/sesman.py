@@ -547,7 +547,7 @@ class Sesman():
 
                         self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                        , target_device
-                                                                       , login
+                                                                       , wab_login
                                                                        )
                     else:
                         data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])

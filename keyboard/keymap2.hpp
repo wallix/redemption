@@ -230,11 +230,15 @@ struct Keymap2
     void event(const uint16_t keyboardFlags, const uint16_t keyCode, Stream & decoded_data, bool & ctrl_alt_del)
     //==============================================================================
     {
-        ctrl_alt_del = false;
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
+
+        ctrl_alt_del =
+            (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&  // Ctrl
+            (this->keys_down[LEFT_ALT] || this->keys_down[RIGHT_ALT]) &&    // Alt
+            (this->keys_down[0xD3] || this->keys_down[0x53]);               // Del (or Numpad del)
 
         if (is_ctrl_pressed() && is_alt_pressed()
         && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
@@ -612,9 +616,6 @@ struct Keymap2
                                 case 0xD3: // delete
                                     if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }
                                     this->push_kevent(KEVENT_DELETE);
-                                    if ((this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) && this->keys_down[LEFT_ALT]) {
-                                        ctrl_alt_del = true;
-                                    }
                                     break;
                                 case 0x53: // numpad delete
                                     if (decoded_data.has_room(sizeof(uint32_t))) { decoded_data.out_uint32_le(0x007F); }

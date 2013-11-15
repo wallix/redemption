@@ -2268,9 +2268,13 @@ public:
                                 this->capture->input(now, decoded_data);
                             }
 
-                            if (this->up_and_running ||
-                                (!ctrl_alt_del || !this->ini->client.disable_ctrl_alt_del.get())) {
-                                cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                            if (this->up_and_running) {
+                                if (ctrl_alt_del && this->ini->client.disable_ctrl_alt_del.get()) {
+                                    LOG(LOG_INFO, "Ctrl+Alt+Del keyboard sequence ignored.");
+                                }
+                                else {
+                                    cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                                }
                             }
                         }
                         break;
@@ -3487,9 +3491,13 @@ public:
                                 this->capture->input(now, decoded_data);
                             }
 
-                            if (this->up_and_running &&
-                                (!ctrl_alt_del || !this->ini->client.disable_ctrl_alt_del.get())) {
-                                cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                            if (this->up_and_running) {
+                                if (ctrl_alt_del && this->ini->client.disable_ctrl_alt_del.get()) {
+                                    LOG(LOG_INFO, "Ctrl+Alt+Del keyboard sequence ignored.");
+                                }
+                                else {
+                                    cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                                }
                             }
                         }
                         break;
