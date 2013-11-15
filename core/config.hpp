@@ -247,6 +247,8 @@ typedef enum
 
         AUTHID_AUTHENTICATION_CHALLENGE,
 
+        AUTHID_DISABLECTRLALTDEL,
+
         MAX_AUTHID
     } authid_t;
 
@@ -340,6 +342,8 @@ typedef enum
 #define STRAUTHID_REAL_TARGET_DEVICE       "real_target_device"
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
+
+#define STRAUTHID_DISABLECTRLALTDEL         "disable_ctrl_alt_del"
 
 static const std::string authstr[MAX_AUTHID - 1] = {
     // Translation text
@@ -438,6 +442,8 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_REAL_TARGET_DEVICE,
 
     STRAUTHID_AUTHENTICATION_CHALLENGE,
+
+    STRAUTHID_DISABLECTRLALTDEL,
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -531,6 +537,7 @@ struct Inifile : public FieldObserver {
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
 
+        BoolField disable_ctrl_alt_del; // AUTHID_DISABLECTRLALTDEL //
 
         bool rdp_compression;
     } client;
@@ -851,6 +858,9 @@ public:
         this->client.tls_support                         = true;
         this->client.bogus_neg_request                   = false;
         this->client.rdp_compression                     = false;
+
+        this->client.disable_ctrl_alt_del.attach_ini(this, AUTHID_DISABLECTRLALTDEL);
+        this->client.disable_ctrl_alt_del.set(false);
         // End Section "client"
 
         // Begin section "mod_rdp"
@@ -1238,6 +1248,9 @@ public:
             }
             else if (0 == strcmp(key, "rdp_compression")){
                 this->client.rdp_compression = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "disable_ctrl_alt_del")){
+                this->client.disable_ctrl_alt_del.set_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "mod_rdp")){

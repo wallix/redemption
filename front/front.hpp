@@ -2255,8 +2255,9 @@ public:
                             }
 
                             BStream decoded_data(256);
+                            bool    ctrl_alt_del;
 
-                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data);
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data, ctrl_alt_del);
                             decoded_data.mark_end();
 
                             if (  this->capture
@@ -2267,10 +2268,10 @@ public:
                                 this->capture->input(now, decoded_data);
                             }
 
-                            if (this->up_and_running) {
+                            if (this->up_and_running ||
+                                (!ctrl_alt_del || !this->ini->client.disable_ctrl_alt_del.get())) {
                                 cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
                             }
-
                         }
                         break;
 
@@ -3473,8 +3474,9 @@ public:
                             }
 
                             BStream decoded_data(256);
+                            bool    ctrl_alt_del;
 
-                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data);
+                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data, ctrl_alt_del);
                             decoded_data.mark_end();
 
                             if (  this->capture
@@ -3485,7 +3487,8 @@ public:
                                 this->capture->input(now, decoded_data);
                             }
 
-                            if (this->up_and_running){
+                            if (this->up_and_running &&
+                                (!ctrl_alt_del || !this->ini->client.disable_ctrl_alt_del.get())) {
                                 cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
                             }
                         }

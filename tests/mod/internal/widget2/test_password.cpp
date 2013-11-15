@@ -351,10 +351,11 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     keymap.init_layout(0x040C);
 
     BStream decoded_data(256);
+    bool    ctrl_alt_delete;
 
-    keymap.event(0, 16, decoded_data); // 'a'
+    keymap.event(0, 16, decoded_data, ctrl_alt_delete); // 'a'
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, decoded_data);
+    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, decoded_data, ctrl_alt_delete);
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
@@ -368,9 +369,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     notifier.event = 0;
     notifier.sender = 0;
 
-    keymap.event(0, 17, decoded_data); // 'z'
+    keymap.event(0, 17, decoded_data, ctrl_alt_delete); // 'z'
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, decoded_data);
+    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, decoded_data, ctrl_alt_delete);
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
@@ -922,10 +923,11 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
 
 
     BStream decoded_data(256);
+    bool    ctrl_alt_delete;
 
-    keymap.event(0, 17, decoded_data); // 'z'
+    keymap.event(0, 17, decoded_data, ctrl_alt_delete); // 'z'
     wpassword.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, decoded_data);
+    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, decoded_data, ctrl_alt_delete);
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e7.png");
     if (!check_sig(drawable.gd.drawable, message,

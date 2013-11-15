@@ -226,6 +226,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     const int layout = 0x040C;
     keymap.init_layout(layout);
     BStream decoded_data(256);
+    bool    ctrl_alt_del;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;
     keyboardFlags = 0 ;
@@ -246,9 +247,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     }
 
 
-
-
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(parent.rect);
