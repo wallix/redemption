@@ -112,6 +112,11 @@ class Sesman():
     def send_data(self, data):
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
+        if DEBUG:
+            import pprint
+            Logger().info(u'================> send_data (update)=%s' % (pprint.pformat(data)))
+
+
         #if current language changed, send translations
         if self.language != SESMANCONF.language:
             if not self.language:
@@ -121,9 +126,6 @@ class Sesman():
             data[u'language'] = SESMANCONF.language
             data.update(translations())
 
-        if DEBUG:
-            import pprint
-            Logger().info(u'send_data (update)=%s' % (pprint.pformat(data)))
 
         # replace MAGICASK with ASK and send data on the wire
         _list = []
@@ -204,36 +206,30 @@ class Sesman():
 
         return _status, _error
 
-    def parse_username(self):
-        level_0_items       = self.shared.get(u'login').split(u':')
+    def parse_username(self, wab_login, target_login, target_device, proto_dest):
+        
+        level_0_items       = wab_login.split(u':')
         if len(level_0_items) > 1:
             if len(level_0_items) > 3:
-                Logger().info(u"username parse error %s" % self.shared.get(u'login'))
-                return False, TR(u'Username_parse_error %s') % self.shared.get(u'login')
+                Logger().info(u"username parse error %s" % wab_login)
+                return False, TR(u'Username_parse_error %s') % wab_login, wab_login, target_login, target_device, proto_dest
 
             proto_dest = u'RDP' if len(level_0_items) <= 2 else level_0_items[-2]
             level_1_items, wab_login       = level_0_items[0].split(u'@'), level_0_items[-1]
             target_login, target_device = '@'.join(level_1_items[:-1]), level_1_items[-1]
-            self.send_data({ u'login'         : wab_login
-                           , u'target_login'  : target_login
-                           , u'target_device' : target_device
-                           , u'proto_dest'    : proto_dest
-                           })
-        return True, ""
 
-    def interactive_ask_x509_connection(self):
+        return True, "", wab_login, target_login, target_device, proto_dest
+
+    def interactive_ask_x509_connection(self, data_to_send):
         """ Send a message to the proxy to prompt the user to validate x509 in his browser
             Wait until the user clicks Ok in Proxy prompt or until timeout
         """
         _status = False
-        data_to_send = { u'message' : TR(u'valid_authorisation')
+        data_to_send = ({ u'message' : TR(u'valid_authorisation')
                        , u'password': u'x509'
                        , u'display_message': MAGICASK
                        , u'accept_message': u''
-                        # ASK reset to u'' exists to avoid jamming the automaton states analysis in proxy side
-                       , u'target_device': self.shared.get(u'target_device') if self.shared.get(u'target_device') != MAGICASK else u''
-                       , u'target_login': self.shared.get(u'target_login') if self.shared.get(u'target_login') != MAGICASK else u''
-                       }
+                      })
 
         self.send_data(data_to_send)
 
@@ -305,7 +301,6 @@ class Sesman():
              interactive messages
         """
         _status, _error = self.receive_data()
-
         if not _status:
             return False, _error
 
@@ -315,7 +310,12 @@ class Sesman():
         if self.shared.get(u'login') == MAGICASK:
             return None, TR(u"Empty user, try again")
 
-        _status, _error = self.parse_username()
+        _status, _error, wab_login, target_login, target_device, proto_dest = self.parse_username(
+                                                                                self.shared.get(u'login'),
+                                                                                self.shared.get(u'target_login'),
+                                                                                self.shared.get(u'target_device'),
+                                                                                self.shared.get(u'proto_dest')
+                                                                                )
         if not _status:
             return None, TR(u"Invalid user, try again")
 
@@ -323,7 +323,7 @@ class Sesman():
 
         try:
             #Check if X509 Authentication is active
-            if self.engine.is_x509_connected(self.shared.get(u'login'), self.shared.get(u'ip_client'), self.shared.get(u'proxy_type')):
+            if self.engine.is_x509_connected(wab_login, self.shared.get(u'ip_client'), self.shared.get(u'proxy_type')):
                 # Prompt the user in proxy window
                  # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
@@ -332,10 +332,10 @@ class Sesman():
                 # PASSWORD based Authentication
                 if (self.shared.get(u'password') == MAGICASK
                 or not self.engine.password_authenticate(
-                                    self.shared.get(u'login'),
+                                    wab_login,
                                     self.shared.get(u'ip_client'),
                                     self.shared.get(u'password'))):
-                    return None, TR(u"auth_failed_wab %s") % self.shared.get(u'login')
+                    return None, TR(u"auth_failed_wab %s") % wab_login
 
             try:
                 if self.engine.user:
@@ -354,22 +354,21 @@ class Sesman():
             try:
                 # Then get user rights (reachable targets)
                 self.engine.get_proxy_rights([u'RDP', u'VNC'])
-
             except Exception, e:
                 import traceback
                 Logger().info("<<<%s>>>" % traceback.format_exc(e))
                 # NB : this exception may be raised because the user must change his password
-                return False, TR(u"Error while retreiving rights for user %s") % self.shared.get(u'login')
+                return False, TR(u"Error while retreiving rights for user %s") % wab_login
 
         except engine.AuthenticationFailed, e:
             import traceback
             Logger().info("<<<%s>>>" % traceback.format_exc(e))
-            _status, _error = None, TR(u'auth_failed_wab %s') % self.shared.get(u'login')
+            _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
 
         except Exception, e:
             import traceback
             Logger().info("<<<%s>>>" % traceback.format_exc(e))
-            _status, _error = None, TR(u'auth_failed_wab %s') % self.shared.get(u'login')
+            _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
 
         return _status, _error
 
@@ -380,16 +379,34 @@ class Sesman():
         u""" Send service pages to proxy until the selected service is returned.
         """
 
-        _status, _error = None, TR(u"No error")
-        Logger().info(u"get_service %s" % (_status))
+        Logger().info(u"get_service")
 
+        _status, _error, wab_login, target_login, target_device, proto_dest = self.parse_username(
+                                                                                self.shared.get(u'login'),
+                                                                                self.shared.get(u'target_login'),
+                                                                                self.shared.get(u'target_device'),
+                                                                                self.shared.get(u'proto_dest')
+                                                                                                )  
+        
+        if not _status:
+            Logger().info(u"Invalid user %s, try again" % self.shared.get(u'login'))
+            return None, TR(u"Invalid user, try again")
+
+        _status, _error = None, TR(u"No error")
+        
         while _status is None:
-            if (self.shared.get(u'target_device') and self.shared.get(u'target_device') != MAGICASK
-            and self.shared.get(u'target_login')  and self.shared.get(u'target_login')  != MAGICASK):
-                self._full_user_device_account = u"%s@%s:%s" % ( self.shared.get(u'target_login')
-                                                               , self.shared.get(u'target_device')
-                                                               , self.shared.get(u'login')
+        
+            if (target_device and target_device != MAGICASK
+            and target_login  and target_login  != MAGICASK):
+                self._full_user_device_account = u"%s@%s:%s" % ( target_login
+                                                               , target_device
+                                                               , wab_login
                                                                )
+                data_to_send = { u'target_login': target_login
+                               , u'target_device': target_device
+                               , u'proto_dest': proto_dest
+                               }
+                self.send_data(data_to_send)
                 _status = True
             elif self.shared.get(u'selector') == MAGICASK:
                 # filters ("Group" and "Account/Device") entered by user in selector are applied to raw services list
@@ -429,9 +446,13 @@ class Sesman():
                         _lines_per_page = int(self.shared.get(u'selector_lines_per_page'))
 
                         if not _lines_per_page:
-                            data_to_send = { u'target_login'            : u""
-                                           , u'target_device'           : u""
-                                           , u'proto_dest'              : u""
+                            target_login = u""
+                            target_device = u""
+                            proto_dest = u""
+                            
+                            data_to_send = { u'target_login'            : target_login
+                                           , u'target_device'           : target_device
+                                           , u'proto_dest'              : proto_dest
                                            , u'end_time'                : u""
                                            , u'selector'                : u"True"
                                            , u'ip_client'               : self.shared.get(u'ip_client')
@@ -460,9 +481,13 @@ class Sesman():
                             all_proto_dest    = [s[2] for s in services]
                             all_end_time      = [s[3] for s in services]
 
-                            data_to_send = { u'target_login'            : u"\x01".join(all_target_login)
-                                           , u'target_device'           : u"\x01".join(all_target_device)
-                                           , u'proto_dest'              : u"\x01".join(all_proto_dest)
+                            target_login = u"\x01".join(all_target_login)
+                            target_device = u"\x01".join(all_target_device)
+                            proto_dest = u"\x01".join(all_proto_dest)
+
+                            data_to_send = { u'target_login'            : target_login
+                                           , u'target_device'           : target_device
+                                           , u'proto_dest'              : proto_dest
                                            , u'end_time'                : u";".join(all_end_time)
                                            , u'selector'                : u'True'
                                            , u'ip_client'               : self.shared.get(u'ip_client')
@@ -486,7 +511,10 @@ class Sesman():
                             Logger().info(u"Logout")
                             return None, u"Logout"
 
-                        _status, _error = self.parse_username()
+                        target_login = MAGICASK
+                        target_device = MAGICASK
+                        proto_dest = MAGICASK
+                        _status, _error, wab_login, target_login, target_device, proto_dest = self.parse_username(self.shared.get(u'login'), target_login, target_device, proto_dest)
                         if not _status:
                             Logger().info(u"Invalid user %s, try again" % self.shared.get(u'login'))
                             return None, TR(u"Invalid user, try again")
@@ -504,9 +532,9 @@ class Sesman():
                         data_to_send[u'target_device'] = s[4]
                         data_to_send[u'proto_dest'] = s[2]
 
-                        self._full_user_device_account = u"%s@%s:%s" % ( self.shared.get(u'target_login')
-                                                                       , self.shared.get(u'target_device')
-                                                                       , self.shared.get(u'login')
+                        self._full_user_device_account = u"%s@%s:%s" % ( target_login
+                                                                       , target_device
+                                                                       , login
                                                                        )
                     else:
                         data_to_send[u'target_login'] = '@'.join(s[1].split('@')[:-1])
