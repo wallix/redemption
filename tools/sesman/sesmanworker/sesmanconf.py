@@ -66,6 +66,7 @@ class SesmanConfig(object):
             , u'sql'                : u'localhost'
             , u'x509_authenticated' : u'localhost'
             , u'record_warning'     : u'True'
+            , u'DEBUG'              : u'False'
             }
         , u'fr':
             { u'login'                  : u"Login"
