@@ -54,6 +54,7 @@ namespace re {
         , nb_capture(nb_capture)
         , nodes(sts.size())
         , idx_trace(-1u)
+        , reindex_trace(0)
         , idx_trace_free(0)
         , pidx_trace_free(0)
         , traces(0)
@@ -102,7 +103,31 @@ namespace re {
             if (this->nb_capture) {
                 const unsigned col = this->nodes - this->nb_capture;
                 this->traces = new const char *[col * this->nb_capture];
-                this->idx_trace_free = new unsigned[col];
+                this->idx_trace_free = new unsigned[col + this->nb_capture];
+                this->reindex_trace = this->idx_trace_free + col;
+
+                unsigned * reindex = this->reindex_trace;
+                typedef state_list_t::const_iterator state_iterator;
+                state_iterator stfirst = this->states.end() - this->nb_capture;
+                state_iterator stlast = this->states.end();
+                for (unsigned num_open; stfirst != stlast; ++stfirst) {
+                    if ((*stfirst)->is_cap_close()) {
+                        continue;
+                    }
+                    *reindex++ = (*stfirst)->num;
+                    state_iterator stfirst2 = stfirst;
+                    num_open = 1;
+                    do {
+                        ++stfirst2;
+                        if ((*stfirst2)->is_cap_close()) {
+                            --num_open;
+                        }
+                        if ((*stfirst2)->is_cap_open()) {
+                            ++num_open;
+                        }
+                    } while (stfirst2 != stlast && num_open);
+                    *reindex++ = (*stfirst2)->num;
+                }
             }
 
             this->init_range_list(this->st_range_list, root);
@@ -250,9 +275,7 @@ namespace re {
                     this->push_state(l, st->out2, num_open);
                 }
                 else if (st->is_cap_open()) {
-                    if (num_open == -1u) {
-                        this->push_state(l, st->out1, st->num);
-                    }
+                    this->push_state(l, st->out1, num_open == -1u ? st->num : num_open);
                 }
                 else if (st->is_cap_close()) {
                     this->push_state(l, st->out1);
@@ -412,10 +435,12 @@ namespace re {
             ranges.reserve(this->nb_capture / 2);
 
             const char ** trace = this->traces + this->idx_trace * this->nb_capture;
-            const char ** last = trace + this->nb_capture;
-            for (; trace != last; trace+=2) {
-                if (*trace && *(trace+1)) {
-                    ranges.push_back(range_t(*trace, *(trace + 1)));
+            unsigned * first = this->reindex_trace;
+            unsigned * last = first + this->nb_capture;
+            for (; first != last; first+=2) {
+                const char * sright = *(trace + *(first + 1));
+                if (sright) {
+                    ranges.push_back(range_t(*(trace + *first), sright));
                 }
                 else if (all) {
                     ranges.push_back(range_t(0,0));
@@ -424,6 +449,20 @@ namespace re {
         }
 
     private:
+        void set_idx_trace(unsigned idx) {
+            this->idx_trace = idx;
+            //recursive matching
+            const char ** first = this->traces + idx * this->nb_capture;
+            const char ** last = first + this->nb_capture;
+            const char ** next = first+1;
+            state_list_t::const_iterator stfirst = this->states.end() - this->nb_capture;
+            for (; next != last; ++first, ++next, ++stfirst) {
+                if ((*stfirst)->type == (*(stfirst+1))->type) {
+                    *next = *first;
+                }
+            }
+        }
+
         void reset_id() const
         {
             for (RangeList * l = this->st_range_list; l < this->st_range_list_last; ++l) {
@@ -751,7 +790,7 @@ namespace re {
                                                    ActiveCapture<active_capture>());
                 if (-1u != result) {
                     if (active_capture) {
-                        this->idx_trace = result;
+                        this->set_idx_trace(result);
                         tracer.good(result);
                     }
                     return false == exact_match || !consumer.valid();
@@ -809,7 +848,7 @@ namespace re {
 
                     if (ifirst->rl == 0) {
                         if (active_capture) {
-                            this->idx_trace = ifirst->idx;
+                            this->set_idx_trace(ifirst->idx);
                         }
                         return true;
                     }
@@ -830,7 +869,7 @@ namespace re {
                     for (; first != last; ++first) {
                         if (first->st->is_terminate()) {
                             if (active_capture) {
-                                this->idx_trace = ifirst->idx;
+                                this->set_idx_trace(ifirst->idx);
                             }
                             return true;
                         }
@@ -849,6 +888,7 @@ namespace re {
         unsigned nb_capture;
         unsigned nodes;
         unsigned idx_trace;
+        unsigned * reindex_trace;
         unsigned * idx_trace_free;
         unsigned * pidx_trace_free;
         const char ** traces;

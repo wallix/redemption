@@ -820,11 +820,12 @@ namespace re {
                             }
                             break;
                         }
-                        unsigned tmp_num_cap = num_cap;
+                        State * stopen = accu.cap_open();
+                        stopen->num = num_cap;
                         IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, ++num_cap, recusive+1);
                         if (intermendary.first) {
-                            *pst = accu.cap_open(intermendary.first);
-                            (*pst)->num = tmp_num_cap;
+                            stopen->out1 = intermendary.first;
+                            *pst = stopen;
                             pst = intermendary.second;
                             *pst = accu.cap_close();
                             (*pst)->num = num_cap++;
@@ -879,7 +880,7 @@ namespace re {
 
                 state_list_t::iterator first = this->m_states.begin();
                 state_list_t::iterator last = this->m_states.end();
-                state_list_t::iterator first_cap = std::partition(first, last, IsCapture());
+                state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
                 this->m_nb_capture = last - first_cap;
 
                 for (unsigned n = this->m_nb_capture; first != first_cap; ++first, ++n) {

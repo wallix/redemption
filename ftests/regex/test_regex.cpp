@@ -365,6 +365,23 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     matches.push_back(range_t(str+2, str+3));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
+
+    str_regex = "((.)(.))";
+    regex.reset(str_regex);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    str = "ab";
+    matches.clear();
+    matches.push_back(range_t(str, str+2));
+    matches.push_back(range_t(str, str+1));
+    matches.push_back(range_t(str+1, str+2));
+    regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+
+
     regex.reset("a{0}");
     if (!regex.message_error()) {
         BOOST_CHECK_MESSAGE(false, "fail");
