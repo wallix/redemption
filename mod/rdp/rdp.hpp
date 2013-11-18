@@ -2054,7 +2054,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt ? 1 : 0);
         order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
+//        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
         order_caps.orderSupport[UnusedIndex3]                    = 1;
         order_caps.orderSupport[UnusedIndex5]                    = 1;
         order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]          = (this->enable_polygonsc ? 1 : 0);
