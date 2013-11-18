@@ -132,7 +132,7 @@ extern "C" {
                 LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
                 return RIO_ERROR_CLOSE_FAILED;
             }
-//            LOG(LOG_INFO, "\"%s\" -> \"%s\".", self->tempnam, tmpname);
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", self->tempnam, tmpname);
             res = rename(self->tempnam, tmpname);
             if (res < 0) {
                 LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
@@ -180,7 +180,35 @@ extern "C" {
     {
         return RIO_ERROR_OK;
     }
+
+    static inline RIO_ERROR sq_m_SQOutfilename_full_clear(SQOutfilename * self)
+    {
+        if (self->trans) {
+            char tmpname[1024];
+            _sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
+            rio_delete(self->trans);
+            int res = close(self->fd);
+            if (res < 0) {
+                LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
+                return RIO_ERROR_CLOSE_FAILED;
+            }
+            // LOG(LOG_INFO, "\"%s\" -> \"%s\".", self->tempnam, tmpname);
+            res = rename(self->tempnam, tmpname);
+            if (res < 0) {
+                LOG( LOG_ERR, "renaming file \"%s\" -> \"%s\" failed erro=%u : %s\n"
+                   , self->tempnam, tmpname, errno, strerror(errno));
+                return RIO_ERROR_RENAME;
+            }
+            memset(self->tempnam, 0, sizeof(self->tempnam));
+            self->trans = NULL;
+        }
+        for (int i = static_cast<int>(self->count); i >= 0; i--) {
+            char tmpname[1024];
+            _sq_im_SQOutfilename_get_name(self, tmpname, sizeof(tmpname), i);
+            unlink(tmpname);
+        }
+        return RIO_ERROR_CLOSED;
+    }
 };
 
 #endif
-
