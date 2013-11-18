@@ -30,8 +30,8 @@
 #include "log.hpp"
 #define LOGNULL
 
-#include "regex_automate.hpp"
 #include "regex_parser.hpp"
+#include "regex_st_automate.hpp"
 
 #include <vector>
 #include <sstream>
@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     struct Reg {
         Reg(const char * s)
         {
-            st_compile(this->stw, s);
+            this->stw.compile(s);
         }
 
         bool search(const char * s)

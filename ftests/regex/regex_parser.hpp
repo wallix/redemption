@@ -21,61 +21,142 @@
 #ifndef REDEMPTION_FTESTS_REGEX_REGEX_PARSE_HPP
 #define REDEMPTION_FTESTS_REGEX_REGEX_PARSE_HPP
 
-#include "regex_states_wraper.hpp"
+#include "regex_utils.hpp"
 
 namespace re {
 
-    inline State ** c2range(State ** pst, State * eps,
+    class StateAccu
+    {
+        state_list_t & sts;
+
+        State * push(State * st)
+        {
+            sts.push_back(st);
+            return st;
+        }
+
+    public:
+        StateAccu(state_list_t & states)
+        : sts(states)
+        {}
+
+        State * normal(unsigned type, char_int range_left = 0, char_int range_right = 0,
+                       State * out1 = 0, State * out2 = 0)
+        {
+            return this->push(new State(type, range_left, range_right, out1, out2));
+        }
+
+        State * character(char_int c, State * out1 = 0) {
+            return this->push(new_character(c, out1));
+        }
+
+        State * range(char_int left, char_int right, State * out1 = 0) {
+            return this->push(new_range(left, right, out1));
+        }
+
+        State * any(State * out1 = 0) {
+            return this->push(new_any(out1));
+        }
+
+        State * split(State * out1 = 0, State * out2 = 0) {
+            return this->push(new_split(out1, out2));
+        }
+
+        State * cap_open(State * out1 = 0) {
+            return this->push(new_cap_open(out1));
+        }
+
+        State * cap_close(State * out1 = 0) {
+            return this->push(new_cap_close(out1));
+        }
+
+        State * epsilone(State * out1 = 0) {
+            return this->push(new_epsilone(out1));
+        }
+
+        State * finish(State * out1 = 0) {
+            return this->push(new_finish(out1));
+        }
+
+        State * begin(State * out1 = 0) {
+            return this->push(new_begin(out1));
+        }
+
+        State * last() {
+            return this->push(new_last());
+        }
+
+        State * sequence(const char_int * s, size_t len, State * out1 = 0) {
+            return this->push(new_sequence(s, len, out1));
+
+        }
+
+        State * sequence(const SequenceString & ss, State * out1 = 0) {
+            return this->push(new_sequence(ss, out1));
+        }
+
+        void clear()
+        {
+            std::for_each(this->sts.begin(), this->sts.end(), StateDeleter());
+            this->sts.clear();
+        }
+    };
+
+    inline State ** c2range(StateAccu & accu,
+                            State ** pst, State * eps,
                             char_int l1, char_int r1,
                             char_int l2, char_int r2)
     {
-        *pst = new_split(new_range(l1, r1, eps),
-                         new_range(l2, r2, eps)
+        *pst = accu.split(accu.range(l1, r1, eps),
+                         accu.range(l2, r2, eps)
                         );
         return &eps->out1;
     }
 
-    inline State ** c2range(State ** pst, State * eps,
+    inline State ** c2range(StateAccu & accu,
+                            State ** pst, State * eps,
                             char_int l1, char_int r1,
                             char_int l2, char_int r2,
                             char_int l3, char_int r3)
     {
-        *pst = new_split(new_range(l1, r1, eps),
-                         new_split(new_range(l2, r2, eps),
-                                   new_range(l3, r3, eps)
+        *pst = accu.split(accu.range(l1, r1, eps),
+                         accu.split(accu.range(l2, r2, eps),
+                                   accu.range(l3, r3, eps)
                                   )
                         );
         return &eps->out1;
     }
 
-    inline State ** c2range(State ** pst, State * eps,
+    inline State ** c2range(StateAccu & accu,
+                            State ** pst, State * eps,
                             char_int l1, char_int r1,
                             char_int l2, char_int r2,
                             char_int l3, char_int r3,
                             char_int l4, char_int r4)
     {
-        *pst = new_split(new_range(l1, r1, eps),
-                         new_split(new_range(l2, r2, eps),
-                                   new_split(new_range(l3, r3, eps),
-                                             new_range(l4, r4, eps)
+        *pst = accu.split(accu.range(l1, r1, eps),
+                         accu.split(accu.range(l2, r2, eps),
+                                   accu.split(accu.range(l3, r3, eps),
+                                             accu.range(l4, r4, eps)
                                    )
                          )
         );
         return &eps->out1;
     }
 
-    inline State ** c2range(State ** pst, State * eps,
+    inline State ** c2range(StateAccu & accu,
+                            State ** pst, State * eps,
                             char_int l1, char_int r1,
                             char_int l2, char_int r2,
                             char_int l3, char_int r3,
                             char_int l4, char_int r4,
                             char_int l5, char_int r5)
     {
-        *pst = new_split(new_range(l1, r1, eps),
-                         new_split(new_range(l2, r2, eps),
-                                   new_split(new_range(l3, r3, eps),
-                                             new_split(new_range(l4, r4, eps),
-                                                       new_range(l5, r5, eps)
+        *pst = accu.split(accu.range(l1, r1, eps),
+                         accu.split(accu.range(l2, r2, eps),
+                                   accu.split(accu.range(l3, r3, eps),
+                                             accu.split(accu.range(l4, r4, eps),
+                                                       accu.range(l5, r5, eps)
                                              )
                                    )
                          )
@@ -83,24 +164,24 @@ namespace re {
         return &eps->out1;
     }
 
-    inline State ** ident_D(State ** pst, State * eps) {
-        return c2range(pst, eps, 0,'0'-1, '9'+1,-1u);
+    inline State ** ident_D(StateAccu & accu, State ** pst, State * eps) {
+        return c2range(accu, pst, eps, 0,'0'-1, '9'+1,-1u);
     }
 
-    inline State ** ident_w(State ** pst, State * eps) {
-        return c2range(pst, eps, 'a','z', 'A','Z', '0','9', '_', '_');
+    inline State ** ident_w(StateAccu & accu, State ** pst, State * eps) {
+        return c2range(accu, pst, eps, 'a','z', 'A','Z', '0','9', '_', '_');
     }
 
-    inline State ** ident_W(State ** pst, State * eps) {
-        return c2range(pst, eps, 0,'0'-1, '9'+1,'A'-1, 'Z'+1,'_'-1, '_'+1,'a'-1, 'z'+1,-1u);
+    inline State ** ident_W(StateAccu & accu, State ** pst, State * eps) {
+        return c2range(accu, pst, eps, 0,'0'-1, '9'+1,'A'-1, 'Z'+1,'_'-1, '_'+1,'a'-1, 'z'+1,-1u);
     }
 
-    inline State ** ident_s(State ** pst, State * eps) {
-        return c2range(pst, eps, ' ',' ', '\t','\v');
+    inline State ** ident_s(StateAccu & accu, State ** pst, State * eps) {
+        return c2range(accu, pst, eps, ' ',' ', '\t','\v');
     }
 
-    inline State ** ident_S(State ** pst, State * eps) {
-        return c2range(pst, eps, 0,'\t'-1, '\v'+1,' '-1, ' '+1,-1u);
+    inline State ** ident_S(StateAccu & accu, State ** pst, State * eps) {
+        return c2range(accu, pst, eps, 0,'\t'-1, '\v'+1,' '-1, ' '+1,-1u);
     }
 
     inline const char * check_interval(char_int a, char_int b)
@@ -179,7 +260,8 @@ namespace re {
         return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.str()));
     }
 
-    inline State ** st_compilechar(State ** pst, utf_consumer & consumer, char_int c, const char * & msg_err)
+    inline State ** st_compilechar(StateAccu & accu, State ** pst,
+                                   utf_consumer & consumer, char_int c, const char * & msg_err)
     {
         if (consumer.valid())
         {
@@ -208,24 +290,24 @@ namespace re {
                 }
                 *++p = 0;
                 consumer.s = cons.s;
-                return &(*pst = new_sequence(str, n))->out1;
+                return &(*pst = accu.sequence(str, n))->out1;
             }
         }
 
         if (c == '\\' && consumer.valid()) {
             c = consumer.bumpc();
             switch (c) {
-                case 'd': return &(*pst = new_range('0','9'))->out1;
-                case 'D': return ident_D(pst, new_epsilone());
-                case 'w': return ident_w(pst, new_epsilone());
-                case 'W': return ident_W(pst, new_epsilone());
-                case 's': return ident_s(pst, new_epsilone());
-                case 'S': return ident_S(pst, new_epsilone());
-                case 'n': return &(*pst = new_character('\n'))->out1;
-                case 't': return &(*pst = new_character('\t'))->out1;
-                case 'r': return &(*pst = new_character('\r'))->out1;
-                case 'v': return &(*pst = new_character('\v'))->out1;
-                default : return &(*pst = new_character(c))->out1;
+                case 'd': return &(*pst = accu.range('0','9'))->out1;
+                case 'D': return ident_D(accu, pst, accu.epsilone());
+                case 'w': return ident_w(accu, pst, accu.epsilone());
+                case 'W': return ident_W(accu, pst, accu.epsilone());
+                case 's': return ident_s(accu, pst, accu.epsilone());
+                case 'S': return ident_S(accu, pst, accu.epsilone());
+                case 'n': return &(*pst = accu.character('\n'))->out1;
+                case 't': return &(*pst = accu.character('\t'))->out1;
+                case 'r': return &(*pst = accu.character('\r'))->out1;
+                case 'v': return &(*pst = accu.character('\v'))->out1;
+                default : return &(*pst = accu.character(c))->out1;
             }
         }
 
@@ -337,13 +419,13 @@ namespace re {
 
             if (ranges.ranges.size() == 1) {
                 if (reverse_result) {
-                    State * eps = new_epsilone();
-                    *pst = new_split(new_range(0, ranges.ranges[0].first-1, eps),
-                                     new_range(ranges.ranges[0].second+1, -1u, eps));
+                    State * eps = accu.epsilone();
+                    *pst = accu.split(accu.range(0, ranges.ranges[0].first-1, eps),
+                                     accu.range(ranges.ranges[0].second+1, -1u, eps));
                     return &eps->out1;
                 }
                 else {
-                    *pst = new_range(ranges.ranges[0].first, ranges.ranges[0].second);
+                    *pst = accu.range(ranges.ranges[0].first, ranges.ranges[0].second);
                     return &(*pst)->out1;
                 }
             }
@@ -373,29 +455,29 @@ namespace re {
                 ranges.ranges.resize(ranges.ranges.size() - (last - result));
             }
 
-            State * eps = new_epsilone();
+            State * eps = accu.epsilone();
             first = ranges.ranges.begin();
             if (reverse_result) {
-                State * st = new_range(0, first->first-1, eps);
+                State * st = accu.range(0, first->first-1, eps);
                 char_int cr = first->second;
                 while (++first != result) {
-                    st = new_split(st, new_range(cr+1, first->first-1, eps));
+                    st = accu.split(st, accu.range(cr+1, first->first-1, eps));
                     cr = first->second;
                 }
-                st = new_split(st, new_range(cr+1, -1u, eps));
+                st = accu.split(st, accu.range(cr+1, -1u, eps));
                 *pst = st;
             }
             else {
-                State * st = new_range(first->first, first->second, eps);
+                State * st = accu.range(first->first, first->second, eps);
                 while (++first != result) {
-                    st = new_split(st, new_range(first->first, first->second, eps));
+                    st = accu.split(st, accu.range(first->first, first->second, eps));
                 }
                 *pst = st;
             }
             return &eps->out1;
         }
 
-        return &(*pst = (c == '.') ? new_any() : new_character(c))->out1;
+        return &(*pst = (c == '.') ? accu.any() : accu.character(c))->out1;
     }
 
 
@@ -403,10 +485,12 @@ namespace re {
         std::vector<State*> sts;
         std::vector<State*> sts2;
         std::vector<unsigned> indexes;
+        StateAccu & accu;
 
-        ContextClone(State * st_base)
+        ContextClone(StateAccu & accu, State * st_base)
         : sts()
         , sts2()
+        , accu(accu)
         {
             append_state(st_base, this->sts);
             this->sts2.resize(this->sts.size());
@@ -451,11 +535,11 @@ namespace re {
             return std::find(this->sts.begin(), this->sts.end(), st) - this->sts.begin();
         }
 
-        static State * copy(const State * st) {
+        State * copy(const State * st) {
             if (st->type == SEQUENCE) {
-                return new_sequence(new_string_sequence(st->data.sequence, 1));
+                return this->accu.sequence(new_string_sequence(st->data.sequence, 1));
             }
-            return new State(st->type, st->data.range.l, st->data.range.r);
+            return this->accu.normal(st->type, st->data.range.l, st->data.range.r);
         }
     };
 
@@ -481,18 +565,12 @@ namespace re {
         st->type = SEQUENCE;
     }
 
-    inline IntermendaryState intermendary_st_compile(utf_consumer & consumer,
+    inline IntermendaryState intermendary_st_compile(StateAccu & accu,
+                                                     utf_consumer & consumer,
                                                      const char * & msg_err,
+                                                     unsigned & num_cap,
                                                      int recusive = 0)
     {
-        struct FreeState {
-            static IntermendaryState invalide(State& st)
-            {
-                StatesWrapper w(st.out1); //quick free
-                return IntermendaryState(0,0);
-            }
-        };
-
         State st(EPSILONE);
         State ** pst = &st.out1;
         State ** spst = pst;
@@ -504,7 +582,7 @@ namespace re {
         while (c) {
             /**///std::cout << "c: " << (c) << std::endl;
             if (c == '^' || c == '$') {
-                *pst = c == '^' ? new_begin() : new_last();
+                *pst = c == '^' ? accu.begin() : accu.last();
 
                 if ((c = consumer.bumpc()) && !is_meta_char(consumer, c)) {
                     pst = &(*pst)->out1;
@@ -515,8 +593,8 @@ namespace re {
             if (!is_meta_char(consumer, c)) {
                 do {
                     spst = pst;
-                    if (!(pst = st_compilechar(pst, consumer, c, msg_err))) {
-                        return FreeState::invalide(st);
+                    if (!(pst = st_compilechar(accu, pst, consumer, c, msg_err))) {
+                        return IntermendaryState(0,0);
                     }
                     if (is_meta_char(consumer, c = consumer.bumpc())) {
                         break;
@@ -526,29 +604,29 @@ namespace re {
             else {
                 switch (c) {
                     case '?': {
-                        *pst = new_finish();
-                        *spst = new_split(*pst, *spst);
+                        *pst = accu.finish();
+                        *spst = accu.split(*pst, *spst);
                         pst = &(*pst)->out1;
                         spst = pst;
                         break;
                     }
                     case '*':
-                        *spst = new_split(new_finish(), *spst);
+                        *spst = accu.split(accu.finish(), *spst);
                         *pst = *spst;
                         pst = &(*spst)->out1->out1;
                         spst = pst;
                         break;
                     case '+':
-                        *pst = new_split(new_finish(), *spst);
+                        *pst = accu.split(accu.finish(), *spst);
                         spst = pst;
                         pst = &(*pst)->out1->out1;
                         break;
                     case '|':
                         if (!eps) {
-                            eps = new_epsilone();
+                            eps = accu.epsilone();
                         }
                         *pst = eps;
-                        bst = new_split(bst == &st ? st.out1 : bst);
+                        bst = accu.split(bst == &st ? st.out1 : bst);
                         pst = &bst->out2;
                         break;
                     case '{': {
@@ -562,20 +640,20 @@ namespace re {
                             if (*(end+1) == '}') {
                                 /**///std::cout << ("infini") << std::endl;
                                 if (m == 1) {
-                                    *pst = new_split(new_finish(), *spst);
+                                    *pst = accu.split(accu.finish(), *spst);
                                     spst = pst;
                                     pst = &(*pst)->out1->out1;
                                 }
                                 else if (m) {
-                                    State * e = new_finish();
+                                    State * e = accu.finish();
                                     if (m > 2 && is_unique_string_state(*spst, *pst)) {
                                         transform_to_sequence(*spst, m);
                                         (*spst)->out1 = e;
-                                        *spst = new_split(e, *spst);
+                                        *spst = accu.split(e, *spst);
                                     }
                                     else {
                                         *pst = e;
-                                        ContextClone cloner(*spst);
+                                        ContextClone cloner(accu, *spst);
                                         std::size_t idx = cloner.get_idx(e);
                                         State ** lst = &e->out1;
                                         while (--m) {
@@ -583,12 +661,12 @@ namespace re {
                                             lst = pst;
                                             pst = &cloner.sts2[idx]->out1;
                                         }
-                                        *pst = new_split(e, *lst);
+                                        *pst = accu.split(e, *lst);
                                     }
                                     pst = &e->out1;
                                 }
                                 else {
-                                    *spst = new_split(new_finish(), *spst);
+                                    *spst = accu.split(accu.finish(), *spst);
                                     *pst = *spst;
                                     pst = &(*spst)->out1->out1;
                                     spst = pst;
@@ -599,23 +677,23 @@ namespace re {
                                 unsigned n = strtoul(end+1, &end, 10);
                                 if (m > n || (0 == m && 0 == n)) {
                                     msg_err = "numbers out of order in {} quantifier";
-                                    return FreeState::invalide(st);
+                                    return IntermendaryState(0,0);
                                 }
                                 /**///std::cout << "n: " << (n) << std::endl;
                                 n -= m;
                                 if (n > 50) {
                                     msg_err = "numbers too large in {} quantifier";
-                                    return FreeState::invalide(st);
+                                    return IntermendaryState(0,0);
                                 }
                                 if (0 == m) {
                                     --end;
                                     /**///std::cout << ("m = 0") << std::endl;
                                     if (n != 1) {
                                         /**///std::cout << ("n != 1") << std::endl;
-                                        State * e = new_finish();
-                                        State * split = new_split();
+                                        State * e = accu.finish();
+                                        State * split = accu.split();
                                         *pst = split;
-                                        ContextClone cloner(*spst);
+                                        ContextClone cloner(accu, *spst);
                                         std::size_t idx = cloner.get_idx(split);
                                         split->out1 = e;
                                         State * cst = split;
@@ -627,28 +705,28 @@ namespace re {
                                         }
                                         cst->type = EPSILONE;
                                         pst = &e->out1;
-                                        *spst = new_split(e, *spst);
+                                        *spst = accu.split(e, *spst);
                                     }
                                     else {
-                                        *pst = new_finish();
-                                        *spst = new_split(*pst, *spst);
+                                        *pst = accu.finish();
+                                        *spst = accu.split(*pst, *spst);
                                         pst = &(*pst)->out1;
                                     }
                                 }
                                 else {
                                     --end;
-                                    State * finish = new_finish();
+                                    State * finish = accu.finish();
                                     if (m > 1 && is_unique_string_state(*spst, *pst)) {
                                         State * lst = finish;
                                         if ((*spst)->is_simple_char()) {
                                             char_int cst = (*spst)->data.range.l;
                                             while (n--) {
-                                                lst = new_split(finish, new_character(cst, lst));
+                                                lst = accu.split(finish, accu.character(cst, lst));
                                             }
                                         }
                                         else {
                                             while (n--) {
-                                                lst = new_split(finish, new_sequence(
+                                                lst = accu.split(finish, accu.sequence(
                                                     new_string_sequence((*spst)->data.sequence, 1), lst
                                                 ));
                                             }
@@ -657,9 +735,9 @@ namespace re {
                                         (*spst)->out1 = lst;
                                     }
                                     else {
-                                        State * e = new_epsilone();
+                                        State * e = accu.epsilone();
                                         *pst = e;
-                                        ContextClone cloner(*spst);
+                                        ContextClone cloner(accu, *spst);
                                         std::size_t idx = cloner.get_idx(e);
                                         pst = &e->out1;
                                         State * lst = e;
@@ -684,7 +762,7 @@ namespace re {
                         }
                         else if (0 == m) {
                             msg_err = "numbers is 0 in {}";
-                            return FreeState::invalide(st);
+                            return IntermendaryState(0,0);
                         }
                         else {
                             if (1 != m) {
@@ -695,7 +773,7 @@ namespace re {
                                     /**///std::cout << ("fixe ") << m << std::endl;
                                     State e(EPSILONE);
                                     *pst = &e;
-                                    ContextClone cloner(*spst);
+                                    ContextClone cloner(accu, *spst);
                                     std::size_t idx = cloner.get_idx(&e);
                                     while (--m) {
                                         /**///std::cout << ("clone") << std::endl;
@@ -713,44 +791,47 @@ namespace re {
                     case ')':
                         if (0 == recusive) {
                             msg_err = "unmatched parentheses";
-                            return FreeState::invalide(st);
+                            return IntermendaryState(0,0);
                         }
 
                         if (!eps) {
-                            eps = new_epsilone();
+                            eps = accu.epsilone();
                         }
                         *pst = eps;
                         pst = &eps->out1;
                         return IntermendaryState(bst == &st ? st.out1 : bst, pst);
                         break;
                     default:
-                        return FreeState::invalide(st);
+                        return IntermendaryState(0,0);
                     case '(':
                         if (*consumer.s == '?' && *(consumer.s+1) == ':') {
                             if (!*consumer.s || !(*consumer.s+1) || !(*consumer.s+2)) {
                                 msg_err = "unmatched parentheses";
-                                return FreeState::invalide(st);
+                                return IntermendaryState(0,0);
                             }
                             consumer.s += 2;
-                            IntermendaryState intermendary = intermendary_st_compile(consumer, msg_err, recusive+1);
+                            IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, num_cap, recusive+1);
                             if (intermendary.first) {
-                                *pst= intermendary.first;
+                                *pst = intermendary.first;
                                 pst = intermendary.second;
                             }
                             else if (0 == intermendary.second) {
-                                return FreeState::invalide(st);
+                                return IntermendaryState(0,0);
                             }
                             break;
                         }
-                        IntermendaryState intermendary = intermendary_st_compile(consumer, msg_err, recusive+1);
+                        unsigned tmp_num_cap = num_cap;
+                        IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, ++num_cap, recusive+1);
                         if (intermendary.first) {
-                            *pst = new_cap_open(intermendary.first);
+                            *pst = accu.cap_open(intermendary.first);
+                            (*pst)->num = tmp_num_cap;
                             pst = intermendary.second;
-                            *pst = new_cap_close();
+                            *pst = accu.cap_close();
+                            (*pst)->num = num_cap++;
                             pst = &(*pst)->out1;
                         }
                         else if (0 == intermendary.second) {
-                            return FreeState::invalide(st);
+                            return IntermendaryState(0,0);
                         }
                         break;
                 }
@@ -760,28 +841,86 @@ namespace re {
 
         if (0 != recusive) {
             msg_err = "unmatched parentheses";
-            return FreeState::invalide(st);
+            return IntermendaryState(0,0);
         }
         return IntermendaryState(bst == &st ? st.out1 : bst, pst);
     }
 
-    inline bool st_compile(StatesWrapper & stw, const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
+    class StateParser
     {
-        const char * err = 0;
-        utf_consumer consumer(s);
-        State * st = intermendary_st_compile(consumer, err).first;
-        if (err) {
+    public:
+        explicit StateParser()
+        : m_root(0)
+        , m_nb_capture(0)
+        {}
+
+        void compile(const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
+        {
+            this->free_state();
+            this->m_states.clear();
+
+            const char * err = 0;
+            utf_consumer consumer(s);
+            StateAccu accu(this->m_states);
+            unsigned num_cap = 0;
+            this->m_root = intermendary_st_compile(accu, consumer, err, num_cap).first;
             if (msg_err) {
                 *msg_err = err;
             }
             if (pos_err) {
-                *pos_err = consumer.str() - s;
+                *pos_err = err ? consumer.str() - s : 0;
             }
-            return false;
+
+            if (err) {
+                accu.clear();
+            }
+            else {
+                remove_epsilone(this->m_states);
+
+                state_list_t::iterator first = this->m_states.begin();
+                state_list_t::iterator last = this->m_states.end();
+                state_list_t::iterator first_cap = std::partition(first, last, IsCapture());
+                this->m_nb_capture = last - first_cap;
+
+                for (unsigned n = this->m_nb_capture; first != first_cap; ++first, ++n) {
+                    (*first)->num = n;
+                }
+            }
         }
-        stw.reset(st);
-        return true;
-    }
+
+        ~StateParser()
+        {
+            this->free_state();
+        }
+
+        const State * root() const
+        {
+            return this->m_root;
+        }
+
+        const state_list_t & states() const
+        {
+            return this->m_states;
+        }
+
+        unsigned nb_capture() const
+        {
+            return this->m_nb_capture;
+        }
+
+    private:
+        StateParser(const StateParser &);
+        StateParser& operator=(const StateParser &);
+
+        void free_state()
+        {
+            std::for_each(this->m_states.begin(), this->m_states.end(), StateDeleter());
+        }
+
+        state_list_t m_states;
+        State * m_root;
+        unsigned m_nb_capture;
+    };
 }
 
 #endif

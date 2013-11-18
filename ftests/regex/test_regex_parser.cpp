@@ -31,6 +31,7 @@
 #define LOGNULL
 
 #include "regex_parser.hpp"
+#include "regex_states_wraper.hpp"
 
 using namespace re;
 
@@ -50,23 +51,22 @@ inline void st_to_string(const state_list_t & states, StatesValue & stval, State
     }
 }
 
-inline std::string st_to_string(StatesWrapper & stw)
+inline std::string st_to_string(State * st)
 {
-    if (stw.states.empty()) {
+    if (!st) {
         return "\n";
     }
     std::ostringstream os;
+    StatesWrapper stw(st);
     StatesValue stval(stw.states);
     st_to_string(stw.states, stval, stw.states.front(), os);
+    stw.states.clear();
     return os.str();
 }
 
-inline std::string st_to_string(State * st)
+inline std::string st_to_string(StatesWrapper & stw)
 {
-    StatesWrapper stw(st);
-    std::string ret = st_to_string(stw);
-    stw.states.clear();
-    return ret;
+    return st_to_string(stw.root);
 }
 
 inline size_t multi_char(const char * c)
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
     struct Reg {
         Reg(const char * s)
         {
-            st_compile(this->stw, s);
+            this->stw.compile(s);
         }
 
         std::string to_string()

@@ -31,7 +31,7 @@ namespace re {
         struct Parser {
             const char * err;
             size_t pos_err;
-            StatesWrapper stw;
+            StateParser st_parser;
 
             Parser()
             : err(0)
@@ -42,18 +42,8 @@ namespace re {
             : err(0)
             , pos_err(0)
             {
-                st_compile(this->stw, s, &this->err, &this->pos_err);
+                this->st_parser.compile(s, &this->err, &this->pos_err);
             }
-
-            Parser(State * st)
-            : err(0)
-            , pos_err(0)
-            {
-                stw.reset(st);
-            }
-
-            ~Parser()
-            {}
         };
         Parser parser;
         StateMachine2 sm;
@@ -63,19 +53,17 @@ namespace re {
 
         Regex(unsigned step_limit = 10000)
         : parser()
-        , sm(this->parser.stw.states)
+        , sm(this->parser.st_parser.states(),
+             this->parser.st_parser.root(),
+             this->parser.st_parser.nb_capture())
         , step_limit(step_limit)
         {}
 
         Regex(const char * s, unsigned step_limit = 10000)
         : parser(s)
-        , sm(this->parser.stw.states)
-        , step_limit(step_limit)
-        {}
-
-        Regex(State * st, unsigned step_limit = 10000)
-        : parser(st)
-        , sm(this->parser.stw.states)
+        , sm(this->parser.st_parser.states(),
+             this->parser.st_parser.root(),
+             this->parser.st_parser.nb_capture())
         , step_limit(step_limit)
         {}
 
@@ -83,9 +71,10 @@ namespace re {
         {
             this->sm.~StateMachine2();
             this->parser.~Parser();
-            this->parser.err = 0;
             new (&this->parser) Parser(s);
-            new (&this->sm) StateMachine2(this->parser.stw.states);
+            new (&this->sm) StateMachine2(this->parser.st_parser.states(),
+                                          this->parser.st_parser.root(),
+                                          this->parser.st_parser.nb_capture());
         }
 
         ~Regex()

@@ -21,93 +21,17 @@
 #ifndef REDEMPTION_REGEX_STATE_WRAPPER_HPP
 #define REDEMPTION_REGEX_STATE_WRAPPER_HPP
 
-#include <ostream>
 #include <vector>
 #include <algorithm>
 #include <cassert>
 
-#include "regex_state.hpp"
+#include "regex_parser.hpp"
 
 namespace re {
 
-    typedef std::vector<const State*> const_state_list_t;
-    typedef std::vector<State*> state_list_t;
-
-    inline void append_state(State * st, state_list_t& sts)
+    class StatesValue
     {
-        //if (st && st->num != -1u) {
-        //    st->num = -1u;
-        //    sts.push_back(st);
-        //    append_state(st->out1, sts);
-        //    append_state(st->out2, sts);
-        //}
-
-        if (!st) {
-            return ;
-        }
-
-        state_list_t stack;
-        stack.reserve(16);
-        sts.reserve(32);
-
-        st->num = -1u;
-        sts.push_back(st);
-        stack.push_back(st);
-
-        while (!stack.empty()) {
-            st = stack.back();
-            while (st->out1 && st->out1->num != -1u) {
-                st = st->out1;
-                stack.push_back(st);
-                sts.push_back(st);
-                st->num = -1u;
-            }
-            st = st->out2;
-            if (st && st->num != -1u) {
-                stack.push_back(st);
-                sts.push_back(st);
-                st->num = -1u;
-                continue;
-            }
-            stack.pop_back();
-            while (!stack.empty()) {
-                st = stack.back()->out2;
-                if (st && st->num != -1u) {
-                    stack.push_back(st);
-                    sts.push_back(st);
-                    st->num = -1u;
-                    break;
-                }
-                stack.pop_back();
-            }
-        }
-    }
-
-    struct StateDeleter
-    {
-        void operator()(State * st) const
-        {
-            delete st;
-        }
-    };
-
-    struct IsEpsilone
-    {
-        bool operator()(State * st) const
-        {
-            return st->is_epsilone();
-        }
-    };
-
-    class StatesValue {
         std::vector<unsigned> nums;
-
-        struct IsCapture {
-            bool operator()(const State * st) const
-            {
-                return ! st->is_cap();
-            }
-        };
 
     public:
         unsigned nb_capture;
@@ -165,40 +89,37 @@ namespace re {
         : root(st)
         {
             append_state(st, this->states);
+            remove_epsilone(this->states);
+        }
+
+        void compile(const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
+        {
+            const char * err = 0;
+            utf_consumer consumer(s);
+            StateAccu accu(this->states);
+            unsigned num_cap = 0;
+            this->root = intermendary_st_compile(accu, consumer, err, num_cap).first;
+            if (msg_err) {
+                *msg_err = err;
+            }
+            if (pos_err) {
+                *pos_err = err ? consumer.str() - s : 0;
+            }
+
+            if (err) {
+                accu.clear();
+            }
+            else {
+                remove_epsilone(this->states);
+            }
         }
 
         void reset(State * st)
         {
-            std::for_each(this->states.begin(), this->states.end(), StateDeleter());
-            this->states.clear();
+            this->clean();
             this->root = st;
             append_state(st, this->states);
-
-            state_list_t::iterator last = this->states.end();
-            if (std::find_if(this->states.begin(), last, IsEpsilone()) != last) {
-                for (state_list_t::iterator first = this->states.begin(); first != last; ++first) {
-                    State * nst = (*first)->out1;
-                    while (nst && nst->is_epsilone()) {
-                        nst = nst->out1;
-                    }
-                    (*first)->out1 = nst;
-                }
-                state_list_t::iterator first = this->states.begin();
-                while (first != last && !(*first)->is_epsilone()) {
-                    ++first;
-                }
-                state_list_t::iterator result = first;
-                for (; first != last; ++first) {
-                    if ((*first)->is_epsilone()) {
-                        delete *first;
-                    }
-                    else {
-                        *result = *first;
-                        ++result;
-                    }
-                }
-                this->states.resize(result - this->states.begin());
-            }
+            remove_epsilone(this->states);
         }
 
         ~StatesWrapper()
@@ -209,6 +130,12 @@ namespace re {
     private:
         StatesWrapper(const StatesWrapper &);
         StatesWrapper& operator=(const StatesWrapper &);
+
+        void clean()
+        {
+            std::for_each(this->states.begin(), this->states.end(), StateDeleter());
+            this->states.clear();
+        }
     };
 
 }

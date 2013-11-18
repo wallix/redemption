@@ -26,36 +26,12 @@
 #include <utility>
 #include <algorithm>
 #include <iomanip>
-#include <cstring>
+#include <cstring> //memset
 #include <cassert>
 
-#include "regex_states_wraper.hpp"
+#include "regex_utils.hpp"
 
 namespace re {
-
-    inline void display_states(StatesValue & stval)
-    {
-        if (stval.states.empty()) {
-            return ;
-        }
-        stval.reset_nums();
-        struct Impl {
-            static void display(StatesValue & stval, State * st, unsigned depth = 0) {
-                if (st && stval.get_num_at(st) != -2u) {
-                    std::cout
-                    << std::setw(depth) << "" << "\033[33m" << st << "\t" << st->num << "\t" << *st
-                    << "\033[0m\n\t" << std::setw(depth) << st->out1 << "\n\t"
-                    << std::setw(depth) << "" << st->out2 << "\n";
-                    stval.set_num_at(st, -2u);
-                    display(stval, st->out1, depth+1);
-                    display(stval, st->out2, depth+1);
-                }
-            }
-        };
-        char oldfill = std::cout.fill('\t');
-        Impl::display(stval, stval.states.front());
-        std::cout.fill(oldfill);
-    }
 
     class StateMachine2
     {
@@ -71,17 +47,11 @@ namespace re {
 
         StateMachine2(const StateMachine2&) /*= delete*/;
 
-        struct IsCapture {
-            bool operator()(const State * st) const
-            {
-                return ! st->is_cap();
-            }
-        };
-
     public:
-        explicit StateMachine2(state_list_t & sts)
+        explicit StateMachine2(const state_list_t & sts, const State * root, unsigned nb_capture)
         : states(sts)
-        , nb_capture(0)
+        , root(root)
+        , nb_capture(nb_capture)
         , nodes(sts.size())
         , idx_trace(-1u)
         , idx_trace_free(0)
@@ -94,24 +64,12 @@ namespace re {
             if (sts.empty()) {
                 return ;
             }
-            const State * root = sts.front();
+
+            this->nums.resize(this->states.size(), 0);
 
             {
-                state_list_t::iterator first = this->states.begin();
-                state_list_t::iterator last = this->states.end();
-                state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
-                this->nb_capture = last - first_cap;
-
-                for (unsigned n = 0; first != last; ++first, ++n) {
-                    (*first)->num = n;
-                }
-
-                this->nums.resize(this->states.size(), 0);
-            }
-
-            {
-                state_list_t::iterator first = this->states.begin();
-                state_list_t::iterator last = this->states.end();
+                state_list_t::const_iterator first = this->states.begin();
+                state_list_t::const_iterator last = this->states.end();
                 for (; first != last; ++first) {
                     if ((*first)->is_sequence()) {
                         this->nodes += (*first)->data.sequence.len - 1;
@@ -215,14 +173,14 @@ namespace re {
 
         void set_num_at(const State * st, unsigned count) const
         {
-            assert(st == this->states[st->num]);
+            //assert(st == this->states[st->num]);
             assert(this->states.size() > st->num);
             this->nums[st->num] = count;
         }
 
         unsigned get_num_at(const State * st) const
         {
-            assert(st == this->states[st->num]);
+            //assert(st == this->states[st->num]);
             assert(this->states.size() > st->num);
             return this->nums[st->num];
         }
@@ -442,14 +400,14 @@ namespace re {
             return this->match(s, step_limit, tracer, ExactMatch<false>(), ActiveCapture<true>());
         }
 
-        range_matches match_result()
+        range_matches match_result(bool all = true)
         {
             range_matches ret;
-            this->append_match_result(ret);
+            this->append_match_result(ret, all);
             return ret;
         }
 
-        void append_match_result(range_matches& ranges) const
+        void append_match_result(range_matches& ranges, bool all = true) const
         {
             if (this->idx_trace == -1u) {
                 return ;
@@ -463,7 +421,7 @@ namespace re {
                 if (*trace && *(trace+1)) {
                     ranges.push_back(range_t(*trace, *(trace + 1)));
                 }
-                else {
+                else if (all) {
                     ranges.push_back(range_t(0,0));
                 }
             }
@@ -532,7 +490,7 @@ namespace re {
             }
             this->reset_id();
             struct Impl {
-                static void display(const StateMachine2 & sm, State * st, unsigned depth = 0) {
+                static void display(const StateMachine2 & sm, const State * st, unsigned depth = 0) {
                     if (st && sm.get_num_at(st) != -2u) {
                         std::cout
                         << std::setw(depth) << "" << "\033[33m" << st << "\t" << st->num << "\t" << *st
@@ -545,7 +503,7 @@ namespace re {
                 }
             };
             char oldfill = std::cout.fill('\t');
-            Impl::display(*this, this->states.front());
+            Impl::display(*this, this->root);
             std::cout.fill(oldfill);
         }
 
@@ -627,7 +585,7 @@ namespace re {
                     if (!--ifirst->consume) {
                         if (active_capture) {
                             if (ifirst->num_close != -1u) {
-                                unsigned num = ifirst->num_close - (this->states.size() - this->nb_capture);
+                                unsigned num = ifirst->num_close;
                                 if (tracer.close(ifirst->idx, s, num)) {
 #ifdef DISPLAY_TRACE
                                     std::cout << "\t" << ifirst->idx << " (close) " << num << std::endl;
@@ -694,7 +652,7 @@ namespace re {
                                                     StateMachine2 & sm, Tracer tracer)
                             {
                                 if (l.num_open != -1u) {
-                                    unsigned num = l.num_open - (sm.states.size() - sm.nb_capture);
+                                    unsigned num = l.num_open;
                                     if (!sm.traces[idx * sm.nb_capture + num] && tracer.open(idx, s, num)) {
 #ifdef DISPLAY_TRACE
                                         std::cout << "\t(open) "<< num << std::endl;
@@ -708,7 +666,7 @@ namespace re {
                                                      StateMachine2 & sm, Tracer tracer, utf_consumer consumer)
                             {
                                 if (l.num_close != -1u) {
-                                    unsigned num = l.num_close - (sm.states.size() - sm.nb_capture);
+                                    unsigned num = l.num_close;
                                     if (tracer.close(idx, s, num)) {
 #ifdef DISPLAY_TRACE
                                         std::cout << "\t(close) "<< num << std::endl;
@@ -842,7 +800,7 @@ namespace re {
 
                         if (active_capture) {
                             if (ifirst->num_close != -1u) {
-                                unsigned num = ifirst->num_close - (this->states.size() - this->nb_capture);
+                                unsigned num = ifirst->num_close;
                                 if (tracer.close(ifirst->idx, s, num)) {
 #ifdef DISPLAY_TRACE
                                     std::cout << "\t" << ifirst->idx << " (close) " << num << std::endl;
@@ -888,7 +846,8 @@ namespace re {
         }
 
 
-        state_list_t & states;
+        const state_list_t & states;
+        const State * root;
         mutable std::vector<unsigned> nums;
 
         unsigned nb_capture;
@@ -925,283 +884,6 @@ namespace re {
         unsigned step_id;
         unsigned step_count;
     };
-
-
-    typedef std::pair<const State*, unsigned> st_step_elem_t;
-    typedef std::vector<st_step_elem_t> st_step_range_list_t;
-    typedef st_step_range_list_t::iterator st_step_range_iterator_t;
-
-    inline bool st_exact_step(st_step_range_list_t & l1, st_step_range_list_t & l2,
-                              StatesValue & stval, size_t c, utf_consumer & consumer, unsigned count)
-    {
-        struct add {
-            static bool impl(st_step_range_list_t & l, const State * st,
-                             StatesValue & stval, bool is_end, unsigned count, unsigned count_consume)
-            {
-                if (stval.get_num_at(st) == count) {
-                    return false;
-                }
-                stval.set_num_at(st, count);
-                if (st->is_split()) {
-                    if (st->out1 && impl(l, st->out1, stval, is_end, count, count_consume)) {
-                        return true;
-                    }
-                    if (st->out2 && impl(l, st->out2, stval, is_end, count, count_consume)) {
-                        return true;
-                    }
-                }
-                else if (st->is_cap()) {
-                    if (st->out1) {
-                        return impl(l, st->out1, stval, is_end, count, count_consume);
-                    }
-                }
-                else if (st) {
-                    if (st->is_terminate()) {
-                        if (count_consume > 0) {
-                            l.push_back(st_step_elem_t(st, count_consume));
-                        }
-                        else if (is_end) {
-                            return true;
-                        }
-                    }
-                    else {
-                        l.push_back(st_step_elem_t(st, count_consume));
-                    }
-                }
-                return false;
-            }
-
-            static bool push_next(st_step_range_list_t & l, const State * st,
-                                  StatesValue & stval, bool is_end, unsigned count)
-            {
-                if ( ! st->out1 && ! st->out2 && is_end) {
-                    return true;
-                }
-                if (st->out1 && impl(l, st->out1, stval, is_end, count, 0)) {
-                    return true;
-                }
-                if (st->out2 && impl(l, st->out2, stval, is_end, count, 0)) {
-                    return true;
-                }
-                return false;
-            }
-        };
-
-        const bool is_end = ! consumer.valid();
-        unsigned r;
-        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
-#ifdef DISPLAY_TRACE
-            std::cout << (*first->first) << std::endl;
-#endif
-            if (first->second) {
-#ifdef DISPLAY_TRACE
-                std::cout << "continue " << first->second << std::endl;
-#endif
-                if (!--first->second) {
-                    if (add::push_next(l2, first->first, stval, is_end, count)) {
-                        return true;
-                    }
-                }
-                else {
-                    l2.push_back(*first);
-                }
-                continue;
-            }
-            if ( ! first->first->is_cap() && (r = first->first->check(c, consumer))) {
-#ifdef DISPLAY_TRACE
-                std::cout << "ok" << std::endl;
-#endif
-                if (r != 1) {
-                    l2.push_back(st_step_elem_t(first->first, r-1));
-                }
-                else if (add::push_next(l2, first->first, stval, is_end, count)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    inline void add_first(st_step_range_list_t & l, st_step_range_list_t & lfirst, const State * st)
-    {
-        if (st->is_split()) {
-            if (st->out1) {
-                add_first(l, lfirst, st->out1);
-            }
-            if (st->out2) {
-                add_first(l, lfirst, st->out2);
-            }
-        }
-        else if (st->is_cap()) {
-            if (st->out1) {
-                add_first(l, lfirst, st->out1);
-            }
-        }
-        else if (st->type == FIRST) {
-            if (st->out1) {
-                add_first(lfirst, lfirst, st->out1);
-            }
-        }
-        else {
-            l.push_back(st_step_elem_t(st, 0));
-        }
-    }
-
-    inline bool st_exact_search(StatesWrapper & stw, const char * s)
-    {
-        if ( stw.states.empty() ) {
-            return false;
-        }
-
-        StatesValue stval(stw.states);
-
-// #ifdef DISPLAY_TRACE
-//         display_state(stval);
-// #endif
-
-        st_step_range_list_t l1;
-        add_first(l1, l1, stw.root);
-        if (l1.empty()) {
-            return false;
-        }
-        utf_consumer consumer(s);
-        st_step_range_list_t l2;
-        bool res = false;
-        unsigned count = 1;
-        while (consumer.valid() && !(res = st_exact_step(l1, l2, stval, consumer.bumpc(), consumer, ++count))) {
-#ifdef DISPLAY_TRACE
-            std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
-#endif
-            if (l2.empty()) {
-                return false;
-            }
-            l1.swap(l2);
-            l2.clear();
-        }
-
-        if (consumer.valid()) {
-            return false;
-        }
-        if (res) {
-            return true;
-        }
-        return false;
-    }
-
-    inline bool st_step(st_step_range_list_t & l1, st_step_range_list_t & l2,
-                        StatesValue & stval, char_int c, utf_consumer & consumer, unsigned count)
-    {
-        struct add {
-            static bool impl(st_step_range_list_t & l, const State * st, StatesValue & stval,
-                             unsigned count, unsigned count_consume) {
-                if (st->is_finish()) {
-                    return true;
-                }
-                if (stval.get_num_at(st) == count) {
-                    return false;
-                }
-                stval.set_num_at(st, count);
-                if (st->is_split()) {
-                    if (st->out1 && impl(l, st->out1, stval, count, count_consume)) {
-                        return true;
-                    }
-                    if (st->out2 && impl(l, st->out2, stval, count, count_consume)) {
-                        return true;
-                    }
-                }
-                else if (st->is_cap()) {
-                    if (st->out1) {
-                        return impl(l, st->out1, stval, count, count_consume);
-                    }
-                }
-                else if (st) {
-                    l.push_back(st_step_elem_t(st, count_consume));
-                }
-                return false;
-            }
-        };
-
-        unsigned r;
-        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
-            if (first->second && --first->second) {
-                l2.push_back(*first);
-                continue;
-            }
-            if ( ! first->first->is_cap() && (r = first->first->check(c, consumer))) {
-#ifdef DISPLAY_TRACE
-            std::cout << (*first->first) << std::endl;
-#endif
-                if ( ! first->first->out1 && ! first->first->out2) {
-                    return true;
-                }
-                if (first->first->out1) {
-                    if (add::impl(l2, first->first->out1, stval, count, r)) {
-                        return true;
-                    }
-                }
-                if (first->first->out2) {
-                    if (add::impl(l2, first->first->out2, stval, count, r)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    inline bool st_search(StatesWrapper & stw, const char * s)
-    {
-        if ( stw.states.empty()) {
-            return false;
-        }
-
-        StatesValue stval(stw.states);
-
-// #ifdef DISPLAY_TRACE
-//         display_state(stval);
-// #endif
-
-        st_step_range_list_t lst;
-        st_step_range_list_t l1;
-        add_first(lst, l1, stw.root);
-        if (l1.empty() && lst.empty()) {
-            return false;
-        }
-        utf_consumer consumer(s);
-        st_step_range_list_t l2;
-        bool res = false;
-        unsigned count = 1;
-        while (consumer.valid()) {
-#ifdef DISPLAY_TRACE
-            std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
-#endif
-            for (st_step_range_iterator_t first = lst.begin(), last = lst.end(); first != last; ++first) {
-                if (stval.get_num_at(first->first) != count) {
-                    l1.push_back(*first);
-                }
-            }
-            if (l1.empty()) {
-                return false;
-            }
-            l2.clear();
-            if ((res = st_step(l1, l2, stval, consumer.bumpc(), consumer, ++count))) {
-                break ;
-            }
-            l1.swap(l2);
-        }
-        if (res) {
-            return true;
-        }
-        if (consumer.valid()) {
-            return false;
-        }
-        for (st_step_range_iterator_t first = l1.begin(), last = l1.end(); first != last; ++first) {
-            if (first->first->type == LAST) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
 
 #endif

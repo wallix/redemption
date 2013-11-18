@@ -195,6 +195,7 @@ int main(int argc, char **argv) {
         Regex::range_matches match_result = regex.match_result();
         typedef Regex::range_matches::iterator iterator;
         for (iterator first = match_result.begin(), last = match_result.end(); first != last; ++first) {
+            std::cout << (first->first - str) << " " << (first->second - str) << std::endl;
             if (first->first) {
                 (std::cout << "\tmatch: '").write(first->first, first->second-first->first) << "'\n";
             }
