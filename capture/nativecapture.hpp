@@ -76,7 +76,10 @@ public:
 
     bool pointer_displayed;
 
-    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable, const Inifile & ini)
+    bool disable_keyboard_log_wrm;
+
+    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable,
+                  const Inifile & ini)
     : width(width)
     , height(height)
     , bpp(24)
@@ -85,6 +88,7 @@ public:
     , nb_file(0)
     , time_to_wait(0)
     , pointer_displayed(false)
+    , disable_keyboard_log_wrm(ini.video.disable_keyboard_log_wrm)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
@@ -142,7 +146,9 @@ public:
     }
 
     virtual void input(const timeval & now, Stream & input_data_32) {
-        this->recorder.input(now, input_data_32);
+        if (!this->disable_keyboard_log_wrm) {
+            this->recorder.input(now, input_data_32);
+        }
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
