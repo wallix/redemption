@@ -80,6 +80,11 @@ namespace re {
         ~Regex()
         {}
 
+        unsigned mark_count() const
+        {
+            return this->parser.st_parser.nb_capture();
+        }
+
         const char * message_error() const
         {
             return this->parser.err;
@@ -92,20 +97,20 @@ namespace re {
 
         typedef StateMachine2::range_matches range_matches;
 
-        range_matches exact_match(const char * s, bool check_end = true)
+        range_matches exact_match(const char * s)
         {
             range_matches ret;
-            if (this->sm.exact_search_with_trace(s, this->step_limit, check_end)) {
+            if (this->sm.exact_search_with_trace(s, this->step_limit)) {
                 this->sm.append_match_result(ret);
             }
             return ret;
         }
 
         template<typename Tracer>
-        range_matches exact_match(const char * s, Tracer tracer, bool check_end = true)
+        range_matches exact_match(const char * s, Tracer tracer)
         {
             range_matches ret;
-            if (this->sm.exact_search_with_trace(s, this->step_limit, tracer, check_end)) {
+            if (this->sm.exact_search_with_trace(s, this->step_limit, tracer)) {
                 this->sm.append_match_result(ret);
             }
             return ret;
@@ -130,9 +135,9 @@ namespace re {
             return ret;
         }
 
-        bool exact_search(const char * s, bool check_end = true)
+        bool exact_search(const char * s)
         {
-            return this->sm.exact_search(s, this->step_limit, check_end);
+            return this->sm.exact_search(s, this->step_limit);
         }
 
         bool search(const char * s)
@@ -140,15 +145,15 @@ namespace re {
             return this->sm.search(s, this->step_limit);
         }
 
-        bool exact_search_with_matches(const char * s, bool check_end = true)
+        bool exact_search_with_matches(const char * s)
         {
-            return this->sm.exact_search_with_trace(s, this->step_limit, check_end);
+            return this->sm.exact_search_with_trace(s, this->step_limit);
         }
 
         template<typename Tracer>
-        bool exact_search_with_matches(const char * s, Tracer tracer, bool check_end = true)
+        bool exact_search_with_matches(const char * s, Tracer tracer)
         {
-            return this->sm.exact_search_with_trace(s, tracer, check_end, this->step_limit);
+            return this->sm.exact_search_with_trace(s, tracer, this->step_limit);
         }
 
         bool search_with_matches(const char * s)

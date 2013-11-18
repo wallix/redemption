@@ -31,11 +31,11 @@
 #define LOGNULL
 
 #include "regex_parser.hpp"
-#include "regex_states_wraper.hpp"
+#include "regex_states_value.hpp"
 
 using namespace re;
 
-inline void st_to_string(const state_list_t & states, StatesValue & stval, State * st,
+inline void st_to_string(const state_list_t & states, StatesValue & stval, const State * st,
                          std::ostream& os, unsigned depth = 0)
 {
     size_t n = std::find(states.begin(), states.end(), st) - states.begin() + 1;
@@ -57,16 +57,14 @@ inline std::string st_to_string(State * st)
         return "\n";
     }
     std::ostringstream os;
-    StatesWrapper stw(st);
-    StatesValue stval(stw.states);
-    st_to_string(stw.states, stval, stw.states.front(), os);
-    stw.states.clear();
+    state_list_t states;
+    append_state(st, states);
+    for (unsigned i = 0; i < states.size(); ++i) {
+        states[i]->num = i;
+    }
+    StatesValue stval(states);
+    st_to_string(states, stval, st, os);
     return os.str();
-}
-
-inline std::string st_to_string(StatesWrapper & stw)
-{
-    return st_to_string(stw.root);
 }
 
 inline size_t multi_char(const char * c)
@@ -79,15 +77,18 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
     struct Reg {
         Reg(const char * s)
         {
-            this->stw.compile(s);
+            this->stparser.compile(s);
+            ///WARNING not save
+            this->str = st_to_string(const_cast<State*>(this->stparser.root()));
         }
 
-        std::string to_string()
+        std::string to_string() const
         {
-            return st_to_string(this->stw);
+            return this->str;
         }
-
-        StatesWrapper stw;
+    private:
+        StateParser stparser;
+        std::string str;
     };
 
     {

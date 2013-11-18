@@ -908,6 +908,11 @@ namespace re {
             return this->m_nb_capture;
         }
 
+        bool empty() const
+        {
+            return this->m_states.empty();
+        }
+
     private:
         StateParser(const StateParser &);
         StateParser& operator=(const StateParser &);

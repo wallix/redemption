@@ -43,25 +43,25 @@ BOOST_AUTO_TEST_CASE(TestRegexSt)
     struct Reg {
         Reg(const char * s)
         {
-            this->stw.compile(s);
+            this->stparser.compile(s);
         }
 
         bool search(const char * s)
         {
-            return st_search(this->stw, s);
+            return st_search(this->stparser, s);
         }
 
         bool exact_search(const char * s)
         {
-            return st_exact_search(this->stw, s);
+            return st_exact_search(this->stparser, s);
         }
 
-        State * root() const
+        const State * root() const
         {
-            return this->stw.states.empty() ? 0 : this->stw.states.front();
+            return this->stparser.root();
         }
 
-        StatesWrapper stw;
+        StateParser stparser;
     };
 
     {

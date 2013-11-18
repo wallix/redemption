@@ -340,39 +340,32 @@ namespace re {
         template<bool V> struct ActiveCapture { static const bool value = V; };
 
     public:
-        bool exact_search(const char * s, unsigned step_limit, bool check_end = true)
+        bool exact_search(const char * s, unsigned step_limit)
         {
             if (this->states.empty()) {
                 return false;
             }
-            if (check_end) {
-                return this->match(s, step_limit, DefaultMatchTracer(),
-                                   ExactMatch<true>(), ActiveCapture<false>());
-            }
-            else {
-                return this->match(s, step_limit, DefaultMatchTracer(),
-                                   ExactMatch<false>(), ActiveCapture<false>());
-            }
+            return this->match(s, step_limit, DefaultMatchTracer(),
+                               ExactMatch<true>(), ActiveCapture<false>());
         }
 
-        bool exact_search_with_trace(const char * s, unsigned step_limit,
-                                     bool check_end = true)
+        bool exact_search_with_trace(const char * s, unsigned step_limit)
         {
             if (this->nb_capture == 0) {
-                return exact_search(s, step_limit, check_end);
+                return exact_search(s, step_limit);
             }
             return this->match(s, step_limit, DefaultMatchTracer(),
                                ExactMatch<true>(), ActiveCapture<true>());
         }
 
         template<typename Tracer>
-        bool exact_search_with_trace(const char * s, unsigned step_limit,
-                                     Tracer tracer, bool check_end = true)
+        bool exact_search_with_trace(const char * s, unsigned step_limit, Tracer tracer)
         {
             if (this->nb_capture == 0) {
-                return exact_search(s, step_limit, check_end);
+                return exact_search(s, step_limit);
             }
-            return this->match(s, step_limit, tracer, ExactMatch<true>(), ActiveCapture<true>());
+            return this->match(s, step_limit, tracer,
+                               ExactMatch<true>(), ActiveCapture<true>());
         }
 
         bool search(const char * s, unsigned step_limit)
@@ -380,7 +373,8 @@ namespace re {
             if (this->states.empty()) {
                 return false;
             }
-            return this->match(s, step_limit, DefaultMatchTracer(), ExactMatch<false>(), ActiveCapture<false>());
+            return this->match(s, step_limit, DefaultMatchTracer(),
+                               ExactMatch<false>(), ActiveCapture<false>());
         }
 
         bool search_with_trace(const char * s, unsigned step_limit)
@@ -388,7 +382,8 @@ namespace re {
             if (this->nb_capture == 0) {
                 return search(s, step_limit);
             }
-            return this->match(s, step_limit, DefaultMatchTracer(), ExactMatch<false>(), ActiveCapture<true>());
+            return this->match(s, step_limit, DefaultMatchTracer(),
+                               ExactMatch<false>(), ActiveCapture<true>());
         }
 
         template<typename Tracer>
@@ -397,7 +392,8 @@ namespace re {
             if (this->nb_capture == 0) {
                 return search(s, step_limit);
             }
-            return this->match(s, step_limit, tracer, ExactMatch<false>(), ActiveCapture<true>());
+            return this->match(s, step_limit, tracer,
+                               ExactMatch<false>(), ActiveCapture<true>());
         }
 
         range_matches match_result(bool all = true)
@@ -488,7 +484,7 @@ namespace re {
             if (this->states.empty()) {
                 return ;
             }
-            this->reset_id();
+            std::fill(this->nums.begin(), this->nums.end(), 0);
             struct Impl {
                 static void display(const StateMachine2 & sm, const State * st, unsigned depth = 0) {
                     if (st && sm.get_num_at(st) != -2u) {

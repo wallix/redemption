@@ -26,18 +26,18 @@
 #include <utility>
 #include <iomanip>
 
-#include "regex_states_wraper.hpp"
+#include "regex_states_value.hpp"
 
 namespace re {
 
-    inline void display_states(StatesValue & stval)
+    inline void display_states(StatesValue & stval, const State * root)
     {
         if (stval.states.empty()) {
             return ;
         }
         stval.reset_nums();
         struct Impl {
-            static void display(StatesValue & stval, State * st, unsigned depth = 0) {
+            static void display(StatesValue & stval, const State * st, unsigned depth = 0) {
                 if (st && stval.get_num_at(st) != -2u) {
                     std::cout
                     << std::setw(depth) << "" << "\033[33m" << st << "\t" << st->num << "\t" << *st
@@ -50,7 +50,7 @@ namespace re {
             }
         };
         char oldfill = std::cout.fill('\t');
-        Impl::display(stval, stval.states.front());
+        Impl::display(stval, root);
         std::cout.fill(oldfill);
     }
 
@@ -174,20 +174,20 @@ namespace re {
         }
     }
 
-    inline bool st_exact_search(StatesWrapper & stw, const char * s)
+    inline bool st_exact_search(StateParser & stparser, const char * s)
     {
-        if ( stw.states.empty() ) {
+        if ( stparser.empty() ) {
             return false;
         }
 
-        StatesValue stval(stw.states);
+        StatesValue stval(stparser.states());
 
 // #ifdef DISPLAY_TRACE
-//         display_states(stval);
+//         display_states(stval, stparser.root());
 // #endif
 
         st_step_range_list_t l1;
-        add_first(l1, l1, stw.root);
+        add_first(l1, l1, stparser.root());
         if (l1.empty()) {
             return false;
         }
@@ -276,21 +276,21 @@ namespace re {
         return false;
     }
 
-    inline bool st_search(StatesWrapper & stw, const char * s)
+    inline bool st_search(StateParser & stparser, const char * s)
     {
-        if ( stw.states.empty()) {
+        if ( stparser.empty()) {
             return false;
         }
 
-        StatesValue stval(stw.states);
+        StatesValue stval(stparser.states());
 
 // #ifdef DISPLAY_TRACE
-//         display_states(stval);
+//         display_states(stval, stparser.root());
 // #endif
 
         st_step_range_list_t lst;
         st_step_range_list_t l1;
-        add_first(lst, l1, stw.root);
+        add_first(lst, l1, stparser.root());
         if (l1.empty() && lst.empty()) {
             return false;
         }

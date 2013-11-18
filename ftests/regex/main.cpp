@@ -173,12 +173,6 @@ int main(int argc, char **argv) {
     << (ismatch4 ? "good\n" : "fail\n")
     << d4 << " sec\n";
 
-//     StatesWrapper stw;
-//     st_compile(stw, rgxstr);
-//     std::cout << "st_exact_search: " << st_exact_search(stw, str) << "\n";
-//     stw.reset_nums();
-//     std::cout << "st_search: " << st_search(stw, str) << std::endl;
-
     if (validregexec && ismatch3) {
         std::cout << ("with regex.h\n");
         for (unsigned i = 1; i < sizeof(regmatch)/sizeof(regmatch[0]); i++) {
