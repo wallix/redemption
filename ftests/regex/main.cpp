@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
     const char * rgxstr = argv[1];
     Regex regex(argv[1]);
     if (regex.message_error()) {
-        std::cerr << regex.message_error() << std::endl;
+        std::cerr << regex.message_error() << " at position " << regex.position_error() << std::endl;
         return 2;
     }
     regex.display();

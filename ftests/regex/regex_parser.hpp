@@ -628,6 +628,7 @@ namespace re {
                         *pst = eps;
                         bst = accu.split(bst == &st ? st.out1 : bst);
                         pst = &bst->out2;
+                        spst = pst;
                         break;
                     case '{': {
                         /**///std::cout << ("{") << std::endl;

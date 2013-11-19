@@ -526,7 +526,7 @@ namespace re {
                     if (st && sm.get_num_at(st) != -2u) {
                         std::cout
                         << std::setw(depth) << "" << "\033[33m" << st << "\t" << st->num << "\t" << *st
-                        << "\033[0m\n\t" << std::setw(depth) << st->out1 << "\n\t"
+                        << "\033[0m\n\t" << std::setw(depth) << "" << st->out1 << "\n\t"
                         << std::setw(depth) << "" << st->out2 << "\n";
                         sm.set_num_at(st, -2u);
                         display(sm, st->out1, depth+1);
