@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_REGEX_STATE_WRAPPER_HPP
-#define REDEMPTION_REGEX_STATE_WRAPPER_HPP
+#ifndef REDEMPTION_REGEX_STATES_VALUE_HPP
+#define REDEMPTION_REGEX_STATES_VALUE_HPP
 
 #include <vector>
 #include <algorithm>

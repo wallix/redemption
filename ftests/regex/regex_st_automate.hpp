@@ -59,7 +59,7 @@ namespace re {
     typedef st_step_range_list_t::iterator st_step_range_iterator_t;
 
     inline bool st_exact_step(st_step_range_list_t & l1, st_step_range_list_t & l2,
-                              StatesValue & stval, size_t c, utf_consumer & consumer, unsigned count)
+                              StatesValue & stval, size_t c, utf8_consumer & consumer, unsigned count)
     {
         struct add {
             static bool impl(st_step_range_list_t & l, const State * st,
@@ -191,13 +191,13 @@ namespace re {
         if (l1.empty()) {
             return false;
         }
-        utf_consumer consumer(s);
+        utf8_consumer consumer(s);
         st_step_range_list_t l2;
         bool res = false;
         unsigned count = 1;
         while (consumer.valid() && !(res = st_exact_step(l1, l2, stval, consumer.bumpc(), consumer, ++count))) {
 #ifdef DISPLAY_TRACE
-            std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
+            std::cout << "\033[01;31mc: '" << utf8_char(consumer.getc()) << "'\033[0m\n";
 #endif
             if (l2.empty()) {
                 return false;
@@ -216,7 +216,7 @@ namespace re {
     }
 
     inline bool st_step(st_step_range_list_t & l1, st_step_range_list_t & l2,
-                        StatesValue & stval, char_int c, utf_consumer & consumer, unsigned count)
+                        StatesValue & stval, char_int c, utf8_consumer & consumer, unsigned count)
     {
         struct add {
             static bool impl(st_step_range_list_t & l, const State * st, StatesValue & stval,
@@ -294,13 +294,13 @@ namespace re {
         if (l1.empty() && lst.empty()) {
             return false;
         }
-        utf_consumer consumer(s);
+        utf8_consumer consumer(s);
         st_step_range_list_t l2;
         bool res = false;
         unsigned count = 1;
         while (consumer.valid()) {
 #ifdef DISPLAY_TRACE
-            std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m\n";
+            std::cout << "\033[01;31mc: '" << utf8_char(consumer.getc()) << "'\033[0m\n";
 #endif
             for (st_step_range_iterator_t first = lst.begin(), last = lst.end(); first != last; ++first) {
                 if (stval.get_num_at(first->first) != count) {

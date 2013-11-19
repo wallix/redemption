@@ -67,7 +67,7 @@ namespace re {
         const char_int * s;
         size_t len;
 
-        unsigned contains(char_int c, utf_consumer consumer) const {
+        unsigned contains(char_int c, utf8_consumer consumer) const {
             if (c == this->s[0]) {
                 const char_int * s = this->s + 1;
                 while (*s && *s == consumer.bumpc()) {
@@ -105,7 +105,7 @@ namespace re {
             }
         }
 
-        unsigned check(char_int c, utf_consumer consumer) const {
+        unsigned check(char_int c, utf8_consumer consumer) const {
             if (this->type == SEQUENCE) {
                 return this->data.sequence.contains(c, consumer);
             }
@@ -119,16 +119,16 @@ namespace re {
                         os << ".";
                     }
                     else if (this->data.range.l == this->data.range.r) {
-                        os << "[" << this->data.range.l << "] '" << utf_char(this->data.range.l) << "'";
+                        os << "[" << this->data.range.l << "] '" << utf8_char(this->data.range.l) << "'";
                     }
                     else {
-                        os << "[" << this->data.range.l << "-" << this->data.range.r << "] ['" << utf_char(this->data.range.l) << "'-'" << utf_char(this->data.range.r) << "']";
+                        os << "[" << this->data.range.l << "-" << this->data.range.r << "] ['" << utf8_char(this->data.range.l) << "'-'" << utf8_char(this->data.range.r) << "']";
                     }
                     break;
                 case SEQUENCE: {
                     os << '"';
                     for (const char_int * p = this->data.sequence.s; *p; ++p) {
-                        os << utf_char(*p);
+                        os << utf8_char(*p);
                     }
                     os << '"';
                     break;

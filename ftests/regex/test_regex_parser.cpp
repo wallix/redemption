@@ -69,7 +69,7 @@ inline std::string st_to_string(State * st)
 
 inline size_t multi_char(const char * c)
 {
-    return re::utf_consumer(c).bumpc();
+    return re::utf8_consumer(c).bumpc();
 }
 
 BOOST_AUTO_TEST_CASE(TestRegexState)

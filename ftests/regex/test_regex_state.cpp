@@ -37,7 +37,7 @@ using namespace re;
 
 inline size_t multi_char(const char * c)
 {
-    return re::utf_consumer(c).bumpc();
+    return re::utf8_consumer(c).bumpc();
 }
 
 BOOST_AUTO_TEST_CASE(TestRegexCheck)
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TestRegexCheck)
     {
         State st(SEQUENCE);
         char_int seq[] = {'a','b','c',0};
-        utf_consumer consumer("abc");
+        utf8_consumer consumer("abc");
         st.data.sequence.s = seq;
         BOOST_CHECK_EQUAL(st.check(consumer.bumpc(), consumer), 3);
         consumer.str("abcd");

@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#ifndef REDEMPTION_FTESTS_REGEX_REGEX_PARSE_HPP
-#define REDEMPTION_FTESTS_REGEX_REGEX_PARSE_HPP
+#ifndef REDEMPTION_FTESTS_REGEX_REGEX_PARSER_HPP
+#define REDEMPTION_FTESTS_REGEX_REGEX_PARSER_HPP
 
 #include "regex_utils.hpp"
 
@@ -209,7 +209,7 @@ namespace re {
         }
     };
 
-    inline char_int get_c(utf_consumer & consumer, char_int c)
+    inline char_int get_c(utf8_consumer & consumer, char_int c)
     {
         if (c != '[' && c != '.') {
             if (c == '\\') {
@@ -255,19 +255,19 @@ namespace re {
         return *s && *s == '}';
     }
 
-    inline bool is_meta_char(utf_consumer & consumer, char_int c)
+    inline bool is_meta_char(utf8_consumer & consumer, char_int c)
     {
         return c == '*' || c == '+' || c == '?' || c == '|' || c == '(' || c == ')' || c == '^' || c == '$' || (c == '{' && is_range_repetition(consumer.str()));
     }
 
     inline State ** st_compilechar(StateAccu & accu, State ** pst,
-                                   utf_consumer & consumer, char_int c, const char * & msg_err)
+                                   utf8_consumer & consumer, char_int c, const char * & msg_err)
     {
         if (consumer.valid())
         {
             unsigned n = 0;
             char_int c2 = c;
-            utf_consumer cons = consumer;
+            utf8_consumer cons = consumer;
             while (get_c(cons, c2)) {
                 ++n;
                 if (!(c2 = cons.bumpc())) {
@@ -566,7 +566,7 @@ namespace re {
     }
 
     inline IntermendaryState intermendary_st_compile(StateAccu & accu,
-                                                     utf_consumer & consumer,
+                                                     utf8_consumer & consumer,
                                                      const char * & msg_err,
                                                      unsigned & num_cap,
                                                      int recusive = 0)
@@ -861,7 +861,7 @@ namespace re {
             this->m_states.clear();
 
             const char * err = 0;
-            utf_consumer consumer(s);
+            utf8_consumer consumer(s);
             StateAccu accu(this->m_states);
             unsigned num_cap = 0;
             this->m_root = intermendary_st_compile(accu, consumer, err, num_cap).first;

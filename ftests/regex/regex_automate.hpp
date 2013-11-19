@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_REGEX_AUTOMATE_HPP
-#define REDEMPTION_REGEX_AUTOMATE_HPP
+#ifndef REDEMPTION_FTESTS_REGEX_REGEX_AUTOMATE_HPP
+#define REDEMPTION_FTESTS_REGEX_REGEX_AUTOMATE_HPP
 
 #include <iostream>
 #include <vector>
@@ -198,14 +198,12 @@ namespace re {
 
         void set_num_at(const State * st, unsigned count) const
         {
-            //assert(st == this->states[st->num]);
             assert(this->states.size() > st->num);
             this->nums[st->num] = count;
         }
 
         unsigned get_num_at(const State * st) const
         {
-            //assert(st == this->states[st->num]);
             assert(this->states.size() > st->num);
             return this->nums[st->num];
         }
@@ -232,7 +230,7 @@ namespace re {
             if (!st) {
                 return true;
             }
-            if (this->valid_and_set(st)) {
+            if (this->is_valid_and_mark(st)) {
                 if (st->is_split()) {
                     const bool ret = this->next_is_finish(st->out1);
                     return ( ! ret) ?this->next_is_finish(st->out2) : ret;
@@ -249,7 +247,7 @@ namespace re {
             if (st && st->is_cap_close()) {
                 return st->num;
             }
-            if (this->valid_and_set(st)) {
+            if (this->is_valid_and_mark(st)) {
                 if (st->is_split()) {
                     const unsigned ret = this->get_num_close(st->out1);
                     return (ret == -1u) ?this->get_num_close(st->out2) : ret;
@@ -258,7 +256,7 @@ namespace re {
             return -1u;
         }
 
-        bool valid_and_set(const State * st)
+        bool is_valid_and_mark(const State * st)
         {
             if (st && this->get_num_at(st) != this->step_id) {
                 this->set_num_at(st, step_id);
@@ -269,7 +267,7 @@ namespace re {
 
         void push_state(RangeList* l, const State * st, unsigned num_open = -1u)
         {
-            if (this->valid_and_set(st)) {
+            if (this->is_valid_and_mark(st)) {
                 if (st->is_split()) {
                     this->push_state(l, st->out1, num_open);
                     this->push_state(l, st->out2, num_open);
@@ -337,7 +335,6 @@ namespace re {
         typedef std::pair<const char *, const char *> range_t;
         typedef std::vector<range_t> range_matches;
 
-    private:
         struct DefaultMatchTracer
         {
             void start(unsigned /*idx*/) const
@@ -359,8 +356,9 @@ namespace re {
             {}
         };
 
-        template<bool V> struct ExactMatch { static const bool value = V; };
-        template<bool V> struct ActiveCapture { static const bool value = V; };
+    private:
+        template<bool> struct ExactMatch { };
+        template<bool> struct ActiveCapture { };
 
     public:
         bool exact_search(const char * s, unsigned step_limit)
@@ -419,7 +417,7 @@ namespace re {
                                ExactMatch<false>(), ActiveCapture<true>());
         }
 
-        range_matches match_result(bool all = true)
+        range_matches match_result(bool all = true) const
         {
             range_matches ret;
             this->append_match_result(ret, all);
@@ -454,11 +452,10 @@ namespace re {
             //recursive matching
             const char ** first = this->traces + idx * this->nb_capture;
             const char ** last = first + this->nb_capture;
-            const char ** next = first+1;
             state_list_t::const_iterator stfirst = this->states.end() - this->nb_capture;
-            for (; next != last; ++first, ++next, ++stfirst) {
+            for (; ++first != last; ++stfirst) {
                 if ((*stfirst)->type == (*(stfirst+1))->type) {
-                    *next = *first;
+                    *first = *(first-1);
                 }
             }
         }
@@ -605,7 +602,7 @@ namespace re {
         typedef StepRangeList::iterator StepRangeIterator;
 
         template<typename Tracer, bool exact_match, bool active_capture>
-        unsigned step(const char * s, char_int c, utf_consumer & consumer,
+        unsigned step(const char * s, char_int c, utf8_consumer & consumer,
                       StepRangeList & l1, StepRangeList & l2, Tracer tracer,
                       ExactMatch<exact_match>, ActiveCapture<active_capture>)
         {
@@ -698,7 +695,7 @@ namespace re {
                             }
 
                             static inline void close(unsigned idx, StateList & l, const char * s,
-                                                     StateMachine2 & sm, Tracer tracer, utf_consumer consumer)
+                                                     StateMachine2 & sm, Tracer tracer, utf8_consumer consumer)
                             {
                                 if (l.num_close != -1u) {
                                     unsigned num = l.num_close;
@@ -768,7 +765,7 @@ namespace re {
                 this->reset_trace();
             }
 
-            utf_consumer consumer(s);
+            utf8_consumer consumer(s);
 
             StepRangeList * pal1 = &this->l1;
             StepRangeList * pal2 = &this->l2;
@@ -782,7 +779,7 @@ namespace re {
 
             while (consumer.valid()) {
 #ifdef DISPLAY_TRACE
-                std::cout << "\033[01;31mc: '" << utf_char(consumer.getc()) << "'\033[0m" << std::endl;
+                std::cout << "\033[01;31mc: '" << utf8_char(consumer.getc()) << "'\033[0m" << std::endl;
 #endif
                 const unsigned result = this->step(s, consumer.bumpc(), consumer,
                                                    *pal1, *pal2, tracer,

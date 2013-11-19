@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 #endif
         std::clock_t start_time = std::clock();
         for (size_t i = 0; i < ITERATION; ++i) {
-            if ((ismatch4 = regex.exact_search_with_matches(str))) {
+            if ((ismatch4 = regex./*exact_*/search_with_matches(str))) {
                 Regex::range_matches match_result = regex.match_result();
                 typedef Regex::range_matches::iterator iterator;
                 for (iterator first = match_result.begin(), last = match_result.end(); first != last; ++first) {

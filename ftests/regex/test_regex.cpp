@@ -357,6 +357,8 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     matches.push_back(range_t(0,0));
     matches.push_back(range_t(str+3, str+4));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+    matches.erase(matches.begin()+1);
+    BOOST_CHECK(regex.match_result(false) == matches);
 
     str = "avd";
     matches.clear();

@@ -97,40 +97,40 @@ namespace re {
 
         typedef StateMachine2::range_matches range_matches;
 
-        range_matches exact_match(const char * s)
+        range_matches exact_match(const char * s, bool all_match = true)
         {
             range_matches ret;
             if (this->sm.exact_search_with_trace(s, this->step_limit)) {
-                this->sm.append_match_result(ret);
+                this->sm.append_match_result(ret, all_match);
             }
             return ret;
         }
 
         template<typename Tracer>
-        range_matches exact_match(const char * s, Tracer tracer)
+        range_matches exact_match(const char * s, Tracer tracer, bool all_match = true)
         {
             range_matches ret;
             if (this->sm.exact_search_with_trace(s, this->step_limit, tracer)) {
-                this->sm.append_match_result(ret);
+                this->sm.append_match_result(ret, all_match);
             }
             return ret;
         }
 
-        range_matches match(const char * s)
+        range_matches match(const char * s, bool all_match = true)
         {
             range_matches ret;
             if (this->sm.search_with_trace(s, this->step_limit)) {
-                this->sm.append_match_result(ret);
+                this->sm.append_match_result(ret, all_match);
             }
             return ret;
         }
 
         template<typename Tracer>
-        range_matches match(const char * s, Tracer tracer)
+        range_matches match(const char * s, Tracer tracer, bool all_match = true)
         {
             range_matches ret;
             if (this->sm.search_with_trace(s, this->step_limit, tracer)) {
-                this->sm.append_match_result(ret);
+                this->sm.append_match_result(ret, all_match);
             }
             return ret;
         }
@@ -167,9 +167,9 @@ namespace re {
             return this->sm.search_with_trace(s, this->step_limit, tracer);
         }
 
-        range_matches match_result()
+        range_matches match_result(bool all = true) const
         {
-            return this->sm.match_result();
+            return this->sm.match_result(all);
         }
 
         void display() const
