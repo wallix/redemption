@@ -23,12 +23,16 @@
 
 #include "regex_utils.hpp"
 
+#include <iterator>
+
 namespace re {
 
     class StateAccu
     {
+    public:
         state_list_t & sts;
 
+    private:
         State * push(State * st)
         {
             sts.push_back(st);
@@ -481,23 +485,33 @@ namespace re {
     }
 
 
-    struct ContextClone {
-        std::vector<State*> sts;
-        std::vector<State*> sts2;
+    class ContextClone
+    {
+        size_t pos;
+        size_t poslast;
+    public:
+        state_list_t sts2;
+    private:
         std::vector<unsigned> indexes;
         StateAccu & accu;
+        unsigned & num_cap;
 
-        ContextClone(StateAccu & accu, State * st_base)
-        : sts()
+    public:
+        ContextClone(StateAccu & accu, unsigned & num_cap, State * st_base, unsigned nb_clone)
+        : pos(std::find(accu.sts.rbegin(), accu.sts.rend(), st_base).base() - accu.sts.begin() - 1)
+        , poslast(accu.sts.size())
         , sts2()
         , accu(accu)
+        , num_cap(num_cap)
         {
-            append_state(st_base, this->sts);
-            this->sts2.resize(this->sts.size());
-            this->indexes.resize(this->sts.size()*2);
-            typedef std::vector<State*>::iterator iterator;
+            const size_t size = this->poslast - this->pos;
+            this->sts2.resize(size);
+            this->indexes.resize(size*2);
+            this->accu.sts.reserve(this->accu.sts.size() + size*nb_clone);
+            state_list_t::iterator first = accu.sts.begin() + this->pos;
+            state_list_t::iterator last = accu.sts.begin() + this->poslast;
             std::vector<unsigned>::iterator idxit = this->indexes.begin();
-            for (iterator first = this->sts.begin(), last = this->sts.end(); first != last; ++first) {
+            for (; first != last; ++first) {
                 if ((*first)->out1) {
                     *idxit = this->get_idx((*first)->out1);
                     ++idxit;
@@ -506,19 +520,21 @@ namespace re {
                     *idxit = this->get_idx((*first)->out2);
                     ++idxit;
                 }
-                (*first)->num = 0;
             }
         }
 
         State * clone()
         {
-            typedef std::vector<State*>::iterator iterator;
-            iterator last = this->sts.end();
-            for (iterator first = this->sts.begin(), first2 = sts2.begin(); first != last; ++first, ++first2) {
+            state_list_t::iterator last = this->accu.sts.begin() + this->poslast;
+            state_list_t::iterator first = this->accu.sts.begin() + this->pos;
+            state_list_t::iterator first2 = this->sts2.begin();
+            for (; first != last; ++first, ++first2) {
                 *first2 = this->copy(*first);
             }
             std::vector<unsigned>::iterator idxit = this->indexes.begin();
-            for (iterator first = this->sts.begin(), first2 = sts2.begin(); first != last; ++first, ++first2) {
+            first = this->accu.sts.begin() + this->pos;
+            first2 = this->sts2.begin();
+            for (; first != last; ++first, ++first2) {
                 if ((*first)->out1) {
                     (*first2)->out1 = this->sts2[*idxit];
                     ++idxit;
@@ -528,18 +544,25 @@ namespace re {
                     ++idxit;
                 }
             }
-            return sts2.front();
+            return this->sts2.front();
         }
 
         std::size_t get_idx(State * st) const {
-            return std::find(this->sts.begin(), this->sts.end(), st) - this->sts.begin();
+            return std::find(accu.sts.begin() + this->pos,
+                             accu.sts.begin() + this->poslast, st)
+            - (accu.sts.begin() + this->pos);
         }
 
+    private:
         State * copy(const State * st) {
             if (st->type == SEQUENCE) {
                 return this->accu.sequence(new_string_sequence(st->data.sequence, 1));
             }
-            return this->accu.normal(st->type, st->data.range.l, st->data.range.r);
+            State * ret = this->accu.normal(st->type, st->data.range.l, st->data.range.r);
+            if (st->is_cap()) {
+                ret->num = this->num_cap++;
+            }
+            return ret;
         }
     };
 
@@ -576,6 +599,7 @@ namespace re {
         State ** spst = pst;
         State * bst = &st;
         State * eps = 0;
+        bool special = true;
 
         char_int c = consumer.bumpc();
 
@@ -600,14 +624,20 @@ namespace re {
                         break;
                     }
                 } while (c);
+                special = false;
             }
             else {
+                if (special && c != '(' && c != ')' && c != '|') {
+                    msg_err = "nothing to repeat";
+                    return IntermendaryState(0,0);
+                }
                 switch (c) {
                     case '?': {
                         *pst = accu.finish();
                         *spst = accu.split(*pst, *spst);
                         pst = &(*pst)->out1;
                         spst = pst;
+                        special = true;
                         break;
                     }
                     case '*':
@@ -615,11 +645,13 @@ namespace re {
                         *pst = *spst;
                         pst = &(*spst)->out1->out1;
                         spst = pst;
+                        special = true;
                         break;
                     case '+':
                         *pst = accu.split(accu.finish(), *spst);
                         spst = pst;
                         pst = &(*pst)->out1->out1;
+                        special = true;
                         break;
                     case '|':
                         if (!eps) {
@@ -629,8 +661,10 @@ namespace re {
                         bst = accu.split(bst == &st ? st.out1 : bst);
                         pst = &bst->out2;
                         spst = pst;
+                        special = true;
                         break;
                     case '{': {
+                        special = true;
                         /**///std::cout << ("{") << std::endl;
                         char * end = 0;
                         unsigned m = strtoul(consumer.str(), &end, 10);
@@ -638,6 +672,7 @@ namespace re {
                         /**///std::cout << "m: " << (m) << std::endl;
                         if (*end != '}') {
                             /**///std::cout << ("reste") << std::endl;
+                            //{m,}
                             if (*(end+1) == '}') {
                                 /**///std::cout << ("infini") << std::endl;
                                 if (m == 1) {
@@ -654,7 +689,7 @@ namespace re {
                                     }
                                     else {
                                         *pst = e;
-                                        ContextClone cloner(accu, *spst);
+                                        ContextClone cloner(accu, num_cap, *spst, m-1);
                                         std::size_t idx = cloner.get_idx(e);
                                         State ** lst = &e->out1;
                                         while (--m) {
@@ -673,6 +708,7 @@ namespace re {
                                     spst = pst;
                                 }
                             }
+                            //{m,n}
                             else {
                                 /**///std::cout << ("range") << std::endl;
                                 unsigned n = strtoul(end+1, &end, 10);
@@ -694,7 +730,7 @@ namespace re {
                                         State * e = accu.finish();
                                         State * split = accu.split();
                                         *pst = split;
-                                        ContextClone cloner(accu, *spst);
+                                        ContextClone cloner(accu, num_cap, *spst, n-1);
                                         std::size_t idx = cloner.get_idx(split);
                                         split->out1 = e;
                                         State * cst = split;
@@ -738,7 +774,7 @@ namespace re {
                                     else {
                                         State * e = accu.epsilone();
                                         *pst = e;
-                                        ContextClone cloner(accu, *spst);
+                                        ContextClone cloner(accu, num_cap, *spst, m-1+n);
                                         std::size_t idx = cloner.get_idx(e);
                                         pst = &e->out1;
                                         State * lst = e;
@@ -761,10 +797,12 @@ namespace re {
                                 }
                             }
                         }
+                        //{0}
                         else if (0 == m) {
                             msg_err = "numbers is 0 in {}";
                             return IntermendaryState(0,0);
                         }
+                        //{m}
                         else {
                             if (1 != m) {
                                 if (is_unique_string_state(*spst, *pst)) {
@@ -772,10 +810,10 @@ namespace re {
                                 }
                                 else {
                                     /**///std::cout << ("fixe ") << m << std::endl;
-                                    State e(EPSILONE);
-                                    *pst = &e;
-                                    ContextClone cloner(accu, *spst);
-                                    std::size_t idx = cloner.get_idx(&e);
+                                    State * e = accu.epsilone();
+                                    *pst = e;
+                                    ContextClone cloner(accu, num_cap, *spst, m-1);
+                                    std::size_t idx = cloner.get_idx(e);
                                     while (--m) {
                                         /**///std::cout << ("clone") << std::endl;
                                         *pst = cloner.clone();
@@ -805,6 +843,7 @@ namespace re {
                     default:
                         return IntermendaryState(0,0);
                     case '(':
+                        special = false;
                         if (*consumer.s == '?' && *(consumer.s+1) == ':') {
                             if (!*consumer.s || !(*consumer.s+1) || !(*consumer.s+2)) {
                                 msg_err = "unmatched parentheses";
@@ -822,8 +861,8 @@ namespace re {
                             break;
                         }
                         State * stopen = accu.cap_open();
-                        stopen->num = num_cap;
-                        IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, ++num_cap, recusive+1);
+                        stopen->num = num_cap++;
+                        IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, num_cap, recusive+1);
                         if (intermendary.first) {
                             stopen->out1 = intermendary.first;
                             *pst = stopen;

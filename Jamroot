@@ -890,6 +890,9 @@ unit-test test_regex_ndfa : ftests/regex/test_regex_ndfa.cpp libboost_unit_test 
 unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test ;
 unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test gcov : <variant>coverage ;
 
+# unit-test benchmark_regex_parser : ftests/regex/benchmark/parser.cpp ;
+# unit-test benchmark_regex_search : ftests/regex/benchmark/search.cpp ;
+
 unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test ;
 unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test gcov : <variant>coverage ;
 

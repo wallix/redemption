@@ -1,0 +1,186 @@
+search:
+a:	0.01 s
+a:	0.00 s
+a*:	0.01 s
+a*:	0.00 s
+a+:	0.01 s
+a+:	0.01 s
+a?:	0.01 s
+a?:	0.00 s
+.:	0.01 s
+.:	0.00 s
+.*:	0.01 s
+.*:	0.01 s
+.+:	0.00 s
+.+:	0.01 s
+.?:	0.01 s
+.?:	0.00 s
+^a:	0.00 s
+^a:	0.01 s
+a$:	0.01 s
+a$:	0.33 s
+^a.*a$:	0.02 s
+^a.*a$:	0.47 s
+\w:	0.01 s
+\w:	0.01 s
+\d:	0.00 s
+\d:	0.00 s
+\s:	0.01 s
+\s:	0.00 s
+\w*:	0.01 s
+\w*:	0.00 s
+\d*:	0.00 s
+\d*:	0.00 s
+\s*:	0.00 s
+\s*:	0.00 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]:	0.01 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]:	0.00 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]+:	0.01 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]+:	0.01 s
+(?:\d\d(?: *|(?:\.|-)?)){5}:	0.14 s
+(?:\d\d(?: *|(?:\.|-)?)){5}:	0.42 s
+(.*):(.*):(.*):	0.01 s
+(.*):(.*):(.*):	0.37 s
+
+total: 1.96 s
+
+
+posix search:
+a:	0.02 s
+a:	0.04 s
+a*:	0.02 s
+a*:	0.13 s
+a+:	0.02 s
+a+:	0.11 s
+a?:	0.02 s
+a?:	0.04 s
+.:	0.02 s
+.:	0.04 s
+.*:	0.02 s
+.*:	0.13 s
+.+:	0.02 s
+.+:	0.11 s
+.?:	0.03 s
+.?:	0.03 s
+^a:	0.02 s
+^a:	0.04 s
+a$:	0.04 s
+a$:	0.64 s
+^a.*a$:	0.04 s
+^a.*a$:	0.37 s
+\w:	0.02 s
+\w:	0.03 s
+\d:	0.02 s
+\d:	0.04 s
+\s:	0.02 s
+\s:	0.04 s
+\w*:	0.02 s
+\w*:	0.13 s
+\d*:	0.02 s
+\d*:	0.03 s
+\s*:	0.02 s
+\s*:	0.14 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]:	0.02 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]:	0.04 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]+:	0.02 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]+:	0.11 s
+(?:\d\d(?: *|(?:\.|-)?)){5}:	none
+(?:\d\d(?: *|(?:\.|-)?)){5}:	none
+(.*):(.*):(.*):	0.02 s
+(.*):(.*):(.*):	0.09 s
+
+total: 2.78 s
+
+
+search with capture:
+a:	0.01 s
+a:	0.00 s
+a*:	0.01 s
+a*:	0.00 s
+a+:	0.01 s
+a+:	0.00 s
+a?:	0.01 s
+a?:	0.00 s
+.:	0.00 s
+.:	0.00 s
+.*:	0.01 s
+.*:	0.00 s
+.+:	0.00 s
+.+:	0.01 s
+.?:	0.01 s
+.?:	0.00 s
+^a:	0.01 s
+^a:	0.00 s
+a$:	0.02 s
+a$:	0.33 s
+^a.*a$:	0.02 s
+^a.*a$:	0.47 s
+\w:	0.01 s
+\w:	0.00 s
+\d:	0.00 s
+\d:	0.00 s
+\s:	0.01 s
+\s:	0.01 s
+\w*:	0.00 s
+\w*:	0.00 s
+\d*:	0.00 s
+\d*:	0.01 s
+\s*:	0.00 s
+\s*:	0.01 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]:	0.00 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]:	0.01 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]+:	0.01 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]+:	0.00 s
+(?:\d\d(?: *|(?:\.|-)?)){5}:	0.15 s
+(?:\d\d(?: *|(?:\.|-)?)){5}:	0.42 s
+(.*):(.*):(.*):	0.02 s
+(.*):(.*):(.*):	0.50 s
+
+total: 2.09 s
+
+
+posix search with capture:
+a:	0.09 s
+a:	1.96 s
+a*:	0.04 s
+a*:	0.15 s
+a+:	0.04 s
+a+:	0.14 s
+a?:	0.09 s
+a?:	1.97 s
+.:	0.09 s
+.:	1.94 s
+.*:	0.05 s
+.*:	0.15 s
+.+:	0.04 s
+.+:	0.14 s
+.?:	0.09 s
+.?:	1.95 s
+^a:	0.09 s
+^a:	2.02 s
+a$:	0.07 s
+a$:	0.65 s
+^a.*a$:	0.05 s
+^a.*a$:	0.39 s
+\w:	0.08 s
+\w:	1.94 s
+\d:	0.02 s
+\d:	0.04 s
+\s:	0.08 s
+\s:	1.95 s
+\w*:	0.05 s
+\w*:	0.14 s
+\d*:	0.02 s
+\d*:	0.04 s
+\s*:	0.04 s
+\s*:	0.15 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]:	0.09 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]:	1.94 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]+:	0.04 s
+[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]+:	0.13 s
+(?:\d\d(?: *|(?:\.|-)?)){5}:	none
+(?:\d\d(?: *|(?:\.|-)?)){5}:	none
+(.*):(.*):(.*):	0.24 s
+(.*):(.*):(.*):	2.12 s
+
+total: 21.32 s
