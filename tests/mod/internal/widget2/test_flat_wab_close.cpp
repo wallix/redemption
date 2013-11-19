@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabClose)
     BOOST_CHECK(1);
 
     Inifile ini;
-   
+
     ini.translation.connection_closed.set_from_cstr("Connection closed");
     ini.translation.button_close.set_from_cstr("Close");
     ini.translation.username.set_from_cstr("Username");
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     ini.translation.username.set_from_cstr("Username");
     ini.translation.target.set_from_cstr("Target");
     ini.translation.diagnostic.set_from_cstr("Diagnostic");
-    
+
 
     FlatWabClose flat_wab_close(drawable, 800, 600, parent, &notifier,
                                 "abc<br>def", 0, "tartempion", "caufield",
@@ -310,8 +310,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     char message[1024];
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x50\x7f\x52\x59\x31\x72\x66\x4d\xed\x2b"
-                   "\x1c\x24\x71\xf3\x01\xf0\x2e\x1b\x05\x10"
+                   "\xf9\x3d\x0f\x60\x7f\x47\x52\xf1\x7f\x6b"
+                   "\x8b\x12\x1f\xcc\xfa\x93\xf3\x77\x76\x6a"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -321,8 +321,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit2.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x0b\x7e\xc3\xa8\xcc\x91\x8f\x63\x0b\xea"
-                   "\xdd\x75\x97\xd7\xe7\xe4\x88\x6a\xdf\x83"
+                   "\x20\x07\x8e\x7b\x84\xb2\xe4\xd0\x4a\xe3"
+                   "\x23\x31\xf9\x77\x12\x34\x2e\x9a\x39\xb9"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -339,8 +339,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close-exit3.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x0b\x7e\xc3\xa8\xcc\x91\x8f\x63\x0b\xea"
-                   "\xdd\x75\x97\xd7\xe7\xe4\x88\x6a\xdf\x83"
+                   "\x20\x07\x8e\x7b\x84\xb2\xe4\xd0\x4a\xe3"
+                   "\x23\x31\xf9\x77\x12\x34\x2e\x9a\x39\xb9"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

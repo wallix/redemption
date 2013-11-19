@@ -68,6 +68,10 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
+    virtual void draw(const RDPMultiDstBlt &, const Rect &) {
+        BOOST_CHECK(false);
+    }
+
     virtual void draw(const RDPPatBlt& cmd, const Rect& rect)
     {
         this->gd.draw(cmd, rect);
@@ -108,8 +112,15 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
-    virtual void draw(const RDPPolyline&, const Rect&)
-    {
+    virtual void draw(const RDPPolygonSC &, const Rect &) {
+        BOOST_CHECK(false);
+    }
+
+    virtual void draw(const RDPPolygonCB &, const Rect &) {
+        BOOST_CHECK(false);
+    }
+
+    virtual void draw(const RDPPolyline &, const Rect &) {
         BOOST_CHECK(false);
     }
 
@@ -486,10 +497,11 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     keymap.init_layout(0x040C);
 
     BStream decoded_data(256);
+    bool ctrl_alt_delete;
 
-    keymap.event(0, 16, decoded_data); // 'a'
+    keymap.event(0, 16, decoded_data, ctrl_alt_delete); // 'a'
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, decoded_data);
+    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 16, decoded_data, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e2-1.png");
     if (!check_sig(drawable.gd.drawable, message,
@@ -503,9 +515,9 @@ BOOST_AUTO_TEST_CASE(EventWidgetEdit)
     notifier.event = 0;
     notifier.sender = 0;
 
-    keymap.event(0, 17, decoded_data); // 'z'
+    keymap.event(0, 17, decoded_data, ctrl_alt_delete); // 'z'
     wedit.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, decoded_data);
+    keymap.event(keymap.KBDFLAGS_DOWN|keymap.KBDFLAGS_RELEASE, 17, decoded_data, ctrl_alt_delete);
     wedit.rdp_input_invalidate(Rect(0, 0, wedit.cx(), wedit.cx()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-e2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
@@ -725,42 +737,43 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditScrolling)
     const int layout = 0x040C;
     keymap.init_layout(layout);
     BStream decoded_data(256);
+    bool    ctrl_alt_delete;
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 0;
     keyboardFlags = 0 ;
     keyCode = 16 ; // key is 'a'
 
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-s0-1.png");
 
-    keymap.event(keyboardFlags, keyCode + 1, decoded_data);
+    keymap.event(keyboardFlags, keyCode + 1, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, decoded_data);
+    keymap.event(keyboardFlags, keyCode + 2, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-s0-2.png");
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-s0-3.png");
 
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-s0-4.png");
 
-    keymap.event(keyboardFlags, keyCode + 9, decoded_data);
+    keymap.event(keyboardFlags, keyCode + 9, decoded_data, ctrl_alt_delete);
     parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
     parent.rdp_input_invalidate(Rect(0, 0, parent.cx(), parent.cy()));
     // drawable.save_to_png(OUTPUT_FILE_PATH "edit-s1.png");

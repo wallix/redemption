@@ -1,6 +1,7 @@
 from logger import Logger
 
 def parse_conf_file(conf, path):
+    DEBUG = False
     from ConfigParser import ConfigParser
 
     parser = ConfigParser()
@@ -18,7 +19,9 @@ def parse_conf_file(conf, path):
                         try:
                             conf[section][key] = temp.decode("utf-8")
                         except Exception, e:
-                            Logger().warning(u"Failed to convert string at (%s, %s) to unicode:" % (section, key))
+                            if DEBUG:
+                                Logger().warning(u"Failed to convert string at (%s, %s) to unicode:" % (section, key))
             except Exception, e:
-                Logger().warning(u"Failed to access to key in section (%s, %s)" % (section, key))
+                if DEBUG:
+                    Logger().warning(u"Failed to access to key in section (%s, %s)" % (section, key))
 

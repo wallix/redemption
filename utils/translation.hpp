@@ -62,6 +62,7 @@ private:
         fr_map["minute"] = "minute";
         fr_map["before_closing"] = "avant fermeture";
         fr_map["manager_close_cnx"] = "Le gestionnaire de session a coupé la connexion";
+        fr_map["end_connection"] = "Fin de connexion";
         fr_map["help_message"] =
             "Dans la zone de saisie login, entrez:<br>"
             "- le nom de la machine cible et du compte<br>"
@@ -102,6 +103,7 @@ private:
         en_map["minute"] = "minute";
         en_map["before_closing"] = "before closing";
         en_map["manager_close_cnx"] = "Connection closed by manager";
+        en_map["end_connection"] = "End of connection";
         en_map["help_message"] =
             "In login edit box, enter:<br>"
             "- target device and login as login@target.<br>"
@@ -158,7 +160,6 @@ public:
 };
 
 #define TRANSLATIONCONF Translation::getInstance()
-
 static inline const char * TR(const char * key, Inifile & ini) {
 
     const char * res = NULL;

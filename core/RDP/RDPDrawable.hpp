@@ -30,12 +30,15 @@
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
@@ -114,6 +117,22 @@ public:
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
         this->drawable.destblt(trect, cmd.rop);
+    }
+
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
+    {
+        const Rect clip_drawable_cmd_intersect = clip.intersect(this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+
+        Rect cmd_rect(0, 0, 0, 0);
+
+        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
+            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
+            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
+            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
+            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
+            const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
+            this->drawable.destblt(trect, cmd.bRop);
+        }
     }
 
     void draw(const RDPPatBlt & cmd, const Rect & clip)
@@ -439,9 +458,9 @@ public:
                 x += font_item->width + 2;
             }
 
-            for (; index < part_len && x < screen_rect.x + screen_rect.cx; index++) {
+            for (; index < part_len && x < screen_rect.right(); index++) {
                 font_item = this->get_font(font, uni[index]);
-                int16_t cy = std::min<int16_t>(y + font_item->height, screen_rect.y + screen_rect.cy) - y;
+                int16_t cy = std::min<int16_t>(y + font_item->height, screen_rect.bottom()) - y;
                 int i = 0;
                 for (int yy = 0 ; yy < cy; yy++) {
                     unsigned char oc = 1<<7;
@@ -450,7 +469,7 @@ public:
                             oc = 1 << 7;
                             ++i;
                         }
-                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.x + screen_rect.cx && font_item->data[i + yy] & oc) {
+                        if (yy + y >= screen_rect.y && xx + x >= screen_rect.x && xx + x < screen_rect.right() && font_item->data[i + yy] & oc) {
                             this->drawable.opaquerect(Rect(x + xx, y + yy, 1, 1), fgcolor);
                         }
                         oc >>= 1;
@@ -469,14 +488,59 @@ public:
         int16_t endy;
 
         for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
-            endx = startx + cmd.deltaPoints[i].xDelta;
-            endy = starty + cmd.deltaPoints[i].yDelta;
+            endx = startx + cmd.deltaEncodedPoints[i].xDelta;
+            endy = starty + cmd.deltaEncodedPoints[i].yDelta;
 
             drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.PenColor, clip);
 
             startx = endx;
             starty = endy;
         }
+    }
+
+    TODO("this functions only draw polygon borders but do not fill "
+         "them with solid color.");
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        int16_t startx = cmd.xStart;
+        int16_t starty = cmd.yStart;
+
+        int16_t endx;
+        int16_t endy;
+
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            endx = startx + cmd.deltaPoints[i].xDelta;
+            endy = starty + cmd.deltaPoints[i].yDelta;
+
+            drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+
+            startx = endx;
+            starty = endy;
+        }
+        endx = cmd.xStart;
+        endy = cmd.yStart;
+        drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.BrushColor, clip);
+    }
+    TODO("this functions only draw polygon borders but do not fill "
+         "them with brush color.");
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        int16_t startx = cmd.xStart;
+        int16_t starty = cmd.yStart;
+
+        int16_t endx;
+        int16_t endy;
+
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            endx = startx + cmd.deltaPoints[i].xDelta;
+            endy = starty + cmd.deltaPoints[i].yDelta;
+
+            drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
+
+            startx = endx;
+            starty = endy;
+        }
+        endx = cmd.xStart;
+        endy = cmd.yStart;
+        drew_line(0x0001, startx, starty, endx, endy, cmd.bRop2, cmd.foreColor, clip);
     }
 
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,

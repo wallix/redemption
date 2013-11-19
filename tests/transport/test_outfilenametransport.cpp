@@ -31,13 +31,16 @@
 #include <unistd.h>
 
 #include "outfilenametransport.hpp"
+/*
 #include "transport.hpp"
 #include "testtransport.hpp"
 #include "outfiletransport.hpp"
 #include "infiletransport.hpp"
+*/
 
 BOOST_AUTO_TEST_CASE(TestOutFilenameTransport)
 {
+/*
     {
         char tmpname[128];
         sprintf(tmpname, "/tmp/test_transportXXXXXX");
@@ -62,5 +65,17 @@ BOOST_AUTO_TEST_CASE(TestOutFilenameTransport)
         ::close(fd);
         ::unlink(tmpname);
     }
+*/
+
+    OutFilenameTransport fnt(SQF_PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid());
+    fnt.send("We write, ", 10);
+    fnt.send("and again, ", 11);
+    fnt.send("and so on.", 10);
+
+    fnt.next();
+    fnt.send(" ", 1);
+    fnt.send("A new file.", 11);
+
+    fnt.request_full_cleaning();
 }
 

@@ -66,13 +66,14 @@ class SesmanConfig(object):
             , u'sql'                : u'localhost'
             , u'x509_authenticated' : u'localhost'
             , u'record_warning'     : u'True'
+            , u'DEBUG'              : u'False'
             }
         , u'fr':
-            { u'login'                  : u"login"
-            , u'target'                 : u"compte cible"
-            , u'password'               : u"mot de passe"
-            , u'diagnostic'             : u"diagnostic"
-            , u'connection_closed'      : u"connexion fermée"
+            { u'login'                  : u"Login"
+            , u'target'                 : u"Compte cible"
+            , u'password'               : u"Mot de passe"
+            , u'diagnostic'             : u"Diagnostic"
+            , u'connection_closed'      : u"Connexion fermée"
             , u'OK'                     : u"OK"
             , u'cancel'                 : u"Abandon"
             , u'help'                   : u"Aide"
@@ -120,7 +121,7 @@ class SesmanConfig(object):
             , u'manager_close_cnx': u"Le gestionnaire de session a coupé la connexion"
             , u'changepassword'         : u"Vous devez changer votre mot de passe<br>"
                                          +u"pour vous connecter."
-                                         
+
             , u"Connection closed by client": u'Connection terminée par le client'
             , u"Empty user, try again": u"Utilisteur non défini, reessayez."
             , u"Error while retreiving rights for user %s": u"Erreur de récupération des droits de l'utilisateur %s"
@@ -139,11 +140,11 @@ class SesmanConfig(object):
             , u'Your password will expire soon. Please change it.': u"L'expiration de votre mot de passe est imminente. Saisissez un nouveau mot de passe."
             }
         , u'en':
-            { u'login'                  : u"login"
-            , u'target'                 : u"target"
-            , u'password'               : u"password"
-            , u'diagnostic'             : u"diagnostic"
-            , u'connection_closed'      : u"connection closed"
+            { u'login'                  : u"Login"
+            , u'target'                 : u"Target"
+            , u'password'               : u"Password"
+            , u'diagnostic'             : u"Diagnostic"
+            , u'connection_closed'      : u"Connection closed"
             , u'OK'                     : u"OK"
             , u'cancel'                 : u"Cancel"
             , u'help'                   : u"Help"

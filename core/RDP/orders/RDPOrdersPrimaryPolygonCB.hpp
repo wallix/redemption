@@ -15,11 +15,11 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2013
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYLINE_HPP_
-#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYLINE_HPP_
+#ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYGONCB_HPP_
+#define _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYGONCB_HPP_
 
 // 2.2.2.2.1.1.1.1 Coord Field (COORD_FIELD)
 // =========================================
@@ -125,16 +125,17 @@
 //     first byte containing the high-order bits) to create a 15-bit signed
 //     delta value.
 
-// 2.2.2.2.1.1.2.18 Polyline (POLYLINE_ORDER)
-// ==========================================
-// The Polyline Primary Drawing Order encodes a solid color polyline
-//  consisting of two or more vertices connected by straight lines.
+// 2.2.2.2.1.1.2.17 PolygonCB (POLYGON_CB_ORDER)
+// =============================================
 
-//  Encoding order number: 22 (0x16)
-//  Negotiation order number: 22 (0x16)
-//  Number of fields: 7
-//  Number of field encoding bytes: 1
-//  Maximum encoded field length: 148 bytes
+// The PolygonCB Primary Drawing Order encodes a color brush polygon
+// consisting of two or more vertices connected by straight lines.
+
+// Encoding order number: 21 (0x15)
+// Negotiation order number: 21 (0x15)
+// Number of fields: 13
+// Number of field encoding bytes: 2
+// Maximum encoded field length: 263 bytes
 
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -142,97 +143,128 @@
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |       xStart (variable)       |       yStart (variable)       |
 // +---------------+---------------+---------------+---------------+
-// |     bRop2     |   BrushCacheEntry (optional)  |    PenColor   |
-// |   (optional)  |                               |   (optional)  |
+// |     bRop2     |    FillMode   |          BackColor            |
+// |   (optional)  |   (optional)  |          (optional)           |
 // +---------------+---------------+---------------+---------------+
-// |              ...              |NumDeltaEntries| CodedDeltaList|
-// |                               |   (optional)  |   (variable)  |
+// |      ...      |            ForeColor (optional)               |
 // +-------------------------------+---------------+---------------+
-// |              ...              |
-// +-------------------------------+
+// |  BrushOrgX    |  BrushOrgY    |  BrushStyle   |  BrushHatch   |
+// |  (optional)   |  (optional)   |  (optional)   |  (optional)   |
+// +---------------+---------------+---------------+---------------+
+// |                     BrushExtra (optional)                     |
+// +-----------------------------------------------+---------------+
+// |                      ...                      |NumDeltaEntries|
+// |                                               |  (optional)   |
+// +-----------------------------------------------+---------------+
+// |            CodedDeltaList (varialbe)          |
+// +-----------------------------------------------+
+
 
 // xStart (variable): The x-coordinate of the starting point of the polygon
 //  path specified by using a Coord Field (section 2.2.2.2.1.1.1.1).
-
 // yStart (variable): The y-coordinate of the starting point of the polygon
 //  path specified by using a Coord Field (section 2.2.2.2.1.1.1.1).
+// bRop2 (1 byte): The binary raster operation to perform (see section 2.2.2.2.1.1.1.6).
 
-// bRop2 (1 byte): The binary raster operation to perform (see section
-//  2.2.2.2.1.1.1.6).
+// FillMode (1 byte): The polygon filling algorithm described using a
+//  Fill Mode (section 2.2.2.2.1.1.1.9) structure.
+// BackColor (3 bytes): Foreground color described by using a
+//  Generic Color (section 2.2.2.2.1.1.1.8) structure.
+// ForeColor (3 bytes): The foreground color described by using
+//  a Generic Color (section 2.2.2.2.1.1.1.8) structure.
 
-// BrushCacheEntry (2 bytes): A 16-bit unsigned integer. The brush cache
-//  entry. This field is unused (as only solid color polylines are drawn) and
-//  SHOULD<3> be set to 0x0000.
-
-// PenColor (3 bytes): The foreground color described by using a Generic
-//  Color (section 2.2.2.2.1.1.1.8) structure.
+// BrushOrgX (1 byte): An 8-bit, signed integer. The x-coordinate of the point
+//  where the top leftmost pixel of a brush pattern MUST be anchored.
+// BrushOrgY (1 byte): An 8-bit, signed integer. The y-coordinate of the point
+//  where the top leftmost pixel of a brush pattern MUST be anchored.
+// BrushStyle (1 byte): An 8-bit, unsigned integer. The contents and format of
+//  this field are the same as the BrushStyle field of the PatBlt
+//  (section 2.2.2.2.1.1.2.3) Primary Drawing Order.
+// BrushHatch (1 byte): An 8-bit, unsigned integer. The contents and format of
+//  this field are the same as the BrushHatch field of the PatBlt
+//  (section 2.2.2.2.1.1.2.3) Primary Drawing Order.
+// BrushExtra (7 bytes): A byte array of length 7. The contents and format of
+//  this field are the same as the BrushExtra field of the PatBlt
+//  (section 2.2.2.2.1.1.2.3) Primary Drawing Order.
 
 // NumDeltaEntries (1 byte): An 8-bit, unsigned integer. The number of points
-//  along the polyline path described by the CodedDeltaList field.
+//  along the polygon path described by the CodedDeltaList field.
+// CodedDeltaList (variable): A One-Byte Header Variable Field (section 2.2.2.2.1.1.1.2)
+//  structure that encapsulates a Delta-Encoded Points (section 2.2.2.2.1.1.1.4)
+//  structure that contains the points along the polygon path.
+//  The number of points described by the Delta-Encoded Points structure
+//  is specified by the NumDeltaEntries field.
 
-// CodedDeltaList (variable): A One-Byte Header Variable Field (section
-//  2.2.2.2.1.1.1.2) structure that encapsulates a Delta-Encoded Points
-//  (section 2.2.2.2.1.1.1.4) structure that contains the points along the
-//  polyline path. The number of points described by the Delta-Encoded Points
-//  structure is specified by the NumDeltaEntries field.
-
-class RDPPolyline {
+class RDPPolygonCB {
 public:
     int16_t  xStart;
     int16_t  yStart;
     uint8_t  bRop2;
-    uint16_t BrushCacheEntry;
-    uint32_t PenColor;
+    uint8_t  fillMode;
+    uint32_t backColor;
+    uint32_t foreColor;
+    RDPBrush brush;
     uint8_t  NumDeltaEntries;
 
-    struct DeltaEncodedPoint {
+    struct DeltaPoint {
         int16_t xDelta;
         int16_t yDelta;
-    } deltaEncodedPoints[128];
+    } deltaPoints [128];
 
     static const uint8_t id(void) {
-        return RDP::POLYLINE;
+        return RDP::POLYGONCB;
     }
 
-    RDPPolyline()
+    RDPPolygonCB()
     : xStart(0)
     , yStart(0)
     , bRop2(0x0)
-    , BrushCacheEntry(0x0000)
-    , PenColor(0x00000000)
+    , fillMode(0x00)
+    , backColor(0x00000000)
+    , foreColor(0x00000000)
+    , brush(RDPBrush())
     , NumDeltaEntries(0) {
-        ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
+        ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
     }
 
-    RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, uint32_t PenColor,
-        uint8_t NumDeltaEntries, Stream & deltaEncodedPoints) {
-        this->xStart          = xStart;
-        this->yStart          = yStart;
-        this->bRop2           = bRop2;
-        this->BrushCacheEntry = BrushCacheEntry;
-        this->PenColor        = PenColor;
-        this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaEncodedPoints) / sizeof(this->deltaEncodedPoints[0]));
-        ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
+    RDPPolygonCB(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
+                 uint32_t backColor, uint32_t foreColor, const RDPBrush & brush,
+                 uint8_t NumDeltaEntries, Stream & deltaPoints)
+        : xStart(xStart)
+        , yStart(yStart)
+        , bRop2(bRop2)
+        , fillMode(fillMode)
+        , backColor(backColor)
+        , foreColor(foreColor)
+        , brush(brush)
+        , NumDeltaEntries(0)
+    {
+        this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaPoints) / sizeof(this->deltaPoints[0]));
+        ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
         for (int i = 0; i < this->NumDeltaEntries; i++) {
-            this->deltaEncodedPoints[i].xDelta = deltaEncodedPoints.in_sint16_le();
-            this->deltaEncodedPoints[i].yDelta = deltaEncodedPoints.in_sint16_le();
+            this->deltaPoints[i].xDelta = deltaPoints.in_sint16_le();
+            this->deltaPoints[i].yDelta = deltaPoints.in_sint16_le();
         }
     }
 
-    bool operator==(const RDPPolyline & other) const {
-        return  (this->xStart          == other.xStart)
-             && (this->yStart          == other.yStart)
-             && (this->bRop2           == other.bRop2)
-             && (this->BrushCacheEntry == other.BrushCacheEntry)
-             && (this->PenColor        == other.PenColor)
-             && (this->NumDeltaEntries == other.NumDeltaEntries)
-             && !memcmp(this->deltaEncodedPoints, other.deltaEncodedPoints, sizeof(DeltaEncodedPoint) * this->NumDeltaEntries)
+    bool operator==(const RDPPolygonCB & other) const {
+        return (this->xStart          == other.xStart)
+            && (this->yStart          == other.yStart)
+            && (this->bRop2           == other.bRop2)
+            && (this->fillMode        == other.fillMode)
+            && (this->backColor       == other.backColor)
+            && (this->foreColor       == other.foreColor)
+            && (this->brush           == other.brush)
+            && (this->NumDeltaEntries == other.NumDeltaEntries)
+            && !memcmp(this->deltaPoints, other.deltaPoints, sizeof(DeltaPoint) * this->NumDeltaEntries)
              ;
     }
 
-    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const {
+    void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon,
+              const RDPPolygonCB & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
+        TODO("check that");
         int16_t pointx = this->xStart;
         int16_t pointy = this->yStart;
         if (!common.clip.contains_pt(pointx, pointy)) {
@@ -240,8 +272,8 @@ public:
         }
         else {
             for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
-                pointx += this->deltaEncodedPoints[i].xDelta;
-                pointy += this->deltaEncodedPoints[i].yDelta;
+                pointx += this->deltaPoints[i].xDelta;
+                pointy += this->deltaPoints[i].yDelta;
 
                 if (!common.clip.contains_pt(pointx, pointy)) {
                     header.control |= RDP::BOUNDS;
@@ -253,17 +285,22 @@ public:
         header.control |= (is_1_byte(this->xStart - oldcmd.xStart) && is_1_byte(this->yStart - oldcmd.yStart)) * RDP::DELTA;
 
         header.fields =
-                (this->xStart          != oldcmd.xStart         ) * 0x0001
-              | (this->yStart          != oldcmd.yStart         ) * 0x0002
-              | (this->bRop2           != oldcmd.bRop2          ) * 0x0004
-              | (this->BrushCacheEntry != oldcmd.BrushCacheEntry) * 0x0008
-              | (this->PenColor        != oldcmd.PenColor       ) * 0x0010
-              | (this->NumDeltaEntries != oldcmd.NumDeltaEntries) * 0x0020
-              | (
-                 (this->NumDeltaEntries != oldcmd.NumDeltaEntries) ||
-                 memcmp(this->deltaEncodedPoints, oldcmd.deltaEncodedPoints,
-                        this->NumDeltaEntries * sizeof(DeltaEncodedPoint))
-                                                                ) * 0x0040
+              (this->xStart          != oldcmd.xStart         ) * 0x0001
+            | (this->yStart          != oldcmd.yStart         ) * 0x0002
+            | (this->bRop2           != oldcmd.bRop2          ) * 0x0004
+            | (this->fillMode        != oldcmd.fillMode       ) * 0x0008
+            | (this->backColor       != oldcmd.backColor      ) * 0x0010
+            | (this->foreColor       != oldcmd.foreColor      ) * 0x0020
+            | (this->brush.org_x     != oldcmd.brush.org_x    ) * 0x0040
+            | (this->brush.org_y     != oldcmd.brush.org_y    ) * 0x0080
+            | (this->brush.style     != oldcmd.brush.style    ) * 0x0100
+            | (this->brush.hatch     != oldcmd.brush.hatch    ) * 0x0200
+            | (memcmp(this->brush.extra, oldcmd.brush.extra, 7) != 0) * 0x0400
+            | (this->NumDeltaEntries != oldcmd.NumDeltaEntries) * 0x0800
+            | ((this->NumDeltaEntries != oldcmd.NumDeltaEntries) ||
+               memcmp(this->deltaPoints, oldcmd.deltaPoints,
+                      this->NumDeltaEntries * sizeof(DeltaPoint))
+               ) * 0x1000
               ;
 
         common.emit(stream, header, oldcommon);
@@ -273,17 +310,24 @@ public:
 
         if (header.fields & 0x0004) { stream.out_uint8(this->bRop2); }
 
-        if (header.fields & 0x0008) { stream.out_uint16_le(this->BrushCacheEntry); }
+        if (header.fields & 0x0008) { stream.out_uint8(this->fillMode); }
 
         if (header.fields & 0x0010) {
-            stream.out_uint8(this->PenColor);
-            stream.out_uint8(this->PenColor >> 8);
-            stream.out_uint8(this->PenColor >> 16);
+            stream.out_uint8(this->backColor);
+            stream.out_uint8(this->backColor >> 8);
+            stream.out_uint8(this->backColor >> 16);
+        }
+        if (header.fields & 0x0020) {
+            stream.out_uint8(this->foreColor);
+            stream.out_uint8(this->foreColor >> 8);
+            stream.out_uint8(this->foreColor >> 16);
         }
 
-        if (header.fields & 0x0020) { stream.out_uint8(this->NumDeltaEntries); }
+        header.emit_brush(stream, 0x0040, this->brush, oldcmd.brush);
 
-        if (header.fields & 0x0040) {
+        if (header.fields & 0x0800) { stream.out_uint8(this->NumDeltaEntries); }
+
+        if (header.fields & 0x1000) {
             uint32_t offset_cbData = stream.get_offset();
             stream.out_clear_bytes(1);
 
@@ -299,50 +343,58 @@ public:
                     *(++zeroBit) = 0;
                 }
 
-                if (!this->deltaEncodedPoints[i].xDelta) {
+                if (!this->deltaPoints[i].xDelta) {
                     *zeroBit |= (1 << (7 - m4 * 2));
                 }
                 else {
-                    stream.out_DEP(this->deltaEncodedPoints[i].xDelta);
+                    stream.out_DEP(this->deltaPoints[i].xDelta);
                 }
 
-                if (!this->deltaEncodedPoints[i].yDelta) {
+                if (!this->deltaPoints[i].yDelta) {
                     *zeroBit |= (1 << (6 - m4 * 2));
                 }
                 else {
-                    stream.out_DEP(this->deltaEncodedPoints[i].yDelta);
+                    stream.out_DEP(this->deltaPoints[i].yDelta);
                 }
             }
 
             stream.set_out_uint8(stream.get_offset() - offset_cbData - 1, offset_cbData);
         }
-    }   // void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const
+    }
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
-        // LOG(LOG_INFO, "RDPPolyline::receive: header fields=0x%02X", header.fields);
+        // LOG(LOG_INFO, "RDPPolygonSC::receive: header fields=0x%02X", header.fields);
 
         header.receive_coord(stream, 0x0001, this->xStart);
         header.receive_coord(stream, 0x0002, this->yStart);
-
         if (header.fields & 0x0004) {
-            this->bRop2 = stream.in_uint8();
+            this->bRop2  = stream.in_uint8();
         }
         if (header.fields & 0x0008) {
-            this->BrushCacheEntry = stream.in_uint16_le();
+            this->fillMode = stream.in_uint8();
         }
 
         if (header.fields & 0x0010) {
             uint8_t r = stream.in_uint8();
             uint8_t g = stream.in_uint8();
             uint8_t b = stream.in_uint8();
-            this->PenColor = r + (g << 8) + (b << 16);
+            this->backColor = r + (g << 8) + (b << 16);
         }
 
         if (header.fields & 0x0020) {
+            uint8_t r = stream.in_uint8();
+            uint8_t g = stream.in_uint8();
+            uint8_t b = stream.in_uint8();
+            this->foreColor = r + (g << 8) + (b << 16);
+        }
+
+        header.receive_brush(stream, 0x0040, this->brush);
+
+        if (header.fields & 0x0800) {
             this->NumDeltaEntries = stream.in_uint8();
         }
 
-        if (header.fields & 0x0040) {
+        if (header.fields & 0x1000) {
             uint8_t cbData = stream.in_uint8();
             // LOG(LOG_INFO, "cbData=%d", cbData);
 
@@ -368,31 +420,38 @@ public:
                     // LOG(LOG_INFO, "0x%02X", zeroBit);
                 }
 
-                this->deltaEncodedPoints[i].xDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
-                this->deltaEncodedPoints[i].yDelta = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
+                this->deltaPoints[i].xDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
+                this->deltaPoints[i].yDelta = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
 
 /*
-                LOG(LOG_INFO, "RDPPolyline::receive: delta point=(%d, %d)",
-                    this->deltaEncodedPoints[i].xDelta, this->deltaEncodedPoints[i].yDelta);
+                LOG(LOG_INFO, "RDPPolygonCB::receive: delta point=%d, %d",
+                    this->deltaPoints[i].xDelta, this->deltaPoints[i].yDelta);
 */
 
                 zeroBit <<= 2;
             }
         }
-    }   // void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
+    }   // receive
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf(buffer + lg, sz - lg,
-            "Polyline(xStart=%d yStart=%d bRop2=0x%02X BrushCacheEntry=%d PenColor=%.6x "
-                "NumDeltaEntries=%d CodedDeltaList=(",
-            this->xStart, this->yStart, this->bRop2, this->BrushCacheEntry, this->PenColor, this->NumDeltaEntries);
+                       "polygoncb(xStart=%d yStart=%d bRop2=0x%02X fillMode=%d "
+                       "backColor=%.6x foreColor=%.6x "
+                       "brush.org_x=%d brush.org_y=%d "
+                       "brush.style=%d brush.hatch=%d "
+                       "NumDeltaEntries=%d DeltaEntries=(",
+                       this->xStart, this->yStart, this->bRop2, this->fillMode,
+                       this->backColor, this->foreColor,
+                       this->brush.org_x, this->brush.org_y,
+                       this->brush.style, this->brush.hatch,
+                       this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");
             }
-            lg += snprintf(buffer + lg, sz - lg, "(%d, %d)", this->deltaEncodedPoints[i].xDelta, this->deltaEncodedPoints[i].yDelta);
+            lg += snprintf(buffer + lg, sz - lg, "(%d, %d)", this->deltaPoints[i].xDelta, this->deltaPoints[i].yDelta);
         }
         lg += snprintf(buffer + lg, sz - lg, "))");
         if (lg >= sz) {
@@ -414,6 +473,6 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         printf("%s", buffer);
     }
-};  // class RDPPolyLine
+};  // class RDPPolygonCB
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_ORDERS_RDPORDERSPRIMARYPOLYLINE_HPP_
+#endif

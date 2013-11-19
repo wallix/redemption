@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_UTILS_CAST_HPP_
 #define _REDEMPTION_UTILS_CAST_HPP_
 
+#include <stdint.h>
+
 static inline uint8_t * byte_ptr_cast(char * data)
 {
     return reinterpret_cast<uint8_t *>(data);

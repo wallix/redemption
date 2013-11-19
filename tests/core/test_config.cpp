@@ -105,6 +105,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -146,6 +150,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -155,6 +160,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -343,6 +349,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
 */
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -384,6 +391,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -393,6 +401,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -591,6 +600,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
 */
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -632,6 +645,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -641,6 +655,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -702,6 +717,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "device_redirection=no\n"
                           "tls_support=no\n"
                           "rdp_compression=yes\n"
+                          "disable_ctrl_alt_del=yes\n"
                           "\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
@@ -720,6 +736,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "ocr_interval=50\n"
                           "ocr_on_title_bar_only=yes\n"
                           "ocr_max_unrecog_char_rate=50\n"
+                          "disable_keyboard_log=1\n"
                           "\n"
                           "[debug]\n"
                           "log_type=file\n"
@@ -793,6 +810,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string("/mnt/tmp/wab/recorded/rdp/"),
                                                         std::string(ini.video.record_tmp_path));
+    BOOST_CHECK_EQUAL(1,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -838,6 +859,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("/var/log/redemption.log"),
                       std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
@@ -847,6 +869,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(true,                             ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
@@ -914,6 +937,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "hash_path=/mnt/wab/hash/\n"
                           "record_path=/mnt/wab/recorded/rdp/\n"
                           "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
+                          "disable_keyboard_log=2\n"
                           "\n"
                           );
 
@@ -981,6 +1005,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string("/mnt/tmp/wab/recorded/rdp/"),
                                                         std::string(ini.video.record_tmp_path));
+    BOOST_CHECK_EQUAL(2,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1024,6 +1052,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
@@ -1033,6 +1062,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1087,6 +1117,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "performance_flags_force_not_present=0x\n"
                           "[mod_rdp]\n"
                           "rdp_compression=no\n"
+                          "[video]\n"
+                          "disable_keyboard_log=4\n"
                           "\n"
                           );
 
@@ -1157,6 +1189,10 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
 */
+    BOOST_CHECK_EQUAL(4,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1202,6 +1238,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(7,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(1,                                ini.client.performance_flags_force_present);
@@ -1211,6 +1248,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1326,6 +1364,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
 */
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1368,6 +1410,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -1377,6 +1420,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1485,6 +1529,10 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
 */
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1527,6 +1575,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(4,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -1536,6 +1585,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1644,6 +1694,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
 */
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1685,6 +1739,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -1694,6 +1749,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1802,6 +1858,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
 */
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1843,6 +1903,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -1852,6 +1913,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1950,6 +2012,10 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
 */
+    BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
+    BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_ocr);
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
     BOOST_CHECK_EQUAL(30,                               ini.globals.keepalive_grace_delay);
@@ -1991,6 +2057,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(2,                                ini.debug.log_type);
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.debug.log_file_path));
 
+    BOOST_CHECK_EQUAL(0,                                ini.client.keyboard_layout.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.ignore_logon_password);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_default);
     BOOST_CHECK_EQUAL(0,                                ini.client.performance_flags_force_present);
@@ -2000,6 +2067,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);

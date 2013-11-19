@@ -594,6 +594,23 @@ void sq_clear(SQ * sq)
     return;
 }
 
+void sq_full_clear(SQ * sq)
+{
+    /* if transport goes into error state it should be immediately flushed and closed (if it means something)
+       hence no need to close it again calling close
+    */
+    if (sq->err != RIO_ERROR_OK){ return; }
+    switch(sq->sq_type){
+        case SQ_TYPE_OUTFILENAME:
+            sq_m_SQOutfilename_full_clear(&(sq->u.outfilename));
+        break;
+        default:
+            ;
+    }
+    sq->err = RIO_ERROR_CLOSED;
+    return;
+}
+
 void sq_delete(SQ * self)
 {
     if (!self) { return; }

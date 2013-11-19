@@ -29,8 +29,8 @@
 #include "bitmap.hpp"
 #include "client_info.hpp"
 
-//MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
-//====================================================================
+// MS-RDPEGDI 3.3.5.1.1.1       Construction of a Primary Drawing Order
+// ====================================================================
 
 //  All primary drawing orders MUST conform to the structure and rules defined
 //  in section 2.2.2.2.1.1.2.
@@ -214,18 +214,21 @@ namespace RDP {
     };
 
     enum {
-        DESTBLT    = 0,
-        PATBLT     = 1,
-        SCREENBLT  = 2,
-        LINE       = 9,
-        RECT       = 10,
-        DESKSAVE   = 11,
-        MEMBLT     = 13,
-        MEM3BLT    = 14,
-        POLYLINE   = 22,
-        ELLIPSESC  = 25,
-        ELLIPSECB  = 26,
-        GLYPHINDEX = 27,
+        DESTBLT     = 0,
+        PATBLT      = 1,
+        SCREENBLT   = 2,
+        LINE        = 9,
+        RECT        = 10,
+        DESKSAVE    = 11,
+        MEMBLT      = 13,
+        MEM3BLT     = 14,
+        MULTIDSTBLT = 15,
+        POLYGONSC   = 20,
+        POLYGONCB   = 21,
+        POLYLINE    = 22,
+        ELLIPSESC   = 25,
+        ELLIPSECB   = 26,
+        GLYPHINDEX  = 27,
     };
 
     enum SecondaryOrderType {
@@ -634,8 +637,8 @@ private:
             case PATBLT:
             case MEMBLT:
             case LINE:
-                //case POLYGON2:
-                //case ELLIPSE2:
+            case POLYGONCB:
+            case ELLIPSECB:
                 size = 2;
                 break;
             case RECT:
@@ -740,13 +743,13 @@ public:
         case MEMBLT:
         case LINE:
         case ELLIPSECB:
-            //case POLYGON2:
-            //case ELLIPSE2:
+        case POLYGONCB:
             size = 2;
             break;
         case RECT:
         case SCREENBLT:
         case DESTBLT:
+        case POLYGONSC:
         case POLYLINE:
         case ELLIPSESC:
         default:
@@ -771,6 +774,9 @@ public:
         case DESTBLT:
             assert(!(header.fields & ~0x1F));
             break;
+        case MULTIDSTBLT:
+            assert(!(header.fields & ~0x7F));
+            break;
         case PATBLT:
             assert(!(header.fields & ~0xFFF));
             break;
@@ -792,6 +798,12 @@ public:
             break;
         case GLYPHINDEX:
             assert(!(header.fields & ~0x3FFFFF));
+            break;
+        case POLYGONSC:
+            assert(!(header.fields & ~0x7F));
+            break;
+        case POLYGONCB:
+            assert(!(header.fields & ~0x1FFF));
             break;
         case POLYLINE:
             assert(!(header.fields & ~0x7F));

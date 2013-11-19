@@ -157,20 +157,34 @@ public:
             header.control |= RDP::BOUNDS;
         }
 
+        int16_t left   = this->el.left();
+        int16_t top    = this->el.top();
+        int16_t right  = this->el.right();
+        int16_t bottom = this->el.bottom();
+        int16_t oldleft   = oldcmd.el.left();
+        int16_t oldtop    = oldcmd.el.top();
+        int16_t oldright  = oldcmd.el.right();
+        int16_t oldbottom = oldcmd.el.bottom();
+
+        header.control |= (is_1_byte(left - oldleft) &&
+                           is_1_byte(top - oldtop) &&
+                           is_1_byte(right - oldright) &&
+                           is_1_byte(bottom - oldbottom)) * RDP::DELTA;
+
         header.fields =
-            ( this->el.left()   != oldcmd.el.left()  ) * 0x0001
-            |(this->el.top()    != oldcmd.el.top()   ) * 0x0002
-            |(this->el.right()  != oldcmd.el.right() ) * 0x0004
-            |(this->el.bottom() != oldcmd.el.bottom()) * 0x0008
-            |(this->bRop2       != oldcmd.bRop2      ) * 0x0010
-            |(this->fillMode    != oldcmd.fillMode   ) * 0x0020
-            |(this->color       != oldcmd.color      ) * 0x0040;
+            ( left           != oldleft        ) * 0x0001
+            |(top            != oldtop         ) * 0x0002
+            |(right          != oldright       ) * 0x0004
+            |(bottom         != oldbottom      ) * 0x0008
+            |(this->bRop2    != oldcmd.bRop2   ) * 0x0010
+            |(this->fillMode != oldcmd.fillMode) * 0x0020
+            |(this->color    != oldcmd.color   ) * 0x0040;
 
         common.emit(stream, header, oldcommon);
-        header.emit_coord(stream, 0x0001, this->el.left(),   oldcmd.el.left());
-        header.emit_coord(stream, 0x0002, this->el.top(),    oldcmd.el.top());
-        header.emit_coord(stream, 0x0004, this->el.right(),  oldcmd.el.right());
-        header.emit_coord(stream, 0x0008, this->el.bottom(), oldcmd.el.bottom());
+        header.emit_coord(stream, 0x0001, left,   oldleft);
+        header.emit_coord(stream, 0x0002, top,    oldtop);
+        header.emit_coord(stream, 0x0004, right,  oldright);
+        header.emit_coord(stream, 0x0008, bottom, oldbottom);
 
         if (header.fields & 0x0010) { stream.out_uint8(this->bRop2); }
 

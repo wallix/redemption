@@ -168,6 +168,7 @@ typedef enum
         AUTHID_LANGUAGE,
 
         // Options
+        AUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
         AUTHID_OPT_CLIPBOARD,           // clipboard
         AUTHID_OPT_DEVICEREDIRECTION,   // device_redirection
         AUTHID_OPT_FILE_ENCRYPTION,     // file encryption
@@ -246,6 +247,10 @@ typedef enum
 
         AUTHID_AUTHENTICATION_CHALLENGE,
 
+        AUTHID_DISABLECTRLALTDEL,
+
+        AUTHID_DISABLE_KEYBOARD_LOG,
+
         MAX_AUTHID
     } authid_t;
 
@@ -265,6 +270,7 @@ typedef enum
 #define STRAUTHID_TRANS_MANAGER_CLOSE_CNX  "trans_manager_close_cnx"
 #define STRAUTHID_LANGUAGE                 "language"
 // Options
+#define STRAUTHID_KEYBOARD_LAYOUT          "keyboard_layout"
 #define STRAUTHID_OPT_CLIPBOARD            "clipboard"
 #define STRAUTHID_OPT_DEVICEREDIRECTION    "device_redirection"
 #define STRAUTHID_OPT_FILE_ENCRYPTION      "file_encryption"
@@ -339,6 +345,10 @@ typedef enum
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
 
+#define STRAUTHID_DISABLECTRLALTDEL        "disable_ctrl_alt_del"
+
+#define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
+
 static const std::string authstr[MAX_AUTHID - 1] = {
     // Translation text
     STRAUTHID_TRANS_BUTTON_OK,
@@ -358,6 +368,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_LANGUAGE,
 
     // Options
+    STRAUTHID_KEYBOARD_LAYOUT,         // keyboard_layout
     STRAUTHID_OPT_CLIPBOARD,            // clipboard
     STRAUTHID_OPT_DEVICEREDIRECTION,    // device_redirection
     STRAUTHID_OPT_FILE_ENCRYPTION,      // file encryption
@@ -435,6 +446,10 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_REAL_TARGET_DEVICE,
 
     STRAUTHID_AUTHENTICATION_CHALLENGE,
+
+    STRAUTHID_DISABLECTRLALTDEL,
+
+    STRAUTHID_DISABLE_KEYBOARD_LOG,
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -514,6 +529,7 @@ struct Inifile : public FieldObserver {
 
     // section "client"
     struct {
+        UnsignedField keyboard_layout;    // AUTHID_KEYBOARD_LAYOUT
         bool ignore_logon_password; // if true, ignore password provided by RDP client, user need do login manually. default
 
         uint32_t performance_flags_default;
@@ -526,6 +542,8 @@ struct Inifile : public FieldObserver {
 
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
+
+        BoolField disable_ctrl_alt_del; // AUTHID_DISABLECTRLALTDEL //
 
         bool rdp_compression;
     } client;
@@ -598,6 +616,14 @@ struct Inifile : public FieldObserver {
 
         bool     inactivity_pause;
         unsigned inactivity_timeout;
+
+        // 1 - Disable keyboard event logging in syslog
+        // 2 - Disable keyboard event logging in WRM
+        // 4 - Disable keyboard event logging in META
+        UnsignedField disable_keyboard_log;    // AUTHID_DISABLE_KEYBOARD_LOG
+        bool disable_keyboard_log_syslog;
+        bool disable_keyboard_log_wrm;
+        bool disable_keyboard_log_ocr;
     } video;
 
     // Section "debug"
@@ -828,6 +854,10 @@ public:
         strcpy(this->account.password,    "");
 
         // Begin Section "client".
+        this->client.keyboard_layout.attach_ini(this, AUTHID_KEYBOARD_LAYOUT);
+        this->client.keyboard_layout.set(0);
+        this->to_send_set.insert(AUTHID_KEYBOARD_LAYOUT);
+
         this->client.clipboard.attach_ini(this,AUTHID_OPT_CLIPBOARD);
         this->client.device_redirection.attach_ini(this,AUTHID_OPT_DEVICEREDIRECTION);
         this->client.clipboard.set(true);
@@ -842,6 +872,9 @@ public:
         this->client.tls_support                         = true;
         this->client.bogus_neg_request                   = false;
         this->client.rdp_compression                     = false;
+
+        this->client.disable_ctrl_alt_del.attach_ini(this, AUTHID_DISABLECTRLALTDEL);
+        this->client.disable_ctrl_alt_del.set(false);
         // End Section "client"
 
         // Begin section "mod_rdp"
@@ -903,6 +936,13 @@ public:
 
         this->video.inactivity_pause   = false;
         this->video.inactivity_timeout = 300;
+
+        this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
+        this->video.disable_keyboard_log.set(0);
+        this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
+        this->video.disable_keyboard_log_syslog = false;
+        this->video.disable_keyboard_log_wrm    = false;
+        this->video.disable_keyboard_log_ocr    = false;
         // End section "video"
 
 
@@ -1230,6 +1270,9 @@ public:
             else if (0 == strcmp(key, "rdp_compression")){
                 this->client.rdp_compression = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "disable_ctrl_alt_del")){
+                this->client.disable_ctrl_alt_del.set_from_cstr(value);
+            }
         }
         else if (0 == strcmp(context, "mod_rdp")){
             if (0 == strcmp(key, "rdp_compression")) {
@@ -1348,6 +1391,12 @@ public:
             }
             else if (0 == strcmp(key, "record_tmp_path")){
                 pathncpy(this->video.record_tmp_path, value, sizeof(this->video.record_tmp_path));
+            }
+            else if (0 == strcmp(key, "disable_keyboard_log")) {
+                this->video.disable_keyboard_log.set_from_cstr(value);
+                this->video.disable_keyboard_log_syslog = 0 != (this->video.disable_keyboard_log.get() & 1);
+                this->video.disable_keyboard_log_wrm    = 0 != (this->video.disable_keyboard_log.get() & 2);
+                this->video.disable_keyboard_log_ocr    = 0 != (this->video.disable_keyboard_log.get() & 4);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

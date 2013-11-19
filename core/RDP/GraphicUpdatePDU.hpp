@@ -252,7 +252,7 @@ protected:
                     this->buffer_stream_orders.copy_to_head(sctrl_header);
 
                     BStream x224_header(256);
-                    BStream mcs_header(256);
+                    OutPerBStream mcs_header(256);
                     BStream sec_header(256);
 
                     SEC::Sec_Send sec( sec_header, this->buffer_stream_orders, 0, this->encrypt
@@ -315,7 +315,7 @@ protected:
                     compressed_buffer_stream_orders.copy_to_head(sctrl_header);
 
                     BStream x224_header(256);
-                    BStream mcs_header(256);
+                    OutPerBStream mcs_header(256);
                     BStream sec_header(256);
 
                     SEC::Sec_Send sec( sec_header, compressed_buffer_stream_orders, 0
@@ -449,7 +449,7 @@ protected:
                 this->buffer_stream_bitmaps.copy_to_head(sctrl_header);
 
                 BStream x224_header(256);
-                BStream mcs_header(256);
+                OutPerBStream mcs_header(256);
                 BStream sec_header(256);
 
                 SEC::Sec_Send sec( sec_header

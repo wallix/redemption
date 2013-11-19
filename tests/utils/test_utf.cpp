@@ -31,8 +31,25 @@
 #define LOGNULL
 
 #include "utf.hpp"
-//#include <unicode/ustring.h>
 #include <stdio.h>
+
+
+BOOST_AUTO_TEST_CASE(TestUTF32isValid)
+{
+    BOOST_CHECK_EQUAL(true, UTF32isValid('a'));
+    BOOST_CHECK_EQUAL(false, UTF32isValid(0x1FFFFF));
+    BOOST_CHECK_EQUAL(false, UTF32isValid(0x00D800));
+    BOOST_CHECK_EQUAL(false, UTF32isValid(0x00DBFF));
+    BOOST_CHECK_EQUAL(false, UTF32isValid(0x00DC00));
+    BOOST_CHECK_EQUAL(false, UTF32isValid(0x00DFFF));
+
+    BOOST_CHECK_EQUAL(true, UTF32isValid(0x00FFFE));
+    BOOST_CHECK_EQUAL(true, UTF32isValid(0x00FFFF));
+    BOOST_CHECK_EQUAL(true, UTF32isValid(0x01FFFF));
+    BOOST_CHECK_EQUAL(true, UTF32isValid(0x10FFFF));
+    BOOST_CHECK_EQUAL(true, UTF32isValid(0x11000));
+}
+
 
 
 BOOST_AUTO_TEST_CASE(TestUTF8Len_2)

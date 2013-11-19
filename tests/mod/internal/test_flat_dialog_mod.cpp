@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
 
     FakeFront front(info, 0);
 
-    Inifile             ini;
+    Inifile ini;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
@@ -109,20 +109,22 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
 
 
     BStream decoded_data(256);
+    bool    ctrl_alt_del;
+
     uint16_t keyboardFlags = 0 ;
     uint16_t keyCode = 16; // key is 'a'
 
-    keymap.event(keyboardFlags, keyCode + 1, decoded_data);
+    keymap.event(keyboardFlags, keyCode + 1, decoded_data, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode + 2, decoded_data);
+    keymap.event(keyboardFlags, keyCode + 2, decoded_data, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
-    keymap.event(keyboardFlags, keyCode, decoded_data);
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     keymap.push_kevent(Keymap2::KEVENT_ENTER);

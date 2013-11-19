@@ -91,6 +91,7 @@ core/font 100 100
 core/front_api 100 100
 core/listen 100 100
 core/mainloop 100 100
+core/RDP/out_per_bstream 100 100
 core/RDP/bitmapupdate 100 100
 core/RDP/caches/bmpcache 100 100
 core/RDP/caches/brushcache 100 100
@@ -139,6 +140,7 @@ core/RDP/nego 100 100
 core/RDP/orders/RDPOrdersCommon 100 100
 core/RDP/orders/RDPOrdersNames 100 100
 core/RDP/orders/RDPOrdersPrimaryDestBlt 100 100
+core/RDP/orders/RDPOrdersPrimaryMultiDstBlt 100 100
 core/RDP/orders/RDPOrdersPrimaryGlyphIndex 100 100
 core/RDP/orders/RDPOrdersPrimaryLineTo 100 100
 core/RDP/orders/RDPOrdersPrimaryMem3Blt 100 100
@@ -146,6 +148,8 @@ core/RDP/orders/RDPOrdersPrimaryMemBlt 100 100
 core/RDP/orders/RDPOrdersPrimaryOpaqueRect 100 100
 core/RDP/orders/RDPOrdersPrimaryPatBlt 100 100
 core/RDP/orders/RDPOrdersPrimaryScrBlt 100 100
+core/RDP/orders/RDPOrdersPrimaryPolygonSC 100 100
+core/RDP/orders/RDPOrdersPrimaryPolygonCB 100 100
 core/RDP/orders/RDPOrdersPrimaryPolyline 100 100
 core/RDP/orders/RDPOrdersPrimaryEllipseSC 100 100
 core/RDP/orders/RDPOrdersPrimaryEllipseCB 100 100

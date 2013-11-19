@@ -390,7 +390,7 @@ namespace CHANNELS {
             stream.mark_end();
 
             BStream x224_header(256);
-            BStream mcs_header(256);
+            OutPerBStream mcs_header(256);
             BStream sec_header(256);
 
             SEC::Sec_Send             sec( sec_header, stream, 0, crypt_context, encryptionLevel);
@@ -413,7 +413,7 @@ namespace CHANNELS {
             stream.mark_end();
 
             BStream x224_header(256);
-            BStream mcs_header(256);
+            OutPerBStream mcs_header(256);
             BStream sec_header(256);
 
             if (((this->verbose & 128) != 0) || ((this->verbose & 16) != 0)) {

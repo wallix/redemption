@@ -286,6 +286,9 @@ unit-test test_fileutils : tests/utils/test_fileutils.cpp libboost_unit_test gco
 unit-test test_x224 : tests/core/RDP/test_x224.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_x224 : tests/core/RDP/test_x224.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_out_per_bstream : tests/core/RDP/test_out_per_bstream.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_out_per_bstream : tests/core/RDP/test_out_per_bstream.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_mcs : tests/core/RDP/test_mcs.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
@@ -626,8 +629,17 @@ unit-test test_RDPOrdersPrimaryMemBlt : tests/core/RDP/orders/test_RDPOrdersPrim
 unit-test test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test ;
 unit-test test_RDPOrdersPrimaryDestBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_RDPOrdersPrimaryMultiDstBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryMultiDstBlt : tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test ;
 unit-test test_RDPOrdersPrimaryLineTo : tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPOrdersPrimaryPolygonSC : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryPolygonSC : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_RDPOrdersPrimaryPolygonCB : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp libboost_unit_test ;
+unit-test test_RDPOrdersPrimaryPolygonCB : tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_RDPOrdersPrimaryPolyline : tests/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp libboost_unit_test ;
 unit-test test_RDPOrdersPrimaryPolyline : tests/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp libboost_unit_test gcov : <variant>coverage ;

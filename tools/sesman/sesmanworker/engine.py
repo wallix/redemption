@@ -493,6 +493,59 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
+        'rec_w2k3_qa\\administrateur@10.10.46.70:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'qa\\administrateur',
+                password = PASSWORD1,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                ),
+                GroupTargetInfo(
+                    cn = u'win2'
+                )
+            ],
+            target_groups = u'win1;win2;',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.46.70',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.46.70',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = True,
+                isRecorded = True
+            ),
+            service_login = u'qa\\administrateur@10.10.46.70:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
         'rec_w2k8_qa\\administrateur@10.10.46.78:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -749,6 +802,59 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
+        'w2k3_qa\\administrateur@10.10.46.70:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'qa\\administrateur',
+                password = PASSWORD1,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                ),
+                GroupTargetInfo(
+                    cn = u'win2'
+                )
+            ],
+            target_groups = u'win1;win2',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.46.70',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.46.70',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = False
+            ),
+            service_login = u'qa\\administrateur@10.10.46.70:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
         'w2k8_qa\\administrateur@10.10.46.78:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -889,6 +995,12 @@ class Engine(object):
             password = PASSWORD1
         ),
         TargetPasswordInfo(
+            account = u'qa\\administrateur',
+            resource = u'10.10.46.70',
+            protocol = u'RDP',
+            password = PASSWORD1
+        ),
+        TargetPasswordInfo(
             account = u'any',
             resource = u'10.10.46.70',
             protocol = u'VNC',
@@ -980,6 +1092,7 @@ class Engine(object):
             [
                 'rec_w2k_administrateur@10.10.46.64:RDP',
                 'rec_w2k3_any@10.10.46.70:VNC',
+                'rec_w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'rec_w2k8_qa\\administrateur@10.10.46.78:RDP',
             ]
         },
@@ -993,6 +1106,7 @@ class Engine(object):
             [
                 'w2k_administrateur@10.10.46.64:RDP',
                 'w2k3_any@10.10.46.70:VNC',
+                'w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.88:RDP',
             ]
@@ -1039,8 +1153,7 @@ class Engine(object):
 
     def password_expiration_date(self):
         #return false or number of days
-        return False
-
+        return False, 0
 
     def is_x509_connected(self, wab_login, ip_client, proxy_type):
         """
@@ -1168,6 +1281,10 @@ class Engine(object):
 
     def get_target_password(self, target_device):
         res = None
+        Logger().info("get_target_password ...")
+        Logger().info("account =%s" % target_device.account.login)
+        Logger().info("resource=%s" % target_device.resource.device.cn)
+        Logger().info("protocol=%s" % target_device.resource.service.protocol.cn)
         try:
             for p in self.config_target_password:
                 if (p.account == target_device.account.login and
@@ -1180,8 +1297,9 @@ class Engine(object):
         Logger().info("get_target_password done = %s" % res)
         return res
 
-    def release_target_password(self, target_device):
-        Logger().info("release_target_password done")
+    def release_target_password(self, target_device, reason):
+        Logger().info("release_target_password done: target_device=\"%s\" reason=\"%s\"" %
+            (target_device, reason))
         pass
 
     def start_session(self, target, pid):

@@ -376,8 +376,21 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint32_le(this->polyline.PenColor);
         payload.out_uint8(this->polyline.NumDeltaEntries);
         for (uint8_t i = 0; i < this->polyline.NumDeltaEntries; i++) {
-            payload.out_sint16_le(this->polyline.deltaPoints[i].xDelta);
-            payload.out_sint16_le(this->polyline.deltaPoints[i].yDelta);
+            payload.out_sint16_le(this->polyline.deltaEncodedPoints[i].xDelta);
+            payload.out_sint16_le(this->polyline.deltaEncodedPoints[i].yDelta);
+        }
+        // RDPMultiDstBlt multidstblt;
+        payload.out_sint16_le(this->multidstblt.nLeftRect);
+        payload.out_sint16_le(this->multidstblt.nTopRect);
+        payload.out_sint16_le(this->multidstblt.nWidth);
+        payload.out_sint16_le(this->multidstblt.nHeight);
+        payload.out_uint8(this->multidstblt.bRop);
+        payload.out_uint8(this->multidstblt.nDeltaEntries);
+        for (uint8_t i = 0; i < this->multidstblt.nDeltaEntries; i++) {
+            payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].leftDelta);
+            payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].topDelta);
+            payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].width);
+            payload.out_sint16_le(this->multidstblt.deltaEncodedRectangles[i].height);
         }
 
         //------------------------------ missing variable length ---------------
@@ -468,6 +481,12 @@ public:
         this->RDPSerializer::draw(cmd, clip);
     }
 
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect &clip)
+    {
+        this->drawable.draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->drawable.draw(cmd, clip);
@@ -502,6 +521,18 @@ public:
     {
         this->drawable.draw(cmd, clip, gly_cache);
         this->RDPSerializer::draw(cmd, clip, gly_cache);
+    }
+
+    virtual void draw(const RDPPolygonSC& cmd, const Rect & clip)
+    {
+        this->drawable.draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPolygonCB& cmd, const Rect & clip)
+    {
+        this->drawable.draw(cmd, clip);
+        this->RDPSerializer::draw(cmd, clip);
     }
 
     virtual void draw(const RDPPolyline& cmd, const Rect & clip)

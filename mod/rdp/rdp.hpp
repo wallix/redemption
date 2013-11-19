@@ -168,9 +168,12 @@ struct mod_rdp : public mod_api {
 
     unsigned certificate_change_action;
 
+    bool enable_polygonsc;
+    bool enable_polygoncb;
     bool enable_polyline;
     bool enable_ellipsesc;
     bool enable_ellipsecb;
+    bool enable_multidstblt;
 
     mod_rdp( Transport * trans
            , const char * target_user
@@ -242,9 +245,12 @@ struct mod_rdp : public mod_api {
         , open_session_timeout_checker(0)
         , output_filename(output_filename)
         , certificate_change_action(certificate_change_action)
+        , enable_polygonsc(false)
+        , enable_polygoncb(false)
         , enable_polyline(false)
         , enable_ellipsesc(false)
         , enable_ellipsecb(false)
+        , enable_multidstblt(false)
     {
         if (this->verbose & 1)
         {
@@ -392,6 +398,24 @@ struct mod_rdp : public mod_api {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
             switch (order_number) {
+            case 15:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=MultiDstBlt");
+                }
+                this->enable_multidstblt = true;
+                break;
+            case 20:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=PolygonSC");
+                }
+                this->enable_polygonsc = true;
+                break;
+            case 21:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=PolygonCB");
+                }
+                this->enable_polygoncb = true;
+                break;
             case 22:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Extra orders=Polyline");
@@ -566,7 +590,7 @@ struct mod_rdp : public mod_api {
     void send_data_request(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
 
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
                                       3, stream.size(), MCS::PER_ENCODING);
@@ -579,7 +603,7 @@ struct mod_rdp : public mod_api {
     void send_data_request_ex(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
@@ -732,7 +756,7 @@ struct mod_rdp : public mod_api {
                             }
                             // ------------------------------------------------------------
 
-                            BStream gcc_header(65536);
+                            OutPerBStream gcc_header(65536);
                             GCC::Create_Request_Send(gcc_header, stream.size());
 
                             BStream mcs_header(65536);
@@ -979,11 +1003,13 @@ struct mod_rdp : public mod_api {
                     }
                     {
                         BStream x224_header(256);
-                        HStream mcs_data(256, 512);
+                        OutPerBStream mcs_header(256);
+                        HStream data(512, 512);
+                        data.mark_end();
 
-                        MCS::ErectDomainRequest_Send mcs(mcs_data, 0, 0, MCS::PER_ENCODING);
-                        X224::DT_TPDU_Send(x224_header, mcs_data.size());
-                        this->nego.trans->send(x224_header, mcs_data);
+                        MCS::ErectDomainRequest_Send mcs(mcs_header, 0, 0, MCS::PER_ENCODING);
+                        X224::DT_TPDU_Send(x224_header, mcs_header.size());
+                        this->nego.trans->send(x224_header, mcs_header, data);
                     }
                     if (this->verbose & 1){
                         LOG(LOG_INFO, "Send MCS::AttachUserRequest");
@@ -2022,14 +2048,17 @@ struct mod_rdp : public mod_api {
         order_caps.numberFonts                                   = 0x147;
         order_caps.orderFlags                                    = 0x2a;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
+        order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt ? 1 : 0);
         order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt ? 1 : 0);
         order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
-        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
+        order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
         order_caps.orderSupport[UnusedIndex3]                    = 1;
         order_caps.orderSupport[UnusedIndex5]                    = 1;
+        order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]          = (this->enable_polygonsc ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]          = (this->enable_polygoncb ? 1 : 0);
         order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb ? 1 : 0);
@@ -2049,13 +2078,16 @@ struct mod_rdp : public mod_api {
 
         // intersect with client order capabilities
         // which may not be supported by clients.
-        this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MULTIDSTBLT_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_MEM3BLT_INDEX,     order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_MULTI_DRAWNINEGRID_INDEX,
                                          order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYGON_SC_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYGON_CB_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_POLYLINE_INDEX,   order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_ELLIPSE_SC_INDEX, order_caps.orderSupport);
         this->front.intersect_order_caps(TS_NEG_ELLIPSE_CB_INDEX, order_caps.orderSupport);
-        this->front.intersect_order_caps(TS_NEG_INDEX_INDEX, order_caps.orderSupport);
+        this->front.intersect_order_caps(TS_NEG_INDEX_INDEX,      order_caps.orderSupport);
 
         // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
         //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
@@ -4401,6 +4433,10 @@ public:
         this->front.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->front.draw(cmd, clip);
@@ -4426,8 +4462,16 @@ public:
         this->front.draw(cmd, clip, gly_cache);
     }
 
-    virtual void draw(const RDPPolyline& cmd, const Rect & clip)
-    {
+    virtual void draw(const RDPPolygonSC& cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPolygonCB& cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
+
+    virtual void draw(const RDPPolyline& cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 
