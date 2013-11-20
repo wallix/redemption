@@ -172,9 +172,10 @@ namespace BER {
         if (!s.in_check_rem(1))
             return false;
         byte = s.in_uint8();
-
+        // LOG(LOG_INFO, "read_contextual_tag read: %x\n", byte);
         if (byte != (CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag))) {
             s.p--;
+            // LOG(LOG_INFO, "read_contextual_tag REWIND: %x\n", tag);
             // s.rewind(1); should rewind stream by 1 byte
             return false;
         }

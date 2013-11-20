@@ -179,6 +179,7 @@ struct TSRequest {
 
     TSRequest(Stream & stream) {
         this->recv(stream);
+        // LOG(LOG_INFO, "TSRequest recv %d", res);
     }
 
     virtual ~TSRequest() {
@@ -273,6 +274,8 @@ struct TSRequest {
 
         /* [1] negoTokens (NegoData) */
 	if (BER::read_contextual_tag(stream, 1, length, true) != false)	{
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS\n");
+
             if (!BER::read_sequence_tag(stream, length) || /* SEQUENCE OF NegoDataItem */
                 !BER::read_sequence_tag(stream, length) || /* NegoDataItem */
                 !BER::read_contextual_tag(stream, 0, length, true) || /* [0] negoToken */
@@ -285,6 +288,7 @@ struct TSRequest {
             this->negoTokens.out_copy_bytes(stream.p, length);
             this->negoTokens.mark_end();
             this->negoTokens.rewind();
+            stream.in_skip_bytes(this->negoTokens.size());
 
             // // TODO
             // sspi_SecBufferAlloc(&credssp->negoToken, length);
@@ -294,6 +298,7 @@ struct TSRequest {
 
 	/* [2] authInfo (OCTET STRING) */
 	if (BER::read_contextual_tag(stream, 2, length, true) != false) {
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO\n");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -303,6 +308,7 @@ struct TSRequest {
             this->authInfo.out_copy_bytes(stream.p, length);
             this->authInfo.mark_end();
             this->authInfo.rewind();
+            stream.in_skip_bytes(this->authInfo.size());
             // // TODO
             // sspi_SecBufferAlloc(&credssp->authInfo, length);
             // Stream_Read(stream, credssp->authInfo.pvBuffer, length);
@@ -311,16 +317,16 @@ struct TSRequest {
 
 	/* [3] pubKeyAuth (OCTET STRING) */
 	if (BER::read_contextual_tag(stream, 3, length, true) != false)	{
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH\n");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
             }
-
             this->pubKeyAuth.init(length);
             this->pubKeyAuth.out_copy_bytes(stream.p, length);
             this->pubKeyAuth.mark_end();
             this->pubKeyAuth.rewind();
-
+            stream.in_skip_bytes(this->pubKeyAuth.size());
             // // TODO
             // sspi_SecBufferAlloc(&credssp->pubKeyAuth, length);
             // Stream_Read(stream, credssp->pubKeyAuth.pvBuffer, length);
