@@ -20,7 +20,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestAuthentifierNew
+#define BOOST_TEST_MODULE TestBER
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
@@ -128,6 +128,25 @@ BOOST_AUTO_TEST_CASE(TestBEROctetString)
     res = BER::read_octet_string_tag(s, value);
     BOOST_CHECK_EQUAL(res, true);
     BOOST_CHECK_EQUAL(value, 7);
+
+    s.reset();
+
+}
+
+
+BOOST_AUTO_TEST_CASE(TestBERContextual)
+{
+    BStream s(2048);
+    int res;
+    int value;
+    uint8_t tag = 0x06;
+
+    BER::write_contextual_tag(s, tag, 3, true);
+    s.mark_end();
+    s.rewind();
+    res = BER::read_contextual_tag(s, tag, value, true);
+    BOOST_CHECK_EQUAL(res, true);
+    BOOST_CHECK_EQUAL(value, 3);
 
     s.reset();
 
