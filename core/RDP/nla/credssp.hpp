@@ -160,7 +160,7 @@ struct TSRequest {
     /* TSRequest */
 
     /* [0] version */
-    long version;
+    uint32_t version;
 
     /* [1] negoTokens (NegoData) */
     BStream negoTokens;
@@ -191,6 +191,8 @@ struct TSRequest {
         int pub_key_auth_length;
         int auth_info_length;
 
+
+
         nego_tokens_length = (this->negoTokens.size() > 0)
             ? CredSSP::sizeof_nego_tokens(this->negoTokens.size())
             : 0;
@@ -215,7 +217,7 @@ struct TSRequest {
 	if (nego_tokens_length > 0) {
             length = nego_tokens_length;
 
-            int sequence_length   = BER::sizeof_sequence_octet_string(nego_tokens_length);
+            int sequence_length   = BER::sizeof_sequence_octet_string(this->negoTokens.size());
             int sequenceof_length = BER::sizeof_sequence(sequence_length);
             int context_length    = BER::sizeof_sequence(sequenceof_length);
 
@@ -224,7 +226,7 @@ struct TSRequest {
             length -= BER::write_sequence_tag(stream, sequence_length);
             length -= BER::write_sequence_octet_string(stream, 0,
                                                        this->negoTokens.get_data(),
-                                                       nego_tokens_length);
+                                                       this->negoTokens.size());
 
             // assert length == 0
         }
@@ -234,7 +236,7 @@ struct TSRequest {
             length = auth_info_length;
             length -= BER::write_sequence_octet_string(stream, 2,
                                                        this->authInfo.get_data(),
-                                                       auth_info_length);
+                                                       this->authInfo.size());
             // assert length == 0
         }
 
@@ -243,7 +245,7 @@ struct TSRequest {
             length = pub_key_auth_length;
             length -= BER::write_sequence_octet_string(stream, 3,
                                                        this->pubKeyAuth.get_data(),
-                                                       pub_key_auth_length);
+                                                       this->pubKeyAuth.size());
             // assert length == 0
         }
 
@@ -253,7 +255,7 @@ struct TSRequest {
     int recv(Stream & stream) {
         int length;
         int status;
-        uint32_t version;
+        // uint32_t version;
 
         status = stream.size();
 
@@ -265,7 +267,7 @@ struct TSRequest {
         /* TSRequest */
 	if(!BER::read_sequence_tag(stream, length) ||
            !BER::read_contextual_tag(stream, 0, length, true) ||
-           !BER::read_integer(stream, version)) {
+           !BER::read_integer(stream, this->version)) {
             return -1;
 	}
 

@@ -23,13 +23,44 @@
 #define BOOST_TEST_MODULE TestCredSSP
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "RDP/nla/credssp.hpp"
 
 BOOST_AUTO_TEST_CASE(TestTSRequest)
 {
+    uint8_t packet[] = {
+        0x30, 0x37, 0xa0, 0x03, 0x02, 0x01, 0x02, 0xa1,
+        0x30, 0x30, 0x2e, 0x30, 0x2c, 0xa0, 0x2a, 0x04,
+        0x28, 0x4e, 0x54, 0x4c, 0x4d, 0x53, 0x53, 0x50,
+        0x00, 0x01, 0x00, 0x00, 0x00, 0xb7, 0x82, 0x08,
+        0xe2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x05, 0x01, 0x28, 0x0a, 0x00, 0x00, 0x00,
+        0x0f
+    };
 
+    BStream s;
+
+    s.out_copy_bytes(packet, sizeof(packet));
+    s.mark_end();
+    s.rewind();
+
+    TSRequest ts_req(s);
+
+    BOOST_CHECK_EQUAL(ts_req.version, 2);
+
+    BOOST_CHECK_EQUAL(ts_req.negoTokens.size(), 0x28);
+    BOOST_CHECK_EQUAL(ts_req.authInfo.size(), 0);
+    BOOST_CHECK_EQUAL(ts_req.pubKeyAuth.size(), 0);
+
+    BStream to_send;
+
+    BOOST_CHECK_EQUAL(to_send.size(), 0);
+    ts_req.emit(to_send);
+
+    BOOST_CHECK_EQUAL(to_send.size(), 0x37 + 2);
+    hexdump_c(to_send.get_data(), to_send.size());
 
 }
