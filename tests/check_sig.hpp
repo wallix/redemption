@@ -55,4 +55,67 @@ inline bool check_sig(Drawable & data, char * message, const char * shasig)
    return check_sig(data.data, data.height, data.rowsize, message, shasig);
 }
 
+
+inline bool check_sig(Stream & stream, char * message, const char * shasig)
+{
+   uint8_t sig[20];
+   SslSha1 sha1;
+   sha1.update(stream);
+   sha1.final(sig);
+
+   if (memcmp(shasig, sig, 20)){
+       sprintf(message, "Expected signature: \""
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+       sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+       sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+       sig[ 8], sig[ 9], sig[10], sig[11],
+       sig[12], sig[13], sig[14], sig[15],
+       sig[16], sig[17], sig[18], sig[19]);
+       return false;
+   }
+   return true;
+}
+
+inline bool check_sig(const uint8_t * data, size_t length, char * message, const char * shasig)
+{
+   uint8_t sig[20];
+   SslSha1 sha1;
+   sha1.update(StaticStream(data, length));
+   sha1.final(sig);
+
+   if (memcmp(shasig, sig, 20)){
+       sprintf(message, "Expected signature: \""
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
+       "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
+       sig[ 0], sig[ 1], sig[ 2], sig[ 3],
+       sig[ 4], sig[ 5], sig[ 6], sig[ 7],
+       sig[ 8], sig[ 9], sig[10], sig[11],
+       sig[12], sig[13], sig[14], sig[15],
+       sig[16], sig[17], sig[18], sig[19]);
+       return false;
+   }
+   return true;
+}
+
+inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig)
+{
+   SslSha1 sha1;
+   sha1.update(StaticStream(data, length));
+   sha1.final(sig);
+}
+
+inline void get_sig(Stream & stream, uint8_t * sig)
+{
+   SslSha1 sha1;
+   sha1.update(stream);
+   sha1.final(sig);
+}
+
 #endif
