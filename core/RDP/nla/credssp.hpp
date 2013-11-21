@@ -93,12 +93,6 @@ namespace CredSSP {
         return length;
     }
 
-    int sizeof_ts_request(int length) {
-        length += BER::sizeof_integer(2);
-        length += BER::sizeof_contextual_tag(3);
-        return length;
-    }
-
 
     void ap_integer_increment_le(uint8_t * number, int size) {
 	int index;
@@ -177,6 +171,7 @@ struct TSRequest {
     {
     }
 
+
     TSRequest(Stream & stream) {
         this->recv(stream);
         // LOG(LOG_INFO, "TSRequest recv %d", res);
@@ -185,14 +180,18 @@ struct TSRequest {
     virtual ~TSRequest() {
     }
 
+    int ber_sizeof(int length) {
+        length += BER::sizeof_integer(2);
+        length += BER::sizeof_contextual_tag(3);
+        return length;
+    }
+
     void emit(Stream & stream) {
         int length;
         int ts_request_length;
         int nego_tokens_length;
         int pub_key_auth_length;
         int auth_info_length;
-
-
 
         nego_tokens_length = (this->negoTokens.size() > 0)
             ? CredSSP::sizeof_nego_tokens(this->negoTokens.size())
@@ -205,7 +204,7 @@ struct TSRequest {
             : 0;
 
         length = nego_tokens_length + pub_key_auth_length + auth_info_length;
-        ts_request_length = CredSSP::sizeof_ts_request(length);
+        ts_request_length = this->ber_sizeof(length);
 
         /* TSRequest */
         BER::write_sequence_tag(stream, ts_request_length);
@@ -286,14 +285,9 @@ struct TSRequest {
 
             this->negoTokens.init(length);
             this->negoTokens.out_copy_bytes(stream.p, length);
+            stream.in_skip_bytes(length);
             this->negoTokens.mark_end();
             this->negoTokens.rewind();
-            stream.in_skip_bytes(this->negoTokens.size());
-
-            // // TODO
-            // sspi_SecBufferAlloc(&credssp->negoToken, length);
-            // Stream_Read(stream, credssp->negoToken.pvBuffer, length);
-            // credssp->negoToken.cbBuffer = length;
 	}
 
 	/* [2] authInfo (OCTET STRING) */
@@ -306,13 +300,9 @@ struct TSRequest {
 
             this->authInfo.init(length);
             this->authInfo.out_copy_bytes(stream.p, length);
+            stream.in_skip_bytes(length);
             this->authInfo.mark_end();
             this->authInfo.rewind();
-            stream.in_skip_bytes(this->authInfo.size());
-            // // TODO
-            // sspi_SecBufferAlloc(&credssp->authInfo, length);
-            // Stream_Read(stream, credssp->authInfo.pvBuffer, length);
-            // credssp->authInfo.cbBuffer = length;
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
@@ -324,13 +314,9 @@ struct TSRequest {
             }
             this->pubKeyAuth.init(length);
             this->pubKeyAuth.out_copy_bytes(stream.p, length);
+            stream.in_skip_bytes(length);
             this->pubKeyAuth.mark_end();
             this->pubKeyAuth.rewind();
-            stream.in_skip_bytes(this->pubKeyAuth.size());
-            // // TODO
-            // sspi_SecBufferAlloc(&credssp->pubKeyAuth, length);
-            // Stream_Read(stream, credssp->pubKeyAuth.pvBuffer, length);
-            // credssp->pubKeyAuth.cbBuffer = length;
 	}
 
         return 0;
@@ -339,33 +325,49 @@ struct TSRequest {
 };
 
 
-struct TSCredentials {
-    int credType;
-};
-
-struct TSPasswordCreds : public TSCredentials {
+/*
+ * TSPasswordCreds ::= SEQUENCE {
+ * 	domainName  [0] OCTET STRING,
+ * 	userName    [1] OCTET STRING,
+ * 	password    [2] OCTET STRING
+ * }
+ */
+struct TSPasswordCreds {
     uint8_t domainName[256];
+    int domainName_length;
     uint8_t userName[256];
+    int userName_length;
     uint8_t password[256];
+    int password_length;
 
+    int ber_sizeof() {
+        int length = 0;
+        // TO COMPLETE
+        length += BER::sizeof_sequence_octet_string(domainName_length);
+        length += BER::sizeof_sequence_octet_string(userName_length);
+        length += BER::sizeof_sequence_octet_string(password_length);
+        return length;
+    }
 
     int emit(Stream & stream) {
 	int size = 0;
-	// int innerSize = CredSSP::sizeof_ts_password_creds(credssp);
+	int innerSize = this->ber_sizeof();
 
 	// /* TSPasswordCreds (SEQUENCE) */
 
-	// size += BER::write_sequence_tag(stream, innerSize);
+	size += BER::write_sequence_tag(stream, innerSize);
 
 	// /* [0] domainName (OCTET STRING) */
-	// size += BER::write_sequence_octet_string(stream, 0, (BYTE*) credssp->identity.Domain, credssp->identity.DomainLength * 2);
+	size += BER::write_sequence_octet_string(stream, 0, this->domainName,
+                                                 this->domainName_length);
 
 	// /* [1] userName (OCTET STRING) */
-	// size += BER::write_sequence_octet_string(stream, 1, (BYTE*) credssp->identity.User, credssp->identity.UserLength * 2);
+	size += BER::write_sequence_octet_string(stream, 1, this->userName,
+                                                 this->userName_length);
 
 	// /* [2] password (OCTET STRING) */
-	// size += BER::write_sequence_octet_string(stream, 2, (BYTE*) credssp->identity.Password, credssp->identity.PasswordLength * 2);
-
+	size += BER::write_sequence_octet_string(stream, 2, this->password,
+                                                 this->password_length);
 	return size;
     }
 
@@ -378,34 +380,113 @@ struct TSPasswordCreds : public TSCredentials {
 	/* [0] domainName (OCTET STRING) */
 	BER::read_contextual_tag(stream, 0, length, true);
 	BER::read_octet_string_tag(stream, length);
-	// credssp->identity.DomainLength = (UINT32) length;
-	// credssp->identity.Domain = (UINT16*) malloc(length);
-	// CopyMemory(credssp->identity.Domain, Stream_Pointer(s), credssp->identity.DomainLength);
-	// Stream_Seek(stream, credssp->identity.DomainLength);
-	// credssp->identity.DomainLength /= 2;
+
+        this->domainName_length = length;
+        stream.in_copy_bytes(this->domainName, length);
 
 	/* [1] userName (OCTET STRING) */
 	BER::read_contextual_tag(stream, 1, length, true);
 	BER::read_octet_string_tag(stream, length);
-	// credssp->identity.UserLength = (UINT32) length;
-	// credssp->identity.User = (UINT16*) malloc(length);
-	// CopyMemory(credssp->identity.User, Stream_Pointer(s), credssp->identity.UserLength);
-	// Stream_Seek(stream, credssp->identity.UserLength);
-	// credssp->identity.UserLength /= 2;
+
+        this->userName_length = length;
+        stream.in_copy_bytes(this->userName, length);
 
 	/* [2] password (OCTET STRING) */
 	BER::read_contextual_tag(stream, 2, length, true);
 	BER::read_octet_string_tag(stream, length);
-	// credssp->identity.PasswordLength = (UINT32) length;
-	// credssp->identity.Password = (UINT16*) malloc(length);
-	// CopyMemory(credssp->identity.Password, Stream_Pointer(s), credssp->identity.PasswordLength);
-	// Stream_Seek(stream, credssp->identity.PasswordLength);
-	// credssp->identity.PasswordLength /= 2;
 
-	// credssp->identity.Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+        this->password_length = length;
+        stream.in_copy_bytes(this->password, length);
 
     }
 };
+
+/*
+ * TSCredentials ::= SEQUENCE {
+ * 	credType    [0] INTEGER,
+ * 	credentials [1] OCTET STRING
+ * }
+ */
+struct TSCredentials {
+    int credType;
+    TSPasswordCreds passCreds;
+
+    int ber_sizeof() {
+	int size = 0;
+	size += BER::sizeof_integer(1);
+	size += BER::sizeof_contextual_tag(BER::sizeof_integer(1));
+	size += BER::sizeof_sequence_octet_string(BER::sizeof_sequence(this->passCreds.ber_sizeof()));
+	return size;
+    }
+
+    int emit(Stream & ts_credentials) {
+        // ts_credentials is the authInfo Stream field of TSRequest before it is sent
+        // ts_credentials will not be encrypted and should be encrypted after calling emit
+        int size = 0;
+
+	int innerSize = this->ber_sizeof();
+	int passwordSize;
+
+	/* TSCredentials (SEQUENCE) */
+	size += BER::write_sequence_tag(ts_credentials, innerSize);
+
+	/* [0] credType (INTEGER) */
+	size += BER::write_contextual_tag(ts_credentials, 0, BER::sizeof_integer(1), true);
+	size += BER::write_integer(ts_credentials, 1);
+
+	/* [1] credentials (OCTET STRING) */
+
+	passwordSize = BER::sizeof_sequence(this->passCreds.ber_sizeof());
+
+	size += BER::write_contextual_tag(ts_credentials, 1, BER::sizeof_octet_string(passwordSize), true);
+	size += BER::write_octet_string_tag(ts_credentials, passwordSize);
+	size += this->passCreds.emit(ts_credentials);
+
+	return size;
+    }
+
+
+    void recv(Stream & ts_credentials) {
+        // ts_credentials is decrypted and should be decrypted before calling recv
+	int length;
+	uint32_t integer_length;
+	int ts_password_creds_length;
+
+	/* TSCredentials (SEQUENCE) */
+        BER::read_sequence_tag(ts_credentials, length);
+
+	/* [0] credType (INTEGER) */
+        BER::read_contextual_tag(ts_credentials, 0, length, true);
+        BER::read_integer(ts_credentials, integer_length);
+
+	/* [1] credentials (OCTET STRING) */
+        BER::read_contextual_tag(ts_credentials, 1, length, true);
+        BER::read_octet_string_tag(ts_credentials, ts_password_creds_length);
+
+        this->passCreds.recv(ts_credentials);
+    }
+
+
+    void encode(Stream & ts_credentials) {
+	int length;
+
+        // should check Restricted Admin Mode and emit credentials with empty fields
+	length = BER::sizeof_sequence(this->ber_sizeof());
+        ts_credentials.init(length);
+
+        this->emit(ts_credentials);
+    }
+
+    int encrypt() {
+        return 0;
+    }
+
+    int decrypt() {
+        return 0;
+    }
+
+};
+
 
 // struct TSCspDataDetail : public TSCredentials {
 //     int keySpec;
