@@ -8,7 +8,7 @@ from logger import Logger
 from model import RightInfo, UserInfo
 from sesmanconf import TR, SESMANCONF, translations
 
-ERPM = False
+# ERPM = False
 
 class Engine(object):
     def __init__(self):
@@ -229,7 +229,8 @@ class Engine(object):
         return []
 
     def get_app_params(self, service_login, effective_target):
-        Logger().info("Engine get_app_params: service_login=%s effective_target=%s" % (service_login, effective_target))
+#         Logger().info("Engine get_app_params: service_login=%s effective_target=%s" % (service_login, effective_target))
+        Logger().info("Engine get_app_params: service_login=%s" % service_login)
         try:
             app_params = self.wabengine.get_app_params(service_login, effective_target)
             # Logger().info("app_params=%s" % (app_params.__dict__))
@@ -243,16 +244,18 @@ class Engine(object):
         return None
 
     def get_target_password(self, target_device):
-        Logger().info("get_target_password: target_device=%s" % target_device)
+#         Logger().info("Engine get_target_password: target_device=%s" % target_device)
+        Logger().info("Engine get_target_password ...")
         try:
-            if ERPM:
-                target_password = self.wabengine.get_target_password(target_device)
-            else:
-                target_password = target_device.account.password
+#             if ERPM:
+#                 target_password = self.wabengine.get_target_password(target_device)
+#             else:
+#                 target_password = target_device.account.password
+            target_password = self.wabengine.get_target_password(target_device)
 
             if not target_password:
                 target_password = u''
-            Logger().info("get_target_password done")
+            Logger().info("Engine get_target_password done")
             return target_password
         except Exception, e:
             import traceback
@@ -260,12 +263,14 @@ class Engine(object):
         return u''
 
     def release_target_password(self, target_device, reason):
-        Logger().info("release_target_password: target_device=\"%s\" reason=\"%s\"" %
-            (target_device, reason))
+#         Logger().info("Engine release_target_password: target_device=\"%s\" reason=\"%s\"" %
+#             (target_device, reason))
+        Logger().info("Engine release_target_password: reason=\"%s\"" % reason)
         try:
-            if ERPM:
-                self.wabengine.release_target_password(target_device, reason)
-            Logger().info("release_target_password done")
+#             if ERPM:
+#                 self.wabengine.release_target_password(target_device, reason)
+            self.wabengine.release_target_password(target_device, reason)
+            Logger().info("Engine release_target_password done")
         except Exception, e:
             import traceback
             Logger().info("Engine release_target_password failed: (((%s)))" % (traceback.format_exc(e)))
