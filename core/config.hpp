@@ -249,6 +249,8 @@ typedef enum
 
         AUTHID_DISABLECTRLALTDEL,
 
+        AUTHID_DISABLE_KEYBOARD_LOG,
+
         MAX_AUTHID
     } authid_t;
 
@@ -343,7 +345,9 @@ typedef enum
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
 
-#define STRAUTHID_DISABLECTRLALTDEL         "disable_ctrl_alt_del"
+#define STRAUTHID_DISABLECTRLALTDEL        "disable_ctrl_alt_del"
+
+#define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
 
 static const std::string authstr[MAX_AUTHID - 1] = {
     // Translation text
@@ -444,6 +448,8 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_AUTHENTICATION_CHALLENGE,
 
     STRAUTHID_DISABLECTRLALTDEL,
+
+    STRAUTHID_DISABLE_KEYBOARD_LOG,
 };
 
 static inline authid_t authid_from_string(const char * strauthid) {
@@ -610,6 +616,14 @@ struct Inifile : public FieldObserver {
 
         bool     inactivity_pause;
         unsigned inactivity_timeout;
+
+        // 1 - Disable keyboard event logging in syslog
+        // 2 - Disable keyboard event logging in WRM
+        // 4 - Disable keyboard event logging in META
+        UnsignedField disable_keyboard_log;    // AUTHID_DISABLE_KEYBOARD_LOG
+        bool disable_keyboard_log_syslog;
+        bool disable_keyboard_log_wrm;
+        bool disable_keyboard_log_ocr;
     } video;
 
     // Section "debug"
@@ -922,6 +936,13 @@ public:
 
         this->video.inactivity_pause   = false;
         this->video.inactivity_timeout = 300;
+
+        this->video.disable_keyboard_log.attach_ini(this, AUTHID_DISABLE_KEYBOARD_LOG);
+        this->video.disable_keyboard_log.set(0);
+        this->to_send_set.insert(AUTHID_DISABLE_KEYBOARD_LOG);
+        this->video.disable_keyboard_log_syslog = false;
+        this->video.disable_keyboard_log_wrm    = false;
+        this->video.disable_keyboard_log_ocr    = false;
         // End section "video"
 
 
@@ -1370,6 +1391,12 @@ public:
             }
             else if (0 == strcmp(key, "record_tmp_path")){
                 pathncpy(this->video.record_tmp_path, value, sizeof(this->video.record_tmp_path));
+            }
+            else if (0 == strcmp(key, "disable_keyboard_log")) {
+                this->video.disable_keyboard_log.set_from_cstr(value);
+                this->video.disable_keyboard_log_syslog = 0 != (this->video.disable_keyboard_log.get() & 1);
+                this->video.disable_keyboard_log_wrm    = 0 != (this->video.disable_keyboard_log.get() & 2);
+                this->video.disable_keyboard_log_ocr    = 0 != (this->video.disable_keyboard_log.get() & 4);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
