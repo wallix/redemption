@@ -340,6 +340,32 @@ struct TSPasswordCreds {
     uint8_t password[256];
     int password_length;
 
+    TSPasswordCreds()
+        : domainName_length(0)
+        , userName_length(0)
+        , password_length(0)
+    {
+
+    }
+
+    TSPasswordCreds(const uint8_t * domain, int domain_length, const uint8_t * user, int user_length, const uint8_t * pass, int pass_length) {
+        memcpy(this->domainName, domain, domain_length);
+        this->domainName_length = domain_length;
+
+        memcpy(this->userName, user, user_length);
+        this->userName_length = user_length;
+
+        memcpy(this->password, pass, pass_length);
+        this->password_length = pass_length;
+    }
+
+    TSPasswordCreds(Stream & stream) {
+        this->recv(stream);
+    }
+
+    ~TSPasswordCreds() {}
+
+
     int ber_sizeof() {
         int length = 0;
         // TO COMPLETE
@@ -373,7 +399,7 @@ struct TSPasswordCreds {
 
 
     void recv(Stream & stream) {
-        int length;
+        int length = 0;
         /* TSPasswordCreds (SEQUENCE) */
         BER::read_sequence_tag(stream, length);
 
@@ -411,6 +437,23 @@ struct TSCredentials {
     int credType;
     TSPasswordCreds passCreds;
 
+
+    TSCredentials()
+        : credType(1)
+        , passCreds(TSPasswordCreds())
+    {}
+
+    TSCredentials(const uint8_t * domain, int domain_length, const uint8_t * user, int user_length, const uint8_t * pass, int pass_length)
+        : credType(1)
+        , passCreds(TSPasswordCreds(domain, domain_length,
+                                    user, user_length,
+                                    pass, pass_length))
+    {
+
+    }
+
+    ~TSCredentials() {}
+
     int ber_sizeof() {
 	int size = 0;
 	size += BER::sizeof_integer(1);
@@ -442,6 +485,7 @@ struct TSCredentials {
 	size += BER::write_octet_string_tag(ts_credentials, passwordSize);
 	size += this->passCreds.emit(ts_credentials);
 
+        ts_credentials.mark_end();
 	return size;
     }
 

@@ -352,3 +352,39 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
 }
 
 
+BOOST_AUTO_TEST_CASE(TestTSCredentials)
+{
+
+    uint8_t domain[] = "flatland";
+    uint8_t user[] = "square";
+    uint8_t pass[] = "hypercube";
+
+
+    TSCredentials ts_cred(domain, sizeof(domain),
+                          user,   sizeof(user),
+                          pass,   sizeof(pass));
+
+    BStream s;
+
+    ts_cred.emit(s);
+    s.rewind();
+    BOOST_CHECK_EQUAL(s.size(), *(s.p + 1) + 2);
+
+    TSCredentials ts_cred_received;
+
+    ts_cred_received.recv(s);
+
+    BOOST_CHECK_EQUAL(ts_cred_received.credType, 1);
+    BOOST_CHECK_EQUAL(ts_cred_received.passCreds.domainName_length, sizeof(domain));
+    BOOST_CHECK_EQUAL(ts_cred_received.passCreds.userName_length,   sizeof(user));
+    BOOST_CHECK_EQUAL(ts_cred_received.passCreds.password_length,   sizeof(pass));
+    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred_received.passCreds.domainName),
+                      std::string((const char*)domain));
+    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred_received.passCreds.userName),
+                      std::string((const char*)user));
+    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred_received.passCreds.password),
+                      std::string((const char*)pass));
+
+
+
+}
