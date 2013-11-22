@@ -46,6 +46,7 @@ private:
                 snprintf(text, sizeof(text), "%s", TR("selector", ini));
             }
             else {
+                TODO("target_application only used for user message, the two branches of alternative should be unified et message prepared by sesman")
                 if (::strlen(ini.globals.target_application.get_cstr())) {
                     snprintf(text, sizeof(text), "%s",
                              ini.globals.target_application.get_cstr());

@@ -816,6 +816,7 @@ class Sesman():
                     physical_target = None
                     break
 
+                kv[u'disable_ctrl_alt_del'] = u'no'
                 if selected_target.resource.application:
                     app_params = self.engine.get_app_params(selected_target.service_login, physical_target)
                     if not app_params:
@@ -824,6 +825,7 @@ class Sesman():
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
                     kv[u'shell_working_directory'] = app_params.workingdir
                     kv[u'target_application'] = selected_target.service_login
+                    kv[u'disable_ctrl_alt_del'] = u'yes'
 
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
