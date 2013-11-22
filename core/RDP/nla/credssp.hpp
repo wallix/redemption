@@ -485,7 +485,6 @@ struct TSCredentials {
 	size += BER::write_octet_string_tag(ts_credentials, passwordSize);
 	size += this->passCreds.emit(ts_credentials);
 
-        ts_credentials.mark_end();
 	return size;
     }
 
