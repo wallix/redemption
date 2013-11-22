@@ -367,7 +367,6 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
     BStream s;
 
     ts_cred.emit(s);
-    s.mark_end();
     s.rewind();
     BOOST_CHECK_EQUAL(s.size(), *(s.p + 1) + 2);
 

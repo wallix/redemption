@@ -22,7 +22,7 @@
 #define _REDEMPTION_CORE_RDP_NLA_CREDSSP_HPP_
 
 #include "RDP/nla/asn1/ber.hpp"
-
+#include "RDP/nla/sspi.hpp"
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -394,6 +394,8 @@ struct TSPasswordCreds {
 	// /* [2] password (OCTET STRING) */
 	size += BER::write_sequence_octet_string(stream, 2, this->password,
                                                  this->password_length);
+
+        stream.mark_end();
 	return size;
     }
 
@@ -485,6 +487,7 @@ struct TSCredentials {
 	size += BER::write_octet_string_tag(ts_credentials, passwordSize);
 	size += this->passCreds.emit(ts_credentials);
 
+        ts_credentials.mark_end();
 	return size;
     }
 
