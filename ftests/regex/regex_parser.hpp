@@ -29,6 +29,7 @@ namespace re {
 
     class StateAccu
     {
+        unsigned num_cap;
     public:
         state_list_t & sts;
 
@@ -41,7 +42,8 @@ namespace re {
 
     public:
         StateAccu(state_list_t & states)
-        : sts(states)
+        : num_cap(0)
+        , sts(states)
         {}
 
         State * normal(unsigned type, char_int range_left = 0, char_int range_right = 0,
@@ -67,24 +69,16 @@ namespace re {
         }
 
         State * cap_open(State * out1 = 0) {
-            return this->push(new_cap_open(out1));
+            State * ret = this->push(new_cap_open(out1));
+            ret->num = this->num_cap++;
+            return ret;
         }
 
         State * cap_close(State * out1 = 0) {
-            return this->push(new_cap_close(out1));
+            State * ret = this->push(new_cap_close(out1));
+            ret->num = this->num_cap++;
+            return ret;
         }
-
-//         State * cap_open(State * out1 = 0) {
-//             State * ret = this->push(new_cap_open(out1));
-//             ret->num = this->num_cap++;
-//             return ret;
-//         }
-//
-//         State * cap_close(State * out1 = 0) {
-//             State * ret = this->push(new_cap_close(out1));
-//             ret->num = this->num_cap++;
-//             return ret;
-//         }
 
         State * epsilone(State * out1 = 0) {
             return this->push(new_epsilone(out1));
@@ -611,7 +605,6 @@ namespace re {
     inline IntermendaryState intermendary_st_compile(StateAccu & accu,
                                                      utf8_consumer & consumer,
                                                      const char * & msg_err,
-                                                     unsigned & num_cap,
                                                      int recusive = 0)
     {
         State st(EPSILONE);
@@ -871,7 +864,7 @@ namespace re {
                             }
                             consumer.s += 2;
                             State * epsgroup = accu.epsilone();
-                            IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, num_cap, recusive+1);
+                            IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, recusive+1);
                             if (intermendary.first) {
                                 epsgroup->out1 = intermendary.first;
                                 *pst = epsgroup;
@@ -884,15 +877,13 @@ namespace re {
                             break;
                         }
                         State * stopen = accu.cap_open();
-                        stopen->num = num_cap++;
-                        IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, num_cap, recusive+1);
+                        IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, recusive+1);
                         if (intermendary.first) {
                             stopen->out1 = intermendary.first;
                             *pst = stopen;
                             spst = pst;
                             pst = intermendary.second;
                             *pst = accu.cap_close();
-                            (*pst)->num = num_cap++;
                             pst = &(*pst)->out1;
                         }
                         else if (0 == intermendary.second) {
@@ -927,8 +918,7 @@ namespace re {
             const char * err = 0;
             utf8_consumer consumer(s);
             StateAccu accu(this->m_states);
-            unsigned num_cap = 0;
-            this->m_root = intermendary_st_compile(accu, consumer, err, num_cap).first;
+            this->m_root = intermendary_st_compile(accu, consumer, err).first;
             if (msg_err) {
                 *msg_err = err;
             }
@@ -936,25 +926,23 @@ namespace re {
                 *pos_err = err ? consumer.str() - s : 0;
             }
 
-            if (err) {
+            while (this->m_root && this->m_root->is_epsilone()) {
+                this->m_root = this->m_root->out1;
+            }
+
+            if (err || ! this->m_root) {
                 accu.clear();
             }
-            else {
-                while (this->m_root && this->m_root->is_epsilone()) {
-                    this->m_root = this->m_root->out1;
-                }
+            else if (this->m_root) {
+                remove_epsilone(this->m_states);
 
-                if (this->m_root) {
-                    remove_epsilone(this->m_states);
+                state_list_t::iterator first = this->m_states.begin();
+                state_list_t::iterator last = this->m_states.end();
+                state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
+                this->m_nb_capture = last - first_cap;
 
-                    state_list_t::iterator first = this->m_states.begin();
-                    state_list_t::iterator last = this->m_states.end();
-                    state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
-                    this->m_nb_capture = last - first_cap;
-
-                    for (unsigned n = this->m_nb_capture; first != first_cap; ++first, ++n) {
-                        (*first)->num = n;
-                    }
+                for (unsigned n = this->m_nb_capture; first != first_cap; ++first, ++n) {
+                    (*first)->num = n;
                 }
             }
         }
