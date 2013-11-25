@@ -37,21 +37,38 @@
 
 using namespace re;
 
-#define regex_test(p_regex,\
-                   p_str,\
-                   p_exact_result_search,\
-                   p_result_search,\
-                   p_exact_result_match,\
-                   p_exact_match_result,\
-                   p_result_match,\
-                   p_match_result)\
-{\
-    BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);\
-    BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);\
-    BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);\
-    BOOST_CHECK(p_regex.match_result() == p_exact_match_result);\
-    BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);\
-    BOOST_CHECK(p_regex.match_result() == p_match_result);\
+// #define regex_test(p_regex,\
+//                    p_str,\
+//                    p_exact_result_search,\
+//                    p_result_search,\
+//                    p_exact_result_match,\
+//                    p_exact_match_result,\
+//                    p_result_match,\
+//                    p_match_result)\
+// {\
+//     BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);\
+//     BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);\
+//     BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);\
+//     BOOST_CHECK(p_regex.match_result() == p_exact_match_result);\
+//     BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);\
+//     BOOST_CHECK(p_regex.match_result() == p_match_result);\
+// }
+
+void regex_test(Regex & p_regex,
+                const char * p_str,
+                bool p_exact_result_search,
+                bool p_result_search,
+                bool p_exact_result_match,
+                const Regex::range_matches & p_exact_match_result,
+                bool p_result_match,
+                const Regex::range_matches & p_match_result)
+{
+    BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);
+    BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);
+    BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);
+    BOOST_CHECK(p_regex.match_result() == p_exact_match_result);
+    BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);
+    BOOST_CHECK(p_regex.match_result() == p_match_result);
 }
 
 BOOST_AUTO_TEST_CASE(TestRegex)
@@ -343,6 +360,21 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 
 
+    str_regex = "(?:.)?";
+    regex.reset(str_regex);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    str = "a";
+    matches.clear();
+    regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+    str = "";
+    regex_test(regex, str, 1, 1, 1, matches, 1, matches);
+
+
     str_regex = "(?:a(bv)|(av))(d)";
     regex.reset(str_regex);
     if (regex.message_error()) {
@@ -407,8 +439,6 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     }
     str = "012";
     matches.clear();
-    matches.push_back(range_t(str, str+1));
-    matches.push_back(range_t(str+1, str+2));
     matches.push_back(range_t(str+2, str+3));
     regex_test(regex, str, 1, 1, 1, matches, 1, matches);
 

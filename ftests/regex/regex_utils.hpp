@@ -105,6 +105,12 @@ namespace re {
                     nst = nst->out1;
                 }
                 (*first)->out1 = nst;
+
+                nst = (*first)->out2;
+                while (nst && nst->is_epsilone()) {
+                    nst = nst->out1;
+                }
+                (*first)->out2 = nst;
             }
             state_list_t::iterator first = states.begin();
             while (first != last && !(*first)->is_epsilone()) {

@@ -74,6 +74,18 @@ namespace re {
             return this->push(new_cap_close(out1));
         }
 
+//         State * cap_open(State * out1 = 0) {
+//             State * ret = this->push(new_cap_open(out1));
+//             ret->num = this->num_cap++;
+//             return ret;
+//         }
+//
+//         State * cap_close(State * out1 = 0) {
+//             State * ret = this->push(new_cap_close(out1));
+//             ret->num = this->num_cap++;
+//             return ret;
+//         }
+
         State * epsilone(State * out1 = 0) {
             return this->push(new_epsilone(out1));
         }
@@ -494,15 +506,15 @@ namespace re {
     private:
         std::vector<unsigned> indexes;
         StateAccu & accu;
-        unsigned & num_cap;
+        unsigned nb_clone;
 
     public:
-        ContextClone(StateAccu & accu, unsigned & num_cap, State * st_base, unsigned nb_clone)
+        ContextClone(StateAccu & accu, State * st_base, unsigned nb_clone)
         : pos(std::find(accu.sts.rbegin(), accu.sts.rend(), st_base).base() - accu.sts.begin() - 1)
         , poslast(accu.sts.size())
         , sts2()
         , accu(accu)
-        , num_cap(num_cap)
+        , nb_clone(nb_clone)
         {
             const size_t size = this->poslast - this->pos;
             this->sts2.resize(size);
@@ -525,6 +537,7 @@ namespace re {
 
         State * clone()
         {
+            --this->nb_clone;
             state_list_t::iterator last = this->accu.sts.begin() + this->poslast;
             state_list_t::iterator first = this->accu.sts.begin() + this->pos;
             state_list_t::iterator first2 = this->sts2.begin();
@@ -554,13 +567,20 @@ namespace re {
         }
 
     private:
-        State * copy(const State * st) {
+        State * copy(State * st) {
             if (st->type == SEQUENCE) {
                 return this->accu.sequence(new_string_sequence(st->data.sequence, 1));
             }
             State * ret = this->accu.normal(st->type, st->data.range.l, st->data.range.r);
             if (st->is_cap()) {
-                ret->num = this->num_cap++;
+                if (!this->nb_clone) {
+                    ret->num = st->num;
+                    st->num = 0;
+                    st->type = EPSILONE;
+                }
+                else {
+                    ret->type = EPSILONE;
+                }
             }
             return ret;
         }
@@ -689,7 +709,7 @@ namespace re {
                                     }
                                     else {
                                         *pst = e;
-                                        ContextClone cloner(accu, num_cap, *spst, m-1);
+                                        ContextClone cloner(accu, *spst, m-1);
                                         std::size_t idx = cloner.get_idx(e);
                                         State ** lst = &e->out1;
                                         while (--m) {
@@ -730,7 +750,7 @@ namespace re {
                                         State * e = accu.finish();
                                         State * split = accu.split();
                                         *pst = split;
-                                        ContextClone cloner(accu, num_cap, *spst, n-1);
+                                        ContextClone cloner(accu, *spst, n-1);
                                         std::size_t idx = cloner.get_idx(split);
                                         split->out1 = e;
                                         State * cst = split;
@@ -774,7 +794,7 @@ namespace re {
                                     else {
                                         State * e = accu.epsilone();
                                         *pst = e;
-                                        ContextClone cloner(accu, num_cap, *spst, m-1+n);
+                                        ContextClone cloner(accu, *spst, m-1+n);
                                         std::size_t idx = cloner.get_idx(e);
                                         pst = &e->out1;
                                         State * lst = e;
@@ -812,7 +832,7 @@ namespace re {
                                     /**///std::cout << ("fixe ") << m << std::endl;
                                     State * e = accu.epsilone();
                                     *pst = e;
-                                    ContextClone cloner(accu, num_cap, *spst, m-1);
+                                    ContextClone cloner(accu, *spst, m-1);
                                     std::size_t idx = cloner.get_idx(e);
                                     while (--m) {
                                         /**///std::cout << ("clone") << std::endl;
@@ -850,9 +870,12 @@ namespace re {
                                 return IntermendaryState(0,0);
                             }
                             consumer.s += 2;
+                            State * epsgroup = accu.epsilone();
                             IntermendaryState intermendary = intermendary_st_compile(accu, consumer, msg_err, num_cap, recusive+1);
                             if (intermendary.first) {
-                                *pst = intermendary.first;
+                                epsgroup->out1 = intermendary.first;
+                                *pst = epsgroup;
+                                spst = pst;
                                 pst = intermendary.second;
                             }
                             else if (0 == intermendary.second) {
@@ -866,6 +889,7 @@ namespace re {
                         if (intermendary.first) {
                             stopen->out1 = intermendary.first;
                             *pst = stopen;
+                            spst = pst;
                             pst = intermendary.second;
                             *pst = accu.cap_close();
                             (*pst)->num = num_cap++;
@@ -916,15 +940,21 @@ namespace re {
                 accu.clear();
             }
             else {
-                remove_epsilone(this->m_states);
+                while (this->m_root && this->m_root->is_epsilone()) {
+                    this->m_root = this->m_root->out1;
+                }
 
-                state_list_t::iterator first = this->m_states.begin();
-                state_list_t::iterator last = this->m_states.end();
-                state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
-                this->m_nb_capture = last - first_cap;
+                if (this->m_root) {
+                    remove_epsilone(this->m_states);
 
-                for (unsigned n = this->m_nb_capture; first != first_cap; ++first, ++n) {
-                    (*first)->num = n;
+                    state_list_t::iterator first = this->m_states.begin();
+                    state_list_t::iterator last = this->m_states.end();
+                    state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
+                    this->m_nb_capture = last - first_cap;
+
+                    for (unsigned n = this->m_nb_capture; first != first_cap; ++first, ++n) {
+                        (*first)->num = n;
+                    }
                 }
             }
         }
