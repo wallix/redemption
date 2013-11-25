@@ -38,6 +38,7 @@ namespace re {
     {
         class RangeList;
         class StateList;
+        class StepRangeList;
 
         struct is_begin_state {
             bool operator()(const StateList& stl) const
@@ -59,28 +60,57 @@ namespace re {
             nb_idx_trace_free *= sizeof(unsigned);
             nb_reindex_trace *= sizeof(unsigned);
             nb_traces *= sizeof(char*);
+            const size_t nb_step_range_list = this->nodes * sizeof(StepRangeList::StepRange);
+            const size_t nb_nums = this->states.size() * sizeof(unsigned);
             char * mem = static_cast<char*>(::operator new(
-                nb_st_list + nb_st_range_list + nb_idx_trace_free + nb_reindex_trace + nb_traces
+                nb_st_list + nb_st_range_list + nb_step_range_list * 2
+                + nb_traces + nb_idx_trace_free + nb_reindex_trace + nb_nums
             ));
             this->st_list = reinterpret_cast<StateList*>(mem);
             mem += nb_st_list;
             this->st_range_list = reinterpret_cast<RangeList*>(mem);
             mem += nb_st_range_list;
+            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
+            mem += nb_step_range_list;
+            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
+            mem += nb_step_range_list;
+            this->traces = reinterpret_cast<const char**>(mem);
+            mem += nb_traces;
             this->idx_trace_free = reinterpret_cast<unsigned*>(mem);
             mem += nb_idx_trace_free;
             this->reindex_trace = reinterpret_cast<unsigned*>(mem);
             mem += nb_reindex_trace;
-            this->traces = reinterpret_cast<const char**>(mem);
+            this->nums = reinterpret_cast<unsigned*>(mem);
+
+#ifndef NDEBUG
+            this->l1.nodes = this->nodes;
+            this->l2.nodes = this->nodes;
+#endif
         }
 
         void new_without_capture(size_t nb_st_list, size_t nb_st_range_list)
         {
             nb_st_list *= sizeof(StateList);
             nb_st_range_list *= sizeof(RangeList);
-            char * mem = static_cast<char*>(::operator new(nb_st_list + nb_st_range_list));
+            const size_t nb_step_range_list = this->nodes * sizeof(StepRangeList::StepRange);
+            const size_t nb_nums = this->states.size() * sizeof(unsigned);
+            char * mem = static_cast<char*>(::operator new(
+                nb_st_list + nb_st_range_list + nb_step_range_list * 2 + nb_nums
+            ));
             this->st_list = reinterpret_cast<StateList*>(mem);
             mem += nb_st_list;
             this->st_range_list = reinterpret_cast<RangeList*>(mem);
+            mem += nb_st_range_list;
+            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
+            mem += nb_step_range_list;
+            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
+            mem += nb_step_range_list;
+            this->nums = reinterpret_cast<unsigned*>(mem);
+
+#ifndef NDEBUG
+            this->l1.nodes = this->nodes;
+            this->l2.nodes = this->nodes;
+#endif
         }
 
     public:
@@ -102,8 +132,6 @@ namespace re {
                 return ;
             }
 
-            this->nums.resize(this->states.size(), 0);
-
             {
                 state_list_t::const_iterator first = this->states.begin();
                 state_list_t::const_iterator last = this->states.end();
@@ -115,8 +143,7 @@ namespace re {
             }
 
             ++this->nodes;
-            l1.reserve(this->nodes);
-            l2.reserve(this->nodes);
+            this->nodes -= this->nb_capture;
 
             const size_t col_size = this->nb_capture ? this->states.size() - this->nb_capture + 1 : this->states.size();
             const size_t line_size = this->states.size() - this->nb_capture;
@@ -126,9 +153,9 @@ namespace re {
                 this->new_with_capture(
                     matrix_size, //st_list
                     this->states.size(), //st_range_list
-                    this->nodes - this->nb_capture, //idx_trace_free
+                    this->nodes, //idx_trace_free
                     this->nb_capture, //reindex_trace
-                    (this->nodes - this->nb_capture) * this->nb_capture //traces
+                    this->nodes * this->nb_capture //traces
                 );
             }
             else {
@@ -139,6 +166,7 @@ namespace re {
             }
 
             std::memset(this->st_list, 0, matrix_size * sizeof * this->st_list);
+            std::memset(this->nums, 0, this->states.size() * sizeof * this->nums);
 
             this->st_range_list_last = this->st_range_list;
             for (unsigned n = 0; n < col_size; ++n) {
@@ -232,7 +260,7 @@ namespace re {
 
         void push_idx_trace(unsigned n)
         {
-            assert(this->pidx_trace_free <= this->idx_trace_free + this->nodes - this->nb_capture);
+            assert(this->pidx_trace_free <= this->idx_trace_free + this->nodes);
             *this->pidx_trace_free = n;
             ++this->pidx_trace_free;
         }
@@ -511,7 +539,7 @@ namespace re {
         void reset_trace()
         {
             this->pidx_trace_free = this->idx_trace_free;
-            const unsigned size = this->nodes - this->nb_capture;
+            const unsigned size = this->nodes;
             for (unsigned i = 0; i != size; ++i, ++this->pidx_trace_free) {
                 *this->pidx_trace_free = i;
             }
@@ -561,7 +589,7 @@ namespace re {
             if (this->states.empty()) {
                 return ;
             }
-            std::fill(this->nums.begin(), this->nums.end(), 0);
+            std::fill(this->nums, this->nums + this->states.size(), 0);
             struct Impl {
                 static void display(const StateMachine2 & sm, const State * st, unsigned depth = 0) {
                     if (st && sm.get_num_at(st) != -2u) {
@@ -607,37 +635,57 @@ namespace re {
                 {}
             };
 
-            typedef std::vector<StepRange> container_type;
-            typedef container_type::iterator iterator;
+            typedef StepRange * iterator;
 
             void push_back(RangeList* val, unsigned count_consume)
-            { this->list.push_back(StepRange(val, count_consume)); }
+            {
+                assert((this->last - this->list) != this->nodes);
+                new(this->last++) StepRange(val, count_consume);
+            }
 
             void push_back(RangeList* val, unsigned count_consume, unsigned id)
-            { this->list.push_back(StepRange(val, count_consume, id)); }
+            {
+                assert((this->last - this->list) != this->nodes);
+                new(this->last++) StepRange(val, count_consume, id);
+            }
 
             void push_back(RangeList* val, unsigned count_consume, unsigned id, unsigned numclose)
-            { this->list.push_back(StepRange(val, count_consume, id, numclose)); }
+            {
+                assert((this->last - this->list) != this->nodes);
+                new(this->last++) StepRange(val, count_consume, id, numclose);
+            }
 
             void push_back(const StepRange & x)
-            { this->list.push_back(x); }
+            {
+                assert((this->last - this->list) != this->nodes);
+                new(this->last++) StepRange(x);
+            }
 
             iterator begin()
-            { return this->list.begin(); }
+            { return this->list; }
 
             iterator end()
-            { return this->list.end(); }
+            { return this->last; }
 
             bool empty() const
-            { return this->list.empty(); }
+            { return this->list == this->last; }
 
             void clear()
-            { this->list.clear(); }
+            { this->last = this->list; }
 
-            void reserve(std::size_t count)
-            { this->list.reserve(count); }
+            void set_array(StepRange * array)
+            {
+                this->list = array;
+                this->last = array;
+            }
 
-            container_type list;
+        private:
+            StepRange * list;
+            StepRange * last;
+#ifndef NDEBUG
+        public:
+            unsigned nodes;
+#endif
         };
 
         typedef StepRangeList::iterator StepRangeIterator;
@@ -921,7 +969,7 @@ namespace re {
 
         const state_list_t & states;
         const State * root;
-        mutable std::vector<unsigned> nums;
+        unsigned * nums;
 
         unsigned nb_capture;
         unsigned nodes;
