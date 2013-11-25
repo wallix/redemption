@@ -116,7 +116,7 @@ public:
         simple_pattern("\\s*");
 
         complexe_pattern("numalpha", "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-        complexe_pattern("numalpha", "[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]");
+        complexe_pattern("[numalpha]", "[0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]");
         complexe_pattern("(?:\\d\\d(?: *|(?:\\.|-)?)){5}");
         complexe_pattern("(.*):(.*):(.*)");
 

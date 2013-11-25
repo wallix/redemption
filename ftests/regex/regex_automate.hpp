@@ -22,6 +22,7 @@
 #define REDEMPTION_FTESTS_REGEX_REGEX_AUTOMATE_HPP
 
 #include <iostream>
+#include <new>
 #include <vector>
 #include <utility>
 #include <algorithm>
@@ -46,6 +47,41 @@ namespace re {
         };
 
         StateMachine2(const StateMachine2&) /*= delete*/;
+
+        void new_with_capture(size_t nb_st_list,
+                              size_t nb_st_range_list,
+                              size_t nb_idx_trace_free,
+                              size_t nb_reindex_trace,
+                              size_t nb_traces)
+        {
+            nb_st_list *= sizeof(StateList);
+            nb_st_range_list *= sizeof(RangeList);
+            nb_idx_trace_free *= sizeof(unsigned);
+            nb_reindex_trace *= sizeof(unsigned);
+            nb_traces *= sizeof(char*);
+            char * mem = static_cast<char*>(::operator new(
+                nb_st_list + nb_st_range_list + nb_idx_trace_free + nb_reindex_trace + nb_traces
+            ));
+            this->st_list = reinterpret_cast<StateList*>(mem);
+            mem += nb_st_list;
+            this->st_range_list = reinterpret_cast<RangeList*>(mem);
+            mem += nb_st_range_list;
+            this->idx_trace_free = reinterpret_cast<unsigned*>(mem);
+            mem += nb_idx_trace_free;
+            this->reindex_trace = reinterpret_cast<unsigned*>(mem);
+            mem += nb_reindex_trace;
+            this->traces = reinterpret_cast<const char**>(mem);
+        }
+
+        void new_without_capture(size_t nb_st_list, size_t nb_st_range_list)
+        {
+            nb_st_list *= sizeof(StateList);
+            nb_st_range_list *= sizeof(RangeList);
+            char * mem = static_cast<char*>(::operator new(nb_st_list + nb_st_range_list));
+            this->st_list = reinterpret_cast<StateList*>(mem);
+            mem += nb_st_list;
+            this->st_range_list = reinterpret_cast<RangeList*>(mem);
+        }
 
     public:
         explicit StateMachine2(const state_list_t & sts, const State * root, unsigned nb_capture)
@@ -82,30 +118,38 @@ namespace re {
             l1.reserve(this->nodes);
             l2.reserve(this->nodes);
 
-            {
-                const size_t matrix_size = this->states.size() * this->states.size();
-                this->st_list = new StateList[matrix_size];
-                std::memset(this->st_list, 0, matrix_size * sizeof * this->st_list);
+            const size_t col_size = this->nb_capture ? this->states.size() - this->nb_capture + 1 : this->states.size();
+            const size_t line_size = this->states.size() - this->nb_capture;
+            const size_t matrix_size = col_size * line_size;
+
+            if (this->nb_capture) {
+                this->new_with_capture(
+                    matrix_size, //st_list
+                    this->states.size(), //st_range_list
+                    this->nodes - this->nb_capture, //idx_trace_free
+                    this->nb_capture, //reindex_trace
+                    (this->nodes - this->nb_capture) * this->nb_capture //traces
+                );
+            }
+            else {
+                this->new_without_capture(
+                    matrix_size, //st_list
+                    this->states.size() //st_range_list
+                );
             }
 
-            {
-                this->st_range_list = new RangeList[this->states.size()];
-                this->st_range_list_last = this->st_range_list;
-                for (unsigned n = 0; n < this->states.size(); ++n) {
-                    RangeList& l = *this->st_range_list_last;
-                    ++this->st_range_list_last;
-                    l.st = 0;
-                    l.first = this->st_list + n * this->states.size();
-                    l.last = l.first;
-                }
+            std::memset(this->st_list, 0, matrix_size * sizeof * this->st_list);
+
+            this->st_range_list_last = this->st_range_list;
+            for (unsigned n = 0; n < col_size; ++n) {
+                RangeList& l = *this->st_range_list_last;
+                ++this->st_range_list_last;
+                l.st = 0;
+                l.first = this->st_list + n * line_size;
+                l.last = l.first;
             }
 
             if (this->nb_capture) {
-                const unsigned col = this->nodes - this->nb_capture;
-                this->traces = new const char *[col * this->nb_capture];
-                this->idx_trace_free = new unsigned[col + this->nb_capture];
-                this->reindex_trace = this->idx_trace_free + col;
-
                 unsigned * reindex = this->reindex_trace;
                 typedef state_list_t::const_iterator state_iterator;
                 state_iterator stfirst = this->states.end() - this->nb_capture;
@@ -131,7 +175,7 @@ namespace re {
             }
 
             this->init_range_list(this->st_range_list, root);
-            this->init_value_state_list(this->st_list, this->st_list + this->states.size() * this->states.size());
+            this->init_value_state_list(this->st_list, this->st_list + matrix_size);
 
             while (this->st_range_list != this->st_range_list_last && 0 == (this->st_range_list_last-1)->st) {
                 --this->st_range_list_last;
@@ -169,10 +213,7 @@ namespace re {
 
         ~StateMachine2()
         {
-            delete [] this->st_list;
-            delete [] this->st_range_list;
-            delete [] this->traces;
-            delete [] this->idx_trace_free;
+            ::operator delete(this->st_list);
         }
 
     private:
