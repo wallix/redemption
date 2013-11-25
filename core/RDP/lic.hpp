@@ -2612,7 +2612,7 @@ namespace LIC
 
             // following data is encrypted using license_key
             SslRC4 rc4;
-            rc4.set_key(FixedSizeStream(license_key, 16));
+            rc4.set_key(license_key, 16);
 
             if (!stream.in_check_rem(this->licenseInfo.wBlobLen)){
                 LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license data, need=%u, remains=%u",
@@ -2809,7 +2809,7 @@ namespace LIC
 
             // following data is encrypted using license_key
             SslRC4 rc4;
-            rc4.set_key(FixedSizeStream(license_key, 16));
+            rc4.set_key(license_key, 16);
 
             SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
 
