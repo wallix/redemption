@@ -955,7 +955,14 @@ class Sesman():
                         break;
                 finally:
                     if not (physical_target is None):
-                        self.engine.release_target_password(physical_target, release_reason)
+                        if (physical_target == selected_target):
+                            #no application case
+                            Logger().info("Calling release_target_password")
+                            self.engine.release_target_password(physical_target, release_reason)
+                        else:
+                            #application case
+                            #release application password
+                            self.engine.release_target_password(physical_target, release_reason, selected_target)
 
             Logger().info(u"Stop session ...")
 

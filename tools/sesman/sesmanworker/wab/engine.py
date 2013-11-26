@@ -262,14 +262,10 @@ class Engine(object):
             Logger().info("Engine get_target_password failed: (((%s)))" % (traceback.format_exc(e)))
         return u''
 
-    def release_target_password(self, target_device, reason):
-#         Logger().info("Engine release_target_password: target_device=\"%s\" reason=\"%s\"" %
-#             (target_device, reason))
+    def release_target_password(self, target_device, reason, target_application = None):
         Logger().info("Engine release_target_password: reason=\"%s\"" % reason)
         try:
-#             if ERPM:
-#                 self.wabengine.release_target_password(target_device, reason)
-            self.wabengine.release_target_password(target_device, reason)
+            self.wabengine.release_target_password(target_device, reason, target_application)
             Logger().info("Engine release_target_password done")
         except Exception, e:
             import traceback
