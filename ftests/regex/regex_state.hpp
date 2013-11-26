@@ -184,13 +184,13 @@ namespace re {
         unsigned type;
         unsigned num;
 
-        State *out1;
-        State *out2;
-
         union {
             Range range;
             Sequence sequence;
         } data;
+
+        State *out1;
+        State *out2;
 
     private:
         State(const State &);

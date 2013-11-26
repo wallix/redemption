@@ -33,7 +33,7 @@ namespace re {
     {
     public:
         unsigned num_cap;
-        state_list_t & sts;
+        state_list_t sts;
 
     private:
 #ifdef RE_PARSER_POOL_STATE
@@ -107,9 +107,9 @@ namespace re {
         }
 
     public:
-        StateAccu(state_list_t & states)
+        StateAccu()
         : num_cap(0)
-        , sts(states)
+        , sts()
 #ifdef RE_PARSER_POOL_STATE
         , mem(memory_list_t::allocate(0))
 #endif
@@ -195,6 +195,7 @@ namespace re {
             std::for_each(this->sts.begin(), this->sts.end(), StateDeleter());
 #endif
             this->sts.clear();
+            this->num_cap = 0;
         }
     };
 
@@ -990,22 +991,25 @@ namespace re {
 
     class StateParser
     {
-        struct noop {
+#ifdef RE_PARSER_POOL_STATE
+        struct Deleter {
             void operator()(State *) const
             {}
         };
+#else
+        typedef StateDeleter Deleter;
+#endif
     public:
         explicit StateParser()
         : m_root(0)
-        , m_accu(this->m_states)
+        , m_accu()
         {
-            this->m_states.reserve(32);
+            this->m_accu.sts.reserve(32);
         }
 
         void compile(const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
         {
             this->m_accu.clear();
-            this->m_states.clear();
 
             const char * err = 0;
             utf8_consumer consumer(s);
@@ -1025,10 +1029,10 @@ namespace re {
                 this->m_accu.clear();
             }
             else if (this->m_root) {
-                remove_epsilone(this->m_states, noop());
+                remove_epsilone(this->m_accu.sts, Deleter());
 
-                state_list_t::iterator first = this->m_states.begin();
-                state_list_t::iterator last = this->m_states.end();
+                state_list_t::iterator first = this->m_accu.sts.begin();
+                state_list_t::iterator last = this->m_accu.sts.end();
                 state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
                 //this->m_nb_capture = last - first_cap;
 
@@ -1050,7 +1054,7 @@ namespace re {
 
         const state_list_t & states() const
         {
-            return this->m_states;
+            return this->m_accu.sts;
         }
 
         unsigned nb_capture() const
@@ -1060,14 +1064,19 @@ namespace re {
 
         bool empty() const
         {
-            return this->m_states.empty();
+            return this->m_accu.sts.empty();
+        }
+
+        void clear()
+        {
+            this->m_accu.clear();
+            this->m_root = 0;
         }
 
     private:
         StateParser(const StateParser &);
         StateParser& operator=(const StateParser &);
 
-        state_list_t m_states;
         State * m_root;
         StateAccu m_accu;
     };

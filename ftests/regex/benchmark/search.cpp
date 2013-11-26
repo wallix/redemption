@@ -27,8 +27,8 @@ struct test_search
 {
     re::Regex regex;
 
-    test_search(const char * pattern)
-    : regex(pattern)
+    test_search(const char * pattern, bool optimize_mem = false)
+    : regex(pattern, optimize_mem)
     {}
 
     bool check_pre_condition(const char * s)
@@ -42,16 +42,32 @@ struct test_search
     }
 };
 
+struct test_search_optimize_mem
+: test_search
+{
+    test_search_optimize_mem(const char* pattern)
+    : test_search(pattern, true)
+    {}
+};
+
 struct test_search_capture : test_search
 {
-    test_search_capture(const char * pattern)
-    : test_search(pattern)
+    test_search_capture(const char * pattern, bool optimize_mem = false)
+    : test_search(pattern, optimize_mem)
     {}
 
     void exec(const char * s)
     {
         this->regex.search_with_matches(s);
     }
+};
+
+struct test_search_capture_optimize_mem
+: test_search_capture
+{
+    test_search_capture_optimize_mem(const char* pattern)
+    : test_search_capture(pattern, true)
+    {}
 };
 
 struct test_posix_search
@@ -129,7 +145,7 @@ class Bench
 
     static void test(Test & test, const char * s)
     {
-        ::test(basic_benchmark<ref_test>(test.pattern, ref_test(test)), 200000u, s);
+        ::test(basic_benchmark<ref_test>(test.pattern, ref_test(test)), 600000u, s);
     }
 
     static void test(const char * s)
@@ -257,10 +273,14 @@ int main()
 {
     std::cout << "search:\n";
     Bench<test_search>();
+    std::cout << "\n\nsearch (optmize_mem=true):\n";
+    Bench<test_search_optimize_mem>();
     std::cout << "\n\nposix search:\n";
     Bench<test_posix_search>();
     std::cout << "\n\nsearch with capture:\n";
     Bench<test_search_capture>();
+    std::cout << "\n\nsearch with capture (optmize_mem=true):\n";
+    Bench<test_search_capture_optimize_mem>();
     std::cout << "\n\nposix search with capture:\n";
     Bench<test_posix_search_capture>();
 }

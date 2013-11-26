@@ -48,8 +48,10 @@ int main(int argc, char **argv) {
         std::cerr << argv[0] << (" regex [str]") << std::endl;
         return 1;
     }
+    const bool optimize_mem = argc >= 4 && argv[3] && (argv[3][0] == 'y' || argv[3][0] == '1');
+    std::cout << "optimize_mem: " << optimize_mem << "\n";
     const char * rgxstr = argv[1];
-    Regex regex(argv[1]);
+    Regex regex(argv[1], optimize_mem);
     if (regex.message_error()) {
         std::cerr << regex.message_error() << " at position " << regex.position_error() << std::endl;
         return 2;

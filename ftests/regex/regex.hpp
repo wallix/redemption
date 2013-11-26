@@ -59,22 +59,31 @@ namespace re {
         , step_limit(step_limit)
         {}
 
-        Regex(const char * s, unsigned step_limit = 10000)
+        Regex(const char * s, bool optimize_mem = false, unsigned step_limit = 10000)
         : parser(s)
         , sm(this->parser.st_parser.states(),
              this->parser.st_parser.root(),
-             this->parser.st_parser.nb_capture())
+             this->parser.st_parser.nb_capture(),
+             optimize_mem)
         , step_limit(step_limit)
-        {}
+        {
+            if (optimize_mem) {
+                this->parser.st_parser.clear();
+            }
+        }
 
-        void reset(const char * s)
+        void reset(const char * s, bool optimize_mem = false)
         {
             this->sm.~StateMachine2();
             this->parser.~Parser();
             new (&this->parser) Parser(s);
             new (&this->sm) StateMachine2(this->parser.st_parser.states(),
                                           this->parser.st_parser.root(),
-                                          this->parser.st_parser.nb_capture());
+                                          this->parser.st_parser.nb_capture(),
+                                          optimize_mem);
+            if (optimize_mem) {
+                this->parser.st_parser.clear();
+            }
         }
 
         ~Regex()
@@ -82,7 +91,7 @@ namespace re {
 
         unsigned mark_count() const
         {
-            return this->parser.st_parser.nb_capture();
+            return this->sm.mark_count();
         }
 
         const char * message_error() const

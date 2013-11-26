@@ -47,13 +47,27 @@ namespace re {
             }
         };
 
+        struct MinimalState
+        {
+            unsigned type;
+            unsigned num;
+
+            union {
+                Range range;
+                Sequence sequence;
+            } data;
+        };
+
         StateMachine2(const StateMachine2&) /*= delete*/;
+
+        /// TODO memory alignement
 
         void new_with_capture(size_t nb_st_list,
                               size_t nb_st_range_list,
                               size_t nb_idx_trace_free,
                               size_t nb_reindex_trace,
-                              size_t nb_traces)
+                              size_t nb_traces,
+                              size_t size_mini_sts)
         {
             nb_st_list *= sizeof(StateList);
             nb_st_range_list *= sizeof(RangeList);
@@ -61,10 +75,12 @@ namespace re {
             nb_reindex_trace *= sizeof(unsigned);
             nb_traces *= sizeof(char*);
             const size_t nb_step_range_list = this->nodes * sizeof(StepRangeList::StepRange);
-            const size_t nb_nums = this->states.size() * sizeof(unsigned);
+            const size_t nb_nums = this->nb_states * sizeof(unsigned);
+            const size_t nb_cap_type = this->nb_capture * sizeof(bool);
             char * mem = static_cast<char*>(::operator new(
                 nb_st_list + nb_st_range_list + nb_step_range_list * 2
                 + nb_traces + nb_idx_trace_free + nb_reindex_trace + nb_nums
+                + nb_cap_type + size_mini_sts
             ));
             this->st_list = reinterpret_cast<StateList*>(mem);
             mem += nb_st_list;
@@ -81,6 +97,10 @@ namespace re {
             this->reindex_trace = reinterpret_cast<unsigned*>(mem);
             mem += nb_reindex_trace;
             this->nums = reinterpret_cast<unsigned*>(mem);
+            mem += nb_nums;
+            this->caps_type = reinterpret_cast<bool*>(mem);
+            mem += nb_cap_type;
+            this->mini_sts = reinterpret_cast<MinimalState*>(mem);
 
 #ifndef NDEBUG
             this->l1.nodes = this->nodes;
@@ -88,14 +108,16 @@ namespace re {
 #endif
         }
 
-        void new_without_capture(size_t nb_st_list, size_t nb_st_range_list)
+        void new_without_capture(size_t nb_st_list, size_t nb_st_range_list,
+                                 size_t size_mini_sts)
         {
             nb_st_list *= sizeof(StateList);
             nb_st_range_list *= sizeof(RangeList);
             const size_t nb_step_range_list = this->nodes * sizeof(StepRangeList::StepRange);
-            const size_t nb_nums = this->states.size() * sizeof(unsigned);
+            const size_t nb_nums = this->nb_states * sizeof(unsigned);
             char * mem = static_cast<char*>(::operator new(
-                nb_st_list + nb_st_range_list + nb_step_range_list * 2 + nb_nums
+                nb_st_list + nb_st_range_list + nb_step_range_list * 2
+                + nb_nums + size_mini_sts
             ));
             this->st_list = reinterpret_cast<StateList*>(mem);
             mem += nb_st_list;
@@ -106,6 +128,8 @@ namespace re {
             this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
             mem += nb_step_range_list;
             this->nums = reinterpret_cast<unsigned*>(mem);
+            mem += nb_nums;
+            this->mini_sts = reinterpret_cast<MinimalState*>(mem);
 
 #ifndef NDEBUG
             this->l1.nodes = this->nodes;
@@ -114,9 +138,10 @@ namespace re {
         }
 
     public:
-        explicit StateMachine2(const state_list_t & sts, const State * root, unsigned nb_capture)
-        : states(sts)
-        , root(root)
+        explicit StateMachine2(const state_list_t & sts, const State * root, unsigned nb_capture,
+                               bool optimize_mem = false, bool modify_state = true)
+        : root(root)
+        , nb_states(sts.size())
         , nb_capture(nb_capture)
         , nodes(sts.size())
         , idx_trace(-1u)
@@ -124,20 +149,24 @@ namespace re {
         , idx_trace_free(0)
         , pidx_trace_free(0)
         , traces(0)
+        , mini_sts(0)
         , st_list(0)
         , st_range_list(0)
         , step_id(1)
+        , optimize(optimize_mem)
         {
             if (sts.empty()) {
                 return ;
             }
 
+            unsigned nb_sequence = 0;
             {
-                state_list_t::const_iterator first = this->states.begin();
-                state_list_t::const_iterator last = this->states.end();
+                state_list_t::const_iterator first = sts.begin();
+                state_list_t::const_iterator last = sts.end();
                 for (; first != last; ++first) {
                     if ((*first)->is_sequence()) {
                         this->nodes += (*first)->data.sequence.len - 1;
+                        ++nb_sequence;
                     }
                 }
             }
@@ -145,28 +174,39 @@ namespace re {
             ++this->nodes;
             this->nodes -= this->nb_capture;
 
-            const size_t col_size = this->nb_capture ? this->states.size() - this->nb_capture + 1 : this->states.size();
-            const size_t line_size = this->states.size() - this->nb_capture;
+            const size_t col_size = this->nb_capture ? this->nb_states - this->nb_capture + 1 : this->nb_states;
+            const size_t line_size = this->nb_states - this->nb_capture;
             const size_t matrix_size = col_size * line_size;
 
-            if (this->nb_capture) {
-                this->new_with_capture(
-                    matrix_size, //st_list
-                    this->states.size(), //st_range_list
-                    this->nodes, //idx_trace_free
-                    this->nb_capture, //reindex_trace
-                    this->nodes * this->nb_capture //traces
-                );
-            }
-            else {
-                this->new_without_capture(
-                    matrix_size, //st_list
-                    this->states.size() //st_range_list
-                );
+            {
+                /// TODO memory alignement
+                const size_t size_mini_sts = optimize_mem
+                ? (this->nb_states - this->nb_capture) * sizeof(MinimalState)
+                    + (!modify_state
+                    ? (this->nodes - 1 - (this->nb_states - this->nb_capture) + nb_sequence) * sizeof(char_int)
+                    : 0)
+                : 0;
+                if (this->nb_capture) {
+                    this->new_with_capture(
+                        matrix_size, //st_list
+                        this->nb_states, //st_range_list
+                        this->nodes, //idx_trace_free
+                        this->nb_capture, //reindex_trace
+                        this->nodes * this->nb_capture, //traces
+                        size_mini_sts
+                    );
+                }
+                else {
+                    this->new_without_capture(
+                        matrix_size, //st_list
+                        this->nb_states, //st_range_list
+                        size_mini_sts
+                    );
+                }
             }
 
             std::memset(this->st_list, 0, matrix_size * sizeof * this->st_list);
-            std::memset(this->nums, 0, this->states.size() * sizeof * this->nums);
+            std::memset(this->nums, 0, this->nb_states * sizeof * this->nums);
 
             this->st_range_list_last = this->st_range_list;
             for (unsigned n = 0; n < col_size; ++n) {
@@ -179,10 +219,12 @@ namespace re {
 
             if (this->nb_capture) {
                 unsigned * reindex = this->reindex_trace;
+                bool * typefirst = this->caps_type;
                 typedef state_list_t::const_iterator state_iterator;
-                state_iterator stfirst = this->states.end() - this->nb_capture;
-                state_iterator stlast = this->states.end();
-                for (unsigned num_open; stfirst != stlast; ++stfirst) {
+                state_iterator stfirst = sts.end() - this->nb_capture;
+                state_iterator stlast = sts.end();
+                for (unsigned num_open; stfirst != stlast; ++stfirst, ++typefirst) {
+                    *typefirst = (*stfirst)->type == CAPTURE_OPEN;
                     if ((*stfirst)->is_cap_close()) {
                         continue;
                     }
@@ -209,11 +251,55 @@ namespace re {
                 --this->st_range_list_last;
             }
 
+            if (optimize_mem) {
+                {
+                    char_int * str = reinterpret_cast<char_int*>(
+                        this->mini_sts + (this->nb_states - this->nb_capture)
+                    );
+                    state_list_t::const_iterator first = sts.begin();
+                    state_list_t::const_iterator last = sts.end() - this->nb_capture;
+                    MinimalState * first2 = this->mini_sts;
+                    for (; first != last; ++first, ++first2) {
+                        State & st = **first;
+                        first2->type = st.type;
+                        first2->num = st.num;
+                        if (st.is_sequence()) {
+                            if (modify_state) {
+                                first2->data.sequence.s = st.data.sequence.s;
+                                st.data.sequence.s = 0;
+                            }
+                            else {
+                                std::copy(st.data.sequence.s, st.data.sequence.s + st.data.sequence.len, str);
+                                first2->data.sequence.s = str;
+                                str += st.data.sequence.len + 1;
+                                *str = 0;
+                            }
+                            first2->data.sequence.len = st.data.sequence.len;
+                        }
+                        else {
+                            first2->data.range.l = st.data.range.l;
+                            first2->data.range.r = st.data.range.r;
+                        }
+                    }
+                }
+
+                RangeList * first = this->st_range_list;
+                RangeList * last = this->st_range_list_last;
+                for (; first != last; ++first) {
+                    StateList * l = first->first;
+                    StateList * rlast = first->last;
+                    for (; l != rlast; ++l) {
+                        l->st = reinterpret_cast<State*>(this->mini_sts + l->st->num - this->nb_capture);
+                    }
+                }
+            }
+
             this->st_range_beginning.first = std::partition(
                 this->st_range_list->first,
                 this->st_range_list->last,
                 is_begin_state()
             );
+
             if (this->st_range_beginning.first != this->st_range_list->first) {
                 this->st_range_beginning.st_num = -1u;
                 this->st_range_beginning.last = this->st_range_beginning.first;
@@ -243,6 +329,11 @@ namespace re {
             ::operator delete(this->st_list);
         }
 
+        unsigned mark_count() const
+        {
+            return this->nb_capture;
+        }
+
     private:
         unsigned pop_idx_trace(unsigned cp_idx)
         {
@@ -266,13 +357,13 @@ namespace re {
 
         void set_num_at(const State * st, unsigned count) const
         {
-            assert(this->states.size() > st->num);
+            assert(this->nb_states > st->num);
             this->nums[st->num] = count;
         }
 
         unsigned get_num_at(const State * st) const
         {
-            assert(this->states.size() > st->num);
+            assert(this->nb_states > st->num);
             return this->nums[st->num];
         }
 
@@ -431,7 +522,7 @@ namespace re {
     public:
         bool exact_search(const char * s, unsigned step_limit)
         {
-            if (this->states.empty()) {
+            if (0 == this->nb_states) {
                 return false;
             }
             return this->match(s, step_limit, DefaultMatchTracer(),
@@ -459,7 +550,7 @@ namespace re {
 
         bool search(const char * s, unsigned step_limit)
         {
-            if (this->states.empty()) {
+            if (0 == this->nb_states) {
                 return false;
             }
             return this->match(s, step_limit, DefaultMatchTracer(),
@@ -520,9 +611,9 @@ namespace re {
             //recursive matching
             const char ** first = this->traces + idx * this->nb_capture;
             const char ** last = first + this->nb_capture;
-            state_list_t::const_iterator stfirst = this->states.end() - this->nb_capture;
-            for (; ++first != last; ++stfirst) {
-                if ((*stfirst)->type == (*(stfirst+1))->type) {
+            bool * typefirst = this->caps_type;
+            for (; ++first != last; ++typefirst) {
+                if (*typefirst == *(typefirst+1)) {
                     *first = *(first-1);
                 }
             }
@@ -556,7 +647,7 @@ namespace re {
         void display_dfa(const RangeList * l, const RangeList * last) const
         {
             for (; l < last && l->first != l->last; ++l) {
-                std::cout << l << "  st: " << l->st_num << (l->st_num >= this->states.size()-this->nb_capture ? " (cap)\n" : "\n");
+                std::cout << l << "  st: " << l->st_num << (l->st_num >= this->nb_states-this->nb_capture ? " (cap)\n" : "\n");
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
                     std::cout << "\t" << first->st->num << "\t"
                     << *first->st << "\t" << first->next << "\t" << first->next_is_finish;
@@ -585,10 +676,22 @@ namespace re {
 
         void display_states() const
         {
-            if (this->states.empty()) {
+            if (0 == this->nb_states) {
                 return ;
             }
-            std::fill(this->nums, this->nums + this->states.size(), 0);
+
+            if (this->optimize) {
+                std::cout << ("\033[33m(optimize out)") << std::endl;
+                MinimalState * first = this->mini_sts;
+                MinimalState * last = first + this->nb_states - this->nb_capture;
+                for (; first != last; ++first) {
+                    std::cout << first->num << "\t" << *reinterpret_cast<State*>(first) << "\n";
+                }
+                std::cout << "\033[0m";
+                return ;
+            }
+
+            std::fill(this->nums, this->nums + this->nb_states, 0);
             struct Impl {
                 static void display(const StateMachine2 & sm, const State * st, unsigned depth = 0) {
                     if (st && sm.get_num_at(st) != -2u) {
@@ -966,9 +1069,10 @@ namespace re {
         }
 
 
-        const state_list_t & states;
         const State * root;
         unsigned * nums;
+        bool * caps_type;
+        unsigned nb_states;
 
         unsigned nb_capture;
         unsigned nodes;
@@ -979,6 +1083,8 @@ namespace re {
         const char ** traces;
         StepRangeList l1;
         StepRangeList l2;
+
+        MinimalState * mini_sts;
 
         struct StateList
         {
@@ -1004,6 +1110,8 @@ namespace re {
 
         unsigned step_id;
         unsigned step_count;
+
+        bool optimize;
     };
 }
 

@@ -56,6 +56,17 @@ struct test_compile
     }
 };
 
+struct test_compile_optimize_mem
+: test_compile
+{
+    void exec(const char * s) const
+    {
+        re::StateParser p;
+        p.compile(s);
+        re::StateMachine2(p.states(), p.root(), p.nb_capture(), true);
+    }
+};
+
 struct test_posix_compile
 {
     bool check_pre_condition(const char * s) const
@@ -130,6 +141,8 @@ int main()
     Bench<test_parser>();
     std::cout << "\n\ncompile (parser+automate):\n";
     Bench<test_compile>();
+    std::cout << "\n\ncompile (parser+automate (optimize_mem=true)):\n";
+    Bench<test_compile_optimize_mem>();
     std::cout << "\n\nposix compile:\n";
     Bench<test_posix_compile>();
 }
