@@ -238,7 +238,7 @@ struct Keymap2
         ctrl_alt_del =
             (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&  // Ctrl
             (this->keys_down[LEFT_ALT] || this->keys_down[RIGHT_ALT]) &&    // Alt
-            (this->keys_down[0xD3] || this->keys_down[0x53]);               // Del (or Numpad del)
+            (this->keys_down[0xD3] || this->keys_down[0x53] || this->keys_down[0x01]);  // Del, Numpad del or Escape
 
         if (is_ctrl_pressed() && is_alt_pressed()
         && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
