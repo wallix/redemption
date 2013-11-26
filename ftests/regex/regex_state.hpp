@@ -23,6 +23,7 @@
 
 #include <ostream>
 #include <algorithm>
+#include <utility> //std::swap
 
 #include "regex_consumer.hpp"
 
@@ -177,6 +178,9 @@ namespace re {
         bool is_sequence() const
         { return this->type == SEQUENCE; }
 
+        bool is_uninitialized() const
+        { return this->type == 0; }
+
         unsigned type;
         unsigned num;
 
@@ -187,6 +191,10 @@ namespace re {
             Range range;
             Sequence sequence;
         } data;
+
+    private:
+        State(const State &);
+        State& operator=(const State &);
     };
 
     inline std::ostream& operator<<(std::ostream& os, const State& st)

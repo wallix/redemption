@@ -95,7 +95,8 @@ namespace re {
         }
     }
 
-    inline void remove_epsilone(state_list_t & states)
+    template<typename Deleter>
+    inline void remove_epsilone(state_list_t & states, Deleter deleter)
     {
         state_list_t::iterator last = states.end();
         if (std::find_if(states.begin(), last, IsEpsilone()) != last) {
@@ -119,7 +120,7 @@ namespace re {
             state_list_t::iterator result = first;
             for (; first != last; ++first) {
                 if ((*first)->is_epsilone()) {
-                    delete *first;
+                    deleter(*first);
                 }
                 else {
                     *result = *first;

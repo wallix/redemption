@@ -172,7 +172,7 @@ namespace re {
             for (unsigned n = 0; n < col_size; ++n) {
                 RangeList& l = *this->st_range_list_last;
                 ++this->st_range_list_last;
-                l.st = 0;
+                l.st_num = -1u;
                 l.first = this->st_list + n * line_size;
                 l.last = l.first;
             }
@@ -205,36 +205,35 @@ namespace re {
             this->init_range_list(this->st_range_list, root);
             this->init_value_state_list(this->st_list, this->st_list + matrix_size);
 
-            while (this->st_range_list != this->st_range_list_last && 0 == (this->st_range_list_last-1)->st) {
+            while (this->st_range_list != this->st_range_list_last && -1u == (this->st_range_list_last-1)->st_num) {
                 --this->st_range_list_last;
             }
 
-            this->st_range_beginning.st = 0;
             this->st_range_beginning.first = std::partition(
                 this->st_range_list->first,
                 this->st_range_list->last,
                 is_begin_state()
             );
-            if (st_range_beginning.first != this->st_range_list->first) {
+            if (this->st_range_beginning.first != this->st_range_list->first) {
+                this->st_range_beginning.st_num = -1u;
                 this->st_range_beginning.last = this->st_range_beginning.first;
-                StateList * l = st_range_list->first;
-                StateList * rlast = st_range_list->last;
-                this->st_range_beginning.st = l->st;
+                StateList * l = this->st_range_list->first;
+                StateList * rlast = this->st_range_list->last;
+                this->st_range_beginning.st_num = l->st->num;
                 for (; l != rlast; ++l) {
                     StateList * first = l->next->first;
                     StateList * last = l->next->last;
                     for (; first != last; ++first) {
-                        st_range_beginning.last->next = first->next;
-                        st_range_beginning.last->st = first->st;
-                        ++st_range_beginning.last;
+                        this->st_range_beginning.last->next = first->next;
+                        this->st_range_beginning.last->st = first->st;
+                        ++this->st_range_beginning.last;
                     }
                 }
 
                 this->st_range_list->first += (this->st_range_beginning.last - this->st_range_beginning.first);
             }
             else {
-                this->st_range_beginning.st = this->st_range_list->st;
-                this->st_range_beginning.first = this->st_range_list->first;
+                this->st_range_beginning.st_num = this->st_range_list->st_num;
                 this->st_range_beginning.last = this->st_range_list->last;
             }
         }
@@ -360,8 +359,8 @@ namespace re {
         {
             /**///std::cout << (__FUNCTION__) << std::endl;
             RangeList * l = this->st_range_list;
-            for (; l < this->st_range_list_last && l->st; ++l) {
-                if (l->st == st) {
+            for (; l < this->st_range_list_last && l->st_num != -1u; ++l) {
+                if (l->st_num == st->num) {
                     return l;
                 }
             }
@@ -371,7 +370,7 @@ namespace re {
         void init_range_list(RangeList* l, const State * st)
         {
             /**///std::cout << (__FUNCTION__) << std::endl;
-            l->st = st;
+            l->st_num = st->num;
             this->push_state(l, st);
             /**///std::cout << "-- " << (l) << std::endl;
             for (StateList * first = l->first, * last = l->last; first < last; ++first) {
@@ -390,7 +389,7 @@ namespace re {
                 }
                 else {
                     RangeList * le = l+1;
-                    while (le < this->st_range_list_last && le->st) {
+                    while (le < this->st_range_list_last && le->st_num != -1u) {
                         ++le;
                     }
                     first->next = le;
@@ -532,7 +531,7 @@ namespace re {
         void reset_id() const
         {
             for (RangeList * l = this->st_range_list; l < this->st_range_list_last; ++l) {
-                this->set_num_at(l->st, 0);
+                this->nums[l->st_num] = 0;
             }
         }
 
@@ -557,7 +556,7 @@ namespace re {
         void display_dfa(const RangeList * l, const RangeList * last) const
         {
             for (; l < last && l->first != l->last; ++l) {
-                std::cout << l << "  st: " << l->st->num << (l->st->is_cap() ? " (cap)\n" : "\n");
+                std::cout << l << "  st: " << l->st_num << (l->st_num >= this->states.size()-this->nb_capture ? " (cap)\n" : "\n");
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
                     std::cout << "\t" << first->st->num << "\t"
                     << *first->st << "\t" << first->next << "\t" << first->next_is_finish;
@@ -741,9 +740,9 @@ namespace re {
                     continue ;
                 }
 
-                if (this->get_num_at(ifirst->rl->st) == this->step_id) {
+                if (this->nums[ifirst->rl->st_num] == this->step_id) {
 #ifdef DISPLAY_TRACE
-                    std::cout << "\t\033[35mdup " << (ifirst->rl->st->num) << "\033[0m\n";
+                    std::cout << "\t\033[35mdup " << (ifirst->rl->st_num) << "\033[0m\n";
 #endif
                     if (active_capture) {
                         tracer.fail(ifirst->idx);
@@ -752,7 +751,7 @@ namespace re {
                     continue;
                 }
 
-                this->set_num_at(ifirst->rl->st, this->step_id);
+                this->nums[ifirst->rl->st_num] = this->step_id;
                 StateList * first = ifirst->rl->first;
                 StateList * last = ifirst->rl->last;
 
@@ -939,7 +938,7 @@ namespace re {
                         return true;
                     }
 
-                    if (this->get_num_at(ifirst->rl->st) == this->step_id) {
+                    if (this->nums[ifirst->rl->st_num] == this->step_id) {
                         if (active_capture) {
                             /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
                             tracer.fail(ifirst->idx);
@@ -947,7 +946,7 @@ namespace re {
                         }
                         continue;
                     }
-                    this->set_num_at(ifirst->rl->st, this->step_id);
+                    this->nums[ifirst->rl->st_num] = this->step_id;
 
                     StateList * first = ifirst->rl->first;
                     StateList * last = ifirst->rl->last;
@@ -994,9 +993,9 @@ namespace re {
 
         struct RangeList
         {
-            const State * st;
             StateList * first;
             StateList * last;
+            unsigned st_num;
         };
 
         RangeList * st_range_list;

@@ -23,19 +23,85 @@
 
 #include "regex_utils.hpp"
 
-#include <iterator>
+#include <algorithm>
+#include <vector>
+#include <new>
 
 namespace re {
 
     class StateAccu
     {
-        unsigned num_cap;
     public:
+        unsigned num_cap;
         state_list_t & sts;
 
     private:
-        State * push(State * st)
+#ifdef RE_PARSER_POOL_STATE
+        struct memory_list_t
         {
+            static const unsigned reserve_state = 31;
+            memory_list_t * prev;
+            unsigned len;
+            State states[1];
+
+            static memory_list_t * allocate(memory_list_t * cur)
+            {
+                memory_list_t * ret = static_cast<memory_list_t*>(
+                    ::operator new(sizeof(memory_list_t) + (reserve_state - 1) * sizeof(State))
+                );
+                ret->prev = cur;
+                ret->len = 0;
+                return ret;
+            }
+
+            struct Deleter
+            {
+                void operator()(State & st) const
+                {
+                    st.~State();
+                }
+            };
+
+            void clear()
+            {
+                std::for_each(this->states + 0, this->states + this->len, Deleter());
+                this->len = 0;
+            }
+
+            static memory_list_t * deallocate(memory_list_t * cur)
+            {
+                memory_list_t * ret = cur->prev;
+                cur->clear();
+                ::operator delete(cur);
+                return ret;
+            }
+
+            bool is_full() const
+            {
+                return this->len == reserve_state;
+            }
+
+            void * next()
+            {
+                return this->states + this->len++;
+            }
+        };
+
+        memory_list_t * mem;
+#endif
+
+        State * push(unsigned type,
+                     char_int range_left = 0, char_int range_right = 0,
+                     State * out1 = 0, State * out2 = 0)
+        {
+#ifdef RE_PARSER_POOL_STATE
+            if (this->mem->is_full()) {
+                this->mem = memory_list_t::allocate(this->mem);
+            }
+            State * st = new(this->mem->next()) State(type, range_left, range_right, out1, out2);
+#else
+            State * st = new State(type, range_left, range_right, out1, out2);
+#endif
             sts.push_back(st);
             return st;
         }
@@ -44,70 +110,90 @@ namespace re {
         StateAccu(state_list_t & states)
         : num_cap(0)
         , sts(states)
+#ifdef RE_PARSER_POOL_STATE
+        , mem(memory_list_t::allocate(0))
+#endif
         {}
+
+        ~StateAccu()
+        {
+            this->clear();
+#ifdef RE_PARSER_POOL_STATE
+            memory_list_t::deallocate(this->mem);
+#endif
+        }
 
         State * normal(unsigned type, char_int range_left = 0, char_int range_right = 0,
                        State * out1 = 0, State * out2 = 0)
         {
-            return this->push(new State(type, range_left, range_right, out1, out2));
+            return this->push(type, range_left, range_right, out1, out2);
         }
 
         State * character(char_int c, State * out1 = 0) {
-            return this->push(new_character(c, out1));
+            return this->push(RANGE, c, c, out1);
         }
 
         State * range(char_int left, char_int right, State * out1 = 0) {
-            return this->push(new_range(left, right, out1));
+            return this->push(RANGE, left, right, out1);
         }
 
         State * any(State * out1 = 0) {
-            return this->push(new_any(out1));
+            return this->push(RANGE, 0, char_int(-1u), out1);
         }
 
         State * split(State * out1 = 0, State * out2 = 0) {
-            return this->push(new_split(out1, out2));
+            return this->push(SPLIT, 0, 0, out1, out2);
         }
 
         State * cap_open(State * out1 = 0) {
-            State * ret = this->push(new_cap_open(out1));
+            State * ret = this->push(CAPTURE_OPEN, 0, 0, out1);
             ret->num = this->num_cap++;
             return ret;
         }
 
         State * cap_close(State * out1 = 0) {
-            State * ret = this->push(new_cap_close(out1));
+            State * ret = this->push(CAPTURE_CLOSE, 0, 0, out1);
             ret->num = this->num_cap++;
             return ret;
         }
 
         State * epsilone(State * out1 = 0) {
-            return this->push(new_epsilone(out1));
+            return this->push(EPSILONE, 0, 0, out1);
         }
 
         State * finish(State * out1 = 0) {
-            return this->push(new_finish(out1));
+            return this->push(FINISH, 0, 0, out1);
         }
 
         State * begin(State * out1 = 0) {
-            return this->push(new_begin(out1));
+            return this->push(FIRST, 0, 0, out1);
         }
 
         State * last() {
-            return this->push(new_last());
+            return this->push(LAST);
         }
 
         State * sequence(const char_int * s, size_t len, State * out1 = 0) {
-            return this->push(new_sequence(s, len, out1));
-
+            State * ret = this->push(SEQUENCE, 0, 0, out1);
+            ret->data.sequence.s = s;
+            ret->data.sequence.len = len;
+            return ret;
         }
 
         State * sequence(const SequenceString & ss, State * out1 = 0) {
-            return this->push(new_sequence(ss, out1));
+            return this->sequence(ss.s, ss.len, out1);
         }
 
         void clear()
         {
+#ifdef RE_PARSER_POOL_STATE
+            while (this->mem->prev) {
+                this->mem = memory_list_t::deallocate(this->mem);
+            }
+            this->mem->clear();
+#else
             std::for_each(this->sts.begin(), this->sts.end(), StateDeleter());
+#endif
             this->sts.clear();
         }
     };
@@ -904,21 +990,26 @@ namespace re {
 
     class StateParser
     {
+        struct noop {
+            void operator()(State *) const
+            {}
+        };
     public:
         explicit StateParser()
         : m_root(0)
-        , m_nb_capture(0)
-        {}
+        , m_accu(this->m_states)
+        {
+            this->m_states.reserve(32);
+        }
 
         void compile(const char * s, const char * * msg_err = 0, size_t * pos_err = 0)
         {
-            this->free_state();
+            this->m_accu.clear();
             this->m_states.clear();
 
             const char * err = 0;
             utf8_consumer consumer(s);
-            StateAccu accu(this->m_states);
-            this->m_root = intermendary_st_compile(accu, consumer, err).first;
+            this->m_root = intermendary_st_compile(this->m_accu, consumer, err).first;
             if (msg_err) {
                 *msg_err = err;
             }
@@ -931,17 +1022,17 @@ namespace re {
             }
 
             if (err || ! this->m_root) {
-                accu.clear();
+                this->m_accu.clear();
             }
             else if (this->m_root) {
-                remove_epsilone(this->m_states);
+                remove_epsilone(this->m_states, noop());
 
                 state_list_t::iterator first = this->m_states.begin();
                 state_list_t::iterator last = this->m_states.end();
                 state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
-                this->m_nb_capture = last - first_cap;
+                //this->m_nb_capture = last - first_cap;
 
-                for (unsigned n = this->m_nb_capture; first != first_cap; ++first, ++n) {
+                for (unsigned n = this->nb_capture(); first != first_cap; ++first, ++n) {
                     (*first)->num = n;
                 }
             }
@@ -949,7 +1040,7 @@ namespace re {
 
         ~StateParser()
         {
-            this->free_state();
+            this->m_accu.clear();
         }
 
         const State * root() const
@@ -964,7 +1055,7 @@ namespace re {
 
         unsigned nb_capture() const
         {
-            return this->m_nb_capture;
+            return this->m_accu.num_cap;
         }
 
         bool empty() const
@@ -976,14 +1067,9 @@ namespace re {
         StateParser(const StateParser &);
         StateParser& operator=(const StateParser &);
 
-        void free_state()
-        {
-            std::for_each(this->m_states.begin(), this->m_states.end(), StateDeleter());
-        }
-
         state_list_t m_states;
         State * m_root;
-        unsigned m_nb_capture;
+        StateAccu m_accu;
     };
 }
 
