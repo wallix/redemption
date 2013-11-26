@@ -669,14 +669,14 @@ public:
     }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel
-                                , uint8_t * data
+                                , uint8_t * chunk
                                 , size_t length
                                 , size_t chunk_size
                                 , int flags) {
         if (this->verbose & 16) {
             LOG( LOG_INFO
                , "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)"
-               , data, length, chunk_size, flags);
+               , chunk, length, chunk_size, flags);
         }
 
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -684,11 +684,10 @@ public:
         }
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu(this->verbose);
-        FixedSizeStream             chunk(data, chunk_size);
 
         virtual_channel_pdu.send_to_client( *this->trans, this->encrypt
                                           , this->client_info.encryptionLevel, userid, channel.chanid
-                                          , length, flags, chunk);
+                                          , length, flags, chunk, chunk_size);
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
