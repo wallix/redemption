@@ -14,7 +14,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
+   Copyright (C) Wallix 2010-2014
    Author(s): Christophe Grosjean, Javier Caverni
 
    openssl headers
@@ -99,8 +99,8 @@ class SslRC4
         RC4_set_key(&this->rc4, key_size, key);
     }
 
-    void crypt(Stream & stream){
-        RC4(&this->rc4, stream.size(), stream.get_data(), stream.get_data());
+    void crypt(Stream & instream, Stream & outstream){
+        RC4(&this->rc4, instream.size(), instream.get_data(), outstream.get_data());
     }
 };
 
@@ -319,7 +319,8 @@ struct CryptContext
             this->rc4.set_key(this->key, keylen);
 
             FixedSizeStream key(this->key, keylen);
-            this->rc4.crypt(key);
+            // in, out
+            this->rc4.crypt(key, key);
 
             if (this->encryptionMethod == 1){
                 ssl.sec_make_40bit(this->key);
@@ -327,7 +328,8 @@ struct CryptContext
             this->rc4.set_key(this->key, keylen);
             this->use_count = 0;
         }
-        this->rc4.crypt(stream);
+        // in, out
+        this->rc4.crypt(stream, stream);
         this->use_count++;
     }
 
