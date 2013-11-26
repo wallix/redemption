@@ -137,13 +137,15 @@ class SslHMAC
 class Sign
 {
     SslSha1 sha1;
-    const Stream & key;
+    const uint8_t * const & key;
+    size_t key_size;
 
     public:
-    Sign(const Stream & key) 
+    Sign(const uint8_t * const key, size_t key_size) 
         : key(key)
+        , key_size(key_size)
     {
-        this->sha1.update(this->key.get_data(), this->key.size());
+        this->sha1.update(this->key, this->key_size);
         const uint8_t sha1const[40] = {
             0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
             0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
@@ -152,8 +154,8 @@ class Sign
         sha1.update(sha1const, 40);
     }
     
-    void update(const Stream & data) {
-        this->sha1.update(data.get_data(), data.size());
+    void update(const uint8_t * const data, size_t data_size) {
+        this->sha1.update(data, data_size);
     }
 
     void final(uint8_t * res) {
@@ -161,7 +163,7 @@ class Sign
         this->sha1.final(shasig);
 
         SslMd5 md5;
-        md5.update(this->key.get_data(), this->key.size());
+        md5.update(this->key, this->key_size);
         const uint8_t sigconst[48] = {
             0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
             0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
@@ -224,9 +226,9 @@ class ssllib
         buf_out_uint32(lenhdr, data.size());
 
 
-        Sign sign(FixedSizeStream(key.get_data(), key.size()));
-        sign.update(FixedSizeStream(lenhdr, sizeof(lenhdr)));
-        sign.update(FixedSizeStream(data.get_data(), data.size()));
+        Sign sign(key.get_data(), key.size());
+        sign.update(lenhdr, sizeof(lenhdr));
+        sign.update(data.get_data(), data.size());
 
         uint8_t md5sig[MD5_DIGEST_LENGTH];
         sign.final(md5sig);
@@ -311,9 +313,8 @@ struct CryptContext
         if (this->use_count == 4096) {
             size_t keylen = (this->encryptionMethod==1)?8:16;
 
-            Sign sign(FixedSizeStream(this->update_key, keylen));
-            FixedSizeStream data(this->key, keylen);
-            sign.update(data);
+            Sign sign(this->update_key, keylen);
+            sign.update(this->key, keylen);
             sign.final(this->key);
 
             this->rc4.set_key(this->key, keylen);
