@@ -1269,7 +1269,7 @@ struct mod_rdp : public mod_api {
                                         /* Now encrypt the HWID */
 
                                         SslRC4 rc4;
-                                        rc4.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
+                                        rc4.set_key(this->lic_layer_license_key, 16);
 
                                         FixedSizeStream hwid_stream(hwid, sizeof(hwid));
                                         rc4.crypt(hwid_stream);
@@ -1306,7 +1306,7 @@ struct mod_rdp : public mod_api {
                                     /* Decrypt the token. It should read TEST in Unicode. */
                                     memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                                     SslRC4 rc4_decrypt_token;
-                                    rc4_decrypt_token.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
+                                    rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
                                     FixedSizeStream decrypt_token_stream(decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                                     rc4_decrypt_token.crypt(decrypt_token_stream);
 
@@ -1329,7 +1329,7 @@ struct mod_rdp : public mod_api {
                                     /* Now encrypt the HWID */
                                     memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                                     SslRC4 rc4_hwid;
-                                    rc4_hwid.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
+                                    rc4_hwid.set_key(this->lic_layer_license_key, 16);
                                     FixedSizeStream crypt_hwid_stream(crypt_hwid, LIC::LICENSE_HWID_SIZE);
                                     rc4_hwid.crypt(crypt_hwid_stream);
 
