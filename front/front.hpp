@@ -2255,9 +2255,9 @@ public:
                             }
 
                             BStream decoded_data(256);
-                            bool    ctrl_alt_del;
+                            bool    tsk_switch_shortcuts;
 
-                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data, ctrl_alt_del);
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
                             decoded_data.mark_end();
 
                             if (  this->capture
@@ -2269,8 +2269,8 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (ctrl_alt_del && this->ini->client.disable_ctrl_alt_del.get()) {
-                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Alt+Esc keyboard sequences ignored.");
+                                if (tsk_switch_shortcuts && this->ini->client.disable_tsk_switch_shortcuts.get()) {
+                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
                                     cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
@@ -3478,9 +3478,9 @@ public:
                             }
 
                             BStream decoded_data(256);
-                            bool    ctrl_alt_del;
+                            bool    tsk_switch_shortcuts;
 
-                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data, ctrl_alt_del);
+                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
                             decoded_data.mark_end();
 
                             if (  this->capture
@@ -3492,8 +3492,8 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (ctrl_alt_del && this->ini->client.disable_ctrl_alt_del.get()) {
-                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Alt+Esc keyboard sequences ignored.");
+                                if (tsk_switch_shortcuts && this->ini->client.disable_tsk_switch_shortcuts.get()) {
+                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
                                     cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);

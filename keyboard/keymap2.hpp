@@ -227,7 +227,7 @@ struct Keymap2
 
 
     //==============================================================================
-    void event(const uint16_t keyboardFlags, const uint16_t keyCode, Stream & decoded_data, bool & ctrl_alt_del)
+    void event(const uint16_t keyboardFlags, const uint16_t keyCode, Stream & decoded_data, bool & tsk_switch_shortcuts)
     //==============================================================================
     {
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
@@ -235,11 +235,11 @@ struct Keymap2
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
 
-        ctrl_alt_del =
+        tsk_switch_shortcuts =
             (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&      // Ctrl
             (this->keys_down[LEFT_ALT] || this->keys_down[RIGHT_ALT]) &&        // Alt
             (this->keys_down[0xD3] || this->keys_down[0x53]);                   // Del (or Numpad del)
-        ctrl_alt_del |=
+        tsk_switch_shortcuts |=
             (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&      // Ctrl
             (this->keys_down[LEFT_SHIFT] || this->keys_down[RIGHT_SHIFT]) &&    // Shift
             this->keys_down[0x01];                                              // Escape
