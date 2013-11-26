@@ -2622,8 +2622,8 @@ namespace LIC
 
             SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
 
-            // in, out
-            rc4.crypt(data, data);
+            // size, in, out
+            rc4.crypt(data.size(), data.get_data(), data.get_data());
 
             expected = 8; /* dwVersion(4) + cbScope(4) */
             if (!stream.in_check_rem(expected)){
@@ -2814,9 +2814,8 @@ namespace LIC
 
             SubStream data(stream, stream.get_offset(), this->licenseInfo.wBlobLen);
 
-            TODO("check that: shouldn't it be data substream instead of stream that we crypt ?")
-            // in, out
-            rc4.crypt(stream, stream);
+            // size, in, out
+            rc4.crypt(data.size(), data.get_data(), data.get_data());
 
             expected = 8; /* dwVersion(4) + cbScope(4) */
             if (!stream.in_check_rem(expected)){

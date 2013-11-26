@@ -1271,9 +1271,8 @@ struct mod_rdp : public mod_api {
                                         SslRC4 rc4;
                                         rc4.set_key(this->lic_layer_license_key, 16);
 
-                                        FixedSizeStream hwid_stream(hwid, sizeof(hwid));
                                         // in, out
-                                        rc4.crypt(hwid_stream, hwid_stream);
+                                        rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
 
                                         LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2,
                                                                     this->lic_layer_license_size, this->lic_layer_license_data, hwid, signature);
@@ -1308,9 +1307,8 @@ struct mod_rdp : public mod_api {
                                     memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                                     SslRC4 rc4_decrypt_token;
                                     rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
-                                    FixedSizeStream decrypt_token_stream(decrypt_token, LIC::LICENSE_TOKEN_SIZE);
-                                    // in, out
-                                    rc4_decrypt_token.crypt(decrypt_token_stream, decrypt_token_stream);
+                                    // size, in, out
+                                    rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
                                     /* Generate a signature for a buffer of token and HWID */
                                     buf_out_uint32(hwid, 2);
@@ -1332,9 +1330,8 @@ struct mod_rdp : public mod_api {
                                     memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                                     SslRC4 rc4_hwid;
                                     rc4_hwid.set_key(this->lic_layer_license_key, 16);
-                                    FixedSizeStream crypt_hwid_stream(crypt_hwid, LIC::LICENSE_HWID_SIZE);
-                                    // in, out
-                                    rc4_hwid.crypt(crypt_hwid_stream, crypt_hwid_stream);
+                                    // size, in, out
+                                    rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
 
                                     BStream sec_header(256);
                                     HStream lic_data(1024, 65535);

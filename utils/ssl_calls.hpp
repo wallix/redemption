@@ -99,8 +99,8 @@ class SslRC4
         RC4_set_key(&this->rc4, key_size, key);
     }
 
-    void crypt(Stream & instream, Stream & outstream){
-        RC4(&this->rc4, instream.size(), instream.get_data(), outstream.get_data());
+    void crypt(size_t data_size, const uint8_t * const indata, uint8_t * const outdata){
+        RC4(&this->rc4, data_size, indata, outdata);
     }
 };
 
@@ -318,9 +318,8 @@ struct CryptContext
 
             this->rc4.set_key(this->key, keylen);
 
-            FixedSizeStream key(this->key, keylen);
-            // in, out
-            this->rc4.crypt(key, key);
+            // size, in, out
+            this->rc4.crypt(keylen, this->key, this->key);
 
             if (this->encryptionMethod == 1){
                 ssl.sec_make_40bit(this->key);
@@ -328,8 +327,8 @@ struct CryptContext
             this->rc4.set_key(this->key, keylen);
             this->use_count = 0;
         }
-        // in, out
-        this->rc4.crypt(stream, stream);
+        // size, in, out
+        this->rc4.crypt(stream.size(), stream.get_data(), stream.get_data());
         this->use_count++;
     }
 
