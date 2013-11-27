@@ -134,6 +134,7 @@ class SslHMAC
     }
 };
 
+/* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
 class Sign
 {
     SslSha1 sha1;
@@ -217,23 +218,6 @@ class ssllib
         key[0] = 0xd1;
         key[1] = 0x26;
         key[2] = 0x9e;
-    }
-
-    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void sign(Stream & signature, const Stream & key, const Stream & data)
-    {
-        uint8_t lenhdr[4];
-        buf_out_uint32(lenhdr, data.size());
-
-
-        Sign sign(key.get_data(), key.size());
-        sign.update(lenhdr, sizeof(lenhdr));
-        sign.update(data.get_data(), data.size());
-
-        uint8_t md5sig[MD5_DIGEST_LENGTH];
-        sign.final(md5sig);
-
-        memcpy(signature.get_data(), md5sig, signature.get_capacity());
     }
 };
 
@@ -336,11 +320,17 @@ struct CryptContext
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
     void sign(Stream & signature, Stream & data)
     {
-        ssllib ssl;
+        uint8_t lenhdr[4];
+        buf_out_uint32(lenhdr, data.size());
 
-        FixedSizeStream key(this->sign_key, (this->encryptionMethod==1)?8:16);
+        Sign sign(this->sign_key, (this->encryptionMethod==1)?8:16);
+        sign.update(lenhdr, sizeof(lenhdr));
+        sign.update(data.get_data(), data.size());
 
-        ssl.sign(signature, key, data);
+        uint8_t md5sig[MD5_DIGEST_LENGTH];
+        sign.final(md5sig);
+        TODO("if signature capacity match MD5_DIGEST_LENGTH, wich should be the case, we could call final on signature")
+        memcpy(signature.get_data(), md5sig, signature.get_capacity());
     }
 };
 

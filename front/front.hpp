@@ -1740,6 +1740,7 @@ public:
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
+                TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                 ssllib ssl;
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
