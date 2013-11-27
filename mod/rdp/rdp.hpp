@@ -558,11 +558,12 @@ struct mod_rdp : public mod_api {
         }
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-        StaticStream                chunk(data, ::strlen(data));
 
+        TODO("I do not like this strlen here, see that")
+        size_t chunk_size = ::strlen(reinterpret_cast<const char *>(data));
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                            , this->userid, this->auth_channel_chanid, chunk.size()
-                            , this->auth_channel_flags, chunk);
+                            , this->userid, this->auth_channel_chanid, chunk_size
+                            , this->auth_channel_flags, reinterpret_cast<const uint8_t *>(data), chunk_size);
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
@@ -580,7 +581,7 @@ struct mod_rdp : public mod_api {
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                                            , this->userid, channel.chanid, length, flags, chunk);
+                                            , this->userid, channel.chanid, length, flags, chunk.get_data(), chunk.size());
 
         if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_channel done");
@@ -1258,7 +1259,6 @@ struct mod_rdp : public mod_api {
                                         buf_out_uint32(hwid, 2);
                                         memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
 
-                                        ssllib ssl;
                                         /* Generate a signature for the HWID buffer */
                                         uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
 

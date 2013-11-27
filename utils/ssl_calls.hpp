@@ -182,26 +182,19 @@ class ssllib
     public:
     static void rsa_encrypt(uint8_t * out, uint8_t * in, int len, uint32_t modulus_size, uint8_t * modulus, uint8_t * exponent)
     {
-        BN_CTX *ctx;
-        BIGNUM mod, exp, x, y;
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
-        int outlen;
 
         reverseit(modulus, modulus_size);
         reverseit(exponent, SEC_EXPONENT_SIZE);
         rmemcpy(inr, in, len);
 
-        ctx = BN_CTX_new();
-        BN_init(&mod);
-        BN_init(&exp);
-        BN_init(&x);
-        BN_init(&y);
+        BN_CTX *ctx = BN_CTX_new();
+        BIGNUM mod; BN_init(&mod); BN_bin2bn(modulus, modulus_size, &mod);
+        BIGNUM exp; BN_init(&exp); BN_bin2bn(exponent, SEC_EXPONENT_SIZE, &exp);
+        BIGNUM x; BN_init(&x); BN_bin2bn(inr, len, &x);
+        BIGNUM y; BN_init(&y); BN_mod_exp(&y, &x, &exp, &mod, ctx);
 
-        BN_bin2bn(modulus, modulus_size, &mod);
-        BN_bin2bn(exponent, SEC_EXPONENT_SIZE, &exp);
-        BN_bin2bn(inr, len, &x);
-        BN_mod_exp(&y, &x, &exp, &mod, ctx);
-        outlen = BN_bn2bin(&y, out);
+        int outlen = BN_bn2bin(&y, out);
         reverseit(out, outlen);
         if (outlen < static_cast<int>(modulus_size)){
             memset(out + outlen, 0, modulus_size - outlen);

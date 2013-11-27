@@ -1741,7 +1741,6 @@ public:
                 SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
                 TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
-                ssllib ssl;
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
                 {
@@ -1751,12 +1750,12 @@ public:
                     uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
 
                     BN_CTX* ctx = BN_CTX_new();
-                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, 64, &lmod);
-                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, 64, &lexp);
-                    BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, 64, &lin);
+                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn(l_mod, 64, &lmod);
+                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn(l_exp, 64, &lexp);
+                    BIGNUM lin; BN_init(&lin);  BN_bin2bn(l_in, 64, &lin);
                     BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
 
-                    int rv = BN_bn2bin(&lout, (uint8_t*)l_out);
+                    int rv = BN_bn2bin(&lout, l_out);
                     if (rv <= 64) {
                         reverseit(l_out, rv);
                         memcpy(client_random, l_out, 64);
@@ -1771,6 +1770,7 @@ public:
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
                 SEC::KeyBlock key_block(client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block.blob0, 16);
+                ssllib ssl;
                 if (this->encrypt.encryptionMethod == 1){
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
