@@ -60,7 +60,7 @@ inline bool check_sig(Stream & stream, char * message, const char * shasig)
 {
    uint8_t sig[20];
    SslSha1 sha1;
-   sha1.update(stream);
+   sha1.update(stream.get_data(), stream.size());
    sha1.final(sig);
 
    if (memcmp(shasig, sig, 20)){
@@ -84,7 +84,7 @@ inline bool check_sig(const uint8_t * data, size_t length, char * message, const
 {
    uint8_t sig[20];
    SslSha1 sha1;
-   sha1.update(StaticStream(data, length));
+   sha1.update(data, length);
    sha1.final(sig);
 
    if (memcmp(shasig, sig, 20)){
@@ -107,14 +107,14 @@ inline bool check_sig(const uint8_t * data, size_t length, char * message, const
 inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig)
 {
    SslSha1 sha1;
-   sha1.update(StaticStream(data, length));
+   sha1.update(data, length);
    sha1.final(sig);
 }
 
 inline void get_sig(Stream & stream, uint8_t * sig)
 {
    SslSha1 sha1;
-   sha1.update(stream);
+   sha1.update(stream.get_data(), stream.size());
    sha1.final(sig);
 }
 

@@ -126,30 +126,6 @@ namespace CredSSP {
 
 };
 
-struct OctetString {
-    uint32_t length;
-    uint8_t * data;
-
-    OctetString() {
-        this->length = 0;
-        this->data = NULL;
-    }
-
-
-    virtual ~OctetString() {
-        if (this->data) {
-            delete [] this->data;
-        }
-    }
-
-    void alloc(uint32_t size) {
-        this->data = new uint8_t[size];
-        this->length = size;
-    }
-};
-
-
-
 struct TSRequest {
     /* TSRequest */
 
