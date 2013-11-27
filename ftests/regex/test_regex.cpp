@@ -37,6 +37,24 @@
 
 using namespace re;
 
+void regex_test(Regex & p_regex,
+                const char * p_str,
+                bool p_exact_result_search,
+                bool p_result_search,
+                bool p_exact_result_match,
+                const Regex::range_matches & p_exact_match_result,
+                bool p_result_match,
+                const Regex::range_matches & p_match_result)
+{
+    BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);
+    BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);
+    BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);
+    BOOST_CHECK(p_regex.match_result() == p_exact_match_result);
+    BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);
+    BOOST_CHECK(p_regex.match_result() == p_match_result);
+}
+
+#include <iostream>
 #define regex_test(p_regex,\
                    p_str,\
                    p_exact_result_search,\
@@ -45,31 +63,8 @@ using namespace re;
                    p_exact_match_result,\
                    p_result_match,\
                    p_match_result)\
-{\
-    BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);\
-    BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);\
-    BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);\
-    BOOST_CHECK(p_regex.match_result() == p_exact_match_result);\
-    BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);\
-    BOOST_CHECK(p_regex.match_result() == p_match_result);\
-}
-
-// void regex_test(Regex & p_regex,
-//                 const char * p_str,
-//                 bool p_exact_result_search,
-//                 bool p_result_search,
-//                 bool p_exact_result_match,
-//                 const Regex::range_matches & p_exact_match_result,
-//                 bool p_result_match,
-//                 const Regex::range_matches & p_match_result)
-// {
-//     BOOST_CHECK_EQUAL(p_regex.exact_search(p_str), p_exact_result_search);
-//     BOOST_CHECK_EQUAL(p_regex.search(p_str), p_result_search);
-//     BOOST_CHECK_EQUAL(p_regex.exact_search_with_matches(p_str), p_exact_result_match);
-//     BOOST_CHECK(p_regex.match_result() == p_exact_match_result);
-//     BOOST_CHECK_EQUAL(p_regex.search_with_matches(p_str), p_result_match);
-//     BOOST_CHECK(p_regex.match_result() == p_match_result);
-// }
+std::cout << "l." << __LINE__ << std::endl; \
+regex_test(p_regex, p_str, p_exact_result_search, p_result_search, p_exact_result_match, p_exact_match_result, p_result_match, p_match_result)
 
 BOOST_AUTO_TEST_CASE(TestRegex)
 {

@@ -278,6 +278,31 @@ namespace re {
             this->init_range_list(this->st_range_list, root);
             this->init_value_state_list(this->st_list, this->st_list + matrix_size);
 
+            {
+                RangeList * l = this->st_range_list;
+                for (; l < this->st_range_list_last; ++l) {
+                    if (l->st_num == -1u) {
+                        continue;
+                    }
+                    if (l->first == l->last) {
+                      l->st_num = -1u;
+                    }
+                }
+            }
+            {
+                RangeList * l = this->st_range_list;
+                for (; l < this->st_range_list_last; ++l) {
+                    if (l->st_num == -1u) {
+                        continue;
+                    }
+                    for (StateList * first = l->first, * last = l->last; first != last; ++first) {
+                        if (first->next && (first->next->first == first->next->last || first->next->st_num == -1u)) {
+                            first->next = 0;
+                        }
+                    }
+                }
+            }
+
             while (this->st_range_list != this->st_range_list_last && -1u == (this->st_range_list_last-1)->st_num) {
                 --this->st_range_list_last;
             }
@@ -472,7 +497,6 @@ namespace re {
                 this->st_range_beginning.first = this->st_range_list->first;
                 this->st_range_beginning.last = this->st_range_list->last;
 
-
                 if (this->st_range_list->first == this->st_range_list->last) {
                     std::cout << ("sasmsqs qs") << std::endl;
                     std::cout << (this->st_range_list_last - this->st_range_list) << std::endl;
@@ -490,17 +514,14 @@ namespace re {
                 this->st_range_beginning.st_num = this->st_range_list != this->st_range_list_last ? this->st_range_list->st_num : (root->out1 || root->out2 ? 0u : -1u);
             }
 
+            if (this->st_range_list != this->st_range_list_last || -1u != this->st_range_beginning.st_num)
             {
-                RangeList * l = this->st_range_list;
-                RangeList * last = this->st_range_list_last;
-                for (; l < last; ++l) {
-                    if (l->st_num == -1u) {
-                        continue;
-                    }
-                    for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                        if (first->next && first->next->first == first->next->last) {
-                            first->next = 0;
-                        }
+                RangeList * l = -1u != this->st_range_beginning.st_num ? &this->st_range_beginning : this->st_range_list;
+                for (StateList * first = l->first, * last = l->last; first != last; ++first) {
+                    if (first->st->is_terminate()) {
+                        this->st_range_list = this->st_range_list_last;
+                        this->st_range_beginning.st_num = -1u;
+                        break;
                     }
                 }
             }
@@ -696,9 +717,6 @@ namespace re {
                     this->init_range_list(le, first->st->out1);
                 }
             }
-            if (l->first == l->last) {
-                l->st_num = -1u;
-            }
         }
 
     public:
@@ -734,7 +752,7 @@ namespace re {
         bool exact_search(const char * s, unsigned step_limit)
         {
             if (0 == this->nb_states) {
-                return false;
+                return !*s;
             }
             return this->match(s, step_limit, DefaultMatchTracer(),
                                ExactMatch<true>(), ActiveCapture<false>());
@@ -762,7 +780,7 @@ namespace re {
         bool search(const char * s, unsigned step_limit)
         {
             if (0 == this->nb_states) {
-                return false;
+                return !*s;
             }
             return this->match(s, step_limit, DefaultMatchTracer(),
                                ExactMatch<false>(), ActiveCapture<false>());
@@ -832,10 +850,7 @@ namespace re {
 
         void reset_id() const
         {
-            for (RangeList * l = this->st_range_list; l < this->st_range_list_last; ++l) {
-                this->nums[l->st_num] = 0;
-            }
-            this->nums[this->st_range_beginning.st_num] = 0;
+            std::memset(this->nums, 0, this->nb_states * sizeof(*this->nums));
         }
 
         void reset_trace()
@@ -1044,7 +1059,6 @@ namespace re {
                     std::cout << "\033[0m\n";
 #endif
                     l2.push_back(*ifirst);
-                    std::cout << "ii: " << (ifirst->idx) << std::endl;
                     if (active_capture) {
                         ++new_trace;
                     }
@@ -1297,12 +1311,10 @@ namespace re {
                     StateList * last = ifirst->rl->last;
 
                     for (; first != last; ++first) {
-                        std::cout << (*first->st) << std::endl;
-                        if (first->st->is_terminate() || first->is_terminate) {
+                        if (first->st->is_terminate()) {
                             if (active_capture) {
                                 this->set_idx_trace(ifirst->idx);
                             }
-                            std::cout << ("ii: ") << ifirst->idx << std::endl;
                             return true;
                         }
                     }
