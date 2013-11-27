@@ -468,6 +468,8 @@ struct FileToGraphic
                            , this->mouse_y);
                     }
 
+                    TODO("this->input contains UTF32 unicode points, it should not be a byte buffer."
+                         "This leads to back and forth conversion between 32 bits and 8 bits")
                     this->input_len = std::min( static_cast<uint16_t>(stream.end - stream.p)
                                               , static_cast<uint16_t>(sizeof(this->input) - 1));
                     if (this->input_len){
