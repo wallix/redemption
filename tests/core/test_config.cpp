@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -401,7 +401,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -655,7 +655,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -717,7 +717,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "device_redirection=no\n"
                           "tls_support=no\n"
                           "rdp_compression=yes\n"
-                          "disable_ctrl_alt_del=yes\n"
+                          "disable_tsk_switch_shortcuts=yes\n"
                           "\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
@@ -869,7 +869,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(true,                             ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(true,                             ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1062,7 +1062,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1248,7 +1248,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1420,7 +1420,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1585,7 +1585,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1749,7 +1749,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1913,7 +1913,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -2067,7 +2067,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(true,                             ini.client.clipboard.get());
     BOOST_CHECK_EQUAL(true,                             ini.client.device_redirection.get());
     BOOST_CHECK_EQUAL(false,                            ini.client.rdp_compression);
-    BOOST_CHECK_EQUAL(false,                            ini.client.disable_ctrl_alt_del.get());
+    BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
 
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);

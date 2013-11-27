@@ -558,11 +558,12 @@ struct mod_rdp : public mod_api {
         }
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-        StaticStream                chunk(data, ::strlen(data));
 
+        TODO("I do not like this strlen here, see that")
+        size_t chunk_size = ::strlen(reinterpret_cast<const char *>(data));
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                            , this->userid, this->auth_channel_chanid, chunk.size()
-                            , this->auth_channel_flags, chunk);
+                            , this->userid, this->auth_channel_chanid, chunk_size
+                            , this->auth_channel_flags, reinterpret_cast<const uint8_t *>(data), chunk_size);
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
@@ -580,7 +581,7 @@ struct mod_rdp : public mod_api {
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                                            , this->userid, channel.chanid, length, flags, chunk);
+                                            , this->userid, channel.chanid, length, flags, chunk.get_data(), chunk.size());
 
         if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_channel done");
@@ -877,6 +878,7 @@ struct mod_rdp : public mod_api {
                                                 throw Error(ERR_SEC);
                                             }
 
+                                            TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                                             RSA * server_public_key = RSAPublicKey_dup((RSA *) epk->pkey.ptr);
                                             EVP_PKEY_free(epk);
                                             this->server_public_key_len = RSA_size(server_public_key);
@@ -1257,22 +1259,27 @@ struct mod_rdp : public mod_api {
                                         buf_out_uint32(hwid, 2);
                                         memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
 
-                                        ssllib ssl;
                                         /* Generate a signature for the HWID buffer */
                                         uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
 
-                                        FixedSizeStream sig(signature, sizeof(signature));
-                                        FixedSizeStream key(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
-                                        FixedSizeStream data(hwid, sizeof(hwid));
+                                        uint8_t lenhdr[4];
+                                        buf_out_uint32(lenhdr, sizeof(hwid));
 
-                                        ssl.sign(sig, key, data);
+                                        Sign sign(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
+                                        sign.update(lenhdr, sizeof(lenhdr));
+                                        sign.update(hwid, sizeof(hwid));
+
+                                        assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                        sign.final(signature);
+                                          
+                                            
                                         /* Now encrypt the HWID */
 
                                         SslRC4 rc4;
-                                        rc4.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
+                                        rc4.set_key(this->lic_layer_license_key, 16);
 
-                                        FixedSizeStream hwid_stream(hwid, sizeof(hwid));
-                                        rc4.crypt(hwid_stream);
+                                        // in, out
+                                        rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
 
                                         LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2,
                                                                     this->lic_layer_license_size, this->lic_layer_license_data, hwid, signature);
@@ -1306,9 +1313,9 @@ struct mod_rdp : public mod_api {
                                     /* Decrypt the token. It should read TEST in Unicode. */
                                     memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                                     SslRC4 rc4_decrypt_token;
-                                    rc4_decrypt_token.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
-                                    FixedSizeStream decrypt_token_stream(decrypt_token, LIC::LICENSE_TOKEN_SIZE);
-                                    rc4_decrypt_token.crypt(decrypt_token_stream);
+                                    rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
+                                    // size, in, out
+                                    rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
                                     /* Generate a signature for a buffer of token and HWID */
                                     buf_out_uint32(hwid, 2);
@@ -1318,20 +1325,22 @@ struct mod_rdp : public mod_api {
                                     memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                                     memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
 
-                                    ssllib ssl;
+                                    uint8_t lenhdr[4];
+                                    buf_out_uint32(lenhdr, sizeof(sealed_buffer));
 
-                                    FixedSizeStream sig(out_sig, sizeof(out_sig));
-                                    FixedSizeStream key(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
-                                    FixedSizeStream data(sealed_buffer, sizeof(sealed_buffer));
+                                    Sign sign(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
+                                    sign.update(lenhdr, sizeof(lenhdr));
+                                    sign.update(sealed_buffer, sizeof(sealed_buffer));
 
-                                    ssl.sign(sig, key, data);
+                                    assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                    sign.final(out_sig);
 
                                     /* Now encrypt the HWID */
                                     memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                                     SslRC4 rc4_hwid;
-                                    rc4_hwid.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
-                                    FixedSizeStream crypt_hwid_stream(crypt_hwid, LIC::LICENSE_HWID_SIZE);
-                                    rc4_hwid.crypt(crypt_hwid_stream);
+                                    rc4_hwid.set_key(this->lic_layer_license_key, 16);
+                                    // size, in, out
+                                    rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
 
                                     BStream sec_header(256);
                                     HStream lic_data(1024, 65535);

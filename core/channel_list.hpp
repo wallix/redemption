@@ -381,12 +381,12 @@ namespace CHANNELS {
 
         void send_to_server( Transport & trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-                           , Stream & chunk) {
+                           , const uint8_t * chunk, size_t chunk_size) {
             HStream stream(1024, 65536);
 
             stream.out_uint32_le(length);
             stream.out_uint32_le(flags);
-            stream.out_copy_bytes(chunk.get_data(), chunk.size());
+            stream.out_copy_bytes(chunk, chunk_size);
             stream.mark_end();
 
             BStream x224_header(256);
@@ -404,12 +404,12 @@ namespace CHANNELS {
 
         void send_to_client( Transport & trans, CryptContext & crypt_context, int encryptionLevel
                            , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
-                           , Stream & chunk) {
+                           , const uint8_t * const chunk, size_t chunk_size) {
             HStream stream(1024, 65536);
 
             stream.out_uint32_le(length);
             stream.out_uint32_le(flags);
-            stream.out_copy_bytes(chunk.get_data(), chunk.size());
+            stream.out_copy_bytes(chunk, chunk_size);
             stream.mark_end();
 
             BStream x224_header(256);

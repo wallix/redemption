@@ -816,7 +816,7 @@ class Sesman():
                     physical_target = None
                     break
 
-                kv[u'disable_ctrl_alt_del'] = u'no'
+                kv[u'disable_tsk_switch_shortcuts'] = u'no'
                 if selected_target.resource.application:
                     app_params = self.engine.get_app_params(selected_target.service_login, physical_target)
                     if not app_params:
@@ -825,7 +825,7 @@ class Sesman():
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
                     kv[u'shell_working_directory'] = app_params.workingdir
                     kv[u'target_application'] = selected_target.service_login
-                    kv[u'disable_ctrl_alt_del'] = u'yes'
+                    kv[u'disable_tsk_switch_shortcuts'] = u'yes'
 
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
@@ -955,7 +955,14 @@ class Sesman():
                         break;
                 finally:
                     if not (physical_target is None):
-                        self.engine.release_target_password(physical_target, release_reason)
+                        if (physical_target == selected_target):
+                            #no application case
+                            Logger().info("Calling release_target_password")
+                            self.engine.release_target_password(physical_target, release_reason)
+                        else:
+                            #application case
+                            #release application password
+                            self.engine.release_target_password(physical_target, release_reason, selected_target)
 
             Logger().info(u"Stop session ...")
 
