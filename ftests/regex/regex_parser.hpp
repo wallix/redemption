@@ -707,10 +707,9 @@ namespace re {
             /**///std::cout << "c: " << (c) << std::endl;
             if (c == '^' || c == '$') {
                 *pst = c == '^' ? accu.begin() : accu.last();
-
-                if ((c = consumer.bumpc()) && !is_meta_char(consumer, c)) {
-                    pst = &(*pst)->out1;
-                }
+                c = consumer.bumpc();
+                pst = &(*pst)->out1;
+                special = true;
                 continue;
             }
 
