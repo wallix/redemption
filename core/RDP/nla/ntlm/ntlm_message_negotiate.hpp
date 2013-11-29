@@ -158,33 +158,41 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     NtlmField DomainName;         /* 8 Bytes */
     NtlmField Workstation;        /* 8 Bytes */
     NtlmVersion version;          /* 8 Bytes */
-    BStream Payload;
+    uint32_t PayloadOffset;
 
     NTLMNegotiateMessage()
         : NTLMMessage(NtlmNegotiate)
+        , PayloadOffset(4+8+8+8)
     {
     }
 
     virtual ~NTLMNegotiateMessage() {}
 
     void emit(Stream & stream) {
+        uint32_t currentOffset = this->PayloadOffset;
         NTLMMessage::emit(stream);
         this->negoFlags.emit(stream);
-        this->DomainName.emit(stream);
-        this->Workstation.emit(stream);
+        this->DomainName.emit(stream, currentOffset);
+        this->Workstation.emit(stream, currentOffset);
         this->version.emit(stream);
 
-        // TODO EMIT PAYLOAD
+        // PAYLOAD
+        this->DomainName.write_payload(stream);
+        this->Workstation.write_payload(stream);
+        stream.mark_end();
     }
 
     void recv(Stream & stream) {
+        uint8_t * pBegin = stream.p;
         NTLMMessage::recv(stream);
         this->negoFlags.recv(stream);
         this->DomainName.recv(stream);
         this->Workstation.recv(stream);
         this->version.recv(stream);
 
-        // TODO RECV PAYLOAD
+        // PAYLOAD
+        this->DomainName.read_payload(stream, pBegin);
+        this->Workstation.read_payload(stream, pBegin);
     }
 
 

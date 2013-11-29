@@ -489,14 +489,12 @@ struct NtlmNegotiateFlags {
 
 	fprintf(stderr, "negotiateFlags \"0x%08X\"{\n", this->flags);
 
-	for (i = 31; i >= 0; i--)
-            {
-		if ((this->flags >> i) & 1)
-                    {
-			str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
-			fprintf(stderr, "\t%s (%d),\n", str, (31 - i));
-                    }
+	for (i = 31; i >= 0; i--) {
+            if ((this->flags >> i) & 1) {
+                str = NTLM_NEGOTIATE_STRINGS[(31 - i)];
+                fprintf(stderr, "\t%s (%d),\n", str, (31 - i));
             }
+        }
 
 	fprintf(stderr, "}\n");
     }
@@ -507,11 +505,13 @@ struct NtlmField {
     uint16_t len;           /* 2 Bytes */
     uint16_t maxLen;        /* 2 Bytes */
     uint32_t bufferOffset;  /* 4 Bytes */
-    uint8_t * Buffer;
+    BStream Buffer;
 
-    void emit(Stream & stream) {
-        if (this->maxLen < 1)
-            this->maxLen = this->len;
+    void emit(Stream & strea, unsigned int & currentOffset) {
+        this->len = this->Buffer.size();
+        this->maxLen = this->len;
+        this->bufferOffset = currentOffset;
+        currentOffset += this->len;
 
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->maxLen);
@@ -524,29 +524,25 @@ struct NtlmField {
         this->bufferOffset = stream.in_uint32_le();
     }
 
-    void ntlm_read_message_fields_buffer(Stream & stream) {
+    void read_payload(Stream & stream, const uint8_t * pBegin) {
 	if (this->len > 0) {
-            this->Buffer = malloc(this->len);
-            stream.p = stream.get_data() + this->bufferOffset;
-            stream.in_copy_bytes(this->Buffer, this->len);
+            uint32_t pEnd = pBegin + this->bufferOffset + this->len;
+            if (pEnd > stream.p) {
+                if (pEnd > stream.end) {
+                    LOG(LOG_ERR, "INVALID stream read");
+                    return;
+                }
+                stream.p = pEnd;
+            }
+            this->Buffer.init(this->len);
+            this->Buffer.out_copy_bytes(pBegin + this->bufferOffset, this->len);
+            this->Buffer.mark_end();
+            this->Buffer.rewind();
         }
     }
-
-    void ntlm_write_message_fields_buffer(Stream & s) {
+    void write_payload(Stream & stream) {
 	if (this->len > 0) {
-            stream.p = stream.get_data() + this->bufferOffset;
-            stream.out_copy_bytes(this->Buffer, this->len);
-        }
-    }
-
-    void ntlm_free_message_fields_buffer() {
-        if (this->Buffer != NULL) {
-            free(this->Buffer);
-
-            this->len = 0;
-            this->maxLen = 0;
-            this->Buffer = NULL;
-            this->bufferOffset = 0;
+            stream.out_copy_bytes(this->Buffer.get_data(), this->len);
         }
     }
 

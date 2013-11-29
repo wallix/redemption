@@ -317,40 +317,58 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
     NtlmField EncryptedRandomSessionKey;  /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
-    uint64_t MIC[2];                      /* 16 Bytes */
-    BStream Payload;
+    // uint64_t MIC[2];                      /* 16 Bytes */
+    uint32_t PayloadOffset;
 
     NTLMAuthenticateMessage()
         : NTLMMessage(NtlmAuthenticate)
+        , PayloadOffset(8+8+8+8+8+8+4+8)
     {
     }
 
     virtual ~NTLMAuthenticateMessage() {}
 
     void emit(Stream & stream) {
+        uint32_t currentOffset = this->PayloadOffset;
         NTLMMessage::emit(stream);
-        this->LmChallengeResponse.emit(stream);
-        this->NtChallengeResponse.emit(stream);
-        this->DomainName.emit(stream);
-        this->UserName.emit(stream);
-        this->Workstation.emit(stream);
-        this->EncryptedRandomSessionKey(stream);
+        this->LmChallengeResponse.emit(stream, currentOffset);
+        this->NtChallengeResponse.emit(stream, currentOffset);
+        this->DomainName.emit(stream, currentOffset);
+        this->UserName.emit(stream, currentOffset);
+        this->Workstation.emit(stream, currentOffset);
+        this->EncryptedRandomSessionKey.emit(stream, currentOffset);
         this->negoFlags.emit(stream);
         this->version.emit(stream);
 
-        // TODO EMIT PAYLOAD
+        // PAYLOAD
+        this->LmChallengeResponse.write_payload(stream);
+        this->NtChallengeResponse.write_payload(stream);
+        this->DomainName.write_payload(stream);
+        this->UserName.write_payload(stream);
+        this->Workstation.write_payload(stream);
+        this->EncryptedRandomSessionKey.write_payload(stream);
+        stream.mark_end();
     }
 
     void recv(Stream & stream) {
+        uint8_t * pBegin = stream.p;
         NTLMMessage::recv(stream);
-        this->TargetName.recv(stream);
-        this->negoFlags.recv(stream);
-        this->serverChallenge = stream.in_uint64_le();
-        stream.in_skip_bytes(8);
-        this->TargetInfo.recv(stream);
-        this->version.recv(stream);
+        this->LmChallengeResponse.recv(stream);
+        this->NtChallengeResponse.recv(stream);
+        this->DomainName.recv(stream);
+        this->UserName.recv(stream);
+        this->Workstation.recv(stream);
+        this->EncryptedRandomSessionKey.recv(stream);
+        this->negoFlags.emit(stream);
+        this->version.emit(stream);
 
-        // TODO RECV PAYLOAD
+        // PAYLOAD
+        this->LmChallengeResponse.read_payload(stream, pBegin);
+        this->NtChallengeResponse.read_payload(stream, pBegin);
+        this->DomainName.read_payload(stream, pBegin);
+        this->UserName.read_payload(stream, pBegin);
+        this->Workstation.read_payload(stream, pBegin);
+        this->EncryptedRandomSessionKey.read_payload(stream, pBegin);
     }
 
 

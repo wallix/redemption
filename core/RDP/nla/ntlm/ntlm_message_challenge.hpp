@@ -187,28 +187,34 @@ struct NTLMChallengeMessage : public NTLMMessage {
     /* 8 Bytes reserved */
     NtlmField TargetInfo;          /* 8 Bytes */
     NtlmVersion version;           /* 8 Bytes */
-    BStream Payload;
+    uint32_t PayloadOffset;
 
     NTLMChallengeMessage()
         : NTLMMessage(NtlmChallenge)
+        , PayloadOffset(8+4+8+8+8+8)
     {
     }
 
     virtual ~NTLMChallengeMessage() {}
 
     void emit(Stream & stream) {
+        uint32_t currentOffset = this->PayloadOffset;
         NTLMMessage::emit(stream);
-        this->TargetName.emit(stream);
+        this->TargetName.emit(stream, currentOffset);
         this->negoFlags.emit(stream);
         stream.out_uint64_le(this->serverChallenge);
         stream.out_skip_bytes(8);
-        this->TargetInfo.emit(stream);
+        this->TargetInfo.emit(stream, currentOffset);
         this->version.emit(stream);
 
-        // TODO EMIT PAYLOAD
+        // PAYLOAD
+        this->TargetName.write_payload(stream);
+        this->TargetInfo.write_payload(stream);
+        stream.mark_end();
     }
 
     void recv(Stream & stream) {
+        uint8_t * pBegin = stream.p;
         NTLMMessage::recv(stream);
         this->TargetName.recv(stream);
         this->negoFlags.recv(stream);
@@ -217,7 +223,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
         this->TargetInfo.recv(stream);
         this->version.recv(stream);
 
-        // TODO RECV PAYLOAD
+        // PAYLOAD
+        this->TargetName.read_payload(stream, pBegin);
+        this->TargetInfo.read_payload(stream, pBegin);
     }
 
 
