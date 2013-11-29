@@ -126,23 +126,24 @@ struct NtlmAvPair {
     BStream Value;
 };
 
-struct NtlmAvPairList {
-    NtlmAvPair list[11];
+// struct NtlmAvPairList {
+//     NtlmAvPair list[11];
 
-    void init() {
-        this->next = NULL;
-        this->avPair.AvId = MsvAvEOL;
-        this->avPair.AvLen = 0;
-    }
+//     void init() {
+//         this->next = NULL;
+//         this->avPair.AvId = MsvAvEOL;
+//         this->avPair.AvLen = 0;
+//     }
 
-    int length() {
-        NtlmAvPairList * current = this->next;
-        int length = 1;
-        if (current != NULL) {
-            length++;
-            current = current.next;
-        }
-};
+//     int length() {
+//         NtlmAvPairList * current = this->next;
+//         int length = 1;
+//         if (current != NULL) {
+//             length++;
+//             current = current.next;
+//         }
+//     }
+// };
 
 struct NTLM_AV_PAIR {
     uint16_t AvId;

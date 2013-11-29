@@ -601,12 +601,12 @@ struct NTLMv2_Response {
 
     void emit(Stream & stream) {
         stream.out_copy_bytes(this->Response, 16);
-        this->challenge.emit(stream);
+        this->Challenge.emit(stream);
     }
 
     void recv(Stream & stream) {
         stream.in_copy_bytes(this->Response, 16);
-        this->challenge.recv(stream);
+        this->Challenge.recv(stream);
     }
 
 };

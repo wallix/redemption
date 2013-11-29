@@ -90,8 +90,8 @@ enum NtlmMessageType {
     NtlmNegotiate = 0x00000001,
     NtlmChallenge = 0x00000002,
     NtlmAuthenticate = 0x00000003
-}
-static const char NTLM_SIGNATURE[8] = "NTLMSSP\0";
+};
+// static const char NTLM_MESSAGE_SIGNATURE[8] = "NTLMSSP\0";
 struct NTLMMessage {
     uint8_t signature[8];      /* 8 Bytes */
     NtlmMessageType msgType;   /* 4 Bytes */
@@ -99,15 +99,15 @@ struct NTLMMessage {
     NTLMMessage(NtlmMessageType msgType)
         : msgType(msgType)
     {
-        memcpy(this->signature, NTLM_SIGNATURE, 8);
-        // signature[0] = 'N';
-        // signature[1] = 'T';
-        // signature[2] = 'L';
-        // signature[3] = 'M';
-        // signature[4] = 'S';
-        // signature[5] = 'S';
-        // signature[6] = 'P';
-        // signature[7] = '\0';
+        // memcpy(this->signature, NTLM_MESSAGE_SIGNATURE, 8);
+        signature[0] = 'N';
+        signature[1] = 'T';
+        signature[2] = 'L';
+        signature[3] = 'M';
+        signature[4] = 'S';
+        signature[5] = 'S';
+        signature[6] = 'P';
+        signature[7] = '\0';
     }
 
     virtual ~NTLMMessage() {}
@@ -119,7 +119,7 @@ struct NTLMMessage {
 
     void recv(Stream & stream) {
         stream.in_copy_bytes(this->signature, 8);
-        this->msgType = stream.in_uint32_le();
+        this->msgType = static_cast<NtlmMessageType>(stream.in_uint32_le());
     }
 
 };
@@ -233,7 +233,8 @@ struct NtlmVersion {
         this->NtlmRevisionCurrent = stream.in_uint8();
     }
 
-    void ntlm_print_version_info(NTLM_VERSION_INFO* versionInfo) {
+    void ntlm_print_version_info(// NTLM_VERSION_INFO* versionInfo
+                                 ) {
 	// fprintf(stderr, "VERSION =\n{\n");
 	// fprintf(stderr, "\tProductMajorVersion: %d\n", versionInfo->ProductMajorVersion);
 	// fprintf(stderr, "\tProductMinorVersion: %d\n", versionInfo->ProductMinorVersion);
@@ -436,40 +437,39 @@ struct NtlmVersion {
 #define NTLMSSP_NEGOTIATE_OEM					0x00000002 /* B   (30) */
 #define NTLMSSP_NEGOTIATE_UNICODE				0x00000001 /* A   (31) */
 
-static const char* const NTLM_NEGOTIATE_STRINGS[] =
-{
-	"NTLMSSP_NEGOTIATE_56",
-	"NTLMSSP_NEGOTIATE_KEY_EXCH",
-	"NTLMSSP_NEGOTIATE_128",
-	"NTLMSSP_RESERVED1",
-	"NTLMSSP_RESERVED2",
-	"NTLMSSP_RESERVED3",
-	"NTLMSSP_NEGOTIATE_VERSION",
-	"NTLMSSP_RESERVED4",
-	"NTLMSSP_NEGOTIATE_TARGET_INFO",
-	"NTLMSSP_REQUEST_NON_NT_SESSION_KEY",
-	"NTLMSSP_RESERVED5",
-	"NTLMSSP_NEGOTIATE_IDENTIFY",
-	"NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY",
-	"NTLMSSP_RESERVED6",
-	"NTLMSSP_TARGET_TYPE_SERVER",
-	"NTLMSSP_TARGET_TYPE_DOMAIN",
-	"NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
-	"NTLMSSP_RESERVED7",
-	"NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED",
-	"NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED",
-	"NTLMSSP_NEGOTIATE_ANONYMOUS",
-	"NTLMSSP_RESERVED8",
-	"NTLMSSP_NEGOTIATE_NTLM",
-	"NTLMSSP_RESERVED9",
-	"NTLMSSP_NEGOTIATE_LM_KEY",
-	"NTLMSSP_NEGOTIATE_DATAGRAM",
-	"NTLMSSP_NEGOTIATE_SEAL",
-	"NTLMSSP_NEGOTIATE_SIGN",
-	"NTLMSSP_RESERVED10",
-	"NTLMSSP_REQUEST_TARGET",
-	"NTLMSSP_NEGOTIATE_OEM",
-	"NTLMSSP_NEGOTIATE_UNICODE"
+static const char* const NTLM_NEGOTIATE_STRINGS[] ={
+    "NTLMSSP_NEGOTIATE_56",
+    "NTLMSSP_NEGOTIATE_KEY_EXCH",
+    "NTLMSSP_NEGOTIATE_128",
+    "NTLMSSP_RESERVED1",
+    "NTLMSSP_RESERVED2",
+    "NTLMSSP_RESERVED3",
+    "NTLMSSP_NEGOTIATE_VERSION",
+    "NTLMSSP_RESERVED4",
+    "NTLMSSP_NEGOTIATE_TARGET_INFO",
+    "NTLMSSP_REQUEST_NON_NT_SESSION_KEY",
+    "NTLMSSP_RESERVED5",
+    "NTLMSSP_NEGOTIATE_IDENTIFY",
+    "NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY",
+    "NTLMSSP_RESERVED6",
+    "NTLMSSP_TARGET_TYPE_SERVER",
+    "NTLMSSP_TARGET_TYPE_DOMAIN",
+    "NTLMSSP_NEGOTIATE_ALWAYS_SIGN",
+    "NTLMSSP_RESERVED7",
+    "NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED",
+    "NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED",
+    "NTLMSSP_NEGOTIATE_ANONYMOUS",
+    "NTLMSSP_RESERVED8",
+    "NTLMSSP_NEGOTIATE_NTLM",
+    "NTLMSSP_RESERVED9",
+    "NTLMSSP_NEGOTIATE_LM_KEY",
+    "NTLMSSP_NEGOTIATE_DATAGRAM",
+    "NTLMSSP_NEGOTIATE_SEAL",
+    "NTLMSSP_NEGOTIATE_SIGN",
+    "NTLMSSP_RESERVED10",
+    "NTLMSSP_REQUEST_TARGET",
+    "NTLMSSP_NEGOTIATE_OEM",
+    "NTLMSSP_NEGOTIATE_UNICODE"
 };
 
 struct NtlmNegotiateFlags {
@@ -507,7 +507,7 @@ struct NtlmField {
     uint32_t bufferOffset;  /* 4 Bytes */
     BStream Buffer;
 
-    void emit(Stream & strea, unsigned int & currentOffset) {
+    void emit(Stream & stream, unsigned int & currentOffset) {
         this->len = this->Buffer.size();
         this->maxLen = this->len;
         this->bufferOffset = currentOffset;
@@ -524,9 +524,9 @@ struct NtlmField {
         this->bufferOffset = stream.in_uint32_le();
     }
 
-    void read_payload(Stream & stream, const uint8_t * pBegin) {
+    void read_payload(Stream & stream, uint8_t * pBegin) {
 	if (this->len > 0) {
-            uint32_t pEnd = pBegin + this->bufferOffset + this->len;
+            uint8_t * pEnd = pBegin + this->bufferOffset + this->len;
             if (pEnd > stream.p) {
                 if (pEnd > stream.end) {
                     LOG(LOG_ERR, "INVALID stream read");
