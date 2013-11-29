@@ -91,7 +91,7 @@ enum NtlmMessageType {
     NtlmChallenge = 0x00000002,
     NtlmAuthenticate = 0x00000003
 };
-// static const char NTLM_MESSAGE_SIGNATURE[8] = "NTLMSSP\0";
+static const uint8_t NTLM_MESSAGE_SIGNATURE[] = "NTLMSSP\0";
 struct NTLMMessage {
     uint8_t signature[8];      /* 8 Bytes */
     NtlmMessageType msgType;   /* 4 Bytes */
@@ -99,15 +99,15 @@ struct NTLMMessage {
     NTLMMessage(NtlmMessageType msgType)
         : msgType(msgType)
     {
-        // memcpy(this->signature, NTLM_MESSAGE_SIGNATURE, 8);
-        signature[0] = 'N';
-        signature[1] = 'T';
-        signature[2] = 'L';
-        signature[3] = 'M';
-        signature[4] = 'S';
-        signature[5] = 'S';
-        signature[6] = 'P';
-        signature[7] = '\0';
+        memcpy(this->signature, NTLM_MESSAGE_SIGNATURE, 8);
+        // signature[0] = 'N';
+        // signature[1] = 'T';
+        // signature[2] = 'L';
+        // signature[3] = 'M';
+        // signature[4] = 'S';
+        // signature[5] = 'S';
+        // signature[6] = 'P';
+        // signature[7] = '\0';
     }
 
     virtual ~NTLMMessage() {}

@@ -191,7 +191,7 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     NTLMChallengeMessage()
         : NTLMMessage(NtlmChallenge)
-        , PayloadOffset(8+4+8+8+8+8)
+        , PayloadOffset(12+8+4+8+8+8+8)
     {
     }
 

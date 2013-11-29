@@ -162,7 +162,7 @@ struct NTLMNegotiateMessage : public NTLMMessage {
 
     NTLMNegotiateMessage()
         : NTLMMessage(NtlmNegotiate)
-        , PayloadOffset(4+8+8+8)
+        , PayloadOffset(12+4+8+8+8)
     {
     }
 

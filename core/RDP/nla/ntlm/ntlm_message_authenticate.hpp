@@ -322,7 +322,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     NTLMAuthenticateMessage()
         : NTLMMessage(NtlmAuthenticate)
-        , PayloadOffset(8+8+8+8+8+8+4+8)
+        , PayloadOffset(12+8+8+8+8+8+8+4+8)
     {
     }
 
