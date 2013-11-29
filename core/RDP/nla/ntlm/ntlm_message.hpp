@@ -233,15 +233,13 @@ struct NtlmVersion {
         this->NtlmRevisionCurrent = stream.in_uint8();
     }
 
-    void ntlm_print_version_info(// NTLM_VERSION_INFO* versionInfo
-                                 ) {
-	// fprintf(stderr, "VERSION =\n{\n");
-	// fprintf(stderr, "\tProductMajorVersion: %d\n", versionInfo->ProductMajorVersion);
-	// fprintf(stderr, "\tProductMinorVersion: %d\n", versionInfo->ProductMinorVersion);
-	// fprintf(stderr, "\tProductBuild: %d\n", versionInfo->ProductBuild);
-	// fprintf(stderr, "\tReserved: 0x%02X%02X%02X\n", versionInfo->Reserved[0],
-        //         versionInfo->Reserved[1], versionInfo->Reserved[2]);
-	// fprintf(stderr, "\tNTLMRevisionCurrent: 0x%02X\n", versionInfo->NTLMRevisionCurrent);
+    void print() {
+	fprintf(stderr, "VERSION =\n{\n");
+	fprintf(stderr, "\tProductMajorVersion: %d\n", this->ProductMajorVersion);
+	fprintf(stderr, "\tProductMinorVersion: %d\n", this->ProductMinorVersion);
+	fprintf(stderr, "\tProductBuild: %d\n", this->ProductBuild);
+	fprintf(stderr, "\tNTLMRevisionCurrent: 0x%02X\n", this->NtlmRevisionCurrent);
+	fprintf(stderr, "}\n");
     }
 };
 
@@ -482,7 +480,7 @@ struct NtlmNegotiateFlags {
         this->flags = stream.in_uint32_le();
     }
 
-    void ntlm_print_negotiate_flags()
+    void print()
     {
 	int i;
 	const char* str;
