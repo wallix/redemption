@@ -590,6 +590,10 @@ struct mod_rdp : public mod_api {
 
     void send_data_request(uint16_t channelId, HStream & stream)
     {
+        if (this->verbose & 16) {
+            LOG(LOG_INFO, "send data request");
+        }
+
         BStream x224_header(256);
         OutPerBStream mcs_header(256);
 
@@ -599,6 +603,10 @@ struct mod_rdp : public mod_api {
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
         this->nego.trans->send(x224_header, mcs_header, stream);
+
+        if (this->verbose & 16) {
+            LOG(LOG_INFO, "send data request done");
+        }
     }
 
     void send_data_request_ex(uint16_t channelId, HStream & stream)
@@ -1265,12 +1273,12 @@ struct mod_rdp : public mod_api {
                                         uint8_t lenhdr[4];
                                         buf_out_uint32(lenhdr, sizeof(hwid));
 
-                                        Sign sign(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
+                                        Sign sign(this->lic_layer_license_sign_key, 16);
                                         sign.update(lenhdr, sizeof(lenhdr));
                                         sign.update(hwid, sizeof(hwid));
 
                                         assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
-                                        sign.final(signature);
+                                        sign.final(signature, sizeof(signature));
                                           
                                             
                                         /* Now encrypt the HWID */
@@ -1328,12 +1336,12 @@ struct mod_rdp : public mod_api {
                                     uint8_t lenhdr[4];
                                     buf_out_uint32(lenhdr, sizeof(sealed_buffer));
 
-                                    Sign sign(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
+                                    Sign sign(this->lic_layer_license_sign_key, 16);
                                     sign.update(lenhdr, sizeof(lenhdr));
                                     sign.update(sealed_buffer, sizeof(sealed_buffer));
 
                                     assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
-                                    sign.final(out_sig);
+                                    sign.final(out_sig, sizeof(out_sig));
 
                                     /* Now encrypt the HWID */
                                     memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
@@ -4393,12 +4401,18 @@ public:
         infoPacket.emit(stream);
         stream.mark_end();
 
+        if (this->verbose) {
+            infoPacket.log("Preparing sec header ");
+        }
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT,
             this->encrypt, this->encryptionLevel);
         stream.copy_to_head(sec_header);
 
+        if (this->verbose) {
+            infoPacket.log("Send data request");
+        }
         this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->open_session_timeout) {

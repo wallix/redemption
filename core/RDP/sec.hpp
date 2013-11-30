@@ -725,7 +725,7 @@ enum {
             // skip signature
             stream.in_skip_bytes(8);
             this->payload.resize(stream, stream.in_remain());
-            crypt.decrypt(this->payload);
+            crypt.decrypt(this->payload.get_data(), this->payload.size());
         }
     };
 
@@ -764,7 +764,7 @@ enum {
                     LOG(LOG_INFO, "Receiving encrypted TPDU");
                     hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
                 }
-                crypt.decrypt(this->payload);
+                crypt.decrypt(this->payload.get_data(), this->payload.size());
                 if (this->verbose >= 0x80){
                     LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
                     hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
@@ -814,7 +814,7 @@ enum {
                         LOG(LOG_INFO, "Receiving encrypted TPDU");
                         hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
                     }
-                    crypt.decrypt(this->payload);
+                    crypt.decrypt(this->payload.get_data(), this->payload.size());
                     if (this->verbose >= 0x80){
                         LOG(LOG_INFO, "Decrypted %u bytes", payload.size());
                         hexdump_c(reinterpret_cast<char*>(payload.get_data()), payload.size());
@@ -832,12 +832,10 @@ enum {
                 stream.out_uint32_le(flags);
             }
             if (flags & SEC_ENCRYPT){
-                SubStream signature(stream, stream.get_offset(), 8);
-
-                // <signature> is an output parameter
-                crypt.sign(signature, data);
-                stream.p += 8;
-                crypt.decrypt(data);
+                uint8_t signature[8] = {};
+                crypt.sign(data.get_data(), data.size(), signature, sizeof(signature));
+                stream.out_copy_bytes(signature, 8);
+                crypt.decrypt(data.get_data(), data.size());
             }
             stream.mark_end();
         }
