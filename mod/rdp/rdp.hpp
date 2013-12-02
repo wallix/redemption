@@ -4020,7 +4020,7 @@ public:
             for (unsigned x = 0; x < mlen ; x++) {
                 BGRColor px = indata[x];
                 // incoming new pointer mask is upside down, revert it
-                mask[128 - 4 - (x & 0xFFFC) + (x & 3)] = px;
+                mask[128 - 4 - (x & 0x7C) + (x & 3)] = px;
             }
         }
         break;
@@ -4181,16 +4181,12 @@ public:
         }
 
         if (data_bpp == 1) {
-            uint8_t copy_data_data[32*32*4];
-            uint8_t copy_mask_data[32*32/8];
-            stream.in_copy_bytes(copy_data_data, dlen);
-            stream.in_copy_bytes(copy_mask_data, mlen);
-
-            unsigned   i = 0;
-            uint8_t  * mask_data = copy_mask_data;
-            uint8_t  * data_data = copy_data_data;
-
-            for (; i < mlen; i++, data_data++, mask_data++) {
+            uint8_t data_data[32*32*4];
+            uint8_t mask_data[32*32/8];
+            stream.in_copy_bytes(data_data, dlen);
+            stream.in_copy_bytes(mask_data, mlen);
+            
+            for (unsigned i = 0 ; i < mlen; i++) {
                 uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
                 uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
                 data_data[i]    = new_data_data;
@@ -4198,15 +4194,15 @@ public:
             }
 
             TODO("move that into cursor")
-            this->to_regular_pointer(copy_data_data, dlen, 1, cursor.data, sizeof(cursor.data));
-            this->to_regular_mask(copy_mask_data, mlen, 1, cursor.mask, sizeof(cursor.mask));
+            this->to_regular_pointer(data_data, dlen, 1, cursor.data, sizeof(cursor.data));
+            this->to_regular_mask(mask_data, mlen, 1, cursor.mask, sizeof(cursor.mask));
         }
         else {
             TODO("move that into cursor")
             this->to_regular_pointer(stream.p, dlen, data_bpp, cursor.data, sizeof(cursor.data));
-            stream.out_skip_bytes(dlen);
+            stream.in_skip_bytes(dlen);
             this->to_regular_mask(stream.p, mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
-            stream.out_skip_bytes(mlen);
+            stream.in_skip_bytes(mlen);
         }
 
         this->front.server_set_pointer(cursor);
