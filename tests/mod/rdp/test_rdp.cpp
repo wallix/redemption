@@ -157,7 +157,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname,sizeof(info.hostname),"test");
-    int verbose = 256;
+    int verbose = 511;
 
     FakeFront front(info, verbose);
 
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         true,       // clipboard
         false,      // fast-path support
         false,      // bitmap update support
-        0,          // verbose
+        511,          // verbose
         false       // enable new pointer
     );
 
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname,sizeof(info.hostname),"test");
-    int verbose = 256;
+    int verbose = 511;
 
     FakeFront front(info, verbose);
 
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         false,      // fast-path support
         true,       // mem3blt support
         false,      // bitmap update support
-        0,          // verbose
+        511,          // verbose
         false       // enable new pointer
     );
 

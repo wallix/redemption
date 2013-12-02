@@ -1575,7 +1575,7 @@ public:
         for (size_t y = 0; y < static_cast<size_t>(this->cy); y++){
             sha1.update(this->data_bitmap.get() + y * rowsize, rowsize);
         }
-        sha1.final(sig);
+        sha1.final(sig, 20);
     }
 
     ~Bitmap(){

@@ -60,8 +60,9 @@ class SslSha1
         SHA1_Update(&this->sha1, data, data_size);
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t * out_data, size_t out_data_size)
     {
+        assert(SHA_DIGEST_LENGTH == out_data_size);
         SHA1_Final(out_data, &this->sha1);
     }
 };
@@ -81,8 +82,14 @@ class SslMd5
         MD5_Update(&this->md5, data, data_size);
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t * out_data, size_t out_data_size)
     {
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            MD5_Final(tmp, &this->md5);
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
         MD5_Final(out_data, &this->md5);
     }
 };
@@ -142,7 +149,7 @@ class Sign
     size_t key_size;
 
     public:
-    Sign(const uint8_t * const key, size_t key_size) 
+    Sign(const uint8_t * const & key, size_t key_size) 
         : key(key)
         , key_size(key_size)
     {
@@ -159,9 +166,9 @@ class Sign
         this->sha1.update(data, data_size);
     }
 
-    void final(uint8_t * res) {
+    void final(uint8_t * out, size_t out_size) {
         uint8_t shasig[20];
-        this->sha1.final(shasig);
+        this->sha1.final(shasig, 20);
 
         SslMd5 md5;
         md5.update(this->key, this->key_size);
@@ -172,7 +179,7 @@ class Sign
         };
         md5.update(sigconst, sizeof(sigconst));
         md5.update(shasig, sizeof(shasig));
-        md5.final(res);
+        md5.final(out, out_size);
     }
 };
 
@@ -283,7 +290,7 @@ struct CryptContext
     }
 
     /* Decrypt data using RC4 */
-    void decrypt(Stream & stream)
+    void decrypt(uint8_t * data, size_t data_size)
     {
         ssllib ssl;
 
@@ -292,7 +299,7 @@ struct CryptContext
 
             Sign sign(this->update_key, keylen);
             sign.update(this->key, keylen);
-            sign.final(this->key);
+            sign.final(this->key, sizeof(key));
 
             this->rc4.set_key(this->key, keylen);
 
@@ -306,24 +313,20 @@ struct CryptContext
             this->use_count = 0;
         }
         // size, in, out
-        this->rc4.crypt(stream.size(), stream.get_data(), stream.get_data());
+        this->rc4.crypt(data_size, data, data);
         this->use_count++;
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void sign(Stream & signature, Stream & data)
+    void sign(const uint8_t * data, size_t data_size, uint8_t * signature, size_t signature_size)
     {
         uint8_t lenhdr[4];
-        buf_out_uint32(lenhdr, data.size());
+        buf_out_uint32(lenhdr, data_size);
 
         Sign sign(this->sign_key, (this->encryptionMethod==1)?8:16);
         sign.update(lenhdr, sizeof(lenhdr));
-        sign.update(data.get_data(), data.size());
-
-        uint8_t md5sig[MD5_DIGEST_LENGTH];
-        sign.final(md5sig);
-        TODO("if signature capacity match MD5_DIGEST_LENGTH, wich should be the case, we could call final on signature")
-        memcpy(signature.get_data(), md5sig, signature.get_capacity());
+        sign.update(data, data_size);
+        sign.final(signature, 8);
     }
 };
 

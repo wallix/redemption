@@ -590,6 +590,10 @@ struct mod_rdp : public mod_api {
 
     void send_data_request(uint16_t channelId, HStream & stream)
     {
+        if (this->verbose & 16) {
+            LOG(LOG_INFO, "send data request");
+        }
+
         BStream x224_header(256);
         OutPerBStream mcs_header(256);
 
@@ -599,6 +603,10 @@ struct mod_rdp : public mod_api {
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
         this->nego.trans->send(x224_header, mcs_header, stream);
+
+        if (this->verbose & 16) {
+            LOG(LOG_INFO, "send data request done");
+        }
     }
 
     void send_data_request_ex(uint16_t channelId, HStream & stream)
@@ -1265,12 +1273,12 @@ struct mod_rdp : public mod_api {
                                         uint8_t lenhdr[4];
                                         buf_out_uint32(lenhdr, sizeof(hwid));
 
-                                        Sign sign(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
+                                        Sign sign(this->lic_layer_license_sign_key, 16);
                                         sign.update(lenhdr, sizeof(lenhdr));
                                         sign.update(hwid, sizeof(hwid));
 
                                         assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
-                                        sign.final(signature);
+                                        sign.final(signature, sizeof(signature));
                                           
                                             
                                         /* Now encrypt the HWID */
@@ -1328,12 +1336,12 @@ struct mod_rdp : public mod_api {
                                     uint8_t lenhdr[4];
                                     buf_out_uint32(lenhdr, sizeof(sealed_buffer));
 
-                                    Sign sign(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
+                                    Sign sign(this->lic_layer_license_sign_key, 16);
                                     sign.update(lenhdr, sizeof(lenhdr));
                                     sign.update(sealed_buffer, sizeof(sealed_buffer));
 
                                     assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
-                                    sign.final(out_sig);
+                                    sign.final(out_sig, sizeof(out_sig));
 
                                     /* Now encrypt the HWID */
                                     memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
@@ -3924,18 +3932,32 @@ public:
         }
     }
 
+    // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
+    // ---------------------------------------------------------------
+    
+    // The TS_CACHEDPOINTERATTRIBUTE structure is used to instruct the 
+    // client to change the current pointer shape to one already present 
+    // in the pointer cache. 
+
+    // cacheIndex (2 bytes): A 16-bit, unsigned integer. A zero-based 
+    // cache entry containing the cache index of the cached pointer to
+    // which the client's pointer MUST be changed. The pointer data MUST
+    // have already been cached using either the Color Pointer Update
+    // (section 2.2.9.1.1.4.4) or New Pointer Update (section 2.2.9.1.1.4.5).
+
     void process_cached_pointer_pdu(Stream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
         }
 
+        TODO("Add check that the idx transmitted is actually an used pointer")
         int pointer_idx = stream.in_uint16_le();
         if (pointer_idx < 0){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
         }
-        if (pointer_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
+        if (pointer_idx >= static_cast<int>(sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
@@ -3945,6 +3967,19 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
         }
     }
+
+    // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
+    // ---------------------------------------------------------------
+
+    // systemPointerType (4 bytes): A 32-bit, unsigned integer. The type of system pointer.
+
+    // +---------------------------+-----------------------------+
+    // |      Value                |      Meaning                |
+    // +---------------------------+-----------------------------+
+    // | SYSPTR_NULL    0x00000000 | The hidden pointer.         |
+    // +---------------------------+-----------------------------+
+    // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
+    // +---------------------------+-----------------------------+
 
     void process_system_pointer_pdu(Stream & stream)
     {
@@ -3970,49 +4005,44 @@ public:
         }
     }
 
-    void to_regular_mask(Stream & stream, unsigned mlen, uint8_t bpp,
-            uint8_t * mask, size_t mask_size) {
+    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp, uint8_t * mask, size_t mask_size) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
-        TODO("CGR: we should ensure we have data enough to create mask");
-        uint8_t * end = stream.p + mlen;
+
+        TODO("check code below: why do we revert mask and pointer when pointer is 1 BPP and not with other color depth ?"
+             " Looks fishy, a mask and pointer should always be encoded in the same way, not depending on color depth"
+             "difficult to see for symmetrical pointers... check documentation");
+        TODO("it may be more efficient to revert cursor after creating it instead of doing it on the fly")
         switch (bpp) {
         case 1 :
         {
             for (unsigned x = 0; x < mlen ; x++) {
-                BGRColor px = stream.in_uint8();
+                BGRColor px = indata[x];
                 // incoming new pointer mask is upside down, revert it
                 mask[128 - 4 - (x & 0xFFFC) + (x & 3)] = px;
             }
         }
         break;
         default:
-            for (unsigned x = 0; x < mlen ; x++) {
-                BGRColor px = stream.in_uint8();
-                mask[x] = px;
-            }
-//            stream.in_copy_bytes(mask, mlen);
+            memcpy(mask, indata, mlen);
         break;
         }
 
-        stream.p = end;
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
     }
 
-    void to_regular_pointer(Stream & stream, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len) {
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
-        uint8_t * end = stream.p + dlen;
-        TODO("CGR: we should ensure we have data enough to create pointer");
         switch (bpp) {
         case 1 :
         {
             for (unsigned x = 0; x < dlen ; x ++) {
-                BGRColor px = stream.in_uint8();
+                BGRColor px = indata[x];
                 // target cursor will receive 8 bits input at once
                 for (unsigned b = 0 ; b < 8 ; b++) {
                     // incoming new pointer is upside down, revert it
@@ -4032,8 +4062,8 @@ public:
         break;
         case 4 :
         {
-            for (unsigned i=0; i < dlen ; i++) {
-                BGRColor px = stream.in_uint8();
+            for (unsigned i = 0; i < dlen ; i++) {
+                BGRColor px = indata[i];
                 // target cursor will receive 8 bits input at once
                 ::out_bytes_le(&(data[6 * i]),     3, color_decode((px >> 4) & 0xF, bpp, this->orders.global_palette));
                 ::out_bytes_le(&(data[6 * i + 3]), 3, color_decode(px        & 0xF, bpp, this->orders.global_palette));
@@ -4043,8 +4073,8 @@ public:
         case 32: case 24: case 16: case 15: case 8:
         {
             uint8_t BPP = nbbytes(bpp);
-            for (unsigned i=0; i + BPP <= dlen; i += BPP) {
-                BGRColor px = stream.in_bytes_le(BPP);
+            for (unsigned i = 0; i + BPP <= dlen; i += BPP) {
+                BGRColor px = in_uint32_from_nb_bytes_le(BPP, indata + i);
                 ::out_bytes_le(&(data[(i/BPP)*3]), 3, color_decode(px, bpp, this->orders.global_palette));
             }
         }
@@ -4057,11 +4087,28 @@ public:
             break;
         }
 
-        stream.p = end;
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
     }
+    
+    // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
+    // ------------------------------------------------------
+    
+    // The TS_POINTERATTRIBUTE structure is used to send pointer data at an arbitrary
+    // color depth. Support for the New Pointer Update is advertised in the Pointer
+    // Capability Set (section 2.2.7.1.5). 
+    
+    
+    // xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel
+    // of the XOR mask contained in the colorPtrAttr field.
+
+    // colorPtrAttr (variable): Encapsulated Color Pointer Update (section 2.2.9.1.1.4.4)
+    //  structure which contains information about the pointer. The Color Pointer Update
+    //  fields are all used, as specified in section 2.2.9.1.1.4.4; however color XOR data
+    //  is presented in the color depth described in the xorBpp field (for 8 bpp, each byte
+    //  contains one palette index; for 4 bpp, there are two palette indices per byte).
+
 
     void process_new_pointer_pdu(Stream & stream) throw(Error) {
         if (this->verbose & 4) {
@@ -4082,7 +4129,7 @@ public:
 
         Pointer & cursor = this->cursors[pointer_idx];
         memset(&cursor, 0, sizeof(struct Pointer));
-        cursor.bpp    = data_bpp;
+        cursor.bpp    = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
         cursor.width  = stream.in_uint16_le();
@@ -4109,6 +4156,15 @@ public:
             cursor.y = 0;
         }
 
+        if (!stream.in_check_rem(dlen)){
+            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%u remain=%u)", dlen, stream.in_remain());
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+        if (!stream.in_check_rem(mlen + dlen)){
+            LOG(LOG_ERR, "Not enough data for cursor mask (need=%u remain=%u)", mlen, stream.in_remain() - dlen);
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+
         size_t out_data_len = 3 * (
             (bpp == 1) ? (cursor.width * cursor.height) / 8 :
             (bpp == 4) ? (cursor.width * cursor.height) / 2 :
@@ -4130,31 +4186,27 @@ public:
             stream.in_copy_bytes(copy_data_data, dlen);
             stream.in_copy_bytes(copy_mask_data, mlen);
 
-            unsigned   i;
-            uint8_t  * mask_data;
-            uint8_t  * data_data;
-            uint8_t    new_mask_data;
+            unsigned   i = 0;
+            uint8_t  * mask_data = copy_mask_data;
+            uint8_t  * data_data = copy_data_data;
 
-            for (i = 0, data_data = copy_data_data, mask_data = copy_mask_data; i < mlen;
-                 i++, data_data++, mask_data++) {
-                new_mask_data = (*mask_data & (*data_data ^ 0xFF));
-                *data_data    = (*data_data ^ *mask_data ^ new_mask_data);
-                *mask_data    = new_mask_data;
+            for (; i < mlen; i++, data_data++, mask_data++) {
+                uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
+                uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
+                data_data[i]    = new_data_data;
+                mask_data[i]    = new_mask_data;
             }
 
-            FixedSizeStream data_stream(copy_data_data, sizeof(copy_data_data));
-            FixedSizeStream mask_stream(copy_mask_data, sizeof(copy_mask_data));
-
-            to_regular_pointer(data_stream,
-                dlen, data_bpp, cursor.data, sizeof(cursor.data));
-            to_regular_mask(mask_stream,
-                mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
-                cursor.bpp = 24;
+            TODO("move that into cursor")
+            this->to_regular_pointer(copy_data_data, dlen, 1, cursor.data, sizeof(cursor.data));
+            this->to_regular_mask(copy_mask_data, mlen, 1, cursor.mask, sizeof(cursor.mask));
         }
         else {
-            to_regular_pointer(stream, dlen, data_bpp, cursor.data, sizeof(cursor.data));
-            to_regular_mask(stream, mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
-            cursor.bpp = 24;
+            TODO("move that into cursor")
+            this->to_regular_pointer(stream.p, dlen, data_bpp, cursor.data, sizeof(cursor.data));
+            stream.out_skip_bytes(dlen);
+            this->to_regular_mask(stream.p, mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
+            stream.out_skip_bytes(mlen);
         }
 
         this->front.server_set_pointer(cursor);
@@ -4393,12 +4445,18 @@ public:
         infoPacket.emit(stream);
         stream.mark_end();
 
+        if (this->verbose) {
+            infoPacket.log("Preparing sec header ");
+        }
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT,
             this->encrypt, this->encryptionLevel);
         stream.copy_to_head(sec_header);
 
+        if (this->verbose) {
+            infoPacket.log("Send data request");
+        }
         this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->open_session_timeout) {
