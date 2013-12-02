@@ -162,12 +162,12 @@ namespace re {
 #endif
         }
 
-        void initialize_minimal_memory(size_t nb_st_list, unsigned nb_split)
+        void initialize_minimal_memory(size_t nb_st_list, unsigned nb_st)
         {
             nb_st_list *= sizeof(StateList);
             nb_st_list += nb_st_list % sizeof(intmax_t);
 
-            size_t nb_st_range_list = (this->nb_states - nb_split) * sizeof(RangeList);
+            size_t nb_st_range_list = nb_st * sizeof(RangeList);
             nb_st_range_list += nb_st_range_list % sizeof(intmax_t);
 
             size_t nb_nums = this->nb_states * sizeof(unsigned);
@@ -185,9 +185,9 @@ namespace re {
 
         void initialize_memory(size_t nb_st_list, size_t nb_st_range_list,
                                bool cpy_sts, bool modify_sts, unsigned nb_seq,
-                               unsigned nb_split)
+                               unsigned nb_st)
         {
-            const size_t nb_st = this->nb_states - nb_split - this->nb_capture;
+//             const size_t nb_st = this->nb_states - nb_split - this->nb_capture;
             const size_t size_mini_sts = cpy_sts
             ? nb_st * sizeof(MinimalState)
             : 0;
@@ -236,8 +236,8 @@ namespace re {
                 return ;
             }
 
-            unsigned nb_split = 0;
             unsigned nb_sequence = 0;
+            unsigned nb_state_consume = 0;
             {
                 state_list_t::const_iterator first = sts.begin();
                 state_list_t::const_iterator last = sts.end();
@@ -246,26 +246,31 @@ namespace re {
                         this->nodes += (*first)->data.sequence.len - 1;
                         ++nb_sequence;
                     }
-                    if ((*first)->is_split()) {
-                        ++nb_split;
+                    if ((*first)->type & (RANGE|SEQUENCE)) {
+                        ++nb_state_consume;
                     }
                 }
             }
 
-            this->nodes -= nb_split;
+            if (0 == nb_state_consume) {
+                this->st_range_beginning.st_num = -1u;
+                this->st_range_list_last = this->st_range_list;
+                return ;
+            }
 
-            const size_t nb_st = this->nb_states - nb_split;
+            this->nodes = this->nodes - (sts.size() - nb_capture) + nb_state_consume + 1;
 
-            const size_t col_size = this->nb_capture ? nb_st - this->nb_capture + 1 : nb_st;
-            const size_t line_size = nb_st - this->nb_capture;
+            const size_t nb_st = nb_state_consume + 1;
+            const size_t col_size = nb_state_consume + 1;
+            const size_t line_size = nb_state_consume;
             const size_t matrix_size = col_size * line_size;
 
             if (minimal_mem) {
-                this->initialize_minimal_memory(matrix_size + nb_st, nb_split);
+                this->initialize_minimal_memory(matrix_size + nb_st, nb_st);
             }
             else {
                 this->initialize_memory(matrix_size + nb_st, nb_st,
-                                        copy_states, modify_states, nb_sequence, nb_split);
+                                        copy_states, modify_states, nb_sequence, nb_st);
             }
 
             std::memset(this->st_list, 0, matrix_size * sizeof * this->st_list);
@@ -382,7 +387,7 @@ namespace re {
                 StateList * tmp_st_first_list = this->st_range_beginning.first;
 
                 this->initialize_memory(nb_st + nb_beginning_st, nb_range,
-                                        copy_states, modify_states, nb_sequence, nb_split);
+                                        copy_states, modify_states, nb_sequence, nb_st);
                 this->st_range_list_last = this->st_range_list + (this->st_range_list_last - tmp_range_list);
 
                 RangeList * rlfirst = this->st_range_list;
