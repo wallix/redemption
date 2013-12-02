@@ -90,8 +90,8 @@ struct test_pcre_compile
 {
     bool check_pre_condition(const char * s) const
     {
-      const char * err = 0;
-      int iffset = 0;
+        const char * err = 0;
+        int iffset = 0;
         pcre * rgx = pcre_compile(
             s,              /* the pattern */
             0,                    /* default options */
@@ -104,11 +104,13 @@ struct test_pcre_compile
 
     void exec(const char * s) const
     {
+        const char * err = 0;
+        int iffset = 0;
         pcre * rgx = pcre_compile(
             s,              /* the pattern */
             0,                    /* default options */
-            0,               /* for error message */
-            0,           /* for error offset */
+            &err,               /* for error message */
+            &iffset,           /* for error offset */
             NULL);                /* use default character tables */
         pcre_free(rgx);
     }

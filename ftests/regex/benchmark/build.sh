@@ -1,4 +1,7 @@
-#!/bin/sh
+#!/bin/bash
+
+[ -z "$*" ] && echo $0 'filename.cpp [-DRE_PARSER_POOL_STATE]' >&2 && exit 1
+
 g++ \
 -Wall \
 -Wextra \
@@ -29,4 +32,5 @@ g++ \
 -O3 \
 -march=native \
 -DNDEBUG \
-"$@"
+"$@" \
+-lpcre

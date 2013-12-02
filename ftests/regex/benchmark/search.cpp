@@ -71,6 +71,91 @@ struct test_search_capture_optimize_mem
     {}
 };
 
+struct test_pcre_search
+{
+    pcre * rgx;
+
+    test_pcre_search(const char * pattern)
+    {
+        const char * err = 0;
+        int iffset = 0;
+        this->rgx = pcre_compile(
+            pattern,              /* the pattern */
+            0,                    /* default options */
+            &err,               /* for error message */
+            &iffset,           /* for error offset */
+            NULL);                /* use default character tables */
+    }
+
+    ~test_pcre_search()
+    {
+        pcre_free(this->rgx);
+    }
+
+    bool check_pre_condition(const char * s)
+    {
+        int ovector[30];
+        return this->rgx && pcre_exec(
+            this->rgx,                   /* the compiled pattern */
+            NULL,                 /* no extra data - we didn't study the pattern */
+            s,              /* the subject string */
+            strlen(s),       /* the length of the subject */
+            0,                    /* start at offset 0 in the subject */
+            0,                    /* default options */
+            ovector,              /* output vector for substring information */
+            30)>=0;
+    }
+
+    void exec(const char * s)
+    {
+        int ovector[30];
+        pcre_exec(
+            this->rgx,                   /* the compiled pattern */
+            NULL,                 /* no extra data - we didn't study the pattern */
+            s,              /* the subject string */
+            strlen(s),       /* the length of the subject */
+            0,                    /* start at offset 0 in the subject */
+            0,                    /* default options */
+            ovector,              /* output vector for substring information */
+            30);           /* number of elements in the output vector */
+    }
+};
+
+struct test_pcre_search_capture : test_pcre_search
+{
+    int regmatch[30]; /* should be a multiple of 3 */
+
+    test_pcre_search_capture(const char * pattern)
+    : test_pcre_search(pattern)
+    {}
+
+    bool check_pre_condition(const char * s)
+    {
+      return this->rgx && pcre_exec(
+        this->rgx,                   /* the compiled pattern */
+        NULL,                 /* no extra data - we didn't study the pattern */
+        s,              /* the subject string */
+        strlen(s),       /* the length of the subject */
+        0,                    /* start at offset 0 in the subject */
+        0,                    /* default options */
+        this->regmatch,              /* output vector for substring information */
+        sizeof(this->regmatch)/sizeof(this->regmatch[0]))>=0;
+    }
+
+    void exec(const char * s)
+    {
+        pcre_exec(
+            this->rgx,                   /* the compiled pattern */
+            NULL,                 /* no extra data - we didn't study the pattern */
+            s,              /* the subject string */
+            strlen(s),       /* the length of the subject */
+            0,                    /* start at offset 0 in the subject */
+            0,                    /* default options */
+            this->regmatch,              /* output vector for substring information */
+            sizeof(this->regmatch)/sizeof(this->regmatch[0]));           /* number of elements in the output vector */
+    }
+};
+
 struct test_posix_search
 {
     regex_t rgx;
@@ -276,6 +361,10 @@ int main()
     Bench<test_search>();
     std::cout << "\n\nsearch (optmize_mem=true):\n";
     Bench<test_search_optimize_mem>();
+    std::cout << "\n\npcre search:\n";
+    Bench<test_pcre_search>();
+    std::cout << "\n\npcre search with capture:\n";
+    Bench<test_pcre_search_capture>();
     std::cout << "\n\nposix search:\n";
     Bench<test_posix_search>();
     std::cout << "\n\nsearch with capture:\n";
