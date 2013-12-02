@@ -205,8 +205,8 @@ namespace re {
                             char_int l2, char_int r2)
     {
         *pst = accu.split(accu.range(l1, r1, eps),
-                         accu.range(l2, r2, eps)
-                        );
+                          accu.range(l2, r2, eps)
+                         );
         return &eps->out1;
     }
 
@@ -217,10 +217,10 @@ namespace re {
                             char_int l3, char_int r3)
     {
         *pst = accu.split(accu.range(l1, r1, eps),
-                         accu.split(accu.range(l2, r2, eps),
-                                   accu.range(l3, r3, eps)
-                                  )
-                        );
+                          accu.split(accu.range(l2, r2, eps),
+                                     accu.range(l3, r3, eps)
+                                    )
+                         );
         return &eps->out1;
     }
 
@@ -232,10 +232,10 @@ namespace re {
                             char_int l4, char_int r4)
     {
         *pst = accu.split(accu.range(l1, r1, eps),
-                         accu.split(accu.range(l2, r2, eps),
-                                   accu.split(accu.range(l3, r3, eps),
-                                             accu.range(l4, r4, eps)
-                                   )
+                          accu.split(accu.range(l2, r2, eps),
+                                     accu.split(accu.range(l3, r3, eps),
+                                                accu.range(l4, r4, eps)
+                                     )
                          )
         );
         return &eps->out1;
@@ -250,12 +250,12 @@ namespace re {
                             char_int l5, char_int r5)
     {
         *pst = accu.split(accu.range(l1, r1, eps),
-                         accu.split(accu.range(l2, r2, eps),
-                                   accu.split(accu.range(l3, r3, eps),
-                                             accu.split(accu.range(l4, r4, eps),
-                                                       accu.range(l5, r5, eps)
-                                             )
-                                   )
+                          accu.split(accu.range(l2, r2, eps),
+                                     accu.split(accu.range(l3, r3, eps),
+                                                accu.split(accu.range(l4, r4, eps),
+                                                           accu.range(l5, r5, eps)
+                                               )
+                                    )
                          )
         );
         return &eps->out1;
@@ -518,7 +518,7 @@ namespace re {
                 if (reverse_result) {
                     State * eps = accu.epsilone();
                     *pst = accu.split(accu.range(0, ranges.ranges[0].first-1, eps),
-                                     accu.range(ranges.ranges[0].second+1, -1u, eps));
+                                      accu.range(ranges.ranges[0].second+1, -1u, eps));
                     return &eps->out1;
                 }
                 else {

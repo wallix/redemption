@@ -53,9 +53,7 @@ namespace re {
 
         Regex(unsigned step_limit = 10000)
         : parser()
-        , sm(this->parser.st_parser.states(),
-             this->parser.st_parser.root(),
-             this->parser.st_parser.nb_capture())
+        , sm(state_list_t(), NULL, 0)
         , step_limit(step_limit)
         {}
 
