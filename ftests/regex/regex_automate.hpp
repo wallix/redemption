@@ -66,8 +66,7 @@ namespace re {
                                             size_t nb_idx_trace_free,
                                             size_t nb_reindex_trace,
                                             size_t nb_traces,
-                                            size_t size_mini_sts,
-                                            size_t size_mini_sts_seq)
+                                            size_t byte_mini_sts, size_t byte_mini_sts_seq)
         {
             nb_st_list *= sizeof(StateList);
             nb_st_list += nb_st_list % sizeof(intmax_t);
@@ -89,12 +88,12 @@ namespace re {
             size_t nb_cap_type = this->nb_capture * sizeof(bool);
             nb_cap_type += nb_cap_type % sizeof(intmax_t);
 
-            size_mini_sts += size_mini_sts % sizeof(intmax_t);
+            byte_mini_sts += byte_mini_sts % sizeof(intmax_t);
 
             char * mem = static_cast<char*>(::operator new(
                 nb_st_list + nb_st_range_list + nb_step_range_list * 2
                 + nb_traces + nb_idx_trace_free + nb_reindex_trace + nb_nums
-                + nb_cap_type + size_mini_sts + size_mini_sts_seq
+                + nb_cap_type + byte_mini_sts + byte_mini_sts_seq
             ));
 
             this->st_list = reinterpret_cast<StateList*>(mem);
@@ -124,7 +123,7 @@ namespace re {
         }
 
         void initialize_memory_without_capture(size_t nb_st_list, size_t nb_st_range_list,
-                                               size_t size_mini_sts, size_t size_mini_sts_seq)
+                                               size_t byte_mini_sts, size_t byte_mini_sts_seq)
         {
             nb_st_list *= sizeof(StateList);
             nb_st_list += nb_st_list % sizeof(intmax_t);
@@ -138,12 +137,11 @@ namespace re {
             size_t nb_nums = this->nb_states * sizeof(unsigned);
             nb_nums += nb_nums % sizeof(intmax_t);
 
-            size_mini_sts *= sizeof(MinimalState);
-            size_mini_sts += size_mini_sts % sizeof(intmax_t);
+            byte_mini_sts += byte_mini_sts % sizeof(intmax_t);
 
             char * mem = static_cast<char*>(::operator new(
                 nb_st_list + nb_st_range_list + nb_step_range_list * 2
-                + nb_nums + size_mini_sts + size_mini_sts_seq
+                + nb_nums + byte_mini_sts + byte_mini_sts_seq
             ));
 
             this->st_list = reinterpret_cast<StateList*>(mem);
@@ -229,11 +227,10 @@ namespace re {
         , idx_trace_free(0)
         , pidx_trace_free(0)
         , traces(0)
-        , mini_sts(0)
+        , mini_sts_last(0)
         , st_list(0)
         , st_range_list(0)
         , step_id(1)
-        , optimize(copy_states)
         {
             if (sts.empty()) {
                 return ;
@@ -464,14 +461,18 @@ namespace re {
             if (copy_states && !(-1u == this->st_range_beginning.st_num && this->st_range_list == this->st_range_list_last)) {
                 {
                     const size_t size_mini_sts = line_size * sizeof(MinimalState);
-                    char_int * str = reinterpret_cast<char_int*>(reinterpret_cast<char*>(
-                        size_mini_sts + size_mini_sts % sizeof(intmax_t)
-                    ));
+                    char_int * str = reinterpret_cast<char_int*>(
+                        reinterpret_cast<char*>(this->mini_sts + size_mini_sts)
+                        + size_mini_sts % sizeof(intmax_t)
+                    );
                     state_list_t::const_iterator first = sts.begin();
                     state_list_t::const_iterator last = sts.end() - this->nb_capture;
                     MinimalState * first2 = this->mini_sts;
-                    for (; first != last; ++first, ++first2) {
+                    for (; first != last; ++first) {
                         State & st = **first;
+                        if (!(st.type & (RANGE | SEQUENCE))) {
+                            continue ;
+                        }
                         first2->type = st.type;
                         first2->num = st.num;
                         if (st.is_sequence()) {
@@ -491,7 +492,9 @@ namespace re {
                             first2->data.range.l = st.data.range.l;
                             first2->data.range.r = st.data.range.r;
                         }
+                        ++first2;
                     }
+                    this->mini_sts_last = first2;
                 }
 
                 RangeList * first = this->st_range_list;
@@ -500,8 +503,22 @@ namespace re {
                     StateList * l = first->first;
                     StateList * rlast = first->last;
                     for (; l != rlast; ++l) {
-                        l->st = reinterpret_cast<State*>(this->mini_sts + l->st->num - this->nb_capture);
+                        MinimalState * msts = this->mini_sts;
+                        while (msts->num != l->st->num) {
+                            ++msts;
+                        }
+                        l->st = reinterpret_cast<State*>(msts);
                     }
+                }
+
+                StateList * l = this->st_range_beginning.first;
+                StateList * rlast = this->st_range_beginning.last;
+                for (; l != rlast; ++l) {
+                    MinimalState * msts = this->mini_sts;
+                    while (msts->num != l->st->num) {
+                        ++msts;
+                    }
+                    l->st = reinterpret_cast<State*>(msts);
                 }
             }
         }
@@ -906,12 +923,11 @@ namespace re {
                 return ;
             }
 
-            if (this->optimize) {
+            if (this->mini_sts_last) {
                 std::cout << ("\033[33m(optimize out)") << std::endl;
                 MinimalState * first = this->mini_sts;
-                MinimalState * last = first + this->nb_states - this->nb_capture;
-                for (; first != last; ++first) {
-                    std::cout << first->num << "\t" << *reinterpret_cast<State*>(first) << "\n";
+                for (; first != this->mini_sts_last; ++first) {
+                    std::cout << first->num << "\t" << first->type << "\n";
                 }
                 std::cout << "\033[0m";
                 return ;
@@ -1337,6 +1353,7 @@ namespace re {
         StepRangeList l2;
 
         MinimalState * mini_sts;
+        MinimalState * mini_sts_last;
 
         struct StateList
         {
@@ -1363,8 +1380,6 @@ namespace re {
 
         unsigned step_id;
         unsigned step_count;
-
-        bool optimize;
     };
 }
 
