@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
     s.rewind();
 
     uint8_t sig[20];
-    get_sig(s, sig);
+    get_sig(s, sig, sizeof(sig));
 
     TSRequest ts_req(s);
 

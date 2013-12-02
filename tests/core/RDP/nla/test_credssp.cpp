@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     s.rewind();
 
     uint8_t sig[20];
-    get_sig(s, sig);
+    get_sig(s, sig, sizeof(sig));
 
     TSRequest ts_req(s);
 
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     s.mark_end();
     s.rewind();
 
-    get_sig(s, sig);
+    get_sig(s, sig, sizeof(sig));
 
     TSRequest ts_req2(s);
 
@@ -211,7 +211,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     s.out_copy_bytes(packet3, sizeof(packet3));
     s.mark_end();
     s.rewind();
-    get_sig(s, sig);
+    get_sig(s, sig, sizeof(sig));
 
     TSRequest ts_req3(s);
 
@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     s.out_copy_bytes(packet4, sizeof(packet4));
     s.mark_end();
     s.rewind();
-    get_sig(s, sig);
+    get_sig(s, sig, sizeof(sig));
 
     TSRequest ts_req4(s);
 
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     s.out_copy_bytes(packet5, sizeof(packet5));
     s.mark_end();
     s.rewind();
-    get_sig(s, sig);
+    get_sig(s, sig, sizeof(sig));
 
     TSRequest ts_req5(s);
 

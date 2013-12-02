@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     s.rewind();
 
     uint8_t sig[20];
-    get_sig(s, sig);
+    get_sig(s, sig, sizeof(sig));
 
     TSRequest ts_req2(s);
 

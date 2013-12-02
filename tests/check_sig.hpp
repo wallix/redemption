@@ -61,7 +61,7 @@ inline bool check_sig(Stream & stream, char * message, const char * shasig)
    uint8_t sig[20];
    SslSha1 sha1;
    sha1.update(stream.get_data(), stream.size());
-   sha1.final(sig);
+   sha1.final(sig, sizeof(sig));
 
    if (memcmp(shasig, sig, 20)){
        sprintf(message, "Expected signature: \""
@@ -85,7 +85,7 @@ inline bool check_sig(const uint8_t * data, size_t length, char * message, const
    uint8_t sig[20];
    SslSha1 sha1;
    sha1.update(data, length);
-   sha1.final(sig);
+   sha1.final(sig, sizeof(sig));
 
    if (memcmp(shasig, sig, 20)){
        sprintf(message, "Expected signature: \""
@@ -104,18 +104,18 @@ inline bool check_sig(const uint8_t * data, size_t length, char * message, const
    return true;
 }
 
-inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig)
+inline void get_sig(const uint8_t * data, size_t length, uint8_t * sig, size_t sig_length)
 {
    SslSha1 sha1;
    sha1.update(data, length);
-   sha1.final(sig);
+   sha1.final(sig, sig_length);
 }
 
-inline void get_sig(Stream & stream, uint8_t * sig)
+inline void get_sig(Stream & stream, uint8_t * sig, size_t sig_length)
 {
    SslSha1 sha1;
    sha1.update(stream.get_data(), stream.size());
-   sha1.final(sig);
+   sha1.final(sig, sig_length);
 }
 
 #endif
