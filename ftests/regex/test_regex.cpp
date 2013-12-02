@@ -89,6 +89,28 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     regex_test(regex, "abc", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "dabc", 0, 1, 0, matches, 1, matches);
 
+    str_regex = "^";
+    regex.reset(str_regex);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
+    regex_test(regex, "", 1, 1, 1, matches, 1, matches);
+
+    str_regex = "$";
+    regex.reset(str_regex);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
+    regex_test(regex, "", 1, 1, 1, matches, 1, matches);
+
     str_regex = "^a";
     regex.reset(str_regex);
     if (regex.message_error()) {
@@ -143,6 +165,19 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     regex_test(regex, "ab", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "abc", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "dabc", 0, 0, 0, matches, 0, matches);
+
+    str_regex = "^a|^.?";
+    regex.reset(str_regex);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    regex_test(regex, "aaaa", 1, 1, 1, matches, 1, matches);
+    regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
+    regex_test(regex, "", 1, 1, 1, matches, 1, matches);
+    regex_test(regex, "ba", 1, 1, 1, matches, 1, matches);
 
     str_regex = "a+";
     regex.reset(str_regex);

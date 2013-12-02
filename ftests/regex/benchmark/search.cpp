@@ -22,6 +22,7 @@
 #include "../regex.hpp"
 
 #include <regex.h>
+#include <pcre.h>
 
 struct test_search
 {

@@ -251,15 +251,15 @@ namespace re {
             ++this->nodes;
             this->nodes -= this->nb_capture;
 
-            const size_t col_size = this->nb_capture ? this->nb_states - this->nb_capture + 1 : this->nb_states;
+            const size_t col_size = this->nb_states - this->nb_capture;
             const size_t line_size = this->nb_states - this->nb_capture;
             const size_t matrix_size = col_size * line_size;
 
             if (minimal_mem) {
-                this->initialize_minimal_memory(matrix_size);
+                this->initialize_minimal_memory(matrix_size + this->nb_states);
             }
             else {
-                this->initialize_memory(matrix_size + this->nb_states/2, //st_states + st_range_beginning
+                this->initialize_memory(matrix_size + this->nb_states/*TODO /2*/, //st_states + st_range_beginning
                                         this->nb_states, copy_states, modify_states, nb_sequence);
             }
 
@@ -275,20 +275,65 @@ namespace re {
                 l.last = l.first;
             }
 
+            this->st_range_beginning.first = this->st_list + matrix_size + this->nb_states/*/2*/ - 1;
+            this->st_range_beginning.last = this->st_range_beginning.first;
             this->init_range_list(this->st_range_list, root);
             this->init_value_state_list(this->st_list, this->st_list + matrix_size);
 
+            if (this->st_range_beginning.first != this->st_range_beginning.last)
+            {
+                StateList * first = this->st_range_beginning.last+1;
+                StateList * last = this->st_range_beginning.first+1;
+                StateList * firstdest = this->st_list + matrix_size;
+                for (; first != last; ++first, ++firstdest) {
+                    typedef StateList * tab2_st_t[2];
+                    tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*first);
+                    //overlap
+                    StateList * cpfirst = tab[0];
+                    StateList * cplast = tab[1];
+                    for (; cpfirst != cplast; ++cpfirst) {
+                        *firstdest = *cpfirst;
+                        cpfirst->st = 0;
+                    }
+                }
+
+                this->st_range_beginning.first = this->st_list + matrix_size;
+                this->st_range_beginning.last = firstdest;
+            }
+
+            // purge empty StateList (StateList::st = 0) and set RangeList::st_num to -1u if empty range
             {
                 RangeList * l = this->st_range_list;
                 for (; l < this->st_range_list_last; ++l) {
                     if (l->st_num == -1u) {
                         continue;
                     }
+                    StateList * first = l->first;
+                    while (first != l->last && first->st) {
+                      ++first;
+                    }
+                    StateList * result = first;
+                    for (; first != l->last; ++first) {
+                      if (first->st) {
+                        *result = *first;
+                        ++result;
+                      }
+                    }
+                    l->last = result;
                     if (l->first == l->last) {
                       l->st_num = -1u;
                     }
                 }
             }
+
+            while (this->st_range_list != this->st_range_list_last && -1u == this->st_range_list->st_num) {
+                ++this->st_range_list;
+            }
+
+            while (this->st_range_list != this->st_range_list_last && -1u == (this->st_range_list_last-1)->st_num) {
+                --this->st_range_list_last;
+            }
+
             {
                 RangeList * l = this->st_range_list;
                 for (; l < this->st_range_list_last; ++l) {
@@ -301,13 +346,15 @@ namespace re {
                         }
                     }
                 }
+                StateList * first = this->st_range_beginning.first;
+                StateList * last = this->st_range_beginning.last;
+                for (; first != last; ++first) {
+                    if (first->next && (first->next->first == first->next->last || first->next->st_num == -1u)) {
+                        first->next = 0;
+                    }
+                }
             }
 
-            while (this->st_range_list != this->st_range_list_last && -1u == (this->st_range_list_last-1)->st_num) {
-                --this->st_range_list_last;
-            }
-
-            size_t pos_beginning = matrix_size;
             if (minimal_mem) {
                 const size_t nb_range = this->st_range_list_last - this->st_range_list;
                 size_t nb_st = 0;
@@ -317,7 +364,6 @@ namespace re {
                         nb_st += first->last - first->first;
                     }
                 }
-                pos_beginning = nb_st;
                 size_t nb_beginning_st = 0;
                 {
                     StateList * first = this->st_range_list->first;
@@ -388,7 +434,23 @@ namespace re {
                 }
             }
 
-            if (copy_states) {
+            this->st_range_beginning.st_num = this->st_range_list != this->st_range_list_last ? this->st_range_list->st_num : (root->out1 || root->out2 ? 0u : -1u);
+
+            if (this->st_range_beginning.first == this->st_range_beginning.last && this->st_range_list != this->st_range_list_last) {
+              this->st_range_beginning = *this->st_range_list;
+            }
+
+            StateList * first = this->st_range_beginning.first;
+            StateList * last = this->st_range_beginning.last;
+            for (; first != last; ++first) {
+                if ((first->st->out1 && first->st->out1->is_finish()) || first->st->is_terminate()) {
+                    this->st_range_list = this->st_range_list_last;
+                    this->st_range_beginning.st_num = -1u;
+                    break;
+                }
+            }
+
+            if (copy_states && !(-1u == this->st_range_beginning.st_num && this->st_range_list == this->st_range_list_last)) {
                 {
                     const size_t size_mini_sts = (this->nb_states - this->nb_capture) * sizeof(MinimalState);
                     char_int * str = reinterpret_cast<char_int*>(reinterpret_cast<char*>(
@@ -428,100 +490,6 @@ namespace re {
                     StateList * rlast = first->last;
                     for (; l != rlast; ++l) {
                         l->st = reinterpret_cast<State*>(this->mini_sts + l->st->num - this->nb_capture);
-                    }
-                }
-            }
-
-            this->st_range_beginning.first = std::partition(
-                this->st_range_list->first,
-                this->st_range_list->last,
-                is_not_begin_state()
-            );
-
-            if (this->st_range_beginning.first != this->st_range_list->last) {
-                this->st_range_beginning.last = this->st_list + pos_beginning;
-                StateList * l = this->st_range_list->first;
-                for (; l != this->st_range_beginning.first; ++l) {
-                    *this->st_range_beginning.last = *l;
-                    ++this->st_range_beginning.last;
-                }
-                StateList * rlast = this->st_range_list->last;
-                for (; l != rlast; ++l) {
-                    if (0 == l->next) {
-                        continue;
-                    }
-                    StateList * first = l->next->first;
-                    StateList * last = l->next->last;
-                    l->next->st_num = -1u;
-                    for (; first != last; ++first) {
-                        *this->st_range_beginning.last = *first;
-                        ++this->st_range_beginning.last;
-                    }
-                }
-
-                this->st_range_list->last = this->st_range_beginning.first;
-                std::cout << (this->st_range_list->last - this->st_range_list->first) << std::endl;
-                this->st_range_beginning.first = this->st_list + pos_beginning;
-
-                if (this->st_range_list->first == this->st_range_list->last) {
-                    std::cout << ("sasmsqs qs") << std::endl;
-                    std::cout << (this->st_range_list_last - this->st_range_list) << std::endl;
-                    ++this->st_range_list;
-                    std::cout << (this->st_range_list_last - this->st_range_list) << std::endl;
-                }
-
-                if (this->st_range_beginning.first == this->st_range_beginning.last) {
-                    this->st_range_beginning.st_num = this->st_range_list->st_num;
-                    this->st_range_beginning.first = this->st_range_list->first;
-                    this->st_range_beginning.last = this->st_range_list->last;
-                    std::cout << ("no begin") << std::endl;
-                }
-//                 else if (this->st_range_list->first == this->st_range_list->last) {
-//                     std::cout << ("''''''''") << std::endl;
-//                     ++this->st_range_list;
-//                 }
-                while (this->st_range_list != this->st_range_list_last && -1u == this->st_range_list->st_num) {
-                    std::cout << ("''''''''") << std::endl;
-                    ++this->st_range_list;
-                }
-                std::cout << (this->st_range_list_last - this->st_range_list) << std::endl;
-//                 this->st_range_beginning.st_num = this->st_range_list != this->st_range_list_last ? this->st_range_list->st_num : (root->out1 || root->out2 ? 0u : -1u);
-                this->st_range_beginning.st_num = this->st_range_list != this->st_range_list_last ? this->st_range_list->st_num : (this->st_range_beginning.first != this->st_range_beginning.last ? 0u : -1u);
-
-//                 while (this->st_range_list != this->st_range_list_last && (this->st_range_list_last-1)->first == (this->st_range_list_last-1)->last) {
-//                     --this->st_range_list_last;
-//                 }
-            }
-            else {
-                this->st_range_beginning.st_num = this->st_range_list->st_num;
-                this->st_range_beginning.first = this->st_range_list->first;
-                this->st_range_beginning.last = this->st_range_list->last;
-
-                if (this->st_range_list->first == this->st_range_list->last) {
-                    std::cout << ("sasmsqs qs") << std::endl;
-                    std::cout << (this->st_range_list_last - this->st_range_list) << std::endl;
-                    ++this->st_range_list;
-                    std::cout << (this->st_range_list_last - this->st_range_list) << std::endl;
-                }
-
-                while (this->st_range_list != this->st_range_list_last && (-1u == this->st_range_list->st_num || this->st_range_list->first == this->st_range_list->last)) {
-                    std::cout << ("''''''''") << std::endl;
-                    ++this->st_range_list;
-                }
-                std::cout << ("'''''''''''''''''''") << std::endl;
-                std::cout << (this->st_range_list != this->st_range_list_last) << std::endl;
-                std::cout << (this->st_range_list - this->st_range_list_last) << std::endl;
-                this->st_range_beginning.st_num = this->st_range_list != this->st_range_list_last ? this->st_range_list->st_num : (root->out1 || root->out2 ? 0u : -1u);
-            }
-
-            if (this->st_range_list != this->st_range_list_last || -1u != this->st_range_beginning.st_num)
-            {
-                RangeList * l = -1u != this->st_range_beginning.st_num ? &this->st_range_beginning : this->st_range_list;
-                for (StateList * first = l->first, * last = l->last; first != last; ++first) {
-                    if (first->st->is_terminate()) {
-                        this->st_range_list = this->st_range_list_last;
-                        this->st_range_beginning.st_num = -1u;
-                        break;
                     }
                 }
             }
@@ -588,7 +556,7 @@ namespace re {
             for (l = tmp; l != last; ++l) {
                 if (l->st) {
                     ++this->step_id;
-                    l->is_terminate = this->next_is_terminate(l->st->out1);
+                    l->is_terminate = l->st->is_terminate() || this->next_is_terminate(l->st->out1);
                 }
             }
         }
@@ -653,18 +621,32 @@ namespace re {
             return false;
         }
 
-        void push_state(RangeList* l, const State * st, unsigned num_open = -1u)
+        void push_state(RangeList* l, const State * st, unsigned num_open = -1u, bool is_first = false)
         {
             if (this->is_valid_and_mark(st)) {
                 if (st->is_split()) {
-                    this->push_state(l, st->out1, num_open);
-                    this->push_state(l, st->out2, num_open);
+                    this->push_state(l, st->out1, num_open, is_first);
+                    this->push_state(l, st->out2, num_open, is_first);
                 }
                 else if (st->is_cap_open()) {
-                    this->push_state(l, st->out1, num_open == -1u ? st->num : num_open);
+                    this->push_state(l, st->out1, num_open == -1u ? st->num : num_open, is_first);
                 }
                 else if (st->is_cap_close()) {
-                    this->push_state(l, st->out1);
+                    this->push_state(l, st->out1, -1u, is_first);
+                }
+                else if (st->type == FIRST) {
+                    if (is_first) {
+                        push_state(l, st->out1, num_open, true);
+                    }
+                    else {
+                        StateList * tmpstl = l->last;
+                        push_state(l, st->out1, num_open, true);
+                        typedef StateList * tab2_st_t[2];
+                        tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*this->st_range_beginning.last);
+                        tab[0] = tmpstl;
+                        tab[1] = l->last;
+                        --this->st_range_beginning.last;
+                    }
                 }
                 else if (st->type != LAST) {
                     l->last->st = st;
@@ -1039,6 +1021,14 @@ namespace re {
 
                 if (ifirst->consume) {
                     if (!--ifirst->consume) {
+                        const StateList * stl = reinterpret_cast<const StateList*>(ifirst->rl);
+                        if (!stl->next && consumer.valid() && stl->is_terminate) {
+#ifdef DISPLAY_TRACE
+                            std::cout << "\t\033[35mx " << (ifirst->rl->st_num) << "\033[0m\n";
+#endif
+                            continue;
+                        }
+
                         if (active_capture) {
                             if (ifirst->num_close != -1u) {
                                 unsigned num = ifirst->num_close;
@@ -1050,6 +1040,13 @@ namespace re {
                                 }
                             }
                         }
+
+                        if (stl->next_is_finish || (stl->is_terminate && !consumer.valid())) {
+                            //l2.pop_back();
+                            return active_capture ? ifirst->idx : 0;
+                        }
+
+                        ifirst->rl = stl->next;
                     }
 #ifdef DISPLAY_TRACE
                     std::cout << "\t\033[35mreinsert (" << ifirst->consume << ")";
@@ -1140,7 +1137,14 @@ namespace re {
                             }
                         };
 
-                        RangeList * const rl = first->next || !first->is_terminate ? first->next : reinterpret_cast<RangeList*>(~0l);
+                        if (!first->next && count_consume == 1 && consumer.valid() && first->is_terminate) {
+#ifdef DISPLAY_TRACE
+                            std::cout << "\t\033[35mx " << (ifirst->rl->st_num) << "\033[0m\n";
+#endif
+                            continue;
+                        }
+
+                        RangeList * const rl = count_consume == 1 ? first->next : reinterpret_cast<RangeList*>(first);
 
                         if (active_capture) {
                             unsigned idx = ifirst->idx;
@@ -1163,11 +1167,8 @@ namespace re {
                             l2.push_back(rl, count_consume - 1);
                         }
 
-                        if (exact_match ? first->next_is_finish && !consumer.valid() : first->next_is_finish) {
-                            return active_capture ? ifirst->idx : 0;
-                        }
-
-                        if (first->is_terminate && !consumer.valid()) {
+                        if ((exact_match ? first->next_is_finish && !consumer.valid() : first->next_is_finish) || (first->is_terminate && count_consume == 1 && !consumer.valid())) {
+                            //l2.pop_back();
                             return active_capture ? ifirst->idx : 0;
                         }
                     }
@@ -1288,13 +1289,15 @@ namespace re {
                                 }
                             }
                         }
-                    }
 
-                    if (ifirst->rl == 0 || ifirst->rl == reinterpret_cast<RangeList*>(~0l)) {
-                        if (active_capture) {
-                            this->set_idx_trace(ifirst->idx);
+                        const StateList * stl = reinterpret_cast<const StateList*>(ifirst->rl);
+                        if (!stl->next || stl->is_terminate) {
+                            if (active_capture) {
+                              this->set_idx_trace(ifirst->idx);
+                            }
+                            return true;
                         }
-                        return true;
+                        ifirst->rl = stl->next;
                     }
 
                     if (this->nums[ifirst->rl->st_num] == this->step_id) {

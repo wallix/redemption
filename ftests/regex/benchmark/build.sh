@@ -1,0 +1,32 @@
+#!/bin/sh
+g++ \
+-Wall \
+-Wextra \
+-Wundef \
+-Wcast-align \
+-Wchar-subscripts \
+-Wformat-security \
+-Wunreachable-code \
+-Wformat \
+-Wformat=2 \
+-Werror-implicit-function-declaration \
+-Wsequence-point \
+-Wreturn-type \
+-Wfloat-equal \
+-Wpointer-arith \
+-Wconversion -Wsign-compare \
+-Wmissing-declarations \
+-Wmissing-noreturn \
+-Wmissing-format-attribute \
+-Wpacked \
+-Wredundant-decls \
+-Wdouble-promotion \
+-Winit-self \
+-Wcast-qual \
+-Wold-style-cast \
+-Woverloaded-virtual \
+-Wnon-virtual-dtor \
+-O3 \
+-march=native \
+-DNDEBUG \
+"$@"
