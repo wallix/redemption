@@ -234,7 +234,7 @@ struct NtlmVersion {
     }
 
     void print() {
-	fprintf(stderr, "VERSION =\n{\n");
+	fprintf(stderr, "VERSION = {\n");
 	fprintf(stderr, "\tProductMajorVersion: %d\n", this->ProductMajorVersion);
 	fprintf(stderr, "\tProductMinorVersion: %d\n", this->ProductMinorVersion);
 	fprintf(stderr, "\tProductBuild: %d\n", this->ProductBuild);

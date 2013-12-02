@@ -117,36 +117,151 @@ enum NTLM_AV_ID {
     MsvAvTimestamp,
     MsvAvSingleHost,
     MsvAvTargetName,
-    MsvChannelBindings
+    MsvChannelBindings,
+    AV_ID_MAX
 };
 
 struct NtlmAvPair {
     uint16_t AvId;
     uint16_t AvLen;
     BStream Value;
+
+    NtlmAvPair(NTLM_AV_ID id, const uint8_t * value, size_t length)
+        : AvId(id)
+        , AvLen(length)
+        , Value(BStream(length))
+    {
+        this->Value.out_copy_bytes(value, length);
+        this->Value.mark_end();
+        this->Value.rewind();
+    }
+
+    void emit(Stream & stream) {
+        stream.out_uint16_le(this->AvId);
+        stream.out_uint16_le(this->AvLen);
+        stream.out_copy_bytes(this->Value.get_data(), this->Value.size());
+    }
+
+    // void recv(Stream & stream) {
+    //     this->AvId = stream.in_uint16_le();
+    //     this->AvLen = stream.in_uint16_le();
+    //     this->Value.init(this->AvLen);
+    //     this->Value.out_copy_bytes(stream.p, this->AvLen);
+    //     this->Value.mark_end();
+    //     this->Value.rewind();
+    //     stream.in_skip_bytes(this->AvLen);
+    // }
+
+    void print() {
+	fprintf(stderr, "\tAvId: 0x%02X, AvLen : %u, \n", this->AvId, this->AvLen);
+        this->Value.print();
+    }
 };
 
-// struct NtlmAvPairList {
-//     NtlmAvPair list[11];
+struct NtlmAvPairList {
+    NtlmAvPair * list[AV_ID_MAX];
 
-//     void init() {
-//         this->next = NULL;
-//         this->avPair.AvId = MsvAvEOL;
-//         this->avPair.AvLen = 0;
-//     }
+    NtlmAvPairList() {
+        this->init();
+    }
 
-//     int length() {
-//         NtlmAvPairList * current = this->next;
-//         int length = 1;
-//         if (current != NULL) {
-//             length++;
-//             current = current.next;
-//         }
-//     }
-// };
+    virtual ~NtlmAvPairList() {
+        this->delete_all();
+    }
 
-struct NTLM_AV_PAIR {
-    uint16_t AvId;
-    uint16_t AvLen;
+    void init() {
+        for (int i = 0; i < AV_ID_MAX; i++) {
+            this->list[i] = NULL;
+        }
+        this->list[MsvAvEOL] = new NtlmAvPair(MsvAvEOL, NULL, 0);
+    }
+
+    void delete_all() {
+        for (int i = 0; i < AV_ID_MAX; i++) {
+            if (this->list[i]) {
+                delete this->list[i];
+                this->list[i] = NULL;
+            }
+        }
+    }
+
+    void add(NTLM_AV_ID avId, const uint8_t * value, size_t length) {
+        if (this->list[avId])
+            delete this->list[avId];
+        this->list[avId] = new NtlmAvPair(avId, value, length);
+    }
+
+    bool rm(NTLM_AV_ID avId) {
+        // ASSUME avID != MsvAvEOL
+        bool res = false;
+        if (this->list[avId]) {
+            delete this->list[avId];
+            this->list[avId] = NULL;
+            res = true;
+        }
+        return res;
+    }
+
+    size_t length() {
+        size_t res = 0;
+        for (int i = 0; i < AV_ID_MAX; i++) {
+            if (this->list[i]) {
+                res++;
+            }
+        }
+        return res;
+    }
+
+    size_t packet_length() {
+        size_t res = 0;
+        for (int i = 0; i < AV_ID_MAX; i++) {
+            if (this->list[i]) {
+                res += sizeof(this->list[i]->AvId);
+                res += sizeof(this->list[i]->AvLen);
+                // res += 4;
+                res += this->list[i]->AvLen;
+            }
+        }
+        return res;
+    }
+
+    void emit(Stream & stream) {
+        for (int i = 1; i < AV_ID_MAX; i++) {
+            if (this->list[i]) {
+                this->list[i]->emit(stream);
+            }
+        }
+        // ASSUME this->list[MsvAvEOL] != NULL
+        this->list[MsvAvEOL]->emit(stream);
+        stream.mark_end();
+    }
+
+    void recv(Stream & stream) {
+        for (int i = 0; i < AV_ID_MAX; i++) {
+            NTLM_AV_ID id = static_cast<NTLM_AV_ID>(stream.in_uint16_le());
+            uint16_t length = stream.in_uint16_le();
+            if (id == MsvAvEOL) {
+                // ASSUME last element is MsvAvEOL
+                stream.in_skip_bytes(length);
+                break;
+            }
+            this->add(id, stream.p, length);
+            stream.in_skip_bytes(length);
+        }
+    }
+
+    void print() {
+	fprintf(stderr, "Av Pair List : %zu elements {\n", this->length());
+
+        for (int i = 0; i < AV_ID_MAX; i++) {
+            if (this->list[i]) {
+                this->list[i]->print();
+            }
+        }
+
+	fprintf(stderr, "}\n");
+    }
+
 };
+
 #endif

@@ -650,6 +650,43 @@ public:
         this->out_der_length(length);
         this->out_copy_bytes(str, length);
     }
+
+
+    void print() {
+        const char * data = reinterpret_cast<const char *>(this->get_data());
+        size_t size = this->size();
+        char buffer[32768];
+        const unsigned line_length = 8;
+        for (size_t j = 0 ; j < size ; j += line_length){
+            char * line = buffer;
+            line += sprintf(line, "/* %.4x */ \"", static_cast<unsigned>(j));
+            size_t i = 0;
+            for (i = 0; i < line_length; i++){
+                if (j+i >= size){ break; }
+                line += sprintf(line, "\\x%.2x", static_cast<unsigned char>(data[j+i]));
+            }
+            line += sprintf(line, "\"");
+            if (i < line_length){
+                line += sprintf(line, "%*c", static_cast<unsigned>((line_length-i)*4), ' ');
+            }
+            line += sprintf(line, " //");
+            for (i = 0; i < line_length; i++){
+                if (j+i >= size){ break; }
+                unsigned char tmp = static_cast<unsigned>(data[j+i]);
+                if ((tmp < ' ') || (tmp > '~')){
+                    tmp = '.';
+                }
+                line += sprintf(line, "%c", tmp);
+            }
+
+            if (line != buffer){
+                line[0] = 0;
+                fprintf(stderr, "%s\n", buffer);
+                buffer[0]=0;
+            }
+        }
+    }
+
 };
 
 // BStream is for "buffering stream", as this stream allocate a work buffer.

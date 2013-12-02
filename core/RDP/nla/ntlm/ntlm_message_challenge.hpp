@@ -189,6 +189,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
     NtlmVersion version;           /* 8 Bytes */
     uint32_t PayloadOffset;
 
+    NtlmAvPairList AvPairList;
+
+
     NTLMChallengeMessage()
         : NTLMMessage(NtlmChallenge)
         , PayloadOffset(12+8+4+8+8+8+8)
@@ -226,6 +229,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
         // PAYLOAD
         this->TargetName.read_payload(stream, pBegin);
         this->TargetInfo.read_payload(stream, pBegin);
+
+        this->AvPairList.recv(this->TargetInfo.Buffer);
+
     }
 
 

@@ -106,6 +106,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     ChallengeMsg.version.print();
 
+    ChallengeMsg.AvPairList.print();
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 
