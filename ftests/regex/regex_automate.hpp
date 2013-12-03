@@ -252,12 +252,6 @@ namespace re {
                 }
             }
 
-            if (0 == nb_state_consume) {
-                this->st_range_beginning.st_num = -1u;
-                this->st_range_list_last = this->st_range_list;
-                return ;
-            }
-
             this->nodes = this->nodes - (sts.size() - nb_capture) + nb_state_consume + 1;
 
             const size_t nb_st = nb_state_consume + 1;
@@ -273,7 +267,7 @@ namespace re {
                                         copy_states, modify_states, nb_sequence, nb_st);
             }
 
-            std::memset(this->st_list, 0, matrix_size * sizeof * this->st_list);
+            std::memset(this->st_list, 0, (matrix_size + nb_st) * sizeof * this->st_list);
             std::memset(this->nums, 0, this->nb_states * sizeof * this->nums);
 
             this->st_range_list_last = this->st_range_list;
@@ -366,8 +360,12 @@ namespace re {
             }
 
             if (this->st_range_list == this->st_range_list_last && !root->out1 && !root->out2) {
-                ::operator delete(this->st_list);
-                this->st_list = 0;
+                if (minimal_mem) {
+                    ::operator delete(this->st_list);
+                    void * mem = ::operator new(this->nb_states * sizeof * this->nums);
+                    this->st_list = static_cast<StateList*>(mem);
+                    this->nums = static_cast<unsigned*>(mem);
+                }
                 this->st_range_beginning.st_num = -1u;
                 return ;
             }
@@ -456,7 +454,7 @@ namespace re {
             StateList * first = this->st_range_beginning.first;
             StateList * last = this->st_range_beginning.last;
             for (; first != last; ++first) {
-                if ((first->st->out1 && first->st->out1->is_finish()) || first->st->is_terminate()) {
+                if (first->st && ((first->st->out1 && first->st->out1->is_finish()) || first->st->is_terminate())) {
                     this->st_range_list = this->st_range_list_last;
                     this->st_range_beginning.st_num = -1u;
                     break;
@@ -525,6 +523,15 @@ namespace re {
                     }
                     l->st = reinterpret_cast<State*>(msts);
                 }
+            }
+
+            if (0 == nb_state_consume) {
+                if (!this->st_range_beginning.first->st && !this->nb_capture) {
+                    this->st_range_beginning.st_num = -1u;
+                }
+                this->st_range_beginning.last = this->st_range_beginning.first;
+                this->st_range_list_last = this->st_range_list;
+                return ;
             }
         }
 
@@ -654,7 +661,7 @@ namespace re {
             return false;
         }
 
-        void push_state(RangeList* l, const State * st, unsigned num_open = -1u, bool is_first = false)
+        void push_state(RangeList* l, const State * st, unsigned num_open = -1u, unsigned is_first = 0)
         {
             if (this->is_valid_and_mark(st)) {
                 if (st->is_split()) {
@@ -667,13 +674,13 @@ namespace re {
                 else if (st->is_cap_close()) {
                     this->push_state(l, st->out1, -1u, is_first);
                 }
-                else if (st->type == FIRST) {
+                else if (st->type == FIRST && is_first <= 1) {
                     if (is_first) {
-                        push_state(l, st->out1, num_open, true);
+                        push_state(l, st->out1, num_open, 1);
                     }
                     else {
                         StateList * tmpstl = l->last;
-                        push_state(l, st->out1, num_open, true);
+                        push_state(l, st->out1, num_open, 1);
                         typedef StateList * tab2_st_t[2];
                         tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*this->st_range_beginning.last);
                         tab[0] = tmpstl;
@@ -702,11 +709,11 @@ namespace re {
             return 0;
         }
 
-        void init_range_list(RangeList* l, const State * st)
+        void init_range_list(RangeList* l, const State * st, unsigned is_first = true)
         {
             /**///std::cout << (__FUNCTION__) << std::endl;
             l->st_num = st->num;
-            this->push_state(l, st);
+            this->push_state(l, st, -1u, is_first ? 0 : 2);
             /**///std::cout << "-- " << (l) << std::endl;
             for (StateList * first = l->first, * last = l->last; first < last; ++first) {
                 /**///std::cout << first->st->num << ("\t") << first->st << ("\t") << first->next << std::endl;
@@ -729,7 +736,7 @@ namespace re {
                     }
                     first->next = le;
                     ++this->step_id;
-                    this->init_range_list(le, first->st->out1);
+                    this->init_range_list(le, first->st->out1, false);
                 }
             }
         }
@@ -912,7 +919,7 @@ namespace re {
             std::cout << ("\tnum\tst\t\tnext\tnext_is_finish\tis_terminate") << std::endl;
             if (this->st_range_list == this->st_range_list_last || this->st_range_list->first != this->st_range_beginning.first) {
                 std::cout << ("beginning") << std::endl;
-                if (this->st_range_beginning.st_num != -1u) {
+                if (this->st_range_beginning.st_num != -1u && this->st_range_beginning.first->st) {
                     this->display_dfa(&this->st_range_beginning, &this->st_range_beginning+1);
                 }
                 std::cout << ("\nrange") << std::endl;
@@ -1204,12 +1211,29 @@ namespace re {
         bool match(const char * s, unsigned step_limit, Tracer tracer,
                    ExactMatch<exact_match>, ActiveCapture<active_capture>)
         {
-#ifdef DISPLAY_TRACE
-            this->display_dfa();
-#endif
             if (this->st_range_beginning.st_num == -1u) {
                 return true;
             }
+
+            if (this->st_range_beginning.first == this->st_range_beginning.last) {
+                bool ret = this->st_range_beginning.first->st ? !*s : true;
+                if (active_capture && ret) {
+                    tracer.open(0, s, 0);
+                    tracer.close(0, s, 0);
+                    this->traces[0] = s;
+                    this->traces[(this->reindex_trace[1]+1)/2] = s;
+                    this->set_idx_trace(0);
+                }
+                return ret;
+            }
+
+            if ( ! this->st_range_beginning.first->st) {
+                return false;
+            }
+
+#ifdef DISPLAY_TRACE
+            this->display_dfa();
+#endif
 
             this->step_count = 0;
             this->step_id = 1;

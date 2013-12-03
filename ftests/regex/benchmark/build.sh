@@ -9,7 +9,6 @@ g++ \
 -Wcast-align \
 -Wchar-subscripts \
 -Wformat-security \
--Wunreachable-code \
 -Wformat \
 -Wformat=2 \
 -Werror-implicit-function-declaration \
@@ -17,7 +16,8 @@ g++ \
 -Wreturn-type \
 -Wfloat-equal \
 -Wpointer-arith \
--Wconversion -Wsign-compare \
+-Wconversion \
+-Wsign-compare \
 -Wmissing-declarations \
 -Wmissing-noreturn \
 -Wmissing-format-attribute \

@@ -68,6 +68,8 @@ regex_test(p_regex, p_str, p_exact_result_search, p_result_search, p_exact_resul
 
 BOOST_AUTO_TEST_CASE(TestRegex)
 {
+    typedef re::StateMachine2::range_t range_t;
+
     Regex::range_matches matches;
     Regex::range_matches matches2;
 
@@ -111,6 +113,31 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     regex_test(regex, "a", 1, 1, 1, matches, 1, matches);
     regex_test(regex, "", 1, 1, 1, matches, 1, matches);
 
+    str_regex = "^$";
+    regex.reset(str_regex);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    regex_test(regex, "aaa", 0, 0, 0, matches, 0, matches);
+    regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
+    regex_test(regex, "", 1, 1, 1, matches, 1, matches);
+
+    str_regex = "(^$)";
+    regex.reset(str_regex);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    const char * str = "";
+    matches.push_back(range_t(str, str));
+    regex_test(regex, "", 1, 1, 1, matches, 1, matches);
+    matches.clear();
+
     str_regex = "^a";
     regex.reset(str_regex);
     if (regex.message_error()) {
@@ -128,6 +155,19 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     regex_test(regex, "ab", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "abc", 0, 1, 0, matches, 1, matches);
     regex_test(regex, "dabc", 0, 0, 0, matches, 0, matches);
+
+    str_regex = "a^b";
+    regex.reset(str_regex);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
+    regex_test(regex, "", 0, 0, 0, matches, 0, matches);
+    regex_test(regex, "ba", 0, 0, 0, matches, 0, matches);
+    regex_test(regex, "b", 0, 0, 0, matches, 0, matches);
 
     str_regex = "a$";
     regex.reset(str_regex);
@@ -282,8 +322,6 @@ BOOST_AUTO_TEST_CASE(TestRegex)
     regex_test(regex, "lka", 0, 1, 0, matches, 1, matches);
 
 
-    typedef re::StateMachine2::range_t range_t;
-
     str_regex = "(.*)";
     regex.reset(str_regex);
     if (regex.message_error()) {
@@ -292,7 +330,7 @@ BOOST_AUTO_TEST_CASE(TestRegex)
         << " at offset " << regex.position_error();
         BOOST_CHECK_MESSAGE(false, os.str());
     }
-    const char * str = "abcd";
+    str = "abcd";
     matches.push_back(range_t(str, str+1));
     matches2.push_back(range_t(str, str+4));
     regex_test(regex, str, 1, 1, 1, matches2, 1, matches);

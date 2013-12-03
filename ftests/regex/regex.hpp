@@ -49,6 +49,11 @@ namespace re {
         StateMachine2 sm;
 
     public:
+        typedef unsigned flag_t;
+        static const flag_t DEFAULT_FLAG =      0;
+        static const flag_t OPTIMIZE_MEMORY =   1 << 0;
+        static const flag_t MINIMAL_MEMORY =    1 << 1;
+
         unsigned step_limit;
 
         Regex(unsigned step_limit = 10000)
@@ -57,20 +62,22 @@ namespace re {
         , step_limit(step_limit)
         {}
 
-        Regex(const char * s, bool optimize_mem = false, unsigned step_limit = 10000)
+        Regex(const char * s, flag_t flags = DEFAULT_FLAG, unsigned step_limit = 10000)
         : parser(s)
         , sm(this->parser.st_parser.states(),
              this->parser.st_parser.root(),
              this->parser.st_parser.nb_capture(),
-             optimize_mem)
+             flags,
+             flags&MINIMAL_MEMORY)
         , step_limit(step_limit)
         {
-            if (optimize_mem) {
+            if (flags) {
                 this->parser.st_parser.clear();
+                this->parser.st_parser.shrink_to_fit();
             }
         }
 
-        void reset(const char * s, bool optimize_mem = false)
+        void reset(const char * s, flag_t flags = DEFAULT_FLAG)
         {
             this->sm.~StateMachine2();
             this->parser.~Parser();
@@ -78,9 +85,11 @@ namespace re {
             new (&this->sm) StateMachine2(this->parser.st_parser.states(),
                                           this->parser.st_parser.root(),
                                           this->parser.st_parser.nb_capture(),
-                                          optimize_mem);
-            if (optimize_mem) {
+                                          flags,
+                                          flags&MINIMAL_MEMORY);
+            if (flags) {
                 this->parser.st_parser.clear();
+                this->parser.st_parser.shrink_to_fit();
             }
         }
 
