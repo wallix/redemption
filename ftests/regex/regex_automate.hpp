@@ -482,6 +482,10 @@ namespace re {
                 ? this->st_range_beginning.first->st->num
                 : 0;
             }
+            else {
+                this->st_range_beginning.st_num = this->st_range_list != this->st_range_list
+                ? this->st_range_list->st_num : 0;
+            }
 
             StateList * first = this->st_range_beginning.first;
             StateList * last = this->st_range_beginning.last;

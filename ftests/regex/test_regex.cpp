@@ -125,6 +125,18 @@ void test_re(re::Regex::flag_t flags)
     regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
     regex_test(regex, "", 1, 1, 1, matches, 1, matches);
 
+    str_regex = "$^";
+    regex.reset(str_regex, flags);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    regex_test(regex, "aaa", 0, 0, 0, matches, 0, matches);
+    regex_test(regex, "a", 0, 0, 0, matches, 0, matches);
+    regex_test(regex, "", 1, 1, 1, matches, 1, matches);
+
     str_regex = "(^$)";
     regex.reset(str_regex, flags);
     if (regex.message_error()) {
