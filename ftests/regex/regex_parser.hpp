@@ -1077,8 +1077,8 @@ namespace re {
 #if __cplusplus >= 201103L
             this->m_accu.sts.shrink_to_fit();
 #else
-            this->m_accu.sts.~vector();
-            new (&this->m_accu.sts) state_list_t();
+//             this->m_accu.sts.~vector();
+//             new (&this->m_accu.sts) state_list_t();
 #endif
         }
 

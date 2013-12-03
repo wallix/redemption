@@ -184,16 +184,13 @@ namespace re {
         }
 
         void initialize_memory(size_t nb_st_list, size_t nb_st_range_list,
-                               bool cpy_sts, bool modify_sts, unsigned nb_seq,
-                               unsigned nb_st)
+                               bool cpy_sts, unsigned nb_char_seq)
         {
 //             const size_t nb_st = this->nb_states - nb_split - this->nb_capture;
             const size_t size_mini_sts = cpy_sts
-            ? nb_st * sizeof(MinimalState)
+            ? (this->nb_states - this->nb_capture) * sizeof(MinimalState)
             : 0;
-            const size_t size_mini_sts_seq = cpy_sts && !modify_sts
-            ? (this->nodes - 1 - nb_st + nb_seq) * sizeof(char_int)
-            : 0;
+            const size_t size_mini_sts_seq = cpy_sts ? nb_char_seq * sizeof(char_int) : 0;
             if (this->nb_capture) {
                 this->initialize_memory_with_capture(
                     nb_st_list, //st_list
@@ -217,7 +214,7 @@ namespace re {
 
     public:
         explicit StateMachine2(const state_list_t & sts, const State * root, unsigned nb_capture,
-                               bool copy_states = false, bool modify_states = true, bool minimal_mem = false)
+                               bool copy_states = false, bool minimal_mem = false)
         : root(root)
         , nb_states(sts.size())
         , nb_capture(nb_capture)
@@ -231,12 +228,14 @@ namespace re {
         , st_list(0)
         , st_range_list(0)
         , step_id(1)
+        , first_last(false)
         {
             if (sts.empty()) {
+                this->st_range_beginning.st_num = -1u;
                 return ;
             }
 
-            unsigned nb_sequence = 0;
+            unsigned nb_char_seq = 0;
             unsigned nb_state_consume = 0;
             {
                 state_list_t::const_iterator first = sts.begin();
@@ -244,7 +243,7 @@ namespace re {
                 for (; first != last; ++first) {
                     if ((*first)->is_sequence()) {
                         this->nodes += (*first)->data.sequence.len - 1;
-                        ++nb_sequence;
+                        nb_char_seq += (*first)->data.sequence.len + 1;
                     }
                     if ((*first)->type & (RANGE|SEQUENCE)) {
                         ++nb_state_consume;
@@ -254,7 +253,7 @@ namespace re {
 
             this->nodes = this->nodes - (sts.size() - nb_capture) + nb_state_consume + 1;
 
-            const size_t nb_st = nb_state_consume + 1;
+            size_t nb_st = nb_state_consume + 1;
             const size_t col_size = nb_state_consume + 1;
             const size_t line_size = nb_state_consume;
             const size_t matrix_size = col_size * line_size;
@@ -263,8 +262,7 @@ namespace re {
                 this->initialize_minimal_memory(matrix_size + nb_st, nb_st);
             }
             else {
-                this->initialize_memory(matrix_size + nb_st, nb_st,
-                                        copy_states, modify_states, nb_sequence, nb_st);
+                this->initialize_memory(matrix_size + nb_st, nb_st, copy_states, nb_char_seq);
             }
 
             std::memset(this->st_list, 0, (matrix_size + nb_st) * sizeof * this->st_list);
@@ -284,25 +282,30 @@ namespace re {
             this->init_range_list(this->st_range_list, root);
             this->init_value_state_list(this->st_list, this->st_list + matrix_size);
 
-            if (this->st_range_beginning.first != this->st_range_beginning.last)
+            const bool special_state = this->st_range_beginning.first != this->st_range_beginning.last;
+
+            if (special_state)
             {
                 StateList * first = this->st_range_beginning.last+1;
                 StateList * last = this->st_range_beginning.first+1;
                 StateList * firstdest = this->st_list + matrix_size;
-                for (; first != last; ++first, ++firstdest) {
+                for (; first != last; ++first) {
                     typedef StateList * tab2_st_t[2];
                     tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*first);
                     //overlap
                     StateList * cpfirst = tab[0];
                     StateList * cplast = tab[1];
-                    for (; cpfirst != cplast; ++cpfirst) {
+                    for (; cpfirst != cplast; ++cpfirst, ++firstdest) {
                         *firstdest = *cpfirst;
                         cpfirst->st = 0;
                     }
                 }
-
                 this->st_range_beginning.first = this->st_list + matrix_size;
                 this->st_range_beginning.last = firstdest;
+            }
+            else {
+                this->st_range_beginning.first = this->st_list + matrix_size;
+                this->st_range_beginning.last = this->st_range_beginning.first;
             }
 
             // purge empty StateList (StateList::st = 0) and set RangeList::st_num to -1u if empty range
@@ -362,16 +365,38 @@ namespace re {
             if (this->st_range_list == this->st_range_list_last && !root->out1 && !root->out2) {
                 if (minimal_mem) {
                     ::operator delete(this->st_list);
-                    void * mem = ::operator new(this->nb_states * sizeof * this->nums);
+                    if (copy_states) {
+                        void * const mem = ::operator new(sizeof(MinimalState) + this->nb_states * sizeof * this->nums);
+                        this->st_list = static_cast<StateList*>(mem);
+                        this->nums = reinterpret_cast<unsigned*>(static_cast<MinimalState*>(mem) + 1);
+                        this->root = static_cast<State*>(mem);
+                        this->mini_sts = static_cast<MinimalState*>(mem);
+                        this->mini_sts->type = 0;
+                        this->mini_sts->num = 0;
+                        this->mini_sts_last = this->mini_sts + 1;
+                    }
+                    else {
+                        void * const mem = ::operator new(this->nb_states * sizeof * this->nums);
+                        this->st_list = static_cast<StateList*>(mem);
+                        this->nums = static_cast<unsigned*>(mem);
+                    }
+                }
+                else if (copy_states) {
+                    ::operator delete(this->st_list);
+                    void * const mem = ::operator new(sizeof(MinimalState));
                     this->st_list = static_cast<StateList*>(mem);
-                    this->nums = static_cast<unsigned*>(mem);
+                    this->root = static_cast<State*>(mem);
+                    this->mini_sts = static_cast<MinimalState*>(mem);
+                    this->mini_sts->type = 0;
+                    this->mini_sts->num = 0;
+                    this->mini_sts_last = this->mini_sts + 1;
                 }
                 this->st_range_beginning.st_num = -1u;
                 return ;
             }
 
             if (minimal_mem) {
-                size_t nb_st = 0;
+                nb_st = 0;
                 {
                     RangeList * first = this->st_range_list;
                     for (; first != this->st_range_list_last; ++first) {
@@ -384,8 +409,9 @@ namespace re {
                 RangeList * tmp_range_list = this->st_range_list;
                 StateList * tmp_st_first_list = this->st_range_beginning.first;
 
-                this->initialize_memory(nb_st + nb_beginning_st, nb_range,
-                                        copy_states, modify_states, nb_sequence, nb_st);
+                this->initialize_memory(nb_st + nb_beginning_st,
+                                        nb_range, copy_states, nb_char_seq);
+                std::memset(this->st_list, 0, (nb_st + nb_beginning_st) * sizeof * this->st_list);
                 this->st_range_list_last = this->st_range_list + (this->st_range_list_last - tmp_range_list);
 
                 RangeList * rlfirst = this->st_range_list;
@@ -445,10 +471,16 @@ namespace re {
                 }
             }
 
-            this->st_range_beginning.st_num = this->st_range_list != this->st_range_list_last ? this->st_range_list->st_num : (root->out1 || root->out2 ? 0u : -1u);
-
             if (this->st_range_beginning.first == this->st_range_beginning.last && this->st_range_list != this->st_range_list_last) {
-              this->st_range_beginning = *this->st_range_list;
+                this->st_range_beginning = *this->st_range_list;
+            }
+
+            if (special_state) {
+                this->st_range_beginning.st_num = this->st_range_list != this->st_range_list
+                ? this->st_range_list->st_num
+                : this->st_range_beginning.first != this->st_range_beginning.first
+                ? this->st_range_beginning.first->st->num
+                : 0;
             }
 
             StateList * first = this->st_range_beginning.first;
@@ -461,34 +493,33 @@ namespace re {
                 }
             }
 
-            if (copy_states && !(-1u == this->st_range_beginning.st_num && this->st_range_list == this->st_range_list_last)) {
+            if (copy_states && -1u == this->st_range_beginning.st_num) {
+                this->root = reinterpret_cast<State*>(this->mini_sts);
+                this->mini_sts->type = 0;
+                this->mini_sts->num = 0;
+                this->mini_sts_last = this->mini_sts + 1;
+            }
+            else if (copy_states) {
                 {
-                    const size_t size_mini_sts = line_size * sizeof(MinimalState);
+                    const size_t size_mini_sts = (this->nb_states - this->nb_capture) * sizeof(MinimalState);
                     char_int * str = reinterpret_cast<char_int*>(
-                        reinterpret_cast<char*>(this->mini_sts + size_mini_sts)
+                        reinterpret_cast<char*>(this->mini_sts) + size_mini_sts
                         + size_mini_sts % sizeof(intmax_t)
                     );
                     state_list_t::const_iterator first = sts.begin();
                     state_list_t::const_iterator last = sts.end() - this->nb_capture;
                     MinimalState * first2 = this->mini_sts;
                     for (; first != last; ++first) {
-                        State & st = **first;
-                        if (!(st.type & (RANGE | SEQUENCE))) {
-                            continue ;
+                        if (*first == this->root) {
+                            this->root = reinterpret_cast<State*>(first2);
                         }
+                        State & st = **first;
                         first2->type = st.type;
                         first2->num = st.num;
                         if (st.is_sequence()) {
-                            if (modify_states) {
-                                first2->data.sequence.s = st.data.sequence.s;
-                                st.data.sequence.s = 0;
-                            }
-                            else {
-                                std::copy(st.data.sequence.s, st.data.sequence.s + st.data.sequence.len, str);
-                                first2->data.sequence.s = str;
-                                str += st.data.sequence.len + 1;
-                                *str = 0;
-                            }
+                            std::copy(st.data.sequence.s, st.data.sequence.s + st.data.sequence.len + 1, str);
+                            first2->data.sequence.s = str;
+                            str += st.data.sequence.len + 1;
                             first2->data.sequence.len = st.data.sequence.len;
                         }
                         else {
@@ -524,15 +555,16 @@ namespace re {
                     l->st = reinterpret_cast<State*>(msts);
                 }
             }
+            this->first_last = true;
 
-            if (0 == nb_state_consume) {
-                if (!this->st_range_beginning.first->st && !this->nb_capture) {
+            if (0 == nb_state_consume || -1u == this->st_range_beginning.st_num) {
+                if (this->st_range_beginning.first != this->st_range_beginning.last && !this->st_range_beginning.first->st && !this->nb_capture) {
                     this->st_range_beginning.st_num = -1u;
                 }
                 this->st_range_beginning.last = this->st_range_beginning.first;
                 this->st_range_list_last = this->st_range_list;
-                return ;
             }
+
         }
 
         ~StateMachine2()
@@ -1216,7 +1248,7 @@ namespace re {
             }
 
             if (this->st_range_beginning.first == this->st_range_beginning.last) {
-                bool ret = this->st_range_beginning.first->st ? !*s : true;
+                bool ret = this->first_last ? !*s : true;
                 if (active_capture && ret) {
                     tracer.open(0, s, 0);
                     tracer.close(0, s, 0);
@@ -1225,10 +1257,6 @@ namespace re {
                     this->set_idx_trace(0);
                 }
                 return ret;
-            }
-
-            if ( ! this->st_range_beginning.first->st) {
-                return false;
             }
 
 #ifdef DISPLAY_TRACE
@@ -1409,6 +1437,7 @@ namespace re {
 
         unsigned step_id;
         unsigned step_count;
+        bool first_last;
     };
 }
 
