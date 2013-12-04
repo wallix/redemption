@@ -547,4 +547,80 @@ struct NtlmField {
 };
 
 
+// 2.2.2.9   NTLMSSP_MESSAGE_SIGNATURE
+// ===================================================
+
+// The NTLMSSP_MESSAGE_SIGNATURE structure (section 3.4.4), specifies the signature
+//  block used for application message integrity and confidentiality. This structure
+//  is then passed back to the application, which embeds it within the application
+//  protocol messages, along with the NTLM-encrypted or integrity-protected application
+//  message data.
+
+// This structure MUST take one of the two following forms, depending on whether the
+//  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY flag is negotiated:
+//  - NTLMSSP_MESSAGE_SIGNATURE
+//  - NTLMSSP_MESSAGE_SIGNATURE for Extended Session Security
+
+// 2.2.2.9.1   NTLMSSP_MESSAGE_SIGNATURE
+// ====================================================
+// This version of the NTLMSSP_MESSAGE_SIGNATURE structure MUST be used when the
+//  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY flag is not negotiated.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                            Version                            |
+// +---------------+---------------+---------------+---------------+
+// |                           RandomPad                           |
+// +---------------+---------------+---------------+---------------+
+// |                           CheckSum                            |
+// +---------------+---------------+---------------+---------------+
+// |                            SeqNum                             |
+// +---------------+---------------+---------------+---------------+
+// Version (4 bytes):  A 32-bit unsigned integer that contains the signature version.
+//  This field MUST be 0x00000001.
+// RandomPad (4 bytes):  A 4-byte array that contains the random pad for the message.
+// Checksum (4 bytes):  A 4-byte array that contains the checksum for the message.
+// SeqNum (4 bytes):  A 32-bit unsigned integer that contains the NTLM sequence number for
+//  this application message.
+
+struct NTLMSSPMessageSignature {
+    uint32_t Version;
+    uint8_t  RandomPad[4];
+    uint8_t  CheckSum[4];
+    uint32_t SeqNum;
+};
+
+
+// 2.2.2.9.2   NTLMSSP_MESSAGE_SIGNATURE for Extended Session Security
+// ====================================================================
+// This version of the NTLMSSP_MESSAGE_SIGNATURE structure MUST be used when the
+//  NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY flag is negotiated.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |                            Version                            |
+// +---------------+---------------+---------------+---------------+
+// |                           CheckSum                            |
+// +---------------+---------------+---------------+---------------+
+// |                              ...                              |
+// +---------------+---------------+---------------+---------------+
+// |                            SeqNum                             |
+// +---------------+---------------+---------------+---------------+
+
+// Version (4 bytes):  A 32-bit unsigned integer that contains the signature version.
+//  This field MUST be 0x00000001.
+// Checksum (8 bytes):  An 8-byte array that contains the checksum for the message.
+// SeqNum (4 bytes):  A 32-bit unsigned integer that contains the NTLM sequence number
+// for this application message.
+struct NTLMSSPMessageSignatureESS {
+    uint32_t Version;
+    uint8_t  CheckSum[8];
+    uint32_t SeqNum;
+};
+
+
 #endif

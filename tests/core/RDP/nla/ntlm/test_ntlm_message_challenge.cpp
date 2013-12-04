@@ -23,12 +23,13 @@
 #define BOOST_TEST_MODULE TestNtlmMessageChallenge
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "RDP/nla/credssp.hpp"
 #include "RDP/nla/ntlm/ntlm_message_challenge.hpp"
 
+#include "ssl_calls.hpp"
 #include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestChallenge)
@@ -109,5 +110,19 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     ChallengeMsg.AvPairList.print();
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
+
+
+    {
+        LOG(LOG_INFO, "=================================\n");
+        SslMd5 md5;
+        BStream buff;
+        buff.out_uint64_be(ChallengeMsg.serverChallenge);
+        buff.mark_end();
+        md5.update(buff.get_data(), buff.size());
+        uint8_t sigmd5[24];
+        md5.final(sigmd5, sizeof(sigmd5));
+        hexdump_c(sigmd5, sizeof(sigmd5));
+    }
+
 
 }
