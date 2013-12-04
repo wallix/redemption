@@ -565,8 +565,8 @@ unit-test test_png : tests/utils/test_png.cpp z png openssl crypto z dl libboost
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test ;
-unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test dl openssl crypto z ;
+unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test dl openssl crypto z gcov : <variant>coverage ;
 
 unit-test test_string : tests/utils/test_string.cpp libboost_unit_test ;
 unit-test test_string : tests/utils/test_string.cpp libboost_unit_test gcov : <variant>coverage ;
