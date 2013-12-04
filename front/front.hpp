@@ -1863,9 +1863,8 @@ public:
                         hexdump_d(stream.get_data(), stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream,
-                        SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
-                    stream.copy_to_head(sec_header);
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
+                    stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
                     this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
@@ -1960,7 +1959,7 @@ public:
 
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT,
                     this->encrypt, 0);
-                stream.copy_to_head(sec_header);
+                stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
                 this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
 
@@ -2063,9 +2062,8 @@ public:
                         hexdump_d(stream.get_data(), stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream,
-                        SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
-                    stream.copy_to_head(sec_header);
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
+                    stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
                     this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
@@ -2552,9 +2550,8 @@ public:
         OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
-                          this->client_info.encryptionLevel);
-        stream.copy_to_head(sec_header);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
         MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
                                          1, 3, stream.size(),

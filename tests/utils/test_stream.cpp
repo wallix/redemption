@@ -350,7 +350,7 @@ BOOST_AUTO_TEST_CASE(TestStream_BStream_Compatibility)
 
     stream.out_copy_bytes("0123456789", 10);
 
-    BOOST_CHECK_EQUAL(502,   stream.room());
+    BOOST_CHECK_EQUAL(502,   stream.tailroom());
     BOOST_CHECK_EQUAL(true,  stream.has_room(502));
     BOOST_CHECK_EQUAL(false, stream.has_room(503));
 }
@@ -360,24 +360,53 @@ BOOST_AUTO_TEST_CASE(TestStream_HStream)
     HStream stream(512, 1024);
 
     BOOST_CHECK_EQUAL(512, stream.get_capacity());
-    BOOST_CHECK_EQUAL(512, stream.room());
+    BOOST_CHECK_EQUAL(512, stream.tailroom());
+    BOOST_CHECK_EQUAL(0, stream.size());
 
-    stream.out_copy_bytes("0123456789", 10);
-    stream.copy_to_head("abcdefg", 7);
-    stream.copy_to_head("ABCDEFG", 7);
-    stream.copy_to_head("#*?!+-_", 7);
+    const uint8_t data1[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
+    stream.out_copy_bytes(data1, 10);
+    stream.mark_end();
 
-    BOOST_CHECK_EQUAL(481,   stream.room());
-    BOOST_CHECK_EQUAL(true,  stream.has_room(481));
-    BOOST_CHECK_EQUAL(false, stream.has_room(482));
+    BOOST_CHECK_EQUAL(512, stream.get_capacity());
+    BOOST_CHECK_EQUAL(502, stream.tailroom());
+    BOOST_CHECK_EQUAL(10, stream.size());
+    
+    
+    const uint8_t header3[] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g'};
+    stream.copy_to_head(header3, 7);
+
+    BOOST_CHECK_EQUAL(519, stream.get_capacity());
+    BOOST_CHECK_EQUAL(502, stream.tailroom());
+    BOOST_CHECK_EQUAL(17, stream.size());
+
+    const uint8_t header2[] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G'};
+    stream.copy_to_head(header2, 7);
+
+    BOOST_CHECK_EQUAL(526, stream.get_capacity());
+    BOOST_CHECK_EQUAL(502, stream.tailroom());
+    BOOST_CHECK_EQUAL(24, stream.size());
+
+    const uint8_t header1[] = { '#', '*', '!', '+', '-', '_'};
+    stream.copy_to_head(header1, 6);
+
+    BOOST_CHECK_EQUAL(532, stream.get_capacity());
+    BOOST_CHECK_EQUAL(502, stream.tailroom());
+    BOOST_CHECK_EQUAL(30, stream.size());
+
+    BOOST_CHECK_EQUAL(true,  stream.has_room(480));
+    BOOST_CHECK_EQUAL(true, stream.has_room(502));
 
     stream.mark_end();
 
-    const char * data = "#*?!+-_ABCDEFGabcdefg0123456789";
 
-    CheckTransport ct(data, strlen(data));
+    const uint8_t expected[] = { '#', '*', '!', '+', '-', '_', 
+                               'A', 'B', 'C', 'D', 'E', 'F', 'G', 
+                               'a', 'b', 'c', 'd', 'e', 'f', 'g',
+                               '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
-    BOOST_CHECK_EQUAL(31, stream.size());
+    CheckTransport ct(reinterpret_cast<const char *>(expected), sizeof(expected));
+
+    BOOST_CHECK_EQUAL(30, stream.size());
 
     ct.send(stream);
 
@@ -386,7 +415,7 @@ BOOST_AUTO_TEST_CASE(TestStream_HStream)
 
     stream.init(2048);
 
-    BOOST_CHECK_EQUAL(2048,  stream.room());
+    BOOST_CHECK_EQUAL(2048,  stream.tailroom());
     BOOST_CHECK_EQUAL(true,  stream.has_room(2048));
     BOOST_CHECK_EQUAL(false, stream.has_room(2049));
 }

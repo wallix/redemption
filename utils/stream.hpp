@@ -57,8 +57,12 @@ public:
         this->end = this->p = this->data;
     }
 
-    bool has_room(unsigned n) const {
-        return this->get_offset() + n <= this->get_capacity();
+    bool has_room(size_t n) const {
+        return  n <= this->tailroom();
+    }
+
+    size_t tailroom() const {
+        return static_cast<size_t>(this->get_capacity() - this->get_offset());
     }
 
     virtual size_t get_capacity() const {
@@ -75,10 +79,6 @@ public:
 
     uint32_t get_offset() const {
         return this->p - this->get_data();
-    }
-
-    uint32_t room() const {
-        return this->get_capacity() - this->get_offset();
     }
 
     bool in_check_rem(const unsigned n) const {
@@ -464,14 +464,14 @@ public:
 
     void out_unistr(const char* text)
     {
-        const size_t len = UTF8toUTF16(reinterpret_cast<const uint8_t*>(text), this->p, this->room());
+        const size_t len = UTF8toUTF16(reinterpret_cast<const uint8_t*>(text), this->p, this->tailroom());
         this->p += len;
         this->out_clear_bytes(2);
     }
 
     void out_unistr_crlf(const char* text)
     {
-        const size_t len = UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t*>(text), this->p, this->room());
+        const size_t len = UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t*>(text), this->p, this->tailroom());
         this->p += len;
         this->out_clear_bytes(2);
     }
@@ -757,11 +757,11 @@ public:
 
     virtual ~HStream() {}
 
+
     void copy_to_head(const uint8_t * v, size_t n) {
-        if (this->data_start - this->data >= (ssize_t)n) {
-            this->data_start -= n;
-
-            ::memcpy(this->data_start, v, n);
+        if (this->data_start - this->data >= static_cast<ssize_t>(n)) {
+            ::memcpy(this->data_start - n , v, n);
+            this->data_start = this->data_start - n;
         }
         else {
             LOG( LOG_ERR
@@ -772,39 +772,44 @@ public:
         }
     }
 
-    void copy_to_head(const char * v, size_t n) {
-        if (this->data_start - this->data >= (ssize_t)n) {
-            this->data_start -= n;
+//    void copy_to_head(const char * v, size_t n) {
+//        if (this->data_start - this->data >= (ssize_t)n) {
+//            this->data_start -= n;
 
-            ::memcpy(this->data_start, v, n);
-        }
-        else {
-            LOG( LOG_ERR
-               , "reserved leading space too small : size available = %d, size asked = %d\n"
-               , this->data_start - this->data
-               , static_cast<int>(n));
-            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
-        }
-    }
+//            ::memcpy(this->data_start, v, n);
+//        }
+//        else {
+//            LOG( LOG_ERR
+//               , "reserved leading space too small : size available = %d, size asked = %d\n"
+//               , this->data_start - this->data
+//               , static_cast<int>(n));
+//            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+//        }
+//    }
 
-    void copy_to_head(const Stream & stream) {
-        size_t n = stream.size();
-        if (this->data_start - this->data >= (ssize_t)n) {
-            this->data_start -= n;
+//    void copy_to_head(const Stream & stream) {
+//        size_t n = stream.size();
+//        if (this->data_start - this->data >= (ssize_t)n) {
+//            this->data_start -= n;
 
-            ::memcpy(this->data_start, stream.get_data(), n);
-        }
-        else {
-            LOG( LOG_ERR
-               , "reserved leading space too small : size available = %d, size asked = %d\n"
-               , this->data_start - this->data
-               , static_cast<int>(n));
-            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
-        }
+//            ::memcpy(this->data_start, stream.get_data(), n);
+//        }
+//        else {
+//            LOG( LOG_ERR
+//               , "reserved leading space too small : size available = %d, size asked = %d\n"
+//               , this->data_start - this->data
+//               , static_cast<int>(n));
+//            throw Error(ERR_STREAM_RESERVED_LEADING_SPACE_TOO_SMALL);
+//        }
+//    }
+
+
+    virtual size_t headroom() const {
+        return this->data_start - this->data;
     }
 
     virtual size_t get_capacity() const {
-        return this->capacity - this->reserved_leading_space;
+        return this->capacity - this->headroom();
     }
 
     virtual uint8_t * get_data() const {
@@ -828,8 +833,7 @@ public:
     }
 
     virtual void rewind() {
-        this->p          = this->data + this->reserved_leading_space;
-        this->data_start = this->p;
+        this->data_start = this->p = this->data + this->reserved_leading_space;
     }
 };
 
@@ -857,7 +861,7 @@ class SubStream : public Stream {
 
     void resize(const Stream & stream, size_t new_size){
         this->data = this->p = stream.p;
-        if (new_size > (stream.room())){
+        if (new_size > (stream.tailroom())){
             LOG(LOG_ERR, "Substream resize overflow capacity=%u offset=%u new_size=%u",
                 static_cast<unsigned>(stream.get_capacity()),
                 static_cast<unsigned>(stream.get_offset()),

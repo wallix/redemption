@@ -2013,7 +2013,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         this->to_vnc_large_clipboard_data.init(2 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
 
                         size_t dataLenU16 = std::min<size_t>( stream.in_remain()
-                                                            , this->to_vnc_large_clipboard_data.room());
+                                                            , this->to_vnc_large_clipboard_data.tailroom());
 
                         REDASSERT(dataLenU16 != 0);
 
@@ -2040,11 +2040,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                     if (this->verbose) {
                         LOG( LOG_INFO, "mod_vnc::send_to_vnc trunk size=%u, capacity=%u"
-                           , stream.in_remain(), this->to_vnc_large_clipboard_data.room());
+                           , stream.in_remain(), static_cast<unsigned>(this->to_vnc_large_clipboard_data.tailroom()));
                     }
 
-                    size_t dataLenU16 = std::min<size_t>( stream.in_remain()
-                                                        , this->to_vnc_large_clipboard_data.room());
+                    size_t dataLenU16 = std::min<size_t>(stream.in_remain(), this->to_vnc_large_clipboard_data.tailroom());
 
                     if (dataLenU16 != 0) {
                         this->to_vnc_large_clipboard_data.out_copy_bytes(stream.p, dataLenU16);

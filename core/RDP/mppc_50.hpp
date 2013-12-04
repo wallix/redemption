@@ -757,7 +757,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
     }
 
     virtual void get_compressed_data(Stream & stream) const {
-        if (stream.room() < static_cast<size_t>(this->bytes_in_opb)) {
+        if (stream.tailroom() < static_cast<size_t>(this->bytes_in_opb)) {
             LOG(LOG_ERR, "rdp_mppc_50_enc::get_compressed_data: Buffer too small");
             throw Error(ERR_BUFFER_TOO_SMALL);
         }

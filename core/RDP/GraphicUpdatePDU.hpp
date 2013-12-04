@@ -249,7 +249,7 @@ protected:
                     BStream sctrl_header(256);
                     ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
 
-                    this->buffer_stream_orders.copy_to_head(sctrl_header);
+                    this->buffer_stream_orders.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
                     BStream x224_header(256);
                     OutPerBStream mcs_header(256);
@@ -312,7 +312,7 @@ protected:
                                      , this->userid + GCC::MCS_USERCHANNEL_BASE
                                      , compressed_buffer_stream_orders.size());
 
-                    compressed_buffer_stream_orders.copy_to_head(sctrl_header);
+                    compressed_buffer_stream_orders.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
                     BStream x224_header(256);
                     OutPerBStream mcs_header(256);
@@ -446,7 +446,7 @@ protected:
                                  , this->userid + GCC::MCS_USERCHANNEL_BASE
                                  , this->stream_bitmaps.size());
 
-                this->buffer_stream_bitmaps.copy_to_head(sctrl_header);
+                this->buffer_stream_bitmaps.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
                 BStream x224_header(256);
                 OutPerBStream mcs_header(256);
