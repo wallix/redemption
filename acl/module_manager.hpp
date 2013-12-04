@@ -39,6 +39,7 @@
 #include "internal/replay_mod.hpp"
 #include "internal/rwl_mod.hpp"
 #include "front.hpp"
+#include "translation.hpp"
 
 #include "internal/flat_login_mod.hpp"
 #include "internal/flat_selector_mod.hpp"
@@ -331,7 +332,7 @@ public:
             //                record_video = this->ini.globals.movie.get();
             //                keep_alive = true;
             if (this->ini.context.auth_error_message.is_empty()) {
-                this->ini.context.auth_error_message.copy_c_str("End of connection");
+                this->ini.context.auth_error_message.copy_c_str(TR("end_connection", this->ini));
             }
             LOG(LOG_INFO, "=================> MODULE_FROM_PROTOCOL");
             return this->get_mod_from_protocol();

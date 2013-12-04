@@ -93,7 +93,7 @@ Binaries are located in /usr/local/bin.
 
 To test it, edit the tools/sesman/sesmanworker/engine.py file to add a remote
 equipment and then
- $ python tools/sesman/WABRDAuthentifier
+ $ python tools/sesman/WABRDPAuthentifier
  # /usr/local/bin/rdpproxy -nf
 
 Now, at that point you'll just have two servers waiting for connections

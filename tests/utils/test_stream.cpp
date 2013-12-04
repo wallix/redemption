@@ -93,6 +93,11 @@ BOOST_AUTO_TEST_CASE(TestStream_uint8)
     BOOST_CHECK(s->in_check_rem(2));
     BOOST_CHECK(!s->in_check_rem(3));
 
+    // we peek a byte (as many time as we want it will always return the same byte)
+    BOOST_CHECK_EQUAL(4, s->peek_uint8());
+    BOOST_CHECK_EQUAL(4, s->peek_uint8());
+    BOOST_CHECK_EQUAL(4, s->peek_uint8());
+
     BOOST_CHECK_EQUAL(4, s->in_sint8());
     BOOST_CHECK_EQUAL(5, s->in_sint8());
     // now the buffer is empty

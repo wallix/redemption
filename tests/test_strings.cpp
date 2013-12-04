@@ -33,6 +33,7 @@
 #include "log.hpp"
 
 #include <string>
+#include "cast.hpp"
 #include "utf.hpp"
 
 BOOST_AUTO_TEST_CASE(TestString)
@@ -42,7 +43,7 @@ BOOST_AUTO_TEST_CASE(TestString)
     BOOST_CHECK_EQUAL(str1.length(), 4);
 
     // but we can get the true length
-    int l = UTF8Len(str1.c_str());
+    int l = UTF8Len(byte_ptr_cast(str1.c_str()));
     BOOST_CHECK_EQUAL(l, 4);
 
     // olé is also a 4 char length string as it is internally UTF-8 encoded
@@ -51,7 +52,7 @@ BOOST_AUTO_TEST_CASE(TestString)
     BOOST_CHECK_EQUAL(str_unicode.length(), 4);
 
     // but we can get the true length
-    int len = UTF8Len(str_unicode.c_str());
+    int len = UTF8Len(byte_ptr_cast(str_unicode.c_str()));
     BOOST_CHECK_EQUAL(len, 3);
 
 }

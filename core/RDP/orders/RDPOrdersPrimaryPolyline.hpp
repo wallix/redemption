@@ -185,10 +185,10 @@ public:
     uint32_t PenColor;
     uint8_t  NumDeltaEntries;
 
-    struct DeltaPoint {
+    struct DeltaEncodedPoint {
         int16_t xDelta;
         int16_t yDelta;
-    } deltaPoints [128];
+    } deltaEncodedPoints[128];
 
     static const uint8_t id(void) {
         return RDP::POLYLINE;
@@ -201,39 +201,38 @@ public:
     , BrushCacheEntry(0x0000)
     , PenColor(0x00000000)
     , NumDeltaEntries(0) {
-        ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
+        ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
     }
 
     RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, uint32_t PenColor,
-        uint8_t NumDeltaEntries, Stream & deltaPoints) {
+        uint8_t NumDeltaEntries, Stream & deltaEncodedPoints) {
         this->xStart          = xStart;
         this->yStart          = yStart;
         this->bRop2           = bRop2;
         this->BrushCacheEntry = BrushCacheEntry;
         this->PenColor        = PenColor;
-        this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaPoints) / sizeof(this->deltaPoints[0]));
-        ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
+        this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaEncodedPoints) / sizeof(this->deltaEncodedPoints[0]));
+        ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
         for (int i = 0; i < this->NumDeltaEntries; i++) {
-            this->deltaPoints[i].xDelta = deltaPoints.in_sint16_le();
-            this->deltaPoints[i].yDelta = deltaPoints.in_sint16_le();
+            this->deltaEncodedPoints[i].xDelta = deltaEncodedPoints.in_sint16_le();
+            this->deltaEncodedPoints[i].yDelta = deltaEncodedPoints.in_sint16_le();
         }
     }
 
     bool operator==(const RDPPolyline & other) const {
-        return  (this->xStart == other.xStart)
-             && (this->yStart == other.yStart)
-             && (this->bRop2 == other.bRop2)
+        return  (this->xStart          == other.xStart)
+             && (this->yStart          == other.yStart)
+             && (this->bRop2           == other.bRop2)
              && (this->BrushCacheEntry == other.BrushCacheEntry)
-             && (this->PenColor == other.PenColor)
+             && (this->PenColor        == other.PenColor)
              && (this->NumDeltaEntries == other.NumDeltaEntries)
-             && !memcmp(this->deltaPoints, other.deltaPoints, sizeof(DeltaPoint) * this->NumDeltaEntries)
+             && !memcmp(this->deltaEncodedPoints, other.deltaEncodedPoints, sizeof(DeltaEncodedPoint) * this->NumDeltaEntries)
              ;
     }
 
     void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const {
         RDPPrimaryOrderHeader header(RDP::STANDARD, 0);
 
-        TODO("check that");
         int16_t pointx = this->xStart;
         int16_t pointy = this->yStart;
         if (!common.clip.contains_pt(pointx, pointy)) {
@@ -241,8 +240,8 @@ public:
         }
         else {
             for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
-                pointx = this->deltaPoints[i].xDelta;
-                pointy = this->deltaPoints[i].yDelta;
+                pointx += this->deltaEncodedPoints[i].xDelta;
+                pointy += this->deltaEncodedPoints[i].yDelta;
 
                 if (!common.clip.contains_pt(pointx, pointy)) {
                     header.control |= RDP::BOUNDS;
@@ -262,8 +261,8 @@ public:
               | (this->NumDeltaEntries != oldcmd.NumDeltaEntries) * 0x0020
               | (
                  (this->NumDeltaEntries != oldcmd.NumDeltaEntries) ||
-                 memcmp(this->deltaPoints, oldcmd.deltaPoints,
-                        this->NumDeltaEntries * sizeof(DeltaPoint))
+                 memcmp(this->deltaEncodedPoints, oldcmd.deltaEncodedPoints,
+                        this->NumDeltaEntries * sizeof(DeltaEncodedPoint))
                                                                 ) * 0x0040
               ;
 
@@ -300,32 +299,33 @@ public:
                     *(++zeroBit) = 0;
                 }
 
-                if (!this->deltaPoints[i].xDelta) {
+                if (!this->deltaEncodedPoints[i].xDelta) {
                     *zeroBit |= (1 << (7 - m4 * 2));
                 }
                 else {
-                    stream.out_DEP(this->deltaPoints[i].xDelta);
+                    stream.out_DEP(this->deltaEncodedPoints[i].xDelta);
                 }
 
-                if (!this->deltaPoints[i].yDelta) {
+                if (!this->deltaEncodedPoints[i].yDelta) {
                     *zeroBit |= (1 << (6 - m4 * 2));
                 }
                 else {
-                    stream.out_DEP(this->deltaPoints[i].yDelta);
+                    stream.out_DEP(this->deltaEncodedPoints[i].yDelta);
                 }
             }
 
             stream.set_out_uint8(stream.get_offset() - offset_cbData - 1, offset_cbData);
         }
-    }
+    }   // void emit(Stream & stream, RDPOrderCommon & common, const RDPOrderCommon & oldcommon, const RDPPolyline & oldcmd) const
 
     void receive(Stream & stream, const RDPPrimaryOrderHeader & header) {
         // LOG(LOG_INFO, "RDPPolyline::receive: header fields=0x%02X", header.fields);
 
         header.receive_coord(stream, 0x0001, this->xStart);
         header.receive_coord(stream, 0x0002, this->yStart);
+
         if (header.fields & 0x0004) {
-            this->bRop2  = stream.in_uint8();
+            this->bRop2 = stream.in_uint8();
         }
         if (header.fields & 0x0008) {
             this->BrushCacheEntry = stream.in_uint16_le();
@@ -368,31 +368,31 @@ public:
                     // LOG(LOG_INFO, "0x%02X", zeroBit);
                 }
 
-                this->deltaPoints[i].xDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
-                this->deltaPoints[i].yDelta = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedPoints[i].xDelta = (!(zeroBit & 0x80) ? rgbData.in_DEP() : 0);
+                this->deltaEncodedPoints[i].yDelta = (!(zeroBit & 0x40) ? rgbData.in_DEP() : 0);
 
 /*
-                LOG(LOG_INFO, "RDPPolyline::receive: delta point=%d, %d",
-                    this->deltaPoints[i].xDelta, this->deltaPoints[i].yDelta);
+                LOG(LOG_INFO, "RDPPolyline::receive: delta point=(%d, %d)",
+                    this->deltaEncodedPoints[i].xDelta, this->deltaEncodedPoints[i].yDelta);
 */
 
                 zeroBit <<= 2;
             }
         }
-    }   // receive
+    }   // void receive(Stream & stream, const RDPPrimaryOrderHeader & header)
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const {
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf(buffer + lg, sz - lg,
-            "polyline(xStart=%d yStart=%d bRop2=0x%02X BrushCacheEntry=%d PenColor=%.6x "
-                "NumDeltaEntries=%d DeltaEntries=(",
+            "Polyline(xStart=%d yStart=%d bRop2=0x%02X BrushCacheEntry=%d PenColor=%.6x "
+                "NumDeltaEntries=%d CodedDeltaList=(",
             this->xStart, this->yStart, this->bRop2, this->BrushCacheEntry, this->PenColor, this->NumDeltaEntries);
         for (uint8_t i = 0; i < this->NumDeltaEntries; i++) {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");
             }
-            lg += snprintf(buffer + lg, sz - lg, "(%d, %d)", this->deltaPoints[i].xDelta, this->deltaPoints[i].yDelta);
+            lg += snprintf(buffer + lg, sz - lg, "(%d, %d)", this->deltaEncodedPoints[i].xDelta, this->deltaEncodedPoints[i].yDelta);
         }
         lg += snprintf(buffer + lg, sz - lg, "))");
         if (lg >= sz) {

@@ -29,6 +29,7 @@
 #include <algorithm>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "test_orders.hpp"
 
 #include "stream.hpp"
@@ -57,9 +58,9 @@ inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
     uint8_t sig[20];
     SslSha1 sha1;
     for (size_t y = 0; y < static_cast<size_t>(height); y++){
-        sha1.update(StaticStream(data + y * len, len));
+        sha1.update(data + y * len, len);
     }
-    sha1.final(sig);
+    sha1.final(sig, 20);
 
     if (memcmp(shasig, sig, 20)){
         sprintf(message, "Expected signature: \""
@@ -99,16 +100,16 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     FakeFront front(info, verbose);
 
     const char * name       = "RDP Wab Target";
-//     int          client_sck = ip_connect("10.10.47.84", 3389, 3, 1000, verbose);
 
-//     redemption::string  error_message;
-//     SocketTransport     t( name
-//                          , client_sck
-//                          , "10.10.47.84"
-//                          , 3389
-//                          , verbose
-//                          , &error_message
-//                          );
+    // int                 client_sck = ip_connect("10.10.47.32", 3389, 3, 1000, verbose);
+    // redemption::string  error_message;
+    // SocketTransport     t( name
+    //                      , client_sck
+    //                      , "10.10.47.32"
+    //                      , 3389
+    //                      , verbose
+    //                      , &error_message
+    //                      );
 
     #include "fixtures/dump_wab.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
@@ -125,8 +126,8 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     struct mod_api * mod = new mod_rdp(
         &t,
-        "tester",
-        "wallix",
+        "x",
+        "x",
         "192.168.1.100",
         front,
         tls,
@@ -163,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     char message[1024];
     if (!check_sig(front.gd.drawable, message,
-    "\x0d\x80\x56\x7b\x36\x90\x5a\xb2\x4c\xdb\x2c\x0a\x78\x37\xe3\x3c\xed\x18\x10\xba"
+    "\x4e\x34\x75\x6d\xd5\x9a\xf0\x53\xe9\xda\x0f\x15\x42\xc4\x8f\x47\x26\xc7\x0a\xa2"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

@@ -34,10 +34,13 @@
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
@@ -73,7 +76,10 @@ public:
 
     bool pointer_displayed;
 
-    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable, const Inifile & ini)
+    bool disable_keyboard_log_wrm;
+
+    NativeCapture(const timeval & now, Transport & trans, int width, int height, BmpCache & bmp_cache, RDPDrawable & drawable,
+                  const Inifile & ini)
     : width(width)
     , height(height)
     , bpp(24)
@@ -82,6 +88,7 @@ public:
     , nb_file(0)
     , time_to_wait(0)
     , pointer_displayed(false)
+    , disable_keyboard_log_wrm(ini.video.disable_keyboard_log_wrm)
     {
         // frame interval is in 1/100 s, default value, 1 timestamp mark every 40/100 s
         this->start_native_capture = now;
@@ -139,7 +146,9 @@ public:
     }
 
     virtual void input(const timeval & now, Stream & input_data_32) {
-        this->recorder.input(now, input_data_32);
+        if (!this->disable_keyboard_log_wrm) {
+            this->recorder.input(now, input_data_32);
+        }
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect & clip)
@@ -167,6 +176,11 @@ public:
         this->recorder.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip)
+    {
+        this->recorder.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         this->recorder.draw(cmd, clip);
@@ -190,6 +204,16 @@ public:
     virtual void draw(const RDPBitmapData & bitmap_data, const uint8_t * data,
             size_t size, const Bitmap & bmp) {
         this->recorder.draw(bitmap_data, data, size, bmp);
+    }
+
+    virtual void draw(const RDPPolygonSC & cmd, const Rect & clip)
+    {
+        this->recorder.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPPolygonCB & cmd, const Rect & clip)
+    {
+        this->recorder.draw(cmd, clip);
     }
 
     virtual void draw(const RDPPolyline & cmd, const Rect & clip)

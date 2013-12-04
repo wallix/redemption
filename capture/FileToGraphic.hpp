@@ -52,16 +52,17 @@ struct FileToGraphic
 
     // Internal state of orders
     RDPOrderCommon common;
-    RDPDestBlt destblt;
-    RDPPatBlt patblt;
-    RDPScrBlt scrblt;
-    RDPOpaqueRect opaquerect;
-    RDPMemBlt memblt;
-    RDPMem3Blt mem3blt;
-    RDPLineTo lineto;
-    RDPGlyphIndex glyphindex;
-    RDPPolyline polyline;
-    RDPEllipseSC ellipseSC;
+    RDPDestBlt     destblt;
+    RDPMultiDstBlt multidstblt;
+    RDPPatBlt      patblt;
+    RDPScrBlt      scrblt;
+    RDPOpaqueRect  opaquerect;
+    RDPMemBlt      memblt;
+    RDPMem3Blt     mem3blt;
+    RDPLineTo      lineto;
+    RDPGlyphIndex  glyphindex;
+    RDPPolyline    polyline;
+    RDPEllipseSC   ellipseSC;
 
     BmpCache     * bmp_cache;
     PointerCache   ptr_cache;
@@ -100,6 +101,7 @@ struct FileToGraphic
 
     bool mem3blt_support;
     bool polyline_support;
+    bool multidstblt_support;
 
     uint16_t info_version;
     uint16_t info_width;
@@ -119,6 +121,7 @@ struct FileToGraphic
         , trans(trans)
         , common(RDP::PATBLT, Rect(0, 0, 1, 1))
         , destblt(Rect(), 0)
+        , multidstblt()
         , patblt(Rect(), 0, 0, 0, RDPBrush())
         , scrblt(Rect(), 0, 0, 0)
         , opaquerect(Rect(), 0)
@@ -148,6 +151,7 @@ struct FileToGraphic
         , verbose(verbose)
         , mem3blt_support(false)
         , polyline_support(false)
+        , multidstblt_support(false)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -338,6 +342,15 @@ struct FileToGraphic
                         this->consumers[i]->draw(this->destblt, clip);
                     }
                     break;
+                case RDP::MULTIDSTBLT:
+                    this->multidstblt.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->multidstblt.log(LOG_INFO, clip);
+                    }
+                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                        this->consumers[i]->draw(this->multidstblt, clip);
+                    }
+                    break;
                 case RDP::PATBLT:
                     this->patblt.receive(this->stream, header);
                     if (this->verbose > 32){
@@ -361,7 +374,7 @@ struct FileToGraphic
                     if (this->verbose > 32){
                         this->lineto.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                    for (size_t i = 0; i < this->nbconsumers ; i++) {
                         this->consumers[i]->draw(this->lineto, clip);
                     }
                     break;
@@ -413,9 +426,9 @@ struct FileToGraphic
                 case RDP::POLYLINE:
                     this->polyline.receive(this->stream, header);
                     if (this->verbose > 32){
-                        this->lineto.log(LOG_INFO, clip);
+                        this->polyline.log(LOG_INFO, clip);
                     }
-                    for (size_t i = 0; i < this->nbconsumers ; i++){
+                    for (size_t i = 0; i < this->nbconsumers ; i++) {
                         this->consumers[i]->draw(this->polyline, clip);
                     }
                     break;
@@ -455,6 +468,8 @@ struct FileToGraphic
                            , this->mouse_y);
                     }
 
+                    TODO("this->input contains UTF32 unicode points, it should not be a byte buffer."
+                         "This leads to back and forth conversion between 32 bits and 8 bits")
                     this->input_len = std::min( static_cast<uint16_t>(stream.end - stream.p)
                                               , static_cast<uint16_t>(sizeof(this->input) - 1));
                     if (this->input_len){
@@ -535,6 +550,7 @@ struct FileToGraphic
                 this->info_version        = this->stream.in_uint16_le();
                 this->mem3blt_support     = (this->info_version > 1);
                 this->polyline_support    = (this->info_version > 2);
+                this->multidstblt_support = (this->info_version > 3);
                 this->info_width          = this->stream.in_uint16_le();
                 this->info_height         = this->stream.in_uint16_le();
                 this->info_bpp            = this->stream.in_uint16_le();
@@ -690,8 +706,24 @@ struct FileToGraphic
                     this->polyline.PenColor        = this->stream.in_uint32_le();
                     this->polyline.NumDeltaEntries = this->stream.in_uint8();
                     for (uint8_t i = 0; i < this->polyline.NumDeltaEntries; i++) {
-                        this->polyline.deltaPoints[i].xDelta = this->stream.in_sint16_le();
-                        this->polyline.deltaPoints[i].yDelta = this->stream.in_sint16_le();
+                        this->polyline.deltaEncodedPoints[i].xDelta = this->stream.in_sint16_le();
+                        this->polyline.deltaEncodedPoints[i].yDelta = this->stream.in_sint16_le();
+                    }
+                }
+
+                // RDPMultiDstBlt multidstblt;
+                if (this->multidstblt_support) {
+                    this->multidstblt.nLeftRect     = this->stream.in_sint16_le();
+                    this->multidstblt.nTopRect      = this->stream.in_sint16_le();
+                    this->multidstblt.nWidth        = this->stream.in_sint16_le();
+                    this->multidstblt.nHeight       = this->stream.in_sint16_le();
+                    this->multidstblt.bRop          = this->stream.in_uint8();
+                    this->multidstblt.nDeltaEntries = this->stream.in_uint8();
+                    for (uint8_t i = 0; i < this->multidstblt.nDeltaEntries; i++) {
+                        this->multidstblt.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
+                        this->multidstblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
+                        this->multidstblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
+                        this->multidstblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
                     }
                 }
             break;

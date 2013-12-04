@@ -227,13 +227,22 @@ struct Keymap2
 
 
     //==============================================================================
-    void event(const uint16_t keyboardFlags, const uint16_t keyCode, Stream & decoded_data)
+    void event(const uint16_t keyboardFlags, const uint16_t keyCode, Stream & decoded_data, bool & tsk_switch_shortcuts)
     //==============================================================================
     {
         // The scancode and its extended nature are merged in a new variable (whose most significant bit indicates the extended nature)
         uint8_t extendedKeyCode = keyCode|((keyboardFlags >> 1)&0x80);
         // The state of that key is updated in the Keyboard status array (1=Make ; 0=Break)
         this->keys_down[extendedKeyCode] = !(keyboardFlags & KBDFLAGS_RELEASE);
+
+        tsk_switch_shortcuts =
+            (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&      // Ctrl
+            (this->keys_down[LEFT_ALT] || this->keys_down[RIGHT_ALT]) &&        // Alt
+            (this->keys_down[0xD3] || this->keys_down[0x53]);                   // Del (or Numpad del)
+        tsk_switch_shortcuts |=
+            (this->keys_down[LEFT_CTRL] || this->keys_down[RIGHT_CTRL]) &&      // Ctrl
+            (this->keys_down[LEFT_SHIFT] || this->keys_down[RIGHT_SHIFT]) &&    // Shift
+            this->keys_down[0x01];                                              // Escape
 
         if (is_ctrl_pressed() && is_alt_pressed()
         && ((extendedKeyCode == 207)||(extendedKeyCode == 83))){
@@ -632,9 +641,7 @@ struct Keymap2
                     } // IF Keypad ELSE not Keypad
                 } // IF event is a Make
             break;
-
         } // END SWITCH : extendedKeyCode
-
     } // END METHOD : event
 
 
@@ -877,7 +884,7 @@ struct Keymap2
         bool found = false;
         for (uint8_t i = 0 ; i < sizeof(keylayouts)/sizeof(keylayouts[0]); i++) {
             if (keylayouts[i]->LCID == LCID){
-                keylayout_WORK = keylayouts[i];
+                this->keylayout_WORK = keylayouts[i];
                 found = true;
                 break;
             }

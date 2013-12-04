@@ -45,9 +45,9 @@ inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
     uint8_t sig[20];
     SslSha1 sha1;
     for (size_t y = 0; y < static_cast<size_t>(height); y++){
-        sha1.update(StaticStream(data + y * len, len));
+        sha1.update(data + y * len, len);
     }
-    sha1.final(sig);
+    sha1.final(sig, 20);
 
     if (memcmp(shasig, sig, 20)){
         sprintf(message, "Expected signature: \""
@@ -122,8 +122,8 @@ BOOST_AUTO_TEST_CASE(TestLineTo)
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
-                   "\x1c\x41\x1d\xab\xe8\x8c\x5b\x40\xd1\x7b"
-                   "\x62\xa2\xb0\x68\x0e\x5c\x36\x55\xae\x24"
+                   "\xba\x61\xe0\xa7\x5a\x4d\xc0\xf1\xfd\xaf"
+                   "\x57\x73\x04\x9f\xc9\xb5\xd4\xba\x75\x6a"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -180,6 +180,46 @@ BOOST_AUTO_TEST_CASE(TestPolyline)
 
     // uncomment to see result in png file
     // dump_png("/tmp/test_polyline_000_", gd.drawable);
+}
+
+BOOST_AUTO_TEST_CASE(TestMultiDstBlt)
+{
+    // Create a simple capture image and dump it to file
+    uint16_t width = 640;
+    uint16_t height = 480;
+    Rect screen_rect(0, 0, width, height);
+    RDPDrawable gd(width, height);
+    gd.draw(RDPOpaqueRect(screen_rect, WHITE), screen_rect);
+    gd.draw(RDPOpaqueRect(screen_rect.shrink(5), GREEN), screen_rect);
+
+    BStream deltaRectangles(1024);
+
+    deltaRectangles.out_sint16_le(100);
+    deltaRectangles.out_sint16_le(100);
+    deltaRectangles.out_sint16_le(10);
+    deltaRectangles.out_sint16_le(10);
+
+    for (int i = 0; i < 19; i++) {
+        deltaRectangles.out_sint16_le(10);
+        deltaRectangles.out_sint16_le(10);
+        deltaRectangles.out_sint16_le(10);
+        deltaRectangles.out_sint16_le(10);
+    }
+
+    deltaRectangles.mark_end();
+    deltaRectangles.rewind();
+
+    gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles), screen_rect);
+
+    char message[1024];
+    if (!check_sig(gd.drawable, message,
+    "\x3d\x83\xd7\x7e\x0b\x3e\xf4\xd1\x53\x50\x33\x94\x1e\x11\x46\x9c\x60\x76\xd7\x0a"
+    )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    // uncomment to see result in png file
+    //dump_png("/tmp/test_multidstblt_000_", gd.drawable);
 }
 
 BOOST_AUTO_TEST_CASE(TestEllipse)

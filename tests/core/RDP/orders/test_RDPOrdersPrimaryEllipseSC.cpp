@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         RDPEllipseSC(Rect(0, 0, 800, 600), 0).emit(stream, newcommon, state_common, state_ellipse);
 
         uint8_t datas[7] = {
-            SMALL | BOUNDS | STANDARD,
+            SMALL | BOUNDS | STANDARD | DELTA,
             0x83,
             0x00,
             0x00,
@@ -74,9 +74,9 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         cmd.receive(stream, header);
 
         check<RDPEllipseSC>(common_cmd, cmd,
-            RDPOrderCommon(ELLIPSESC, Rect(0, 400, 800, 76)),
-            RDPEllipseSC(Rect(0, 0, 800, 600), 0),
-                            "ellipsesc draw 0");
+                            RDPOrderCommon(ELLIPSESC, Rect(0, 400, 800, 76)),
+                            RDPEllipseSC(Rect(0, 0, 800, 600), 0),
+                            "ellipsesc draw 01");
     }
 
     {
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
         RDPEllipseSC(Rect(0, 0, 10, 10), 0xFFFFFF).emit(stream, newcommon, state_common, state_ellipse);
 
-        uint8_t datas[2] = {SMALL | CHANGE | STANDARD, ELLIPSESC};
+        uint8_t datas[2] = {SMALL | CHANGE | STANDARD | DELTA, ELLIPSESC};
         check_datas(stream.get_offset(), stream.get_data(), 2, datas, "ellipse draw identical");
 
         stream.mark_end(); stream.p = stream.get_data();
@@ -119,13 +119,13 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         RDPEllipseSC(Rect(5, 0, 10, 10), 0xFFFFFF).emit(stream, newcommon, state_common, state_ellipse);
         // stream = old - cmd
 
-        uint8_t datas[7] = {CHANGE | STANDARD,
+        uint8_t datas[5] = {CHANGE | STANDARD | DELTA,
                             ELLIPSESC,
                             0x01 | 0x04, // right and left coordinate changed
-                            5, 0, // 5 on left
-                            15, 0 // 15 on right
+                            5, // 5 on left
+                            5 // 15 on right
         };
-        check_datas(stream.get_offset(), stream.get_data(), 7, datas, "ellipse draw 1");
+        check_datas(stream.get_offset(), stream.get_data(), 5, datas, "ellipse draw 1");
 
         stream.mark_end(); stream.p = stream.get_data();
 
@@ -154,14 +154,15 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         RDPEllipseSC newcmd(Rect(5, 10, 25, 30), 0xFFFFFF);
         newcmd.emit(stream, newcommon, state_common, state_ellipse);
 
-        uint8_t datas[11] = {CHANGE | STANDARD, ELLIPSESC,
+        uint8_t datas[7] = {CHANGE | STANDARD | DELTA,
+                            ELLIPSESC,
                             0x0F,  // left, top, right, bottom changed
-                            5,  0, // 5 on left
-                            10, 0, // 10 on top
-                            29, 0, // 29 on right
-                            40, 0  // 40 on bottom
+                            5, // 5 on left
+                            10, // 10 on top
+                            19, // 29 on right
+                            30  // 40 on bottom
         };
-        check_datas(stream.p-stream.get_data(), stream.get_data(), 11, datas, "ellipse draw 2");
+        check_datas(stream.p-stream.get_data(), stream.get_data(), 7, datas, "ellipse draw 2");
 
         stream.mark_end(); stream.p = stream.get_data();
 
@@ -446,7 +447,8 @@ BOOST_AUTO_TEST_CASE(TestEllipseSC)
         RDPOrderCommon newcommon(ELLIPSESC, Rect(0, 0, 800, 600));
         RDPEllipseSC(Rect(0, 0, 10, 10), 0xFFFFFF, 0x0A, 0x00).emit(stream, newcommon, state_common, state_ellipse);
 
-        uint8_t datas[5] = { CHANGE | STANDARD, ELLIPSESC,
+        uint8_t datas[5] = { CHANGE | STANDARD | DELTA,
+                             ELLIPSESC,
                              0x30, // brop2 and fillmode changed
                              0x0A,
                              0x00};

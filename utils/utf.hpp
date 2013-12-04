@@ -28,11 +28,22 @@
 #include <stdint.h>
 #define LOGNULL
 #include "log.hpp"
-#include "cast.hpp"
+
+// bool UTF32isValid(uint32_t c):
+// abstract: Check if some code point is a valid char or not (some UNICODE ranges are forbiden)
+// input: c = 32 bits Unicode codepoint
+// output: true or false
+static inline bool UTF32isValid(uint32_t c)
+{
+    // Note: FFFE and FFFF are specifically permitted by the
+    // Unicode standard for application internal use, but are not
+    // allowed for interchange.
+    return c < 0xD800 || (c > 0xDFFF && c <= 0x10FFFF);
+}
 
 
-REDOC("Check if some string is valid utf8, zero terminated"
-      "Returns number of valid bytes");
+// Check if some string is valid utf8, zero terminated"
+// Returns number of valid bytes
 static inline size_t UTF8Check(const uint8_t * source, size_t len)
 {
     size_t i = 0;
@@ -98,11 +109,6 @@ static inline size_t UTF8Len(const uint8_t * source)
     return len;
 }
 
-static inline size_t UTF8Len(const char * source)
-{
-    return UTF8Len(byte_ptr_cast(source));
-}
-
 
 REDOC("UTF8GetLen find the number of bytes of the len first characters of input."
       " It assumes input is valid utf8, zero terminated (that has been checked before).");
@@ -162,12 +168,6 @@ static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
     source[UTF8GetPos(source, len)] = 0;
 }
 
-static inline void UTF8TruncateAtPos(char * source, size_t len)
-{
-    UTF8TruncateAtPos(reinterpret_cast<uint8_t *>(source), len);
-}
-
-
 REDOC("UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before")
 REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert");
 static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source)
@@ -194,8 +194,13 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
 }
 
 
-REDOC("UTF8Len assumes input is valid utf8, zero terminated, that has been checked before")
-TODO("Naive immplementation, not working for complex cases");
+ 
+// UTF8CharNbBytes: 
+// ----------------
+// input: 'source' is the beginning of a char contained in a valid utf8 zero terminated string.
+//        (valid means "that has been checked before". It means we are in a secure context).
+// output: number of bytes for 'one' char
+
 static inline size_t UTF8CharNbBytes(const uint8_t * source)
 {
     uint8_t c = *source;
@@ -412,71 +417,6 @@ UTF8toUnicode_exit:
     return i_t;
 }
 
-/*
-TODO("API may be clearer if we always return a len and an error code in case of failure (error defaulting to 0)"
-     "Another option could be to be to return a negative value in cas of error like other C functions");
-static inline bool UTF8toUnicodeWithCheck(const uint8_t ** s, size_t s_len, uint32_t ** t, size_t t_len)
-{
-    bool res = false;
-    const uint8_t * source = *s;
-    uint32_t * target = *t;
-    size_t i_t = 0;
-    uint32_t ucode = 0;
-    size_t i = 0;
-    for (; i < s_len ; i++){
-        unsigned c = source[i];
-        switch (c >> 4){
-            case 0: case 1: case 2: case 3:
-            case 4: case 5: case 6: case 7:
-            ucode = c;
-            break;
-            // handle U+0080..U+07FF inline : 2 bytes sequences
-            case 0xC: case 0xD:
-                if ((i+1 >= s_len)
-                   ||((c & 0xFE) == 0xC0)
-                   ||((source[i+1] >> 6) != 2)){
-                    goto UTF8toUnicode_exit;
-                }
-                ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
-                i+=1;
-            break;
-             // handle U+8FFF..U+FFFF inline : 3 bytes sequences
-            case 0xE:
-                if ((i+2 >= s_len)
-                   ||((source[i+1] >> 6) != 2)
-                   ||((source[i+2] >> 6) != 2)){
-                    goto UTF8toUnicode_exit;
-                }
-                ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
-                i+=2;
-            break;
-            case 0xF:
-                if ((i+3 >= s_len)
-                   ||(c > 244)
-                   ||((source[i+1] >> 6) != 2)
-                   ||((source[i+2] >> 6) != 2)
-                   ||((source[i+3] >> 6) != 2)){
-                    goto UTF8toUnicode_exit;
-                }
-                c = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
-                i+=3;
-            break;
-            case 8: case 9: case 0x0A: case 0x0B:
-                goto UTF8toUnicode_exit;
-            break;
-        }
-        if (i_t + 1 > t_len) { goto UTF8toUnicode_exit; }
-        target[i_t] = ucode;
-        i_t += 1;
-    }
-    res = true;
-UTF8toUnicode_exit:
-    *s = source + i;
-    *t = target + i_t;
-    return res;
-}
-*/
-
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
 static inline size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len)
@@ -563,6 +503,7 @@ static inline size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len,
 // Returns the number of UTF8 characters copied.
 // The destination string will always be 0 terminated (dest_size 0 is forbidden)
 // The buffer after final 0 is not padded.
+
 static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uint8_t * source)
 {
     size_t source_len     = strlen(reinterpret_cast<const char *>(source));

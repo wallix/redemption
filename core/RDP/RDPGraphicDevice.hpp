@@ -32,11 +32,14 @@
 #include "RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
+#include "RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
 #include "RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
+#include "RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
@@ -52,17 +55,20 @@
 struct RDPGraphicDevice {
     virtual void set_row(size_t rownum, const uint8_t * data) {}
 
-    virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPScrBlt     & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPDestBlt    & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPPatBlt     & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPMemBlt     & cmd, const Rect & clip, const Bitmap & bmp) = 0;
-    virtual void draw(const RDPMem3Blt    & cmd, const Rect & clip, const Bitmap & bmp) = 0;
-    virtual void draw(const RDPLineTo     & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPGlyphIndex & cmd, const Rect & clip, const GlyphCache * gly_cache) = 0;
-    virtual void draw(const RDPPolyline   & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPEllipseSC  & cmd, const Rect & clip) = 0;
-    virtual void draw(const RDPEllipseCB  & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPOpaqueRect  & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPScrBlt      & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPDestBlt     & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPatBlt      & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPMemBlt      & cmd, const Rect & clip, const Bitmap & bmp) = 0;
+    virtual void draw(const RDPMem3Blt     & cmd, const Rect & clip, const Bitmap & bmp) = 0;
+    virtual void draw(const RDPLineTo      & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPGlyphIndex  & cmd, const Rect & clip, const GlyphCache * gly_cache) = 0;
+    virtual void draw(const RDPPolygonSC   & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPolygonCB   & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPPolyline    & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPEllipseSC   & cmd, const Rect & clip) = 0;
+    virtual void draw(const RDPEllipseCB   & cmd, const Rect & clip) = 0;
 
     TODO("The 3 methods below should not exist and cache access be done before calling drawing orders");
     virtual void draw(const RDPBrushCache & cmd) {}

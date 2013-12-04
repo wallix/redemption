@@ -307,7 +307,7 @@ BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
 
 BOOST_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
 {
-    BStream stream(1024);
+    OutPerBStream stream(1024);
     size_t length = 5;
     int subheight = 0;
     int subinterval = 0;
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataRequest)
 {
-    BStream stream(1024);
+    OutPerBStream stream(1024);
     size_t length = 8;
     MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
@@ -622,7 +622,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 
 BOOST_AUTO_TEST_CASE(TestSend_SendDataIndication)
 {
-    BStream stream(1024);
+    OutPerBStream stream(1024);
     size_t length = 8;
     MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
     BOOST_CHECK_EQUAL(length, stream.size());
@@ -689,3 +689,758 @@ BOOST_AUTO_TEST_CASE(TestRecv_SendDataIndication)
     BOOST_CHECK_EQUAL(static_cast<uint16_t>(379) , mcs.payload_size);
 }
 
+
+BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
+{
+    {
+        BStream stream(1024);
+        try {
+            MCS::PlumbDomainIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::PlumbDomainIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::MergeChannelRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::MergeChannelRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::MergeChannelsConfirm_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::MergeChannelsConfirm_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::MergeTokensRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::MergeTokensRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::MergeTokensRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::MergeTokensConfirm_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::PurgeTokensIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::PurgeTokensIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::RejectMCSPDUUltimatum_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::RejectMCSPDUUltimatum_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::DetachUserRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::DetachUserRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::DetachUserIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::DetachUserIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelLeaveRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelLeaveRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelConveneRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelConveneRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelConveneConfirm_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelConveneConfirm_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelDisbandRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelDisbandRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelDisbandIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelDisbandIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelAdmitRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelAdmitRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelAdmitIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelAdmitIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelExpelRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelExpelRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelExpelIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::ChannelExpelIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::UniformSendDataRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::UniformSendDataRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::UniformSendDataIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::UniformSendDataIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGrabRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGrabRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGrabConfirm_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGrabConfirm_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenInhibitRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenInhibitRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenInhibitConfirm_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenInhibitConfirm_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveResponse_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveResponse_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveConfirm_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenGiveConfirm_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenPleaseRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenPleaseRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenPleaseIndication_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenPleaseIndication_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenReleaseRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenReleaseRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenReleaseConfirm_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenReleaseConfirm_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenTestRequest_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+    
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenTestRequest_Recv mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+    {
+        BStream stream(1024);
+        try {
+            MCS::TokenTestConfirm_Send mcs(stream, MCS::PER_ENCODING);
+            BOOST_CHECK(false);
+        }
+        catch (const Error & e) {
+            BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
+        }; 
+    }
+
+}

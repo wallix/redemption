@@ -27,6 +27,7 @@
 #include <algorithm>
 
 #include "stream.hpp"
+#include "RDP/out_per_bstream.hpp"
 
 namespace MCS
 {
@@ -1177,7 +1178,7 @@ namespace MCS
 
     struct ErectDomainRequest_Send
     {
-        ErectDomainRequest_Send(Stream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
+        ErectDomainRequest_Send(OutPerBStream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
@@ -1215,16 +1216,46 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_ErectDomainRequest;
-            bool in_result;
-            this->subHeight = stream.in_per_integer_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
-                throw Error(ERR_MCS);
+            
+            {
+                if (!stream.in_check_rem(2)) {
+                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subHeight len : (need 2, available %u)", stream.size());
+                    throw Error(ERR_MCS);
+                }
+                uint16_t len = stream.in_2BUE();
+                // case len = 0 is theoretically forbidden but rdesktop send that (treat it as 1)
+                if (len == 0) {
+                    len = 1;
+                }
+                if (len > 4) {
+                    LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
+                    throw Error(ERR_MCS);
+                }
+                if (!stream.in_check_rem(len)) {
+                    LOG(LOG_ERR, "ErectDomainRequest bad subHeight");
+                    throw Error(ERR_MCS);
+                }
+                this->subHeight = stream.in_bytes_be(len);
             }
-            this->subInterval = stream.in_per_integer_with_check(in_result);
-            if (!in_result){
-                LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
-                throw Error(ERR_MCS);
+            {
+                if (!stream.in_check_rem(2)) {
+                    LOG(LOG_ERR, "ErectDomainRequest not enough data for subInterval len : (need 2, available %u)", stream.size());
+                    throw Error(ERR_MCS);
+                }
+                uint16_t len = stream.in_2BUE();
+                // case len = 0 is theoretically forbidden but rdesktop send that (treat it as 1)
+                if (len == 0) {
+                    len = 1;
+                }
+                if (len > 4) {
+                    LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
+                    throw Error(ERR_MCS);
+                }
+                if (!stream.in_check_rem(len)) {
+                    LOG(LOG_ERR, "ErectDomainRequest bad subInterval");
+                    throw Error(ERR_MCS);
+                }
+                this->subInterval = stream.in_bytes_be(len);
             }
         }
     };
@@ -2317,7 +2348,7 @@ namespace MCS
 
     struct SendDataRequest_Send
     {
-        SendDataRequest_Send(Stream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
+        SendDataRequest_Send(OutPerBStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
@@ -2383,13 +2414,11 @@ namespace MCS
                 // low 4 bits of magic are padding
 
                 // length of payload, per_encoded
-                bool in_result;
-                this->payload_size = stream.in_per_length_with_check(in_result);
-                if (!in_result){
+                if (!stream.in_check_rem(2)){
                     LOG(LOG_ERR, "Truncated SendDataRequest data: payload length");
                     throw Error(ERR_MCS);
                 }
-
+                this->payload_size = stream.in_2BUE();
                 this->_header_size = stream.get_offset();
 
                 if (!stream.in_check_rem(this->payload_size)){
@@ -2418,7 +2447,7 @@ namespace MCS
 
     struct SendDataIndication_Send
     {
-        SendDataIndication_Send(Stream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
+        SendDataIndication_Send(OutPerBStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
@@ -2482,13 +2511,11 @@ namespace MCS
                 // low 4 bits of magic are padding
 
                 // length of payload, per_encoded
-                bool in_result;
-                this->payload_size = stream.in_per_length_with_check(in_result);
-                if (!in_result){
+                if (!stream.in_check_rem(2)){
                     LOG(LOG_ERR, "Truncated SendDataIndication data: payload length");
                     throw Error(ERR_MCS);
                 }
-
+                this->payload_size = stream.in_2BUE();
                 this->_header_size = stream.get_offset();
 
                 if (!stream.in_check_rem(this->payload_size)){

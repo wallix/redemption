@@ -669,14 +669,14 @@ public:
     }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel
-                                , uint8_t * data
+                                , uint8_t * chunk
                                 , size_t length
                                 , size_t chunk_size
                                 , int flags) {
         if (this->verbose & 16) {
             LOG( LOG_INFO
                , "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)"
-               , data, length, chunk_size, flags);
+               , chunk, length, chunk_size, flags);
         }
 
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -684,11 +684,10 @@ public:
         }
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu(this->verbose);
-        FixedSizeStream             chunk(data, chunk_size);
 
         virtual_channel_pdu.send_to_client( *this->trans, this->encrypt
                                           , this->client_info.encryptionLevel, userid, channel.chanid
-                                          , length, flags, chunk);
+                                          , length, flags, chunk, chunk_size);
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -1741,7 +1740,7 @@ public:
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
-                ssllib ssl;
+                TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
                 {
@@ -1751,12 +1750,12 @@ public:
                     uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
 
                     BN_CTX* ctx = BN_CTX_new();
-                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, 64, &lmod);
-                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, 64, &lexp);
-                    BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, 64, &lin);
+                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn(l_mod, 64, &lmod);
+                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn(l_exp, 64, &lexp);
+                    BIGNUM lin; BN_init(&lin);  BN_bin2bn(l_in, 64, &lin);
                     BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
 
-                    int rv = BN_bn2bin(&lout, (uint8_t*)l_out);
+                    int rv = BN_bn2bin(&lout, l_out);
                     if (rv <= 64) {
                         reverseit(l_out, rv);
                         memcpy(client_random, l_out, 64);
@@ -1771,6 +1770,7 @@ public:
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
                 SEC::KeyBlock key_block(client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block.blob0, 16);
+                ssllib ssl;
                 if (this->encrypt.encryptionMethod == 1){
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
@@ -1836,7 +1836,7 @@ public:
             }
 
             this->keymap.init_layout(this->client_info.keylayout);
-
+            this->ini->client.keyboard_layout.set(this->client_info.keylayout);
             if (this->client_info.is_mce) {
                 if (this->verbose & 2){
                     LOG(LOG_INFO, "Front::incoming::licencing client_info.is_mce");
@@ -2255,8 +2255,9 @@ public:
                             }
 
                             BStream decoded_data(256);
+                            bool    tsk_switch_shortcuts;
 
-                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data);
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
                             decoded_data.mark_end();
 
                             if (  this->capture
@@ -2268,9 +2269,13 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                                if (tsk_switch_shortcuts && this->ini->client.disable_tsk_switch_shortcuts.get()) {
+                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
+                                }
+                                else {
+                                    cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
+                                }
                             }
-
                         }
                         break;
 
@@ -2531,7 +2536,7 @@ public:
     void send_data_indication(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
 
         MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
                                          1, 3, stream.size(),
@@ -2544,7 +2549,7 @@ public:
     void send_data_indication_ex(uint16_t channelId, HStream & stream)
     {
         BStream x224_header(256);
-        BStream mcs_header(256);
+        OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
         SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
@@ -3473,8 +3478,9 @@ public:
                             }
 
                             BStream decoded_data(256);
+                            bool    tsk_switch_shortcuts;
 
-                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data);
+                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
                             decoded_data.mark_end();
 
                             if (  this->capture
@@ -3485,8 +3491,13 @@ public:
                                 this->capture->input(now, decoded_data);
                             }
 
-                            if (this->up_and_running){
-                                cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                            if (this->up_and_running) {
+                                if (tsk_switch_shortcuts && this->ini->client.disable_tsk_switch_shortcuts.get()) {
+                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
+                                }
+                                else {
+                                    cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
+                                }
                             }
                         }
                         break;
@@ -3883,6 +3894,17 @@ public:
         }
     }
 
+    void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        if (!clip.isempty() &&
+            !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
+            this->orders->draw(cmd, clip);
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                this->capture->draw(cmd, clip);
+            }
+        }
+    }
+
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         if (!clip.isempty() && !clip.intersect(cmd.rect).isempty()){
@@ -4091,7 +4113,7 @@ public:
     }
 
     void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & bitmap) {
-//LOG(LOG_INFO, "Mem3Blt::rop = %X", cmd.rop);
+        // LOG(LOG_INFO, "Mem3Blt::rop = %X", cmd.rop);
         if (bitmap.cx < cmd.srcx || bitmap.cy < cmd.srcy){
             return;
         }
@@ -4275,14 +4297,13 @@ public:
         }
     }
 
-    void draw(const RDPPolyline & cmd, const Rect & clip) {
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
         int16_t minx, miny, maxx, maxy, previousx, previousy;
 
         minx = maxx = previousx = cmd.xStart;
         miny = maxy = previousy = cmd.yStart;
 
-        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++)
-        {
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
             previousx += cmd.deltaPoints[i].xDelta;
             previousy += cmd.deltaPoints[i].yDelta;
 
@@ -4295,8 +4316,83 @@ public:
         const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
 
         if (!clip.isempty() && !clip.intersect(rect).isempty()) {
+            RDPPolygonSC new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp) {
+                const BGRColor pen_color24 = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette);
+                new_cmd.BrushColor = color_encode(pen_color24, this->client_info.bpp);
+            }
+
+            this->orders->draw(new_cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                RDPPolygonSC new_cmd24 = cmd;
+                new_cmd24.BrushColor = color_decode_opaquerect(cmd.BrushColor, this->mod_bpp, this->mod_palette);
+                this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        int16_t minx, miny, maxx, maxy, previousx, previousy;
+
+        minx = maxx = previousx = cmd.xStart;
+        miny = maxy = previousy = cmd.yStart;
+
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            previousx += cmd.deltaPoints[i].xDelta;
+            previousy += cmd.deltaPoints[i].yDelta;
+
+            minx = std::min(minx, previousx);
+            miny = std::min(miny, previousy);
+
+            maxx = std::max(maxx, previousx);
+            maxy = std::max(maxy, previousy);
+        }
+        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
+
+        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
+            RDPPolygonCB new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp) {
+                const BGRColor fore_pen_color24 = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette);
+                new_cmd.foreColor = color_encode(fore_pen_color24, this->client_info.bpp);
+                const BGRColor back_pen_color24 = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette);
+                new_cmd.backColor = color_encode(back_pen_color24, this->client_info.bpp);
+            }
+
+            this->orders->draw(new_cmd, clip);
+
+            if (  this->capture
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
+                RDPPolygonCB new_cmd24 = cmd;
+                new_cmd24.foreColor = color_decode_opaquerect(cmd.foreColor, this->mod_bpp, this->mod_palette);
+                new_cmd24.backColor = color_decode_opaquerect(cmd.backColor, this->mod_bpp, this->mod_palette);
+                this->capture->draw(new_cmd24, clip);
+            }
+        }
+    }
+
+    void draw(const RDPPolyline & cmd, const Rect & clip) {
+        int16_t minx, miny, maxx, maxy, previousx, previousy;
+
+        minx = maxx = previousx = cmd.xStart;
+        miny = maxy = previousy = cmd.yStart;
+
+        for (uint8_t i = 0; i < cmd.NumDeltaEntries; i++) {
+            previousx += cmd.deltaEncodedPoints[i].xDelta;
+            previousy += cmd.deltaEncodedPoints[i].yDelta;
+
+            minx = std::min(minx, previousx);
+            miny = std::min(miny, previousy);
+
+            maxx = std::max(maxx, previousx);
+            maxy = std::max(maxy, previousy);
+        }
+        const Rect rect(minx, miny, maxx-minx+1, maxy-miny+1);
+
+        if (!clip.isempty() && !clip.intersect(rect).isempty()) {
             RDPPolyline new_cmd = cmd;
-            if (this->client_info.bpp != this->mod_bpp){
+            if (this->client_info.bpp != this->mod_bpp) {
                 const BGRColor pen_color24 = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette);
                 new_cmd.PenColor = color_encode(pen_color24, this->client_info.bpp);
             }
@@ -4304,7 +4400,7 @@ public:
             this->orders->draw(new_cmd, clip);
 
             if (  this->capture
-               && (this->capture_state == CAPTURE_STATE_STARTED)){
+               && (this->capture_state == CAPTURE_STATE_STARTED)) {
                 RDPPolyline new_cmd24 = cmd;
                 new_cmd24.PenColor = color_decode_opaquerect(cmd.PenColor, this->mod_bpp, this->mod_palette);
                 this->capture->draw(new_cmd24, clip);

@@ -31,6 +31,7 @@
 #define _REDEMPTION_CORE_RDP_GCC_HPP_
 
 #include "stream.hpp"
+#include "RDP/out_per_bstream.hpp"
 #include "ssl_calls.hpp"
 
 enum DATA_BLOCK_TYPE {
@@ -206,22 +207,21 @@ namespace GCC
 
     class Create_Request_Send {
         public:
-        Create_Request_Send(Stream & stream, size_t payload_size) {
+        Create_Request_Send(OutPerBStream & stream, size_t payload_size) {
             // ConnectData
             stream.out_per_choice(0); // From Key select object (0) of type OBJECT_IDENTIFIER
             const uint8_t t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
             stream.out_per_object_identifier(t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
 
             //  ConnectData::connectPDU (OCTET_STRING)
-            uint16_t offset_len = stream.get_offset();
-            stream.out_per_length(256); // connectPDU length (reserve 16 bits)
+            // 23 = offset after mark_end()
+            stream.out_per_length(payload_size + 23 - 9); // connectPDU length
 
             //  ConnectGCCPDU
             stream.out_per_choice(0); // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
             stream.out_per_selection(0x08); // select optional userData from ConferenceCreateRequest
 
             //  ConferenceCreateRequest::conferenceName
-            //	stream.out_per_numeric_string(s, (uint8*)"1", 1, 1); /* ConferenceName::numeric */
             stream.out_uint16_be(16);
             stream.out_per_padding(1); /* padding */
 
@@ -235,8 +235,6 @@ namespace GCC
 
             stream.out_per_length(payload_size); // user data length
             stream.mark_end();
-
-            stream.set_out_per_length(payload_size + stream.get_offset() - 9, offset_len); // length including header
         }
     };
 
@@ -247,10 +245,16 @@ namespace GCC
         SubStream payload;
 
         Create_Request_Recv(Stream & stream) {
+            if (!stream.in_check_rem(23)){
+                LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.size());
+                throw Error(ERR_GCC);
+            }
+            
             // Key select object (0) of type OBJECT_IDENTIFIER
             // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
             stream.in_skip_bytes(7);
-            uint16_t length_with_header = stream.in_per_length();
+            
+            uint16_t length_with_header = stream.in_2BUE();
 
             // ConnectGCCPDU
             // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
@@ -261,7 +265,7 @@ namespace GCC
             // h221NonStandard, client-to-server H.221 key, "Duca"
 
             stream.in_skip_bytes(12);
-            uint16_t length = stream.in_per_length();
+            uint16_t length = stream.in_2BUE();
 
             if (length_with_header != length + 14){
                 LOG(LOG_WARNING, "GCC Conference Create Request User data Length mismatch with header+data length %u %u", length, length_with_header);
@@ -360,7 +364,7 @@ namespace GCC
     // by the GCC Provider sourcing this PDU. The Tag parameter is assigned
     // by the source GCC Provider to be locally unique. It is used to
     // identify the returned UserIDIndication PDU. The Result parameter
-    // include " GCC-specific failure information sourced directly from
+    // includes " GCC-specific failure information sourced directly from
     // the Result parameter in the GCC-Conference-Create response primitive.
     // If the Result parameter is anything except successful, the Result
     // parameter in the MCS-Connect-Provider response is set to
@@ -471,8 +475,13 @@ namespace GCC
         SubStream payload;
 
         Create_Response_Recv(Stream & stream) {
+            if (!stream.in_check_rem(23)){
+                LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
+                throw Error(ERR_GCC);
+            }
+            TODO("We should actually read and decode data here. Merely skipping the block is evil")
             stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
-            size_t length = stream.in_per_length();
+            size_t length = stream.in_2BUE();
             if (length != stream.size() - stream.get_offset()){
                 LOG(LOG_WARNING, "GCC Conference Create Response User data Length mismatch with header %u %u",
                     length, stream.size() - stream.get_offset());

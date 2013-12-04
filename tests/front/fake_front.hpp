@@ -55,6 +55,10 @@ public:
         this->gd.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) {
         RDPPatBlt new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);
@@ -90,11 +94,25 @@ public:
         this->gd.draw(new_cmd24, clip, gly_cache);
     }
 
+    void draw(const RDPPolygonSC & cmd, const Rect & clip) {
+        RDPPolygonSC new_cmd24 = cmd;
+        new_cmd24.BrushColor  = color_decode_opaquerect(cmd.BrushColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
+    void draw(const RDPPolygonCB & cmd, const Rect & clip) {
+        RDPPolygonCB new_cmd24 = cmd;
+        new_cmd24.foreColor  = color_decode_opaquerect(cmd.foreColor,  this->mod_bpp, this->mod_palette);
+        new_cmd24.backColor  = color_decode_opaquerect(cmd.backColor,  this->mod_bpp, this->mod_palette);
+        this->gd.draw(new_cmd24, clip);
+    }
+
     void draw(const RDPPolyline & cmd, const Rect & clip) {
         RDPPolyline new_cmd24 = cmd;
         new_cmd24.PenColor  = color_decode_opaquerect(cmd.PenColor,  this->mod_bpp, this->mod_palette);
         this->gd.draw(new_cmd24, clip);
     }
+
     virtual void draw(const RDPEllipseSC & cmd, const Rect & clip) {
         RDPEllipseSC new_cmd24 = cmd;
         new_cmd24.color = color_decode_opaquerect(cmd.color, this->mod_bpp, this->mod_palette);
@@ -133,7 +151,7 @@ public:
     virtual void server_draw_text( int16_t x, int16_t y, const char * text, uint32_t fgcolor
                                  , uint32_t bgcolor, const Rect & clip) {}
 
-    virtual void text_metrics(const char * text, int & width, int & height) {}
+    virtual void text_metrics(const char * text, int & width, int & height) { width = 0; height = 0; }
 
     virtual int server_resize(int width, int height, int bpp) {
         this->mod_bpp = bpp;

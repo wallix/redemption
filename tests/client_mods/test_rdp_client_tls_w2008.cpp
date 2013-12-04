@@ -29,6 +29,7 @@
 #include <algorithm>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "test_orders.hpp"
 
 #include "stream.hpp"

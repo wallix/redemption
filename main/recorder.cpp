@@ -217,7 +217,13 @@ int main(int argc, char** argv)
     }
     player.add_consumer(&capture);
 
-    player.play();
+    int return_code = 0;
+    try {
+        player.play();
+    }
+    catch (Error e) {
+        return_code = -1;
+    }
 
-    return 0;
+    return return_code;
 }

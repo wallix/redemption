@@ -64,7 +64,14 @@ public:
     ~OutFilenameTransport()
     {
         rio_clear(&this->rio);
-        sq_clear(&this->seq);
+        if (this->full_cleaning_requested)
+        {
+            sq_full_clear(&this->seq);
+        }
+        else
+        {
+            sq_clear(&this->seq);
+        }
     }
 
     using Transport::send;

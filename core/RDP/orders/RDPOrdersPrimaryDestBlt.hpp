@@ -81,9 +81,9 @@ class RDPDestBlt {
     }
 
     void emit(Stream & stream,
-                        RDPOrderCommon & common,
-                        const RDPOrderCommon & oldcommon,
-                        const RDPDestBlt & oldcmd) const
+              RDPOrderCommon & common,
+              const RDPOrderCommon & oldcommon,
+              const RDPDestBlt & oldcmd) const
     {
         using namespace RDP;
         RDPPrimaryOrderHeader header(STANDARD, 0);
@@ -112,7 +112,7 @@ class RDPDestBlt {
                       | (dr.dtop    != 0) * 0x02
                       | (dr.dwidth  != 0) * 0x04
                       | (dr.dheight != 0) * 0x08
-                      | (this->rop != oldcmd.rop) * 0x10
+                      | (this->rop  != oldcmd.rop) * 0x10
                       ;
 
         common.emit(stream, header, oldcommon);

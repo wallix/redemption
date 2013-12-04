@@ -25,6 +25,7 @@
 #include "widget.hpp"
 #include "label.hpp"
 #include <keymap2.hpp>
+#include "cast.hpp"
 
 class WidgetEdit : public Widget2 {
 public:
@@ -52,7 +53,7 @@ public:
     {
         if (text) {
             this->buffer_size = strlen(text);
-            this->num_chars = UTF8Len(this->label.buffer);
+            this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
             this->edit_pos = std::min(this->num_chars, edit_position);
             this->edit_buffer_pos = UTF8GetPos(reinterpret_cast<uint8_t *>(this->label.buffer), this->edit_pos);
             this->cursor_px_pos = 0;
@@ -106,7 +107,7 @@ public:
                     this->rect.cx -= 2;
                 }
             }
-            this->num_chars = UTF8Len(this->label.buffer);
+            this->num_chars = UTF8Len(byte_ptr_cast(this->label.buffer));
         }
         this->edit_pos = this->num_chars;
         this->edit_buffer_pos = this->buffer_size;

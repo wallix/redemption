@@ -119,10 +119,10 @@ BOOST_AUTO_TEST_CASE(TestRect)
         Rect res = i1.intersect(i2);
         BOOST_CHECK_EQUAL(true, res.isempty());
         // Is it necessary to force empty rect to be canonical ?
-        BOOST_CHECK_EQUAL(0, res.x);
-        BOOST_CHECK_EQUAL(0, res.y);
-        BOOST_CHECK_EQUAL(0, res.right());
-        BOOST_CHECK_EQUAL(0, res.bottom());
+        BOOST_CHECK_EQUAL(20, res.x);
+        BOOST_CHECK_EQUAL(110, res.y);
+        BOOST_CHECK_EQUAL(20, res.right());
+        BOOST_CHECK_EQUAL(110, res.bottom());
     }
 
 
@@ -360,11 +360,11 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(Rect::DOWN              , r.region_pt(242, 500));
         BOOST_CHECK_EQUAL(Rect::DOWN | Rect::RIGHT, r.region_pt(555, 477));
 
-        // Borders points are in
+        // up and left border are in, right and bottom borders are out
         BOOST_CHECK_EQUAL(Rect::IN                , r.region_pt(100, 200));
-        BOOST_CHECK_EQUAL(Rect::IN                , r.region_pt(400, 350));
-        BOOST_CHECK_EQUAL(Rect::IN                , r.region_pt(100, 350));
-        BOOST_CHECK_EQUAL(Rect::IN                , r.region_pt(100, 350));
+        BOOST_CHECK_EQUAL(Rect::DOWN | Rect::RIGHT, r.region_pt(400, 350));
+        BOOST_CHECK_EQUAL(Rect::RIGHT             , r.region_pt(400, 200));
+        BOOST_CHECK_EQUAL(Rect::DOWN              , r.region_pt(100, 350));
 
         LineEquation equa(300, 100, 50, 300);
         BOOST_CHECK_EQUAL(true, equa.resolve(r));
@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(true, equa.resolve(r));
         BOOST_CHECK_EQUAL(equa.segin.a.x, 100);
         BOOST_CHECK_EQUAL(equa.segin.a.y, 215);
-        BOOST_CHECK_EQUAL(equa.segin.b.x, 400);
+        BOOST_CHECK_EQUAL(equa.segin.b.x, 399);
         BOOST_CHECK_EQUAL(equa.segin.b.y, 215);
 
         equa = LineEquation(50, 400, 450, 400);
@@ -398,8 +398,8 @@ BOOST_AUTO_TEST_CASE(TestRect)
         BOOST_CHECK_EQUAL(true, equa.resolve(r));
         BOOST_CHECK_EQUAL(equa.segin.a.x, 250);
         BOOST_CHECK_EQUAL(equa.segin.a.y, 200);
-        BOOST_CHECK_EQUAL(equa.segin.b.x, 400);
-        BOOST_CHECK_EQUAL(equa.segin.b.y, 350);
+        BOOST_CHECK_EQUAL(equa.segin.b.x, 399);
+        BOOST_CHECK_EQUAL(equa.segin.b.y, 349);
 
         equa = LineEquation(10, 250, 150, 50);
         BOOST_CHECK_EQUAL(false, equa.resolve(r));
