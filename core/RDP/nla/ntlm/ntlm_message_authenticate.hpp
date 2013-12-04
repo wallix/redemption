@@ -507,17 +507,16 @@ struct NTLM_Response {
 //   structure with an AvId field of MsvAvEOL.
 
 struct NTLMv2_Client_Challenge {
-    uint8_t RespType;
-    uint8_t HiRespType;
-    uint16_t Reserved1;
-    uint32_t Reserved2;
-    uint8_t Timestamp[8];
-    uint8_t ClientChallenge[8];
-    uint32_t Reserved3;
-    // NTLM_AV_PAIR* AvPairs;
+    uint8_t  RespType;              // MUST BE 0x01
+    uint8_t  HiRespType;            // MUST BE 0x01
+    uint16_t Reserved1;             // MUST BE 0x00
+    uint32_t Reserved2;             // MUST BE 0x00
+    uint8_t  Timestamp[8];          // Current system time
+    uint8_t  ClientChallenge[8];    // Client Challenge
+    uint32_t Reserved3;             // MUST BE 0x00
+    NtlmAvPairList AvPairList;
 
-    void ntlm_current_time()
-    {
+    void ntlm_current_time() {
     /**
      * Get current time, in tenths of microseconds since midnight of January 1, 1601.
      * @param[out] timestamp 64-bit little-endian timestamp
@@ -544,9 +543,7 @@ struct NTLMv2_Client_Challenge {
         stream.out_copy_bytes(this->Timestamp, 8);
         stream.out_copy_bytes(this->ClientChallenge, 8);
         stream.out_skip_bytes(4);
-        // TODO
-	// length = ntlm_av_pair_list_length(challenge->AvPairs);
-	// Stream_Write(s, challenge->AvPairs, length);
+        this->AvPairList.emit(stream);
     }
 
 
@@ -559,11 +556,7 @@ struct NTLMv2_Client_Challenge {
         stream.in_copy_bytes(this->Timestamp, 8);
         stream.in_copy_bytes(this->ClientChallenge, 8);
         stream.in_skip_bytes(4);
-
-        //TODO
-	// size = Stream_Length(s) - Stream_GetPosition(s);
-	// challenge->AvPairs = (NTLM_AV_PAIR*) malloc(size);
-	// Stream_Read(s, challenge->AvPairs, size);
+        this->AvPairList.recv(stream);
     }
 
 };

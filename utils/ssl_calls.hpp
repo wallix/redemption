@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2014
-   Author(s): Christophe Grosjean, Javier Caverni
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
 
    openssl headers
 
@@ -77,7 +77,7 @@ class SslMd5
         MD5_Init(&this->md5);
     }
 
-    void update(const uint8_t * const data,  size_t data_size)
+    void update(const uint8_t * const data, size_t data_size)
     {
         MD5_Update(&this->md5, data, data_size);
     }
@@ -93,6 +93,34 @@ class SslMd5
         MD5_Final(out_data, &this->md5);
     }
 };
+
+class SslMd4
+{
+    MD4_CTX md4;
+
+    public:
+    SslMd4()
+    {
+        MD4_Init(&this->md4);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        MD4_Update(&this->md4, data, data_size);
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        if (MD4_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD4_DIGEST_LENGTH];
+            MD4_Final(tmp, &this->md4);
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        MD4_Final(out_data, &this->md4);
+    }
+};
+
 
 class SslRC4
 {
@@ -141,6 +169,39 @@ class SslHMAC
     }
 };
 
+class SslHMAC_Md5
+{
+    HMAC_CTX hmac;
+
+    public:
+    SslHMAC_Md5(const uint8_t * const key, size_t key_size)
+    {
+        HMAC_Init(&this->hmac, key, key_size, EVP_md5());
+    }
+
+    ~SslHMAC_Md5()
+    {
+        HMAC_cleanup(&this->hmac);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        HMAC_Update(&this->hmac, data, data_size);
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        unsigned int len = 0;
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            HMAC_Final(&this->hmac, tmp, &len);
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        HMAC_Final(&this->hmac, out_data, &len);
+    }
+};
+
 /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
 class Sign
 {
@@ -149,7 +210,7 @@ class Sign
     size_t key_size;
 
     public:
-    Sign(const uint8_t * const & key, size_t key_size) 
+    Sign(const uint8_t * const & key, size_t key_size)
         : key(key)
         , key_size(key_size)
     {
@@ -161,7 +222,7 @@ class Sign
         };
         sha1.update(sha1const, 40);
     }
-    
+
     void update(const uint8_t * const data, size_t data_size) {
         this->sha1.update(data, data_size);
     }
