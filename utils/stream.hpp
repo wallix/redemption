@@ -40,6 +40,62 @@ enum {
      AUTOSIZE = 65536
 };
 
+// BStream is for "buffering stream", as this stream allocate a work buffer.
+class Array {
+    uint8_t* data;
+    size_t capacity;
+    private:
+    uint8_t autobuffer[AUTOSIZE];
+
+    public:
+    Array(size_t size = AUTOSIZE) {
+        this->capacity = 0;
+        this->init(size);
+    }
+
+    virtual ~Array() {
+        // <this->data> is allocated dynamically.
+        if (this->capacity > AUTOSIZE) {
+            delete [] this->data;
+        }
+    }
+
+    size_t size() const {
+        return this->capacity;
+    }
+
+    uint8_t * get_data() const {
+        return this->data;
+    }
+
+    // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
+    virtual void init(size_t v) {
+        if (v != this->capacity) {
+            try {
+                // <this->data> is allocated dynamically.
+                if (this->capacity > AUTOSIZE){
+                    delete [] this->data;
+                }
+                if (v > AUTOSIZE){
+                    this->data = new uint8_t[v];
+                }
+                else {
+                    this->data = &(this->autobuffer[0]);
+                }
+                this->capacity = v;
+            }
+            catch (...) {
+                this->data = 0;
+                this->capacity = 0;
+                LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(v));
+                throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
+            }
+        }
+    }
+};
+
+
+
 class Stream {
 public:
     uint8_t* p;
@@ -61,12 +117,20 @@ public:
         return  n <= this->tailroom();
     }
 
-    size_t tailroom() const {
-        return static_cast<size_t>(this->get_capacity() - this->get_offset());
+    virtual size_t tailroom() const {
+        return static_cast<size_t>(this->capacity - this->headroom() - this->get_offset());
+    }
+
+    virtual size_t endroom() const {
+        return static_cast<size_t>(this->capacity - (this->end - this->data));
+    }
+
+    virtual size_t headroom() const {
+        return 0;
     }
 
     virtual size_t get_capacity() const {
-        return this->capacity;
+        return static_cast<size_t>(this->capacity - this->headroom());
     }
 
     virtual uint8_t * get_data() const {
@@ -808,10 +872,6 @@ public:
         return this->data_start - this->data;
     }
 
-    virtual size_t get_capacity() const {
-        return this->capacity - this->headroom();
-    }
-
     virtual uint8_t * get_data() const {
         return this->data_start;
     }
@@ -847,29 +907,29 @@ class SubStream : public Stream {
 
     SubStream(const Stream & stream, size_t offset = 0, size_t new_size = 0)
     {
-        if ((offset + new_size) > stream.get_capacity()){
-            LOG(LOG_ERR, "Substream allocation overflow capacity=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.get_capacity()),
+        if ((offset + new_size) > stream.size()){
+            LOG(LOG_ERR, "Substream definition outside underlying stream stream.size=%u offset=%u new_size=%u",
+                static_cast<unsigned>(stream.size()),
                 static_cast<unsigned>(offset),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_CONSTRUCTOR);
         }
         this->p = this->data = stream.get_data() + offset;
-        this->capacity = (new_size == 0)?(stream.get_capacity() - offset):new_size;
+        this->capacity = (new_size == 0)?(stream.size() - offset):new_size;
         this->end = this->data + this->capacity;
     }
 
     void resize(const Stream & stream, size_t new_size){
-        this->data = this->p = stream.p;
-        if (new_size > (stream.tailroom())){
-            LOG(LOG_ERR, "Substream resize overflow capacity=%u offset=%u new_size=%u",
-                static_cast<unsigned>(stream.get_capacity()),
+        if (new_size > stream.size()){
+            LOG(LOG_ERR, "Substream resize overflow size=%u offset=%u new_size=%u",
+                static_cast<unsigned>(stream.size()),
                 static_cast<unsigned>(stream.get_offset()),
                 static_cast<unsigned>(new_size));
             throw Error(ERR_SUBSTREAM_OVERFLOW_IN_RESIZE);
         }
+        this->data = this->p = stream.p;
         this->capacity = new_size;
-        this->end = stream.p + new_size;
+        this->end = this->data + new_size;
     }
 
     virtual ~SubStream() {}
