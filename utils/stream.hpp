@@ -723,7 +723,7 @@ class BStream : public Stream {
                 }
                 this->capacity = v;
             }
-            catch (...){
+            catch (...) {
                 this->data = 0;
                 this->capacity = 0;
                 LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(v));
