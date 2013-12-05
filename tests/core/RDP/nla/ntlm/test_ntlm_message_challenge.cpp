@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
     hexdump_c(ChallengeMsg.TargetInfo.Buffer.get_data(),
               ChallengeMsg.TargetInfo.Buffer.size());
-    BOOST_CHECK_EQUAL(ChallengeMsg.serverChallenge, 8063485858206805542);
+    BOOST_CHECK_EQUAL(ChallengeMsg.serverChallenge, 8063485858206805542LL);
 
     ChallengeMsg.version.print();
 
