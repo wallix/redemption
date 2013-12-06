@@ -166,6 +166,7 @@ struct NTLMNegotiateMessage : public NTLMMessage {
     {
     }
 
+
     virtual ~NTLMNegotiateMessage() {}
 
     void emit(Stream & stream) {

@@ -103,11 +103,16 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
     hexdump_c(ChallengeMsg.TargetInfo.Buffer.get_data(),
               ChallengeMsg.TargetInfo.Buffer.size());
-    BOOST_CHECK_EQUAL(ChallengeMsg.serverChallenge, 8063485858206805542LL);
+    BStream servChall;
+    servChall.out_copy_bytes(ChallengeMsg.serverChallenge, 8);
+    servChall.mark_end();
+    servChall.rewind();
+    uint64_t servchallengeinteger = servChall.in_uint64_le();
+    BOOST_CHECK_EQUAL(servchallengeinteger, 8063485858206805542LL);
 
-    ChallengeMsg.version.print();
+    // ChallengeMsg.version.print();
 
-    ChallengeMsg.AvPairList.print();
+    // ChallengeMsg.AvPairList.print();
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 
@@ -116,7 +121,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
         LOG(LOG_INFO, "=================================\n");
         SslMd5 md5;
         BStream buff;
-        buff.out_uint64_be(ChallengeMsg.serverChallenge);
+        buff.out_copy_bytes(ChallengeMsg.serverChallenge, 8);
         buff.mark_end();
         md5.update(buff.get_data(), buff.size());
         uint8_t sigmd5[24];

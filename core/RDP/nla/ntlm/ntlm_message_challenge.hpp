@@ -183,7 +183,8 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     NtlmField TargetName;          /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
-    uint64_t serverChallenge;      /* 8 Bytes */
+    uint8_t serverChallenge[8];      /* 8 Bytes */
+    // uint64_t serverChallenge;
     /* 8 Bytes reserved */
     NtlmField TargetInfo;          /* 8 Bytes */
     NtlmVersion version;           /* 8 Bytes */
@@ -205,7 +206,8 @@ struct NTLMChallengeMessage : public NTLMMessage {
         NTLMMessage::emit(stream);
         this->TargetName.emit(stream, currentOffset);
         this->negoFlags.emit(stream);
-        stream.out_uint64_le(this->serverChallenge);
+        stream.out_copy_bytes(this->serverChallenge, 8);
+        // stream.out_uint64_le(this->serverChallenge);
         stream.out_skip_bytes(8);
         this->TargetInfo.emit(stream, currentOffset);
         this->version.emit(stream);
@@ -221,7 +223,8 @@ struct NTLMChallengeMessage : public NTLMMessage {
         NTLMMessage::recv(stream);
         this->TargetName.recv(stream);
         this->negoFlags.recv(stream);
-        this->serverChallenge = stream.in_uint64_le();
+        stream.in_copy_bytes(this->serverChallenge, 8);
+        // this->serverChallenge = stream.in_uint64_le();
         stream.in_skip_bytes(8);
         this->TargetInfo.recv(stream);
         this->version.recv(stream);

@@ -515,6 +515,7 @@ struct NTLMv2_Client_Challenge {
     uint8_t  ClientChallenge[8];    // Client Challenge
     uint32_t Reserved3;             // MUST BE 0x00
     NtlmAvPairList AvPairList;
+    uint32_t Reserved4;             // MUST BE 0x00
 
     void ntlm_current_time() {
     /**
@@ -544,6 +545,7 @@ struct NTLMv2_Client_Challenge {
         stream.out_copy_bytes(this->ClientChallenge, 8);
         stream.out_skip_bytes(4);
         this->AvPairList.emit(stream);
+        stream.out_skip_bytes(4);
     }
 
 
@@ -557,6 +559,7 @@ struct NTLMv2_Client_Challenge {
         stream.in_copy_bytes(this->ClientChallenge, 8);
         stream.in_skip_bytes(4);
         this->AvPairList.recv(stream);
+        stream.in_skip_bytes(4);
     }
 
 };
