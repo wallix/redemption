@@ -197,6 +197,17 @@ namespace re {
             this->sts.clear();
             this->num_cap = 0;
         }
+
+        void clear_and_shrink()
+        {
+            this->clear();
+#if __cplusplus >= 201103L
+            this->sts.shrink_to_fit();
+#else
+            this->sts.~vector();
+            new (&this->sts) state_list_t();
+#endif
+        }
     };
 
     inline State ** c2range(StateAccu & accu,
@@ -1072,14 +1083,10 @@ namespace re {
             this->m_root = 0;
         }
 
-        void shrink_to_fit()
+        void clear_and_shrink()
         {
-#if __cplusplus >= 201103L
-            this->m_accu.sts.shrink_to_fit();
-#else
-//             this->m_accu.sts.~vector();
-//             new (&this->m_accu.sts) state_list_t();
-#endif
+            this->m_accu.clear_and_shrink();
+            this->m_root = 0;
         }
 
     private:

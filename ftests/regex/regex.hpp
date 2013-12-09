@@ -44,6 +44,14 @@ namespace re {
             {
                 this->st_parser.compile(s, &this->err, &this->pos_err);
             }
+
+            void reset(const char * s)
+            {
+                this->err = 0;
+                this->pos_err = 0;
+                this->st_parser.clear();
+                this->st_parser.compile(s, &this->err, &this->pos_err);
+            }
         };
         Parser parser;
         StateMachine2 sm;
@@ -68,28 +76,25 @@ namespace re {
              this->parser.st_parser.root(),
              this->parser.st_parser.nb_capture(),
              flags,
-             flags&MINIMAL_MEMORY)
+             flags & MINIMAL_MEMORY)
         , step_limit(step_limit)
         {
             if (flags) {
-                this->parser.st_parser.clear();
-                this->parser.st_parser.shrink_to_fit();
+                this->parser.st_parser.clear_and_shrink();
             }
         }
 
         void reset(const char * s, flag_t flags = DEFAULT_FLAG)
         {
             this->sm.~StateMachine2();
-            this->parser.~Parser();
-            new (&this->parser) Parser(s);
+            this->parser.reset(s);
             new (&this->sm) StateMachine2(this->parser.st_parser.states(),
                                           this->parser.st_parser.root(),
                                           this->parser.st_parser.nb_capture(),
                                           flags,
-                                          flags&MINIMAL_MEMORY);
+                                          flags & MINIMAL_MEMORY);
             if (flags) {
-                this->parser.st_parser.clear();
-                this->parser.st_parser.shrink_to_fit();
+                this->parser.st_parser.clear_and_shrink();
             }
         }
 

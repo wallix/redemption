@@ -363,14 +363,14 @@ int main()
     Bench<test_search_optimize_mem>();
     std::cout << "\n\npcre search:\n";
     Bench<test_pcre_search>();
-    std::cout << "\n\npcre search with capture:\n";
-    Bench<test_pcre_search_capture>();
-    std::cout << "\n\nposix search:\n";
-    Bench<test_posix_search>();
     std::cout << "\n\nsearch with capture:\n";
     Bench<test_search_capture>();
     std::cout << "\n\nsearch with capture (optmize_mem=true):\n";
     Bench<test_search_capture_optimize_mem>();
+    std::cout << "\n\npcre search with capture:\n";
+    Bench<test_pcre_search_capture>();
+    std::cout << "\n\nposix search:\n";
+    Bench<test_posix_search>();
     std::cout << "\n\nposix search with capture:\n";
     Bench<test_posix_search_capture>();
 }

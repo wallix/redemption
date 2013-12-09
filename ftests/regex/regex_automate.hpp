@@ -239,7 +239,7 @@ namespace re {
             unsigned nb_state_consume = 0;
             {
                 state_list_t::const_iterator first = sts.begin();
-                state_list_t::const_iterator last = sts.end();
+                state_list_t::const_iterator last = sts.end() - this->nb_capture;
                 for (; first != last; ++first) {
                     if ((*first)->is_sequence()) {
                         this->nodes += (*first)->data.sequence.len - 1;
