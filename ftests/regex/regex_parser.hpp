@@ -36,6 +36,8 @@ namespace re {
         unsigned num_cap;
         state_list_t sts;
         std::vector<unsigned> indexes;
+        typedef std::vector<std::pair<char_int, char_int> > c_range_type;
+        c_range_type c_ranges;
 
     private:
 #ifdef RE_PARSER_POOL_STATE
@@ -190,6 +192,7 @@ namespace re {
         {
             this->delete_state();
             this->num_cap = 0;
+            this->c_ranges.clear();
             this->indexes.clear();
             this->sts.clear();
         }
@@ -199,11 +202,15 @@ namespace re {
             this->delete_state();
             this->num_cap = 0;
 #if __cplusplus >= 201103L
+            this->c_ranges.clear();
+            this->c_ranges.shrink_to_fit();
             this->indexes.clear();
             this->indexes.shrink_to_fit();
             this->sts.clear();
             this->sts.shrink_to_fit();
 #else
+            this->c_ranges.~vector();
+            new (&this->c_ranges) c_range_type();
             this->indexes.~vector();
             new (&this->indexes) std::vector<unsigned>();
             this->sts.~vector();
@@ -321,7 +328,13 @@ namespace re {
         typedef std::vector<range_t> container_type;
         typedef container_type::iterator iterator;
 
-        container_type ranges;
+        container_type & ranges;
+
+        VectorRange(container_type & c_ranges)
+        : ranges(c_ranges)
+        {
+            this->ranges.clear();
+        }
 
         void push(char_int left, char_int right) {
             ranges.push_back(range_t(left, right));
@@ -436,7 +449,7 @@ namespace re {
 
         if (c == '[') {
             bool reverse_result = false;
-            VectorRange ranges;
+            VectorRange ranges(accu.c_ranges);
             if (consumer.valid() && (c = consumer.bumpc()) != ']') {
                 if (c == '^') {
                     reverse_result = true;
