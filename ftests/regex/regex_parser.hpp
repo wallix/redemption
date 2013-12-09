@@ -35,6 +35,7 @@ namespace re {
     public:
         unsigned num_cap;
         state_list_t sts;
+        std::vector<unsigned> indexes;
 
     private:
 #ifdef RE_PARSER_POOL_STATE
@@ -118,7 +119,7 @@ namespace re {
 
         ~StateAccu()
         {
-            this->clear();
+            this->delete_state();
 #ifdef RE_PARSER_POOL_STATE
             memory_list_t::deallocate(this->mem);
 #endif
@@ -187,6 +188,32 @@ namespace re {
 
         void clear()
         {
+            this->delete_state();
+            this->num_cap = 0;
+            this->indexes.clear();
+            this->sts.clear();
+        }
+
+        void clear_and_shrink()
+        {
+            this->delete_state();
+            this->num_cap = 0;
+#if __cplusplus >= 201103L
+            this->indexes.clear();
+            this->indexes.shrink_to_fit();
+            this->sts.clear();
+            this->sts.shrink_to_fit();
+#else
+            this->indexes.~vector();
+            new (&this->indexes) std::vector<unsigned>();
+            this->sts.~vector();
+            new (&this->sts) state_list_t();
+#endif
+        }
+
+    private:
+        void delete_state()
+        {
 #ifdef RE_PARSER_POOL_STATE
             while (this->mem->prev) {
                 this->mem = memory_list_t::deallocate(this->mem);
@@ -194,19 +221,6 @@ namespace re {
             this->mem->clear();
 #else
             std::for_each(this->sts.begin(), this->sts.end(), StateDeleter());
-#endif
-            this->sts.clear();
-            this->num_cap = 0;
-        }
-
-        void clear_and_shrink()
-        {
-            this->clear();
-#if __cplusplus >= 201103L
-            this->sts.shrink_to_fit();
-#else
-            this->sts.~vector();
-            new (&this->sts) state_list_t();
 #endif
         }
     };
@@ -597,7 +611,6 @@ namespace re {
     public:
         state_list_t sts2;
     private:
-        std::vector<unsigned> indexes;
         StateAccu & accu;
         unsigned nb_clone;
 
@@ -611,11 +624,11 @@ namespace re {
         {
             const size_t size = this->poslast - this->pos;
             this->sts2.resize(size);
-            this->indexes.resize(size*2);
+            this->accu.indexes.resize(size*2);
             this->accu.sts.reserve(this->accu.sts.size() + size*nb_clone);
             state_list_t::iterator first = accu.sts.begin() + this->pos;
             state_list_t::iterator last = accu.sts.begin() + this->poslast;
-            std::vector<unsigned>::iterator idxit = this->indexes.begin();
+            std::vector<unsigned>::iterator idxit = this->accu.indexes.begin();
             for (; first != last; ++first) {
                 if ((*first)->out1) {
                     *idxit = this->get_idx((*first)->out1);
@@ -637,7 +650,7 @@ namespace re {
             for (; first != last; ++first, ++first2) {
                 *first2 = this->copy(*first);
             }
-            std::vector<unsigned>::iterator idxit = this->indexes.begin();
+            std::vector<unsigned>::iterator idxit = this->accu.indexes.begin();
             first = this->accu.sts.begin() + this->pos;
             first2 = this->sts2.begin();
             for (; first != last; ++first, ++first2) {

@@ -84,7 +84,7 @@ namespace re {
             }
         }
 
-#if __cplusplus >= 201103L && __cplusplus != 1 || __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L && __cplusplus != 1 || defined(__GXX_EXPERIMENTAL_CXX0X__)
         Regex(Regex&& other) noexcept
         : parser()
         , sm(std::move(other.sm))
