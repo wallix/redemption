@@ -23,7 +23,6 @@
 
 #include <ostream>
 #include <algorithm>
-#include <utility> //std::swap
 
 #include "regex_consumer.hpp"
 
@@ -120,10 +119,13 @@ namespace re {
                         os << ".";
                     }
                     else if (this->data.range.l == this->data.range.r) {
-                        os << "[" << this->data.range.l << "] '" << utf8_char(this->data.range.l) << "'";
+                        os << "[" << this->data.range.l << "] '"
+                        << utf8_char(this->data.range.l) << "'";
                     }
                     else {
-                        os << "[" << this->data.range.l << "-" << this->data.range.r << "] ['" << utf8_char(this->data.range.l) << "'-'" << utf8_char(this->data.range.r) << "']";
+                        os << "[" << this->data.range.l << "-" << this->data.range.r << "] ['"
+                        << utf8_char(this->data.range.l) << "'-'" << utf8_char(this->data.range.r)
+                        << "']";
                     }
                     break;
                 case SEQUENCE: {
@@ -261,7 +263,8 @@ namespace re {
         return SequenceString(s, count);
     }
 
-    inline SequenceString new_string_sequence(const char_int * str, std::size_t len, std::size_t count) {
+    inline SequenceString new_string_sequence(const char_int * str, std::size_t len,
+                                              std::size_t count) {
         char_int * ret = new char_int[count * len + 1];
         char_int * p = ret;
         while (count--) {

@@ -24,6 +24,7 @@
 #include "regex_utils.hpp"
 
 #include <algorithm>
+#include <utility> //std::pair
 #include <vector>
 #include <new>
 
@@ -1043,8 +1044,7 @@ namespace re {
 
                 state_list_t::iterator first = this->m_accu.sts.begin();
                 state_list_t::iterator last = this->m_accu.sts.end();
-                state_list_t::iterator first_cap = std::stable_partition(first, last, IsCapture());
-                //this->m_nb_capture = last - first_cap;
+                state_list_t::iterator first_cap = std::stable_partition(first, last, IsNotCapture());
 
                 for (unsigned n = this->nb_capture(); first != first_cap; ++first, ++n) {
                     (*first)->num = n;

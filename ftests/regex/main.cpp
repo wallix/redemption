@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     using namespace re;
 
     if (argc < 2) {
-        std::cerr << argv[0] << (" regex [str]") << std::endl;
+        std::cerr << argv[0] << (" regex [str [optimization:(1|2|3)]]") << std::endl;
         return 1;
     }
     const int optimize_mem = argc >= 4 && argv[3] ? atoi(argv[3]) : 0;

@@ -186,7 +186,6 @@ namespace re {
         void initialize_memory(size_t nb_st_list, size_t nb_st_range_list,
                                bool cpy_sts, unsigned nb_char_seq)
         {
-//             const size_t nb_st = this->nb_states - nb_split - this->nb_capture;
             const size_t size_mini_sts = cpy_sts
             ? (this->nb_states - this->nb_capture) * sizeof(MinimalState)
             : 0;
@@ -935,10 +934,25 @@ namespace re {
                 if (l->st_num == -1u) {
                     continue;
                 }
-                std::cout << l << "  st: " << l->st_num << (l->st_num >= this->nb_states-this->nb_capture ? " (cap)\n" : "\n");
+                std::cout << l << "  st: " << l->st_num
+                << (l->st_num >= this->nb_states-this->nb_capture ? " (cap)\n" : "\n");
                 for (StateList * first = l->first, * last = l->last; first != last; ++first) {
                     std::cout << "\t" << first->st->num << "\t"
-                    << *first->st << "\t" << first->next << "\t" << first->next_is_finish << "\t" << first->is_terminate;
+                    << *first->st
+                    << ((first->st->is_range()
+                      && first->st->data.range.l == 0
+                      && first->st->data.range.r == char_int(-1)
+                    ) ||(first->st->is_sequence()
+                      && first->st->data.sequence.len < 8
+                    ) ? "\t\t\t"
+                      :  (first->st->is_range()
+                       && first->st->data.range.l != first->st->data.range.r
+                      )||(first->st->is_sequence()
+                       && first->st->data.sequence.len > 7
+                      ) ? "\t"
+                        : "\t\t"
+                    ) << first->next << (first->next ? "\t" : "\t\t")
+                    << first->next_is_finish << "\t" << first->is_terminate;
                     if (first->num_open != -1u) {
                         std::cout << "\t( " << first->num_open;
                     }
@@ -952,7 +966,7 @@ namespace re {
 
         void display_dfa() const
         {
-            std::cout << ("\tnum\tst\t\tnext\tnext_is_finish\tis_terminate") << std::endl;
+            std::cout << ("\tnum\tst\t\t\tnext\tnext_is_finish\tis_terminate") << std::endl;
             if (this->st_range_list == this->st_range_list_last || this->st_range_list->first != this->st_range_beginning.first) {
                 std::cout << ("beginning") << std::endl;
                 if (this->st_range_beginning.st_num != -1u && this->st_range_beginning.first->st) {
@@ -972,12 +986,13 @@ namespace re {
             }
 
             if (this->mini_sts_last) {
-                std::cout << ("\033[33m(optimize out)") << std::endl;
+                std::cout << "\033[33m(optimize out)\nnum\ttype\n";
                 MinimalState * first = this->mini_sts;
                 for (; first != this->mini_sts_last; ++first) {
                     std::cout << first->num << "\t" << first->type << "\n";
                 }
                 std::cout << "\033[0m";
+                std::cout.flush();
                 return ;
             }
 
@@ -998,6 +1013,7 @@ namespace re {
             char oldfill = std::cout.fill('\t');
             Impl::display(*this, this->root);
             std::cout.fill(oldfill);
+            std::cout.flush();
         }
 
     private:

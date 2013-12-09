@@ -27,7 +27,8 @@
 
 namespace re {
 
-    struct IsCapture {
+    struct IsNotCapture
+    {
         bool operator()(const State * st) const
         {
             return ! st->is_cap();

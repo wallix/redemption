@@ -1,6 +1,6 @@
 #!/bin/bash
 
-[ -z "$*" ] && echo $0 'filename.cpp [-DRE_PARSER_POOL_STATE]' >&2 && exit 1
+[ -z "$*" ] && echo $0 'filename.cpp [-DRE_PARSER_POOL_STATE] [g++-options]' >&2 && exit 1
 
 g++ \
 -Wall \
@@ -32,5 +32,6 @@ g++ \
 -O3 \
 -march=native \
 -DNDEBUG \
+-pedantic \
 "$@" \
 -lpcre

@@ -234,11 +234,6 @@ class Bench
         ::test(basic_benchmark<ref_test>(test.pattern, ref_test(test)), 600000u, s);
     }
 
-    static void test(const char * s)
-    {
-        test(s, s);
-    }
-
 public:
     Bench()
     {

@@ -72,9 +72,9 @@ public:
 };
 
 template<typename Test>
-void test(const basic_benchmark<Test> & bench, unsigned n, const char * s)
+bool test(const basic_benchmark<Test> & bench, unsigned n, const char * s)
 {
-    bench(n, s);
+    return bench(n, s);
 }
 
 struct basic_test
