@@ -359,8 +359,8 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->UserName.recv(stream);
         this->Workstation.recv(stream);
         this->EncryptedRandomSessionKey.recv(stream);
-        this->negoFlags.emit(stream);
-        this->version.emit(stream);
+        this->negoFlags.recv(stream);
+        this->version.recv(stream);
 
         // PAYLOAD
         this->LmChallengeResponse.read_payload(stream, pBegin);
@@ -432,8 +432,19 @@ struct LM_Response {
 //   ClientChallenge, as defined in section 3.1.5.1.2.
 
 struct LMv2_Response {
-    uint8_t response[16];
-    uint8_t challengeFromClient[8];
+    uint8_t Response[16];
+    uint8_t ClientChallenge[8];
+
+    void emit(Stream & stream) {
+        stream.out_copy_bytes(this->Response, 16);
+        stream.out_copy_bytes(this->ClientChallenge, 8);
+    }
+
+    void recv(Stream & stream) {
+        stream.in_copy_bytes(this->Response, 16);
+        stream.in_copy_bytes(this->ClientChallenge, 8);
+    }
+
 };
 
 // 2.2.2.6   NTLM v1 Response: NTLM_RESPONSE

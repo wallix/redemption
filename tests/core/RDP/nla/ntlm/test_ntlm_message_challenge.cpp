@@ -93,16 +93,31 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     ChallengeMsg.recv(ts_req2.negoTokens);
 
     BOOST_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
-    ChallengeMsg.negoFlags.print();
+    // ChallengeMsg.negoFlags.print();
 
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
-    hexdump_c(ChallengeMsg.TargetName.Buffer.get_data(),
-              ChallengeMsg.TargetName.Buffer.size());
+    uint8_t targetname_match[] =
+        "\x57\x00\x49\x00\x4e\x00\x37\x00";
+    BOOST_CHECK_EQUAL(memcmp(targetname_match,
+                             ChallengeMsg.TargetName.Buffer.get_data(),
+                             ChallengeMsg.TargetName.len),
+                      0);
+    // hexdump_c(ChallengeMsg.TargetName.Buffer.get_data(),
+    //           ChallengeMsg.TargetName.Buffer.size());
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.len, 64);
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetInfo.bufferOffset, 64);
-    hexdump_c(ChallengeMsg.TargetInfo.Buffer.get_data(),
-              ChallengeMsg.TargetInfo.Buffer.size());
+    uint8_t targetinfo_match[] =
+        "\x02\x00\x08\x00\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00"
+        "\x57\x00\x49\x00\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00"
+        "\x6e\x00\x37\x00\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
+        "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
+    BOOST_CHECK_EQUAL(memcmp(targetinfo_match,
+                             ChallengeMsg.TargetInfo.Buffer.get_data(),
+                             ChallengeMsg.TargetInfo.len),
+                      0);
+    // hexdump_c(ChallengeMsg.TargetInfo.Buffer.get_data(),
+    //           ChallengeMsg.TargetInfo.Buffer.size());
     BStream servChall;
     servChall.out_copy_bytes(ChallengeMsg.serverChallenge, 8);
     servChall.mark_end();
@@ -116,18 +131,29 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 
+    BStream tosend;
+    ChallengeMsg.emit(tosend);
 
-    {
-        LOG(LOG_INFO, "=================================\n");
-        SslMd5 md5;
-        BStream buff;
-        buff.out_copy_bytes(ChallengeMsg.serverChallenge, 8);
-        buff.mark_end();
-        md5.update(buff.get_data(), buff.size());
-        uint8_t sigmd5[24];
-        md5.final(sigmd5, sizeof(sigmd5));
-        hexdump_c(sigmd5, sizeof(sigmd5));
-    }
+    NTLMChallengeMessage ChallengeMsgDuplicate;
 
+    tosend.mark_end();
+    tosend.rewind();
+    ChallengeMsgDuplicate.recv(tosend);
 
+    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);
+    // ChallengeMsgDuplicate.negoFlags.print();
+
+    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.len, 8);
+    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetName.bufferOffset, 56);
+
+    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.len, 64);
+    BOOST_CHECK_EQUAL(ChallengeMsgDuplicate.TargetInfo.bufferOffset, 64);
+    BStream servChall2;
+    servChall2.out_copy_bytes(ChallengeMsgDuplicate.serverChallenge, 8);
+    servChall2.mark_end();
+    servChall2.rewind();
+    uint64_t servchallengeinteger2 = servChall2.in_uint64_le();
+    BOOST_CHECK_EQUAL(servchallengeinteger2, 8063485858206805542LL);
+
+    // ChallengeMsgDuplicate.AvPairList.print();
 }

@@ -202,6 +202,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
     virtual ~NTLMChallengeMessage() {}
 
     void emit(Stream & stream) {
+        this->TargetInfo.Buffer.reset();
+        this->AvPairList.emit(this->TargetInfo.Buffer);
+
         uint32_t currentOffset = this->PayloadOffset;
         NTLMMessage::emit(stream);
         this->TargetName.emit(stream, currentOffset);

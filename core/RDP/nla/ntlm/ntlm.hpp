@@ -80,14 +80,17 @@ struct NTLMContext {
     NTLMNegotiateMessage NEGOTIATE_MESSAGE;
     NTLMChallengeMessage CHALLENGE_MESSAGE;
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
-    BStream BuffNegotiateMessage;
-    BStream BuffChallengeMessage;
-    BStream BuffAuthenticateMessage;
-    BStream BuffChallengeTargetInfo;
-    BStream BuffAuthenticateTargetInfo;
-    BStream BuffTargetName;
-    BStream BuffNtChallengeResponse;
-    BStream BuffLmChallengeResponse;
+
+    // BStream BuffNegotiateMessage;
+    // BStream BuffChallengeMessage;
+    // BStream BuffAuthenticateMessage;
+    // BStream BuffChallengeTargetInfo;
+    // BStream BuffAuthenticateTargetInfo;
+    // BStream BuffTargetName;
+
+    // BStream BuffNtChallengeResponse;
+    // BStream BuffLmChallengeResponse;
+
     uint8_t Timestamp[8];
     uint8_t ChallengeTimestamp[8];
     uint8_t ServerChallenge[8];
@@ -170,12 +173,19 @@ struct NTLMContext {
         }
     }
 
+    /**
+     * Generate client challenge (8-byte nonce).
+     * @param NTLM context
+     */
     void ntlm_generate_client_challenge()
     {
 	// /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
         this->randgen.random(this->ClientChallenge, 8);
     }
-
+    /**
+     * Generate server challenge (8-byte nonce).
+     * @param NTLM context
+     */
     void ntlm_generate_server_challenge()
     {
         this->randgen.random(this->ServerChallenge, 8);
@@ -185,6 +195,10 @@ struct NTLMContext {
         memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
     }
 
+    /**
+     * Generate RandomSessionKey (16-byte nonce).
+     * @param NTLM context
+     */
     void ntlm_generate_random_session_key()
     {
         this->randgen.random(this->RandomSessionKey, 16);
@@ -193,6 +207,7 @@ struct NTLMContext {
     void ntlm_generate_exported_session_key() {
         this->randgen.random(this->ExportedSessionKey, 16);
     }
+
     // void ntlm_generate_exported_session_key()
     // {
     //     memcpy(this->ExportedSessionKey, this->RandomSessionKey, 16);
@@ -229,6 +244,12 @@ struct NTLMContext {
         NTOWFv2(pass, pass_size, user, user_size, domain, domain_size,
                 buff, buff_size);
     }
+
+    // ntlmv2_compute_response_from_challenge generates :
+    // - timestamp
+    // - client challenge
+    // - NtChallengeResponse
+    // - LmChallengeResponse
     void ntlmv2_compute_response_from_challenge(const uint8_t * pass,   size_t pass_size,
                                                 const uint8_t * user,   size_t user_size,
                                                 const uint8_t * domain, size_t domain_size) {
@@ -641,24 +662,14 @@ struct NTLMContext {
 	// RC4(&rc4, length, (void*) plaintext, (void*) ciphertext);
     }
 
-    /**
-     * Generate client challenge (8-byte nonce).
-     * @param NTLM context
-     */
-
-
-    /**
-     * Generate server challenge (8-byte nonce).
-     * @param NTLM context
-     */
 
 
 
 
-    /**
-     * Generate RandomSessionKey (16-byte nonce).
-     * @param NTLM context
-     */
+
+
+
+
 
 
     /**
