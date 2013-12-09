@@ -41,13 +41,6 @@ namespace re {
         class StateList;
         class StepRangeList;
 
-        struct is_not_begin_state {
-            bool operator()(const StateList& stl) const
-            {
-                return stl.st->type != FIRST;
-            }
-        };
-
         struct MinimalState
         {
             unsigned type;
@@ -567,8 +560,39 @@ namespace re {
                 this->st_range_beginning.last = this->st_range_beginning.first;
                 this->st_range_list_last = this->st_range_list;
             }
-
         }
+
+#if __cplusplus >= 201103L && __cplusplus != 1 || __GXX_EXPERIMENTAL_CXX0X__
+        StateMachine2(StateMachine2 && other) noexcept
+        {
+            this->root = other.root;
+            this->nums = other.nums;
+            this->caps_type = other.caps_type;
+            this->nb_states = other.nb_states;
+            this->nb_capture = other.nb_capture;
+            this->nodes = other.nodes;
+            this->idx_trace = other.idx_trace;
+            this->reindex_trace = other.reindex_trace;
+            this->idx_trace_free = other.idx_trace_free;
+            this->pidx_trace_free = other.pidx_trace_free;
+            this->traces = other.traces;
+            this->l1 = other.l1;
+            this->l2 = other.l2;
+            this->mini_sts = other.mini_sts;
+            this->mini_sts_last = other.mini_sts_last;
+            this->st_list = other.st_list;
+            this->st_range_list = other.st_range_list;
+            this->st_range_list_last = other.st_range_list_last;
+            this->st_range_beginning = other.st_range_beginning;
+            this->step_id = other.step_id;
+            this->first_last = other.first_last;
+
+            other.st_list = nullptr;
+            other.nb_states = 0;
+            other.nb_capture = 0;
+            other.st_range_beginning.st_num = -1u;
+        }
+#endif
 
         ~StateMachine2()
         {

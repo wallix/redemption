@@ -84,6 +84,23 @@ namespace re {
             }
         }
 
+#if __cplusplus >= 201103L && __cplusplus != 1 || __GXX_EXPERIMENTAL_CXX0X__
+        Regex(Regex&& other) noexcept
+        : parser()
+        , sm(std::move(other.sm))
+        , step_limit(other.step_limit)
+        {
+            other.parser.err = nullptr;
+            other.parser.pos_err = 0;
+        }
+
+        Regex(StateMachine2 && other, unsigned step_limit = 10000) noexcept
+        : parser()
+        , sm(std::move(other))
+        , step_limit(step_limit)
+        {}
+#endif
+
         void reset(const char * s, flag_t flags = DEFAULT_FLAG)
         {
             this->sm.~StateMachine2();
