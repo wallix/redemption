@@ -894,7 +894,10 @@ class SocketTransport : public Transport {
 
             if (binary_check_failed
             || (0 != strcmp(issuer_existing, issuer))
-            || (0 != strcmp(subject_existing, subject))
+            // Only one of subject_existing and subject is null
+            || ((!subject_existing || !subject) && (subject_existing != subject))
+            // All of subject_existing and subject are not null
+            || (subject && (0 != strcmp(subject_existing, subject)))
             || (0 != strcmp(fingerprint_existing, fingerprint))) {
                 if (this->error_message) {
                     char buff[256];
