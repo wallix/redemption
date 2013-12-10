@@ -38,7 +38,7 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "listen.hpp"
@@ -78,6 +78,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     Inifile ini;
     ini.debug.front = 511;
+    ini.debug.primary_orders = 7;
 
 //     int nodelay = 1;
 //     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY
