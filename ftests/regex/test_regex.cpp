@@ -334,6 +334,42 @@ void test_re(re::Regex::flag_t flags)
     regex_test(regex, "lka", 0, 1, 0, matches, 1, matches);
 
 
+    str_regex = "\\a";
+    regex.reset(str_regex, flags);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    str = "a";
+    regex_test(regex, str, 1, 1, 1, matches2, 1, matches);
+
+
+    str_regex = "[\\a]";
+    regex.reset(str_regex, flags);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    str = "a";
+    regex_test(regex, str, 1, 1, 1, matches2, 1, matches);
+
+
+    str_regex = "\\[a]";
+    regex.reset(str_regex, flags);
+    if (regex.message_error()) {
+        std::ostringstream os;
+        os << str_regex << (regex.message_error())
+        << " at offset " << regex.position_error();
+        BOOST_CHECK_MESSAGE(false, os.str());
+    }
+    str = "[a]";
+    regex_test(regex, str, 1, 1, 1, matches2, 1, matches);
+
+
     str_regex = "(.*)";
     regex.reset(str_regex, flags);
     if (regex.message_error()) {

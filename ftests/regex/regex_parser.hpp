@@ -349,7 +349,7 @@ namespace re {
     {
         if (c != '[' && c != '.') {
             if (c == '\\') {
-                char_int c2 = consumer.getc();
+                char_int c2 = consumer.bumpc();
                 switch (c2) {
                     case 0:
                         return '\\';
@@ -419,13 +419,11 @@ namespace re {
             if (n > 1) {
                 char_int * str = new char_int[n+1];
                 char_int * p = str;
-                *p = c;
-                cons = consumer;
+                *p = get_c(consumer, c);
                 for (unsigned i = 1; i != n; ++i) {
-                    *++p = get_c(cons, cons.bumpc());
+                    *++p = get_c(consumer, consumer.bumpc());
                 }
                 *++p = 0;
-                consumer.s = cons.s;
                 return &(*pst = accu.sequence(str, n))->out1;
             }
         }
