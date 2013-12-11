@@ -30,10 +30,10 @@
 
 namespace re {
 
-    typedef std::vector<const StateBase*> const_state_list_t;
-    typedef std::vector<StateBase*> state_list_t;
+    typedef std::vector<const State*> const_state_list_t;
+    typedef std::vector<State*> state_list_t;
 
-    inline void append_state(StateBase * st, state_list_t& sts)
+    inline void append_state(State * st, state_list_t& sts)
     {
         //if (st && st->num != -1u) {
         //    st->num = -1u;
@@ -85,9 +85,17 @@ namespace re {
 
     struct StateDeleter
     {
-        void operator()(StateBase * st) const
+        void operator()(State * st) const
         {
             delete st;
+        }
+    };
+
+    struct IsEpsilone
+    {
+        bool operator()(State * st) const
+        {
+            return st->is_epsilone();
         }
     };
 
@@ -96,14 +104,14 @@ namespace re {
         std::vector<unsigned> nums;
 
         struct IsCapture {
-            bool operator()(const StateBase * st) const
+            bool operator()(const State * st) const
             {
                 return ! st->is_cap();
             }
         };
     public:
         state_list_t states;
-        StateBase * root;
+        State * root;
         unsigned nb_capture;
 
         explicit StatesWrapper()
@@ -111,19 +119,47 @@ namespace re {
         , nb_capture(0)
         {}
 
-        explicit StatesWrapper(StateBase * st)
+        explicit StatesWrapper(State * st)
         : root(st)
         , nb_capture(0)
         {
             append_state(st, this->states);
         }
 
-        void reset(StateBase * st)
+        void reset(State * st)
         {
             std::for_each(this->states.begin(), this->states.end(), StateDeleter());
             this->states.clear();
             this->root = st;
             append_state(st, this->states);
+
+            state_list_t::iterator last = this->states.end();
+            if (std::find_if(this->states.begin(), last, IsEpsilone()) != last) {
+                for (state_list_t::iterator first = this->states.begin(); first != last; ++first) {
+                    State * nst = (*first)->out1;
+                    while (nst && nst->is_epsilone()) {
+                        nst = nst->out1;
+                    }
+                    (*first)->out1 = nst;
+                }
+                state_list_t::iterator first = this->states.begin();
+                while (first != last && !(*first)->is_epsilone()) {
+                    ++first;
+                }
+                state_list_t::iterator result = first;
+                for (; first != last; ++first) {
+                    if ((*first)->is_epsilone()) {
+                        delete *first;
+                    }
+                    else {
+                        *result = *first;
+                        ++result;
+                    }
+                }
+                this->states.resize(result - this->states.begin());
+            }
+
+            this->init_nums();
         }
 
         void init_nums()
@@ -150,14 +186,14 @@ namespace re {
             std::fill(this->nums.begin(), this->nums.end(), 0);
         }
 
-        void set_num_at(const StateBase * st, unsigned count)
+        void set_num_at(const State * st, unsigned count)
         {
             assert(st == this->states[st->num]);
             assert(this->states.size() > st->num);
             this->nums[st->num] = count;
         }
 
-        unsigned get_num_at(const StateBase * st) const
+        unsigned get_num_at(const State * st) const
         {
             assert(st == this->states[st->num]);
             assert(this->states.size() > st->num);

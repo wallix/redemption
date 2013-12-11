@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
     bool ismatch3 = false;
     bool ismatch4 = false;
     double d1, d2, d3, d4;
+    bool validregexec = false;
 
     const char * str = argc > 1 ? argv[1] : "abcdef";
 
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
 # define ITERATION 100000
 #endif
     {
-        regexec(&rgx, str, 1, regmatch, 0); //NOTE preload
+        validregexec = regexec(&rgx, str, 1, regmatch, 0) == 0; //NOTE preload
         //BEGIN
         std::clock_t start_time = std::clock();
         for (size_t i = 0; i < ITERATION; ++i) {
@@ -141,7 +142,7 @@ int main(int argc, char **argv) {
     }
     {
 #ifdef DISPLAY_TRACE
-        std::cout << ("\n###exact_search_with_matches\n") << std::endl;
+        std::cout << ("\n### exact_search_with_matches\n") << std::endl;
 #endif
         std::clock_t start_time = std::clock();
         for (size_t i = 0; i < ITERATION; ++i) {
@@ -172,10 +173,13 @@ int main(int argc, char **argv) {
     << (ismatch4 ? "good\n" : "fail\n")
     << d4 << " sec\n";
 
-    //std::cout << "st_exact_search: " << st_exact_search(regex.stw, str) << "\n";
-    //std::cout << "st_search: " << st_search(regex.stw, str) << std::endl;
+//     StatesWrapper stw;
+//     st_compile(stw, rgxstr);
+//     std::cout << "st_exact_search: " << st_exact_search(stw, str) << "\n";
+//     stw.reset_nums();
+//     std::cout << "st_search: " << st_search(stw, str) << std::endl;
 
-    if (ismatch3) {
+    if (validregexec && ismatch3) {
         std::cout << ("with regex.h\n");
         for (unsigned i = 1; i < sizeof(regmatch)/sizeof(regmatch[0]); i++) {
             if (regmatch[i].rm_so == -1) {

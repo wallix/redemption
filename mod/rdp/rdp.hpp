@@ -615,9 +615,8 @@ struct mod_rdp : public mod_api {
         OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
-                          this->encryptionLevel);
-        stream.copy_to_head(sec_header);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
+        stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
                                       3, stream.size(), MCS::PER_ENCODING);
@@ -1298,7 +1297,7 @@ struct mod_rdp : public mod_api {
 
                                     SEC::Sec_Send sec(sec_header, lic_data,
                                         SEC::SEC_LICENSE_PKT, this->encrypt, 0);
-                                    lic_data.copy_to_head(sec_header);
+                                    lic_data.copy_to_head(sec_header.get_data(), sec_header.size());
 
                                     this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
                                 }
@@ -1354,9 +1353,8 @@ struct mod_rdp : public mod_api {
                                     HStream lic_data(1024, 65535);
 
                                     LIC::ClientPlatformChallengeResponse_Send(lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig);
-                                    SEC::Sec_Send sec(sec_header, lic_data,
-                                        SEC::SEC_LICENSE_PKT, this->encrypt, 0);
-                                    lic_data.copy_to_head(sec_header);
+                                    SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
+                                    lic_data.copy_to_head(sec_header.get_data(), sec_header.size());
                                     this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
                                 }
                                 break;
@@ -4446,9 +4444,8 @@ public:
         }
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT,
-            this->encrypt, this->encryptionLevel);
-        stream.copy_to_head(sec_header);
+        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel);
+        stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
         if (this->verbose) {
             infoPacket.log("Send data request");

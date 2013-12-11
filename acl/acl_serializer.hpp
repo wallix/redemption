@@ -146,7 +146,7 @@ public:
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
             throw Error(ERR_ACL_MESSAGE_TOO_BIG);
         }
-        if (size > stream.get_capacity()) {
+        if (size > stream.endroom()) {
             stream.init(size);
         }
 

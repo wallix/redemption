@@ -22,8 +22,7 @@
 #define REDEMPTION_REGEX_STATE_HPP
 
 #include <ostream>
-#include <vector>
-#include <string>
+#include <algorithm>
 
 #include "regex_consumer.hpp"
 
@@ -31,7 +30,7 @@
 
 namespace re {
 
-    const unsigned NORMAL           = 0;
+    const unsigned RANGE            = 1;
     const unsigned FINISH           = 1 << 8;
     const unsigned SPLIT            = 1 << 9;
     const unsigned CAPTURE_OPEN     = 1 << 10;
@@ -39,23 +38,111 @@ namespace re {
     const unsigned EPSILONE         = 1 << 12;
     const unsigned FIRST            = 1 << 13;
     const unsigned LAST             = 1 << 14;
+    const unsigned SEQUENCE         = 1 << 15;
 
-    struct StateBase
+
+    struct Range
     {
-        StateBase(unsigned type, StateBase * out1 = 0, StateBase * out2 = 0)
+        char_int l;
+        char_int r;
+
+        bool contains(char_int c) const {
+            return this->l <= c && c <= this->r;
+        }
+    };
+
+    struct SequenceString
+    {
+        const char_int * s;
+        size_t len;
+
+        SequenceString(const char_int * str, size_t slen)
+        : s(str)
+        , len(slen)
+        {}
+    };
+
+    struct Sequence
+    {
+        const char_int * s;
+        size_t len;
+
+        unsigned contains(char_int c, utf_consumer consumer) const {
+            if (c == this->s[0]) {
+                const char_int * s = this->s + 1;
+                while (*s && *s == consumer.bumpc()) {
+                    ++s;
+                }
+                return *s ? 0 : s - this->s;
+            }
+            return 0;
+        }
+
+        Sequence & operator=(const SequenceString& ss)
+        {
+            this->s = ss.s;
+            this->len = ss.len;
+            return *this;
+        }
+    };
+
+    struct State
+    {
+        State(unsigned type, char_int range_left = 0, char_int range_right = 0, State * out1 = 0, State * out2 = 0)
         : type(type)
         , num(0)
         , out1(out1)
         , out2(out2)
-        {}
+        {
+            this->data.range.l = range_left;
+            this->data.range.r = range_right;
+        }
 
-    public:
-        virtual ~StateBase()
-        {}
+        ~State()
+        {
+            if (this->type == SEQUENCE) {
+                delete[] this->data.sequence.s;
+            }
+        }
 
-        virtual bool check(char_int c) const = 0;
-        virtual StateBase * clone() const = 0;
-        virtual void display(std::ostream& os) const = 0;
+        unsigned check(char_int c, utf_consumer consumer) const {
+            if (this->type == SEQUENCE) {
+                return this->data.sequence.contains(c, consumer);
+            }
+            return this->data.range.contains(c) ? 1 : 0;
+        }
+
+        void display(std::ostream& os) const {
+            switch (this->type) {
+                case RANGE:
+                    if (this->data.range.l == 0 && this->data.range.r == char_int(-1u)) {
+                        os << ".";
+                    }
+                    else if (this->data.range.l == this->data.range.r) {
+                        os << "[" << this->data.range.l << "] '" << utf_char(this->data.range.l) << "'";
+                    }
+                    else {
+                        os << "[" << this->data.range.l << "-" << this->data.range.r << "] ['" << utf_char(this->data.range.l) << "'-'" << utf_char(this->data.range.r) << "']";
+                    }
+                    break;
+                case SEQUENCE: {
+                    os << '"';
+                    for (const char_int * p = this->data.sequence.s; *p; ++p) {
+                        os << utf_char(*p);
+                    }
+                    os << '"';
+                    break;
+                }
+                case CAPTURE_CLOSE: os << ")"; break;
+                case CAPTURE_OPEN: os << "("; break;
+                case EPSILONE: os << "(epsilone)"; break;
+                case FINISH: os << "(finish)"; break;
+                case SPLIT: os << "(split)"; break;
+                case FIRST: os << "^"; break;
+                case LAST: os << "$"; break;
+                default: os << "???"; break;
+            }
+        }
 
         bool is_border() const
         { return this->type & (FIRST|LAST); }
@@ -73,7 +160,7 @@ namespace re {
         { return this->type == SPLIT; }
 
         bool is_epsilone() const
-        { return this->type == EPSILONE; }
+        { return this->type == EPSILONE || (this->type == FINISH && this->out1); }
 
         bool is_finish() const
         { return this->type == FINISH; }
@@ -81,495 +168,113 @@ namespace re {
         bool is_terminate() const
         { return this->type & (LAST|FINISH); }
 
+        bool is_range() const
+        { return this->type == RANGE; }
+
+        bool is_simple_char() const
+        { return this->is_range() && this->data.range.l == this->data.range.r; }
+
+        bool is_sequence() const
+        { return this->type == SEQUENCE; }
+
         unsigned type;
         unsigned num;
 
-        StateBase *out1;
-        StateBase *out2;
+        State *out1;
+        State *out2;
+
+        union {
+            Range range;
+            Sequence sequence;
+        } data;
     };
 
-    inline std::ostream& operator<<(std::ostream& os, const StateBase& st)
+    inline std::ostream& operator<<(std::ostream& os, const State& st)
     {
         st.display(os);
         return os;
     }
 
-    struct StateSplit : public StateBase
-    {
-        StateSplit(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(SPLIT, out1, out2)
-        {}
+    inline State * new_character(char_int c, State * out1 = 0) {
+        return new State(RANGE, c, c, out1);
+    }
 
-        virtual StateBase * clone() const
-        {
-            return new StateSplit;
+    inline State * new_range(char_int left, char_int right, State * out1 = 0) {
+        return new State(RANGE, left, right, out1);
+    }
+
+    inline State * new_any(State * out1 = 0) {
+        return new State(RANGE, 0, char_int(-1u), out1);
+    }
+
+    inline State * new_split(State * out1 = 0, State * out2 = 0) {
+        return new State(SPLIT, 0, 0, out1, out2);
+    }
+
+    inline State * new_cap_open(State * out1 = 0) {
+        return new State(CAPTURE_OPEN, 0, 0, out1);
+    }
+
+    inline State * new_cap_close(State * out1 = 0) {
+        return new State(CAPTURE_CLOSE, 0, 0, out1);
+    }
+
+    inline State * new_epsilone(State * out1 = 0) {
+        return new State(EPSILONE, 0, 0, out1);
+    }
+
+    inline State * new_finish(State * out1 = 0) {
+        return new State(FINISH, 0, 0, out1);
+    }
+
+    inline State * new_begin(State * out1 = 0) {
+        return new State(FIRST, 0, 0, out1);
+    }
+
+    inline State * new_last() {
+        return new State(LAST, 0, 0);
+    }
+
+    inline State * new_sequence(const char_int * s, size_t len, State * out1 = 0) {
+        State * ret = new State(SEQUENCE, 0, 0, out1);
+        ret->data.sequence.s = s;
+        ret->data.sequence.len = len;
+        return ret;
+    }
+
+    inline State * new_sequence(const SequenceString & ss, State * out1 = 0) {
+        return new_sequence(ss.s, ss.len, out1);
+    }
+
+    inline SequenceString new_string_sequence(char_int c, std::size_t count) {
+        char_int * s = new char_int[count + 1];
+        std::fill(s, s + count, c);
+        *(s+count) = 0;
+        return SequenceString(s, count);
+    }
+
+    inline SequenceString new_string_sequence(const char_int * str, std::size_t len, std::size_t count) {
+        char_int * ret = new char_int[count * len + 1];
+        char_int * p = ret;
+        while (count--) {
+            std::copy(str, str + len, p);
+            p += len;
         }
-
-        virtual bool check(char_int /*c*/) const
-        {
-            return false;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "(split)";
-        }
-    };
-
-    struct StateChar : public StateBase
-    {
-        StateChar(char_int c, StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(NORMAL, out1, out2)
-        , uc(c)
-        {}
-
-        virtual StateBase * clone() const
-        {
-            return new StateChar(this->uc);
-        }
-
-        virtual bool check(char_int c) const
-        {
-            return this->uc == c;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "'" << utf_char(this->uc) << "'";
-        }
-
-    private:
-        char_int uc;
-    };
-
-    struct StateAny : public StateBase
-    {
-        StateAny(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(NORMAL, out1, out2)
-        {}
-
-        virtual StateBase * clone() const
-        {
-            return new StateAny();
-        }
-
-        virtual bool check(char_int /*c*/) const
-        {
-            return true;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "any";
-        }
-    };
-
-    struct StateClose : public StateBase
-    {
-        StateClose(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(CAPTURE_CLOSE, out1, out2)
-        {}
-
-        virtual StateBase * clone() const
-        {
-            return new StateClose();
-        }
-
-        virtual bool check(char_int /*c*/) const
-        {
-            return false;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "(close)";
-        }
-    };
-
-    struct StateOpen : public StateBase
-    {
-        StateOpen(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(CAPTURE_OPEN, out1, out2)
-        {}
-
-        virtual StateBase * clone() const
-        {
-            return new StateOpen();
-        }
-
-        virtual bool check(char_int /*c*/) const
-        {
-            return false;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "(open)";
-        }
-    };
-
-    struct StateEpsilone : public StateBase
-    {
-        StateEpsilone(StateBase * out1 = 0, StateBase * out2 = 0)
-        : StateBase(EPSILONE, out1, out2)
-        {}
-
-        virtual StateBase * clone() const
-        {
-            return new StateEpsilone();
-        }
-
-        virtual bool check(char_int /*c*/) const
-        {
-            return false;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "(epsilone)";
-        }
-    };
-
-    struct StateFinish : StateBase
-    {
-        StateFinish()
-        : StateBase(FINISH)
-        {}
-
-        virtual ~StateFinish()
-        {}
-
-        virtual bool check(char_int /*c*/) const
-        {
-            /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
-            return true;
-        }
-
-        virtual StateBase * clone() const
-        {
-            return new StateFinish;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "Finish";
-        }
-    };
-
-    struct StateRange : StateBase
-    {
-        StateRange(char_int c1, char_int c2, StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, out1, out2)
-        , uc_first(c1)
-        , uc_last(c2)
-        {}
-
-        virtual ~StateRange()
-        {}
-
-        virtual bool check(char_int c) const
-        {
-            /**///std::cout << char(this->c&0xFF) << "-" << char(rend);
-            return this->uc_first <= c && c <= this->uc_last;
-        }
-
-        virtual StateBase * clone() const
-        {
-            return new StateRange(this->uc_first, this->uc_last);
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "[" << utf_char(this->uc_first) << "-" << utf_char(this->uc_last) << "]";
-        }
-
-
-        char_int uc_first;
-        char_int uc_last;
-    };
-
-    template<char Identifier, typename Trait>
-    struct StateIdentifier : StateBase
-    {
-        StateIdentifier(StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, out1, out2)
-        {}
-
-        virtual ~StateIdentifier()
-        {}
-
-        virtual StateIdentifier * clone() const
-        {
-            return new StateIdentifier;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "\\" << Identifier;
-        }
-
-        virtual bool check(char_int c) const
-        {
-            return Trait::check(c);
-        }
-    };
-
-    struct IdentifierDigitTrait
-    {
-        static bool check(char_int c)
-        {
-            return ('0' <= c && c <= '9');
-        }
-    };
-
-    struct IdentifierWordTrait
-    {
-        static bool check(char_int c)
-        {
-            return ('a' <= c && c <= 'z')
-                || ('A' <= c && c <= 'Z')
-                || ('0' <= c && c <= '9')
-                || c == '_';
-        }
-    };
-
-    struct IdentifierSpaceTrait
-    {
-        static bool check(char_int c)
-        {
-            return (' ' == c || '\t' == c || '\n' == c);
-        }
-    };
-
-    template<typename Trait>
-    struct IdentifierNotTrait
-    {
-        static bool check(char_int c)
-        {
-            return !Trait::check(c);
-        }
-    };
-
-    typedef IdentifierNotTrait<IdentifierWordTrait>  IdentifierNotWordTrait;
-    typedef IdentifierNotTrait<IdentifierDigitTrait> IdentifierNotDigitTrait;
-    typedef IdentifierNotTrait<IdentifierSpaceTrait> IdentifierNotSpaceTrait;
-
-    typedef StateIdentifier<'w', IdentifierWordTrait>       StateWord;
-    typedef StateIdentifier<'W', IdentifierNotWordTrait>    StateNoWord;
-    typedef StateIdentifier<'d', IdentifierDigitTrait>      StateDigit;
-    typedef StateIdentifier<'D', IdentifierNotDigitTrait>   SateNotDigit;
-    typedef StateIdentifier<'s', IdentifierSpaceTrait>      StateSpace;
-    typedef StateIdentifier<'S', IdentifierNotSpaceTrait>   StateNotSpace;
-
-    struct StateCharacters : StateBase
-    {
-        StateCharacters(const std::string& s, StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, out1, out2)
-        , str(s)
-        {}
-
-        virtual ~StateCharacters()
-        {}
-
-        virtual bool check(char_int c) const
-        {
-            /**///std::cout << str;
-            return utf_contains(this->str.c_str(), c);
-        }
-
-        virtual StateBase * clone() const
-        {
-            return new StateCharacters(this->str);
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "[" << this->str << "]";
-        }
-
-        std::string str;
-    };
-
-    struct StateBorder : StateBase
-    {
-        StateBorder(bool is_first)
-        : StateBase(is_first ? FIRST : LAST)
-        {}
-
-        virtual ~StateBorder()
-        {}
-
-        virtual bool check(char_int /*c*/) const
-        {
-            /**///std::cout << (this->c == FIRST ? "^" : "$");
-            return false;
-        }
-
-        virtual StateBase * clone() const
-        {
-            return new StateBorder(this->type == FIRST);
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << (this->type == FIRST ? "^" : "$");
-        }
-    };
-
-    struct StateMultiTest : StateBase
-    {
-        struct Checker {
-            virtual bool check(char_int c) const = 0;
-            virtual Checker * clone() const = 0;
-            virtual void display(std::ostream& os) const = 0;
-            virtual ~Checker() {}
-        };
-
-        std::vector<Checker*> checkers;
-        typedef std::vector<Checker*>::iterator checker_iterator;
-        typedef std::vector<Checker*>::const_iterator checker_const_iterator;
-        bool result_true_check;
-
-
-        StateMultiTest(StateBase* out1 = 0, StateBase* out2 = 0)
-        : StateBase(NORMAL, out1, out2)
-        , checkers()
-        , result_true_check(true)
-        {}
-
-        virtual ~StateMultiTest()
-        {
-            for (checker_iterator first = this->checkers.begin(), last = this->checkers.end(); first != last; ++first) {
-                delete *first;
-            }
-        }
-
-        virtual bool check(char_int c) const
-        {
-            for (checker_const_iterator first = this->checkers.begin(), last = this->checkers.end(); first != last; ++first) {
-                if ((*first)->check(c)) {
-                    return this->result_true_check;
-                }
-            }
-            return !this->result_true_check;
-        }
-
-        virtual StateBase * clone() const
-        {
-            StateMultiTest * ret = new StateMultiTest;
-            ret->result_true_check = this->result_true_check;
-            for (checker_const_iterator first = this->checkers.begin(), last = this->checkers.end(); first != last; ++first) {
-                ret->push_checker((*first)->clone());
-            }
-            return ret;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            checker_const_iterator first = this->checkers.begin();
-            checker_const_iterator last = this->checkers.end();
-            if (first != last) {
-                (*first)->display(os);
-                while (++first != last) {
-                    os << "|";
-                    (*first)->display(os);
-                }
-            }
-        }
-
-        void push_checker(Checker * checker)
-        {
-            this->checkers.push_back(checker);
-        }
-    };
-
-    struct CheckerString : StateMultiTest::Checker
-    {
-        CheckerString(const std::string& s)
-        : str(s)
-        {}
-
-        virtual ~CheckerString()
-        {}
-
-        virtual bool check(char_int c) const
-        {
-            return utf_contains(this->str.c_str(), c);
-        }
-
-        virtual Checker * clone() const
-        {
-            return new CheckerString(this->str);
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "[" << this->str << "]";
-        }
-
-        std::string str;
-    };
-
-    struct CheckerInterval : StateMultiTest::Checker
-    {
-        CheckerInterval(int first, int last)
-        : begin(first)
-        , end(last)
-        {}
-
-        virtual ~CheckerInterval()
-        {}
-
-        virtual bool check(char_int c) const
-        {
-            return this->begin <= c && c <= this->end;
-        }
-
-        virtual Checker* clone() const
-        {
-            return new CheckerInterval(this->begin, this->end);
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "[" << utf_char(this->begin) << "-" << utf_char(this->end) << "]";
-        }
-
-        char_int begin;
-        char_int end;
-    };
-
-    template<char Identifier, typename Trait>
-    struct CheckerIdentifier : StateMultiTest::Checker
-    {
-        CheckerIdentifier()
-        {}
-
-        virtual ~CheckerIdentifier()
-        {}
-
-        virtual bool check(char_int c) const
-        {
-            return Trait::check(c);
-        }
-
-        virtual Checker* clone() const
-        {
-            return new CheckerIdentifier;
-        }
-
-        virtual void display(std::ostream& os) const
-        {
-            os << "\\" << Identifier;
-        }
-    };
-
-    typedef CheckerIdentifier<'w', IdentifierWordTrait>     CheckerWord;
-    typedef CheckerIdentifier<'W', IdentifierNotWordTrait>  CheckerNoWord;
-    typedef CheckerIdentifier<'d', IdentifierDigitTrait>    CheckerDigit;
-    typedef CheckerIdentifier<'D', IdentifierNotDigitTrait> CheckerNotDigit;
-    typedef CheckerIdentifier<'s', IdentifierSpaceTrait>    CheckerSpace;
-    typedef CheckerIdentifier<'S', IdentifierNotSpaceTrait> CheckerNotSpace;
+        *p = 0;
+        return SequenceString(ret, count * len);
+    }
+
+    inline SequenceString new_string_sequence(const char_int * str, std::size_t count) {
+        return new_string_sequence(str, std::char_traits<char_int>::length(str), count);
+    }
+
+    inline SequenceString new_string_sequence(const Sequence & seq, std::size_t count) {
+        return new_string_sequence(seq.s, seq.len, count);
+    }
+
+    inline State * new_sequence(char_int c, std::size_t count, State * out1 = 0) {
+        return new_sequence(new_string_sequence(c, count), out1);
+    }
 
 }
 

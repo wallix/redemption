@@ -109,8 +109,14 @@ public:
                     }
                     close(fd);
 
-                    setgid(this->gid);
-                    setuid(this->uid);
+                    if (setgid(this->gid) != 0){
+                        LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
+                        _exit(1);
+                    }
+                    if (setuid(this->uid) != 0){
+                        LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
+                        _exit(1);
+                    }
                 }
 
                 LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);

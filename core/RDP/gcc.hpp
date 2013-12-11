@@ -479,7 +479,7 @@ namespace GCC
                 LOG(LOG_WARNING, "GCC Conference Create Response User data (need at least 23 bytes, available %u)", stream.size());
                 throw Error(ERR_GCC);
             }
-            
+            TODO("We should actually read and decode data here. Merely skipping the block is evil")
             stream.in_skip_bytes(21); /* header (T.124 ConferenceCreateResponse) */
             size_t length = stream.in_2BUE();
             if (length != stream.size() - stream.get_offset()){

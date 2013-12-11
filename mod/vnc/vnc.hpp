@@ -908,8 +908,8 @@ struct mod_vnc : public InternalMod, public NotifyApi {
 
         ZRLEUpdateContext() : data_remain(16384) {}
     };
-    void lib_framebuffer_update_zrle(HStream & uncompressed_data_buffer,
-        ZRLEUpdateContext & update_context)
+
+    void lib_framebuffer_update_zrle(HStream & uncompressed_data_buffer, ZRLEUpdateContext & update_context)
     {
         if (this->verbose) {
             LOG(LOG_INFO,
@@ -1456,7 +1456,7 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                 {
                     HStream zlib_uncompressed_data_buffer(16384, 49152);
 
-                    zstrm.avail_out = zlib_uncompressed_data_buffer.get_capacity();
+                    zstrm.avail_out = zlib_uncompressed_data_buffer.endroom();
                     zstrm.next_out  = zlib_uncompressed_data_buffer.get_data();
 
                     int zlib_result = inflate(&zstrm, Z_NO_FLUSH);
@@ -1467,13 +1467,11 @@ LOG(LOG_INFO, "VNC Encoding: Hextile, Bpp = %u, x=%u, y=%u, cx=%u, cy=%u", Bpp, 
                         throw Error(ERR_VNC_ZLIB_INFLATE);
                     }
 
-                    zlib_uncompressed_data_buffer.out_skip_bytes(
-                        zlib_uncompressed_data_buffer.get_capacity() - zstrm.avail_out);
+                    zlib_uncompressed_data_buffer.out_skip_bytes(zlib_uncompressed_data_buffer.endroom() - zstrm.avail_out);
                     zlib_uncompressed_data_buffer.mark_end();
                     zlib_uncompressed_data_buffer.rewind();
 
-                    this->lib_framebuffer_update_zrle(
-                        zlib_uncompressed_data_buffer, zrle_update_context);
+                    this->lib_framebuffer_update_zrle(zlib_uncompressed_data_buffer, zrle_update_context);
                 }
             }
             break;
@@ -1982,7 +1980,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                             throw Error(ERR_VNC);
                         }
 
-                        BStream dataU8(
+                        Array dataU8(
                               format_data_response_pdu.dataLen
                             + format_data_response_pdu.dataLen / 2
                             + 1);
@@ -1990,9 +1988,9 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         size_t len_utf8 = UTF16toUTF8( stream.p
                                                      , format_data_response_pdu.dataLen / 2
                                                      , dataU8.get_data()
-                                                     , dataU8.get_capacity());
+                                                     , dataU8.size());
 
-                        (dataU8.get_data())[len_utf8] = 0;
+                        dataU8.get_data()[len_utf8] = 0;
 
                         this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
                     }
@@ -2013,7 +2011,7 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         this->to_vnc_large_clipboard_data.init(2 * (MAX_VNC_2_RDP_CLIP_DATA_SIZE + 1));
 
                         size_t dataLenU16 = std::min<size_t>( stream.in_remain()
-                                                            , this->to_vnc_large_clipboard_data.room());
+                                                            , this->to_vnc_large_clipboard_data.tailroom());
 
                         REDASSERT(dataLenU16 != 0);
 
@@ -2040,11 +2038,10 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
 
                     if (this->verbose) {
                         LOG( LOG_INFO, "mod_vnc::send_to_vnc trunk size=%u, capacity=%u"
-                           , stream.in_remain(), this->to_vnc_large_clipboard_data.room());
+                           , stream.in_remain(), static_cast<unsigned>(this->to_vnc_large_clipboard_data.tailroom()));
                     }
 
-                    size_t dataLenU16 = std::min<size_t>( stream.in_remain()
-                                                        , this->to_vnc_large_clipboard_data.room());
+                    size_t dataLenU16 = std::min<size_t>(stream.in_remain(), this->to_vnc_large_clipboard_data.tailroom());
 
                     if (dataLenU16 != 0) {
                         this->to_vnc_large_clipboard_data.out_copy_bytes(stream.p, dataLenU16);
@@ -2054,16 +2051,13 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
                         // Last chunk
 
                         this->to_vnc_large_clipboard_data.mark_end();
-
                         dataLenU16 = this->to_vnc_large_clipboard_data.size();
 
-                        BStream dataU8(dataLenU16 + 2);
-
+                        Array dataU8(dataLenU16 + 2);
                         size_t len_utf8 = UTF16toUTF8( this->to_vnc_large_clipboard_data.get_data()
-                                                     , dataLenU16 / 2, dataU8.p, dataU8.get_capacity());
+                                                     , dataLenU16 / 2, dataU8.get_data(), dataU8.size());
 
-                        (dataU8.get_data())[len_utf8] = 0;
-
+                        dataU8.get_data()[len_utf8] = 0;
                         this->rdp_input_clip_data(dataU8.get_data(), len_utf8 + 1);
                     }
                 }
