@@ -90,10 +90,11 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     NTLMChallengeMessage ChallengeMsg;
 
+    hexdump_c(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
     ChallengeMsg.recv(ts_req2.negoTokens);
 
     BOOST_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
-    // ChallengeMsg.negoFlags.print();
+    ChallengeMsg.negoFlags.print();
 
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetName.len, 8);
     BOOST_CHECK_EQUAL(ChallengeMsg.TargetName.bufferOffset, 56);
@@ -127,7 +128,7 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
 
     // ChallengeMsg.version.print();
 
-    // ChallengeMsg.AvPairList.print();
+    ChallengeMsg.AvPairList.print();
 
     // // hexdump_c(to_send2.get_data(), to_send2.size());
 

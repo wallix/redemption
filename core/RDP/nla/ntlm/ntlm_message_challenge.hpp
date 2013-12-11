@@ -246,3 +246,297 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
 
 #endif
+
+
+//     SECURITY_STATUS ntlm_read_ChallengeMessage(PSecBuffer buffer)
+//     {
+// 	wStream* s;
+// 	int length;
+// 	PBYTE StartOffset;
+// 	PBYTE PayloadOffset;
+// 	NTLM_AV_PAIR* AvTimestamp;
+// 	NTLM_CHALLENGE_MESSAGE* message;
+
+// 	ntlm_generate_client_challenge(context);
+
+// 	message = &context->CHALLENGE_MESSAGE;
+// 	ZeroMemory(message, sizeof(NTLM_CHALLENGE_MESSAGE));
+
+// 	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
+
+// 	StartOffset = Stream_Pointer(s);
+
+// 	ntlm_read_message_header(s, (NTLM_MESSAGE_HEADER*) message);
+
+// 	if (!ntlm_validate_message_header(s, (NTLM_MESSAGE_HEADER*) message, MESSAGE_TYPE_CHALLENGE))
+//             {
+// 		Stream_Free(s, FALSE);
+// 		return SEC_E_INVALID_TOKEN;
+//             }
+
+// 	/* TargetNameFields (8 bytes) */
+// 	ntlm_read_message_fields(s, &(message->TargetName));
+
+// 	Stream_Read_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+// 	context->NegotiateFlags = message->NegotiateFlags;
+
+// 	Stream_Read(s, message->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
+// 	CopyMemory(context->ServerChallenge, message->ServerChallenge, 8);
+
+// 	Stream_Read(s, message->Reserved, 8); /* Reserved (8 bytes), should be ignored */
+
+// 	/* TargetInfoFields (8 bytes) */
+// 	ntlm_read_message_fields(s, &(message->TargetInfo));
+
+// 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+//             ntlm_read_version_info(s, &(message->Version)); /* Version (8 bytes) */
+
+// 	/* Payload (variable) */
+// 	PayloadOffset = Stream_Pointer(s);
+
+// 	if (message->TargetName.Len > 0)
+//             ntlm_read_message_fields_buffer(s, &(message->TargetName));
+
+// 	if (message->TargetInfo.Len > 0)
+//             {
+// 		ntlm_read_message_fields_buffer(s, &(message->TargetInfo));
+
+// 		context->ChallengeTargetInfo.pvBuffer = message->TargetInfo.Buffer;
+// 		context->ChallengeTargetInfo.cbBuffer = message->TargetInfo.Len;
+
+// 		AvTimestamp = ntlm_av_pair_get((NTLM_AV_PAIR*) message->TargetInfo.Buffer, MsvAvTimestamp);
+
+// 		if (AvTimestamp != NULL)
+//                     {
+// 			if (context->NTLMv2)
+//                             context->UseMIC = TRUE;
+
+// 			CopyMemory(context->ChallengeTimestamp, ntlm_av_pair_get_value_pointer(AvTimestamp), 8);
+//                     }
+//             }
+
+// 	length = (PayloadOffset - StartOffset) + message->TargetName.Len + message->TargetInfo.Len;
+
+// 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
+// 	CopyMemory(context->ChallengeMessage.pvBuffer, StartOffset, length);
+
+// #ifdef WITH_DEBUG_NTLM
+// 	fprintf(stderr, "CHALLENGE_MESSAGE (length = %d)\n", length);
+// 	winpr_HexDump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+// 	fprintf(stderr, "\n");
+
+// 	ntlm_print_negotiate_flags(context->NegotiateFlags);
+
+// 	if (context->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+//             ntlm_print_version_info(&(message->Version));
+
+// 	ntlm_print_message_fields(&(message->TargetName), "TargetName");
+// 	ntlm_print_message_fields(&(message->TargetInfo), "TargetInfo");
+
+// 	if (context->ChallengeTargetInfo.cbBuffer > 0)
+//             {
+// 		fprintf(stderr, "ChallengeTargetInfo (%d):\n", (int) context->ChallengeTargetInfo.cbBuffer);
+// 		ntlm_print_av_pair_list(context->ChallengeTargetInfo.pvBuffer);
+//             }
+// #endif
+// 	/* AV_PAIRs */
+
+// 	if (context->NTLMv2)
+//             {
+// 		ntlm_construct_authenticate_target_info(context);
+// 		sspi_SecBufferFree(&context->ChallengeTargetInfo);
+// 		context->ChallengeTargetInfo.pvBuffer = context->AuthenticateTargetInfo.pvBuffer;
+// 		context->ChallengeTargetInfo.cbBuffer = context->AuthenticateTargetInfo.cbBuffer;
+//             }
+
+// 	/* Timestamp */
+// 	ntlm_generate_timestamp(context);
+
+// 	/* LmChallengeResponse */
+// 	ntlm_compute_lm_v2_response(context);
+
+// 	/* NtChallengeResponse */
+// 	ntlm_compute_ntlm_v2_response(context);
+
+// 	/* KeyExchangeKey */
+// 	ntlm_generate_key_exchange_key(context);
+
+// 	/* RandomSessionKey */
+// 	ntlm_generate_random_session_key(context);
+
+// 	/* ExportedSessionKey */
+// 	ntlm_generate_exported_session_key(context);
+
+// 	/* EncryptedRandomSessionKey */
+// 	ntlm_encrypt_random_session_key(context);
+
+// 	/* Generate signing keys */
+// 	ntlm_generate_client_signing_key(context);
+// 	ntlm_generate_server_signing_key(context);
+
+// 	/* Generate sealing keys */
+// 	ntlm_generate_client_sealing_key(context);
+// 	ntlm_generate_server_sealing_key(context);
+
+// 	/* Initialize RC4 seal state using client sealing key */
+// 	ntlm_init_rc4_seal_states(context);
+
+// #ifdef WITH_DEBUG_NTLM
+// 	fprintf(stderr, "ClientChallenge\n");
+// 	winpr_HexDump(context->ClientChallenge, 8);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "ServerChallenge\n");
+// 	winpr_HexDump(context->ServerChallenge, 8);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "SessionBaseKey\n");
+// 	winpr_HexDump(context->SessionBaseKey, 16);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "KeyExchangeKey\n");
+// 	winpr_HexDump(context->KeyExchangeKey, 16);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "ExportedSessionKey\n");
+// 	winpr_HexDump(context->ExportedSessionKey, 16);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "RandomSessionKey\n");
+// 	winpr_HexDump(context->RandomSessionKey, 16);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "ClientSigningKey\n");
+// 	winpr_HexDump(context->ClientSigningKey, 16);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "ClientSealingKey\n");
+// 	winpr_HexDump(context->ClientSealingKey, 16);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "ServerSigningKey\n");
+// 	winpr_HexDump(context->ServerSigningKey, 16);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "ServerSealingKey\n");
+// 	winpr_HexDump(context->ServerSealingKey, 16);
+// 	fprintf(stderr, "\n");
+
+// 	fprintf(stderr, "Timestamp\n");
+// 	winpr_HexDump(context->Timestamp, 8);
+// 	fprintf(stderr, "\n");
+// #endif
+
+// 	context->state = NTLM_STATE_AUTHENTICATE;
+
+// 	ntlm_free_message_fields_buffer(&(message->TargetName));
+
+// 	Stream_Free(s, FALSE);
+
+// 	return SEC_I_CONTINUE_NEEDED;
+//     }
+
+//     SECURITY_STATUS ntlm_write_ChallengeMessage(PSecBuffer buffer)
+//     {
+// 	wStream* s;
+// 	int length;
+// 	UINT32 PayloadOffset;
+// 	NTLM_CHALLENGE_MESSAGE* message;
+
+// 	message = &context->CHALLENGE_MESSAGE;
+// 	ZeroMemory(message, sizeof(NTLM_CHALLENGE_MESSAGE));
+
+// 	s = Stream_New(buffer->pvBuffer, buffer->cbBuffer);
+
+// 	/* Version */
+// 	ntlm_get_version_info(&(message->Version));
+
+// 	/* Server Challenge */
+// 	ntlm_generate_server_challenge(context);
+
+// 	/* Timestamp */
+// 	ntlm_generate_timestamp(context);
+
+// 	/* TargetInfo */
+// 	ntlm_construct_challenge_target_info(context);
+
+// 	/* ServerChallenge */
+// 	CopyMemory(message->ServerChallenge, context->ServerChallenge, 8);
+
+// 	message->NegotiateFlags = context->NegotiateFlags;
+
+// 	ntlm_populate_message_header((NTLM_MESSAGE_HEADER*) message, MESSAGE_TYPE_CHALLENGE);
+
+// 	/* Message Header (12 bytes) */
+// 	ntlm_write_message_header(s, (NTLM_MESSAGE_HEADER*) message);
+
+// 	if (message->NegotiateFlags & NTLMSSP_REQUEST_TARGET)
+//             {
+// 		message->TargetName.Len = (UINT16) context->TargetName.cbBuffer;
+// 		message->TargetName.Buffer = context->TargetName.pvBuffer;
+//             }
+
+// 	message->NegotiateFlags |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+
+// 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
+//             {
+// 		message->TargetInfo.Len = (UINT16) context->ChallengeTargetInfo.cbBuffer;
+// 		message->TargetInfo.Buffer = context->ChallengeTargetInfo.pvBuffer;
+//             }
+
+// 	PayloadOffset = 48;
+
+// 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+//             PayloadOffset += 8;
+
+// 	message->TargetName.BufferOffset = PayloadOffset;
+// 	message->TargetInfo.BufferOffset = message->TargetName.BufferOffset + message->TargetName.Len;
+
+// 	/* TargetNameFields (8 bytes) */
+// 	ntlm_write_message_fields(s, &(message->TargetName));
+
+// 	Stream_Write_UINT32(s, message->NegotiateFlags); /* NegotiateFlags (4 bytes) */
+
+// 	Stream_Write(s, message->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
+// 	Stream_Write(s, message->Reserved, 8); /* Reserved (8 bytes), should be ignored */
+
+// 	/* TargetInfoFields (8 bytes) */
+// 	ntlm_write_message_fields(s, &(message->TargetInfo));
+
+// 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+//             ntlm_write_version_info(s, &(message->Version)); /* Version (8 bytes) */
+
+// 	/* Payload (variable) */
+
+// 	if (message->NegotiateFlags & NTLMSSP_REQUEST_TARGET)
+//             ntlm_write_message_fields_buffer(s, &(message->TargetName));
+
+// 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_TARGET_INFO)
+//             ntlm_write_message_fields_buffer(s, &(message->TargetInfo));
+
+// 	length = Stream_GetPosition(s);
+// 	buffer->cbBuffer = length;
+
+// 	sspi_SecBufferAlloc(&context->ChallengeMessage, length);
+// 	CopyMemory(context->ChallengeMessage.pvBuffer, Stream_Buffer(s), length);
+
+// #ifdef WITH_DEBUG_NTLM
+// 	fprintf(stderr, "CHALLENGE_MESSAGE (length = %d)\n", length);
+// 	winpr_HexDump(context->ChallengeMessage.pvBuffer, context->ChallengeMessage.cbBuffer);
+// 	fprintf(stderr, "\n");
+
+// 	ntlm_print_negotiate_flags(message->NegotiateFlags);
+
+// 	if (message->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+//             ntlm_print_version_info(&(message->Version));
+
+// 	ntlm_print_message_fields(&(message->TargetName), "TargetName");
+// 	ntlm_print_message_fields(&(message->TargetInfo), "TargetInfo");
+// #endif
+
+// 	context->state = NTLM_STATE_AUTHENTICATE;
+
+// 	Stream_Free(s, FALSE);
+
+// 	return SEC_I_CONTINUE_NEEDED;
+//     }

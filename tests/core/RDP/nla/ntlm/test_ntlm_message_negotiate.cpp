@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestNtlmMessageNegotiate
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 
 #include "RDP/nla/credssp.hpp"
@@ -79,6 +79,7 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
     NegoMsg.recv(ts_req.negoTokens);
 
+
     BOOST_CHECK_EQUAL(NegoMsg.negoFlags.flags, 0xe20882b7);
     // NegoMsg.negoFlags.print();
 
@@ -105,6 +106,9 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
     NegoMsg.version.print();
 
     // // hexdump_c(to_send.get_data(), to_send.size());
+    // BStream outMsg;
+    // NegoMsg.emit(outMsg);
+    // hexdump_c(outMsg.get_data(), outMsg.size());
 
 
 }
