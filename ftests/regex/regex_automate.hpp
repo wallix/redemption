@@ -205,8 +205,8 @@ namespace re {
         }
 
     public:
-        explicit StateMachine2(const state_list_t & sts, const State * root, unsigned nb_capture,
-                               bool copy_states = false, bool minimal_mem = false)
+        StateMachine2(const state_list_t & sts, const State * root, unsigned nb_capture,
+                      bool copy_states = false, bool minimal_mem = false)
         : root(root)
         , nb_states(sts.size())
         , nb_capture(nb_capture)
@@ -830,59 +830,59 @@ namespace re {
         template<bool> struct ActiveCapture { };
 
     public:
-        bool exact_search(const char * s, unsigned step_limit)
+        bool exact_search(const char * s, unsigned step_limit, size_t * pos = 0)
         {
             if (0 == this->nb_states) {
                 return !*s;
             }
-            return this->match(s, step_limit, DefaultMatchTracer(),
+            return this->match(s, step_limit, DefaultMatchTracer(), pos,
                                ExactMatch<true>(), ActiveCapture<false>());
         }
 
-        bool exact_search_with_trace(const char * s, unsigned step_limit)
+        bool exact_search_with_trace(const char * s, unsigned step_limit, size_t * pos = 0)
         {
             if (this->nb_capture == 0) {
-                return exact_search(s, step_limit);
+                return exact_search(s, step_limit, pos);
             }
-            return this->match(s, step_limit, DefaultMatchTracer(),
+            return this->match(s, step_limit, DefaultMatchTracer(), pos,
                                ExactMatch<true>(), ActiveCapture<true>());
         }
 
         template<typename Tracer>
-        bool exact_search_with_trace(const char * s, unsigned step_limit, Tracer tracer)
+        bool exact_search_with_trace(const char * s, unsigned step_limit, Tracer tracer, size_t * pos = 0)
         {
             if (this->nb_capture == 0) {
-                return exact_search(s, step_limit);
+                return exact_search(s, step_limit, pos);
             }
-            return this->match(s, step_limit, tracer,
+            return this->match(s, step_limit, tracer, pos,
                                ExactMatch<true>(), ActiveCapture<true>());
         }
 
-        bool search(const char * s, unsigned step_limit)
+        bool search(const char * s, unsigned step_limit, size_t * pos = 0)
         {
             if (0 == this->nb_states) {
                 return !*s;
             }
-            return this->match(s, step_limit, DefaultMatchTracer(),
+            return this->match(s, step_limit, DefaultMatchTracer(), pos,
                                ExactMatch<false>(), ActiveCapture<false>());
         }
 
-        bool search_with_trace(const char * s, unsigned step_limit)
+        bool search_with_trace(const char * s, unsigned step_limit, size_t * pos = 0)
         {
             if (this->nb_capture == 0) {
-                return search(s, step_limit);
+                return search(s, step_limit, pos);
             }
-            return this->match(s, step_limit, DefaultMatchTracer(),
+            return this->match(s, step_limit, DefaultMatchTracer(), pos,
                                ExactMatch<false>(), ActiveCapture<true>());
         }
 
         template<typename Tracer>
-        bool search_with_trace(const char * s, unsigned step_limit, Tracer tracer)
+        bool search_with_trace(const char * s, unsigned step_limit, Tracer tracer, size_t * pos = 0)
         {
             if (this->nb_capture == 0) {
-                return search(s, step_limit);
+                return search(s, step_limit, pos);
             }
-            return this->match(s, step_limit, tracer,
+            return this->match(s, step_limit, tracer, pos,
                                ExactMatch<false>(), ActiveCapture<true>());
         }
 
@@ -1284,9 +1284,13 @@ namespace re {
         }
 
         template<typename Tracer, bool exact_match, bool active_capture>
-        bool match(const char * s, unsigned step_limit, Tracer tracer,
+        bool match(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
                    ExactMatch<exact_match>, ActiveCapture<active_capture>)
         {
+            if (ppos) {
+                *ppos = 0;
+            }
+
             if (this->st_range_beginning.st_num == -1u) {
                 return true;
             }
@@ -1318,6 +1322,25 @@ namespace re {
             }
 
             utf8_consumer consumer(s);
+
+            struct Finally {
+                Finally(utf8_consumer & cons, size_t * ppos)
+                : cons(cons)
+                , s(cons.s)
+                , spos(ppos)
+                {}
+
+                ~Finally()
+                {
+                    if (this->spos) {
+                        *this->spos = this->cons.s - this->s;
+                    }
+                }
+
+                utf8_consumer & cons;
+                const unsigned char * s;
+                size_t * spos;
+            } auto_set_pos (consumer, ppos);
 
             StepRangeList * pal1 = &this->l1;
             StepRangeList * pal2 = &this->l2;

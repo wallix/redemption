@@ -32,7 +32,7 @@ namespace re {
 
     struct utf8_char
     {
-        utf8_char(char_int c)
+        explicit utf8_char(char_int c)
         : uc(c)
         {}
 
@@ -89,7 +89,7 @@ namespace re {
     class utf8_consumer
     {
     public:
-        utf8_consumer(const char * str)
+        explicit utf8_consumer(const char * str)
         : s(reinterpret_cast<const unsigned char *>(str))
         {}
 

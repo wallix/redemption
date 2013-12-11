@@ -88,7 +88,8 @@ namespace re {
 
     struct State
     {
-        State(unsigned type, char_int range_left = 0, char_int range_right = 0, State * out1 = 0, State * out2 = 0)
+        explicit State(unsigned type, char_int range_left = 0, char_int range_right = 0,
+                       State * out1 = 0, State * out2 = 0)
         : type(type)
         , num(0)
         , out1(out1)

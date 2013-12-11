@@ -330,7 +330,7 @@ namespace re {
 
         container_type & ranges;
 
-        VectorRange(container_type & c_ranges)
+        explicit VectorRange(container_type & c_ranges)
         : ranges(c_ranges)
         {
             this->ranges.clear();
@@ -1035,7 +1035,7 @@ namespace re {
         typedef StateDeleter Deleter;
 #endif
     public:
-        explicit StateParser()
+        StateParser()
         : m_root(0)
         , m_accu()
         {
