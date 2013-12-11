@@ -502,24 +502,6 @@ struct NTLMContext {
 
 
     /**
-     * Encrypt the given plain text using RC4 and the given key.
-     * @param key RC4 key
-     * @param length text length
-     * @param plaintext plain text
-     * @param ciphertext cipher text
-     */
-
-
-
-
-
-
-
-
-
-
-
-    /**
      * Decrypt RandomSessionKey (RC4-encrypted RandomSessionKey, using KeyExchangeKey as the key).
      * @param NTLM context
      */
@@ -560,7 +542,7 @@ struct NTLMContext {
     }
 
     // server check nt response
-    bool ntlm_check_nt_response_from_authenticate(const uint8_t * hash,   size_t hash_size) {
+    bool ntlm_check_nt_response_from_authenticate(const uint8_t * hash, size_t hash_size) {
         BStream & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
         BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
         BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
@@ -592,7 +574,7 @@ struct NTLMContext {
     }
 
     // Server check lm response
-    bool ntlm_check_lm_response_from_authenticate(const uint8_t * hash,   size_t hash_size) {
+    bool ntlm_check_lm_response_from_authenticate(const uint8_t * hash, size_t hash_size) {
         BStream & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
         BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
         BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
@@ -623,7 +605,7 @@ struct NTLMContext {
     }
 
     // server compute Session Base Key
-    void ntlm_compute_session_base_key(const uint8_t * hash,   size_t hash_size) {
+    void ntlm_compute_session_base_key(const uint8_t * hash, size_t hash_size) {
         BStream & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
         BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
         BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
