@@ -112,49 +112,7 @@ struct NTLMContext {
     uint8_t ServerSigningKey[16];
     uint8_t ServerSealingKey[16];
     uint8_t MessageIntegrityCheck[16];
-
-
-
-
-
-#if 0
-
-    /**
-     * Output Restriction_Encoding.\n
-     * Restriction_Encoding @msdn{cc236647}
-     * @param NTLM context
-     */
-
-    void ntlm_output_restriction_encoding()
-    {
-	// wStream* s;
-	// AV_PAIR* restrictions = &context->av_pairs->Restrictions;
-
-	// BYTE machineID[32] =
-        //     "\x3A\x15\x8E\xA6\x75\x82\xD8\xF7\x3E\x06\xFA\x7A\xB4\xDF\xFD\x43"
-        //     "\x84\x6C\x02\x3A\xFD\x5A\x94\xFE\xCF\x97\x0F\x3D\x19\x2C\x38\x20";
-
-	// restrictions->value = malloc(48);
-	// restrictions->length = 48;
-
-	// s = PStreamAllocAttach(restrictions->value, restrictions->length);
-
-	// Stream_Write_UINT32(s, 48); /* Size */
-	// Stream_Zero(s, 4); /* Z4 (set to zero) */
-
-	// /* IntegrityLevel (bit 31 set to 1) */
-	// Stream_Write_UINT8(s, 1);
-	// Stream_Zero(s, 3);
-
-	// Stream_Write_UINT32(s, 0x00002000); /* SubjectIntegrityLevel */
-	// Stream_Write(s, machineID, 32); /* MachineID */
-
-	// PStreamFreeDetach(s);
-    }
-
-#endif
-
-
+    uint8_t NtProofStr[16];
 
 
     /**
@@ -251,6 +209,20 @@ struct NTLMContext {
 	memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
     }
 
+    void NTOWFv2_FromHash(const uint8_t * hash,   size_t hash_size,
+                          const uint8_t * user,   size_t user_size,
+                          const uint8_t * domain, size_t domain_size,
+                          uint8_t * buff, size_t buff_size) {
+        SslMd4 md4;
+
+        SslHMAC_Md5 hmac_md5(hash, hash_size);
+
+        // TODO user to uppercase !!!!!
+        // user and domain in UNICODE UTF16
+        hmac_md5.update(user, user_size);
+        hmac_md5.update(domain, domain_size);
+        hmac_md5.final(buff, buff_size);
+    }
 
     void NTOWFv2(const uint8_t * pass,   size_t pass_size,
                  const uint8_t * user,   size_t user_size,
@@ -296,8 +268,9 @@ struct NTLMContext {
         // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
         // Z(n) = { 0x00, ... , 0x00 } n times
         // ServerName = AvPairs received in Challenge message
-        BStream AvPairsStream;
-        this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
+        BStream & AvPairsStream = this->CHALLENGE_MESSAGE.TargetInfo.Buffer;
+        // BStream AvPairsStream;
+        // this->CHALLENGE_MESSAGE.AvPairList.emit(AvPairsStream);
         uint8_t temp_size = 1 + 1 + 6 + 8 + 8 + 4 + AvPairsStream.size() + 4;
         uint8_t * temp = new uint8_t[temp_size];
         memset(temp, 0, temp_size);
@@ -311,12 +284,13 @@ struct NTLMContext {
         memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
         memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
 
-#ifdef DISABLE_RANDOM_TESTS
-        temp[0x1C] = 0x02;
-        temp[0x28] = 0x01;
-        temp[0x34] = 0x04;
-        temp[0x40] = 0x03;
-#endif
+// #ifdef DISABLE_RANDOM_TESTS
+//         temp[0x1C] = 0x02;
+//         temp[0x28] = 0x01;
+//         temp[0x34] = 0x04;
+//         temp[0x40] = 0x03;
+// #endif
+
         // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                       Concat(ServerChallenge, temp))
         uint8_t NtProofStr[16] = {};
@@ -335,7 +309,7 @@ struct NTLMContext {
         NtChallengeResponse.out_copy_bytes(temp, temp_size);
         NtChallengeResponse.mark_end();
 
-        delete temp;
+        delete [] temp;
         temp = NULL;
 
         // LmChallengeResponse.Response = HMAC_MD5(LMOWFv2(password, user, userdomain),
@@ -585,7 +559,88 @@ struct NTLMContext {
         }
     }
 
+    // server check nt response
+    bool ntlm_check_nt_response_from_authenticate(const uint8_t * hash,   size_t hash_size) {
+        BStream & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
+        BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
+        BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
+        size_t temp_size = AuthNtResponse.size() - 16;
+        uint8_t NtProofStr_from_msg[16] = {};
+        AuthNtResponse.in_copy_bytes(NtProofStr_from_msg, 16);
+        uint8_t * temp = new uint8_t[temp_size];
+        AuthNtResponse.in_copy_bytes(temp, temp_size);
+        AuthNtResponse.rewind();
 
+        uint8_t NtProofStr[16] = {};
+        uint8_t ResponseKeyNT[16] = {};
+        this->NTOWFv2_FromHash(hash, hash_size,
+                               UserName.get_data(), UserName.size(),
+                               DomainName.get_data(), DomainName.size(),
+                               ResponseKeyNT, sizeof(ResponseKeyNT));
+
+        SslHMAC_Md5 hmac_md5resp(ResponseKeyNT, sizeof(ResponseKeyNT));
+        hmac_md5resp.update(this->ServerChallenge, 8);
+        hmac_md5resp.update(temp, temp_size);
+        hmac_md5resp.final(NtProofStr, sizeof(NtProofStr));
+
+        bool res = !memcmp(NtProofStr, NtProofStr_from_msg, 16);
+
+        delete [] temp;
+        temp = NULL;
+
+        return res;
+    }
+
+    // Server check lm response
+    bool ntlm_check_lm_response_from_authenticate(const uint8_t * hash,   size_t hash_size) {
+        BStream & AuthLmResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
+        BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
+        BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
+        size_t lm_response_size = AuthLmResponse.size(); // should be 24
+        if (lm_response_size != 24) {
+            return false;
+        }
+        uint8_t response[16] = {};
+        AuthLmResponse.in_copy_bytes(response, 16);
+        AuthLmResponse.in_copy_bytes(this->ClientChallenge, 8);
+        AuthLmResponse.rewind();
+
+        uint8_t compute_response[16] = {};
+        uint8_t ResponseKeyLM[16] = {};
+        this->NTOWFv2_FromHash(hash, hash_size,
+                               UserName.get_data(), UserName.size(),
+                               DomainName.get_data(), DomainName.size(),
+                               ResponseKeyLM, sizeof(ResponseKeyLM));
+
+        SslHMAC_Md5 hmac_md5resp(ResponseKeyLM, sizeof(ResponseKeyLM));
+        hmac_md5resp.update(this->ServerChallenge, 8);
+        hmac_md5resp.update(this->ClientChallenge, 8);
+        hmac_md5resp.final(compute_response, sizeof(compute_response));
+
+        bool res = !memcmp(response, compute_response, 16);
+
+        return res;
+    }
+
+    // server compute Session Base Key
+    void ntlm_compute_session_base_key(const uint8_t * hash,   size_t hash_size) {
+        BStream & AuthNtResponse = this->AUTHENTICATE_MESSAGE.NtChallengeResponse.Buffer;
+        BStream & DomainName = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
+        BStream & UserName = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
+        uint8_t NtProofStr[16] = {};
+        AuthNtResponse.in_copy_bytes(NtProofStr, 16);
+        AuthNtResponse.rewind();
+        uint8_t ResponseKeyNT[16] = {};
+        this->NTOWFv2_FromHash(hash, hash_size,
+                               UserName.get_data(), UserName.size(),
+                               DomainName.get_data(), DomainName.size(),
+                               ResponseKeyNT, sizeof(ResponseKeyNT));
+        // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
+        //                           NtProofStr)
+        SslHMAC_Md5 hmac_md5seskey(ResponseKeyNT, sizeof(ResponseKeyNT));
+        hmac_md5seskey.update(NtProofStr, sizeof(NtProofStr));
+        hmac_md5seskey.final(this->SessionBaseKey, 16);
+    }
 
 };
 

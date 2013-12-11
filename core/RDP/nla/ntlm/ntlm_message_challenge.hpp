@@ -210,7 +210,6 @@ struct NTLMChallengeMessage : public NTLMMessage {
         this->TargetName.emit(stream, currentOffset);
         this->negoFlags.emit(stream);
         stream.out_copy_bytes(this->serverChallenge, 8);
-        // stream.out_uint64_le(this->serverChallenge);
         stream.out_skip_bytes(8);
         this->TargetInfo.emit(stream, currentOffset);
         this->version.emit(stream);
