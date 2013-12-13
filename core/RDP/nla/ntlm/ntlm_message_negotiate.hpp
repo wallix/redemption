@@ -185,7 +185,11 @@ struct NTLMNegotiateMessage : public NTLMMessage {
 
     void recv(Stream & stream) {
         uint8_t * pBegin = stream.p;
-        NTLMMessage::recv(stream);
+        bool res;
+        res = NTLMMessage::recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
         this->negoFlags.recv(stream);
         this->DomainName.recv(stream);
         this->Workstation.recv(stream);

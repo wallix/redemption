@@ -117,9 +117,14 @@ struct NTLMMessage {
         stream.out_uint32_le(this->msgType);
     }
 
-    void recv(Stream & stream) {
-        stream.in_copy_bytes(this->signature, 8);
-        this->msgType = static_cast<NtlmMessageType>(stream.in_uint32_le());
+    bool recv(Stream & stream) {
+        bool res = true;
+        uint8_t received_sig[8];
+        stream.in_copy_bytes(received_sig, 8);
+        res &= (!memcmp(this->signature, received_sig, 8));
+        uint32_t type = stream.in_uint32_le();
+        res &= (static_cast<uint32_t>(this->msgType) == type);
+        return res;
     }
 
 };
@@ -208,7 +213,11 @@ struct NtlmVersion {
     }
 
     void ntlm_get_version_info() {
-	// OSVERSIONINFOA osVersionInfo;
+        this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+        this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
+	this->ProductBuild        = 7601;
+        this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
+        // OSVERSIONINFOA osVersionInfo;
 	// osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
 	// GetVersionExA(&osVersionInfo);
 	// this->ProductMajorVersion = (UINT8) osVersionInfo.dwMajorVersion;

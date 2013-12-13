@@ -183,7 +183,7 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     NtlmField TargetName;          /* 8 Bytes */
     NtlmNegotiateFlags negoFlags;  /* 4 Bytes */
-    uint8_t serverChallenge[8];      /* 8 Bytes */
+    uint8_t serverChallenge[8];    /* 8 Bytes */
     // uint64_t serverChallenge;
     /* 8 Bytes reserved */
     NtlmField TargetInfo;          /* 8 Bytes */
@@ -222,7 +222,11 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     void recv(Stream & stream) {
         uint8_t * pBegin = stream.p;
-        NTLMMessage::recv(stream);
+        bool res;
+        res = NTLMMessage::recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
         this->TargetName.recv(stream);
         this->negoFlags.recv(stream);
         stream.in_copy_bytes(this->serverChallenge, 8);
@@ -434,6 +438,13 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
 // 	return SEC_I_CONTINUE_NEEDED;
 //     }
+
+
+
+
+
+
+
 
 //     SECURITY_STATUS ntlm_write_ChallengeMessage(PSecBuffer buffer)
 //     {

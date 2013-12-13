@@ -332,6 +332,8 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     void emit(Stream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
+        if (this->has_mic)
+            currentOffset += 16;
         NTLMMessage::emit(stream);
         this->LmChallengeResponse.emit(stream, currentOffset);
         this->NtChallengeResponse.emit(stream, currentOffset);
@@ -358,7 +360,11 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     void recv(Stream & stream) {
         uint8_t * pBegin = stream.p;
-        NTLMMessage::recv(stream);
+        bool res;
+        res = NTLMMessage::recv(stream);
+        if (!res) {
+            LOG(LOG_ERR, "INVALID MSG RECEIVED type: %u", this->msgType);
+        }
         this->LmChallengeResponse.recv(stream);
         this->NtChallengeResponse.recv(stream);
         this->DomainName.recv(stream);
@@ -878,6 +884,15 @@ struct NTLMv2_Response {
 //      * @param NTLM context
 //      * @param buffer
 //      */
+
+
+// =====================================================
+// =====================================================
+// =====================================================
+// =====================================================
+
+
+
 
 //     SECURITY_STATUS ntlm_write_AuthenticateMessage(PSecBuffer buffer)
 //     {
