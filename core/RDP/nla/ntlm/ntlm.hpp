@@ -718,6 +718,108 @@ struct NTLMContext {
         list.add(MsvAvDnsComputerName, win7,            sizeof(win7));
     }
 
+
+
+
+    // CLIENT BUILD NEGOTIATE
+
+    void ntlm_client_build_negotiate() {
+        if (this->server) {
+            return;
+        }
+        this->ntlm_set_negotiate_flags();
+        this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+            this->NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
+    }
+
+    // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
+    void ntlm_server_build_challenge() {
+        if (!this->server) {
+            return;
+        }
+        bool result = false;
+        result = this->ntlm_check_nego();
+        if (!result) {
+            LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
+        }
+        this->ntlm_generate_server_challenge();
+        memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
+        this->ntlm_generate_timestamp();
+        this->ntlm_construct_challenge_target_info();
+
+        this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+            this->CHALLENGE_MESSAGE.version.ntlm_get_version_info();
+    }
+
+    // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
+    void ntlm_client_build_authenticate(const uint8_t * password, size_t pass_size,
+                                        const uint8_t * userUpper, size_t user_size,
+                                        const uint8_t * userDomain, size_t domain_size,
+                                        const uint8_t * workstation, size_t work_size) {
+        if (this->server) {
+            return;
+        }
+        this->ntlmv2_compute_response_from_challenge(password, pass_size,
+                                                     userUpper, user_size,
+                                                     userDomain, domain_size);
+        this->ntlm_encrypt_random_session_key();
+        this->ntlm_generate_client_signing_key();
+        this->ntlm_generate_client_sealing_key();
+        this->ntlm_generate_server_signing_key();
+        this->ntlm_generate_server_sealing_key();
+        this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+
+        uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
+        if (flag & NTLMSSP_NEGOTIATE_VERSION)
+            this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
+
+        if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+            BStream & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.Buffer;
+            workstationbuff.reset();
+            workstationbuff.out_copy_bytes(workstation, work_size);
+            workstationbuff.mark_end();
+        }
+
+        flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+        BStream & domain = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
+        domain.reset();
+        domain.out_copy_bytes(userDomain, domain_size);
+        domain.mark_end();
+
+        BStream & user = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
+        user.reset();
+        user.out_copy_bytes(userUpper, user_size);
+        user.mark_end();
+
+        this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
+    }
+
+    // SERVER PROCEED RESPONSE CHECKING
+    void ntlm_server_proceed_authenticate(const uint8_t * hash) {
+        if (!this->server) {
+            return;
+        }
+        bool result = false;
+        result = this->ntlm_check_nt_response_from_authenticate(hash, 16);
+        if (!result) {
+            LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
+        }
+        result = this->ntlm_check_lm_response_from_authenticate(hash, 16);
+        if (!result) {
+            LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
+        }
+        // SERVER COMPUTE SHARED KEY WITH CLIENT
+        this->ntlm_compute_session_base_key(hash, 16);
+        this->ntlm_decrypt_exported_session_key();
+
+        this->ntlm_generate_client_signing_key();
+        this->ntlm_generate_client_sealing_key();
+        this->ntlm_generate_server_signing_key();
+        this->ntlm_generate_server_sealing_key();
+    }
+
 };
 
 

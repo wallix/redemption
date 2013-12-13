@@ -350,3 +350,127 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
                         client_context.ServerSealingKey,
                         16));
 }
+
+
+BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
+{
+
+    NTLMContext client_context;
+    NTLMContext server_context;
+
+    const uint8_t password[] = {
+        0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
+        0x77, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00,
+        0x70, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
+        0x77, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00
+    };
+    // uint8_t user[] = {
+    //     0x75, 0x00, 0x73, 0x00, 0x65, 0x00, 0x72, 0x00,
+    //     0x6e, 0x00, 0x61, 0x00, 0x6d, 0x00, 0x65, 0x00,
+    //     0x6e, 0x00, 0x61, 0x00, 0x6d, 0x00, 0x65, 0x00
+    // };
+    const uint8_t userUpper[] = {
+        0x55, 0x00, 0x53, 0x00, 0x45, 0x00, 0x52, 0x00,
+        0x55, 0x00, 0x53, 0x00, 0x45, 0x00, 0x52, 0x00,
+        0x4e, 0x00, 0x41, 0x00, 0x4d, 0x00, 0x45, 0x00
+    };
+    const uint8_t userDomain[] = {
+        0x44, 0x00, 0x6f, 0x00, 0x6d, 0x00, 0x61, 0x00,
+        0x69, 0x00, 0x6e, 0x00,
+        0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00
+    };
+
+    const uint8_t workstation[] = {
+        0x57, 0x00, 0x49, 0x00, 0x4e, 0x00, 0x58, 0x00, 0x50, 0x00
+    };
+
+    // Initialization
+    BStream client_to_server;
+    BStream server_to_client;
+
+    client_context.init();
+    server_context.init();
+
+    client_context.server = false;
+    server_context.server = true;
+
+
+    // CLIENT BUILDS NEGOTIATE
+    client_context.ntlm_client_build_negotiate();
+
+    // send NEGOTIATE MESSAGE
+    client_context.NEGOTIATE_MESSAGE.emit(client_to_server);
+    client_to_server.rewind();
+    server_context.NEGOTIATE_MESSAGE.recv(client_to_server);
+
+    // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
+    server_context.ntlm_server_build_challenge();
+
+    // send CHALLENGE MESSAGE
+    server_context.CHALLENGE_MESSAGE.emit(server_to_client);
+    server_to_client.rewind();
+    client_context.CHALLENGE_MESSAGE.recv(server_to_client);
+
+    // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
+
+    client_context.ntlm_client_build_authenticate(password, sizeof(password),
+                                                  userUpper, sizeof(userUpper),
+                                                  userDomain, sizeof(userDomain),
+                                                  workstation, sizeof(workstation));
+
+
+    // send AUTHENTICATE MESSAGE
+    client_to_server.reset();
+    client_context.AUTHENTICATE_MESSAGE.emit(client_to_server);
+    client_to_server.rewind();
+    server_context.AUTHENTICATE_MESSAGE.recv(client_to_server);
+
+
+    // SERVER PROCEED RESPONSE CHECKING
+    uint8_t hash[16] = {};
+    server_context.hash_password(password, sizeof(password), hash);
+    server_context.ntlm_server_proceed_authenticate(hash);
+
+    // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
+    LOG(LOG_INFO, "===== SESSION BASE KEY =====");
+    hexdump_c(server_context.SessionBaseKey, 16);
+    hexdump_c(client_context.SessionBaseKey, 16);
+    BOOST_CHECK(!memcmp(server_context.SessionBaseKey,
+                        client_context.SessionBaseKey,
+                        16));
+
+    LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
+    hexdump_c(server_context.ExportedSessionKey, 16);
+    hexdump_c(client_context.ExportedSessionKey, 16);
+    BOOST_CHECK(!memcmp(server_context.ExportedSessionKey,
+                        client_context.ExportedSessionKey,
+                        16));
+
+    LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
+    hexdump_c(server_context.ClientSigningKey, 16);
+    hexdump_c(client_context.ClientSigningKey, 16);
+    BOOST_CHECK(!memcmp(server_context.ClientSigningKey,
+                        client_context.ClientSigningKey,
+                        16));
+
+    LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
+    hexdump_c(server_context.ClientSealingKey, 16);
+    hexdump_c(client_context.ClientSealingKey, 16);
+    BOOST_CHECK(!memcmp(server_context.ClientSealingKey,
+                        client_context.ClientSealingKey,
+                        16));
+
+    LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
+    hexdump_c(server_context.ServerSigningKey, 16);
+    hexdump_c(client_context.ServerSigningKey, 16);
+    BOOST_CHECK(!memcmp(server_context.ServerSigningKey,
+                        client_context.ServerSigningKey,
+                        16));
+
+    LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
+    hexdump_c(server_context.ServerSealingKey, 16);
+    hexdump_c(client_context.ServerSealingKey, 16);
+    BOOST_CHECK(!memcmp(server_context.ServerSealingKey,
+                        client_context.ServerSealingKey,
+                        16));
+}
