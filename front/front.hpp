@@ -2476,11 +2476,6 @@ public:
                             if (this->verbose & 1){
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
                             }
-this->send_synchronize();
-this->send_control(RDP_CTL_COOPERATE);
-this->send_control(RDP_CTL_GRANT_CONTROL);
-this->send_fontmap();
-
                             break;
                         case PDUTYPE_DATAPDU: /* 7 */
                             if (this->verbose & 8){
@@ -3407,10 +3402,10 @@ this->send_fontmap();
                 sdata_in.payload.in_skip_bytes(4); /* control id */
                 switch (action){
                     case RDP_CTL_REQUEST_CONTROL:
-//                        this->send_control(RDP_CTL_GRANT_CONTROL);
+                        this->send_control(RDP_CTL_GRANT_CONTROL);
                     break;
                     case RDP_CTL_COOPERATE:
-//                        this->send_control(RDP_CTL_COOPERATE);
+                        this->send_control(RDP_CTL_COOPERATE);
                     break;
                     default:
                         LOG(LOG_WARNING, "process DATA_PDU_CONTROL unknown action (%d)\n", action);
@@ -3534,7 +3529,7 @@ this->send_fontmap();
                                   (unsigned)messageType,
                                   static_cast<unsigned>(controlId));
                 }
-//                this->send_synchronize();
+                this->send_synchronize();
             }
         break;
         case PDUTYPE2_REFRESH_RECT: // Refresh Rect PDU (section 2.2.11.2.1)
@@ -3712,7 +3707,7 @@ this->send_fontmap();
             /* after second font message, we are up and running */
             if (seq == 2 || seq == 3)
             {
-//                this->send_fontmap();
+                this->send_fontmap();
                 this->send_data_update_sync();
 
                 if (this->client_info.bpp == 8){
