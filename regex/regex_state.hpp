@@ -67,7 +67,7 @@ namespace re {
         const char_int * s;
         size_t len;
 
-        unsigned contains(char_int c, utf_consumer consumer) const {
+        unsigned contains(char_int c, utf8_consumer consumer) const {
             if (c == this->s[0]) {
                 const char_int * s = this->s + 1;
                 while (*s && *s == consumer.bumpc()) {
@@ -88,7 +88,8 @@ namespace re {
 
     struct State
     {
-        State(unsigned type, char_int range_left = 0, char_int range_right = 0, State * out1 = 0, State * out2 = 0)
+        explicit State(unsigned type, char_int range_left = 0, char_int range_right = 0,
+                       State * out1 = 0, State * out2 = 0)
         : type(type)
         , num(0)
         , out1(out1)
@@ -105,7 +106,7 @@ namespace re {
             }
         }
 
-        unsigned check(char_int c, utf_consumer consumer) const {
+        unsigned check(char_int c, utf8_consumer consumer) const {
             if (this->type == SEQUENCE) {
                 return this->data.sequence.contains(c, consumer);
             }
@@ -119,16 +120,19 @@ namespace re {
                         os << ".";
                     }
                     else if (this->data.range.l == this->data.range.r) {
-                        os << "[" << this->data.range.l << "] '" << utf_char(this->data.range.l) << "'";
+                        os << "[" << this->data.range.l << "] '"
+                        << utf8_char(this->data.range.l) << "'";
                     }
                     else {
-                        os << "[" << this->data.range.l << "-" << this->data.range.r << "] ['" << utf_char(this->data.range.l) << "'-'" << utf_char(this->data.range.r) << "']";
+                        os << "[" << this->data.range.l << "-" << this->data.range.r << "] ['"
+                        << utf8_char(this->data.range.l) << "'-'" << utf8_char(this->data.range.r)
+                        << "']";
                     }
                     break;
                 case SEQUENCE: {
                     os << '"';
                     for (const char_int * p = this->data.sequence.s; *p; ++p) {
-                        os << utf_char(*p);
+                        os << utf8_char(*p);
                     }
                     os << '"';
                     break;
@@ -177,16 +181,23 @@ namespace re {
         bool is_sequence() const
         { return this->type == SEQUENCE; }
 
+        bool is_uninitialized() const
+        { return this->type == 0; }
+
         unsigned type;
         unsigned num;
-
-        State *out1;
-        State *out2;
 
         union {
             Range range;
             Sequence sequence;
         } data;
+
+        State *out1;
+        State *out2;
+
+    private:
+        State(const State &);
+        State& operator=(const State &);
     };
 
     inline std::ostream& operator<<(std::ostream& os, const State& st)
@@ -253,7 +264,8 @@ namespace re {
         return SequenceString(s, count);
     }
 
-    inline SequenceString new_string_sequence(const char_int * str, std::size_t len, std::size_t count) {
+    inline SequenceString new_string_sequence(const char_int * str, std::size_t len,
+                                              std::size_t count) {
         char_int * ret = new char_int[count * len + 1];
         char_int * p = ret;
         while (count--) {

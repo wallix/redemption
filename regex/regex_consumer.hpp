@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
  */
 
-#ifndef REDEMPTION_REGEX_CONSUMER_HPP
-#define REDEMPTION_REGEX_CONSUMER_HPP
+#ifndef REDEMPTION_FTESTS_REGEX_REGEX_CONSUMER_HPP
+#define REDEMPTION_FTESTS_REGEX_REGEX_CONSUMER_HPP
 
 #include <ostream>
 #include <stdint.h>
@@ -30,22 +30,22 @@ namespace re {
     using std::size_t;
     typedef uint32_t char_int;
 
-    struct utf_char
+    struct utf8_char
     {
-        utf_char(char_int c)
+        explicit utf8_char(char_int c)
         : uc(c)
         {}
 
         char_int uc;
     };
 
-    inline std::ostream& operator<<(std::ostream& os, utf_char utf_c)
+    inline std::ostream& operator<<(std::ostream& os, utf8_char utf8_c)
     {
         char c[] = {
-            char((utf_c.uc & 0XFF000000) >> 24),
-            char((utf_c.uc & 0X00FF0000) >> 16),
-            char((utf_c.uc & 0X0000FF00) >> 8),
-            char((utf_c.uc & 0X000000FF)),
+            char((utf8_c.uc & 0XFF000000) >> 24),
+            char((utf8_c.uc & 0X00FF0000) >> 16),
+            char((utf8_c.uc & 0X0000FF00) >> 8),
+            char((utf8_c.uc & 0X000000FF)),
         };
         if (c[0]) {
             return os.write(c, 4);
@@ -62,13 +62,13 @@ namespace re {
         return os;
     }
 
-    inline std::string& operator+=(std::string& str, utf_char utf_c)
+    inline std::string& operator+=(std::string& str, utf8_char utf8_c)
     {
         char c[] = {
-            char((utf_c.uc & 0XFF000000) >> 24),
-            char((utf_c.uc & 0X00FF0000) >> 16),
-            char((utf_c.uc & 0X0000FF00) >> 8),
-            char((utf_c.uc & 0X000000FF)),
+            char((utf8_c.uc & 0XFF000000) >> 24),
+            char((utf8_c.uc & 0X00FF0000) >> 16),
+            char((utf8_c.uc & 0X0000FF00) >> 8),
+            char((utf8_c.uc & 0X000000FF)),
         };
         if (c[0]) {
             str += c[0];
@@ -86,10 +86,10 @@ namespace re {
         return str;
     }
 
-    class utf_consumer
+    class utf8_consumer
     {
     public:
-        utf_consumer(const char * str)
+        explicit utf8_consumer(const char * str)
         : s(reinterpret_cast<const unsigned char *>(str))
         {}
 
@@ -133,7 +133,7 @@ namespace re {
 
         char_int getc() const
         {
-            return utf_consumer(this->str()).bumpc();
+            return utf8_consumer(this->str()).bumpc();
         }
 
         bool valid() const
@@ -154,9 +154,9 @@ namespace re {
         const unsigned char * s;
     };
 
-    inline bool utf_contains(const char * str, char_int c)
+    inline bool utf8_contains(const char * str, char_int c)
     {
-        utf_consumer consumer(str);
+        utf8_consumer consumer(str);
         while (consumer.valid()) {
             if (consumer.bumpc() == c) {
                 return true;
