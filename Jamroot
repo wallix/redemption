@@ -85,6 +85,7 @@ project redemption
     <include>recorder
     <include>keyboard
     <include>transport
+    <include>regex
     <include>/usr/include
     <include>FreeRDP/include
     <conditional>@defines
@@ -878,20 +879,20 @@ unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex_state : ftests/regex/test_regex_state.cpp libboost_unit_test ;
-unit-test test_regex_state : ftests/regex/test_regex_state.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex_state : tests/regex/test_regex_state.cpp libboost_unit_test ;
+unit-test test_regex_state : tests/regex/test_regex_state.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex_parser : ftests/regex/test_regex_parser.cpp libboost_unit_test ;
-unit-test test_regex_parser : ftests/regex/test_regex_parser.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex_parser : tests/regex/test_regex_parser.cpp libboost_unit_test ;
+unit-test test_regex_parser : tests/regex/test_regex_parser.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex_ndfa : ftests/regex/test_regex_ndfa.cpp libboost_unit_test ;
-unit-test test_regex_ndfa : ftests/regex/test_regex_ndfa.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex_ndfa : tests/regex/test_regex_ndfa.cpp libboost_unit_test ;
+unit-test test_regex_ndfa : tests/regex/test_regex_ndfa.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test ;
-unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex : tests/regex/test_regex.cpp libboost_unit_test ;
+unit-test test_regex : tests/regex/test_regex.cpp libboost_unit_test gcov : <variant>coverage ;
 
-# unit-test benchmark_regex_parser : ftests/regex/benchmark/parser.cpp ;
-# unit-test benchmark_regex_search : ftests/regex/benchmark/search.cpp ;
+# unit-test benchmark_regex_parser : tests/benchmark/parser.cpp ;
+# unit-test benchmark_regex_search : tests/benchmark/search.cpp ;
 
 unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test ;
 unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test gcov : <variant>coverage ;
