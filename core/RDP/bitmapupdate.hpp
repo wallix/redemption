@@ -239,7 +239,7 @@ struct RDPBitmapData {
             LOG( LOG_ERR
                , "BitmapData::emit - stream too small, need=%u, remains=%u"
                , expected
-               , stream.room());
+               , static_cast<unsigned>(stream.tailroom()));
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
 

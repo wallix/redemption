@@ -45,9 +45,9 @@ inline bool check_sig(const uint8_t* data, std::size_t height, uint32_t len,
     uint8_t sig[20];
     SslSha1 sha1;
     for (size_t y = 0; y < static_cast<size_t>(height); y++){
-        sha1.update(StaticStream(data + y * len, len));
+        sha1.update(data + y * len, len);
     }
-    sha1.final(sig);
+    sha1.final(sig, 20);
 
     if (memcmp(shasig, sig, 20)){
         sprintf(message, "Expected signature: \""

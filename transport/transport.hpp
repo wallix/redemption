@@ -111,19 +111,19 @@ public:
     virtual void seek(int64_t offset, int whence) throw (Error) = 0; // { throw Error(TRANSPORT_SEEK_NOT_AVAILABLE); }
 
     void send(Stream & header1, Stream & header2, Stream & header3, HStream & stream) {
-        stream.copy_to_head(header3);
-        stream.copy_to_head(header2);
-        stream.copy_to_head(header1);
+        stream.copy_to_head(header3.get_data(), header3.size());
+        stream.copy_to_head(header2.get_data(), header2.size());
+        stream.copy_to_head(header1.get_data(), header1.size());
         this->send(stream);
     }
 
     void send(Stream & header1, Stream & header2, HStream & stream) {
-        stream.copy_to_head(header2);
-        stream.copy_to_head(header1);
+        stream.copy_to_head(header2.get_data(), header2.size());
+        stream.copy_to_head(header1.get_data(), header1.size());
         this->send(stream);
     }
     void send(Stream & header, HStream & stream) {
-        stream.copy_to_head(header);
+        stream.copy_to_head(header.get_data(), header.size());
         this->send(stream);
     }
     void send(Stream & stream) throw(Error) {

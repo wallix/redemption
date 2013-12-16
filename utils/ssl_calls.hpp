@@ -14,8 +14,8 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni
+   Copyright (C) Wallix 2010-2014
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
 
    openssl headers
 
@@ -55,13 +55,14 @@ class SslSha1
         SHA1_Init(&this->sha1);
     }
 
-    void update(const Stream & stream)
+    void update(const uint8_t * const data,  size_t data_size)
     {
-        SHA1_Update(&this->sha1, stream.get_data(), stream.size());
+        SHA1_Update(&this->sha1, data, data_size);
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t * out_data, size_t out_data_size)
     {
+        assert(SHA_DIGEST_LENGTH == out_data_size);
         SHA1_Final(out_data, &this->sha1);
     }
 };
@@ -76,16 +77,50 @@ class SslMd5
         MD5_Init(&this->md5);
     }
 
-    void update(const Stream & stream)
+    void update(const uint8_t * const data, size_t data_size)
     {
-        MD5_Update(&this->md5, stream.get_data(), stream.size());
+        MD5_Update(&this->md5, data, data_size);
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t * out_data, size_t out_data_size)
     {
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            MD5_Final(tmp, &this->md5);
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
         MD5_Final(out_data, &this->md5);
     }
 };
+
+class SslMd4
+{
+    MD4_CTX md4;
+
+    public:
+    SslMd4()
+    {
+        MD4_Init(&this->md4);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        MD4_Update(&this->md4, data, data_size);
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        if (MD4_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD4_DIGEST_LENGTH];
+            MD4_Final(tmp, &this->md4);
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        MD4_Final(out_data, &this->md4);
+    }
+};
+
 
 class SslRC4
 {
@@ -94,13 +129,13 @@ class SslRC4
     public:
     SslRC4(){}
 
-    void set_key(const Stream & stream)
+    void set_key(const uint8_t * const key,  size_t key_size)
     {
-        RC4_set_key(&this->rc4, stream.size(), stream.get_data());
+        RC4_set_key(&this->rc4, key_size, key);
     }
 
-    void crypt(Stream & stream){
-        RC4(&this->rc4, stream.size(), stream.get_data(), stream.get_data());
+    void crypt(size_t data_size, const uint8_t * const indata, uint8_t * const outdata){
+        RC4(&this->rc4, data_size, indata, outdata);
     }
 };
 
@@ -134,31 +169,100 @@ class SslHMAC
     }
 };
 
+class SslHMAC_Md5
+{
+    HMAC_CTX hmac;
+
+    public:
+    SslHMAC_Md5(const uint8_t * const key, size_t key_size)
+    {
+        HMAC_Init(&this->hmac, key, key_size, EVP_md5());
+    }
+
+    ~SslHMAC_Md5()
+    {
+        HMAC_cleanup(&this->hmac);
+    }
+
+    void update(const uint8_t * const data, size_t data_size)
+    {
+        HMAC_Update(&this->hmac, data, data_size);
+    }
+
+    void final(uint8_t * out_data, size_t out_data_size)
+    {
+        unsigned int len = 0;
+        if (MD5_DIGEST_LENGTH > out_data_size){
+            uint8_t tmp[MD5_DIGEST_LENGTH];
+            HMAC_Final(&this->hmac, tmp, &len);
+            memcpy(out_data, tmp, out_data_size);
+            return;
+        }
+        HMAC_Final(&this->hmac, out_data, &len);
+    }
+};
+
+/* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
+class Sign
+{
+    SslSha1 sha1;
+    const uint8_t * const & key;
+    size_t key_size;
+
+    public:
+    Sign(const uint8_t * const & key, size_t key_size)
+        : key(key)
+        , key_size(key_size)
+    {
+        this->sha1.update(this->key, this->key_size);
+        const uint8_t sha1const[40] = {
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
+            0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
+        };
+        sha1.update(sha1const, 40);
+    }
+
+    void update(const uint8_t * const data, size_t data_size) {
+        this->sha1.update(data, data_size);
+    }
+
+    void final(uint8_t * out, size_t out_size) {
+        uint8_t shasig[20];
+        this->sha1.final(shasig, 20);
+
+        SslMd5 md5;
+        md5.update(this->key, this->key_size);
+        const uint8_t sigconst[48] = {
+            0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+            0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
+            0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
+        };
+        md5.update(sigconst, sizeof(sigconst));
+        md5.update(shasig, sizeof(shasig));
+        md5.final(out, out_size);
+    }
+};
+
+
 class ssllib
 {
     public:
     static void rsa_encrypt(uint8_t * out, uint8_t * in, int len, uint32_t modulus_size, uint8_t * modulus, uint8_t * exponent)
     {
-        BN_CTX *ctx;
-        BIGNUM mod, exp, x, y;
         uint8_t inr[SEC_MAX_MODULUS_SIZE];
-        int outlen;
 
         reverseit(modulus, modulus_size);
         reverseit(exponent, SEC_EXPONENT_SIZE);
         rmemcpy(inr, in, len);
 
-        ctx = BN_CTX_new();
-        BN_init(&mod);
-        BN_init(&exp);
-        BN_init(&x);
-        BN_init(&y);
+        BN_CTX *ctx = BN_CTX_new();
+        BIGNUM mod; BN_init(&mod); BN_bin2bn(modulus, modulus_size, &mod);
+        BIGNUM exp; BN_init(&exp); BN_bin2bn(exponent, SEC_EXPONENT_SIZE, &exp);
+        BIGNUM x; BN_init(&x); BN_bin2bn(inr, len, &x);
+        BIGNUM y; BN_init(&y); BN_mod_exp(&y, &x, &exp, &mod, ctx);
 
-        BN_bin2bn(modulus, modulus_size, &mod);
-        BN_bin2bn(exponent, SEC_EXPONENT_SIZE, &exp);
-        BN_bin2bn(inr, len, &x);
-        BN_mod_exp(&y, &x, &exp, &mod, ctx);
-        outlen = BN_bn2bin(&y, out);
+        int outlen = BN_bn2bin(&y, out);
         reverseit(out, outlen);
         if (outlen < static_cast<int>(modulus_size)){
             memset(out + outlen, 0, modulus_size - outlen);
@@ -175,41 +279,6 @@ class ssllib
         key[0] = 0xd1;
         key[1] = 0x26;
         key[2] = 0x9e;
-    }
-
-    /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    static void sign(Stream & signature, const Stream & key, const Stream & data)
-    {
-        uint8_t lenhdr[4];
-        buf_out_uint32(lenhdr, data.size());
-
-        SslSha1 sha1;
-        sha1.update(key);
-        sha1.update(StaticStream(
-                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
-                    "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
-                    "\x36\x36\x36\x36\x36\x36\x36\x36"
-                  , 40));
-        // Data we are signing
-        TODO("pass in a stream and factorize with code in decrypt");
-        sha1.update(FixedSizeStream(lenhdr, sizeof(lenhdr)));
-        sha1.update(data);
-
-        uint8_t shasig[20];
-        sha1.final(shasig);
-
-        SslMd5 md5;
-        md5.update(key);
-        md5.update(StaticStream(
-                   "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                   "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                   "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                 , 48));
-        md5.update(FixedSizeStream(shasig, sizeof(shasig)));
-        uint8_t md5sig[MD5_DIGEST_LENGTH];
-        md5.final(md5sig);
-
-        memcpy(signature.get_data(), md5sig, signature.get_capacity());
     }
 };
 
@@ -271,72 +340,54 @@ struct CryptContext
             ssllib ssl;
             ssl.sec_make_40bit(this->key);
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key(FixedSizeStream(this->key, 8));
+            this->rc4.set_key(this->key, 8);
         }
         else {
             // 128 bits encryption
 
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key(FixedSizeStream(this->key, 16));
+            this->rc4.set_key(this->key, 16);
         }
     }
 
     /* Decrypt data using RC4 */
-    void decrypt(Stream & stream)
+    void decrypt(uint8_t * data, size_t data_size)
     {
         ssllib ssl;
 
         if (this->use_count == 4096) {
             size_t keylen = (this->encryptionMethod==1)?8:16;
 
-            SslSha1 sha1;
-            sha1.update(FixedSizeStream(this->update_key, keylen));
-            sha1.update(StaticStream(
-                        "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
-                        "\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36\x36"
-                        "\x36\x36\x36\x36\x36\x36\x36\x36"
-                      , 40));
+            Sign sign(this->update_key, keylen);
+            sign.update(this->key, keylen);
+            sign.final(this->key, sizeof(key));
 
-            // Data we are signing
-            TODO("pass in a stream and factorize with code in sign");
-            sha1.update(FixedSizeStream(this->key, keylen));
+            this->rc4.set_key(this->key, keylen);
 
-            uint8_t shasig[20];
-            sha1.final(shasig);
-
-            SslMd5 md5;
-            md5.update(FixedSizeStream(this->update_key, keylen));
-            md5.update(StaticStream(
-                       "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                       "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                       "\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c\x5c"
-                     , 48));
-            md5.update(FixedSizeStream(shasig, sizeof(shasig)));
-            md5.final(this->key);
-
-            this->rc4.set_key(FixedSizeStream(this->key, keylen));
-
-            FixedSizeStream key(this->key, keylen);
-            this->rc4.crypt(key);
+            // size, in, out
+            this->rc4.crypt(keylen, this->key, this->key);
 
             if (this->encryptionMethod == 1){
                 ssl.sec_make_40bit(this->key);
             }
-            this->rc4.set_key(FixedSizeStream(this->key, keylen));
+            this->rc4.set_key(this->key, keylen);
             this->use_count = 0;
         }
-        this->rc4.crypt(stream);
+        // size, in, out
+        this->rc4.crypt(data_size, data, data);
         this->use_count++;
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void sign(Stream & signature, Stream & data)
+    void sign(const uint8_t * data, size_t data_size, uint8_t * signature, size_t signature_size)
     {
-        ssllib ssl;
+        uint8_t lenhdr[4];
+        buf_out_uint32(lenhdr, data_size);
 
-        FixedSizeStream key(this->sign_key, (this->encryptionMethod==1)?8:16);
-
-        ssl.sign(signature, key, data);
+        Sign sign(this->sign_key, (this->encryptionMethod==1)?8:16);
+        sign.update(lenhdr, sizeof(lenhdr));
+        sign.update(data, data_size);
+        sign.final(signature, 8);
     }
 };
 

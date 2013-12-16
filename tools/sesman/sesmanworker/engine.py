@@ -1297,10 +1297,9 @@ class Engine(object):
         Logger().info("get_target_password done = %s" % res)
         return res
 
-    def release_target_password(self, target_device, reason):
+    def release_target_password(self, target_device, reason, target_application = None):
         Logger().info("release_target_password done: target_device=\"%s\" reason=\"%s\"" %
             (target_device, reason))
-        pass
 
     def start_session(self, target, pid):
         return "SESSIONID-0000"

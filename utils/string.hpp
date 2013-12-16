@@ -37,6 +37,8 @@ public:
 
     string(const string & source) : internal_string(source.internal_string) {}
 
+    string(const char * source, size_t length) : internal_string(source, length) {}
+
 private:
     string & operator=(const char * source);
 
@@ -67,6 +69,11 @@ public:
 
     void empty() {
         this->internal_string.clear();
+    }
+
+    size_t find(const char * s, size_t pos = 0) const
+    {
+        return this->internal_string.find(s, pos);
     }
 
     bool is_empty() const {

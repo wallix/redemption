@@ -269,15 +269,7 @@ int main(int argc, char** argv)
     bool user_check_file_result  =
         ((uid != euid) || (gid != egid)) ?
         CheckFile::check(user_check_file_list) : true;
-/*
-    setgid(egid);
-    setuid(euid);
-*/
     bool euser_check_file_result = CheckFile::check(euser_check_file_list);
-/*
-    setgid(gid);
-    setuid(uid);
-*/
 
     if (options.count("check")) {
         if ((uid != euid) || (gid != egid))
@@ -363,8 +355,14 @@ int main(int argc, char** argv)
     ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
     if (!ini.globals.enable_ip_transparent) {
-        setgid(egid);
-        setuid(euid);
+        if (setgid(gid) != 0){
+            LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
+            _exit(1);
+        }
+        if (setuid(uid) != 0){
+            LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", gid, strerror(errno));
+            _exit(1);
+        }
     }
 
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");

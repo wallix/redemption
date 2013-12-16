@@ -249,7 +249,7 @@ protected:
                     BStream sctrl_header(256);
                     ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, this->stream_orders.size());
 
-                    this->buffer_stream_orders.copy_to_head(sctrl_header);
+                    this->buffer_stream_orders.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
                     BStream x224_header(256);
                     OutPerBStream mcs_header(256);
@@ -312,7 +312,7 @@ protected:
                                      , this->userid + GCC::MCS_USERCHANNEL_BASE
                                      , compressed_buffer_stream_orders.size());
 
-                    compressed_buffer_stream_orders.copy_to_head(sctrl_header);
+                    compressed_buffer_stream_orders.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
                     BStream x224_header(256);
                     OutPerBStream mcs_header(256);
@@ -340,11 +340,15 @@ protected:
                 }
 
                 this->stream_orders.mark_end();
+                LOG(LOG_INFO, "SubStream Upd_s size=%u", this->stream_orders.size());
 
                 size_t header_size = FastPath::Update_Send::GetSize(this->compression);
+                LOG(LOG_INFO, "SubStream Upd_s ??? size=%u", this->stream_orders.size());
 
                 if (!this->compression) {
+                    LOG(LOG_INFO, "SubStream Upd_s !!! size=%u", this->stream_orders.size());
                     SubStream Upd_s(this->stream_orders, 0, header_size);
+                    LOG(LOG_INFO, "SubStream Upd_s size=%u", Upd_s.size());
 
                     FastPath::Update_Send Upd( Upd_s
                                              , this->stream_orders.size() - header_size
@@ -367,7 +371,6 @@ protected:
                     this->trans->send(fastpath_header, this->buffer_stream_orders);
                 }
                 else {
-                    HStream  compressed_buffer_stream_orders(1024, 65565);
                     uint8_t  compressionFlags;
                     uint16_t datalen;
 
@@ -379,11 +382,11 @@ protected:
                         header_size = FastPath::Update_Send::GetSize(0);
                     }
 
-                    SubStream Upd_s(compressed_buffer_stream_orders, 0, header_size);
+                    HStream  compressed_buffer_stream_orders(1024, 65565);
 
                     uint8_t compression = ((compressionFlags & PACKET_COMPRESSED) ? FastPath::FASTPATH_OUTPUT_COMPRESSION_USED : 0);
 
-                    FastPath::Update_Send Upd( Upd_s
+                    FastPath::Update_Send Upd( compressed_buffer_stream_orders
                                              , datalen
                                              , FastPath::FASTPATH_UPDATETYPE_ORDERS
                                              , FastPath::FASTPATH_FRAGMENT_SINGLE
@@ -391,7 +394,7 @@ protected:
                                              , compressionFlags
                                              );
 
-                    compressed_buffer_stream_orders.p += header_size;
+                    assert(compressed_buffer_stream_orders.get_offset() == header_size);
 
                     if (compressionFlags & PACKET_COMPRESSED) {
                         this->mppc_enc->get_compressed_data(compressed_buffer_stream_orders);
@@ -446,7 +449,7 @@ protected:
                                  , this->userid + GCC::MCS_USERCHANNEL_BASE
                                  , this->stream_bitmaps.size());
 
-                this->buffer_stream_bitmaps.copy_to_head(sctrl_header);
+                this->buffer_stream_bitmaps.copy_to_head(sctrl_header.get_data(), sctrl_header.size());
 
                 BStream x224_header(256);
                 OutPerBStream mcs_header(256);
@@ -507,6 +510,7 @@ protected:
                     this->trans->send(fastpath_header, this->buffer_stream_bitmaps);
                 }
                 else {
+
                     HStream  compressed_buffer_stream_bitmaps(1024, 65565);
                     uint16_t datalen;
                     uint8_t  compressionFlags;
@@ -514,24 +518,22 @@ protected:
                     this->mppc_enc->compress(this->buffer_stream_bitmaps.get_data(), this->buffer_stream_bitmaps.size(),
                         compressionFlags, datalen);
 
+                    uint8_t compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
+                    header_size = 4;
                     if (!(compressionFlags & PACKET_COMPRESSED)) {
                         datalen     = this->buffer_stream_bitmaps.size();
-                        header_size = FastPath::Update_Send::GetSize(0);
+                        header_size = 3;
+                        compression = 0;
                     }
 
-                    SubStream Upd_s(compressed_buffer_stream_bitmaps, 0, header_size);
-
-                    uint8_t compression = ((compressionFlags & PACKET_COMPRESSED) ? FastPath::FASTPATH_OUTPUT_COMPRESSION_USED : 0);
-
-                    FastPath::Update_Send Upd( Upd_s
+                    TODO("This is a fastpath header, we should manage it as a separate buffer")
+                    FastPath::Update_Send Upd( compressed_buffer_stream_bitmaps
                                              , datalen
                                              , FastPath::FASTPATH_UPDATETYPE_BITMAP
                                              , FastPath::FASTPATH_FRAGMENT_SINGLE
                                              , compression
                                              , compressionFlags
                                             );
-
-                    compressed_buffer_stream_bitmaps.p += header_size;
 
                     if (compressionFlags & PACKET_COMPRESSED) {
                         this->mppc_enc->get_compressed_data(compressed_buffer_stream_bitmaps);

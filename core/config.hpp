@@ -247,7 +247,7 @@ typedef enum
 
         AUTHID_AUTHENTICATION_CHALLENGE,
 
-        AUTHID_DISABLECTRLALTDEL,
+        AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
         AUTHID_DISABLE_KEYBOARD_LOG,
 
@@ -345,7 +345,7 @@ typedef enum
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
 
-#define STRAUTHID_DISABLECTRLALTDEL        "disable_ctrl_alt_del"
+#define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
 
@@ -447,7 +447,7 @@ static const std::string authstr[MAX_AUTHID - 1] = {
 
     STRAUTHID_AUTHENTICATION_CHALLENGE,
 
-    STRAUTHID_DISABLECTRLALTDEL,
+    STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
     STRAUTHID_DISABLE_KEYBOARD_LOG,
 };
@@ -543,7 +543,7 @@ struct Inifile : public FieldObserver {
         BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
         BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
 
-        BoolField disable_ctrl_alt_del; // AUTHID_DISABLECTRLALTDEL //
+        BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
 
         bool rdp_compression;
     } client;
@@ -873,8 +873,8 @@ public:
         this->client.bogus_neg_request                   = false;
         this->client.rdp_compression                     = false;
 
-        this->client.disable_ctrl_alt_del.attach_ini(this, AUTHID_DISABLECTRLALTDEL);
-        this->client.disable_ctrl_alt_del.set(false);
+        this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
+        this->client.disable_tsk_switch_shortcuts.set(false);
         // End Section "client"
 
         // Begin section "mod_rdp"
@@ -1270,8 +1270,8 @@ public:
             else if (0 == strcmp(key, "rdp_compression")){
                 this->client.rdp_compression = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "disable_ctrl_alt_del")){
-                this->client.disable_ctrl_alt_del.set_from_cstr(value);
+            else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")){
+                this->client.disable_tsk_switch_shortcuts.set_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "mod_rdp")){

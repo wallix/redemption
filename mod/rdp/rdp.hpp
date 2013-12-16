@@ -318,24 +318,62 @@ struct mod_rdp : public mod_api {
 
         TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log");
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
-            LOG(LOG_INFO, "mod_rdp: hostname too long! %u > %u", ::strlen(info.hostname), sizeof(this->hostname));
+            LOG(LOG_INFO, "mod_rdp: hostname too long! %u >= %u", ::strlen(info.hostname), sizeof(this->hostname));
         }
         strncpy(this->hostname, info.hostname, 15);
         this->hostname[15] = 0;
 
-        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log");
-        if (::strlen(target_user) >= sizeof(this->username)) {
-            LOG(LOG_INFO, "mod_rdp: username too long! %u > %u", ::strlen(target_user), sizeof(this->username));
-        }
-        strncpy(this->username, target_user, 127);
-        this->username[127] = 0;
 
-        LOG(LOG_INFO, "Remote RDP Server login:%s host:%s", this->username, this->hostname);
+        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log");
+        const char * domain_pos   = 0;
+        size_t       domain_len   = 0;
+        const char * username_pos = 0;
+        size_t       username_len = 0;
+        const char * separator = strchr(target_user, '\\');
+        if (separator)
+        {
+            domain_pos   = target_user;
+            domain_len   = separator - target_user;
+            username_pos = ++separator;
+            username_len = strlen(username_pos);
+        }
+        else
+        {
+            separator = strchr(target_user, '@');
+            if (separator)
+            {
+                domain_pos   = ++separator;
+                domain_len   = strlen(domain_pos);
+                username_pos = target_user;
+                username_len = separator - target_user;
+            }
+            else
+            {
+                username_pos = target_user;
+                username_len = strlen(username_pos);
+            }
+        }
+
+        if (username_len >= sizeof(this->username)) {
+            LOG(LOG_INFO, "mod_rdp: username too long! %u >= %u", username_len, sizeof(this->username));
+        }
+        size_t count = std::min(sizeof(this->username) - 1, username_len);
+        if (count > 0) strncpy(this->username, username_pos, count);
+        this->username[count] = 0;
+
+        if (domain_len >= sizeof(this->domain)) {
+            LOG(LOG_INFO, "mod_rdp: domain too long! %u >= %u", domain_len, sizeof(this->domain));
+        }
+        count = std::min(sizeof(this->domain) - 1, domain_len);
+        if (count > 0) strncpy(this->domain, domain_pos, count);
+        this->domain[count] = 0;
+
+        LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"", this->domain, this->username, this->hostname);
+
 
         strncpy(this->password, target_password, sizeof(this->password) - 1);
         this->password[sizeof(this->password) - 1] = 0;
 
-        memset(this->domain, 0, sizeof(this->domain));
 
         strncpy(this->program, alternate_shell, sizeof(this->program) - 1);
         this->program[sizeof(this->program) - 1] = 0;
@@ -558,11 +596,12 @@ struct mod_rdp : public mod_api {
         }
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-        StaticStream                chunk(data, ::strlen(data));
 
+        TODO("I do not like this strlen here, see that")
+        size_t chunk_size = ::strlen(reinterpret_cast<const char *>(data));
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                            , this->userid, this->auth_channel_chanid, chunk.size()
-                            , this->auth_channel_flags, chunk);
+                            , this->userid, this->auth_channel_chanid, chunk_size
+                            , this->auth_channel_flags, reinterpret_cast<const uint8_t *>(data), chunk_size);
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
@@ -580,7 +619,7 @@ struct mod_rdp : public mod_api {
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                                            , this->userid, channel.chanid, length, flags, chunk);
+                                            , this->userid, channel.chanid, length, flags, chunk.get_data(), chunk.size());
 
         if (this->verbose & 16) {
             LOG(LOG_INFO, "mod_rdp::send_to_channel done");
@@ -589,6 +628,10 @@ struct mod_rdp : public mod_api {
 
     void send_data_request(uint16_t channelId, HStream & stream)
     {
+        if (this->verbose & 16) {
+            LOG(LOG_INFO, "send data request");
+        }
+
         BStream x224_header(256);
         OutPerBStream mcs_header(256);
 
@@ -598,6 +641,10 @@ struct mod_rdp : public mod_api {
         X224::DT_TPDU_Send(x224_header, stream.size() + mcs_header.size());
 
         this->nego.trans->send(x224_header, mcs_header, stream);
+
+        if (this->verbose & 16) {
+            LOG(LOG_INFO, "send data request done");
+        }
     }
 
     void send_data_request_ex(uint16_t channelId, HStream & stream)
@@ -606,9 +653,8 @@ struct mod_rdp : public mod_api {
         OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
-                          this->encryptionLevel);
-        stream.copy_to_head(sec_header);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->encryptionLevel);
+        stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
         MCS::SendDataRequest_Send mcs(mcs_header, this->userid, channelId, 1,
                                       3, stream.size(), MCS::PER_ENCODING);
@@ -877,6 +923,7 @@ struct mod_rdp : public mod_api {
                                                 throw Error(ERR_SEC);
                                             }
 
+                                            TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                                             RSA * server_public_key = RSAPublicKey_dup((RSA *) epk->pkey.ptr);
                                             EVP_PKEY_free(epk);
                                             this->server_public_key_len = RSA_size(server_public_key);
@@ -1217,7 +1264,16 @@ struct mod_rdp : public mod_api {
 
                     {
                         const char * hostname = this->hostname;
-                        const char * username = this->username;
+                        const char * username;
+                        char username_a_domain[512];
+                        if (this->domain[0]) {
+                            snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->username, this->domain);
+                            username = username_a_domain;
+                        }
+                        else {
+                            username = this->username;
+                        }
+                        LOG(LOG_INFO, "Rdp::Get license: username=\"%s\"", username);
                         // read tpktHeader (4 bytes = 3 0 len)
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
@@ -1257,22 +1313,27 @@ struct mod_rdp : public mod_api {
                                         buf_out_uint32(hwid, 2);
                                         memcpy(hwid + 4, hostname, LIC::LICENSE_HWID_SIZE - 4);
 
-                                        ssllib ssl;
                                         /* Generate a signature for the HWID buffer */
                                         uint8_t signature[LIC::LICENSE_SIGNATURE_SIZE];
 
-                                        FixedSizeStream sig(signature, sizeof(signature));
-                                        FixedSizeStream key(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
-                                        FixedSizeStream data(hwid, sizeof(hwid));
+                                        uint8_t lenhdr[4];
+                                        buf_out_uint32(lenhdr, sizeof(hwid));
 
-                                        ssl.sign(sig, key, data);
+                                        Sign sign(this->lic_layer_license_sign_key, 16);
+                                        sign.update(lenhdr, sizeof(lenhdr));
+                                        sign.update(hwid, sizeof(hwid));
+
+                                        assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                        sign.final(signature, sizeof(signature));
+                                          
+                                            
                                         /* Now encrypt the HWID */
 
                                         SslRC4 rc4;
-                                        rc4.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
+                                        rc4.set_key(this->lic_layer_license_key, 16);
 
-                                        FixedSizeStream hwid_stream(hwid, sizeof(hwid));
-                                        rc4.crypt(hwid_stream);
+                                        // in, out
+                                        rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
 
                                         LIC::ClientLicenseInfo_Send(lic_data, this->use_rdp5?3:2,
                                                                     this->lic_layer_license_size, this->lic_layer_license_data, hwid, signature);
@@ -1283,7 +1344,7 @@ struct mod_rdp : public mod_api {
 
                                     SEC::Sec_Send sec(sec_header, lic_data,
                                         SEC::SEC_LICENSE_PKT, this->encrypt, 0);
-                                    lic_data.copy_to_head(sec_header);
+                                    lic_data.copy_to_head(sec_header.get_data(), sec_header.size());
 
                                     this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
                                 }
@@ -1306,9 +1367,9 @@ struct mod_rdp : public mod_api {
                                     /* Decrypt the token. It should read TEST in Unicode. */
                                     memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                                     SslRC4 rc4_decrypt_token;
-                                    rc4_decrypt_token.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
-                                    FixedSizeStream decrypt_token_stream(decrypt_token, LIC::LICENSE_TOKEN_SIZE);
-                                    rc4_decrypt_token.crypt(decrypt_token_stream);
+                                    rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
+                                    // size, in, out
+                                    rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
                                     /* Generate a signature for a buffer of token and HWID */
                                     buf_out_uint32(hwid, 2);
@@ -1318,28 +1379,29 @@ struct mod_rdp : public mod_api {
                                     memcpy(sealed_buffer, decrypt_token, LIC::LICENSE_TOKEN_SIZE);
                                     memcpy(sealed_buffer + LIC::LICENSE_TOKEN_SIZE, hwid, LIC::LICENSE_HWID_SIZE);
 
-                                    ssllib ssl;
+                                    uint8_t lenhdr[4];
+                                    buf_out_uint32(lenhdr, sizeof(sealed_buffer));
 
-                                    FixedSizeStream sig(out_sig, sizeof(out_sig));
-                                    FixedSizeStream key(this->lic_layer_license_sign_key, sizeof(this->lic_layer_license_sign_key));
-                                    FixedSizeStream data(sealed_buffer, sizeof(sealed_buffer));
+                                    Sign sign(this->lic_layer_license_sign_key, 16);
+                                    sign.update(lenhdr, sizeof(lenhdr));
+                                    sign.update(sealed_buffer, sizeof(sealed_buffer));
 
-                                    ssl.sign(sig, key, data);
+                                    assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
+                                    sign.final(out_sig, sizeof(out_sig));
 
                                     /* Now encrypt the HWID */
                                     memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                                     SslRC4 rc4_hwid;
-                                    rc4_hwid.set_key(FixedSizeStream(this->lic_layer_license_key, 16));
-                                    FixedSizeStream crypt_hwid_stream(crypt_hwid, LIC::LICENSE_HWID_SIZE);
-                                    rc4_hwid.crypt(crypt_hwid_stream);
+                                    rc4_hwid.set_key(this->lic_layer_license_key, 16);
+                                    // size, in, out
+                                    rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
 
                                     BStream sec_header(256);
                                     HStream lic_data(1024, 65535);
 
                                     LIC::ClientPlatformChallengeResponse_Send(lic_data, this->use_rdp5?3:2, out_token, crypt_hwid, out_sig);
-                                    SEC::Sec_Send sec(sec_header, lic_data,
-                                        SEC::SEC_LICENSE_PKT, this->encrypt, 0);
-                                    lic_data.copy_to_head(sec_header);
+                                    SEC::Sec_Send sec(sec_header, lic_data, SEC::SEC_LICENSE_PKT, this->encrypt, 0);
+                                    lic_data.copy_to_head(sec_header.get_data(), sec_header.size());
                                     this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, lic_data);
                                 }
                                 break;
@@ -3915,18 +3977,32 @@ public:
         }
     }
 
+    // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
+    // ---------------------------------------------------------------
+    
+    // The TS_CACHEDPOINTERATTRIBUTE structure is used to instruct the 
+    // client to change the current pointer shape to one already present 
+    // in the pointer cache. 
+
+    // cacheIndex (2 bytes): A 16-bit, unsigned integer. A zero-based 
+    // cache entry containing the cache index of the cached pointer to
+    // which the client's pointer MUST be changed. The pointer data MUST
+    // have already been cached using either the Color Pointer Update
+    // (section 2.2.9.1.1.4.4) or New Pointer Update (section 2.2.9.1.1.4.5).
+
     void process_cached_pointer_pdu(Stream & stream)
     {
         if (this->verbose & 4){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
         }
 
+        TODO("Add check that the idx transmitted is actually an used pointer")
         int pointer_idx = stream.in_uint16_le();
         if (pointer_idx < 0){
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu negative pointer cache idx (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_LESS_0);
         }
-        if (pointer_idx >= (int)(sizeof(this->cursors) / sizeof(Pointer))) {
+        if (pointer_idx >= static_cast<int>(sizeof(this->cursors) / sizeof(Pointer))) {
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)", pointer_idx);
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
@@ -3936,6 +4012,19 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
         }
     }
+
+    // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
+    // ---------------------------------------------------------------
+
+    // systemPointerType (4 bytes): A 32-bit, unsigned integer. The type of system pointer.
+
+    // +---------------------------+-----------------------------+
+    // |      Value                |      Meaning                |
+    // +---------------------------+-----------------------------+
+    // | SYSPTR_NULL    0x00000000 | The hidden pointer.         |
+    // +---------------------------+-----------------------------+
+    // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
+    // +---------------------------+-----------------------------+
 
     void process_system_pointer_pdu(Stream & stream)
     {
@@ -3961,49 +4050,44 @@ public:
         }
     }
 
-    void to_regular_mask(Stream & stream, unsigned mlen, uint8_t bpp,
-            uint8_t * mask, size_t mask_size) {
+    void to_regular_mask(const uint8_t * indata, unsigned mlen, uint8_t bpp, uint8_t * mask, size_t mask_size) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
-        TODO("CGR: we should ensure we have data enough to create mask");
-        uint8_t * end = stream.p + mlen;
+
+        TODO("check code below: why do we revert mask and pointer when pointer is 1 BPP and not with other color depth ?"
+             " Looks fishy, a mask and pointer should always be encoded in the same way, not depending on color depth"
+             "difficult to see for symmetrical pointers... check documentation");
+        TODO("it may be more efficient to revert cursor after creating it instead of doing it on the fly")
         switch (bpp) {
         case 1 :
         {
             for (unsigned x = 0; x < mlen ; x++) {
-                BGRColor px = stream.in_uint8();
+                BGRColor px = indata[x];
                 // incoming new pointer mask is upside down, revert it
-                mask[128 - 4 - (x & 0xFFFC) + (x & 3)] = px;
+                mask[128 - 4 - (x & 0x7C) + (x & 3)] = px;
             }
         }
         break;
         default:
-            for (unsigned x = 0; x < mlen ; x++) {
-                BGRColor px = stream.in_uint8();
-                mask[x] = px;
-            }
-//            stream.in_copy_bytes(mask, mlen);
+            memcpy(mask, indata, mlen);
         break;
         }
 
-        stream.p = end;
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_mask");
         }
     }
 
-    void to_regular_pointer(Stream & stream, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len) {
+    void to_regular_pointer(const uint8_t * indata, unsigned dlen, uint8_t bpp, uint8_t * data, size_t target_data_len) {
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
-        uint8_t * end = stream.p + dlen;
-        TODO("CGR: we should ensure we have data enough to create pointer");
         switch (bpp) {
         case 1 :
         {
             for (unsigned x = 0; x < dlen ; x ++) {
-                BGRColor px = stream.in_uint8();
+                BGRColor px = indata[x];
                 // target cursor will receive 8 bits input at once
                 for (unsigned b = 0 ; b < 8 ; b++) {
                     // incoming new pointer is upside down, revert it
@@ -4023,8 +4107,8 @@ public:
         break;
         case 4 :
         {
-            for (unsigned i=0; i < dlen ; i++) {
-                BGRColor px = stream.in_uint8();
+            for (unsigned i = 0; i < dlen ; i++) {
+                BGRColor px = indata[i];
                 // target cursor will receive 8 bits input at once
                 ::out_bytes_le(&(data[6 * i]),     3, color_decode((px >> 4) & 0xF, bpp, this->orders.global_palette));
                 ::out_bytes_le(&(data[6 * i + 3]), 3, color_decode(px        & 0xF, bpp, this->orders.global_palette));
@@ -4034,8 +4118,8 @@ public:
         case 32: case 24: case 16: case 15: case 8:
         {
             uint8_t BPP = nbbytes(bpp);
-            for (unsigned i=0; i + BPP <= dlen; i += BPP) {
-                BGRColor px = stream.in_bytes_le(BPP);
+            for (unsigned i = 0; i + BPP <= dlen; i += BPP) {
+                BGRColor px = in_uint32_from_nb_bytes_le(BPP, indata + i);
                 ::out_bytes_le(&(data[(i/BPP)*3]), 3, color_decode(px, bpp, this->orders.global_palette));
             }
         }
@@ -4048,11 +4132,28 @@ public:
             break;
         }
 
-        stream.p = end;
         if (this->verbose & 4) {
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
     }
+    
+    // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
+    // ------------------------------------------------------
+    
+    // The TS_POINTERATTRIBUTE structure is used to send pointer data at an arbitrary
+    // color depth. Support for the New Pointer Update is advertised in the Pointer
+    // Capability Set (section 2.2.7.1.5). 
+    
+    
+    // xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel
+    // of the XOR mask contained in the colorPtrAttr field.
+
+    // colorPtrAttr (variable): Encapsulated Color Pointer Update (section 2.2.9.1.1.4.4)
+    //  structure which contains information about the pointer. The Color Pointer Update
+    //  fields are all used, as specified in section 2.2.9.1.1.4.4; however color XOR data
+    //  is presented in the color depth described in the xorBpp field (for 8 bpp, each byte
+    //  contains one palette index; for 4 bpp, there are two palette indices per byte).
+
 
     void process_new_pointer_pdu(Stream & stream) throw(Error) {
         if (this->verbose & 4) {
@@ -4073,7 +4174,7 @@ public:
 
         Pointer & cursor = this->cursors[pointer_idx];
         memset(&cursor, 0, sizeof(struct Pointer));
-        cursor.bpp    = data_bpp;
+        cursor.bpp    = 24;
         cursor.x      = stream.in_uint16_le();
         cursor.y      = stream.in_uint16_le();
         cursor.width  = stream.in_uint16_le();
@@ -4100,6 +4201,15 @@ public:
             cursor.y = 0;
         }
 
+        if (!stream.in_check_rem(dlen)){
+            LOG(LOG_ERR, "Not enough data for cursor pixels (need=%u remain=%u)", dlen, stream.in_remain());
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+        if (!stream.in_check_rem(mlen + dlen)){
+            LOG(LOG_ERR, "Not enough data for cursor mask (need=%u remain=%u)", mlen, stream.in_remain() - dlen);
+            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+        }
+
         size_t out_data_len = 3 * (
             (bpp == 1) ? (cursor.width * cursor.height) / 8 :
             (bpp == 4) ? (cursor.width * cursor.height) / 2 :
@@ -4116,36 +4226,28 @@ public:
         }
 
         if (data_bpp == 1) {
-            uint8_t copy_data_data[32*32*4];
-            uint8_t copy_mask_data[32*32/8];
-            stream.in_copy_bytes(copy_data_data, dlen);
-            stream.in_copy_bytes(copy_mask_data, mlen);
-
-            unsigned   i;
-            uint8_t  * mask_data;
-            uint8_t  * data_data;
-            uint8_t    new_mask_data;
-
-            for (i = 0, data_data = copy_data_data, mask_data = copy_mask_data; i < mlen;
-                 i++, data_data++, mask_data++) {
-                new_mask_data = (*mask_data & (*data_data ^ 0xFF));
-                *data_data    = (*data_data ^ *mask_data ^ new_mask_data);
-                *mask_data    = new_mask_data;
+            uint8_t data_data[32*32*4];
+            uint8_t mask_data[32*32/8];
+            stream.in_copy_bytes(data_data, dlen);
+            stream.in_copy_bytes(mask_data, mlen);
+            
+            for (unsigned i = 0 ; i < mlen; i++) {
+                uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
+                uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
+                data_data[i]    = new_data_data;
+                mask_data[i]    = new_mask_data;
             }
 
-            FixedSizeStream data_stream(copy_data_data, sizeof(copy_data_data));
-            FixedSizeStream mask_stream(copy_mask_data, sizeof(copy_mask_data));
-
-            to_regular_pointer(data_stream,
-                dlen, data_bpp, cursor.data, sizeof(cursor.data));
-            to_regular_mask(mask_stream,
-                mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
-                cursor.bpp = 24;
+            TODO("move that into cursor")
+            this->to_regular_pointer(data_data, dlen, 1, cursor.data, sizeof(cursor.data));
+            this->to_regular_mask(mask_data, mlen, 1, cursor.mask, sizeof(cursor.mask));
         }
         else {
-            to_regular_pointer(stream, dlen, data_bpp, cursor.data, sizeof(cursor.data));
-            to_regular_mask(stream, mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
-            cursor.bpp = 24;
+            TODO("move that into cursor")
+            this->to_regular_pointer(stream.p, dlen, data_bpp, cursor.data, sizeof(cursor.data));
+            stream.in_skip_bytes(dlen);
+            this->to_regular_mask(stream.p, mlen, data_bpp, cursor.mask, sizeof(cursor.mask));
+            stream.in_skip_bytes(mlen);
         }
 
         this->front.server_set_pointer(cursor);
@@ -4384,12 +4486,17 @@ public:
         infoPacket.emit(stream);
         stream.mark_end();
 
+        if (this->verbose) {
+            infoPacket.log("Preparing sec header ");
+        }
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT,
-            this->encrypt, this->encryptionLevel);
-        stream.copy_to_head(sec_header);
+        SEC::Sec_Send sec(sec_header, stream, SEC::SEC_INFO_PKT, this->encrypt, this->encryptionLevel);
+        stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
+        if (this->verbose) {
+            infoPacket.log("Send data request");
+        }
         this->send_data_request(GCC::MCS_GLOBAL_CHANNEL, stream);
 
         if (this->open_session_timeout) {

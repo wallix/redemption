@@ -204,7 +204,7 @@ public:
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)
     {
-//    LOG(LOG_INFO, "RDPSerializer::reserve_order");
+//        LOG(LOG_INFO, "RDPSerializer::reserve_order %u (avail=%u)", asked_size, this->stream_orders.size());
         size_t max_packet_size = std::min(this->stream_orders.get_capacity(), static_cast<size_t>(16384));
         size_t used_size = this->stream_orders.get_offset();
         if (this->ini.debug.primary_orders > 3){
