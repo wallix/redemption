@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include "log.hpp"
 #include "error.hpp"
+#include "regex.hpp"
 
 static inline int filesize(const char * path)
 {
@@ -319,19 +320,12 @@ struct LineBuffer
     int fd;
     int begin_line;
     int eol;
-    int eollen;
-
-    int begin_word;
-    int eow;
 
     LineBuffer(int fd)
-        : end_buffer(0)
-        , fd(fd)
-        , begin_line(0)
-        , eol(0)
-        , eollen(1)
-        , begin_word(0)
-        , eow(0)
+    : end_buffer(0)
+    , fd(fd)
+    , begin_line(0)
+    , eol(0)
     {
     }
 
@@ -340,7 +334,6 @@ struct LineBuffer
         for (int i = this->begin_line; i < this->end_buffer; i++){
             if (this->buffer[i] == '\n'){
                 this->eol = i+1;
-                this->eollen = 1;
                 return 1;
             }
         }
@@ -364,596 +357,78 @@ struct LineBuffer
         for (int i = this->begin_line; i < this->end_buffer; i++){
             if (this->buffer[i] == '\n'){
                 this->eol = i+1;
-                this->eollen = 1;
                 return 1;
             }
         }
         this->eol = this->end_buffer;
-        this->eollen = 0;
         return 1;
-    }
-
-    int get_protocol()
-    {
-        int res = -1;
-        int i = this->begin_word;
-        for ( ; i < this->eol ; i++){
-            char c = this->buffer[i];
-            if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || (c == '-'))){
-                if (isspace(c)){
-                    res = 0;
-                }
-                break;
-            }
-        }
-        this->eow = i;
-        return res;
-    }
-
-    int get_status1()
-    {
-        int res = -1;
-        int i = this->begin_word;
-        for ( ; i < this->eol ; i++){
-            char c = this->buffer[i];
-            if (!(c >= 'A' && c <= 'Z')){
-                if (isspace(c)){
-                    res = 0;
-                }
-                break;
-            }
-        }
-        this->eow = i;
-        return res;
-    }
-
-    int get_space()
-    {
-        int i = this->begin_word;
-        int res = -1;
-        char c = this->buffer[i];
-        if (isspace(c)){
-            res = 0;
-            i++;
-            for ( ; i < this->eol ; i++){
-                char c = this->buffer[i];
-                if (!isspace(c)){
-                    break;
-                }
-            }
-        }
-        this->eow = i;
-        return res;
-
-    }
-
-    int get_num(int start)
-    {
-        int res = -1;
-        int i = start;
-        for ( ; i < this->eol ; i++){
-            char c = this->buffer[i];
-            if (!(c >= '0' && c <= '9')){
-                break;
-            }
-            res = 0;
-        }
-        this->eow = i;
-        return res;
-    }
-
-    int get_protocol_number()
-    {
-        int res = this->get_num(this->begin_word);
-        if (this->eow == this->eol){
-            return res;
-        }
-        if (isspace(this->buffer[this->eow])){
-            return res;
-        }
-        return -1;
-    }
-
-    int get_ttl_sec()
-    {
-        int res = this->get_num(this->begin_word);
-        if (this->eow == this->eol){
-            return res;
-        }
-        if (isspace(this->buffer[this->eow])){
-            return res;
-        }
-        return -1;
-    }
-
-    int get_identifier()
-    {
-        int res = -1;
-        int i = this->begin_word;
-        for ( ; i < this->eol ; i++){
-            char c = this->buffer[i];
-            if (!(c >= 'a' && c <= 'z')){
-                break;
-            }
-            res = 0;
-        }
-        this->eow = i;
-        return res;
-    }
-
-    int get_var()
-    {
-        int res = this->get_identifier();
-        if (res < 0){
-            return res;
-        }
-        if (this->eow + 1 >= this->eol){
-            return -1;
-        }
-        if (this->buffer[this->eow] != '='){
-            return -1;
-        }
-        this->eow++;
-        return 0;
-    }
-
-    int get_ip()
-    {
-        int res = this->get_num(this->begin_word);
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow + 1 >= this->eol){
-            return -1;
-        }
-        if (this->buffer[this->eow] != '.'){
-            return -1;
-        }
-        this->eow++;
-        res = this->get_num(this->eow);
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow + 1 >= this->eol){
-            return -1;
-        }
-        if (this->buffer[this->eow] != '.'){
-            return -1;
-        }
-        this->eow++;
-        res = this->get_num(this->eow);
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow + 1 >= this->eol){
-            return -1;
-        }
-        if (this->buffer[this->eow] != '.'){
-            return -1;
-        }
-        this->eow++;
-        return this->get_num(this->eow);
-    }
-
-
-    int get_var_ip()
-    {
-        int res = this->get_var();
-        if (res < 0){
-            return res;
-        }
-        res = this->get_num(this->eow);
-        if (res < 0){
-            return res;
-        }
-        if (this->eow + 1 >= this->eol){
-            return -1;
-        }
-        if (this->buffer[this->eow] != '.'){
-            return -1;
-        }
-        this->eow++;
-        res = this->get_num(this->eow);
-        if (res < 0){
-            return res;
-        }
-        if (this->eow + 1 >= this->eol){
-            return -1;
-        }
-        if (this->buffer[this->eow] != '.'){
-            return -1;
-        }
-        this->eow++;
-        res = this->get_num(this->eow);
-        if (res < 0){
-            return res;
-        }
-        if (this->eow + 1 >= this->eol){
-            return -1;
-        }
-        if (this->buffer[this->eow] != '.'){
-            return -1;
-        }
-        this->eow++;
-        res = this->get_num(this->eow);
-        if ((this->eow <= this->eol) && (!isspace(this->buffer[this->eow]))){
-            return -1;
-        }
-        return res;
-    }
-
-    int get_src_ip()
-    {
-        int res = this->get_var_ip();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 4){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "src=", 4)){
-            return -1;
-        }
-        return 0;
-    }
-
-    int get_dst_ip()
-    {
-        int res = this->get_var_ip();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 4){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "dst=", 4)){
-            return -1;
-        }
-        return 0;
-    }
-
-    int get_var_num()
-    {
-        int res = this->get_var();
-        if (res < 0){
-            return res;
-        }
-        res = this->get_num(this->eow);
-        if (res < 0){
-            return res;
-        }
-        if ((this->eow >= this->eol) || (!isspace(this->buffer[this->eow]))){
-            return -1;
-        }
-        return res;
-    }
-
-    int get_sport()
-    {
-        int res = this->get_var_num();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 6){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "sport=", 6)){
-            return -1;
-        }
-        return 0;
-    }
-
-    int get_dport()
-    {
-        int res = this->get_var_num();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 6){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "dport=", 6)){
-            return -1;
-        }
-        return 0;
-    }
-
-    int get_packets()
-    {
-        int res = this->get_var_num();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 8){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "packets=", 8)){
-            return -1;
-        }
-        return 0;
-    }
-
-    int get_bytes()
-    {
-        int res = this->get_var_num();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 6){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "bytes=", 6)){
-            return -1;
-        }
-        return 0;
-    }
-
-    int get_status()
-    {
-        int res = -1;
-        int i = this->begin_word;
-        if (i >= this->eol){
-            return -1;
-        }
-        char c = this->buffer[i];
-        if (c != '['){
-            return -1;
-        }
-        i++;
-
-        for ( ; i < this->eol ; i++){
-            char c = this->buffer[i];
-            if (!(c >= 'A' && c <= 'Z')){
-                break;
-            }
-            res = 0;
-        }
-        if (res < 0){
-            return -1;
-        }
-        if (i >= this->eol){
-            return -1;
-        }
-        c = this->buffer[i];
-        if (c != ']'){
-            return -1;
-        }
-        i++;
-        this->eow = i;
-        return res;
-    }
-
-    int get_mark()
-    {
-        int res = this->get_var_num();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 5){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "mark=", 5)){
-            return -1;
-        }
-        return 0;
-    }
-
-    int get_secmark()
-    {
-        int res = this->get_var_num();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 8){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "secmark=", 8)){
-            return -1;
-        }
-        return 0;
-    }
-
-    int get_use()
-    {
-        int res = this->get_var_num();
-        if (res < 0){
-            return -1;
-        }
-        if (this->eow - this->begin_word < 4){
-            return -1;
-        }
-        if (0 != memcmp(&this->buffer[this->begin_word], "use=", 4)){
-            return -1;
-        }
-        return 0;
     }
 };
 
 // return 0 if found, -1 not found or error
-static inline int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, int sz_transparent_dest, uint32_t verbose = 0)
+static inline int parse_ip_conntrack(int fd, const char * source, const char * dest, int sport, int dport, char * transparent_dest, size_t sz_transparent_dest, uint32_t verbose = 0)
 {
     LineBuffer line(fd);
-    char src_port[6];
-    char dst_port[6];
-    int len_src_port = sprintf(src_port, "%u", sport);
-    int len_dst_port = sprintf(dst_port, "%u", dport);
-    int len_source = strlen(source);
-    int len_dest = strlen(dest);
-
-    int status = line.readline();
-
     //"tcp      6 299 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=36699 dport=22 packets=5256 bytes=437137 src=10.10.47.93 dst=10.10.43.13 sport=22 dport=36699 packets=3523 bytes=572101 [ASSURED] mark=0 secmark=0 use=2\n"
 
-    char tmp_transparent_dest[64] = {};
-    int len_tmp_transparent_dest = 0;
+    char strre[512];
+#define RE_IP_DEF "\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?\\.\\d\\d?\\d?"
+    sprintf(strre,
+            "^ *6 +\\d+ +ESTABLISHED +"
+            "src="RE_IP_DEF" +"
+            "dst=("RE_IP_DEF") +"
+            "sport=\\d+ +dport=\\d+ +packets=\\d+ bytes=\\d+ +"
+            "src=%s +"
+            "dst=%s +"
+            "sport=%d +dport=%d +packets=\\d+ bytes=\\d+ +"
+            "\\[ASSURED] +mark=\\d+ +secmark=\\d+ use=\\d+$",
+            source, dest, sport, dport
+    );
+#undef RE_IP_DEF
+    re::Regex regex(strre);
 
-    for ( ; status == 1 ; (line.begin_line = line.eol), (status = line.readline())) {
+    int status = line.readline();
+    for (; status == 1 ; (line.begin_line = line.eol), (status = line.readline())) {
         if (verbose) {
-            LOG(LOG_INFO, "Line: %.*s", line.eol - line.begin_line, &line.buffer[line.begin_line]);
+            fprintf(stderr, "Line: %.*s", line.eol - line.begin_line, &line.buffer[line.begin_line]);
         }
 
-        line.begin_word = line.begin_line;
-
-        // tcp
-        if (line.get_protocol() < 0) { continue; }
-//        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word != 3)
-        || (0 != memcmp(&line.buffer[line.begin_word], "tcp", 3))){ continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // 6
-        if (line.get_protocol_number() < 0) { continue; }
-//        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word != 1)
-        || (0 != memcmp(&line.buffer[line.begin_word], "6", 1))){ continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // 0
-        if (line.get_ttl_sec() < 0) { continue; }
-//        printf("Word TTL: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // ESTABLISHED
-        if (line.get_status1() < 0) { continue; }
-//        printf("Word: %.*s\n", line.eow - line.begin_word, &line.buffer[line.begin_word]);
-        if ((line.eow - line.begin_word != 11)
-        || (0 != memcmp(&line.buffer[line.begin_word], "ESTABLISHED", 11))){ continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // src=10.10.43.31
-        if (line.get_src_ip() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // dst=10.10.47.255
-        if (line.get_dst_ip() < 0) { continue; }
-        if (line.eow - line.begin_word > static_cast<int>(sizeof(tmp_transparent_dest) + 4)){
-            return -1;
-        }
-        len_tmp_transparent_dest = line.eow - line.begin_word - 4;
-        memcpy(tmp_transparent_dest, &line.buffer[line.begin_word + 4], len_tmp_transparent_dest);
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // sport=57621
-        if (line.get_sport() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // dport=57621
-        if (line.get_dport() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // packets=1139
-        if (line.get_packets() == 0) {
-            line.begin_word = line.eow;
-            if (line.get_space() < 0) { continue; }
-            line.begin_word = line.eow;
-         }
-
-        // bytes=82008
-        if (line.get_bytes() == 0) {
-            line.begin_word = line.eow;
-            if (line.get_space() < 0) { continue; }
-            line.begin_word = line.eow;
+        if (line.eol - line.begin_line < 100) {
+            continue;
         }
 
-        // src=10.10.47.255
-        if (line.get_src_ip() < 0) { continue; }
-        if ((line.eow - line.begin_word != len_source + 4)
-        || (0 != memcmp(&line.buffer[line.begin_word + 4], source, len_source))){ continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
+        const char * s = line.buffer + line.begin_line;
+        if (s[0] != 't' || s[1] != 'c' || s[2] != 'p' || s[3] != ' ') {
+            continue ;
+        }
+        s += 4;
 
-
-        // dst=10.10.43.31
-        if (line.get_dst_ip() < 0) { continue; }
-        if ((line.eow - line.begin_word != len_dest + 4)
-        || (0 != memcmp(&line.buffer[line.begin_word + 4], dest, len_dest))){ continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // sport=57621
-        if (line.get_sport() < 0) { continue; }
-        if ((line.eow - line.begin_word != len_src_port + 6)
-        || (0 != memcmp(&line.buffer[line.begin_word + 6], src_port, len_src_port))){ continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // dport=57621
-        if (line.get_dport() < 0) { continue; }
-        if ((line.eow - line.begin_word != len_dst_port + 6)
-        || (0 != memcmp(&line.buffer[line.begin_word + 6], dst_port, len_dst_port))){ continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // packets=0
-        if (line.get_packets() == 0) {
-            line.begin_word = line.eow;
-            if (line.get_space() < 0) { continue; }
-            line.begin_word = line.eow;
+        const bool contains_endl = line.buffer[line.eol-1] == '\n';
+        if (contains_endl) {
+            line.buffer[line.eol-1] = 0;
         }
 
-        // bytes=0
-        if (line.get_bytes() == 0) {
-            line.begin_word = line.eow;
-            if (line.get_space() < 0) { continue; }
-            line.begin_word = line.eow;
+        re::Regex::range_matches matches = regex.exact_match(s);
+        if ( ! matches.empty() ) {
+            const size_t match_size = matches[0].second - matches[0].first;
+            if (match_size >= sz_transparent_dest){
+                LOG(LOG_WARNING, "No enough space to store transparent ip target address");
+                return -1;
+            }
+
+            memcpy(transparent_dest, matches[0].first, match_size);
+            transparent_dest[match_size] = 0;
+
+            if (verbose) {
+                LOG(LOG_INFO, "Match found: %s", transparent_dest);
+            }
+
+            return 0;
         }
 
-        // [ASSURED]
-        if (line.get_status() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // mark=0
-        if (line.get_mark() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-        line.begin_word = line.eow;
-
-        // secmark=0
-        if (line.get_secmark() == 0) {
-            line.begin_word = line.eow;
-            if (line.get_space() < 0) { continue; }
-            line.begin_word = line.eow;
+        if (contains_endl) {
+            line.buffer[line.eol-1] = '\n';
         }
-
-        // use=2\n";
-        if (line.get_use() < 0) { continue; }
-        line.begin_word = line.eow;
-        if (line.get_space() < 0) { continue; }
-
-        if (len_tmp_transparent_dest >= sz_transparent_dest){
-            LOG(LOG_WARNING, "No enough space to store transparent ip target address");
-            return -1;
-        }
-        memcpy(transparent_dest, tmp_transparent_dest, len_tmp_transparent_dest);
-        transparent_dest[len_tmp_transparent_dest] = 0;
-
-        if (verbose) {
-            LOG(LOG_INFO, "Match found: %s", transparent_dest);
-        }
-
-        return 0;
     }
     // transparent ip route not found in ip_conntrack
     return -1;
