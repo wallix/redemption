@@ -24,6 +24,7 @@
 #include "ssl_calls.hpp"
 #include "genrandom.hpp"
 #include "difftimeval.hpp"
+#include "utf.hpp"
 
 #include "RDP/nla/ntlm/ntlm_message.hpp"
 #include "RDP/nla/ntlm/ntlm_message_negotiate.hpp"
@@ -224,44 +225,57 @@ struct NTLMContext {
 	memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
     }
 
+    // all strings are in unicode utf16
     void NTOWFv2_FromHash(const uint8_t * hash,   size_t hash_size,
                           const uint8_t * user,   size_t user_size,
                           const uint8_t * domain, size_t domain_size,
                           uint8_t * buff, size_t buff_size) {
         SslHMAC_Md5 hmac_md5(hash, hash_size);
 
-        // TODO user to uppercase !!!!!
-        // user and domain in UNICODE UTF16
-        hmac_md5.update(user, user_size);
+        uint8_t * userup = new uint8_t[user_size];
+        memcpy(userup, user, user_size);
+        UTF16Upper(userup, user_size / 2);
+        hmac_md5.update(userup, user_size);
+        delete [] userup;
+        userup = NULL;
+
+        // hmac_md5.update(user, user_size);
         hmac_md5.update(domain, domain_size);
         hmac_md5.final(buff, buff_size);
     }
-
+    // all strings are in unicode utf16
     void hash_password(const uint8_t * pass, size_t pass_size, uint8_t * hash) {
         SslMd4 md4;
-        // pass UNICODE (UTF16)
+
         md4.update(pass, pass_size);
         md4.final(hash, 16);
     }
 
+    // all strings are in unicode utf16
     void NTOWFv2(const uint8_t * pass,   size_t pass_size,
                  const uint8_t * user,   size_t user_size,
                  const uint8_t * domain, size_t domain_size,
                  uint8_t * buff, size_t buff_size) {
         SslMd4 md4;
         uint8_t md4password[16] = {};
-        // pass UNICODE (UTF16)
+
         md4.update(pass, pass_size);
         md4.final(md4password, sizeof(md4password));
 
         SslHMAC_Md5 hmac_md5(md4password, sizeof(md4password));
 
-        // TODO user to uppercase !!!!!
-        // user and domain in UNICODE UTF16
-        hmac_md5.update(user, user_size);
+        uint8_t * userup = new uint8_t[user_size];
+        memcpy(userup, user, user_size);
+        UTF16Upper(userup, user_size / 2);
+        hmac_md5.update(userup, user_size);
+        delete [] userup;
+        userup = NULL;
+
+        // hmac_md5.update(user, user_size);
         hmac_md5.update(domain, domain_size);
         hmac_md5.final(buff, buff_size);
     }
+    // all strings are in unicode utf16
     void LMOWFv2(const uint8_t * pass,   size_t pass_size,
                  const uint8_t * user,   size_t user_size,
                  const uint8_t * domain, size_t domain_size,
@@ -276,6 +290,7 @@ struct NTLMContext {
     // - client challenge
     // - NtChallengeResponse
     // - LmChallengeResponse
+    // all strings are in unicode utf16
     void ntlmv2_compute_response_from_challenge(const uint8_t * pass,   size_t pass_size,
                                                 const uint8_t * user,   size_t user_size,
                                                 const uint8_t * domain, size_t domain_size) {
@@ -506,7 +521,7 @@ struct NTLMContext {
     }
 
 
-
+    // all strings are in unicode utf16
     void ntlm_compute_lm_v2_response(const uint8_t * pass,   size_t pass_size,
                                      const uint8_t * user,   size_t user_size,
                                      const uint8_t * domain, size_t domain_size)
@@ -754,15 +769,16 @@ struct NTLMContext {
     }
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
+    // all strings are in unicode utf16
     void ntlm_client_build_authenticate(const uint8_t * password, size_t pass_size,
-                                        const uint8_t * userUpper, size_t user_size,
+                                        const uint8_t * userName, size_t user_size,
                                         const uint8_t * userDomain, size_t domain_size,
                                         const uint8_t * workstation, size_t work_size) {
         if (this->server) {
             return;
         }
         this->ntlmv2_compute_response_from_challenge(password, pass_size,
-                                                     userUpper, user_size,
+                                                     userName, user_size,
                                                      userDomain, domain_size);
         this->ntlm_encrypt_random_session_key();
         this->ntlm_generate_client_signing_key();
@@ -790,7 +806,7 @@ struct NTLMContext {
 
         BStream & user = this->AUTHENTICATE_MESSAGE.UserName.Buffer;
         user.reset();
-        user.out_copy_bytes(userUpper, user_size);
+        user.out_copy_bytes(userName, user_size);
         user.mark_end();
 
         this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();

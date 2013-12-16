@@ -109,6 +109,30 @@ static inline size_t UTF8Len(const uint8_t * source)
     return len;
 }
 
+// source_size is size of source in bytes
+static inline void UTF8Upper(uint8_t * source, size_t source_size) {
+    // size_t len = 0;
+    uint8_t c = 0;
+    for (size_t i = 0 ; ((0 != (c = source[i])) && (i < source_size)) ; i++){
+        if (c >= 0x61 && c <= 0x7A) {
+            source[i] -= 0x20;
+        }
+    }
+}
+static inline void UTF16Upper(uint8_t * source, size_t max_len) {
+    size_t i_s = 0;
+    for (size_t i = 0 ; i < max_len ; i++){
+        uint8_t lo = source[i_s];
+        uint8_t hi = source[i_s+1];
+        if (hi == 0) {
+            if (lo >= 0x61 && lo <= 0x7A) {
+                source[i_s] -= 0x20;
+            }
+        }
+        i_s += 2;
+    }
+}
+
 
 REDOC("UTF8GetLen find the number of bytes of the len first characters of input."
       " It assumes input is valid utf8, zero terminated (that has been checked before).");
@@ -194,8 +218,8 @@ static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t *
 }
 
 
- 
-// UTF8CharNbBytes: 
+
+// UTF8CharNbBytes:
 // ----------------
 // input: 'source' is the beginning of a char contained in a valid utf8 zero terminated string.
 //        (valid means "that has been checked before". It means we are in a secure context).
