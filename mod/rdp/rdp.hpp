@@ -590,18 +590,31 @@ struct mod_rdp : public mod_api {
     }
 
     // Method used by session to transmit sesman answer for auth_channel
-    virtual void send_auth_channel_data(const char * data) {
-        if (strncmp("Error:", data, 6)) {
+    virtual void send_auth_channel_data(const char * string_data) {
+        if (strncmp("ERROR", string_data, 5)) {
             this->auth_channel_state = 1; // session started
         }
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-        TODO("I do not like this strlen here, see that")
-        size_t chunk_size = ::strlen(reinterpret_cast<const char *>(data));
+        BStream stream_data(65536);
+        uint32_t data_size = std::min(::strlen(string_data), stream_data.get_capacity() - sizeof(uint32_t));
+
+        stream_data.out_uint32_le(data_size);
+        uint8_t * data_curr = stream_data.p;
+        stream_data.out_copy_bytes(string_data, data_size);
+        stream_data.mark_end();
+
+        for (uint8_t * data_end = data_curr + data_size; data_curr != data_end; data_curr++)
+            if (*data_curr == 1)
+                *data_curr = '\n';
+
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                            , this->userid, this->auth_channel_chanid, chunk_size
-                            , this->auth_channel_flags, reinterpret_cast<const uint8_t *>(data), chunk_size);
+                            , this->userid, this->auth_channel_chanid
+                            , stream_data.size()
+                            , this->auth_channel_flags
+                            , stream_data.get_data()
+                            , stream_data.size());
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
@@ -1645,31 +1658,29 @@ struct mod_rdp : public mod_api {
 
                             // If channel name is our virtual channel, then don't send data to front
                             if (this->auth_channel[0] /*&& this->acl */&& !strcmp(mod_channel.name, this->auth_channel)){
-                                const char * auth_channel_message = (const char *)sec.payload.p;
+                                uint32_t ulDataLength = sec.payload.in_uint32_le();
+                                LOG(LOG_INFO, "Auth channel data length=%d", ulDataLength);
+                                redemption::string auth_channel_message((const char *)sec.payload.p, ulDataLength);
+                                LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
                                 if (this->auth_channel_state == 0) {
                                     this->auth_channel_flags = flags;
                                     this->auth_channel_chanid = mod_channel.chanid;
-                                    if (strncmp("target:", auth_channel_message, 7)){
-                                        LOG(LOG_ERR, "Invalid request (%s)", auth_channel_message);
-                                        this->send_auth_channel_data("Error: Invalid request");
+                                    if (auth_channel_message.find("GET JOB") != 0) {
+                                        LOG(LOG_ERR, "Auth message \"GET JOB\" is expected, got=\"%s\"", auth_channel_message.c_str());
+                                        this->send_auth_channel_data("ERROR\nTo:wablauncher\n\n");
                                     }
-                                    else if (this->program[0]) {
-    //                                    LOG(LOG_ERR, "WabLauncher send program (%s)", this->program);
-                                        this->send_auth_channel_data(this->program);
-                                    }
-                                    else if (this->acl) {
-                                        // Ask sesman for requested target
-                                        this->acl->set_auth_channel_target(auth_channel_message + 7);
+                                    else {
+                                        this->acl->set_auth_channel_target("wablauncher");
                                     }
                                 }
-                                else if (this->auth_channel_state == 1){
-                                    if (strncmp("result:", auth_channel_message, 7)){
-                                        LOG(LOG_ERR, "Invalid result (%s)", auth_channel_message);
-                                        auth_channel_message = "result:Session interrupted";
+                                else if (this->auth_channel_state == 1) {
+                                    if (auth_channel_message.find("SET JOB RESULT") != 0) {
+                                        LOG(LOG_ERR, "Auth message \"SET JOB RESULT\" is expected, got=\"%s\"", auth_channel_message.c_str());
+                                        this->send_auth_channel_data("ERROR\nTo:wablauncher\n\n");
                                     }
                                     this->auth_channel_state = 0;
                                     if (this->acl) {
-                                        this->acl->set_auth_channel_result(auth_channel_message + 7);
+                                        this->acl->set_auth_channel_result("OK");
                                     }
                                 }
                             }
