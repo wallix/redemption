@@ -1255,17 +1255,26 @@ class Engine(object):
         self.rights = [ self.config_rights[r] for r in self.config_users[self.wab_login]['rights']]
         return self.rights
 
-    def get_effective_target(self, service_login):
-#        Logger().info("Effective_target %s" % service_login)
+    def get_effective_target(self, selected_target):
+        service_login = selected_target.service_login
+        Logger().info("Effective_target %s" % service_login)
         try:
-            res = [ self.config_effective_targets[r] for r in self.config_service_logins[service_login]['rights']]
+            if selected_target.resource.application:
+                res = [ self.config_effective_targets[r] for r in self.config_service_logins[service_login]['rights']]
+                Logger().info("Engine get_effective_target done (application)")
+                return effective_target
+            else:
+                Logger().info("Engine get_effective_target done (physical)")
+                return [selected_target]
+
         except Exception, e:
             import traceback
             Logger().info("%s" % traceback.format_exc(e))
 #        Logger().info("Effective_target ok %r" % res)
         return res
 
-    def get_app_params(self, service_login, effective_target):
+    def get_app_params(self, selected_target, effective_target):
+        service_login = selected_target.service_login
         res = None
 #        Logger().info("get_app_params %s" % service_login)
         try:
