@@ -34,6 +34,7 @@
 
 #include "stream.hpp"
 #include "transport.hpp"
+//#include "sockettransport.hpp"
 #include "testtransport.hpp"
 #include "RDP/x224.hpp"
 #include "RDP/mcs.hpp"
