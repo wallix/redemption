@@ -74,8 +74,6 @@ enum {
 };
 
 struct Session {
-    wait_obj front_event;
-
     Inifile  * ini;
     uint32_t & verbose;
 
@@ -92,14 +90,14 @@ struct Session {
     wait_obj        * ptr_auth_event;
 
     Session(int sck, Inifile * ini)
-            : front_event(sck)
-            , ini(ini)
+            : ini(ini)
             , verbose(this->ini->debug.session)
             , acl(NULL)
             , ptr_auth_trans(NULL)
             , ptr_auth_event(NULL) {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
+            wait_obj front_event(&front_trans);
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
 
@@ -141,7 +139,7 @@ struct Session {
                 FD_ZERO(&wfds);
                 struct timeval timeout = time_mark;
 
-                this->front_event.add_to_fd_set(rfds, max, timeout);
+                front_event.add_to_fd_set(rfds, max, timeout);
                 if (this->front->capture) {
                     this->front->capture->capture_event.add_to_fd_set(rfds, max, timeout);
                 }
@@ -169,7 +167,7 @@ struct Session {
                 }
 
                 time_t now = time(NULL);
-                if (this->front_event.is_set(rfds)) {
+                if (front_event.is_set(rfds)) {
                     try {
                         this->front->incoming(*mm.mod);
                     } catch (...) {
@@ -220,7 +218,7 @@ struct Session {
                                                                                 , this->ini->globals.authport
                                                                                 , this->ini->debug.auth
                                                                                 );
-                                    this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
+                                    this->ptr_auth_event = new wait_obj(this->ptr_auth_trans);
                                     this->acl = new SessionManager( this->ini
                                                                     , *this->ptr_auth_trans
                                                                     , start_time // proxy start time

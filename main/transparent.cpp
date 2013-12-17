@@ -148,9 +148,9 @@ int main(int argc, char * argv[]) {
                         , sizeof(nodelay))) {
         LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
     }
-    wait_obj front_event(one_shot_server.sck);
     SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
                                , ini.debug.front, 0);
+    wait_obj front_event(&front_trans);
 
     LCGRandom gen(0);
 
@@ -199,7 +199,7 @@ int main(int argc, char * argv[]) {
                     0,                  // on server certificate change
                     true,               // enable transparent mode
                     output_filename.c_str());
-        mod.event.obj = client_sck;
+        mod.event.st = &mod_trans;
 
         struct      timeval time_mark = { 0, 50000 };
         bool        run_session       = true;

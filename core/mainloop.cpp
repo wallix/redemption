@@ -32,7 +32,6 @@
 #include "mainloop.hpp"
 #include "log.hpp"
 #include "listen.hpp"
-#include "wait_obj.hpp"
 #include "session_server.hpp"
 
 /*****************************************************************************/
