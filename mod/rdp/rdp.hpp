@@ -318,24 +318,62 @@ struct mod_rdp : public mod_api {
 
         TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log");
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
-            LOG(LOG_INFO, "mod_rdp: hostname too long! %u > %u", ::strlen(info.hostname), sizeof(this->hostname));
+            LOG(LOG_INFO, "mod_rdp: hostname too long! %u >= %u", ::strlen(info.hostname), sizeof(this->hostname));
         }
         strncpy(this->hostname, info.hostname, 15);
         this->hostname[15] = 0;
 
-        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log");
-        if (::strlen(target_user) >= sizeof(this->username)) {
-            LOG(LOG_INFO, "mod_rdp: username too long! %u > %u", ::strlen(target_user), sizeof(this->username));
-        }
-        strncpy(this->username, target_user, 127);
-        this->username[127] = 0;
 
-        LOG(LOG_INFO, "Remote RDP Server login:%s host:%s", this->username, this->hostname);
+        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log");
+        const char * domain_pos   = 0;
+        size_t       domain_len   = 0;
+        const char * username_pos = 0;
+        size_t       username_len = 0;
+        const char * separator = strchr(target_user, '\\');
+        if (separator)
+        {
+            domain_pos   = target_user;
+            domain_len   = separator - target_user;
+            username_pos = ++separator;
+            username_len = strlen(username_pos);
+        }
+        else
+        {
+            separator = strchr(target_user, '@');
+            if (separator)
+            {
+                domain_pos   = ++separator;
+                domain_len   = strlen(domain_pos);
+                username_pos = target_user;
+                username_len = separator - target_user;
+            }
+            else
+            {
+                username_pos = target_user;
+                username_len = strlen(username_pos);
+            }
+        }
+
+        if (username_len >= sizeof(this->username)) {
+            LOG(LOG_INFO, "mod_rdp: username too long! %u >= %u", username_len, sizeof(this->username));
+        }
+        size_t count = std::min(sizeof(this->username) - 1, username_len);
+        if (count > 0) strncpy(this->username, username_pos, count);
+        this->username[count] = 0;
+
+        if (domain_len >= sizeof(this->domain)) {
+            LOG(LOG_INFO, "mod_rdp: domain too long! %u >= %u", domain_len, sizeof(this->domain));
+        }
+        count = std::min(sizeof(this->domain) - 1, domain_len);
+        if (count > 0) strncpy(this->domain, domain_pos, count);
+        this->domain[count] = 0;
+
+        LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"", this->domain, this->username, this->hostname);
+
 
         strncpy(this->password, target_password, sizeof(this->password) - 1);
         this->password[sizeof(this->password) - 1] = 0;
 
-        memset(this->domain, 0, sizeof(this->domain));
 
         strncpy(this->program, alternate_shell, sizeof(this->program) - 1);
         this->program[sizeof(this->program) - 1] = 0;
@@ -1226,7 +1264,16 @@ struct mod_rdp : public mod_api {
 
                     {
                         const char * hostname = this->hostname;
-                        const char * username = this->username;
+                        const char * username;
+                        char username_a_domain[512];
+                        if (this->domain[0]) {
+                            snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->username, this->domain);
+                            username = username_a_domain;
+                        }
+                        else {
+                            username = this->username;
+                        }
+                        LOG(LOG_INFO, "Rdp::Get license: username=\"%s\"", username);
                         // read tpktHeader (4 bytes = 3 0 len)
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 

@@ -31,45 +31,45 @@
 #define LOGNULL
 
 #include "regex_parser.hpp"
+#include "regex_states_value.hpp"
 
 using namespace re;
 
-inline void st_to_string(StatesWrapper & stw, State * st,
+inline void st_to_string(const state_list_t & states, StatesValue & stval, const State * st,
                          std::ostream& os, unsigned depth = 0)
 {
-    size_t n = std::find(stw.states.begin(), stw.states.end(), st) - stw.states.begin() + 1;
+    size_t n = std::find(states.begin(), states.end(), st) - states.begin() + 1;
     os << std::string(depth, '\t') << n;
-    if (st && stw.get_num_at(st) != -30u) {
+    if (st && stval.get_num_at(st) != -30u) {
         os << "\t" << *st << "\n";
-        stw.set_num_at(st, -30u);
-        st_to_string(stw, st->out1, os, depth+1);
-        st_to_string(stw, st->out2, os, depth+1);
+        stval.set_num_at(st, -30u);
+        st_to_string(states, stval, st->out1, os, depth+1);
+        st_to_string(states, stval, st->out2, os, depth+1);
     }
     else {
         os << "\n";
     }
 }
 
-inline std::string st_to_string(StatesWrapper & stw)
-{
-    std::ostringstream os;
-    st_to_string(stw, stw.root, os);
-    return os.str();
-}
-
 inline std::string st_to_string(State * st)
 {
+    if (!st) {
+        return "\n";
+    }
     std::ostringstream os;
-    StatesWrapper stw(st);
-    stw.init_nums();
-    st_to_string(stw, stw.root, os);
-    stw.states.clear();
+    state_list_t states;
+    append_state(st, states);
+    for (unsigned i = 0; i < states.size(); ++i) {
+        states[i]->num = i;
+    }
+    StatesValue stval(states);
+    st_to_string(states, stval, st, os);
     return os.str();
 }
 
 inline size_t multi_char(const char * c)
 {
-    return re::utf_consumer(c).bumpc();
+    return re::utf8_consumer(c).bumpc();
 }
 
 BOOST_AUTO_TEST_CASE(TestRegexState)
@@ -77,15 +77,18 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
     struct Reg {
         Reg(const char * s)
         {
-            st_compile(this->stw, s);
+            this->stparser.compile(s);
+            ///\ATTENTION not save
+            this->str = st_to_string(const_cast<State*>(this->stparser.root()));
         }
 
-        std::string to_string()
+        std::string to_string() const
         {
-            return st_to_string(this->stw);
+            return this->str;
         }
-
-        StatesWrapper stw;
+    private:
+        StateParser stparser;
+        std::string str;
     };
 
     {
