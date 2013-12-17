@@ -74,7 +74,7 @@ enum {
 };
 
 struct Session {
-    wait_obj & front_event;
+    wait_obj front_event;
 
     Inifile  * ini;
     uint32_t & verbose;
@@ -91,8 +91,8 @@ struct Session {
     SocketTransport * ptr_auth_trans;
     wait_obj        * ptr_auth_event;
 
-    Session(wait_obj & front_event, int sck, Inifile * ini)
-            : front_event(front_event)
+    Session(int sck, Inifile * ini)
+            : front_event(sck)
             , ini(ini)
             , verbose(this->ini->debug.session)
             , acl(NULL)
