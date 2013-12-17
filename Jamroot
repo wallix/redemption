@@ -474,8 +474,8 @@ unit-test test_session : tests/core/test_session.cpp libboost_unit_test gcov : <
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test ;
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test ;
-unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test openssl ;
+unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test openssl gcov : <variant>coverage ;
 
 unit-test test_front : tests/front/test_front.cpp libboost_unit_test ;
 unit-test test_front : tests/front/test_front.cpp libboost_unit_test gcov : <variant>coverage ;

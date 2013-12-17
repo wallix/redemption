@@ -86,7 +86,7 @@ struct mod_api : public Callback, public DrawApi {
     uint16_t front_height;
 
     mod_api(const uint16_t front_width, const uint16_t front_height)
-        : event(-1)
+        : event(NULL)
         , front_width(front_width)
         , front_height(front_height) {
         this->event.set(0);

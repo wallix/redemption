@@ -30,6 +30,7 @@
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include "difftimeval.hpp"
+#include "sockettransport.hpp"
 
 enum BackEvent_t {
     BACK_EVENT_NONE = 0,
@@ -42,15 +43,15 @@ enum BackEvent_t {
 class wait_obj
 {
 public:
-    int            obj;
-    bool           set_state;
-    BackEvent_t    signal;
-    struct timeval trigger_time;
-    bool           object_and_time;
-    bool           waked_up_by_time;
+    SocketTransport * st;
+    bool              set_state;
+    BackEvent_t       signal;
+    struct timeval    trigger_time;
+    bool              object_and_time;
+    bool              waked_up_by_time;
 
-    wait_obj(int sck, bool object_and_time = false)
-    : obj(sck)
+    wait_obj(SocketTransport * socktrans, bool object_and_time = false)
+    : st(socktrans)
     , set_state(false)
     , signal(BACK_EVENT_NONE)
     , object_and_time(object_and_time)
@@ -61,19 +62,18 @@ public:
 
     ~wait_obj()
     {
-        if (this->obj > 0){
-            close(this->obj);
+        if ((this->st != NULL) && (this->st->sck > 0)){
+            close(this->st->sck);
         }
     }
 
     void add_to_fd_set(fd_set & rfds, unsigned & max, timeval & timeout)
     {
-        if (this->obj > 0){
-            FD_SET(this->obj, &rfds);
-            max = ((unsigned)this->obj > max)?this->obj:max;
+        if ((this->st != NULL) && (this->st->sck > 0)){
+            FD_SET(this->st->sck, &rfds);
+            max = ((unsigned)this->st->sck > max)?this->st->sck:max;
         }
-//        else if (this->set_state) {
-        if (((this->obj <= 0) || this->object_and_time) && this->set_state) {
+        if (((this->st == NULL) || (this->st->sck <= 0) || this->object_and_time) && this->set_state) {
             struct timeval now;
             now = tvtime();
             timeval remain = how_long_to_wait(this->trigger_time, now);
@@ -92,8 +92,8 @@ public:
     {
         this->waked_up_by_time = false;
 
-        if (this->obj > 0) {
-            bool res = FD_ISSET(this->obj, &rfds);
+        if ((this->st != NULL) && (this->st->sck > 0)) {
+            bool res = FD_ISSET(this->st->sck, &rfds);
 
             if (res || !this->object_and_time) {
                 return res;
@@ -150,14 +150,14 @@ public:
         time.tv_sec = 0;
         time.tv_usec = 0;
         FD_ZERO(&rfds);
-        if (this->obj > 0) {
-            FD_SET((this->obj), &rfds);
-            rv = select(this->obj + 1, &rfds, 0, 0, &time); /* don't wait */
+        if ((this->st != NULL) && (this->st->sck > 0)) {
+            FD_SET(this->st->sck, &rfds);
+            rv = select(this->st->sck + 1, &rfds, 0, 0, &time); /* don't wait */
             if (rv > 0) {
                 int opt;
                 unsigned int opt_len = sizeof(opt);
 
-                if (getsockopt(this->obj, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&opt), &opt_len) == 0) {
+                if (getsockopt(this->st->sck, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&opt), &opt_len) == 0) {
                     rv = (opt == 0);
                 }
             }

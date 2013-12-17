@@ -74,8 +74,6 @@ enum {
 };
 
 struct Session {
-    wait_obj & front_event;
-
     Inifile  * ini;
     uint32_t & verbose;
 
@@ -91,15 +89,15 @@ struct Session {
     SocketTransport * ptr_auth_trans;
     wait_obj        * ptr_auth_event;
 
-    Session(wait_obj & front_event, int sck, Inifile * ini)
-            : front_event(front_event)
-            , ini(ini)
+    Session(int sck, Inifile * ini)
+            : ini(ini)
             , verbose(this->ini->debug.session)
             , acl(NULL)
             , ptr_auth_trans(NULL)
             , ptr_auth_event(NULL) {
         try {
             SocketTransport front_trans("RDP Client", sck, "", 0, this->ini->debug.front);
+            wait_obj front_event(&front_trans);
             // Contruct auth_trans (SocketTransport) and auth_event (wait_obj)
             //  here instead of inside Sessionmanager
 
@@ -131,6 +129,7 @@ struct Session {
             struct timeval time_mark = { 3, 0 };
 
             bool run_session = true;
+            bool has_pending_data;
 
             while (run_session) {
                 unsigned max = 0;
@@ -141,7 +140,7 @@ struct Session {
                 FD_ZERO(&wfds);
                 struct timeval timeout = time_mark;
 
-                this->front_event.add_to_fd_set(rfds, max, timeout);
+                front_event.add_to_fd_set(rfds, max, timeout);
                 if (this->front->capture) {
                     this->front->capture->capture_event.add_to_fd_set(rfds, max, timeout);
                 }
@@ -151,6 +150,11 @@ struct Session {
                     this->ptr_auth_event->add_to_fd_set(rfds, max, timeout);
                 }
                 mm.mod->event.add_to_fd_set(rfds, max, timeout);
+
+                has_pending_data =
+                    (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl));
+                if (has_pending_data)
+                    memset(&timeout, 0, sizeof(timeout));
 
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 
@@ -169,7 +173,9 @@ struct Session {
                 }
 
                 time_t now = time(NULL);
-                if (this->front_event.is_set(rfds)) {
+
+                if (front_event.is_set(rfds) ||
+                    (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl))) {
                     try {
                         this->front->incoming(*mm.mod);
                     } catch (...) {
@@ -220,7 +226,7 @@ struct Session {
                                                                                 , this->ini->globals.authport
                                                                                 , this->ini->debug.auth
                                                                                 );
-                                    this->ptr_auth_event = new wait_obj(this->ptr_auth_trans->sck);
+                                    this->ptr_auth_event = new wait_obj(this->ptr_auth_trans);
                                     this->acl = new SessionManager( this->ini
                                                                     , *this->ptr_auth_trans
                                                                     , start_time // proxy start time
