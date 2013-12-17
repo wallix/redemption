@@ -342,10 +342,11 @@ struct mod_rdp : public mod_api {
             separator = strchr(target_user, '@');
             if (separator)
             {
-                domain_pos   = ++separator;
+                domain_pos   = separator + 1;
                 domain_len   = strlen(domain_pos);
                 username_pos = target_user;
                 username_len = separator - target_user;
+                LOG(LOG_INFO, "mod_rdp: username_len=%u", username_len);
             }
             else
             {
