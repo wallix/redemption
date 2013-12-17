@@ -312,44 +312,44 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
     server_context.ntlm_generate_server_sealing_key();
 
     // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
-    LOG(LOG_INFO, "===== SESSION BASE KEY =====");
-    hexdump_c(server_context.SessionBaseKey, 16);
-    hexdump_c(client_context.SessionBaseKey, 16);
+    // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
+    // hexdump_c(server_context.SessionBaseKey, 16);
+    // hexdump_c(client_context.SessionBaseKey, 16);
     BOOST_CHECK(!memcmp(server_context.SessionBaseKey,
                         client_context.SessionBaseKey,
                         16));
 
-    LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
-    hexdump_c(server_context.ExportedSessionKey, 16);
-    hexdump_c(client_context.ExportedSessionKey, 16);
+    // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
+    // hexdump_c(server_context.ExportedSessionKey, 16);
+    // hexdump_c(client_context.ExportedSessionKey, 16);
     BOOST_CHECK(!memcmp(server_context.ExportedSessionKey,
                         client_context.ExportedSessionKey,
                         16));
 
-    LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
-    hexdump_c(server_context.ClientSigningKey, 16);
-    hexdump_c(client_context.ClientSigningKey, 16);
+    // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
+    // hexdump_c(server_context.ClientSigningKey, 16);
+    // hexdump_c(client_context.ClientSigningKey, 16);
     BOOST_CHECK(!memcmp(server_context.ClientSigningKey,
                         client_context.ClientSigningKey,
                         16));
 
-    LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
-    hexdump_c(server_context.ClientSealingKey, 16);
-    hexdump_c(client_context.ClientSealingKey, 16);
+    // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
+    // hexdump_c(server_context.ClientSealingKey, 16);
+    // hexdump_c(client_context.ClientSealingKey, 16);
     BOOST_CHECK(!memcmp(server_context.ClientSealingKey,
                         client_context.ClientSealingKey,
                         16));
 
-    LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
-    hexdump_c(server_context.ServerSigningKey, 16);
-    hexdump_c(client_context.ServerSigningKey, 16);
+    // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
+    // hexdump_c(server_context.ServerSigningKey, 16);
+    // hexdump_c(client_context.ServerSigningKey, 16);
     BOOST_CHECK(!memcmp(server_context.ServerSigningKey,
                         client_context.ServerSigningKey,
                         16));
 
-    LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
-    hexdump_c(server_context.ServerSealingKey, 16);
-    hexdump_c(client_context.ServerSealingKey, 16);
+    // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
+    // hexdump_c(server_context.ServerSealingKey, 16);
+    // hexdump_c(client_context.ServerSealingKey, 16);
     BOOST_CHECK(!memcmp(server_context.ServerSealingKey,
                         client_context.ServerSealingKey,
                         16));
@@ -373,11 +373,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
         0x6e, 0x00, 0x61, 0x00, 0x6d, 0x00, 0x65, 0x00,
         0x6e, 0x00, 0x61, 0x00, 0x6d, 0x00, 0x65, 0x00
     };
-    // const uint8_t userUpper[] = {
-    //     0x55, 0x00, 0x53, 0x00, 0x45, 0x00, 0x52, 0x00,
-    //     0x55, 0x00, 0x53, 0x00, 0x45, 0x00, 0x52, 0x00,
-    //     0x4e, 0x00, 0x41, 0x00, 0x4d, 0x00, 0x45, 0x00
-    // };
     const uint8_t userDomain[] = {
         0x44, 0x00, 0x6f, 0x00, 0x6d, 0x00, 0x61, 0x00,
         0x69, 0x00, 0x6e, 0x00,
@@ -436,45 +431,81 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
     server_context.ntlm_server_proceed_authenticate(hash);
 
     // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
-    LOG(LOG_INFO, "===== SESSION BASE KEY =====");
-    hexdump_c(server_context.SessionBaseKey, 16);
-    hexdump_c(client_context.SessionBaseKey, 16);
+    // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
+    // hexdump_c(server_context.SessionBaseKey, 16);
+    // hexdump_c(client_context.SessionBaseKey, 16);
     BOOST_CHECK(!memcmp(server_context.SessionBaseKey,
                         client_context.SessionBaseKey,
                         16));
 
-    LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
-    hexdump_c(server_context.ExportedSessionKey, 16);
-    hexdump_c(client_context.ExportedSessionKey, 16);
+    // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
+    // hexdump_c(server_context.ExportedSessionKey, 16);
+    // hexdump_c(client_context.ExportedSessionKey, 16);
     BOOST_CHECK(!memcmp(server_context.ExportedSessionKey,
                         client_context.ExportedSessionKey,
                         16));
 
-    LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
-    hexdump_c(server_context.ClientSigningKey, 16);
-    hexdump_c(client_context.ClientSigningKey, 16);
+    // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
+    // hexdump_c(server_context.ClientSigningKey, 16);
+    // hexdump_c(client_context.ClientSigningKey, 16);
     BOOST_CHECK(!memcmp(server_context.ClientSigningKey,
                         client_context.ClientSigningKey,
                         16));
 
-    LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
-    hexdump_c(server_context.ClientSealingKey, 16);
-    hexdump_c(client_context.ClientSealingKey, 16);
+    // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
+    // hexdump_c(server_context.ClientSealingKey, 16);
+    // hexdump_c(client_context.ClientSealingKey, 16);
     BOOST_CHECK(!memcmp(server_context.ClientSealingKey,
                         client_context.ClientSealingKey,
                         16));
 
-    LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
-    hexdump_c(server_context.ServerSigningKey, 16);
-    hexdump_c(client_context.ServerSigningKey, 16);
+    // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
+    // hexdump_c(server_context.ServerSigningKey, 16);
+    // hexdump_c(client_context.ServerSigningKey, 16);
     BOOST_CHECK(!memcmp(server_context.ServerSigningKey,
                         client_context.ServerSigningKey,
                         16));
 
-    LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
-    hexdump_c(server_context.ServerSealingKey, 16);
-    hexdump_c(client_context.ServerSealingKey, 16);
+    // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
+    // hexdump_c(server_context.ServerSealingKey, 16);
+    // hexdump_c(client_context.ServerSealingKey, 16);
     BOOST_CHECK(!memcmp(server_context.ServerSealingKey,
                         client_context.ServerSealingKey,
                         16));
+
+    // LOG(LOG_INFO, "===== Message Integrity Check =====");
+    // hexdump_c(client_context.MessageIntegrityCheck, 16);
+    // hexdump_c(server_context.MessageIntegrityCheck, 16);
+    BOOST_CHECK(!memcmp(client_context.MessageIntegrityCheck,
+                        server_context.MessageIntegrityCheck,
+                        16));
+
+}
+
+
+BOOST_AUTO_TEST_CASE(TestNTOWFv2)
+{
+    NTLMContext context;
+    uint8_t buff[16];
+
+    uint8_t password[] = "Password";
+    uint8_t user[] = "User";
+    uint8_t domain[] = "Domain";
+
+    uint8_t upassword[(sizeof(password) - 1) * 2];
+    uint8_t uuser[(sizeof(user) - 1) * 2];
+    uint8_t udomain[(sizeof(domain) - 1) * 2];
+    UTF8toUTF16(password, upassword, sizeof(upassword));
+    UTF8toUTF16(user, uuser, sizeof(uuser));
+    UTF8toUTF16(domain, udomain, sizeof(udomain));
+
+    context.NTOWFv2(upassword, sizeof(upassword),
+                    uuser, sizeof(uuser),
+                    udomain, sizeof(udomain),
+                    buff, sizeof(buff));
+    BOOST_CHECK_EQUAL(memcmp("\x0c\x86\x8a\x40\x3b\xfd\x7a\x93"
+                             "\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f",
+                             buff,
+                             16),
+                      0);
 }

@@ -122,8 +122,18 @@ struct NTLMContext {
 
     void init() {
         this->NTLMv2 = true;
+        this->UseMIC = false;
+        this->SendVersionInfo = true;
+        this->SendSingleHostData = false;
+        this->NegotiateFlags = 0;
+        this->LmCompatibilityLevel = 3;
+        memset(this->MachineID, 0xAA, sizeof(this->MachineID));
+
         this->confidentiality = true;
         this->hardcoded_tests = false;
+
+        if (this->NTLMv2)
+            this->UseMIC = true;
     };
     /**
      * Generate timestamp for AUTHENTICATE_MESSAGE.
@@ -718,6 +728,7 @@ struct NTLMContext {
 
 
     // server method
+    // TO COMPLETE
     void ntlm_construct_challenge_target_info() {
         uint8_t win7[] =  {
             0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00
@@ -810,6 +821,12 @@ struct NTLMContext {
         user.mark_end();
 
         this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
+
+        if (this->UseMIC) {
+            this->ntlm_compute_MIC();
+            memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
+            this->AUTHENTICATE_MESSAGE.has_mic = true;
+        }
     }
 
     // SERVER PROCEED RESPONSE CHECKING
@@ -834,6 +851,16 @@ struct NTLMContext {
         this->ntlm_generate_client_sealing_key();
         this->ntlm_generate_server_signing_key();
         this->ntlm_generate_server_sealing_key();
+
+        if (this->UseMIC) {
+            this->ntlm_compute_MIC();
+            if (memcmp(this->MessageIntegrityCheck,
+                       this->AUTHENTICATE_MESSAGE.MIC, 16)) {
+                LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
+            }
+
+        }
+
     }
 
 };

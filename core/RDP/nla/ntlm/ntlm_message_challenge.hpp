@@ -243,6 +243,10 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
     }
 
+    void avpair_decode() {
+        this->TargetInfo.Buffer.reset();
+        this->AvPairList.emit(this->TargetInfo.Buffer);
+    }
 
 };
 

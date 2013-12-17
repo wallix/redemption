@@ -205,6 +205,14 @@ struct SecHandle
     unsigned long * dwUpper;
 };
 
+const SecPkgInfo* SecPkgInfo_LIST[] =
+{
+	// &NTLM_SecPkgInfoA,
+	// &CREDSSP_SecPkgInfoA,
+	// &SCHANNEL_SecPkgInfoA
+};
+
+
 struct SecurityFunctionTable {
 
     virtual ~SecurityFunctionTable() {}
@@ -212,7 +220,13 @@ struct SecurityFunctionTable {
 
     // ENUMERATE_SECURITY_PACKAGES_FN EnumerateSecurityPackages;
     virtual uint32_t enumerate_security_package(unsigned long * pcPackages,
-                                                SecPkgInfo ** ppPackageInfo) = 0;
+                                                SecPkgInfo ** ppPackageInfo) {
+        // int index;
+        // uint32_t cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
+        // size_t size = sizeof(SecPkgInfo) * cPackages;
+        return 0;
+
+    }
 
     // QUERY_CREDENTIALS_ATTRIBUTES_FN QueryCredentialsAttributes;
     virtual uint32_t query_credentials_attributes(SecHandle * phCredential,

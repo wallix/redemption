@@ -374,6 +374,23 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->negoFlags.recv(stream);
         this->version.recv(stream);
 
+        uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
+        if (this->NtChallengeResponse.bufferOffset < min_offset)
+            min_offset = this->NtChallengeResponse.bufferOffset;
+        if (this->DomainName.bufferOffset < min_offset)
+            min_offset = this->DomainName.bufferOffset;
+        if (this->UserName.bufferOffset < min_offset)
+            min_offset = this->UserName.bufferOffset;
+        if (this->Workstation.bufferOffset < min_offset)
+            min_offset = this->Workstation.bufferOffset;
+        if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
+            min_offset = this->EncryptedRandomSessionKey.bufferOffset;
+
+        if (min_offset > (stream.p - pBegin)) {
+            this->has_mic = true;
+            stream.in_copy_bytes(this->MIC, 16);
+        }
+
         // PAYLOAD
         this->LmChallengeResponse.read_payload(stream, pBegin);
         this->NtChallengeResponse.read_payload(stream, pBegin);
