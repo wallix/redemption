@@ -36,9 +36,17 @@ namespace re {
     public:
         const state_list_t & states;
 
-        StatesValue(const state_list_t & sts)
+#ifndef NDEBUG
+    private:
+        unsigned nb_cap;
+    public:
+#endif
+        StatesValue(const state_list_t & sts, unsigned nb_cap)
         : nums(sts.size(), 0)
         , states(sts)
+#ifndef NDEBUG
+        , nb_cap(nb_cap)
+#endif
         {}
 
         ~StatesValue()
@@ -51,14 +59,14 @@ namespace re {
 
         void set_num_at(const State * st, unsigned count)
         {
-            assert(st == this->states[st->num]);
+            assert(st == this->states[(st->is_cap() ? this->states.size() - this->nb_cap : -this->nb_cap) + st->num]);
             assert(this->states.size() > st->num);
             this->nums[st->num] = count;
         }
 
         unsigned get_num_at(const State * st) const
         {
-            assert(st == this->states[st->num]);
+            assert(st == this->states[(st->is_cap() ? this->states.size() - this->nb_cap : -this->nb_cap) + st->num]);
             assert(this->states.size() > st->num);
             return this->nums[st->num];
         }
