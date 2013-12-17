@@ -129,6 +129,7 @@ struct Session {
             struct timeval time_mark = { 3, 0 };
 
             bool run_session = true;
+            bool has_pending_data;
 
             while (run_session) {
                 unsigned max = 0;
@@ -150,6 +151,11 @@ struct Session {
                 }
                 mm.mod->event.add_to_fd_set(rfds, max, timeout);
 
+                has_pending_data =
+                    (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl));
+                if (has_pending_data)
+                    memset(&timeout, 0, sizeof(timeout));
+
                 int num = select(max + 1, &rfds, &wfds, 0, &timeout);
 
                 if (num < 0) {
@@ -167,7 +173,9 @@ struct Session {
                 }
 
                 time_t now = time(NULL);
-                if (front_event.is_set(rfds)) {
+
+                if (front_event.is_set(rfds) ||
+                    (front_event.st->tls && SSL_pending(front_event.st->allocated_ssl))) {
                     try {
                         this->front->incoming(*mm.mod);
                     } catch (...) {
