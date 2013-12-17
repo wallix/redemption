@@ -180,7 +180,7 @@ namespace re {
             return false;
         }
 
-        StatesValue stval(stparser.states());
+        StatesValue stval(stparser.states(), stparser.nb_capture());
 
 // #ifdef DISPLAY_TRACE
 //         display_states(stval, stparser.root());
@@ -282,7 +282,7 @@ namespace re {
             return false;
         }
 
-        StatesValue stval(stparser.states());
+        StatesValue stval(stparser.states(), stparser.nb_capture());
 
 // #ifdef DISPLAY_TRACE
 //         display_states(stval, stparser.root());
