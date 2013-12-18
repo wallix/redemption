@@ -735,7 +735,7 @@ struct Inifile : public FieldObserver {
 
         StringField        real_target_device;       // AUHTID_REAL_TARGET_DEVICE  //
 
-        StringField        authentication_challenge; // AUTHID_AUTHENTICATION_CHALLENGE //
+        BoolField          authentication_challenge; // AUTHID_AUTHENTICATION_CHALLENGE //
     } context;
 
     struct IniAccounts account;
@@ -1108,7 +1108,7 @@ public:
 
         this->context.real_target_device.set_empty();
 
-        this->context.authentication_challenge.set_empty();
+        this->context.authentication_challenge.ask();
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
         // Attaching ini struct to values
         this->context.opt_bpp.attach_ini(this,AUTHID_OPT_BPP);
@@ -1704,6 +1704,11 @@ public:
                 break;
             case AUTHID_AUTHENTICATED:
                 return this->context.authenticated.get();
+            case AUTHID_AUTHENTICATION_CHALLENGE:
+                if (!this->context.authentication_challenge.is_asked()) {
+                    return this->context.authentication_challenge.get();
+                }
+                break;
             default:
                 LOG(LOG_WARNING, "Inifile::context_get_bool(id): unknown authid=\"%d\"", authid);
                 break;

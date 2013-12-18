@@ -276,7 +276,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.real_target_device.get_cstr()));
 
-    BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.context.authentication_challenge.get_cstr()));
+    BOOST_CHECK_EQUAL(false,                            ini.context.authentication_challenge.get());
 }
 
 BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
@@ -2536,11 +2536,11 @@ BOOST_AUTO_TEST_CASE(TestContextSetValue)
 
 
     // authentication_challenge
-    ini.context_set_value(AUTHID_AUTHENTICATION_CHALLENGE,     "authentication_challenge");
+    ini.context_set_value(AUTHID_AUTHENTICATION_CHALLENGE,     "true");
 
-    BOOST_CHECK_EQUAL(std::string("authentication_challenge"), std::string(ini.context.authentication_challenge.get_cstr()));
+    BOOST_CHECK_EQUAL(true,                             ini.context.authentication_challenge.get());
 
-    BOOST_CHECK_EQUAL(std::string("authentication_challenge"), std::string(ini.context_get_value(AUTHID_AUTHENTICATION_CHALLENGE)));
+    BOOST_CHECK_EQUAL(std::string("True"), std::string(ini.context_get_value(AUTHID_AUTHENTICATION_CHALLENGE)));
 }
 
 

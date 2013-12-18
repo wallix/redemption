@@ -340,10 +340,10 @@ class Sesman():
             else:
                 # PASSWORD based Authentication
                 if (self.shared.get(u'password') == MAGICASK
-                or not self.engine.password_authenticate(
-                                    wab_login,
-                                    self.shared.get(u'ip_client'),
-                                    self.shared.get(u'password'))):
+                    or not self.engine.password_authenticate(
+                        wab_login,
+                        self.shared.get(u'ip_client'),
+                        self.shared.get(u'password'))):
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
             try:
@@ -688,10 +688,18 @@ class Sesman():
             _status, _error = self.authentify()
 
             if _status is None:
-                self.engine.NotifyPrimaryConnectionFailed(self.shared.get(u'login'), self.shared.get(u'ip_client'))
-
+                if not self.engine.challenge:
+                    self.engine.NotifyPrimaryConnectionFailed(self.shared.get(u'login'), self.shared.get(u'ip_client'))
             tries = tries - 1
             if _status is None and tries > 0:
+                if self.engine.challenge:
+                    # submit challenge:
+                    tries = tries + 1
+                    data_to_send = { u'authentication_challenge' : self.engine.challenge.promptEcho,
+                                     u'message' : self.engine.challenge.message,
+                                     u'password' : MAGICASK }
+                    self.send_data(data_to_send)
+                    continue
                 Logger().info(
                     u"Wab user '%s' authentication from %s failed [%u tries remains]"  %
                     (mundane(self.shared.get(u'login')) , mundane(self.shared.get(u'ip_client')), tries)

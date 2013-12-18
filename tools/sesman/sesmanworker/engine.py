@@ -1147,6 +1147,7 @@ class Engine(object):
         self.wab_login = None
         self.user = User()
         self._trace_encryption = False
+        self.challenge = None
 
     def get_trace_encryption(self):
         return self._trace_encryption

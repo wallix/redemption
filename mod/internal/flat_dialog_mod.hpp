@@ -39,7 +39,7 @@ class FlatDialogMod : public InternalMod, public NotifyApi
 public:
     FlatDialogMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height,
                   const char * caption, const char * message, const char * cancel_text, time_t now,
-                  bool has_challenge = false)
+                  ChallengeOpt has_challenge = NO_CHALLENGE)
     : InternalMod(front, width, height)
     , dialog_widget(*this, width, height, this->screen, this, caption, message,
                     0, TR("OK", ini), cancel_text, WHITE, DARK_BLUE_BIS, has_challenge)
@@ -53,7 +53,7 @@ public:
 
         if (this->dialog_widget.challenge) {
             this->dialog_widget.set_widget_focus(this->dialog_widget.challenge);
-            this->ini.to_send_set.insert(AUTHID_AUTHENTICATION_CHALLENGE);
+            // this->ini.to_send_set.insert(AUTHID_AUTHENTICATION_CHALLENGE);
         }
     }
 
@@ -75,12 +75,14 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod");
     void accepted()
     {
-        this->ini.context_set_value(
-            (this->dialog_widget.cancel
-            ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE), "True");
         if (this->dialog_widget.challenge) {
-            this->ini.context_set_value(AUTHID_AUTHENTICATION_CHALLENGE,
+            this->ini.context_set_value(AUTHID_PASSWORD,
                                         this->dialog_widget.challenge->get_text());
+        }
+        else {
+            this->ini.context_set_value((this->dialog_widget.cancel
+                                         ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE),
+                                        "True");
         }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();

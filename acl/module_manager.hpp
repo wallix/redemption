@@ -63,6 +63,7 @@ enum {
     MODULE_INTERNAL_CARD,
     MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE,
     MODULE_INTERNAL_DIALOG_VALID_MESSAGE,
+    MODULE_INTERNAL_DIALOG_CHALLENGE,
     MODULE_INTERNAL_BOUNCER2,
     MODULE_INTERNAL_TEST,
     MODULE_INTERNAL_WIDGET2_SELECTOR,
@@ -303,6 +304,11 @@ public:
             LOG(LOG_INFO, "=================> MODULE_ACCEPT");
             return MODULE_INTERNAL_DIALOG_VALID_MESSAGE;
         }
+        // Challenge received
+        else if (!this->ini.context_is_asked(AUTHID_AUTHENTICATION_CHALLENGE)) {
+            LOG(LOG_INFO, "===============> MODULE_DIALOG_CHALLENGE");
+            return MODULE_INTERNAL_DIALOG_CHALLENGE;
+        }
         else if (this->ini.context_is_asked(AUTHID_AUTH_USER)
             ||  this->ini.context_is_asked(AUTHID_PASSWORD)) {
             LOG(LOG_INFO, "===========> MODULE_LOGIN");
@@ -496,6 +502,31 @@ public:
                                               now);
                     LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
                 }
+                break;
+            case MODULE_INTERNAL_DIALOG_CHALLENGE:
+                {
+                    LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Challenge'");
+                    const char * message = this->ini.context.message.get_cstr();
+                    const char * button = NULL;
+                    const char * caption = "Challenge";
+                    ChallengeOpt challenge = CHALLENGE_HIDE;
+                    if (this->ini.context_get_bool(AUTHID_AUTHENTICATION_CHALLENGE)) {
+                        challenge = CHALLENGE_ECHO;
+                    }
+                    this->ini.context_ask(AUTHID_AUTHENTICATION_CHALLENGE);
+                    this->mod = new FlatDialogMod(
+                                                  this->ini,
+                                                  this->front,
+                                                  this->front.client_info.width,
+                                                  this->front.client_info.height,
+                                                  caption,
+                                                  message,
+                                                  button,
+                                                  now,
+                                                  challenge);
+                    LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Challenge' ready");
+                }
+
                 break;
             case MODULE_INTERNAL_WIDGET2_LOGIN:
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");

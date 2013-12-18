@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
 
-    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0, true);
+    FlatDialogMod d(ini, front, 800, 600, "Title", "Hello, World", "Cancel", 0, CHALLENGE_ECHO);
 
 
     BStream decoded_data(256);
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(TestDialogModChallenge)
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    const char * res = ini.context_get_value(AUTHID_AUTHENTICATION_CHALLENGE);
+    const char * res = ini.context_get_value(AUTHID_PASSWORD);
     LOG(LOG_INFO, "%s\n", res);
     BOOST_CHECK(0 == strcmp("zeaaaa", res));
 }
