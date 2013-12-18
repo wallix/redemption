@@ -27,6 +27,7 @@
 #define _REDEMPTION_HEADERS_OPENSSL_CRYPTO_HPP_
 
 #include <openssl/rc4.h>
+#include <openssl/md4.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>

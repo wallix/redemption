@@ -109,17 +109,20 @@ public:
                     }
                     close(fd);
 
-                    setgid(this->gid);
-                    setuid(this->uid);
+                    if (setgid(this->gid) != 0){
+                        LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
+                        _exit(1);
+                    }
+                    if (setuid(this->uid) != 0){
+                        LOG(LOG_WARNING, "Changing process group to %u failed with error: %s\n", this->gid, strerror(errno));
+                        _exit(1);
+                    }
                 }
 
                 LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, real_target_ip, target_port);
 
                 int nodelay = 1;
                 if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
-                    wait_obj front_event(sck);
-                    //                SocketTransport front_trans("RDP Client", sck, ini.debug.front);
-
                     // Create session file
                     int child_pid = getpid();
                     char session_file[256];
@@ -144,7 +147,7 @@ public:
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
                     }
-                    Session session(front_event, sck, &ini);
+                    Session session(sck, &ini);
 
                     // Suppress session file
                     unlink(session_file);

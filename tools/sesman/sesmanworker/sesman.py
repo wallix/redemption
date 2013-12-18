@@ -96,6 +96,10 @@ class Sesman():
         self.shared[u'target_protocol'] = MAGICASK
         self.shared[u'keyboard_layout'] = MAGICASK
 
+        self.shared[u'auth_channel_answer'] = u''
+        self.shared[u'auth_channel_result'] = u''
+        self.shared[u'auth_channel_target'] = u''
+
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
         french_layouts = [0x0000040C, # French (France)
@@ -212,7 +216,7 @@ class Sesman():
         return _status, _error
 
     def parse_username(self, wab_login, target_login, target_device, proto_dest):
-        
+
         level_0_items       = wab_login.split(u':')
         if len(level_0_items) > 1:
             if len(level_0_items) > 3:
@@ -239,7 +243,7 @@ class Sesman():
         self.send_data(data_to_send)
 
         # Wait for the user to click Ok in proxy
-        
+
         while self.shared.get(u'display_message') == MAGICASK:
             Logger().info(u'wait user grant or reject connection')
             _status, _error = self.receive_data()
@@ -395,23 +399,23 @@ class Sesman():
                                                                                 self.shared.get(u'target_login'),
                                                                                 self.shared.get(u'target_device'),
                                                                                 self.shared.get(u'proto_dest')
-                                                                                                )  
-        
+                                                                                                )
+
         if not _status:
             Logger().info(u"Invalid user %s, try again" % self.shared.get(u'login'))
             return None, TR(u"Invalid user, try again")
 
         _status, _error = None, TR(u"No error")
-        
+
         while _status is None:
-        
+
             if (target_device and target_device != MAGICASK
             and target_login  and target_login  != MAGICASK):
                 self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                , target_device
                                                                , wab_login
                                                                )
-                data_to_send = { u'login'                   : wab_login 
+                data_to_send = { u'login'                   : wab_login
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
                                , u'proto_dest'              : proto_dest
@@ -459,8 +463,8 @@ class Sesman():
                             target_login = u""
                             target_device = u""
                             proto_dest = u""
-                            
-                            data_to_send = { u'login'                   : wab_login 
+
+                            data_to_send = { u'login'                   : wab_login
                                            , u'target_login'            : target_login
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
@@ -810,22 +814,21 @@ class Sesman():
 
             try_next = False
 
-            for physical_target in (self.engine.get_effective_target(selected_target.service_login)
-                                     if selected_target.resource.application else [selected_target]):
+            for physical_target in self.engine.get_effective_target(selected_target):
                 if not _status:
                     physical_target = None
                     break
 
-                kv[u'disable_ctrl_alt_del'] = u'no'
+                kv[u'disable_tsk_switch_shortcuts'] = u'no'
                 if selected_target.resource.application:
-                    app_params = self.engine.get_app_params(selected_target.service_login, physical_target)
+                    app_params = self.engine.get_app_params(selected_target, physical_target)
                     if not app_params:
                         continue
 
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
                     kv[u'shell_working_directory'] = app_params.workingdir
                     kv[u'target_application'] = selected_target.service_login
-                    kv[u'disable_ctrl_alt_del'] = u'yes'
+                    kv[u'disable_tsk_switch_shortcuts'] = u'yes'
 
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
@@ -914,6 +917,8 @@ class Sesman():
                                     _reporting_target  = _reporting_data[:_reporting_data.index(':')]
                                     _reporting_message = _reporting_data[_reporting_data.index(':') + 1:]
 
+                                    self.shared[u'reporting'] = u''
+
                                     Logger().info(u"Reporting: reason=\"%s\" target=\"%s\" message=\"%s\"" % (_reporting_reason, _reporting_target, _reporting_message))
 
                                     self.process_report(_reporting_reason, _reporting_target, _reporting_message)
@@ -932,6 +937,27 @@ class Sesman():
                                         release_reason = u'Kill pattern detected'
                                         break
 
+                                if self.shared.get(u'auth_channel_target'):
+                                    Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
+
+                                    _message = (u"SET JOB\x01"
+                                                u"To:%s\x01"
+                                                u"\x01"
+                                                u"Job:simple_webform_filling\x01"
+                                                u"Application:C:\\Program Files\\Internet Explorer\\iexplore.exe\x01"
+                                                u"Directory:%%HOMEDRIVE%%%%HOMEPATH%%\x01"
+                                                u"WebsiteURL:10.10.47.32\x01"
+                                                u"WebformURL:https://10.10.47.32/accounts/login/\x01"
+                                                u"WebformName:login-form\x01"
+                                                u"Input:user_name:admin\x01"
+                                                u"Input:passwd:admin") % self.shared.get(u'auth_channel_target')
+
+                                    self.send_data({u'auth_channel_answer': _message})
+
+                                    Logger().info(u"Sending of auth channel answer ok")
+
+                                    self.shared[u'auth_channel_target'] = u''
+
                             else: # (if self.proxy_conx in r)
                                 Logger().error(u'break connection')
                                 release_reason = u'Break connection'
@@ -940,7 +966,10 @@ class Sesman():
                         Logger().debug(u"End Of Keep Alive")
 
                     except AuthentifierSocketClosed, e:
-                        Logger().info(u"RDP/VNC connection terminated by client")
+                        if DEBUG:
+                            import traceback
+                            Logger().info(u"RDP/VNC connection terminated by client")
+                            Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
                         release_reason = u"RDP/VNC connection terminated by client"
 
                     except Exception, e:
@@ -955,7 +984,14 @@ class Sesman():
                         break;
                 finally:
                     if not (physical_target is None):
-                        self.engine.release_target_password(physical_target, release_reason)
+                        if (physical_target == selected_target):
+                            #no application case
+                            Logger().info("Calling release_target_password")
+                            self.engine.release_target_password(physical_target, release_reason)
+                        else:
+                            #application case
+                            #release application password
+                            self.engine.release_target_password(physical_target, release_reason, selected_target)
 
             Logger().info(u"Stop session ...")
 
@@ -1028,12 +1064,12 @@ class Sesman():
 
 
 # This little main permets to run the Sesman Server Alone for one connection
-if __name__ == u'__main__':
-    sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sck.bind(('', 3350))
-    sck.listen(100)
-    connection, address = sck.accept()
+#if __name__ == u'__main__':
+#    sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#    sck.bind(('', 3350))
+#    sck.listen(100)
+#    connection, address = sck.accept()
 
-    Sesman(connection, address)
+#    Sesman(connection, address)
 
 # EOF

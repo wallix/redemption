@@ -168,12 +168,6 @@ static inline void UTF8TruncateAtPos(uint8_t * source, size_t len)
     source[UTF8GetPos(source, len)] = 0;
 }
 
-static inline void UTF8TruncateAtPos(char * source, size_t len)
-{
-    UTF8TruncateAtPos(reinterpret_cast<uint8_t *>(source), len);
-}
-
-
 REDOC("UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before")
 REDOC("UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert");
 static inline bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source)

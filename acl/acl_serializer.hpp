@@ -146,13 +146,15 @@ public:
             LOG(LOG_WARNING, "Error: ACL message too big (got %u max 64 K)", size);
             throw Error(ERR_ACL_MESSAGE_TOO_BIG);
         }
-        if (size > stream.get_capacity()) {
+        if (size > stream.endroom()) {
             stream.init(size);
         }
 
         this->auth_trans.recv(&stream.end, size);
 
-        LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
+        if (this->verbose & 0x40){
+            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (receive) = %u", size);
+        }
         bool flag = this->ini->context.session_id.get().is_empty();
         this->in_items(stream);
         if (flag && !this->ini->context.session_id.get().is_empty()) {
@@ -164,8 +166,9 @@ public:
                     this->ini->context.session_id.get_cstr());
             rename(old_session_file, new_session_file);
         }
-
-        LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.get_cstr());
+        if (this->verbose & 0x40){
+            LOG(LOG_INFO, "SESSION_ID = %s", this->ini->context.session_id.get_cstr());
+        }
     }
 
     TODO("move that function to Inifile create specialized stream object InifileStream "
@@ -216,7 +219,9 @@ public:
             }
             stream.mark_end();
             int total_length = stream.get_offset();
-            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            if (this->verbose & 0x40){
+                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            }
             stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
             this->auth_trans.send(stream.get_data(), total_length);
         } catch (Error e) {
@@ -256,7 +261,9 @@ public:
 
             stream.mark_end();
             int total_length = stream.get_offset();
-            LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            if (this->verbose & 0x40){
+                LOG(LOG_INFO, "ACL SERIALIZER : Data size without header (send) %u", total_length - HEADER_SIZE);
+            }
             stream.set_out_uint32_be(total_length - HEADER_SIZE, 0); /* size in header */
             this->auth_trans.send(stream.get_data(), total_length);
         } catch (Error e) {
@@ -268,7 +275,9 @@ public:
     void ask_next_module_remote() {
         Inifile::SetField list = this->ini->get_changed_set();
         //std::set<Inifile::BaseField *> list = this->ini->get_changed_set();
-        LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u",list.size());
+        if (this->verbose & 0x01){
+            LOG(LOG_INFO, "Begin Sending data to ACL: numbers of changed fields = %u",list.size());
+        }
         if (!list.empty())
             this->send_new(list);
         this->ini->reset();

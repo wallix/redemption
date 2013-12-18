@@ -45,13 +45,23 @@ int main(int argc, char **argv) {
     using namespace re;
 
     if (argc < 2) {
-        std::cerr << argv[0] << (" regex [str]") << std::endl;
+        std::cerr << argv[0] << (" regex [str [optimization:(1|2|3)]]") << std::endl;
         return 1;
     }
+    const int optimize_mem = argc >= 4 && argv[3] ? atoi(argv[3]) : 0;
+    std::cout << "optimize_mem: " << optimize_mem << "\n";
     const char * rgxstr = argv[1];
-    Regex regex(argv[1]);
+    Regex regex(argv[1],
+                optimize_mem == 1
+                    ? Regex::OPTIMIZE_MEMORY
+                : optimize_mem == 2
+                    ? Regex::MINIMAL_MEMORY
+                : optimize_mem > 2
+                    ? Regex::OPTIMIZE_MEMORY|Regex::MINIMAL_MEMORY
+                : Regex::DEFAULT_FLAG
+               );
     if (regex.message_error()) {
-        std::cerr << regex.message_error() << std::endl;
+        std::cerr << regex.message_error() << " at position " << regex.position_error() << std::endl;
         return 2;
     }
     regex.display();
@@ -79,6 +89,7 @@ int main(int argc, char **argv) {
     bool ismatch3 = false;
     bool ismatch4 = false;
     double d1, d2, d3, d4;
+    bool validregexec = false;
 
     const char * str = argc > 1 ? argv[1] : "abcdef";
 
@@ -86,7 +97,7 @@ int main(int argc, char **argv) {
 # define ITERATION 100000
 #endif
     {
-        regexec(&rgx, str, 1, regmatch, 0); //NOTE preload
+        validregexec = regexec(&rgx, str, 1, regmatch, 0) == 0; //NOTE preload
         //BEGIN
         std::clock_t start_time = std::clock();
         for (size_t i = 0; i < ITERATION; ++i) {
@@ -101,7 +112,7 @@ int main(int argc, char **argv) {
 #endif
         std::clock_t start_time = std::clock();
         for (size_t i = 0; i < ITERATION; ++i) {
-            ismatch2 = regex.search(str);
+            ismatch2 = regex./*exact_*/search(str);
         }
         d2 = double(std::clock() - start_time) / CLOCKS_PER_SEC;
     }
@@ -141,7 +152,7 @@ int main(int argc, char **argv) {
     }
     {
 #ifdef DISPLAY_TRACE
-        std::cout << ("\n###exact_search_with_matches\n") << std::endl;
+        std::cout << ("\n### exact_search_with_matches\n") << std::endl;
 #endif
         std::clock_t start_time = std::clock();
         for (size_t i = 0; i < ITERATION; ++i) {
@@ -172,10 +183,7 @@ int main(int argc, char **argv) {
     << (ismatch4 ? "good\n" : "fail\n")
     << d4 << " sec\n";
 
-    //std::cout << "st_exact_search: " << st_exact_search(regex.stw, str) << "\n";
-    //std::cout << "st_search: " << st_search(regex.stw, str) << std::endl;
-
-    if (ismatch3) {
+    if (validregexec && ismatch3) {
         std::cout << ("with regex.h\n");
         for (unsigned i = 1; i < sizeof(regmatch)/sizeof(regmatch[0]); i++) {
             if (regmatch[i].rm_so == -1) {
@@ -191,7 +199,10 @@ int main(int argc, char **argv) {
         Regex::range_matches match_result = regex.match_result();
         typedef Regex::range_matches::iterator iterator;
         for (iterator first = match_result.begin(), last = match_result.end(); first != last; ++first) {
-            (std::cout << "\tmatch: '").write(first->first, first->second-first->first) << "'\n";
+            std::cout << (first->first - str) << " " << (first->second - str) << std::endl;
+            if (first->first) {
+                (std::cout << "\tmatch: '").write(first->first, first->second-first->first) << "'\n";
+            }
         }
         std::cout.flush();
     }

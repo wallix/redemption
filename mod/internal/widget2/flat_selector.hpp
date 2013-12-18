@@ -45,7 +45,6 @@ class WidgetSelectorFlat : public WidgetParent
         WidgetLabel target;
         WidgetLabel protocol;
         WidgetLabel closetime;
-        uint h_border;
         int border_color;
 
 
@@ -63,7 +62,6 @@ class WidgetSelectorFlat : public WidgetParent
                                    false, 0, fgcolor, bgcolor, x_text, y_text))
             , closetime(WidgetLabel(drawable, x + group_w + target_w + protocol_w, y, parent, notifier,
                                     closetime, false, 0, fgcolor, bgcolor, x_text, y_text))
-            , h_border(h_border)
             , border_color(bgcolor)
         {
             this->group.rect.cx     = group_w;

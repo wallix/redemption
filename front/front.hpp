@@ -669,14 +669,14 @@ public:
     }
 
     virtual void send_to_channel( const CHANNELS::ChannelDef & channel
-                                , uint8_t * data
+                                , uint8_t * chunk
                                 , size_t length
                                 , size_t chunk_size
                                 , int flags) {
         if (this->verbose & 16) {
             LOG( LOG_INFO
                , "Front::send_to_channel(channel, data=%p, length=%u, chunk_size=%u, flags=%x)"
-               , data, length, chunk_size, flags);
+               , chunk, length, chunk_size, flags);
         }
 
         if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
@@ -684,11 +684,10 @@ public:
         }
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu(this->verbose);
-        FixedSizeStream             chunk(data, chunk_size);
 
         virtual_channel_pdu.send_to_client( *this->trans, this->encrypt
                                           , this->client_info.encryptionLevel, userid, channel.chanid
-                                          , length, flags, chunk);
+                                          , length, flags, chunk, chunk_size);
     }
 
     // Global palette cf [MS-RDPCGR] 2.2.9.1.1.3.1.1.1 Palette Update Data
@@ -1741,7 +1740,7 @@ public:
                 MCS::SendDataRequest_Recv mcs(x224.payload, MCS::PER_ENCODING);
                 SEC::SecExchangePacket_Recv sec(mcs.payload, mcs.payload_size);
 
-                ssllib ssl;
+                TODO("see possible factorisation with ssl_calls.hpp/ssllib::rsa_encrypt")
                 uint8_t client_random[64];
                 memset(client_random, 0, 64);
                 {
@@ -1751,12 +1750,12 @@ public:
                     uint8_t l_exp[64]; rmemcpy(l_exp, this->pri_exp, 64);
 
                     BN_CTX* ctx = BN_CTX_new();
-                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn((uint8_t*)l_mod, 64, &lmod);
-                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn((uint8_t*)l_exp, 64, &lexp);
-                    BIGNUM lin; BN_init(&lin);  BN_bin2bn((uint8_t*)l_in, 64, &lin);
+                    BIGNUM lmod; BN_init(&lmod); BN_bin2bn(l_mod, 64, &lmod);
+                    BIGNUM lexp; BN_init(&lexp); BN_bin2bn(l_exp, 64, &lexp);
+                    BIGNUM lin; BN_init(&lin);  BN_bin2bn(l_in, 64, &lin);
                     BIGNUM lout; BN_init(&lout); BN_mod_exp(&lout, &lin, &lexp, &lmod, ctx);
 
-                    int rv = BN_bn2bin(&lout, (uint8_t*)l_out);
+                    int rv = BN_bn2bin(&lout, l_out);
                     if (rv <= 64) {
                         reverseit(l_out, rv);
                         memcpy(client_random, l_out, 64);
@@ -1771,6 +1770,7 @@ public:
                 // beware order of parameters for key generation (decrypt/encrypt) is inversed between server and client
                 SEC::KeyBlock key_block(client_random, this->server_random);
                 memcpy(this->encrypt.sign_key, key_block.blob0, 16);
+                ssllib ssl;
                 if (this->encrypt.encryptionMethod == 1){
                     ssl.sec_make_40bit(this->encrypt.sign_key);
                 }
@@ -1863,9 +1863,8 @@ public:
                         hexdump_d(stream.get_data(), stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream,
-                        SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
-                    stream.copy_to_head(sec_header);
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100200, this->encrypt, 0);
+                    stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
                     this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
@@ -1960,7 +1959,7 @@ public:
 
                 SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT,
                     this->encrypt, 0);
-                stream.copy_to_head(sec_header);
+                stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
                 this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
 
@@ -2063,9 +2062,8 @@ public:
                         hexdump_d(stream.get_data(), stream.size());
                     }
 
-                    SEC::Sec_Send sec(sec_header, stream,
-                        SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
-                    stream.copy_to_head(sec_header);
+                    SEC::Sec_Send sec(sec_header, stream, SEC::SEC_LICENSE_PKT | 0x00100000, this->encrypt, 0);
+                    stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
                     this->send_data_indication(GCC::MCS_GLOBAL_CHANNEL, stream);
                 }
@@ -2255,9 +2253,9 @@ public:
                             }
 
                             BStream decoded_data(256);
-                            bool    ctrl_alt_del;
+                            bool    tsk_switch_shortcuts;
 
-                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data, ctrl_alt_del);
+                            this->keymap.event(ke.spKeyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
                             decoded_data.mark_end();
 
                             if (  this->capture
@@ -2269,8 +2267,8 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (ctrl_alt_del && this->ini->client.disable_ctrl_alt_del.get()) {
-                                    LOG(LOG_INFO, "Ctrl+Alt+Del keyboard sequence ignored.");
+                                if (tsk_switch_shortcuts && this->ini->client.disable_tsk_switch_shortcuts.get()) {
+                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
                                     cb.rdp_input_scancode(ke.keyCode, 0, ke.spKeyboardFlags, 0, &this->keymap);
@@ -2478,6 +2476,11 @@ public:
                             if (this->verbose & 1){
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
                             }
+//this->send_synchronize();
+//this->send_control(RDP_CTL_COOPERATE);
+//this->send_control(RDP_CTL_GRANT_CONTROL);
+//this->send_fontmap();
+
                             break;
                         case PDUTYPE_DATAPDU: /* 7 */
                             if (this->verbose & 8){
@@ -2552,9 +2555,8 @@ public:
         OutPerBStream mcs_header(256);
         BStream sec_header(256);
 
-        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt,
-                          this->client_info.encryptionLevel);
-        stream.copy_to_head(sec_header);
+        SEC::Sec_Send sec(sec_header, stream, 0, this->encrypt, this->client_info.encryptionLevel);
+        stream.copy_to_head(sec_header.get_data(), sec_header.size());
 
         MCS::SendDataIndication_Send mcs(mcs_header, this->userid, channelId,
                                          1, 3, stream.size(),
@@ -3478,9 +3480,9 @@ public:
                             }
 
                             BStream decoded_data(256);
-                            bool    ctrl_alt_del;
+                            bool    tsk_switch_shortcuts;
 
-                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data, ctrl_alt_del);
+                            this->keymap.event(ke.keyboardFlags, ke.keyCode, decoded_data, tsk_switch_shortcuts);
                             decoded_data.mark_end();
 
                             if (  this->capture
@@ -3492,8 +3494,8 @@ public:
                             }
 
                             if (this->up_and_running) {
-                                if (ctrl_alt_del && this->ini->client.disable_ctrl_alt_del.get()) {
-                                    LOG(LOG_INFO, "Ctrl+Alt+Del keyboard sequence ignored.");
+                                if (tsk_switch_shortcuts && this->ini->client.disable_tsk_switch_shortcuts.get()) {
+                                    LOG(LOG_INFO, "Ctrl+Alt+Del and Ctrl+Shift+Esc keyboard sequences ignored.");
                                 }
                                 else {
                                     cb.rdp_input_scancode(ke.keyCode, 0, ke.keyboardFlags, ie.eventTime, &this->keymap);
@@ -3731,7 +3733,18 @@ public:
                 this->ini->context.opt_width.set(this->client_info.width);
                 this->ini->context.opt_height.set(this->client_info.height);
                 this->ini->context.opt_bpp.set(this->client_info.bpp);
-                this->ini->parse_username(this->client_info.username);
+                char username_a_domain[512];
+                const char * username;
+                if (this->client_info.domain[0] &&
+                    !strchr(this->client_info.username, '@') &&
+                    !strchr(this->client_info.username, '\\')) {
+                    snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->client_info.username, this->client_info.domain);
+                    username = username_a_domain;
+                }
+                else {
+                    username = this->client_info.username;
+                }
+                this->ini->parse_username(username);
                 if (this->client_info.password[0]) {
                     this->ini->context_set_value(AUTHID_PASSWORD, this->client_info.password);
                 }

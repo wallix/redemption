@@ -38,7 +38,7 @@
 #undef DEFAULT_FONT_NAME
 #define DEFAULT_FONT_NAME "sans-10.fv1"
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "listen.hpp"
@@ -78,15 +78,16 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     Inifile ini;
     ini.debug.front = 511;
+    ini.debug.primary_orders = 7;
 
 //     int nodelay = 1;
 //     if (-1 == setsockopt( one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY
 //                         , (char *)&nodelay, sizeof(nodelay))) {
 //         LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
 //     }
-//     wait_obj front_event(one_shot_server.sck);
 //     SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
 //                                , ini.debug.front, 0);
+//     wait_obj front_event(&front_trans);
 
     LCGRandom gen(0);
 

@@ -82,6 +82,7 @@ BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos)
     BOOST_CHECK_EQUAL(11, UTF8Len(source));
 }
 
+
 BOOST_AUTO_TEST_CASE(TestUTF8TruncateAtPos_0)
 {
     uint8_t source[] = { 'a', 'b', 'c', 'e', 'd', 'e', 'f', 0xC3, 0xA9, 0xC3, 0xA7, 0xC3, 0xA0, '@', 0};

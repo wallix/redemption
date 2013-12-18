@@ -85,6 +85,7 @@ project redemption
     <include>recorder
     <include>keyboard
     <include>transport
+    <include>regex
     <include>/usr/include
     <include>FreeRDP/include
     <conditional>@defines
@@ -135,6 +136,7 @@ alias install : install-bin install-etc install-share ;
 alias exe     : rdpproxy redrec ;
 
 #alias test_suite_widget2 : test_widget2_rect test_image test_label test_tooltip test_edit test_multiline test_password test_number_edit test_widget test_composite test_window_dialog test_window_login test_window_wab_close test_widget2_window test_wab_close test_selector test_screen ;
+
 
 install install-bin
     : exe
@@ -472,8 +474,8 @@ unit-test test_session : tests/core/test_session.cpp libboost_unit_test gcov : <
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test ;
 unit-test test_session_server : tests/core/test_session_server.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test ;
-unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test openssl crypto ;
+unit-test test_wait_obj : tests/core/test_wait_obj.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
 unit-test test_front : tests/front/test_front.cpp libboost_unit_test ;
 unit-test test_front : tests/front/test_front.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -493,8 +495,8 @@ unit-test test_rdp_cursor : tests/mod/rdp/test_rdp_cursor.cpp libboost_unit_test
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test ;
 unit-test test_rdp_orders : tests/mod/rdp/test_rdp_orders.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_vnc : tests/mod/vnc/test_vnc.cpp openssl libboost_unit_test ;
-unit-test test_vnc : tests/mod/vnc/test_vnc.cpp openssl libboost_unit_test gcov : <variant>coverage ;
+unit-test test_vnc : tests/mod/vnc/test_vnc.cpp openssl crypto libboost_unit_test ;
+unit-test test_vnc : tests/mod/vnc/test_vnc.cpp openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test ;
 unit-test test_xup : tests/mod/xup/test_xup.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -564,8 +566,8 @@ unit-test test_png : tests/utils/test_png.cpp z png openssl crypto z dl libboost
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test ;
 unit-test test_rdtsc : tests/utils/test_rdtsc.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test ;
-unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test dl openssl crypto z ;
+unit-test test_ssl_calls : tests/utils/test_ssl_calls.cpp libboost_unit_test dl openssl crypto z gcov : <variant>coverage ;
 
 unit-test test_string : tests/utils/test_string.cpp libboost_unit_test ;
 unit-test test_string : tests/utils/test_string.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -878,17 +880,20 @@ unit-test test_replay_mod : tests/mod/internal/test_replay_mod.cpp libboost_unit
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test ;
 unit-test test_internal_mod : tests/mod/internal/test_internal_mod.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex_state : ftests/regex/test_regex_state.cpp libboost_unit_test ;
-unit-test test_regex_state : ftests/regex/test_regex_state.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex_state : tests/regex/test_regex_state.cpp libboost_unit_test ;
+unit-test test_regex_state : tests/regex/test_regex_state.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex_parser : ftests/regex/test_regex_parser.cpp libboost_unit_test ;
-unit-test test_regex_parser : ftests/regex/test_regex_parser.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex_parser : tests/regex/test_regex_parser.cpp libboost_unit_test ;
+unit-test test_regex_parser : tests/regex/test_regex_parser.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex_ndfa : ftests/regex/test_regex_ndfa.cpp libboost_unit_test ;
-unit-test test_regex_ndfa : ftests/regex/test_regex_ndfa.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex_ndfa : tests/regex/test_regex_ndfa.cpp libboost_unit_test ;
+unit-test test_regex_ndfa : tests/regex/test_regex_ndfa.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test ;
-unit-test test_regex : ftests/regex/test_regex.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_regex : tests/regex/test_regex.cpp libboost_unit_test ;
+unit-test test_regex : tests/regex/test_regex.cpp libboost_unit_test gcov : <variant>coverage ;
+
+# unit-test benchmark_regex_parser : tests/benchmark/parser.cpp ;
+# unit-test benchmark_regex_search : tests/benchmark/search.cpp ;
 
 unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test ;
 unit-test test_rwl : ftests/rwl/test_rwl.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -913,3 +918,21 @@ unit-test test_flat_selector_mod : tests/mod/internal/test_flat_selector_mod.cpp
 
 unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z openssl crypto libboost_unit_test ;
 unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
+
+
+unit-test test_ber : tests/core/RDP/nla/asn1/test_ber.cpp libboost_unit_test openssl crypto ;
+unit-test test_ber : tests/core/RDP/nla/asn1/test_ber.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+
+unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test openssl crypto ;
+unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+
+alias test_ntlm : test_ntlm_negotiate test_ntlm_avpair test_ntlm_challenge ;
+
+unit-test test_ntlm_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp libboost_unit_test openssl crypto ;
+unit-test test_ntlm_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+
+unit-test test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp libboost_unit_test openssl crypto ;
+unit-test test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+
+unit-test test_ntlm_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp libboost_unit_test openssl crypto ;
+unit-test test_ntlm_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
