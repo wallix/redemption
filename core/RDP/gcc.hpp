@@ -2548,9 +2548,9 @@ namespace GCC
                 else {
                     this->x509.certCount = stream.in_uint32_le();
                     if (this->x509.certCount > 32){
-			LOG(LOG_ERR, "More than 32 certificates (count=%u), this is probably an attack", 
-				this->x509.certCount);
-                        throw Error(ERR_GCC);                    
+                        LOG(LOG_ERR, "More than 32 certificates (count=%u), this is probably an attack", 
+                            this->x509.certCount);
+                        throw Error(ERR_GCC);
                     }
                     
                     for (size_t i = 0; i < this->x509.certCount ; i++){
