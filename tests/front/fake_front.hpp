@@ -59,6 +59,10 @@ public:
         this->gd.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+        this->gd.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect & clip) {
         RDPPatBlt new_cmd24 = cmd;
         new_cmd24.back_color = color_decode_opaquerect(cmd.back_color, this->mod_bpp, this->mod_palette);

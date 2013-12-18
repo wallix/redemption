@@ -125,21 +125,22 @@ struct RDPSerializer : public RDPGraphicDevice
     const int op2;
 
     // Internal state of orders
-    RDPOrderCommon common;
-    RDPDestBlt     destblt;
-    RDPMultiDstBlt multidstblt;
-    RDPPatBlt      patblt;
-    RDPScrBlt      scrblt;
-    RDPOpaqueRect  opaquerect;
-    RDPMemBlt      memblt;
-    RDPMem3Blt     mem3blt;
-    RDPLineTo      lineto;
-    RDPGlyphIndex  glyphindex;
-    RDPPolygonSC   polygonSC;
-    RDPPolygonCB   polygonCB;
-    RDPPolyline    polyline;
-    RDPEllipseSC   ellipseSC;
-    RDPEllipseCB   ellipseCB;
+    RDPOrderCommon     common;
+    RDPDestBlt         destblt;
+    RDPMultiDstBlt     multidstblt;
+    RDPMultiOpaqueRect multiopaquerect;
+    RDPPatBlt          patblt;
+    RDPScrBlt          scrblt;
+    RDPOpaqueRect      opaquerect;
+    RDPMemBlt          memblt;
+    RDPMem3Blt         mem3blt;
+    RDPLineTo          lineto;
+    RDPGlyphIndex      glyphindex;
+    RDPPolygonSC       polygonSC;
+    RDPPolygonCB       polygonCB;
+    RDPPolyline        polyline;
+    RDPEllipseSC       ellipseSC;
+    RDPEllipseCB       ellipseCB;
 
     // state variables for gathering batch of orders
     size_t order_count;
@@ -272,12 +273,23 @@ public:
         }
     }
 
-    virtual void draw(const RDPMultiDstBlt & cmd, const Rect &clip) {
+    virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
         this->reserve_order(395 * 2);
         RDPOrderCommon newcommon(RDP::MULTIDSTBLT, clip);
         cmd.emit(this->stream_orders, newcommon, this->common, this->multidstblt);
         this->common      = newcommon;
         this->multidstblt = cmd;
+        if (this->ini.debug.primary_orders) {
+            cmd.log(LOG_INFO, common.clip);
+        }
+    }
+
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+        this->reserve_order(397 * 2);
+        RDPOrderCommon newcommon(RDP::MULTIOPAQUERECT, clip);
+        cmd.emit(this->stream_orders, newcommon, this->common, this->multiopaquerect);
+        this->common          = newcommon;
+        this->multiopaquerect = cmd;
         if (this->ini.debug.primary_orders) {
             cmd.log(LOG_INFO, common.clip);
         }

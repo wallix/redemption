@@ -49,18 +49,19 @@
 /* orders */
 struct rdp_orders {
     // State
-    RDPOrderCommon common;
-    RDPMemBlt      memblt;
-    RDPMem3Blt     mem3blt;
-    RDPOpaqueRect  opaquerect;
-    RDPScrBlt      scrblt;
-    RDPDestBlt     destblt;
-    RDPMultiDstBlt multidstblt;
-    RDPPatBlt      patblt;
-    RDPLineTo      lineto;
-    RDPGlyphIndex  glyph_index;
-    RDPPolyline    polyline;
-    RDPEllipseSC   ellipseSC;
+    RDPOrderCommon     common;
+    RDPMemBlt          memblt;
+    RDPMem3Blt         mem3blt;
+    RDPOpaqueRect      opaquerect;
+    RDPScrBlt          scrblt;
+    RDPDestBlt         destblt;
+    RDPMultiDstBlt     multidstblt;
+    RDPMultiOpaqueRect multiopaquerect;
+    RDPPatBlt          patblt;
+    RDPLineTo          lineto;
+    RDPGlyphIndex      glyph_index;
+    RDPPolyline        polyline;
+    RDPEllipseSC       ellipseSC;
 
     BGRPalette cache_colormap[6];
     BGRPalette global_palette;

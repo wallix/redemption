@@ -135,6 +135,23 @@ public:
         }
     }
 
+    void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip)
+    {
+        const Rect clip_drawable_cmd_intersect = clip.intersect(this->drawable.width, this->drawable.height).intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight));
+
+        Rect cmd_rect(0, 0, 0, 0);
+
+        for (uint8_t i = 0; i < cmd.nDeltaEntries; i++) {
+            cmd_rect.x  += cmd.deltaEncodedRectangles[i].leftDelta;
+            cmd_rect.y  += cmd.deltaEncodedRectangles[i].topDelta;
+            cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
+            cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
+            const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
+            this->drawable.opaquerect(trect,
+                cmd.RedOrPaletteIndex | (cmd.Green << 8) | (cmd.Blue << 16));
+        }
+    }
+
     void draw(const RDPPatBlt & cmd, const Rect & clip)
     {
         const Rect trect = clip.intersect(this->drawable.width, this->drawable.height).intersect(cmd.rect);
