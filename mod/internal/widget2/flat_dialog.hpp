@@ -30,6 +30,12 @@
 #include "edit.hpp"
 #include "password.hpp"
 
+enum ChallengeOpt {
+    NO_CHALLENGE = 0x00,
+    CHALLENGE_ECHO = 0x01,
+    CHALLENGE_HIDE = 0x02
+};
+
 class FlatDialog : public WidgetParent
 {
 public:
@@ -47,8 +53,8 @@ public:
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id = 0,
                const char * ok_text = "Ok", const char * cancel_text = "Cancel",
-               int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS, bool has_challenge = false
-               )
+               int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS,
+               ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -8)
         , title(drawable, 0, 0, *this, NULL, caption, true, -9,
@@ -81,9 +87,15 @@ public:
         y = this->dialog.dy() + this->dialog.cy() + 10;
 
         if (has_challenge) {
-            this->challenge = new WidgetEdit(this->drawable, this->separator.rect.x + 10, y,
-                                             total_width - 20, *this, this, 0, -13,
-                                             BLACK, WHITE, -1u, 1, 1);
+            if (CHALLENGE_ECHO == has_challenge) {
+                this->challenge = new WidgetEdit(this->drawable, this->separator.rect.x + 10, y,
+                                                 total_width - 20, *this, this, 0, -13,
+                                                 BLACK, WHITE, -1u, 1, 1);
+            } else {
+                this->challenge = new WidgetPassword(this->drawable, this->separator.rect.x + 10,
+                                                     y, total_width - 20, *this, this, 0, -13,
+                                                     BLACK, WHITE, -1u, 1, 1);
+            }
             this->add_widget(this->challenge);
             total_height += this->challenge->cy() + 10;
             y += this->challenge->cy() + 10;

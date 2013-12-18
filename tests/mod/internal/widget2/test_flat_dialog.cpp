@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
                            "erat ut ligula. Fusce sit amet mauris neque.<br>"
                            "Sed orci augue, luctus in ornare sed,<br>"
                            "adipiscing et arcu.", 0, "Ok", "Cancel", WHITE, DARK_BLUE_BIS,
-                           true);
+                           CHALLENGE_ECHO);
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);

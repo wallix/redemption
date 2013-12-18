@@ -14,6 +14,7 @@ class Engine(object):
         self.session_id  = None
         self.auth_x509 = None
         self._trace_encryption = None
+        self.challenge = None
 
     def get_trace_encryption(self):
         try:
@@ -70,13 +71,19 @@ class Engine(object):
         try:
             from wabengine.client.sync_client import SynClient
             self.client = SynClient('localhost', 'tcp:8803')
-            self.wabengine = self.client.authenticate(wab_login, password, ip_client)
+            self.wabengine = self.client.authenticate(wab_login, password,
+                                                      ip_client, self.challenge)
+            self.challenge = None
             if self.wabengine is not None:
                 self.user = self.wabengine.who_am_i()
                 return True
+        except engine.AuthenticationChallenged, e:
+            self.challenge = e.challenge
         except AuthenticationFailed, e:
+            self.challenge = None
             pass
         except Exception, e:
+            self.challenge = None
             import traceback
             Logger().info("Engine password_authenticate failed: (((%s)))" % traceback.format_exc(e))
         return False
