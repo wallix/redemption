@@ -36,17 +36,13 @@ namespace re {
     public:
         const state_list_t & states;
 
-#ifndef NDEBUG
     private:
         unsigned nb_cap;
     public:
-#endif
         StatesValue(const state_list_t & sts, unsigned nb_cap)
         : nums(sts.size(), 0)
         , states(sts)
-#ifndef NDEBUG
         , nb_cap(nb_cap)
-#endif
         {}
 
         ~StatesValue()
