@@ -1611,7 +1611,9 @@ class Engine(object):
         if not self.challenge:
             res = self.config_users[wab_login]['password'] == password
             if res:
-                self.challenge = ChallengeInfo("""When Littlefoot's Mother died in the original<br>'Land Before Time', did you feel sad ?<br>(Bots: No lying)""",
+                self.challenge = ChallengeInfo("""When Littlefoot's Mother died in the original
+'Land Before Time', did you feel sad ?
+(Bots: No lying)""",
                                                False)
                 res = False
         else:
