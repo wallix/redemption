@@ -696,7 +696,7 @@ class Sesman():
                     # submit challenge:
                     tries = tries + 1
                     data_to_send = { u'authentication_challenge' : self.engine.challenge.promptEcho,
-                                     u'message' : self.engine.challenge.message,
+                                     u'message' : cut_message(self.engine.challenge.message),
                                      u'password' : MAGICASK }
                     self.send_data(data_to_send)
                     continue
