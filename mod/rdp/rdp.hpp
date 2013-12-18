@@ -318,24 +318,63 @@ struct mod_rdp : public mod_api {
 
         TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log");
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
-            LOG(LOG_INFO, "mod_rdp: hostname too long! %u > %u", ::strlen(info.hostname), sizeof(this->hostname));
+            LOG(LOG_INFO, "mod_rdp: hostname too long! %u >= %u", ::strlen(info.hostname), sizeof(this->hostname));
         }
         strncpy(this->hostname, info.hostname, 15);
         this->hostname[15] = 0;
 
-        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log");
-        if (::strlen(target_user) >= sizeof(this->username)) {
-            LOG(LOG_INFO, "mod_rdp: username too long! %u > %u", ::strlen(target_user), sizeof(this->username));
-        }
-        strncpy(this->username, target_user, 127);
-        this->username[127] = 0;
 
-        LOG(LOG_INFO, "Remote RDP Server login:%s host:%s", this->username, this->hostname);
+        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log");
+        const char * domain_pos   = 0;
+        size_t       domain_len   = 0;
+        const char * username_pos = 0;
+        size_t       username_len = 0;
+        const char * separator = strchr(target_user, '\\');
+        if (separator)
+        {
+            domain_pos   = target_user;
+            domain_len   = separator - target_user;
+            username_pos = ++separator;
+            username_len = strlen(username_pos);
+        }
+        else
+        {
+            separator = strchr(target_user, '@');
+            if (separator)
+            {
+                domain_pos   = separator + 1;
+                domain_len   = strlen(domain_pos);
+                username_pos = target_user;
+                username_len = separator - target_user;
+                LOG(LOG_INFO, "mod_rdp: username_len=%u", username_len);
+            }
+            else
+            {
+                username_pos = target_user;
+                username_len = strlen(username_pos);
+            }
+        }
+
+        if (username_len >= sizeof(this->username)) {
+            LOG(LOG_INFO, "mod_rdp: username too long! %u >= %u", username_len, sizeof(this->username));
+        }
+        size_t count = std::min(sizeof(this->username) - 1, username_len);
+        if (count > 0) strncpy(this->username, username_pos, count);
+        this->username[count] = 0;
+
+        if (domain_len >= sizeof(this->domain)) {
+            LOG(LOG_INFO, "mod_rdp: domain too long! %u >= %u", domain_len, sizeof(this->domain));
+        }
+        count = std::min(sizeof(this->domain) - 1, domain_len);
+        if (count > 0) strncpy(this->domain, domain_pos, count);
+        this->domain[count] = 0;
+
+        LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"", this->domain, this->username, this->hostname);
+
 
         strncpy(this->password, target_password, sizeof(this->password) - 1);
         this->password[sizeof(this->password) - 1] = 0;
 
-        memset(this->domain, 0, sizeof(this->domain));
 
         strncpy(this->program, alternate_shell, sizeof(this->program) - 1);
         this->program[sizeof(this->program) - 1] = 0;
@@ -552,18 +591,31 @@ struct mod_rdp : public mod_api {
     }
 
     // Method used by session to transmit sesman answer for auth_channel
-    virtual void send_auth_channel_data(const char * data) {
-        if (strncmp("Error:", data, 6)) {
+    virtual void send_auth_channel_data(const char * string_data) {
+        if (strncmp("ERROR", string_data, 5)) {
             this->auth_channel_state = 1; // session started
         }
 
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-        TODO("I do not like this strlen here, see that")
-        size_t chunk_size = ::strlen(reinterpret_cast<const char *>(data));
+        BStream stream_data(65536);
+        uint32_t data_size = std::min(::strlen(string_data), stream_data.get_capacity() - sizeof(uint32_t));
+
+        stream_data.out_uint32_le(data_size);
+        uint8_t * data_curr = stream_data.p;
+        stream_data.out_copy_bytes(string_data, data_size);
+        stream_data.mark_end();
+
+        for (uint8_t * data_end = data_curr + data_size; data_curr != data_end; data_curr++)
+            if (*data_curr == 1)
+                *data_curr = '\n';
+
         virtual_channel_pdu.send_to_server( *this->nego.trans, this->encrypt, this->encryptionLevel
-                            , this->userid, this->auth_channel_chanid, chunk_size
-                            , this->auth_channel_flags, reinterpret_cast<const uint8_t *>(data), chunk_size);
+                            , this->userid, this->auth_channel_chanid
+                            , stream_data.size()
+                            , this->auth_channel_flags
+                            , stream_data.get_data()
+                            , stream_data.size());
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, Stream & chunk, size_t length
@@ -1226,7 +1278,16 @@ struct mod_rdp : public mod_api {
 
                     {
                         const char * hostname = this->hostname;
-                        const char * username = this->username;
+                        const char * username;
+                        char username_a_domain[512];
+                        if (this->domain[0]) {
+                            snprintf(username_a_domain, sizeof(username_a_domain), "%s@%s", this->username, this->domain);
+                            username = username_a_domain;
+                        }
+                        else {
+                            username = this->username;
+                        }
+                        LOG(LOG_INFO, "Rdp::Get license: username=\"%s\"", username);
                         // read tpktHeader (4 bytes = 3 0 len)
                         // TPDU class 0    (3 bytes = LI F0 PDU_DT)
 
@@ -1598,31 +1659,29 @@ struct mod_rdp : public mod_api {
 
                             // If channel name is our virtual channel, then don't send data to front
                             if (this->auth_channel[0] /*&& this->acl */&& !strcmp(mod_channel.name, this->auth_channel)){
-                                const char * auth_channel_message = (const char *)sec.payload.p;
+                                uint32_t ulDataLength = sec.payload.in_uint32_le();
+                                LOG(LOG_INFO, "Auth channel data length=%d", ulDataLength);
+                                redemption::string auth_channel_message((const char *)sec.payload.p, ulDataLength);
+                                LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message.c_str());
                                 if (this->auth_channel_state == 0) {
                                     this->auth_channel_flags = flags;
                                     this->auth_channel_chanid = mod_channel.chanid;
-                                    if (strncmp("target:", auth_channel_message, 7)){
-                                        LOG(LOG_ERR, "Invalid request (%s)", auth_channel_message);
-                                        this->send_auth_channel_data("Error: Invalid request");
+                                    if (auth_channel_message.find("GET JOB") != 0) {
+                                        LOG(LOG_ERR, "Auth message \"GET JOB\" is expected, got=\"%s\"", auth_channel_message.c_str());
+                                        this->send_auth_channel_data("ERROR\nTo:wablauncher\n\n");
                                     }
-                                    else if (this->program[0]) {
-    //                                    LOG(LOG_ERR, "WabLauncher send program (%s)", this->program);
-                                        this->send_auth_channel_data(this->program);
-                                    }
-                                    else if (this->acl) {
-                                        // Ask sesman for requested target
-                                        this->acl->set_auth_channel_target(auth_channel_message + 7);
+                                    else {
+                                        this->acl->set_auth_channel_target("wablauncher");
                                     }
                                 }
-                                else if (this->auth_channel_state == 1){
-                                    if (strncmp("result:", auth_channel_message, 7)){
-                                        LOG(LOG_ERR, "Invalid result (%s)", auth_channel_message);
-                                        auth_channel_message = "result:Session interrupted";
+                                else if (this->auth_channel_state == 1) {
+                                    if (auth_channel_message.find("SET JOB RESULT") != 0) {
+                                        LOG(LOG_ERR, "Auth message \"SET JOB RESULT\" is expected, got=\"%s\"", auth_channel_message.c_str());
+                                        this->send_auth_channel_data("ERROR\nTo:wablauncher\n\n");
                                     }
                                     this->auth_channel_state = 0;
                                     if (this->acl) {
-                                        this->acl->set_auth_channel_result(auth_channel_message + 7);
+                                        this->acl->set_auth_channel_result("OK");
                                     }
                                 }
                             }

@@ -96,6 +96,10 @@ class Sesman():
         self.shared[u'target_protocol'] = MAGICASK
         self.shared[u'keyboard_layout'] = MAGICASK
 
+        self.shared[u'auth_channel_answer'] = u''
+        self.shared[u'auth_channel_result'] = u''
+        self.shared[u'auth_channel_target'] = u''
+
     def set_language_from_keylayout(self):
         self.language = SESMANCONF.language
         french_layouts = [0x0000040C, # French (France)
@@ -212,7 +216,7 @@ class Sesman():
         return _status, _error
 
     def parse_username(self, wab_login, target_login, target_device, proto_dest):
-        
+
         level_0_items       = wab_login.split(u':')
         if len(level_0_items) > 1:
             if len(level_0_items) > 3:
@@ -239,7 +243,7 @@ class Sesman():
         self.send_data(data_to_send)
 
         # Wait for the user to click Ok in proxy
-        
+
         while self.shared.get(u'display_message') == MAGICASK:
             Logger().info(u'wait user grant or reject connection')
             _status, _error = self.receive_data()
@@ -395,23 +399,23 @@ class Sesman():
                                                                                 self.shared.get(u'target_login'),
                                                                                 self.shared.get(u'target_device'),
                                                                                 self.shared.get(u'proto_dest')
-                                                                                                )  
-        
+                                                                                                )
+
         if not _status:
             Logger().info(u"Invalid user %s, try again" % self.shared.get(u'login'))
             return None, TR(u"Invalid user, try again")
 
         _status, _error = None, TR(u"No error")
-        
+
         while _status is None:
-        
+
             if (target_device and target_device != MAGICASK
             and target_login  and target_login  != MAGICASK):
                 self._full_user_device_account = u"%s@%s:%s" % ( target_login
                                                                , target_device
                                                                , wab_login
                                                                )
-                data_to_send = { u'login'                   : wab_login 
+                data_to_send = { u'login'                   : wab_login
                                , u'target_login'            : target_login
                                , u'target_device'           : target_device
                                , u'proto_dest'              : proto_dest
@@ -459,8 +463,8 @@ class Sesman():
                             target_login = u""
                             target_device = u""
                             proto_dest = u""
-                            
-                            data_to_send = { u'login'                   : wab_login 
+
+                            data_to_send = { u'login'                   : wab_login
                                            , u'target_login'            : target_login
                                            , u'target_device'           : target_device
                                            , u'proto_dest'              : proto_dest
@@ -913,6 +917,8 @@ class Sesman():
                                     _reporting_target  = _reporting_data[:_reporting_data.index(':')]
                                     _reporting_message = _reporting_data[_reporting_data.index(':') + 1:]
 
+                                    self.shared[u'reporting'] = u''
+
                                     Logger().info(u"Reporting: reason=\"%s\" target=\"%s\" message=\"%s\"" % (_reporting_reason, _reporting_target, _reporting_message))
 
                                     self.process_report(_reporting_reason, _reporting_target, _reporting_message)
@@ -931,6 +937,27 @@ class Sesman():
                                         release_reason = u'Kill pattern detected'
                                         break
 
+                                if self.shared.get(u'auth_channel_target'):
+                                    Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
+
+                                    _message = (u"SET JOB\x01"
+                                                u"To:%s\x01"
+                                                u"\x01"
+                                                u"Job:simple_webform_filling\x01"
+                                                u"Application:C:\\Program Files\\Internet Explorer\\iexplore.exe\x01"
+                                                u"Directory:%%HOMEDRIVE%%%%HOMEPATH%%\x01"
+                                                u"WebsiteURL:10.10.47.32\x01"
+                                                u"WebformURL:https://10.10.47.32/accounts/login/\x01"
+                                                u"WebformName:login-form\x01"
+                                                u"Input:user_name:admin\x01"
+                                                u"Input:passwd:admin") % self.shared.get(u'auth_channel_target')
+
+                                    self.send_data({u'auth_channel_answer': _message})
+
+                                    Logger().info(u"Sending of auth channel answer ok")
+
+                                    self.shared[u'auth_channel_target'] = u''
+
                             else: # (if self.proxy_conx in r)
                                 Logger().error(u'break connection')
                                 release_reason = u'Break connection'
@@ -939,7 +966,10 @@ class Sesman():
                         Logger().debug(u"End Of Keep Alive")
 
                     except AuthentifierSocketClosed, e:
-                        Logger().info(u"RDP/VNC connection terminated by client")
+                        if DEBUG:
+                            import traceback
+                            Logger().info(u"RDP/VNC connection terminated by client")
+                            Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
                         release_reason = u"RDP/VNC connection terminated by client"
 
                     except Exception, e:

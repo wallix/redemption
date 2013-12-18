@@ -443,6 +443,106 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
+        'rec_w2k_administrateur@10.10.47.115:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD2,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                )
+            ],
+            target_groups = u'win1',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.115',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.115',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = True,
+                isRecorded = True
+            ),
+            service_login = u'administrateur@10.10.47.115:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
+        'rec_w2k3_administrateur@10.10.47.205:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD2,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                )
+            ],
+            target_groups = u'win1',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.205',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.205',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = True,
+                isRecorded = True
+            ),
+            service_login = u'administrateur@10.10.47.205:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
         'rec_w2k3_any@10.10.46.70:VNC': RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -599,6 +699,56 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
+        'rec_wxp_administrateur@10.10.47.175:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD2,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                )
+            ],
+            target_groups = u'win1',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.175',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.175',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = True,
+                isRecorded = True
+            ),
+            service_login = u'administrateur@10.10.47.175:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
         'w2k_administrateur@10.10.46.64:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -640,6 +790,106 @@ class Engine(object):
                 isRecorded = False
             ),
             service_login = u'administrateur@10.10.46.64:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
+        'w2k_administrateur@10.10.47.115:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD2,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                )
+            ],
+            target_groups = u'win1',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.115',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.115',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = False
+            ),
+            service_login = u'administrateur@10.10.47.115:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
+        'w2k3_administrateur@10.10.47.205:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD2,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                )
+            ],
+            target_groups = u'win1',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.205',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.205',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = False
+            ),
+            service_login = u'administrateur@10.10.47.205:RDP',
             subprotocols =
             [
                 SubprotocolInfo(
@@ -855,6 +1105,59 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
+        'w2k8_administrateur@10.10.47.228:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD1,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                ),
+                GroupTargetInfo(
+                    cn = u'win2'
+                )
+            ],
+            target_groups = u'win1;win2',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.228',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.228',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = False
+            ),
+            service_login = u'administrateur@10.10.47.228:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
+        ),
         'w2k8_qa\\administrateur@10.10.46.78:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -960,6 +1263,56 @@ class Engine(object):
                 )
             ],
             deconnection_time = u'2099-12-30 23:59:59'
+        ),
+        'wxp_administrateur@10.10.47.175:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'administrateur',
+                password = PASSWORD2,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                )
+            ],
+            target_groups = u'win1',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.47.175',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.47.175',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = False
+            ),
+            service_login = u'administrateur@10.10.47.175:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
         )
     }   # config_rights
 
@@ -981,6 +1334,24 @@ class Engine(object):
             resource = u'10.10.46.64',
             protocol = u'RDP',
             password = PASSWORD3
+        ),
+        TargetPasswordInfo(
+            account = u'administrateur',
+            resource = u'10.10.47.115',
+            protocol = u'RDP',
+            password = PASSWORD2
+        ),
+        TargetPasswordInfo(
+            account = u'administrateur',
+            resource = u'10.10.47.175',
+            protocol = u'RDP',
+            password = PASSWORD2
+        ),
+        TargetPasswordInfo(
+            account = u'administrateur',
+            resource = u'10.10.47.205',
+            protocol = u'RDP',
+            password = PASSWORD2
         ),
         TargetPasswordInfo(
             account = u'admin',
@@ -1005,6 +1376,12 @@ class Engine(object):
             resource = u'10.10.46.70',
             protocol = u'VNC',
             password = PASSWORD4
+        ),
+        TargetPasswordInfo(
+            account = u'administrateur',
+            resource = u'10.10.47.228',
+            protocol = u'RDP',
+            password = PASSWORD1
         ),
         TargetPasswordInfo(
             account = u'internal',
@@ -1091,9 +1468,12 @@ class Engine(object):
             'rights':
             [
                 'rec_w2k_administrateur@10.10.46.64:RDP',
+                'rec_w2k_administrateur@10.10.47.115:RDP',
+                'rec_w2k3_administrateur@10.10.47.205:RDP',
                 'rec_w2k3_any@10.10.46.70:VNC',
                 'rec_w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'rec_w2k8_qa\\administrateur@10.10.46.78:RDP',
+                'rec_wxp_administrateur@10.10.47.175:RDP'
             ]
         },
         'x':
@@ -1105,10 +1485,14 @@ class Engine(object):
             'rights':
             [
                 'w2k_administrateur@10.10.46.64:RDP',
+                'w2k_administrateur@10.10.47.115:RDP',
+                'w2k3_administrateur@10.10.47.205:RDP',
                 'w2k3_any@10.10.46.70:VNC',
                 'w2k3_qa\\administrateur@10.10.46.70:RDP',
+                'w2k8_administrateur@10.10.47.228:RDP',
                 'w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.88:RDP',
+                'wxp_administrateur@10.10.47.175:RDP'
             ]
         },
         'fr':
@@ -1255,17 +1639,26 @@ class Engine(object):
         self.rights = [ self.config_rights[r] for r in self.config_users[self.wab_login]['rights']]
         return self.rights
 
-    def get_effective_target(self, service_login):
-#        Logger().info("Effective_target %s" % service_login)
+    def get_effective_target(self, selected_target):
+        service_login = selected_target.service_login
+        Logger().info("Effective_target %s" % service_login)
         try:
-            res = [ self.config_effective_targets[r] for r in self.config_service_logins[service_login]['rights']]
+            if selected_target.resource.application:
+                res = [ self.config_effective_targets[r] for r in self.config_service_logins[service_login]['rights']]
+                Logger().info("Engine get_effective_target done (application)")
+                return effective_target
+            else:
+                Logger().info("Engine get_effective_target done (physical)")
+                return [selected_target]
+
         except Exception, e:
             import traceback
             Logger().info("%s" % traceback.format_exc(e))
 #        Logger().info("Effective_target ok %r" % res)
         return res
 
-    def get_app_params(self, service_login, effective_target):
+    def get_app_params(self, selected_target, effective_target):
+        service_login = selected_target.service_login
         res = None
 #        Logger().info("get_app_params %s" % service_login)
         try:

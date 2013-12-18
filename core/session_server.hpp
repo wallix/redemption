@@ -123,9 +123,6 @@ public:
 
                 int nodelay = 1;
                 if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
-                    wait_obj front_event(sck);
-                    //                SocketTransport front_trans("RDP Client", sck, ini.debug.front);
-
                     // Create session file
                     int child_pid = getpid();
                     char session_file[256];
@@ -150,7 +147,7 @@ public:
                         &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.context_set_value(AUTHID_REAL_TARGET_DEVICE, real_target_ip);
                     }
-                    Session session(front_event, sck, &ini);
+                    Session session(sck, &ini);
 
                     // Suppress session file
                     unlink(session_file);

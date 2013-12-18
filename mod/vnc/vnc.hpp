@@ -429,7 +429,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
             try
             {
                 this->t->connect();
-                this->event.obj = this->t->get_native_object();
+                this->event.st = (SocketTransport *)this->t;
             }
             catch (Error e)
             {
@@ -565,7 +565,9 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                             {
                                 LOG(LOG_ERR, "vnc password failed");
 
-                                this->event.obj = -1;
+                                if (this->event.st) {
+                                    this->event.st->sck = -1;
+                                }
                                 this->t->disconnect();
 
                                 this->state = ASK_PASSWORD;
