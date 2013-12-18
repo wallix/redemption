@@ -810,15 +810,14 @@ class Sesman():
 
             try_next = False
 
-            for physical_target in (self.engine.get_effective_target(selected_target.service_login)
-                                     if selected_target.resource.application else [selected_target]):
+            for physical_target in self.engine.get_effective_target(selected_target):
                 if not _status:
                     physical_target = None
                     break
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
                 if selected_target.resource.application:
-                    app_params = self.engine.get_app_params(selected_target.service_login, physical_target)
+                    app_params = self.engine.get_app_params(selected_target, physical_target)
                     if not app_params:
                         continue
 
@@ -1035,12 +1034,12 @@ class Sesman():
 
 
 # This little main permets to run the Sesman Server Alone for one connection
-if __name__ == u'__main__':
-    sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sck.bind(('', 3350))
-    sck.listen(100)
-    connection, address = sck.accept()
+#if __name__ == u'__main__':
+#    sck = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#    sck.bind(('', 3350))
+#    sck.listen(100)
+#    connection, address = sck.accept()
 
-    Sesman(connection, address)
+#    Sesman(connection, address)
 
 # EOF
