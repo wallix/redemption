@@ -778,6 +778,9 @@ public:
         case MULTIDSTBLT:
             assert(!(header.fields & ~0x7F));
             break;
+        case MULTIOPAQUERECT:
+            assert(!(header.fields & ~0x1FF));
+            break;
         case PATBLT:
             assert(!(header.fields & ~0xFFF));
             break;
