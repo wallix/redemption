@@ -51,18 +51,19 @@ struct FileToGraphic
     Rect screen_rect;
 
     // Internal state of orders
-    RDPOrderCommon common;
-    RDPDestBlt     destblt;
-    RDPMultiDstBlt multidstblt;
-    RDPPatBlt      patblt;
-    RDPScrBlt      scrblt;
-    RDPOpaqueRect  opaquerect;
-    RDPMemBlt      memblt;
-    RDPMem3Blt     mem3blt;
-    RDPLineTo      lineto;
-    RDPGlyphIndex  glyphindex;
-    RDPPolyline    polyline;
-    RDPEllipseSC   ellipseSC;
+    RDPOrderCommon     common;
+    RDPDestBlt         destblt;
+    RDPMultiDstBlt     multidstblt;
+    RDPMultiOpaqueRect multiopaquerect;
+    RDPPatBlt          patblt;
+    RDPScrBlt          scrblt;
+    RDPOpaqueRect      opaquerect;
+    RDPMemBlt          memblt;
+    RDPMem3Blt         mem3blt;
+    RDPLineTo          lineto;
+    RDPGlyphIndex      glyphindex;
+    RDPPolyline        polyline;
+    RDPEllipseSC       ellipseSC;
 
     BmpCache     * bmp_cache;
     PointerCache   ptr_cache;
@@ -102,6 +103,7 @@ struct FileToGraphic
     bool mem3blt_support;
     bool polyline_support;
     bool multidstblt_support;
+    bool multiopaquerect_support;
 
     uint16_t info_version;
     uint16_t info_width;
@@ -152,6 +154,7 @@ struct FileToGraphic
         , mem3blt_support(false)
         , polyline_support(false)
         , multidstblt_support(false)
+        , multiopaquerect_support(false)
         , info_version(0)
         , info_width(0)
         , info_height(0)
@@ -547,19 +550,20 @@ struct FileToGraphic
             case META_FILE:
             TODO("Cache meta_data (sizes, number of entries) should be put in META chunk");
             {
-                this->info_version        = this->stream.in_uint16_le();
-                this->mem3blt_support     = (this->info_version > 1);
-                this->polyline_support    = (this->info_version > 2);
-                this->multidstblt_support = (this->info_version > 3);
-                this->info_width          = this->stream.in_uint16_le();
-                this->info_height         = this->stream.in_uint16_le();
-                this->info_bpp            = this->stream.in_uint16_le();
-                this->info_small_entries  = this->stream.in_uint16_le();
-                this->info_small_size     = this->stream.in_uint16_le();
-                this->info_medium_entries = this->stream.in_uint16_le();
-                this->info_medium_size    = this->stream.in_uint16_le();
-                this->info_big_entries    = this->stream.in_uint16_le();
-                this->info_big_size       = this->stream.in_uint16_le();
+                this->info_version            = this->stream.in_uint16_le();
+                this->mem3blt_support         = (this->info_version > 1);
+                this->polyline_support        = (this->info_version > 2);
+                this->multidstblt_support     = (this->info_version > 3);
+                this->multiopaquerect_support = (this->info_version > 3);
+                this->info_width              = this->stream.in_uint16_le();
+                this->info_height             = this->stream.in_uint16_le();
+                this->info_bpp                = this->stream.in_uint16_le();
+                this->info_small_entries      = this->stream.in_uint16_le();
+                this->info_small_size         = this->stream.in_uint16_le();
+                this->info_medium_entries     = this->stream.in_uint16_le();
+                this->info_medium_size        = this->stream.in_uint16_le();
+                this->info_big_entries        = this->stream.in_uint16_le();
+                this->info_big_size           = this->stream.in_uint16_le();
 
                 this->stream.p = this->stream.end;
 
@@ -724,6 +728,24 @@ struct FileToGraphic
                         this->multidstblt.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
                         this->multidstblt.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
                         this->multidstblt.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
+                    }
+                }
+
+                // RDPMultiOpaqueRect multiopaquerect;
+                if (this->multiopaquerect_support) {
+                    this->multiopaquerect.nLeftRect         = this->stream.in_sint16_le();
+                    this->multiopaquerect.nTopRect          = this->stream.in_sint16_le();
+                    this->multiopaquerect.nWidth            = this->stream.in_sint16_le();
+                    this->multiopaquerect.nHeight           = this->stream.in_sint16_le();
+                    this->multiopaquerect.RedOrPaletteIndex = this->stream.in_uint8();
+                    this->multiopaquerect.Green             = this->stream.in_uint8();
+                    this->multiopaquerect.Blue              = this->stream.in_uint8();
+                    this->multiopaquerect.nDeltaEntries     = this->stream.in_uint8();
+                    for (uint8_t i = 0; i < this->multiopaquerect.nDeltaEntries; i++) {
+                        this->multiopaquerect.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();
+                        this->multiopaquerect.deltaEncodedRectangles[i].topDelta  = this->stream.in_sint16_le();
+                        this->multiopaquerect.deltaEncodedRectangles[i].width     = this->stream.in_sint16_le();
+                        this->multiopaquerect.deltaEncodedRectangles[i].height    = this->stream.in_sint16_le();
                     }
                 }
             break;

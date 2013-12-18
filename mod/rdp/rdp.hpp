@@ -174,6 +174,7 @@ struct mod_rdp : public mod_api {
     bool enable_ellipsesc;
     bool enable_ellipsecb;
     bool enable_multidstblt;
+    bool enable_multiopaquerect;
 
     mod_rdp( Transport * trans
            , const char * target_user
@@ -251,6 +252,7 @@ struct mod_rdp : public mod_api {
         , enable_ellipsesc(false)
         , enable_ellipsecb(false)
         , enable_multidstblt(false)
+        , enable_multiopaquerect(false)
     {
         if (this->verbose & 1)
         {
@@ -437,37 +439,43 @@ struct mod_rdp : public mod_api {
                 LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
             }
             switch (order_number) {
-            case 15:
+            case RDP::MULTIDSTBLT:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Extra orders=MultiDstBlt");
                 }
                 this->enable_multidstblt = true;
                 break;
-            case 20:
+            case RDP::MULTIOPAQUERECT:
+                if (verbose) {
+                    LOG(LOG_INFO, "RDP Extra orders=MultiOpaqueRect");
+                }
+                this->enable_multiopaquerect = true;
+                break;
+            case RDP::POLYGONSC:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Extra orders=PolygonSC");
                 }
                 this->enable_polygonsc = true;
                 break;
-            case 21:
+            case RDP::POLYGONCB:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Extra orders=PolygonCB");
                 }
                 this->enable_polygoncb = true;
                 break;
-            case 22:
+            case RDP::POLYLINE:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Extra orders=Polyline");
                 }
                 this->enable_polyline = true;
                 break;
-            case 25:
+            case RDP::ELLIPSESC:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Extra orders=EllipseSC");
                 }
                 this->enable_ellipsesc = true;
                 break;
-            case 26:
+            case RDP::ELLIPSECB:
                 if (verbose) {
                     LOG(LOG_INFO, "RDP Extra orders=EllipseCB");
                 }
@@ -2123,6 +2131,7 @@ struct mod_rdp : public mod_api {
         order_caps.orderFlags                                    = 0x2a;
         order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
         order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
         order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
@@ -4553,6 +4562,10 @@ public:
     }
 
     virtual void draw(const RDPMultiDstBlt & cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
         this->front.draw(cmd, clip);
     }
 

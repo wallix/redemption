@@ -65,6 +65,10 @@ struct TestDraw : DrawApi
         BOOST_CHECK(false);
     }
 
+    virtual void draw(const RDPMultiOpaqueRect &, const Rect &) {
+        BOOST_CHECK(false);
+    }
+
     virtual void draw(const RDPPatBlt&, const Rect&)
     {
         BOOST_CHECK(false);

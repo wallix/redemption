@@ -163,5 +163,4 @@ class RDPOpaqueRect {
 
 };
 
-
 #endif

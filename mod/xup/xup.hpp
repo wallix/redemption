@@ -349,6 +349,10 @@ enum {
         this->front.draw(cmd, clip);
     }
 
+    virtual void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
+        this->front.draw(cmd, clip);
+    }
+
     virtual void draw(const RDPPatBlt & cmd, const Rect &clip)
     {
         this->front.draw(cmd, clip);

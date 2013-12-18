@@ -214,21 +214,22 @@ namespace RDP {
     };
 
     enum {
-        DESTBLT     = 0,
-        PATBLT      = 1,
-        SCREENBLT   = 2,
-        LINE        = 9,
-        RECT        = 10,
-        DESKSAVE    = 11,
-        MEMBLT      = 13,
-        MEM3BLT     = 14,
-        MULTIDSTBLT = 15,
-        POLYGONSC   = 20,
-        POLYGONCB   = 21,
-        POLYLINE    = 22,
-        ELLIPSESC   = 25,
-        ELLIPSECB   = 26,
-        GLYPHINDEX  = 27,
+        DESTBLT         = 0,
+        PATBLT          = 1,
+        SCREENBLT       = 2,
+        LINE            = 9,
+        RECT            = 10,
+        DESKSAVE        = 11,
+        MEMBLT          = 13,
+        MEM3BLT         = 14,
+        MULTIDSTBLT     = 15,
+        MULTIOPAQUERECT = 18,
+        POLYGONSC       = 20,
+        POLYGONCB       = 21,
+        POLYLINE        = 22,
+        ELLIPSESC       = 25,
+        ELLIPSECB       = 26,
+        GLYPHINDEX      = 27,
     };
 
     enum SecondaryOrderType {
