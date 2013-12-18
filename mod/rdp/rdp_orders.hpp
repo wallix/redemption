@@ -281,6 +281,11 @@ public:
                     mod->draw(this->multidstblt, cmd_clip);
                     // this->multidstblt.log(LOG_INFO, cmd_clip);
                     break;
+                case MULTIOPAQUERECT:
+                    this->multiopaquerect.receive(stream, header);
+                    mod->draw(this->multiopaquerect, cmd_clip);
+                    this->multiopaquerect.log(LOG_INFO, cmd_clip);
+                    break;
                 case PATBLT:
                     this->patblt.receive(stream, header);
                     mod->draw(this->patblt, cmd_clip);
