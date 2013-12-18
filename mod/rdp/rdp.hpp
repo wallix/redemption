@@ -2140,8 +2140,8 @@ struct mod_rdp : public mod_api {
         order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
         order_caps.orderSupport[UnusedIndex3]                    = 1;
         order_caps.orderSupport[UnusedIndex5]                    = 1;
-        order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]          = (this->enable_polygonsc ? 1 : 0);
-        order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]          = (this->enable_polygoncb ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc ? 1 : 0);
+        order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb ? 1 : 0);
         order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc ? 1 : 0);
         order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb ? 1 : 0);
