@@ -91,9 +91,15 @@ private:
     TODO("ugly. The value should be pulled by authentifier when module is closed instead of being pushed to it by mod");
     void refused()
     {
-        this->ini.context_set_value(
-            (this->dialog_widget.cancel
-            ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE), "False");
+        if (this->dialog_widget.challenge) {
+            this->ini.context_set_value(AUTHID_PASSWORD,
+                                        this->dialog_widget.challenge->get_text());
+        }
+        else {
+            this->ini.context_set_value((this->dialog_widget.cancel
+                                         ? AUTHID_ACCEPT_MESSAGE : AUTHID_DISPLAY_MESSAGE),
+                                        "False");
+        }
         this->event.signal = BACK_EVENT_NEXT;
         this->event.set();
     }

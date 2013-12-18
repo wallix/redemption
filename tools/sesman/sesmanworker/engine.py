@@ -9,6 +9,11 @@ from logger import Logger
 
 from password import PASSWORD1, PASSWORD2, PASSWORD3, PASSWORD4, PASSWORD5, PASSWORD6, PASSWORD7, PASSWORD8
 
+class ChallengeInfo(object):
+    def __init__(self, message=None, promptEcho=None):
+        self.message = message
+        self.promptEcho = promptEcho
+
 class Engine(object):
     config_app_params = {
         'notepaduser@NOTEPAD':
@@ -1509,6 +1514,21 @@ class Engine(object):
                 'w2k8_qa\\administrateur@10.10.46.88:RDP'
             ]
         },
+        'challenge':
+        {
+            'is_x509_connected': False,
+            'x509_authenticate': False,
+            'password': 'challengepass',
+            'response': 'yes',
+            'preferredLanguage': u'en',
+            'rights':
+            [
+                'w2k_administrateur@10.10.46.64:RDP',
+                'w2k3_any@10.10.46.70:VNC',
+                'w2k8_qa\\administrateur@10.10.46.78:RDP',
+                'w2k8_qa\\administrateur@10.10.46.88:RDP'
+            ]
+        },
         'x509':
         {
             'is_x509_connected': True,
@@ -1572,7 +1592,10 @@ class Engine(object):
         res = False
         try:
             print ('::::: %s' % (self.config_users[wab_login]))
-            res = self.config_users[wab_login]['password'] == password
+            if wab_login == 'challenge':
+                res = self.challenge_manage(wab_login, password)
+            else:
+                res = self.config_users[wab_login]['password'] == password
             if res:
                 self.wab_login = wab_login
                 self.user.preferredLanguage = self.config_users[wab_login][u'preferredLanguage']
@@ -1582,6 +1605,21 @@ class Engine(object):
 
     def get_license_status(self):
         return True
+
+    def challenge_manage(self, wab_login, password):
+        res = False
+        if not self.challenge:
+            res = self.config_users[wab_login]['password'] == password
+            if res:
+                self.challenge = ChallengeInfo("""When Littlefoot's Mother died in the original<br>'Land Before Time', did you feel sad ?<br>(Bots: No lying)""",
+                                               False)
+                res = False
+        else:
+            res = self.config_users[wab_login]['response'] == password
+            self.challenge = None
+        return res
+
+
 
     def NotifyConnectionToCriticalEquipment(self, protocol, user, source,
             ip_source, login, device, ip, time, url):
