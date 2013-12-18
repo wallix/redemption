@@ -241,16 +241,22 @@ public:
     RDPMultiOpaqueRect(int16_t nLeftRect, int16_t nTopRect, int16_t nWidth, int16_t nHeight,
         uint8_t RedOrPaletteIndex, uint8_t Green, uint8_t Blue, uint8_t nDeltaEntries,
         Stream & deltaEncodedRectangles)
-    : nLeftRect(0)
-    , nTopRect(0)
-    , nWidth(0)
-    , nHeight(0)
-    , RedOrPaletteIndex(0)
-    , Green(0)
-    , Blue(0)
-    , nDeltaEntries(0)
+    : nLeftRect(nLeftRect)
+    , nTopRect(nTopRect)
+    , nWidth(nWidth)
+    , nHeight(nHeight)
+    , RedOrPaletteIndex(RedOrPaletteIndex)
+    , Green(Green)
+    , Blue(Blue)
+    , nDeltaEntries(nDeltaEntries)
     {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
+        for (int i = 0; i < this->nDeltaEntries; i++) {
+            this->deltaEncodedRectangles[i].leftDelta = deltaEncodedRectangles.in_sint16_le();
+            this->deltaEncodedRectangles[i].topDelta  = deltaEncodedRectangles.in_sint16_le();
+            this->deltaEncodedRectangles[i].width     = deltaEncodedRectangles.in_sint16_le();
+            this->deltaEncodedRectangles[i].height    = deltaEncodedRectangles.in_sint16_le();
+        }
     }
 
     bool operator==(const RDPMultiOpaqueRect & other) const {
