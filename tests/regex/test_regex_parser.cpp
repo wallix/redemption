@@ -62,7 +62,7 @@ inline std::string st_to_string(State * st)
     for (unsigned i = 0; i < states.size(); ++i) {
         states[i]->num = i;
     }
-    StatesValue stval(states);
+    StatesValue stval(states, 0);
     st_to_string(states, stval, st, os);
     return os.str();
 }
@@ -285,7 +285,11 @@ BOOST_AUTO_TEST_CASE(TestRegexState)
         BOOST_CHECK_EQUAL(st_to_string(&open1), rgx.to_string());
     }
     {
-        char_int seq[] = {multi_char("¥"),multi_char("Ë"),'a',multi_char("Þ"),0};
+        char_int seq[] = {
+            static_cast<char_int>(multi_char("¥")),
+            static_cast<char_int>(multi_char("Ë")),
+            'a',
+            static_cast<char_int>(multi_char("Þ")),0};
         State st(SEQUENCE);
         st.data.sequence.s = seq;
         Reg rgx("¥ËaÞ");

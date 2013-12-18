@@ -73,7 +73,7 @@ public:
             , pnc_bmp_cache(NULL)
             , pnc(NULL)
             , drawable(NULL)
-            , capture_event(wait_obj(0))
+            , capture_event(wait_obj(NULL))
             , png_path(png_path)
             , basename(basename) {
         if (this->capture_drawable) {

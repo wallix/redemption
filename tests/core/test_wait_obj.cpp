@@ -30,7 +30,7 @@
 
 BOOST_AUTO_TEST_CASE(Testwait_obj)
 {
-    wait_obj nonsocketobj(0);
+    wait_obj nonsocketobj(NULL);
     unsigned max = 0;
 
     // nonsocketobj never interact with system fd_set and max;
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(Testwait_obj)
     timeout.tv_sec = 2L;
     // adding two non socket waitobj to fd set
     // setting them with differents timers.
-    wait_obj nonsocketobj2(0);
+    wait_obj nonsocketobj2(NULL);
     nonsocketobj.set(1500000);
     nonsocketobj2.set(300000);
 

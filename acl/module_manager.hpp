@@ -611,7 +611,7 @@ public:
                                              , this->ini.context.opt_height.get()
                                              , this->ini.context.opt_bpp.get()
                                              );
-                    this->mod->event.obj = client_sck;
+                    this->mod->event.st = t;
                     this->ini.context.auth_error_message.empty();
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
                     this->connected = true;
@@ -700,7 +700,7 @@ public:
                         "",             // output (configuration) filename
                         this->ini.mod_rdp.extra_orders.c_str()
                     );
-                    this->mod->event.obj = client_sck;
+                    this->mod->event.st = t;
 
                     this->mod->rdp_input_invalidate(Rect(0, 0, this->front.client_info.width, this->front.client_info.height));
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
@@ -748,7 +748,7 @@ public:
                                             , this->ini.mod_vnc.encodings.c_str()
                                             , this->ini.mod_vnc.allow_authentification_retries
                                             , this->ini.debug.mod_vnc);
-                    this->mod->event.obj = client_sck;
+                    this->mod->event.st = t;
 
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC' suceeded\n");
                     this->ini.context.auth_error_message.empty();
