@@ -86,14 +86,14 @@ void check(const RDPOrderCommon & common,
            const RDPOrderType & expected_cmd,
            const char * message)
 {
-    char buffer[1024];
+    char buffer[2048];
     size_t idx = 0;
-    idx += snprintf(buffer + idx,   1024 - idx, "%s:\n", message);
-    idx += snprintf(buffer + idx,   1024 - idx, "Expected ");
-    idx += expected_cmd.str(buffer + idx, 1024 - idx, expected_common);
-    idx += snprintf(buffer + idx,   1024 - idx, "\nGot ");
-    idx += cmd.str(buffer + idx, 1024 - idx, common);
-    buffer[1023] = 0;
+    idx += snprintf(buffer + idx,   2048 - idx, "%s:\n", message);
+    idx += snprintf(buffer + idx,   2048 - idx, "Expected ");
+    idx += expected_cmd.str(buffer + idx, 2048 - idx, expected_common);
+    idx += snprintf(buffer + idx,   2048 - idx, "\nGot ");
+    idx += cmd.str(buffer + idx, 2048 - idx, common);
+    buffer[2047] = 0;
 
     BOOST_CHECK_MESSAGE((expected_common == common) && (expected_cmd == cmd), buffer);
 }
@@ -104,12 +104,12 @@ void check(const RDPOrderType & cmd, const RDPOrderType & expected_cmd,
 {
     char buffer[2048];
     size_t idx = 0;
-    idx += snprintf(buffer + idx,   1024 - idx, "%s:\n", message);
-    idx += snprintf(buffer + idx,   1024 - idx, "Expected ");
-    idx += expected_cmd.str(buffer + idx, 1024 - idx);
-    idx += snprintf(buffer + idx,   1024 - idx, "\nGot ");
-    idx += cmd.str(buffer + idx, 1024 - idx);
-    buffer[1023] = 0;
+    idx += snprintf(buffer + idx,   2048 - idx, "%s:\n", message);
+    idx += snprintf(buffer + idx,   2048 - idx, "Expected ");
+    idx += expected_cmd.str(buffer + idx, 2048 - idx);
+    idx += snprintf(buffer + idx,   2048 - idx, "\nGot ");
+    idx += cmd.str(buffer + idx, 2048 - idx);
+    buffer[2047] = 0;
 
     BOOST_CHECK_MESSAGE(expected_cmd == cmd, buffer);
 }
