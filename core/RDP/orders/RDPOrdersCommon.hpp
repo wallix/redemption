@@ -640,11 +640,14 @@ private:
             case LINE:
             case POLYGONCB:
             case ELLIPSECB:
+            case MULTIOPAQUERECT:
                 size = 2;
                 break;
             case RECT:
             case SCREENBLT:
             case DESTBLT:
+            case MULTIDSTBLT:
+            case POLYLINE:
             default:
                 size = 1;
         }
@@ -745,6 +748,7 @@ public:
         case LINE:
         case ELLIPSECB:
         case POLYGONCB:
+        case MULTIOPAQUERECT:
             size = 2;
             break;
         case RECT:
@@ -753,6 +757,7 @@ public:
         case POLYGONSC:
         case POLYLINE:
         case ELLIPSESC:
+        case MULTIDSTBLT:
         default:
             size = 1;
         }
