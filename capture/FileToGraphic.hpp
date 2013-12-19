@@ -354,6 +354,15 @@ struct FileToGraphic
                         this->consumers[i]->draw(this->multidstblt, clip);
                     }
                     break;
+                case RDP::MULTIOPAQUERECT:
+                    this->multiopaquerect.receive(this->stream, header);
+                    if (this->verbose > 32){
+                        this->multiopaquerect.log(LOG_INFO, clip);
+                    }
+                    for (size_t i = 0; i < this->nbconsumers ; i++) {
+                        this->consumers[i]->draw(this->multiopaquerect, clip);
+                    }
+                    break;
                 case RDP::PATBLT:
                     this->patblt.receive(this->stream, header);
                     if (this->verbose > 32){
