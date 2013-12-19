@@ -3921,10 +3921,20 @@ public:
     void draw(const RDPMultiOpaqueRect & cmd, const Rect & clip) {
         if (!clip.isempty() &&
             !clip.intersect(Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight)).isempty()) {
-            this->orders->draw(cmd, clip);
+            this->send_global_palette();
+
+            RDPMultiOpaqueRect new_cmd = cmd;
+            if (this->client_info.bpp != this->mod_bpp) {
+                const BGRColor color24 = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette);
+                new_cmd._Color = color_encode(color24, this->client_info.bpp);
+            }
+            this->orders->draw(new_cmd, clip);
+
             if (  this->capture
                && (this->capture_state == CAPTURE_STATE_STARTED)) {
-                this->capture->draw(cmd, clip);
+                RDPMultiOpaqueRect new_cmd24 = cmd;
+                new_cmd24._Color = color_decode_opaquerect(cmd._Color, this->mod_bpp, this->mod_palette);
+                this->capture->draw(new_cmd24, clip);
             }
         }
     }

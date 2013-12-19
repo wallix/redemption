@@ -147,8 +147,8 @@ public:
             cmd_rect.cx =  cmd.deltaEncodedRectangles[i].width;
             cmd_rect.cy =  cmd.deltaEncodedRectangles[i].height;
             const Rect trect = clip_drawable_cmd_intersect.intersect(cmd_rect);
-            this->drawable.opaquerect(trect,
-                cmd.RedOrPaletteIndex | (cmd.Green << 8) | (cmd.Blue << 16));
+            const uint32_t color = this->RGBtoBGR(cmd._Color);
+            this->drawable.opaquerect(trect, color);
         }
     }
 

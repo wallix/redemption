@@ -205,14 +205,12 @@
 
 class RDPMultiOpaqueRect {
 public:
-    int16_t nLeftRect;
-    int16_t nTopRect;
-    int16_t nWidth;
-    int16_t nHeight;
-    uint8_t RedOrPaletteIndex;
-    uint8_t Green;
-    uint8_t Blue;
-    uint8_t nDeltaEntries;
+    int16_t  nLeftRect;
+    int16_t  nTopRect;
+    int16_t  nWidth;
+    int16_t  nHeight;
+    uint32_t _Color;
+    uint8_t  nDeltaEntries;
 
     struct DeltaEncodedRectangle {
         int16_t leftDelta;
@@ -230,24 +228,20 @@ public:
     , nTopRect(0)
     , nWidth(0)
     , nHeight(0)
-    , RedOrPaletteIndex(0)
-    , Green(0)
-    , Blue(0)
+    , _Color(0)
     , nDeltaEntries(0)
     {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
     }
 
     RDPMultiOpaqueRect(int16_t nLeftRect, int16_t nTopRect, int16_t nWidth, int16_t nHeight,
-        uint8_t RedOrPaletteIndex, uint8_t Green, uint8_t Blue, uint8_t nDeltaEntries,
+        uint32_t _Color, uint8_t nDeltaEntries,
         Stream & deltaEncodedRectangles)
     : nLeftRect(nLeftRect)
     , nTopRect(nTopRect)
     , nWidth(nWidth)
     , nHeight(nHeight)
-    , RedOrPaletteIndex(RedOrPaletteIndex)
-    , Green(Green)
-    , Blue(Blue)
+    , _Color(_Color)
     , nDeltaEntries(nDeltaEntries)
     {
         ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
@@ -260,14 +254,12 @@ public:
     }
 
     bool operator==(const RDPMultiOpaqueRect & other) const {
-        return  (this->nLeftRect         == other.nLeftRect)
-             && (this->nTopRect          == other.nTopRect)
-             && (this->nWidth            == other.nWidth)
-             && (this->nHeight           == other.nHeight)
-             && (this->RedOrPaletteIndex == other.RedOrPaletteIndex)
-             && (this->Green             == other.Green)
-             && (this->Blue              == other.Blue)
-             && (this->nDeltaEntries     == other.nDeltaEntries)
+        return  (this->nLeftRect     == other.nLeftRect)
+             && (this->nTopRect      == other.nTopRect)
+             && (this->nWidth        == other.nWidth)
+             && (this->nHeight       == other.nHeight)
+             && (this->_Color        == other._Color)
+             && (this->nDeltaEntries == other.nDeltaEntries)
              && !memcmp(this->deltaEncodedRectangles, other.deltaEncodedRectangles, sizeof(DeltaEncodedRectangle) * this->nDeltaEntries)
              ;
     }
@@ -300,14 +292,14 @@ public:
             is_1_byte(this->nWidth - oldcmd.nWidth) && is_1_byte(this->nHeight - oldcmd.nHeight)) * RDP::DELTA;
 
         header.fields =
-                (this->nLeftRect         != oldcmd.nLeftRect        ) * 0x0001
-              | (this->nTopRect          != oldcmd.nTopRect         ) * 0x0002
-              | (this->nWidth            != oldcmd.nWidth           ) * 0x0004
-              | (this->nHeight           != oldcmd.nHeight          ) * 0x0008
-              | (this->RedOrPaletteIndex != oldcmd.RedOrPaletteIndex) * 0x0010
-              | (this->Green             != oldcmd.Green            ) * 0x0020
-              | (this->Blue              != oldcmd.Blue             ) * 0x0040
-              | (this->nDeltaEntries     != oldcmd.nDeltaEntries    ) * 0x0080
+                (this->nLeftRect           != oldcmd.nLeftRect          ) * 0x0001
+              | (this->nTopRect            != oldcmd.nTopRect           ) * 0x0002
+              | (this->nWidth              != oldcmd.nWidth             ) * 0x0004
+              | (this->nHeight             != oldcmd.nHeight            ) * 0x0008
+              | ((this->_Color & 0x0000FF) != (oldcmd._Color & 0x0000FF)) * 0x0010
+              | ((this->_Color & 0x00FF00) != (oldcmd._Color & 0x00FF00)) * 0x0020
+              | ((this->_Color & 0xFF0000) != (oldcmd._Color & 0xFF0000)) * 0x0040
+              | (this->nDeltaEntries       != oldcmd.nDeltaEntries      ) * 0x0080
               | (
                  (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
                  memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
@@ -322,9 +314,9 @@ public:
         header.emit_coord(stream, 0x0004, this->nWidth,    oldcmd.nWidth);
         header.emit_coord(stream, 0x0008, this->nHeight,   oldcmd.nHeight);
 
-        if (header.fields & 0x0010) { stream.out_uint8(this->RedOrPaletteIndex); }
-        if (header.fields & 0x0020) { stream.out_uint8(this->Green); }
-        if (header.fields & 0x0040) { stream.out_uint8(this->Blue); }
+        if (header.fields & 0x0010) { stream.out_uint8(this->_Color); }
+        if (header.fields & 0x0020) { stream.out_uint8(this->_Color >> 8); }
+        if (header.fields & 0x0040) { stream.out_uint8(this->_Color >> 16); }
 
         if (header.fields & 0x0080) { stream.out_uint8(this->nDeltaEntries); }
 
@@ -385,17 +377,23 @@ public:
         header.receive_coord(stream, 0x0004, this->nWidth);
         header.receive_coord(stream, 0x0008, this->nHeight);
 
+        uint8_t r = this->_Color;
+        uint8_t g = this->_Color >> 8;
+        uint8_t b = this->_Color >> 16;
+
         if (header.fields & 0x0010) {
-            this->RedOrPaletteIndex = stream.in_uint8();
+            r = stream.in_uint8();
         }
 
         if (header.fields & 0x0020) {
-            this->Green = stream.in_uint8();
+            g = stream.in_uint8();
         }
 
         if (header.fields & 0x0040) {
-            this->Blue = stream.in_uint8();
+            b = stream.in_uint8();
         }
+
+        this->_Color = (r | (g << 8) | (b << 16));
 
         if (header.fields & 0x0080) {
             this->nDeltaEntries = stream.in_uint8();
@@ -447,9 +445,12 @@ public:
         size_t lg = 0;
         lg += common.str(buffer + lg, sz - lg, true);
         lg += snprintf(buffer + lg, sz - lg,
-            "MultiDstBlt(nLeftRect=%d nTopRect=%d nWidth=%d nHeight=%d RedOrPaletteIndex=0x%02X Green=0x%02X Blue=0x%02X "
+            "MultiOpaqueRect(nLeftRect=%d nTopRect=%d nWidth=%d nHeight=%d RedOrPaletteIndex=0x%02X Green=0x%02X Blue=0x%02X "
                 "nDeltaEntries=%d CodedDeltaList=(",
-            this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight, this->RedOrPaletteIndex, this->Green, this->Blue,
+            this->nLeftRect, this->nTopRect, this->nWidth, this->nHeight,
+            this->_Color & 0x0000FF,
+            ((this->_Color & 0x00FF00) >> 8),
+            ((this->_Color & 0xFF0000) >> 16),
             this->nDeltaEntries);
         for (uint8_t i = 0; i < this->nDeltaEntries; i++) {
             if (i) {

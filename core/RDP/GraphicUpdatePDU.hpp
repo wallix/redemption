@@ -340,15 +340,15 @@ protected:
                 }
 
                 this->stream_orders.mark_end();
-                LOG(LOG_INFO, "SubStream Upd_s size=%u", this->stream_orders.size());
+                //LOG(LOG_INFO, "SubStream Upd_s size=%u", this->stream_orders.size());
 
                 size_t header_size = FastPath::Update_Send::GetSize(this->compression);
-                LOG(LOG_INFO, "SubStream Upd_s ??? size=%u", this->stream_orders.size());
+                //LOG(LOG_INFO, "SubStream Upd_s ??? size=%u", this->stream_orders.size());
 
                 if (!this->compression) {
-                    LOG(LOG_INFO, "SubStream Upd_s !!! size=%u", this->stream_orders.size());
+                    //LOG(LOG_INFO, "SubStream Upd_s !!! size=%u", this->stream_orders.size());
                     SubStream Upd_s(this->stream_orders, 0, header_size);
-                    LOG(LOG_INFO, "SubStream Upd_s size=%u", Upd_s.size());
+                    //LOG(LOG_INFO, "SubStream Upd_s size=%u", Upd_s.size());
 
                     FastPath::Update_Send Upd( Upd_s
                                              , this->stream_orders.size() - header_size
