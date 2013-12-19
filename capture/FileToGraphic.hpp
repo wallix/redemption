@@ -746,9 +746,12 @@ struct FileToGraphic
                     this->multiopaquerect.nTopRect          = this->stream.in_sint16_le();
                     this->multiopaquerect.nWidth            = this->stream.in_sint16_le();
                     this->multiopaquerect.nHeight           = this->stream.in_sint16_le();
-                    this->multiopaquerect.RedOrPaletteIndex = this->stream.in_uint8();
-                    this->multiopaquerect.Green             = this->stream.in_uint8();
-                    this->multiopaquerect.Blue              = this->stream.in_uint8();
+                    {
+                        uint8_t red                         = this->stream.in_uint8();
+                        uint8_t green                       = this->stream.in_uint8();
+                        uint8_t blue                        = this->stream.in_uint8();
+                        this->multiopaquerect._Color        = red | green << 8 | blue << 16;
+                    }
                     this->multiopaquerect.nDeltaEntries     = this->stream.in_uint8();
                     for (uint8_t i = 0; i < this->multiopaquerect.nDeltaEntries; i++) {
                         this->multiopaquerect.deltaEncodedRectangles[i].leftDelta = this->stream.in_sint16_le();

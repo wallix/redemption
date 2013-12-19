@@ -397,9 +397,9 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_sint16_le(this->multiopaquerect.nTopRect);
         payload.out_sint16_le(this->multiopaquerect.nWidth);
         payload.out_sint16_le(this->multiopaquerect.nHeight);
-        payload.out_uint8(this->multiopaquerect.RedOrPaletteIndex);
-        payload.out_uint8(this->multiopaquerect.Green);
-        payload.out_uint8(this->multiopaquerect.Blue);
+        payload.out_uint8(this->multiopaquerect._Color);
+        payload.out_uint8(this->multiopaquerect._Color >> 8);
+        payload.out_uint8(this->multiopaquerect._Color >> 16);
         payload.out_uint8(this->multiopaquerect.nDeltaEntries);
         for (uint8_t i = 0; i < this->multiopaquerect.nDeltaEntries; i++) {
             payload.out_sint16_le(this->multiopaquerect.deltaEncodedRectangles[i].leftDelta);
