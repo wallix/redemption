@@ -3,6 +3,7 @@
 from sesmanconf import TR
 
 from wabengine.common.exception import AuthenticationFailed
+from wabengine.common.exception import AuthenticationChallenged
 from logger import Logger
 
 from model import RightInfo, UserInfo
@@ -77,7 +78,7 @@ class Engine(object):
             if self.wabengine is not None:
                 self.user = self.wabengine.who_am_i()
                 return True
-        except engine.AuthenticationChallenged, e:
+        except AuthenticationChallenged, e:
             self.challenge = e.challenge
         except AuthenticationFailed, e:
             self.challenge = None
