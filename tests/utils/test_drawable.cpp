@@ -249,7 +249,7 @@ BOOST_AUTO_TEST_CASE(TestMultiOpaqueRect)
     deltaRectangles.mark_end();
     deltaRectangles.rewind();
 
-    gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, 0x00, 0x00, 0x00, 20, deltaRectangles), screen_rect);
+    gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, 0x000000, 20, deltaRectangles), screen_rect);
 
     char message[1024];
     if (!check_sig(gd.drawable, message,
