@@ -923,13 +923,17 @@ unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.c
 unit-test test_flat_wab_close_mod : tests/mod/internal/test_flat_wab_close_mod.cpp png z openssl crypto libboost_unit_test gcov : <variant>coverage ;
 
 
+
+
+# NLA TESTS
+
 unit-test test_ber : tests/core/RDP/nla/asn1/test_ber.cpp libboost_unit_test openssl crypto ;
 unit-test test_ber : tests/core/RDP/nla/asn1/test_ber.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
 unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test openssl crypto ;
 unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
-alias test_ntlm : test_ntlm_negotiate test_ntlm_avpair test_ntlm_challenge ;
+alias test_ntlm_suite : test_ntlm_negotiate test_ntlm_avpair test_ntlm_challenge test_ntlm_authenticate test_ntlm ;
 
 unit-test test_ntlm_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp libboost_unit_test openssl crypto ;
 unit-test test_ntlm_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
@@ -939,3 +943,9 @@ unit-test test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp libboo
 
 unit-test test_ntlm_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp libboost_unit_test openssl crypto ;
 unit-test test_ntlm_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+
+unit-test test_ntlm_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp libboost_unit_test openssl crypto ;
+unit-test test_ntlm_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+
+unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp libboost_unit_test openssl crypto dl z ;
+unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp libboost_unit_test openssl crypto dl z gcov : <variant>coverage ;

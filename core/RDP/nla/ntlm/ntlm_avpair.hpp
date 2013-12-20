@@ -262,6 +262,7 @@ struct NtlmAvPairList {
 	fprintf(stderr, "}\n");
     }
 
+
 };
 
 
