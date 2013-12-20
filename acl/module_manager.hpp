@@ -514,6 +514,7 @@ public:
                         challenge = CHALLENGE_ECHO;
                     }
                     this->ini.context_ask(AUTHID_AUTHENTICATION_CHALLENGE);
+                    this->ini.context_ask(AUTHID_PASSWORD);
                     this->mod = new FlatDialogMod(
                                                   this->ini,
                                                   this->front,

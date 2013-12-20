@@ -344,6 +344,8 @@ class Sesman():
                         wab_login,
                         self.shared.get(u'ip_client'),
                         self.shared.get(u'password'))):
+                    if self.shared.get(u'password') == MAGICASK:
+                        self.engine.challenge = None
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
             try:
@@ -687,19 +689,19 @@ class Sesman():
             ##################
             _status, _error = self.authentify()
 
+            if _status is None and self.engine.challenge:
+                # submit challenge:
+                data_to_send = { u'authentication_challenge' : self.engine.challenge.promptEcho,
+                                 u'message' : cut_message(self.engine.challenge.message)
+                                 }
+                self.send_data(data_to_send)
+                continue
+
             if _status is None:
-                if not self.engine.challenge:
-                    self.engine.NotifyPrimaryConnectionFailed(self.shared.get(u'login'), self.shared.get(u'ip_client'))
+                self.engine.NotifyPrimaryConnectionFailed(self.shared.get(u'login'),
+                                                          self.shared.get(u'ip_client'))
             tries = tries - 1
             if _status is None and tries > 0:
-                if self.engine.challenge:
-                    # submit challenge:
-                    tries = tries + 1
-                    data_to_send = { u'authentication_challenge' : self.engine.challenge.promptEcho,
-                                     u'message' : cut_message(self.engine.challenge.message),
-                                     u'password' : MAGICASK }
-                    self.send_data(data_to_send)
-                    continue
                 Logger().info(
                     u"Wab user '%s' authentication from %s failed [%u tries remains]"  %
                     (mundane(self.shared.get(u'login')) , mundane(self.shared.get(u'ip_client')), tries)
