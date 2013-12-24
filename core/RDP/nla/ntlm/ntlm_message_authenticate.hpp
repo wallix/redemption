@@ -386,7 +386,7 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
             min_offset = this->EncryptedRandomSessionKey.bufferOffset;
 
-        if (min_offset > (stream.p - pBegin)) {
+        if (min_offset + pBegin > stream.p) {
             this->has_mic = true;
             stream.in_copy_bytes(this->MIC, 16);
         }
