@@ -45,52 +45,20 @@ struct SecPkgInfo {
     uint16_t wVersion;
     uint16_t wRPCID;
     uint32_t cbMaxToken;
-    char* Name;
-    char* Comment;
+    const char* Name;
+    const char* Comment;
 };
 const char Ntlm_Name[] = "NTLM";
 const char Ntlm_Comment[] = "NTLM Security Package";
 const SecPkgInfo NTLM_SecPkgInfo = {
-    0x00082B37,             /* fCapabilities */
-    1,                      /* wVersion */
-    0x000A,                 /* wRPCID */
-    0x00000B48,             /* cbMaxToken */
-    (char*)Ntlm_Name,       /* Name */
-    (char*)Ntlm_Comment     /* Comment */
+    0x00082B37,             // fCapabilities
+    1,                      // wVersion
+    0x000A,                 // wRPCID
+    0x00000B48,             // cbMaxToken
+    Ntlm_Name,              // Name
+    Ntlm_Comment            // Comment
 };
 
-struct SecPkgContext_AccessToken {
-    void* AccessToken;
-};
-struct SecPkgContext_Authority
-{
-    char* sAuthorityName;
-};
-struct SecPkgContext_ClientSpecifiedTarget
-{
-    char* sTargetName;
-};
-
-struct SecPkgContext_ConnectionInfo
-{
-    uint32_t dwProtocol;
-    uint32_t aiCipher;
-    uint32_t dwCipherStrength;
-    uint32_t aiHash;
-    uint32_t dwHashStrength;
-    uint32_t aiExch;
-    uint32_t dwExchStrength;
-};
-struct SecPkgContext_ClientCreds
-{
-    uint32_t AuthBufferLen;
-    uint8_t* AuthBuffer;
-};
-struct SecPkgContex_DceInfo
-{
-    uint32_t AuthzSvc;
-    void* pPac;
-};
 struct SEC_CHANNEL_BINDINGS
 {
     uint32_t dwInitiatorAddrType;
@@ -107,63 +75,6 @@ struct SecPkgContext_Bindings
 	uint32_t BindingsLength;
 	SEC_CHANNEL_BINDINGS* Bindings;
 };
-struct SecPkgContext_EapKeyBlock
-{
-    uint8_t rgbKeys[128];
-    uint8_t rgbIVs[64];
-};
-struct SecPkgContext_Flags
-{
-    uint32_t Flags;
-};
-struct SecPkgContext_KeyInfo
-{
-    char*    sSignatureAlgorithmName;
-    char*    sEncryptAlgorithmName;
-    uint32_t KeySize;
-    uint32_t SignatureAlgorithm;
-    uint32_t EncryptAlgorithm;
-};
-struct SecPkgContext_Lifespan
-{
-    TimeStamp tsStart;
-    TimeStamp tsExpiry;
-};
-struct SecPkgContext_Names
-{
-    char* sUserName;
-};
-struct SecPkgContext_NativeNames
-{
-    char* sClientName;
-    char* sServerName;
-};
-
-struct SecPkgContext_NegotiationInfo
-{
-    SecPkgInfo* PackageInfo;
-    uint32_t NegotiationState;
-};
-
-struct SecPkgContext_PackageInfo
-{
-    SecPkgInfo* PackageInfo;
-};
-struct SecPkgContext_PasswordExpiry
-{
-    TimeStamp tsPasswordExpires;
-};
-struct SecPkgContext_SessionKey
-{
-    uint32_t SessionKeyLength;
-    uint8_t* SessionKey;
-};
-struct SecPkgContext_SessionInfo
-{
-    uint32_t dwFlags;
-    uint32_t cbSessionId;
-    uint8_t  rgbSessionId[32];
-};
 
 struct SecPkgContext_Sizes
 {
@@ -172,33 +83,7 @@ struct SecPkgContext_Sizes
     uint32_t cbBlockSize;
     uint32_t cbSecurityTrailer;
 };
-struct SecPkgContext_StreamSizes
-{
-    uint32_t cbHeader;
-    uint32_t cbTrailer;
-    uint32_t cbMaximumMessage;
-    uint32_t cBuffers;
-    uint32_t cbBlockSize;
-};
-struct SecPkgContext_SubjectAttributes
-{
-    void* AttributeInfo;
-};
-struct SecPkgContext_SupportedSignatures
-{
-    uint16_t  cSignatureAndHashAlgorithms;
-    uint16_t* pSignatureAndHashAlgorithms;
-};
-struct SecPkgContext_TargetInformation
-{
-    uint32_t MarshalledTargetInfoLength;
-    uint8_t* MarshalledTargetInfo;
-};
 
-struct SecPkgCredentials_Names
-{
-    char* sUserName;
-};
 
 struct _SEC_WINNT_AUTH_IDENTITY
 {
@@ -225,11 +110,10 @@ typedef PSecHandle PCtxtHandle;
 
 
 
-const SecPkgInfo* SecPkgInfo_LIST[] =
-{
-	// &NTLM_SecPkgInfoA,
-	// &CREDSSP_SecPkgInfoA,
-	// &SCHANNEL_SecPkgInfoA
+const SecPkgInfo* SecPkgInfo_LIST[] = {
+    // &NTLM_SecPkgInfoA,
+    // &CREDSSP_SecPkgInfoA,
+    // &SCHANNEL_SecPkgInfoA
 };
 
 enum SEC_STATUS {
@@ -319,6 +203,10 @@ enum SEC_STATUS {
     SEC_I_SIGNATURE_NEEDED = 0x0009035C,
     SEC_I_NO_RENEGOTIATION = 0x00090360,
 };
+
+typedef void (*SEC_GET_KEY_FN)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
+typedef void* HANDLE, *PHANDLE, *LPHANDLE;
+
 struct SecurityFunctionTable {
 
     virtual ~SecurityFunctionTable() {}
@@ -341,13 +229,13 @@ struct SecurityFunctionTable {
     }
 
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    // virtual SEC_STATUS AcquireCredentialsHandle(LPSTR pszPrincipal, LPSTR pszPackage,
-    //                                     unsigned long fCredentialUse, void* pvLogonID,
-    //                                     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-    //                                     void* pvGetKeyArgument, SecHandle * phCredential,
-    //                                     TimeStamp * ptsExpiry) {
-    //      return SEC_E_OK;
-    // }
+    virtual SEC_STATUS AcquireCredentialsHandle(char * pszPrincipal, char * pszPackage,
+                                                unsigned long fCredentialUse, void* pvLogonID,
+                                                void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+                                                void* pvGetKeyArgument, SecHandle * phCredential,
+                                                TimeStamp * ptsExpiry) {
+         return SEC_E_OK;
+    }
 
     // FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
     virtual SEC_STATUS FreeCredentialsHandle(SecHandle * phCredential) {
@@ -437,31 +325,31 @@ struct SecurityFunctionTable {
     // void* Reserved4;
 
     // EXPORT_SECURITY_CONTEXT ExportSecurityContext;
-    // virtual SEC_STATUS ExportSecurityContext(SecHandle * phContext, unsigned long fFlags,
-    //                                  SecBuffer * pPackedContext, HANDLE* pToken) {
-    //     return SEC_E_OK;
-    // }
+    virtual SEC_STATUS ExportSecurityContext(SecHandle * phContext, unsigned long fFlags,
+                                             SecBuffer * pPackedContext, HANDLE* pToken) {
+        return SEC_E_OK;
+    }
 
     // IMPORT_SECURITY_CONTEXT ImportSecurityContext;
-    // virtual SEC_STATUS ImportSecurityContext(char* pszPackage, SecBuffer * pPackedContext,
-    //                                  HANDLE pToken, SecHandle * phContext) {
-    //     return SEC_E_OK;
-    // }
+    virtual SEC_STATUS ImportSecurityContext(char* pszPackage, SecBuffer * pPackedContext,
+                                             HANDLE pToken, SecHandle * phContext) {
+        return SEC_E_OK;
+    }
 
     // ADD_CREDENTIALS AddCredentials;
-    // virtual SEC_STATUS AddCredentials(SecHandle * hCredentials, char* pszPrincipal,
-    //                                  char* pszPackage, uint32_t fCredentialUse,
-    //                                  void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-    //                                  void* pvGetKeyArgument, TimeStamp * ptsExpiry) {
-    //     return SEC_E_OK;
-    // }
+    virtual SEC_STATUS AddCredentials(SecHandle * hCredentials, char* pszPrincipal,
+                                     char* pszPackage, uint32_t fCredentialUse,
+                                     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
+                                     void* pvGetKeyArgument, TimeStamp * ptsExpiry) {
+        return SEC_E_OK;
+    }
 
     // void* Reserved8;
 
     // QUERY_SECURITY_CONTEXT_TOKEN QuerySecurityContextToken;
-    // virtual SEC_STATUS QuerySecurityContextToken(SecHandle * phContext, HANDLE* phToken) {
-    //     return SEC_E_OK;
-    // }
+    virtual SEC_STATUS QuerySecurityContextToken(SecHandle * phContext, HANDLE* phToken) {
+        return SEC_E_OK;
+    }
 
     // ENCRYPT_MESSAGE EncryptMessage;
     virtual SEC_STATUS EncryptMessage(SecHandle * phContext, unsigned long fQOP,
