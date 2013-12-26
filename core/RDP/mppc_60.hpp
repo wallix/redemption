@@ -47,6 +47,47 @@ static uint8_t HuffLenLEC[] = {
     0x8, 0x5, 0x6, 0x7, 0x7
 };
 
+static uint16_t HuffCodeLEC[] =
+{
+    0x0004, 0x0024, 0x0014, 0x0011, 0x0051, 0x0031, 0x0071, 0x0009,
+    0x0049, 0x0029, 0x0069, 0x0015, 0x0095, 0x0055, 0x00d5, 0x0035,
+    0x00b5, 0x0075, 0x001d, 0x00f5, 0x011d, 0x009d, 0x019d, 0x005d,
+    0x000d, 0x008d, 0x015d, 0x00dd, 0x01dd, 0x003d, 0x013d, 0x00bd,
+    0x004d, 0x01bd, 0x007d, 0x006b, 0x017d, 0x00fd, 0x01fd, 0x0003,
+    0x0103, 0x0083, 0x0183, 0x026b, 0x0043, 0x016b, 0x036b, 0x00eb,
+    0x0143, 0x00c3, 0x02eb, 0x01c3, 0x01eb, 0x0023, 0x03eb, 0x0123,
+    0x00a3, 0x01a3, 0x001b, 0x021b, 0x0063, 0x011b, 0x0163, 0x00e3,
+    0x00cd, 0x01e3, 0x0013, 0x0113, 0x0093, 0x031b, 0x009b, 0x029b,
+    0x0193, 0x0053, 0x019b, 0x039b, 0x005b, 0x025b, 0x015b, 0x035b,
+    0x0153, 0x00d3, 0x00db, 0x02db, 0x01db, 0x03db, 0x003b, 0x023b,
+    0x013b, 0x01d3, 0x033b, 0x00bb, 0x02bb, 0x01bb, 0x03bb, 0x007b,
+    0x002d, 0x027b, 0x017b, 0x037b, 0x00fb, 0x02fb, 0x01fb, 0x03fb,
+    0x0007, 0x0207, 0x0107, 0x0307, 0x0087, 0x0287, 0x0187, 0x0387,
+    0x0033, 0x0047, 0x0247, 0x0147, 0x0347, 0x00c7, 0x02c7, 0x01c7,
+    0x0133, 0x03c7, 0x0027, 0x0227, 0x0127, 0x0327, 0x00a7, 0x00b3,
+    0x0019, 0x01b3, 0x0073, 0x02a7, 0x0173, 0x01a7, 0x03a7, 0x0067,
+    0x00f3, 0x0267, 0x0167, 0x0367, 0x00e7, 0x02e7, 0x01e7, 0x03e7,
+    0x01f3, 0x0017, 0x0217, 0x0117, 0x0317, 0x0097, 0x0297, 0x0197,
+    0x0397, 0x0057, 0x0257, 0x0157, 0x0357, 0x00d7, 0x02d7, 0x01d7,
+    0x03d7, 0x0037, 0x0237, 0x0137, 0x0337, 0x00b7, 0x02b7, 0x01b7,
+    0x03b7, 0x0077, 0x0277, 0x07ff, 0x0177, 0x0377, 0x00f7, 0x02f7,
+    0x01f7, 0x03f7, 0x03ff, 0x000f, 0x020f, 0x010f, 0x030f, 0x008f,
+    0x028f, 0x018f, 0x038f, 0x004f, 0x024f, 0x014f, 0x034f, 0x00cf,
+    0x000b, 0x02cf, 0x01cf, 0x03cf, 0x002f, 0x022f, 0x010b, 0x012f,
+    0x032f, 0x00af, 0x02af, 0x01af, 0x008b, 0x03af, 0x006f, 0x026f,
+    0x018b, 0x016f, 0x036f, 0x00ef, 0x02ef, 0x01ef, 0x03ef, 0x001f,
+    0x021f, 0x011f, 0x031f, 0x009f, 0x029f, 0x019f, 0x039f, 0x005f,
+    0x004b, 0x025f, 0x015f, 0x035f, 0x00df, 0x02df, 0x01df, 0x03df,
+    0x003f, 0x023f, 0x013f, 0x033f, 0x00bf, 0x02bf, 0x014b, 0x01bf,
+    0x00ad, 0x00cb, 0x01cb, 0x03bf, 0x002b, 0x007f, 0x027f, 0x017f,
+    0x012b, 0x037f, 0x00ff, 0x02ff, 0x00ab, 0x01ab, 0x006d, 0x0059,
+    0x17ff, 0x0fff, 0x0039, 0x0079, 0x01ff, 0x0005, 0x0045, 0x0034,
+    0x000c, 0x002c, 0x001c, 0x0000, 0x003c, 0x0002, 0x0022, 0x0010,
+    0x0012, 0x0008, 0x0032, 0x000a, 0x002a, 0x001a, 0x003a, 0x0006,
+    0x0026, 0x0016, 0x0036, 0x000e, 0x002e, 0x001e, 0x003e, 0x0001,
+    0x00ed, 0x0018, 0x0021, 0x0025, 0x0065
+};
+
 static uint16_t HuffIndexLEC[512] = {
     0x007b, 0xff1f, 0xff0d, 0xfe27, 0xfe00, 0xff05, 0xff17, 0xfe68, 0x00c5, 0xfe07,
     0xff13, 0xfec0, 0xff08, 0xfe18, 0xff1b, 0xfeb3, 0xfe03, 0x00a2, 0xfe42, 0xff10,
@@ -109,6 +150,13 @@ static uint8_t HuffLenLOM[] = {
     0x7, 0x8, 0x8, 0x9, 0x9, 0x8, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9, 0x9
 };
 
+static uint16_t HuffCodeLOM[] = {
+    0x0001, 0x0000, 0x0002, 0x0009, 0x0006, 0x0005, 0x000d, 0x000b,
+    0x0003, 0x001b, 0x0007, 0x0017, 0x0037, 0x000f, 0x004f, 0x006f,
+    0x002f, 0x00ef, 0x001f, 0x005f, 0x015f, 0x009f, 0x00df, 0x01df,
+    0x003f, 0x013f, 0x00bf, 0x01bf, 0x007f, 0x017f, 0x00ff, 0x01ff
+};
+
 static uint16_t HuffIndexLOM[] = {
     0xfe1, 0xfe0, 0xfe2, 0xfe8, 0xe, 0xfe5, 0xfe4, 0xfea, 0xff1, 0xfe3, 0x15, 0xfe7,
     0xfef, 0x46, 0xff0, 0xfed, 0xfff, 0xff7, 0xffb, 0x19, 0xffd, 0xff4, 0x12c, 0xfeb,
@@ -138,11 +186,22 @@ static uint16_t LOMBaseLUT[] = {
     82, 98, 114, 130, 194, 258, 514, 2, 2
 };
 
-struct rdp_mppc_60_dec : public rdp_mppc_dec {
-protected:
-    static const size_t RDP_60_HIST_BUF_LEN      = 1024 * 64;
-    static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
+static const size_t RDP_60_HIST_BUF_LEN      = 1024 * 64;
+static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
 
+static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
+    *((uint32_t*)(offset_cache+2)) <<= 16;
+    *((uint32_t*)(offset_cache+2)) |=  (*((uint32_t*)offset_cache) >> 16);
+    *((uint32_t*)offset_cache)     =   (*((uint32_t*)offset_cache) << 16) | copy_offset;
+}
+
+static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
+    uint16_t t = *offset_cache;
+    *offset_cache              = *(offset_cache + LUTIndex);
+    *(offset_cache + LUTIndex) = t;
+}
+
+struct rdp_mppc_60_dec : public rdp_mppc_dec {
 public:
     uint8_t  * history_buf;
     uint16_t * offset_cache;
@@ -244,18 +303,6 @@ protected:
         return x;
     }
 
-    static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
-        *((uint32_t*)(offset_cache+2)) <<= 16;
-        *((uint32_t*)(offset_cache+2)) |=  (*((uint32_t*)offset_cache) >> 16);
-        *((uint32_t*)offset_cache)     =   (*((uint32_t*)offset_cache) << 16) | copy_offset;
-    }
-
-    static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
-        uint16_t t = *offset_cache;
-        *offset_cache              = *(offset_cache + LUTIndex);
-        *(offset_cache + LUTIndex) = t;
-    }
-
 public:
     /**
      * decompress RDP 6 data
@@ -269,7 +316,7 @@ public:
      * @return        True on success, False on failure
      */
     int decompress_60(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
-//        LOG(LOG_INFO, "decompress_60");
+        //LOG(LOG_INFO, "decompress_60");
 
         uint16_t * offset_cache;    /* Copy Offset cache                          */
         uint8_t  * history_ptr;     /* points to next free slot in bistory_buf    */
@@ -380,7 +427,7 @@ public:
                 if (tmp != 0) {
                     copy_offset += rdp_mppc_60_dec::transposebits(d32 & (0xffffffff << (32 - tmp)));
                 }
-                rdp_mppc_60_dec::cache_add(offset_cache, copy_offset);
+                cache_add(offset_cache, copy_offset);
                 d32       <<= tmp;
                 bits_left -=  tmp;
             }
@@ -388,7 +435,7 @@ public:
                 LUTIndex    = i32 - 289;
                 copy_offset = *(offset_cache + LUTIndex);
                 if (LUTIndex != 0) {
-                    rdp_mppc_60_dec::cache_swap(offset_cache, LUTIndex);
+                    cache_swap(offset_cache, LUTIndex);
                 }
             }
             else if (i32 == 256) {
@@ -463,7 +510,6 @@ public:
             bits_left -=  tmp;
 
             /* now that we have copy_offset and LoM, process them */
-
             src_ptr = history_ptr - copy_offset;
             tmp     = (lom > copy_offset) ? copy_offset : lom;
             uint32_t i32 = 0;
@@ -476,7 +522,7 @@ public:
                     i32            = ((i32 >= copy_offset)) ? 0 : i32;
                     *history_ptr++ = *(src_ptr + i32++);
                     lom--;
-                }
+             }
             }
             else {
                 src_ptr = this->history_buf_end - (copy_offset - (history_ptr - this->history_buf));
@@ -570,5 +616,353 @@ public:
         return result;
     }
 };  // struct rdp_mppc_60_dec
+
+struct rdp_mppc_60_enc : public rdp_mppc_enc {
+private:
+public:
+    // The shared state necessary to support the transmission and reception
+    //     of RDP6.0-BC compressed data between a client and server requires
+    //     a history buffer and a current offset into the history buffer
+    //    (HistoryOffset).
+
+    uint8_t  * historyBuffer;   /* contains uncompressed data */
+    int        historyOffset;   /* next free slot in historyBuffer */
+    // In addition to the history buffer and HistoryOffset, a small cache
+    //     MUST also be managed by the client and server endpoints. This
+    //     cache is referred to as the OffsetCache and is used to store the
+    //     last four unique copy-offsets encountered during data compression
+    //     (copy-offsets are described in [MS-RDPBCGR] section 3.1.8.1). This
+    //     saves on bandwidth in cases where there are many repeated
+    //     copy-offsets.
+    uint16_t * offsetCache;
+    uint8_t  * outputBuffer;    /* contains compressed data              */
+    int        bytes_in_opb;    /* compressed bytes available in         */
+                                /*     outputBuffer                      */
+    int        flags;           /* PACKET_COMPRESSED, PACKET_AT_FRONT,   */
+                                /*     PACKET_FLUSHED etc                */
+    int        flagsHold;
+    uint16_t * hash_table;
+
+public:
+    rdp_mppc_60_enc() : rdp_mppc_enc() {
+        // The HistoryOffset MUST start initialized to zero, while the
+        //     history buffer MUST be filled with zeros. After it has been
+        //     initialized, the entire history buffer is immediately
+        //     regarded as valid.
+        this->historyBuffer = static_cast<uint8_t *>(
+            ::calloc(RDP_60_HIST_BUF_LEN, 1));
+        this->historyOffset = 0;
+
+        // Whenever the history buffer is initialized or reinitialized, the
+        //     OffsetCache MUST be emptied.
+        this->offsetCache = static_cast<uint16_t *>(
+            ::calloc(RDP_60_OFFSET_CACHE_SIZE, 1));
+
+        this->outputBuffer = static_cast<uint8_t *>(
+            ::calloc(RDP_60_HIST_BUF_LEN, 1));
+        this->bytes_in_opb = 0;
+
+        this->flags      = 0;
+        this->flagsHold  = 0;
+        this->hash_table = static_cast<uint16_t *>(
+            ::calloc(rdp_mppc_enc::HASH_BUF_LEN, 2));
+    }   // rdp_mppc_60_enc()
+
+    virtual ~rdp_mppc_60_enc()
+    {
+        ::free(this->historyBuffer);
+        ::free(this->offsetCache);
+        ::free(this->outputBuffer);
+        ::free(this->hash_table);
+    }   // ~rdp_mppc_60_enc()
+
+    virtual void mini_dump() {
+        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
+        LOG(LOG_INFO, "historyBuffer");
+        hexdump_d(this->historyBuffer,         16);
+        LOG(LOG_INFO, "outputBuffer");
+        hexdump_d(this->outputBuffer,          16);
+        LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
+        LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
+        LOG(LOG_INFO, "offsetCache");
+        hexdump_d(reinterpret_cast<uint8_t *>(this->offsetCache), RDP_60_OFFSET_CACHE_SIZE);
+        LOG(LOG_INFO, "flags=0x%X",            this->flags);
+        LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
+        LOG(LOG_INFO, "hash_table");
+        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), 16);
+    }
+
+    virtual void dump() {
+        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
+        LOG(LOG_INFO, "historyBuffer");
+        hexdump_d(this->historyBuffer,         RDP_60_HIST_BUF_LEN);
+        LOG(LOG_INFO, "outputBuffer");
+        hexdump_d(this->outputBuffer,          RDP_60_HIST_BUF_LEN);
+        LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
+        LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
+        LOG(LOG_INFO, "offsetCache");
+        hexdump_d(reinterpret_cast<uint8_t *>(this->offsetCache), RDP_60_OFFSET_CACHE_SIZE);
+        LOG(LOG_INFO, "flags=0x%X",            this->flags);
+        LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
+        LOG(LOG_INFO, "hash_table");
+        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), rdp_mppc_enc::HASH_BUF_LEN * 2);
+    }
+
+private:
+public:
+    static inline void insert_n_bits(int n, uint32_t _data,
+        uint8_t * outputBuffer, int & bits_left, int & opb_index) {
+
+        while (n)
+        {
+            if (bits_left >= n) {
+                uint8_t tmp = _data << (8 - bits_left);
+                outputBuffer[opb_index] |= tmp;
+                bits_left -= n;
+                n = 0;
+            }
+            else {
+                uint8_t tmp = _data << (8 - bits_left);
+                outputBuffer[opb_index] |= tmp;
+                _data >>= bits_left;
+                n -= bits_left;
+                bits_left = 0;
+            }   // if (bits_left >= n)
+
+            if (!bits_left) {
+                opb_index++;
+                bits_left = 8;
+            }   // if (!bits_left)
+        }   // while (n)
+    }   // void insert_n_bits(int n, uint32_t _data, char * outputBuffer,
+        //     int & bits_left, int & opb_index)
+
+    static inline void encode_literal(uint16_t c, uint8_t * outputBuffer,
+        int & bits_left, int & opb_index) {
+        size_t index = c;
+        rdp_mppc_60_enc::insert_n_bits(HuffLenLEC[index], HuffCodeLEC[index],
+            outputBuffer, bits_left, opb_index);
+    }   // void encode_literal(char c, char * outputBuffer, int & bits_left,
+        //     int & opb_index)
+
+    static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset) {
+        for (int i = 0; i < 4; i++)
+            if (offset_cache[i] == copy_offset)
+                return i;
+
+        return -1;
+    }
+
+    template <typename T> size_t indexOfEqualOrSmallerEntry(T data, T * table)
+    {
+        size_t index;
+        for (index = 0; *(table + index) < data; index++);
+        if (*(table + index) > data) {
+            REDASSERT(index > 0);
+
+            return index - 1;
+        }
+        return index;
+    }
+
+    bool compress_60(uint8_t * srcData, int len)
+    {
+        //LOG(LOG_INFO, "compress_60");
+
+        if ((srcData == NULL) || (len <= 0) || (len > static_cast<int>(RDP_60_HIST_BUF_LEN)))
+            return false;
+
+        int opb_index = 0; /* index into outputBuffer           */
+        int bits_left = 8; /* unused bits in current uint8_t in */
+                           /*     outputBuffer                  */
+
+        ::memset(this->outputBuffer, 0, len);
+
+        this->flags = PACKET_COMPR_TYPE_RDP6;
+
+LOG(LOG_INFO, "historyOffset=%d len=%d", this->historyOffset, len);
+        if ((this->historyOffset + len + 2) >= static_cast<int>(RDP_60_HIST_BUF_LEN)) {
+LOG(LOG_INFO, "PACKET_AT_FRONT");
+            /* historyBuffer cannot hold srcData - rewind it */
+/*
+        if (ctype & PACKET_AT_FRONT) {
+            // slid history_buf and reset history_buf to middle
+            memmove(this->history_buf,
+                (this->history_buf + (history_ptr - this->history_buf - 32768)),
+                32768);
+            history_ptr       = this->history_buf + 32768;
+            this->history_ptr = history_ptr;
+            *roff             = 32768;
+        }
+*/
+/*
+            memmove(this->historyBuffer,
+                (this->historyBuffer + (this->historyOffset - 32768)),
+                32768);
+*/
+            ::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
+            ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
+            ::memset(this->offsetCache, 0, RDP_60_OFFSET_CACHE_SIZE);
+
+            this->historyOffset =  0;
+            this->flagsHold     |= /*PACKET_AT_FRONT*/PACKET_FLUSHED;
+        }
+
+        /* add/append new data to historyBuffer */
+        ::memcpy(&(this->historyBuffer[this->historyOffset]), srcData, len);
+
+        int ctr = 0;
+
+        /* if we are at start of history buffer, do not attempt to compress */
+        /*     first 2 bytes, even the minimum LoM is 2                     */
+        if (this->historyOffset == 0)
+        {
+            /* encode first two bytes as literals */
+            int index, count;
+            for (index = 0, count = std::min(2, len); index < count; index++) {
+                rdp_mppc_60_enc::encode_literal(
+                    this->historyBuffer[this->historyOffset + index],
+                    this->outputBuffer, bits_left, opb_index);
+            }
+
+            ctr = count;
+        }
+
+
+        int lom = 0;
+        // we need at least 3 bytes to look for match
+        for (; ctr + 2 < len; ctr += lom) {
+
+            uint32_t crc2           = rdp_mppc_enc::signature(
+                reinterpret_cast<char *>(this->historyBuffer) + this->historyOffset + ctr);
+            int      previous_match = this->hash_table[crc2];
+            this->hash_table[crc2]  = this->historyOffset + ctr;
+
+            /* check that we have a pattern match, hash is not enough */
+
+            if (0 != memcmp(this->historyBuffer + this->historyOffset + ctr, this->historyBuffer + previous_match, 3)) {
+                /* no match found; encode literal uint8_t */
+                rdp_mppc_60_enc::encode_literal(
+                    this->historyBuffer[this->historyOffset + ctr],
+                    this->outputBuffer, bits_left, opb_index);
+                lom = 1;
+            }
+            else {
+                /* we have a match - compute hash and Length of Match for triplets */
+                this->hash_table[rdp_mppc_enc::signature(
+                    reinterpret_cast<char *>(this->historyBuffer) + this->historyOffset + ctr + 1)] =
+                    this->historyOffset + ctr + 1;
+                for (lom = 3; (ctr + lom < len) && (lom < 514); lom++) {
+                    this->hash_table[rdp_mppc_enc::signature(
+                        reinterpret_cast<char *>(this->historyBuffer) + this->historyOffset + ctr + lom - 1)] =
+                        this->historyOffset + ctr + lom - 1;
+                    if (this->historyBuffer[this->historyOffset + ctr + lom] != this->historyBuffer[previous_match + lom]) {
+                        break;
+                    }
+                }
+
+                /* encode copy_offset and insert into output buffer */
+                uint32_t copy_offset = this->historyOffset + ctr - previous_match;
+
+                int offsetCacheIndex;
+                int LUTIndex;
+                if ((offsetCacheIndex =
+                     cache_find(this->offsetCache, copy_offset)) != -1) {
+                    cache_swap(this->offsetCache, offsetCacheIndex);
+
+                    LUTIndex = offsetCacheIndex + 289;
+
+                    rdp_mppc_60_enc::insert_n_bits(HuffLenLEC[LUTIndex],
+                         HuffCodeLEC[LUTIndex],
+                        this->outputBuffer, bits_left, opb_index);
+                }
+                else {
+                    cache_add(this->offsetCache, copy_offset);
+
+                    LUTIndex = indexOfEqualOrSmallerEntry<uint32_t>(copy_offset + 1,
+                        CopyOffsetBaseLUT);
+                    int HuffmanIndex = LUTIndex + 257;
+                    rdp_mppc_60_enc::insert_n_bits(HuffLenLEC[HuffmanIndex],
+                        HuffCodeLEC[HuffmanIndex],
+                        this->outputBuffer, bits_left, opb_index);
+
+                    int ExtraBitsLength = CopyOffsetBitsLUT[LUTIndex];
+                    int ExtraBits       = copy_offset & ((1 << ExtraBitsLength) - 1);
+                    if (ExtraBitsLength) {
+                        rdp_mppc_60_enc::insert_n_bits(ExtraBitsLength,
+                            ExtraBits,
+                            this->outputBuffer, bits_left, opb_index);
+                    }
+                }
+
+                LUTIndex = indexOfEqualOrSmallerEntry<uint16_t>(lom, LOMBaseLUT);
+                rdp_mppc_60_enc::insert_n_bits(HuffLenLOM[LUTIndex],
+                    HuffCodeLOM[LUTIndex],
+                    this->outputBuffer, bits_left, opb_index);
+
+                int ExtraBitsLength = LOMBitsLUT[LUTIndex];
+                int ExtraBits = (lom - 2) & ((1 << ExtraBitsLength) - 1);
+                rdp_mppc_60_enc::insert_n_bits(ExtraBitsLength,
+                    ExtraBits,
+                    this->outputBuffer, bits_left, opb_index);
+            }
+        }
+
+        /* add remaining data if any to the output */
+        while (len - ctr > 0) {
+            rdp_mppc_60_enc::encode_literal(srcData[ctr], this->outputBuffer, bits_left, opb_index);
+            ctr++;
+        }
+
+        rdp_mppc_60_enc::insert_n_bits(13, 0x17ff, outputBuffer, bits_left, opb_index);
+
+        if (opb_index >= len) {
+            /* compressed data longer or same size than uncompressed data */
+            /* give up */
+            this->historyOffset = 0;
+            memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
+            this->flagsHold |= PACKET_FLUSHED;
+            memset(this->offsetCache, 0, RDP_60_OFFSET_CACHE_SIZE);
+::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
+LOG(LOG_INFO, "opb_index(%d) >= len(%d)", opb_index, len);
+            return true;
+        }
+
+        this->historyOffset += len;
+        this->flags         |= PACKET_COMPRESSED;
+        /* if bits_left == 8, opb_index has already been incremented */
+        this->bytes_in_opb  =  opb_index + (bits_left != 8);
+        this->flags         |= this->flagsHold;
+        this->flagsHold     =  0;
+
+        return true;
+    }   // bool compress_60(uint8_t * srcData, int len)
+
+public:
+    virtual bool compress(uint8_t * srcData, int len, uint8_t & flags, uint16_t & compressedLength) {
+//dump();
+LOG(LOG_INFO, "len=%d", len);
+hexdump(srcData, len);
+        bool compress_result = this->compress_60(srcData, len);
+        if (this->flags & PACKET_COMPRESSED) {
+            flags            = this->flags;
+            compressedLength = this->bytes_in_opb;
+        }
+        else {
+            flags            = 0;
+            compressedLength = 0;
+        }
+        return compress_result;
+    }
+
+    virtual void get_compressed_data(Stream & stream) const {
+        if (stream.tailroom() < static_cast<size_t>(this->bytes_in_opb)) {
+            LOG(LOG_ERR, "rdp_mppc_60_enc::get_compressed_data: Buffer too small");
+            throw Error(ERR_BUFFER_TOO_SMALL);
+        }
+
+        stream.out_copy_bytes(this->outputBuffer, this->bytes_in_opb);
+    }
+};  // struct rdp_mppc_60_enc
 
 #endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_60_HPP_
