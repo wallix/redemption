@@ -25,7 +25,7 @@
 
 #define LOGPRINT
 #include "log.hpp"
-#include "RDP/nla/ntlm/ntlm.hpp"
+#include "RDP/nla/ntlm/ntlm_context.hpp"
 #include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNtlmContext)

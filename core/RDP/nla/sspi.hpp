@@ -59,6 +59,10 @@ const SecPkgInfo NTLM_SecPkgInfo = {
     Ntlm_Comment            // Comment
 };
 
+const SecPkgInfo* SecPkgInfo_LIST[] = {
+    &NTLM_SecPkgInfo
+};
+
 struct SEC_CHANNEL_BINDINGS
 {
     uint32_t dwInitiatorAddrType;
@@ -97,6 +101,11 @@ struct _SEC_WINNT_AUTH_IDENTITY
 };
 typedef struct _SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
 
+struct CREDENTIALS {
+    uint32_t flags;
+    SEC_WINNT_AUTH_IDENTITY identity;
+};
+
 typedef struct _SecHandle {
     unsigned long * dwLower;
     unsigned long * dwUpper;
@@ -108,13 +117,6 @@ typedef PSecHandle PCredHandle;
 typedef SecHandle CtxtHandle;
 typedef PSecHandle PCtxtHandle;
 
-
-
-const SecPkgInfo* SecPkgInfo_LIST[] = {
-    // &NTLM_SecPkgInfoA,
-    // &CREDSSP_SecPkgInfoA,
-    // &SCHANNEL_SecPkgInfoA
-};
 
 enum SEC_STATUS {
     SEC_E_OK = 0x00000000,
@@ -218,32 +220,36 @@ struct SecurityFunctionTable {
         // int index;
         // uint32_t cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
         // size_t size = sizeof(SecPkgInfo) * cPackages;
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // QUERY_CREDENTIALS_ATTRIBUTES_FN QueryCredentialsAttributes;
     virtual SEC_STATUS QueryCredentialsAttributes(SecHandle * phCredential,
                                                   unsigned long ulAttribute,
                                                   void* pBuffer) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     virtual SEC_STATUS AcquireCredentialsHandle(char * pszPrincipal, char * pszPackage,
                                                 unsigned long fCredentialUse, void* pvLogonID,
                                                 void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
                                                 void* pvGetKeyArgument, SecHandle * phCredential,
                                                 TimeStamp * ptsExpiry) {
+
          return SEC_E_OK;
     }
 
+    // GSS_Release_cred
     // FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
     virtual SEC_STATUS FreeCredentialsHandle(SecHandle * phCredential) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // void * Reserved2;
 
+    // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     virtual SEC_STATUS InitializeSecurityContext(SecHandle * phCredential, SecHandle * phContext,
                                                  char* pszTargetName, unsigned long fContextReq,
@@ -253,9 +259,10 @@ struct SecurityFunctionTable {
                                                  SecHandle * phNewContext, SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     virtual SEC_STATUS AcceptSecurityContext(SecHandle * phCredential, SecHandle * phContext,
                                              SecBufferDesc * pInput, unsigned long fContextReq,
@@ -263,110 +270,139 @@ struct SecurityFunctionTable {
                                              SecBufferDesc * pOutput,
                                              unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
 
+    // GSS_Process_context_token ?
     // COMPLETE_AUTH_TOKEN CompleteAuthToken;
     virtual SEC_STATUS CompleteAuthToken(SecHandle * phContext, SecBufferDesc * pToken) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Delete_sec_context
     // DELETE_SECURITY_CONTEXT DeleteSecurityContext;
     virtual SEC_STATUS DeleteSecurityContext(SecHandle * phContext) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // APPLY_CONTROL_TOKEN ApplyControlToken;
     virtual SEC_STATUS ApplyControlToken(SecHandle * phContext, SecBufferDesc * pInput) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
     virtual SEC_STATUS QueryContextAttributes(SecHandle * phContext, unsigned long ulAttribute,
                                               void* pBuffer) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
     virtual SEC_STATUS ImpersonateSecurityContext(SecHandle * phContext) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
     virtual SEC_STATUS RevertSecurityContext(SecHandle * phContext) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // MAKE_SIGNATURE MakeSignature;
     virtual SEC_STATUS MakeSignature(SecHandle * phContext, unsigned long fQOP,
                                       SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // VERIFY_SIGNATURE VerifySignature;
     virtual SEC_STATUS VerifySignature(SecHandle * phContext, SecBufferDesc * pMessage,
                                         unsigned long MessageSeqNo, unsigned long * pfQOP) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // FREE_CONTEXT_BUFFER FreeContextBuffer;
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
     virtual SEC_STATUS QuerySecurityPackageInfo(char* pszPackageName,
-                                                   SecPkgInfo ** ppPackageInfo) {
-        return SEC_E_OK;
+                                                SecPkgInfo * pPackageInfo) {
+
+	int index;
+	uint32_t cPackages;
+
+	cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
+
+	for (index = 0; index < (int) cPackages; index++) {
+            if (strcmp(pszPackageName, SecPkgInfo_LIST[index]->Name) == 0) {
+
+                pPackageInfo->fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
+                pPackageInfo->wVersion = SecPkgInfo_LIST[index]->wVersion;
+                pPackageInfo->wRPCID = SecPkgInfo_LIST[index]->wRPCID;
+                pPackageInfo->cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
+                pPackageInfo->Name = SecPkgInfo_LIST[index]->Name;
+                pPackageInfo->Comment = SecPkgInfo_LIST[index]->Comment;
+
+                return SEC_E_OK;
+            }
+        }
+
+        pPackageInfo = NULL;
+
+	return SEC_E_SECPKG_NOT_FOUND;
     }
 
     // void* Reserved3;
     // void* Reserved4;
 
+    // GSS_Export_sec_context
     // EXPORT_SECURITY_CONTEXT ExportSecurityContext;
     virtual SEC_STATUS ExportSecurityContext(SecHandle * phContext, unsigned long fFlags,
                                              SecBuffer * pPackedContext, HANDLE* pToken) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Import_sec_context
     // IMPORT_SECURITY_CONTEXT ImportSecurityContext;
     virtual SEC_STATUS ImportSecurityContext(char* pszPackage, SecBuffer * pPackedContext,
                                              HANDLE pToken, SecHandle * phContext) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Add_cred
     // ADD_CREDENTIALS AddCredentials;
     virtual SEC_STATUS AddCredentials(SecHandle * hCredentials, char* pszPrincipal,
                                      char* pszPackage, uint32_t fCredentialUse,
                                      void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
                                      void* pvGetKeyArgument, TimeStamp * ptsExpiry) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // void* Reserved8;
 
     // QUERY_SECURITY_CONTEXT_TOKEN QuerySecurityContextToken;
     virtual SEC_STATUS QuerySecurityContextToken(SecHandle * phContext, HANDLE* phToken) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     virtual SEC_STATUS EncryptMessage(SecHandle * phContext, unsigned long fQOP,
                                        SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
     virtual SEC_STATUS DecryptMessage(SecHandle * phContext, SecBufferDesc * pMessage,
                                        unsigned long MessageSeqNo, unsigned long * pfQOP) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // SET_CONTEXT_ATTRIBUTES SetContextAttributes;
     virtual SEC_STATUS SetContextAttributes(SecHandle * phContext, unsigned long ulAttribute,
                                             void* pBuffer, unsigned long cbBuffer) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
 };
