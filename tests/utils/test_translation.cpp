@@ -75,6 +75,15 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
                                   "<br>"
                                   "Contact your system administrator if you are<br>"
                                   "experiencing problems."));
+    BOOST_CHECK_EQUAL(std::string(TR("selector", ini)),          std::string("Selector"));
+    BOOST_CHECK_EQUAL(std::string(TR("session_out_time", ini)),
+                      std::string("Session is out of allowed timeframe"));
+    BOOST_CHECK_EQUAL(std::string(TR("miss_keepalive", ini)),
+                      std::string("Missed keepalive from ACL"));
+    BOOST_CHECK_EQUAL(std::string(TR("close_inactivity", ini)),
+                      std::string("Connection closed on inactivity"));
+    BOOST_CHECK_EQUAL(std::string(TR("acl_fail", ini)),
+                      std::string("Authentifier service failed"));
 
     BOOST_CHECK_EQUAL(std::string(TR("unknown text made for tests", ini)),  std::string("unknown text made for tests"));
 
@@ -131,7 +140,15 @@ BOOST_AUTO_TEST_CASE(TestTranslation)
                                   "<br>"
                                   "Contactez votre administrateur système en<br>"
                                   "cas de problème pour vous connecter."));
-
+    BOOST_CHECK_EQUAL(std::string(TR("selector", ini)),          std::string("Sélecteur"));
+    BOOST_CHECK_EQUAL(std::string(TR("session_out_time", ini)),
+                      std::string("L'authorisation de la session a expirée"));
+    BOOST_CHECK_EQUAL(std::string(TR("miss_keepalive", ini)),
+                      std::string("Absence de réponse de Keepalive de l'ACL"));
+    BOOST_CHECK_EQUAL(std::string(TR("close_inactivity", ini)),
+                      std::string("Fermeture sur inactivité"));
+    BOOST_CHECK_EQUAL(std::string(TR("acl_fail", ini)),
+                      std::string("Echec du service d'authentification"));
 
     BOOST_CHECK_EQUAL(std::string(TR("texte inconnu fait pour les tests", ini)),  std::string("texte inconnu fait pour les tests"));
 

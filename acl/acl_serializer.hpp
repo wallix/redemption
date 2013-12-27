@@ -31,6 +31,7 @@
 #include "config.hpp"
 #include "netutils.hpp"
 #include "sockettransport.hpp"
+#include "translation.hpp"
 
 class AclSerializer{
 
@@ -226,7 +227,8 @@ public:
             this->auth_trans.send(stream.get_data(), total_length);
         } catch (Error e) {
             this->ini->context.authenticated.set(false);
-            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
+            this->ini->context.rejected.set_from_cstr(TR("acl_fail", *(this->ini)));
+            // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
 
@@ -268,7 +270,8 @@ public:
             this->auth_trans.send(stream.get_data(), total_length);
         } catch (Error e) {
             this->ini->context.authenticated.set(false);
-            this->ini->context.rejected.set_from_cstr("Authentifier service failed");
+            this->ini->context.rejected.set_from_cstr(TR("acl_fail", *(this->ini)));
+            // this->ini->context.rejected.set_from_cstr("Authentifier service failed");
         }
     }
 
