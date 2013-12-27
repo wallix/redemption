@@ -20,12 +20,13 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestNtlm
+#define BOOST_TEST_MODULE TestNtlm_context
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGPRINT
 #include "log.hpp"
 #include "RDP/nla/ntlm/ntlm_context.hpp"
+#include "RDP/nla/ntlm/ntlm.hpp"
 #include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNtlmContext)
@@ -508,4 +509,15 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
                              buff,
                              16),
                       0);
+}
+
+
+BOOST_AUTO_TEST_CASE(tryr)
+{
+    size_t pointer = -1;
+
+    LOG(LOG_INFO, "dump %u", pointer);
+    LOG(LOG_INFO, "dump %u", ~pointer);
+    LOG(LOG_INFO, "dump %x", ~~pointer);
+    LOG(LOG_INFO, "dump %x", ~~~pointer);
 }

@@ -18,8 +18,8 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
-#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLM_HPP_
-#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLM_HPP_
+#ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
+#define _REDEMPTION_CORE_RDP_NLA_NTLM_NTLMCONTEXT_HPP_
 
 #include "ssl_calls.hpp"
 #include "genrandom.hpp"
@@ -30,6 +30,7 @@
 #include "RDP/nla/ntlm/ntlm_message_negotiate.hpp"
 #include "RDP/nla/ntlm/ntlm_message_challenge.hpp"
 #include "RDP/nla/ntlm/ntlm_message_authenticate.hpp"
+#include "RDP/nla/sspi.hpp"
 
 enum NtlmState {
     NTLM_STATE_INITIAL,
@@ -82,7 +83,7 @@ struct NTLMContext {
     bool SendWorkstationName;
     // UNICODE_STRING Workstation;
     // UNICODE_STRING ServicePrincipalName;
-    // SEC_WINNT_AUTH_IDENTITY identity;
+    SEC_WINNT_AUTH_IDENTITY identity;
     uint8_t* ChannelBindingToken;
     uint8_t ChannelBindingsHash[16];
     // SecPkgContext_Bindings Bindings;
@@ -119,6 +120,9 @@ struct NTLMContext {
     uint8_t MessageIntegrityCheck[16];
     uint8_t NtProofStr[16];
 
+    // NTLMContext() {
+    //     this->init();
+    // }
 
     void init() {
         this->NTLMv2 = true;
@@ -863,6 +867,12 @@ struct NTLMContext {
 
     }
 
+    void ntlm_SetContextWorkStation(const char * workstation) {
+        // TODO
+    }
+    void ntlm_SetContextServicePrincipalName(const char * pszTargetName) {
+        // TODO
+    }
 };
 
 

@@ -28,6 +28,7 @@ struct SecBuffer {
     unsigned long BufferType;
     void *        pvBuffer;
 };
+typedef SecBuffer *PSecBuffer;
 struct SecBufferDesc
 {
     unsigned long ulVersion;
@@ -89,7 +90,7 @@ struct SecPkgContext_Sizes
 };
 
 
-struct _SEC_WINNT_AUTH_IDENTITY
+struct SEC_WINNT_AUTH_IDENTITY
 {
     uint16_t* User;
     uint32_t UserLength;
@@ -98,19 +99,65 @@ struct _SEC_WINNT_AUTH_IDENTITY
     uint16_t* Password;
     uint32_t PasswordLength;
     uint32_t Flags;
+
+    void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY & src) {
+        // TODO
+    }
 };
-typedef struct _SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
 
 struct CREDENTIALS {
     uint32_t flags;
     SEC_WINNT_AUTH_IDENTITY identity;
 };
 
-typedef struct _SecHandle {
-    unsigned long * dwLower;
-    unsigned long * dwUpper;
-} SecHandle, *PSecHandle;
+struct _SecHandle {
+    unsigned long dwLower;
+    unsigned long dwUpper;
+};
 
+
+class SecHandle {
+    _SecHandle * pHandle;
+
+public:
+    SecHandle()
+        : pHandle(new _SecHandle()) {
+    }
+    SecHandle(const SecHandle & other)
+        : pHandle(new _SecHandle(*(other.pHandle))) {
+    }
+
+    ~SecHandle() {
+        delete pHandle;
+    }
+
+    SecHandle& operator=(const SecHandle &other) {
+        *pHandle = *(other.pHandle);
+        return *this;
+    }
+
+    void SecureHandleSetLowerPointer(void* pointer) {
+        this->pHandle->dwLower = (unsigned long) pointer;
+    }
+
+    void SecureHandleSetUpperPointer(void* pointer) {
+        this->pHandle->dwUpper = (unsigned long) pointer;
+    }
+
+    void* SecureHandleGetLowerPointer() {
+        void * pointer;
+        pointer = (void*) this->pHandle->dwLower;
+        return pointer;
+    }
+    void* SecureHandleGetUpperPointer() {
+        void * pointer;
+        pointer = (void*) this->pHandle->dwUpper;
+        return pointer;
+    }
+
+
+};
+typedef SecHandle *PSecHandle;
 typedef SecHandle CredHandle;
 typedef PSecHandle PCredHandle;
 
@@ -206,6 +253,46 @@ enum SEC_STATUS {
     SEC_I_NO_RENEGOTIATION = 0x00090360,
 };
 
+enum ISC_REQ {
+    /* InitializeSecurityContext Flags */
+    ISC_REQ_DELEGATE = 0x00000001,
+    ISC_REQ_MUTUAL_AUTH = 0x00000002,
+    ISC_REQ_REPLAY_DETECT = 0x00000004,
+    ISC_REQ_SEQUENCE_DETECT = 0x00000008,
+    ISC_REQ_CONFIDENTIALITY = 0x00000010,
+    ISC_REQ_USE_SESSION_KEY = 0x00000020,
+    ISC_REQ_PROMPT_FOR_CREDS = 0x00000040,
+    ISC_REQ_USE_SUPPLIED_CREDS = 0x00000080,
+    ISC_REQ_ALLOCATE_MEMORY = 0x00000100,
+    ISC_REQ_USE_DCE_STYLE = 0x00000200,
+    ISC_REQ_DATAGRAM = 0x00000400,
+    ISC_REQ_CONNECTION = 0x00000800,
+    ISC_REQ_CALL_LEVEL = 0x00001000,
+    ISC_REQ_FRAGMENT_SUPPLIED = 0x00002000,
+    ISC_REQ_EXTENDED_ERROR = 0x00004000,
+    ISC_REQ_STREAM = 0x00008000,
+    ISC_REQ_INTEGRITY = 0x00010000,
+    ISC_REQ_IDENTIFY = 0x00020000,
+    ISC_REQ_NULL_SESSION = 0x00040000,
+    ISC_REQ_MANUAL_CRED_VALIDATION = 0x00080000,
+    ISC_REQ_RESERVED1 = 0x00100000,
+    ISC_REQ_FRAGMENT_TO_FIT = 0x00200000,
+    ISC_REQ_FORWARD_CREDENTIALS = 0x00400000,
+    ISC_REQ_NO_INTEGRITY = 0x00800000,
+    ISC_REQ_USE_HTTP_STYLE = 0x01000000
+};
+
+
+enum CredentialUse {
+    SECPKG_CRED_INBOUND = 0x00000001,
+    SECPKG_CRED_OUTBOUND = 0x00000002,
+    SECPKG_CRED_BOTH = 0x00000003,
+    SECPKG_CRED_AUTOLOGON_RESTRICTED = 0x00000010,
+    SECPKG_CRED_PROCESS_POLICY_ONLY = 0x00000020
+};
+
+
+
 typedef void (*SEC_GET_KEY_FN)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
 typedef void* HANDLE, *PHANDLE, *LPHANDLE;
 
@@ -235,16 +322,16 @@ struct SecurityFunctionTable {
     virtual SEC_STATUS AcquireCredentialsHandle(char * pszPrincipal, char * pszPackage,
                                                 unsigned long fCredentialUse, void* pvLogonID,
                                                 void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-                                                void* pvGetKeyArgument, SecHandle * phCredential,
+                                                void* pvGetKeyArgument, PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
-         return SEC_E_OK;
+         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Release_cred
     // FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
-    virtual SEC_STATUS FreeCredentialsHandle(SecHandle * phCredential) {
-        return SEC_E_UNSUPPORTED_FUNCTION;
+    virtual SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
+	return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // void * Reserved2;
@@ -406,6 +493,8 @@ struct SecurityFunctionTable {
     }
 
 };
+
+typedef SecurityFunctionTable *PSecurityFunctionTable;
 
 enum SecInterface {
     NTLM_Interface,
