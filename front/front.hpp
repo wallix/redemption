@@ -572,7 +572,10 @@ public:
             this->mppc_enc = NULL;
         }
         if (this->client_info.rdp_compression) {
-            if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
+            /*if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_RDP6) {
+                this->mppc_enc = new rdp_mppc_60_enc();
+            }
+            else */if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
                 this->mppc_enc = new rdp_mppc_50_enc();
             }
             else {
