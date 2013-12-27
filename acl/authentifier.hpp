@@ -224,7 +224,12 @@ public:
         long enddate = this->ini->context.end_date_cnx.get();
         if (enddate != 0 && (now > enddate)) {
             LOG(LOG_INFO, "Session is out of allowed timeframe : closing");
-            mm.invoke_close_box("Session is out of allowed timeframe", signal, now);
+            if (this->ini) {
+                mm.invoke_close_box(TR("session_out_time", *(this->ini)), signal, now);
+            }
+            else {
+                mm.invoke_close_box("Session is out of allowed timeframe", signal, now);
+            }
             return true;
         }
 
@@ -239,13 +244,23 @@ public:
 
         // Keep Alive
         if (this->keepalive.check(now, this->ini)) {
-            mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+            if (this->ini) {
+                mm.invoke_close_box(TR("miss_keepalive", *(this->ini)), signal, now);
+            }
+            else {
+                mm.invoke_close_box("Missed keepalive from ACL", signal, now);
+            }
             return true;
         }
 
         // Inactivity management
         if (this->inactivity.check(now, trans)) {
-            mm.invoke_close_box("Connection closed on inactivity", signal, now);
+            if (this->ini) {
+                mm.invoke_close_box(TR("close_inactivity", *(this->ini)), signal, now);
+            }
+            else {
+                mm.invoke_close_box("Connection closed on inactivity", signal, now);
+            }
             return true;
         }
 
@@ -342,8 +357,8 @@ public:
         } catch (...) {
             // acl connection lost
             this->ini->context.authenticated.set(false);
-            if (ini) {
-                this->ini->context.rejected.set_from_cstr(TR("manager_close_cnx", *ini));
+            if (this->ini) {
+                this->ini->context.rejected.set_from_cstr(TR("manager_close_cnx", *(this->ini)));
             }
             else {
                 this->ini->context.rejected.set_from_cstr("Connection closed by manager");
