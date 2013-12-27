@@ -751,7 +751,7 @@ public:
                 return i;
 
         return -1;
-    }
+    }   // int cache_find(uint16_t * offset_cache, uint16_t copy_offset)
 
     template <typename T> size_t indexOfEqualOrSmallerEntry(T data, T * table)
     {
@@ -780,32 +780,16 @@ public:
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
-LOG(LOG_INFO, "historyOffset=%d len=%d", this->historyOffset, len);
-        if ((this->historyOffset + len + 2) >= static_cast<int>(RDP_60_HIST_BUF_LEN)) {
-LOG(LOG_INFO, "PACKET_AT_FRONT");
+        if ((this->historyOffset + len) >= static_cast<int>(RDP_60_HIST_BUF_LEN)) {
             /* historyBuffer cannot hold srcData - rewind it */
-/*
-        if (ctype & PACKET_AT_FRONT) {
-            // slid history_buf and reset history_buf to middle
-            memmove(this->history_buf,
-                (this->history_buf + (history_ptr - this->history_buf - 32768)),
-                32768);
-            history_ptr       = this->history_buf + 32768;
-            this->history_ptr = history_ptr;
-            *roff             = 32768;
-        }
-*/
-/*
-            memmove(this->historyBuffer,
+            this->flagsHold |= PACKET_AT_FRONT;
+            ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
+            ::memmove(this->historyBuffer,
                 (this->historyBuffer + (this->historyOffset - 32768)),
                 32768);
-*/
-            ::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
-            ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
-            ::memset(this->offsetCache, 0, RDP_60_OFFSET_CACHE_SIZE);
-
-            this->historyOffset =  0;
-            this->flagsHold     |= /*PACKET_AT_FRONT*/PACKET_FLUSHED;
+            this->historyOffset = 32768;
+            ::memset(reinterpret_cast<uint8_t *>(this->offsetCache), 0,
+                RDP_60_OFFSET_CACHE_SIZE);
         }
 
         /* add/append new data to historyBuffer */
@@ -852,6 +836,7 @@ LOG(LOG_INFO, "PACKET_AT_FRONT");
                 this->hash_table[rdp_mppc_enc::signature(
                     reinterpret_cast<char *>(this->historyBuffer) + this->historyOffset + ctr + 1)] =
                     this->historyOffset + ctr + 1;
+                // maximum LOM is 514 bytes
                 for (lom = 3; (ctr + lom < len) && (lom < 514); lom++) {
                     this->hash_table[rdp_mppc_enc::signature(
                         reinterpret_cast<char *>(this->historyBuffer) + this->historyOffset + ctr + lom - 1)] =
@@ -866,8 +851,8 @@ LOG(LOG_INFO, "PACKET_AT_FRONT");
 
                 int offsetCacheIndex;
                 int LUTIndex;
-                if ((offsetCacheIndex =
-                     cache_find(this->offsetCache, copy_offset)) != -1) {
+                if (((offsetCacheIndex =
+                     cache_find(this->offsetCache, copy_offset)) != -1) && false) {
                     cache_swap(this->offsetCache, offsetCacheIndex);
 
                     LUTIndex = offsetCacheIndex + 289;
@@ -902,9 +887,11 @@ LOG(LOG_INFO, "PACKET_AT_FRONT");
 
                 int ExtraBitsLength = LOMBitsLUT[LUTIndex];
                 int ExtraBits = (lom - 2) & ((1 << ExtraBitsLength) - 1);
-                rdp_mppc_60_enc::insert_n_bits(ExtraBitsLength,
-                    ExtraBits,
-                    this->outputBuffer, bits_left, opb_index);
+                if (ExtraBitsLength) {
+                    rdp_mppc_60_enc::insert_n_bits(ExtraBitsLength,
+                        ExtraBits,
+                        this->outputBuffer, bits_left, opb_index);
+                }
             }
         }
 
@@ -917,14 +904,7 @@ LOG(LOG_INFO, "PACKET_AT_FRONT");
         rdp_mppc_60_enc::insert_n_bits(13, 0x17ff, outputBuffer, bits_left, opb_index);
 
         if (opb_index >= len) {
-            /* compressed data longer or same size than uncompressed data */
-            /* give up */
-            this->historyOffset = 0;
-            memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
-            this->flagsHold |= PACKET_FLUSHED;
-            memset(this->offsetCache, 0, RDP_60_OFFSET_CACHE_SIZE);
-::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
-LOG(LOG_INFO, "opb_index(%d) >= len(%d)", opb_index, len);
+            ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
             return true;
         }
 
@@ -940,9 +920,6 @@ LOG(LOG_INFO, "opb_index(%d) >= len(%d)", opb_index, len);
 
 public:
     virtual bool compress(uint8_t * srcData, int len, uint8_t & flags, uint16_t & compressedLength) {
-//dump();
-LOG(LOG_INFO, "len=%d", len);
-hexdump(srcData, len);
         bool compress_result = this->compress_60(srcData, len);
         if (this->flags & PACKET_COMPRESSED) {
             flags            = this->flags;
