@@ -510,14 +510,3 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
                              16),
                       0);
 }
-
-
-BOOST_AUTO_TEST_CASE(tryr)
-{
-    size_t pointer = -1;
-
-    LOG(LOG_INFO, "dump %u", pointer);
-    LOG(LOG_INFO, "dump %u", ~pointer);
-    LOG(LOG_INFO, "dump %x", ~~pointer);
-    LOG(LOG_INFO, "dump %x", ~~~pointer);
-}

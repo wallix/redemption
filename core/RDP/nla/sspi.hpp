@@ -92,13 +92,18 @@ struct SecPkgContext_Sizes
 
 struct SEC_WINNT_AUTH_IDENTITY
 {
-    uint16_t* User;
-    uint32_t UserLength;
-    uint16_t* Domain;
-    uint32_t DomainLength;
-    uint16_t* Password;
-    uint32_t PasswordLength;
+    // uint16_t* User;
+    // uint32_t UserLength;
+    // uint16_t* Domain;
+    // uint32_t DomainLength;
+    // uint16_t* Password;
+    // uint32_t PasswordLength;
+
+    Array User;
+    Array Domain;
+    Array Password;
     uint32_t Flags;
+
 
     void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY & src) {
         // TODO
@@ -311,7 +316,7 @@ struct SecurityFunctionTable {
     }
 
     // QUERY_CREDENTIALS_ATTRIBUTES_FN QueryCredentialsAttributes;
-    virtual SEC_STATUS QueryCredentialsAttributes(SecHandle * phCredential,
+    virtual SEC_STATUS QueryCredentialsAttributes(PCredHandle phCredential,
                                                   unsigned long ulAttribute,
                                                   void* pBuffer) {
         return SEC_E_UNSUPPORTED_FUNCTION;
@@ -338,12 +343,12 @@ struct SecurityFunctionTable {
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    virtual SEC_STATUS InitializeSecurityContext(SecHandle * phCredential, SecHandle * phContext,
+    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
                                                  char* pszTargetName, unsigned long fContextReq,
                                                  unsigned long Reserved1,
                                                  unsigned long TargetDataRep,
                                                  SecBufferDesc * pInput, unsigned long Reserved2,
-                                                 SecHandle * phNewContext, SecBufferDesc * pOutput,
+                                                 PCtxtHandle phNewContext, SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
         return SEC_E_UNSUPPORTED_FUNCTION;
@@ -351,9 +356,9 @@ struct SecurityFunctionTable {
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(SecHandle * phCredential, SecHandle * phContext,
+    virtual SEC_STATUS AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
                                              SecBufferDesc * pInput, unsigned long fContextReq,
-                                             unsigned long TargetDataRep, SecHandle * phNewContext,
+                                             unsigned long TargetDataRep, PCtxtHandle phNewContext,
                                              SecBufferDesc * pOutput,
                                              unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
@@ -363,45 +368,45 @@ struct SecurityFunctionTable {
 
     // GSS_Process_context_token ?
     // COMPLETE_AUTH_TOKEN CompleteAuthToken;
-    virtual SEC_STATUS CompleteAuthToken(SecHandle * phContext, SecBufferDesc * pToken) {
+    virtual SEC_STATUS CompleteAuthToken(PCtxtHandle phContext, SecBufferDesc * pToken) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Delete_sec_context
     // DELETE_SECURITY_CONTEXT DeleteSecurityContext;
-    virtual SEC_STATUS DeleteSecurityContext(SecHandle * phContext) {
+    virtual SEC_STATUS DeleteSecurityContext(PCtxtHandle phContext) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // APPLY_CONTROL_TOKEN ApplyControlToken;
-    virtual SEC_STATUS ApplyControlToken(SecHandle * phContext, SecBufferDesc * pInput) {
+    virtual SEC_STATUS ApplyControlToken(PCtxtHandle phContext, SecBufferDesc * pInput) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    virtual SEC_STATUS QueryContextAttributes(SecHandle * phContext, unsigned long ulAttribute,
+    virtual SEC_STATUS QueryContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
                                               void* pBuffer) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    virtual SEC_STATUS ImpersonateSecurityContext(SecHandle * phContext) {
+    virtual SEC_STATUS ImpersonateSecurityContext(PCtxtHandle phContext) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    virtual SEC_STATUS RevertSecurityContext(SecHandle * phContext) {
+    virtual SEC_STATUS RevertSecurityContext(PCtxtHandle phContext) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // MAKE_SIGNATURE MakeSignature;
-    virtual SEC_STATUS MakeSignature(SecHandle * phContext, unsigned long fQOP,
+    virtual SEC_STATUS MakeSignature(PCtxtHandle phContext, unsigned long fQOP,
                                       SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // VERIFY_SIGNATURE VerifySignature;
-    virtual SEC_STATUS VerifySignature(SecHandle * phContext, SecBufferDesc * pMessage,
+    virtual SEC_STATUS VerifySignature(PCtxtHandle phContext, SecBufferDesc * pMessage,
                                         unsigned long MessageSeqNo, unsigned long * pfQOP) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
@@ -444,7 +449,7 @@ struct SecurityFunctionTable {
 
     // GSS_Export_sec_context
     // EXPORT_SECURITY_CONTEXT ExportSecurityContext;
-    virtual SEC_STATUS ExportSecurityContext(SecHandle * phContext, unsigned long fFlags,
+    virtual SEC_STATUS ExportSecurityContext(PCtxtHandle phContext, unsigned long fFlags,
                                              SecBuffer * pPackedContext, HANDLE* pToken) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
@@ -452,13 +457,13 @@ struct SecurityFunctionTable {
     // GSS_Import_sec_context
     // IMPORT_SECURITY_CONTEXT ImportSecurityContext;
     virtual SEC_STATUS ImportSecurityContext(char* pszPackage, SecBuffer * pPackedContext,
-                                             HANDLE pToken, SecHandle * phContext) {
+                                             HANDLE pToken, PCtxtHandle phContext) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Add_cred
     // ADD_CREDENTIALS AddCredentials;
-    virtual SEC_STATUS AddCredentials(SecHandle * hCredentials, char* pszPrincipal,
+    virtual SEC_STATUS AddCredentials(PCredHandle phCredentials, char* pszPrincipal,
                                      char* pszPackage, uint32_t fCredentialUse,
                                      void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
                                      void* pvGetKeyArgument, TimeStamp * ptsExpiry) {
@@ -468,26 +473,26 @@ struct SecurityFunctionTable {
     // void* Reserved8;
 
     // QUERY_SECURITY_CONTEXT_TOKEN QuerySecurityContextToken;
-    virtual SEC_STATUS QuerySecurityContextToken(SecHandle * phContext, HANDLE* phToken) {
+    virtual SEC_STATUS QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    virtual SEC_STATUS EncryptMessage(SecHandle * phContext, unsigned long fQOP,
+    virtual SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
                                        SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    virtual SEC_STATUS DecryptMessage(SecHandle * phContext, SecBufferDesc * pMessage,
+    virtual SEC_STATUS DecryptMessage(PCtxtHandle phContext, SecBufferDesc * pMessage,
                                        unsigned long MessageSeqNo, unsigned long * pfQOP) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // SET_CONTEXT_ATTRIBUTES SetContextAttributes;
-    virtual SEC_STATUS SetContextAttributes(SecHandle * phContext, unsigned long ulAttribute,
+    virtual SEC_STATUS SetContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
                                             void* pBuffer, unsigned long cbBuffer) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }

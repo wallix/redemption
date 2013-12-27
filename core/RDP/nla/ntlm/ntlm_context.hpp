@@ -81,8 +81,8 @@ struct NTLMContext {
     int LmCompatibilityLevel;
     int SuppressExtendedProtection;
     bool SendWorkstationName;
-    // UNICODE_STRING Workstation;
-    // UNICODE_STRING ServicePrincipalName;
+    Array Workstation;
+    Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     uint8_t* ChannelBindingToken;
     uint8_t ChannelBindingsHash[16];
@@ -867,11 +867,19 @@ struct NTLMContext {
 
     }
 
-    void ntlm_SetContextWorkStation(const char * workstation) {
-        // TODO
+    void ntlm_SetContextWorkStation(const char * workstation, size_t length) {
+        this->Workstation.init(length);
+        memcpy(this->Workstation.get_data(), workstation, length);
     }
     void ntlm_SetContextServicePrincipalName(const char * pszTargetName) {
-        // TODO
+        const char * p = pszTargetName;
+        size_t length = 0;
+        while (!p) {
+            length++;
+            p++;
+        }
+        this->ServicePrincipalName.init(length);
+        memcpy(this->ServicePrincipalName.get_data(), pszTargetName, length);
     }
 };
 
