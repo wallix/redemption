@@ -33,5 +33,6 @@ g++ \
 -march=native \
 -DNDEBUG \
 -pedantic \
+-I $(dirname $0)/../../.. \
 "$@" \
 -lpcre
