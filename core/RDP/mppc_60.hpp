@@ -717,7 +717,12 @@ public:
 
         while (n)
         {
-            if (bits_left >= n) {
+            if (bits_left == 0)
+            {
+                opb_index++;
+                bits_left = 8;
+            }
+            else if (bits_left >= n) {
                 uint8_t tmp = _data << (8 - bits_left);
                 outputBuffer[opb_index] |= tmp;
                 bits_left -= n;
@@ -730,11 +735,6 @@ public:
                 n -= bits_left;
                 bits_left = 0;
             }   // if (bits_left >= n)
-
-            if (!bits_left) {
-                opb_index++;
-                bits_left = 8;
-            }   // if (!bits_left)
         }   // while (n)
     }   // void insert_n_bits(int n, uint32_t _data, char * outputBuffer,
         //     int & bits_left, int & opb_index)
@@ -797,7 +797,7 @@ int  __flagsHold = this->flagsHold;
 char __hash_table[1024 * 64 * 2];
 memcpy(__hash_table, this->hash_table, sizeof(__hash_table));
 */
-//LOG(LOG_INFO, ". len=%d", len);
+LOG(LOG_INFO, ". len=%d", len);
         if ((this->historyOffset + len) >= static_cast<int>(RDP_60_HIST_BUF_LEN)) {
             /* historyBuffer cannot hold srcData - rewind it */
             this->flagsHold |= PACKET_AT_FRONT;
@@ -871,12 +871,12 @@ memcpy(__hash_table, this->hash_table, sizeof(__hash_table));
                 int LUTIndex;
                 if (((offsetCacheIndex =
                      cache_find(this->offsetCache, copy_offset)) != -1) && true) {
-//LOG(LOG_INFO, "C");
+LOG(LOG_INFO, "C");
                     if ((lom >= len) && !offsetCacheIndex) {
-//LOG(LOG_INFO, "C lom=%d len=%d", lom, len);
+LOG(LOG_INFO, "C lom=%d len=%d", lom, len);
                     lom--;
 
-//LOG(LOG_INFO, "Find->%5d %5d %5d %5d - %d %d", *this->offsetCache, *(this->offsetCache + 1), *(this->offsetCache + 2), *(this->offsetCache + 3), copy_offset, offsetCacheIndex);
+LOG(LOG_INFO, "Find->%5d %5d %5d %5d - %d %d", *this->offsetCache, *(this->offsetCache + 1), *(this->offsetCache + 2), *(this->offsetCache + 3), copy_offset, offsetCacheIndex);
 //LOG(LOG_INFO, "historyOffset=%d", this->historyOffset);
 /*
 extern bool __debug;
