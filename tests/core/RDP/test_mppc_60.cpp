@@ -399,6 +399,33 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
     BOOST_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
         rdata, rlen));
 
+    //LOG(LOG_INFO, "rlen=%d", rlen);
+    //hexdump_d(rdata, rlen);
+
+    delete(mppc_dec);
+}
+
+BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
+{
+    #include "../../fixtures/test_mppc_7.hpp"
+
+    rdp_mppc_60_dec * mppc_dec = new rdp_mppc_60_dec();
+
+    memcpy(mppc_dec->history_buf, __historyBuffer, sizeof(__historyBuffer));
+    memcpy(mppc_dec->offset_cache, __offsetCache, sizeof(__offsetCache));
+    mppc_dec->history_ptr = mppc_dec->history_buf + __historyOffset;
+
+    uint8_t  compressionFlags = 0x22;
+
+    const uint8_t * rdata;
+    uint32_t        rlen;
+
+    mppc_dec->decompress(__outputBuffer, sizeof(__outputBuffer),
+        compressionFlags, rdata, rlen);
+
+    BOOST_CHECK_EQUAL(sizeof(__srcData), rlen);
+    BOOST_CHECK_EQUAL(0,                 memcmp(__srcData, rdata, rlen));
+
     LOG(LOG_INFO, "rlen=%d", rlen);
     hexdump_d(rdata, rlen);
 

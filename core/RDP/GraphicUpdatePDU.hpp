@@ -416,8 +416,22 @@ protected:
                            ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                         , this->encrypt
                         );
-
+/*
+extern bool __debug;
+if (__debug) {
+    LOG(LOG_INFO, "Before send data ...");
+    sleep(5);
+}
+*/
                     this->trans->send(fastpath_header, compressed_buffer_stream_orders);
+/*
+if (__debug) {
+    LOG(LOG_INFO, "After send data ...");
+    sleep(10);
+    LOG(LOG_INFO, "next ...");
+    __debug = false;
+}
+*/
                 }
             }
 
