@@ -24,6 +24,8 @@
 #include "cfgloader.hpp"
 // BASE64 TRY
 // #include "base64.hpp"
+#include <set>
+#include <map>
 
 struct FieldObserver : public ConfigurationHolder {
     /******************************************************
