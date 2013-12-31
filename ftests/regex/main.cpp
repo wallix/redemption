@@ -68,6 +68,14 @@ int main(int argc, char **argv) {
     std::cout.flush();
 
     if (argc < 3) {
+//         std::string line;
+//         while (std::getline(std::cin, line)) {
+//             if (regex.partial_search(line.c_str())) {
+//                 std::cout << "ok\n";
+//                 return 0;
+//             }
+//         }
+//         std::cout << (regex.partial_search_finish() ? "ok\n" : "fail\n");
         return 0;
     }
     else {

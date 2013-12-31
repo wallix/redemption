@@ -1047,50 +1047,14 @@ namespace re {
                 unsigned consume;
                 unsigned idx;
                 unsigned num_close;
-
-                StepRange(const RangeList * l, unsigned count_consume, unsigned id, unsigned numclose)
-                : rl(l)
-                , consume(count_consume)
-                , idx(id)
-                , num_close(numclose)
-                {}
-
-                StepRange(const RangeList * l, unsigned count_consume, unsigned id)
-                : rl(l)
-                , consume(count_consume)
-                , idx(id)
-                {}
-
-                StepRange(const RangeList * l, unsigned count_consume)
-                : rl(l)
-                , consume(count_consume)
-                {}
             };
 
             typedef StepRange * iterator;
 
-            void push_back(RangeList* val, unsigned count_consume)
+            StepRange & next_uninitialized()
             {
                 assert((this->last - this->list) != this->nodes);
-                new(this->last++) StepRange(val, count_consume);
-            }
-
-            void push_back(RangeList* val, unsigned count_consume, unsigned id)
-            {
-                assert((this->last - this->list) != this->nodes);
-                new(this->last++) StepRange(val, count_consume, id);
-            }
-
-            void push_back(RangeList* val, unsigned count_consume, unsigned id, unsigned numclose)
-            {
-                assert((this->last - this->list) != this->nodes);
-                new(this->last++) StepRange(val, count_consume, id, numclose);
-            }
-
-            void push_back(const StepRange & x)
-            {
-                assert((this->last - this->list) != this->nodes);
-                new(this->last++) StepRange(x);
+                return *this->last++;
             }
 
             iterator begin()
@@ -1158,7 +1122,6 @@ namespace re {
                         }
 
                         if (stl->next_is_finish || (stl->is_terminate && !consumer.valid())) {
-                            //l2.pop_back();
                             return active_capture ? ifirst->idx : 0;
                         }
 
@@ -1175,8 +1138,12 @@ namespace re {
                     }
                     std::cout << "\033[0m\n";
 #endif
-                    l2.push_back(*ifirst);
+                    StepRangeList::StepRange & sr = l2.next_uninitialized();
+                    sr.rl = ifirst->rl;
+                    sr.consume = ifirst->consume;
                     if (active_capture) {
+                        sr.idx = ifirst->idx;
+                        sr.num_close = ifirst->num_close;
                         ++new_trace;
                     }
                     continue ;
@@ -1243,6 +1210,10 @@ namespace re {
 
                         RangeList * const rl = count_consume == 1 ? first->next : reinterpret_cast<RangeList*>(first);
 
+                        StepRangeList::StepRange & sr = l2.next_uninitialized();
+                        sr.rl = rl;
+                        sr.consume = count_consume - 1;
+
                         if (active_capture) {
                             unsigned idx = ifirst->idx;
                             if (new_trace) {
@@ -1257,11 +1228,9 @@ namespace re {
 #ifdef DISPLAY_TRACE
                             std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m" << std::endl;
 #endif
-                            l2.push_back(rl, count_consume - 1, idx, first->num_close);
+                            sr.idx = idx;
+                            sr.num_close = first->num_close;
                             ++new_trace;
-                        }
-                        else {
-                            l2.push_back(rl, count_consume - 1);
                         }
 
                         if ((exact_match ? first->next_is_finish && !consumer.valid() : first->next_is_finish) || (first->is_terminate && count_consume == 1 && !consumer.valid())) {
@@ -1344,12 +1313,13 @@ namespace re {
 
             StepRangeList * pal1 = &this->l1;
             StepRangeList * pal2 = &this->l2;
-            if (active_capture) {
-                this->l1.push_back(&this->st_range_beginning, 0, *--this->pidx_trace_free);
-                tracer.start(*this->pidx_trace_free);
-            }
-            else {
-                this->l1.push_back(&this->st_range_beginning, 0);
+            {
+                StepRangeList::StepRange & sr = this->l1.next_uninitialized();
+                sr.rl = &this->st_range_beginning;
+                sr.consume = 0;
+                if (active_capture) {
+                    sr.idx = *--this->pidx_trace_free;
+                }
             }
 
             while (consumer.valid()) {
@@ -1383,16 +1353,16 @@ namespace re {
                         }
                         break;
                     }
+                    StepRangeList::StepRange & sr = pal1->next_uninitialized();
+                    sr.rl = &this->st_range_beginning;
+                    sr.consume = 0;
                     if (active_capture) {
                         --this->pidx_trace_free;
                         assert(this->pidx_trace_free >= this->idx_trace_free);
 #ifdef DISPLAY_TRACE
                         std::cout << "\t\033[32m-> " << *this->pidx_trace_free << "\033[0m" << std::endl;
 #endif
-                        pal1->push_back(this->st_range_list, 0, *this->pidx_trace_free);
-                    }
-                    else {
-                        pal1->push_back(this->st_range_list, 0);
+                        sr.idx = *this->pidx_trace_free;
                     }
                 }
                 if (active_capture) {
