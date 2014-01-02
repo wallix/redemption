@@ -53,7 +53,7 @@ class Array {
         this->init(size);
     }
 
-    virtual ~Array() {
+    ~Array() {
         // <this->data> is allocated dynamically.
         if (this->capacity > AUTOSIZE) {
             delete [] this->data;
@@ -68,8 +68,13 @@ class Array {
         return this->data;
     }
 
+    void copy(Array & other) {
+        this->init(other.size());
+        memcpy(this->get_data(), other.get_data(), this->size());
+    }
+
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
-    virtual void init(size_t v) {
+    void init(size_t v) {
         if (v != this->capacity) {
             try {
                 // <this->data> is allocated dynamically.

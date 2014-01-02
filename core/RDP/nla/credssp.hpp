@@ -135,22 +135,29 @@ struct TSRequest {
     uint32_t version;
 
     /* [1] negoTokens (NegoData) */
-    BStream negoTokens;
+    Array negoTokens;
+    // BStream negoTokens;
     /* [2] authInfo (OCTET STRING) */
-    BStream authInfo;
+    Array authInfo;
+    // BStream authInfo;
     /* [3] pubKeyAuth (OCTET STRING) */
-    BStream pubKeyAuth;
+    Array pubKeyAuth;
+    // BStream pubKeyAuth;
 
     TSRequest()
         : version(2)
-        , negoTokens(BStream())
-        , authInfo(BStream())
-        , pubKeyAuth(BStream())
+        , negoTokens(Array(0))
+        , authInfo(Array(0))
+        , pubKeyAuth(Array(0))
     {
     }
 
 
-    TSRequest(Stream & stream) {
+    TSRequest(Stream & stream)
+        : negoTokens(Array(0))
+        , authInfo(Array(0))
+        , pubKeyAuth(Array(0))
+    {
         this->recv(stream);
         // LOG(LOG_INFO, "TSRequest recv %d", res);
     }
@@ -262,10 +269,11 @@ struct TSRequest {
             }
 
             this->negoTokens.init(length);
-            this->negoTokens.out_copy_bytes(stream.p, length);
-            stream.in_skip_bytes(length);
-            this->negoTokens.mark_end();
-            this->negoTokens.rewind();
+            stream.in_copy_bytes(this->negoTokens.get_data(), length);
+            // this->negoTokens.out_copy_bytes(stream.p, length);
+            // stream.in_skip_bytes(length);
+            // this->negoTokens.mark_end();
+            // this->negoTokens.rewind();
 	}
 
 	/* [2] authInfo (OCTET STRING) */
@@ -277,10 +285,11 @@ struct TSRequest {
             }
 
             this->authInfo.init(length);
-            this->authInfo.out_copy_bytes(stream.p, length);
-            stream.in_skip_bytes(length);
-            this->authInfo.mark_end();
-            this->authInfo.rewind();
+            stream.in_copy_bytes(this->authInfo.get_data(), length);
+            // this->authInfo.out_copy_bytes(stream.p, length);
+            // stream.in_skip_bytes(length);
+            // this->authInfo.mark_end();
+            // this->authInfo.rewind();
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
@@ -291,10 +300,11 @@ struct TSRequest {
                 return -1;
             }
             this->pubKeyAuth.init(length);
-            this->pubKeyAuth.out_copy_bytes(stream.p, length);
-            stream.in_skip_bytes(length);
-            this->pubKeyAuth.mark_end();
-            this->pubKeyAuth.rewind();
+            stream.in_copy_bytes(this->pubKeyAuth.get_data(), length);
+            // this->pubKeyAuth.out_copy_bytes(stream.p, length);
+            // stream.in_skip_bytes(length);
+            // this->pubKeyAuth.mark_end();
+            // this->pubKeyAuth.rewind();
 	}
 
         return 0;

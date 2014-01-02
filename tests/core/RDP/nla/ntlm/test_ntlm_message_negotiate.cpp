@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE(TestNegotiate)
 
     NTLMNegotiateMessage NegoMsg;
 
-    NegoMsg.recv(ts_req.negoTokens);
+    StaticStream nego(ts_req.negoTokens.get_data(), ts_req.negoTokens.size());
+    NegoMsg.recv(nego);
 
 
     BOOST_CHECK_EQUAL(NegoMsg.negoFlags.flags, 0xe20882b7);

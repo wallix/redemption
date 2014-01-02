@@ -510,3 +510,18 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
                              16),
                       0);
 }
+
+
+BOOST_AUTO_TEST_CASE(TestOutputs)
+{
+    LOG(LOG_INFO, "SebBuffer size : %u", sizeof(SecBuffer));
+    LOG(LOG_INFO, "Array size : %u", sizeof(Array));
+    LOG(LOG_INFO, "size_t size : %u", sizeof(size_t));
+    LOG(LOG_INFO, "unsigned long size : %u", sizeof(unsigned long));
+    LOG(LOG_INFO, "uint8_t size : %u", sizeof(uint8_t));
+    LOG(LOG_INFO, "uint8_t* size : %u", sizeof(uint8_t*));
+    uint8_t autobuffer[AUTOSIZE];
+    LOG(LOG_INFO, "autobuffer size : %u", sizeof(autobuffer));
+
+
+}

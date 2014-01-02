@@ -110,6 +110,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
 	if (!context) {
             context = new NTLMContext;
+            context->init();
+            context->server = false;
 
             if (!context)
                 return SEC_E_INSUFFICIENT_MEMORY;
@@ -136,18 +138,25 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (pOutput->cBuffers < 1)
                 return SEC_E_INVALID_TOKEN;
 
-            // output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
+            output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!output_buffer)
                 return SEC_E_INVALID_TOKEN;
 
-            if (output_buffer->cbBuffer < 1)
+            if (output_buffer->Buffer.size() < 1)
                 return SEC_E_INVALID_TOKEN;
 
             if (context->state == NTLM_STATE_INITIAL)
                 context->state = NTLM_STATE_NEGOTIATE;
 
             if (context->state == NTLM_STATE_NEGOTIATE) {
+                context->ntlm_client_build_negotiate();
+                BStream out_stream;
+                context->NEGOTIATE_MESSAGE.emit(out_stream);
+                output_buffer->Buffer.init(out_stream.size());
+                // out_stream.rewind();
+                // out_stream.in_copy_bytes(output_buffer.Buffer.get_data(), out_stream.size());
+                memcpy(output_buffer->Buffer.get_data(), out_stream.get_data(), out_stream.size());
                 //context->ntlm_write_NegotiateMessage(output_buffer);
             }
             return SEC_E_OUT_OF_SEQUENCE;
@@ -156,12 +165,12 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (pInput->cBuffers < 1)
                 return SEC_E_INVALID_TOKEN;
 
-            // input_buffer = sspi_FindSecBuffer(pInput, SECBUFFER_TOKEN);
+            input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
 
             if (!input_buffer)
                 return SEC_E_INVALID_TOKEN;
 
-            if (input_buffer->cbBuffer < 1)
+            if (input_buffer->Buffer.size() < 1)
                 return SEC_E_INVALID_TOKEN;
 
             // channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
@@ -172,6 +181,13 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             // }
 
             if (context->state == NTLM_STATE_CHALLENGE) {
+                BStream input_stream;
+                input_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
+                                            input_buffer->Buffer.size());
+                input_stream.mark_end();
+                input_stream.rewind();
+                context->CHALLENGE_MESSAGE.recv(input_stream);
+
                 // status = ntlm_read_ChallengeMessage(context, input_buffer);
 
                 if (!pOutput)
@@ -185,10 +201,28 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 if (!output_buffer)
                     return SEC_E_INVALID_TOKEN;
 
-                if (output_buffer->cbBuffer < 1)
+                if (output_buffer->Buffer.size() < 1)
                     return SEC_E_INSUFFICIENT_MEMORY;
 
                 if (context->state == NTLM_STATE_AUTHENTICATE) {
+                    SEC_WINNT_AUTH_IDENTITY & id = context->identity;
+                    context->ntlm_client_build_authenticate(id.Password.get_data(),
+                                                            id.Password.size(),
+                                                            id.User.get_data(),
+                                                            id.User.size(),
+                                                            id.Domain.get_data(),
+                                                            id.Domain.size(),
+                                                            context->Workstation.get_data(),
+                                                            context->Workstation.size());
+                    BStream out_stream;
+                    context->AUTHENTICATE_MESSAGE.emit(out_stream);
+                    output_buffer->Buffer.init(out_stream.size());
+                    // out_stream.rewind();
+                    // out_stream.in_copy_bytes(output_buffer.Buffer.get_data(),
+                    //                          out_stream.size());
+                    memcpy(output_buffer->Buffer.get_data(),
+                           out_stream.get_data(), out_stream.size());
+
                     // return ntlm_write_AuthenticateMessage(context, output_buffer);
                 }
             }

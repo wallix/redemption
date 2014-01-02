@@ -23,17 +23,60 @@
 
 #include <stdio.h>
 
+// struct SecBuffer {
+//     unsigned long cbBuffer;
+//     unsigned long BufferType;
+//     void *        pvBuffer;
+// };
+#define SECBUFFER_VERSION			0
+
+/* Buffer Types */
+#define SECBUFFER_EMPTY				0
+#define SECBUFFER_DATA				1
+#define SECBUFFER_TOKEN				2
+#define SECBUFFER_PKG_PARAMS			3
+#define SECBUFFER_MISSING			4
+#define SECBUFFER_EXTRA				5
+#define SECBUFFER_STREAM_TRAILER		6
+#define SECBUFFER_STREAM_HEADER			7
+#define SECBUFFER_NEGOTIATION_INFO		8
+#define SECBUFFER_PADDING			9
+#define SECBUFFER_STREAM			10
+#define SECBUFFER_MECHLIST			11
+#define SECBUFFER_MECHLIST_SIGNATURE		12
+#define SECBUFFER_TARGET			13
+#define SECBUFFER_CHANNEL_BINDINGS		14
+#define SECBUFFER_CHANGE_PASS_RESPONSE		15
+#define SECBUFFER_TARGET_HOST			16
+#define SECBUFFER_ALERT				17
+
 struct SecBuffer {
-    unsigned long cbBuffer;
     unsigned long BufferType;
-    void *        pvBuffer;
+    Array         Buffer;
 };
+
 typedef SecBuffer *PSecBuffer;
 struct SecBufferDesc
 {
     unsigned long ulVersion;
     unsigned long cBuffers;
     SecBuffer *   pBuffers;
+
+    PSecBuffer FindSecBuffer(unsigned long BufferType)
+    {
+        unsigned long index;
+        PSecBuffer pSecBuffer = NULL;
+
+	for (index = 0; index < this->cBuffers; index++) {
+            if (this->pBuffers[index].BufferType == BufferType) {
+                pSecBuffer = &(this->pBuffers[index]);
+                break;
+            }
+        }
+
+	return pSecBuffer;
+    }
+
 };
 
 struct TimeStamp {
@@ -104,8 +147,10 @@ struct SEC_WINNT_AUTH_IDENTITY
     Array Password;
     uint32_t Flags;
 
-
     void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY & src) {
+        this->User.init(src.User.size());
+        this->Domain.init(src.Domain.size());
+        this->Password.init(src.Password.size());
         // TODO
     }
 };
