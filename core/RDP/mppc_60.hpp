@@ -713,45 +713,47 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), rdp_mppc_enc::HASH_BUF_LEN * 2);
     }
 
-    static inline void insert_n_bits(int n, uint32_t _data,
-        uint8_t * outputBuffer, int & bits_left, int & opb_index) {
+    static inline void insert_n_bits(uint8_t n, uint32_t _data,
+        uint8_t * outputBuffer, uint8_t & bits_left, uint16_t & opb_index) {
+
+REDASSERT(n);
+REDASSERT((_data & ((1 << n) - 1)) == _data);
 
         while (n)
         {
+REDASSERT(bits_left >= 0);
+            uint8_t tmp = _data << (8 - bits_left);
+            outputBuffer[opb_index] |= tmp;
+            if (bits_left >= n) {
+                bits_left -= n;
+                n = 0;
+            }
+            else {
+                _data >>= bits_left;
+                n -= bits_left;
+                bits_left = 0;
+            }
+
             if (bits_left == 0)
             {
                 opb_index++;
                 bits_left = 8;
             }
-
-            if (bits_left >= n) {
-                uint8_t tmp = _data << (8 - bits_left);
-                outputBuffer[opb_index] |= tmp;
-                bits_left -= n;
-                n = 0;
-            }
-            else {
-                uint8_t tmp = _data << (8 - bits_left);
-                outputBuffer[opb_index] |= tmp;
-                _data >>= bits_left;
-                n -= bits_left;
-                bits_left = 0;
-            }
         }
     }
 
     static inline void encode_literal(uint16_t c, uint8_t * outputBuffer,
-        int & bits_left, int & opb_index) {
+        uint8_t & bits_left, uint16_t & opb_index) {
         rdp_mppc_60_enc::insert_n_bits(HuffLenLEC[c], HuffCodeLEC[c],
             outputBuffer, bits_left, opb_index);
     }
 
     static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset) {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++) {
             if (offset_cache[i] == copy_offset) {
-
                 return i;
             }
+        }
 
         return -1;
     }
@@ -775,9 +777,9 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         if ((srcData == NULL) || (len <= 0) || (len > static_cast<int>(RDP_60_HIST_BUF_LEN)))
             return false;
 
-        int opb_index = 0; /* index into outputBuffer           */
-        int bits_left = 8; /* unused bits in current uint8_t in */
-                           /*     outputBuffer                  */
+        uint16_t opb_index = 0; /* index into outputBuffer           */
+        uint8_t  bits_left = 8; /* unused bits in current uint8_t in */
+                                /*     outputBuffer                  */
 
         ::memset(this->outputBuffer, 0, RDP_60_HIST_BUF_LEN);
 
@@ -795,15 +797,15 @@ memcpy(__hash_table, this->hash_table, sizeof(__hash_table));
 */
 
 LOG(LOG_INFO, ". len=%d", len);
-        if ((this->historyOffset + len) > static_cast<int>(RDP_60_HIST_BUF_LEN)) {
-LOG(LOG_INFO, "F");
+        if ((this->historyOffset + len) >= static_cast<int>(RDP_60_HIST_BUF_LEN)) {
+LOG(LOG_INFO, "F historyOffset=%d", this->historyOffset);
             /* historyBuffer cannot hold srcData - rewind it */
-            this->flagsHold |= PACKET_AT_FRONT;
-            ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
             ::memmove(this->historyBuffer,
                 (this->historyBuffer + (this->historyOffset - 32768)),
                 32768);
             this->historyOffset = 32768;
+            this->flagsHold |= PACKET_AT_FRONT;
+            ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
         }
 
         // add/append new data to historyBuffer
@@ -816,6 +818,7 @@ LOG(LOG_INFO, "F");
         if (this->historyOffset == 0) {
 LOG(LOG_INFO, "B");
             // encode first two bytes as literals
+/*
             int index, count;
             for (index = 0, count = std::min(2, len); index < count; index++) {
                 rdp_mppc_60_enc::encode_literal(
@@ -823,7 +826,20 @@ LOG(LOG_INFO, "B");
                     this->outputBuffer, bits_left, opb_index);
             }
 
+            hash_table[rdp_mppc_enc::signature(this->historyBuffer)]     = 0;
+            if (count )
+            hash_table[rdp_mppc_enc::signature(this->historyBuffer + 1)] = 1;
             ctr = count;
+*/
+            for (int x = 0; x < 2; x++) {
+                rdp_mppc_60_enc::encode_literal(
+                    this->historyBuffer[this->historyOffset + x],
+                    this->outputBuffer, bits_left, opb_index);
+            }
+
+            hash_table[rdp_mppc_enc::signature(reinterpret_cast<char *>(this->historyBuffer))]     = 0;
+            hash_table[rdp_mppc_enc::signature(reinterpret_cast<char *>(this->historyBuffer) + 1)] = 1;
+            ctr                                            = 2;
         }
 
         int lom = 0;
@@ -861,15 +877,16 @@ LOG(LOG_INFO, "B");
 
                 // encode copy_offset and insert into output buffer
                 uint32_t copy_offset = this->historyOffset + ctr - previous_match;
+//LOG(LOG_INFO, "lom=%d copy_offset=%d", lom, copy_offset);
 
                 int offsetCacheIndex;
                 int LUTIndex;
                 if (((offsetCacheIndex =
                      cache_find(this->offsetCache, copy_offset)) != -1) && true) {
-LOG(LOG_INFO, "C index=%d", offsetCacheIndex);
+//LOG(LOG_INFO, "C index=%d", offsetCacheIndex);
                     if ((lom >= len) && !offsetCacheIndex) {
 LOG(LOG_INFO, "C lom=%d len=%d", lom, len);
-                    lom--;
+//                    lom--;
 
 LOG(LOG_INFO, "Find->%5d %5d %5d %5d - %d %d", *this->offsetCache, *(this->offsetCache + 1), *(this->offsetCache + 2), *(this->offsetCache + 3), copy_offset, offsetCacheIndex);
 //LOG(LOG_INFO, "historyOffset=%d", this->historyOffset);
@@ -942,9 +959,10 @@ hexdump_d(srcData, len);
         }
 
         // add End-of-Stream (EOS) marker
-        rdp_mppc_60_enc::insert_n_bits(13, 0x17ff, outputBuffer, bits_left, opb_index);
+        rdp_mppc_60_enc::encode_literal(256, this->outputBuffer, bits_left, opb_index);
 
         if (opb_index >= len) {
+LOG(LOG_INFO, "U");
             ::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
             this->historyOffset = 0;
 
@@ -962,6 +980,9 @@ hexdump_d(srcData, len);
         this->historyOffset += len;
 
         // if bits_left == 8, opb_index has already been incremented
+if (!bits_left) {
+    LOG(LOG_INFO, "bits_left == 0");
+}
         this->bytes_in_opb  =  opb_index + (bits_left != 8);
 
         this->flags         |= PACKET_COMPRESSED;
