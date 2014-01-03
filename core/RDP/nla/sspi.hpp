@@ -22,12 +22,9 @@
 #define _REDEMPTION_CORE_RDP_NLA_SSPI_HPP_
 
 #include <stdio.h>
+#include "utf.hpp"
 
-// struct SecBuffer {
-//     unsigned long cbBuffer;
-//     unsigned long BufferType;
-//     void *        pvBuffer;
-// };
+#define NTLMSP_NAME "NTLM"
 #define SECBUFFER_VERSION			0
 
 /* Buffer Types */
@@ -94,6 +91,8 @@ struct SecPkgInfo {
     const char* Name;
     const char* Comment;
 };
+typedef SecPkgInfo *PSecPkgInfo;
+
 const char Ntlm_Name[] = "NTLM";
 const char Ntlm_Comment[] = "NTLM Security Package";
 const SecPkgInfo NTLM_SecPkgInfo = {
@@ -134,6 +133,10 @@ struct SecPkgContext_Sizes
     uint32_t cbSecurityTrailer;
 };
 
+enum SecIdFlag {
+    SEC_WINNT_AUTH_IDENTITY_ANSI = 0x1,
+    SEC_WINNT_AUTH_IDENTITY_UNICODE = 0x2,
+};
 
 struct SEC_WINNT_AUTH_IDENTITY
 {
@@ -148,6 +151,37 @@ struct SEC_WINNT_AUTH_IDENTITY
     Array Domain;
     Array Password;
     uint32_t Flags;
+
+    void SetAuthIdentity(const uint8_t * user, const uint8_t * domain, const uint8_t * password) {
+        this->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+        if (user) {
+            size_t user_len = UTF8Len(user);
+            this->User.init(user_len * 2);
+            UTF8toUTF16(user, this->User.get_data(), user_len);
+	}
+        else {
+            this->User.init(0);
+	}
+
+        if (domain) {
+            size_t domain_len = UTF8Len(domain);
+            this->Domain.init(domain_len * 2);
+            UTF8toUTF16(domain, this->Domain.get_data(), domain_len);
+	}
+        else {
+            this->Domain.init(0);
+	}
+
+        if (password) {
+            size_t password_len = UTF8Len(password);
+            this->Password.init(password_len * 2);
+            UTF8toUTF16(password, this->Password.get_data(), password_len);
+	}
+        else {
+            this->Password.init(0);
+	}
+
+    }
 
     void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY & src) {
         this->User.init(src.User.size());
@@ -334,6 +368,10 @@ enum ISC_REQ {
     ISC_REQ_USE_HTTP_STYLE = 0x01000000
 };
 
+enum SecDrep {
+    SECURITY_NATIVE_DREP = 0x00000010,
+    SECURITY_NETWORK_DREP = 0x00000000
+};
 
 enum CredentialUse {
     SECPKG_CRED_INBOUND = 0x00000001,
@@ -343,6 +381,41 @@ enum CredentialUse {
     SECPKG_CRED_PROCESS_POLICY_ONLY = 0x00000020
 };
 
+enum SecPkg_Att {
+/* Security Context Attributes */
+
+    SECPKG_ATTR_SIZES = 0,
+    SECPKG_ATTR_NAMES = 1,
+    SECPKG_ATTR_LIFESPAN = 2,
+    SECPKG_ATTR_DCE_INFO = 3,
+    SECPKG_ATTR_STREAM_SIZES = 4,
+    SECPKG_ATTR_KEY_INFO = 5,
+    SECPKG_ATTR_AUTHORITY = 6,
+    SECPKG_ATTR_PROTO_INFO = 7,
+    SECPKG_ATTR_PASSWORD_EXPIRY = 8,
+    SECPKG_ATTR_SESSION_KEY = 9,
+    SECPKG_ATTR_PACKAGE_INFO = 10,
+    SECPKG_ATTR_USER_FLAGS = 11,
+    SECPKG_ATTR_NEGOTIATION_INFO = 12,
+    SECPKG_ATTR_NATIVE_NAMES = 13,
+    SECPKG_ATTR_FLAGS = 14,
+    SECPKG_ATTR_USE_VALIDATED = 15,
+    SECPKG_ATTR_CREDENTIAL_NAME = 16,
+    SECPKG_ATTR_TARGET_INFORMATION = 17,
+    SECPKG_ATTR_ACCESS_TOKEN = 18,
+    SECPKG_ATTR_TARGET = 19,
+    SECPKG_ATTR_AUTHENTICATION_ID = 20,
+    SECPKG_ATTR_LOGOFF_TIME = 21,
+    SECPKG_ATTR_NEGO_KEYS = 22,
+    SECPKG_ATTR_PROMPTING_NEEDED = 24,
+    SECPKG_ATTR_UNIQUE_BINDINGS = 25,
+    SECPKG_ATTR_ENDPOINT_BINDINGS = 26,
+    SECPKG_ATTR_CLIENT_SPECIFIED_TARGET = 27,
+    SECPKG_ATTR_LAST_CLIENT_TOKEN_STATUS = 30,
+    SECPKG_ATTR_NEGO_PKG_INFO = 31,
+    SECPKG_ATTR_NEGO_STATUS = 32,
+    SECPKG_ATTR_CONTEXT_DELETED = 33
+};
 
 
 typedef void (*SEC_GET_KEY_FN)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
@@ -371,7 +444,7 @@ struct SecurityFunctionTable {
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    virtual SEC_STATUS AcquireCredentialsHandle(char * pszPrincipal, char * pszPackage,
+    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal, const char * pszPackage,
                                                 unsigned long fCredentialUse, void* pvLogonID,
                                                 void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
                                                 void* pvGetKeyArgument, PCredHandle phCredential,
@@ -464,7 +537,7 @@ struct SecurityFunctionTable {
     }
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    virtual SEC_STATUS QuerySecurityPackageInfo(char* pszPackageName,
+    virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) {
 
 	int index;
@@ -554,10 +627,6 @@ enum SecInterface {
     SChannel_Interface
 };
 
-SecurityFunctionTable * InitSecurityInterface(SecInterface secInter) {
-
-    return NULL;
-}
 
 
 #endif

@@ -32,7 +32,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    virtual SEC_STATUS AcquireCredentialsHandle(char * pszPrincipal, char * pszPackage,
+    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal, const char * pszPackage,
                                                 unsigned long fCredentialUse, void* pvLogonID,
                                                 void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
                                                 void* pvGetKeyArgument, PCredHandle phCredential,
@@ -234,6 +234,14 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         }
 
 	return SEC_E_OUT_OF_SEQUENCE;
+    }
+
+    virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
+        NTLMContext * toDelete = (NTLMContext*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
+        if (!toDelete) {
+            delete toDelete;
+        }
+        return SEC_E_OK;
     }
 };
 
