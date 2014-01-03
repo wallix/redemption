@@ -513,73 +513,17 @@ struct NTLMContext {
     }
 
     void ntlm_compute_MIC() {
-        // uint8_t * firstcheck = NULL;
-        // uint8_t * secondcheck = NULL;
-        // size_t sizecheck = 0;
-        {
-            uint8_t * MIC = this->MessageIntegrityCheck;
-            SslHMAC_Md5 hmac_md5resp(this->ExportedSessionKey, 16);
-            BStream Messages2;
-            BStream Messages;
-            BStream Messages3;
-            this->NEGOTIATE_MESSAGE.emit(Messages);
-            this->CHALLENGE_MESSAGE.emit(Messages);
-            // when computing MIC, authenticate message should not include MIC
-            this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-            this->AUTHENTICATE_MESSAGE.emit(Messages);
-            this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-            // firstcheck = new uint8_t[Messages.size()];
-            // memcpy(firstcheck, Messages.get_data(), Messages.size());
-            // sizecheck = Messages.size();
-            hmac_md5resp.update(Messages.get_data(), Messages.size());
-            // LOG(LOG_INFO, "Message size %u", Messages.size());
-            // hexdump_c(Messages.get_data(), Messages.size());
-            hmac_md5resp.final(MIC, 16);
-
-        }
-
-        // {
-        //     uint8_t * MIC = this->MessageIntegrityCheck;
-
-        //     SslHMAC_Md5 hmac_md5resp(this->ExportedSessionKey, 16);
-        //     BStream NegoMsg;
-        //     BStream ChalMsg;
-        //     BStream AuthMsg;
-        //     this->NEGOTIATE_MESSAGE.emit(NegoMsg);
-        //     this->CHALLENGE_MESSAGE.emit(ChalMsg);
-        //     this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-        //     this->AUTHENTICATE_MESSAGE.emit(AuthMsg);
-        //     this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-        //     BStream Msg;
-        //     Msg.out_copy_bytes(NegoMsg.get_data(), NegoMsg.size());
-        //     Msg.out_copy_bytes(ChalMsg.get_data(), ChalMsg.size());
-        //     Msg.out_copy_bytes(AuthMsg.get_data(), AuthMsg.size());
-        //     Msg.mark_end();
-        //     secondcheck = new uint8_t[Msg.size()];
-        //     memcpy(secondcheck, Msg.get_data(), Msg.size());
-        //     hmac_md5resp.update(Msg.get_data(), Msg.size());
-        //     // hmac_md5resp.update(NegoMsg.get_data(), NegoMsg.size());
-        //     // hmac_md5resp.update(ChalMsg.get_data(), ChalMsg.size());
-        //     // hmac_md5resp.update(AuthMsg.get_data(), AuthMsg.size());
-        //     // LOG(LOG_INFO, "Message size sum %u", NegoMsg.size() + ChalMsg.size() + AuthMsg.size());
-        //     // hexdump_c(NegoMsg.get_data(), NegoMsg.size());
-        //     // hexdump_c(ChalMsg.get_data(), ChalMsg.size());
-        //     // hexdump_c(AuthMsg.get_data(), AuthMsg.size());
-        //     LOG(LOG_INFO, "Message size Msg %u", Msg.size());
-        //     // hexdump_c(Msg.get_data(), Msg.size());
-
-        //     // hmac_md5resp.final(MIC, 16);
-        // }
-
-        // LOG(LOG_INFO, "========= RESULT %x ",
-        //     memcmp(firstcheck, secondcheck, sizecheck));
-        // LOG(LOG_INFO, "========= FIRST ");
-        // hexdump_c(firstcheck, sizecheck);
-        // LOG(LOG_INFO, "========= SECOND ");
-        // hexdump_c(secondcheck, sizecheck);
-
-        // delete [] firstcheck;
-        // delete [] secondcheck;
+        uint8_t * MIC = this->MessageIntegrityCheck;
+        SslHMAC_Md5 hmac_md5resp(this->ExportedSessionKey, 16);
+        BStream Messages;
+        this->NEGOTIATE_MESSAGE.emit(Messages);
+        this->CHALLENGE_MESSAGE.emit(Messages);
+        // when computing MIC, authenticate message should not include MIC
+        this->AUTHENTICATE_MESSAGE.ignore_mic = true;
+        this->AUTHENTICATE_MESSAGE.emit(Messages);
+        this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+        hmac_md5resp.update(Messages.get_data(), Messages.size());
+        hmac_md5resp.final(MIC, 16);
     }
 
 
