@@ -70,13 +70,11 @@ int main(int argc, char **argv) {
     if (argc < 3) {
         std::string line;
         std::cout << "str: ";
-        while (std::getline(std::cin, line) && line.empty()) {
-        }
-        Regex::ExactPartial part_rgx = regex.part_of_text_exact_search(line.c_str());
-        while (Regex::match_undetermined == part_rgx.next(line.c_str())) {
-            std::cout << "str: ";
-            if (!std::getline(std::cin, line)) {
-                break;
+        std::getline(std::cin, line);
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(line.empty());
+        if (Regex::match_undetermined == part_rgx.state()) {
+            while (Regex::match_undetermined == part_rgx.next(line.c_str())
+                && (std::cout << "str: ", std::getline(std::cin, line))) {
             }
         }
 
@@ -86,7 +84,7 @@ int main(int argc, char **argv) {
             default: ;
         }
 
-        if (part_rgx.finish()) {
+        if (Regex::match_success == part_rgx.finish()) {
             std::cout << "ok\n";
             return 0;
         }

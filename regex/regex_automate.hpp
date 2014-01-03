@@ -615,6 +615,11 @@ namespace re {
             return this->nb_capture;
         }
 
+        unsigned node_count() const
+        {
+            return this->nodes;
+        }
+
     private:
         unsigned pop_idx_trace(unsigned cp_idx)
         {
@@ -821,13 +826,17 @@ namespace re {
         typedef std::pair<const char *, const char *> range_t;
         typedef std::vector<range_t> range_matches;
 
-        struct DefaultMatchTracer
+        class DefaultMatchTracer
         {
-            void start(unsigned /*idx*/) const
+            StateMachine2 & sm;
+
+        public:
+            DefaultMatchTracer(StateMachine2 & sm)
+            : sm(sm)
             {}
 
-            void new_id(unsigned /*old_id*/, unsigned /*new_id*/) const
-            {}
+            unsigned new_id(unsigned old_id) const
+            { return this->sm.pop_idx_trace(old_id); }
 
             bool open(unsigned /*idx*/, const char *, unsigned /*num_cap*/) const
             { return true; }
@@ -835,11 +844,16 @@ namespace re {
             bool close(unsigned /*idx*/, const char *, unsigned /*num_cap*/) const
             { return true; }
 
-            void fail(unsigned /*idx*/) const
-            {}
+            void fail(unsigned idx) const
+            { this->sm.push_idx_trace(idx); }
 
-            void good(unsigned /*idx*/) const
-            {}
+            void good(unsigned idx) const
+            { this->sm.set_idx_trace(idx); }
+
+            typedef std::pair<const unsigned *, const unsigned *> range_idx_trace;
+
+            range_idx_trace range_idx_trace_reserved() const
+            { return range_idx_trace(this->sm.idx_trace_free, this->sm.pidx_trace_free); }
         };
 
     private:
@@ -853,7 +867,7 @@ namespace re {
             if (0 == this->nb_states) {
                 return !*s;
             }
-            return this->match(s, step_limit, DefaultMatchTracer(), pos,
+            return this->match(s, step_limit, DefaultMatchTracer(*this), pos,
                                ExactMatch<true>(), ActiveCapture<false>(), ActivePartOfText<false>());
         }
 
@@ -862,7 +876,7 @@ namespace re {
             if (this->nb_capture == 0) {
                 return this->exact_search(s, step_limit, pos);
             }
-            return this->match(s, step_limit, DefaultMatchTracer(), pos,
+            return this->match(s, step_limit, DefaultMatchTracer(*this), pos,
                                ExactMatch<true>(), ActiveCapture<true>(), ActivePartOfText<false>());
         }
 
@@ -881,7 +895,7 @@ namespace re {
             if (0 == this->nb_states) {
                 return !*s;
             }
-            return this->match(s, step_limit, DefaultMatchTracer(), pos,
+            return this->match(s, step_limit, DefaultMatchTracer(*this), pos,
                                ExactMatch<false>(), ActiveCapture<false>(), ActivePartOfText<false>());
         }
 
@@ -890,7 +904,7 @@ namespace re {
             if (this->nb_capture == 0) {
                 return this->search(s, step_limit, pos);
             }
-            return this->match(s, step_limit, DefaultMatchTracer(), pos,
+            return this->match(s, step_limit, DefaultMatchTracer(*this), pos,
                                ExactMatch<false>(), ActiveCapture<true>(), ActivePartOfText<false>());
         }
 
@@ -910,7 +924,7 @@ namespace re {
             if (0 == this->nb_states) {
                 return !*s;
             }
-            return this->match_run(s, step_limit, DefaultMatchTracer(), pos,
+            return this->match_run(s, step_limit, DefaultMatchTracer(*this), pos,
                                    ExactMatch<true>(), ActiveCapture<false>(), ActivePartOfText<true>());
         }
 
@@ -919,7 +933,7 @@ namespace re {
             if (this->nb_capture == 0) {
                 return this->part_of_text_exact_search(s, step_limit, pos);
             }
-            return this->match_run(s, step_limit, DefaultMatchTracer(), pos,
+            return this->match_run(s, step_limit, DefaultMatchTracer(*this), pos,
                                    ExactMatch<true>(), ActiveCapture<true>(), ActivePartOfText<true>());
         }
 
@@ -939,7 +953,7 @@ namespace re {
             if (0 == this->nb_states) {
                 return !*s;
             }
-            return this->match_run(s, step_limit, DefaultMatchTracer(), pos,
+            return this->match_run(s, step_limit, DefaultMatchTracer(*this), pos,
                                    ExactMatch<false>(), ActiveCapture<false>(), ActivePartOfText<true>());
         }
 
@@ -948,7 +962,7 @@ namespace re {
             if (this->nb_capture == 0) {
                 return this->part_of_text_search(s, step_limit, pos);
             }
-            return this->match_run(s, step_limit, DefaultMatchTracer(), pos,
+            return this->match_run(s, step_limit, DefaultMatchTracer(*this), pos,
                                    ExactMatch<false>(), ActiveCapture<true>(), ActivePartOfText<true>());
         }
 
@@ -966,30 +980,39 @@ namespace re {
 
         unsigned part_of_text_start(const char * s, size_t * pos = 0)
         {
-            return this->match_start(s, DefaultMatchTracer(), pos, ActiveCapture<false>());
+            if (0 == this->nb_states) {
+                return !*s ? match_success : match_fail;
+            }
+            return this->match_start(s, DefaultMatchTracer(*this), pos, ActiveCapture<false>());
         }
 
         unsigned part_of_text_start_with_trace(const char * s, size_t * pos = 0)
         {
-            return this->match_start(s, DefaultMatchTracer(), pos, ActiveCapture<true>());
+            if (this->nb_capture == 0) {
+                return this->part_of_text_start(s, pos);
+            }
+            return this->match_start(s, DefaultMatchTracer(*this), pos, ActiveCapture<true>());
         }
 
         template<typename Tracer>
         unsigned part_of_text_start_with_trace(const char * s, Tracer tracer, size_t * pos = 0)
         {
+            if (this->nb_capture == 0) {
+                return this->part_of_text_start(s, pos);
+            }
             return this->match_start(s, tracer, pos, ActiveCapture<true>());
         }
 
 
         bool part_of_text_finish(size_t * pos = 0)
         {
-            return this->match_finish(DefaultMatchTracer(), pos, ActiveCapture<false>(),
+            return this->match_finish(DefaultMatchTracer(*this), pos, ActiveCapture<false>(),
                                       ActivePartOfText<true>());
         }
 
         bool part_of_text_finish_with_trace(size_t * pos = 0)
         {
-            return this->match_finish(DefaultMatchTracer(), pos, ActiveCapture<true>(),
+            return this->match_finish(DefaultMatchTracer(*this), pos, ActiveCapture<true>(),
                                       ActivePartOfText<true>());
         }
 
@@ -1172,6 +1195,9 @@ namespace re {
                 return *this->last++;
             }
 
+            void pop()
+            { --this->last; }
+
             iterator begin()
             { return this->list; }
 
@@ -1231,28 +1257,43 @@ namespace re {
         }
 
         template<typename Tracer>
-        void set_trace_open(unsigned idx, unsigned num_open, Tracer tracer)
+        void fail_trace(unsigned idx, Tracer tracer)
+        {
+            RE_SHOW(std::cout << "\t\033[35mx " << idx << "\033[0m\n");
+            tracer.fail(idx);
+        }
+
+        template<typename Tracer>
+        bool set_trace_open(unsigned idx, unsigned num_open, Tracer tracer)
         {
             if (num_open != -1u) {
                 unsigned num = num_open;
                 const char * & trace = this->traces[idx * this->nb_capture + num];
-                if (!trace && tracer.open(idx, this->s, num)) {
+                if (!trace) {
                     RE_SHOW(std::cout << "\t" << idx << "\t(open) "<< num << std::endl);
+                    if (!tracer.open(idx, this->s, num)) {
+                        this->fail_trace(idx, tracer);
+                        return false;
+                    }
                     trace = this->s;
                 }
             }
+            return true;
         }
 
         template<typename Tracer>
-        void set_trace_close(unsigned idx, unsigned num_close, Tracer tracer)
+        bool set_trace_close(unsigned idx, unsigned num_close, Tracer tracer)
         {
             if (num_close != -1u) {
                 unsigned num = num_close;
-                if (tracer.close(idx, this->s, num)) {
-                    RE_SHOW(std::cout << "\t" << idx << "\t(close) "<< num << std::endl);
-                    this->traces[idx * this->nb_capture + num] = this->consumer.str();
+                if (!tracer.close(idx, this->s, num)) {
+                    this->fail_trace(idx, tracer);
+                    return false;
                 }
+                RE_SHOW(std::cout << "\t" << idx << "\t(close) "<< num << std::endl);
+                this->traces[idx * this->nb_capture + num] = this->consumer.str();
             }
+            return true;
         }
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
@@ -1294,7 +1335,9 @@ namespace re {
                             ifirst->real_count_consume += count_consume - 1;
 
                             if (active_capture && count_consume_is_one) {
-                                this->set_trace_close(ifirst->idx, ifirst->num_close, tracer);
+                                if (!this->set_trace_close(ifirst->idx, ifirst->num_close, tracer)) {
+                                    continue;
+                                }
                             }
 
                             if (((exact_match ? stl.next_is_finish && !consumer.valid() : stl.next_is_finish)
@@ -1313,7 +1356,9 @@ namespace re {
                             }
 
                             if (active_capture) {
-                                this->set_trace_close(ifirst->idx, ifirst->num_close, tracer);
+                                if (!this->set_trace_close(ifirst->idx, ifirst->num_close, tracer)) {
+                                    continue;
+                                }
                             }
 
                             if (stl.next_is_finish || (stl.is_terminate && !consumer.valid())) {
@@ -1391,13 +1436,16 @@ namespace re {
                         if (active_capture) {
                             unsigned idx = ifirst->idx;
                             if (new_trace) {
-                                idx = this->pop_idx_trace(ifirst->idx);
-                                tracer.new_id(ifirst->idx, idx);
+                                idx = tracer.new_id(ifirst->idx);
                             }
 
-                            this->set_trace_open(idx, first->num_open, tracer);
-                            if (count_consume_is_one) {
-                                this->set_trace_close(idx, first->num_close, tracer);
+                            if (!this->set_trace_open(idx, first->num_open, tracer)) {
+                                l2.pop();
+                                continue ;
+                            }
+                            if (count_consume_is_one && !this->set_trace_close(idx, first->num_close, tracer)){
+                                l2.pop();
+                                continue ;
                             }
                             RE_SHOW(std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m\n");
                             sr.idx = idx;
@@ -1416,66 +1464,29 @@ namespace re {
                 }
 
                 if (active_capture && 0 == new_trace) {
-                    RE_SHOW(std::cout << "\t\033[35mx " << ifirst->idx << "\033[0m" << std::endl);
-                    tracer.fail(ifirst->idx);
-                    this->push_idx_trace(ifirst->idx);
+                    this->fail_trace(ifirst->idx, tracer);
                 }
             }
 
             return -1u;
         }
 
+        template<unsigned State> struct MatchState { static const unsigned value = State; };
+        typedef MatchState<1> MatchStart;
+        typedef MatchState<2> MatchRun;
+        typedef MatchState<4> MatchFinish;
+        typedef MatchState<3> MatchImpl;
+
         template<typename Tracer, bool active_capture>
         unsigned match_start(const char * s, Tracer tracer, size_t * ppos,
                              ActiveCapture<active_capture>)
         {
-            if (ppos) {
-                *ppos = 0;
-            }
-
-            if (this->st_range_beginning.st_num == -1u) {
-                return match_success;
-            }
-
-            if (this->st_range_beginning.first == this->st_range_beginning.last) {
-                unsigned ret = this->first_last && *s ? match_fail : match_success;
-                if (active_capture && ret) {
-                    tracer.open(0, s, 0);
-                    tracer.close(0, s, 0);
-                    this->traces[0] = s;
-                    this->traces[(this->reindex_trace[1]+1)/2] = s;
-                    this->set_idx_trace(0);
-                }
-                return ret;
-            }
-
-            RE_SHOW(this->display_dfa());
-
-            this->step_count = 0;
-            this->step_id = 1;
-
-            this->l1.clear();
-            this->l2.clear();
-            this->reset_id();
-            if (active_capture) {
-                this->reset_trace();
-            }
-
-            this->start_s = s;
-
-            this->pal1 = &this->l1;
-            this->pal2 = &this->l2;
-
-            {
-                StepRangeList::StepRange & sr = this->l1.next_uninitialized();
-                sr.stl = &this->sl_beginning;
-                sr.consume = 0;
-                if (active_capture) {
-                    sr.idx = *--this->pidx_trace_free;
-                }
-            }
-
-            return match_undetermined;
+            return match_impl(s, 0, tracer, ppos,
+                              ExactMatch<false>(),
+                              ActiveCapture<active_capture>(),
+                              ActivePartOfText<false>(),
+                              MatchStart()
+            );
         }
 
 
@@ -1484,72 +1495,12 @@ namespace re {
                           ActivePartOfText<active_part_of_text>)
         {
             RE_SHOW(std::cout << ("finish") << std::endl);
-            struct SetPos {
-                StateMachine2 & sm;
-                size_t * ppos;
-
-                SetPos(StateMachine2 & sm, size_t * ppos)
-                : sm(sm)
-                , ppos(ppos)
-                {}
-
-                ~SetPos()
-                { this->sm.set_pos(this->ppos); }
-            } auto_set_pos(*this, ppos);
-
-            if (!consumer.valid()) {
-                StepRangeIterator ifirst = this->pal1->begin();
-                StepRangeIterator ilast = this->pal1->end();
-                for (; ifirst != ilast; ++ifirst) {
-                    if (ifirst->consume) {
-                        if (ifirst->consume != 1) {
-                            continue ;
-                        }
-
-                        const StateList & stl = *ifirst->stl;
-
-                        if (active_part_of_text && stl.st->type == SEQUENCE && stl.st->data.sequence.len != ifirst->real_count_consume) {
-                            continue ;
-                        }
-
-                        if (active_capture) {
-                            this->set_trace_close(ifirst->idx, ifirst->num_close, tracer);
-                        }
-                        if (!stl.next || stl.is_terminate) {
-                            if (active_capture) {
-                              this->set_idx_trace(ifirst->idx);
-                            }
-                            return true;
-                        }
-                    }
-
-                    const RangeList & rl = *ifirst->stl->next;
-
-                    if (this->nums[rl.st_num] == this->step_id) {
-                        if (active_capture) {
-                            /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
-                            tracer.fail(ifirst->idx);
-                            //this->push_idx_trace(ifirst->idx);
-                        }
-                        continue;
-                    }
-                    this->nums[rl.st_num] = this->step_id;
-
-                    StateList * first = rl.first;
-                    StateList * last = rl.last;
-
-                    for (; first != last; ++first) {
-                        if (first->st->is_terminate()) {
-                            if (active_capture) {
-                                this->set_idx_trace(ifirst->idx);
-                            }
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
+            return match_impl(s, 0, tracer, ppos,
+                              ExactMatch<false>(),
+                              ActiveCapture<active_capture>(),
+                              ActivePartOfText<active_part_of_text>(),
+                              MatchFinish()
+            ) == match_success;
         }
 
         void set_pos(size_t * ppos) const
@@ -1565,84 +1516,208 @@ namespace re {
                            ExactMatch<exact_match>, ActiveCapture<active_capture>,
                            ActivePartOfText<active_part_of_text>)
         {
-            this->s = s;
-            this->consumer.str(s);
-
-            while (this->consumer.valid()) {
-                RE_SHOW(std::cout << "\033[01;31mc: '" << utf8_char(consumer.getc()) << "'\033[0m\n");
-                const unsigned result = this->step(this->consumer.bumpc(), tracer,
-                                                   ExactMatch<exact_match>(),
-                                                   ActiveCapture<active_capture>(),
-                                                   ActivePartOfText<active_part_of_text>());
-                if (-1u != result) {
-                    if (active_capture) {
-                        this->set_idx_trace(result);
-                        tracer.good(result);
-                    }
-                    this->set_pos(ppos);
-                    return (false == exact_match || !this->consumer.valid()) ? match_success : match_fail;
-                }
-                if (exact_match == true && this->pal2->empty()) {
-                    this->set_pos(ppos);
-                    return match_fail;
-                }
-                if (this->step_count >= step_limit) {
-                    this->set_pos(ppos);
-                    return match_fail;
-                }
-                ++this->step_id;
-                std::swap(this->pal1, this->pal2);
-                this->pal2->clear();
-                if (false == exact_match) {
-                    if (this->st_range_list == this->st_range_list_last) {
-                        if (active_capture) {
-                            this->s = this->consumer.str();
-                        }
-                        break;
-                    }
-                    StepRangeList::StepRange & sr = this->pal1->next_uninitialized();
-                    sr.stl = &this->sl_beginning;
-                    sr.consume = 0;
-                    if (active_capture) {
-                        --this->pidx_trace_free;
-                        assert(this->pidx_trace_free >= this->idx_trace_free);
-                        RE_SHOW(std::cout << "\t\033[32m-> " << *this->pidx_trace_free << "\033[0m\n");
-                        sr.idx = *this->pidx_trace_free;
-                    }
-                }
-                if (active_capture) {
-                    this->s = this->consumer.str();
-                }
-            }
-
-            return match_undetermined;
+            return match_impl(s, step_limit, tracer, ppos,
+                              ExactMatch<exact_match>(),
+                              ActiveCapture<active_capture>(),
+                              ActivePartOfText<active_part_of_text>(),
+                              MatchRun()
+                             );
         }
 
         template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
         bool match(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
-                   ExactMatch<exact_match>, ActiveCapture<active_capture>,
-                   ActivePartOfText<active_part_of_text>)
+                        ExactMatch<exact_match>, ActiveCapture<active_capture>,
+                        ActivePartOfText<active_part_of_text>)
         {
-            switch (this->match_start(s, tracer, ppos, ActiveCapture<active_capture>())) {
-                case match_success: return true;
-                case match_fail: return false;
-                default: ;
+            return match_impl(s, step_limit, tracer, ppos,
+                              ExactMatch<exact_match>(),
+                              ActiveCapture<active_capture>(),
+                              ActivePartOfText<active_part_of_text>(),
+                              MatchImpl()
+                             ) == match_success;
+        }
+
+        template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text, unsigned R>
+        unsigned match_impl(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
+                            ExactMatch<exact_match>, ActiveCapture<active_capture>,
+                            ActivePartOfText<active_part_of_text>, MatchState<R>)
+        {
+            if (R & MatchStart::value) {
+                if (ppos) {
+                    *ppos = 0;
+                }
+
+                if (this->st_range_beginning.st_num == -1u) {
+                    return match_success;
+                }
+
+                if (this->st_range_beginning.first == this->st_range_beginning.last) {
+                    const unsigned ret = this->first_last && *s ? match_fail : match_success;
+                    if (active_capture && ret) {
+                        if (!(tracer.open(0, s, 0) && tracer.close(0, s, 0))) {
+                            return match_fail;
+                        }
+                        this->traces[0] = s;
+                        this->traces[(this->reindex_trace[1]+1)/2] = s;
+                        tracer.good(0);
+                    }
+                    return ret;
+                }
+
+                RE_SHOW(this->display_dfa());
+
+                this->step_count = 0;
+                this->step_id = 1;
+
+                this->l1.clear();
+                this->l2.clear();
+                this->reset_id();
+                if (active_capture) {
+                    this->reset_trace();
+                }
+
+                this->start_s = s;
+
+                this->pal1 = &this->l1;
+                this->pal2 = &this->l2;
+
+                {
+                    StepRangeList::StepRange & sr = this->l1.next_uninitialized();
+                    sr.stl = &this->sl_beginning;
+                    sr.consume = 0;
+                    if (active_capture) {
+                        sr.idx = *--this->pidx_trace_free;
+                    }
+                }
+
+                if (R == MatchStart::value) {
+                    return match_undetermined;
+                }
             }
 
-            switch (this->match_run(s, step_limit, tracer, ppos,
-                                    ExactMatch<exact_match>(),
-                                    ActiveCapture<active_capture>(),
-                                    ActivePartOfText<active_part_of_text>())
-            ) {
-                case match_success: return true;
-                case match_fail: return false;
-                default: ;
+            if (R & MatchRun::value) {
+                this->s = s;
+                this->consumer.str(s);
+
+                while (this->consumer.valid()) {
+                    RE_SHOW(std::cout << "\033[01;31mc: '" << utf8_char(consumer.getc()) << "'\033[0m\n");
+                    const unsigned result = this->step(this->consumer.bumpc(), tracer,
+                                                       ExactMatch<exact_match>(),
+                                                       ActiveCapture<active_capture>(),
+                                                       ActivePartOfText<active_part_of_text>());
+                    if (-1u != result) {
+                        if (active_capture) {
+                            tracer.good(result);
+                        }
+                        this->set_pos(ppos);
+                        return (false == exact_match || !this->consumer.valid()) ? match_success : match_fail;
+                    }
+                    if (exact_match == true && this->pal2->empty()) {
+                        this->set_pos(ppos);
+                        return match_fail;
+                    }
+                    if (this->step_count >= step_limit) {
+                        this->set_pos(ppos);
+                        return match_fail;
+                    }
+                    ++this->step_id;
+                    std::swap(this->pal1, this->pal2);
+                    this->pal2->clear();
+                    if (false == exact_match) {
+                        if (this->st_range_list == this->st_range_list_last) {
+                            if (active_capture) {
+                                this->s = this->consumer.str();
+                            }
+                            break;
+                        }
+                        StepRangeList::StepRange & sr = this->pal1->next_uninitialized();
+                        sr.stl = &this->sl_beginning;
+                        sr.consume = 0;
+                        if (active_capture) {
+                            --this->pidx_trace_free;
+                            assert(this->pidx_trace_free >= this->idx_trace_free);
+                            RE_SHOW(std::cout << "\t\033[32m-> " << *this->pidx_trace_free << "\033[0m\n");
+                            sr.idx = *this->pidx_trace_free;
+                        }
+                    }
+                    if (active_capture) {
+                        this->s = this->consumer.str();
+                    }
+                }
+
+                if (R == MatchRun::value) {
+                    return match_undetermined;
+                }
             }
 
             RE_SHOW(std::cout << "\033[35mconsumer.valid(): '" << consumer.valid() << "'\033[0m" << std::endl);
 
-            return this->match_finish(tracer, ppos, ActiveCapture<active_capture>(),
-                                      ActivePartOfText<active_part_of_text>());
+            //MatchFinish
+            {
+                struct SetPos {
+                    StateMachine2 & sm;
+                    size_t * ppos;
+
+                    SetPos(StateMachine2 & sm, size_t * ppos)
+                    : sm(sm)
+                    , ppos(ppos)
+                    {}
+
+                    ~SetPos()
+                    { this->sm.set_pos(this->ppos); }
+                } auto_set_pos(*this, ppos);
+
+                if (!consumer.valid()) {
+                    StepRangeIterator ifirst = this->pal1->begin();
+                    StepRangeIterator ilast = this->pal1->end();
+                    for (; ifirst != ilast; ++ifirst) {
+                        if (ifirst->consume) {
+                            if (ifirst->consume != 1) {
+                                continue ;
+                            }
+
+                            const StateList & stl = *ifirst->stl;
+
+                            if (active_part_of_text && stl.st->type == SEQUENCE && stl.st->data.sequence.len != ifirst->real_count_consume) {
+                                continue ;
+                            }
+
+                            if (active_capture) {
+                                if (!this->set_trace_close(ifirst->idx, ifirst->num_close, tracer)) {
+                                    continue ;
+                                }
+                            }
+                            if (!stl.next || stl.is_terminate) {
+                                if (active_capture) {
+                                    tracer.good(ifirst->idx);
+                                }
+                                return match_success;
+                            }
+                        }
+
+                        const RangeList & rl = *ifirst->stl->next;
+
+                        if (this->nums[rl.st_num] == this->step_id) {
+                            continue;
+                        }
+                        this->nums[rl.st_num] = this->step_id;
+
+                        StateList * first = rl.first;
+                        StateList * last = rl.last;
+
+                        for (; first != last; ++first) {
+                            if (first->st->is_terminate()) {
+                                if (active_capture) {
+                                    tracer.good(ifirst->idx);
+                                }
+                                return match_success;
+                            }
+                        }
+                    }
+                }
+
+                return match_fail;
+            }
         }
 
 
