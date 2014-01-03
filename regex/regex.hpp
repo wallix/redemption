@@ -24,6 +24,7 @@
 #include "regex_automate.hpp"
 #include "regex_parser.hpp"
 
+struct Tracer;
 namespace re {
 
     class Regex
@@ -214,6 +215,157 @@ namespace re {
         bool search_with_matches(const char * s, Tracer tracer)
         {
             return this->sm.search_with_trace(s, this->step_limit, tracer, &this->pos);
+        }
+
+        enum {
+            match_fail = StateMachine2::match_fail,
+            match_success = StateMachine2::match_success,
+            match_undetermined = StateMachine2::match_undetermined
+        };
+
+    private:
+        template<bool exact>
+        class BasicPartial
+        {
+        protected:
+            Regex & re;
+            const char * s;
+            unsigned res;
+
+        public:
+            BasicPartial(Regex & re, const char * s)
+            : re(re)
+            , s(s)
+            , res(re.sm.part_of_text_start(s, &re.pos))
+            {}
+
+            unsigned state() const
+            {
+                return this->res;
+            }
+
+            unsigned next(const char * s)
+            {
+                if (exact) {
+                    this->res = this->re.sm.part_of_text_exact_search(this->s, this->re.step_limit,
+                                                                      &this->re.pos);
+                }
+                else {
+                    this->res = this->re.sm.part_of_text_search(this->s, this->re.step_limit, &this->re.pos);
+                }
+                this->s = s;
+                return this->res;
+            }
+
+            bool finish()
+            {
+                this->next(0);
+                if (this->res != match_undetermined) {
+                    this->res = this->re.sm.part_of_text_finish(&this->re.pos);
+                }
+                return this->res;
+            }
+        };
+
+
+        template<bool exact, typename Tracer>
+        class BasicPartialWithCapture
+        {
+        protected:
+            Regex & re;
+            const char * s;
+            Tracer tracer;
+            unsigned res;
+
+        public:
+            BasicPartialWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            : re(re)
+            , s(s)
+            , tracer(tracer)
+            , res(re.sm.part_of_text_start_with_trace(s, this->tracer, &re.pos))
+            {}
+
+            unsigned state() const
+            {
+                return this->res;
+            }
+
+            unsigned next(const char * s)
+            {
+                if (exact) {
+                    this->res = this->re.sm.part_of_text_exact_search_with_trace(this->s, this->re.step_limit,
+                                                                                 this->tracer, &this->re.pos);
+                }
+                else {
+                    this->res = this->re.sm.part_of_text_search_with_trace(this->s, this->re.step_limit,
+                                                                           this->tracer, &this->re.pos);
+                }
+                this->s = s;
+                return this->res;
+            }
+
+            bool finish()
+            {
+                this->next(0);
+                if (this->res != match_undetermined) {
+                    this->res = this->re.sm.part_of_text_finish_with_trace(this->tracer, &this->re.pos);
+                }
+                return this->res;
+            }
+        };
+
+    public:
+        typedef BasicPartial<true> ExactPartial;
+        typedef BasicPartial<false> Partial;
+
+        template<typename Tracer>
+        struct ExactPartialWithCapture : BasicPartialWithCapture<true, Tracer>
+        {
+            ExactPartialWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            : BasicPartialWithCapture<true, Tracer>(re, s, tracer)
+            {}
+        };
+
+        template<typename Tracer>
+        struct PartialWithCapture : BasicPartialWithCapture<false, Tracer>
+        {
+            PartialWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            : BasicPartialWithCapture<false, Tracer>(re, s, tracer)
+            {}
+        };
+
+
+        ExactPartial part_of_text_exact_search(const char * s)
+        {
+            return ExactPartial(*this, s);
+        }
+
+        Partial part_of_text_search(const char * s)
+        {
+            return Partial(*this, s);
+        }
+
+        ExactPartialWithCapture<StateMachine2::DefaultMatchTracer>
+        part_of_text_exact_search_with_capture(const char * s)
+        {
+            return ExactPartialWithCapture<StateMachine2::DefaultMatchTracer>(*this, s);
+        }
+
+        template<typename Tracer>
+        ExactPartialWithCapture<Tracer> part_of_text_exact_search_with_capture(const char * s, Tracer tracer)
+        {
+            return ExactPartialWithCapture<Tracer>(*this, s, tracer);
+        }
+
+        PartialWithCapture<StateMachine2::DefaultMatchTracer> part_of_text_search_with_capture(const char * s)
+        {
+            return PartialWithCapture<StateMachine2::DefaultMatchTracer>(*this, s);
+        }
+
+        template<typename Tracer>
+        PartialWithCapture<Tracer> part_of_text_search_with_capture(const char * s, Tracer tracer)
+        {
+            return PartialWithCapture<Tracer>(*this, s, tracer);
         }
 
         range_matches match_result(bool all = true) const

@@ -34,6 +34,13 @@
 #include "regex_utils.hpp"
 
 namespace re {
+#ifdef DISPLAY_TRACE
+    enum { g_trace_active = 1 };
+#else
+    enum { g_trace_active = 0 };
+#endif
+
+#define RE_SHOW !::re::g_trace_active ? void() : void
 
     class StateMachine2
     {
@@ -221,6 +228,7 @@ namespace re {
         , st_range_list(0)
         , step_id(1)
         , first_last(false)
+        , consumer(0)
         {
             if (sts.empty()) {
                 this->st_range_beginning.st_num = -1u;
@@ -560,6 +568,8 @@ namespace re {
                 this->st_range_beginning.last = this->st_range_beginning.first;
                 this->st_range_list_last = this->st_range_list;
             }
+
+            this->sl_beginning.next = &this->st_range_beginning;
         }
 
 #if __cplusplus >= 201103L && __cplusplus != 1 || defined(__GXX_EXPERIMENTAL_CXX0X__)
@@ -584,6 +594,7 @@ namespace re {
             this->st_range_list = other.st_range_list;
             this->st_range_list_last = other.st_range_list_last;
             this->st_range_beginning = other.st_range_beginning;
+            this->sl_beginning = other.sl_beginning;
             this->step_id = other.step_id;
             this->first_last = other.first_last;
 
@@ -801,6 +812,12 @@ namespace re {
         }
 
     public:
+        enum {
+            match_fail = 0,
+            match_success = 1,
+            match_undetermined = 2
+        };
+
         typedef std::pair<const char *, const char *> range_t;
         typedef std::vector<range_t> range_matches;
 
@@ -828,6 +845,7 @@ namespace re {
     private:
         template<bool> struct ExactMatch { };
         template<bool> struct ActiveCapture { };
+        template<bool> struct ActivePartOfText { };
 
     public:
         bool exact_search(const char * s, unsigned step_limit, size_t * pos = 0)
@@ -836,26 +854,26 @@ namespace re {
                 return !*s;
             }
             return this->match(s, step_limit, DefaultMatchTracer(), pos,
-                               ExactMatch<true>(), ActiveCapture<false>());
+                               ExactMatch<true>(), ActiveCapture<false>(), ActivePartOfText<false>());
         }
 
         bool exact_search_with_trace(const char * s, unsigned step_limit, size_t * pos = 0)
         {
             if (this->nb_capture == 0) {
-                return exact_search(s, step_limit, pos);
+                return this->exact_search(s, step_limit, pos);
             }
             return this->match(s, step_limit, DefaultMatchTracer(), pos,
-                               ExactMatch<true>(), ActiveCapture<true>());
+                               ExactMatch<true>(), ActiveCapture<true>(), ActivePartOfText<false>());
         }
 
         template<typename Tracer>
         bool exact_search_with_trace(const char * s, unsigned step_limit, Tracer tracer, size_t * pos = 0)
         {
             if (this->nb_capture == 0) {
-                return exact_search(s, step_limit, pos);
+                return this->exact_search(s, step_limit, pos);
             }
             return this->match(s, step_limit, tracer, pos,
-                               ExactMatch<true>(), ActiveCapture<true>());
+                               ExactMatch<true>(), ActiveCapture<true>(), ActivePartOfText<false>());
         }
 
         bool search(const char * s, unsigned step_limit, size_t * pos = 0)
@@ -864,27 +882,123 @@ namespace re {
                 return !*s;
             }
             return this->match(s, step_limit, DefaultMatchTracer(), pos,
-                               ExactMatch<false>(), ActiveCapture<false>());
+                               ExactMatch<false>(), ActiveCapture<false>(), ActivePartOfText<false>());
         }
 
         bool search_with_trace(const char * s, unsigned step_limit, size_t * pos = 0)
         {
             if (this->nb_capture == 0) {
-                return search(s, step_limit, pos);
+                return this->search(s, step_limit, pos);
             }
             return this->match(s, step_limit, DefaultMatchTracer(), pos,
-                               ExactMatch<false>(), ActiveCapture<true>());
+                               ExactMatch<false>(), ActiveCapture<true>(), ActivePartOfText<false>());
         }
 
         template<typename Tracer>
         bool search_with_trace(const char * s, unsigned step_limit, Tracer tracer, size_t * pos = 0)
         {
             if (this->nb_capture == 0) {
-                return search(s, step_limit, pos);
+                return this->search(s, step_limit, pos);
             }
             return this->match(s, step_limit, tracer, pos,
-                               ExactMatch<false>(), ActiveCapture<true>());
+                               ExactMatch<false>(), ActiveCapture<true>(), ActivePartOfText<false>());
         }
+
+
+        unsigned part_of_text_exact_search(const char * s, unsigned step_limit, size_t * pos = 0)
+        {
+            if (0 == this->nb_states) {
+                return !*s;
+            }
+            return this->match_run(s, step_limit, DefaultMatchTracer(), pos,
+                                   ExactMatch<true>(), ActiveCapture<false>(), ActivePartOfText<true>());
+        }
+
+        unsigned part_of_text_exact_search_with_trace(const char * s, unsigned step_limit, size_t * pos = 0)
+        {
+            if (this->nb_capture == 0) {
+                return this->part_of_text_exact_search(s, step_limit, pos);
+            }
+            return this->match_run(s, step_limit, DefaultMatchTracer(), pos,
+                                   ExactMatch<true>(), ActiveCapture<true>(), ActivePartOfText<true>());
+        }
+
+        template<typename Tracer>
+        unsigned part_of_text_exact_search_with_trace(const char * s, unsigned step_limit, Tracer tracer,
+                                                      size_t * pos = 0)
+        {
+            if (this->nb_capture == 0) {
+                return this->part_of_text_exact_search(s, step_limit, pos);
+            }
+            return this->match_run(s, step_limit, tracer, pos,
+                                   ExactMatch<true>(), ActiveCapture<true>(), ActivePartOfText<true>());
+        }
+
+        unsigned part_of_text_search(const char * s, unsigned step_limit, size_t * pos = 0)
+        {
+            if (0 == this->nb_states) {
+                return !*s;
+            }
+            return this->match_run(s, step_limit, DefaultMatchTracer(), pos,
+                                   ExactMatch<false>(), ActiveCapture<false>(), ActivePartOfText<true>());
+        }
+
+        unsigned part_of_text_search_with_trace(const char * s, unsigned step_limit, size_t * pos = 0)
+        {
+            if (this->nb_capture == 0) {
+                return this->part_of_text_search(s, step_limit, pos);
+            }
+            return this->match_run(s, step_limit, DefaultMatchTracer(), pos,
+                                   ExactMatch<false>(), ActiveCapture<true>(), ActivePartOfText<true>());
+        }
+
+        template<typename Tracer>
+        unsigned part_of_text_search_with_trace(const char * s, unsigned step_limit, Tracer tracer,
+                                                size_t * pos = 0)
+        {
+            if (this->nb_capture == 0) {
+                return this->part_of_text_search(s, step_limit, pos);
+            }
+            return this->match_run(s, step_limit, tracer, pos,
+                                   ExactMatch<false>(), ActiveCapture<true>(), ActivePartOfText<true>());
+        }
+
+
+        unsigned part_of_text_start(const char * s, size_t * pos = 0)
+        {
+            return this->match_start(s, DefaultMatchTracer(), pos, ActiveCapture<false>());
+        }
+
+        unsigned part_of_text_start_with_trace(const char * s, size_t * pos = 0)
+        {
+            return this->match_start(s, DefaultMatchTracer(), pos, ActiveCapture<true>());
+        }
+
+        template<typename Tracer>
+        unsigned part_of_text_start_with_trace(const char * s, Tracer tracer, size_t * pos = 0)
+        {
+            return this->match_start(s, tracer, pos, ActiveCapture<true>());
+        }
+
+
+        bool part_of_text_finish(size_t * pos = 0)
+        {
+            return this->match_finish(DefaultMatchTracer(), pos, ActiveCapture<false>(),
+                                      ActivePartOfText<true>());
+        }
+
+        bool part_of_text_finish_with_trace(size_t * pos = 0)
+        {
+            return this->match_finish(DefaultMatchTracer(), pos, ActiveCapture<true>(),
+                                      ActivePartOfText<true>());
+        }
+
+        template<typename Tracer>
+        bool part_of_text_finish_with_trace(Tracer tracer, size_t * pos = 0)
+        {
+            return this->match_finish(tracer, pos, ActiveCapture<true>(), ActivePartOfText<true>());
+        }
+
 
         range_matches match_result(bool all = true) const
         {
@@ -1043,10 +1157,11 @@ namespace re {
     private:
         struct StepRangeList {
             struct StepRange {
-                const RangeList * rl;
+                const StateList * stl;
                 unsigned consume;
                 unsigned idx;
                 unsigned num_close;
+                unsigned real_count_consume;
             };
 
             typedef StepRange * iterator;
@@ -1086,13 +1201,71 @@ namespace re {
 
         typedef StepRangeList::iterator StepRangeIterator;
 
-        template<typename Tracer, bool exact_match, bool active_capture>
-        unsigned step(const char * s, char_int c, utf8_consumer & consumer,
-                      StepRangeList & l1, StepRangeList & l2, Tracer tracer,
-                      ExactMatch<exact_match>, ActiveCapture<active_capture>)
+        static unsigned part_of_text_search_check(const State & st, unsigned pos, char_int c,
+                                             utf8_consumer consumer,
+                                             bool & count_consume_is_one)
         {
+            const Sequence & seq = st.data.sequence;
+            if (c == seq.s[pos]) {
+                const char_int * s = seq.s + pos + 1;
+                while (*s && *s == consumer.bumpc()) {
+                    ++s;
+                }
+                count_consume_is_one = seq.len == 1;
+                return (*s && consumer.valid())
+                ? 0
+                : s - (seq.s + pos) + (size_t(s - seq.s) == seq.len ? 0 : 1);
+            }
+            return 0;
+        }
+
+        static unsigned part_of_text_search_check(const State & st, char_int c,
+                                             utf8_consumer consumer,
+                                             bool & count_consume_is_one)
+        {
+            if (st.type == SEQUENCE) {
+                return part_of_text_search_check(st, 0, c, consumer, count_consume_is_one);
+            }
+            count_consume_is_one = true;
+            return st.data.range.contains(c) ? 1 : 0;
+        }
+
+        template<typename Tracer>
+        void set_trace_open(unsigned idx, unsigned num_open, Tracer tracer)
+        {
+            if (num_open != -1u) {
+                unsigned num = num_open;
+                const char * & trace = this->traces[idx * this->nb_capture + num];
+                if (!trace && tracer.open(idx, this->s, num)) {
+                    RE_SHOW(std::cout << "\t" << idx << "\t(open) "<< num << std::endl);
+                    trace = this->s;
+                }
+            }
+        }
+
+        template<typename Tracer>
+        void set_trace_close(unsigned idx, unsigned num_close, Tracer tracer)
+        {
+            if (num_close != -1u) {
+                unsigned num = num_close;
+                if (tracer.close(idx, this->s, num)) {
+                    RE_SHOW(std::cout << "\t" << idx << "\t(close) "<< num << std::endl);
+                    this->traces[idx * this->nb_capture + num] = this->consumer.str();
+                }
+            }
+        }
+
+        template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
+        unsigned step(char_int c, Tracer tracer,
+                      ExactMatch<exact_match>, ActiveCapture<active_capture>,
+                      ActivePartOfText<active_part_of_text>)
+        {
+            StepRangeList & l1 = *this->pal1;
+            StepRangeList & l2 = *this->pal2;
+
             unsigned new_trace;
             unsigned count_consume;
+            bool count_consume_is_one;
             for (StepRangeIterator ifirst = l1.begin(), ilast = l1.end(); ifirst != ilast; ++ifirst) {
                 ++this->step_count;
                 if (active_capture) {
@@ -1101,118 +1274,119 @@ namespace re {
 
                 if (ifirst->consume) {
                     if (!--ifirst->consume) {
-                        const StateList * stl = reinterpret_cast<const StateList*>(ifirst->rl);
-                        if (!stl->next && consumer.valid() && stl->is_terminate) {
-#ifdef DISPLAY_TRACE
-                            std::cout << "\t\033[35mx " << (ifirst->rl->st_num) << "\033[0m\n";
-#endif
-                            continue;
-                        }
+                        const StateList & stl = *ifirst->stl;
 
-                        if (active_capture) {
-                            if (ifirst->num_close != -1u) {
-                                unsigned num = ifirst->num_close;
-                                if (tracer.close(ifirst->idx, s, num)) {
-#ifdef DISPLAY_TRACE
-                                    std::cout << "\t" << ifirst->idx << " (close) " << num << std::endl;
-#endif
-                                    this->traces[ifirst->idx * this->nb_capture + num] = consumer.str();
+                        if (active_part_of_text && ifirst->real_count_consume != stl.st->data.sequence.len) {
+                            count_consume = this->part_of_text_search_check(*stl.st,
+                                                                            ifirst->real_count_consume,
+                                                                            c, consumer, count_consume_is_one);
+
+                            if (!count_consume || (count_consume_is_one && !stl.next && consumer.valid() && (exact_match || stl.is_terminate))) {
+                                if (g_trace_active && stl.next) {
+                                    RE_SHOW(std::cout << "\t\033[35mx " << stl.next->st_num << "\033[0m\n");
                                 }
+                                continue;
+                            }
+
+                            RE_SHOW(this->display_elem_state_list(stl, active_capture ? ifirst->idx : 0));
+
+                            ifirst->consume = count_consume - 1;
+                            ifirst->real_count_consume += count_consume - 1;
+
+                            if (active_capture && count_consume_is_one) {
+                                this->set_trace_close(ifirst->idx, ifirst->num_close, tracer);
+                            }
+
+                            if (((exact_match ? stl.next_is_finish && !consumer.valid() : stl.next_is_finish)
+                                && (stl.st->type != SEQUENCE
+                                 || stl.st->data.sequence.len+1 == ifirst->real_count_consume))
+                            || (stl.is_terminate && count_consume_is_one && !consumer.valid())) {
+                                return active_capture ? ifirst->idx : 0;
                             }
                         }
+                        else {
+                            if (!stl.next && consumer.valid() && (exact_match || stl.is_terminate)) {
+                                if (g_trace_active && stl.next) {
+                                    RE_SHOW(std::cout << "\t\033[35mx " << (stl.next->st_num) << "\033[0m\n");
+                                }
+                                continue;
+                            }
 
-                        if (stl->next_is_finish || (stl->is_terminate && !consumer.valid())) {
-                            return active_capture ? ifirst->idx : 0;
+                            if (active_capture) {
+                                this->set_trace_close(ifirst->idx, ifirst->num_close, tracer);
+                            }
+
+                            if (stl.next_is_finish || (stl.is_terminate && !consumer.valid())) {
+                                return active_capture ? ifirst->idx : 0;
+                            }
+
+                            if (stl.is_terminate && consumer.valid()) {
+                                continue ;
+                            }
+
+                            if(active_capture) {
+                                ifirst->consume = 0;
+                            }
                         }
-
-                        if (stl->is_terminate && consumer.valid()) {
-                            continue ;
-                        }
-
-                        ifirst->rl = stl->next;
                     }
-#ifdef DISPLAY_TRACE
-                    std::cout << "\t\033[35mreinsert (" << ifirst->consume << ")";
+
+                    RE_SHOW(std::cout << "\t\033[35mreinsert (" << ifirst->consume << ")");
                     if (active_capture) {
-                        std::cout << " idx: " << ifirst->idx;
+                        RE_SHOW(std::cout << " idx: " << ifirst->idx);
                     }
-                    std::cout << "\033[0m\n";
-#endif
+                    RE_SHOW(std::cout << "\033[0m\n");
+
                     StepRangeList::StepRange & sr = l2.next_uninitialized();
-                    sr.rl = ifirst->rl;
+                    sr.stl = ifirst->stl;
                     sr.consume = ifirst->consume;
                     if (active_capture) {
                         sr.idx = ifirst->idx;
                         sr.num_close = ifirst->num_close;
                         ++new_trace;
                     }
+                    if (active_part_of_text) {
+                        sr.real_count_consume = ifirst->real_count_consume;
+                    }
                     continue ;
                 }
 
-                StateList * first = ifirst->rl->first;
-                StateList * last = ifirst->rl->last;
+                const RangeList & rl = *ifirst->stl->next;
+                StateList * first = rl.first;
+                StateList * last = rl.last;
 
                 for (; first != last; ++first) {
                     ++this->step_count;
 
                     if (first->next && this->nums[first->next->st_num] == this->step_id) {
-#ifdef DISPLAY_TRACE
-                        std::cout << "\t\033[35mdup " << (ifirst->rl->st_num) << "\033[0m\n";
-#endif
+                        RE_SHOW(std::cout << "\t\033[35mdup " << (rl.st_num) << "\033[0m\n");
                         continue ;
                     }
 
-                    if ((count_consume = first->st->check(c, consumer))) {
-#ifdef DISPLAY_TRACE
-                        this->display_elem_state_list(*first, active_capture ? ifirst->idx : 0);
-#endif
+                    if ((count_consume = active_part_of_text
+                        ? part_of_text_search_check(*first->st, c, consumer, count_consume_is_one)
+                        : first->st->check(c, consumer))
+                    ) {
+                        RE_SHOW(this->display_elem_state_list(*first, active_capture ? ifirst->idx : 0));
+
                         if (first->next) {
                             this->nums[first->next->st_num] = this->step_id;
                         }
 
-                        if (count_consume == 1 && !first->next && consumer.valid() && (exact_match || first->is_terminate)) {
-#ifdef DISPLAY_TRACE
-                            std::cout << "\t\033[35mx " << (ifirst->rl->st_num) << "\033[0m\n";
-#endif
+                        if (!active_part_of_text) {
+                            count_consume_is_one = count_consume == 1;
+                        }
+
+                        if (count_consume_is_one && !first->next && consumer.valid() && (exact_match || first->is_terminate)) {
+                            RE_SHOW(std::cout << "\t\033[35mx " << (rl.st_num) << "\033[0m\n");
                             continue;
                         }
 
-                        struct set_trace
-                        {
-                            static inline void open(unsigned idx, StateList & l, const char * s,
-                                                    StateMachine2 & sm, Tracer tracer)
-                            {
-                                if (l.num_open != -1u) {
-                                    unsigned num = l.num_open;
-                                    if (!sm.traces[idx * sm.nb_capture + num] && tracer.open(idx, s, num)) {
-#ifdef DISPLAY_TRACE
-                                        std::cout << "\t(open) "<< num << std::endl;
-#endif
-                                        sm.traces[idx * sm.nb_capture + num] = s;
-                                    }
-                                }
-                            }
-
-                            static inline void close(unsigned idx, StateList & l, const char * s,
-                                                     StateMachine2 & sm, Tracer tracer, utf8_consumer consumer)
-                            {
-                                if (l.num_close != -1u) {
-                                    unsigned num = l.num_close;
-                                    if (tracer.close(idx, s, num)) {
-#ifdef DISPLAY_TRACE
-                                        std::cout << "\t(close) "<< num << std::endl;
-#endif
-                                        sm.traces[idx * sm.nb_capture + num] = consumer.str();
-                                    }
-                                }
-                            }
-                        };
-
-                        RangeList * const rl = count_consume == 1 ? first->next : reinterpret_cast<RangeList*>(first);
-
                         StepRangeList::StepRange & sr = l2.next_uninitialized();
-                        sr.rl = rl;
+                        sr.stl = first;
                         sr.consume = count_consume - 1;
+                        if (active_part_of_text) {
+                            sr.real_count_consume = count_consume - 1;
+                        }
 
                         if (active_capture) {
                             unsigned idx = ifirst->idx;
@@ -1221,19 +1395,20 @@ namespace re {
                                 tracer.new_id(ifirst->idx, idx);
                             }
 
-                            set_trace::open(idx, *first, s, *this, tracer);
-                            if (count_consume == 1) {
-                                set_trace::close(idx, *first, s, *this, tracer, consumer);
+                            this->set_trace_open(idx, first->num_open, tracer);
+                            if (count_consume_is_one) {
+                                this->set_trace_close(idx, first->num_close, tracer);
                             }
-#ifdef DISPLAY_TRACE
-                            std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m" << std::endl;
-#endif
+                            RE_SHOW(std::cout << "\t\033[32m" << ifirst->idx << " -> " << idx << "\033[0m\n");
                             sr.idx = idx;
                             sr.num_close = first->num_close;
                             ++new_trace;
                         }
 
-                        if ((exact_match ? first->next_is_finish && !consumer.valid() : first->next_is_finish) || (first->is_terminate && count_consume == 1 && !consumer.valid())) {
+                        if (((exact_match ? first->next_is_finish && !consumer.valid() : first->next_is_finish)
+                            && (!active_part_of_text || first->st->type != SEQUENCE
+                             || first->st->data.sequence.len+1 == count_consume))
+                        || (first->is_terminate && count_consume_is_one && !consumer.valid())) {
                             //l2.pop_back();
                             return active_capture ? ifirst->idx : 0;
                         }
@@ -1241,9 +1416,7 @@ namespace re {
                 }
 
                 if (active_capture && 0 == new_trace) {
-#ifdef DISPLAY_TRACE
-                    std::cout << "\t\033[35mx " << ifirst->idx << "\033[0m" << std::endl;
-#endif
+                    RE_SHOW(std::cout << "\t\033[35mx " << ifirst->idx << "\033[0m" << std::endl);
                     tracer.fail(ifirst->idx);
                     this->push_idx_trace(ifirst->idx);
                 }
@@ -1252,20 +1425,20 @@ namespace re {
             return -1u;
         }
 
-        template<typename Tracer, bool exact_match, bool active_capture>
-        bool match(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
-                   ExactMatch<exact_match>, ActiveCapture<active_capture>)
+        template<typename Tracer, bool active_capture>
+        unsigned match_start(const char * s, Tracer tracer, size_t * ppos,
+                             ActiveCapture<active_capture>)
         {
             if (ppos) {
                 *ppos = 0;
             }
 
             if (this->st_range_beginning.st_num == -1u) {
-                return true;
+                return match_success;
             }
 
             if (this->st_range_beginning.first == this->st_range_beginning.last) {
-                bool ret = this->first_last ? !*s : true;
+                unsigned ret = this->first_last && *s ? match_fail : match_success;
                 if (active_capture && ret) {
                     tracer.open(0, s, 0);
                     tracer.close(0, s, 0);
@@ -1276,9 +1449,7 @@ namespace re {
                 return ret;
             }
 
-#ifdef DISPLAY_TRACE
-            this->display_dfa();
-#endif
+            RE_SHOW(this->display_dfa());
 
             this->step_count = 0;
             this->step_id = 1;
@@ -1290,120 +1461,71 @@ namespace re {
                 this->reset_trace();
             }
 
-            utf8_consumer consumer(s);
+            this->start_s = s;
 
-            struct Finally {
-                Finally(utf8_consumer & cons, size_t * ppos)
-                : cons(cons)
-                , s(cons.s)
-                , spos(ppos)
-                {}
+            this->pal1 = &this->l1;
+            this->pal2 = &this->l2;
 
-                ~Finally()
-                {
-                    if (this->spos) {
-                        *this->spos = this->cons.s - this->s;
-                    }
-                }
-
-                utf8_consumer & cons;
-                const unsigned char * s;
-                size_t * spos;
-            } auto_set_pos (consumer, ppos);
-
-            StepRangeList * pal1 = &this->l1;
-            StepRangeList * pal2 = &this->l2;
             {
                 StepRangeList::StepRange & sr = this->l1.next_uninitialized();
-                sr.rl = &this->st_range_beginning;
+                sr.stl = &this->sl_beginning;
                 sr.consume = 0;
                 if (active_capture) {
                     sr.idx = *--this->pidx_trace_free;
                 }
             }
 
-            while (consumer.valid()) {
-#ifdef DISPLAY_TRACE
-                std::cout << "\033[01;31mc: '" << utf8_char(consumer.getc()) << "'\033[0m" << std::endl;
-#endif
-                const unsigned result = this->step(s, consumer.bumpc(), consumer,
-                                                   *pal1, *pal2, tracer,
-                                                   ExactMatch<exact_match>(),
-                                                   ActiveCapture<active_capture>());
-                if (-1u != result) {
-                    if (active_capture) {
-                        this->set_idx_trace(result);
-                        tracer.good(result);
-                    }
-                    return false == exact_match || !consumer.valid();
-                }
-                if (exact_match == true && pal2->empty()) {
-                    return false;
-                }
-                if (this->step_count >= step_limit) {
-                    return false;
-                }
-                ++this->step_id;
-                std::swap(pal1, pal2);
-                pal2->clear();
-                if (false == exact_match) {
-                    if (this->st_range_list == this->st_range_list_last) {
-                        if (active_capture) {
-                            s = consumer.str();
-                        }
-                        break;
-                    }
-                    StepRangeList::StepRange & sr = pal1->next_uninitialized();
-                    sr.rl = &this->st_range_beginning;
-                    sr.consume = 0;
-                    if (active_capture) {
-                        --this->pidx_trace_free;
-                        assert(this->pidx_trace_free >= this->idx_trace_free);
-#ifdef DISPLAY_TRACE
-                        std::cout << "\t\033[32m-> " << *this->pidx_trace_free << "\033[0m" << std::endl;
-#endif
-                        sr.idx = *this->pidx_trace_free;
-                    }
-                }
-                if (active_capture) {
-                    s = consumer.str();
-                }
-            }
+            return match_undetermined;
+        }
 
-#ifdef DISPLAY_TRACE
-                std::cout << "\033[35mconsumer.valid(): '" << consumer.valid() << "'\033[0m" << std::endl;
-#endif
+
+        template<typename Tracer, bool active_capture, bool active_part_of_text>
+        bool match_finish(Tracer tracer, size_t * ppos, ActiveCapture<active_capture>,
+                          ActivePartOfText<active_part_of_text>)
+        {
+            RE_SHOW(std::cout << ("finish") << std::endl);
+            struct SetPos {
+                StateMachine2 & sm;
+                size_t * ppos;
+
+                SetPos(StateMachine2 & sm, size_t * ppos)
+                : sm(sm)
+                , ppos(ppos)
+                {}
+
+                ~SetPos()
+                { this->sm.set_pos(this->ppos); }
+            } auto_set_pos(*this, ppos);
 
             if (!consumer.valid()) {
-                for (StepRangeIterator ifirst = pal1->begin(), ilast = pal1->end(); ifirst != ilast; ++ifirst) {
+                StepRangeIterator ifirst = this->pal1->begin();
+                StepRangeIterator ilast = this->pal1->end();
+                for (; ifirst != ilast; ++ifirst) {
                     if (ifirst->consume) {
                         if (ifirst->consume != 1) {
                             continue ;
                         }
 
-                        if (active_capture) {
-                            if (ifirst->num_close != -1u) {
-                                unsigned num = ifirst->num_close;
-                                if (tracer.close(ifirst->idx, s, num)) {
-#ifdef DISPLAY_TRACE
-                                    std::cout << "\t" << ifirst->idx << " (close) " << num << std::endl;
-#endif
-                                    this->traces[ifirst->idx * this->nb_capture + num] = s;
-                                }
-                            }
+                        const StateList & stl = *ifirst->stl;
+
+                        if (active_part_of_text && stl.st->type == SEQUENCE && stl.st->data.sequence.len != ifirst->real_count_consume) {
+                            continue ;
                         }
 
-                        const StateList * stl = reinterpret_cast<const StateList*>(ifirst->rl);
-                        if (!stl->next || stl->is_terminate) {
+                        if (active_capture) {
+                            this->set_trace_close(ifirst->idx, ifirst->num_close, tracer);
+                        }
+                        if (!stl.next || stl.is_terminate) {
                             if (active_capture) {
                               this->set_idx_trace(ifirst->idx);
                             }
                             return true;
                         }
-                        ifirst->rl = stl->next;
                     }
 
-                    if (this->nums[ifirst->rl->st_num] == this->step_id) {
+                    const RangeList & rl = *ifirst->stl->next;
+
+                    if (this->nums[rl.st_num] == this->step_id) {
                         if (active_capture) {
                             /**///std::cout << "\t\033[35mx " << (ifirst->idx) << "\033[0m\n";
                             tracer.fail(ifirst->idx);
@@ -1411,10 +1533,10 @@ namespace re {
                         }
                         continue;
                     }
-                    this->nums[ifirst->rl->st_num] = this->step_id;
+                    this->nums[rl.st_num] = this->step_id;
 
-                    StateList * first = ifirst->rl->first;
-                    StateList * last = ifirst->rl->last;
+                    StateList * first = rl.first;
+                    StateList * last = rl.last;
 
                     for (; first != last; ++first) {
                         if (first->st->is_terminate()) {
@@ -1428,6 +1550,99 @@ namespace re {
             }
 
             return false;
+        }
+
+        void set_pos(size_t * ppos) const
+        {
+            if (ppos) {
+                *ppos = this->consumer.str() - this->start_s;
+            }
+        }
+
+
+        template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
+        unsigned match_run(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
+                           ExactMatch<exact_match>, ActiveCapture<active_capture>,
+                           ActivePartOfText<active_part_of_text>)
+        {
+            this->s = s;
+            this->consumer.str(s);
+
+            while (this->consumer.valid()) {
+                RE_SHOW(std::cout << "\033[01;31mc: '" << utf8_char(consumer.getc()) << "'\033[0m\n");
+                const unsigned result = this->step(this->consumer.bumpc(), tracer,
+                                                   ExactMatch<exact_match>(),
+                                                   ActiveCapture<active_capture>(),
+                                                   ActivePartOfText<active_part_of_text>());
+                if (-1u != result) {
+                    if (active_capture) {
+                        this->set_idx_trace(result);
+                        tracer.good(result);
+                    }
+                    this->set_pos(ppos);
+                    return (false == exact_match || !this->consumer.valid()) ? match_success : match_fail;
+                }
+                if (exact_match == true && this->pal2->empty()) {
+                    this->set_pos(ppos);
+                    return match_fail;
+                }
+                if (this->step_count >= step_limit) {
+                    this->set_pos(ppos);
+                    return match_fail;
+                }
+                ++this->step_id;
+                std::swap(this->pal1, this->pal2);
+                this->pal2->clear();
+                if (false == exact_match) {
+                    if (this->st_range_list == this->st_range_list_last) {
+                        if (active_capture) {
+                            this->s = this->consumer.str();
+                        }
+                        break;
+                    }
+                    StepRangeList::StepRange & sr = this->pal1->next_uninitialized();
+                    sr.stl = &this->sl_beginning;
+                    sr.consume = 0;
+                    if (active_capture) {
+                        --this->pidx_trace_free;
+                        assert(this->pidx_trace_free >= this->idx_trace_free);
+                        RE_SHOW(std::cout << "\t\033[32m-> " << *this->pidx_trace_free << "\033[0m\n");
+                        sr.idx = *this->pidx_trace_free;
+                    }
+                }
+                if (active_capture) {
+                    this->s = this->consumer.str();
+                }
+            }
+
+            return match_undetermined;
+        }
+
+        template<typename Tracer, bool exact_match, bool active_capture, bool active_part_of_text>
+        bool match(const char * s, unsigned step_limit, Tracer tracer, size_t * ppos,
+                   ExactMatch<exact_match>, ActiveCapture<active_capture>,
+                   ActivePartOfText<active_part_of_text>)
+        {
+            switch (this->match_start(s, tracer, ppos, ActiveCapture<active_capture>())) {
+                case match_success: return true;
+                case match_fail: return false;
+                default: ;
+            }
+
+            switch (this->match_run(s, step_limit, tracer, ppos,
+                                    ExactMatch<exact_match>(),
+                                    ActiveCapture<active_capture>(),
+                                    ActivePartOfText<active_part_of_text>())
+            ) {
+                case match_success: return true;
+                case match_fail: return false;
+                default: ;
+            }
+
+            RE_SHOW(std::cout << "\033[35mconsumer.valid(): '" << consumer.valid() << "'\033[0m" << std::endl);
+
+            return this->match_finish(tracer, ppos, ActiveCapture<active_capture>(),
+                                      ActivePartOfText<active_part_of_text>());
         }
 
 
@@ -1471,10 +1686,19 @@ namespace re {
         RangeList * st_range_list;
         RangeList * st_range_list_last;
         RangeList st_range_beginning;
+        StateList sl_beginning;
 
         unsigned step_id;
         unsigned step_count;
         bool first_last;
+
+        //BEGIN only for match and step
+        utf8_consumer consumer;
+        StepRangeList * pal1;
+        StepRangeList * pal2;
+        const char * start_s;
+        const char * s;
+        //END
     };
 }
 
