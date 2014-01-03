@@ -158,6 +158,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 // out_stream.in_copy_bytes(output_buffer.Buffer.get_data(), out_stream.size());
                 memcpy(output_buffer->Buffer.get_data(), out_stream.get_data(), out_stream.size());
                 //context->ntlm_write_NegotiateMessage(output_buffer);
+                return SEC_I_CONTINUE_NEEDED;
             }
             return SEC_E_OUT_OF_SEQUENCE;
         }
@@ -189,6 +190,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 context->CHALLENGE_MESSAGE.recv(input_stream);
 
                 // status = ntlm_read_ChallengeMessage(context, input_buffer);
+                context->state = NTLM_STATE_AUTHENTICATE;
 
                 if (!pOutput)
                     return SEC_E_INVALID_TOKEN;
@@ -196,7 +198,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 if (pOutput->cBuffers < 1)
                     return SEC_E_INVALID_TOKEN;
 
-                // output_buffer = sspi_FindSecBuffer(pOutput, SECBUFFER_TOKEN);
+                output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
 
                 if (!output_buffer)
                     return SEC_E_INVALID_TOKEN;
@@ -224,6 +226,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                            out_stream.get_data(), out_stream.size());
 
                     // return ntlm_write_AuthenticateMessage(context, output_buffer);
+                    return SEC_I_COMPLETE_NEEDED;
                 }
             }
 

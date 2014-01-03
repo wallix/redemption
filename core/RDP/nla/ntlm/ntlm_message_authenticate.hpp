@@ -318,33 +318,36 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
     NtlmNegotiateFlags negoFlags;         /* 4 Bytes */
     NtlmVersion version;                  /* 8 Bytes */
     uint8_t MIC[16];                      /* 16 Bytes */
-    bool has_mic;
+    bool ignore_mic;
     uint32_t PayloadOffset;
 
     NTLMAuthenticateMessage()
         : NTLMMessage(NtlmAuthenticate)
-        , has_mic(false)
-        , PayloadOffset(12+8+8+8+8+8+8+4+8)
+        , ignore_mic(false)
+        , PayloadOffset(12+8+8+8+8+8+8+4+8 + 16)
     {
+        memset(this->MIC, 0x00, 16);
     }
 
     virtual ~NTLMAuthenticateMessage() {}
 
     void emit(Stream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
-        if (this->has_mic)
-            currentOffset += 16;
+        // currentOffset += 16;
         NTLMMessage::emit(stream);
-        this->LmChallengeResponse.emit(stream, currentOffset);
-        this->NtChallengeResponse.emit(stream, currentOffset);
-        this->DomainName.emit(stream, currentOffset);
-        this->UserName.emit(stream, currentOffset);
-        this->Workstation.emit(stream, currentOffset);
-        this->EncryptedRandomSessionKey.emit(stream, currentOffset);
+        currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
+        currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
+        currentOffset += this->DomainName.emit(stream, currentOffset);
+        currentOffset += this->UserName.emit(stream, currentOffset);
+        currentOffset += this->Workstation.emit(stream, currentOffset);
+        currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
         this->negoFlags.emit(stream);
         this->version.emit(stream);
 
-        if (this->has_mic) {
+        if (this->ignore_mic) {
+            stream.out_clear_bytes(16);
+        }
+        else {
             stream.out_copy_bytes(this->MIC, 16);
         }
 
@@ -357,6 +360,38 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->EncryptedRandomSessionKey.write_payload(stream);
         stream.mark_end();
     }
+
+    void emit2(Stream & stream) {
+        uint32_t currentOffset = this->PayloadOffset;
+        // currentOffset += 16;
+        NTLMMessage::emit(stream);
+        currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
+        currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
+        currentOffset += this->DomainName.emit(stream, currentOffset);
+        currentOffset += this->UserName.emit(stream, currentOffset);
+        currentOffset += this->Workstation.emit(stream, currentOffset);
+        currentOffset += this->EncryptedRandomSessionKey.emit(stream, currentOffset);
+        this->negoFlags.emit(stream);
+        this->version.emit(stream);
+
+        if (this->ignore_mic) {
+            stream.out_clear_bytes(16);
+        }
+        else {
+            stream.out_copy_bytes(this->MIC, 16);
+        }
+
+        // // PAYLOAD
+        this->LmChallengeResponse.write_payload(stream);
+        this->NtChallengeResponse.write_payload(stream);
+        this->DomainName.write_payload(stream);
+        this->UserName.write_payload(stream);
+        this->Workstation.write_payload(stream);
+        this->EncryptedRandomSessionKey.write_payload(stream);
+        stream.mark_end();
+    }
+
+
 
     void recv(Stream & stream) {
         uint8_t * pBegin = stream.p;
@@ -374,22 +409,19 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->negoFlags.recv(stream);
         this->version.recv(stream);
 
-        uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
-        if (this->NtChallengeResponse.bufferOffset < min_offset)
-            min_offset = this->NtChallengeResponse.bufferOffset;
-        if (this->DomainName.bufferOffset < min_offset)
-            min_offset = this->DomainName.bufferOffset;
-        if (this->UserName.bufferOffset < min_offset)
-            min_offset = this->UserName.bufferOffset;
-        if (this->Workstation.bufferOffset < min_offset)
-            min_offset = this->Workstation.bufferOffset;
-        if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
-            min_offset = this->EncryptedRandomSessionKey.bufferOffset;
+        // uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
+        // if (this->NtChallengeResponse.bufferOffset < min_offset)
+        //     min_offset = this->NtChallengeResponse.bufferOffset;
+        // if (this->DomainName.bufferOffset < min_offset)
+        //     min_offset = this->DomainName.bufferOffset;
+        // if (this->UserName.bufferOffset < min_offset)
+        //     min_offset = this->UserName.bufferOffset;
+        // if (this->Workstation.bufferOffset < min_offset)
+        //     min_offset = this->Workstation.bufferOffset;
+        // if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
+        //     min_offset = this->EncryptedRandomSessionKey.bufferOffset;
 
-        if (min_offset + pBegin > stream.p) {
-            this->has_mic = true;
-            stream.in_copy_bytes(this->MIC, 16);
-        }
+        stream.in_copy_bytes(this->MIC, 16);
 
         // PAYLOAD
         this->LmChallengeResponse.read_payload(stream, pBegin);
@@ -557,35 +589,20 @@ struct NTLMv2_Client_Challenge {
     NtlmAvPairList AvPairList;
     uint32_t Reserved4;             // MUST BE 0x00
 
-    void ntlm_current_time() {
-    /**
-     * Get current time, in tenths of microseconds since midnight of January 1, 1601.
-     * @param[out] timestamp 64-bit little-endian timestamp
-     */
-
-	// FILETIME filetime;
-	// ULARGE_INTEGER time64;
-
-	// GetSystemTimeAsFileTime(&filetime);
-
-	// time64.LowPart = filetime.dwLowDateTime;
-	// time64.HighPart = filetime.dwHighDateTime;
-
-	// CopyMemory(this->timestamp, &(time64.QuadPart), 8);
-    }
-
     void emit(Stream & stream) {
 	// ULONG length;
 
+        this->RespType = 0x01;
+        this->HiRespType = 0x01;
         stream.out_uint8(this->RespType);
         stream.out_uint8(this->HiRespType);
-        stream.out_skip_bytes(2);
-        stream.out_skip_bytes(4);
+        stream.out_clear_bytes(2);
+        stream.out_clear_bytes(4);
         stream.out_copy_bytes(this->Timestamp, 8);
         stream.out_copy_bytes(this->ClientChallenge, 8);
-        stream.out_skip_bytes(4);
+        stream.out_clear_bytes(4);
         this->AvPairList.emit(stream);
-        stream.out_skip_bytes(4);
+        stream.out_clear_bytes(4);
     }
 
 

@@ -277,15 +277,15 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     // AuthMsgDuplicate.negoFlags.print();
 
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.len, 24);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.bufferOffset, 72);
+    BOOST_CHECK_EQUAL(AuthMsgDuplicate.LmChallengeResponse.bufferOffset, 88);
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.len, 112);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.bufferOffset, 96);
+    BOOST_CHECK_EQUAL(AuthMsgDuplicate.NtChallengeResponse.bufferOffset, 112);
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.DomainName.len, 8);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.DomainName.bufferOffset, 208);
+    BOOST_CHECK_EQUAL(AuthMsgDuplicate.DomainName.bufferOffset, 224);
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.UserName.len, 16);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.UserName.bufferOffset, 216);
+    BOOST_CHECK_EQUAL(AuthMsgDuplicate.UserName.bufferOffset, 232);
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.Workstation.len, 10);
-    BOOST_CHECK_EQUAL(AuthMsgDuplicate.Workstation.bufferOffset, 232);
+    BOOST_CHECK_EQUAL(AuthMsgDuplicate.Workstation.bufferOffset, 248);
     BOOST_CHECK_EQUAL(AuthMsgDuplicate.EncryptedRandomSessionKey.len, 16);
 
 }

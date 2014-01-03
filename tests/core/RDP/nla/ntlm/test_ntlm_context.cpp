@@ -418,7 +418,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
                                                   userDomain, sizeof(userDomain),
                                                   workstation, sizeof(workstation));
 
-
     // send AUTHENTICATE MESSAGE
     client_to_server.reset();
     client_context.AUTHENTICATE_MESSAGE.emit(client_to_server);
@@ -480,6 +479,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
     BOOST_CHECK(!memcmp(client_context.MessageIntegrityCheck,
                         server_context.MessageIntegrityCheck,
                         16));
+
 
 }
 
