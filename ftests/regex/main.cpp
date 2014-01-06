@@ -68,7 +68,28 @@ int main(int argc, char **argv) {
     std::cout.flush();
 
     if (argc < 3) {
-        return 0;
+        std::string line;
+        std::cout << "str: ";
+        std::getline(std::cin, line);
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(line.empty());
+        if (Regex::match_undetermined == part_rgx.state()) {
+            while (Regex::match_undetermined == part_rgx.next(line.c_str())
+                && (std::cout << "str: ", std::getline(std::cin, line))) {
+            }
+        }
+
+        switch (part_rgx.state()) {
+            case Regex::match_success: std::cout << "ok\n"; return 0;
+            case Regex::match_fail: std::cout << "fail\n"; return 1;
+            default: ;
+        }
+
+        if (Regex::match_success == part_rgx.finish()) {
+            std::cout << "ok\n";
+            return 0;
+        }
+        std::cout << "fail\n";
+        return 1;
     }
     else {
         argv[1] = argv[2];

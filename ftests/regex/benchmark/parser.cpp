@@ -19,8 +19,8 @@
  */
 
 #include "basic_benchmark.hpp"
-#include "../regex_parser.hpp"
-#include "../regex_automate.hpp"
+#include "regex/regex_parser.hpp"
+#include "regex/regex_automate.hpp"
 
 #include <regex.h>
 #include <pcre.h>

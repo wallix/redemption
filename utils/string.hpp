@@ -23,6 +23,7 @@
 
 #include "error.hpp"
 #include "log.hpp"
+#include <string>
 
 namespace redemption {
 
@@ -45,8 +46,6 @@ private:
     string & operator=(const string & source);
 
 public:
-    virtual ~string() {}
-
     const char * c_str() const {
         return this->internal_string.c_str();
     }

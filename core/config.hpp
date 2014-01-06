@@ -576,7 +576,6 @@ struct Inifile : public FieldObserver {
         bool     capture_flv;
         bool     capture_ocr;
 
-        const char * ocr_filters[20];
         unsigned ocr_interval;
         bool     ocr_on_title_bar_only;
         unsigned ocr_max_unrecog_char_rate; // expressed in percentage,
@@ -902,7 +901,6 @@ public:
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
-        this->video.ocr_filters[0]              = NULL;
         this->video.ocr_interval                = 100;      // 1 every second
         this->video.ocr_on_title_bar_only       = false;
         this->video.ocr_max_unrecog_char_rate   = 40;

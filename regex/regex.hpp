@@ -24,6 +24,7 @@
 #include "regex_automate.hpp"
 #include "regex_parser.hpp"
 
+struct Tracer;
 namespace re {
 
     class Regex
@@ -215,6 +216,209 @@ namespace re {
         {
             return this->sm.search_with_trace(s, this->step_limit, tracer, &this->pos);
         }
+
+        enum {
+            match_fail = StateMachine2::match_fail,
+            match_success = StateMachine2::match_success,
+            match_undetermined = StateMachine2::match_undetermined
+        };
+
+    private:
+        template<bool exact>
+        class BasicPartOfText
+        {
+        protected:
+            Regex & re;
+            unsigned res;
+
+        public:
+            BasicPartOfText(Regex & re, const char * s)
+            : re(re)
+            , res(re.sm.part_of_text_start(s, &re.pos))
+            {}
+
+            unsigned state() const
+            {
+                return this->res;
+            }
+
+            unsigned next(const char * s)
+            {
+                if (exact) {
+                    this->res = this->re.sm.part_of_text_exact_search(s, this->re.step_limit,
+                                                                      &this->re.pos);
+                }
+                else {
+                    this->res = this->re.sm.part_of_text_search(s, this->re.step_limit,
+                                                                &this->re.pos);
+                }
+                return this->res;
+            }
+
+            bool finish()
+            {
+                this->res = this->re.sm.part_of_text_finish(&this->re.pos);
+                return this->res;
+            }
+        };
+
+
+        template<bool exact, typename Tracer>
+        class BasicPartOfTextWithCapture
+        {
+        protected:
+            Regex & re;
+            Tracer tracer;
+            unsigned res;
+
+        public:
+            BasicPartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            : re(re)
+            , tracer(tracer)
+            , res(re.sm.part_of_text_start_with_trace(s, this->tracer, &re.pos))
+            {}
+
+            unsigned state() const
+            {
+                return this->res;
+            }
+
+            unsigned next(const char * s)
+            {
+                if (exact) {
+                    this->res = this->re.sm
+                    .part_of_text_exact_search_with_trace(s, this->re.step_limit,
+                                                          this->tracer, &this->re.pos);
+                }
+                else {
+                    this->res = this->re.sm
+                    .part_of_text_search_with_trace(s, this->re.step_limit,
+                                                    this->tracer, &this->re.pos);
+                }
+                return this->res;
+            }
+
+            bool finish()
+            {
+                this->res = this->re.sm.part_of_text_finish_with_trace(this->tracer,
+                                                                       &this->re.pos);
+                return this->res;
+            }
+        };
+
+    public:
+        typedef BasicPartOfText<true> ExactPartOfText;
+        typedef BasicPartOfText<false> PartOfText;
+
+        template<typename Tracer>
+        struct ExactPartOfTextWithCapture : BasicPartOfTextWithCapture<true, Tracer>
+        {
+            ExactPartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            : BasicPartOfTextWithCapture<true, Tracer>(re, s, tracer)
+            {}
+        };
+
+        template<typename Tracer>
+        struct PartOfTextWithCapture : BasicPartOfTextWithCapture<false, Tracer>
+        {
+            PartOfTextWithCapture(Regex & re, const char * s, Tracer tracer = Tracer())
+            : BasicPartOfTextWithCapture<false, Tracer>(re, s, tracer)
+            {}
+        };
+
+        class PartOfTextTracer
+        {
+            StateMachine2::DefaultMatchTracer sm_tracer;
+            std::vector<std::string> matches;
+            StateMachine2 & sm;
+            const char * s;
+
+        public:
+            PartOfTextTracer(StateMachine2 & sm)
+            : sm_tracer(sm)
+            , matches(sm.node_count())
+            , sm(sm)
+            {}
+
+            unsigned new_id(unsigned old_id)
+            {
+                const unsigned new_id = this->sm_tracer.new_id(old_id);
+                std::copy(this->matches.begin() + old_id,
+                          this->matches.begin() + old_id + this->sm.mark_count(),
+                          this->matches.begin() + new_id);
+                return new_id;
+            }
+
+            bool open(unsigned idx, const char * s, unsigned num_cap) const
+            {
+                (void)idx;
+                (void)s;
+                (void)num_cap;
+                return true;
+            }
+
+            bool close(unsigned idx, const char * s, unsigned num_cap)
+            {
+                this->matches[idx * this->sm.mark_count() + num_cap].append(this->s, s - this->s);
+                return true;
+            }
+
+            void fail(unsigned idx)
+            {
+                this->sm_tracer.fail(idx);
+                for (const unsigned last = idx + this->sm.mark_count(); idx != last; ++idx) {
+                    this->matches[idx].clear();
+                }
+            }
+
+            void good(unsigned idx) const
+            {
+                this->sm_tracer.good(idx);
+            }
+        };
+
+        typedef StateMachine2::DefaultMatchTracer DefaultTracer;
+
+
+        ExactPartOfText part_of_text_exact_search(bool str_is_empty)
+        {
+            return ExactPartOfText(*this, str_is_empty ? "" : " ");
+        }
+
+        PartOfText part_of_text_search(bool str_is_empty)
+        {
+            return PartOfText(*this, str_is_empty ? "" : " ");
+        }
+
+//         ExactPartOfTextWithCapture<DefaultTracer>
+//         part_of_text_exact_search_with_capture(bool str_is_empty)
+//         {
+//             return ExactPartOfTextWithCapture<DefaultTracer>(*this,
+//                                                              str_is_empty ? "" : " ",
+//                                                              DefaultTracer(this->sm)
+//                                                             );
+//         }
+//
+//         template<typename Tracer>
+//         ExactPartOfTextWithCapture<Tracer>
+//         part_of_text_exact_search_with_capture(bool str_is_empty, Tracer tracer)
+//         {
+//             return ExactPartOfTextWithCapture<Tracer>(*this, str_is_empty ? "" : " ", tracer);
+//         }
+//
+//         PartOfTextWithCapture<DefaultTracer>
+//         part_of_text_search_with_capture(bool str_is_empty)
+//         {
+//             return PartOfTextWithCapture<DefaultTracer>(*this, str_is_empty ? "" : " ",
+//                                                         DefaultTracer(this->sm));
+//         }
+//
+//         template<typename Tracer>
+//         PartOfTextWithCapture<Tracer>
+//         part_of_text_search_with_capture(bool str_is_empty, Tracer tracer)
+//         {
+//             return PartOfTextWithCapture<Tracer>(*this, str_is_empty ? "" : " ", tracer);
+//         }
 
         range_matches match_result(bool all = true) const
         {
