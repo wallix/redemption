@@ -444,6 +444,14 @@ struct TSCredentials {
 
     ~TSCredentials() {}
 
+    void set_credentials(const uint8_t * domain, int domain_length,
+                         const uint8_t * user, int user_length,
+                         const uint8_t * pass, int pass_length) {
+        this->passCreds = TSPasswordCreds(domain, domain_length,
+                                          user, user_length,
+                                          pass, pass_length);
+    }
+
     int ber_sizeof() {
 	int size = 0;
 	size += BER::sizeof_integer(1);

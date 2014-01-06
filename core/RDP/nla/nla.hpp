@@ -48,11 +48,12 @@ struct rdpCredssp
     // rdpSettings* settings;
     // rdpTransport* transport;
 
+    TSCredentials ts_credentials;
     TSRequest ts_request;
-    Array * negoToken;
-    Array * pubKeyAuth;
-    Array * authInfo;
-    SecBuffer PublicKey;
+    Array & negoToken;
+    Array & pubKeyAuth;
+    Array & authInfo;
+    Array PublicKey;
 
     // CryptoRc4 rc4_seal_state;
     Array ServicePrincipalName;
@@ -62,9 +63,9 @@ struct rdpCredssp
 
 
     rdpCredssp()
-        : negoToken(&(ts_request.negoTokens))
-        , pubKeyAuth(&(ts_request.pubKeyAuth))
-        , authInfo(&(ts_request.authInfo))
+        : negoToken(ts_request.negoTokens)
+        , pubKeyAuth(ts_request.pubKeyAuth)
+        , authInfo(ts_request.authInfo)
     {}
 
     ~rdpCredssp()
@@ -114,8 +115,7 @@ struct rdpCredssp
 
         // this->identity.SetAuthIdentity(settings->Username, settings->Domain,
         //                                settings->Password);
-        this->identity.SetAuthIdentity(NULL, NULL,
-                                       NULL);
+        this->identity.SetAuthIdentity(NULL, NULL, NULL);
 
 // #ifndef _WIN32
 //         {
@@ -179,145 +179,201 @@ struct rdpCredssp
 
     }
 
+    void ap_integer_increment_le(uint8_t* number, size_t size) {
+        size_t index = 0;
+
+        for (index = 0; index < size; index++) {
+            if (number[index] < 0xFF) {
+                number[index]++;
+                break;
+            }
+            else {
+                number[index] = 0;
+                continue;
+            }
+        }
+    }
+
+    void ap_integer_decrement_le(uint8_t* number, size_t size) {
+        size_t index = 0;
+        for (index = 0; index < size; index++) {
+            if (number[index] > 0) {
+                number[index]--;
+                break;
+            }
+            else {
+                number[index] = 0xFF;
+                continue;
+            }
+        }
+    }
+
+
     SEC_STATUS credssp_encrypt_public_key_echo() {
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
         int public_key_length;
 
-        public_key_length = this->PublicKey.Buffer.size();
+        public_key_length = this->PublicKey.size();
 
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
         Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
 
-        this->pubKeyAuth->init(this->ContextSizes.cbMaxSignature + public_key_length);
-        // sspi_SecBufferAlloc(&this->pubKeyAuth, this->ContextSizes.cbMaxSignature + public_key_length);
+        this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        // Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
-        // Buffers[0].pvBuffer = credssp->pubKeyAuth.pvBuffer;
+        memcpy(Buffers[0].Buffer.get_data(), this->pubKeyAuth.get_data(),
+               Buffers[0].Buffer.size());
 
         Buffers[1].Buffer.init(public_key_length);
-        // Buffers[1].cbBuffer = public_key_length;
-        // Buffers[1].pvBuffer = ((BYTE*) this->pubKeyAuth.pvBuffer) + this->ContextSizes.cbMaxSignature;
-        memcpy(Buffers[1].Buffer.get_data(), this->PublicKey.Buffer.get_data(),
+
+        memcpy(Buffers[1].Buffer.get_data(), this->PublicKey.get_data(),
                Buffers[1].Buffer.size());
 
         if (this->server) {
             /* server echos the public key +1 */
-            // ap_integer_increment_le((BYTE*) Buffers[1].pvBuffer, Buffers[1].cbBuffer);
+            this->ap_integer_increment_le(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
         }
 
         Message.cBuffers = 2;
         Message.ulVersion = SECBUFFER_VERSION;
-        Message.pBuffers = (PSecBuffer) &Buffers;
+        Message.pBuffers = Buffers;
 
         status = this->table->EncryptMessage(&this->context, 0, &Message, this->send_seq_num++);
 
         if (status != SEC_E_OK) {
-            fprintf(stderr, "EncryptMessage status: 0x%08X\n", status);
+            LOG(LOG_ERR, "EncryptMessage status: 0x%08X\n", status);
             return status;
         }
+
+        memcpy(this->pubKeyAuth.get_data(),
+               Buffers[0].Buffer.get_data(),
+               Buffers[0].Buffer.size());
+        memcpy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
+               Buffers[1].Buffer.get_data(),
+               Buffers[1].Buffer.size());
 
         return status;
 
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
-    //     int length;
-    //     BYTE* buffer;
-    //     ULONG pfQOP = 0;
-    //     BYTE* public_key1;
-    //     BYTE* public_key2;
-    //     int public_key_length;
-    //     SecBuffer Buffers[2];
-    //     SecBufferDesc Message;
-    //     SECURITY_STATUS status;
+        int length;
+        unsigned long pfQOP = 0;
+        uint8_t* public_key1;
+        uint8_t* public_key2;
+        int public_key_length;
+        SecBuffer Buffers[2];
+        SecBufferDesc Message;
+        SEC_STATUS status;
 
-    //     if (credssp->PublicKey.cbBuffer + credssp->ContextSizes.cbMaxSignature != credssp->pubKeyAuth.cbBuffer) {
-    //         fprintf(stderr, "unexpected pubKeyAuth buffer size:%d\n", (int) credssp->pubKeyAuth.cbBuffer);
-    //         return SEC_E_INVALID_TOKEN;
-    //     }
+        if (this->PublicKey.size() + this->ContextSizes.cbMaxSignature != this->pubKeyAuth.size()) {
+            fprintf(stderr, "unexpected pubKeyAuth buffer size:%d\n",
+                    (int) this->pubKeyAuth.size());
+            return SEC_E_INVALID_TOKEN;
+        }
 
-    //     length = credssp->pubKeyAuth.cbBuffer;
-    //     buffer = (BYTE*) malloc(length);
-    //     CopyMemory(buffer, credssp->pubKeyAuth.pvBuffer, length);
+        length = this->pubKeyAuth.size();
 
-    //     public_key_length = credssp->PublicKey.cbBuffer;
+        public_key_length = this->PublicKey.size();
 
-    //     Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-    //     Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
+        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
+        Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
 
-    //     Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
-    //     Buffers[0].pvBuffer = buffer;
+        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
+        memcpy(Buffers[0].Buffer.get_data(),
+               this->pubKeyAuth.get_data(),
+               this->ContextSizes.cbMaxSignature);
 
-    //     Buffers[1].cbBuffer = length - credssp->ContextSizes.cbMaxSignature;
-    //     Buffers[1].pvBuffer = buffer + credssp->ContextSizes.cbMaxSignature;
+        Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
+        memcpy(Buffers[1].Buffer.get_data(),
+               this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
+               Buffers[1].Buffer.size());
 
-    //     Message.cBuffers = 2;
-    //     Message.ulVersion = SECBUFFER_VERSION;
-    //     Message.pBuffers = (PSecBuffer) &Buffers;
+        Message.cBuffers = 2;
+        Message.ulVersion = SECBUFFER_VERSION;
+        Message.pBuffers = Buffers;
 
-    //     status = credssp->table->DecryptMessage(&credssp->context, &Message, credssp->recv_seq_num++, &pfQOP);
+        status = this->table->DecryptMessage(&this->context, &Message, this->recv_seq_num++, &pfQOP);
 
-    //     if (status != SEC_E_OK) {
-    //         fprintf(stderr, "DecryptMessage failure: 0x%08X\n", status);
-    //         return status;
-    //     }
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "DecryptMessage failure: 0x%08X\n", status);
+            return status;
+        }
 
-    //     public_key1 = (BYTE*) credssp->PublicKey.pvBuffer;
-    //     public_key2 = (BYTE*) Buffers[1].pvBuffer;
+        public_key1 = this->PublicKey.get_data();
+        public_key2 = Buffers[1].Buffer.get_data();
 
-    //     if (!credssp->server) {
-    //         /* server echos the public key +1 */
-    //         ap_integer_decrement_le(public_key2, public_key_length);
-    //     }
+        if (!this->server) {
+            /* server echos the public key +1 */
+            ap_integer_decrement_le(public_key2, public_key_length);
+        }
 
-    //     if (memcmp(public_key1, public_key2, public_key_length) != 0) {
-    //         fprintf(stderr, "Could not verify server's public key echo\n");
+        if (memcmp(public_key1, public_key2, public_key_length) != 0) {
+            LOG(LOG_ERR, "Could not verify server's public key echo\n");
 
-    //         fprintf(stderr, "Expected (length = %d):\n", public_key_length);
-    //         winpr_HexDump(public_key1, public_key_length);
+            LOG(LOG_ERR, "Expected (length = %d):\n", public_key_length);
+            hexdump_c(public_key1, public_key_length);
 
-    //         fprintf(stderr, "Actual (length = %d):\n", public_key_length);
-    //         winpr_HexDump(public_key2, public_key_length);
+            LOG(LOG_ERR, "Actual (length = %d):\n", public_key_length);
+            hexdump_c(public_key2, public_key_length);
 
-    //         return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
-    //     }
-
-    //     free(buffer);
+            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+        }
 
         return SEC_E_OK;
     }
 
+    void credssp_encode_ts_credentials() {
+        // this->ts_credentials.set_credentials
+    }
+
     SEC_STATUS credssp_encrypt_ts_credentials() {
-    //     SecBuffer Buffers[2];
-    //     SecBufferDesc Message;
-    //     SEC_STATUS status;
+        SecBuffer Buffers[2];
+        SecBufferDesc Message;
+        SEC_STATUS status;
 
-    //     credssp_encode_ts_credentials(credssp);
+        this->credssp_encode_ts_credentials();
 
-    //     Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-    //     Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
+        BStream ts_credentials_send;
+        this->ts_credentials.emit(ts_credentials_send);
+
+        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
+        Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
 
     //     sspi_SecBufferAlloc(&credssp->authInfo, credssp->ContextSizes.cbMaxSignature + credssp->ts_credentials.cbBuffer);
+        this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
 
+        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
+        memset(Buffers[0].Buffer.get_data(), 0, Buffers[0].Buffer.size());
     //     Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
     //     Buffers[0].pvBuffer = credssp->authInfo.pvBuffer;
     //     ZeroMemory(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
+
+        Buffers[1].Buffer.init(ts_credentials_send.size());
+        memcpy(Buffers[1].Buffer.get_data(), ts_credentials_send.get_data(),
+               ts_credentials_send.size());
 
     //     Buffers[1].cbBuffer = credssp->ts_credentials.cbBuffer;
     //     Buffers[1].pvBuffer = &((BYTE*) credssp->authInfo.pvBuffer)[Buffers[0].cbBuffer];
     //     CopyMemory(Buffers[1].pvBuffer, credssp->ts_credentials.pvBuffer, Buffers[1].cbBuffer);
 
-    //     Message.cBuffers = 2;
-    //     Message.ulVersion = SECBUFFER_VERSION;
-    //     Message.pBuffers = (PSecBuffer) &Buffers;
+        Message.cBuffers = 2;
+        Message.ulVersion = SECBUFFER_VERSION;
+        Message.pBuffers = Buffers;
 
-    //     status = credssp->table->EncryptMessage(&credssp->context, 0, &Message, credssp->send_seq_num++);
+        status = this->table->EncryptMessage(&this->context, 0, &Message, this->send_seq_num++);
 
-    //     if (status != SEC_E_OK)
-    //         return status;
+        if (status != SEC_E_OK)
+            return status;
+
+        memcpy(this->authInfo.get_data(),
+               Buffers[0].Buffer.get_data(),
+               Buffers[0].Buffer.size());
+        memcpy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
+               Buffers[1].Buffer.get_data(),
+               Buffers[1].Buffer.size());
 
         return SEC_E_OK;
     }
@@ -350,7 +406,6 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     SecBufferDesc output_buffer_desc;
     bool have_context;
     bool have_input_buffer;
-    // bool have_pub_key_auth;
 
     // TODO
     // sspi_GlobalInit();
@@ -358,7 +413,6 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     if (credssp->credssp_ntlm_client_init() == 0)
         return 0;
 
-    // TODO
     credssp->table = InitSecurityInterface(NTLM_Interface);
 
     pPackageInfo = NULL;
@@ -367,7 +421,7 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, pPackageInfo);
 
     if (status != SEC_E_OK) {
-        fprintf(stderr, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+        LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
         return 0;
     }
 
@@ -379,7 +433,7 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
                                                       &credentials, &expiration);
 
     if (status != SEC_E_OK) {
-        fprintf(stderr, "AcquireCredentialsHandle status: 0x%08X\n", status);
+        LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
         return 0;
     }
 
@@ -433,7 +487,7 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
             // have_pub_key_auth = true;
 
             if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK) {
-                fprintf(stderr, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+                LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
                 return 0;
             }
 
@@ -449,8 +503,8 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
 
         if (output_buffer.Buffer.size() > 0) {
             // copy or set reference ? BStream
-            credssp->negoToken->init(output_buffer.Buffer.size());
-            memcpy(credssp->negoToken->get_data(), output_buffer.Buffer.get_data(),
+            credssp->negoToken.init(output_buffer.Buffer.size());
+            memcpy(credssp->negoToken.get_data(), output_buffer.Buffer.get_data(),
                    output_buffer.Buffer.size());
 
             // credssp->negoToken.reset();
@@ -460,8 +514,8 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
             // credssp->negoToken = output_buffer.Buffer;
 
 // #ifdef WITH_DEBUG_CREDSSP
-//             fprintf(stderr, "Sending Authentication Token\n");
-//             winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+//             LOG(LOG_ERR, "Sending Authentication Token\n");
+//             hexdump_c(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 // #endif
 
             credssp->credssp_send();
@@ -482,13 +536,13 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
             return -1;
 
 // #ifdef WITH_DEBUG_CREDSSP
-//         fprintf(stderr, "Receiving Authentication Token (%d)\n", (int) credssp->negoToken.cbBuffer);
-//         winpr_HexDump(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
+//         LOG(LOG_ERR, "Receiving Authentication Token (%d)\n", (int) credssp->negoToken.cbBuffer);
+//         hexdump_c(credssp->negoToken.pvBuffer, credssp->negoToken.cbBuffer);
 // #endif
 
-        input_buffer.Buffer.init(credssp->negoToken->size());
-        memcpy(input_buffer.Buffer.get_data(), credssp->negoToken->get_data(),
-               credssp->negoToken->size());
+        input_buffer.Buffer.init(credssp->negoToken.size());
+        memcpy(input_buffer.Buffer.get_data(), credssp->negoToken.get_data(),
+               credssp->negoToken.size());
 
         have_input_buffer = true;
         have_context = true;
@@ -504,7 +558,7 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     credssp->credssp_buffer_free();
 
     if (status != SEC_E_OK) {
-        fprintf(stderr, "Could not verify public key echo!\n");
+        LOG(LOG_ERR, "Could not verify public key echo!\n");
         return -1;
     }
 
@@ -513,7 +567,7 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     status = credssp->credssp_encrypt_ts_credentials();
 
     if (status != SEC_E_OK) {
-        fprintf(stderr, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
+        LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
         return 0;
     }
 

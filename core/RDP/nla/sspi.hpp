@@ -140,13 +140,6 @@ enum SecIdFlag {
 
 struct SEC_WINNT_AUTH_IDENTITY
 {
-    // uint16_t* User;
-    // uint32_t UserLength;
-    // uint16_t* Domain;
-    // uint32_t DomainLength;
-    // uint16_t* Password;
-    // uint32_t PasswordLength;
-
     Array User;
     Array Domain;
     Array Password;
