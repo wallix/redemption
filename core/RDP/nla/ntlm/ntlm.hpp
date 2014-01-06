@@ -244,6 +244,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         return SEC_E_OK;
     }
 
+    // GSS_Wrap
+    // ENCRYPT_MESSAGE EncryptMessage;
     virtual SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
                                       PSecBufferDesc pMessage, unsigned long MessageSeqNo) {
         int index;
@@ -334,6 +336,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         return SEC_E_OK;
     }
 
+    // GSS_Unwrap
+    // DECRYPT_MESSAGE DecryptMessage;
     SEC_STATUS ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                    unsigned long MessageSeqNo, unsigned long * pfQOP) {
         int index;
