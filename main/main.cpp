@@ -42,10 +42,6 @@
 #include "mainloop.hpp"
 #include "log.hpp"
 
-/*
-bool __debug = false;
-*/
-
 void daemonize(const char * pid_file)
 {
     int pid;

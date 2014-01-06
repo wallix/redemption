@@ -190,14 +190,12 @@ static const size_t RDP_60_HIST_BUF_LEN      = 1024 * 64;
 static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
 
 static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
-//LOG(LOG_INFO, "Add ->%5d %5d %5d %5d - %d", *offset_cache, *(offset_cache + 1), *(offset_cache + 2), *(offset_cache + 3), copy_offset);
     *((uint32_t*)(offset_cache+2)) <<= 16;
     *((uint32_t*)(offset_cache+2)) |=  (*((uint32_t*)offset_cache) >> 16);
     *((uint32_t*)offset_cache)     =   (*((uint32_t*)offset_cache) << 16) | copy_offset;
 }
 
 static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
-//LOG(LOG_INFO, "Swap->%5d %5d %5d %5d - %d", *offset_cache, *(offset_cache + 1), *(offset_cache + 2), *(offset_cache + 3), LUTIndex);
     uint16_t t = *offset_cache;
     *offset_cache              = *(offset_cache + LUTIndex);
     *(offset_cache + LUTIndex) = t;
@@ -716,12 +714,8 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
     static inline void insert_n_bits(uint8_t n, uint32_t _data,
         uint8_t * outputBuffer, uint8_t & bits_left, uint16_t & opb_index) {
 
-REDASSERT(n);
-REDASSERT((_data & ((1 << n) - 1)) == _data);
-
         while (n)
         {
-REDASSERT(bits_left >= 0);
             uint8_t tmp = _data << (8 - bits_left);
             outputBuffer[opb_index] |= tmp;
             if (bits_left >= n) {
@@ -785,19 +779,8 @@ REDASSERT(bits_left >= 0);
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
-/*
-char __historyBuffer[1024*64];
-memcpy(__historyBuffer, this->historyBuffer, sizeof(__historyBuffer));
-int  __historyOffset = this->historyOffset;
-char __offsetCache[8];
-memcpy(__offsetCache, this->offsetCache, sizeof(__offsetCache));
-int  __flagsHold = this->flagsHold;
-char __hash_table[1024 * 64 * 2];
-memcpy(__hash_table, this->hash_table, sizeof(__hash_table));
-*/
-
 LOG(LOG_INFO, ". len=%d", len);
-        if ((this->historyOffset + len) >= static_cast<int>(RDP_60_HIST_BUF_LEN)) {
+        if ((this->historyOffset + len) >= static_cast<int>(RDP_60_HIST_BUF_LEN) - 1) {
 LOG(LOG_INFO, "F historyOffset=%d", this->historyOffset);
             /* historyBuffer cannot hold srcData - rewind it */
             ::memmove(this->historyBuffer,
@@ -818,19 +801,6 @@ LOG(LOG_INFO, "F historyOffset=%d", this->historyOffset);
         if (this->historyOffset == 0) {
 LOG(LOG_INFO, "B");
             // encode first two bytes as literals
-/*
-            int index, count;
-            for (index = 0, count = std::min(2, len); index < count; index++) {
-                rdp_mppc_60_enc::encode_literal(
-                    this->historyBuffer[this->historyOffset + index],
-                    this->outputBuffer, bits_left, opb_index);
-            }
-
-            hash_table[rdp_mppc_enc::signature(this->historyBuffer)]     = 0;
-            if (count )
-            hash_table[rdp_mppc_enc::signature(this->historyBuffer + 1)] = 1;
-            ctr = count;
-*/
             for (int x = 0; x < 2; x++) {
                 rdp_mppc_60_enc::encode_literal(
                     this->historyBuffer[this->historyOffset + x],
@@ -877,35 +847,15 @@ LOG(LOG_INFO, "B");
 
                 // encode copy_offset and insert into output buffer
                 uint32_t copy_offset = this->historyOffset + ctr - previous_match;
-//LOG(LOG_INFO, "lom=%d copy_offset=%d", lom, copy_offset);
 
                 int offsetCacheIndex;
                 int LUTIndex;
-                if (((offsetCacheIndex =
-                     cache_find(this->offsetCache, copy_offset)) != -1) && true) {
-//LOG(LOG_INFO, "C index=%d", offsetCacheIndex);
+                if ((offsetCacheIndex =
+                     cache_find(this->offsetCache, copy_offset)) != -1) {
                     if ((lom >= len) && !offsetCacheIndex) {
 LOG(LOG_INFO, "C lom=%d len=%d", lom, len);
-//                    lom--;
 
 LOG(LOG_INFO, "Find->%5d %5d %5d %5d - %d %d", *this->offsetCache, *(this->offsetCache + 1), *(this->offsetCache + 2), *(this->offsetCache + 3), copy_offset, offsetCacheIndex);
-//LOG(LOG_INFO, "historyOffset=%d", this->historyOffset);
-/*
-extern bool __debug;
-__debug = true;
-*/
-/*
-LOG(LOG_INFO, "historyBuffer");
-hexdump_d(__historyBuffer, sizeof(__historyBuffer));
-LOG(LOG_INFO, "historyOffset=%d", __historyOffset);
-LOG(LOG_INFO, "offsetCache");
-hexdump_d(__offsetCache, sizeof(__offsetCache));
-LOG(LOG_INFO, "flagsHold=%d", __flagsHold);
-LOG(LOG_INFO, "hash_table");
-hexdump_d(__hash_table, sizeof(__hash_table));
-LOG(LOG_INFO, "len=%d", len);
-hexdump_d(srcData, len);
-*/
                     }
 
                     if (offsetCacheIndex != 0) {
@@ -980,22 +930,10 @@ LOG(LOG_INFO, "U");
         this->historyOffset += len;
 
         // if bits_left == 8, opb_index has already been incremented
-if (!bits_left) {
-    LOG(LOG_INFO, "bits_left == 0");
-}
         this->bytes_in_opb  =  opb_index + (bits_left != 8);
-
         this->flags         |= PACKET_COMPRESSED;
         this->flags         |= this->flagsHold;
         this->flagsHold     =  0;
-
-/*
-extern bool __debug;
-if (__debug == true) {
-LOG(LOG_INFO, "flags=0x%X bytes_in_opb=%d", this->flags, this->bytes_in_opb);
-hexdump_d(this->outputBuffer, this->bytes_in_opb);
-}
-*/
 
         return true;
     }   // bool compress_60(uint8_t * srcData, int len)
