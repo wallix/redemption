@@ -326,7 +326,12 @@ struct rdpCredssp
     }
 
     void credssp_encode_ts_credentials() {
-        // this->ts_credentials.set_credentials
+        this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
+                                             this->identity.Domain.size(),
+                                             this->identity.User.get_data(),
+                                             this->identity.User.size(),
+                                             this->identity.Password.get_data(),
+                                             this->identity.Password.size());
     }
 
     SEC_STATUS credssp_encrypt_ts_credentials() {
@@ -340,24 +345,24 @@ struct rdpCredssp
         this->ts_credentials.emit(ts_credentials_send);
 
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-        Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
+        Buffers[1].BufferType = SECBUFFER_DATA;  /* TSCredentials */
 
-    //     sspi_SecBufferAlloc(&credssp->authInfo, credssp->ContextSizes.cbMaxSignature + credssp->ts_credentials.cbBuffer);
+        //     sspi_SecBufferAlloc(&credssp->authInfo, credssp->ContextSizes.cbMaxSignature + credssp->ts_credentials.cbBuffer);
         this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
         memset(Buffers[0].Buffer.get_data(), 0, Buffers[0].Buffer.size());
-    //     Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
-    //     Buffers[0].pvBuffer = credssp->authInfo.pvBuffer;
-    //     ZeroMemory(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
+        //     Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
+        //     Buffers[0].pvBuffer = credssp->authInfo.pvBuffer;
+        //     ZeroMemory(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
 
         Buffers[1].Buffer.init(ts_credentials_send.size());
         memcpy(Buffers[1].Buffer.get_data(), ts_credentials_send.get_data(),
                ts_credentials_send.size());
 
-    //     Buffers[1].cbBuffer = credssp->ts_credentials.cbBuffer;
-    //     Buffers[1].pvBuffer = &((BYTE*) credssp->authInfo.pvBuffer)[Buffers[0].cbBuffer];
-    //     CopyMemory(Buffers[1].pvBuffer, credssp->ts_credentials.pvBuffer, Buffers[1].cbBuffer);
+        //     Buffers[1].cbBuffer = credssp->ts_credentials.cbBuffer;
+        //     Buffers[1].pvBuffer = &((BYTE*) credssp->authInfo.pvBuffer)[Buffers[0].cbBuffer];
+        //     CopyMemory(Buffers[1].pvBuffer, credssp->ts_credentials.pvBuffer, Buffers[1].cbBuffer);
 
         Message.cBuffers = 2;
         Message.ulVersion = SECBUFFER_VERSION;
@@ -368,6 +373,7 @@ struct rdpCredssp
         if (status != SEC_E_OK)
             return status;
 
+        this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
         memcpy(this->authInfo.get_data(),
                Buffers[0].Buffer.get_data(),
                Buffers[0].Buffer.size());
@@ -378,6 +384,55 @@ struct rdpCredssp
         return SEC_E_OK;
     }
 
+    SEC_STATUS credssp_decrypt_ts_credentials() {
+        int length;
+        unsigned long pfQOP = 0;
+        SecBuffer Buffers[2];
+        SecBufferDesc Message;
+        SEC_STATUS status;
+
+        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
+        Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
+
+        if (this->authInfo.size() < 1) {
+            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing authInfo buffer\n");
+            return SEC_E_INVALID_TOKEN;
+        }
+
+        length = this->authInfo.size();
+        // CopyMemory(buffer, this->authInfo.pvBuffer, length);
+
+        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
+        memcpy(Buffers[0].Buffer.get_data(),
+               this->authInfo.get_data(),
+               Buffers[0].Buffer.size());
+        // Buffers[0].cbBuffer = this->ContextSizes.cbMaxSignature;
+        // Buffers[0].pvBuffer = buffer;
+
+        Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
+        memcpy(Buffers[0].Buffer.get_data(),
+               this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
+               Buffers[0].Buffer.size());
+        // Buffers[1].cbBuffer = length - this->ContextSizes.cbMaxSignature;
+        // Buffers[1].pvBuffer = &buffer[this->ContextSizes.cbMaxSignature];
+
+        Message.cBuffers = 2;
+        Message.ulVersion = SECBUFFER_VERSION;
+        Message.pBuffers = Buffers;
+
+        status = this->table->DecryptMessage(&this->context, &Message, this->recv_seq_num++, &pfQOP);
+
+        if (status != SEC_E_OK)
+            return status;
+
+        StaticStream decrypted_creds(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
+        this->ts_credentials.recv(decrypted_creds);
+        // credssp_read_ts_credentials(this, &Buffers[1]);
+
+        return SEC_E_OK;
+    }
+
+
     void credssp_send() {
         // this->ts_request.emit();
     }
@@ -387,7 +442,9 @@ struct rdpCredssp
     }
 
     void credssp_buffer_free() {
-
+        this->negoToken.init(0);
+        this->pubKeyAuth.init(0);
+        this->authInfo.init(0);
     }
 
 };
@@ -407,7 +464,7 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     bool have_context;
     bool have_input_buffer;
 
-    // TODO
+    // TODO ?
     // sspi_GlobalInit();
 
     if (credssp->credssp_ntlm_client_init() == 0)
