@@ -243,6 +243,96 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         }
         return SEC_E_OK;
     }
+
+    virtual SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
+                                      PSecBufferDesc pMessage, unsigned long MessageSeqNo) {
+        int index;
+        int length;
+        uint8_t* data;
+        uint32_t SeqNo;
+        uint8_t digest[16];
+        uint8_t checksum[8];
+        uint8_t* signature;
+        unsigned long version = 1;
+        NTLMContext* context;
+        PSecBuffer data_buffer = NULL;
+        PSecBuffer signature_buffer = NULL;
+
+        SeqNo = MessageSeqNo;
+        context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+
+        for (index = 0; index < (int) pMessage->cBuffers; index++) {
+            if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
+                data_buffer = &pMessage->pBuffers[index];
+            else if (pMessage->pBuffers[index].BufferType == SECBUFFER_TOKEN)
+                signature_buffer = &pMessage->pBuffers[index];
+        }
+
+        if (!data_buffer)
+            return SEC_E_INVALID_TOKEN;
+
+        if (!signature_buffer)
+            return SEC_E_INVALID_TOKEN;
+
+        /* Copy original data buffer */
+        length = data_buffer->Buffer.size();
+        data = new uint8_t[length];
+        memcpy(data, data_buffer->Buffer.get_data(), length);
+
+        /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
+//         HMAC_CTX_init(&hmac);
+
+        SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
+        hmac_md5.update((uint8_t*) &(SeqNo), 4);
+        hmac_md5.update(data, 4);
+        hmac_md5.final(digest, sizeof(digest));
+        // HMAC_Init_ex(&hmac, context->SendSigningKey, 16, EVP_md5(), NULL);
+        // HMAC_Update(&hmac, (void*) &(SeqNo), 4);
+        // HMAC_Update(&hmac, data, length);
+        // HMAC_Final(&hmac, digest, NULL);
+        // HMAC_CTX_cleanup(&hmac);
+
+        /* Encrypt message using with RC4, result overwrites original buffer */
+
+        if (context->confidentiality) {
+            context->SendRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
+            // RC4(&context->SendRc4Seal, length, data, data_buffer->pvBuffer);
+        }
+        else {
+            memcpy(data_buffer->Buffer.get_data(), data, length);
+        }
+// #ifdef WITH_DEBUG_NTLM
+//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
+//         hexdump_c(data, length);
+//         LOG(LOG_ERR, "\n");
+
+//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
+//         hexdump_c(data_buffer->pvBuffer, data_buffer->cbBuffer);
+//         LOG(LOG_ERR, "\n");
+// #endif
+
+        delete [] data;
+        // free(data);
+
+        /* RC4-encrypt first 8 bytes of digest */
+        context->SendRc4Seal.crypt(8, digest, checksum);
+
+        signature = signature_buffer->Buffer.get_data();
+
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        memcpy(signature, (void*) & version, 4);
+        memcpy(&signature[4], (void*) checksum, 8);
+        memcpy(&signature[12], (void*) &(SeqNo), 4);
+        context->SendSeqNum++;
+
+// #ifdef WITH_DEBUG_NTLM
+//         LOG(LOG_ERR, "Signature (length = %d)\n", (int) signature_buffer->cbBuffer);
+//         hexdump_c(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
+//         LOG(LOG_ERR, "\n");
+// #endif
+
+        return SEC_E_OK;
+    }
 };
 
 

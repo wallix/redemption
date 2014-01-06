@@ -77,6 +77,7 @@ struct SecBufferDesc
     }
 
 };
+typedef SecBufferDesc *PSecBufferDesc;
 
 struct TimeStamp {
     uint32_t LowPart;

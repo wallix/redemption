@@ -71,6 +71,8 @@ struct NTLMContext {
 
     // RC4_KEY SendRc4Seal;
     // RC4_KEY RecvRc4Seal;
+    SslRC4 SendRc4Seal;
+    SslRC4 RecvRc4Seal;
     uint8_t* SendSigningKey;
     uint8_t* RecvSigningKey;
     uint8_t* SendSealingKey;
@@ -581,6 +583,8 @@ struct NTLMContext {
             this->RecvSigningKey = this->ClientSigningKey;
             this->SendSealingKey = this->ClientSealingKey;
             this->RecvSealingKey = this->ServerSealingKey;
+            this->SendRc4Seal.set_key(this->ServerSealingKey, 16);
+            this->RecvRc4Seal.set_key(this->ClientSealingKey, 16);
             // RC4_set_key(&this->SendRc4Seal, 16, this->ServerSealingKey);
             // RC4_set_key(&this->RecvRc4Seal, 16, this->ClientSealingKey);
         }
@@ -589,6 +593,8 @@ struct NTLMContext {
             this->RecvSigningKey = this->ServerSigningKey;
             this->SendSealingKey = this->ServerSealingKey;
             this->RecvSealingKey = this->ClientSealingKey;
+            this->SendRc4Seal.set_key(this->ClientSealingKey, 16);
+            this->RecvRc4Seal.set_key(this->ServerSealingKey, 16);
             // RC4_set_key(&this->SendRc4Seal, 16, this->ClientSealingKey);
             // RC4_set_key(&this->RecvRc4Seal, 16, this->ServerSealingKey);
         }
@@ -794,6 +800,7 @@ struct NTLMContext {
         this->ntlm_generate_client_sealing_key();
         this->ntlm_generate_server_signing_key();
         this->ntlm_generate_server_sealing_key();
+        this->ntlm_init_rc4_seal_states();
         this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
         uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
@@ -826,6 +833,8 @@ struct NTLMContext {
             // this->AUTHENTICATE_MESSAGE.has_mic = true;
         }
         this->state = NTLM_STATE_FINAL;
+
+
     }
 
     // SERVER PROCEED RESPONSE CHECKING
@@ -850,7 +859,7 @@ struct NTLMContext {
         this->ntlm_generate_client_sealing_key();
         this->ntlm_generate_server_signing_key();
         this->ntlm_generate_server_sealing_key();
-
+        this->ntlm_init_rc4_seal_states();
         if (this->UseMIC) {
             this->ntlm_compute_MIC();
             if (memcmp(this->MessageIntegrityCheck,
