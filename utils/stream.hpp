@@ -97,6 +97,11 @@ class Array {
             }
         }
     }
+
+    void copy(const uint8_t * source, size_t size, uint32_t offset = 0) {
+        REDASSERT(this->capacity < size + offset);
+        memcpy(this->data + offset, source, size);
+    }
 };
 
 

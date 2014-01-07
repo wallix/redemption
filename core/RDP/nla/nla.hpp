@@ -434,10 +434,14 @@ struct rdpCredssp
 
 
     void credssp_send() {
-        // this->ts_request.emit();
+        BStream ts_request_emit;
+        this->ts_request.emit(ts_request_emit);
+        // TODO send it to actual transport layer
     }
     int credssp_recv() {
-        // this->ts_request.recv();
+        BStream ts_request_received;
+        // TODO receive from actual transport layer
+        this->ts_request.recv(ts_request_received);
         return 1;
     }
 
@@ -453,12 +457,10 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     unsigned long cbMaxToken;
     unsigned long fContextReq;
     unsigned long pfContextAttr;
-    uint32_t status;
+    SEC_STATUS status;
     CredHandle credentials;
     TimeStamp expiration;
     PSecPkgInfo pPackageInfo;
-    SecBuffer input_buffer;
-    SecBuffer output_buffer;
     SecBufferDesc input_buffer_desc;
     SecBufferDesc output_buffer_desc;
     bool have_context;
@@ -467,14 +469,15 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     // TODO ?
     // sspi_GlobalInit();
 
-    if (credssp->credssp_ntlm_client_init() == 0)
+    if (credssp->credssp_ntlm_client_init() == 0) {
         return 0;
-
+    }
     credssp->table = InitSecurityInterface(NTLM_Interface);
 
     pPackageInfo = NULL;
-    if (credssp->table == NULL)
+    if (credssp->table == NULL) {
         return 0;
+    }
     status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, pPackageInfo);
 
     if (status != SEC_E_OK) {
@@ -494,12 +497,16 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
         return 0;
     }
 
+    SecBuffer input_buffer;
+    SecBuffer output_buffer;
     have_context = false;
-    have_input_buffer = false;
+    // have_input_buffer = false;
     // have_pub_key_auth = false;
     memset(&input_buffer, 0x00, sizeof(SecBuffer));
     memset(&output_buffer, 0x00, sizeof(SecBuffer));
     memset(&credssp->ContextSizes, 0x00, sizeof(SecPkgContext_Sizes));
+    input_buffer.Buffer.init(0);
+    output_buffer.Buffer.init(0);
 
     /*
      * from tspkg.dll: 0x00000132
@@ -639,6 +646,234 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     return 1;
 }
 
+int credssp_server_authenticate(rdpCredssp* credssp) {
+    unsigned long cbMaxToken;
+    unsigned long fContextReq;
+    unsigned long pfContextAttr;
+    SEC_STATUS status;
+    CredHandle credentials;
+    TimeStamp expiration;
+    PSecPkgInfo pPackageInfo;
+    SecBuffer input_buffer;
+    SecBuffer output_buffer;
+    SecBufferDesc input_buffer_desc;
+    SecBufferDesc output_buffer_desc;
+    bool have_context;
+    // bool have_input_buffer;
+    // bool have_pub_key_auth;
 
+    // TODO
+    // sspi_GlobalInit();
+
+    // TODO
+    // if (credssp_ntlm_server_init(credssp) == 0)
+    //     return 0;
+
+    if (credssp->SspiModule.size() > 0) {
+        // HMODULE hSSPI;
+        // INIT_SECURITY_INTERFACE pInitSecurityInterface;
+
+        // hSSPI = LoadLibrary(credssp->SspiModule);
+
+        // if (!hSSPI) {
+        //     _tprintf(_T("Failed to load SSPI module: %s\n"), credssp->SspiModule);
+        //     return 0;
+        // }
+        // pInitSecurityInterface = (INIT_SECURITY_INTERFACE) GetProcAddress(hSSPI, "InitSecurityInterfaceA");
+
+        // credssp->table = (*pInitSecurityInterface)();
+    }
+    else {
+        credssp->table = InitSecurityInterface(NTLM_Interface);
+    }
+    pPackageInfo = NULL;
+    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, pPackageInfo);
+
+    if (status != SEC_E_OK) {
+        LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+        return 0;
+    }
+
+    cbMaxToken = pPackageInfo->cbMaxToken;
+
+    status = credssp->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
+                                                      SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL, &credentials, &expiration);
+
+    if (status != SEC_E_OK) {
+        LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
+        return 0;
+    }
+
+    have_context = false;
+    // have_input_buffer = false;
+    // have_pub_key_auth = false;
+
+    // ZeroMemory(&input_buffer, sizeof(SecBuffer));
+    // ZeroMemory(&output_buffer, sizeof(SecBuffer));
+    // ZeroMemory(&input_buffer_desc, sizeof(SecBufferDesc));
+    // ZeroMemory(&output_buffer_desc, sizeof(SecBufferDesc));
+    // ZeroMemory(&credssp->ContextSizes, sizeof(SecPkgContext_Sizes));
+    memset(&input_buffer, 0x00, sizeof(SecBuffer));
+    memset(&output_buffer, 0x00, sizeof(SecBuffer));
+    memset(&input_buffer_desc, 0x00, sizeof(SecBufferDesc));
+    memset(&output_buffer_desc, 0x00, sizeof(SecBufferDesc));
+    memset(&credssp->ContextSizes, 0x00, sizeof(SecPkgContext_Sizes));
+    input_buffer.Buffer.init(0);
+    output_buffer.Buffer.init(0);
+
+    /*
+     * from tspkg.dll: 0x00000112
+     * ASC_REQ_MUTUAL_AUTH
+     * ASC_REQ_CONFIDENTIALITY
+     * ASC_REQ_ALLOCATE_MEMORY
+     */
+
+    fContextReq = 0;
+    fContextReq |= ASC_REQ_MUTUAL_AUTH;
+    fContextReq |= ASC_REQ_CONFIDENTIALITY;
+
+    fContextReq |= ASC_REQ_CONNECTION;
+    fContextReq |= ASC_REQ_USE_SESSION_KEY;
+
+    fContextReq |= ASC_REQ_REPLAY_DETECT;
+    fContextReq |= ASC_REQ_SEQUENCE_DETECT;
+
+    fContextReq |= ASC_REQ_EXTENDED_ERROR;
+
+    while (true) {
+        /* receive authentication token */
+
+        input_buffer_desc.ulVersion = SECBUFFER_VERSION;
+        input_buffer_desc.cBuffers = 1;
+        input_buffer_desc.pBuffers = &input_buffer;
+        input_buffer.BufferType = SECBUFFER_TOKEN;
+
+        if (credssp->credssp_recv() < 0)
+            return -1;
+// #ifdef WITH_DEBUG_CREDSSP
+//         LOG(LOG_ERR, "Receiving Authentication Token\n");
+//         credssp_buffer_print(credssp);
+// #endif
+
+        input_buffer.Buffer.init(credssp->negoToken.size());
+        memcpy(input_buffer.Buffer.get_data(),
+               credssp->negoToken.get_data(),
+               input_buffer.Buffer.size());
+        // input_buffer.pvBuffer = credssp->negoToken.pvBuffer;
+        // input_buffer.cbBuffer = credssp->negoToken.cbBuffer;
+
+        if (credssp->negoToken.size() < 1) {
+            LOG(LOG_ERR, "CredSSP: invalid negoToken!\n");
+            return -1;
+        }
+
+        output_buffer_desc.ulVersion = SECBUFFER_VERSION;
+        output_buffer_desc.cBuffers = 1;
+        output_buffer_desc.pBuffers = &output_buffer;
+        output_buffer.BufferType = SECBUFFER_TOKEN;
+
+        output_buffer.Buffer.init(cbMaxToken);
+        // output_buffer.cbBuffer = cbMaxToken;
+        // output_buffer.pvBuffer = malloc(output_buffer.cbBuffer);
+
+        status = credssp->table->AcceptSecurityContext(&credentials,
+                                                       have_context? &credssp->context: NULL,
+                                                       &input_buffer_desc, fContextReq,
+                                                       SECURITY_NATIVE_DREP, &credssp->context,
+                                                       &output_buffer_desc, &pfContextAttr,
+                                                       &expiration);
+
+        credssp->negoToken.init(output_buffer.Buffer.size());
+        memcpy(credssp->negoToken.get_data(), output_buffer.Buffer.get_data(),
+               output_buffer.Buffer.size());
+        // credssp->negoToken.pvBuffer = output_buffer.pvBuffer;
+        // credssp->negoToken.cbBuffer = output_buffer.cbBuffer;
+
+        if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
+            credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
+
+            if (status == SEC_I_COMPLETE_NEEDED)
+                status = SEC_E_OK;
+            else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+                status = SEC_I_CONTINUE_NEEDED;
+        }
+
+        if (status == SEC_E_OK) {
+            // have_pub_key_auth = true;
+
+            if (credssp->table->QueryContextAttributes(&credssp->context,
+                                                       SECPKG_ATTR_SIZES,
+                                                       &credssp->ContextSizes) != SEC_E_OK) {
+                LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
+                return 0;
+            }
+
+            if (credssp->credssp_decrypt_public_key_echo() != SEC_E_OK) {
+                LOG(LOG_ERR, "Error: could not verify client's public key echo\n");
+                return -1;
+            }
+
+            credssp->negoToken.init(0);
+            // sspi_SecBufferFree(&credssp->negoToken);
+            // credssp->negoToken.pvBuffer = NULL;
+            // credssp->negoToken.cbBuffer = 0;
+
+            credssp->credssp_encrypt_public_key_echo();
+        }
+
+        if ((status != SEC_E_OK) && (status != SEC_I_CONTINUE_NEEDED)) {
+            LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X\n", status);
+            return -1;
+        }
+
+        /* send authentication token */
+// #ifdef WITH_DEBUG_CREDSSP
+//         LOG(LOG_ERR, "Sending Authentication Token\n");
+//         credssp_buffer_print(credssp);
+// #endif
+
+        credssp->credssp_send();
+        credssp->credssp_buffer_free();
+
+        if (status != SEC_I_CONTINUE_NEEDED)
+            break;
+
+        have_context = true;
+    }
+
+    /* Receive encrypted credentials */
+
+    if (credssp->credssp_recv() < 0)
+        return -1;
+
+    if (credssp->credssp_decrypt_ts_credentials() != SEC_E_OK) {
+        LOG(LOG_ERR, "Could not decrypt TSCredentials status: 0x%08X\n", status);
+        return 0;
+    }
+
+    if (status != SEC_E_OK) {
+        LOG(LOG_ERR, "AcceptSecurityContext status: 0x%08X\n", status);
+        return 0;
+    }
+
+    status = credssp->table->ImpersonateSecurityContext(&credssp->context);
+
+    if (status != SEC_E_OK) {
+        LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X\n", status);
+        return 0;
+    }
+    else {
+        status = credssp->table->RevertSecurityContext(&credssp->context);
+
+        if (status != SEC_E_OK) {
+            LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X\n", status);
+            return 0;
+        }
+    }
+
+    credssp->table->FreeContextBuffer(pPackageInfo);
+
+    return 1;
+}
 
 #endif

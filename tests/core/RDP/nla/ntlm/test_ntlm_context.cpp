@@ -401,17 +401,30 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 
     // send NEGOTIATE MESSAGE
     client_context.NEGOTIATE_MESSAGE.emit(client_to_server);
-    client_to_server.rewind();
-    server_context.NEGOTIATE_MESSAGE.recv(client_to_server);
 
+    client_context.SavedNegotiateMessage.init(client_to_server.size());
+    memcpy(client_context.SavedNegotiateMessage.get_data(),
+           client_to_server.get_data(), client_to_server.size());
+    client_to_server.rewind();
+
+    server_context.NEGOTIATE_MESSAGE.recv(client_to_server);
+    server_context.SavedNegotiateMessage.init(client_to_server.size());
+    memcpy(server_context.SavedNegotiateMessage.get_data(),
+           client_to_server.get_data(), client_to_server.size());
     // SERVER RECV NEGOTIATE AND BUILD CHALLENGE
     server_context.ntlm_server_build_challenge();
 
     // send CHALLENGE MESSAGE
     server_context.CHALLENGE_MESSAGE.emit(server_to_client);
+    server_context.SavedChallengeMessage.init(server_to_client.size());
+    memcpy(server_context.SavedChallengeMessage.get_data(),
+           server_to_client.get_data(), server_to_client.size());
+
     server_to_client.rewind();
     client_context.CHALLENGE_MESSAGE.recv(server_to_client);
-
+    client_context.SavedChallengeMessage.init(server_to_client.size());
+    memcpy(client_context.SavedChallengeMessage.get_data(),
+           server_to_client.get_data(), server_to_client.size());
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
     client_context.ntlm_client_build_authenticate(password, sizeof(password),
@@ -421,10 +434,30 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
 
     // send AUTHENTICATE MESSAGE
     client_to_server.reset();
+    if (client_context.UseMIC) {
+        LOG(LOG_INFO, "has mic");
+            client_context.AUTHENTICATE_MESSAGE.ignore_mic = true;
+            client_context.AUTHENTICATE_MESSAGE.emit(client_to_server);
+            client_context.AUTHENTICATE_MESSAGE.ignore_mic = false;
+
+            client_context.SavedAuthenticateMessage.init(client_to_server.size());
+            memcpy(client_context.SavedAuthenticateMessage.get_data(), client_to_server.get_data(),
+                   client_to_server.size());
+            client_context.ntlm_compute_MIC();
+            memcpy(client_context.AUTHENTICATE_MESSAGE.MIC, client_context.MessageIntegrityCheck, 16);
+    }
+    client_to_server.reset();
     client_context.AUTHENTICATE_MESSAGE.emit(client_to_server);
     client_to_server.rewind();
     server_context.AUTHENTICATE_MESSAGE.recv(client_to_server);
-
+    if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
+        server_context.UseMIC = true;
+        memset(client_to_server.get_data() +
+               server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
+        server_context.SavedAuthenticateMessage.init(client_to_server.size());
+        memcpy(server_context.SavedAuthenticateMessage.get_data(),
+               client_to_server.get_data(), client_to_server.size());
+    }
 
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};
@@ -475,12 +508,11 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
                         16));
 
     // LOG(LOG_INFO, "===== Message Integrity Check =====");
-    // hexdump_c(client_context.MessageIntegrityCheck, 16);
-    // hexdump_c(server_context.MessageIntegrityCheck, 16);
+    hexdump_c(client_context.MessageIntegrityCheck, 16);
+    hexdump_c(server_context.MessageIntegrityCheck, 16);
     BOOST_CHECK(!memcmp(client_context.MessageIntegrityCheck,
                         server_context.MessageIntegrityCheck,
                         16));
-
 
 }
 

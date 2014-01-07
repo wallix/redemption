@@ -319,12 +319,14 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
     NtlmVersion version;                  /* 8 Bytes */
     uint8_t MIC[16];                      /* 16 Bytes */
     bool ignore_mic;
+    bool has_mic;
     uint32_t PayloadOffset;
 
     NTLMAuthenticateMessage()
         : NTLMMessage(NtlmAuthenticate)
         , ignore_mic(false)
-        , PayloadOffset(12+8+8+8+8+8+8+4+8 + 16)
+        , has_mic(true)
+        , PayloadOffset(12+8+8+8+8+8+8+4+8)
     {
         memset(this->MIC, 0x00, 16);
     }
@@ -333,7 +335,9 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     void emit(Stream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
-        // currentOffset += 16;
+        if (this->has_mic) {
+            currentOffset += 16;
+        }
         NTLMMessage::emit(stream);
         currentOffset += this->LmChallengeResponse.emit(stream, currentOffset);
         currentOffset += this->NtChallengeResponse.emit(stream, currentOffset);
@@ -344,11 +348,13 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->negoFlags.emit(stream);
         this->version.emit(stream);
 
-        if (this->ignore_mic) {
-            stream.out_clear_bytes(16);
-        }
-        else {
-            stream.out_copy_bytes(this->MIC, 16);
+        if (this->has_mic) {
+            if (this->ignore_mic) {
+                stream.out_clear_bytes(16);
+            }
+            else {
+                stream.out_copy_bytes(this->MIC, 16);
+            }
         }
 
         // PAYLOAD
@@ -378,19 +384,24 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->negoFlags.recv(stream);
         this->version.recv(stream);
 
-        // uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
-        // if (this->NtChallengeResponse.bufferOffset < min_offset)
-        //     min_offset = this->NtChallengeResponse.bufferOffset;
-        // if (this->DomainName.bufferOffset < min_offset)
-        //     min_offset = this->DomainName.bufferOffset;
-        // if (this->UserName.bufferOffset < min_offset)
-        //     min_offset = this->UserName.bufferOffset;
-        // if (this->Workstation.bufferOffset < min_offset)
-        //     min_offset = this->Workstation.bufferOffset;
-        // if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
-        //     min_offset = this->EncryptedRandomSessionKey.bufferOffset;
-
-        stream.in_copy_bytes(this->MIC, 16);
+        uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
+        if (this->NtChallengeResponse.bufferOffset < min_offset)
+            min_offset = this->NtChallengeResponse.bufferOffset;
+        if (this->DomainName.bufferOffset < min_offset)
+            min_offset = this->DomainName.bufferOffset;
+        if (this->UserName.bufferOffset < min_offset)
+            min_offset = this->UserName.bufferOffset;
+        if (this->Workstation.bufferOffset < min_offset)
+            min_offset = this->Workstation.bufferOffset;
+        if (this->EncryptedRandomSessionKey.bufferOffset < min_offset)
+            min_offset = this->EncryptedRandomSessionKey.bufferOffset;
+        if (min_offset + pBegin > stream.p) {
+            this->has_mic = true;
+            stream.in_copy_bytes(this->MIC, 16);
+        }
+        else {
+            this->has_mic = false;
+        }
 
         // PAYLOAD
         this->LmChallengeResponse.read_payload(stream, pBegin);

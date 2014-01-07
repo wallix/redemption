@@ -96,9 +96,9 @@ struct NTLMContext {
     NTLMAuthenticateMessage AUTHENTICATE_MESSAGE;
 
     NtlmVersion version;
-    // BStream BuffNegotiateMessage;
-    // BStream BuffChallengeMessage;
-    // BStream BuffAuthenticateMessage;
+    Array SavedNegotiateMessage;
+    Array SavedChallengeMessage;
+    Array SavedAuthenticateMessage;
     // BStream BuffChallengeTargetInfo;
     // BStream BuffAuthenticateTargetInfo;
     // BStream BuffTargetName;
@@ -127,6 +127,9 @@ struct NTLMContext {
     // }
 
     void init() {
+        this->SavedNegotiateMessage.init(0);
+        this->SavedChallengeMessage.init(0);
+        this->SavedAuthenticateMessage.init(0);
         this->NTLMv2 = true;
         this->UseMIC = false;
         this->state = NTLM_STATE_INITIAL;
@@ -415,7 +418,7 @@ struct NTLMContext {
         AuthEncryptedRSK.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
         AuthEncryptedRSK.mark_end();
     }
-    // server method for decrypt exported session key from authenticate message with
+    // server method to decrypt exported session key from authenticate message with
     // session base key computed with Responses.
     void ntlm_decrypt_exported_session_key() {
         BStream & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.Buffer;
@@ -517,14 +520,20 @@ struct NTLMContext {
     void ntlm_compute_MIC() {
         uint8_t * MIC = this->MessageIntegrityCheck;
         SslHMAC_Md5 hmac_md5resp(this->ExportedSessionKey, 16);
-        BStream Messages;
-        this->NEGOTIATE_MESSAGE.emit(Messages);
-        this->CHALLENGE_MESSAGE.emit(Messages);
-        // when computing MIC, authenticate message should not include MIC
-        this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-        this->AUTHENTICATE_MESSAGE.emit(Messages);
-        this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-        hmac_md5resp.update(Messages.get_data(), Messages.size());
+        // BStream Messages;
+        // this->NEGOTIATE_MESSAGE.emit(Messages);
+        // this->CHALLENGE_MESSAGE.emit(Messages);
+        // // when computing MIC, authenticate message should not include MIC
+        // this->AUTHENTICATE_MESSAGE.ignore_mic = true;
+        // this->AUTHENTICATE_MESSAGE.emit(Messages);
+        // this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+        // hmac_md5resp.update(Messages.get_data(), Messages.size());
+        hmac_md5resp.update(this->SavedNegotiateMessage.get_data(),
+                            this->SavedNegotiateMessage.size());
+        hmac_md5resp.update(this->SavedChallengeMessage.get_data(),
+                            this->SavedChallengeMessage.size());
+        hmac_md5resp.update(this->SavedAuthenticateMessage.get_data(),
+                            this->SavedAuthenticateMessage.size());
         hmac_md5resp.final(MIC, 16);
     }
 
@@ -566,10 +575,6 @@ struct NTLMContext {
 	// /* In NTLMv2, EncryptedRandomSessionKey is the ExportedSessionKey RC4-encrypted with the KeyExchangeKey */
 	// ntlm_rc4k(context->KeyExchangeKey, 16, context->EncryptedRandomSessionKey, context->RandomSessionKey);
     }
-
-
-
-
 
     /**
      * Initialize RC4 stream cipher states for sealing.
@@ -730,7 +735,7 @@ struct NTLMContext {
 
 
     // server method
-    // TO COMPLETE
+    // TODO COMPLETE
     void ntlm_construct_challenge_target_info() {
         uint8_t win7[] =  {
             0x77, 0x00, 0x69, 0x00, 0x6e, 0x00, 0x37, 0x00
@@ -748,9 +753,7 @@ struct NTLMContext {
 
 
 
-
     // CLIENT BUILD NEGOTIATE
-
     void ntlm_client_build_negotiate() {
         if (this->server) {
             return;
@@ -827,29 +830,30 @@ struct NTLMContext {
 
         this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
-        if (this->UseMIC) {
-            this->ntlm_compute_MIC();
-            memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
-            // this->AUTHENTICATE_MESSAGE.has_mic = true;
-        }
         this->state = NTLM_STATE_FINAL;
 
 
     }
 
+    void ntlm_server_fetch_hash(uint8_t * hash) {
+        // TODO get password hash from DC or find ourself
+
+    };
     // SERVER PROCEED RESPONSE CHECKING
-    void ntlm_server_proceed_authenticate(const uint8_t * hash) {
+    SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t * hash) {
         if (!this->server) {
-            return;
+            return SEC_E_INTERNAL_ERROR;
         }
         bool result = false;
         result = this->ntlm_check_nt_response_from_authenticate(hash, 16);
         if (!result) {
             LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
+            return SEC_E_INVALID_TOKEN;
         }
         result = this->ntlm_check_lm_response_from_authenticate(hash, 16);
         if (!result) {
             LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
+            return SEC_E_INVALID_TOKEN;
         }
         // SERVER COMPUTE SHARED KEY WITH CLIENT
         this->ntlm_compute_session_base_key(hash, 16);
@@ -865,17 +869,20 @@ struct NTLMContext {
             if (memcmp(this->MessageIntegrityCheck,
                        this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                 LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
+                return SEC_E_INVALID_TOKEN;
             }
         }
         this->state = NTLM_STATE_FINAL;
-
+        return SEC_I_COMPLETE_NEEDED;
     }
 
     void ntlm_SetContextWorkStation(const char * workstation, size_t length) {
+        // CHECK UTF8 or UTF16 (should store in UTF16)
         this->Workstation.init(length);
         memcpy(this->Workstation.get_data(), workstation, length);
     }
     void ntlm_SetContextServicePrincipalName(const char * pszTargetName) {
+        // CHECK UTF8 or UTF16 (should store in UTF16)
         const char * p = pszTargetName;
         size_t length = 0;
         while (!p) {
@@ -884,6 +891,119 @@ struct NTLMContext {
         }
         this->ServicePrincipalName.init(length);
         memcpy(this->ServicePrincipalName.get_data(), pszTargetName, length);
+    }
+
+
+
+    // READ WRITE FUNCTIONS
+    SEC_STATUS write_negotiate(PSecBuffer output_buffer) {
+        this->ntlm_client_build_negotiate();
+        BStream out_stream;
+        this->NEGOTIATE_MESSAGE.emit(out_stream);
+        output_buffer->Buffer.init(out_stream.size());
+        memcpy(output_buffer->Buffer.get_data(), out_stream.get_data(), out_stream.size());
+
+        this->SavedNegotiateMessage.init(out_stream.size());
+        memcpy(this->SavedNegotiateMessage.get_data(), out_stream.get_data(), out_stream.size());
+        this->state = NTLM_STATE_CHALLENGE;
+        return SEC_I_CONTINUE_NEEDED;
+    }
+
+    SEC_STATUS read_negotiate(PSecBuffer input_buffer) {
+        BStream in_stream;
+        in_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
+                                 input_buffer->Buffer.size());
+        in_stream.mark_end();
+        in_stream.rewind();
+        this->NEGOTIATE_MESSAGE.recv(in_stream);
+        if (!this->ntlm_check_nego())
+            return SEC_E_INVALID_TOKEN;
+
+        this->SavedNegotiateMessage.init(in_stream.size());
+        memcpy(this->SavedNegotiateMessage.get_data(), in_stream.get_data(), in_stream.size());
+
+        this->state = NTLM_STATE_CHALLENGE;
+	return SEC_I_CONTINUE_NEEDED;
+    }
+    SEC_STATUS write_challenge(PSecBuffer output_buffer) {
+        this->ntlm_server_build_challenge();
+        BStream out_stream;
+        this->CHALLENGE_MESSAGE.emit(out_stream);
+        output_buffer->Buffer.init(out_stream.size());
+        memcpy(output_buffer->Buffer.get_data(), out_stream.get_data(), out_stream.size());
+
+        this->SavedChallengeMessage.init(out_stream.size());
+        memcpy(this->SavedChallengeMessage.get_data(), out_stream.get_data(), out_stream.size());
+
+	this->state = NTLM_STATE_AUTHENTICATE;
+        return SEC_I_CONTINUE_NEEDED;
+    }
+    SEC_STATUS read_challenge(PSecBuffer input_buffer) {
+        BStream in_stream;
+        in_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
+                                 input_buffer->Buffer.size());
+        in_stream.mark_end();
+        in_stream.rewind();
+        this->CHALLENGE_MESSAGE.recv(in_stream);
+
+        this->SavedChallengeMessage.init(in_stream.size());
+        memcpy(this->SavedChallengeMessage.get_data(), in_stream.get_data(), in_stream.size());
+
+        this->state = NTLM_STATE_AUTHENTICATE;
+        return SEC_I_CONTINUE_NEEDED;
+    }
+    SEC_STATUS write_authenticate(PSecBuffer output_buffer) {
+        SEC_WINNT_AUTH_IDENTITY & id = this->identity;
+        this->ntlm_client_build_authenticate(id.Password.get_data(),
+                                             id.Password.size(),
+                                             id.User.get_data(),
+                                             id.User.size(),
+                                             id.Domain.get_data(),
+                                             id.Domain.size(),
+                                             this->Workstation.get_data(),
+                                             this->Workstation.size());
+        BStream out_stream;
+        if (this->UseMIC) {
+            this->AUTHENTICATE_MESSAGE.ignore_mic = true;
+            this->AUTHENTICATE_MESSAGE.emit(out_stream);
+            this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+
+            this->SavedAuthenticateMessage.init(out_stream.size());
+            memcpy(this->SavedAuthenticateMessage.get_data(), out_stream.get_data(),
+                   out_stream.size());
+            this->ntlm_compute_MIC();
+            memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
+            // this->AUTHENTICATE_MESSAGE.has_mic = true;
+        }
+        out_stream.reset();
+        this->AUTHENTICATE_MESSAGE.ignore_mic = false;
+        this->AUTHENTICATE_MESSAGE.emit(out_stream);
+        output_buffer->Buffer.init(out_stream.size());
+        memcpy(output_buffer->Buffer.get_data(),
+               out_stream.get_data(), out_stream.size());
+
+        return SEC_I_COMPLETE_NEEDED;
+    }
+    SEC_STATUS read_authenticate(PSecBuffer input_buffer) {
+        BStream in_stream;
+        in_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
+                                 input_buffer->Buffer.size());
+        in_stream.mark_end();
+        in_stream.rewind();
+        this->AUTHENTICATE_MESSAGE.recv(in_stream);
+        if (this->AUTHENTICATE_MESSAGE.has_mic) {
+            this->UseMIC = true;
+            memset(in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
+            this->SavedAuthenticateMessage.init(in_stream.size());
+            memcpy(this->SavedAuthenticateMessage.get_data(), in_stream.get_data(),
+                   in_stream.size());
+        }
+
+        uint8_t hash[16];
+        this->ntlm_server_fetch_hash(hash);
+        SEC_STATUS status = this->ntlm_server_proceed_authenticate(hash);
+
+        return status;
     }
 };
 
