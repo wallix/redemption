@@ -24,16 +24,19 @@
 #define _REDEMPTION_TRANSPORT_RIO_RIO_CRYPTO_H_
 
 #include "rio.h"
+#include "crypto_impl.h"
 
 #define HASH_LEN 64
 
 extern "C" {
     /* gl_crypto_key is a copy of the master key
      */
+/*
     char gl_crypto_key[32] = {
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
+*/
 
     TODO("this is a place holder implementation without cryptography...");
     struct RIOCrypto {
@@ -46,7 +49,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, const char * filename, int oflag) {
+    static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, const CryptoContext * crypto_ctx, const char * filename, int oflag) {
         RIO_ERROR error = RIO_ERROR_OK;
         int       _oflag;
 

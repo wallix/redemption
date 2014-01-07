@@ -120,10 +120,10 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOCryptoInmeta_constructor(RIOCryptoInmeta * self, SQ ** seq, const char * prefix, const char * extension)
+    inline RIO_ERROR rio_m_RIOCryptoInmeta_constructor(RIOCryptoInmeta * self, SQ ** seq, const CryptoContext * crypto_ctx, const char * prefix, const char * extension)
     {
         RIO_ERROR status = RIO_ERROR_OK;
-        SQ * sequence = sq_new_cryptoinmeta(&status, prefix, extension);
+        SQ * sequence = sq_new_cryptoinmeta(&status, crypto_ctx, prefix, extension);
 
         if (status != RIO_ERROR_OK){
             return status;

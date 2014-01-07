@@ -40,6 +40,7 @@ extern "C" {
         struct RIO * meta;
         struct SQ * seq;
         struct RIO * out;
+        const CryptoContext * crypto_ctx;
     };
 
     /* This method does not allocate space for object itself,
@@ -47,10 +48,13 @@ extern "C" {
         and allocate and initialize it's subfields if necessary
     */
     inline RIO_ERROR rio_m_RIOCryptoOutmeta_constructor(RIOCryptoOutmeta * self, SQ ** seq,
+                                                  const CryptoContext * crypto_ctx,
                                                   const char * path, const char * hash_path, const char * filename, const char * extension,
                                                   const char * header1, const char * header2, const char* header3, timeval * tv,
                                                   const int groupid)
     {
+        self->crypto_ctx = crypto_ctx;
+
         TODO("use system constants for size");
         size_t res = snprintf(self->meta_filename, sizeof(self->meta_filename), "%s%s%s", path, filename, extension);
         size_t res2 = snprintf(self->hasher_filename, sizeof(self->hasher_filename), "%s%s%s", hash_path, filename, extension);
@@ -64,7 +68,7 @@ extern "C" {
         }
 
         RIO_ERROR status = RIO_ERROR_OK;
-        RIO * meta = rio_new_crypto(&status, self->meta_filename, O_WRONLY);
+        RIO * meta = rio_new_crypto(&status, crypto_ctx, self->meta_filename, O_WRONLY);
         if (status != RIO_ERROR_OK){
             return status;
         }
@@ -73,7 +77,7 @@ extern "C" {
             LOG(LOG_ERR, "can't set file %s mod to u+r, g+r : %s [%u]", self->meta_filename, strerror(errno), errno);
         }
 
-        SQ * sequence = sq_new_cryptoouttracker(&status, meta, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3, groupid);
+        SQ * sequence = sq_new_cryptoouttracker(&status, meta, crypto_ctx, SQF_PATH_FILE_COUNT_EXTENSION, path, filename, ".wrm", tv, header1, header2, header3, groupid);
         if (status != RIO_ERROR_OK){
             LOG(LOG_ERR, "CryptoOutMeta failed : tracker creation failed for %s\n", self->meta_filename);
             rio_delete(meta);
@@ -118,7 +122,7 @@ extern "C" {
 
             TODO("check errors when storing hash");
             RIOCrypto hasher;
-            RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->hasher_filename, O_WRONLY);
+            RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->crypto_ctx, self->hasher_filename, O_WRONLY);
             if (status != RIO_ERROR_OK){
                 LOG(LOG_ERR, "Failed to open hash file %s\n", self->hasher_filename);
             }
@@ -212,7 +216,7 @@ extern "C" {
 
             TODO("check errors when storing hash");
             RIOCrypto hasher;
-            RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->hasher_filename, O_WRONLY);
+            RIO_ERROR status = rio_m_RIOCrypto_constructor(&hasher, self->crypto_ctx, self->hasher_filename, O_WRONLY);
             if (status != RIO_ERROR_OK){
                 LOG(LOG_ERR, "Failed to open hash file %s\n", self->hasher_filename);
             }

@@ -46,16 +46,19 @@ extern "C" {
         unsigned pid;
         unsigned count;
         int groupid;
+        const CryptoContext * crypto_ctx;
     };
 
     static inline RIO_ERROR sq_m_SQCryptoOutfilename_constructor(SQCryptoOutfilename * self,
+        const CryptoContext * crypto_ctx,
         SQ_FORMAT format, const char * path, const char * filename,
         const char * extension, const int groupid)
     {
-        self->trans  = NULL;
-        self->count  = 0;
-        self->format = format;
-        self->pid    = getpid();
+        self->trans      = NULL;
+        self->count      = 0;
+        self->format     = format;
+        self->pid        = getpid();
+        self->crypto_ctx = crypto_ctx;
 
         if (strlen(path) > sizeof(self->path) - 1){
             return RIO_ERROR_STRING_PATH_TOO_LONG;
@@ -124,7 +127,7 @@ extern "C" {
             sq_im_SQCryptoOutfilename_get_name(self, tmpname, sizeof(tmpname), self->count);
             TODO("add rights information to constructor");
             LOG(LOG_INFO, "opening file %s", tmpname);
-            self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
+            self->trans = rio_new_crypto(status, self->crypto_ctx, tmpname, O_WRONLY);
             TODO("maybe we should put groupid management into rio_new_crypto");
             if (self->groupid){
 //                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
@@ -152,4 +155,3 @@ extern "C" {
 };
 
 #endif
-

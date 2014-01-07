@@ -72,10 +72,10 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00", 32));
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -320,10 +320,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00", 32));
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -577,10 +577,10 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
-                                                               "\x00\x00\x00\x00\x00\x00\x00\x00", 32));
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
