@@ -19,7 +19,7 @@
  */
 
 #include "basic_benchmark.hpp"
-#include "../regex.hpp"
+#include "regex/regex.hpp"
 
 #include <regex.h>
 #include <pcre.h>

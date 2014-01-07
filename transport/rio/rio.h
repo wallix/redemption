@@ -25,6 +25,8 @@
 
 #include "openssl_tls.hpp"
 
+#include "crypto_impl.h"
+
 extern "C" {
     typedef enum {
         RIO_ERROR_OK,                           // 0
@@ -158,9 +160,11 @@ extern "C" {
         const int groupid);
 
     SQ * sq_new_cryptooutfilename(RIO_ERROR * error,
+        const CryptoContext * crypto_ctx,
         SQ_FORMAT format, const char * path, const char * filename, const char * extension,
         const int groupid);
     RIO_ERROR sq_init_cryptooutfilename(SQ * self,
+        const CryptoContext * crypto_ctx,
         SQ_FORMAT format, const char * path, const char * filename,
         const char * extension);
 
@@ -176,11 +180,13 @@ extern "C" {
                 const char * header1, const char * header2, const char * header3, const int groupid);
 
     SQ * sq_new_cryptoouttracker(RIO_ERROR * error, RIO * tracker,
+                const CryptoContext * crypto_ctx,
                 SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension,
                 timeval * tv,
                 const char * header1, const char * header2, const char * header3, const int groupid);
     RIO_ERROR sq_init_cryptoouttracker(SQ * self, RIO * tracker,
+                const CryptoContext * crypto_ctx,
                 SQ_FORMAT format,
                 const char * path, const char * filename, const char * extension,
                 timeval * tv,
@@ -195,8 +201,8 @@ extern "C" {
     SQ * sq_new_inmeta(RIO_ERROR * error, const char * prefix, const char * extension);
     RIO_ERROR sq_init_inmeta(SQ * self, const char * prefix, const char * extension);
 
-    SQ * sq_new_cryptoinmeta(RIO_ERROR * error, const char * prefix, const char * extension);
-    RIO_ERROR sq_init_cryptoinmeta(SQ * self, const char * prefix, const char * extension);
+    SQ * sq_new_cryptoinmeta(RIO_ERROR * error, const CryptoContext * crypto_ctx, const char * prefix, const char * extension);
+    RIO_ERROR sq_init_cryptoinmeta(SQ * self, const CryptoContext * crypto_ctx, const char * prefix, const char * extension);
 
     void sq_delete(SQ * rt);
     void sq_clear(SQ * rt);
@@ -205,8 +211,8 @@ extern "C" {
     RIO_ERROR sq_timestamp(SQ * seq, timeval * tv);
     RIO_ERROR sq_get_chunk_info(SQ * seq, unsigned & num_chunk, char * path, size_t path_len, timeval * begin, timeval * end);
 
-    RIO * rio_new_crypto(RIO_ERROR * error, const char * file, int oflag);
-    RIO_ERROR rio_init_crypto(RIO * self, const char * file, int oflag);
+    RIO * rio_new_crypto(RIO_ERROR * error, const CryptoContext * crypto_ctx, const char * file, int oflag);
+    RIO_ERROR rio_init_crypto(RIO * self, const CryptoContext * crypto_ctx, const char * file, int oflag);
 
     ssize_t sq_outtracker_unlink(SQ * seq);
     ssize_t sq_cryptoouttracker_unlink(SQ * seq);

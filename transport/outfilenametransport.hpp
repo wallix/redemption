@@ -131,6 +131,7 @@ public:
     char path[512];
 
     CryptoOutFilenameTransport(
+            const CryptoContext * crypto_ctx,
             SQ_FORMAT format,
             const char * const prefix,
             const char * const filename,
@@ -143,7 +144,7 @@ public:
             this->set_authentifier(authentifier);
         }
 
-        RIO_ERROR status1 = sq_init_cryptooutfilename(&this->seq, format, prefix, filename, extension, groupid);
+        RIO_ERROR status1 = sq_init_cryptooutfilename(&this->seq, crypto_ctx, format, prefix, filename, extension, groupid);
         if (status1 != RIO_ERROR_OK){
             LOG(LOG_ERR, "Sequence outfilename initialisation failed (%u)", status1);
             throw Error(ERR_TRANSPORT);

@@ -59,6 +59,8 @@ public:
     redemption::string png_path;
     redemption::string basename;
 
+    CryptoContext crypto_ctx;
+
     Capture( const timeval & now, int width, int height, const char * wrm_path
            , const char * png_path, const char * hash_path, const char * basename
            , bool clear_png, bool no_timestamp, auth_api * authentifier, Inifile & ini)
@@ -102,6 +104,8 @@ public:
                 LOG(LOG_ERR, "Failed to create directory: \"%s\"", hash_path);
             }
 
+            memset(&this->crypto_ctx, 0, sizeof(this->crypto_ctx));
+            memcpy(this->crypto_ctx.crypto_key, ini.globals.crypto_key, sizeof(this->crypto_ctx.crypto_key));
             TODO("there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not."
                  "Here is not the right level to manage anything related to encryption.")
             TODO("Also we may wonder why we are encrypting wrm and not png"
@@ -109,7 +113,8 @@ public:
                  "We should stop and consider what we should actually do")
             this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
             if (this->enable_file_encryption) {
-                this->crypto_wrm_trans = new CryptoOutmetaTransport( wrm_path, hash_path, basename, now
+                this->crypto_wrm_trans = new CryptoOutmetaTransport( &this->crypto_ctx
+                                                                   , wrm_path, hash_path, basename, now
                                                                    , width, height
                                                                    , ini.video.capture_groupid
                                                                    , authentifier);

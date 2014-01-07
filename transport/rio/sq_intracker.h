@@ -385,6 +385,7 @@ extern "C" {
         timeval start_tv;
         timeval stop_tv;
         int num_chunk;
+        const CryptoContext * crypto_ctx;
     };
 
     // input: self->begin_line : beginning of available buffer (already read)
@@ -461,7 +462,7 @@ extern "C" {
     }
 
     static inline RIO_ERROR sq_m_SQCryptoIntracker_constructor(SQCryptoIntracker * self,
-        RIO * tracker, const char * meta_path)
+        RIO * tracker, const CryptoContext * crypto_ctx, const char * meta_path)
     {
         self->trans = NULL;
         self->tracker = tracker;
@@ -470,6 +471,7 @@ extern "C" {
         self->eollen = 0;
         self->rlstatus = RIO_ERROR_OK;
         self->num_chunk = 0;
+        self->crypto_ctx = crypto_ctx;
 
         strncpy(self->meta_path, meta_path, sizeof(self->meta_path));
         self->meta_path[sizeof(self->meta_path) - 1] = 0;
@@ -621,7 +623,7 @@ extern "C" {
                 return NULL;
             }
             TODO("add rights information to constructor");
-            self->trans = rio_new_crypto(&temp_status, self->line, O_RDONLY);
+            self->trans = rio_new_crypto(&temp_status, self->crypto_ctx, self->line, O_RDONLY);
             if (temp_status){
                 char full_path[2048];
                 char path[1024];
@@ -634,7 +636,7 @@ extern "C" {
 
                 snprintf(full_path, sizeof(full_path), "%s%s%s", self->meta_path, basename, extension);
 
-                self->trans = rio_new_crypto(&(self->rlstatus), full_path, O_RDONLY);
+                self->trans = rio_new_crypto(&(self->rlstatus), self->crypto_ctx, full_path, O_RDONLY);
                 if (self->rlstatus == RIO_ERROR_OK) {
                     strncpy(self->line, full_path, sizeof(self->line));
                     self->line[sizeof(self->line) - 1] = 0;

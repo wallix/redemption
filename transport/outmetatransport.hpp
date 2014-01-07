@@ -138,7 +138,7 @@ public:
     SQ  * seq;
     char  path[512];
 
-    CryptoOutmetaTransport(const char * path, const char * hash_path,
+    CryptoOutmetaTransport(const CryptoContext * crypto_ctx, const char * path, const char * hash_path,
         const char * basename, timeval now, uint16_t width, uint16_t height,
         const int groupid, auth_api * authentifier = NULL, unsigned verbose = 0)
     : seq(NULL)
@@ -152,7 +152,7 @@ public:
         char header1[64];
         sprintf(header1, "%u %u", width, height);
         RIO_ERROR status = rio_init_cryptooutmeta(&this->rio,
-            &this->seq, path, hash_path, filename, ".mwrm", header1, "0", "",
+            &this->seq, crypto_ctx, path, hash_path, filename, ".mwrm", header1, "0", "",
             &now, groupid);
         if (status < 0)
         {

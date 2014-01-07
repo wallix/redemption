@@ -658,6 +658,168 @@ BOOST_AUTO_TEST_CASE(TestRegexOptimize)
     test_re(re::Regex::MINIMAL_MEMORY|re::Regex::OPTIMIZE_MEMORY);
 }
 
+BOOST_AUTO_TEST_CASE(TestRegexPartOfText)
+{
+    const char * str_regex = "a";
+    Regex regex(str_regex);
+
+    {
+        const char * str = "a";
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*str);
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (Regex::match_undetermined ==  part_rgx.next(str)) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    {
+        const char * str = "dsqdaaz";
+        Regex::PartOfText part_rgx = regex.part_of_text_search(!*str);
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (Regex::match_undetermined ==  part_rgx.next(str)) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    regex.reset("abc[0-9]");
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("a")
+             && Regex::match_undetermined == part_rgx.next("b")
+             && Regex::match_undetermined == part_rgx.next("c")
+             && Regex::match_undetermined == part_rgx.next("0")
+            ) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("ab")
+             && Regex::match_undetermined == part_rgx.next("c")
+             && Regex::match_undetermined == part_rgx.next("0")
+            ) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("abc")
+             && Regex::match_undetermined == part_rgx.next("0")
+            ) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (Regex::match_undetermined == part_rgx.next("abc0")) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("a")
+             && Regex::match_undetermined == part_rgx.next("bc")
+             && Regex::match_undetermined == part_rgx.next("0")
+            ) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("a")
+             && Regex::match_undetermined == part_rgx.next("bc0")
+            ) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("a")
+             && Regex::match_undetermined == part_rgx.next("b")
+             && Regex::match_undetermined == part_rgx.next("c0")
+            ) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_success, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("a")
+             && Regex::match_undetermined == part_rgx.next("b")
+            ) {
+                part_rgx.finish();
+            }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_fail, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"a");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("a")
+                && Regex::match_undetermined == part_rgx.next("bca")
+                ) {
+                    part_rgx.finish();
+                }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_fail, part_rgx.state());
+    }
+
+    {
+        Regex::ExactPartOfText part_rgx = regex.part_of_text_exact_search(!*"");
+        if (Regex::match_undetermined == part_rgx.state()) {
+            if (
+                Regex::match_undetermined == part_rgx.next("a")
+                && Regex::match_undetermined == part_rgx.next("bca")
+                ) {
+                    part_rgx.finish();
+                }
+        }
+        BOOST_CHECK_EQUAL(Regex::match_fail, part_rgx.state());
+    }
+}
+
 
 BOOST_AUTO_TEST_CASE(TestRegexLimit)
 {

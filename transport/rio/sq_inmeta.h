@@ -143,7 +143,7 @@ extern "C" {
         struct SQCryptoIntracker impl;
     };
 
-    static inline RIO_ERROR sq_m_SQCryptoInmeta_constructor(SQCryptoInmeta * self, const char * prefix, const char * extension)
+    static inline RIO_ERROR sq_m_SQCryptoInmeta_constructor(SQCryptoInmeta * self, const CryptoContext * crypto_ctx, const char * prefix, const char * extension)
     {
         TODO("Manage all actual open error with more details");
         char tmpname[1024];
@@ -160,12 +160,12 @@ extern "C" {
             cp_extension, sizeof(cp_extension));
         LOG(LOG_INFO, "%s", cp_path);
 
-        RIO * rt = rio_new_crypto(&self->status, tmpname, O_RDONLY);
+        RIO * rt = rio_new_crypto(&self->status, crypto_ctx, tmpname, O_RDONLY);
         if (self->status != RIO_ERROR_OK){
             return self->status;
         }
         self->tracker = rt;
-        self->status = sq_m_SQCryptoIntracker_constructor(&self->impl, rt, cp_path);
+        self->status = sq_m_SQCryptoIntracker_constructor(&self->impl, rt, crypto_ctx, cp_path);
         if (self->status != RIO_ERROR_OK){
             rio_delete(rt);
         }

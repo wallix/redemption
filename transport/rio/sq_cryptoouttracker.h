@@ -49,9 +49,11 @@ extern "C" {
         unsigned pid;
         unsigned count;
         int groupid;
+        const CryptoContext * crypto_ctx;
     };
 
     static inline RIO_ERROR sq_m_SQCryptoOuttracker_constructor(SQCryptoOuttracker * self, RIO * tracker,
+                    const CryptoContext * crypto_ctx,
                     SQ_FORMAT format,
                     const char * path, const char * filename, const char * extension,
                     struct timeval * tv, const char * header1, const char * header2, const char * header3,
@@ -64,6 +66,7 @@ extern "C" {
         self->pid = getpid();
         self->start_tv.tv_sec = self->stop_tv.tv_sec = tv->tv_sec;
         self->start_tv.tv_usec = self->stop_tv.tv_usec = tv->tv_usec;
+        self->crypto_ctx = crypto_ctx;
         if (strlen(path) > sizeof(self->path) - 1){
             return RIO_ERROR_STRING_PATH_TOO_LONG;
         }
@@ -188,7 +191,7 @@ extern "C" {
             char tmpname[1024];
             sq_im_SQCryptoOuttracker_get_name(self, tmpname, sizeof(tmpname), self->count);
             TODO("add rights information to constructor");
-            self->trans = rio_new_crypto(status, tmpname, O_WRONLY);
+            self->trans = rio_new_crypto(status, self->crypto_ctx, tmpname, O_WRONLY);
             if (self->groupid){
 //                if (chown(tmpname, (uid_t)-1, self->groupid) < 0){
 //                    LOG(LOG_ERR, "can't set file %s group to %u : %s [%u]", tmpname, self->groupid, strerror(errno), errno);

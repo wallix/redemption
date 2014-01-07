@@ -120,7 +120,7 @@ public:
     RIO * rio;
     SQ * seq;
 
-    CryptoInByMetaSequenceTransport(const char * filename, const char * extension)
+    CryptoInByMetaSequenceTransport(const CryptoContext * crypto_ctx, const char * filename, const char * extension)
     : Transport()
     {
         memset(this->path, 0, sizeof(path));
@@ -130,7 +130,7 @@ public:
 
         RIO_ERROR status = RIO_ERROR_OK;
         SQ * seq = NULL;
-        this->rio = rio_new_cryptoinmeta(&status, &seq, filename, extension);
+        this->rio = rio_new_cryptoinmeta(&status, &seq, crypto_ctx, filename, extension);
         if (status != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT);
         }

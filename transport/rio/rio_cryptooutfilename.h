@@ -38,10 +38,10 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOCryptoOutfilename_constructor(RIOCryptoOutfilename * self, const char * filename, const int groupid)
+    inline RIO_ERROR rio_m_RIOCryptoOutfilename_constructor(RIOCryptoOutfilename * self, const CryptoContext * crypto_ctx, const char * filename, const int groupid)
     {
         RIO_ERROR error = RIO_ERROR_OK;
-        self->trans = rio_new_crypto(&error, filename, O_WRONLY);
+        self->trans = rio_new_crypto(&error, crypto_ctx, filename, O_WRONLY);
         if (error != RIO_ERROR_OK){
             LOG(LOG_ERR, "Failed to create encrypted trace file %s %u : %s [%u]", filename, strerror(errno), errno);
         }

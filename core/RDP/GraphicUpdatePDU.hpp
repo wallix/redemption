@@ -416,7 +416,6 @@ protected:
                            ? FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0)
                         , this->encrypt
                         );
-
                     this->trans->send(fastpath_header, compressed_buffer_stream_orders);
                 }
             }

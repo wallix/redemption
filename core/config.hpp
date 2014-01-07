@@ -525,6 +525,8 @@ struct Inifile : public FieldObserver {
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval;
+
+        char crypto_key[32];
     } globals;
 
     // section "client"
@@ -576,7 +578,6 @@ struct Inifile : public FieldObserver {
         bool     capture_flv;
         bool     capture_ocr;
 
-        const char * ocr_filters[20];
         unsigned ocr_interval;
         bool     ocr_on_title_bar_only;
         unsigned ocr_max_unrecog_char_rate; // expressed in percentage,
@@ -843,6 +844,13 @@ public:
         TODO("this could be some kind of enumeration");
         this->globals.video_quality.set_from_cstr("medium");
         this->globals.enable_bitmap_update = false;
+
+        memcpy(this->globals.crypto_key,
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
+            sizeof(this->globals.crypto_key));
         // End Init globals
 
 
@@ -902,7 +910,6 @@ public:
         this->video.capture_flv   = false;
         this->video.capture_ocr   = false;
 
-        this->video.ocr_filters[0]              = NULL;
         this->video.ocr_interval                = 100;      // 1 every second
         this->video.ocr_on_title_bar_only       = false;
         this->video.ocr_max_unrecog_char_rate   = 40;
@@ -1237,6 +1244,17 @@ public:
             }
             else if (0 == strcmp(key, "enable_bitmap_update")){
                 this->globals.enable_bitmap_update = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "crypto_key")){
+                if (strlen(value) >= sizeof(this->globals.crypto_key) * 2) {
+                    char   hexval[3] = { 0 };
+                    char * end;
+                    for (size_t i = 0; i < sizeof(this->globals.crypto_key); i++) {
+                        memcpy(hexval, value + i * 2, 2);
+
+                        this->globals.crypto_key[i] = strtol(hexval, &end, 16);
+                    }
+                }
             }
         }
         else if (0 == strcmp(context, "client")){

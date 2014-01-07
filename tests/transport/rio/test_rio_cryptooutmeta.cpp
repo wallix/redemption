@@ -40,13 +40,22 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaCleaning)
         }
     }
 
+    CryptoContext crypto_ctx;
+    memset(&crypto_ctx, 0, sizeof(crypto_ctx));
+    memcpy(crypto_ctx.crypto_key,
+        "\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08"
+        "\x01\x02\x03\x04\x05\x06\x07\x08",
+        sizeof(crypto_ctx.crypto_key));
+
     RIO_ERROR status = RIO_ERROR_OK;
     SQ * seq  = NULL;
     struct timeval tv;
     tv.tv_usec = 0;
     tv.tv_sec = 1352304810;
     const int groupid = 0;
-    RIO * rt = rio_new_cryptooutmeta(&status, &seq, "", "/tmp/", "TESTOFS", ".mwrm", "800 600", "", "", &tv, groupid);
+    RIO * rt = rio_new_cryptooutmeta(&status, &seq, &crypto_ctx, "", "/tmp/", "TESTOFS", ".mwrm", "800 600", "", "", &tv, groupid);
 
     BOOST_CHECK_EQUAL( 5, rio_send(rt, "AAAAX",  5));
     tv.tv_sec += 100;
