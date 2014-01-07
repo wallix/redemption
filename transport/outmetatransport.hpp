@@ -138,7 +138,7 @@ public:
     SQ  * seq;
     char  path[512];
 
-    CryptoOutmetaTransport(const CryptoContext * crypto_ctx, const char * path, const char * hash_path,
+    CryptoOutmetaTransport(CryptoContext * crypto_ctx, const char * path, const char * hash_path,
         const char * basename, timeval now, uint16_t width, uint16_t height,
         const int groupid, auth_api * authentifier = NULL, unsigned verbose = 0)
     : seq(NULL)

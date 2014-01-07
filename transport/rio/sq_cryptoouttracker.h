@@ -49,11 +49,11 @@ extern "C" {
         unsigned pid;
         unsigned count;
         int groupid;
-        const CryptoContext * crypto_ctx;
+        CryptoContext * crypto_ctx;
     };
 
     static inline RIO_ERROR sq_m_SQCryptoOuttracker_constructor(SQCryptoOuttracker * self, RIO * tracker,
-                    const CryptoContext * crypto_ctx,
+                    CryptoContext * crypto_ctx,
                     SQ_FORMAT format,
                     const char * path, const char * filename, const char * extension,
                     struct timeval * tv, const char * header1, const char * header2, const char * header3,

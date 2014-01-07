@@ -49,7 +49,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, const CryptoContext * crypto_ctx, const char * filename, int oflag) {
+    static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, CryptoContext * crypto_ctx, const char * filename, int oflag) {
         RIO_ERROR error = RIO_ERROR_OK;
         int       _oflag;
 

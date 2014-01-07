@@ -131,7 +131,7 @@ public:
     char path[512];
 
     CryptoOutFilenameTransport(
-            const CryptoContext * crypto_ctx,
+            CryptoContext * crypto_ctx,
             SQ_FORMAT format,
             const char * const prefix,
             const char * const filename,

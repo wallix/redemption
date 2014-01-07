@@ -40,7 +40,7 @@ extern "C" {
         struct RIO * meta;
         struct SQ * seq;
         struct RIO * out;
-        const CryptoContext * crypto_ctx;
+        CryptoContext * crypto_ctx;
     };
 
     /* This method does not allocate space for object itself,
@@ -48,7 +48,7 @@ extern "C" {
         and allocate and initialize it's subfields if necessary
     */
     inline RIO_ERROR rio_m_RIOCryptoOutmeta_constructor(RIOCryptoOutmeta * self, SQ ** seq,
-                                                  const CryptoContext * crypto_ctx,
+                                                  CryptoContext * crypto_ctx,
                                                   const char * path, const char * hash_path, const char * filename, const char * extension,
                                                   const char * header1, const char * header2, const char* header3, timeval * tv,
                                                   const int groupid)

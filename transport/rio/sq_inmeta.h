@@ -143,7 +143,7 @@ extern "C" {
         struct SQCryptoIntracker impl;
     };
 
-    static inline RIO_ERROR sq_m_SQCryptoInmeta_constructor(SQCryptoInmeta * self, const CryptoContext * crypto_ctx, const char * prefix, const char * extension)
+    static inline RIO_ERROR sq_m_SQCryptoInmeta_constructor(SQCryptoInmeta * self, CryptoContext * crypto_ctx, const char * prefix, const char * extension)
     {
         TODO("Manage all actual open error with more details");
         char tmpname[1024];

@@ -120,7 +120,7 @@ public:
     RIO * rio;
     SQ * seq;
 
-    CryptoInByMetaSequenceTransport(const CryptoContext * crypto_ctx, const char * filename, const char * extension)
+    CryptoInByMetaSequenceTransport(CryptoContext * crypto_ctx, const char * filename, const char * extension)
     : Transport()
     {
         memset(this->path, 0, sizeof(path));

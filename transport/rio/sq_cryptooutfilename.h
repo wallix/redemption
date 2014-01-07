@@ -46,11 +46,11 @@ extern "C" {
         unsigned pid;
         unsigned count;
         int groupid;
-        const CryptoContext * crypto_ctx;
+        CryptoContext * crypto_ctx;
     };
 
     static inline RIO_ERROR sq_m_SQCryptoOutfilename_constructor(SQCryptoOutfilename * self,
-        const CryptoContext * crypto_ctx,
+        CryptoContext * crypto_ctx,
         SQ_FORMAT format, const char * path, const char * filename,
         const char * extension, const int groupid)
     {

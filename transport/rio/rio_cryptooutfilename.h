@@ -38,7 +38,7 @@ extern "C" {
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    inline RIO_ERROR rio_m_RIOCryptoOutfilename_constructor(RIOCryptoOutfilename * self, const CryptoContext * crypto_ctx, const char * filename, const int groupid)
+    inline RIO_ERROR rio_m_RIOCryptoOutfilename_constructor(RIOCryptoOutfilename * self, CryptoContext * crypto_ctx, const char * filename, const int groupid)
     {
         RIO_ERROR error = RIO_ERROR_OK;
         self->trans = rio_new_crypto(&error, crypto_ctx, filename, O_WRONLY);

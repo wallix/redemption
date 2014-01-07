@@ -385,7 +385,7 @@ extern "C" {
         timeval start_tv;
         timeval stop_tv;
         int num_chunk;
-        const CryptoContext * crypto_ctx;
+        CryptoContext * crypto_ctx;
     };
 
     // input: self->begin_line : beginning of available buffer (already read)
@@ -462,7 +462,7 @@ extern "C" {
     }
 
     static inline RIO_ERROR sq_m_SQCryptoIntracker_constructor(SQCryptoIntracker * self,
-        RIO * tracker, const CryptoContext * crypto_ctx, const char * meta_path)
+        RIO * tracker, CryptoContext * crypto_ctx, const char * meta_path)
     {
         self->trans = NULL;
         self->tracker = tracker;
