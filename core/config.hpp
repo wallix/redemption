@@ -525,6 +525,8 @@ struct Inifile : public FieldObserver {
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval;
+
+        char crypto_key[32];
     } globals;
 
     // section "client"
@@ -842,6 +844,13 @@ public:
         TODO("this could be some kind of enumeration");
         this->globals.video_quality.set_from_cstr("medium");
         this->globals.enable_bitmap_update = false;
+
+        memcpy(this->globals.crypto_key,
+            "\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0"
+            "\0\0\0\0\0\0\0\0",
+            sizeof(this->globals.crypto_key));
         // End Init globals
 
 
@@ -1235,6 +1244,17 @@ public:
             }
             else if (0 == strcmp(key, "enable_bitmap_update")){
                 this->globals.enable_bitmap_update = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "crypto_key")){
+                if (strlen(value) >= sizeof(this->globals.crypto_key) * 2) {
+                    char   hexval[3] = { 0 };
+                    char * end;
+                    for (size_t i = 0; i < sizeof(this->globals.crypto_key); i++) {
+                        memcpy(hexval, value + i * 2, 2);
+
+                        this->globals.crypto_key[i] = strtol(hexval, &end, 16);
+                    }
+                }
             }
         }
         else if (0 == strcmp(context, "client")){

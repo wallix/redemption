@@ -29,6 +29,7 @@
 
 #include "log.hpp"
 #define LOGNULL
+//#define LOGPRINT
 
 #include "config.hpp"
 #include <sstream>
@@ -69,6 +70,12 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00", 32));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -311,6 +318,12 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00", 32));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -563,6 +576,12 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00"
+                                                               "\x00\x00\x00\x00\x00\x00\x00\x00", 32));
+
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
@@ -706,6 +725,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "alternate_shell=C:\\\\WINDOWS\\\\NOTEPAD.EXE\n"
                           "shell_working_directory=C:\\\\WINDOWS\\\\\n"
                           "enable_bitmap_update=true\n"
+                          "crypto_key=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF"
                           "\n"
                           "[client]\n"
                           "ignore_logon_password=yes\n"
@@ -775,6 +795,12 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
+                                                               "\x00\x11\x22\x33\x44\x55\x66\x77"
+                                                               "\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
+                                                               "\x00\x11\x22\x33\x44\x55\x66\x77"
+                                                               "\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF", 32));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
