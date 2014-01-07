@@ -879,7 +879,7 @@ struct NTLMContext {
     void ntlm_SetContextWorkStation(const char * workstation, size_t length) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
         this->Workstation.init(length);
-        memcpy(this->Workstation.get_data(), workstation, length);
+        this->Workstation.copy((uint8_t *)workstation, length);
     }
     void ntlm_SetContextServicePrincipalName(const char * pszTargetName) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
@@ -890,7 +890,7 @@ struct NTLMContext {
             p++;
         }
         this->ServicePrincipalName.init(length);
-        memcpy(this->ServicePrincipalName.get_data(), pszTargetName, length);
+        this->ServicePrincipalName.copy((uint8_t *)pszTargetName, length);
     }
 
 
@@ -901,10 +901,10 @@ struct NTLMContext {
         BStream out_stream;
         this->NEGOTIATE_MESSAGE.emit(out_stream);
         output_buffer->Buffer.init(out_stream.size());
-        memcpy(output_buffer->Buffer.get_data(), out_stream.get_data(), out_stream.size());
+        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.size());
 
         this->SavedNegotiateMessage.init(out_stream.size());
-        memcpy(this->SavedNegotiateMessage.get_data(), out_stream.get_data(), out_stream.size());
+        this->SavedNegotiateMessage.copy(out_stream.get_data(), out_stream.size());
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
     }
@@ -920,7 +920,7 @@ struct NTLMContext {
             return SEC_E_INVALID_TOKEN;
 
         this->SavedNegotiateMessage.init(in_stream.size());
-        memcpy(this->SavedNegotiateMessage.get_data(), in_stream.get_data(), in_stream.size());
+        this->SavedNegotiateMessage.copy(in_stream.get_data(), in_stream.size());
 
         this->state = NTLM_STATE_CHALLENGE;
 	return SEC_I_CONTINUE_NEEDED;
@@ -930,10 +930,10 @@ struct NTLMContext {
         BStream out_stream;
         this->CHALLENGE_MESSAGE.emit(out_stream);
         output_buffer->Buffer.init(out_stream.size());
-        memcpy(output_buffer->Buffer.get_data(), out_stream.get_data(), out_stream.size());
+        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.size());
 
         this->SavedChallengeMessage.init(out_stream.size());
-        memcpy(this->SavedChallengeMessage.get_data(), out_stream.get_data(), out_stream.size());
+        this->SavedChallengeMessage.copy(out_stream.get_data(), out_stream.size());
 
 	this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -947,7 +947,7 @@ struct NTLMContext {
         this->CHALLENGE_MESSAGE.recv(in_stream);
 
         this->SavedChallengeMessage.init(in_stream.size());
-        memcpy(this->SavedChallengeMessage.get_data(), in_stream.get_data(), in_stream.size());
+        this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.size());
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -969,8 +969,8 @@ struct NTLMContext {
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
             this->SavedAuthenticateMessage.init(out_stream.size());
-            memcpy(this->SavedAuthenticateMessage.get_data(), out_stream.get_data(),
-                   out_stream.size());
+            this->SavedAuthenticateMessage.copy(out_stream.get_data(),
+                                                out_stream.size());
             this->ntlm_compute_MIC();
             memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
             // this->AUTHENTICATE_MESSAGE.has_mic = true;
@@ -979,8 +979,7 @@ struct NTLMContext {
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
         this->AUTHENTICATE_MESSAGE.emit(out_stream);
         output_buffer->Buffer.init(out_stream.size());
-        memcpy(output_buffer->Buffer.get_data(),
-               out_stream.get_data(), out_stream.size());
+        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.size());
 
         return SEC_I_COMPLETE_NEEDED;
     }
@@ -995,8 +994,8 @@ struct NTLMContext {
             this->UseMIC = true;
             memset(in_stream.get_data() + this->AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
             this->SavedAuthenticateMessage.init(in_stream.size());
-            memcpy(this->SavedAuthenticateMessage.get_data(), in_stream.get_data(),
-                   in_stream.size());
+            this->SavedAuthenticateMessage.copy(in_stream.get_data(),
+                                                in_stream.size());
         }
 
         uint8_t hash[16];

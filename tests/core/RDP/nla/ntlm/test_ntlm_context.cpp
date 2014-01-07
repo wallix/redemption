@@ -435,7 +435,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
     // send AUTHENTICATE MESSAGE
     client_to_server.reset();
     if (client_context.UseMIC) {
-        LOG(LOG_INFO, "has mic");
             client_context.AUTHENTICATE_MESSAGE.ignore_mic = true;
             client_context.AUTHENTICATE_MESSAGE.emit(client_to_server);
             client_context.AUTHENTICATE_MESSAGE.ignore_mic = false;
@@ -508,8 +507,8 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
                         16));
 
     // LOG(LOG_INFO, "===== Message Integrity Check =====");
-    hexdump_c(client_context.MessageIntegrityCheck, 16);
-    hexdump_c(server_context.MessageIntegrityCheck, 16);
+    // hexdump_c(client_context.MessageIntegrityCheck, 16);
+    // hexdump_c(server_context.MessageIntegrityCheck, 16);
     BOOST_CHECK(!memcmp(client_context.MessageIntegrityCheck,
                         server_context.MessageIntegrityCheck,
                         16));

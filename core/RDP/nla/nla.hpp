@@ -220,16 +220,14 @@ struct rdpCredssp
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
         Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
 
-        this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
-
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        memcpy(Buffers[0].Buffer.get_data(), this->pubKeyAuth.get_data(),
-               Buffers[0].Buffer.size());
+        Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
+                               Buffers[0].Buffer.size());
 
         Buffers[1].Buffer.init(public_key_length);
 
-        memcpy(Buffers[1].Buffer.get_data(), this->PublicKey.get_data(),
-               Buffers[1].Buffer.size());
+        Buffers[1].Buffer.copy(this->PublicKey.get_data(),
+                               Buffers[1].Buffer.size());
 
         if (this->server) {
             /* server echos the public key +1 */
@@ -247,12 +245,13 @@ struct rdpCredssp
             return status;
         }
 
-        memcpy(this->pubKeyAuth.get_data(),
-               Buffers[0].Buffer.get_data(),
-               Buffers[0].Buffer.size());
-        memcpy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
-               Buffers[1].Buffer.get_data(),
-               Buffers[1].Buffer.size());
+        this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
+
+        this->pubKeyAuth.copy(Buffers[0].Buffer.get_data(),
+                              Buffers[0].Buffer.size());
+        this->pubKeyAuth.copy(Buffers[1].Buffer.get_data(),
+                              Buffers[1].Buffer.size(),
+                              this->ContextSizes.cbMaxSignature);
 
         return status;
 
@@ -282,14 +281,12 @@ struct rdpCredssp
         Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        memcpy(Buffers[0].Buffer.get_data(),
-               this->pubKeyAuth.get_data(),
-               this->ContextSizes.cbMaxSignature);
+        Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
+                               this->ContextSizes.cbMaxSignature);
 
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
-        memcpy(Buffers[1].Buffer.get_data(),
-               this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
-               Buffers[1].Buffer.size());
+        Buffers[1].Buffer.copy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
+                               Buffers[1].Buffer.size());
 
         Message.cBuffers = 2;
         Message.ulVersion = SECBUFFER_VERSION;
@@ -357,8 +354,8 @@ struct rdpCredssp
         //     ZeroMemory(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
 
         Buffers[1].Buffer.init(ts_credentials_send.size());
-        memcpy(Buffers[1].Buffer.get_data(), ts_credentials_send.get_data(),
-               ts_credentials_send.size());
+        Buffers[1].Buffer.copy(ts_credentials_send.get_data(),
+                               ts_credentials_send.size());
 
         //     Buffers[1].cbBuffer = credssp->ts_credentials.cbBuffer;
         //     Buffers[1].pvBuffer = &((BYTE*) credssp->authInfo.pvBuffer)[Buffers[0].cbBuffer];
@@ -374,12 +371,11 @@ struct rdpCredssp
             return status;
 
         this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
-        memcpy(this->authInfo.get_data(),
-               Buffers[0].Buffer.get_data(),
-               Buffers[0].Buffer.size());
-        memcpy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
-               Buffers[1].Buffer.get_data(),
-               Buffers[1].Buffer.size());
+        this->authInfo.copy(Buffers[0].Buffer.get_data(),
+                            Buffers[0].Buffer.size());
+        this->authInfo.copy(Buffers[1].Buffer.get_data(),
+                            Buffers[1].Buffer.size(),
+                            this->ContextSizes.cbMaxSignature);
 
         return SEC_E_OK;
     }
@@ -403,16 +399,14 @@ struct rdpCredssp
         // CopyMemory(buffer, this->authInfo.pvBuffer, length);
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        memcpy(Buffers[0].Buffer.get_data(),
-               this->authInfo.get_data(),
-               Buffers[0].Buffer.size());
+        Buffers[0].Buffer.copy(this->authInfo.get_data(),
+                               Buffers[0].Buffer.size());
         // Buffers[0].cbBuffer = this->ContextSizes.cbMaxSignature;
         // Buffers[0].pvBuffer = buffer;
 
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
-        memcpy(Buffers[0].Buffer.get_data(),
-               this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
-               Buffers[0].Buffer.size());
+        Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
+                               Buffers[1].Buffer.size());
         // Buffers[1].cbBuffer = length - this->ContextSizes.cbMaxSignature;
         // Buffers[1].pvBuffer = &buffer[this->ContextSizes.cbMaxSignature];
 
@@ -568,14 +562,8 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
         if (output_buffer.Buffer.size() > 0) {
             // copy or set reference ? BStream
             credssp->negoToken.init(output_buffer.Buffer.size());
-            memcpy(credssp->negoToken.get_data(), output_buffer.Buffer.get_data(),
-                   output_buffer.Buffer.size());
-
-            // credssp->negoToken.reset();
-            // credssp->negoToken.out_copy_bytes(output_buffer.Buffer.get_data());
-            // credssp->negoToken.mark_end();
-            // credssp->negoToken.rewind();
-            // credssp->negoToken = output_buffer.Buffer;
+            credssp->negoToken.copy(output_buffer.Buffer.get_data(),
+                                    output_buffer.Buffer.size());
 
 // #ifdef WITH_DEBUG_CREDSSP
 //             LOG(LOG_ERR, "Sending Authentication Token\n");
@@ -605,8 +593,8 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
 // #endif
 
         input_buffer.Buffer.init(credssp->negoToken.size());
-        memcpy(input_buffer.Buffer.get_data(), credssp->negoToken.get_data(),
-               credssp->negoToken.size());
+        input_buffer.Buffer.copy(credssp->negoToken.get_data(),
+                                 credssp->negoToken.size());
 
         have_input_buffer = true;
         have_context = true;
@@ -756,9 +744,8 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
 // #endif
 
         input_buffer.Buffer.init(credssp->negoToken.size());
-        memcpy(input_buffer.Buffer.get_data(),
-               credssp->negoToken.get_data(),
-               input_buffer.Buffer.size());
+        input_buffer.Buffer.copy(credssp->negoToken.get_data(),
+                                     input_buffer.Buffer.size());
         // input_buffer.pvBuffer = credssp->negoToken.pvBuffer;
         // input_buffer.cbBuffer = credssp->negoToken.cbBuffer;
 
@@ -773,8 +760,6 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
         output_buffer.BufferType = SECBUFFER_TOKEN;
 
         output_buffer.Buffer.init(cbMaxToken);
-        // output_buffer.cbBuffer = cbMaxToken;
-        // output_buffer.pvBuffer = malloc(output_buffer.cbBuffer);
 
         status = credssp->table->AcceptSecurityContext(&credentials,
                                                        have_context? &credssp->context: NULL,
@@ -784,8 +769,8 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
                                                        &expiration);
 
         credssp->negoToken.init(output_buffer.Buffer.size());
-        memcpy(credssp->negoToken.get_data(), output_buffer.Buffer.get_data(),
-               output_buffer.Buffer.size());
+        credssp->negoToken.copy(output_buffer.Buffer.get_data(),
+                                output_buffer.Buffer.size());
         // credssp->negoToken.pvBuffer = output_buffer.pvBuffer;
         // credssp->negoToken.cbBuffer = output_buffer.cbBuffer;
 
@@ -814,9 +799,6 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
             }
 
             credssp->negoToken.init(0);
-            // sspi_SecBufferFree(&credssp->negoToken);
-            // credssp->negoToken.pvBuffer = NULL;
-            // credssp->negoToken.cbBuffer = 0;
 
             credssp->credssp_encrypt_public_key_echo();
         }

@@ -99,12 +99,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                                  PCtxtHandle phNewContext, SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
-	NTLMContext* context;
-	// SEC_STATUS status;
-	CREDENTIALS* credentials;
+	NTLMContext* context = NULL;
+	CREDENTIALS* credentials = NULL;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
-	// PSecBuffer channel_bindings = NULL;
 
 	context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
 
@@ -150,15 +148,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 context->state = NTLM_STATE_NEGOTIATE;
 
             if (context->state == NTLM_STATE_NEGOTIATE) {
-                // context->ntlm_client_build_negotiate();
-                // BStream out_stream;
-                // context->NEGOTIATE_MESSAGE.emit(out_stream);
-                // output_buffer->Buffer.init(out_stream.size());
-                // // out_stream.rewind();
-                // // out_stream.in_copy_bytes(output_buffer.Buffer.get_data(), out_stream.size());
-                // memcpy(output_buffer->Buffer.get_data(), out_stream.get_data(), out_stream.size());
-                // //context->ntlm_write_NegotiateMessage(output_buffer);
-                // return SEC_I_CONTINUE_NEEDED;
                 return context->read_negotiate(output_buffer);
             }
             return SEC_E_OUT_OF_SEQUENCE;
@@ -183,15 +172,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             // }
 
             if (context->state == NTLM_STATE_CHALLENGE) {
-                // BStream input_stream;
-                // input_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
-                //                             input_buffer->Buffer.size());
-                // input_stream.mark_end();
-                // input_stream.rewind();
-                // context->CHALLENGE_MESSAGE.recv(input_stream);
-
-                // // status = ntlm_read_ChallengeMessage(context, input_buffer);
-                // context->state = NTLM_STATE_AUTHENTICATE;
                 context->read_challenge(input_buffer);
 
                 if (!pOutput)
@@ -209,26 +189,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                     return SEC_E_INSUFFICIENT_MEMORY;
 
                 if (context->state == NTLM_STATE_AUTHENTICATE) {
-                    SEC_WINNT_AUTH_IDENTITY & id = context->identity;
-                    context->ntlm_client_build_authenticate(id.Password.get_data(),
-                                                            id.Password.size(),
-                                                            id.User.get_data(),
-                                                            id.User.size(),
-                                                            id.Domain.get_data(),
-                                                            id.Domain.size(),
-                                                            context->Workstation.get_data(),
-                                                            context->Workstation.size());
-                    BStream out_stream;
-                    context->AUTHENTICATE_MESSAGE.emit(out_stream);
-                    output_buffer->Buffer.init(out_stream.size());
-                    // out_stream.rewind();
-                    // out_stream.in_copy_bytes(output_buffer.Buffer.get_data(),
-                    //                          out_stream.size());
-                    memcpy(output_buffer->Buffer.get_data(),
-                           out_stream.get_data(), out_stream.size());
+                    return context->write_authenticate(output_buffer);
 
-                    // return ntlm_write_AuthenticateMessage(context, output_buffer);
-                    return SEC_I_COMPLETE_NEEDED;
                 }
             }
 
@@ -246,11 +208,11 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                              SecBufferDesc * pOutput,
                                              unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
-        NTLMContext* context;
+        NTLMContext* context = NULL;
         SEC_STATUS status;
-        CREDENTIALS* credentials;
-        PSecBuffer input_buffer;
-        PSecBuffer output_buffer;
+        CREDENTIALS* credentials = NULL;
+        PSecBuffer input_buffer = NULL;
+        PSecBuffer output_buffer = NULL;
 
         context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
 
@@ -291,16 +253,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (input_buffer->Buffer.size() < 1)
                 return SEC_E_INVALID_TOKEN;
 
-            // BStream input_stream;
-            // input_stream.out_copy_bytes(input_buffer->Buffer.get_data(),
-            //                             input_buffer->Buffer.size());
-            // input_stream.mark_end();
-            // input_stream.rewind();
-            // context->NEGOTIATE_MESSAGE.recv(input_stream);
-            // // status = ntlm_read_NegotiateMessage(context, input_buffer);
-            // // should check return of nego message read (recv)
-            // context->state = NTLM_STATE_CHALLENGE;
-
             status = context->read_negotiate(input_buffer);
 
             if (context->state == NTLM_STATE_CHALLENGE) {
@@ -318,13 +270,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 if (output_buffer->Buffer.size() < 1)
                     return SEC_E_INSUFFICIENT_MEMORY;
 
-                // context->ntlm_server_build_challenge();
-                // BStream out_stream;
-                // context->CHALLENGE_MESSAGE.emit(out_stream);
-                // output_buffer->Buffer.init(out_stream.size());
-                // memcpy(output_buffer->Buffer.get_data(), out_stream.get_data(), out_stream.size());
-                // // return ntlm_write_ChallengeMessage(context, output_buffer);
-                // return SEC_I_CONTINUE_NEEDED;
                 return context->write_challenge(output_buffer);
             }
 
@@ -345,11 +290,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (input_buffer->Buffer.size() < 1)
                 return SEC_E_INVALID_TOKEN;
 
-            // uint8_t hash[16];
-            // context->ntlm_server_fetch_hash(hash);
-            // status = context->ntlm_server_proceed_authenticate(hash);
-
-            // status = ntlm_read_AuthenticateMessage(context, input_buffer);
             status = context->read_authenticate(input_buffer);
 
             if (pOutput) {
@@ -431,7 +371,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             // RC4(&context->SendRc4Seal, length, data, data_buffer->pvBuffer);
         }
         else {
-            memcpy(data_buffer->Buffer.get_data(), data, length);
+            data_buffer->Buffer.copy(data, length);
         }
 // #ifdef WITH_DEBUG_NTLM
 //         LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
@@ -444,7 +384,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 // #endif
 
         delete [] data;
-        // free(data);
 
         /* RC4-encrypt first 8 bytes of digest */
         context->SendRc4Seal.crypt(8, digest, checksum);
@@ -511,7 +450,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             // RC4(&context->RecvRc4Seal, length, data, data_buffer->pvBuffer);
         }
         else {
-            memcpy(data_buffer->Buffer.get_data(), data, length);
+            data_buffer->Buffer.copy(data, length);
         }
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
