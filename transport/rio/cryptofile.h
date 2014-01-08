@@ -46,10 +46,12 @@ struct CryptoContext {
     unsigned char crypto_key[CRYPTO_KEY_LENGTH];
 };
 
-void get_derivator(const char * file, unsigned char * derivator, int derivator_len);
-int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned char * derivator);
+/* Standard unbase64, store result in buffer. Returns written bytes
+ */
+size_t unbase64(char *buffer, size_t bufsiz, const char *txt);
 
-//int dev_urandom_read(unsigned char * buf, int sz);
+int compute_hmac(unsigned char * hmac, const unsigned char * key, const unsigned char * derivator);
+void get_derivator(const char * file, unsigned char * derivator, int derivator_len);
 
 void * crypto_open_read (int systemfd, unsigned char * trace_key, struct CryptoContext * cctx);
 void * crypto_open_write(int systemfd, unsigned char * trace_key, struct CryptoContext * cctx, const unsigned char * iv);

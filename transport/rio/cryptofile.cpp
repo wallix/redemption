@@ -27,6 +27,49 @@
 
 extern "C" {
 
+/*****************************************************************************************************
+ *                               Shared memory accessor procedures                                   *
+ *****************************************************************************************************/
+/* Standard unbase64, store result in buffer. Returns written bytes
+ */
+size_t unbase64(char *buffer, size_t bufsiz, const char *txt)
+{
+    const unsigned char _base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    unsigned int bits = 0;
+    int nbits = 0;
+    char base64tbl[256];
+    int i;
+    char v;
+    size_t nbytes = 0;
+
+    memset(base64tbl, -1, sizeof base64tbl);
+
+    for (i = 0; _base64chars[i]; i++) {
+        base64tbl[_base64chars[i]] = i;
+    }
+
+    base64tbl['.'] = 62;
+    base64tbl['-'] = 62;
+    base64tbl['_'] = 63;
+
+    while (*txt) {
+        if ((v = base64tbl[(unsigned char)*txt]) >= 0) {
+            bits <<= 6;
+            bits += v;
+            nbits += 6;
+            if (nbits >= 8) {
+                if (nbytes < bufsiz)
+                    *buffer++ = (bits >> (nbits - 8));
+                nbytes++;
+                nbits -= 8;
+            }
+        }
+        txt++;
+    }
+
+    return nbytes;
+}
+
 /**********************************************
  *                Public API                  *
  **********************************************/
