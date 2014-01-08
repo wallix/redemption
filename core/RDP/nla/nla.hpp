@@ -462,14 +462,14 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     if (credssp->table == NULL) {
         return 0;
     }
-    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, packageInfo);
+    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
 
     if (status != SEC_E_OK) {
         LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
         return 0;
     }
 
-    unsigned long cbMaxToken = packageInfo->cbMaxToken;
+    unsigned long cbMaxToken = packageInfo.cbMaxToken;
     CredHandle credentials;
     TimeStamp expiration;
 
@@ -622,7 +622,6 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     /* Free resources */
 
     credssp->table->FreeCredentialsHandle(&credentials);
-    // credssp->table->FreeContextBuffer(pPackageInfo);
 
     return 1;
 }
@@ -656,14 +655,14 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
     }
 
     SecPkgInfo packageInfo;
-    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, packageInfo);
+    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
 
     if (status != SEC_E_OK) {
         LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
         return 0;
     }
 
-    unsigned long cbMaxToken = packageInfo->cbMaxToken;
+    unsigned long cbMaxToken = packageInfo.cbMaxToken;
     CredHandle credentials;
     TimeStamp expiration;
 
@@ -830,8 +829,6 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
             return 0;
         }
     }
-
-    // credssp->table->FreeContextBuffer(pPackageInfo);
 
     return 1;
 }
