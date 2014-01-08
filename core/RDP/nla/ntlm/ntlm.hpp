@@ -334,12 +334,17 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         uint8_t checksum[8];
         uint8_t* signature;
         uint32_t version = 1;
-        NTLMContext* context;
+        NTLMContext* context = NULL;
         PSecBuffer data_buffer = NULL;
         PSecBuffer signature_buffer = NULL;
 
         SeqNo = MessageSeqNo;
-        context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        if (phContext) {
+            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        }
+        if (!context) {
+            return SEC_E_NO_CONTEXT;
+        }
 
         for (index = 0; index < (int) pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
@@ -428,13 +433,18 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         uint8_t digest[16];
         uint8_t checksum[8];
         uint32_t version = 1;
-        NTLMContext* context;
+        NTLMContext* context = NULL;
         uint8_t expected_signature[16];
         PSecBuffer data_buffer = NULL;
         PSecBuffer signature_buffer = NULL;
 
         SeqNo = (uint32_t) MessageSeqNo;
-        context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        if (phContext) {
+            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        }
+        if (!context) {
+            return SEC_E_NO_CONTEXT;
+        }
 
         for (index = 0; index < (int) pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
