@@ -22,18 +22,68 @@
 #define _REDEMPTION_CORE_RDP_NLA_SSPI_HPP_
 
 #include <stdio.h>
+#include "utf.hpp"
+#include "stream.hpp"
+
+#define NTLMSP_NAME "NTLM"
+#define SECBUFFER_VERSION			0
+
+/* Buffer Types */
+enum buffer_type {
+    SECBUFFER_EMPTY = 0,
+    SECBUFFER_DATA = 1,
+    SECBUFFER_TOKEN = 2,
+    SECBUFFER_PKG_PARAMS = 3,
+    SECBUFFER_MISSING = 4,
+    SECBUFFER_EXTRA = 5,
+    SECBUFFER_STREAM_TRAILER = 6,
+    SECBUFFER_STREAM_HEADER = 7,
+    SECBUFFER_NEGOTIATION_INFO = 8,
+    SECBUFFER_PADDING = 9,
+    SECBUFFER_STREAM = 10,
+    SECBUFFER_MECHLIST = 11,
+    SECBUFFER_MECHLIST_SIGNATURE = 12,
+    SECBUFFER_TARGET = 13,
+    SECBUFFER_CHANNEL_BINDINGS = 14,
+    SECBUFFER_CHANGE_PASS_RESPONSE = 15,
+    SECBUFFER_TARGET_HOST = 16,
+    SECBUFFER_ALERT = 17
+};
 
 struct SecBuffer {
-    unsigned long cbBuffer;
     unsigned long BufferType;
-    void *        pvBuffer;
+    Array         Buffer;
+
+    void setzero() {
+        this->Buffer.init(0);
+        this->BufferType = SECBUFFER_EMPTY;
+    }
 };
+
+typedef SecBuffer *PSecBuffer;
 struct SecBufferDesc
 {
     unsigned long ulVersion;
     unsigned long cBuffers;
     SecBuffer *   pBuffers;
+
+    PSecBuffer FindSecBuffer(unsigned long BufferType)
+    {
+        unsigned long index;
+        PSecBuffer pSecBuffer = NULL;
+
+	for (index = 0; index < this->cBuffers; index++) {
+            if (this->pBuffers[index].BufferType == BufferType) {
+                pSecBuffer = &(this->pBuffers[index]);
+                break;
+            }
+        }
+
+	return pSecBuffer;
+    }
+
 };
+typedef SecBufferDesc *PSecBufferDesc;
 
 struct TimeStamp {
     uint32_t LowPart;
@@ -48,6 +98,8 @@ struct SecPkgInfo {
     const char* Name;
     const char* Comment;
 };
+typedef SecPkgInfo *PSecPkgInfo;
+
 const char Ntlm_Name[] = "NTLM";
 const char Ntlm_Comment[] = "NTLM Security Package";
 const SecPkgInfo NTLM_SecPkgInfo = {
@@ -57,6 +109,10 @@ const SecPkgInfo NTLM_SecPkgInfo = {
     0x00000B48,             // cbMaxToken
     Ntlm_Name,              // Name
     Ntlm_Comment            // Comment
+};
+
+const SecPkgInfo* SecPkgInfo_LIST[] = {
+    &NTLM_SecPkgInfo
 };
 
 struct SEC_CHANNEL_BINDINGS
@@ -84,37 +140,127 @@ struct SecPkgContext_Sizes
     uint32_t cbSecurityTrailer;
 };
 
-
-struct _SEC_WINNT_AUTH_IDENTITY
-{
-    uint16_t* User;
-    uint32_t UserLength;
-    uint16_t* Domain;
-    uint32_t DomainLength;
-    uint16_t* Password;
-    uint32_t PasswordLength;
-    uint32_t Flags;
+enum SecIdFlag {
+    SEC_WINNT_AUTH_IDENTITY_ANSI = 0x1,
+    SEC_WINNT_AUTH_IDENTITY_UNICODE = 0x2,
 };
-typedef struct _SEC_WINNT_AUTH_IDENTITY SEC_WINNT_AUTH_IDENTITY;
 
-typedef struct _SecHandle {
-    unsigned long * dwLower;
-    unsigned long * dwUpper;
-} SecHandle, *PSecHandle;
+struct SEC_WINNT_AUTH_IDENTITY
+{
+    Array User;
+    Array Domain;
+    Array Password;
+    uint32_t Flags;
 
+    void SetAuthIdentityFromUtf8(const uint8_t * user, const uint8_t * domain,
+                                 const uint8_t * password) {
+        this->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+        if (user) {
+            size_t user_len = UTF8Len(user);
+            this->User.init(user_len * 2);
+            UTF8toUTF16(user, this->User.get_data(), user_len * 2);
+	}
+        else {
+            this->User.init(0);
+	}
+
+        if (domain) {
+            size_t domain_len = UTF8Len(domain);
+            this->Domain.init(domain_len * 2);
+            UTF8toUTF16(domain, this->Domain.get_data(), domain_len * 2);
+	}
+        else {
+            this->Domain.init(0);
+	}
+
+        if (password) {
+            size_t password_len = UTF8Len(password);
+            this->Password.init(password_len * 2);
+            UTF8toUTF16(password, this->Password.get_data(), password_len * 2);
+	}
+        else {
+            this->Password.init(0);
+	}
+
+    }
+
+    void clear() {
+        this->User.init(0);
+        this->Domain.init(0);
+        this->Password.init(0);
+        this->Flags = 0;
+    }
+
+    void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY & src) {
+        this->User.init(src.User.size());
+        this->User.copy(src.User.get_data(), src.User.size());
+        this->Domain.init(src.Domain.size());
+        this->Domain.copy(src.Domain.get_data(), src.Domain.size());
+        this->Password.init(src.Password.size());
+        this->Password.copy(src.Password.get_data(), src.Password.size());
+        this->Flags = src.Flags;
+    }
+};
+
+struct CREDENTIALS {
+    uint32_t flags;
+    SEC_WINNT_AUTH_IDENTITY identity;
+};
+
+struct _SecHandle {
+    unsigned long dwLower;
+    unsigned long dwUpper;
+};
+
+
+class SecHandle {
+    _SecHandle * pHandle;
+
+public:
+    SecHandle()
+        : pHandle(new _SecHandle()) {
+    }
+    SecHandle(const SecHandle & other)
+        : pHandle(new _SecHandle(*(other.pHandle))) {
+    }
+
+    ~SecHandle() {
+        delete pHandle;
+    }
+
+    SecHandle& operator=(const SecHandle &other) {
+        *pHandle = *(other.pHandle);
+        return *this;
+    }
+
+    void SecureHandleSetLowerPointer(void* pointer) {
+        this->pHandle->dwLower = (unsigned long) pointer;
+    }
+
+    void SecureHandleSetUpperPointer(void* pointer) {
+        this->pHandle->dwUpper = (unsigned long) pointer;
+    }
+
+    void* SecureHandleGetLowerPointer() {
+        void * pointer;
+        pointer = (void*) this->pHandle->dwLower;
+        return pointer;
+    }
+    void* SecureHandleGetUpperPointer() {
+        void * pointer;
+        pointer = (void*) this->pHandle->dwUpper;
+        return pointer;
+    }
+
+
+};
+typedef SecHandle *PSecHandle;
 typedef SecHandle CredHandle;
 typedef PSecHandle PCredHandle;
 
 typedef SecHandle CtxtHandle;
 typedef PSecHandle PCtxtHandle;
 
-
-
-const SecPkgInfo* SecPkgInfo_LIST[] = {
-    // &NTLM_SecPkgInfoA,
-    // &CREDSSP_SecPkgInfoA,
-    // &SCHANNEL_SecPkgInfoA
-};
 
 enum SEC_STATUS {
     SEC_E_OK = 0x00000000,
@@ -204,6 +350,139 @@ enum SEC_STATUS {
     SEC_I_NO_RENEGOTIATION = 0x00090360,
 };
 
+/* InitializeSecurityContext Flags */
+enum ISC_REQ {
+    ISC_REQ_DELEGATE = 0x00000001,
+    ISC_REQ_MUTUAL_AUTH = 0x00000002,
+    ISC_REQ_REPLAY_DETECT = 0x00000004,
+    ISC_REQ_SEQUENCE_DETECT = 0x00000008,
+    ISC_REQ_CONFIDENTIALITY = 0x00000010,
+    ISC_REQ_USE_SESSION_KEY = 0x00000020,
+    ISC_REQ_PROMPT_FOR_CREDS = 0x00000040,
+    ISC_REQ_USE_SUPPLIED_CREDS = 0x00000080,
+    ISC_REQ_ALLOCATE_MEMORY = 0x00000100,
+    ISC_REQ_USE_DCE_STYLE = 0x00000200,
+    ISC_REQ_DATAGRAM = 0x00000400,
+    ISC_REQ_CONNECTION = 0x00000800,
+    ISC_REQ_CALL_LEVEL = 0x00001000,
+    ISC_REQ_FRAGMENT_SUPPLIED = 0x00002000,
+    ISC_REQ_EXTENDED_ERROR = 0x00004000,
+    ISC_REQ_STREAM = 0x00008000,
+    ISC_REQ_INTEGRITY = 0x00010000,
+    ISC_REQ_IDENTIFY = 0x00020000,
+    ISC_REQ_NULL_SESSION = 0x00040000,
+    ISC_REQ_MANUAL_CRED_VALIDATION = 0x00080000,
+    ISC_REQ_RESERVED1 = 0x00100000,
+    ISC_REQ_FRAGMENT_TO_FIT = 0x00200000,
+    ISC_REQ_FORWARD_CREDENTIALS = 0x00400000,
+    ISC_REQ_NO_INTEGRITY = 0x00800000,
+    ISC_REQ_USE_HTTP_STYLE = 0x01000000
+};
+
+/* AcceptSecurityContext Flags */
+enum ASC_REQ {
+    ASC_REQ_DELEGATE = 0x00000001,
+    ASC_REQ_MUTUAL_AUTH = 0x00000002,
+    ASC_REQ_REPLAY_DETECT = 0x00000004,
+    ASC_REQ_SEQUENCE_DETECT = 0x00000008,
+    ASC_REQ_CONFIDENTIALITY = 0x00000010,
+    ASC_REQ_USE_SESSION_KEY = 0x00000020,
+    ASC_REQ_ALLOCATE_MEMORY = 0x00000100,
+    ASC_REQ_USE_DCE_STYLE = 0x00000200,
+    ASC_REQ_DATAGRAM = 0x00000400,
+    ASC_REQ_CONNECTION = 0x00000800,
+    ASC_REQ_CALL_LEVEL = 0x00001000,
+    ASC_REQ_EXTENDED_ERROR = 0x00008000,
+    ASC_REQ_STREAM = 0x00010000,
+    ASC_REQ_INTEGRITY = 0x00020000,
+    ASC_REQ_LICENSING = 0x00040000,
+    ASC_REQ_IDENTIFY = 0x00080000,
+    ASC_REQ_ALLOW_NULL_SESSION = 0x00100000,
+    ASC_REQ_ALLOW_NON_USER_LOGONS = 0x00200000,
+    ASC_REQ_ALLOW_CONTEXT_REPLAY = 0x00400000,
+    ASC_REQ_FRAGMENT_TO_FIT = 0x00800000,
+    ASC_REQ_FRAGMENT_SUPPLIED = 0x00002000,
+    ASC_REQ_NO_TOKEN = 0x01000000,
+    ASC_REQ_PROXY_BINDINGS = 0x04000000,
+    ASC_REQ_ALLOW_MISSING_BINDINGS = 0x10000000,
+};
+
+enum ASC_RET {
+    ASC_RET_DELEGATE = 0x00000001,
+    ASC_RET_MUTUAL_AUTH = 0x00000002,
+    ASC_RET_REPLAY_DETECT = 0x00000004,
+    ASC_RET_SEQUENCE_DETECT = 0x00000008,
+    ASC_RET_CONFIDENTIALITY = 0x00000010,
+    ASC_RET_USE_SESSION_KEY = 0x00000020,
+    ASC_RET_ALLOCATED_MEMORY = 0x00000100,
+    ASC_RET_USED_DCE_STYLE = 0x00000200,
+    ASC_RET_DATAGRAM = 0x00000400,
+    ASC_RET_CONNECTION = 0x00000800,
+    ASC_RET_CALL_LEVEL = 0x00002000,
+    ASC_RET_THIRD_LEG_FAILED = 0x00004000,
+    ASC_RET_EXTENDED_ERROR = 0x00008000,
+    ASC_RET_STREAM = 0x00010000,
+    ASC_RET_INTEGRITY = 0x00020000,
+    ASC_RET_LICENSING = 0x00040000,
+    ASC_RET_IDENTIFY = 0x00080000,
+    ASC_RET_NULL_SESSION = 0x00100000,
+    ASC_RET_ALLOW_NON_USER_LOGONS = 0x00200000,
+    ASC_RET_FRAGMENT_ONLY = 0x00800000,
+    ASC_RET_NO_TOKEN = 0x01000000,
+    ASC_RET_NO_PROXY_BINDINGS = 0x04000000,
+    ASC_RET_MISSING_BINDINGS = 0x10000000,
+};
+
+enum SecDrep {
+    SECURITY_NATIVE_DREP = 0x00000010,
+    SECURITY_NETWORK_DREP = 0x00000000
+};
+
+enum CredentialUse {
+    SECPKG_CRED_INBOUND = 0x00000001,
+    SECPKG_CRED_OUTBOUND = 0x00000002,
+    SECPKG_CRED_BOTH = 0x00000003,
+    SECPKG_CRED_AUTOLOGON_RESTRICTED = 0x00000010,
+    SECPKG_CRED_PROCESS_POLICY_ONLY = 0x00000020
+};
+
+enum SecPkg_Att {
+/* Security Context Attributes */
+
+    SECPKG_ATTR_SIZES = 0,
+    SECPKG_ATTR_NAMES = 1,
+    SECPKG_ATTR_LIFESPAN = 2,
+    SECPKG_ATTR_DCE_INFO = 3,
+    SECPKG_ATTR_STREAM_SIZES = 4,
+    SECPKG_ATTR_KEY_INFO = 5,
+    SECPKG_ATTR_AUTHORITY = 6,
+    SECPKG_ATTR_PROTO_INFO = 7,
+    SECPKG_ATTR_PASSWORD_EXPIRY = 8,
+    SECPKG_ATTR_SESSION_KEY = 9,
+    SECPKG_ATTR_PACKAGE_INFO = 10,
+    SECPKG_ATTR_USER_FLAGS = 11,
+    SECPKG_ATTR_NEGOTIATION_INFO = 12,
+    SECPKG_ATTR_NATIVE_NAMES = 13,
+    SECPKG_ATTR_FLAGS = 14,
+    SECPKG_ATTR_USE_VALIDATED = 15,
+    SECPKG_ATTR_CREDENTIAL_NAME = 16,
+    SECPKG_ATTR_TARGET_INFORMATION = 17,
+    SECPKG_ATTR_ACCESS_TOKEN = 18,
+    SECPKG_ATTR_TARGET = 19,
+    SECPKG_ATTR_AUTHENTICATION_ID = 20,
+    SECPKG_ATTR_LOGOFF_TIME = 21,
+    SECPKG_ATTR_NEGO_KEYS = 22,
+    SECPKG_ATTR_PROMPTING_NEEDED = 24,
+    SECPKG_ATTR_UNIQUE_BINDINGS = 25,
+    SECPKG_ATTR_ENDPOINT_BINDINGS = 26,
+    SECPKG_ATTR_CLIENT_SPECIFIED_TARGET = 27,
+    SECPKG_ATTR_LAST_CLIENT_TOKEN_STATUS = 30,
+    SECPKG_ATTR_NEGO_PKG_INFO = 31,
+    SECPKG_ATTR_NEGO_STATUS = 32,
+    SECPKG_ATTR_CONTEXT_DELETED = 33
+};
+
+
 typedef void (*SEC_GET_KEY_FN)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
 typedef void* HANDLE, *PHANDLE, *LPHANDLE;
 
@@ -218,158 +497,192 @@ struct SecurityFunctionTable {
         // int index;
         // uint32_t cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
         // size_t size = sizeof(SecPkgInfo) * cPackages;
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // QUERY_CREDENTIALS_ATTRIBUTES_FN QueryCredentialsAttributes;
-    virtual SEC_STATUS QueryCredentialsAttributes(SecHandle * phCredential,
+    virtual SEC_STATUS QueryCredentialsAttributes(PCredHandle phCredential,
                                                   unsigned long ulAttribute,
                                                   void* pBuffer) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    virtual SEC_STATUS AcquireCredentialsHandle(char * pszPrincipal, char * pszPackage,
+    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal, const char * pszPackage,
                                                 unsigned long fCredentialUse, void* pvLogonID,
                                                 void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-                                                void* pvGetKeyArgument, SecHandle * phCredential,
+                                                void* pvGetKeyArgument, PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
-         return SEC_E_OK;
+
+         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Release_cred
     // FREE_CREDENTIALS_HANDLE_FN FreeCredentialsHandle;
-    virtual SEC_STATUS FreeCredentialsHandle(SecHandle * phCredential) {
-        return SEC_E_OK;
+    virtual SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
+	return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // void * Reserved2;
 
+    // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    virtual SEC_STATUS InitializeSecurityContext(SecHandle * phCredential, SecHandle * phContext,
+    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
                                                  char* pszTargetName, unsigned long fContextReq,
                                                  unsigned long Reserved1,
                                                  unsigned long TargetDataRep,
                                                  SecBufferDesc * pInput, unsigned long Reserved2,
-                                                 SecHandle * phNewContext, SecBufferDesc * pOutput,
+                                                 PCtxtHandle phNewContext, SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(SecHandle * phCredential, SecHandle * phContext,
+    virtual SEC_STATUS AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
                                              SecBufferDesc * pInput, unsigned long fContextReq,
-                                             unsigned long TargetDataRep, SecHandle * phNewContext,
+                                             unsigned long TargetDataRep, PCtxtHandle phNewContext,
                                              SecBufferDesc * pOutput,
                                              unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
 
+    // GSS_Process_context_token ?
     // COMPLETE_AUTH_TOKEN CompleteAuthToken;
-    virtual SEC_STATUS CompleteAuthToken(SecHandle * phContext, SecBufferDesc * pToken) {
-        return SEC_E_OK;
+    virtual SEC_STATUS CompleteAuthToken(PCtxtHandle phContext, SecBufferDesc * pToken) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Delete_sec_context
     // DELETE_SECURITY_CONTEXT DeleteSecurityContext;
-    virtual SEC_STATUS DeleteSecurityContext(SecHandle * phContext) {
-        return SEC_E_OK;
+    virtual SEC_STATUS DeleteSecurityContext(PCtxtHandle phContext) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // APPLY_CONTROL_TOKEN ApplyControlToken;
-    virtual SEC_STATUS ApplyControlToken(SecHandle * phContext, SecBufferDesc * pInput) {
-        return SEC_E_OK;
+    virtual SEC_STATUS ApplyControlToken(PCtxtHandle phContext, SecBufferDesc * pInput) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    virtual SEC_STATUS QueryContextAttributes(SecHandle * phContext, unsigned long ulAttribute,
+    virtual SEC_STATUS QueryContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
                                               void* pBuffer) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    virtual SEC_STATUS ImpersonateSecurityContext(SecHandle * phContext) {
-        return SEC_E_OK;
+    virtual SEC_STATUS ImpersonateSecurityContext(PCtxtHandle phContext) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    virtual SEC_STATUS RevertSecurityContext(SecHandle * phContext) {
-        return SEC_E_OK;
+    virtual SEC_STATUS RevertSecurityContext(PCtxtHandle phContext) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // MAKE_SIGNATURE MakeSignature;
-    virtual SEC_STATUS MakeSignature(SecHandle * phContext, unsigned long fQOP,
-                                      SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
-        return SEC_E_OK;
+    virtual SEC_STATUS MakeSignature(PCtxtHandle phContext, unsigned long fQOP,
+                                     SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // VERIFY_SIGNATURE VerifySignature;
-    virtual SEC_STATUS VerifySignature(SecHandle * phContext, SecBufferDesc * pMessage,
+    virtual SEC_STATUS VerifySignature(PCtxtHandle phContext, SecBufferDesc * pMessage,
                                         unsigned long MessageSeqNo, unsigned long * pfQOP) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // FREE_CONTEXT_BUFFER FreeContextBuffer;
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    virtual SEC_STATUS QuerySecurityPackageInfo(char* pszPackageName,
-                                                   SecPkgInfo ** ppPackageInfo) {
-        return SEC_E_OK;
+    virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
+                                                SecPkgInfo * pPackageInfo) {
+
+	int index;
+	uint32_t cPackages;
+
+	cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
+
+	for (index = 0; index < (int) cPackages; index++) {
+            if (strcmp(pszPackageName, SecPkgInfo_LIST[index]->Name) == 0) {
+
+                pPackageInfo->fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
+                pPackageInfo->wVersion = SecPkgInfo_LIST[index]->wVersion;
+                pPackageInfo->wRPCID = SecPkgInfo_LIST[index]->wRPCID;
+                pPackageInfo->cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
+                pPackageInfo->Name = SecPkgInfo_LIST[index]->Name;
+                pPackageInfo->Comment = SecPkgInfo_LIST[index]->Comment;
+
+                return SEC_E_OK;
+            }
+        }
+
+	return SEC_E_SECPKG_NOT_FOUND;
     }
 
     // void* Reserved3;
     // void* Reserved4;
 
+    // GSS_Export_sec_context
     // EXPORT_SECURITY_CONTEXT ExportSecurityContext;
-    virtual SEC_STATUS ExportSecurityContext(SecHandle * phContext, unsigned long fFlags,
+    virtual SEC_STATUS ExportSecurityContext(PCtxtHandle phContext, unsigned long fFlags,
                                              SecBuffer * pPackedContext, HANDLE* pToken) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Import_sec_context
     // IMPORT_SECURITY_CONTEXT ImportSecurityContext;
     virtual SEC_STATUS ImportSecurityContext(char* pszPackage, SecBuffer * pPackedContext,
-                                             HANDLE pToken, SecHandle * phContext) {
-        return SEC_E_OK;
+                                             HANDLE pToken, PCtxtHandle phContext) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Add_cred
     // ADD_CREDENTIALS AddCredentials;
-    virtual SEC_STATUS AddCredentials(SecHandle * hCredentials, char* pszPrincipal,
+    virtual SEC_STATUS AddCredentials(PCredHandle phCredentials, char* pszPrincipal,
                                      char* pszPackage, uint32_t fCredentialUse,
                                      void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
                                      void* pvGetKeyArgument, TimeStamp * ptsExpiry) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // void* Reserved8;
 
     // QUERY_SECURITY_CONTEXT_TOKEN QuerySecurityContextToken;
-    virtual SEC_STATUS QuerySecurityContextToken(SecHandle * phContext, HANDLE* phToken) {
-        return SEC_E_OK;
+    virtual SEC_STATUS QuerySecurityContextToken(PCtxtHandle phContext, HANDLE* phToken) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    virtual SEC_STATUS EncryptMessage(SecHandle * phContext, unsigned long fQOP,
+    virtual SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
                                        SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
+    // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    virtual SEC_STATUS DecryptMessage(SecHandle * phContext, SecBufferDesc * pMessage,
-                                       unsigned long MessageSeqNo, unsigned long * pfQOP) {
-        return SEC_E_OK;
+    virtual SEC_STATUS DecryptMessage(PCtxtHandle phContext, SecBufferDesc * pMessage,
+                                      unsigned long MessageSeqNo, unsigned long * pfQOP) {
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // SET_CONTEXT_ATTRIBUTES SetContextAttributes;
-    virtual SEC_STATUS SetContextAttributes(SecHandle * phContext, unsigned long ulAttribute,
+    virtual SEC_STATUS SetContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
                                             void* pBuffer, unsigned long cbBuffer) {
-        return SEC_E_OK;
+        return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
 };
+
+typedef SecurityFunctionTable *PSecurityFunctionTable;
 
 enum SecInterface {
     NTLM_Interface,
@@ -377,10 +690,6 @@ enum SecInterface {
     SChannel_Interface
 };
 
-SecurityFunctionTable * InitSecurityInterface(SecInterface secInter) {
-
-    return NULL;
-}
 
 
 #endif

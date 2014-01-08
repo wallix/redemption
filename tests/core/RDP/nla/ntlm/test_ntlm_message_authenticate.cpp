@@ -143,8 +143,10 @@ BOOST_AUTO_TEST_CASE(TestAuthenticate)
     // hexdump_c(to_send3.get_data(), to_send3.size());
 
     NTLMAuthenticateMessage AuthMsg;
+    // AuthMsg.recv(ts_req3.negoTokens);
 
-    AuthMsg.recv(ts_req3.negoTokens);
+    StaticStream token(ts_req3.negoTokens.get_data(), ts_req3.negoTokens.size());
+    AuthMsg.recv(token);
 
     BOOST_CHECK_EQUAL(AuthMsg.negoFlags.flags, 0xE2888235);
     // AuthMsg.negoFlags.print();
