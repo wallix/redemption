@@ -38,17 +38,17 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                                 void* pvGetKeyArgument, PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
-	CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
+	CREDENTIALS* credentials = NULL;
+	SEC_WINNT_AUTH_IDENTITY* identity = NULL;
 
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
             credentials = new CREDENTIALS;
 
             identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
-            if (identity != NULL)
-                memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
+            if (identity != NULL) {
+                credentials->identity.CopyAuthIdentity(*identity);
+            }
             phCredential->SecureHandleSetLowerPointer((void*) credentials);
             phCredential->SecureHandleSetUpperPointer((void*) NTLM_PACKAGE_NAME);
 
@@ -59,11 +59,12 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
             identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
 
-            if (identity)
-                memcpy(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
-            else
-                memset(&(credentials->identity), 0x00, sizeof(SEC_WINNT_AUTH_IDENTITY));
-
+            if (identity) {
+                credentials->identity.CopyAuthIdentity(*identity);
+            }
+            else {
+                credentials->identity.clear();
+            }
             phCredential->SecureHandleSetLowerPointer((void*) credentials);
             phCredential->SecureHandleSetUpperPointer((void*) NTLM_PACKAGE_NAME);
 

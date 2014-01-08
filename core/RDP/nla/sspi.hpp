@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include "utf.hpp"
+#include "stream.hpp"
 
 #define NTLMSP_NAME "NTLM"
 #define SECBUFFER_VERSION			0
@@ -52,6 +53,11 @@ enum buffer_type {
 struct SecBuffer {
     unsigned long BufferType;
     Array         Buffer;
+
+    void setzero() {
+        this->Buffer.init(0);
+        this->BufferType = SECBUFFER_EMPTY;
+    }
 };
 
 typedef SecBuffer *PSecBuffer;
@@ -146,12 +152,13 @@ struct SEC_WINNT_AUTH_IDENTITY
     Array Password;
     uint32_t Flags;
 
-    void SetAuthIdentity(const uint8_t * user, const uint8_t * domain, const uint8_t * password) {
+    void SetAuthIdentityFromUtf8(const uint8_t * user, const uint8_t * domain,
+                                 const uint8_t * password) {
         this->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
         if (user) {
             size_t user_len = UTF8Len(user);
             this->User.init(user_len * 2);
-            UTF8toUTF16(user, this->User.get_data(), user_len);
+            UTF8toUTF16(user, this->User.get_data(), user_len * 2);
 	}
         else {
             this->User.init(0);
@@ -160,7 +167,7 @@ struct SEC_WINNT_AUTH_IDENTITY
         if (domain) {
             size_t domain_len = UTF8Len(domain);
             this->Domain.init(domain_len * 2);
-            UTF8toUTF16(domain, this->Domain.get_data(), domain_len);
+            UTF8toUTF16(domain, this->Domain.get_data(), domain_len * 2);
 	}
         else {
             this->Domain.init(0);
@@ -169,7 +176,7 @@ struct SEC_WINNT_AUTH_IDENTITY
         if (password) {
             size_t password_len = UTF8Len(password);
             this->Password.init(password_len * 2);
-            UTF8toUTF16(password, this->Password.get_data(), password_len);
+            UTF8toUTF16(password, this->Password.get_data(), password_len * 2);
 	}
         else {
             this->Password.init(0);
@@ -177,11 +184,21 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     }
 
+    void clear() {
+        this->User.init(0);
+        this->Domain.init(0);
+        this->Password.init(0);
+        this->Flags = 0;
+    }
+
     void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY & src) {
         this->User.init(src.User.size());
+        this->User.copy(src.User.get_data(), src.User.size());
         this->Domain.init(src.Domain.size());
+        this->Domain.copy(src.Domain.get_data(), src.Domain.size());
         this->Password.init(src.Password.size());
-        // TODO
+        this->Password.copy(src.Password.get_data(), src.Password.size());
+        this->Flags = src.Flags;
     }
 };
 
@@ -569,7 +586,7 @@ struct SecurityFunctionTable {
 
     // MAKE_SIGNATURE MakeSignature;
     virtual SEC_STATUS MakeSignature(PCtxtHandle phContext, unsigned long fQOP,
-                                      SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
+                                     SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -606,8 +623,6 @@ struct SecurityFunctionTable {
                 return SEC_E_OK;
             }
         }
-
-        pPackageInfo = NULL;
 
 	return SEC_E_SECPKG_NOT_FOUND;
     }

@@ -115,7 +115,7 @@ struct rdpCredssp
 
         // this->identity.SetAuthIdentity(settings->Username, settings->Domain,
         //                                settings->Password);
-        this->identity.SetAuthIdentity(NULL, NULL, NULL);
+        this->identity.SetAuthIdentityFromUtf8(NULL, NULL, NULL);
 
 // #ifndef _WIN32
 //         {
@@ -448,17 +448,7 @@ struct rdpCredssp
 };
 
 int credssp_client_authenticate(rdpCredssp* credssp) {
-    unsigned long cbMaxToken;
-    unsigned long fContextReq;
-    unsigned long pfContextAttr;
     SEC_STATUS status;
-    CredHandle credentials;
-    TimeStamp expiration;
-    PSecPkgInfo pPackageInfo;
-    SecBufferDesc input_buffer_desc;
-    SecBufferDesc output_buffer_desc;
-    bool have_context;
-    bool have_input_buffer;
 
     // TODO ?
     // sspi_GlobalInit();
@@ -468,18 +458,20 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     }
     credssp->table = InitSecurityInterface(NTLM_Interface);
 
-    pPackageInfo = NULL;
+    SecPkgInfo packageInfo;
     if (credssp->table == NULL) {
         return 0;
     }
-    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, pPackageInfo);
+    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, packageInfo);
 
     if (status != SEC_E_OK) {
         LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
         return 0;
     }
 
-    cbMaxToken = pPackageInfo->cbMaxToken;
+    unsigned long cbMaxToken = packageInfo->cbMaxToken;
+    CredHandle credentials;
+    TimeStamp expiration;
 
     status = credssp->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
                                                       SECPKG_CRED_OUTBOUND, NULL,
@@ -493,14 +485,15 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
 
     SecBuffer input_buffer;
     SecBuffer output_buffer;
+    SecBufferDesc input_buffer_desc;
+    SecBufferDesc output_buffer_desc;
+    bool have_context;
+    bool have_input_buffer;
     have_context = false;
-    // have_input_buffer = false;
-    // have_pub_key_auth = false;
-    memset(&input_buffer, 0x00, sizeof(SecBuffer));
-    memset(&output_buffer, 0x00, sizeof(SecBuffer));
+    have_input_buffer = false;
+    input_buffer.setzero();
+    output_buffer.setzero();
     memset(&credssp->ContextSizes, 0x00, sizeof(SecPkgContext_Sizes));
-    input_buffer.Buffer.init(0);
-    output_buffer.Buffer.init(0);
 
     /*
      * from tspkg.dll: 0x00000132
@@ -510,6 +503,8 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
      * ISC_REQ_ALLOCATE_MEMORY
      */
 
+    unsigned long pfContextAttr;
+    unsigned long fContextReq = 0;
     fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
     while (true) {
@@ -518,8 +513,6 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
         output_buffer_desc.pBuffers = &output_buffer;
         output_buffer.BufferType = SECBUFFER_TOKEN;
         output_buffer.Buffer.init(cbMaxToken);
-        // output_buffer.cbBuffer = cbMaxToken;
-        // output_buffer.pvBuffer = malloc(output_buffer.cbBuffer);
 
         status = credssp->table->InitializeSecurityContext(&credentials,
                                                            (have_context) ?
@@ -635,20 +628,7 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
 }
 
 int credssp_server_authenticate(rdpCredssp* credssp) {
-    unsigned long cbMaxToken;
-    unsigned long fContextReq;
-    unsigned long pfContextAttr;
     SEC_STATUS status;
-    CredHandle credentials;
-    TimeStamp expiration;
-    PSecPkgInfo pPackageInfo;
-    SecBuffer input_buffer;
-    SecBuffer output_buffer;
-    SecBufferDesc input_buffer_desc;
-    SecBufferDesc output_buffer_desc;
-    bool have_context;
-    // bool have_input_buffer;
-    // bool have_pub_key_auth;
 
     // TODO
     // sspi_GlobalInit();
@@ -674,40 +654,43 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
     else {
         credssp->table = InitSecurityInterface(NTLM_Interface);
     }
-    pPackageInfo = NULL;
-    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, pPackageInfo);
+
+    SecPkgInfo packageInfo;
+    status = credssp->table->QuerySecurityPackageInfo(NLA_PKG_NAME, packageInfo);
 
     if (status != SEC_E_OK) {
         LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
         return 0;
     }
 
-    cbMaxToken = pPackageInfo->cbMaxToken;
+    unsigned long cbMaxToken = packageInfo->cbMaxToken;
+    CredHandle credentials;
+    TimeStamp expiration;
 
     status = credssp->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
-                                                      SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL, &credentials, &expiration);
+                                                      SECPKG_CRED_INBOUND,
+                                                      NULL, NULL, NULL, NULL,
+                                                      &credentials, &expiration);
 
     if (status != SEC_E_OK) {
         LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
         return 0;
     }
 
-    have_context = false;
-    // have_input_buffer = false;
-    // have_pub_key_auth = false;
 
-    // ZeroMemory(&input_buffer, sizeof(SecBuffer));
-    // ZeroMemory(&output_buffer, sizeof(SecBuffer));
-    // ZeroMemory(&input_buffer_desc, sizeof(SecBufferDesc));
-    // ZeroMemory(&output_buffer_desc, sizeof(SecBufferDesc));
-    // ZeroMemory(&credssp->ContextSizes, sizeof(SecPkgContext_Sizes));
-    memset(&input_buffer, 0x00, sizeof(SecBuffer));
-    memset(&output_buffer, 0x00, sizeof(SecBuffer));
+    SecBuffer input_buffer;
+    SecBuffer output_buffer;
+    SecBufferDesc input_buffer_desc;
+    SecBufferDesc output_buffer_desc;
+    bool have_context;
+
+    have_context = false;
+
+    input_buffer.setzero();
+    output_buffer.setzero();
     memset(&input_buffer_desc, 0x00, sizeof(SecBufferDesc));
     memset(&output_buffer_desc, 0x00, sizeof(SecBufferDesc));
     memset(&credssp->ContextSizes, 0x00, sizeof(SecPkgContext_Sizes));
-    input_buffer.Buffer.init(0);
-    output_buffer.Buffer.init(0);
 
     /*
      * from tspkg.dll: 0x00000112
@@ -716,7 +699,8 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
      * ASC_REQ_ALLOCATE_MEMORY
      */
 
-    fContextReq = 0;
+    unsigned long pfContextAttr;
+    unsigned long fContextReq = 0;
     fContextReq |= ASC_REQ_MUTUAL_AUTH;
     fContextReq |= ASC_REQ_CONFIDENTIALITY;
 
@@ -746,8 +730,6 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
         input_buffer.Buffer.init(credssp->negoToken.size());
         input_buffer.Buffer.copy(credssp->negoToken.get_data(),
                                      input_buffer.Buffer.size());
-        // input_buffer.pvBuffer = credssp->negoToken.pvBuffer;
-        // input_buffer.cbBuffer = credssp->negoToken.cbBuffer;
 
         if (credssp->negoToken.size() < 1) {
             LOG(LOG_ERR, "CredSSP: invalid negoToken!\n");
@@ -758,7 +740,6 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
         output_buffer_desc.cBuffers = 1;
         output_buffer_desc.pBuffers = &output_buffer;
         output_buffer.BufferType = SECBUFFER_TOKEN;
-
         output_buffer.Buffer.init(cbMaxToken);
 
         status = credssp->table->AcceptSecurityContext(&credentials,
@@ -771,8 +752,6 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
         credssp->negoToken.init(output_buffer.Buffer.size());
         credssp->negoToken.copy(output_buffer.Buffer.get_data(),
                                 output_buffer.Buffer.size());
-        // credssp->negoToken.pvBuffer = output_buffer.pvBuffer;
-        // credssp->negoToken.cbBuffer = output_buffer.cbBuffer;
 
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
             credssp->table->CompleteAuthToken(&credssp->context, &output_buffer_desc);
@@ -784,7 +763,6 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
         }
 
         if (status == SEC_E_OK) {
-            // have_pub_key_auth = true;
 
             if (credssp->table->QueryContextAttributes(&credssp->context,
                                                        SECPKG_ATTR_SIZES,
@@ -853,7 +831,7 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
         }
     }
 
-    credssp->table->FreeContextBuffer(pPackageInfo);
+    // credssp->table->FreeContextBuffer(pPackageInfo);
 
     return 1;
 }
