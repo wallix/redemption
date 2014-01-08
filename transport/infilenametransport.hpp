@@ -35,10 +35,10 @@ class CryptoInFilenameTransport : public Transport {
     RIO rio;
     uint32_t verbose;
 
-    CryptoInFilenameTransport(const char * filename, unsigned verbose = 0)
+    CryptoInFilenameTransport(CryptoContext * crypto_ctx, const char * filename, unsigned verbose = 0)
         : verbose(verbose)
     {
-        RIO_ERROR status = rio_init_cryptoinfilename(&this->rio, filename);
+        RIO_ERROR status = rio_init_cryptoinfilename(&this->rio, crypto_ctx, filename);
         if (status != RIO_ERROR_OK){
             LOG(LOG_ERR, "rio infile initialisation failed (%u)", status);
             throw Error(ERR_TRANSPORT);
