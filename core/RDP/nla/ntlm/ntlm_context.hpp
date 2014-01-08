@@ -703,7 +703,7 @@ struct NTLMContext {
     }
 
     void ntlm_set_negotiate_flags() {
-        uint32_t & negoFlag = this->ConfigFlags;
+        uint32_t & negoFlag = this->NegotiateFlags;
         if (this->NTLMv2) {
             negoFlag |= NTLMSSP_NEGOTIATE_56;
             negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
@@ -885,7 +885,7 @@ struct NTLMContext {
         // CHECK UTF8 or UTF16 (should store in UTF16)
         const char * p = pszTargetName;
         size_t length = 0;
-        while (!p) {
+        while (p) {
             length++;
             p++;
         }
