@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
 
-    CtxtHandle context;
+    CtxtHandle client_context;
     SecBuffer input_buffer;
     SecBuffer output_buffer;
     SecBufferDesc input_buffer_desc;
@@ -112,35 +112,101 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     output_buffer_desc.pBuffers = &output_buffer;
     output_buffer.BufferType = SECBUFFER_TOKEN;
     output_buffer.Buffer.init(packageInfo.cbMaxToken);
-    (void)input_buffer_desc;
+
     unsigned long pfContextAttr;
     unsigned long fContextReq = 0;
     fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-    // first call, no input buffer, no context
+    // client first call, no input buffer, no context
     status = table.InitializeSecurityContext(&credentials,
                                              NULL, // context
                                              NULL, // TargetName
                                              fContextReq, 0, SECURITY_NATIVE_DREP,
                                              NULL, // input buffer desc
-                                             0, &context, // context (NTLMContext)
+                                             0, &client_context, // context (NTLMContext)
                                              &output_buffer_desc, // output buffer desc
                                              &pfContextAttr, &expiration);
-
 
     BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
 
     BOOST_CHECK_EQUAL(output_buffer.Buffer.size(), 40);
     // hexdump_c(output_buffer.Buffer.get_data(), 40);
 
+    unsigned long pfsContextAttr;
+    unsigned long fsContextReq = 0;
+    fsContextReq |= ASC_REQ_MUTUAL_AUTH;
+    fsContextReq |= ASC_REQ_CONFIDENTIALITY;
+
+    fsContextReq |= ASC_REQ_CONNECTION;
+    fsContextReq |= ASC_REQ_USE_SESSION_KEY;
+
+    fsContextReq |= ASC_REQ_REPLAY_DETECT;
+    fsContextReq |= ASC_REQ_SEQUENCE_DETECT;
+
+    fsContextReq |= ASC_REQ_EXTENDED_ERROR;
+
+    input_buffer_desc.ulVersion = SECBUFFER_VERSION;
+    input_buffer_desc.cBuffers = 1;
+    input_buffer_desc.pBuffers = &input_buffer;
+    input_buffer.BufferType = SECBUFFER_TOKEN;
+    input_buffer.Buffer.init(packageInfo.cbMaxToken);
+
+    CtxtHandle server_context;
+    // server first call, no context
+    // got input buffer (output of client): Negotiate message
+    status = table.AcceptSecurityContext(&credentials, NULL,
+                                         &output_buffer_desc, fsContextReq,
+                                         SECURITY_NATIVE_DREP, &server_context,
+                                         &input_buffer_desc, &pfsContextAttr,
+                                         &expiration);
+
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
+    // hexdump_c(input_buffer.Buffer.get_data(), 120);
+
+    output_buffer_desc.ulVersion = SECBUFFER_VERSION;
+    output_buffer_desc.cBuffers = 1;
+    output_buffer_desc.pBuffers = &output_buffer;
+    output_buffer.BufferType = SECBUFFER_TOKEN;
+    output_buffer.Buffer.init(packageInfo.cbMaxToken);
+
+    // client second call, got context
+    // got input buffer: challenge message
+    status = table.InitializeSecurityContext(&credentials,
+                                             &client_context, // context
+                                             NULL, // TargetName
+                                             fContextReq, 0, SECURITY_NATIVE_DREP,
+                                             &input_buffer_desc, // input buffer desc
+                                             0, &client_context, // context (NTLMContext)
+                                             &output_buffer_desc, // output buffer desc
+                                             &pfContextAttr, &expiration);
+
+    BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    BOOST_CHECK_EQUAL(output_buffer.Buffer.size(), 266);
+    // hexdump_c(output_buffer.Buffer.get_data(), 266);
 
 
+    input_buffer_desc.ulVersion = SECBUFFER_VERSION;
+    input_buffer_desc.cBuffers = 1;
+    input_buffer_desc.pBuffers = &input_buffer;
+    input_buffer.BufferType = SECBUFFER_TOKEN;
+    input_buffer.Buffer.init(packageInfo.cbMaxToken);
 
+    // server second call, got context
+    // got input buffer (ouput of client): authenticate message
+    status = table.AcceptSecurityContext(&credentials, &server_context,
+                                         &output_buffer_desc, fsContextReq,
+                                         SECURITY_NATIVE_DREP, &server_context,
+                                         &input_buffer_desc, &pfsContextAttr,
+                                         &expiration);
 
-
+    BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    BOOST_CHECK_EQUAL(input_buffer.Buffer.size(), 0);
 
     // clear handles
-    status = table.FreeContextBuffer(&context);
+    status = table.FreeContextBuffer(&server_context);
+    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    status = table.FreeContextBuffer(&client_context);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
     status = table.FreeCredentialsHandle(&credentials);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);

@@ -485,8 +485,8 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
 
     SecBuffer input_buffer;
     SecBuffer output_buffer;
-    SecBufferDesc input_buffer_desc;
-    SecBufferDesc output_buffer_desc;
+    SecBufferDesc input_buffer_desc = {};
+    SecBufferDesc output_buffer_desc = {};
     bool have_context;
     bool have_input_buffer;
     have_context = false;
@@ -679,16 +679,14 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
 
     SecBuffer input_buffer;
     SecBuffer output_buffer;
-    SecBufferDesc input_buffer_desc;
-    SecBufferDesc output_buffer_desc;
+    SecBufferDesc input_buffer_desc = {};
+    SecBufferDesc output_buffer_desc = {};
     bool have_context;
 
     have_context = false;
 
     input_buffer.setzero();
     output_buffer.setzero();
-    memset(&input_buffer_desc, 0x00, sizeof(SecBufferDesc));
-    memset(&output_buffer_desc, 0x00, sizeof(SecBufferDesc));
     memset(&credssp->ContextSizes, 0x00, sizeof(SecPkgContext_Sizes));
 
     /*

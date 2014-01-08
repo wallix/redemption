@@ -776,7 +776,7 @@ struct NTLMContext {
             LOG(LOG_ERR, "ERROR CHECK NEGO FLAGS");
         }
         this->ntlm_generate_server_challenge();
-        memcpy(this->ServerChallenge, this->CHALLENGE_MESSAGE.serverChallenge, 8);
+        memcpy(this->CHALLENGE_MESSAGE.serverChallenge, this->ServerChallenge, 8);
         this->ntlm_generate_timestamp();
         this->ntlm_construct_challenge_target_info();
 
@@ -837,7 +837,12 @@ struct NTLMContext {
 
     void ntlm_server_fetch_hash(uint8_t * hash) {
         // TODO get password hash from DC or find ourself
-
+        if (this->identity.Password.size() > 0) {
+            // password is available
+            this->hash_password(this->identity.Password.get_data(),
+                                this->identity.Password.size(),
+                                hash);
+        }
     };
     // SERVER PROCEED RESPONSE CHECKING
     SEC_STATUS ntlm_server_proceed_authenticate(const uint8_t * hash) {

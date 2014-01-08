@@ -220,7 +220,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         PSecBuffer input_buffer = NULL;
         PSecBuffer output_buffer = NULL;
 
-        context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        if (phContext) {
+            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        }
 
         if (!context) {
             context = new NTLMContext;
