@@ -112,7 +112,7 @@ struct NTLMMessage {
 
     virtual ~NTLMMessage() {}
 
-    void emit(Stream & stream) {
+    void emit(Stream & stream) const {
         stream.out_copy_bytes(this->signature, 8);
         stream.out_uint32_le(this->msgType);
     }
@@ -230,7 +230,7 @@ struct NtlmVersion {
         stream.out_uint8(this->ProductMajorVersion);
         stream.out_uint8(this->ProductMinorVersion);
         stream.out_uint16_le(this->ProductBuild);
-        stream.out_skip_bytes(3);
+        stream.out_clear_bytes(3);
         stream.out_uint8(this->NtlmRevisionCurrent);
     }
 
@@ -514,15 +514,16 @@ struct NtlmField {
     uint32_t bufferOffset;  /* 4 Bytes */
     BStream Buffer;
 
-    void emit(Stream & stream, unsigned int & currentOffset) {
+    unsigned int emit(Stream & stream, unsigned int currentOffset) {
         this->len = this->Buffer.size();
         this->maxLen = this->len;
         this->bufferOffset = currentOffset;
-        currentOffset += this->len;
+        // currentOffset += this->len;
 
         stream.out_uint16_le(this->len);
         stream.out_uint16_le(this->maxLen);
         stream.out_uint32_le(this->bufferOffset);
+        return this->len;
     }
 
     void recv(Stream & stream) {

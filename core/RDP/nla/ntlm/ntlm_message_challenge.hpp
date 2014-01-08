@@ -207,11 +207,11 @@ struct NTLMChallengeMessage : public NTLMMessage {
 
         uint32_t currentOffset = this->PayloadOffset;
         NTLMMessage::emit(stream);
-        this->TargetName.emit(stream, currentOffset);
+        currentOffset += this->TargetName.emit(stream, currentOffset);
         this->negoFlags.emit(stream);
         stream.out_copy_bytes(this->serverChallenge, 8);
-        stream.out_skip_bytes(8);
-        this->TargetInfo.emit(stream, currentOffset);
+        stream.out_clear_bytes(8);
+        currentOffset += this->TargetInfo.emit(stream, currentOffset);
         this->version.emit(stream);
 
         // PAYLOAD

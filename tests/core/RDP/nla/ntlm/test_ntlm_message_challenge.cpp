@@ -91,7 +91,10 @@ BOOST_AUTO_TEST_CASE(TestChallenge)
     NTLMChallengeMessage ChallengeMsg;
 
     hexdump_c(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
-    ChallengeMsg.recv(ts_req2.negoTokens);
+    // ChallengeMsg.recv(ts_req2.negoTokens);
+
+    StaticStream token(ts_req2.negoTokens.get_data(), ts_req2.negoTokens.size());
+    ChallengeMsg.recv(token);
 
     BOOST_CHECK_EQUAL(ChallengeMsg.negoFlags.flags, 0xe28a8235);
     ChallengeMsg.negoFlags.print();
