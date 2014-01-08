@@ -25,9 +25,9 @@
 
 #include "openssl_tls.hpp"
 
-#include "crypto_impl.h"
-
 extern "C" {
+    #include "cryptofile.h"
+
     typedef enum {
         RIO_ERROR_OK,                           // 0
         RIO_ERROR_ANY,
