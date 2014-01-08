@@ -217,7 +217,7 @@ namespace re {
             return this->sm.search_with_trace(s, this->step_limit, tracer, &this->pos);
         }
 
-        enum {
+        enum match_state_t {
             match_fail = StateMachine2::match_fail,
             match_success = StateMachine2::match_success,
             match_undetermined = StateMachine2::match_undetermined
