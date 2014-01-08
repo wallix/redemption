@@ -516,8 +516,11 @@ unit-test test_infilenametransport : tests/transport/test_infilenametransport.cp
 unit-test test_rio : tests/transport/rio/test_rio.cpp libboost_unit_test ;
 unit-test test_rio : tests/transport/rio/test_rio.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_rio_crypto : tests/transport/rio/test_rio_crypto.cpp libboost_unit_test ;
-unit-test test_rio_crypto : tests/transport/rio/test_rio_crypto.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_rio_crypto : tests/transport/rio/test_rio_crypto.cpp cryptofile openssl snappy dl z libboost_unit_test ;
+unit-test test_rio_crypto : tests/transport/rio/test_rio_crypto.cpp cryptofile openssl snappy dl z libboost_unit_test gcov : <variant>coverage ;
+
+unit-test test_rio_cryptoinmeta : tests/transport/rio/test_rio_cryptoinmeta.cpp cryptofile openssl snappy dl z libboost_unit_test ;
+unit-test test_rio_cryptoinmeta : tests/transport/rio/test_rio_cryptoinmeta.cpp cryptofile openssl snappy dl z libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_rio_cryptoinfilename : tests/transport/rio/test_rio_cryptoinfilename.cpp libboost_unit_test ;
 unit-test test_rio_cryptoinfilename : tests/transport/rio/test_rio_cryptoinfilename.cpp libboost_unit_test gcov : <variant>coverage ;
