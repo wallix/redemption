@@ -953,3 +953,6 @@ unit-test test_ntlm_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_aut
 
 unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp libboost_unit_test openssl crypto dl z ;
 unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp libboost_unit_test openssl crypto dl z gcov : <variant>coverage ;
+
+unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp libboost_unit_test openssl crypto dl z ;
+unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp libboost_unit_test openssl crypto dl z gcov : <variant>coverage ;

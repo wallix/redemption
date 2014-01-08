@@ -85,7 +85,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 	if (!credentials)
             return SEC_E_INVALID_HANDLE;
 
-	delete credentials;
+        delete credentials;
+        credentials = NULL;
 
 	return SEC_E_OK;
     }
