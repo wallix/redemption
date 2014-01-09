@@ -242,7 +242,6 @@ public:
         return pointer;
     }
 
-
 };
 typedef SecHandle *PSecHandle;
 typedef SecHandle CredHandle;

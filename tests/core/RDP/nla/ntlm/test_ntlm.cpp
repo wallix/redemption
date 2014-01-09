@@ -42,11 +42,11 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
 
     // status = table.FreeCredentialsHandle(&credentials);
     // BOOST_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
-
     // If AcquireCredential succeed, do not forget to free credential handle !
     status = table.AcquireCredentialsHandle(NULL, NTLMSP_NAME, SECPKG_CRED_OUTBOUND, NULL,
                                             &id, NULL, NULL,
                                             &credentials, &expiration);
+
 
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
     CREDENTIALS * creds = (CREDENTIALS*)credentials.SecureHandleGetLowerPointer();

@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestSspi
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 #include "RDP/nla/sspi.hpp"
 #include "check_sig.hpp"
@@ -62,6 +62,8 @@ BOOST_AUTO_TEST_CASE(TestSecBuffer)
     BOOST_CHECK_EQUAL(buff5->Buffer.size(), 555);
     BOOST_CHECK_EQUAL(buff7->Buffer.size(), 777);
     BOOST_CHECK(buffunknown == NULL);
+
+
 }
 
 BOOST_AUTO_TEST_CASE(TestSecIdentity)
@@ -93,6 +95,7 @@ BOOST_AUTO_TEST_CASE(TestSecIdentity)
 
     SEC_WINNT_AUTH_IDENTITY id2;
 
+
     id2.CopyAuthIdentity(id);
     BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
                        id2.User.get_data(),
@@ -104,6 +107,25 @@ BOOST_AUTO_TEST_CASE(TestSecIdentity)
                        id2.Password.get_data(),
                        id2.Password.size()));
 }
+
+BOOST_AUTO_TEST_CASE(TestSecureHandle)
+{
+    SecHandle handle;
+    unsigned long a = 521354;
+    SecBuffer buff;
+    buff.Buffer.init(462);
+
+    handle.SecureHandleSetLowerPointer(&a);
+    handle.SecureHandleSetUpperPointer(&buff);
+
+    unsigned long * b = (unsigned long *)handle.SecureHandleGetLowerPointer();
+    PSecBuffer buffimport = (PSecBuffer)handle.SecureHandleGetUpperPointer();
+
+    BOOST_CHECK_EQUAL(*b, a);
+    BOOST_CHECK_EQUAL(buffimport->Buffer.size(), buff.Buffer.size());
+
+}
+
 
 BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
 {

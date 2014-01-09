@@ -1,21 +1,21 @@
 /*
-    This program is free software; you can redistribute it and/or modify it
-     under the terms of the GNU General Public License as published by the
-     Free Software Foundation; either version 2 of the License, or (at your
-     option) any later version.
+  This program is free software; you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the
+  Free Software Foundation; either version 2 of the License, or (at your
+  option) any later version.
 
-    This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-     Public License for more details.
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  Public License for more details.
 
-    You should have received a copy of the GNU General Public License along
-     with this program; if not, write to the Free Software Foundation, Inc.,
-     675 Mass Ave, Cambridge, MA 02139, USA.
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  675 Mass Ave, Cambridge, MA 02139, USA.
 
-    Product name: redemption, a FLOSS RDP proxy
-    Copyright (C) Wallix 2013
-    Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
+  Product name: redemption, a FLOSS RDP proxy
+  Copyright (C) Wallix 2013
+  Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLM_HPP_
@@ -48,9 +48,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 	// int index;
 	// uint32_t cPackages;
 
-	// cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
+        // cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
 
-	// for (index = 0; index < (int) cPackages; index++) {
+        // for (index = 0; index < (int) cPackages; index++) {
         if (strcmp(pszPackageName, NTLM_SecPkgInfo.Name) == 0) {
 
             pPackageInfo->fCapabilities = NTLM_SecPkgInfo.fCapabilities;
@@ -64,7 +64,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         }
         // }
 
-	return SEC_E_SECPKG_NOT_FOUND;
+        return SEC_E_SECPKG_NOT_FOUND;
     }
 
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
@@ -96,10 +96,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                                 void* pvGetKeyArgument, PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
-	CREDENTIALS* credentials = NULL;
-	SEC_WINNT_AUTH_IDENTITY* identity = NULL;
+        CREDENTIALS* credentials = NULL;
+        SEC_WINNT_AUTH_IDENTITY* identity = NULL;
 
-	if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
+        if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
             credentials = new CREDENTIALS;
 
             identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
@@ -107,12 +107,13 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (identity != NULL) {
                 credentials->identity.CopyAuthIdentity(*identity);
             }
+
             phCredential->SecureHandleSetLowerPointer((void*) credentials);
             phCredential->SecureHandleSetUpperPointer((void*) NTLM_PACKAGE_NAME);
 
             return SEC_E_OK;
         }
-	else if (fCredentialUse == SECPKG_CRED_INBOUND) {
+        else if (fCredentialUse == SECPKG_CRED_INBOUND) {
             credentials = new CREDENTIALS;
 
             identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
@@ -129,24 +130,24 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_OK;
         }
 
-	return SEC_E_OK;
+        return SEC_E_OK;
     }
 
     SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
-	CREDENTIALS* credentials;
+        CREDENTIALS* credentials;
 
-	if (!phCredential) {
+        if (!phCredential) {
             return SEC_E_INVALID_HANDLE;
         }
-	credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
+        credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
 
-	if (!credentials) {
+        if (!credentials) {
             return SEC_E_INVALID_HANDLE;
         }
         delete credentials;
         credentials = NULL;
 
-	return SEC_E_OK;
+        return SEC_E_OK;
     }
 
     // GSS_Init_sec_context
@@ -159,16 +160,16 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                                  PCtxtHandle phNewContext, SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
-	NTLMContext* context = NULL;
-	CREDENTIALS* credentials = NULL;
-	PSecBuffer input_buffer = NULL;
-	PSecBuffer output_buffer = NULL;
+        NTLMContext* context = NULL;
+        CREDENTIALS* credentials = NULL;
+        PSecBuffer input_buffer = NULL;
+        PSecBuffer output_buffer = NULL;
 
         if (phContext) {
             context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
         }
 
-	if (!context) {
+        if (!context) {
             context = new NTLMContext;
 
             if (!context) {
@@ -194,7 +195,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             phNewContext->SecureHandleSetUpperPointer((void*) NTLM_PACKAGE_NAME);
         }
 
-	if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE)) {
+        if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE)) {
             if (!pOutput) {
                 return SEC_E_INVALID_TOKEN;
             }
@@ -216,7 +217,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             }
             return SEC_E_OUT_OF_SEQUENCE;
         }
-	else {
+        else {
             if (pInput->cBuffers < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
@@ -254,14 +255,13 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 }
                 if (context->state == NTLM_STATE_AUTHENTICATE) {
                     return context->write_authenticate(output_buffer);
-
                 }
             }
 
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-	return SEC_E_OUT_OF_SEQUENCE;
+        return SEC_E_OUT_OF_SEQUENCE;
     }
 
     // GSS_Accept_sec_context
@@ -425,7 +425,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         memcpy(data, data_buffer->Buffer.get_data(), length);
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-//         HMAC_CTX_init(&hmac);
+        //         HMAC_CTX_init(&hmac);
 
         SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
         // TODO CHECK ENDIANNESS
@@ -450,21 +450,21 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
 
 // #ifdef WITH_DEBUG_NTLM
-        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
-        // hexdump_c(context->SendSigningKey, 16);
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "signing key (length = %d)\n", 16);
+//         hexdump_c(context->SendSigningKey, 16);
+//         LOG(LOG_ERR, "\n");
 
-        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
-        // hexdump_c(digest, sizeof(digest));
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
+//         hexdump_c(digest, sizeof(digest));
+//         LOG(LOG_ERR, "\n");
 
-        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
-        // hexdump_c(data, length);
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
+//         hexdump_c(data, length);
+//         LOG(LOG_ERR, "\n");
 
-        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", data_buffer->Buffer.size());
-        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", data_buffer->Buffer.size());
+//         hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+//         LOG(LOG_ERR, "\n");
 // #endif
 
         delete [] data;
@@ -482,9 +482,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         context->SendSeqNum++;
 
 // #ifdef WITH_DEBUG_NTLM
-        // LOG(LOG_ERR, "Signature (length = %d)\n", signature_buffer->Buffer.size());
-        // hexdump_c(signature_buffer->Buffer.get_data(), signature_buffer->Buffer.size());
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "Signature (length = %d)\n", signature_buffer->Buffer.size());
+//         hexdump_c(signature_buffer->Buffer.get_data(), signature_buffer->Buffer.size());
+//         LOG(LOG_ERR, "\n");
 // #endif
 
         return SEC_E_OK;
@@ -558,21 +558,21 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         // HMAC_Final(&hmac, digest, NULL);
         // HMAC_CTX_cleanup(&hmac);
 // #ifdef WITH_DEBUG_NTLM
-        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
-        // hexdump_c(context->RecvSigningKey, 16);
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "signing key (length = %d)\n", 16);
+//         hexdump_c(context->RecvSigningKey, 16);
+//         LOG(LOG_ERR, "\n");
 
-        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
-        // hexdump_c(digest, sizeof(digest));
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
+//         hexdump_c(digest, sizeof(digest));
+//         LOG(LOG_ERR, "\n");
 
-        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
-        // hexdump_c(data, length);
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
+//         hexdump_c(data, length);
+//         LOG(LOG_ERR, "\n");
 
-        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", data_buffer->Buffer.size());
-        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
-        // LOG(LOG_ERR, "\n");
+//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", data_buffer->Buffer.size());
+//         hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+//         LOG(LOG_ERR, "\n");
 // #endif
 
         delete [] data;

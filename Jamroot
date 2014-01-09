@@ -937,19 +937,19 @@ unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test openss
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
 
-alias test_ntlm_suite : test_ntlm_negotiate test_ntlm_avpair test_ntlm_challenge test_ntlm_authenticate test_ntlm_context ;
+alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
 
-unit-test test_ntlm_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp libboost_unit_test openssl crypto ;
-unit-test test_ntlm_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+unit-test test_ntlm_message_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp libboost_unit_test openssl crypto ;
+unit-test test_ntlm_message_negotiate : tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
 unit-test test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp libboost_unit_test openssl crypto ;
 unit-test test_ntlm_avpair : tests/core/RDP/nla/ntlm/test_ntlm_avpair.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
-unit-test test_ntlm_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp libboost_unit_test openssl crypto ;
-unit-test test_ntlm_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+unit-test test_ntlm_message_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp libboost_unit_test openssl crypto ;
+unit-test test_ntlm_message_challenge : tests/core/RDP/nla/ntlm/test_ntlm_message_challenge.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
-unit-test test_ntlm_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp libboost_unit_test openssl crypto ;
-unit-test test_ntlm_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+unit-test test_ntlm_message_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp libboost_unit_test openssl crypto ;
+unit-test test_ntlm_message_authenticate : tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
 unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp libboost_unit_test openssl crypto dl z ;
 unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp libboost_unit_test openssl crypto dl z gcov : <variant>coverage ;
