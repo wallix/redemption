@@ -106,6 +106,11 @@ BOOST_AUTO_TEST_CASE(TestSecIdentity)
     BOOST_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
                        id2.Password.get_data(),
                        id2.Password.size()));
+
+    id2.clear();
+    BOOST_CHECK_EQUAL(id2.User.size(), 0);
+    BOOST_CHECK_EQUAL(id2.Domain.size(), 0);
+    BOOST_CHECK_EQUAL(id2.Password.size(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(TestSecureHandle)
@@ -123,6 +128,24 @@ BOOST_AUTO_TEST_CASE(TestSecureHandle)
 
     BOOST_CHECK_EQUAL(*b, a);
     BOOST_CHECK_EQUAL(buffimport->Buffer.size(), buff.Buffer.size());
+
+    SecHandle handle2(handle);
+
+    unsigned long * b2 = (unsigned long *)handle2.SecureHandleGetLowerPointer();
+    PSecBuffer buffimport2 = (PSecBuffer)handle2.SecureHandleGetUpperPointer();
+
+    BOOST_CHECK_EQUAL(*b2, a);
+    BOOST_CHECK_EQUAL(buffimport2->Buffer.size(), buff.Buffer.size());
+
+    SecHandle handle3;
+
+    handle3 = handle2;
+
+    unsigned long * b3 = (unsigned long *)handle3.SecureHandleGetLowerPointer();
+    PSecBuffer buffimport3 = (PSecBuffer)handle3.SecureHandleGetUpperPointer();
+
+    BOOST_CHECK_EQUAL(*b3, a);
+    BOOST_CHECK_EQUAL(buffimport3->Buffer.size(), buff.Buffer.size());
 
 }
 
@@ -170,6 +193,9 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.MakeSignature(NULL, 0, NULL, 0);
+    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+
+    status = table.VerifySignature(NULL, NULL, 0, NULL);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.FreeContextBuffer(NULL);
