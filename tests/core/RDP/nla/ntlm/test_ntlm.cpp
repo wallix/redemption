@@ -192,6 +192,8 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     input_buffer.BufferType = SECBUFFER_TOKEN;
     input_buffer.Buffer.init(packageInfo.cbMaxToken);
 
+
+
     // server second call, got context
     // got input buffer (ouput of client): authenticate message
     status = table.AcceptSecurityContext(&credentials, &server_context,
@@ -202,6 +204,62 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
 
     BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
     BOOST_CHECK_EQUAL(input_buffer.Buffer.size(), 0);
+
+    // Check contexts
+    NTLMContext * client = (NTLMContext*)client_context.SecureHandleGetLowerPointer();
+    NTLMContext * server = (NTLMContext*)server_context.SecureHandleGetLowerPointer();
+
+    // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
+    LOG(LOG_INFO, "===== SESSION BASE KEY =====");
+    hexdump_c(server->SessionBaseKey, 16);
+    hexdump_c(client->SessionBaseKey, 16);
+    BOOST_CHECK(!memcmp(server->SessionBaseKey,
+                        client->SessionBaseKey,
+                        16));
+
+    LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
+    hexdump_c(server->ExportedSessionKey, 16);
+    hexdump_c(client->ExportedSessionKey, 16);
+    BOOST_CHECK(!memcmp(server->ExportedSessionKey,
+                        client->ExportedSessionKey,
+                        16));
+    LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
+    hexdump_c(server->ClientSigningKey, 16);
+    hexdump_c(client->ClientSigningKey, 16);
+    BOOST_CHECK(!memcmp(server->ClientSigningKey,
+                        client->ClientSigningKey,
+                        16));
+
+    LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
+    hexdump_c(server->ClientSealingKey, 16);
+    hexdump_c(client->ClientSealingKey, 16);
+    BOOST_CHECK(!memcmp(server->ClientSealingKey,
+                        client->ClientSealingKey,
+                        16));
+
+    LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
+    hexdump_c(server->ServerSigningKey, 16);
+    hexdump_c(client->ServerSigningKey, 16);
+    BOOST_CHECK(!memcmp(server->ServerSigningKey,
+                        client->ServerSigningKey,
+                        16));
+
+    LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
+    hexdump_c(server->ServerSealingKey, 16);
+    hexdump_c(client->ServerSealingKey, 16);
+    BOOST_CHECK(!memcmp(server->ServerSealingKey,
+                        client->ServerSealingKey,
+                        16));
+
+    LOG(LOG_INFO, "===== Message Integrity Check =====");
+    hexdump_c(client->MessageIntegrityCheck, 16);
+    hexdump_c(server->MessageIntegrityCheck, 16);
+    BOOST_CHECK(!memcmp(client->MessageIntegrityCheck,
+                        server->MessageIntegrityCheck,
+                        16));
+
+
+
 
     // clear handles
     status = table.FreeContextBuffer(&server_context);

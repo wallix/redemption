@@ -27,13 +27,7 @@
 
 #define NLA_PKG_NAME NTLMSP_NAME
 
-SecurityFunctionTable * InitSecurityInterface(SecInterface secInter) {
-    SecurityFunctionTable * table = NULL;
-    if (secInter == NTLM_Interface) {
-        table = new Ntlm_SecurityFunctionTable;
-    }
-    return table;
-}
+
 
 struct rdpCredssp
 {
@@ -66,7 +60,10 @@ struct rdpCredssp
         : negoToken(ts_request.negoTokens)
         , pubKeyAuth(ts_request.pubKeyAuth)
         , authInfo(ts_request.authInfo)
-    {}
+        , table(NULL)
+    {
+
+    }
 
     ~rdpCredssp()
     {
@@ -74,6 +71,18 @@ struct rdpCredssp
         if (this->table) {
             delete this->table;
             this->table = NULL;
+        }
+    }
+
+    void InitSecurityInterface(SecInterface secInter) {
+        if (secInter == NTLM_Interface) {
+            if (this->table) {
+                delete this->table;
+            }
+            this->table = new Ntlm_SecurityFunctionTable;
+        }
+        else if (this->table == NULL) {
+            this->table = new SecurityFunctionTable;
         }
     }
 
@@ -456,7 +465,7 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
     if (credssp->credssp_ntlm_client_init() == 0) {
         return 0;
     }
-    credssp->table = InitSecurityInterface(NTLM_Interface);
+    credssp->InitSecurityInterface(NTLM_Interface);
 
     SecPkgInfo packageInfo;
     if (credssp->table == NULL) {
@@ -651,7 +660,7 @@ int credssp_server_authenticate(rdpCredssp* credssp) {
         // credssp->table = (*pInitSecurityInterface)();
     }
     else {
-        credssp->table = InitSecurityInterface(NTLM_Interface);
+        credssp->InitSecurityInterface(NTLM_Interface);
     }
 
     SecPkgInfo packageInfo;

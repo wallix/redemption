@@ -25,10 +25,48 @@
 #include "RDP/nla/ntlm/ntlm_context.hpp"
 
 const char* NTLM_PACKAGE_NAME = "NTLM";
+const char Ntlm_Name[] = "NTLM";
+const char Ntlm_Comment[] = "NTLM Security Package";
+const SecPkgInfo NTLM_SecPkgInfo = {
+    0x00082B37,             // fCapabilities
+    1,                      // wVersion
+    0x000A,                 // wRPCID
+    0x00000B48,             // cbMaxToken
+    Ntlm_Name,              // Name
+    Ntlm_Comment            // Comment
+};
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     virtual ~Ntlm_SecurityFunctionTable() {}
+
+
+    // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
+    virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
+                                                SecPkgInfo * pPackageInfo) {
+
+	// int index;
+	// uint32_t cPackages;
+
+	// cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
+
+	// for (index = 0; index < (int) cPackages; index++) {
+        if (strcmp(pszPackageName, NTLM_SecPkgInfo.Name) == 0) {
+
+            pPackageInfo->fCapabilities = NTLM_SecPkgInfo.fCapabilities;
+            pPackageInfo->wVersion = NTLM_SecPkgInfo.wVersion;
+            pPackageInfo->wRPCID = NTLM_SecPkgInfo.wRPCID;
+            pPackageInfo->cbMaxToken = NTLM_SecPkgInfo.cbMaxToken;
+            pPackageInfo->Name = NTLM_SecPkgInfo.Name;
+            pPackageInfo->Comment = NTLM_SecPkgInfo.Comment;
+
+            return SEC_E_OK;
+        }
+        // }
+
+	return SEC_E_SECPKG_NOT_FOUND;
+    }
+
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;

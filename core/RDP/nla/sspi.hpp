@@ -100,20 +100,10 @@ struct SecPkgInfo {
 };
 typedef SecPkgInfo *PSecPkgInfo;
 
-const char Ntlm_Name[] = "NTLM";
-const char Ntlm_Comment[] = "NTLM Security Package";
-const SecPkgInfo NTLM_SecPkgInfo = {
-    0x00082B37,             // fCapabilities
-    1,                      // wVersion
-    0x000A,                 // wRPCID
-    0x00000B48,             // cbMaxToken
-    Ntlm_Name,              // Name
-    Ntlm_Comment            // Comment
-};
 
-const SecPkgInfo* SecPkgInfo_LIST[] = {
-    &NTLM_SecPkgInfo
-};
+// const SecPkgInfo* SecPkgInfo_LIST[] = {
+//     &NTLM_SecPkgInfo
+// };
 
 struct SEC_CHANNEL_BINDINGS
 {
@@ -605,24 +595,24 @@ struct SecurityFunctionTable {
     virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) {
 
-	int index;
-	uint32_t cPackages;
+	// int index;
+	// uint32_t cPackages;
 
-	cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
+	// cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
 
-	for (index = 0; index < (int) cPackages; index++) {
-            if (strcmp(pszPackageName, SecPkgInfo_LIST[index]->Name) == 0) {
+	// for (index = 0; index < (int) cPackages; index++) {
+        //     if (strcmp(pszPackageName, SecPkgInfo_LIST[index]->Name) == 0) {
 
-                pPackageInfo->fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
-                pPackageInfo->wVersion = SecPkgInfo_LIST[index]->wVersion;
-                pPackageInfo->wRPCID = SecPkgInfo_LIST[index]->wRPCID;
-                pPackageInfo->cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
-                pPackageInfo->Name = SecPkgInfo_LIST[index]->Name;
-                pPackageInfo->Comment = SecPkgInfo_LIST[index]->Comment;
+        //         pPackageInfo->fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
+        //         pPackageInfo->wVersion = SecPkgInfo_LIST[index]->wVersion;
+        //         pPackageInfo->wRPCID = SecPkgInfo_LIST[index]->wRPCID;
+        //         pPackageInfo->cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
+        //         pPackageInfo->Name = SecPkgInfo_LIST[index]->Name;
+        //         pPackageInfo->Comment = SecPkgInfo_LIST[index]->Comment;
 
-                return SEC_E_OK;
-            }
-        }
+        //         return SEC_E_OK;
+        //     }
+        // }
 
 	return SEC_E_SECPKG_NOT_FOUND;
     }
