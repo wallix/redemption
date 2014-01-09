@@ -210,54 +210,110 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     NTLMContext * server = (NTLMContext*)server_context.SecureHandleGetLowerPointer();
 
     // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
-    LOG(LOG_INFO, "===== SESSION BASE KEY =====");
-    hexdump_c(server->SessionBaseKey, 16);
-    hexdump_c(client->SessionBaseKey, 16);
+    // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
+    // hexdump_c(server->SessionBaseKey, 16);
+    // hexdump_c(client->SessionBaseKey, 16);
     BOOST_CHECK(!memcmp(server->SessionBaseKey,
                         client->SessionBaseKey,
                         16));
 
-    LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
-    hexdump_c(server->ExportedSessionKey, 16);
-    hexdump_c(client->ExportedSessionKey, 16);
+    // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
+    // hexdump_c(server->ExportedSessionKey, 16);
+    // hexdump_c(client->ExportedSessionKey, 16);
     BOOST_CHECK(!memcmp(server->ExportedSessionKey,
                         client->ExportedSessionKey,
                         16));
-    LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
-    hexdump_c(server->ClientSigningKey, 16);
-    hexdump_c(client->ClientSigningKey, 16);
+    // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
+    // hexdump_c(server->ClientSigningKey, 16);
+    // hexdump_c(client->ClientSigningKey, 16);
     BOOST_CHECK(!memcmp(server->ClientSigningKey,
                         client->ClientSigningKey,
                         16));
 
-    LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
-    hexdump_c(server->ClientSealingKey, 16);
-    hexdump_c(client->ClientSealingKey, 16);
+    // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
+    // hexdump_c(server->ClientSealingKey, 16);
+    // hexdump_c(client->ClientSealingKey, 16);
     BOOST_CHECK(!memcmp(server->ClientSealingKey,
                         client->ClientSealingKey,
                         16));
 
-    LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
-    hexdump_c(server->ServerSigningKey, 16);
-    hexdump_c(client->ServerSigningKey, 16);
+    // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
+    // hexdump_c(server->ServerSigningKey, 16);
+    // hexdump_c(client->ServerSigningKey, 16);
     BOOST_CHECK(!memcmp(server->ServerSigningKey,
                         client->ServerSigningKey,
                         16));
 
-    LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
-    hexdump_c(server->ServerSealingKey, 16);
-    hexdump_c(client->ServerSealingKey, 16);
+    // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
+    // hexdump_c(server->ServerSealingKey, 16);
+    // hexdump_c(client->ServerSealingKey, 16);
     BOOST_CHECK(!memcmp(server->ServerSealingKey,
                         client->ServerSealingKey,
                         16));
 
-    LOG(LOG_INFO, "===== Message Integrity Check =====");
-    hexdump_c(client->MessageIntegrityCheck, 16);
-    hexdump_c(server->MessageIntegrityCheck, 16);
+    // LOG(LOG_INFO, "===== Message Integrity Check =====");
+    // hexdump_c(client->MessageIntegrityCheck, 16);
+    // hexdump_c(server->MessageIntegrityCheck, 16);
     BOOST_CHECK(!memcmp(client->MessageIntegrityCheck,
                         server->MessageIntegrityCheck,
                         16));
 
+    SecPkgContext_Sizes ContextSizes;
+    table.QueryContextAttributes(NULL, SECPKG_ATTR_SIZES, &ContextSizes);
+    BOOST_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
+    BOOST_CHECK_EQUAL(ContextSizes.cbMaxSignature, 16);
+    BOOST_CHECK_EQUAL(ContextSizes.cbBlockSize, 0);
+    BOOST_CHECK_EQUAL(ContextSizes.cbSecurityTrailer, 16);
+
+
+    BOOST_CHECK_EQUAL(server->confidentiality, client->confidentiality);
+    BOOST_CHECK_EQUAL(server->confidentiality, true);
+    server->confidentiality = false;
+    client->confidentiality = false;
+    // ENCRYPT
+    uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
+    SecBuffer Buffers[2];
+    SecBufferDesc Message;
+    Array Result;
+    Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
+    Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
+    Buffers[0].Buffer.init(ContextSizes.cbMaxSignature);
+    Buffers[1].Buffer.init(sizeof(message));
+    Buffers[1].Buffer.copy(message,
+                           Buffers[1].Buffer.size());
+    Message.cBuffers = 2;
+    Message.ulVersion = SECBUFFER_VERSION;
+    Message.pBuffers = Buffers;
+    status = table.EncryptMessage(&server_context, 0, &Message, 0);
+    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    Result.init(ContextSizes.cbMaxSignature + sizeof(message));
+
+    Result.copy(Buffers[0].Buffer.get_data(),
+                Buffers[0].Buffer.size());
+    Result.copy(Buffers[1].Buffer.get_data(),
+                Buffers[1].Buffer.size(),
+                ContextSizes.cbMaxSignature);
+
+    // LOG(LOG_INFO, "=== ENCRYPTION RESULT: size: %u, token: %u, data %u",
+    //     Result.size(), ContextSizes.cbMaxSignature, sizeof(message));
+    // hexdump_c(Result.get_data(), Result.size());
+
+    // DECRYPT
+    unsigned long pfQOP = 0;
+    Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
+    Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
+    Buffers[0].Buffer.init(ContextSizes.cbMaxSignature);
+    Buffers[0].Buffer.copy(Result.get_data(),
+                           ContextSizes.cbMaxSignature);
+    Buffers[1].Buffer.init(Result.size() - ContextSizes.cbMaxSignature);
+    Buffers[1].Buffer.copy(Result.get_data() + ContextSizes.cbMaxSignature,
+                           Buffers[1].Buffer.size());
+    Message.cBuffers = 2;
+    Message.ulVersion = SECBUFFER_VERSION;
+    Message.pBuffers = Buffers;
+    status = table.DecryptMessage(&client_context, &Message, 0, &pfQOP);
+
+    BOOST_CHECK_EQUAL(status, SEC_E_OK);
 
 
 

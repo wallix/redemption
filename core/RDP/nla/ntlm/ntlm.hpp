@@ -67,6 +67,26 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 	return SEC_E_SECPKG_NOT_FOUND;
     }
 
+    // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
+    virtual SEC_STATUS QueryContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
+                                              void* pBuffer) {
+        // if (!phContext) {
+        //     return SEC_E_INVALID_HANDLE;
+        // }
+        if (!pBuffer) {
+            return SEC_E_INSUFFICIENT_MEMORY;
+        }
+        if (ulAttribute == SECPKG_ATTR_SIZES) {
+            SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
+            ContextSizes->cbMaxToken = 2010;
+            ContextSizes->cbMaxSignature = 16;
+            ContextSizes->cbBlockSize = 0;
+            ContextSizes->cbSecurityTrailer = 16;
+            return SEC_E_OK;
+        }
+
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
@@ -410,7 +430,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
         // TODO CHECK ENDIANNESS
         hmac_md5.update((uint8_t*) &(SeqNo), 4);
-        hmac_md5.update(data, 4);
+        hmac_md5.update(data, length);
         hmac_md5.final(digest, sizeof(digest));
         // HMAC_Init_ex(&hmac, context->SendSigningKey, 16, EVP_md5(), NULL);
         // HMAC_Update(&hmac, (void*) &(SeqNo), 4);
@@ -427,14 +447,24 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         else {
             data_buffer->Buffer.copy(data, length);
         }
-// #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
-//         hexdump_c(data, length);
-//         LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
-//         hexdump_c(data_buffer->pvBuffer, data_buffer->cbBuffer);
-//         LOG(LOG_ERR, "\n");
+
+// #ifdef WITH_DEBUG_NTLM
+        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
+        // hexdump_c(context->SendSigningKey, 16);
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
+        // hexdump_c(digest, sizeof(digest));
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
+        // hexdump_c(data, length);
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", data_buffer->Buffer.size());
+        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         delete [] data;
@@ -452,9 +482,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         context->SendSeqNum++;
 
 // #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "Signature (length = %d)\n", (int) signature_buffer->cbBuffer);
-//         hexdump_c(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Signature (length = %d)\n", signature_buffer->Buffer.size());
+        // hexdump_c(signature_buffer->Buffer.get_data(), signature_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         return SEC_E_OK;
@@ -528,13 +558,21 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         // HMAC_Final(&hmac, digest, NULL);
         // HMAC_CTX_cleanup(&hmac);
 // #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
-//         hexdump_c(data, length);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
+        // hexdump_c(context->RecvSigningKey, 16);
+        // LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
-//         hexdump_c(data_buffer->pvBuffer, data_buffer->cbBuffer);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
+        // hexdump_c(digest, sizeof(digest));
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
+        // hexdump_c(data, length);
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", data_buffer->Buffer.size());
+        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         delete [] data;

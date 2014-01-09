@@ -230,11 +230,10 @@ struct rdpCredssp
         Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
-                               Buffers[0].Buffer.size());
+        // Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
+        //                        Buffers[0].Buffer.size());
 
         Buffers[1].Buffer.init(public_key_length);
-
         Buffers[1].Buffer.copy(this->PublicKey.get_data(),
                                Buffers[1].Buffer.size());
 
@@ -546,7 +545,8 @@ int credssp_client_authenticate(rdpCredssp* credssp) {
 
             // have_pub_key_auth = true;
 
-            if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES, &credssp->ContextSizes) != SEC_E_OK) {
+            if (credssp->table->QueryContextAttributes(&credssp->context, SECPKG_ATTR_SIZES,
+                                                       &credssp->ContextSizes) != SEC_E_OK) {
                 LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
                 return 0;
             }
