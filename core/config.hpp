@@ -525,8 +525,6 @@ struct Inifile : public FieldObserver {
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval;
-
-        char crypto_key[32];
     } globals;
 
     // section "client"
@@ -626,6 +624,12 @@ struct Inifile : public FieldObserver {
         bool disable_keyboard_log_wrm;
         bool disable_keyboard_log_ocr;
     } video;
+
+    // Section "Crypto"
+    struct {
+        char key0[32];
+        char key1[32];
+    } crypto;
 
     // Section "debug"
     struct {
@@ -844,15 +848,7 @@ public:
         TODO("this could be some kind of enumeration");
         this->globals.video_quality.set_from_cstr("medium");
         this->globals.enable_bitmap_update = false;
-
-        memcpy(this->globals.crypto_key,
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
-            sizeof(this->globals.crypto_key));
         // End Init globals
-
 
         this->globals.flv_break_interval = 600000000l;
         this->globals.flv_frame_interval = 1000000L;
@@ -952,6 +948,21 @@ public:
         this->video.disable_keyboard_log_ocr    = false;
         // End section "video"
 
+        // Init crypto
+        memcpy(this->crypto.key0,
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
+            sizeof(this->crypto.key0));
+
+        memcpy(this->crypto.key1,
+            "\x00\x01\x02\x03\x04\x05\x06\x07"
+            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+            "\x10\x11\x12\x13\x14\x15\x16\x17"
+            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F",
+            sizeof(this->crypto.key1));
+        // End Init crypto
 
         // Begin Section "debug".
         this->debug.x224              = 0;
@@ -1245,16 +1256,8 @@ public:
             else if (0 == strcmp(key, "enable_bitmap_update")){
                 this->globals.enable_bitmap_update = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "crypto_key")){
-                if (strlen(value) >= sizeof(this->globals.crypto_key) * 2) {
-                    char   hexval[3] = { 0 };
-                    char * end;
-                    for (size_t i = 0; i < sizeof(this->globals.crypto_key); i++) {
-                        memcpy(hexval, value + i * 2, 2);
-
-                        this->globals.crypto_key[i] = strtol(hexval, &end, 16);
-                    }
-                }
+            else {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
         else if (0 == strcmp(context, "client")){
@@ -1291,6 +1294,9 @@ public:
             else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")){
                 this->client.disable_tsk_switch_shortcuts.set_from_cstr(value);
             }
+            else {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
         }
         else if (0 == strcmp(context, "mod_rdp")){
             if (0 == strcmp(key, "rdp_compression")) {
@@ -1305,8 +1311,11 @@ public:
             else if (0 == strcmp(key, "certificate_change_action")) {
                 this->mod_rdp.certificate_change_action = ulong_from_cstr(value);
             }
-            if (0 == strcmp(key, "extra_orders")) {
+            else if (0 == strcmp(key, "extra_orders")) {
                 this->mod_rdp.extra_orders.copy_c_str(value);
+            }
+            else {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
         else if (0 == strcmp(context, "mod_vnc")){
@@ -1315,6 +1324,9 @@ public:
             }
             else if (0 == strcmp(key, "allow_authentification_retries")) {
                 this->mod_vnc.allow_authentification_retries = bool_from_cstr(value);
+            }
+            else {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
         else if (0 == strcmp(context, "video")){
@@ -1415,6 +1427,33 @@ public:
                 this->video.disable_keyboard_log_syslog = 0 != (this->video.disable_keyboard_log.get() & 1);
                 this->video.disable_keyboard_log_wrm    = 0 != (this->video.disable_keyboard_log.get() & 2);
                 this->video.disable_keyboard_log_ocr    = 0 != (this->video.disable_keyboard_log.get() & 4);
+            }
+            else {
+                LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
+        }
+        else if (0 == strcmp(context, "crypto")){
+            if (0 == strcmp(key, "key0")){
+                if (strlen(value) >= sizeof(this->crypto.key0) * 2) {
+                    char   hexval[3] = { 0 };
+                    char * end;
+                    for (size_t i = 0; i < sizeof(this->crypto.key0); i++) {
+                        memcpy(hexval, value + i * 2, 2);
+
+                        this->crypto.key0[i] = strtol(hexval, &end, 16);
+                    }
+                }
+            }
+            else if (0 == strcmp(key, "key1")){
+                if (strlen(value) >= sizeof(this->crypto.key1) * 2) {
+                    char   hexval[3] = { 0 };
+                    char * end;
+                    for (size_t i = 0; i < sizeof(this->crypto.key1); i++) {
+                        memcpy(hexval, value + i * 2, 2);
+
+                        this->crypto.key1[i] = strtol(hexval, &end, 16);
+                    }
+                }
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

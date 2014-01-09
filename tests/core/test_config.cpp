@@ -71,12 +71,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
-                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
-                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
-                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
-
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
@@ -135,6 +129,17 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key1,
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -319,12 +324,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
-                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
-                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
-                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
-
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
@@ -382,6 +381,17 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key1,
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -576,12 +586,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
 
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
-                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
-                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
-                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
-
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
     BOOST_CHECK_EQUAL(40,                               ini.video.frame_interval);
@@ -642,6 +646,17 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key1,
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -725,7 +740,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "alternate_shell=C:\\\\WINDOWS\\\\NOTEPAD.EXE\n"
                           "shell_working_directory=C:\\\\WINDOWS\\\\\n"
                           "enable_bitmap_update=true\n"
-                          "crypto_key=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF"
                           "\n"
                           "[client]\n"
                           "ignore_logon_password=yes\n"
@@ -757,6 +771,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "ocr_on_title_bar_only=yes\n"
                           "ocr_max_unrecog_char_rate=50\n"
                           "disable_keyboard_log=1\n"
+                          "\n"
+                          "[crypto]\n"
+                          "key0=00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF\n"
+                          "key1=FFEEDDCCBBAA99887766554433221100FFEEDDCCBBAA99887766554433221100\n"
                           "\n"
                           "[debug]\n"
                           "log_type=file\n"
@@ -795,12 +813,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
-
-    BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.crypto_key,
-                                                               "\x00\x11\x22\x33\x44\x55\x66\x77"
-                                                               "\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
-                                                               "\x00\x11\x22\x33\x44\x55\x66\x77"
-                                                               "\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF", 32));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -862,6 +874,17 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(std::string("C:\\WINDOWS\\"),     std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.enable_bitmap_update);
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
+                                                               "\x00\x11\x22\x33\x44\x55\x66\x77"
+                                                               "\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF"
+                                                               "\x00\x11\x22\x33\x44\x55\x66\x77"
+                                                               "\x88\x99\xAA\xBB\xCC\xDD\xEE\xFF", 32));
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key1,
+                                                               "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88"
+                                                               "\x77\x66\x55\x44\x33\x22\x11\x00"
+                                                               "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88"
+                                                               "\x77\x66\x55\x44\x33\x22\x11\x00", 32));
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);
@@ -965,6 +988,10 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "record_tmp_path=/mnt/tmp/wab/recorded/rdp/\n"
                           "disable_keyboard_log=2\n"
                           "\n"
+                          "[crypto]\n"
+                          "key0=00112233445566778899AABBCCDDEEFF\n"
+                          "key1=FFEEDDCCBBAA99887766554433221100\n"
+                          "\n"
                           );
 
     Inifile             ini;
@@ -1056,6 +1083,17 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(std::string(""),                  std::string(ini.globals.shell_working_directory.get_cstr()));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.enable_bitmap_update);
+
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key0,
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
+    BOOST_CHECK_EQUAL(0,                                memcmp(ini.crypto.key1,
+                                                               "\x00\x01\x02\x03\x04\x05\x06\x07"
+                                                               "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+                                                               "\x10\x11\x12\x13\x14\x15\x16\x17"
+                                                               "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
     BOOST_CHECK_EQUAL(0,                                ini.debug.x224);
     BOOST_CHECK_EQUAL(0,                                ini.debug.mcs);

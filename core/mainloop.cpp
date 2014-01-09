@@ -232,7 +232,7 @@ void redemption_main_loop(Inifile & ini, unsigned uid, unsigned gid)
 {
     init_signals();
 
-    SessionServer ss(uid, gid, ini.globals.crypto_key);
+    SessionServer ss(uid, gid, ini.crypto.key0, ini.crypto.key1);
     //    Inifile ini(CFG_PATH "/" RDPPROXY_INI);
     uint32_t s_addr = inet_addr(ini.globals.listen_address);
     if (s_addr == INADDR_NONE) { s_addr = INADDR_ANY; }
