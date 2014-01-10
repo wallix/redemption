@@ -35,7 +35,7 @@ class GeneratorTransport : public Transport {
         : Transport()
     {
         RIO_ERROR status = rio_init_generator(&this->rio, data, len);
-        if (status != RIO_ERROR_OK){ 
+        if (status != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
     }
@@ -79,7 +79,7 @@ class CheckTransport : public Transport {
         : Transport()
     {
         RIO_ERROR res = rio_init_check(&this->rio, data, len);
-        if (res != RIO_ERROR_OK){ 
+        if (res != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
     }
@@ -124,11 +124,11 @@ class TestTransport : public Transport {
     TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
     {
         RIO_ERROR res1 = rio_init_check(&this->rio_check, indata, inlen);
-        if (res1 != RIO_ERROR_OK){ 
+        if (res1 != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
         RIO_ERROR res2 = rio_init_generator(&this->rio_gen, outdata, outlen);
-        if (res2 != RIO_ERROR_OK){ 
+        if (res2 != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
     }
@@ -149,6 +149,7 @@ class TestTransport : public Transport {
         if (static_cast<size_t>(res) < len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
+
     }
 
     using Transport::send;

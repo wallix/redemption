@@ -270,10 +270,6 @@ struct TSRequest {
 
             this->negoTokens.init(length);
             stream.in_copy_bytes(this->negoTokens.get_data(), length);
-            // this->negoTokens.out_copy_bytes(stream.p, length);
-            // stream.in_skip_bytes(length);
-            // this->negoTokens.mark_end();
-            // this->negoTokens.rewind();
 	}
 
 	/* [2] authInfo (OCTET STRING) */
@@ -286,10 +282,6 @@ struct TSRequest {
 
             this->authInfo.init(length);
             stream.in_copy_bytes(this->authInfo.get_data(), length);
-            // this->authInfo.out_copy_bytes(stream.p, length);
-            // stream.in_skip_bytes(length);
-            // this->authInfo.mark_end();
-            // this->authInfo.rewind();
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
@@ -301,10 +293,6 @@ struct TSRequest {
             }
             this->pubKeyAuth.init(length);
             stream.in_copy_bytes(this->pubKeyAuth.get_data(), length);
-            // this->pubKeyAuth.out_copy_bytes(stream.p, length);
-            // stream.in_skip_bytes(length);
-            // this->pubKeyAuth.mark_end();
-            // this->pubKeyAuth.rewind();
 	}
 
         return 0;

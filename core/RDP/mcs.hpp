@@ -161,8 +161,8 @@ namespace MCS
     {
 
         Stream & stream;
-    
-        InBerStream(Stream & stream) 
+
+        InBerStream(Stream & stream)
         : stream(stream)
         {
         }
@@ -347,7 +347,7 @@ namespace MCS
             }
             return l;
         }
-        
+
         uint16_t in_uint16_be_with_check(bool & result) {
             if (this->in_check_rem(2)){
                 result = true;
@@ -372,7 +372,7 @@ namespace MCS
             return this->stream.in_bytes_le(nb);
         }
 
-        
+
         bool in_check_rem(const unsigned n) const {
             // returns true if there is enough data available to read n bytes
             return this->stream.in_check_rem(n);
@@ -403,15 +403,15 @@ namespace MCS
         };
 
         Stream & stream;
-    
-        OutBerStream(Stream & stream) 
+
+        OutBerStream(Stream & stream)
         : stream(stream)
         {
         }
-        
+
         void out_ber_len(unsigned int v){
             if (v < 0x80){
-                this->stream.out_uint8(static_cast<uint8_t>(v));            
+                this->stream.out_uint8(static_cast<uint8_t>(v));
             }
             else if (v < 0x100) {
                 this->stream.out_uint8(0x81);
@@ -438,7 +438,7 @@ namespace MCS
                 this->stream.out_uint8(3);
                 this->stream.out_uint8((uint8_t)(v >> 16));
                 this->stream.out_uint8((uint8_t)(v >> 8));
-                this->stream.out_uint8(static_cast<uint8_t>(v));            
+                this->stream.out_uint8(static_cast<uint8_t>(v));
             }
         }
 
@@ -478,7 +478,7 @@ namespace MCS
                 (this->stream.get_data())[offset+0] = static_cast<uint8_t>(v);
             }
         }
-        
+
         void mark_end() {
             this->stream.mark_end();
         }
@@ -495,16 +495,16 @@ namespace MCS
             return this->stream.out_uint8(v);
         }
     };
-    
+
 
     struct CONNECT_INITIAL_Send
     {
         OutBerStream ber_stream;
-    
+
         CONNECT_INITIAL_Send(Stream & stream, size_t payload_length, int encoding)
         : ber_stream(stream)
         {
-            if (encoding != BER_ENCODING){
+            if (encoding != BER_ENCODING) {
                 LOG(LOG_ERR, "Connect Initial::BER_ENCODING mandatory for Connect PDUs");
                 throw Error(ERR_MCS);
             }
@@ -527,11 +527,11 @@ namespace MCS
             this->ber_stream.out_ber_integer(34);     // 3 bytes : max_channels
             this->ber_stream.out_ber_integer(2);      // 3 bytes : max_users
             this->ber_stream.out_ber_integer(0);      // 3 bytes : max_tokens
-            this->ber_stream.out_ber_integer(1);      // 3 bytes : 
-            this->ber_stream.out_ber_integer(0);      // 3 bytes : 
-            this->ber_stream.out_ber_integer(1);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(1);      // 3 bytes :
+            this->ber_stream.out_ber_integer(0);      // 3 bytes :
+            this->ber_stream.out_ber_integer(1);      // 3 bytes :
             this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_pdu_size
-            this->ber_stream.out_ber_integer(2);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(2);      // 3 bytes :
 
             // min params
             this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
@@ -543,7 +543,7 @@ namespace MCS
             this->ber_stream.out_ber_integer(0);     // 3 bytes :
             this->ber_stream.out_ber_integer(1);     // 3 bytes :
             this->ber_stream.out_ber_integer(0x420); // 4 bytes : max_pdu_size
-            this->ber_stream.out_ber_integer(2);     // 3 bytes : 
+            this->ber_stream.out_ber_integer(2);     // 3 bytes :
 
             // max params
             this->ber_stream.out_uint8(OutBerStream::BER_TAG_MCS_DOMAIN_PARAMS);
@@ -551,11 +551,11 @@ namespace MCS
             this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_channels
             this->ber_stream.out_ber_integer(0xfc17); // 4 bytes : max_users
             this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_tokens
-            this->ber_stream.out_ber_integer(1);      // 3 bytes : 
-            this->ber_stream.out_ber_integer(0);      // 3 bytes : 
-            this->ber_stream.out_ber_integer(1);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(1);      // 3 bytes :
+            this->ber_stream.out_ber_integer(0);      // 3 bytes :
+            this->ber_stream.out_ber_integer(1);      // 3 bytes :
             this->ber_stream.out_ber_integer(0xffff); // 5 bytes : max_pdu_size
-            this->ber_stream.out_ber_integer(2);      // 3 bytes : 
+            this->ber_stream.out_ber_integer(2);      // 3 bytes :
 
             this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
             this->ber_stream.out_ber_len_uint16(payload_length);
@@ -739,7 +739,7 @@ namespace MCS
     struct CONNECT_INITIAL_PDU_Recv
     {
         InBerStream ber_stream;
-    
+
         struct DomainParameters targetParameters;
         struct DomainParameters minimumParameters;
         struct DomainParameters maximumParameters;
@@ -936,9 +936,9 @@ namespace MCS
 
     struct CONNECT_RESPONSE_PDU_Recv
     {
-    
+
         InBerStream ber_stream;
-    
+
         uint16_t tag;
         size_t tag_len;
 
@@ -1108,7 +1108,7 @@ namespace MCS
             this->ber_stream.out_ber_integer(3);           // DomainParameters::maxUserIds = 3
             this->ber_stream.out_ber_integer(0);           // DomainParameters::maximumTokenIds = 0
             this->ber_stream.out_ber_integer(1);           // DomainParameters::numPriorities = 1
-            this->ber_stream.out_ber_integer(0);           // DomainParameters::minThroughput = 0             
+            this->ber_stream.out_ber_integer(0);           // DomainParameters::minThroughput = 0
             this->ber_stream.out_ber_integer(1);           // DomainParameters::maxHeight = 1
             this->ber_stream.out_ber_integer(0xfff8);      // DomainParameters::maxMCSPDUsize = 65528
             this->ber_stream.out_ber_integer(2);           // DomainParameters::protocolVersion = 2
@@ -1216,7 +1216,7 @@ namespace MCS
                 throw Error(ERR_MCS);
             }
             this->type = MCS::MCSPDU_ErectDomainRequest;
-            
+
             {
                 if (!stream.in_check_rem(2)) {
                     LOG(LOG_ERR, "ErectDomainRequest not enough data for subHeight len : (need 2, available %u)", stream.size());

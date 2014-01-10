@@ -178,7 +178,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
             context->init();
             context->server = false;
-
+            if (Reserved1 == 1) {
+                context->hardcoded_tests = true;
+            }
             if (fContextReq & ISC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
             }
@@ -290,11 +292,14 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             }
             context->init();
             context->server = true;
-
+            if (*pfContextAttr == 1) {
+                context->hardcoded_tests = true;
+                // TODO
+            }
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
             }
-            credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
+            credentials = (CREDENTIALS*)phCredential->SecureHandleGetLowerPointer();
             context->identity.CopyAuthIdentity(credentials->identity);
 
             context->ntlm_SetContextServicePrincipalName(NULL);

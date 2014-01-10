@@ -556,4 +556,9 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
     LOG(LOG_INFO, "autobuffer size : %u", sizeof(autobuffer));
 
 
+    uint8_t head[2];
+    head[0] = 1;
+    head[1] = 0xFF;
+    size_t length = (head[0] << 8) | head[1];
+    LOG(LOG_INFO, "size length : %x", length);
 }
