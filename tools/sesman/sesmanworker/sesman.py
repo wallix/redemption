@@ -950,17 +950,45 @@ class Sesman():
                                 if self.shared.get(u'auth_channel_target'):
                                     Logger().info(u"Auth channel target=\"%s\"" % self.shared.get(u'auth_channel_target'))
 
+                                    # _message = (u"SET JOB\x01"
+                                    #             u"To:%s\x01"
+                                    #             u"\x01"
+                                    #             u"Job:simple_webform_filling\x01"
+                                    #             u"Application:C:\\Program Files\\Internet Explorer\\iexplore.exe\x01"
+                                    #             u"Directory:%%HOMEDRIVE%%%%HOMEPATH%%\x01"
+                                    #             u"WebsiteURL:www.hotmail.com\x01"
+                                    #             u"WebformURL:https://login.live.com/login.srf\x01"
+                                    #             u"Input:login:rzhou@wallix.com\x01"
+                                    #             u"Input:passwd:*W@1Pw#!") % self.shared.get(u'auth_channel_target')
+
                                     _message = (u"SET JOB\x01"
                                                 u"To:%s\x01"
                                                 u"\x01"
-                                                u"Job:simple_webform_filling\x01"
+                                                u"Job:executing_script\x01"
                                                 u"Application:C:\\Program Files\\Internet Explorer\\iexplore.exe\x01"
                                                 u"Directory:%%HOMEDRIVE%%%%HOMEPATH%%\x01"
-                                                u"WebsiteURL:10.10.47.32\x01"
-                                                u"WebformURL:https://10.10.47.32/accounts/login/\x01"
-                                                u"WebformName:login-form\x01"
-                                                u"Input:user_name:admin\x01"
-                                                u"Input:passwd:admin") % self.shared.get(u'auth_channel_target')
+                                                u"WebsiteURL:www.hotmail.com\x01"
+                                                u"WebformURL:https://login.live.com/login.srf\x01"
+                                                u"Script:"
+                                                u"var doc = document;\\n"
+                                                u"echo(doc.url);\\n"
+                                                u"echo('Form count=' + doc.forms.length);\\n"
+                                                u"var submitButton;"
+                                                u"doc.forms.forEach(function(form) {\\n"
+                                                u"    echo('Form name=' + form.name);\\n"
+                                                u"    echo('Element count=' + form.elements.length);\\n"
+                                                u"    form.elements.forEach(function(element) {\\n"
+                                                u"        echo('  Element name =' + element.name);\\n"
+                                                u"        echo('  Element type =' + element.type);\\n"
+                                                u"        echo('  Element value=' + element.value);\\n"
+                                                u"        if (element.type == 'email') element.value = 'rzhou@wallix.com';\\n"
+                                                u"        if (element.type == 'password') element.value = '*W@1Pw#!';\\n"
+                                                u"        if (element.type == 'submit') submitButton = element;\\n"
+                                                u"    });\\n"
+                                                u"    //form.submit();\\n"
+                                                u"    if (typeof(submitButton) !== 'undefined') submitButton.click();\\n"
+                                                u"});\\n"
+                                                u"echo('Hello ' + 'World!');\\n") % self.shared.get(u'auth_channel_target')
 
                                     self.send_data({u'auth_channel_answer': _message})
 
