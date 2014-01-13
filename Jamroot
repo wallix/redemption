@@ -947,8 +947,8 @@ unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test 
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test openssl crypto ;
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
-unit-test test_nla : tests/core/RDP/nla/test_nla.cpp libboost_unit_test openssl crypto ;
-unit-test test_nla : tests/core/RDP/nla/test_nla.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
+unit-test test_nla : tests/core/RDP/nla/test_nla.cpp libboost_unit_test openssl crypto cryptofile snappy ;
+unit-test test_nla : tests/core/RDP/nla/test_nla.cpp libboost_unit_test openssl crypto cryptofile snappy gcov : <variant>coverage ;
 
 
 alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;

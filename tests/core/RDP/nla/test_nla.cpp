@@ -36,8 +36,6 @@
 //     rdpCredssp credssp(logtrans);
 
 //     credssp.credssp_client_authenticate();
-
-
 // }
 
 BOOST_AUTO_TEST_CASE(TestNlaclient)

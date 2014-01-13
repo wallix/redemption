@@ -27,7 +27,6 @@
 #include "log.hpp"
 #include "RDP/nla/ntlm/ntlm_context.hpp"
 #include "RDP/nla/ntlm/ntlm.hpp"
-#include "RDP/nla/nla.hpp"
 #include "check_sig.hpp"
 
 BOOST_AUTO_TEST_CASE(TestNtlmContext)
