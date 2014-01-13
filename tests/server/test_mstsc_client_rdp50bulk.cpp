@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
     ini.client.tls_support         = true;
     ini.client.tls_fallback_legacy = false;
-    ini.client.rdp_compression     = true;
+    ini.client.rdp_compression     = 2;     // RDP 5.0 bulk compression
 
     Front front( &front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini
                , fastpath_support, mem3blt_support, ini.client.rdp_compression);

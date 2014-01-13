@@ -504,7 +504,7 @@ struct Inifile : public FieldObserver {
 
         char      dynamic_conf_path[1024]; // directory where to look for dynamic configuration files
         char      auth_channel[512];
-        BoolField enable_file_encryption; // AUTHID_OPT_FILE_ENCRYPTION //
+        BoolField enable_file_encryption;  // AUTHID_OPT_FILE_ENCRYPTION //
         char      listen_address[256];
         bool      enable_ip_transparent;
         char      certificate_password[256];
@@ -517,7 +517,7 @@ struct Inifile : public FieldObserver {
         StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY //
 
         StringField codec_id;                 // AUTHID_OPT_CODEC_ID //
-        BoolField   movie;                      // AUTHID_OPT_MOVIE //
+        BoolField   movie;                    // AUTHID_OPT_MOVIE //
         StringField movie_path;               // AUTHID_OPT_MOVIE_PATH //
         StringField video_quality;            // AUTHID_VIDEO_QUALITY //
         bool        enable_bitmap_update;
@@ -545,11 +545,11 @@ struct Inifile : public FieldObserver {
 
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
 
-        bool rdp_compression;
+        int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1 (not yet supported)
     } client;
 
     struct {
-        bool rdp_compression;
+        int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1 (not yet supported)
 
         bool disconnect_on_logon_user_change;
 
@@ -875,14 +875,14 @@ public:
         this->client.tls_fallback_legacy                 = false;
         this->client.tls_support                         = true;
         this->client.bogus_neg_request                   = false;
-        this->client.rdp_compression                     = false;
+        this->client.rdp_compression                     = 0;
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
         // End Section "client"
 
         // Begin section "mod_rdp"
-        this->mod_rdp.rdp_compression = false;
+        this->mod_rdp.rdp_compression = 0;
 
         this->mod_rdp.disconnect_on_logon_user_change = false;
 
@@ -1289,7 +1289,11 @@ public:
                 this->client.device_redirection.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "rdp_compression")){
-                this->client.rdp_compression = bool_from_cstr(value);
+                this->client.rdp_compression = ulong_from_cstr(value);
+                if (this->client.rdp_compression < 0)
+                    this->client.rdp_compression = 0;
+                else if (this->client.rdp_compression > 4)
+                    this->client.rdp_compression = 4;
             }
             else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")){
                 this->client.disable_tsk_switch_shortcuts.set_from_cstr(value);
@@ -1300,7 +1304,11 @@ public:
         }
         else if (0 == strcmp(context, "mod_rdp")){
             if (0 == strcmp(key, "rdp_compression")) {
-                this->mod_rdp.rdp_compression = bool_from_cstr(value);
+                this->mod_rdp.rdp_compression = ulong_from_cstr(value);
+                if (this->mod_rdp.rdp_compression < 0)
+                    this->mod_rdp.rdp_compression = 0;
+                else if (this->mod_rdp.rdp_compression > 4)
+                    this->mod_rdp.rdp_compression = 4;
             }
             else if (0 == strcmp(key, "disconnect_on_logon_user_change")) {
                 this->mod_rdp.disconnect_on_logon_user_change = bool_from_cstr(value);

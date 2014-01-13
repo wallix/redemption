@@ -779,9 +779,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
-LOG(LOG_INFO, ". len=%d", len);
         if ((this->historyOffset + len) >= static_cast<int>(RDP_60_HIST_BUF_LEN) - 1) {
-LOG(LOG_INFO, "F historyOffset=%d", this->historyOffset);
             /* historyBuffer cannot hold srcData - rewind it */
             ::memmove(this->historyBuffer,
                 (this->historyBuffer + (this->historyOffset - 32768)),
@@ -799,7 +797,6 @@ LOG(LOG_INFO, "F historyOffset=%d", this->historyOffset);
         // if we are at start of history buffer, do not attempt to compress
         //     first 2 bytes, even the minimum LoM is 2
         if (this->historyOffset == 0) {
-LOG(LOG_INFO, "B");
             // encode first two bytes as literals
             for (int x = 0; x < 2; x++) {
                 rdp_mppc_60_enc::encode_literal(
@@ -852,11 +849,6 @@ LOG(LOG_INFO, "B");
                 int LUTIndex;
                 if ((offsetCacheIndex =
                      cache_find(this->offsetCache, copy_offset)) != -1) {
-                    if ((lom >= len) && !offsetCacheIndex) {
-LOG(LOG_INFO, "C lom=%d len=%d", lom, len);
-
-LOG(LOG_INFO, "Find->%5d %5d %5d %5d - %d %d", *this->offsetCache, *(this->offsetCache + 1), *(this->offsetCache + 2), *(this->offsetCache + 3), copy_offset, offsetCacheIndex);
-                    }
 
                     if (offsetCacheIndex != 0) {
                         cache_swap(this->offsetCache, offsetCacheIndex);
@@ -912,7 +904,6 @@ LOG(LOG_INFO, "Find->%5d %5d %5d %5d - %d %d", *this->offsetCache, *(this->offse
         rdp_mppc_60_enc::encode_literal(256, this->outputBuffer, bits_left, opb_index);
 
         if (opb_index >= len) {
-LOG(LOG_INFO, "U");
             ::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
             this->historyOffset = 0;
 

@@ -136,7 +136,7 @@ public:
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_client_active;
     bool mem3blt_support;
-    bool rdp_50_bulk_compression_support;
+    int rdp_compression;
     int clientRequestedProtocols;
 
     uint32_t bitmap_update_count;
@@ -159,7 +159,7 @@ public:
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
-          , bool rdp_50_bulk_compression_support = false
+          , int rdp_compression = 0
           , const char * server_capabilities_filename = ""
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
@@ -187,7 +187,7 @@ public:
         , server_fastpath_update_support(false)
         , tls_client_active(true)
         , mem3blt_support(mem3blt_support)
-        , rdp_50_bulk_compression_support(rdp_50_bulk_compression_support)
+        , rdp_compression(rdp_compression)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
         , server_capabilities_filename(server_capabilities_filename)
@@ -559,6 +559,22 @@ public:
     }
     // ===========================================================================
 
+    static int get_appropriate_compression_type(int client_supported_type, int front_supported_type)
+    {
+        if (((client_supported_type < PACKET_COMPR_TYPE_8K) || (client_supported_type > PACKET_COMPR_TYPE_RDP61)) ||
+            ((front_supported_type  < PACKET_COMPR_TYPE_8K) || (front_supported_type  > PACKET_COMPR_TYPE_RDP61)))
+            return -1;
+
+        static int compress_type_selector[4][4] = {
+            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_8K,  PACKET_COMPR_TYPE_8K,   PACKET_COMPR_TYPE_8K   },
+            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_64K,  PACKET_COMPR_TYPE_64K  },
+            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_RDP6, PACKET_COMPR_TYPE_RDP6 },
+            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_RDP6, PACKET_COMPR_TYPE_RDP6 }
+        };
+
+        return compress_type_selector[client_supported_type][front_supported_type];
+    }
+
     virtual void reset(){
         if (this->verbose & 1){
             LOG(LOG_INFO, "Front::reset()");
@@ -571,17 +587,33 @@ public:
             delete this->mppc_enc;
             this->mppc_enc = NULL;
         }
-        if (this->client_info.rdp_compression) {
-            /*if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_RDP6) {
+
+        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->rdp_compression - 1))
+        {
+        case PACKET_COMPR_TYPE_RDP6:
+            this->mppc_enc = new rdp_mppc_60_enc();
+            break;
+        case PACKET_COMPR_TYPE_64K:
+            this->mppc_enc = new rdp_mppc_50_enc();
+            break;
+        case PACKET_COMPR_TYPE_8K:
+            this->mppc_enc = new rdp_mppc_40_enc();
+            break;
+        }
+
+/*
+        if (this->client_info.rdp_compression && this->rdp_compression) {
+            if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_RDP6) {
                 this->mppc_enc = new rdp_mppc_60_enc();
             }
-            else */if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
+            else if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
                 this->mppc_enc = new rdp_mppc_50_enc();
             }
             else {
                 this->mppc_enc = new rdp_mppc_40_enc();
             }
         }
+*/
 
         // reset outgoing orders and reset caches
         delete this->bmp_cache;
@@ -609,8 +641,8 @@ public:
             , this->client_info.use_compact_packets
             , this->server_fastpath_update_support
             , this->mppc_enc
-            , this->rdp_50_bulk_compression_support ? this->client_info.rdp_compression : 0
-            , this->rdp_50_bulk_compression_support ? this->client_info.rdp_compression_type : 0
+            , this->rdp_compression ? this->client_info.rdp_compression : 0
+            , this->rdp_compression ? this->client_info.rdp_compression_type : 0
             );
 
         this->pointer_cache.reset(this->client_info);

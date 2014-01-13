@@ -147,7 +147,7 @@ struct mod_rdp : public mod_api {
     bool enable_fastpath_server_update;      // = choice of programmer
     bool enable_mem3blt;
     bool enable_new_pointer;
-    bool enable_rdp_bulk_compression;
+    int  rdp_compression;
     bool enable_transparent_mode;
 
     size_t recv_bmp_update;
@@ -195,7 +195,7 @@ struct mod_rdp : public mod_api {
            , bool enable_bitmap_update
            , uint32_t verbose = 0
            , bool enable_new_pointer = false
-           , bool enable_rdp_bulk_compression = false
+           , int rdp_compression = 0
            , redemption::string * error_message = NULL
            , bool disconnect_on_logon_user_change = false
            , uint32_t open_session_timeout = 0
@@ -237,7 +237,7 @@ struct mod_rdp : public mod_api {
         , enable_fastpath_server_update(enable_fastpath)
         , enable_mem3blt(enable_mem3blt)
         , enable_new_pointer(enable_new_pointer)
-        , enable_rdp_bulk_compression(enable_rdp_bulk_compression)
+        , rdp_compression(rdp_compression)
         , enable_transparent_mode(enable_transparent_mode)
         , recv_bmp_update(0)
         , error_message(error_message)
@@ -4496,10 +4496,10 @@ public:
                                , this->clientAddr
                                );
 
-        if (this->enable_rdp_bulk_compression) {
+        if (this->rdp_compression) {
             infoPacket.flags |= INFO_COMPRESSION;
             infoPacket.flags &= ~CompressionTypeMask;
-            infoPacket.flags |= (PACKET_COMPR_TYPE_64K << 9);
+            infoPacket.flags |= ((this->rdp_compression - 1) << 9);
         }
 
         if (this->verbose) {
