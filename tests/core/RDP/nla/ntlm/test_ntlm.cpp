@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
     BOOST_CHECK_EQUAL(output_buffer.Buffer.size(), 40);
     // hexdump_c(output_buffer.Buffer.get_data(), 40);
 
-    unsigned long pfsContextAttr;
+    unsigned long pfsContextAttr = 0;
     unsigned long fsContextReq = 0;
     fsContextReq |= ASC_REQ_MUTUAL_AUTH;
     fsContextReq |= ASC_REQ_CONFIDENTIALITY;
