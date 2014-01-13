@@ -455,21 +455,22 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
 
 // #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "signing key (length = %d)\n", 16);
-//         hexdump_c(context->SendSigningKey, 16);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "======== ENCRYPT ==========");
+        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
+        // hexdump_c(context->SendSigningKey, 16);
+        // LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
-//         hexdump_c(digest, sizeof(digest));
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
+        // hexdump_c(digest, sizeof(digest));
+        // LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
-//         hexdump_c(data, length);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
+        // hexdump_c(data, length);
+        // LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", data_buffer->Buffer.size());
-//         hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", data_buffer->Buffer.size());
+        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         delete [] data;
@@ -487,9 +488,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         context->SendSeqNum++;
 
 // #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "Signature (length = %d)\n", signature_buffer->Buffer.size());
-//         hexdump_c(signature_buffer->Buffer.get_data(), signature_buffer->Buffer.size());
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Signature (length = %d)\n", signature_buffer->Buffer.size());
+        // hexdump_c(signature_buffer->Buffer.get_data(), signature_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         return SEC_E_OK;
@@ -503,11 +504,11 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         int length;
         uint8_t* data;
         uint32_t SeqNo;
-        uint8_t digest[16];
-        uint8_t checksum[8];
+        uint8_t digest[16] = {};
+        uint8_t checksum[8] = {};
         uint32_t version = 1;
         NTLMContext* context = NULL;
-        uint8_t expected_signature[16];
+        uint8_t expected_signature[16] = {};
         PSecBuffer data_buffer = NULL;
         PSecBuffer signature_buffer = NULL;
 
@@ -563,21 +564,22 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         // HMAC_Final(&hmac, digest, NULL);
         // HMAC_CTX_cleanup(&hmac);
 // #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "signing key (length = %d)\n", 16);
-//         hexdump_c(context->RecvSigningKey, 16);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "======== DECRYPT ==========");
+        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
+        // hexdump_c(context->RecvSigningKey, 16);
+        // LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
-//         hexdump_c(digest, sizeof(digest));
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
+        // hexdump_c(digest, sizeof(digest));
+        // LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
-//         hexdump_c(data, length);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
+        // hexdump_c(data, length);
+        // LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", data_buffer->Buffer.size());
-//         hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", data_buffer->Buffer.size());
+        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         delete [] data;
@@ -604,6 +606,15 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_MESSAGE_ALTERED;
         }
 
+        return SEC_E_OK;
+    }
+
+    // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
+    virtual SEC_STATUS ImpersonateSecurityContext(PCtxtHandle phContext) {
+        return SEC_E_OK;
+    }
+    // REVERT_SECURITY_CONTEXT RevertSecurityContext;
+    virtual SEC_STATUS RevertSecurityContext(PCtxtHandle phContext) {
         return SEC_E_OK;
     }
 };

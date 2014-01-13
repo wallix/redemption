@@ -844,10 +844,10 @@ struct NTLMContext {
 
     void ntlm_server_fetch_hash(uint8_t * hash) {
         // TODO get password hash from DC or find ourself
-        LOG(LOG_INFO, "MARK %u, %u, %u",
-            this->identity.User.size(),
-            this->identity.Domain.size(),
-            this->identity.Password.size());
+        // LOG(LOG_INFO, "MARK %u, %u, %u",
+        //     this->identity.User.size(),
+        //     this->identity.Domain.size(),
+        //     this->identity.Password.size());
 
         if (this->identity.Password.size() > 0) {
             // password is available
@@ -1021,15 +1021,16 @@ struct NTLMContext {
         this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.Buffer.get_data(),
                                     this->AUTHENTICATE_MESSAGE.DomainName.Buffer.size());
 
-        uint8_t pass[] = "Pénélope";
-        this->identity.Password.init(sizeof(pass));
-        this->identity.Password.copy(pass, sizeof(pass));
 
+        // TODO tests
+        if (this->hardcoded_tests) {
+            uint8_t pass[] = "Pénélope";
+            this->identity.SetPasswordFromUtf8(pass);
+        }
 
         uint8_t hash[16];
         this->ntlm_server_fetch_hash(hash);
         SEC_STATUS status = this->ntlm_server_proceed_authenticate(hash);
-        LOG(LOG_INFO, "MARK");
         return status;
     }
 };

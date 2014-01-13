@@ -58,14 +58,16 @@ struct rdpCredssp
     bool hardcodedtests;
 
     rdpCredssp(Transport & transport)
-        : trans(transport)
+        : send_seq_num(0)
+        , recv_seq_num(0)
+        , trans(transport)
         , negoToken(ts_request.negoTokens)
         , pubKeyAuth(ts_request.pubKeyAuth)
         , authInfo(ts_request.authInfo)
         , table(new SecurityFunctionTable)
         , hardcodedtests(false)
     {
-
+        this->SspiModule.init(0);
     }
 
     ~rdpCredssp()
@@ -98,6 +100,7 @@ struct rdpCredssp
         // freerdp* instance;
         // rdpSettings* settings;
 
+        this->server = false;
 //         PromptPassword = false;
 //         settings = this->settings;
 //         instance = (freerdp*) settings->instance;
@@ -126,13 +129,16 @@ struct rdpCredssp
 //             }
 //         }
 
+
+        // TODO REMOVE HARDCODED DATA
         // this->identity.SetAuthIdentity(settings->Username, settings->Domain,
         //                                settings->Password);
-
-        uint8_t user[] = "Ulysse";
-        uint8_t domain[] = "Ithaque";
-        uint8_t pass[] = "Pénélope";
-        this->identity.SetAuthIdentityFromUtf8(user, domain, pass);
+        if (this->hardcodedtests) {
+            uint8_t user[] = "Ulysse";
+            uint8_t domain[] = "Ithaque";
+            uint8_t pass[] = "Pénélope";
+            this->identity.SetAuthIdentityFromUtf8(user, domain, pass);
+        }
 
 // #ifndef _WIN32
 //         {
@@ -164,12 +170,15 @@ struct rdpCredssp
 /* Get Public Key From TLS Layer and hostname */
 // ============================================
 
-        this->PublicKey.init(16);
-        this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
+        // TODO REMOVE HARDCODED DATA
+        if (this->hardcodedtests) {
+            this->PublicKey.init(16);
+            this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
 
-        uint8_t host[] = "Télémaque";
-        this->ServicePrincipalName.init(sizeof(host));
-        this->ServicePrincipalName.copy(host, sizeof(host));
+            uint8_t host[] = "Télémaque";
+            this->ServicePrincipalName.init(sizeof(host));
+            this->ServicePrincipalName.copy(host, sizeof(host));
+        }
 
 //         if (this->transport->layer == TRANSPORT_LAYER_TLS) {
 //             tls = this->transport->TlsIn;
@@ -208,9 +217,17 @@ struct rdpCredssp
 	// rdpSettings* settings = credssp->settings;
 	// instance = (freerdp*) settings->instance;
 
+        this->server = true;
+
         // ================================
         /* Get Public Key From TLS Layer */
         // ================================
+
+        // TODO REMOVE HARDCODED DATA
+        if (this->hardcodedtests) {
+            this->PublicKey.init(16);
+            this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
+        }
 	// sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 	// CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 
@@ -307,11 +324,14 @@ struct rdpCredssp
         SEC_STATUS status;
 
         if (this->PublicKey.size() + this->ContextSizes.cbMaxSignature != this->pubKeyAuth.size()) {
-            fprintf(stderr, "unexpected pubKeyAuth buffer size:%d\n",
-                    (int) this->pubKeyAuth.size());
+            LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%d\n",
+                (int) this->pubKeyAuth.size());
+            LOG(LOG_ERR, "size expected: %d = %d + %d\n",
+                this->PublicKey.size() + this->ContextSizes.cbMaxSignature,
+                this->PublicKey.size(), this->ContextSizes.cbMaxSignature);
+
             return SEC_E_INVALID_TOKEN;
         }
-
         length = this->pubKeyAuth.size();
 
         public_key_length = this->PublicKey.size();
@@ -462,6 +482,13 @@ struct rdpCredssp
         this->ts_credentials.recv(decrypted_creds);
         // credssp_read_ts_credentials(this, &Buffers[1]);
 
+        // hexdump(this->ts_credentials.passCreds.userName,
+        //         this->ts_credentials.passCreds.userName_length);
+        // hexdump(this->ts_credentials.passCreds.domainName,
+        //         this->ts_credentials.passCreds.domainName_length);
+        // hexdump(this->ts_credentials.passCreds.password,
+        //         this->ts_credentials.passCreds.password_length);
+
         return SEC_E_OK;
     }
 
@@ -469,7 +496,6 @@ struct rdpCredssp
         BStream ts_request_emit;
         this->ts_request.emit(ts_request_emit);
         this->trans.send(ts_request_emit);
-        // TODO send it to actual transport layer
     }
     int credssp_recv() {
         // ad hoc read of ber encoding size.
@@ -502,8 +528,11 @@ struct rdpCredssp
         // ts_request_received.out_skip_bytes(length);
         ts_request_received.mark_end();
         ts_request_received.rewind();
-        // TODO receive from actual transport layer
         this->ts_request.recv(ts_request_received);
+
+        // LOG(LOG_INFO, "MARK %u", this->pubKeyAuth.size());
+        // hexdump_c(this->pubKeyAuth.get_data(), this->pubKeyAuth.size());
+
         return 1;
     }
 
@@ -702,7 +731,6 @@ struct rdpCredssp
         // TODO
         // sspi_GlobalInit();
 
-        // TODO
         if (credssp_ntlm_server_init() == 0)
             return 0;
 
