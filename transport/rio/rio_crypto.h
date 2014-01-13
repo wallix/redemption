@@ -23,76 +23,107 @@
 #ifndef _REDEMPTION_TRANSPORT_RIO_RIO_CRYPTO_H_
 #define _REDEMPTION_TRANSPORT_RIO_RIO_CRYPTO_H_
 
-#include "rio.h"
-#include "crypto_impl.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include "rio/rio.h"
 
 #define HASH_LEN 64
 
-extern "C" {
-    /* gl_crypto_key is a copy of the master key
-     */
-/*
-    char gl_crypto_key[32] = {
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-    };
-*/
+#include "rio/cryptofile.hpp"
 
-    TODO("this is a place holder implementation without cryptography...");
+extern "C" {
+
     struct RIOCrypto {
-        int fd;
-        RIO *trans;
-        int oflag;
+        void * cf_struct;
+        CryptoContext * crypto_ctx;
     };
 
     /* This method does not allocate space for object itself,
         but initialize it's properties
         and allocate and initialize it's subfields if necessary
     */
-    static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, CryptoContext * crypto_ctx, const char * filename, int oflag) {
-        RIO_ERROR error = RIO_ERROR_OK;
-        int       _oflag;
+    static inline RIO_ERROR rio_m_RIOCrypto_constructor(RIOCrypto * self, CryptoContext * crypto_ctx, const char * file, int oflag) {
+        self->crypto_ctx = crypto_ctx;
 
-        if (oflag & O_WRONLY) {
-            _oflag = oflag | O_CREAT;
+        unsigned char derivator[DERIVATOR_LENGTH];
+        get_derivator(file, derivator, DERIVATOR_LENGTH);
+        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        if (compute_hmac(trace_key, self->crypto_ctx->crypto_key, derivator) == -1){
+            return RIO_ERROR_OPEN;
+        }
+
+        if (oflag != O_RDONLY){
+            unsigned char iv[32];
+            if (dev_urandom_read(iv, 32) == -1){
+                printf("iv randomization failed for crypto file=%s\n", file);
+                return RIO_ERROR_OPEN;
+            }
+
+            printf("crypto open write... file=%s oflag=%u\n", file, oflag);
+            int system_fd = open(file, O_WRONLY|O_CREAT|O_TRUNC, 0600);
+            if (system_fd == -1){
+                printf("failed opening=%s\n", file);
+                return RIO_ERROR_OPEN;
+            }
+
+            self->cf_struct = crypto_open_write(system_fd, trace_key, self->crypto_ctx, iv);
+            if (!self->cf_struct) {
+                close(system_fd);
+                printf("open failed for crypto file=%s\n", file);
+                return RIO_ERROR_OPEN;
+            }
         }
         else {
-            _oflag = oflag;
+            printf("crypto open read... file=%s\n", file);
+
+            int system_fd = open(file, O_RDONLY, 0600);
+            if (system_fd == -1){
+                printf("failed opening=%s\n", file);
+                return RIO_ERROR_OPEN;
+            }
+
+            self->cf_struct = crypto_open_read(system_fd, trace_key, self->crypto_ctx);
+            if (!self->cf_struct) {
+                close(system_fd);
+                printf("open failed for crypto file=%s\n", file);
+                return RIO_ERROR_OPEN;
+            }
         }
 
-        self->fd = ::open(filename, _oflag, S_IRUSR);
-        if (self->fd < 0) {
-            return RIO_ERROR_CREAT;
-        }
-        if (oflag & O_WRONLY) {
-            self->trans = rio_new_outfile(&error, self->fd);
-        }
-        else {
-            self->trans = rio_new_infile(&error, self->fd);
-        }
-        self->oflag = _oflag;
-        return error;
+        return RIO_ERROR_OK;
     }
 
     /* This method deallocate any space used for subfields if any
     */
     static inline RIO_ERROR rio_m_RIOCrypto_destructor(RIOCrypto * self) {
-        rio_delete(self->trans);
-        int res = close(self->fd);
-        if (res < 0){
-            LOG(LOG_ERR, "closing file failed erro=%u : %s\n", errno, strerror(errno));
-            return RIO_ERROR_CLOSE_FAILED;
-        }
-        self->trans = NULL;
+        unsigned char hash[HASH_LEN];
+
+        int error = crypto_close(self->cf_struct, hash, self->crypto_ctx->hmac_key);
+        if (error == -1) { return RIO_ERROR_CLOSE_FAILED; }
+
+        self->cf_struct = NULL;
+
         return RIO_ERROR_CLOSED;
     }
 
     /* This method return a signature based on the data written
     */
     static inline RIO_ERROR rio_m_RIOCrypto_sign(RIOCrypto * self, unsigned char * buf, size_t size, size_t * len) {
-        memset(buf, 1, (size>=HASH_LEN)?HASH_LEN:size);
-        *len = (size>=HASH_LEN)?HASH_LEN:size;
-        return RIO_ERROR_OK;
+        memset(buf, 0, size);
+        *len = HASH_LEN;
+        if (size < HASH_LEN) {
+            rio_m_RIOCrypto_destructor(self);
+            return RIO_ERROR_MORE_DATA;
+        }
+
+        int error = crypto_close(self->cf_struct, buf, self->crypto_ctx->hmac_key);
+        if (error == -1) { return RIO_ERROR_CLOSE_FAILED; }
+
+        self->cf_struct = NULL;
+
+        return RIO_ERROR_CLOSED;
     }
 
     /* This method receive len bytes of data into buffer
@@ -103,12 +134,13 @@ extern "C" {
        and an error returned on subsequent call.
     */
     static inline ssize_t rio_m_RIOCrypto_recv(RIOCrypto * self, void * data, size_t len) {
-        if (self->oflag & O_WRONLY) {
+        ssize_t res = crypto_read(self->cf_struct, (char *)data, len);
+        if (res == -1) {
             rio_m_RIOCrypto_destructor(self);
-            return -RIO_ERROR_SEND_ONLY;
+            return -RIO_ERROR_ANY;
         }
 
-        return rio_recv(self->trans, data, len);
+        return res;
     }
 
     /* This method send len bytes of data from buffer to current transport
@@ -119,12 +151,13 @@ extern "C" {
        and an error returned on subsequent call.
     */
     static inline ssize_t rio_m_RIOCrypto_send(RIOCrypto * self, const void * data, size_t len) {
-        if (!(self->oflag & O_WRONLY)) {
+        ssize_t res = crypto_write(self->cf_struct, (char *)data, len);
+        if (res != (ssize_t)len) {
             rio_m_RIOCrypto_destructor(self);
-            return -RIO_ERROR_RECV_ONLY;
+            return -RIO_ERROR_ANY;
         }
 
-        return rio_send(self->trans, data, len);
+        return res;
     }
 
     static inline RIO_ERROR rio_m_RIOCrypto_seek(RIOCrypto * self, int64_t offset, int whence)
@@ -135,7 +168,6 @@ extern "C" {
     static inline RIO_ERROR rio_m_RIOCrypto_get_status(RIOCrypto * self) {
         return RIO_ERROR_OK;
     }
-    
 };
 
 #endif // #ifndef _REDEMPTION_LIBS_RIO_CRYPTO_H_

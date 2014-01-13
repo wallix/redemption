@@ -34,6 +34,8 @@
 #include <stddef.h>
 #include <unistd.h>
 
+#include "openssl_crypto.hpp"
+
 #include "version.hpp"
 
 #include "config.hpp"
@@ -352,6 +354,8 @@ int main(int argc, char** argv)
 
     Inifile ini;
     ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
+
+    OpenSSL_add_all_digests();
 
     if (!ini.globals.enable_ip_transparent) {
         if (setgid(gid) != 0){

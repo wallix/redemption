@@ -49,6 +49,8 @@ BOOST_AUTO_TEST_CASE(TestCryptoOutMetaCleaning)
         "\x01\x02\x03\x04\x05\x06\x07\x08",
         sizeof(crypto_ctx.crypto_key));
 
+    OpenSSL_add_all_digests();
+
     RIO_ERROR status = RIO_ERROR_OK;
     SQ * seq  = NULL;
     struct timeval tv;

@@ -105,7 +105,9 @@ public:
             }
 
             memset(&this->crypto_ctx, 0, sizeof(this->crypto_ctx));
-            memcpy(this->crypto_ctx.crypto_key, ini.globals.crypto_key, sizeof(this->crypto_ctx.crypto_key));
+            memcpy(this->crypto_ctx.crypto_key, ini.crypto.key0, sizeof(this->crypto_ctx.crypto_key));
+            memcpy(this->crypto_ctx.hmac_key,   ini.crypto.key1, sizeof(this->crypto_ctx.hmac_key  ));
+
             TODO("there should only be one outmeta, not two. Capture code should not really care if file is encrypted or not."
                  "Here is not the right level to manage anything related to encryption.")
             TODO("Also we may wonder why we are encrypting wrm and not png"

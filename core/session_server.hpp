@@ -32,13 +32,15 @@ class SessionServer : public Server
     unsigned uid;
     unsigned gid;
 
-    const char * crypto_key;
+    const char * key0;
+    const char * key1;
 
 public:
-    SessionServer(unsigned uid, unsigned gid, const char * crypto_key)
+    SessionServer(unsigned uid, unsigned gid, const char * key0, const char * key1)
         : uid(uid)
         , gid(gid)
-        , crypto_key(crypto_key) {
+        , key0(key0)
+        , key1(key1) {
     }
 
     virtual Server_status start(int incoming_sck)
@@ -78,7 +80,8 @@ public:
                 Inifile ini;
                 ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
-                memcpy(ini.globals.crypto_key, this->crypto_key, sizeof(ini.globals.crypto_key));
+                memcpy(ini.crypto.key0, this->key0, sizeof(ini.crypto.key0));
+                memcpy(ini.crypto.key1, this->key1, sizeof(ini.crypto.key1));
 
                 if (ini.debug.session){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
