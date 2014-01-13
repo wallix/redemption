@@ -315,7 +315,10 @@ BOOST_AUTO_TEST_CASE(TestInitialize)
 
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
 
-
+    status = table.ImpersonateSecurityContext(&server_context);
+    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    status = table.RevertSecurityContext(&server_context);
+    BOOST_CHECK_EQUAL(status, SEC_E_OK);
 
     // clear handles
     status = table.FreeContextBuffer(&server_context);

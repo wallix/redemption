@@ -111,6 +111,23 @@ BOOST_AUTO_TEST_CASE(TestSecIdentity)
     BOOST_CHECK_EQUAL(id2.User.size(), 0);
     BOOST_CHECK_EQUAL(id2.Domain.size(), 0);
     BOOST_CHECK_EQUAL(id2.Password.size(), 0);
+
+
+    id.SetUserFromUtf8((const uint8_t *)"Zeus");
+    BOOST_CHECK(!memcmp("\x5a\x00\x65\x00\x75\x00\x73\x00",
+                        id.User.get_data(),
+                        id.User.size()));
+    id.SetDomainFromUtf8((const uint8_t *)"Olympe");
+    BOOST_CHECK(!memcmp("\x4f\x00\x6c\x00\x79\x00\x6d\x00\x70\x00\x65\x00",
+                        id.Domain.get_data(),
+                        id.Domain.size()));
+    id.SetPasswordFromUtf8((const uint8_t *)"Athéna");
+    BOOST_CHECK(!memcmp("\x41\x00\x74\x00\x68\x00\xe9\x00\x6e\x00\x61\x00",
+                        id.Password.get_data(),
+                        id.Password.size()));
+    // hexdump_c(id.User.get_data(), id.User.size());
+    // hexdump_c(id.Domain.get_data(), id.Domain.size());
+    // hexdump_c(id.Password.get_data(), id.Password.size());
 }
 
 BOOST_AUTO_TEST_CASE(TestSecureHandle)
