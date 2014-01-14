@@ -902,10 +902,13 @@ struct NTLMContext {
         // CHECK UTF8 or UTF16 (should store in UTF16)
         const char * p = pszTargetName;
         size_t length = 0;
-        while (p) {
-            length++;
-            p++;
+        if (p) {
+            length = strlen(p);
         }
+        // while (p) {
+        //     length++;
+        //     p++;
+        // }
         this->ServicePrincipalName.init(length);
         this->ServicePrincipalName.copy((uint8_t *)pszTargetName, length);
     }

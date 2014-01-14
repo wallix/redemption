@@ -1011,18 +1011,16 @@ public:
         // the length of the encoded data.
 
         // export the public key to DER format
-        // int public_key_length = i2d_PublicKey(pkey, NULL);
         this->public_key_length = i2d_PublicKey(pkey, NULL);
-        // uint8_t * public_key_data = static_cast<uint8_t *>(malloc(public_key_length));
         this->public_key = new uint8_t[this->public_key_length];
         LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
-        // uint8_t * tmp = public_key_data;
+        // hexdump_c(this->public_key, this->public_key_length);
         uint8_t * tmp = this->public_key;
         i2d_PublicKey(pkey, &tmp);
 
-        // free(public_key_data);
-        // public_key_data =
         tmp             = 0;
+
+        EVP_PKEY_free(pkey);
 
 
         X509* xcert = px509;
