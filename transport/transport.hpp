@@ -103,6 +103,14 @@ public:
         // default enable_tls do nothing
     }
 
+    virtual const uint8_t * get_public_key() {
+        return NULL;
+    }
+
+    virtual size_t get_public_key_length() {
+        return 0;
+    }
+
     void recv(uint8_t ** pbuffer, size_t len) throw (Error) {
         this->recv(reinterpret_cast<char **>(pbuffer), len);
     }

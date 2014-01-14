@@ -170,15 +170,20 @@ struct rdpCredssp
 /* Get Public Key From TLS Layer and hostname */
 // ============================================
 
+
+        this->PublicKey.init(this->trans.get_public_key_length());
+        this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
+
         // TODO REMOVE HARDCODED DATA
         if (this->hardcodedtests) {
-            this->PublicKey.init(16);
-            this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
+            // this->PublicKey.init(16);
+            // this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
 
             uint8_t host[] = "Télémaque";
             this->ServicePrincipalName.init(sizeof(host));
             this->ServicePrincipalName.copy(host, sizeof(host));
         }
+
 
 //         if (this->transport->layer == TRANSPORT_LAYER_TLS) {
 //             tls = this->transport->TlsIn;
@@ -223,11 +228,14 @@ struct rdpCredssp
         /* Get Public Key From TLS Layer */
         // ================================
 
+        this->PublicKey.init(this->trans.get_public_key_length());
+        this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
+
         // TODO REMOVE HARDCODED DATA
-        if (this->hardcodedtests) {
-            this->PublicKey.init(16);
-            this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
-        }
+        // if (this->hardcodedtests) {
+        //     this->PublicKey.init(16);
+        //     this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
+        // }
 	// sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 	// CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 
@@ -480,7 +488,6 @@ struct rdpCredssp
 
         StaticStream decrypted_creds(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
         this->ts_credentials.recv(decrypted_creds);
-        // credssp_read_ts_credentials(this, &Buffers[1]);
 
         // hexdump(this->ts_credentials.passCreds.userName,
         //         this->ts_credentials.passCreds.userName_length);
@@ -749,10 +756,9 @@ struct rdpCredssp
             // this->table = (*pInitSecurityInterface)();
         }
         else {
-
+            this->InitSecurityInterface(NTLM_Interface);
         }
 
-        this->InitSecurityInterface(NTLM_Interface);
         SecPkgInfo packageInfo;
         status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
 
