@@ -523,6 +523,7 @@ public:
 #include "mppc_40.hpp"
 #include "mppc_50.hpp"
 #include "mppc_60.hpp"
+#include "mppc_61.hpp"
 
 
 struct rdp_mppc_unified_dec : public rdp_mppc_dec {

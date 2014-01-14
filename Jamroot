@@ -315,6 +315,9 @@ unit-test test_mppc_50 : tests/core/RDP/test_mppc_50.cpp z openssl crypto dl lib
 unit-test test_mppc_60 : tests/core/RDP/test_mppc_60.cpp z openssl crypto dl libboost_unit_test ;
 unit-test test_mppc_60 : tests/core/RDP/test_mppc_60.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_mppc_61 : tests/core/RDP/test_mppc_61.cpp z openssl crypto dl libboost_unit_test ;
+unit-test test_mppc_61 : tests/core/RDP/test_mppc_61.cpp z openssl crypto dl libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_gcc : tests/core/RDP/test_gcc.cpp cryptofile z openssl crypto dl snappy libboost_unit_test ;
 unit-test test_gcc : tests/core/RDP/test_gcc.cpp cryptofile z openssl crypto dl snappy libboost_unit_test gcov : <variant>coverage ;
 
