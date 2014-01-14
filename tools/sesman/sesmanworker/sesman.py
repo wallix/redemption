@@ -62,6 +62,7 @@ class Sesman():
         if SESMANCONF[u'sesman'][u'DEBUG'].lower() == u'true':
             global DEBUG
             DEBUG = True
+        self.cn = u'Unknown'
 
         self.proxy_conx  = conn
         self.addr        = addr
@@ -832,6 +833,7 @@ class Sesman():
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
                 if selected_target.resource.application:
                     app_params = self.engine.get_app_params(selected_target, physical_target)
+                    self.cn = selected_target.resource.application.cn
                     if not app_params:
                         continue
 
@@ -839,6 +841,8 @@ class Sesman():
                     kv[u'shell_working_directory'] = app_params.workingdir
                     kv[u'target_application'] = selected_target.service_login
                     kv[u'disable_tsk_switch_shortcuts'] = u'yes'
+                else:
+                    self.cn = selected_target.resource.device.cn
 
                 kv[u'target_device'] = physical_target.resource.device.host
                 kv[u'target_login'] = physical_target.account.login
@@ -1054,7 +1058,7 @@ class Sesman():
             string = pattern[1]
 #            Logger().info(u"regexp=\"%s\" string=\"%s\" user_login=\"%s\" user=\"%s\" host=\"%s\"" %
 #                (regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device')))
-            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'))
+            self.engine.NotifyFindPatternInRDPFlow(regexp, string, self.shared.get(u'login'), self.shared.get(u'target_login'), self.shared.get(u'target_device'), self.cn)
         else:
             Logger().info(
                 u"Unexpected reporting reason: \"%s\" \"%s\" \"%s\"" % (reason, target, message))
