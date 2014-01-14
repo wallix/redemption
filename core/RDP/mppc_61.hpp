@@ -45,7 +45,16 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
         free(this->historyBuffer);
     }
 
-    virtual bool compress(uint8_t * srcData, int len, uint8_t & flags, uint16_t & compressedLength) {
+    virtual bool compress_61(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size) {
+        //LOG(LOG_INFO, "compress_61");
+
+        if (uncompressed_data_size > RDP_61_MAX_DATA_BLOCK_SIZE)
+            return true;
+
+        return false;
+    }
+
+    virtual bool compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size, uint8_t & flags, uint16_t & compressedLength) {
         return false;
     }
 
@@ -57,6 +66,6 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
 
     virtual void dump() {
     }
-};
+};  // struct rdp_mppc_61_enc
 
-#endif
+#endif  // #ifndef _REDEMPTION_CORE_RDP_MPPC_61_HPP_

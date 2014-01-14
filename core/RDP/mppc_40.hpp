@@ -587,11 +587,15 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
      *
      * @return  true on success, false on failure
      */
-    virtual bool compress_40(uint8_t * srcData, int len) {
-//        LOG(LOG_INFO, "compress_40");
+    virtual bool compress_40(const uint8_t * srcData, int len) {
+        //LOG(LOG_INFO, "compress_40");
 
-        if ((srcData == NULL) || (len <= 0) || (len > this->buf_len))
-            return false;
+        this->flags = PACKET_COMPR_TYPE_8K;
+
+        if ((srcData == NULL) || (len <= 0) || (len >= this->buf_len - 2)) {
+LOG(LOG_INFO, "len=%d", len);
+            return true;
+        }
 
         int        opb_index    = 0;                    /* index into outputBuffer                        */
         int        bits_left    = 8;                    /* unused bits in current uint8_t in outputBuffer */
@@ -601,13 +605,11 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         TODO("this memset should not be necessary");
         memset(outputBuffer, 0, len);
 
-        this->flags = PACKET_COMPR_TYPE_8K;
-
         if (this->first_pkt) {
             this->first_pkt =  0;
             this->flagsHold |= PACKET_AT_FRONT;
         }
-
+LOG(LOG_INFO, "historyOffset(%d) + len(%d) = %d", this->historyOffset, len, this->historyOffset + len);
         if ((this->historyOffset + len + 2) >= this->buf_len) {
             /* historyBuffer cannot hold srcData - rewind it */
             this->historyOffset =  0;
@@ -626,28 +628,27 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         if (this->historyOffset == 0) {
             /* encode first two bytes as literals */
             for (int x = 0; x < 2; x++) {
-                rdp_mppc_enc::encode_literal(
+                ::encode_literal_40_50(
                     this->historyBuffer[this->historyOffset + x],
                     outputBuffer, bits_left, opb_index);
             }
 
             hash_table[rdp_mppc_enc::signature(this->historyBuffer)]   = 0;
             hash_table[rdp_mppc_enc::signature(this->historyBuffer+1)] = 1;
-            ctr                                          = 2;
+            ctr                                                        = 2;
         }
 
         int lom = 0;
         for (; ctr + 2 < len ; ctr += lom) { // we need at least 3 bytes to look for match
-            uint32_t crc2           = rdp_mppc_enc::signature(
-                this->historyBuffer + this->historyOffset + ctr);
+            uint32_t crc2           = rdp_mppc_enc::signature(this->historyBuffer + this->historyOffset + ctr);
             int      previous_match = hash_table[crc2];
-            hash_table[crc2] = this->historyOffset + ctr;
+            hash_table[crc2]        = this->historyOffset + ctr;
 
             /* check that we have a pattern match, hash is not enough */
             if (0 != memcmp(this->historyBuffer + this->historyOffset + ctr,
                             this->historyBuffer + previous_match, 3)) {
                 /* no match found; encode literal uint8_t */
-                rdp_mppc_enc::encode_literal(
+                ::encode_literal_40_50(
                     this->historyBuffer[this->historyOffset + ctr],
                     outputBuffer, bits_left, opb_index);
                 lom = 1;
@@ -673,14 +674,14 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
                 int range = (copy_offset <= 0x3F)  ? 0 :
                             (copy_offset <= 0x13F) ? 1 :
                                                      2 ;
-                rdp_mppc_enc::insert_n_bits(nbbits[range],
-                    headers[range]|(copy_offset - base[range]),
+                ::insert_n_bits_40_50(nbbits[range],
+                    headers[range] | (copy_offset - base[range]),
                     outputBuffer, bits_left, opb_index);
 
                 int log_lom = 8 * sizeof(lom) - 1 - __builtin_clz(lom);
 
                 /* encode length of match and insert into output buffer */
-                rdp_mppc_enc::insert_n_bits(
+                ::insert_n_bits_40_50(
                     (lom == 3) ? 1 : 2 * log_lom,
                     (lom == 3) ? 0 : (((((1 << log_lom) - 1) & 0xFFE) << log_lom) | (lom - (1 << log_lom))),
                     outputBuffer, bits_left, opb_index);
@@ -689,12 +690,13 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
 
         /* add remaining data if any to the output */
         while (len - ctr > 0) {
-            rdp_mppc_enc::encode_literal(srcData[ctr], outputBuffer, bits_left,
+            ::encode_literal_40_50(srcData[ctr], outputBuffer, bits_left,
                 opb_index);
             ctr++;
         }
 
         if (opb_index >= len) {
+LOG(LOG_INFO, "opb_index(%d) >= len(%d)", opb_index, len);
             /* compressed data longer or same size than uncompressed data */
             /* give up */
             this->historyOffset = 0;
@@ -715,8 +717,8 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         return true;
     }
 
-    virtual bool compress(uint8_t * srcData, int len, uint8_t & flags, uint16_t & compressedLength) {
-        bool compress_result = this->compress_40(srcData, len);
+    virtual bool compress(const uint8_t * srcData, uint16_t len, uint8_t & flags, uint16_t & compressedLength) {
+        bool compress_result = this->compress_40(srcData, (int)len);
         if (this->flags & PACKET_COMPRESSED) {
             flags            = this->flags;
             compressedLength = this->bytes_in_opb;

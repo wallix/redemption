@@ -422,6 +422,42 @@ public:
 };  // rdp_mppc_dec
 
 
+////////////////////
+//
+// Decompressor
+//
+////////////////////
+
+static inline void insert_n_bits_40_50(int n, uint32_t _data, char * outputBuffer,
+    int & bits_left, int & opb_index)
+{
+    int bits_to_serialize = n;
+    if (bits_left >= bits_to_serialize + 1) {
+        const int i = bits_left - bits_to_serialize;
+        outputBuffer[opb_index] |= _data << i;
+        bits_left = i;
+    }
+    else {
+        outputBuffer[opb_index++] |= _data >> (bits_to_serialize - bits_left);
+        _data                     &= (0xFFFFFFFF >> (32 - (bits_to_serialize - bits_left)));
+        bits_to_serialize         -= bits_left;
+        for (; bits_to_serialize >= 8 ; bits_to_serialize -= 8) {
+            outputBuffer[opb_index++] =  (_data >> (bits_to_serialize - 8));
+            _data                     &= (0xFFFFFFFF >> (32 - (bits_to_serialize - 8)));
+        }
+        outputBuffer[opb_index] =
+            (bits_to_serialize > 0) ? (_data << (8 - bits_to_serialize)) : 0;
+        bits_left               = 8 - bits_to_serialize;
+    }
+}
+
+static inline void encode_literal_40_50(char c, char * outputBuffer, int & bits_left, int & opb_index) {
+    insert_n_bits_40_50(
+        (c & 0x80) ? 9 : 8,
+        (c & 0x80) ? (0x02 << 7) | (c & 0x7F) : c,
+        outputBuffer, bits_left, opb_index);
+}
+
 struct rdp_mppc_enc {
     static const size_t HASH_BUF_LEN = (1024 * 64); /* 16 bit hash table size */
 
@@ -481,36 +517,7 @@ public:
         return crc;
     }
 
-    static inline void insert_n_bits(int n, uint32_t _data, char * outputBuffer,
-        int & bits_left, int & opb_index) {
-        int bits_to_serialize = n;
-        if (bits_left >= bits_to_serialize + 1) {
-            const int i = bits_left - bits_to_serialize;
-            outputBuffer[opb_index] |= _data << i;
-            bits_left = i;
-        }
-        else {
-            outputBuffer[opb_index++] |= _data >> (bits_to_serialize - bits_left);
-            _data                     &= (0xFFFFFFFF >> (32 - (bits_to_serialize - bits_left)));
-            bits_to_serialize -= bits_left;
-            for (; bits_to_serialize >= 8 ; bits_to_serialize -= 8) {
-                outputBuffer[opb_index++] =  (_data >> (bits_to_serialize - 8));
-                _data                     &= (0xFFFFFFFF >> (32 - (bits_to_serialize - 8)));
-            }
-            outputBuffer[opb_index] =
-                (bits_to_serialize > 0) ? (_data << (8 - bits_to_serialize)) : 0;
-            bits_left               = 8 - bits_to_serialize;
-        }
-    }
-
-    static inline void encode_literal(char c, char * outputBuffer, int & bits_left, int & opb_index) {
-        rdp_mppc_enc::insert_n_bits(
-            (c & 0x80) ? 9 : 8,
-            (c & 0x80) ? (0x02 << 7) | (c & 0x7F) : c,
-            outputBuffer, bits_left, opb_index);
-    }
-
-    virtual bool compress(uint8_t * srcData, int len, uint8_t & flags, uint16_t & compressedLength) = 0;
+    virtual bool compress(const uint8_t * srcData, uint16_t len, uint8_t & flags, uint16_t & compressedLength) = 0;
 
     virtual void get_compressed_data(Stream & stream) const = 0;
 
