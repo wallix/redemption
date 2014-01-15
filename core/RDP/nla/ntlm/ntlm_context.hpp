@@ -136,6 +136,7 @@ struct NTLMContext {
         this->SendVersionInfo = true;
         // this->SendVersionInfo = false;
         this->SendSingleHostData = false;
+        this->SendWorkstationName = true;
         this->NegotiateFlags = 0;
         this->LmCompatibilityLevel = 3;
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
@@ -351,18 +352,11 @@ struct NTLMContext {
         memcpy(&temp[1+1+6+8], this->ClientChallenge, 8);
         memcpy(&temp[1+1+6+8+8+4], AvPairsStream.get_data(), AvPairsStream.size());
 
-// #ifdef DISABLE_RANDOM_TESTS
-//         temp[0x1C] = 0x02;
-//         temp[0x28] = 0x01;
-//         temp[0x34] = 0x04;
-//         temp[0x40] = 0x03;
-// #endif
-
         // NtProofStr = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                       Concat(ServerChallenge, temp))
         uint8_t NtProofStr[16] = {};
         SslHMAC_Md5 hmac_md5resp(ResponseKeyNT, sizeof(ResponseKeyNT));
-        // TODO take ServerChallenge from ChallengeMessage
+
         this->ntlm_get_server_challenge();
         hmac_md5resp.update(this->ServerChallenge, 8);
         hmac_md5resp.update(temp, temp_size);
@@ -421,6 +415,8 @@ struct NTLMContext {
         this->ntlm_rc4k(this->SessionBaseKey, 16,
                         this->ExportedSessionKey, this->EncryptedRandomSessionKey);
 
+        TODO("We should check NTLMSSP_NEGOTIATE_KEY_EXCH in challenge nego flag before sending"
+             " or not the EncryptedRandomSessionKey");
         BStream & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.Buffer;
         AuthEncryptedRSK.reset();
         AuthEncryptedRSK.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
@@ -728,11 +724,13 @@ struct NTLMContext {
 	negoFlag |= NTLMSSP_REQUEST_TARGET;
 	negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
 
-	if (this->confidentiality)
+	if (this->confidentiality) {
             negoFlag |= NTLMSSP_NEGOTIATE_SEAL;
+        }
 
-	if (this->SendVersionInfo)
+	if (this->SendVersionInfo) {
             negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
+        }
 
 	if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
             this->version.ntlm_get_version_info();
@@ -744,6 +742,51 @@ struct NTLMContext {
 	this->NegotiateFlags = negoFlag;
         this->NEGOTIATE_MESSAGE.negoFlags.flags = negoFlag;
     }
+
+    void ntlm_set_negotiate_flags_auth() {
+        uint32_t & negoFlag = this->NegotiateFlags;
+        if (this->NTLMv2) {
+            negoFlag |= NTLMSSP_NEGOTIATE_56;
+            if (this->SendVersionInfo) {
+                negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
+            }
+        }
+
+        if (this->UseMIC) {
+            negoFlag |= NTLMSSP_NEGOTIATE_TARGET_INFO;
+        }
+        if (this->SendWorkstationName) {
+            negoFlag |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+        }
+	if (this->confidentiality) {
+            negoFlag |= NTLMSSP_NEGOTIATE_SEAL;
+        }
+        if (this->CHALLENGE_MESSAGE.negoFlags.flags & NTLMSSP_NEGOTIATE_KEY_EXCH) {
+            negoFlag |= NTLMSSP_NEGOTIATE_KEY_EXCH;
+        }
+	negoFlag |= NTLMSSP_NEGOTIATE_128;
+	negoFlag |= NTLMSSP_NEGOTIATE_EXTENDED_SESSION_SECURITY;
+	negoFlag |= NTLMSSP_NEGOTIATE_ALWAYS_SIGN;
+	negoFlag |= NTLMSSP_NEGOTIATE_NTLM;
+	negoFlag |= NTLMSSP_NEGOTIATE_SIGN;
+	negoFlag |= NTLMSSP_REQUEST_TARGET;
+	negoFlag |= NTLMSSP_NEGOTIATE_UNICODE;
+
+	// if (this->SendVersionInfo) {
+        //     negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
+        // }
+
+	if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.ntlm_get_version_info();
+        }
+        else {
+            this->version.ignore_version_info();
+        }
+
+	this->NegotiateFlags = negoFlag;
+        this->AUTHENTICATE_MESSAGE.negoFlags.flags = negoFlag;
+    }
+
 
 
     // server method
@@ -843,7 +886,8 @@ struct NTLMContext {
         this->ntlm_generate_server_signing_key();
         this->ntlm_generate_server_sealing_key();
         this->ntlm_init_rc4_seal_states();
-        this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
+        this->ntlm_set_negotiate_flags_auth();
+        // this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
         uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
         if (flag & NTLMSSP_NEGOTIATE_VERSION) {
@@ -853,7 +897,10 @@ struct NTLMContext {
             this->AUTHENTICATE_MESSAGE.version.ignore_version_info();
         }
 
-
+        if (!(flag & NTLMSSP_NEGOTIATE_KEY_EXCH)) {
+            // If flag is not set, encryted session key buffer is not send
+            this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.Buffer.reset();
+        }
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
             BStream & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.Buffer;
             workstationbuff.reset();
@@ -936,9 +983,11 @@ struct NTLMContext {
             size_t host_len = UTF8Len(workstation);
             this->Workstation.init(host_len * 2);
             UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
+            this->SendWorkstationName = true;
 	}
         else {
             this->Workstation.init(0);
+            this->SendWorkstationName = false;
 	}
     }
     void ntlm_SetContextServicePrincipalName(const uint8_t * pszTargetName) {

@@ -109,41 +109,7 @@ struct rdpCredssp
     }
 
     int credssp_ntlm_client_init() {
-        // char* spn;
-        // int length;
-        // bool PromptPassword;
-        // rdpTls* tls = NULL;
-        // freerdp* instance;
-        // rdpSettings* settings;
-
         this->server = false;
-//         PromptPassword = false;
-//         settings = this->settings;
-//         instance = (freerdp*) settings->instance;
-
-//         if ((!settings->Password) || (!settings->Username)
-//             || (!strlen(settings->Password)) || (!strlen(settings->Username))) {
-//             PromptPassword = true;
-//         }
-
-// #ifndef _WIN32
-//         if (PromptPassword) {
-//             if (settings->RestrictedAdminModeRequired) {
-//                 if ((settings->PasswordHash) && (strlen(settings->PasswordHash) > 0))
-//                     PromptPassword = false;
-//             }
-//         }
-// #endif
-
-//         if (PromptPassword) {
-//             if (instance->Authenticate) {
-//                 BOOL proceed = instance->Authenticate(instance,
-//                                                       &settings->Username, &settings->Password, &settings->Domain);
-
-//                 if (!proceed)
-//                     return 0;
-//             }
-//         }
 
 
         // TODO REMOVE HARDCODED DATA
@@ -234,9 +200,6 @@ struct rdpCredssp
     }
 
     int credssp_ntlm_server_init() {
-	// freerdp* instance;
-	// rdpSettings* settings = credssp->settings;
-	// instance = (freerdp*) settings->instance;
 
         this->server = true;
 
@@ -332,7 +295,6 @@ struct rdpCredssp
         this->pubKeyAuth.copy(Buffers[1].Buffer.get_data(),
                               Buffers[1].Buffer.size(),
                               this->ContextSizes.cbMaxSignature);
-
         return status;
 
     }
@@ -458,7 +420,6 @@ struct rdpCredssp
         this->authInfo.copy(Buffers[1].Buffer.get_data(),
                             Buffers[1].Buffer.size(),
                             this->ContextSizes.cbMaxSignature);
-
         return SEC_E_OK;
     }
 
