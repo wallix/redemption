@@ -538,7 +538,7 @@ protected:
     rdp_mppc_40_dec * dec_40;
     rdp_mppc_50_dec * dec_50;
     rdp_mppc_60_dec * dec_60;
-//    rdp_mppc_61_dec * dec_61;
+    rdp_mppc_61_dec * dec_61;
 
 public:
     /**
@@ -548,7 +548,7 @@ public:
         this->dec_40 = NULL;
         this->dec_50 = NULL;
         this->dec_60 = NULL;
-//        this->dec_61 = NULL;
+        this->dec_61 = NULL;
     }
 
     /**
@@ -567,11 +567,9 @@ public:
             delete this->dec_60;
         }
 
-/*
         if (this->dec_61) {
             delete this->dec_61;
         }
-*/
     }
 
     virtual void mini_dump() {
@@ -584,11 +582,9 @@ public:
         else if (this->dec_60) {
             this->dec_60->mini_dump();
         }
-/*
         else if (this->dec_61) {
             this->dec_61->mini_dump();
         }
-*/
     }
 
     virtual void dump() {
@@ -601,11 +597,9 @@ public:
         else if (this->dec_60) {
             this->dec_60->dump();
         }
-/*
         else if (this->dec_61) {
             this->dec_61->dump();
         }
-*/
     }
 
     int decompress(uint8_t * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) {
@@ -630,13 +624,11 @@ public:
                 }
                 return this->dec_60->decompress(cbuf, len, ctype, rdata, rlen);
 
-/*
             case PACKET_COMPR_TYPE_RDP61:
                 if (!this->dec_61) {
                     this->dec_61 = new rdp_mppc_61_dec();
                 }
                 return this->dec_61->decompress(cbuf, len, ctype, rdata, rlen);
-*/
         }
 
         LOG(LOG_ERR, "rdp_mppc_unified_dec::decompress: invalid RDP compression code 0x%2.2x", type);

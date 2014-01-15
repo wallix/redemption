@@ -75,7 +75,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
      * @return        true on success, False on failure
      */
     int decompress_40(uint8_t * cbuf, int len, int ctype, uint32_t * roff, uint32_t * rlen) {
-//        LOG(LOG_INFO, "decompress_40");
+        //LOG(LOG_INFO, "decompress_40");
 
         uint8_t  * src_ptr       = 0;       /* used while copying compressed data         */
         uint8_t  * cptr          = cbuf;    /* points to next uint8_t in cbuf             */
@@ -593,7 +593,6 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         this->flags = PACKET_COMPR_TYPE_8K;
 
         if ((srcData == NULL) || (len <= 0) || (len >= this->buf_len - 2)) {
-LOG(LOG_INFO, "len=%d", len);
             return true;
         }
 
@@ -609,7 +608,6 @@ LOG(LOG_INFO, "len=%d", len);
             this->first_pkt =  0;
             this->flagsHold |= PACKET_AT_FRONT;
         }
-LOG(LOG_INFO, "historyOffset(%d) + len(%d) = %d", this->historyOffset, len, this->historyOffset + len);
         if ((this->historyOffset + len + 2) >= this->buf_len) {
             /* historyBuffer cannot hold srcData - rewind it */
             this->historyOffset =  0;
@@ -696,7 +694,6 @@ LOG(LOG_INFO, "historyOffset(%d) + len(%d) = %d", this->historyOffset, len, this
         }
 
         if (opb_index >= len) {
-LOG(LOG_INFO, "opb_index(%d) >= len(%d)", opb_index, len);
             /* compressed data longer or same size than uncompressed data */
             /* give up */
             this->historyOffset = 0;

@@ -1347,8 +1347,8 @@ struct mod_rdp : public mod_api {
 
                                         assert(MD5_DIGEST_LENGTH == LIC::LICENSE_SIGNATURE_SIZE);
                                         sign.final(signature, sizeof(signature));
-                                          
-                                            
+
+
                                         /* Now encrypt the HWID */
 
                                         SslRC4 rc4;
@@ -4001,12 +4001,12 @@ public:
 
     // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
     // ---------------------------------------------------------------
-    
-    // The TS_CACHEDPOINTERATTRIBUTE structure is used to instruct the 
-    // client to change the current pointer shape to one already present 
-    // in the pointer cache. 
 
-    // cacheIndex (2 bytes): A 16-bit, unsigned integer. A zero-based 
+    // The TS_CACHEDPOINTERATTRIBUTE structure is used to instruct the
+    // client to change the current pointer shape to one already present
+    // in the pointer cache.
+
+    // cacheIndex (2 bytes): A 16-bit, unsigned integer. A zero-based
     // cache entry containing the cache index of the cached pointer to
     // which the client's pointer MUST be changed. The pointer data MUST
     // have already been cached using either the Color Pointer Update
@@ -4158,15 +4158,15 @@ public:
             LOG(LOG_INFO, "mod_rdp::to_regular_pointer");
         }
     }
-    
+
     // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
     // ------------------------------------------------------
-    
+
     // The TS_POINTERATTRIBUTE structure is used to send pointer data at an arbitrary
     // color depth. Support for the New Pointer Update is advertised in the Pointer
-    // Capability Set (section 2.2.7.1.5). 
-    
-    
+    // Capability Set (section 2.2.7.1.5).
+
+
     // xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel
     // of the XOR mask contained in the colorPtrAttr field.
 
@@ -4252,7 +4252,7 @@ public:
             uint8_t mask_data[32*32/8];
             stream.in_copy_bytes(data_data, dlen);
             stream.in_copy_bytes(mask_data, mlen);
-            
+
             for (unsigned i = 0 ; i < mlen; i++) {
                 uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
                 uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);

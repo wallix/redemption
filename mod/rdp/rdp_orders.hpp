@@ -224,6 +224,7 @@ public:
             if (!drawing_order.control_flags & STANDARD) {
                 /* error, this should always be set */
                 LOG(LOG_ERR, "Non standard order detected : protocol error");
+                REDASSERT(false);
                 break;
             }
             if (drawing_order.control_flags & SECONDARY) {
