@@ -23,7 +23,7 @@
 
 #ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
 #define _REDEMPTION_CORE_RDP_NEGO_HPP_
-
+#include "RDP/nla/nla.hpp"
 struct RdpNego
 {
     enum {
@@ -67,6 +67,12 @@ struct RdpNego
     char username[128];
     Transport * trans;
 
+    char hostname[16];
+    char password[256];
+    char domain[256];
+
+    rdpCredssp credssp;
+
     RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla)
     : flags(0)
     , tls(nla || tls)
@@ -75,6 +81,7 @@ struct RdpNego
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
     , trans(socket_trans)
+    , credssp(*trans)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
@@ -85,6 +92,23 @@ struct RdpNego
         }
         strncpy(this->username, username, 127);
         this->username[127] = 0;
+
+        memset(this->hostname, 0, 16);
+        memset(this->password, 0, 256);
+        memset(this->domain, 0, 256);
+    }
+
+    void set_identity(uint8_t * user, uint8_t * domain, uint8_t * pass, uint8_t * hostname) {
+        this->credssp.identity.SetUserFromUtf8(user);
+        this->credssp.identity.SetDomainFromUtf8(domain);
+        this->credssp.identity.SetPasswordFromUtf8(pass);
+        this->credssp.SetHostnameFromUtf8(hostname);
+
+        hexdump_c(user, strlen((char*)user));
+        hexdump_c(domain, strlen((char*)domain));
+        hexdump_c(pass, strlen((char*)pass));
+        hexdump_c(hostname, strlen((char*)hostname));
+
     }
 
     void server_event(bool ignore_certificate_change)
@@ -246,7 +270,11 @@ struct RdpNego
             && x224.rdp_neg_code == X224::PROTOCOL_HYBRID){
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_client_tls(ignore_certificate_change);
+                int res = this->credssp.credssp_client_authenticate();
                 // TODO NLA authentication
+                if (res != 1) {
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
                 this->state = NEGO_STATE_FINAL;
             }
             else {

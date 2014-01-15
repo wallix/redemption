@@ -182,6 +182,7 @@ struct mod_rdp : public mod_api {
            , const char * client_address
            , struct FrontAPI & front
            , const bool enable_tls
+           , const bool enable_nla
            , const ClientInfo & info
            , Random * gen
            , int key_flags
@@ -229,7 +230,7 @@ struct mod_rdp : public mod_api {
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
         , acl(acl)
-        , nego(enable_tls, trans, target_user, false)
+        , nego(enable_tls, trans, target_user, enable_nla)
         , enable_bitmap_update(enable_bitmap_update)
         , enable_clipboard(enable_clipboard)
         , enable_fastpath(enable_fastpath)
@@ -384,6 +385,11 @@ struct mod_rdp : public mod_api {
         this->directory[sizeof(this->directory) - 1] = 0;
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
+
+        this->nego.set_identity((uint8_t*)this->username,
+                                (uint8_t*)this->domain,
+                                (uint8_t*)this->password,
+                                (uint8_t*)this->hostname);
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
             this->draw_event(time(NULL));

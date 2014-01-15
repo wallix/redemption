@@ -189,7 +189,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             // if (context->Workstation.size() < 1)
             //     context->ntlm_SetContextWorkstation(NULL);
 
-            context->ntlm_SetContextServicePrincipalName(pszTargetName);
+            context->ntlm_SetContextWorkstation((uint8_t*)pszTargetName);
+            context->ntlm_SetContextServicePrincipalName((uint8_t*)pszTargetName);
 
             context->identity.CopyAuthIdentity(credentials->identity);
 

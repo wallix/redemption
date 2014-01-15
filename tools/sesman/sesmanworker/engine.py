@@ -1018,6 +1018,59 @@ class Engine(object):
                 )
             ],
             deconnection_time = u'2099-12-30 23:59:59'
+        ),
+        'w2k8erpm\\administrateur@10.10.46.110:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'QA\\administrateur',
+                password = PASSWORD1,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                ),
+                GroupTargetInfo(
+                    cn = u'win2'
+                )
+            ],
+            target_groups = u'win1;win2',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.46.110',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.46.110',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = False
+            ),
+            service_login = u'QA\\administrateur@10.10.46.110:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
         )
     }   # config_rights
 
@@ -1106,6 +1159,12 @@ class Engine(object):
             protocol = u'RDP',
             password = PASSWORD2
         ),
+        TargetPasswordInfo(
+            account = u'QA\\administrateur',
+            resource = u'10.10.46.110',
+            protocol = u'RDP',
+            password = PASSWORD1
+        ),
     ]
 
     config_users = {
@@ -1174,6 +1233,7 @@ class Engine(object):
                 'w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.88:RDP',
                 'w2k3\\administrateur@10.10.47.97:RDP',
+                'w2k8erpm\\administrateur@10.10.46.110:RDP',
             ]
         },
         'fr':

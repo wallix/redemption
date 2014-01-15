@@ -101,6 +101,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
             "10.10.9.161",
             front,
             false,      // tls
+            false,      // nla
             info,
             &gen,
             7,          // key flags
@@ -190,6 +191,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         "10.10.9.161",
         front,
         false,      // tls
+        false,      // nla
         info,
         &gen,
         2,          // key flags
@@ -269,6 +271,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         "0.0.0.0",
         front,
         false,      // tls
+        false,      // nla
         info,
         &gen,
         2,          // key flags
@@ -356,6 +359,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         "0.0.0.0",
         front,
         false,      // tls
+        false,      // nla
         info,
         &gen,
         2,          // key flags

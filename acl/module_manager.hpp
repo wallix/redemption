@@ -679,6 +679,7 @@ public:
                         "0.0.0.0",  // client ip is silenced
                         this->front,
                         true,
+                        true,
                         client_info,
                         &gen,
                         this->front.keymap.key_flags,

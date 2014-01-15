@@ -79,6 +79,22 @@ struct rdpCredssp
         }
     }
 
+    void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
+        const char * p = (char *)pszTargetName;
+        size_t length = 0;
+        if (p) {
+            length = strlen(p);
+        }
+        // while (p) {
+        //     length++;
+        //     p++;
+        // }
+        this->ServicePrincipalName.init(length + 1);
+        this->ServicePrincipalName.copy(pszTargetName, length);
+        this->ServicePrincipalName.get_data()[length] = 0;
+    }
+
+
     void InitSecurityInterface(SecInterface secInter) {
         if (this->table) {
             delete this->table;
@@ -373,7 +389,6 @@ struct rdpCredssp
             /* server echos the public key +1 */
             ap_integer_decrement_le(public_key2, public_key_length);
         }
-
         if (memcmp(public_key1, public_key2, public_key_length) != 0) {
             LOG(LOG_ERR, "Could not verify server's public key echo\n");
 
@@ -562,6 +577,7 @@ struct rdpCredssp
 
         SecPkgInfo packageInfo;
         if (this->table == NULL) {
+            LOG(LOG_ERR, "Could not Initiate %s Security Interface!", NTLM_Interface);
             return 0;
         }
         status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
@@ -582,6 +598,7 @@ struct rdpCredssp
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
+            this->table->FreeCredentialsHandle(&credentials);
             return 0;
         }
 
@@ -681,9 +698,11 @@ struct rdpCredssp
             input_buffer_desc.pBuffers = &input_buffer;
             input_buffer.BufferType = SECBUFFER_TOKEN;
 
-            if (this->credssp_recv() < 0)
+            if (this->credssp_recv() < 0) {
+                LOG(LOG_ERR, "NEGO Token Expected!");
+                this->table->FreeCredentialsHandle(&credentials);
                 return -1;
-
+            }
             // #ifdef WITH_DEBUG_CREDSSP
             //         LOG(LOG_ERR, "Receiving Authentication Token (%d)\n", (int) this->negoToken.cbBuffer);
             //         hexdump_c(this->negoToken.pvBuffer, this->negoToken.cbBuffer);
@@ -698,8 +717,11 @@ struct rdpCredssp
         }
 
         /* Encrypted Public Key +1 */
-        if (this->credssp_recv() < 0)
+        if (this->credssp_recv() < 0) {
+            LOG(LOG_ERR, "Encrypted Public Key Expected!");
+            this->table->FreeCredentialsHandle(&credentials);
             return -1;
+        }
 
         /* Verify Server Public Key Echo */
 
@@ -708,6 +730,8 @@ struct rdpCredssp
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "Could not verify public key echo!\n");
+            this->credssp_buffer_free();
+            this->table->FreeCredentialsHandle(&credentials);
             return -1;
         }
 
@@ -717,6 +741,7 @@ struct rdpCredssp
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
+            this->table->FreeCredentialsHandle(&credentials);
             return 0;
         }
 
@@ -729,8 +754,6 @@ struct rdpCredssp
 
         return 1;
     }
-
-
 
     int credssp_server_authenticate() {
         SEC_STATUS status;

@@ -67,7 +67,7 @@ struct NTLMContext {
     bool SendVersionInfo;
     bool confidentiality;
 
-    uint32_t ConfigFlags;
+    // uint32_t ConfigFlags;
 
     // RC4_KEY SendRc4Seal;
     // RC4_KEY RecvRc4Seal;
@@ -134,6 +134,7 @@ struct NTLMContext {
         this->UseMIC = false;
         this->state = NTLM_STATE_INITIAL;
         this->SendVersionInfo = true;
+        // this->SendVersionInfo = false;
         this->SendSingleHostData = false;
         this->NegotiateFlags = 0;
         this->LmCompatibilityLevel = 3;
@@ -733,8 +734,12 @@ struct NTLMContext {
 	if (this->SendVersionInfo)
             negoFlag |= NTLMSSP_NEGOTIATE_VERSION;
 
-	// if (negoFlag & NTLMSSP_NEGOTIATE_VERSION)
-        //     this->version.ntlm_get_version_info();
+	if (negoFlag & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.ntlm_get_version_info();
+        }
+        else {
+            this->version.ignore_version_info();
+        }
 
 	this->NegotiateFlags = negoFlag;
         this->NEGOTIATE_MESSAGE.negoFlags.flags = negoFlag;
@@ -767,8 +772,30 @@ struct NTLMContext {
         }
         this->ntlm_set_negotiate_flags();
         this->NEGOTIATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
             this->NEGOTIATE_MESSAGE.version.ntlm_get_version_info();
+        }
+        else {
+            this->NEGOTIATE_MESSAGE.version.ignore_version_info();
+        }
+
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
+            BStream & workstationbuff = this->NEGOTIATE_MESSAGE.Workstation.Buffer;
+            workstationbuff.reset();
+            workstationbuff.out_copy_bytes(this->Workstation.get_data(),
+                                           this->Workstation.size());
+            workstationbuff.mark_end();
+        }
+
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED) {
+            BStream & domain = this->AUTHENTICATE_MESSAGE.DomainName.Buffer;
+            domain.reset();
+            domain.out_copy_bytes(this->identity.Domain.get_data(),
+                                  this->identity.Domain.size());
+            domain.mark_end();
+        }
+
+
         this->state = NTLM_STATE_CHALLENGE;
     }
 
@@ -788,8 +815,13 @@ struct NTLMContext {
         this->ntlm_construct_challenge_target_info();
 
         this->CHALLENGE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
-        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION)
+        if (this->NegotiateFlags & NTLMSSP_NEGOTIATE_VERSION) {
             this->CHALLENGE_MESSAGE.version.ntlm_get_version_info();
+        }
+        else {
+            this->CHALLENGE_MESSAGE.version.ignore_version_info();
+        }
+
         this->state = NTLM_STATE_AUTHENTICATE;
     }
 
@@ -814,8 +846,13 @@ struct NTLMContext {
         this->AUTHENTICATE_MESSAGE.negoFlags.flags = this->NegotiateFlags;
 
         uint32_t flag = this->AUTHENTICATE_MESSAGE.negoFlags.flags;
-        if (flag & NTLMSSP_NEGOTIATE_VERSION)
+        if (flag & NTLMSSP_NEGOTIATE_VERSION) {
             this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
+        }
+        else {
+            this->AUTHENTICATE_MESSAGE.version.ignore_version_info();
+        }
+
 
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
             BStream & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.Buffer;
@@ -835,7 +872,7 @@ struct NTLMContext {
         user.out_copy_bytes(userName, user_size);
         user.mark_end();
 
-        this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
+        // this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
 
         this->state = NTLM_STATE_FINAL;
 
@@ -893,24 +930,27 @@ struct NTLMContext {
         return SEC_I_COMPLETE_NEEDED;
     }
 
-    void ntlm_SetContextWorkStation(const char * workstation, size_t length) {
+    void ntlm_SetContextWorkstation(const uint8_t * workstation) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
-        this->Workstation.init(length);
-        this->Workstation.copy((uint8_t *)workstation, length);
+        if (workstation) {
+            size_t host_len = UTF8Len(workstation);
+            this->Workstation.init(host_len * 2);
+            UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
+	}
+        else {
+            this->Workstation.init(0);
+	}
     }
-    void ntlm_SetContextServicePrincipalName(const char * pszTargetName) {
+    void ntlm_SetContextServicePrincipalName(const uint8_t * pszTargetName) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
-        const char * p = pszTargetName;
-        size_t length = 0;
-        if (p) {
-            length = strlen(p);
-        }
-        // while (p) {
-        //     length++;
-        //     p++;
-        // }
-        this->ServicePrincipalName.init(length);
-        this->ServicePrincipalName.copy((uint8_t *)pszTargetName, length);
+        if (pszTargetName) {
+            size_t host_len = UTF8Len(pszTargetName);
+            this->ServicePrincipalName.init(host_len * 2);
+            UTF8toUTF16(pszTargetName, this->ServicePrincipalName.get_data(), host_len * 2);
+	}
+        else {
+            this->ServicePrincipalName.init(0);
+	}
     }
 
 
@@ -1037,8 +1077,6 @@ struct NTLMContext {
         return status;
     }
 };
-
-
 
 
 #endif

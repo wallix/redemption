@@ -206,6 +206,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
         this->AvPairList.emit(this->TargetInfo.Buffer);
 
         uint32_t currentOffset = this->PayloadOffset;
+        if (this->version.ignore_version) {
+            currentOffset -= 8;
+        }
         NTLMMessage::emit(stream);
         currentOffset += this->TargetName.emit(stream, currentOffset);
         this->negoFlags.emit(stream);
@@ -233,7 +236,9 @@ struct NTLMChallengeMessage : public NTLMMessage {
         // this->serverChallenge = stream.in_uint64_le();
         stream.in_skip_bytes(8);
         this->TargetInfo.recv(stream);
-        this->version.recv(stream);
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.recv(stream);
+        }
 
         // PAYLOAD
         this->TargetName.read_payload(stream, pBegin);
