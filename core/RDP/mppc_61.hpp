@@ -485,7 +485,7 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
                 this->hash_table[rdp_mppc_enc::signature(this->historyBuffer + 5, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 5;
                 this->hash_table[rdp_mppc_enc::signature(this->historyBuffer + 6, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 6;
                 this->hash_table[rdp_mppc_enc::signature(this->historyBuffer + 7, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 7;
-                counter                                                                                                                              = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
+                counter                                                                                                    = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
             }
 
             uint32_t length_of_match = 0;
@@ -558,16 +558,12 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
             this->output_buffer_literals.mark_end();
 
             uint32_t match_details_data_size = this->output_buffer_match_details.size();
-/*
-            uint32_t MatchCount              = (match_details_data_size ?
-                                                match_details_data_size / 8 :   // sizeof(RDP61_COMPRESSED_DATA) = 8
-                                                0);
-*/
 
             if ((match_details_data_size ? 2 : 0) +  // MatchCount(2)
-                match_details_data_size +
-                this->output_buffer_literals.size() >=
-                uncompressed_data_size) {
+                     match_details_data_size +
+                     this->output_buffer_literals.size() >=
+                uncompressed_data_size)
+            {
                 this->Level1ComprFlags |= L1_NO_COMPRESSION;
             }
             else {
@@ -577,30 +573,31 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
 
         this->historyOffset += uncompressed_data_size;
 
-/*
         uint16_t compressed_data_size;
-        if ((match_details_data_size ? 2 : 0) +  // MatchCount(2)
-            match_details_data_size +
-            this->output_buffer_literals.size() >=
-            uncompressed_data_size) {
-            this->Level1ComprFlags |= L1_NO_COMPRESSION;
-
+        if (this->Level1ComprFlags & L1_NO_COMPRESSION) {
             this->level_2_compressor.compress(uncompressed_data, uncompressed_data_size, Level2ComprFlags,
-                compressed_data_size);
+                compressed_data_size,
+                uncompressed_data_size -
+                    2); // Level1ComprFlags(1) + Level2ComprFlags(1)
 
-            if (compressed_data_size < uncompressed_data_size) {
+            if (Level2ComprFlags & PACKET_COMPRESSED) {
                 this->outputBuffer           = reinterpret_cast<uint8_t *>(this->level_2_compressor.outputBuffer);
                 this->bytes_in_output_buffer = this->level_2_compressor.bytes_in_opb;
             }
+            else {
+// Data compression results in an expansion of the data size!!!
+            }
         }
         else {
-            this->Level1ComprFlags |= L1_COMPRESSED;
-
             uint8_t * level_1_compressed_data =
                 this->output_buffer_literals.get_data() -
                 this->output_buffer_match_details.size() -
                 2;  // MatchCount(2)
 
+            uint32_t match_details_data_size = this->output_buffer_match_details.size();
+            uint32_t MatchCount = (match_details_data_size ?
+                                   match_details_data_size / 8 :   // sizeof(RDP61_COMPRESSED_DATA) = 8
+                                   0);
             StaticStream match_count_stream(level_1_compressed_data, 2); // MatchCount(2)
             match_count_stream.out_uint16_le(MatchCount);
 
@@ -617,9 +614,17 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
                 this->output_buffer_literals.size();
 
             this->level_2_compressor.compress(level_1_compressed_data, level_1_compressed_data_size, Level2ComprFlags,
-                compressed_data_size);
+                compressed_data_size, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
+
+            if (Level2ComprFlags & PACKET_COMPRESSED) {
+                this->outputBuffer           = reinterpret_cast<uint8_t *>(this->level_2_compressor.outputBuffer);
+                this->bytes_in_output_buffer = this->level_2_compressor.bytes_in_opb;
+            }
+            else {
+                this->outputBuffer           = level_1_compressed_data;
+                this->bytes_in_output_buffer = level_1_compressed_data_size;
+            }
         }
-*/
 
         return true;
     }
@@ -636,6 +641,12 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
     }
 
     virtual void get_compressed_data(Stream & stream) const {
+        if (stream.tailroom() < this->bytes_in_output_buffer) {
+            LOG(LOG_ERR, "rdp_mppc_61_enc::get_compressed_data: Buffer too small");
+            throw Error(ERR_BUFFER_TOO_SMALL);
+        }
+
+        stream.out_copy_bytes(this->outputBuffer, this->bytes_in_output_buffer);
     }
 
     virtual void dump() {
