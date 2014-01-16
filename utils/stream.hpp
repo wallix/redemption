@@ -983,6 +983,12 @@ class StaticStream : public FixedSizeStream {
 
     // Not allowed on SubStreams
     virtual void init(size_t v) {}
+
+    void resize(const uint8_t * data, size_t len) {
+        this->p = this->data = const_cast<uint8_t *>(data);
+        this->capacity = len;
+        this->end = this->data + this->capacity;
+    }
 };
 
 #endif

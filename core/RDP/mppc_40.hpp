@@ -436,9 +436,9 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
 };  // struct rdp_mppc_40_dec
 
 struct rdp_mppc_40_enc : public rdp_mppc_enc {
-    char     * historyBuffer;       /* contains uncompressed data */
-    char     * outputBuffer;        /* contains compressed data */
-    char     * outputBufferPlus;
+    uint8_t  * historyBuffer;       /* contains uncompressed data */
+    uint8_t  * outputBuffer;        /* contains compressed data */
+    uint8_t  * outputBufferPlus;
     int        historyOffset;       /* next free slot in historyBuffer */
     int        buf_len;             /* length of historyBuffer, protocol dependant */
     int        bytes_in_opb;        /* compressed bytes available in outputBuffer */
@@ -466,8 +466,8 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
 
         this->first_pkt        = 1;
         TODO("making it static and large enough should be good for both RDP4 and RDP5");
-        this->historyBuffer    = static_cast<char *>(calloc(this->buf_len, 1));
-        this->outputBufferPlus = static_cast<char *>(calloc(this->buf_len + 64 + 8, 1));
+        this->historyBuffer    = static_cast<uint8_t *>(calloc(this->buf_len, 1));
+        this->outputBufferPlus = static_cast<uint8_t *>(calloc(this->buf_len + 64 + 8, 1));
         this->outputBuffer     = this->outputBufferPlus + 64;
         this->hash_table       = static_cast<uint16_t *>(calloc(rdp_mppc_enc::HASH_BUF_LEN, 2));
     }
@@ -599,7 +599,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         int        opb_index    = 0;                    /* index into outputBuffer                        */
         int        bits_left    = 8;                    /* unused bits in current uint8_t in outputBuffer */
         uint16_t * hash_table   = this->hash_table;     /* hash table for pattern matching                */
-        char     * outputBuffer = this->outputBuffer;   /* points to enc->outputBuffer                    */
+        uint8_t  * outputBuffer = this->outputBuffer;   /* points to enc->outputBuffer                    */
 
         TODO("this memset should not be necessary");
         memset(outputBuffer, 0, len);
@@ -631,14 +631,15 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
                     outputBuffer, bits_left, opb_index);
             }
 
-            hash_table[rdp_mppc_enc::signature(this->historyBuffer)]   = 0;
-            hash_table[rdp_mppc_enc::signature(this->historyBuffer+1)] = 1;
-            ctr                                                        = 2;
+            hash_table[rdp_mppc_enc::signature(this->historyBuffer    , 3)] = 0;
+            hash_table[rdp_mppc_enc::signature(this->historyBuffer + 1, 3)] = 1;
+            ctr                                                             = 2;
         }
 
         int lom = 0;
         for (; ctr + 2 < len ; ctr += lom) { // we need at least 3 bytes to look for match
-            uint32_t crc2           = rdp_mppc_enc::signature(this->historyBuffer + this->historyOffset + ctr);
+            uint32_t crc2           = rdp_mppc_enc::signature(
+                this->historyBuffer + this->historyOffset + ctr, 3);
             int      previous_match = hash_table[crc2];
             hash_table[crc2]        = this->historyOffset + ctr;
 
@@ -653,11 +654,13 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
             }
             else {
                 /* we have a match - compute hash and Length of Match for triplets */
-                hash_table[rdp_mppc_enc::signature(this->historyBuffer + this->historyOffset + ctr + 1)] =
-                    this->historyOffset + ctr + 1;
+                hash_table[rdp_mppc_enc::signature(
+                    this->historyBuffer + this->historyOffset + ctr + 1, 3)] =
+                        this->historyOffset + ctr + 1;
                 for (lom = 3; ctr + lom < len; lom++) {
-                    hash_table[rdp_mppc_enc::signature(this->historyBuffer + this->historyOffset + ctr + lom - 1)] =
-                        this->historyOffset + ctr + lom - 1;
+                    hash_table[rdp_mppc_enc::signature(
+                        this->historyBuffer + this->historyOffset + ctr + lom - 1, 3)] =
+                            this->historyOffset + ctr + lom - 1;
                     if (this->historyBuffer[this->historyOffset + ctr + lom] !=
                         this->historyBuffer[previous_match + lom]) {
                         break;
@@ -714,15 +717,17 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         return true;
     }
 
-    virtual bool compress(const uint8_t * srcData, uint16_t len, uint8_t & flags, uint16_t & compressedLength) {
-        bool compress_result = this->compress_40(srcData, (int)len);
+    virtual bool compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+        uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t reserved)
+    {
+        bool compress_result = this->compress_40(uncompressed_data, (int)uncompressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
-            flags            = this->flags;
-            compressedLength = this->bytes_in_opb;
+            compressedType       = this->flags;
+            compressed_data_size = this->bytes_in_opb;
         }
         else {
-            flags            = 0;
-            compressedLength = 0;
+            compressedType       = 0;
+            compressed_data_size = 0;
         }
         return compress_result;
     }

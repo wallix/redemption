@@ -428,7 +428,7 @@ public:
 //
 ////////////////////
 
-static inline void insert_n_bits_40_50(int n, uint32_t _data, char * outputBuffer,
+static inline void insert_n_bits_40_50(int n, uint32_t _data, uint8_t * outputBuffer,
     int & bits_left, int & opb_index)
 {
     int bits_to_serialize = n;
@@ -451,7 +451,7 @@ static inline void insert_n_bits_40_50(int n, uint32_t _data, char * outputBuffe
     }
 }
 
-static inline void encode_literal_40_50(char c, char * outputBuffer, int & bits_left, int & opb_index) {
+static inline void encode_literal_40_50(char c, uint8_t * outputBuffer, int & bits_left, int & opb_index) {
     insert_n_bits_40_50(
         (c & 0x80) ? 9 : 8,
         (c & 0x80) ? (0x02 << 7) | (c & 0x7F) : c,
@@ -473,7 +473,7 @@ public:
      */
     virtual ~rdp_mppc_enc() {}
 
-    static uint32_t signature(const char v[]) {
+    static inline uint16_t signature(const uint8_t v[], unsigned int length) {
         /* CRC16 defs */
         static const uint16_t crc_table[256] = {
             0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
@@ -510,20 +510,22 @@ public:
             0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
         };
 
-        uint32_t crc = 0xFFFF;
-        crc = (crc >> 8) ^ crc_table[(crc ^ v[0]) & 0xff];
-        crc = (crc >> 8) ^ crc_table[(crc ^ v[1]) & 0xff];
-        crc = (crc >> 8) ^ crc_table[(crc ^ v[2]) & 0xff];
+        uint16_t crc = 0xFFFF;
+        for (unsigned int index = 0; index < length; index++)
+            crc = (crc >> 8) ^ crc_table[(crc ^ v[index]) & 0xff];
         return crc;
     }
 
-    virtual bool compress(const uint8_t * srcData, uint16_t len, uint8_t & flags, uint16_t & compressedLength) = 0;
+    static const uint16_t MAX_COMPRESSED_DATA_SIZE_UNUSED = static_cast<uint16_t>(-1);
+
+    virtual bool compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+        uint8_t & compressedType, uint16_t & compressed_data_size,
+        uint16_t max_compressed_data_size) = 0;
 
     virtual void get_compressed_data(Stream & stream) const = 0;
 
-    virtual void mini_dump() = 0;
-
     virtual void dump() = 0;
+    virtual void mini_dump() = 0;
 };  // struct rdp_mppc_enc
 
 

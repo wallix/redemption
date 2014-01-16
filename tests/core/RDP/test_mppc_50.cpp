@@ -55,7 +55,8 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression2)
     uint8_t  compressionFlags;
     uint16_t datalen;
 
-    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen);
+    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
+        rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     int flags = PACKET_COMPRESSED;
 
@@ -94,7 +95,8 @@ BOOST_AUTO_TEST_CASE(TestRDP50BlukCompression3)
     uint8_t  compressionFlags;
     uint16_t datalen;
 
-    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen);
+    mppc_enc->compress(uncompressed_data, sizeof(uncompressed_data), compressionFlags, datalen,
+        rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     int flags = PACKET_COMPRESSED;
 

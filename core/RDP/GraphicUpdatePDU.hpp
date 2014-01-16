@@ -278,7 +278,7 @@ protected:
                     uint16_t datalen;
 
                     this->mppc_enc->compress(this->buffer_stream_orders.get_data(), this->buffer_stream_orders.size(),
-                        compressionFlags, datalen);
+                        compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
                     size_t share_data_header_size = 12;
 
@@ -375,7 +375,7 @@ protected:
                     uint16_t datalen;
 
                     this->mppc_enc->compress(this->buffer_stream_orders.get_data(), this->buffer_stream_orders.size(),
-                        compressionFlags, datalen);
+                        compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
                     if (!(compressionFlags & PACKET_COMPRESSED)) {
                         datalen     = this->buffer_stream_orders.size();
@@ -515,7 +515,7 @@ protected:
                     uint8_t  compressionFlags;
 
                     this->mppc_enc->compress(this->buffer_stream_bitmaps.get_data(), this->buffer_stream_bitmaps.size(),
-                        compressionFlags, datalen);
+                        compressionFlags, datalen, rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
                     uint8_t compression = FastPath::FASTPATH_OUTPUT_COMPRESSION_USED;
                     header_size = 4;

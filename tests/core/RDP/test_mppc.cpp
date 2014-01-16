@@ -95,7 +95,8 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     uint8_t  compressionFlags;
     uint16_t datalen;
 
-    BOOST_CHECK_EQUAL(true, enc->compress(decompressed_rd5_data, data_len, compressionFlags, datalen));
+    BOOST_CHECK_EQUAL(true, enc->compress(decompressed_rd5_data, data_len, compressionFlags, datalen,
+        rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED));
 
     BOOST_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
     BOOST_CHECK_EQUAL(true,
@@ -116,7 +117,7 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
 
 BOOST_AUTO_TEST_CASE(TestBitsSerializer)
 {
-    char outputBuffer[256] ={};
+    uint8_t outputBuffer[256] ={};
     int bits_left = 8;
     int opb_index = 0;
     insert_n_bits_40_50(2, 3, outputBuffer, bits_left, opb_index);
