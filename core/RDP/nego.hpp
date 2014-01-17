@@ -267,7 +267,7 @@ struct RdpNego
             this->state = NEGO_STATE_FINAL;
             return;
         }
-
+        this->selected_protocol = x224.rdp_neg_code;
         if (this->nla) {
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_HYBRID){
