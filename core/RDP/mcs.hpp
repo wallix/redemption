@@ -29,6 +29,8 @@
 #include "stream.hpp"
 #include "RDP/out_per_bstream.hpp"
 
+
+
 namespace MCS
 {
     enum {
@@ -129,6 +131,25 @@ namespace MCS
         MCSPDU_CONNECT_RESPONSE            = 102,
         MCSPDU_CONNECT_ADDITIONAL          = 103,
         MCSPDU_CONNECT_RESULT              = 104,
+    };
+
+    static const char* const RT_RESULT[] = {
+        "rt-successful",
+        "rt-domain-merging",
+        "rt-domain-not-hierarchical",
+        "rt-no-such-channel",
+        "rt-no-such-domain",
+        "rt-no-such-user",
+        "rt-not-admitted",
+        "rt-other-user-id",
+        "rt-parameters-unacceptable",
+        "rt-token-not-available",
+        "rt-token-not-possessed",
+        "rt-too-many-channels",
+        "rt-too-many-tokens",
+        "rt-too-many-users",
+        "rt-unspecified-failure",
+        "rt-user-rejected"
     };
 
     struct RecvFactory
@@ -558,8 +579,11 @@ namespace MCS
             this->ber_stream.out_ber_integer(2);      // 3 bytes :
 
             this->ber_stream.out_uint8(OutBerStream::BER_TAG_OCTET_STRING);
-            this->ber_stream.out_ber_len_uint16(payload_length);
+            // We assume here that payload_length is encoded in 2 bytes
+            // (length > 0xFFFF will probably bug whereas ber should allow theses values)
+            this->ber_stream.out_ber_len_uint16(payload_length); // 3 bytes
             // now we know full MCS Initial header length (without initial tag and len)
+            // fill 3 bytes of length at the begining of this function
             this->ber_stream.set_out_ber_len_uint16(payload_length + stream.get_offset() - 5, 2);
             this->ber_stream.mark_end();
         }
@@ -934,6 +958,7 @@ namespace MCS
 // serverNetworkData (variable): Variable-length Server Network Data structure
 //   (section 2.2.1.4.4).
 
+
     struct CONNECT_RESPONSE_PDU_Recv
     {
 
@@ -1003,6 +1028,10 @@ namespace MCS
             this->result = this->ber_stream.in_uint8_with_check(in_result);
             if (!in_result){
                 LOG(LOG_ERR, "Truncated Connect Response PDU result: expected=1, remains=0");
+                throw Error(ERR_MCS);
+            }
+            if (this->result){
+                LOG(LOG_ERR, "Check Result Error (0x%02X): %s", this->result, RT_RESULT[this->result]);
                 throw Error(ERR_MCS);
             }
 

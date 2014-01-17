@@ -86,6 +86,9 @@ struct RdpNego
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
                                     | RdpNego::PROTOCOL_TLS;
+            if (this->nla) {
+                this->enabled_protocols |= RdpNego::PROTOCOL_NLA;
+            }
         }
         else {
             this->enabled_protocols = RdpNego::PROTOCOL_RDP;
@@ -104,10 +107,10 @@ struct RdpNego
         this->credssp.identity.SetPasswordFromUtf8(pass);
         this->credssp.SetHostnameFromUtf8(hostname);
 
-        hexdump_c(user, strlen((char*)user));
-        hexdump_c(domain, strlen((char*)domain));
-        hexdump_c(pass, strlen((char*)pass));
-        hexdump_c(hostname, strlen((char*)hostname));
+        // hexdump_c(user, strlen((char*)user));
+        // hexdump_c(domain, strlen((char*)domain));
+        // hexdump_c(pass, strlen((char*)pass));
+        // hexdump_c(hostname, strlen((char*)hostname));
 
     }
 
@@ -270,8 +273,8 @@ struct RdpNego
             && x224.rdp_neg_code == X224::PROTOCOL_HYBRID){
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_client_tls(ignore_certificate_change);
+                LOG(LOG_INFO, "activating CREDSSP");
                 int res = this->credssp.credssp_client_authenticate();
-                // TODO NLA authentication
                 if (res != 1) {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
@@ -286,6 +289,7 @@ struct RdpNego
                 }
                 this->send_negotiation_request();
                 this->state = NEGO_STATE_TLS;
+                this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
             }
         }
         else if (this->tls){
@@ -306,6 +310,7 @@ struct RdpNego
                 }
                 this->send_negotiation_request();
                 this->state = NEGO_STATE_RDP;
+                this->enabled_protocols = RdpNego::PROTOCOL_RDP;
             }
             TODO("Other cases are errors, set an appropriate error message");
         }

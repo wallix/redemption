@@ -212,12 +212,11 @@ namespace GCC
             stream.out_per_choice(0); // From Key select object (0) of type OBJECT_IDENTIFIER
             const uint8_t t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
             stream.out_per_object_identifier(t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
-
             //  ConnectData::connectPDU (OCTET_STRING)
             // 23 = offset after mark_end()
             stream.out_per_length(payload_size + 23 - 9); // connectPDU length
 
-            //  ConnectGCCPDU
+             // ConnectGCCPDU
             stream.out_per_choice(0); // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
             stream.out_per_selection(0x08); // select optional userData from ConferenceCreateRequest
 
@@ -249,11 +248,11 @@ namespace GCC
                 LOG(LOG_WARNING, "GCC Conference Create Request User data truncated (need at least 23 bytes, available %u)", stream.size());
                 throw Error(ERR_GCC);
             }
-            
+
             // Key select object (0) of type OBJECT_IDENTIFIER
             // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
             stream.in_skip_bytes(7);
-            
+
             uint16_t length_with_header = stream.in_2BUE();
 
             // ConnectGCCPDU
@@ -2548,11 +2547,11 @@ namespace GCC
                 else {
                     this->x509.certCount = stream.in_uint32_le();
                     if (this->x509.certCount > 32){
-                        LOG(LOG_ERR, "More than 32 certificates (count=%u), this is probably an attack", 
+                        LOG(LOG_ERR, "More than 32 certificates (count=%u), this is probably an attack",
                             this->x509.certCount);
                         throw Error(ERR_GCC);
                     }
-                    
+
                     for (size_t i = 0; i < this->x509.certCount ; i++){
                         this->x509.cert[i].len = stream.in_uint32_le();
                         this->x509.cert[i].cert = d2i_X509(NULL, const_cast<const uint8_t **>(&stream.p), this->x509.cert[i].len);
