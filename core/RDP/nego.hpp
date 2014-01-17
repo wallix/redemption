@@ -67,11 +67,10 @@ struct RdpNego
     char username[128];
     Transport * trans;
 
-    char hostname[16];
-    char password[256];
-    char domain[256];
-
-    rdpCredssp credssp;
+    uint8_t hostname[16];
+    uint8_t user[128];
+    uint8_t password[256];
+    uint8_t domain[256];
 
     RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla)
     : flags(0)
@@ -81,7 +80,6 @@ struct RdpNego
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
     , trans(socket_trans)
-    , credssp(*trans)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
@@ -96,22 +94,26 @@ struct RdpNego
         strncpy(this->username, username, 127);
         this->username[127] = 0;
 
-        memset(this->hostname, 0, 16);
-        memset(this->password, 0, 256);
-        memset(this->domain, 0, 256);
+        memset(this->hostname, 0, sizeof(this->hostname));
+        memset(this->user, 0, sizeof(this->user));
+        memset(this->password, 0, sizeof(this->password));
+        memset(this->domain, 0, sizeof(this->domain));
+    }
+
+    virtual ~RdpNego() {
     }
 
     void set_identity(uint8_t * user, uint8_t * domain, uint8_t * pass, uint8_t * hostname) {
-        this->credssp.identity.SetUserFromUtf8(user);
-        this->credssp.identity.SetDomainFromUtf8(domain);
-        this->credssp.identity.SetPasswordFromUtf8(pass);
-        this->credssp.SetHostnameFromUtf8(hostname);
-
-        // hexdump_c(user, strlen((char*)user));
-        // hexdump_c(domain, strlen((char*)domain));
-        // hexdump_c(pass, strlen((char*)pass));
-        // hexdump_c(hostname, strlen((char*)hostname));
-
+        if (this->nla) {
+            memcpy(this->user, user, sizeof(this->user) - 1);
+            this->user[sizeof(this->user) - 1] = 0;
+            memcpy(this->domain, domain, sizeof(this->domain) - 1);
+            this->domain[sizeof(this->domain) - 1] = 0;
+            memcpy(this->password, pass, sizeof(this->password) - 1);
+            this->password[sizeof(this->password) - 1] = 0;
+            memcpy(this->hostname, hostname, sizeof(this->hostname) - 1);
+            this->hostname[sizeof(this->hostname) - 1] = 0;
+        }
     }
 
     void server_event(bool ignore_certificate_change)
@@ -268,13 +270,16 @@ struct RdpNego
             return;
         }
         this->selected_protocol = x224.rdp_neg_code;
+
         if (this->nla) {
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_HYBRID){
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_client_tls(ignore_certificate_change);
                 LOG(LOG_INFO, "activating CREDSSP");
-                int res = this->credssp.credssp_client_authenticate();
+                rdpCredssp credssp(*this->trans);
+                credssp.set_credentials(this->user, this->domain, this->password, this->hostname);
+                int res = credssp.credssp_client_authenticate();
                 if (res != 1) {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
@@ -292,7 +297,7 @@ struct RdpNego
                 this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
             }
         }
-        else if (this->tls){
+        else if (this->tls) {
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");

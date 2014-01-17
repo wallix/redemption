@@ -744,15 +744,14 @@ struct mod_rdp : public mod_api {
                                 cs_core.clientName[i] = hostname[i];
                             }
                             bzero(&(cs_core.clientName[hostlen]), 16-hostlen);
+
                             if (this->nego.tls){
-                                // cs_core.serverSelectedProtocol = 1;
                                 cs_core.serverSelectedProtocol = this->nego.selected_protocol;
                             }
                             if (this->verbose) {
                                 cs_core.log("Sending to Server");
                             }
                             cs_core.emit(stream);
-                            LOG(LOG_INFO, "CS CORE offset : %u", stream.size());
                             // ------------------------------------------------------------
 
                             GCC::UserData::CSCluster cs_cluster;
@@ -776,16 +775,12 @@ struct mod_rdp : public mod_api {
                                 cs_cluster.log("Sending to server");
                             }
                             cs_cluster.emit(stream);
-                            LOG(LOG_INFO, "CS CLUSTER offset : %u", stream.size());
-
                             // ------------------------------------------------------------
                             GCC::UserData::CSSecurity cs_security;
                             if (this->verbose) {
                                 cs_security.log("Sending to server");
                             }
                             cs_security.emit(stream);
-                            LOG(LOG_INFO, "CS SECURITY offset : %u", stream.size());
-
                             // ------------------------------------------------------------
 
                             const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
@@ -831,7 +826,6 @@ struct mod_rdp : public mod_api {
                                     cs_net.log("Sending to server");
                                 }
                                 cs_net.emit(stream);
-                                LOG(LOG_INFO, "CS CHANNEL offset : %u", stream.size());
                             }
                             // ------------------------------------------------------------
 

@@ -79,6 +79,18 @@ struct rdpCredssp
         }
     }
 
+    void set_credentials(uint8_t * user, uint8_t * domain, uint8_t * pass, uint8_t * hostname) {
+        this->identity.SetUserFromUtf8(user);
+        this->identity.SetDomainFromUtf8(domain);
+        this->identity.SetPasswordFromUtf8(pass);
+        this->SetHostnameFromUtf8(hostname);
+        // hexdump_c(user, strlen((char*)user));
+        // hexdump_c(domain, strlen((char*)domain));
+        // hexdump_c(pass, strlen((char*)pass));
+        // hexdump_c(hostname, strlen((char*)hostname));
+
+    }
+
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         const char * p = (char *)pszTargetName;
         size_t length = 0;
