@@ -211,9 +211,9 @@ public:
     virtual int decompress(uint8_t * compressed_data, int compressed_data_size,
         int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size)
     {
-        //LOG(LOG_INFO, "decompress_61");
+        LOG(LOG_INFO, "decompress_61");
 //LOG(LOG_INFO, "");
-//LOG(LOG_INFO, "historyOffset=%d compressed_data_size=%d compressionFlags=0x%X", this->historyOffset, compressed_data_size, compressionFlags);
+LOG(LOG_INFO, "historyOffset=%d compressed_data_size=%d compressionFlags=0x%X", this->historyOffset, compressed_data_size, compressionFlags);
 
         uncompressed_data      = NULL;
         uncompressed_data_size = 0;
@@ -229,7 +229,7 @@ public:
 
         uint8_t Level1ComprFlags = compressed_data_stream.in_uint8();
         uint8_t Level2ComprFlags = compressed_data_stream.in_uint8();
-//LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, Level2ComprFlags);
+LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, Level2ComprFlags);
 
         if (!(Level1ComprFlags & (L1_COMPRESSED | L1_NO_COMPRESSION))) {
             LOG(LOG_ERR, "Level-1 no historyBuffer update");
@@ -428,7 +428,8 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
     }
 
     virtual bool compress_61(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size) {
-        //LOG(LOG_INFO, "compress_61");
+        LOG(LOG_INFO, "compress_61");
+LOG(LOG_INFO, "uncompressed_data_size=%u historyOffset=%u", uncompressed_data_size, this->historyOffset);
 
         this->Level1ComprFlags = L1_INNER_COMPRESSION;
         this->Level2ComprFlags = 0;
@@ -453,7 +454,8 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
         }
 
         if (this->level_1_compr_flags_hold & L1_PACKET_AT_FRONT) {
-            this->historyOffset =  0;
+LOG(LOG_INFO, "level_1_compr_flags_hold & L1_PACKET_AT_FRONT");
+            this->historyOffset = 0;
 
             ::memset(this->historyBuffer, 0, RDP_61_HISTORY_BUFFER_LENGTH * sizeof(uint8_t) );
             ::memset(this->hash_table,    0, rdp_mppc_enc::HASH_BUF_LEN   * sizeof(uint32_t));
@@ -488,7 +490,7 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
                 counter                                                                                                    = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
             }
 
-            uint32_t length_of_match = 0;
+            uint16_t length_of_match = 0;
             // We need at least RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH bytes to look for match
             //  (> sizeof(RDP61_MATCH_DETAILS) = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1).
             for (; counter + (RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1) < uncompressed_data_size;
@@ -527,7 +529,7 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
                     // Maximum LOM is RDP_61_MAX_DATA_BLOCK_SIZE bytes.
                     for (length_of_match = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH;
                          (counter + length_of_match < uncompressed_data_size) &&
-                             (length_of_match < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
+                             (length_of_match < RDP_61_MAX_DATA_BLOCK_SIZE);
                          length_of_match++) {
                         this->hash_table[rdp_mppc_enc::signature(
                             this->historyBuffer + this->historyOffset + counter + length_of_match - 1,
@@ -538,12 +540,19 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
                         {
                             break;
                         }
-
-                        this->output_buffer_match_details.out_uint16_le(length_of_match);
-                        this->output_buffer_match_details.out_uint16_le(counter);
-                        this->output_buffer_match_details.out_uint32_le(previous_match);
                     }
+
+                    this->output_buffer_match_details.out_uint16_le(length_of_match);
+                    this->output_buffer_match_details.out_uint16_le(counter);
+                    this->output_buffer_match_details.out_uint32_le(previous_match);
                 }
+            }
+
+            if (literals_length) {
+                this->output_buffer_literals.out_copy_bytes(literals, literals_length);
+
+                literals        = NULL;
+                literals_length = 0;
             }
 
             // Add remaining data if any to the output.
@@ -558,6 +567,7 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
             this->output_buffer_literals.mark_end();
 
             uint32_t match_details_data_size = this->output_buffer_match_details.size();
+LOG(LOG_INFO, "match_details_data_size=%u literals_size=%u", match_details_data_size, this->output_buffer_literals.size());
 
             if ((match_details_data_size ? 2 : 0) +  // MatchCount(2)
                      match_details_data_size +
@@ -586,6 +596,7 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
             }
             else {
 // Data compression results in an expansion of the data size!!!
+                this->level_1_compr_flags_hold |= L1_PACKET_AT_FRONT;
             }
         }
         else {
@@ -598,15 +609,16 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
             uint32_t MatchCount = (match_details_data_size ?
                                    match_details_data_size / 8 :   // sizeof(RDP61_COMPRESSED_DATA) = 8
                                    0);
-            StaticStream match_count_stream(level_1_compressed_data, 2); // MatchCount(2)
-            match_count_stream.out_uint16_le(MatchCount);
 
-            memmove(
+            ::memmove(
                 level_1_compressed_data +
                     2,                         // MatchCount(2)
                 this->output_buffer_match_details.get_data(),
                 this->output_buffer_match_details.size()
                 );
+
+            StaticStream match_count_stream(level_1_compressed_data, 2); // MatchCount(2)
+            match_count_stream.out_uint16_le(MatchCount);
 
             uint16_t level_1_compressed_data_size =
                 2 + // MatchCount(2)
@@ -626,6 +638,13 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
             }
         }
 
+        if (this->bytes_in_output_buffer) {
+            this->Level1ComprFlags |= this->level_1_compr_flags_hold;
+
+            this->level_1_compr_flags_hold = 0;
+        }
+
+LOG(LOG_INFO, "Level1ComprFlags=0x%02X Level2ComprFlags=0x%02X", this->Level1ComprFlags, this->Level2ComprFlags);
         return true;
     }
 
@@ -635,17 +654,27 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
         this->compress_61(uncompressed_data, uncompressed_data_size);
 
         compressedType       = (this->bytes_in_output_buffer ? (PACKET_COMPRESSED | PACKET_COMPR_TYPE_RDP61) : 0);
-        compressed_data_size = this->bytes_in_output_buffer;
+        compressed_data_size =
+            2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
+            this->bytes_in_output_buffer;
+LOG(LOG_INFO, "compressedType=0x%02X compressed_data_size=%u", compressedType, compressed_data_size);
+if (compressed_data_size) {
+    LOG(LOG_INFO, "Rate=%.2f", (float)compressed_data_size * 100 / uncompressed_data_size);
+}
 
         return true;
     }
 
     virtual void get_compressed_data(Stream & stream) const {
-        if (stream.tailroom() < this->bytes_in_output_buffer) {
+        if (stream.tailroom() <
+            (size_t)2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
+                this->bytes_in_output_buffer) {
             LOG(LOG_ERR, "rdp_mppc_61_enc::get_compressed_data: Buffer too small");
             throw Error(ERR_BUFFER_TOO_SMALL);
         }
 
+        stream.out_uint8(this->Level1ComprFlags);
+        stream.out_uint8(this->Level2ComprFlags);
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_output_buffer);
     }
 

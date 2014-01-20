@@ -566,10 +566,10 @@ public:
             return -1;
 
         static int compress_type_selector[4][4] = {
-            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_8K,  PACKET_COMPR_TYPE_8K,   PACKET_COMPR_TYPE_8K   },
-            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_64K,  PACKET_COMPR_TYPE_64K  },
-            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_RDP6, PACKET_COMPR_TYPE_RDP6 },
-            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_RDP6, PACKET_COMPR_TYPE_RDP6 }
+            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_8K,  PACKET_COMPR_TYPE_8K,   PACKET_COMPR_TYPE_8K    },
+            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_64K,  PACKET_COMPR_TYPE_64K   },
+            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_RDP6, PACKET_COMPR_TYPE_RDP6  },
+            { PACKET_COMPR_TYPE_8K, PACKET_COMPR_TYPE_64K, PACKET_COMPR_TYPE_RDP6, PACKET_COMPR_TYPE_RDP61 }
         };
 
         return compress_type_selector[client_supported_type][front_supported_type];
@@ -590,6 +590,9 @@ public:
 
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->rdp_compression - 1))
         {
+        case PACKET_COMPR_TYPE_RDP61:
+            this->mppc_enc = new rdp_mppc_61_enc();
+            break;
         case PACKET_COMPR_TYPE_RDP6:
             this->mppc_enc = new rdp_mppc_60_enc();
             break;
