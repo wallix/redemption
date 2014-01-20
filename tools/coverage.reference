@@ -170,6 +170,11 @@ core/RDP/nla/credssp 100 100
 core/RDP/nla/sspi 100 100
 core/RDP/nla/nla 100 100
 core/RDP/nla/ntlm/ntlm 100 100
+core/RDP/nla/ntlm/ntlm_context 100 100
+core/RDP/nla/ntlm/ntlm_avpair 100 100
+core/RDP/nla/ntlm/ntlm_message_negotiate 100 100
+core/RDP/nla/ntlm/ntlm_message_challenge 100 100
+core/RDP/nla/ntlm/ntlm_message_authenticate 100 100
 core/server 100 100
 core/session 100 100
 core/session_server 100 100

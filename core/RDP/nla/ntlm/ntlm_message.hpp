@@ -223,16 +223,8 @@ struct NtlmVersion {
         this->ignore_version = false;
         this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
         this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-	// this->ProductBuild        = 7601;
 	this->ProductBuild        = 2600;
         this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
-        // OSVERSIONINFOA osVersionInfo;
-	// osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-	// GetVersionExA(&osVersionInfo);
-	// this->ProductMajorVersion = (UINT8) osVersionInfo.dwMajorVersion;
-	// this->ProductMinorVersion = (UINT8) osVersionInfo.dwMinorVersion;
-	// this->ProductBuild = (UINT16) osVersionInfo.dwBuildNumber;
-	// this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
     void emit(Stream & stream) {
