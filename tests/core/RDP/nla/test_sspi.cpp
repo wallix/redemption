@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestSspi
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 #include "RDP/nla/sspi.hpp"
 #include "check_sig.hpp"
@@ -62,6 +62,8 @@ BOOST_AUTO_TEST_CASE(TestSecBuffer)
     BOOST_CHECK_EQUAL(buff5->Buffer.size(), 555);
     BOOST_CHECK_EQUAL(buff7->Buffer.size(), 777);
     BOOST_CHECK(buffunknown == NULL);
+
+
 }
 
 BOOST_AUTO_TEST_CASE(TestSecIdentity)
@@ -93,6 +95,7 @@ BOOST_AUTO_TEST_CASE(TestSecIdentity)
 
     SEC_WINNT_AUTH_IDENTITY id2;
 
+
     id2.CopyAuthIdentity(id);
     BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
                        id2.User.get_data(),
@@ -103,7 +106,66 @@ BOOST_AUTO_TEST_CASE(TestSecIdentity)
     BOOST_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
                        id2.Password.get_data(),
                        id2.Password.size()));
+
+    id2.clear();
+    BOOST_CHECK_EQUAL(id2.User.size(), 0);
+    BOOST_CHECK_EQUAL(id2.Domain.size(), 0);
+    BOOST_CHECK_EQUAL(id2.Password.size(), 0);
+
+
+    id.SetUserFromUtf8((const uint8_t *)"Zeus");
+    BOOST_CHECK(!memcmp("\x5a\x00\x65\x00\x75\x00\x73\x00",
+                        id.User.get_data(),
+                        id.User.size()));
+    id.SetDomainFromUtf8((const uint8_t *)"Olympe");
+    BOOST_CHECK(!memcmp("\x4f\x00\x6c\x00\x79\x00\x6d\x00\x70\x00\x65\x00",
+                        id.Domain.get_data(),
+                        id.Domain.size()));
+    id.SetPasswordFromUtf8((const uint8_t *)"Athéna");
+    BOOST_CHECK(!memcmp("\x41\x00\x74\x00\x68\x00\xe9\x00\x6e\x00\x61\x00",
+                        id.Password.get_data(),
+                        id.Password.size()));
+    // hexdump_c(id.User.get_data(), id.User.size());
+    // hexdump_c(id.Domain.get_data(), id.Domain.size());
+    // hexdump_c(id.Password.get_data(), id.Password.size());
 }
+
+BOOST_AUTO_TEST_CASE(TestSecureHandle)
+{
+    SecHandle handle;
+    unsigned long a = 521354;
+    SecBuffer buff;
+    buff.Buffer.init(462);
+
+    handle.SecureHandleSetLowerPointer(&a);
+    handle.SecureHandleSetUpperPointer(&buff);
+
+    unsigned long * b = (unsigned long *)handle.SecureHandleGetLowerPointer();
+    PSecBuffer buffimport = (PSecBuffer)handle.SecureHandleGetUpperPointer();
+
+    BOOST_CHECK_EQUAL(*b, a);
+    BOOST_CHECK_EQUAL(buffimport->Buffer.size(), buff.Buffer.size());
+
+    SecHandle handle2(handle);
+
+    unsigned long * b2 = (unsigned long *)handle2.SecureHandleGetLowerPointer();
+    PSecBuffer buffimport2 = (PSecBuffer)handle2.SecureHandleGetUpperPointer();
+
+    BOOST_CHECK_EQUAL(*b2, a);
+    BOOST_CHECK_EQUAL(buffimport2->Buffer.size(), buff.Buffer.size());
+
+    SecHandle handle3;
+
+    handle3 = handle2;
+
+    unsigned long * b3 = (unsigned long *)handle3.SecureHandleGetLowerPointer();
+    PSecBuffer buffimport3 = (PSecBuffer)handle3.SecureHandleGetUpperPointer();
+
+    BOOST_CHECK_EQUAL(*b3, a);
+    BOOST_CHECK_EQUAL(buffimport3->Buffer.size(), buff.Buffer.size());
+
+}
+
 
 BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
 {
@@ -150,6 +212,9 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.MakeSignature(NULL, 0, NULL, 0);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
+    status = table.VerifySignature(NULL, NULL, 0, NULL);
+    BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
+
     status = table.FreeContextBuffer(NULL);
     BOOST_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
@@ -176,11 +241,11 @@ BOOST_AUTO_TEST_CASE(TestSecFunctionTable)
 
     SecPkgInfo packageInfo = {};
     status = table.QuerySecurityPackageInfo(NTLMSP_NAME, &packageInfo);
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
-    BOOST_CHECK_EQUAL(packageInfo.fCapabilities, NTLM_SecPkgInfo.fCapabilities);
-    BOOST_CHECK_EQUAL(packageInfo.wVersion, NTLM_SecPkgInfo.wVersion);
-    BOOST_CHECK_EQUAL(packageInfo.wRPCID, NTLM_SecPkgInfo.wRPCID);
-    BOOST_CHECK_EQUAL(packageInfo.cbMaxToken, NTLM_SecPkgInfo.cbMaxToken);
+    BOOST_CHECK_EQUAL(status, SEC_E_SECPKG_NOT_FOUND);
+    // BOOST_CHECK_EQUAL(packageInfo.fCapabilities, NTLM_SecPkgInfo.fCapabilities);
+    // BOOST_CHECK_EQUAL(packageInfo.wVersion, NTLM_SecPkgInfo.wVersion);
+    // BOOST_CHECK_EQUAL(packageInfo.wRPCID, NTLM_SecPkgInfo.wRPCID);
+    // BOOST_CHECK_EQUAL(packageInfo.cbMaxToken, NTLM_SecPkgInfo.cbMaxToken);
 
     SecPkgInfo packageInfo2 = {};
     status = table.QuerySecurityPackageInfo("KERBEROS", &packageInfo2);

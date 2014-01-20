@@ -87,27 +87,30 @@ static inline int password_cb0(char *buf, int num, int rwflag, void *userdata)
 
 
 class SocketTransport : public Transport {
-    public:
-        RIO rio;
-        bool tls;
-        int sck;
-        int sck_closed;
-        const char * name;
-        uint32_t verbose;
+public:
+    RIO rio;
+    bool tls;
+    int sck;
+    int sck_closed;
+    const char * name;
+    uint32_t verbose;
 
-        char ip_address[128];
-        int  port;
+    char ip_address[128];
+    int  port;
 
-        TODO("check if buffer is defined before accessing it");
+    uint8_t * public_key;
+    size_t public_key_length;
+    TODO("check if buffer is defined before accessing it");
 
-        redemption::string * error_message;
+    redemption::string * error_message;
 
-        SSL_CTX * allocated_ctx;
-        SSL     * allocated_ssl;
+    SSL_CTX * allocated_ctx;
+    SSL     * allocated_ssl;
 
     SocketTransport( const char * name, int sck, const char *ip_address, int port
-                   , uint32_t verbose, redemption::string * error_message = 0)
+                     , uint32_t verbose, redemption::string * error_message = 0)
         : Transport(), tls(false), name(name), verbose(verbose)
+        , public_key(NULL), public_key_length(0)
         , error_message(error_message), allocated_ctx(0), allocated_ssl(0)
     {
         RIO_ERROR res = rio_init_socket(&this->rio, sck);
@@ -140,6 +143,19 @@ class SocketTransport : public Transport {
                , "%s (%d): total_received=%llu, total_sent=%llu"
                , this->name, this->sck, this->total_received, this->total_sent);
         }
+        if (this->public_key) {
+            delete [] this->public_key;
+            this->public_key = NULL;
+            this->public_key_length = 0;
+        }
+    }
+
+    virtual const uint8_t * get_public_key() {
+        return this->public_key;
+    }
+
+    virtual size_t get_public_key_length() {
+        return this->public_key_length;
     }
 
     virtual void enable_server_tls(const char * certificate_password) throw (Error)
@@ -995,15 +1011,16 @@ class SocketTransport : public Transport {
         // the length of the encoded data.
 
         // export the public key to DER format
-        int public_key_length = i2d_PublicKey(pkey, NULL);
-        uint8_t * public_key_data = static_cast<uint8_t *>(malloc(public_key_length));
+        this->public_key_length = i2d_PublicKey(pkey, NULL);
+        this->public_key = new uint8_t[this->public_key_length];
         LOG(LOG_INFO, "RIO *::i2d_PublicKey()");
-        uint8_t * tmp = public_key_data;
+        // hexdump_c(this->public_key, this->public_key_length);
+        uint8_t * tmp = this->public_key;
         i2d_PublicKey(pkey, &tmp);
 
-        free(public_key_data);
-        public_key_data =
         tmp             = 0;
+
+        EVP_PKEY_free(pkey);
 
 
         X509* xcert = px509;

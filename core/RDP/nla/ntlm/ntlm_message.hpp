@@ -204,15 +204,23 @@ struct NtlmVersion {
     /* 3 Bytes Reserved */
     uint8_t NtlmRevisionCurrent;   /* 1 Byte */
 
+    bool ignore_version;
+
     NtlmVersion()
         : ProductMajorVersion(WINDOWS_MAJOR_VERSION_6)
         , ProductMinorVersion(WINDOWS_MINOR_VERSION_2)
         , ProductBuild(0x0000)
         , NtlmRevisionCurrent(NTLMSSP_REVISION_W2K3)
+        , ignore_version(true)
     {
     }
 
+    void ignore_version_info() {
+        this->ignore_version = true;
+    }
+
     void ntlm_get_version_info() {
+        this->ignore_version = false;
         this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
         this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
 	// this->ProductBuild        = 7601;
@@ -228,6 +236,9 @@ struct NtlmVersion {
     }
 
     void emit(Stream & stream) {
+        if (this->ignore_version) {
+            return;
+        }
         stream.out_uint8(this->ProductMajorVersion);
         stream.out_uint8(this->ProductMinorVersion);
         stream.out_uint16_le(this->ProductBuild);
@@ -236,6 +247,7 @@ struct NtlmVersion {
     }
 
     void recv(Stream & stream) {
+        this->ignore_version = false;
         this->ProductMajorVersion = stream.in_uint8();
         this->ProductMinorVersion = stream.in_uint8();
         this->ProductBuild = stream.in_uint16_le();

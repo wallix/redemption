@@ -35,7 +35,7 @@ class GeneratorTransport : public Transport {
         : Transport()
     {
         RIO_ERROR status = rio_init_generator(&this->rio, data, len);
-        if (status != RIO_ERROR_OK){ 
+        if (status != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
     }
@@ -79,7 +79,7 @@ class CheckTransport : public Transport {
         : Transport()
     {
         RIO_ERROR res = rio_init_check(&this->rio, data, len);
-        if (res != RIO_ERROR_OK){ 
+        if (res != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
     }
@@ -121,14 +121,19 @@ class TestTransport : public Transport {
     RIO rio_check;
     RIO rio_gen;
 
+    uint8_t* public_key;
+    size_t   public_key_length;
+
+
     TestTransport(const char * name, const char * outdata, size_t outlen, const char * indata, size_t inlen, uint32_t verbose = 0)
+        : public_key(NULL), public_key_length(0)
     {
         RIO_ERROR res1 = rio_init_check(&this->rio_check, indata, inlen);
-        if (res1 != RIO_ERROR_OK){ 
+        if (res1 != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
         RIO_ERROR res2 = rio_init_generator(&this->rio_gen, outdata, outlen);
-        if (res2 != RIO_ERROR_OK){ 
+        if (res2 != RIO_ERROR_OK){
             throw Error(ERR_TRANSPORT, 0);
         }
     }
@@ -137,6 +142,26 @@ class TestTransport : public Transport {
     {
         rio_clear(&this->rio_check);
         rio_clear(&this->rio_gen);
+
+        if (this->public_key) {
+            delete [] this->public_key;
+            this->public_key = NULL;
+            this->public_key_length = 0;
+        }
+    }
+
+    void set_public_key(uint8_t * data, size_t data_size) {
+        this->public_key = new uint8_t[data_size];
+        this->public_key_length = data_size;
+        memcpy(this->public_key, data, data_size);
+    }
+
+    virtual const uint8_t * get_public_key() {
+        return this->public_key;
+    }
+
+    virtual size_t get_public_key_length() {
+        return this->public_key_length;
     }
 
     using Transport::recv;
@@ -149,6 +174,7 @@ class TestTransport : public Transport {
         if (static_cast<size_t>(res) < len){
             throw Error(ERR_TRANSPORT_NO_MORE_DATA, 0);
         }
+
     }
 
     using Transport::send;

@@ -100,20 +100,10 @@ struct SecPkgInfo {
 };
 typedef SecPkgInfo *PSecPkgInfo;
 
-const char Ntlm_Name[] = "NTLM";
-const char Ntlm_Comment[] = "NTLM Security Package";
-const SecPkgInfo NTLM_SecPkgInfo = {
-    0x00082B37,             // fCapabilities
-    1,                      // wVersion
-    0x000A,                 // wRPCID
-    0x00000B48,             // cbMaxToken
-    Ntlm_Name,              // Name
-    Ntlm_Comment            // Comment
-};
 
-const SecPkgInfo* SecPkgInfo_LIST[] = {
-    &NTLM_SecPkgInfo
-};
+// const SecPkgInfo* SecPkgInfo_LIST[] = {
+//     &NTLM_SecPkgInfo
+// };
 
 struct SEC_CHANNEL_BINDINGS
 {
@@ -152,6 +142,38 @@ struct SEC_WINNT_AUTH_IDENTITY
     Array Password;
     uint32_t Flags;
 
+    void SetUserFromUtf8(const uint8_t * user) {
+        if (user) {
+            size_t user_len = UTF8Len(user);
+            this->User.init(user_len * 2);
+            UTF8toUTF16(user, this->User.get_data(), user_len * 2);
+	}
+        else {
+            this->User.init(0);
+	}
+    }
+
+    void SetDomainFromUtf8(const uint8_t * domain) {
+        if (domain) {
+            size_t domain_len = UTF8Len(domain);
+            this->Domain.init(domain_len * 2);
+            UTF8toUTF16(domain, this->Domain.get_data(), domain_len * 2);
+	}
+        else {
+            this->Domain.init(0);
+	}
+    }
+
+    void SetPasswordFromUtf8(const uint8_t * password) {
+        if (password) {
+            size_t password_len = UTF8Len(password);
+            this->Password.init(password_len * 2);
+            UTF8toUTF16(password, this->Password.get_data(), password_len * 2);
+	}
+        else {
+            this->Password.init(0);
+	}
+    }
     void SetAuthIdentityFromUtf8(const uint8_t * user, const uint8_t * domain,
                                  const uint8_t * password) {
         this->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
@@ -251,7 +273,6 @@ public:
         pointer = (void*) this->pHandle->dwUpper;
         return pointer;
     }
-
 
 };
 typedef SecHandle *PSecHandle;
@@ -605,24 +626,24 @@ struct SecurityFunctionTable {
     virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) {
 
-	int index;
-	uint32_t cPackages;
+	// int index;
+	// uint32_t cPackages;
 
-	cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
+	// cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
 
-	for (index = 0; index < (int) cPackages; index++) {
-            if (strcmp(pszPackageName, SecPkgInfo_LIST[index]->Name) == 0) {
+	// for (index = 0; index < (int) cPackages; index++) {
+        //     if (strcmp(pszPackageName, SecPkgInfo_LIST[index]->Name) == 0) {
 
-                pPackageInfo->fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
-                pPackageInfo->wVersion = SecPkgInfo_LIST[index]->wVersion;
-                pPackageInfo->wRPCID = SecPkgInfo_LIST[index]->wRPCID;
-                pPackageInfo->cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
-                pPackageInfo->Name = SecPkgInfo_LIST[index]->Name;
-                pPackageInfo->Comment = SecPkgInfo_LIST[index]->Comment;
+        //         pPackageInfo->fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
+        //         pPackageInfo->wVersion = SecPkgInfo_LIST[index]->wVersion;
+        //         pPackageInfo->wRPCID = SecPkgInfo_LIST[index]->wRPCID;
+        //         pPackageInfo->cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
+        //         pPackageInfo->Name = SecPkgInfo_LIST[index]->Name;
+        //         pPackageInfo->Comment = SecPkgInfo_LIST[index]->Comment;
 
-                return SEC_E_OK;
-            }
-        }
+        //         return SEC_E_OK;
+        //     }
+        // }
 
 	return SEC_E_SECPKG_NOT_FOUND;
     }

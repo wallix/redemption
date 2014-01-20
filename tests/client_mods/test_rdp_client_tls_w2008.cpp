@@ -100,6 +100,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         "192.168.1.100",
         front,
         tls,
+        false,      // nla
         info,
         &gen,
         7,

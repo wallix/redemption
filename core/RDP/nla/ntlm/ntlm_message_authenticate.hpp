@@ -335,6 +335,9 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
 
     void emit(Stream & stream) {
         uint32_t currentOffset = this->PayloadOffset;
+        if (this->version.ignore_version) {
+            currentOffset -= 8;
+        }
         if (this->has_mic) {
             currentOffset += 16;
         }
@@ -382,8 +385,9 @@ struct NTLMAuthenticateMessage : public NTLMMessage {
         this->Workstation.recv(stream);
         this->EncryptedRandomSessionKey.recv(stream);
         this->negoFlags.recv(stream);
-        this->version.recv(stream);
-
+        if (this->negoFlags.flags & NTLMSSP_NEGOTIATE_VERSION) {
+            this->version.recv(stream);
+        }
         uint32_t min_offset = this->LmChallengeResponse.bufferOffset;
         if (this->NtChallengeResponse.bufferOffset < min_offset)
             min_offset = this->NtChallengeResponse.bufferOffset;

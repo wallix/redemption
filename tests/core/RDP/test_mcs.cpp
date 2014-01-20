@@ -116,6 +116,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_MCSPDU_CONNECT_INITIAL_with_factory)
     BOOST_CHECK_EQUAL(mcs.payload_size, payload.end - payload.get_data() - mcs._header_size);
 }
 
+
 BOOST_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_INITIAL)
 {
     BStream stream(1024);
@@ -700,7 +701,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -711,9 +712,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -722,7 +723,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -733,10 +734,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
-    
+
+
     {
         BStream stream(1024);
         try {
@@ -745,7 +746,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -756,10 +757,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
-    
+
+
     {
         BStream stream(1024);
         try {
@@ -768,7 +769,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -779,10 +780,10 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
-    
+
     {
         BStream stream(1024);
         try {
@@ -791,7 +792,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -802,7 +803,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -813,7 +814,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -824,7 +825,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -835,7 +836,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -846,7 +847,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -857,7 +858,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -868,7 +869,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -879,7 +880,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -890,7 +891,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -901,7 +902,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -912,7 +913,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -923,7 +924,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -934,7 +935,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -945,7 +946,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -956,7 +957,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -967,7 +968,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -978,7 +979,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -989,7 +990,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1000,7 +1001,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1011,7 +1012,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1022,7 +1023,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1033,7 +1034,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1044,7 +1045,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1055,7 +1056,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1066,7 +1067,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1077,7 +1078,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1088,7 +1089,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1099,7 +1100,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1110,7 +1111,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1121,7 +1122,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1132,7 +1133,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1143,7 +1144,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1154,7 +1155,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1165,7 +1166,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1176,7 +1177,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1187,7 +1188,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1198,7 +1199,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1209,7 +1210,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1220,7 +1221,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1231,7 +1232,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1242,7 +1243,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1253,7 +1254,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1264,9 +1265,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -1275,7 +1276,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1286,9 +1287,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -1297,7 +1298,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1308,9 +1309,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -1319,7 +1320,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1330,9 +1331,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -1341,7 +1342,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1352,9 +1353,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -1363,7 +1364,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1374,9 +1375,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -1385,7 +1386,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1396,9 +1397,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -1407,7 +1408,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1418,9 +1419,9 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
-    
+
     {
         BStream stream(1024);
         try {
@@ -1429,7 +1430,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
     {
@@ -1440,7 +1441,7 @@ BOOST_AUTO_TEST_CASE(TestRecv_NotImplemented)
         }
         catch (const Error & e) {
             BOOST_CHECK_EQUAL(static_cast<unsigned>(e.id), static_cast<unsigned>(ERR_MCS));
-        }; 
+        };
     }
 
 }
