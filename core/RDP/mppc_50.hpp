@@ -476,6 +476,8 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec {
     }
 };  // struct rdp_mppc_50_dec
 
+static const size_t RDP_50_COMPRESSOR_MAX_HASH_BUFFER_UNDO_ELEMENT = 256;
+
 struct rdp_mppc_50_enc : public rdp_mppc_enc {
     uint8_t  * historyBuffer;       /* contains uncompressed data */
     uint8_t  * outputBuffer;        /* contains compressed data */
@@ -487,6 +489,10 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
     int        flagsHold;
     int        first_pkt;           /* this is the first pkt passing through enc */
     uint16_t * hash_table;
+
+    uint16_t * undo_buffer_hash_table_begin;
+    uint16_t * undo_buffer_hash_table_end;
+    uint16_t * undo_buffer_hash_table_current;
 
     /**
      * Initialize rdp_mppc_50_enc structure
@@ -511,6 +517,10 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
         this->outputBufferPlus = static_cast<uint8_t *>(calloc(this->buf_len + 64 + 8, 1));
         this->outputBuffer     = this->outputBufferPlus + 64;
         this->hash_table       = static_cast<uint16_t *>(calloc(rdp_mppc_enc::HASH_BUF_LEN, 2));
+
+        this->undo_buffer_hash_table_begin   = static_cast<uint16_t *>(calloc(RDP_50_COMPRESSOR_MAX_HASH_BUFFER_UNDO_ELEMENT, sizeof(uint16_t) * 2));
+        this->undo_buffer_hash_table_end     = this->undo_buffer_hash_table_begin + RDP_50_COMPRESSOR_MAX_HASH_BUFFER_UNDO_ELEMENT * 2;
+        this->undo_buffer_hash_table_current = this->undo_buffer_hash_table_begin;
     }
 
     /**
@@ -520,6 +530,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
         free(this->historyBuffer);
         free(this->outputBufferPlus);
         free(this->hash_table);
+        free(this->undo_buffer_hash_table_begin);
     }
 
     virtual void mini_dump() {
@@ -555,6 +566,30 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
         LOG(LOG_INFO, "hash_table");
         hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), rdp_mppc_enc::HASH_BUF_LEN * 2);
     }
+
+private:
+    inline void hash_table_update(uint16_t hash, uint16_t pos) {
+        if (this->undo_buffer_hash_table_current != this->undo_buffer_hash_table_end) {
+            *(this->undo_buffer_hash_table_current++) = hash;
+            *(this->undo_buffer_hash_table_current++) = hash_table[hash];
+        }
+        hash_table[hash] = pos;
+    }
+
+    inline bool hash_table_undo() {
+        if (this->undo_buffer_hash_table_current == this->undo_buffer_hash_table_end) {
+            return false;
+        }
+
+        while (this->undo_buffer_hash_table_current != this->undo_buffer_hash_table_begin) {
+            this->undo_buffer_hash_table_current -= 2;
+            hash_table[*this->undo_buffer_hash_table_current] = *(this->undo_buffer_hash_table_current - 1);
+        }
+
+        return true;
+    }
+
+public:
 
 // 3.1.8.4.2 RDP 5.0
 // =================
@@ -627,6 +662,8 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
 
         this->flags = PACKET_COMPR_TYPE_64K;
 
+        this->undo_buffer_hash_table_current = this->undo_buffer_hash_table_begin;
+
         if ((srcData == NULL) || (len <= 0) || (len >= this->buf_len - 2))
             return true;
 
@@ -665,8 +702,10 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
                     outputBuffer, bits_left, opb_index);
             }
 
-            hash_table[rdp_mppc_enc::signature(this->historyBuffer,     3)] = 0;
-            hash_table[rdp_mppc_enc::signature(this->historyBuffer + 1, 3)] = 1;
+            //hash_table[rdp_mppc_enc::signature(this->historyBuffer,     3)] = 0;
+            this->hash_table_update(rdp_mppc_enc::signature(this->historyBuffer,     3), 0);
+            // hash_table[rdp_mppc_enc::signature(this->historyBuffer + 1, 3)] = 1;
+            this->hash_table_update(rdp_mppc_enc::signature(this->historyBuffer + 1, 3), 0);
             ctr                                                             = 2;
         }
 
@@ -675,7 +714,8 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
             uint32_t crc2           = rdp_mppc_enc::signature(
                 this->historyBuffer + this->historyOffset + ctr, 3);
             int      previous_match = hash_table[crc2];
-            hash_table[crc2] = this->historyOffset + ctr;
+            //hash_table[crc2] = this->historyOffset + ctr;
+            this->hash_table_update(crc2, this->historyOffset + ctr);
 
             /* check that we have a pattern match, hash is not enough */
             if (0 != memcmp(this->historyBuffer + this->historyOffset + ctr, this->historyBuffer + previous_match, 3)) {
@@ -687,13 +727,23 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
             }
             else {
                 /* we have a match - compute hash and Length of Match for triplets */
+/*
                 hash_table[rdp_mppc_enc::signature(
                     this->historyBuffer + this->historyOffset + ctr + 1, 3)] =
                         this->historyOffset + ctr + 1;
+*/
+                this->hash_table_update(rdp_mppc_enc::signature(
+                        this->historyBuffer + this->historyOffset + ctr + 1, 3),
+                    this->historyOffset + ctr + 1);
                 for (lom = 3; ctr + lom < len; lom++) {
+/*
                     hash_table[rdp_mppc_enc::signature(
                         this->historyBuffer + this->historyOffset + ctr + lom - 1, 3)] =
                         this->historyOffset + ctr + lom - 1;
+*/
+                    this->hash_table_update(rdp_mppc_enc::signature(
+                            this->historyBuffer + this->historyOffset + ctr + lom - 1, 3),
+                        this->historyOffset + ctr + lom - 1);
                     if (this->historyBuffer[this->historyOffset + ctr + lom] != this->historyBuffer[previous_match + lom]) {
                         break;
                     }
@@ -730,10 +780,15 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc {
         if (opb_index >= std::min<int>(len, max_compressed_data_size)) {
             /* compressed data longer or same size than uncompressed data */
             /* give up */
-            this->historyOffset = 0;
-            memset(hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
-            this->flagsHold |= PACKET_FLUSHED;
-            this->first_pkt =  1;
+            if (!this->hash_table_undo()) {
+                this->historyOffset = 0;
+                memset(hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
+                this->flagsHold |= PACKET_FLUSHED;
+                this->first_pkt =  1;
+            }
+            else {
+LOG(LOG_INFO, "Undo hash table OK.");
+            }
             return true;
         }
 

@@ -293,6 +293,7 @@ LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, L
                 throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
             }
             uint16_t MatchLength        = match_details_stream.in_uint16_le();
+LOG(LOG_INFO, "MatchLength=%d", MatchLength);
             uint16_t MatchOutputOffset  = match_details_stream.in_uint16_le();
             uint32_t MatchHistoryOffset = match_details_stream.in_uint32_le();
 //LOG(LOG_INFO, "MatchHistoryOffset=%u MatchLength=%d MatchOutputOffset=%d", MatchHistoryOffset, MatchLength, MatchOutputOffset);
@@ -651,15 +652,30 @@ LOG(LOG_INFO, "Level1ComprFlags=0x%02X Level2ComprFlags=0x%02X", this->Level1Com
     virtual bool compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t reserved)
     {
+static uint64_t total_uncompressed_data_size = 0;
+static uint64_t total_compressed_data_size   = 0;
+
+total_uncompressed_data_size += uncompressed_data_size;
+
         this->compress_61(uncompressed_data, uncompressed_data_size);
 
         compressedType       = (this->bytes_in_output_buffer ? (PACKET_COMPRESSED | PACKET_COMPR_TYPE_RDP61) : 0);
-        compressed_data_size =
+        compressed_data_size = (this->bytes_in_output_buffer ?
             2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
-            this->bytes_in_output_buffer;
+                this->bytes_in_output_buffer :
+            0);
+
+total_compressed_data_size += (this->bytes_in_output_buffer ? 
+    2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
+        this->bytes_in_output_buffer :
+    uncompressed_data_size);
+
 LOG(LOG_INFO, "compressedType=0x%02X compressed_data_size=%u", compressedType, compressed_data_size);
 if (compressed_data_size) {
-    LOG(LOG_INFO, "Rate=%.2f", (float)compressed_data_size * 100 / uncompressed_data_size);
+    LOG(LOG_INFO, "total_compressed_data_size=%llu total_uncompressed_data_size=%llu",
+        total_compressed_data_size, total_uncompressed_data_size);
+    LOG(LOG_INFO, "rate=%.2f total_rate=%.2Lf", (float)compressed_data_size * 100.0 / uncompressed_data_size,
+        (long double)total_compressed_data_size * 100.0 / (long double)total_uncompressed_data_size);
 }
 
         return true;
