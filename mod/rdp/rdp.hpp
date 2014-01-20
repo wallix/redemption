@@ -182,6 +182,7 @@ struct mod_rdp : public mod_api {
            , const char * client_address
            , struct FrontAPI & front
            , const bool enable_tls
+           , const bool enable_nla
            , const ClientInfo & info
            , Random * gen
            , int key_flags
@@ -229,7 +230,7 @@ struct mod_rdp : public mod_api {
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
         , acl(acl)
-        , nego(enable_tls, trans, target_user)
+        , nego(enable_tls, trans, target_user, enable_nla)
         , enable_bitmap_update(enable_bitmap_update)
         , enable_clipboard(enable_clipboard)
         , enable_fastpath(enable_fastpath)
@@ -384,6 +385,11 @@ struct mod_rdp : public mod_api {
         this->directory[sizeof(this->directory) - 1] = 0;
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
+
+        this->nego.set_identity((uint8_t*)this->username,
+                                (uint8_t*)this->domain,
+                                (uint8_t*)this->password,
+                                (uint8_t*)this->hostname);
 
         while (UP_AND_RUNNING != this->connection_finalization_state){
             this->draw_event(time(NULL));
@@ -738,40 +744,38 @@ struct mod_rdp : public mod_api {
                                 cs_core.clientName[i] = hostname[i];
                             }
                             bzero(&(cs_core.clientName[hostlen]), 16-hostlen);
+
                             if (this->nego.tls){
-                                cs_core.serverSelectedProtocol = 1;
+                                cs_core.serverSelectedProtocol = this->nego.selected_protocol;
                             }
                             if (this->verbose) {
                                 cs_core.log("Sending to Server");
                             }
-                            if (this->nego.tls){
-                            }
                             cs_core.emit(stream);
-
                             // ------------------------------------------------------------
+
                             GCC::UserData::CSCluster cs_cluster;
                             TODO("CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?");
 
-                                if (!this->nego.tls){
-                                    if (this->console_session){
-                                        cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
-                                    }
-                                    else {
-                                        cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
-                                    }
+                            if (!this->nego.tls){
+                                if (this->console_session){
+                                    cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
                                 }
                                 else {
-                                    cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
-                                    if (this->console_session){
-                                        cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
-                                    }
+                                    cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
                                 }
+                                }
+                            else {
+                                cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
+                                if (this->console_session){
+                                    cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
+                                }
+                            }
                             if (this->verbose) {
                                 cs_cluster.log("Sending to server");
                             }
                             cs_cluster.emit(stream);
                             // ------------------------------------------------------------
-
                             GCC::UserData::CSSecurity cs_security;
                             if (this->verbose) {
                                 cs_security.log("Sending to server");
@@ -782,11 +786,12 @@ struct mod_rdp : public mod_api {
                             const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();
                             size_t num_channels = channel_list.size();
                             if ((num_channels > 0) || this->auth_channel[0]) {
-                                /* Here we need to put channel information in order to redirect channel data
+                                /* Here we need to put channel information in order
+                                   to redirect channel data
                                    from client to server passing through the "proxy" */
                                 GCC::UserData::CSNet cs_net;
                                 cs_net.channelCount = num_channels;
-                                for (size_t index = 0; index < num_channels; index++){
+                                for (size_t index = 0; index < num_channels; index++) {
                                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
                                     memcpy(cs_net.channelDefArray[index].name, channel_list[index].name, 8);
                                     cs_net.channelDefArray[index].options = channel_item.flags;
@@ -832,7 +837,6 @@ struct mod_rdp : public mod_api {
 
                             BStream x224_header(256);
                             X224::DT_TPDU_Send(x224_header, mcs_header.size() + gcc_header.size() + stream.size());
-
                             this->nego.trans->send(x224_header, mcs_header, gcc_header, stream);
 
                             this->state = MOD_RDP_BASIC_SETTINGS_EXCHANGE;

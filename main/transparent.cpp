@@ -179,6 +179,7 @@ int main(int argc, char * argv[]) {
                     "0.0.0.0",
                     front,
                     false,               // tls
+                    false,               // nla
                     client_info,
                     &gen,
                     front.keymap.key_flags,

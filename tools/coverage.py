@@ -256,6 +256,8 @@ for m in cover.modules:
     g_no_coverage += no_coverage
     g_low_coverage += low_coverage
     g_total_number += total_number
+    covered_rate = 0
+    if g_total_number != 0:
+        covered_rate = 100 * g_covered / g_total_number
 if cover.all:
-    print "ALL MODULES : %s COVERED, %s LOW_COVERAGE, %s NO_COVERAGE in %s TOTAL" % (g_covered,
-                                                g_low_coverage, g_no_coverage, g_total_number)
+    print "ALL MODULES : %s COVERED (%s%%), %s LOW_COVERAGE, %s NO_COVERAGE in %s TOTAL" % (g_covered, covered_rate , g_low_coverage, g_no_coverage, g_total_number)

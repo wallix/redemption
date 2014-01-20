@@ -96,35 +96,35 @@ namespace CredSSP {
     }
 
 
-    void ap_integer_increment_le(uint8_t * number, int size) {
-	int index;
+    // void ap_integer_increment_le(uint8_t * number, int size) {
+    //     int index;
 
-	for (index = 0; index < size; index++) {
-            if (number[index] < 0xFF) {
-                number[index]++;
-                break;
-            }
-            else {
-                number[index] = 0;
-                continue;
-            }
-        }
-    }
+    //     for (index = 0; index < size; index++) {
+    //         if (number[index] < 0xFF) {
+    //             number[index]++;
+    //             break;
+    //         }
+    //         else {
+    //             number[index] = 0;
+    //             continue;
+    //         }
+    //     }
+    // }
 
-    void ap_integer_decrement_le(uint8_t * number, int size) {
-	int index;
+    // void ap_integer_decrement_le(uint8_t * number, int size) {
+    //     int index;
 
-	for (index = 0; index < size; index++) {
-            if (number[index] > 0) {
-                number[index]--;
-                break;
-            }
-            else {
-                number[index] = 0xFF;
-                continue;
-            }
-        }
-    }
+    //     for (index = 0; index < size; index++) {
+    //         if (number[index] > 0) {
+    //             number[index]--;
+    //             break;
+    //         }
+    //         else {
+    //             number[index] = 0xFF;
+    //             continue;
+    //         }
+    //     }
+    // }
 
 };
 
@@ -270,10 +270,6 @@ struct TSRequest {
 
             this->negoTokens.init(length);
             stream.in_copy_bytes(this->negoTokens.get_data(), length);
-            // this->negoTokens.out_copy_bytes(stream.p, length);
-            // stream.in_skip_bytes(length);
-            // this->negoTokens.mark_end();
-            // this->negoTokens.rewind();
 	}
 
 	/* [2] authInfo (OCTET STRING) */
@@ -286,10 +282,6 @@ struct TSRequest {
 
             this->authInfo.init(length);
             stream.in_copy_bytes(this->authInfo.get_data(), length);
-            // this->authInfo.out_copy_bytes(stream.p, length);
-            // stream.in_skip_bytes(length);
-            // this->authInfo.mark_end();
-            // this->authInfo.rewind();
 	}
 
 	/* [3] pubKeyAuth (OCTET STRING) */
@@ -301,10 +293,6 @@ struct TSRequest {
             }
             this->pubKeyAuth.init(length);
             stream.in_copy_bytes(this->pubKeyAuth.get_data(), length);
-            // this->pubKeyAuth.out_copy_bytes(stream.p, length);
-            // stream.in_skip_bytes(length);
-            // this->pubKeyAuth.mark_end();
-            // this->pubKeyAuth.rewind();
 	}
 
         return 0;
@@ -347,11 +335,11 @@ struct TSPasswordCreds {
         this->password_length = pass_length;
     }
 
-    TSPasswordCreds(Stream & stream) {
-        this->recv(stream);
-    }
+    // TSPasswordCreds(Stream & stream) {
+    //     this->recv(stream);
+    // }
 
-    ~TSPasswordCreds() {}
+    virtual ~TSPasswordCreds() {}
 
 
     int ber_sizeof() {
@@ -442,14 +430,11 @@ struct TSCredentials {
 
     }
 
-    ~TSCredentials() {}
+    virtual ~TSCredentials() {}
 
-    void set_credentials(const uint8_t * domain, int domain_length,
-                         const uint8_t * user, int user_length,
-                         const uint8_t * pass, int pass_length) {
-        this->passCreds = TSPasswordCreds(domain, domain_length,
-                                          user, user_length,
-                                          pass, pass_length);
+    void set_credentials(const uint8_t * domain, int domain_length, const uint8_t * user,
+                         int user_length, const uint8_t * pass, int pass_length) {
+        this->passCreds = TSPasswordCreds(domain, domain_length, user, user_length, pass, pass_length);
     }
 
     int ber_sizeof() {
@@ -508,24 +493,6 @@ struct TSCredentials {
         this->passCreds.recv(ts_credentials);
     }
 
-
-    void encode(Stream & ts_credentials) {
-	int length;
-
-        // should check Restricted Admin Mode and emit credentials with empty fields
-	length = BER::sizeof_sequence(this->ber_sizeof());
-        ts_credentials.init(length);
-
-        this->emit(ts_credentials);
-    }
-
-    int encrypt() {
-        return 0;
-    }
-
-    int decrypt() {
-        return 0;
-    }
 
 };
 

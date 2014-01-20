@@ -1,21 +1,21 @@
 /*
-    This program is free software; you can redistribute it and/or modify it
-     under the terms of the GNU General Public License as published by the
-     Free Software Foundation; either version 2 of the License, or (at your
-     option) any later version.
+  This program is free software; you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the
+  Free Software Foundation; either version 2 of the License, or (at your
+  option) any later version.
 
-    This program is distributed in the hope that it will be useful, but
-     WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-     Public License for more details.
+  This program is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+  Public License for more details.
 
-    You should have received a copy of the GNU General Public License along
-     with this program; if not, write to the Free Software Foundation, Inc.,
-     675 Mass Ave, Cambridge, MA 02139, USA.
+  You should have received a copy of the GNU General Public License along
+  with this program; if not, write to the Free Software Foundation, Inc.,
+  675 Mass Ave, Cambridge, MA 02139, USA.
 
-    Product name: redemption, a FLOSS RDP proxy
-    Copyright (C) Wallix 2013
-    Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
+  Product name: redemption, a FLOSS RDP proxy
+  Copyright (C) Wallix 2013
+  Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
 */
 
 #ifndef _REDEMPTION_CORE_RDP_NLA_NTLM_NTLM_HPP_
@@ -25,10 +25,68 @@
 #include "RDP/nla/ntlm/ntlm_context.hpp"
 
 const char* NTLM_PACKAGE_NAME = "NTLM";
+const char Ntlm_Name[] = "NTLM";
+const char Ntlm_Comment[] = "NTLM Security Package";
+const SecPkgInfo NTLM_SecPkgInfo = {
+    0x00082B37,             // fCapabilities
+    1,                      // wVersion
+    0x000A,                 // wRPCID
+    0x00000B48,             // cbMaxToken
+    Ntlm_Name,              // Name
+    Ntlm_Comment            // Comment
+};
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     virtual ~Ntlm_SecurityFunctionTable() {}
+
+
+    // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
+    virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
+                                                SecPkgInfo * pPackageInfo) {
+
+	// int index;
+	// uint32_t cPackages;
+
+        // cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
+
+        // for (index = 0; index < (int) cPackages; index++) {
+        if (strcmp(pszPackageName, NTLM_SecPkgInfo.Name) == 0) {
+
+            pPackageInfo->fCapabilities = NTLM_SecPkgInfo.fCapabilities;
+            pPackageInfo->wVersion = NTLM_SecPkgInfo.wVersion;
+            pPackageInfo->wRPCID = NTLM_SecPkgInfo.wRPCID;
+            pPackageInfo->cbMaxToken = NTLM_SecPkgInfo.cbMaxToken;
+            pPackageInfo->Name = NTLM_SecPkgInfo.Name;
+            pPackageInfo->Comment = NTLM_SecPkgInfo.Comment;
+
+            return SEC_E_OK;
+        }
+        // }
+
+        return SEC_E_SECPKG_NOT_FOUND;
+    }
+
+    // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
+    virtual SEC_STATUS QueryContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
+                                              void* pBuffer) {
+        // if (!phContext) {
+        //     return SEC_E_INVALID_HANDLE;
+        // }
+        if (!pBuffer) {
+            return SEC_E_INSUFFICIENT_MEMORY;
+        }
+        if (ulAttribute == SECPKG_ATTR_SIZES) {
+            SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
+            ContextSizes->cbMaxToken = 2010;
+            ContextSizes->cbMaxSignature = 16;
+            ContextSizes->cbBlockSize = 0;
+            ContextSizes->cbSecurityTrailer = 16;
+            return SEC_E_OK;
+        }
+
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
@@ -38,10 +96,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                                 void* pvGetKeyArgument, PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
-	CREDENTIALS* credentials = NULL;
-	SEC_WINNT_AUTH_IDENTITY* identity = NULL;
+        CREDENTIALS* credentials = NULL;
+        SEC_WINNT_AUTH_IDENTITY* identity = NULL;
 
-	if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
+        if (fCredentialUse == SECPKG_CRED_OUTBOUND) {
             credentials = new CREDENTIALS;
 
             identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
@@ -49,12 +107,13 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (identity != NULL) {
                 credentials->identity.CopyAuthIdentity(*identity);
             }
+
             phCredential->SecureHandleSetLowerPointer((void*) credentials);
             phCredential->SecureHandleSetUpperPointer((void*) NTLM_PACKAGE_NAME);
 
             return SEC_E_OK;
         }
-	else if (fCredentialUse == SECPKG_CRED_INBOUND) {
+        else if (fCredentialUse == SECPKG_CRED_INBOUND) {
             credentials = new CREDENTIALS;
 
             identity = (SEC_WINNT_AUTH_IDENTITY*) pAuthData;
@@ -71,24 +130,24 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_OK;
         }
 
-	return SEC_E_OK;
+        return SEC_E_OK;
     }
 
     SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
-	CREDENTIALS* credentials;
+        CREDENTIALS* credentials;
 
-	if (!phCredential) {
+        if (!phCredential) {
             return SEC_E_INVALID_HANDLE;
         }
-	credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
+        credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
 
-	if (!credentials) {
+        if (!credentials) {
             return SEC_E_INVALID_HANDLE;
         }
         delete credentials;
         credentials = NULL;
 
-	return SEC_E_OK;
+        return SEC_E_OK;
     }
 
     // GSS_Init_sec_context
@@ -101,16 +160,16 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                                                  PCtxtHandle phNewContext, SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
-	NTLMContext* context = NULL;
-	CREDENTIALS* credentials = NULL;
-	PSecBuffer input_buffer = NULL;
-	PSecBuffer output_buffer = NULL;
+        NTLMContext* context = NULL;
+        CREDENTIALS* credentials = NULL;
+        PSecBuffer input_buffer = NULL;
+        PSecBuffer output_buffer = NULL;
 
         if (phContext) {
             context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
         }
 
-	if (!context) {
+        if (!context) {
             context = new NTLMContext;
 
             if (!context) {
@@ -119,7 +178,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
             context->init();
             context->server = false;
-
+            if (Reserved1 == 1) {
+                context->hardcoded_tests = true;
+            }
             if (fContextReq & ISC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
             }
@@ -128,7 +189,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             // if (context->Workstation.size() < 1)
             //     context->ntlm_SetContextWorkstation(NULL);
 
-            context->ntlm_SetContextServicePrincipalName(pszTargetName);
+            context->ntlm_SetContextWorkstation((uint8_t*)pszTargetName);
+            context->ntlm_SetContextServicePrincipalName((uint8_t*)pszTargetName);
 
             context->identity.CopyAuthIdentity(credentials->identity);
 
@@ -136,7 +198,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             phNewContext->SecureHandleSetUpperPointer((void*) NTLM_PACKAGE_NAME);
         }
 
-	if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE)) {
+        if ((!pInput) || (context->state == NTLM_STATE_AUTHENTICATE)) {
             if (!pOutput) {
                 return SEC_E_INVALID_TOKEN;
             }
@@ -158,7 +220,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             }
             return SEC_E_OUT_OF_SEQUENCE;
         }
-	else {
+        else {
             if (pInput->cBuffers < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
@@ -196,14 +258,13 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 }
                 if (context->state == NTLM_STATE_AUTHENTICATE) {
                     return context->write_authenticate(output_buffer);
-
                 }
             }
 
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-	return SEC_E_OUT_OF_SEQUENCE;
+        return SEC_E_OUT_OF_SEQUENCE;
     }
 
     // GSS_Accept_sec_context
@@ -220,7 +281,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         PSecBuffer input_buffer = NULL;
         PSecBuffer output_buffer = NULL;
 
-        context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        if (phContext) {
+            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        }
 
         if (!context) {
             context = new NTLMContext;
@@ -230,11 +293,14 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             }
             context->init();
             context->server = true;
-
+            if (*pfContextAttr == 1) {
+                context->hardcoded_tests = true;
+                // TODO
+            }
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
             }
-            credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
+            credentials = (CREDENTIALS*)phCredential->SecureHandleGetLowerPointer();
             context->identity.CopyAuthIdentity(credentials->identity);
 
             context->ntlm_SetContextServicePrincipalName(NULL);
@@ -332,12 +398,17 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         uint8_t checksum[8];
         uint8_t* signature;
         uint32_t version = 1;
-        NTLMContext* context;
+        NTLMContext* context = NULL;
         PSecBuffer data_buffer = NULL;
         PSecBuffer signature_buffer = NULL;
 
         SeqNo = MessageSeqNo;
-        context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        if (phContext) {
+            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        }
+        if (!context) {
+            return SEC_E_NO_CONTEXT;
+        }
 
         for (index = 0; index < (int) pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
@@ -360,12 +431,12 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         memcpy(data, data_buffer->Buffer.get_data(), length);
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-//         HMAC_CTX_init(&hmac);
+        //         HMAC_CTX_init(&hmac);
 
         SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
         // TODO CHECK ENDIANNESS
         hmac_md5.update((uint8_t*) &(SeqNo), 4);
-        hmac_md5.update(data, 4);
+        hmac_md5.update(data, length);
         hmac_md5.final(digest, sizeof(digest));
         // HMAC_Init_ex(&hmac, context->SendSigningKey, 16, EVP_md5(), NULL);
         // HMAC_Update(&hmac, (void*) &(SeqNo), 4);
@@ -382,14 +453,25 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         else {
             data_buffer->Buffer.copy(data, length);
         }
-// #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
-//         hexdump_c(data, length);
-//         LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
-//         hexdump_c(data_buffer->pvBuffer, data_buffer->cbBuffer);
-//         LOG(LOG_ERR, "\n");
+
+// #ifdef WITH_DEBUG_NTLM
+        // LOG(LOG_ERR, "======== ENCRYPT ==========");
+        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
+        // hexdump_c(context->SendSigningKey, 16);
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
+        // hexdump_c(digest, sizeof(digest));
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
+        // hexdump_c(data, length);
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", data_buffer->Buffer.size());
+        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         delete [] data;
@@ -407,9 +489,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         context->SendSeqNum++;
 
 // #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "Signature (length = %d)\n", (int) signature_buffer->cbBuffer);
-//         hexdump_c(signature_buffer->pvBuffer, signature_buffer->cbBuffer);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Signature (length = %d)\n", signature_buffer->Buffer.size());
+        // hexdump_c(signature_buffer->Buffer.get_data(), signature_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         return SEC_E_OK;
@@ -423,16 +505,21 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         int length;
         uint8_t* data;
         uint32_t SeqNo;
-        uint8_t digest[16];
-        uint8_t checksum[8];
+        uint8_t digest[16] = {};
+        uint8_t checksum[8] = {};
         uint32_t version = 1;
-        NTLMContext* context;
-        uint8_t expected_signature[16];
+        NTLMContext* context = NULL;
+        uint8_t expected_signature[16] = {};
         PSecBuffer data_buffer = NULL;
         PSecBuffer signature_buffer = NULL;
 
         SeqNo = (uint32_t) MessageSeqNo;
-        context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        if (phContext) {
+            context = (NTLMContext*) phContext->SecureHandleGetLowerPointer();
+        }
+        if (!context) {
+            return SEC_E_NO_CONTEXT;
+        }
 
         for (index = 0; index < (int) pMessage->cBuffers; index++) {
             if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA) {
@@ -478,13 +565,22 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         // HMAC_Final(&hmac, digest, NULL);
         // HMAC_CTX_cleanup(&hmac);
 // #ifdef WITH_DEBUG_NTLM
-//         LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
-//         hexdump_c(data, length);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "======== DECRYPT ==========");
+        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
+        // hexdump_c(context->RecvSigningKey, 16);
+        // LOG(LOG_ERR, "\n");
 
-//         LOG(LOG_ERR, "Data Buffer (length = %d)\n", (int) data_buffer->cbBuffer);
-//         hexdump_c(data_buffer->pvBuffer, data_buffer->cbBuffer);
-//         LOG(LOG_ERR, "\n");
+        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
+        // hexdump_c(digest, sizeof(digest));
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
+        // hexdump_c(data, length);
+        // LOG(LOG_ERR, "\n");
+
+        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", data_buffer->Buffer.size());
+        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+        // LOG(LOG_ERR, "\n");
 // #endif
 
         delete [] data;
@@ -511,6 +607,15 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             return SEC_E_MESSAGE_ALTERED;
         }
 
+        return SEC_E_OK;
+    }
+
+    // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
+    virtual SEC_STATUS ImpersonateSecurityContext(PCtxtHandle phContext) {
+        return SEC_E_OK;
+    }
+    // REVERT_SECURITY_CONTEXT RevertSecurityContext;
+    virtual SEC_STATUS RevertSecurityContext(PCtxtHandle phContext) {
         return SEC_E_OK;
     }
 };

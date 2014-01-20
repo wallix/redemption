@@ -166,6 +166,10 @@ core/RDP/sec 100 100
 core/RDP/share 100 100
 core/RDP/slowpath 100 100
 core/RDP/x224 100 100
+core/RDP/nla/credssp 100 100
+core/RDP/nla/sspi 100 100
+core/RDP/nla/nla 100 100
+core/RDP/nla/ntlm/ntlm 100 100
 core/server 100 100
 core/session 100 100
 core/session_server 100 100

@@ -213,7 +213,9 @@ BOOST_AUTO_TEST_CASE(TestTSRequest)
     s.rewind();
     get_sig(s, sig, sizeof(sig));
 
-    TSRequest ts_req3(s);
+    TSRequest ts_req3;
+
+    ts_req3.recv(s);
 
     BOOST_CHECK_EQUAL(ts_req3.version, 2);
 
@@ -387,4 +389,17 @@ BOOST_AUTO_TEST_CASE(TestTSCredentials)
 
 
 
+    uint8_t domain2[] = "somewhere";
+    uint8_t user2[] = "someone";
+    uint8_t pass2[] = "somepass";
+
+    ts_cred.set_credentials(domain2, sizeof(domain2),
+                            user2, sizeof(user2),
+                            pass2, sizeof(pass2));
+    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred.passCreds.domainName),
+                      std::string((const char*)domain2));
+    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred.passCreds.userName),
+                      std::string((const char*)user2));
+    BOOST_CHECK_EQUAL(std::string((const char*)ts_cred.passCreds.password),
+                      std::string((const char*)pass2));
 }

@@ -23,7 +23,7 @@
 
 #ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
 #define _REDEMPTION_CORE_RDP_NEGO_HPP_
-
+#include "RDP/nla/nla.hpp"
 struct RdpNego
 {
     enum {
@@ -41,6 +41,7 @@ struct RdpNego
 //    int port;
     uint32_t flags;
     bool tls;
+    bool nla;
 //    char* hostname;
 //    char* cookie;
 
@@ -66,9 +67,15 @@ struct RdpNego
     char username[128];
     Transport * trans;
 
-    RdpNego(const bool tls, Transport * socket_trans, const char * username)
+    uint8_t hostname[16];
+    uint8_t user[128];
+    uint8_t password[256];
+    uint8_t domain[256];
+
+    RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla)
     : flags(0)
-    , tls(tls)
+    , tls(nla || tls)
+    , nla(nla)
     , state(NEGO_STATE_INITIAL)
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
@@ -77,12 +84,36 @@ struct RdpNego
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
                                     | RdpNego::PROTOCOL_TLS;
+            if (this->nla) {
+                this->enabled_protocols |= RdpNego::PROTOCOL_NLA;
+            }
         }
         else {
             this->enabled_protocols = RdpNego::PROTOCOL_RDP;
         }
         strncpy(this->username, username, 127);
         this->username[127] = 0;
+
+        memset(this->hostname, 0, sizeof(this->hostname));
+        memset(this->user, 0, sizeof(this->user));
+        memset(this->password, 0, sizeof(this->password));
+        memset(this->domain, 0, sizeof(this->domain));
+    }
+
+    virtual ~RdpNego() {
+    }
+
+    void set_identity(uint8_t * user, uint8_t * domain, uint8_t * pass, uint8_t * hostname) {
+        if (this->nla) {
+            memcpy(this->user, user, sizeof(this->user) - 1);
+            this->user[sizeof(this->user) - 1] = 0;
+            memcpy(this->domain, domain, sizeof(this->domain) - 1);
+            this->domain[sizeof(this->domain) - 1] = 0;
+            memcpy(this->password, pass, sizeof(this->password) - 1);
+            this->password[sizeof(this->password) - 1] = 0;
+            memcpy(this->hostname, hostname, sizeof(this->hostname) - 1);
+            this->hostname[sizeof(this->hostname) - 1] = 0;
+        }
     }
 
     void server_event(bool ignore_certificate_change)
@@ -91,7 +122,10 @@ struct RdpNego
         case NEGO_STATE_INITIAL:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
             this->send_negotiation_request();
-            if (this->tls){
+            if (this->nla) {
+                this->state = NEGO_STATE_NLA;
+            }
+            else if (this->tls){
                 this->state = NEGO_STATE_TLS;
             }
             else {
@@ -99,6 +133,10 @@ struct RdpNego
             }
         break;
         default:
+        case NEGO_STATE_NLA:
+            LOG(LOG_INFO, "RdpNego::NEGO_STATE_NLA");
+            this->recv_connection_confirm(ignore_certificate_change);
+        break;
         case NEGO_STATE_TLS:
             LOG(LOG_INFO, "RdpNego::NEGO_STATE_TLS");
             this->recv_connection_confirm(ignore_certificate_change);
@@ -231,8 +269,35 @@ struct RdpNego
             this->state = NEGO_STATE_FINAL;
             return;
         }
+        this->selected_protocol = x224.rdp_neg_code;
 
-        if (this->tls){
+        if (this->nla) {
+            if (x224.rdp_neg_type == X224::RDP_NEG_RSP
+            && x224.rdp_neg_code == X224::PROTOCOL_HYBRID){
+                LOG(LOG_INFO, "activating SSL");
+                this->trans->enable_client_tls(ignore_certificate_change);
+                LOG(LOG_INFO, "activating CREDSSP");
+                rdpCredssp credssp(*this->trans);
+                credssp.set_credentials(this->user, this->domain, this->password, this->hostname);
+                int res = credssp.credssp_client_authenticate();
+                if (res != 1) {
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+                this->state = NEGO_STATE_FINAL;
+            }
+            else {
+                LOG(LOG_INFO, "Can't activate NLA, falling back to SSL only");
+                this->nla = false;
+                this->trans->disconnect();
+                if (!this->trans->connect()){
+                    throw Error(ERR_SOCKET_CONNECT_FAILED);
+                }
+                this->send_negotiation_request();
+                this->state = NEGO_STATE_TLS;
+                this->enabled_protocols = RdpNego::PROTOCOL_TLS | RdpNego::PROTOCOL_RDP;
+            }
+        }
+        else if (this->tls) {
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_TLS){
                 LOG(LOG_INFO, "activating SSL");
@@ -250,6 +315,7 @@ struct RdpNego
                 }
                 this->send_negotiation_request();
                 this->state = NEGO_STATE_RDP;
+                this->enabled_protocols = RdpNego::PROTOCOL_RDP;
             }
             TODO("Other cases are errors, set an appropriate error message");
         }
@@ -304,10 +370,18 @@ struct RdpNego
         char cookie[256];
         snprintf(cookie, 256, "Cookie: mstshash=%s\x0D\x0A", this->username);
 
+        uint32_t rdp_neg_requestedProtocols = X224::PROTOCOL_RDP;
+        if (this->tls) {
+            rdp_neg_requestedProtocols |= X224::PROTOCOL_TLS;
+        }
+        if (this->nla) {
+            rdp_neg_requestedProtocols |= X224::PROTOCOL_HYBRID;
+        }
+
         X224::CR_TPDU_Send(stream, cookie,
             this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
             0,
-            this->tls?(X224::PROTOCOL_TLS|X224::PROTOCOL_RDP):(X224::PROTOCOL_RDP));
+            rdp_neg_requestedProtocols);
         this->trans->send(stream);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
