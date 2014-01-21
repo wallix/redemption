@@ -156,10 +156,12 @@ class Engine(object):
             import traceback
             Logger().info("Engine NotifyPrimaryConnectionFailed failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def NotifySecondaryConnectionFailed(self, user, device):
+    def NotifySecondaryConnectionFailed(self, user, ip, account, device):
         try:
             notif_data = {
                    u'user'   : user
+                 , u'ip'     : ip                   
+                 , u'account': account                   
                  , u'device' : device
              }
 
@@ -182,7 +184,7 @@ class Engine(object):
             import traceback
             Logger().info("Engine NotifyFilesystemIsFullOrUsedAtXPercent failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user, host):
+    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user, host, cn):
         try:
             notif_data = {
                    u'regexp'     : regexp
@@ -190,6 +192,7 @@ class Engine(object):
                  , u'user_login' : user_login
                  , u'user'       : user
                  , u'host'       : host
+                 , u'device'     : cn
              }
 
             from wallixgenericnotifier import Notify, RDP_PATTERN_FOUND

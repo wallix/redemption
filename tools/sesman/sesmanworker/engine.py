@@ -1385,9 +1385,11 @@ class Engine(object):
 
         Logger().info(u"NotifyPrimaryConnectionFailed: %r" % notif_data)
 
-    def NotifySecondaryConnectionFailed(self, user, device):
+    def NotifySecondaryConnectionFailed(self, user, ip, account, device):
         notif_data = {
                u'user'   : user
+             , u'ip'     : ip
+             , u'account': account
              , u'device' : device
          }
 
@@ -1401,13 +1403,14 @@ class Engine(object):
 
         Logger().info(u"NotifyFilesystemIsFullOrUsedAtXPercent: %r" % notif_data)
 
-    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user, host):
+    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user, host, cn):
         notif_data = {
                u'regexp'     : regexp
              , u'string'     : string
              , u'user_login' : user_login
              , u'user'       : user
              , u'host'       : host
+             , u'device'     : cn
          }
 
         Logger().info(u"NotifyFindPatternInRDPFlow: %r" % notif_data)
