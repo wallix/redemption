@@ -289,12 +289,20 @@ struct NTLMContext {
         memcpy(userup, user, user_size);
         UTF16Upper(userup, user_size / 2);
         hmac_md5.update(userup, user_size);
+
+        // LOG(LOG_INFO, "NTOWFv2 compute Password:");
+        // hexdump_c(pass, pass_size);
+        // LOG(LOG_INFO, "NTOWFv2 compute User Upper:");
+        // hexdump_c(userup, user_size);
+        // LOG(LOG_INFO, "NTOWFv2 compute Domain:");
+        // hexdump_c(domain, domain_size);
+
         delete [] userup;
         userup = NULL;
-
-        // hmac_md5.update(user, user_size);
         hmac_md5.update(domain, domain_size);
         hmac_md5.final(buff, buff_size);
+
+
     }
     // all strings are in unicode utf16
     void LMOWFv2(const uint8_t * pass,   size_t pass_size,

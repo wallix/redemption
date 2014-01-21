@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: UTF-8 -*-
 
 from sesmanconf import TR
 
@@ -7,7 +8,7 @@ class AuthenticationFailed(Exception): pass
 from model import *
 from logger import Logger
 
-from password import PASSWORD1, PASSWORD2, PASSWORD3, PASSWORD4, PASSWORD5, PASSWORD6, PASSWORD7, PASSWORD8
+from password import PASSWORD1, PASSWORD2, PASSWORD3, PASSWORD4, PASSWORD5, PASSWORD6, PASSWORD7, PASSWORD8, PASSWORD9
 
 class ChallengeInfo(object):
     def __init__(self, message=None, promptEcho=None):
@@ -1071,6 +1072,59 @@ class Engine(object):
                 )
             ],
             deconnection_time = u'2099-12-30 23:59:59'
+        ),
+        'w2k8erpm\\special@10.10.46.110:RDP' : RightInfo(
+            account = AccountInfo(
+                isAgentForwardable = u'0',
+                login = u'QA\\noël_et_cébè_et_fran',
+                password = PASSWORD9,
+                pubkey = None,
+                isKeyAuth = None
+            ),
+            group_targets =
+            [
+                GroupTargetInfo(
+                    cn = u'win1'
+                ),
+                GroupTargetInfo(
+                    cn = u'win2'
+                )
+            ],
+            target_groups = u'win1;win2',
+            resource = ResourceInfo(
+                device = DeviceInfo(
+                    cn = u'10.10.46.110',
+                    uid = u'140ee23607907e970800279eed97',
+                    deviceAlias = u'',
+                    host = u'10.10.46.110',
+                    isKeyAuth = None
+                ),
+                application = None,
+                service = ServiceInfo(
+                    authmechanism = BlobInfo(
+                        data = u''
+                    ),
+                    protocol = ProtocolInfo(
+                        cn = u'RDP'
+                    ),
+                    cn = u'RDP',
+                    port = u'3389'
+                )
+            ),
+            auth_mode = u'NAM',
+            authorization = AuthorizationInfo(
+                isCritical = False,
+                isRecorded = False
+            ),
+            service_login = u'QA\\noël_et_cébè_et_fran@10.10.46.110:RDP',
+            subprotocols =
+            [
+                SubprotocolInfo(
+                    cn = u'RDP',
+                    uid = u'140ed5f39235d74d0800279eed97'
+                )
+            ],
+            deconnection_time = u'2099-12-30 23:59:59'
         )
     }   # config_rights
 
@@ -1165,6 +1219,12 @@ class Engine(object):
             protocol = u'RDP',
             password = PASSWORD1
         ),
+        TargetPasswordInfo(
+            account = u'QA\\noël_et_cébè_et_fran',
+            resource = u'10.10.46.110',
+            protocol = u'RDP',
+            password = PASSWORD9
+        ),
     ]
 
     config_users = {
@@ -1234,6 +1294,7 @@ class Engine(object):
                 'w2k8_qa\\administrateur@10.10.46.88:RDP',
                 'w2k3\\administrateur@10.10.47.97:RDP',
                 'w2k8erpm\\administrateur@10.10.46.110:RDP',
+                'w2k8erpm\\special@10.10.46.110:RDP',
             ]
         },
         'fr':

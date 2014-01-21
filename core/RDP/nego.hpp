@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean
+   Author(s): Christophe Grosjean, Meng Tan
 
    Early Transport Protocol Security Negotiation stage
 

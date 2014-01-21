@@ -742,6 +742,7 @@ class Sesman():
             # NB : service names are supposed to be in alphabetical ascending order.
             try:
                 selected_target = None
+
                 if self.shared.get(u'proto_dest'):
                     selected_target = self.get_selected_target(self.shared.get(u'proto_dest'))
                 else:
@@ -750,14 +751,12 @@ class Sesman():
                         selected_target = self.get_selected_target(u'RDP')
                     if not selected_target:
                         selected_target = self.get_selected_target(u'VNC')
-
                 if not selected_target:
                     _target = u"%s@%s:%s" % ( self.shared.get(u'target_login')
                                             , self.shared.get(u'target_device')
                                             , self.shared.get(u'proto_dest'))
-                    _error_log = u"Target %s not found in user rights" % target
-                    Logger().info(u"%s" % _error_log)
-                    _status, _error = False, TR(u"Target %s not found in user rights") % target
+                    _error_log = u"Target %s not found in user rights" % _target
+                    _status, _error = False, TR(u"Target %s not found in user rights") % _target
 
             except Exception, e:
                 _status, _error = False, TR(u"Failed to get authorisations for %s") % self._full_user_device_account
@@ -766,7 +765,9 @@ class Sesman():
 
 
         #TODO: looks like the code below should be done in the instance of some "selected_target" class
+
         if _status:
+
             session_started = False
 
             _status, _error = self.check_video_recording(selected_target.authorization.isRecorded)
