@@ -837,9 +837,6 @@ class Sesman():
                     self.cn = selected_target.resource.application.cn
                     if not app_params:
                         continue
-                else:
-                    self.cn = selected_target.resource.device.cn
-
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
                     kv[u'shell_working_directory'] = app_params.workingdir
                     kv[u'target_application'] = selected_target.service_login
@@ -1048,7 +1045,7 @@ class Sesman():
         elif reason == u'OPEN_SESSION_FAILED':
             self.engine.NotifySecondaryConnectionFailed(
                 self.shared.get(u'login'),
-                self.shared.get(u'ip_client'),            
+                self.shared.get(u'ip_client'),
                 self.shared.get(u'target_login'),
                 self._physical_target_device)
         elif reason == u'OPEN_SESSION_SUCCESSFUL':
