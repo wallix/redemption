@@ -481,38 +481,25 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         free(this->hash_table);
     }
 
-    virtual void mini_dump() {
+    virtual void dump(bool mini_dump) {
         LOG(LOG_INFO, "Type=RDP 4.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
-        hexdump_d(this->historyBuffer,         16);
-        LOG(LOG_INFO, "outputBuffer");
-        hexdump_d(this->outputBuffer,          16);
+        hexdump_d(this->historyBuffer, (mini_dump ? 16 : this->buf_len));
+        if (mini_dump) {
+            LOG(LOG_INFO, "outputBuffer");
+            hexdump_d(this->outputBuffer, 16);
+        }
         LOG(LOG_INFO, "outputBufferPlus");
-        hexdump_d(this->outputBufferPlus,      16);
-        LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
-        LOG(LOG_INFO, "buf_len=%d",            this->buf_len);
-        LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
-        LOG(LOG_INFO, "flags=0x%X",            this->flags);
-        LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
-        LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
+        hexdump_d(this->outputBufferPlus, (mini_dump ? 16 : this->buf_len + 64));
+        LOG(LOG_INFO, "historyOffset=%d", this->historyOffset);
+        LOG(LOG_INFO, "buf_len=%d", this->buf_len);
+        LOG(LOG_INFO, "bytes_in_opb=%d", this->bytes_in_opb);
+        LOG(LOG_INFO, "flags=0x%02X", this->flags);
+        LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
+        LOG(LOG_INFO, "first_pkt=%d", this->first_pkt);
         LOG(LOG_INFO, "hash_table");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), 16);
-    }
-
-    virtual void dump() {
-        LOG(LOG_INFO, "Type=RDP 4.0 bulk compressor");
-        LOG(LOG_INFO, "historyBuffer");
-        hexdump_d(this->historyBuffer,         this->buf_len);
-        LOG(LOG_INFO, "outputBufferPlus");
-        hexdump_d(this->outputBufferPlus,      this->buf_len + 64);
-        LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
-        LOG(LOG_INFO, "buf_len=%d",            this->buf_len);
-        LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
-        LOG(LOG_INFO, "flags=0x%X",            this->flags);
-        LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
-        LOG(LOG_INFO, "first_pkt=%d",          this->first_pkt);
-        LOG(LOG_INFO, "hash_table");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), rdp_mppc_enc::HASH_BUF_LEN * 2);
+        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table),
+            (mini_dump ? 16 : rdp_mppc_enc::HASH_BUF_LEN * sizeof(this->hash_table[0])));
     }
 
 // 3.1.8.4.1 RDP 4.0
@@ -579,21 +566,20 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
 //    A length-of-match value of 120 is encoded as the binary value 111110 111000.
 //    A length-of-match value of 4097 is encoded as the binary value 111111111110 000000000001.
 
+private:
     /**
      * encode (compress) data using RDP 4.0 protocol
      *
      * @param   srcData       uncompressed data
      * @param   len           length of srcData
-     *
-     * @return  true on success, false on failure
      */
-    virtual bool compress_40(const uint8_t * srcData, int len) {
+    void compress_40(const uint8_t * srcData, int len) {
         //LOG(LOG_INFO, "compress_40");
 
         this->flags = PACKET_COMPR_TYPE_8K;
 
         if ((srcData == NULL) || (len <= 0) || (len >= this->buf_len - 2)) {
-            return true;
+            return;
         }
 
         int        opb_index    = 0;                    /* index into outputBuffer                        */
@@ -704,7 +690,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
             this->flagsHold |= PACKET_FLUSHED;
             this->first_pkt =  1;
 
-            return true;
+            return;
         }
 
         this->historyOffset += len;
@@ -713,14 +699,12 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         this->bytes_in_opb =  opb_index + (bits_left != 8);
         this->flags        |= this->flagsHold;
         this->flagsHold    =  0;
-
-        return true;
     }
 
-    virtual bool compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+    virtual void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t reserved)
     {
-        bool compress_result = this->compress_40(uncompressed_data, (int)uncompressed_data_size);
+        this->compress_40(uncompressed_data, (int)uncompressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
             compressedType       = this->flags;
             compressed_data_size = this->bytes_in_opb;
@@ -729,9 +713,9 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
             compressedType       = 0;
             compressed_data_size = 0;
         }
-        return compress_result;
     }
 
+public:
     virtual void get_compressed_data(Stream & stream) const {
         if (stream.tailroom() < static_cast<size_t>(this->bytes_in_opb)) {
             LOG(LOG_ERR, "rdp_mppc_40_enc::get_compressed_data: Buffer too small");

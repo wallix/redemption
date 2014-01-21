@@ -31,7 +31,9 @@
 
 BOOST_AUTO_TEST_CASE(TestRDP61BlukCompression)
 {
-    rdp_mppc_61_enc * rdp_mppc_enc = new rdp_mppc_61_enc();
+    rdp_mppc_enc_match_finder * mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
+    rdp_mppc_61_enc * mppc_61_enc = new rdp_mppc_61_enc(mppc_enc_match_finder);
 
-    delete rdp_mppc_enc;
+    delete mppc_61_enc;
+    delete mppc_enc_match_finder;
 }

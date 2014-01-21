@@ -716,36 +716,21 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         ::free(this->hash_table);
     }
 
-    virtual void mini_dump() {
+    virtual void dump(bool mini_dump) {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
-        hexdump_d(this->historyBuffer,         16);
+        hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
         LOG(LOG_INFO, "outputBuffer");
-        hexdump_d(this->outputBuffer,          16);
-        LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
-        LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
+        hexdump_d(this->outputBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
+        LOG(LOG_INFO, "historyOffset=%d", this->historyOffset);
+        LOG(LOG_INFO, "bytes_in_opb=%d", this->bytes_in_opb);
         LOG(LOG_INFO, "offsetCache");
         hexdump_d(reinterpret_cast<uint8_t *>(this->offsetCache), RDP_60_OFFSET_CACHE_SIZE);
-        LOG(LOG_INFO, "flags=0x%X",            this->flags);
-        LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
+        LOG(LOG_INFO, "flags=0x%02X", this->flags);
+        LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
         LOG(LOG_INFO, "hash_table");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), 16);
-    }
-
-    virtual void dump() {
-        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
-        LOG(LOG_INFO, "historyBuffer");
-        hexdump_d(this->historyBuffer,         RDP_60_HIST_BUF_LEN);
-        LOG(LOG_INFO, "outputBuffer");
-        hexdump_d(this->outputBuffer,          RDP_60_HIST_BUF_LEN);
-        LOG(LOG_INFO, "historyOffset=%d",      this->historyOffset);
-        LOG(LOG_INFO, "bytes_in_opb=%d",       this->bytes_in_opb);
-        LOG(LOG_INFO, "offsetCache");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->offsetCache), RDP_60_OFFSET_CACHE_SIZE);
-        LOG(LOG_INFO, "flags=0x%X",            this->flags);
-        LOG(LOG_INFO, "flagsHold=0x%X",        this->flagsHold);
-        LOG(LOG_INFO, "hash_table");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table), rdp_mppc_enc::HASH_BUF_LEN * 2);
+        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table),
+            (mini_dump ? 16 : rdp_mppc_enc::HASH_BUF_LEN * sizeof(this->hash_table[0])));
     }
 
     static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset) {
@@ -770,14 +755,15 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         return index;
     }
 
-    bool compress_60(const uint8_t * srcData, int len)
+private:
+    void compress_60(const uint8_t * srcData, int len)
     {
         //LOG(LOG_INFO, "compress_60");
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
         if ((srcData == NULL) || (len <= 0) || (len >= static_cast<int>(RDP_60_HIST_BUF_LEN) - 1))
-            return true;
+            return;
 
         uint16_t opb_index = 0; /* index into outputBuffer           */
         uint8_t  bits_left = 8; /* unused bits in current uint8_t in */
@@ -920,7 +906,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
             this->flagsHold |= PACKET_FLUSHED;
 
             ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
-            return true;
+            return;
         }
 
         this->historyOffset += len;
@@ -930,15 +916,12 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         this->flags         |= PACKET_COMPRESSED;
         this->flags         |= this->flagsHold;
         this->flagsHold     =  0;
+    }   // void compress_60(uint8_t * srcData, int len)
 
-        return true;
-    }   // bool compress_60(uint8_t * srcData, int len)
-
-public:
-    virtual bool compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+    virtual void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t reserved)
     {
-        bool compress_result = this->compress_60(uncompressed_data, (int)uncompressed_data_size);
+        this->compress_60(uncompressed_data, (int)uncompressed_data_size);
         if (this->flags & PACKET_COMPRESSED) {
             compressedType       = this->flags;
             compressed_data_size = this->bytes_in_opb;
@@ -947,9 +930,9 @@ public:
             compressedType       = 0;
             compressed_data_size = 0;
         }
-        return compress_result;
     }
 
+public:
     virtual void get_compressed_data(Stream & stream) const {
         if (stream.tailroom() < static_cast<size_t>(this->bytes_in_opb)) {
             LOG(LOG_ERR, "rdp_mppc_60_enc::get_compressed_data: Buffer too small");

@@ -95,8 +95,8 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
     uint8_t  compressionFlags;
     uint16_t datalen;
 
-    BOOST_CHECK_EQUAL(true, enc->compress(decompressed_rd5_data, data_len, compressionFlags, datalen,
-        rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED));
+    enc->compress(decompressed_rd5_data, data_len, compressionFlags, datalen,
+        rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
     BOOST_CHECK(0 != (compressionFlags & PACKET_COMPRESSED));
     BOOST_CHECK_EQUAL(true,

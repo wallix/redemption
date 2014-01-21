@@ -465,7 +465,13 @@ protected:
     /**
      * Initialize rdp_mppc_enc structure
      */
-    rdp_mppc_enc() {}
+    rdp_mppc_enc()
+        : total_uncompressed_data_size(0)
+        , total_compressed_data_size(0)
+    {}
+
+    uint64_t total_uncompressed_data_size;
+    uint64_t total_compressed_data_size;
 
 public:
     /**
@@ -516,16 +522,38 @@ public:
         return crc;
     }
 
-    static const uint16_t MAX_COMPRESSED_DATA_SIZE_UNUSED = static_cast<uint16_t>(-1);
-
-    virtual bool compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+private:
+    virtual void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint8_t & compressedType, uint16_t & compressed_data_size,
         uint16_t max_compressed_data_size) = 0;
 
-    virtual void get_compressed_data(Stream & stream) const = 0;
+public:
+    static const uint16_t MAX_COMPRESSED_DATA_SIZE_UNUSED = static_cast<uint16_t>(-1);
 
-    virtual void dump() = 0;
-    virtual void mini_dump() = 0;
+    void compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
+        uint8_t & compressedType, uint16_t & compressed_data_size,
+        uint16_t max_compressed_data_size = MAX_COMPRESSED_DATA_SIZE_UNUSED)
+    {
+        this->total_uncompressed_data_size += uncompressed_data_size;
+        this->_compress(uncompressed_data, uncompressed_data_size,
+            compressedType, compressed_data_size, max_compressed_data_size);
+
+        this->total_compressed_data_size +=
+            ((compressedType & PACKET_COMPRESSED) ? compressed_data_size :
+                uncompressed_data_size);
+
+        LOG(LOG_INFO, "compressedType=0x%02X", compressedType);
+        LOG(LOG_INFO, "uncompressed_data_size=%u compressed_data_size=%u rate=%.2f",
+            uncompressed_data_size, compressed_data_size,
+            (float)compressed_data_size * 100.0 / uncompressed_data_size);
+        LOG(LOG_INFO, "total_uncompressed_data_size=%llu total_compressed_data_size=%llu total_rate=%.2Lf",
+            total_uncompressed_data_size, total_compressed_data_size,
+            (long double)total_compressed_data_size * 100.0 / (long double)total_uncompressed_data_size);
+    }
+
+    virtual void dump(bool mini_dump) = 0;
+
+    virtual void get_compressed_data(Stream & stream) const = 0;
 };  // struct rdp_mppc_enc
 
 
