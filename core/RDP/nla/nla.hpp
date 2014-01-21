@@ -34,12 +34,11 @@ struct rdpCredssp
     bool server;
     int send_seq_num;
     int recv_seq_num;
-    // freerdp* instance;
+
     CtxtHandle context;
 
     Array SspiModule;
 
-    // rdpSettings* settings;
     Transport& trans;
 
     TSCredentials ts_credentials;
@@ -97,10 +96,6 @@ struct rdpCredssp
         if (p) {
             length = strlen(p);
         }
-        // while (p) {
-        //     length++;
-        //     p++;
-        // }
         this->ServicePrincipalName.init(length + 1);
         this->ServicePrincipalName.copy(pszTargetName, length);
         this->ServicePrincipalName.get_data()[length] = 0;
@@ -123,7 +118,6 @@ struct rdpCredssp
     int credssp_ntlm_client_init() {
         this->server = false;
 
-
         // TODO REMOVE HARDCODED DATA
         // this->identity.SetAuthIdentity(settings->Username, settings->Domain,
         //                                settings->Password);
@@ -134,31 +128,6 @@ struct rdpCredssp
             this->identity.SetAuthIdentityFromUtf8(user, domain, pass);
         }
 
-// #ifndef _WIN32
-//         {
-//             SEC_WINNT_AUTH_IDENTITY* identity = &(this->identity);
-
-//             if (settings->RestrictedAdminModeRequired) {
-//                 if (settings->PasswordHash) {
-//                     if (strlen(settings->PasswordHash) == 32) {
-//                         if (identity->Password)
-//                             free(identity->Password);
-
-//                         identity->PasswordLength = ConvertToUnicode(CP_UTF8, 0,
-//                                                                     settings->PasswordHash,
-//                                                                     -1, &identity->Password,
-//                                                                     0) - 1;
-
-//                         /**
-//                          * Multiply password hash length by 64 to obtain a length exceeding
-//                          * the maximum (256) and use it this for hash identification in WinPR.
-//                          */
-//                         identity->PasswordLength = 32 * 64; /* 2048 */
-//                     }
-//                 }
-//             }
-//         }
-// #endif
 
 // ============================================
 /* Get Public Key From TLS Layer and hostname */
@@ -178,20 +147,6 @@ struct rdpCredssp
             this->ServicePrincipalName.copy(host, sizeof(host));
         }
 
-
-//         if (this->transport->layer == TRANSPORT_LAYER_TLS) {
-//             tls = this->transport->TlsIn;
-//         }
-//         else if (this->transport->layer == TRANSPORT_LAYER_TSG_TLS) {
-//             tls = this->transport->TsgTls;
-//         }
-//         else {
-//             fprintf(stderr, "Unknown NLA transport layer\n");
-//             return 0;
-//         }
-
-//         sspi_SecBufferAlloc(&this->PublicKey, tls->PublicKeyLength);
-//         CopyMemory(this->PublicKey.pvBuffer, tls->PublicKey, tls->PublicKeyLength);
 
 //         length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->ServerHostname);
 
@@ -227,8 +182,6 @@ struct rdpCredssp
         //     this->PublicKey.init(16);
         //     this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
         // }
-	// sspi_SecBufferAlloc(&credssp->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
-	// CopyMemory(credssp->PublicKey.pvBuffer, credssp->transport->TlsIn->PublicKey, credssp->transport->TlsIn->PublicKeyLength);
 
 	return 1;
     }
@@ -277,8 +230,6 @@ struct rdpCredssp
         Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        // Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
-        //                        Buffers[0].Buffer.size());
 
         Buffers[1].Buffer.init(public_key_length);
         Buffers[1].Buffer.copy(this->PublicKey.get_data(),
@@ -400,22 +351,15 @@ struct rdpCredssp
         Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
         Buffers[1].BufferType = SECBUFFER_DATA;  /* TSCredentials */
 
-        //     sspi_SecBufferAlloc(&credssp->authInfo, credssp->ContextSizes.cbMaxSignature + credssp->ts_credentials.cbBuffer);
         this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
         memset(Buffers[0].Buffer.get_data(), 0, Buffers[0].Buffer.size());
-        //     Buffers[0].cbBuffer = credssp->ContextSizes.cbMaxSignature;
-        //     Buffers[0].pvBuffer = credssp->authInfo.pvBuffer;
-        //     ZeroMemory(Buffers[0].pvBuffer, Buffers[0].cbBuffer);
 
         Buffers[1].Buffer.init(ts_credentials_send.size());
         Buffers[1].Buffer.copy(ts_credentials_send.get_data(),
                                ts_credentials_send.size());
 
-        //     Buffers[1].cbBuffer = credssp->ts_credentials.cbBuffer;
-        //     Buffers[1].pvBuffer = &((BYTE*) credssp->authInfo.pvBuffer)[Buffers[0].cbBuffer];
-        //     CopyMemory(Buffers[1].pvBuffer, credssp->ts_credentials.pvBuffer, Buffers[1].cbBuffer);
 
         Message.cBuffers = 2;
         Message.ulVersion = SECBUFFER_VERSION;
@@ -451,19 +395,14 @@ struct rdpCredssp
         }
 
         length = this->authInfo.size();
-        // CopyMemory(buffer, this->authInfo.pvBuffer, length);
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
         Buffers[0].Buffer.copy(this->authInfo.get_data(),
                                Buffers[0].Buffer.size());
-        // Buffers[0].cbBuffer = this->ContextSizes.cbMaxSignature;
-        // Buffers[0].pvBuffer = buffer;
 
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
         Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
                                Buffers[1].Buffer.size());
-        // Buffers[1].cbBuffer = length - this->ContextSizes.cbMaxSignature;
-        // Buffers[1].pvBuffer = &buffer[this->ContextSizes.cbMaxSignature];
 
         Message.cBuffers = 2;
         Message.ulVersion = SECBUFFER_VERSION;
@@ -520,12 +459,10 @@ struct rdpCredssp
         BStream ts_request_received(2 + byte + length);
         ts_request_received.out_copy_bytes(head, 2 + byte);
         this->trans.recv(&ts_request_received.p, length);
-        // ts_request_received.out_skip_bytes(length);
         ts_request_received.mark_end();
         ts_request_received.rewind();
         this->ts_request.recv(ts_request_received);
 
-        // LOG(LOG_INFO, "MARK %u", this->pubKeyAuth.size());
         // hexdump_c(this->pubKeyAuth.get_data(), this->pubKeyAuth.size());
 
         return 1;
@@ -540,8 +477,6 @@ struct rdpCredssp
     int credssp_client_authenticate() {
         SEC_STATUS status;
 
-        // TODO ?
-        // sspi_GlobalInit();
 
         if (this->credssp_ntlm_client_init() == 0) {
             return 0;
@@ -737,23 +672,7 @@ struct rdpCredssp
         if (credssp_ntlm_server_init() == 0)
             return 0;
 
-        if (this->SspiModule.size() > 0) {
-            // HMODULE hSSPI;
-            // INIT_SECURITY_INTERFACE pInitSecurityInterface;
-
-            // hSSPI = LoadLibrary(this->SspiModule);
-
-            // if (!hSSPI) {
-            //     _tprintf(_T("Failed to load SSPI module: %s\n"), this->SspiModule);
-            //     return 0;
-            // }
-            // pInitSecurityInterface = (INIT_SECURITY_INTERFACE)GetProcAddress(hSSPI, "InitSecurityInterfaceA");
-
-            // this->table = (*pInitSecurityInterface)();
-        }
-        else {
-            this->InitSecurityInterface(NTLM_Interface);
-        }
+        this->InitSecurityInterface(NTLM_Interface);
 
         SecPkgInfo packageInfo;
         status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);

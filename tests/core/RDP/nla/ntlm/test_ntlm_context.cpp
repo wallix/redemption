@@ -23,7 +23,7 @@
 #define BOOST_TEST_MODULE TestNtlm_context
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
 #include "log.hpp"
 #include "RDP/nla/ntlm/ntlm_context.hpp"
 #include "RDP/nla/ntlm/ntlm.hpp"
@@ -542,6 +542,61 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
                       0);
 }
 
+BOOST_AUTO_TEST_CASE(TestSetters)
+{
+    NTLMContext context;
+    context.init();
+
+    uint8_t work[] = "Carpe Diem";
+
+    uint8_t spn[] = "Sustine et abstine";
+
+    BOOST_CHECK_EQUAL(context.Workstation.size(), 0);
+    context.ntlm_SetContextWorkstation(work);
+    BOOST_CHECK_EQUAL(context.Workstation.size(), (sizeof(work) - 1) * 2);
+    BOOST_CHECK(memcmp(work, context.Workstation.get_data(), sizeof(work)));
+
+    BOOST_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
+    context.ntlm_SetContextServicePrincipalName(spn);
+    BOOST_CHECK_EQUAL(context.ServicePrincipalName.size(), (sizeof(spn) - 1) * 2);
+    BOOST_CHECK(memcmp(spn, context.ServicePrincipalName.get_data(), sizeof(spn)));
+
+}
+
+BOOST_AUTO_TEST_CASE(TestWrittersReaders)
+{
+    NTLMContext context_write;
+    context_write.init();
+    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
+    context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
+
+    NTLMContext context_read;
+    context_read.init();
+    SEC_STATUS status;
+    SecBuffer nego;
+    status = context_write.write_negotiate(&nego);
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
+    status = context_read.read_negotiate(&nego);
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
+
+
+    SecBuffer chal;
+    status = context_write.write_challenge(&chal);
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
+    status = context_read.read_challenge(&chal);
+    BOOST_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
+    BOOST_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
+
+    SecBuffer auth;
+    status = context_write.write_authenticate(&auth);
+    BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
+    BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
+    status = context_read.read_authenticate(&auth);
+    BOOST_CHECK_EQUAL(status, SEC_E_INTERNAL_ERROR);
+}
 
 BOOST_AUTO_TEST_CASE(TestOutputs)
 {
@@ -563,7 +618,7 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
     size_t length = (head[0] << 8) | head[1];
     LOG(LOG_INFO, "size length : %x", length);
 
-    const char ccd_redemption[] = {
+    const char ccd_r[] = {
 // Client Core Data
 "\x01\xc0\xd8\x00\x04\x00\x08\x00" //..Duca..........
 /* 0090 */ "\x00\x04\x00\x03\x01\xca\x03\xaa\x0c\x04\x00\x00\x28\x0a\x00\x00" //............(...
@@ -582,7 +637,7 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
     };
 
 
-    const char ccd_freerdp[] = {
+    const char ccd_f[] = {
 // Client Core Data
 "\x01\xc0\xd8\x00\x04\x00\x08\x00\x80\x07\xdb\x03" // ca.(............
 /*0090*/ "\x01\xca\x03\xaa\x09\x04\x00\x00\xb0\x1d\x00\x00\x57\x00\x49\x00" // ............W.I.
@@ -600,7 +655,8 @@ BOOST_AUTO_TEST_CASE(TestOutputs)
 /*0150*/ "\x00\x00\x00\x00\x00\x00\x02\x00\x02\x00\x00\x00"
     };
 
-    hexdump_c(ccd_redemption, sizeof(ccd_redemption) - 1);
-    hexdump_c(ccd_freerdp, sizeof(ccd_freerdp) - 1);
+    hexdump_c(ccd_r, sizeof(ccd_r) - 1);
+    hexdump_c(ccd_f, sizeof(ccd_f) - 1);
+
 
 }

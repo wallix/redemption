@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2012
-   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou
+   Author(s): Christophe Grosjean, Javier Caverni, Raphael Zhou, Meng Tan
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    stream object, used for input / output communication between
@@ -119,6 +119,17 @@ static inline void UTF8Upper(uint8_t * source, size_t source_size) {
         }
     }
 }
+
+// static inline uint8_t findup(uint8_t c) {
+//     const uint8_t uppertable[] = { 0x38, 0x49, 0x78, 0x7F, 0x86 };
+//     uint8_t i = 0;
+//     for (; i < sizeof(uppertable) ; i++) {
+//         if (c < uppertable[i]) {
+//             break;
+//         }
+//     }
+// }
+
 static inline void UTF16Upper(uint8_t * source, size_t max_len) {
     size_t i_s = 0;
     for (size_t i = 0 ; i < max_len ; i++){
@@ -126,8 +137,32 @@ static inline void UTF16Upper(uint8_t * source, size_t max_len) {
         uint8_t hi = source[i_s+1];
         if (hi == 0) {
             if (lo >= 0x61 && lo <= 0x7A) {
+                // latin characters (ascii)
                 source[i_s] -= 0x20;
             }
+            if (lo >= 0xe0 && lo <= 0xfe) {
+                // some common latin characters with accent
+                source[i_s] -= 0x20;
+            }
+            if (lo == 0xff) { // ÿ
+                source[i_s] = 0x78;
+                source[i_s+1] = 0x01;
+            }
+        }
+        i_s += 2;
+    }
+}
+
+static inline void UTF16UpperW(uint8_t * source, size_t max_len) {
+    size_t i_s = 0;
+    for (size_t i = 0 ; i < max_len ; i++){
+        unsigned int wc = (unsigned int) source[i_s];
+        wc += (unsigned int) source[i_s+1] << 8;
+        // local should be set
+        unsigned int uwc = towupper(wc);
+        if (uwc != wc) {
+            source[i_s] = uwc & 0xFF;
+            source[i_s+1] = (uwc >> 8) & 0xFF;
         }
         i_s += 2;
     }

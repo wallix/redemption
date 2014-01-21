@@ -67,10 +67,7 @@ struct NTLMContext {
     bool SendVersionInfo;
     bool confidentiality;
 
-    // uint32_t ConfigFlags;
 
-    // RC4_KEY SendRc4Seal;
-    // RC4_KEY RecvRc4Seal;
     SslRC4 SendRc4Seal;
     SslRC4 RecvRc4Seal;
     uint8_t* SendSigningKey;
@@ -81,13 +78,15 @@ struct NTLMContext {
     uint32_t NegotiateFlags;
 
     int LmCompatibilityLevel;
-    int SuppressExtendedProtection;
+    // int SuppressExtendedProtection;
     bool SendWorkstationName;
     Array Workstation;
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
-    uint8_t* ChannelBindingToken;
-    uint8_t ChannelBindingsHash[16];
+
+    // uint8_t* ChannelBindingToken;
+    // uint8_t ChannelBindingsHash[16];
+
     // SecPkgContext_Bindings Bindings;
     bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
@@ -99,12 +98,6 @@ struct NTLMContext {
     Array SavedNegotiateMessage;
     Array SavedChallengeMessage;
     Array SavedAuthenticateMessage;
-    // BStream BuffChallengeTargetInfo;
-    // BStream BuffAuthenticateTargetInfo;
-    // BStream BuffTargetName;
-
-    // BStream BuffNtChallengeResponse;
-    // BStream BuffLmChallengeResponse;
 
     uint8_t Timestamp[8];
     uint8_t ChallengeTimestamp[8];
@@ -120,7 +113,7 @@ struct NTLMContext {
     uint8_t ServerSigningKey[16];
     uint8_t ServerSealingKey[16];
     uint8_t MessageIntegrityCheck[16];
-    uint8_t NtProofStr[16];
+    // uint8_t NtProofStr[16];
 
     // NTLMContext() {
     //     this->init();
@@ -134,14 +127,15 @@ struct NTLMContext {
         this->UseMIC = false;
         this->state = NTLM_STATE_INITIAL;
         this->SendVersionInfo = true;
-        // this->SendVersionInfo = false;
         this->SendSingleHostData = false;
         this->SendWorkstationName = true;
         this->NegotiateFlags = 0;
         this->LmCompatibilityLevel = 3;
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
-
         memset(this->MessageIntegrityCheck, 0x00, sizeof(this->MessageIntegrityCheck));
+
+        this->Workstation.init(0);
+        this->ServicePrincipalName.init(0);
 
         this->confidentiality = true;
         this->hardcoded_tests = false;
@@ -245,11 +239,7 @@ struct NTLMContext {
         }
     }
 
-    // void ntlm_generate_exported_session_key()
-    // {
-    //     memcpy(this->ExportedSessionKey, this->RandomSessionKey, 16);
-    // }
-    // client method ??
+    // client method
     void ntlm_generate_key_exchange_key()
     {
 	// /* In NTLMv2, KeyExchangeKey is the 128-bit SessionBaseKey */
@@ -299,12 +289,20 @@ struct NTLMContext {
         memcpy(userup, user, user_size);
         UTF16Upper(userup, user_size / 2);
         hmac_md5.update(userup, user_size);
+
+        // LOG(LOG_INFO, "NTOWFv2 compute Password:");
+        // hexdump_c(pass, pass_size);
+        // LOG(LOG_INFO, "NTOWFv2 compute User Upper:");
+        // hexdump_c(userup, user_size);
+        // LOG(LOG_INFO, "NTOWFv2 compute Domain:");
+        // hexdump_c(domain, domain_size);
+
         delete [] userup;
         userup = NULL;
-
-        // hmac_md5.update(user, user_size);
         hmac_md5.update(domain, domain_size);
         hmac_md5.final(buff, buff_size);
+
+
     }
     // all strings are in unicode utf16
     void LMOWFv2(const uint8_t * pass,   size_t pass_size,
@@ -499,7 +497,7 @@ struct NTLMContext {
 
     void ntlm_generate_client_sealing_key()
     {
-	ntlm_generate_signing_key(client_seal_magic, sizeof(client_seal_magic),
+	ntlm_generate_sealing_key(client_seal_magic, sizeof(client_seal_magic),
                                   this->ClientSealingKey);
     }
 
@@ -511,27 +509,13 @@ struct NTLMContext {
 
     void ntlm_generate_server_sealing_key()
     {
-	ntlm_generate_signing_key(server_seal_magic, sizeof(server_seal_magic),
+	ntlm_generate_sealing_key(server_seal_magic, sizeof(server_seal_magic),
                                   this->ServerSealingKey);
-    }
-
-
-    void ntlm_compute_kxkey() {
-        // NTLMv2
-        memcpy(this->KeyExchangeKey, this->SessionBaseKey, 16);
     }
 
     void ntlm_compute_MIC() {
         uint8_t * MIC = this->MessageIntegrityCheck;
         SslHMAC_Md5 hmac_md5resp(this->ExportedSessionKey, 16);
-        // BStream Messages;
-        // this->NEGOTIATE_MESSAGE.emit(Messages);
-        // this->CHALLENGE_MESSAGE.emit(Messages);
-        // // when computing MIC, authenticate message should not include MIC
-        // this->AUTHENTICATE_MESSAGE.ignore_mic = true;
-        // this->AUTHENTICATE_MESSAGE.emit(Messages);
-        // this->AUTHENTICATE_MESSAGE.ignore_mic = false;
-        // hmac_md5resp.update(Messages.get_data(), Messages.size());
         hmac_md5resp.update(this->SavedNegotiateMessage.get_data(),
                             this->SavedNegotiateMessage.size());
         hmac_md5resp.update(this->SavedChallengeMessage.get_data(),
@@ -569,16 +553,6 @@ struct NTLMContext {
     }
 
 
-    /**
-     * Decrypt RandomSessionKey (RC4-encrypted RandomSessionKey, using KeyExchangeKey as the key).
-     * @param NTLM context
-     */
-
-    void ntlm_decrypt_random_session_key()
-    {
-	// /* In NTLMv2, EncryptedRandomSessionKey is the ExportedSessionKey RC4-encrypted with the KeyExchangeKey */
-	// ntlm_rc4k(context->KeyExchangeKey, 16, context->EncryptedRandomSessionKey, context->RandomSessionKey);
-    }
 
     /**
      * Initialize RC4 stream cipher states for sealing.
