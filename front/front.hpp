@@ -149,7 +149,8 @@ public:
 
     redemption::string server_capabilities_filename;
 
-    rdp_mppc_enc * mppc_enc;
+    rdp_mppc_enc              * mppc_enc;
+    rdp_mppc_enc_match_finder * mppc_enc_match_finder;
 
     auth_api * authentifier;
 
@@ -191,7 +192,8 @@ public:
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
         , server_capabilities_filename(server_capabilities_filename)
-        , mppc_enc(0)
+        , mppc_enc(NULL)
+        , mppc_enc_match_finder(NULL)
         , authentifier(NULL)
     {
         // init TLS
@@ -262,7 +264,9 @@ public:
     ~Front(){
         if (this->mppc_enc) {
             delete this->mppc_enc;
-            this->mppc_enc = NULL;
+        }
+        if (this->mppc_enc_match_finder) {
+            delete this->mppc_enc_match_finder;
         }
 
         if (this->bmp_cache) {
@@ -587,11 +591,16 @@ public:
             delete this->mppc_enc;
             this->mppc_enc = NULL;
         }
+        if (this->mppc_enc_match_finder) {
+            delete this->mppc_enc_match_finder;
+            this->mppc_enc_match_finder = NULL;
+        }
 
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->rdp_compression - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
-            this->mppc_enc = new rdp_mppc_61_enc();
+            this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
+            this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder);
             break;
         case PACKET_COMPR_TYPE_RDP6:
             this->mppc_enc = new rdp_mppc_60_enc();
