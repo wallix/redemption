@@ -45,12 +45,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) {
 
-	// int index;
-	// uint32_t cPackages;
-
-        // cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
-
-        // for (index = 0; index < (int) cPackages; index++) {
         if (strcmp(pszPackageName, NTLM_SecPkgInfo.Name) == 0) {
 
             pPackageInfo->fCapabilities = NTLM_SecPkgInfo.fCapabilities;
@@ -62,7 +56,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
             return SEC_E_OK;
         }
-        // }
 
         return SEC_E_SECPKG_NOT_FOUND;
     }
@@ -70,9 +63,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
     virtual SEC_STATUS QueryContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
                                               void* pBuffer) {
-        // if (!phContext) {
-        //     return SEC_E_INVALID_HANDLE;
-        // }
         if (!pBuffer) {
             return SEC_E_INSUFFICIENT_MEMORY;
         }
@@ -176,7 +166,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
 
-            context->init();
+            // context->init();
             context->server = false;
             if (Reserved1 == 1) {
                 context->hardcoded_tests = true;
@@ -291,7 +281,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (!context) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
-            context->init();
+            // context->init();
             context->server = true;
             if (*pfContextAttr == 1) {
                 context->hardcoded_tests = true;
@@ -431,24 +421,15 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         memcpy(data, data_buffer->Buffer.get_data(), length);
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-        //         HMAC_CTX_init(&hmac);
-
         SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
-        // TODO CHECK ENDIANNESS
         hmac_md5.update((uint8_t*) &(SeqNo), 4);
         hmac_md5.update(data, length);
         hmac_md5.final(digest, sizeof(digest));
-        // HMAC_Init_ex(&hmac, context->SendSigningKey, 16, EVP_md5(), NULL);
-        // HMAC_Update(&hmac, (void*) &(SeqNo), 4);
-        // HMAC_Update(&hmac, data, length);
-        // HMAC_Final(&hmac, digest, NULL);
-        // HMAC_CTX_cleanup(&hmac);
 
         /* Encrypt message using with RC4, result overwrites original buffer */
 
         if (context->confidentiality) {
             context->SendRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
-            // RC4(&context->SendRc4Seal, length, data, data_buffer->pvBuffer);
         }
         else {
             data_buffer->Buffer.copy(data, length);
@@ -482,7 +463,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         signature = signature_buffer->Buffer.get_data();
 
         /* Concatenate version, ciphertext and sequence number to build signature */
-        // TODO CHECK ENDIANNESS
         memcpy(signature, (void*) & version, 4);
         memcpy(&signature[4], checksum, 8);
         memcpy(&signature[12], (void*) &(SeqNo), 4);
@@ -545,7 +525,6 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         if (context->confidentiality) {
             context->RecvRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
-            // RC4(&context->RecvRc4Seal, length, data, data_buffer->pvBuffer);
         }
         else {
             data_buffer->Buffer.copy(data, length);
@@ -553,17 +532,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(context->RecvSigningKey, 16);
-        // TODO CHECK ENDIANNESS
         hmac_md5.update((uint8_t*) &(SeqNo), 4);
         hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
         hmac_md5.final(digest, sizeof(digest));
 
-        // HMAC_CTX_init(&hmac);
-        // HMAC_Init_ex(&hmac, context->RecvSigningKey, 16, EVP_md5(), NULL);
-        // HMAC_Update(&hmac, (void*) &(SeqNo), 4);
-        // HMAC_Update(&hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
-        // HMAC_Final(&hmac, digest, NULL);
-        // HMAC_CTX_cleanup(&hmac);
 // #ifdef WITH_DEBUG_NTLM
         // LOG(LOG_ERR, "======== DECRYPT ==========");
         // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
@@ -587,10 +559,8 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         /* RC4-encrypt first 8 bytes of digest */
         context->RecvRc4Seal.crypt(8, digest, checksum);
-        // RC4(&context->RecvRc4Seal, 8, digest, checksum);
 
         /* Concatenate version, ciphertext and sequence number to build signature */
-        // TODO CHECK ENDIANNESS
         memcpy(expected_signature, (void*) &version, 4);
         memcpy(&expected_signature[4], checksum, 8);
         memcpy(&expected_signature[12], (void*) &(SeqNo), 4);

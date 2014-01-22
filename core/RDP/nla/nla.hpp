@@ -48,7 +48,6 @@ struct rdpCredssp
     Array & authInfo;
     Array PublicKey;
 
-    // CryptoRc4 rc4_seal_state;
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     PSecurityFunctionTable table;
@@ -146,21 +145,6 @@ struct rdpCredssp
             this->ServicePrincipalName.init(sizeof(host));
             this->ServicePrincipalName.copy(host, sizeof(host));
         }
-
-
-//         length = sizeof(TERMSRV_SPN_PREFIX) + strlen(settings->ServerHostname);
-
-//         spn = (SEC_CHAR*) malloc(length + 1);
-//         sprintf(spn, "%s%s", TERMSRV_SPN_PREFIX, settings->ServerHostname);
-
-// #ifdef UNICODE
-//         this->ServicePrincipalName = (LPTSTR) malloc(length * 2 + 2);
-//         MultiByteToWideChar(CP_UTF8, 0, spn, length,
-//                             (LPWSTR) this->ServicePrincipalName, length);
-//         free(spn);
-// #else
-//         this->ServicePrincipalName = spn;
-// #endif
 
         return 1;
 

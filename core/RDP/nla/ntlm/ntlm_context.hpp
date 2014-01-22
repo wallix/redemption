@@ -115,9 +115,9 @@ struct NTLMContext {
     uint8_t MessageIntegrityCheck[16];
     // uint8_t NtProofStr[16];
 
-    // NTLMContext() {
-    //     this->init();
-    // }
+    NTLMContext() {
+        this->init();
+    }
 
     void init() {
         this->SavedNegotiateMessage.init(0);
@@ -290,13 +290,6 @@ struct NTLMContext {
         UTF16Upper(userup, user_size / 2);
         hmac_md5.update(userup, user_size);
 
-        // LOG(LOG_INFO, "NTOWFv2 compute Password:");
-        // hexdump_c(pass, pass_size);
-        // LOG(LOG_INFO, "NTOWFv2 compute User Upper:");
-        // hexdump_c(userup, user_size);
-        // LOG(LOG_INFO, "NTOWFv2 compute Domain:");
-        // hexdump_c(domain, domain_size);
-
         delete [] userup;
         userup = NULL;
         hmac_md5.update(domain, domain_size);
@@ -413,8 +406,6 @@ struct NTLMContext {
         this->ntlm_rc4k(this->SessionBaseKey, 16,
                         this->ExportedSessionKey, this->EncryptedRandomSessionKey);
 
-        TODO("We should check NTLMSSP_NEGOTIATE_KEY_EXCH in challenge nego flag before sending"
-             " or not the EncryptedRandomSessionKey");
         BStream & AuthEncryptedRSK = this->AUTHENTICATE_MESSAGE.EncryptedRandomSessionKey.Buffer;
         AuthEncryptedRSK.reset();
         AuthEncryptedRSK.out_copy_bytes(this->EncryptedRandomSessionKey, 16);
@@ -568,8 +559,6 @@ struct NTLMContext {
             this->RecvSealingKey = this->ServerSealingKey;
             this->SendRc4Seal.set_key(this->ServerSealingKey, 16);
             this->RecvRc4Seal.set_key(this->ClientSealingKey, 16);
-            // RC4_set_key(&this->SendRc4Seal, 16, this->ServerSealingKey);
-            // RC4_set_key(&this->RecvRc4Seal, 16, this->ClientSealingKey);
         }
 	else {
             this->SendSigningKey = this->ClientSigningKey;
@@ -578,8 +567,6 @@ struct NTLMContext {
             this->RecvSealingKey = this->ClientSealingKey;
             this->SendRc4Seal.set_key(this->ClientSealingKey, 16);
             this->RecvRc4Seal.set_key(this->ServerSealingKey, 16);
-            // RC4_set_key(&this->SendRc4Seal, 16, this->ClientSealingKey);
-            // RC4_set_key(&this->RecvRc4Seal, 16, this->ServerSealingKey);
         }
     }
 
@@ -975,7 +962,6 @@ struct NTLMContext {
             this->ServicePrincipalName.init(0);
 	}
     }
-
 
 
     // READ WRITE FUNCTIONS

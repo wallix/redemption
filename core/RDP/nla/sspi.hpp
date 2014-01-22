@@ -101,10 +101,6 @@ struct SecPkgInfo {
 typedef SecPkgInfo *PSecPkgInfo;
 
 
-// const SecPkgInfo* SecPkgInfo_LIST[] = {
-//     &NTLM_SecPkgInfo
-// };
-
 struct SEC_CHANNEL_BINDINGS
 {
     uint32_t dwInitiatorAddrType;

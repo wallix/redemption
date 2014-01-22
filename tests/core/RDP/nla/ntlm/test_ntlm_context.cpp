@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
 
 
     NTLMContext context;
-    context.init();
+    // context.init();
     context.NTLMv2 = true;
     context.confidentiality = true;
     context.ntlm_set_negotiate_flags();
@@ -216,8 +216,8 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario)
 
     bool result;
 
-    client_context.init();
-    server_context.init();
+    // client_context.init();
+    // server_context.init();
 
     client_context.server = false;
     server_context.server = true;
@@ -388,8 +388,8 @@ BOOST_AUTO_TEST_CASE(TestNtlmScenario2)
     BStream client_to_server;
     BStream server_to_client;
 
-    client_context.init();
-    server_context.init();
+    // client_context.init();
+    // server_context.init();
 
     client_context.server = false;
     server_context.server = true;
@@ -545,7 +545,7 @@ BOOST_AUTO_TEST_CASE(TestNTOWFv2)
 BOOST_AUTO_TEST_CASE(TestSetters)
 {
     NTLMContext context;
-    context.init();
+    // context.init();
 
     uint8_t work[] = "Carpe Diem";
 
@@ -566,12 +566,12 @@ BOOST_AUTO_TEST_CASE(TestSetters)
 BOOST_AUTO_TEST_CASE(TestWrittersReaders)
 {
     NTLMContext context_write;
-    context_write.init();
+    // context_write.init();
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
 
     NTLMContext context_read;
-    context_read.init();
+    // context_read.init();
     SEC_STATUS status;
     SecBuffer nego;
     status = context_write.write_negotiate(&nego);
