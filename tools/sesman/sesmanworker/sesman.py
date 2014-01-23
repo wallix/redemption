@@ -333,7 +333,7 @@ class Sesman():
 
         try:
             #Check if X509 Authentication is active
-            if self.engine.is_x509_connected(wab_login, self.shared.get(u'ip_client'), self.shared.get(u'proxy_type')):
+            if self.engine.is_x509_connected(wab_login, self.shared.get(u'ip_client'), self.shared.get(u'proxy_type'), self.shared.get(u'target_device')):
                 # Prompt the user in proxy window
                  # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
