@@ -450,7 +450,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
     /**
      * Initialize rdp_mppc_40_enc structure
      */
-    rdp_mppc_40_enc() : rdp_mppc_enc() {
+    rdp_mppc_40_enc(uint32_t verbose = 0) : rdp_mppc_enc(verbose) {
         this->historyBuffer     = NULL; /* contains uncompressed data */
         this->outputBuffer      = NULL; /* contains compressed data */
         this->outputBufferPlus  = NULL;
@@ -574,7 +574,9 @@ private:
      * @param   len           length of srcData
      */
     void compress_40(const uint8_t * srcData, int len) {
-        //LOG(LOG_INFO, "compress_40");
+        if (this->verbose) {
+            LOG(LOG_INFO, "compress_40");
+        }
 
         this->flags = PACKET_COMPR_TYPE_8K;
 

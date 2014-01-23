@@ -600,6 +600,7 @@ public:
         {
         case PACKET_COMPR_TYPE_RDP61:
             this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
+            //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
             this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder);
             break;
         case PACKET_COMPR_TYPE_RDP6:

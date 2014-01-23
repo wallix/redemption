@@ -683,7 +683,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 
     uint16_t * hash_table;
 
-    rdp_mppc_60_enc() : rdp_mppc_enc() {
+    rdp_mppc_60_enc(uint32_t verbose = 0) : rdp_mppc_enc(verbose) {
         // The HistoryOffset MUST start initialized to zero, while the
         //     history buffer MUST be filled with zeros. After it has been
         //     initialized, the entire history buffer is immediately
@@ -758,7 +758,9 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 private:
     void compress_60(const uint8_t * srcData, int len)
     {
-        //LOG(LOG_INFO, "compress_60");
+        if (this->verbose & 512) {
+            LOG(LOG_INFO, "compress_60");
+        }
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
