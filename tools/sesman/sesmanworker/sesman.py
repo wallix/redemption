@@ -742,7 +742,6 @@ class Sesman():
             # NB : service names are supposed to be in alphabetical ascending order.
             try:
                 selected_target = None
-
                 if self.shared.get(u'proto_dest'):
                     selected_target = self.get_selected_target(self.shared.get(u'proto_dest'))
                 else:
@@ -765,9 +764,7 @@ class Sesman():
 
 
         #TODO: looks like the code below should be done in the instance of some "selected_target" class
-
         if _status:
-
             session_started = False
 
             _status, _error = self.check_video_recording(selected_target.authorization.isRecorded)
@@ -833,8 +830,8 @@ class Sesman():
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
                 if selected_target.resource.application:
-                    app_params = self.engine.get_app_params(selected_target, physical_target)
                     self.cn = selected_target.resource.application.cn
+                    app_params = self.engine.get_app_params(selected_target, physical_target)
                     if not app_params:
                         continue
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))
