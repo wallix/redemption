@@ -645,7 +645,7 @@ private:
         memcpy(this->historyBuffer + this->historyOffset, uncompressed_data, uncompressed_data_size);
 
         offset_type ctr         = 0;
-        offset_type copy_offset = 0; /* pattern match starts here... */
+        offset_type copy_offset = 0;    /* pattern match starts here... */
 
         /* if we are at start of history buffer, do not attempt to compress  */
         /* first RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH -1 bytes, because */
@@ -659,11 +659,11 @@ private:
                     this->outputBuffer, bits_left, opb_index);
             }
 
-            this->hash_tab_mgr.update2(this->historyBuffer, 0);
-            this->hash_tab_mgr.update2(this->historyBuffer, 1);
+            this->hash_tab_mgr.update_indirect(this->historyBuffer, 0);
+            this->hash_tab_mgr.update_indirect(this->historyBuffer, 1);
         }
 
-        int lom = 0;
+        uint16_t lom = 0;
         for (; ctr + (RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1) < uncompressed_data_size;
              ctr += lom) { // we need at least 3 bytes to look for match
             offset_type     offset         = this->historyOffset + ctr;
@@ -682,10 +682,10 @@ private:
             }
             else {
                 /* we have a match - compute hash and Length of Match for triplets */
-                this->hash_tab_mgr.update2(this->historyBuffer, offset + 1);
+                this->hash_tab_mgr.update_indirect(this->historyBuffer, offset + 1);
 
                 for (lom = RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH; ctr + lom < uncompressed_data_size; lom++) {
-                    this->hash_tab_mgr.update2(this->historyBuffer, offset + lom - 1);
+                    this->hash_tab_mgr.update_indirect(this->historyBuffer, offset + lom - 1);
                     if (this->historyBuffer[offset + lom] !=
                         this->historyBuffer[previous_match + lom]) {
                         break;
@@ -702,7 +702,7 @@ private:
                                         (copy_offset <= 0x93F) ? 2 :
                                                                  3 ;
                 ::insert_n_bits_40_50(nbbits[range],
-                    headers[range]|(copy_offset - base[range]),
+                    headers[range] | (copy_offset - base[range]),
                     this->outputBuffer, bits_left, opb_index);
 
                 int log_lom = 31 - __builtin_clz(lom);
@@ -716,7 +716,8 @@ private:
 
         /* add remaining data if any to the output */
         while (uncompressed_data_size - ctr > 0) {
-            ::encode_literal_40_50(uncompressed_data[ctr], outputBuffer, bits_left, opb_index);
+            ::encode_literal_40_50(uncompressed_data[ctr], this->outputBuffer, bits_left,
+                opb_index);
             ctr++;
         }
 

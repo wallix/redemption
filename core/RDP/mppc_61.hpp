@@ -324,7 +324,7 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
         if (historyOffset == 0) {
             counter = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
             for (offset_type i = 0; i < counter; i++)
-                this->hash_tab_mgr.update2(historyBuffer, i);
+                this->hash_tab_mgr.update_indirect(historyBuffer, i);
         }
 
         uint16_t length_of_match = 0;
@@ -347,14 +347,14 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
             }
             else {
                 // We have a match, compute hash and Length of Match for triplets.
-                this->hash_tab_mgr.update2(historyBuffer, offset + 1);
+                this->hash_tab_mgr.update_indirect(historyBuffer, offset + 1);
 
                 // Maximum LOM is RDP_61_MAX_DATA_BLOCK_SIZE bytes.
                 for (length_of_match = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH;
                      (counter + length_of_match < uncompressed_data_size) &&
                          (length_of_match < RDP_61_MAX_DATA_BLOCK_SIZE);
                      length_of_match++) {
-                    this->hash_tab_mgr.update2(historyBuffer, offset + length_of_match - 1);
+                    this->hash_tab_mgr.update_indirect(historyBuffer, offset + length_of_match - 1);
                     if (historyBuffer[offset + length_of_match] !=
                         historyBuffer[previous_match + length_of_match])
                     {

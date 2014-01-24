@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
     hash_tab_mgr.reset();
     offset = 1;
     hash = hash_tab_mgr.sign(data + offset);
-    hash_tab_mgr.update2(data, offset);
+    hash_tab_mgr.update_indirect(data, offset);
     BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
 
 
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
     hash_tab_mgr.reset();
     offset = 1;
     hash = hash_tab_mgr.sign(data + offset);
-    hash_tab_mgr.update2(data, offset);
+    hash_tab_mgr.update_indirect(data, offset);
     BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
     hash_tab_mgr.clear_undo_history();
     hash_save   = hash;
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
 
     offset = 3;
     hash = hash_tab_mgr.sign(data + offset);
-    hash_tab_mgr.update2(data, offset);
+    hash_tab_mgr.update_indirect(data, offset);
     BOOST_CHECK_EQUAL(offset,      hash_tab_mgr.get_offset(hash));
     BOOST_CHECK_EQUAL(true,        hash_tab_mgr.undo_last_changes());
     BOOST_CHECK_EQUAL(0,           hash_tab_mgr.get_offset(hash));
@@ -200,6 +200,6 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
     // Test of undoing last changes (out of undo buffer).
     hash_tab_mgr.reset();
     for (int i = 0; i < 10; i++)
-        hash_tab_mgr.update2(data + i, offset);
+        hash_tab_mgr.update_indirect(data + i, offset);
     BOOST_CHECK_EQUAL(false, hash_tab_mgr.undo_last_changes());
 }

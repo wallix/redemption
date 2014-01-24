@@ -675,7 +675,7 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
         this->hash_table[hash] = offset;
     }
 
-    inline void update2(const uint8_t * data, T offset) {
+    inline void update_indirect(const uint8_t * data, T offset) {
         hash_type hash = this->sign(data + offset);
 
         if (this->undo_buffer_current != this->undo_buffer_end) {
