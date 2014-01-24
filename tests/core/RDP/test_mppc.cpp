@@ -146,10 +146,11 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
     const unsigned int length_of_data_to_sign = 3;
     const unsigned int max_undo_element       = 8;
 
-    typedef uint16_t                                                offset_type;
-    typedef rdp_mppc_enc_hash_table_manager<offset_type>::hash_type hash_type;
+    typedef uint16_t                                     offset_type;
+    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
+    typedef hash_table_manager::hash_type                hash_type;
 
-    rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager(
+    hash_table_manager hash_tab_mgr(
         length_of_data_to_sign, max_undo_element);
 
     uint8_t data[] = "0123456789ABCDEF";
@@ -161,43 +162,43 @@ BOOST_AUTO_TEST_CASE(TestHashTableManager)
 
 
     // Test of insertion (explicit hash value).
-    hash_table_manager.reset();
+    hash_tab_mgr.reset();
     offset = 1;
-    hash = hash_table_manager.sign(data + offset);
-    hash_table_manager.update(hash, offset);
-    BOOST_CHECK_EQUAL(offset, hash_table_manager.get_offset(hash));
+    hash = hash_tab_mgr.sign(data + offset);
+    hash_tab_mgr.update(hash, offset);
+    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
 
 
     // Test of insertion (implicit hash value).
-    hash_table_manager.reset();
+    hash_tab_mgr.reset();
     offset = 1;
-    hash = hash_table_manager.sign(data + offset);
-    hash_table_manager.update2(data, offset);
-    BOOST_CHECK_EQUAL(offset, hash_table_manager.get_offset(hash));
+    hash = hash_tab_mgr.sign(data + offset);
+    hash_tab_mgr.update2(data, offset);
+    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
 
 
     // Test of undoing last changes.
-    hash_table_manager.reset();
+    hash_tab_mgr.reset();
     offset = 1;
-    hash = hash_table_manager.sign(data + offset);
-    hash_table_manager.update2(data, offset);
-    BOOST_CHECK_EQUAL(offset, hash_table_manager.get_offset(hash));
-    hash_table_manager.clear_undo_history();
+    hash = hash_tab_mgr.sign(data + offset);
+    hash_tab_mgr.update2(data, offset);
+    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
+    hash_tab_mgr.clear_undo_history();
     hash_save   = hash;
     offset_save = offset;
 
     offset = 3;
-    hash = hash_table_manager.sign(data + offset);
-    hash_table_manager.update2(data, offset);
-    BOOST_CHECK_EQUAL(offset,      hash_table_manager.get_offset(hash));
-    BOOST_CHECK_EQUAL(true,        hash_table_manager.undo_last_changes());
-    BOOST_CHECK_EQUAL(0,           hash_table_manager.get_offset(hash));
-    BOOST_CHECK_EQUAL(offset_save, hash_table_manager.get_offset(hash_save));
+    hash = hash_tab_mgr.sign(data + offset);
+    hash_tab_mgr.update2(data, offset);
+    BOOST_CHECK_EQUAL(offset,      hash_tab_mgr.get_offset(hash));
+    BOOST_CHECK_EQUAL(true,        hash_tab_mgr.undo_last_changes());
+    BOOST_CHECK_EQUAL(0,           hash_tab_mgr.get_offset(hash));
+    BOOST_CHECK_EQUAL(offset_save, hash_tab_mgr.get_offset(hash_save));
 
 
     // Test of undoing last changes (out of undo buffer).
-    hash_table_manager.reset();
+    hash_tab_mgr.reset();
     for (int i = 0; i < 10; i++)
-        hash_table_manager.update2(data + i, offset);
-    BOOST_CHECK_EQUAL(false, hash_table_manager.undo_last_changes());
+        hash_tab_mgr.update2(data + i, offset);
+    BOOST_CHECK_EQUAL(false, hash_tab_mgr.undo_last_changes());
 }

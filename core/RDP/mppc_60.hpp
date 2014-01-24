@@ -202,7 +202,6 @@ static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
 }
 
 struct rdp_mppc_60_dec : public rdp_mppc_dec {
-public:
     uint8_t  * history_buf;
     uint16_t * offset_cache;
     uint8_t  * history_buf_end;
@@ -716,7 +715,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         ::free(this->hash_table);
     }
 
-    virtual void dump(bool mini_dump) {
+    virtual void dump(bool mini_dump) const {
         LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));

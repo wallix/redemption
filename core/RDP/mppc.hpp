@@ -428,30 +428,33 @@ public:
 //
 ////////////////////
 
-static inline void insert_n_bits_40_50(int n, uint32_t _data, uint8_t * outputBuffer,
-    int & bits_left, int & opb_index)
+static inline void insert_n_bits_40_50(uint8_t n, uint32_t data, uint8_t * outputBuffer,
+    uint8_t & bits_left, uint16_t & opb_index)
 {
-    int bits_to_serialize = n;
+    uint8_t bits_to_serialize = n;
     if (bits_left >= bits_to_serialize + 1) {
         const int i = bits_left - bits_to_serialize;
-        outputBuffer[opb_index] |= _data << i;
+        outputBuffer[opb_index] |= data << i;
         bits_left = i;
     }
     else {
-        outputBuffer[opb_index++] |= _data >> (bits_to_serialize - bits_left);
-        _data                     &= (0xFFFFFFFF >> (32 - (bits_to_serialize - bits_left)));
+        outputBuffer[opb_index++] |= data >> (bits_to_serialize - bits_left);
+        data                      &= (0xFFFFFFFF >> (32 - (bits_to_serialize - bits_left)));
         bits_to_serialize         -= bits_left;
         for (; bits_to_serialize >= 8 ; bits_to_serialize -= 8) {
-            outputBuffer[opb_index++] =  (_data >> (bits_to_serialize - 8));
-            _data                     &= (0xFFFFFFFF >> (32 - (bits_to_serialize - 8)));
+            outputBuffer[opb_index++] =  (data >> (bits_to_serialize - 8));
+            data                      &= (0xFFFFFFFF >> (32 - (bits_to_serialize - 8)));
         }
-        outputBuffer[opb_index] =
-            (bits_to_serialize > 0) ? (_data << (8 - bits_to_serialize)) : 0;
+        outputBuffer[opb_index] = (bits_to_serialize > 0)           ?
+                                  (data << (8 - bits_to_serialize)) :
+                                  0                                 ;
         bits_left               = 8 - bits_to_serialize;
     }
 }
 
-static inline void encode_literal_40_50(char c, uint8_t * outputBuffer, int & bits_left, int & opb_index) {
+static inline void encode_literal_40_50(char c, uint8_t * outputBuffer, uint8_t & bits_left,
+    uint16_t & opb_index)
+{
     insert_n_bits_40_50(
         (c & 0x80) ? 9 : 8,
         (c & 0x80) ? (0x02 << 7) | (c & 0x7F) : c,
@@ -555,7 +558,7 @@ public:
         }
     }
 
-    virtual void dump(bool mini_dump) = 0;
+    virtual void dump(bool mini_dump) const = 0;
 
     virtual void get_compressed_data(Stream & stream) const = 0;
 };  // struct rdp_mppc_enc
@@ -599,12 +602,24 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
         free(this->undo_buffer_begin);
     }
 
-    void dump(bool mini_dump) {
+    inline void clear_undo_history() {
+        this->undo_buffer_current = this->undo_buffer_begin;
+    }
+
+    void dump(bool mini_dump) const {
         LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
         LOG(LOG_INFO, "hashTable");
         hexdump_d(reinterpret_cast<const char *>(this->hash_table),
             (mini_dump ? 16 :
                  rdp_mppc_enc_hash_table_manager::MAX_HASH_TABLE_ELEMENT * sizeof(T)));
+    }
+
+    inline T get_offset(hash_type hash) const {
+        return this->hash_table[hash];
+    }
+
+    static inline size_t get_table_size() {
+        return rdp_mppc_enc_hash_table_manager::MAX_HASH_TABLE_ELEMENT * sizeof(T);
     }
 
     inline hash_type sign(const uint8_t * data) {
@@ -650,10 +665,6 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
         return crc;
     }
 
-    inline T get_offset(hash_type hash) {
-        return this->hash_table[hash];
-    }
-
     inline void update(hash_type hash, T offset) {
         if (this->undo_buffer_current != this->undo_buffer_end) {
             *(reinterpret_cast<hash_type *>(this->undo_buffer_current                   )) = hash;
@@ -683,10 +694,6 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
         this->undo_buffer_current = this->undo_buffer_begin;
     }
 
-    inline void clear_undo_history() {
-        this->undo_buffer_current = this->undo_buffer_begin;
-    }
-
     inline bool undo_last_changes() {
         if (this->undo_buffer_current == this->undo_buffer_end) {
             return false;
@@ -702,6 +709,9 @@ template<typename T> struct rdp_mppc_enc_hash_table_manager {
         return true;
     }
 };
+
+
+static const size_t RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH = 3;
 
 
 #include "mppc_40.hpp"

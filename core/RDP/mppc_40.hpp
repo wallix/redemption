@@ -481,7 +481,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         free(this->hash_table);
     }
 
-    virtual void dump(bool mini_dump) {
+    virtual void dump(bool mini_dump) const {
         LOG(LOG_INFO, "Type=RDP 4.0 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : this->buf_len));
@@ -584,8 +584,8 @@ private:
             return;
         }
 
-        int        opb_index    = 0;                    /* index into outputBuffer                        */
-        int        bits_left    = 8;                    /* unused bits in current uint8_t in outputBuffer */
+        uint16_t   opb_index    = 0;                    /* index into outputBuffer                        */
+        uint8_t    bits_left    = 8;                    /* unused bits in current uint8_t in outputBuffer */
         uint16_t * hash_table   = this->hash_table;     /* hash table for pattern matching                */
         uint8_t  * outputBuffer = this->outputBuffer;   /* points to enc->outputBuffer                    */
 
@@ -603,7 +603,7 @@ private:
             memset(hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
         }
 
-        /* add / append new data to historyBuffer */
+        /* add/append new data to historyBuffer */
         memcpy(&(this->historyBuffer[this->historyOffset]), srcData, len);
 
         int      ctr         = 0;
