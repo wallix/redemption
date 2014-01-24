@@ -163,6 +163,7 @@ static const size_t RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE        =
     RDP_61_COMPRESSOR_LITERALS_BUFFER_SIZE
     ;
 
+
 struct rdp_mppc_enc_match_finder {
     BStream match_details_stream;
 
@@ -170,12 +171,16 @@ struct rdp_mppc_enc_match_finder {
 
     virtual void dump(bool mini_dump) = 0;
 
+    /**
+     * @param historyOffset HistoryOffset before data compression.
+     */
     virtual void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) = 0;
 
     virtual void process_packet_at_front() {}
 
     virtual bool undo_last_changes() { return true; }
 };
+
 
 struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_match_finder
 {
@@ -281,53 +286,44 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
 {
     static const size_t MAX_HASH_BUFFER_UNDO_ELEMENT = 256;
 
-    uint32_t * hash_table;
+    typedef uint32_t                                                offset_type;
+    typedef rdp_mppc_enc_hash_table_manager<offset_type>::hash_type hash_type;
 
-    uint32_t * undo_buffer_hash_table_begin;
-    uint32_t * undo_buffer_hash_table_end;
-    uint32_t * undo_buffer_hash_table_current;
+    rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
 
-    rdp_mppc_61_enc_hash_based_match_finder() {
-        this->hash_table = static_cast<uint32_t *>(calloc(rdp_mppc_enc::HASH_BUF_LEN, sizeof(uint32_t)));
-
-        this->undo_buffer_hash_table_begin   = static_cast<uint32_t *>(calloc(MAX_HASH_BUFFER_UNDO_ELEMENT, sizeof(uint32_t) * 2));
-        this->undo_buffer_hash_table_end     = this->undo_buffer_hash_table_begin + MAX_HASH_BUFFER_UNDO_ELEMENT * 2;
-        this->undo_buffer_hash_table_current = this->undo_buffer_hash_table_begin;
-    }
+    rdp_mppc_61_enc_hash_based_match_finder()
+        : rdp_mppc_enc_match_finder()
+        , hash_table_manager(RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH,
+              MAX_HASH_BUFFER_UNDO_ELEMENT)
+    {}
 
     virtual ~rdp_mppc_61_enc_hash_based_match_finder() {
-        free(this->hash_table);
     }
 
     virtual void dump(bool mini_dump) {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder hash-based match finder");
-        LOG(LOG_INFO, "hashTable");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table),
-            (mini_dump ? 16 : rdp_mppc_enc::HASH_BUF_LEN * sizeof(this->hash_table[0])));
+        this->hash_table_manager.dump(mini_dump);
     }
 
-    virtual void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) {
+    virtual void find_match(const uint8_t * historyBuffer, offset_type historyOffset,
+        uint16_t uncompressed_data_size)
+    {
         this->match_details_stream.reset();
 
-        this->undo_buffer_hash_table_current = this->undo_buffer_hash_table_begin;
+        this->hash_table_manager.clear_undo_history();
 
         if (uncompressed_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH) {
             return;
         }
 
-        uint32_t counter = 0;
+        offset_type counter = 0;
         // If we are at start of history buffer, do not attempt to compress
         //  first RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1 bytes, because
         //  minimum LoM is RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH.
         if (historyOffset == 0) {
-            this->hash_table_update(rdp_mppc_enc::signature(historyBuffer,     RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH), 0);
-            this->hash_table_update(rdp_mppc_enc::signature(historyBuffer + 1, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH), 1);
-            this->hash_table_update(rdp_mppc_enc::signature(historyBuffer + 2, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH), 2);
-            this->hash_table_update(rdp_mppc_enc::signature(historyBuffer + 3, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH), 3);
-            this->hash_table_update(rdp_mppc_enc::signature(historyBuffer + 4, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH), 4);
-            this->hash_table_update(rdp_mppc_enc::signature(historyBuffer + 5, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH), 5);
-            this->hash_table_update(rdp_mppc_enc::signature(historyBuffer + 6, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH), 6);
-            this->hash_table_update(rdp_mppc_enc::signature(historyBuffer + 7, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH), 7);
+            for (offset_type i = 0, c = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
+                 i < c; i++)
+                this->hash_table_manager.update2(historyBuffer, i);
             counter = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
         }
 
@@ -336,34 +332,30 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
         //  (> sizeof(RDP61_MATCH_DETAILS) = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1).
         for (; counter + (RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1) < uncompressed_data_size;
              counter += length_of_match) {
-            uint16_t crc16          = rdp_mppc_enc::signature(
-                historyBuffer + historyOffset + counter,
-                RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
-            uint32_t previous_match = this->hash_table[crc16];
+            offset_type     offset         = historyOffset + counter;
+            const uint8_t * data           = historyBuffer + offset;
+            hash_type       hash           = this->hash_table_manager.sign(data);
+            offset_type     previous_match = this->hash_table_manager.get_offset(hash);
 
-            this->hash_table_update(crc16, historyOffset + counter);
+            this->hash_table_manager.update(hash, offset);
 
             // Check that we have a pattern match, hash is not enough.
 
-            if (0 != memcmp(historyBuffer + historyOffset + counter, historyBuffer + previous_match,
+            if (0 != memcmp(data, historyBuffer + previous_match,
                             RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
                 length_of_match = 1;
             }
             else {
                 // We have a match, compute hash and Length of Match for triplets.
-                this->hash_table_update(rdp_mppc_enc::signature(
-                        historyBuffer + historyOffset + counter + 1, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH),
-                    historyOffset + counter + 1);
+                this->hash_table_manager.update2(historyBuffer, offset + 1);
 
                 // Maximum LOM is RDP_61_MAX_DATA_BLOCK_SIZE bytes.
                 for (length_of_match = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH;
                      (counter + length_of_match < uncompressed_data_size) &&
                          (length_of_match < RDP_61_MAX_DATA_BLOCK_SIZE);
                      length_of_match++) {
-                    this->hash_table_update(rdp_mppc_enc::signature(
-                            historyBuffer + historyOffset + counter + length_of_match - 1, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH),
-                        historyOffset + counter + length_of_match - 1);
-                    if (historyBuffer[historyOffset + counter + length_of_match] !=
+                    this->hash_table_manager.update2(historyBuffer, offset + length_of_match - 1);
+                    if (historyBuffer[offset + length_of_match] !=
                         historyBuffer[previous_match + length_of_match])
                     {
                         break;
@@ -379,33 +371,13 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
         this->match_details_stream.mark_end();
     }
 
-private:
-    inline void hash_table_update(uint16_t hash, uint32_t pos) {
-        if (this->undo_buffer_hash_table_current != this->undo_buffer_hash_table_end) {
-            *(this->undo_buffer_hash_table_current++) = hash;
-            *(this->undo_buffer_hash_table_current++) = hash_table[hash];
-        }
-        hash_table[hash] = pos;
-    }
-
 public:
     virtual void process_packet_at_front() {
-        ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * sizeof(uint32_t));
-
-        this->undo_buffer_hash_table_current = this->undo_buffer_hash_table_begin;
+        this->hash_table_manager.reset();
     }
 
     virtual bool undo_last_changes() {
-        if (this->undo_buffer_hash_table_current == this->undo_buffer_hash_table_end) {
-            return false;
-        }
-
-        while (this->undo_buffer_hash_table_current != this->undo_buffer_hash_table_begin) {
-            this->undo_buffer_hash_table_current -= 2;
-            hash_table[*this->undo_buffer_hash_table_current] = *(this->undo_buffer_hash_table_current - 1);
-        }
-
-        return true;
+        return this->hash_table_manager.undo_last_changes();
     }
 };
 
@@ -661,8 +633,6 @@ public:
         stream.out_copy_bytes(this->outputBuffer, this->bytes_in_output_buffer);
     }
 };  // struct rdp_mppc_61_enc
-
-
 
 
 

@@ -688,9 +688,7 @@ private:
                     outputBuffer, bits_left, opb_index);
             }
 
-            //hash_table[rdp_mppc_enc::signature(this->historyBuffer,     3)] = 0;
             this->hash_table_update(rdp_mppc_enc::signature(this->historyBuffer,     3), 0);
-            // hash_table[rdp_mppc_enc::signature(this->historyBuffer + 1, 3)] = 1;
             this->hash_table_update(rdp_mppc_enc::signature(this->historyBuffer + 1, 3), 0);
             ctr = 2;
         }
