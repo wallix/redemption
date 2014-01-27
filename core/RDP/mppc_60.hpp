@@ -659,6 +659,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
     static const size_t MINIMUM_MATCH_LENGTH             = 3;
     static const size_t MAXIMUM_MATCH_LENGTH             = 514;
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
+    static const size_t CACHED_OFFSET_COUNT              = 4;
 
     typedef uint16_t                                     offset_type;
     typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
@@ -679,7 +680,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
     //     (copy-offsets are described in [MS-RDPBCGR] section 3.1.8.1). This
     //     saves on bandwidth in cases where there are many repeated
     //     copy-offsets.
-    uint16_t * offsetCache;
+    uint16_t offsetCache[CACHED_OFFSET_COUNT];
 
     uint8_t  * outputBuffer;    /* contains compressed data              */
     uint16_t   bytes_in_opb;    /* compressed bytes available in         */
@@ -691,11 +692,10 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 
     hash_table_manager hash_tab_mgr;
 
-    rdp_mppc_60_enc(uint32_t verbose = 0)
+    rdp_mppc_60_enc(uint32_t verbose = 512)
         : rdp_mppc_enc(verbose)
         , historyBuffer(NULL)
         , historyOffset(0)
-        , offsetCache(NULL)
         , outputBuffer(NULL)
         , bytes_in_opb(0)
         , flags(0)
@@ -713,8 +713,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 
         // Whenever the history buffer is initialized or reinitialized, the
         //     OffsetCache MUST be emptied.
-        this->offsetCache = static_cast<uint16_t *>(
-            ::calloc(RDP_60_OFFSET_CACHE_SIZE, sizeof(uint8_t)));
+        ::memset(this->offsetCache, 0, sizeof(this->offsetCache));
 
         this->outputBuffer = static_cast<uint8_t *>(
             ::calloc(RDP_60_HIST_BUF_LEN, sizeof(uint8_t)));
@@ -727,7 +726,6 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
     virtual ~rdp_mppc_60_enc()
     {
         ::free(this->historyBuffer);
-        ::free(this->offsetCache);
         ::free(this->outputBuffer);
     }
 
@@ -740,7 +738,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         LOG(LOG_INFO, "historyOffset=%u", this->historyOffset);
         LOG(LOG_INFO, "bytes_in_opb=%u", this->bytes_in_opb);
         LOG(LOG_INFO, "offsetCache");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->offsetCache), RDP_60_OFFSET_CACHE_SIZE);
+        hexdump_d(reinterpret_cast<const uint8_t *>(this->offsetCache), sizeof(this->offsetCache));
         LOG(LOG_INFO, "flags=0x%02X", this->flags);
         LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
 
@@ -773,7 +771,8 @@ private:
     void compress_60(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size)
     {
         if (this->verbose & 512) {
-            LOG(LOG_INFO, "compress_60");
+            LOG(LOG_INFO, "compress_60: uncompressed_data_size=%u historyOffset=%u",
+                uncompressed_data_size, this->historyOffset);
         }
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
@@ -785,7 +784,10 @@ private:
         uint16_t opb_index = 0; /* index into outputBuffer                        */
         uint8_t  bits_left = 8; /* unused bits in current uint8_t in outputBuffer */
 
-        ::memset(this->outputBuffer, 0, uncompressed_data_size);
+        uint16_t saved_offset_cache[CACHED_OFFSET_COUNT];
+        ::memcpy(saved_offset_cache, this->offsetCache, sizeof(saved_offset_cache));
+
+        ::memset(this->outputBuffer, 0, RDP_60_HIST_BUF_LEN);
 
         if ((this->historyOffset + uncompressed_data_size + 1U) >= RDP_60_HIST_BUF_LEN) {
             /* historyBuffer cannot hold uncompressed_data - rewind it */
@@ -795,6 +797,9 @@ private:
             this->historyOffset =  RDP_60_HIST_BUF_MIDDLE;
             this->flagsHold     |= PACKET_AT_FRONT;
             this->hash_tab_mgr.reset();
+            if (this->verbose & 512) {
+                LOG(LOG_INFO, "compress_60: flagsHold |= PACKET_AT_FRONT");
+            }
         }
 
         // add/append new data to historyBuffer
@@ -847,6 +852,10 @@ private:
                         break;
                     }
                 }
+
+                //if (this->verbose & 512) {
+                //    LOG(LOG_INFO, "LoM=%u", lom);
+                //}
 
                 // encode copy_offset and insert into output buffer
                 uint32_t copy_offset = offset - previous_match;
@@ -904,6 +913,9 @@ private:
         ::encode_literal_60(256, this->outputBuffer, bits_left, opb_index);
 
         if (opb_index >= uncompressed_data_size) {
+            if (this->verbose & 512) {
+                LOG(LOG_INFO, "compress_60: opb_index >= uncompressed_data_size");
+            }
             if (!this->hash_tab_mgr.undo_last_changes()) {
                 ::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
                 this->historyOffset = 0;
@@ -911,6 +923,9 @@ private:
                 ::memset(this->offsetCache, 0, RDP_60_OFFSET_CACHE_SIZE);
 
                 if (this->flagsHold & PACKET_AT_FRONT) {
+                    if (this->verbose & 512) {
+                        LOG(LOG_INFO, "compress_60: this->flagsHold & PACKET_AT_FRONT");
+                    }
                     this->flagsHold &= ~PACKET_AT_FRONT;
                 }
                 this->flagsHold |= PACKET_FLUSHED;
@@ -921,6 +936,9 @@ private:
                     LOG(LOG_INFO, "Unable to undo changes made in hash table.");
                 }
             }
+            else
+                ::memcpy(this->offsetCache, saved_offset_cache, sizeof(this->offsetCache));
+
             return;
         }
 

@@ -579,7 +579,7 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
     /**
      * Initialize rdp_mppc_61_enc structure
      */
-    rdp_mppc_61_enc(rdp_mppc_enc_match_finder * match_finder, uint32_t verbose = 512)
+    rdp_mppc_61_enc(rdp_mppc_enc_match_finder * match_finder, uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
         , historyBuffer(NULL)
         , historyOffset(0)

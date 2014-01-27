@@ -178,8 +178,8 @@ int main(int argc, char * argv[]) {
                     password.c_str(),
                     "0.0.0.0",
                     front,
-                    false,               // tls
-                    false,               // nla
+                    true,               // tls
+                    true,               // nla
                     client_info,
                     &gen,
                     front.keymap.key_flags,
