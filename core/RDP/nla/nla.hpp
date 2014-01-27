@@ -55,7 +55,11 @@ struct rdpCredssp
 
     bool hardcodedtests;
 
-    rdpCredssp(Transport & transport)
+    rdpCredssp(Transport & transport,
+               uint8_t * user,
+               uint8_t * domain,
+               uint8_t * pass,
+               uint8_t * hostname)
         : send_seq_num(0)
         , recv_seq_num(0)
         , trans(transport)
@@ -66,6 +70,8 @@ struct rdpCredssp
         , hardcodedtests(false)
     {
         this->SspiModule.init(0);
+        this->set_credentials(user, domain, pass, hostname);
+
     }
 
     ~rdpCredssp()
@@ -117,17 +123,6 @@ struct rdpCredssp
     int credssp_ntlm_client_init() {
         this->server = false;
 
-        // TODO REMOVE HARDCODED DATA
-        // this->identity.SetAuthIdentity(settings->Username, settings->Domain,
-        //                                settings->Password);
-        if (this->hardcodedtests) {
-            uint8_t user[] = "Ulysse";
-            uint8_t domain[] = "Ithaque";
-            uint8_t pass[] = "Pénélope";
-            this->identity.SetAuthIdentityFromUtf8(user, domain, pass);
-        }
-
-
 // ============================================
 /* Get Public Key From TLS Layer and hostname */
 // ============================================
@@ -136,15 +131,6 @@ struct rdpCredssp
         this->PublicKey.init(this->trans.get_public_key_length());
         this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
 
-        // TODO REMOVE HARDCODED DATA
-        if (this->hardcodedtests) {
-            // this->PublicKey.init(16);
-            // this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
-
-            uint8_t host[] = "Télémaque";
-            this->ServicePrincipalName.init(sizeof(host));
-            this->ServicePrincipalName.copy(host, sizeof(host));
-        }
 
         return 1;
 
@@ -160,12 +146,6 @@ struct rdpCredssp
 
         this->PublicKey.init(this->trans.get_public_key_length());
         this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
-
-        // TODO REMOVE HARDCODED DATA
-        // if (this->hardcodedtests) {
-        //     this->PublicKey.init(16);
-        //     this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
-        // }
 
 	return 1;
     }

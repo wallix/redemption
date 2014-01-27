@@ -277,8 +277,8 @@ struct RdpNego
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_client_tls(ignore_certificate_change);
                 LOG(LOG_INFO, "activating CREDSSP");
-                rdpCredssp credssp(*this->trans);
-                credssp.set_credentials(this->user, this->domain, this->password, this->hostname);
+                rdpCredssp credssp(*this->trans,
+                                   this->user, this->domain, this->password, this->hostname);
                 int res = credssp.credssp_client_authenticate();
                 if (res != 1) {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);

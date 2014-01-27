@@ -101,7 +101,11 @@ BOOST_AUTO_TEST_CASE(TestNlaclient)
 
     TestTransport logtrans("test", server, sizeof(server), client, sizeof(client));
     logtrans.set_public_key((uint8_t*)"1245789652325415", 16);
-    rdpCredssp credssp(logtrans);
+    uint8_t user[] = "Ulysse";
+    uint8_t domain[] = "Ithaque";
+    uint8_t pass[] = "Pénélope";
+    uint8_t host[] = "Télémaque";
+    rdpCredssp credssp(logtrans, user, domain, pass, host);
     credssp.hardcodedtests = true;
     credssp.credssp_client_authenticate();
 
@@ -170,7 +174,11 @@ BOOST_AUTO_TEST_CASE(TestNlaserver)
     LOG(LOG_INFO, "TEST SERVER SIDE");
     TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
     logtrans.set_public_key((uint8_t*)"1245789652325415", 16);
-    rdpCredssp credssp(logtrans);
+    uint8_t user[] = "Ulysse";
+    uint8_t domain[] = "Ithaque";
+    uint8_t pass[] = "Pénélope";
+    uint8_t host[] = "Télémaque";
+    rdpCredssp credssp(logtrans, user, domain, pass, host);
     credssp.hardcodedtests = true;
     credssp.credssp_server_authenticate();
 }
