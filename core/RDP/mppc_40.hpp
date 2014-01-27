@@ -437,7 +437,7 @@ struct rdp_mppc_40_dec : public rdp_mppc_dec {
 
 
 struct rdp_mppc_40_enc : public rdp_mppc_enc {
-    static const size_t MAX_HASH_BUFFER_UNDO_ELEMENT = 256;
+    static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
 
     typedef uint16_t                                     offset_type;
     typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
@@ -468,7 +468,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc {
         , flagsHold(0)
         , first_pkt(true)           /* this is the first pkt passing through enc */
         , hash_tab_mgr(RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH,
-              MAX_HASH_BUFFER_UNDO_ELEMENT)
+              MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {
         TODO("making it static and large enough should be good for both RDP4 and RDP5");
         this->historyBuffer    = static_cast<uint8_t *>(calloc(RDP_40_HIST_BUF_LEN, sizeof(uint8_t)));
@@ -611,9 +611,9 @@ private:
         offset_type ctr         = 0;
         offset_type copy_offset = 0;    /* pattern match starts here... */
 
-        /* if we are at start of history buffer, do not attempt to compress  */
-        /* first RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH -1 bytes, because */
-        /*  minimum LoM is RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH         */
+        /* if we are at start of history buffer, do not attempt to compress    */
+        /*  first RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1 bytes, because */
+        /*  minimum LoM is RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH           */
         if (this->historyOffset == 0) {
             /* encode first two bytes as literals */
             ctr = RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;

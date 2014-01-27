@@ -176,6 +176,8 @@ struct mod_rdp : public mod_api {
     bool enable_multidstblt;
     bool enable_multiopaquerect;
 
+    //uint64_t total_data_received;
+
     mod_rdp( Transport * trans
            , const char * target_user
            , const char * target_password
@@ -254,6 +256,7 @@ struct mod_rdp : public mod_api {
         , enable_ellipsecb(false)
         , enable_multidstblt(false)
         , enable_multiopaquerect(false)
+        //, total_data_received(0)
     {
         if (this->verbose & 1)
         {
@@ -275,7 +278,6 @@ struct mod_rdp : public mod_api {
                 }
             }
         }
-
         this->configure_extra_orders(extra_orders);
 
         this->event.object_and_time = (this->open_session_timeout > 0);
@@ -1559,6 +1561,8 @@ struct mod_rdp : public mod_api {
                         if (f.fast_path) {
                             FastPath::ServerUpdatePDU_Recv su(*this->nego.trans, stream, this->decrypt);
                             if (this->enable_transparent_mode) {
+                                //total_data_received += su.payload.size();
+                                //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
                                 this->front.send_fastpath_data(su.payload);
 
                                 break;
@@ -1806,6 +1810,9 @@ struct mod_rdp : public mod_api {
 
                                             copy_stream.out_copy_bytes(sec.payload.p, sec.payload.in_remain());
                                             copy_stream.mark_end();
+
+                                            //total_data_received += copy_stream.size();
+                                            //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
 
                                             this->front.send_data_indication_ex(mcs.channelId, copy_stream);
 

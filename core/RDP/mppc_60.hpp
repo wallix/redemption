@@ -187,6 +187,7 @@ static uint16_t LOMBaseLUT[] = {
 };
 
 static const size_t RDP_60_HIST_BUF_LEN      = 1024 * 64;
+static const size_t RDP_60_HIST_BUF_MIDDLE   = 32768;
 static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
 
 static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
@@ -350,11 +351,11 @@ public:
         if (ctype & PACKET_AT_FRONT) {
             /* slid history_buf and reset history_buf to middle */
             memmove(this->history_buf,
-                (this->history_buf + (history_ptr - this->history_buf - 32768)),
-                32768);
-            history_ptr       = this->history_buf + 32768;
+                (this->history_buf + (history_ptr - this->history_buf - RDP_60_HIST_BUF_MIDDLE)),
+                RDP_60_HIST_BUF_MIDDLE);
+            history_ptr       = this->history_buf + RDP_60_HIST_BUF_MIDDLE;
             this->history_ptr = history_ptr;
-            *roff             = 32768;
+            *roff             = RDP_60_HIST_BUF_MIDDLE;
         }
 
         if (ctype & PACKET_FLUSHED) {
@@ -623,19 +624,19 @@ public:
 //
 ////////////////////
 
-static inline void insert_n_bits_60(uint8_t n, uint32_t _data,
+static inline void insert_n_bits_60(uint8_t n, uint32_t data,
     uint8_t * outputBuffer, uint8_t & bits_left, uint16_t & opb_index) {
 
     while (n)
     {
-        uint8_t tmp = _data << (8 - bits_left);
+        uint8_t tmp = data << (8 - bits_left);
         outputBuffer[opb_index] |= tmp;
         if (bits_left >= n) {
             bits_left -= n;
             n = 0;
         }
         else {
-            _data >>= bits_left;
+            data >>= bits_left;
             n -= bits_left;
             bits_left = 0;
         }
@@ -655,13 +656,21 @@ static inline void encode_literal_60(uint16_t c, uint8_t * outputBuffer,
 }
 
 struct rdp_mppc_60_enc : public rdp_mppc_enc {
+    static const size_t MINIMUM_MATCH_LENGTH             = 3;
+    static const size_t MAXIMUM_MATCH_LENGTH             = 514;
+    static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
+
+    typedef uint16_t                                     offset_type;
+    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
+    typedef hash_table_manager::hash_type                hash_type;
+
     // The shared state necessary to support the transmission and reception
     //     of RDP6.0-BC compressed data between a client and server requires
     //     a history buffer and a current offset into the history buffer
     //    (HistoryOffset).
 
     uint8_t  * historyBuffer;   /* contains uncompressed data */
-    int        historyOffset;   /* next free slot in historyBuffer */
+    uint16_t   historyOffset;   /* next free slot in historyBuffer */
 
     // In addition to the history buffer and HistoryOffset, a small cache
     //     MUST also be managed by the client and server endpoints. This
@@ -673,38 +682,46 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
     uint16_t * offsetCache;
 
     uint8_t  * outputBuffer;    /* contains compressed data              */
-    int        bytes_in_opb;    /* compressed bytes available in         */
+    uint16_t   bytes_in_opb;    /* compressed bytes available in         */
                                 /*     outputBuffer                      */
 
-    int        flags;           /* PACKET_COMPRESSED, PACKET_AT_FRONT,   */
+    uint8_t    flags;           /* PACKET_COMPRESSED, PACKET_AT_FRONT,   */
                                 /*     PACKET_FLUSHED etc                */
-    int        flagsHold;
+    uint8_t    flagsHold;
 
-    uint16_t * hash_table;
+    hash_table_manager hash_tab_mgr;
 
-    rdp_mppc_60_enc(uint32_t verbose = 0) : rdp_mppc_enc(verbose) {
+    rdp_mppc_60_enc(uint32_t verbose = 0)
+        : rdp_mppc_enc(verbose)
+        , historyBuffer(NULL)
+        , historyOffset(0)
+        , offsetCache(NULL)
+        , outputBuffer(NULL)
+        , bytes_in_opb(0)
+        , flags(0)
+        , flagsHold(0)
+        , hash_tab_mgr(MINIMUM_MATCH_LENGTH,
+              MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
+    {
         // The HistoryOffset MUST start initialized to zero, while the
         //     history buffer MUST be filled with zeros. After it has been
         //     initialized, the entire history buffer is immediately
         //     regarded as valid.
         this->historyBuffer = static_cast<uint8_t *>(
-            ::calloc(RDP_60_HIST_BUF_LEN, 1));
-        this->historyOffset = 0;
+            ::calloc(RDP_60_HIST_BUF_LEN, sizeof(uint8_t)));
+        //this->historyOffset = 0;
 
         // Whenever the history buffer is initialized or reinitialized, the
         //     OffsetCache MUST be emptied.
         this->offsetCache = static_cast<uint16_t *>(
-            ::calloc(RDP_60_OFFSET_CACHE_SIZE, 1));
+            ::calloc(RDP_60_OFFSET_CACHE_SIZE, sizeof(uint8_t)));
 
         this->outputBuffer = static_cast<uint8_t *>(
-            ::calloc(RDP_60_HIST_BUF_LEN, 1));
-        this->bytes_in_opb = 0;
+            ::calloc(RDP_60_HIST_BUF_LEN, sizeof(uint8_t)));
+        //this->bytes_in_opb = 0;
 
-        this->flags      = 0;
-        this->flagsHold  = 0;
-
-        this->hash_table = static_cast<uint16_t *>(
-            ::calloc(rdp_mppc_enc::HASH_BUF_LEN, 2));
+        //this->flags      = 0;
+        //this->flagsHold  = 0;
     }
 
     virtual ~rdp_mppc_60_enc()
@@ -712,7 +729,6 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         ::free(this->historyBuffer);
         ::free(this->offsetCache);
         ::free(this->outputBuffer);
-        ::free(this->hash_table);
     }
 
     virtual void dump(bool mini_dump) const {
@@ -721,15 +737,14 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
         LOG(LOG_INFO, "outputBuffer");
         hexdump_d(this->outputBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
-        LOG(LOG_INFO, "historyOffset=%d", this->historyOffset);
-        LOG(LOG_INFO, "bytes_in_opb=%d", this->bytes_in_opb);
+        LOG(LOG_INFO, "historyOffset=%u", this->historyOffset);
+        LOG(LOG_INFO, "bytes_in_opb=%u", this->bytes_in_opb);
         LOG(LOG_INFO, "offsetCache");
         hexdump_d(reinterpret_cast<uint8_t *>(this->offsetCache), RDP_60_OFFSET_CACHE_SIZE);
         LOG(LOG_INFO, "flags=0x%02X", this->flags);
         LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
-        LOG(LOG_INFO, "hash_table");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table),
-            (mini_dump ? 16 : rdp_mppc_enc::HASH_BUF_LEN * sizeof(this->hash_table[0])));
+
+        this->hash_tab_mgr.dump(mini_dump);
     }
 
     static inline int cache_find(uint16_t * offset_cache, uint16_t copy_offset) {
@@ -755,7 +770,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
     }
 
 private:
-    void compress_60(const uint8_t * srcData, int len)
+    void compress_60(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size)
     {
         if (this->verbose & 512) {
             LOG(LOG_INFO, "compress_60");
@@ -763,85 +778,82 @@ private:
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
-        if ((srcData == NULL) || (len <= 0) || (len >= static_cast<int>(RDP_60_HIST_BUF_LEN) - 1))
+        if ((uncompressed_data == NULL) || (uncompressed_data_size <= 0) ||
+            (uncompressed_data_size >= RDP_60_HIST_BUF_LEN - 1))
             return;
 
-        uint16_t opb_index = 0; /* index into outputBuffer           */
-        uint8_t  bits_left = 8; /* unused bits in current uint8_t in */
-                                /*     outputBuffer                  */
+        uint16_t opb_index = 0; /* index into outputBuffer                        */
+        uint8_t  bits_left = 8; /* unused bits in current uint8_t in outputBuffer */
 
-        ::memset(this->outputBuffer, 0, RDP_60_HIST_BUF_LEN);
+        ::memset(this->outputBuffer, 0, uncompressed_data_size);
 
-        if ((this->historyOffset + len + 1) >= static_cast<int>(RDP_60_HIST_BUF_LEN)) {
-            /* historyBuffer cannot hold srcData - rewind it */
+        if ((this->historyOffset + uncompressed_data_size + 1U) >= RDP_60_HIST_BUF_LEN) {
+            /* historyBuffer cannot hold uncompressed_data - rewind it */
             ::memmove(this->historyBuffer,
-                (this->historyBuffer + (this->historyOffset - 32768)),
-                32768);
-            this->historyOffset = 32768;
-            this->flagsHold |= PACKET_AT_FRONT;
-            ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
+                this->historyBuffer + (this->historyOffset - RDP_60_HIST_BUF_MIDDLE),
+                RDP_60_HIST_BUF_MIDDLE);
+            this->historyOffset =  RDP_60_HIST_BUF_MIDDLE;
+            this->flagsHold     |= PACKET_AT_FRONT;
+            this->hash_tab_mgr.reset();
         }
 
         // add/append new data to historyBuffer
-        ::memcpy(&(this->historyBuffer[this->historyOffset]), srcData, len);
+        ::memcpy(this->historyBuffer + this->historyOffset, uncompressed_data, uncompressed_data_size);
 
-        int ctr = 0;
+        offset_type ctr = 0;
 
         // if we are at start of history buffer, do not attempt to compress
-        //     first 2 bytes, even the minimum LoM is 2
+        //  first RDP_60_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1 bytes, even
+        //  minimum LoM is 2
         if (this->historyOffset == 0) {
             // encode first two bytes as literals
-            for (int x = 0; x < 2; x++) {
+            ctr = MINIMUM_MATCH_LENGTH - 1;
+            for (offset_type i = 0; i < ctr; i++) {
                 ::encode_literal_60(
-                    this->historyBuffer[this->historyOffset + x],
+                    this->historyBuffer[this->historyOffset + i],
                     this->outputBuffer, bits_left, opb_index);
             }
 
-            hash_table[rdp_mppc_enc::signature(this->historyBuffer,     3)] = 0;
-            hash_table[rdp_mppc_enc::signature(this->historyBuffer + 1, 3)] = 1;
-            ctr                                                                                       = 2;
+            this->hash_tab_mgr.update_indirect(this->historyBuffer, 0);
+            this->hash_tab_mgr.update_indirect(this->historyBuffer, 1);
         }
 
-        int lom = 0;
+        uint16_t lom = 0;
         // we need at least 3 bytes to look for match
-        for (; ctr + 2 < len; ctr += lom) {
+        for (; ctr + (MINIMUM_MATCH_LENGTH - 1) < uncompressed_data_size; ctr += lom) {
+            offset_type     offset         = this->historyOffset + ctr;
+            const uint8_t * data           = this->historyBuffer + offset;
+            hash_type       hash           = this->hash_tab_mgr.sign(data);
+            offset_type     previous_match = this->hash_tab_mgr.get_offset(hash);
 
-            uint32_t crc2           = rdp_mppc_enc::signature(
-                this->historyBuffer + this->historyOffset + ctr, 3);
-            int      previous_match = this->hash_table[crc2];
-            this->hash_table[crc2]  = this->historyOffset + ctr;
+            this->hash_tab_mgr.update(hash, offset);
 
             // check that we have a pattern match, hash is not enough
 
-            if (0 != memcmp(this->historyBuffer + this->historyOffset + ctr, this->historyBuffer + previous_match, 3)) {
+            if (0 != ::memcmp(data, this->historyBuffer + previous_match, MINIMUM_MATCH_LENGTH)) {
                 // no match found; encode literal uint8_t
-                ::encode_literal_60(
-                    this->historyBuffer[this->historyOffset + ctr],
-                    this->outputBuffer, bits_left, opb_index);
+                ::encode_literal_60(*data, this->outputBuffer, bits_left, opb_index);
                 lom = 1;
             }
             else {
                 // we have a match - compute hash and Length of Match for triplets
-                this->hash_table[rdp_mppc_enc::signature(
-                    this->historyBuffer + this->historyOffset + ctr + 1, 3)] =
-                        this->historyOffset + ctr + 1;
-                // maximum LOM is 514 bytes
-                for (lom = 3; (ctr + lom < len) && (lom < 514); lom++) {
-                    this->hash_table[rdp_mppc_enc::signature(
-                        this->historyBuffer + this->historyOffset + ctr + lom - 1, 3)] =
-                        this->historyOffset + ctr + lom - 1;
-                    if (this->historyBuffer[this->historyOffset + ctr + lom] != this->historyBuffer[previous_match + lom]) {
+                this->hash_tab_mgr.update_indirect(this->historyBuffer, offset + 1);
+
+                for (lom = MINIMUM_MATCH_LENGTH;
+                     (ctr + lom < uncompressed_data_size) && (lom < MAXIMUM_MATCH_LENGTH); lom++) {
+                    this->hash_tab_mgr.update_indirect(this->historyBuffer, offset + lom - 1);
+                    if (this->historyBuffer[offset + lom] !=
+                        this->historyBuffer[previous_match + lom]) {
                         break;
                     }
                 }
 
                 // encode copy_offset and insert into output buffer
-                uint32_t copy_offset = this->historyOffset + ctr - previous_match;
+                uint32_t copy_offset = offset - previous_match;
 
                 int offsetCacheIndex;
                 int LUTIndex;
-                if ((offsetCacheIndex =
-                     cache_find(this->offsetCache, copy_offset)) != -1) {
+                if ((offsetCacheIndex = cache_find(this->offsetCache, copy_offset)) != -1) {
 
                     if (offsetCacheIndex != 0) {
                         cache_swap(this->offsetCache, offsetCacheIndex);
@@ -849,8 +861,7 @@ private:
 
                     LUTIndex = offsetCacheIndex + 289;
 
-                    ::insert_n_bits_60(HuffLenLEC[LUTIndex],
-                         HuffCodeLEC[LUTIndex],
+                    ::insert_n_bits_60(HuffLenLEC[LUTIndex], HuffCodeLEC[LUTIndex],
                         this->outputBuffer, bits_left, opb_index);
                 }
                 else {
@@ -859,65 +870,68 @@ private:
                     LUTIndex = indexOfEqualOrSmallerEntry<uint32_t>(copy_offset + 1,
                         CopyOffsetBaseLUT);
                     int HuffmanIndex = LUTIndex + 257;
-                    ::insert_n_bits_60(HuffLenLEC[HuffmanIndex],
-                        HuffCodeLEC[HuffmanIndex],
+                    ::insert_n_bits_60(HuffLenLEC[HuffmanIndex], HuffCodeLEC[HuffmanIndex],
                         this->outputBuffer, bits_left, opb_index);
 
                     int ExtraBitsLength = CopyOffsetBitsLUT[LUTIndex];
                     int ExtraBits       = copy_offset & ((1 << ExtraBitsLength) - 1);
                     if (ExtraBitsLength) {
-                        ::insert_n_bits_60(ExtraBitsLength, ExtraBits,
-                            this->outputBuffer, bits_left, opb_index);
+                        ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
+                            bits_left, opb_index);
                     }
                 }
 
                 LUTIndex = indexOfEqualOrSmallerEntry<uint16_t>(lom, LOMBaseLUT);
-                ::insert_n_bits_60(HuffLenLOM[LUTIndex],
-                    HuffCodeLOM[LUTIndex],
+                ::insert_n_bits_60(HuffLenLOM[LUTIndex], HuffCodeLOM[LUTIndex],
                     this->outputBuffer, bits_left, opb_index);
 
                 int ExtraBitsLength = LOMBitsLUT[LUTIndex];
                 int ExtraBits = (lom - 2) & ((1 << ExtraBitsLength) - 1);
                 if (ExtraBitsLength) {
-                    ::insert_n_bits_60(ExtraBitsLength,
-                        ExtraBits,
-                        this->outputBuffer, bits_left, opb_index);
+                    ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
+                        bits_left, opb_index);
                 }
             }
         }
 
         // add remaining data if any to the output
-        while (len - ctr > 0) {
-            ::encode_literal_60(srcData[ctr], this->outputBuffer, bits_left, opb_index);
+        while (uncompressed_data_size - ctr > 0) {
+            ::encode_literal_60(uncompressed_data[ctr], this->outputBuffer, bits_left, opb_index);
             ctr++;
         }
 
         // add End-of-Stream (EOS) marker
         ::encode_literal_60(256, this->outputBuffer, bits_left, opb_index);
 
-        if (opb_index >= len) {
-            ::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
-            this->historyOffset = 0;
+        if (opb_index >= uncompressed_data_size) {
+            if (!this->hash_tab_mgr.undo_last_changes()) {
+                ::memset(this->historyBuffer, 0, RDP_60_HIST_BUF_LEN);
+                this->historyOffset = 0;
 
-            ::memset(this->offsetCache, 0, RDP_60_OFFSET_CACHE_SIZE);
+                ::memset(this->offsetCache, 0, RDP_60_OFFSET_CACHE_SIZE);
 
-            if (this->flagsHold & PACKET_AT_FRONT) {
-                this->flagsHold &= ~PACKET_AT_FRONT;
+                if (this->flagsHold & PACKET_AT_FRONT) {
+                    this->flagsHold &= ~PACKET_AT_FRONT;
+                }
+                this->flagsHold |= PACKET_FLUSHED;
+
+                this->hash_tab_mgr.reset();
+
+                if (this->verbose & 512) {
+                    LOG(LOG_INFO, "Unable to undo changes made in hash table.");
+                }
             }
-            this->flagsHold |= PACKET_FLUSHED;
-
-            ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * 2);
             return;
         }
 
-        this->historyOffset += len;
+        this->historyOffset += uncompressed_data_size;
 
         // if bits_left == 8, opb_index has already been incremented
         this->bytes_in_opb  =  opb_index + (bits_left != 8);
         this->flags         |= PACKET_COMPRESSED;
         this->flags         |= this->flagsHold;
         this->flagsHold     =  0;
-    }   // void compress_60(uint8_t * srcData, int len)
+    }   // void compress_60(const uint8_t * uncompressed_data, int uncompressed_data_size)
 
     virtual void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
         uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t reserved)
