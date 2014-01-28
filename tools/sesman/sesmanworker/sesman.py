@@ -333,7 +333,7 @@ class Sesman():
 
         try:
             #Check if X509 Authentication is active
-            if self.engine.is_x509_connected(wab_login, self.shared.get(u'ip_client'), self.shared.get(u'proxy_type')):
+            if self.engine.is_x509_connected(wab_login, self.shared.get(u'ip_client'), self.shared.get(u'proxy_type'), self.shared.get(u'target_device')):
                 # Prompt the user in proxy window
                  # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
@@ -742,7 +742,6 @@ class Sesman():
             # NB : service names are supposed to be in alphabetical ascending order.
             try:
                 selected_target = None
-
                 if self.shared.get(u'proto_dest'):
                     selected_target = self.get_selected_target(self.shared.get(u'proto_dest'))
                 else:
@@ -765,9 +764,7 @@ class Sesman():
 
 
         #TODO: looks like the code below should be done in the instance of some "selected_target" class
-
         if _status:
-
             session_started = False
 
             _status, _error = self.check_video_recording(selected_target.authorization.isRecorded)
