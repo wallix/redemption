@@ -52,6 +52,7 @@ struct rdpCredssp
     SEC_WINNT_AUTH_IDENTITY identity;
     PSecurityFunctionTable table;
     SecPkgContext_Sizes ContextSizes;
+    bool RestrictedAdminMode;
 
     bool hardcodedtests;
 
@@ -67,6 +68,7 @@ struct rdpCredssp
         , pubKeyAuth(ts_request.pubKeyAuth)
         , authInfo(ts_request.authInfo)
         , table(new SecurityFunctionTable)
+        , RestrictedAdminMode(false)
         , hardcodedtests(false)
     {
         this->SspiModule.init(0);
@@ -294,12 +296,19 @@ struct rdpCredssp
     }
 
     void credssp_encode_ts_credentials() {
-        this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
-                                             this->identity.Domain.size(),
-                                             this->identity.User.get_data(),
-                                             this->identity.User.size(),
-                                             this->identity.Password.get_data(),
-                                             this->identity.Password.size());
+        if (this->RestrictedAdminMode) {
+            this->ts_credentials.set_credentials(NULL, 0,
+                                                 NULL, 0,
+                                                 NULL, 0);
+        }
+        else {
+            this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
+                                                 this->identity.Domain.size(),
+                                                 this->identity.User.get_data(),
+                                                 this->identity.User.size(),
+                                                 this->identity.Password.get_data(),
+                                                 this->identity.Password.size());
+        }
     }
 
     SEC_STATUS credssp_encrypt_ts_credentials() {
