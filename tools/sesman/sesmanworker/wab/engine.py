@@ -39,7 +39,7 @@ class Engine(object):
             Logger().info("Engine password_expiration_date failed: (((%s)))" % traceback.format_exc(e))
         return False, 0
 
-    def is_x509_connected(self, wab_login, ip_client, proxy_type):
+    def is_x509_connected(self, wab_login, ip_client, proxy_type, target):
         """
         Ask if we are authentifying using x509
         (and ask user by opening confirmation popup if we are,
@@ -47,7 +47,7 @@ class Engine(object):
         """
         try:
             from wabx509 import AuthX509
-            self.auth_x509 = AuthX509(wab_login, ip_client, proxy_type)
+            self.auth_x509 = AuthX509(wab_login, ip_client, proxy_type, target)
             result = self.auth_x509.is_connected()
             return result
         except Exception, e:

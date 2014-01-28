@@ -830,8 +830,8 @@ class Sesman():
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
                 if selected_target.resource.application:
-                    app_params = self.engine.get_app_params(selected_target, physical_target)
                     self.cn = selected_target.resource.application.cn
+                    app_params = self.engine.get_app_params(selected_target, physical_target)
                     if not app_params:
                         continue
                     kv[u'alternate_shell'] = (u"%s %s" % (app_params.program, app_params.params))

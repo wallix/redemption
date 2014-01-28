@@ -23,7 +23,8 @@
 #define BOOST_TEST_MODULE TestMPPC40
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+//#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "RDP/mppc.hpp"
@@ -35,22 +36,21 @@ BOOST_AUTO_TEST_CASE(TestRDP40BlukCompression4)
     rdp_mppc_40_enc * mppc_enc = new rdp_mppc_40_enc();
 
 
-    BOOST_CHECK_EQUAL(sizeof(historyBuffer),     mppc_enc->buf_len);
-    BOOST_CHECK_EQUAL(sizeof(outputBufferPlus),  mppc_enc->buf_len + 64);
-    BOOST_CHECK_EQUAL(sizeof(hash_table),        rdp_mppc_enc::HASH_BUF_LEN * 2);
+    BOOST_CHECK_EQUAL(sizeof(historyBuffer),     RDP_40_HIST_BUF_LEN);
+    BOOST_CHECK_EQUAL(sizeof(outputBufferPlus),  RDP_40_HIST_BUF_LEN + 64);
+    BOOST_CHECK_EQUAL(sizeof(hash_table),        rdp_mppc_40_enc::hash_table_manager::get_table_size());
     BOOST_CHECK_EQUAL(sizeof(uncompressed_data), 204);
     BOOST_CHECK_EQUAL(sizeof(compressed_data),   18);
 
 
-    memcpy(mppc_enc->historyBuffer,    historyBuffer,    mppc_enc->buf_len);
-    memcpy(mppc_enc->outputBufferPlus, outputBufferPlus, mppc_enc->buf_len + 64);
+    memcpy(mppc_enc->historyBuffer,           historyBuffer,    RDP_40_HIST_BUF_LEN);
+    memcpy(mppc_enc->outputBufferPlus,        outputBufferPlus, RDP_40_HIST_BUF_LEN + 64);
     mppc_enc->historyOffset = 2974;
-    mppc_enc->buf_len       = 8192;
     mppc_enc->bytes_in_opb  = 21;
     mppc_enc->flags         = 0x20;
     mppc_enc->flagsHold     = 0;
-    mppc_enc->first_pkt     = 0;
-    memcpy(mppc_enc->hash_table,       hash_table,       rdp_mppc_enc::HASH_BUF_LEN * 2);
+    mppc_enc->first_pkt     = false;
+    memcpy(mppc_enc->hash_tab_mgr.hash_table, hash_table,       rdp_mppc_40_enc::hash_table_manager::get_table_size());
 
     uint8_t  compressionFlags;
     uint16_t datalen;

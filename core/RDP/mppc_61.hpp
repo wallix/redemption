@@ -154,6 +154,16 @@ static const size_t RDP_61_HISTORY_BUFFER_LENGTH = 2000000;
 static const size_t RDP_61_MAX_DATA_BLOCK_SIZE   = 16382;
 
 
+static const size_t RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH      = 9;    // sizeof(RDP61_MATCH_DETAILS) + 1
+static const size_t RDP_61_COMPRESSOR_MATCH_DATAILS_BUFFER_SIZE = 1024 * 32;
+static const size_t RDP_61_COMPRESSOR_LITERALS_BUFFER_SIZE      = RDP_61_MAX_DATA_BLOCK_SIZE;
+static const size_t RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE        =
+    2 + // MatchCount(2)
+    RDP_61_COMPRESSOR_MATCH_DATAILS_BUFFER_SIZE +
+    RDP_61_COMPRESSOR_LITERALS_BUFFER_SIZE
+    ;
+
+
 struct rdp_mppc_61_dec : public rdp_mppc_dec {
     uint8_t * historyBuffer;    // Livel-1 history buffer.
     size_t    historyOffset;    // Livel-1 history buffer associated history offset.
@@ -163,7 +173,8 @@ struct rdp_mppc_61_dec : public rdp_mppc_dec {
     /**
      * Initialize rdp_mppc_61_dec structure
      */
-    rdp_mppc_61_dec() {
+    rdp_mppc_61_dec() : rdp_mppc_dec()
+    {
         this->historyBuffer = static_cast<uint8_t *>(calloc(RDP_61_HISTORY_BUFFER_LENGTH, sizeof(uint8_t)));
         this->historyOffset = 0;
     }
@@ -211,9 +222,8 @@ public:
     virtual int decompress(uint8_t * compressed_data, int compressed_data_size,
         int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size)
     {
-        LOG(LOG_INFO, "decompress_61");
-//LOG(LOG_INFO, "");
-LOG(LOG_INFO, "historyOffset=%d compressed_data_size=%d compressionFlags=0x%X", this->historyOffset, compressed_data_size, compressionFlags);
+        LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
+            this->historyOffset, compressed_data_size, compressionFlags);
 
         uncompressed_data      = NULL;
         uncompressed_data_size = 0;
@@ -229,7 +239,7 @@ LOG(LOG_INFO, "historyOffset=%d compressed_data_size=%d compressionFlags=0x%X", 
 
         uint8_t Level1ComprFlags = compressed_data_stream.in_uint8();
         uint8_t Level2ComprFlags = compressed_data_stream.in_uint8();
-LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, Level2ComprFlags);
+        //LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, Level2ComprFlags);
 
         if (!(Level1ComprFlags & (L1_COMPRESSED | L1_NO_COMPRESSION))) {
             LOG(LOG_ERR, "Level-1 no historyBuffer update");
@@ -242,7 +252,6 @@ LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, L
         size_t     literals_length;
 
         if ((Level1ComprFlags & L1_INNER_COMPRESSION) && (Level2ComprFlags & PACKET_COMPRESSED)) {
-//LOG(LOG_INFO, "(Level1ComprFlags & L1_INNER_COMPRESSION) && (Level2ComprFlags & PACKET_COMPRESSED)");
 
             const uint8_t * level_1_compressed_data;
             uint32_t        level_1_compressed_data_size;
@@ -254,7 +263,7 @@ LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, L
                 LOG(LOG_ERR, "RDP 6.1 bluk compression Level-2 decompression error");
                 throw Error(ERR_RDP61_DECOMPRESS_LEVEL_2);
             }
-//LOG(LOG_INFO, "level_1_compressed_data_size=%d", level_1_compressed_data_size);
+            //LOG(LOG_INFO, "level_1_compressed_data_size=%d", level_1_compressed_data_size);
 
             StaticStream level_1_compressed_data_stream(level_1_compressed_data,
                 level_1_compressed_data_size);
@@ -264,16 +273,14 @@ LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, L
                 MatchCount, MatchDetails, Literals, literals_length);
         }
         else {
-//LOG(LOG_INFO, "!(Level1ComprFlags & L1_INNER_COMPRESSION) || !(Level2ComprFlags & PACKET_COMPRESSED)");
             rdp_mppc_61_dec::prepare_compressed_data(compressed_data_stream,
                 !(Level1ComprFlags & L1_NO_COMPRESSION),
                 MatchCount, MatchDetails, Literals, literals_length);
         }
 
-//LOG(LOG_INFO, "MatchCount=%d literals_length=%d", MatchCount, literals_length);
+        //LOG(LOG_INFO, "MatchCount=%d literals_length=%d", MatchCount, literals_length);
 
         if (Level1ComprFlags & L1_PACKET_AT_FRONT) {
-//LOG(LOG_INFO, "Level1ComprFlags & L1_PACKET_AT_FRONT");
             this->historyOffset = 0;
         }
 
@@ -293,10 +300,9 @@ LOG(LOG_INFO, "Level1ComprFlags=0x%X Level2ComprFlags=0x%X", Level1ComprFlags, L
                 throw Error(ERR_RDP61_DECOMPRESS_DATA_TRUNCATED);
             }
             uint16_t MatchLength        = match_details_stream.in_uint16_le();
-LOG(LOG_INFO, "MatchLength=%d", MatchLength);
             uint16_t MatchOutputOffset  = match_details_stream.in_uint16_le();
             uint32_t MatchHistoryOffset = match_details_stream.in_uint32_le();
-//LOG(LOG_INFO, "MatchHistoryOffset=%u MatchLength=%d MatchOutputOffset=%d", MatchHistoryOffset, MatchLength, MatchOutputOffset);
+            //LOG(LOG_INFO, "MatchHistoryOffset=%u MatchLength=%d MatchOutputOffset=%d", MatchHistoryOffset, MatchLength, MatchOutputOffset);
 
             if (MatchOutputOffset > current_output_offset) {
                 expected = MatchOutputOffset - current_output_offset;
@@ -333,9 +339,9 @@ LOG(LOG_INFO, "MatchLength=%d", MatchLength);
         uncompressed_data_size = current_output_offset;
 
         this->historyOffset += current_output_offset;
-//LOG(LOG_INFO, "uncompressed_data_size=%d historyOffset=%d", uncompressed_data_size, this->historyOffset);
+        //LOG(LOG_INFO, "uncompressed_data_size=%d historyOffset=%d", uncompressed_data_size, this->historyOffset);
 
-        return false;
+        return true;
     }
 
     virtual void dump() {
@@ -348,67 +354,154 @@ LOG(LOG_INFO, "MatchLength=%d", MatchLength);
 };
 
 
-static const size_t RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH      = 9;    // sizeof(RDP61_MATCH_DETAILS) + 1
-static const size_t RDP_61_COMPRESSOR_MATCH_DATAILS_BUFFER_SIZE = 1024 * 32;
-static const size_t RDP_61_COMPRESSOR_LITERALS_BUFFER_SIZE      = RDP_61_MAX_DATA_BLOCK_SIZE;
-static const size_t RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE        =
-    2 + // MatchCount(2)
-    RDP_61_COMPRESSOR_MATCH_DATAILS_BUFFER_SIZE +
-    RDP_61_COMPRESSOR_LITERALS_BUFFER_SIZE
-    ;
-
 struct rdp_mppc_enc_match_finder {
     BStream match_details_stream;
 
     virtual ~rdp_mppc_enc_match_finder() {}
 
-    virtual void dump(bool mini_dump) = 0;
+    virtual void dump(bool mini_dump) const = 0;
 
+    /**
+     * @param historyOffset HistoryOffset before data compression.
+     */
     virtual void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) = 0;
 
     virtual void process_packet_at_front() {}
+
+    virtual bool undo_last_changes() { return true; }
+};
+
+
+struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_match_finder
+{
+    virtual void dump(bool mini_dump) const {
+        LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder sequential search match finder");
+    }
+
+    inline void get_match_length(const uint8_t * output_data, uint16_t output_data_size,
+        const uint8_t * history_data, uint32_t history_data_size, uint16_t & MatchLength,
+        uint32_t & MatchHistoryOffset)
+    {
+        MatchLength        = 0;
+        MatchHistoryOffset = 0;
+
+        if (history_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH) {
+            return;
+        }
+
+        REDASSERT(output_data_size >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
+
+        const uint8_t * history_data_begin = history_data;
+        const uint8_t * history_data_end   = history_data_begin + history_data_size - (RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1);
+        while (history_data_begin != history_data_end) {
+            REDASSERT(history_data_begin <= history_data_end);
+            if (memcmp(output_data, history_data_begin, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
+                history_data_begin++;
+                continue;
+            }
+
+            uint16_t        CurrentMatchLength = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH;
+            const uint8_t * o = output_data + CurrentMatchLength;
+            const uint8_t * h = history_data_begin + CurrentMatchLength;
+            for (; (*o == *h) && (o < output_data + output_data_size) && (h < history_data + history_data_size);
+                o++, h++, CurrentMatchLength++);
+
+            if (CurrentMatchLength > MatchLength) {
+                if (MatchLength > 0) {
+                    history_data_end = history_data_begin + history_data_size - (CurrentMatchLength - 1);
+                }
+
+                MatchLength        = CurrentMatchLength;
+                MatchHistoryOffset = history_data_begin - history_data;
+            }
+
+            history_data_begin++;
+        }
+    }
+
+    virtual void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) {
+        if (uncompressed_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)
+            return;
+
+        this->match_details_stream.reset();
+
+        uint32_t        history_data_size  = historyOffset;
+        uint16_t        output_data_length = uncompressed_data_size;
+        const uint8_t * output_data_begin  = historyBuffer + historyOffset;
+        const uint8_t * output_data_end    = output_data_begin + uncompressed_data_size - (RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1);
+        while (output_data_begin < output_data_end) {
+            REDASSERT(output_data_length >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
+
+            uint16_t MatchLength;
+            uint32_t MatchHistoryOffset;
+            this->get_match_length(output_data_begin, output_data_length,
+                historyBuffer, history_data_size, MatchLength, MatchHistoryOffset);
+            if (MatchLength) {
+                REDASSERT(MatchLength >= RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
+
+                this->match_details_stream.out_uint16_le(MatchLength);
+                //LOG(LOG_INFO, "MatchLength=%d", MatchLength);
+                this->match_details_stream.out_uint16_le(output_data_begin - (historyBuffer + historyOffset));
+                this->match_details_stream.out_uint32_le(MatchHistoryOffset);
+
+                history_data_size  += MatchLength;
+                output_data_length -= MatchLength;
+                output_data_begin  += MatchLength;
+            }
+            else {
+                history_data_size++;
+                output_data_length--;
+                output_data_begin++;
+            }
+        }
+
+        this->match_details_stream.mark_end();
+    }
 };
 
 struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finder
 {
-    uint32_t * hash_table;
+    static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
 
-    rdp_mppc_61_enc_hash_based_match_finder() {
-        this->hash_table = static_cast<uint32_t *>(calloc(rdp_mppc_enc::HASH_BUF_LEN, sizeof(uint32_t)));
-    }
+    typedef uint32_t                                     offset_type;
+    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
+    typedef hash_table_manager::hash_type                hash_type;
+
+    hash_table_manager hash_tab_mgr;
+
+    rdp_mppc_61_enc_hash_based_match_finder()
+        : rdp_mppc_enc_match_finder()
+        , hash_tab_mgr(RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH,
+              MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
+    {}
 
     virtual ~rdp_mppc_61_enc_hash_based_match_finder() {
-        free(this->hash_table);
     }
 
-    virtual void dump(bool mini_dump) {
+    virtual void dump(bool mini_dump) const  {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder hash-based match finder");
-        LOG(LOG_INFO, "hashTable");
-        hexdump_d(reinterpret_cast<uint8_t *>(this->hash_table),
-            (mini_dump ? 16 : rdp_mppc_enc::HASH_BUF_LEN * sizeof(this->hash_table[0])));
+        this->hash_tab_mgr.dump(mini_dump);
     }
 
-    virtual void find_match(const uint8_t * historyBuffer, uint32_t historyOffset, uint16_t uncompressed_data_size) {
+    virtual void find_match(const uint8_t * historyBuffer, offset_type historyOffset,
+        uint16_t uncompressed_data_size)
+    {
         this->match_details_stream.reset();
+
+        this->hash_tab_mgr.clear_undo_history();
 
         if (uncompressed_data_size < RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH) {
             return;
         }
 
-        uint32_t counter = 0;
+        offset_type counter = 0;
         // If we are at start of history buffer, do not attempt to compress
         //  first RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1 bytes, because
         //  minimum LoM is RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH.
         if (historyOffset == 0) {
-            this->hash_table[rdp_mppc_enc::signature(historyBuffer,     RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 0;
-            this->hash_table[rdp_mppc_enc::signature(historyBuffer + 1, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 1;
-            this->hash_table[rdp_mppc_enc::signature(historyBuffer + 2, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 2;
-            this->hash_table[rdp_mppc_enc::signature(historyBuffer + 3, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 3;
-            this->hash_table[rdp_mppc_enc::signature(historyBuffer + 4, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 4;
-            this->hash_table[rdp_mppc_enc::signature(historyBuffer + 5, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 5;
-            this->hash_table[rdp_mppc_enc::signature(historyBuffer + 6, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 6;
-            this->hash_table[rdp_mppc_enc::signature(historyBuffer + 7, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] = 7;
-            counter                                                                                              = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
+            counter = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
+            for (offset_type i = 0; i < counter; i++)
+                this->hash_tab_mgr.update_indirect(historyBuffer, i);
         }
 
         uint16_t length_of_match = 0;
@@ -416,35 +509,30 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
         //  (> sizeof(RDP61_MATCH_DETAILS) = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1).
         for (; counter + (RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1) < uncompressed_data_size;
              counter += length_of_match) {
-            uint16_t crc16          = rdp_mppc_enc::signature(
-                historyBuffer + historyOffset + counter,
-                RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH);
-            uint32_t previous_match = this->hash_table[crc16];
+            offset_type     offset         = historyOffset + counter;
+            const uint8_t * data           = historyBuffer + offset;
+            hash_type       hash           = this->hash_tab_mgr.sign(data);
+            offset_type     previous_match = this->hash_tab_mgr.get_offset(hash);
 
-            this->hash_table[crc16] = historyOffset + counter;
+            this->hash_tab_mgr.update(hash, offset);
 
             // Check that we have a pattern match, hash is not enough.
 
-            if (0 != memcmp(historyBuffer + historyOffset + counter, historyBuffer + previous_match,
-                            RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
+            if (0 != ::memcmp(data, historyBuffer + previous_match,
+                              RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
                 length_of_match = 1;
             }
             else {
                 // We have a match, compute hash and Length of Match for triplets.
-                this->hash_table[rdp_mppc_enc::signature(
-                    historyBuffer + historyOffset + counter + 1,
-                    RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] =
-                        historyOffset + counter + 1;
+                this->hash_tab_mgr.update_indirect(historyBuffer, offset + 1);
+
                 // Maximum LOM is RDP_61_MAX_DATA_BLOCK_SIZE bytes.
                 for (length_of_match = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH;
                      (counter + length_of_match < uncompressed_data_size) &&
                          (length_of_match < RDP_61_MAX_DATA_BLOCK_SIZE);
                      length_of_match++) {
-                    this->hash_table[rdp_mppc_enc::signature(
-                        historyBuffer + historyOffset + counter + length_of_match - 1,
-                        RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)] =
-                            historyOffset + counter + length_of_match - 1;
-                    if (historyBuffer[historyOffset + counter + length_of_match] !=
+                    this->hash_tab_mgr.update_indirect(historyBuffer, offset + length_of_match - 1);
+                    if (historyBuffer[offset + length_of_match] !=
                         historyBuffer[previous_match + length_of_match])
                     {
                         break;
@@ -460,8 +548,13 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
         this->match_details_stream.mark_end();
     }
 
+public:
     virtual void process_packet_at_front() {
-        ::memset(this->hash_table, 0, rdp_mppc_enc::HASH_BUF_LEN * sizeof(uint32_t));
+        this->hash_tab_mgr.reset();
+    }
+
+    virtual bool undo_last_changes() {
+        return this->hash_tab_mgr.undo_last_changes();
     }
 };
 
@@ -486,8 +579,9 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
     /**
      * Initialize rdp_mppc_61_enc structure
      */
-    rdp_mppc_61_enc(rdp_mppc_enc_match_finder * match_finder)
-        : historyBuffer(NULL)
+    rdp_mppc_61_enc(rdp_mppc_enc_match_finder * match_finder, uint32_t verbose = 0)
+        : rdp_mppc_enc(verbose)
+        , historyBuffer(NULL)
         , historyOffset(0)
         , level_1_output_buffer(NULL)
         , level_1_compressed_data_size(0)
@@ -524,8 +618,10 @@ struct rdp_mppc_61_enc : public rdp_mppc_enc {
 
 private:
     void compress_61(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size) {
-        LOG(LOG_INFO, "compress_61");
-LOG(LOG_INFO, "uncompressed_data_size=%u historyOffset=%u", uncompressed_data_size, this->historyOffset);
+        if (this->verbose & 512) {
+            LOG(LOG_INFO, "compress_61: uncompressed_data_size=%u historyOffset=%u",
+                uncompressed_data_size, this->historyOffset);
+        }
 
         this->Level1ComprFlags = L1_INNER_COMPRESSION;
         this->Level2ComprFlags = 0;
@@ -548,7 +644,9 @@ LOG(LOG_INFO, "uncompressed_data_size=%u historyOffset=%u", uncompressed_data_si
         }
 
         if (this->level_1_compr_flags_hold & L1_PACKET_AT_FRONT) {
-LOG(LOG_INFO, "level_1_compr_flags_hold & L1_PACKET_AT_FRONT");
+            if (this->verbose & 512) {
+                LOG(LOG_INFO, "level_1_compr_flags_hold & L1_PACKET_AT_FRONT");
+            }
             this->historyOffset = 0;
 
             ::memset(this->historyBuffer, 0, RDP_61_HISTORY_BUFFER_LENGTH * sizeof(uint8_t));
@@ -619,8 +717,6 @@ LOG(LOG_INFO, "level_1_compr_flags_hold & L1_PACKET_AT_FRONT");
         }
 
 
-        this->historyOffset += uncompressed_data_size;
-
         uint16_t compressed_data_size;
         if (this->Level1ComprFlags & L1_NO_COMPRESSION) {
             this->level_2_compressor.compress(uncompressed_data, uncompressed_data_size, Level2ComprFlags,
@@ -633,8 +729,13 @@ LOG(LOG_INFO, "level_1_compr_flags_hold & L1_PACKET_AT_FRONT");
                 this->bytes_in_output_buffer = this->level_2_compressor.bytes_in_opb;
             }
             else {
-// Data compression results in an expansion of the data size!!!
-                this->level_1_compr_flags_hold |= L1_PACKET_AT_FRONT;
+                // Data compression results in an expansion of the data size.
+                if (!this->match_finder->undo_last_changes()) {
+                    this->level_1_compr_flags_hold |= L1_PACKET_AT_FRONT;
+                }
+                else {
+                    return;
+                }
             }
         }
         else {
@@ -652,13 +753,18 @@ LOG(LOG_INFO, "level_1_compr_flags_hold & L1_PACKET_AT_FRONT");
             }
         }
 
+        this->historyOffset += uncompressed_data_size;
+
         if (this->bytes_in_output_buffer) {
             this->Level1ComprFlags |= this->level_1_compr_flags_hold;
 
             this->level_1_compr_flags_hold = 0;
         }
 
-LOG(LOG_INFO, "Level1ComprFlags=0x%02X Level2ComprFlags=0x%02X", this->Level1ComprFlags, this->Level2ComprFlags);
+        if (this->verbose & 512) {
+            LOG(LOG_INFO, "Level1ComprFlags=0x%02X Level2ComprFlags=0x%02X",
+                this->Level1ComprFlags, this->Level2ComprFlags);
+        }
     }
 
     virtual void _compress(const uint8_t * uncompressed_data, uint16_t uncompressed_data_size,
@@ -666,15 +772,19 @@ LOG(LOG_INFO, "Level1ComprFlags=0x%02X Level2ComprFlags=0x%02X", this->Level1Com
     {
         this->compress_61(uncompressed_data, uncompressed_data_size);
 
-        compressedType       = (this->bytes_in_output_buffer ? (PACKET_COMPRESSED | PACKET_COMPR_TYPE_RDP61) : 0);
-        compressed_data_size = (this->bytes_in_output_buffer ?
-            2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
-                this->bytes_in_output_buffer :
-            0);
+        if (this->bytes_in_output_buffer) {
+            compressedType       = (PACKET_COMPRESSED | PACKET_COMPR_TYPE_RDP61);
+            compressed_data_size = 2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
+                                   this->bytes_in_output_buffer;
+        }
+        else {
+            compressedType       = 0;
+            compressed_data_size = 0;
+        }
     }
 
 public:
-    virtual void dump(bool mini_dump) {
+    virtual void dump(bool mini_dump) const {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor");
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_61_HISTORY_BUFFER_LENGTH));
@@ -693,7 +803,7 @@ public:
 
     virtual void get_compressed_data(Stream & stream) const {
         if (stream.tailroom() <
-            (size_t)2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
+            static_cast<size_t>(2) + // Level1ComprFlags(1) + Level2ComprFlags(1)
                 this->bytes_in_output_buffer) {
             LOG(LOG_ERR, "rdp_mppc_61_enc::get_compressed_data: Buffer too small");
             throw Error(ERR_BUFFER_TOO_SMALL);

@@ -178,8 +178,8 @@ int main(int argc, char * argv[]) {
                     password.c_str(),
                     "0.0.0.0",
                     front,
-                    false,               // tls
-                    false,               // nla
+                    true,               // tls
+                    true,               // nla
                     client_info,
                     &gen,
                     front.keymap.key_flags,
@@ -193,7 +193,7 @@ int main(int argc, char * argv[]) {
                     true,               // bitmap update
                     ini.debug.mod_rdp,  // Verbose
                     true,               // new pointer
-                    true,               // rdp compression
+                    4,                  // rdp compression
                     NULL,               // error message
                     false,              // disconnect on logon user change
                     0,                  // open session timeout

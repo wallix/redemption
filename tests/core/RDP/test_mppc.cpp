@@ -117,9 +117,10 @@ BOOST_AUTO_TEST_CASE(TestMPPC_enc)
 
 BOOST_AUTO_TEST_CASE(TestBitsSerializer)
 {
-    uint8_t outputBuffer[256] ={};
-    int bits_left = 8;
-    int opb_index = 0;
+    uint8_t  outputBuffer[256] ={};
+    uint8_t  bits_left = 8;
+    uint16_t opb_index = 0;
+
     insert_n_bits_40_50(2, 3, outputBuffer, bits_left, opb_index);
     BOOST_CHECK_EQUAL(6, bits_left);
     BOOST_CHECK_EQUAL(0, opb_index);
@@ -139,4 +140,66 @@ BOOST_AUTO_TEST_CASE(TestBitsSerializer)
     BOOST_CHECK_EQUAL(8, bits_left);
     BOOST_CHECK_EQUAL(1, opb_index);
     BOOST_CHECK_EQUAL(0xFF, outputBuffer[0] & 0xFF);
+}
+
+BOOST_AUTO_TEST_CASE(TestHashTableManager)
+{
+    const unsigned int length_of_data_to_sign = 3;
+    const unsigned int max_undo_element       = 8;
+
+    typedef uint16_t                                     offset_type;
+    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
+    typedef hash_table_manager::hash_type                hash_type;
+
+    hash_table_manager hash_tab_mgr(
+        length_of_data_to_sign, max_undo_element);
+
+    uint8_t data[] = "0123456789ABCDEF";
+
+    hash_type   hash;
+    hash_type   hash_save;
+    offset_type offset;
+    offset_type offset_save;
+
+
+    // Test of insertion (explicit hash value).
+    hash_tab_mgr.reset();
+    offset = 1;
+    hash = hash_tab_mgr.sign(data + offset);
+    hash_tab_mgr.update(hash, offset);
+    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
+
+
+    // Test of insertion (implicit hash value).
+    hash_tab_mgr.reset();
+    offset = 1;
+    hash = hash_tab_mgr.sign(data + offset);
+    hash_tab_mgr.update_indirect(data, offset);
+    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
+
+
+    // Test of undoing last changes.
+    hash_tab_mgr.reset();
+    offset = 1;
+    hash = hash_tab_mgr.sign(data + offset);
+    hash_tab_mgr.update_indirect(data, offset);
+    BOOST_CHECK_EQUAL(offset, hash_tab_mgr.get_offset(hash));
+    hash_tab_mgr.clear_undo_history();
+    hash_save   = hash;
+    offset_save = offset;
+
+    offset = 3;
+    hash = hash_tab_mgr.sign(data + offset);
+    hash_tab_mgr.update_indirect(data, offset);
+    BOOST_CHECK_EQUAL(offset,      hash_tab_mgr.get_offset(hash));
+    BOOST_CHECK_EQUAL(true,        hash_tab_mgr.undo_last_changes());
+    BOOST_CHECK_EQUAL(0,           hash_tab_mgr.get_offset(hash));
+    BOOST_CHECK_EQUAL(offset_save, hash_tab_mgr.get_offset(hash_save));
+
+
+    // Test of undoing last changes (out of undo buffer).
+    hash_tab_mgr.reset();
+    for (int i = 0; i < 10; i++)
+        hash_tab_mgr.update_indirect(data + i, offset);
+    BOOST_CHECK_EQUAL(false, hash_tab_mgr.undo_last_changes());
 }

@@ -1298,13 +1298,13 @@ class Engine(object):
         #return false or number of days
         return False, 0
 
-    def is_x509_connected(self, wab_login, ip_client, proxy_type):
+    def is_x509_connected(self, wab_login, ip_client, proxy_type, target):
         """
         Ask if we are authentifying using x509
         (and ask user by opening confirmation popup if we are,
         session ticket will be asked later in x509_authenticate)
         """
-        print ('is_x509_connected(%s %s %s)' % (wab_login, ip_client, proxy_type))
+        print ('is_x509_connected(%s %s %s %s)' % (wab_login, ip_client, proxy_type, target))
         res = False
         try:
             res = self.config_users[wab_login]['is_x509_connected']
