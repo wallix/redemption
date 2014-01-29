@@ -692,7 +692,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
 
     hash_table_manager hash_tab_mgr;
 
-    rdp_mppc_60_enc(uint32_t verbose = 512)
+    rdp_mppc_60_enc(uint32_t verbose = 0)
         : rdp_mppc_enc(verbose)
         , historyBuffer(NULL)
         , historyOffset(0)
