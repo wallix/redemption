@@ -74,6 +74,9 @@ struct RdpNego
     uint8_t password[256];
     uint8_t domain[256];
 
+    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
+    bool test;
+
     RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla)
     : flags(0)
     , tls(nla || tls)
@@ -82,6 +85,7 @@ struct RdpNego
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
     , trans(socket_trans)
+    , test(false)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
@@ -281,6 +285,9 @@ struct RdpNego
                 LOG(LOG_INFO, "activating CREDSSP");
                 rdpCredssp credssp(*this->trans,
                                    this->user, this->domain, this->password, this->hostname);
+                if (this->test) {
+                    credssp.hardcodedtests = true;
+                }
                 int res = credssp.credssp_client_authenticate();
                 if (res != 1) {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -478,7 +485,8 @@ struct RdpNego
     }
 
 
-    void recv_resquest(const char * certificate_password, ClientInfo & client_info) {
+    void recv_resquest(const char * certificate_password, ClientInfo & client_info,
+                       bool tls_support, bool tls_fallback_legacy) {
         // Receive Request
         {
             BStream stream(65536);
@@ -490,7 +498,10 @@ struct RdpNego
             }
             this->requested_protocol = x224.rdp_neg_requestedProtocols;
 
-            if (0 == (this->requested_protocol & X224::PROTOCOL_TLS)) {
+            if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
+                (!tls_support || 0 == (this->requested_protocol & X224::PROTOCOL_TLS))
+                // Fallback to legacy security protocol (RDP) is allowed.
+                && tls_fallback_legacy) {
                 LOG(LOG_INFO, "Fallback to legacy security protocol");
                 this->tls = false;
             }
