@@ -46,13 +46,17 @@ namespace BER {
         TAG_OBJECT_IDENTIFIER = 0x06,
         TAG_ENUMERATED        = 0x0A,
         TAG_SEQUENCE          = 0x10,
-        TAG_SEQUENCE_OF       = 0x10
+        TAG_SEQUENCE_OF       = 0x10,
+        TAG_GENERAL_STRING    = 0x1B
     };
 
     inline PC ber_pc(bool _pc) {
         return (_pc ? PC_CONSTRUCT : PC_PRIMITIVE);
     }
 
+    // ==========================
+    //   LENGTH
+    // ==========================
     bool read_length(Stream & s, int & length) {
         if (!s.in_check_rem(1)) {
             return false;
@@ -108,6 +112,10 @@ namespace BER {
         return res;
     }
 
+
+    // ==========================
+    //   UNIVERSAL TAG
+    // ==========================
     bool read_universal_tag(Stream & s, uint8_t tag, bool pc) {
         uint8_t byte;
         if (!s.in_check_rem(1))
@@ -123,7 +131,9 @@ namespace BER {
         return 1;
     }
 
-
+    // ==========================
+    //   APPLICATION TAG
+    // ==========================
     bool read_application_tag(Stream & s, uint8_t tag, int & length) {
         uint8_t byte;
         if (tag > 30) {
@@ -167,6 +177,9 @@ namespace BER {
         }
     }
 
+    // ==========================
+    //   CONTEXTUAL TAG
+    // ==========================
     bool read_contextual_tag(Stream & s, uint8_t tag, int & length, bool pc) {
         uint8_t byte;
         if (!s.in_check_rem(1))
@@ -189,6 +202,9 @@ namespace BER {
         return 1 + _ber_sizeof_length(length);
     }
 
+    // ==========================
+    //   SEQUENCE TAG
+    // ==========================
     bool read_sequence_tag(Stream & s, int & length) {
         uint8_t byte;
         if (!s.in_check_rem(1))
@@ -215,7 +231,9 @@ namespace BER {
         return 1 + _ber_sizeof_length(length);
     }
 
-
+    // ==========================
+    //   ENUMERATED
+    // ==========================
     bool read_enumerated(Stream & s, uint8_t & enumerated, uint8_t count) {
         int length;
         if (!read_universal_tag(s, TAG_ENUMERATED, false) ||
@@ -239,18 +257,24 @@ namespace BER {
         s.out_uint8(enumerated);
     }
 
-    bool read_bit_string(Stream & s, int & length, uint8_t & padding) {
-        if (!read_universal_tag(s, TAG_BIT_STRING, false) ||
-            !read_length(s, length)) {
-            return false;
-        }
-        if (!s.in_check_rem(1)) {
-            return false;
-        }
-        padding = s.in_uint8();
-        return true;
-    }
+    // ==========================
+    //   BIT STRING
+    // ==========================
+    // bool read_bit_string(Stream & s, int & length, uint8_t & padding) {
+    //     if (!read_universal_tag(s, TAG_BIT_STRING, false) ||
+    //         !read_length(s, length)) {
+    //         return false;
+    //     }
+    //     if (!s.in_check_rem(1)) {
+    //         return false;
+    //     }
+    //     padding = s.in_uint8();
+    //     return true;
+    // }
 
+    // ==========================
+    //   OCTET STRING
+    // ==========================
     int write_octet_string(Stream & s, const uint8_t * oct_str, int length) {
         int size = 0;
         size += write_universal_tag(s, TAG_OCTET_STRING, false);
@@ -275,7 +299,43 @@ namespace BER {
     int sizeof_octet_string(int length) {
         return 1 + _ber_sizeof_length(length) + length;
     }
+    int sizeof_sequence_octet_string(int length) {
+        return sizeof_contextual_tag(sizeof_octet_string(length))
+            + sizeof_octet_string(length);
+    }
 
+    int write_sequence_octet_string(Stream & stream, uint8_t context,
+                                        const uint8_t * value, int length) {
+        return write_contextual_tag(stream, context, sizeof_octet_string(length), true)
+            + write_octet_string(stream, value, length);
+    }
+
+    // ==========================
+    //   GENERAL STRING
+    // ==========================
+    int write_general_string(Stream & s, const uint8_t * oct_str, int length) {
+        int size = 0;
+        size += write_universal_tag(s, TAG_GENERAL_STRING, false);
+        size += write_length(s, length);
+        s.out_copy_bytes(oct_str, length);
+        size += length;
+        return size;
+    }
+    bool read_general_string_tag(Stream & s, int & length) {
+        return read_universal_tag(s, TAG_GENERAL_STRING, false)
+            && read_length(s, length);
+    }
+    int write_general_string_tag(Stream & s, int length) {
+        write_universal_tag(s, TAG_GENERAL_STRING, false);
+        write_length(s, length);
+        return 1 + _ber_sizeof_length(length);
+    }
+    int sizeof_general_string(int length) {
+        return 1 + _ber_sizeof_length(length) + length;
+    }
+    // ==========================
+    //   BOOL
+    // ==========================
     bool read_bool(Stream & s, bool & value) {
         int length;
         if (!read_universal_tag(s, TAG_BOOLEAN, false) ||
@@ -297,6 +357,9 @@ namespace BER {
         s.out_uint8(value ? 0xFF : 0);
     }
 
+    // ==========================
+    //   INTEGER
+    // ==========================
     bool read_integer(Stream & s, uint32_t & value) {
         int length;
         if (!read_universal_tag(s, TAG_INTEGER, false) ||
@@ -380,16 +443,6 @@ namespace BER {
             && read_length(s, length);
     }
 
-    int sizeof_sequence_octet_string(int length) {
-        return sizeof_contextual_tag(sizeof_octet_string(length))
-            + sizeof_octet_string(length);
-    }
-
-    int write_sequence_octet_string(Stream & stream, uint8_t context,
-                                        const uint8_t * value, int length) {
-        return write_contextual_tag(stream, context, sizeof_octet_string(length), true)
-            + write_octet_string(stream, value, length);
-    }
 };
 
 #endif

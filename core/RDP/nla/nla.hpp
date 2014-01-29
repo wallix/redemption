@@ -52,10 +52,15 @@ struct rdpCredssp
     SEC_WINNT_AUTH_IDENTITY identity;
     PSecurityFunctionTable table;
     SecPkgContext_Sizes ContextSizes;
+    bool RestrictedAdminMode;
 
     bool hardcodedtests;
 
-    rdpCredssp(Transport & transport)
+    rdpCredssp(Transport & transport,
+               uint8_t * user,
+               uint8_t * domain,
+               uint8_t * pass,
+               uint8_t * hostname)
         : send_seq_num(0)
         , recv_seq_num(0)
         , trans(transport)
@@ -63,9 +68,12 @@ struct rdpCredssp
         , pubKeyAuth(ts_request.pubKeyAuth)
         , authInfo(ts_request.authInfo)
         , table(new SecurityFunctionTable)
+        , RestrictedAdminMode(false)
         , hardcodedtests(false)
     {
         this->SspiModule.init(0);
+        this->set_credentials(user, domain, pass, hostname);
+
     }
 
     ~rdpCredssp()
@@ -117,17 +125,6 @@ struct rdpCredssp
     int credssp_ntlm_client_init() {
         this->server = false;
 
-        // TODO REMOVE HARDCODED DATA
-        // this->identity.SetAuthIdentity(settings->Username, settings->Domain,
-        //                                settings->Password);
-        if (this->hardcodedtests) {
-            uint8_t user[] = "Ulysse";
-            uint8_t domain[] = "Ithaque";
-            uint8_t pass[] = "Pénélope";
-            this->identity.SetAuthIdentityFromUtf8(user, domain, pass);
-        }
-
-
 // ============================================
 /* Get Public Key From TLS Layer and hostname */
 // ============================================
@@ -136,15 +133,6 @@ struct rdpCredssp
         this->PublicKey.init(this->trans.get_public_key_length());
         this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
 
-        // TODO REMOVE HARDCODED DATA
-        if (this->hardcodedtests) {
-            // this->PublicKey.init(16);
-            // this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
-
-            uint8_t host[] = "Télémaque";
-            this->ServicePrincipalName.init(sizeof(host));
-            this->ServicePrincipalName.copy(host, sizeof(host));
-        }
 
         return 1;
 
@@ -160,12 +148,6 @@ struct rdpCredssp
 
         this->PublicKey.init(this->trans.get_public_key_length());
         this->PublicKey.copy(this->trans.get_public_key(), this->trans.get_public_key_length());
-
-        // TODO REMOVE HARDCODED DATA
-        // if (this->hardcodedtests) {
-        //     this->PublicKey.init(16);
-        //     this->PublicKey.copy((uint8_t*)"1245789652325415", 16);
-        // }
 
 	return 1;
     }
@@ -314,12 +296,19 @@ struct rdpCredssp
     }
 
     void credssp_encode_ts_credentials() {
-        this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
-                                             this->identity.Domain.size(),
-                                             this->identity.User.get_data(),
-                                             this->identity.User.size(),
-                                             this->identity.Password.get_data(),
-                                             this->identity.Password.size());
+        if (this->RestrictedAdminMode) {
+            this->ts_credentials.set_credentials(NULL, 0,
+                                                 NULL, 0,
+                                                 NULL, 0);
+        }
+        else {
+            this->ts_credentials.set_credentials(this->identity.Domain.get_data(),
+                                                 this->identity.Domain.size(),
+                                                 this->identity.User.get_data(),
+                                                 this->identity.User.size(),
+                                                 this->identity.Password.get_data(),
+                                                 this->identity.Password.size());
+        }
     }
 
     SEC_STATUS credssp_encrypt_ts_credentials() {

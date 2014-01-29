@@ -120,6 +120,7 @@ struct NTLMContext {
     }
 
     void init() {
+        this->server = false;
         this->SavedNegotiateMessage.init(0);
         this->SavedChallengeMessage.init(0);
         this->SavedAuthenticateMessage.init(0);

@@ -279,11 +279,11 @@ struct TSRequest {
  */
 struct TSPasswordCreds {
     uint8_t domainName[256];
-    int domainName_length;
+    size_t domainName_length;
     uint8_t userName[256];
-    int userName_length;
+    size_t userName_length;
     uint8_t password[256];
-    int password_length;
+    size_t password_length;
 
     TSPasswordCreds()
         : domainName_length(0)
@@ -293,15 +293,21 @@ struct TSPasswordCreds {
 
     }
 
-    TSPasswordCreds(const uint8_t * domain, int domain_length, const uint8_t * user, int user_length, const uint8_t * pass, int pass_length) {
-        memcpy(this->domainName, domain, domain_length);
-        this->domainName_length = domain_length;
+    TSPasswordCreds(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length) {
+        this->domainName_length = (domain_length < sizeof(this->domainName))
+            ? domain_length
+            : sizeof(this->domainName);
+        memcpy(this->domainName, domain, this->domainName_length);
 
-        memcpy(this->userName, user, user_length);
-        this->userName_length = user_length;
+        this->userName_length = (user_length < sizeof(this->userName))
+            ? user_length
+            : sizeof(this->userName);
+        memcpy(this->userName, user, this->userName_length);
 
-        memcpy(this->password, pass, pass_length);
-        this->password_length = pass_length;
+        this->password_length = (pass_length < sizeof(this->password))
+            ? pass_length
+            : sizeof(this->password);
+        memcpy(this->password, pass, this->password_length);
     }
 
     // TSPasswordCreds(Stream & stream) {
@@ -383,14 +389,14 @@ struct TSPasswordCreds {
 struct TSCredentials {
     int credType;
     TSPasswordCreds passCreds;
-
+    // For now, TSCredentials can only contains TSPasswordCreds (not TSSmartCardCreds)
 
     TSCredentials()
         : credType(1)
         , passCreds(TSPasswordCreds())
     {}
 
-    TSCredentials(const uint8_t * domain, int domain_length, const uint8_t * user, int user_length, const uint8_t * pass, int pass_length)
+    TSCredentials(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length)
         : credType(1)
         , passCreds(TSPasswordCreds(domain, domain_length,
                                     user, user_length,
@@ -468,17 +474,17 @@ struct TSCredentials {
 
 // struct TSCspDataDetail : public TSCredentials {
 //     int keySpec;
-//     char cardName[256];
-//     char readerName[256];
-//     char containerName[256];
-//     char cspName[256];
+//     uint8_t cardName[256];
+//     uint8_t readerName[256];
+//     uint8_t containerName[256];
+//     uint8_t cspName[256];
 
 // };
 // struct TSSmartCardCreds : public TSCredentials {
-//     char pin[256];
+//     uint8_t pin[256];
 //     TSCspDataDetail capData;
-//     char userHint[256];
-//     char domainHint[256];
+//     uint8_t userHint[256];
+//     uint8_t domainHint[256];
 
 // };
 
