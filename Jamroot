@@ -453,8 +453,8 @@ unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp cryptofil
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test ;
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_nego : tests/core/RDP/test_nego.cpp libboost_unit_test ;
-unit-test test_nego : tests/core/RDP/test_nego.cpp libboost_unit_test gcov : <variant>coverage ;
+unit-test test_nego : tests/core/RDP/test_nego.cpp cryptofile openssl snappy libboost_unit_test ;
+unit-test test_nego : tests/core/RDP/test_nego.cpp cryptofile openssl snappy libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp libboost_unit_test ;
 unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp libboost_unit_test gcov : <variant>coverage ;

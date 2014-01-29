@@ -54,6 +54,7 @@ struct rdpCredssp
     SecPkgContext_Sizes ContextSizes;
     bool RestrictedAdminMode;
 
+    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool hardcodedtests;
 
     rdpCredssp(Transport & transport,

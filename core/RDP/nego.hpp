@@ -24,6 +24,8 @@
 #ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
 #define _REDEMPTION_CORE_RDP_NEGO_HPP_
 #include "RDP/nla/nla.hpp"
+#include "RDP/x224.hpp"
+#include "client_info.hpp"
 struct RdpNego
 {
     enum {
@@ -72,6 +74,9 @@ struct RdpNego
     uint8_t password[256];
     uint8_t domain[256];
 
+    TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
+    bool test;
+
     RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla)
     : flags(0)
     , tls(nla || tls)
@@ -80,6 +85,7 @@ struct RdpNego
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
     , trans(socket_trans)
+    , test(false)
     {
         if (this->tls){
             this->enabled_protocols = RdpNego::PROTOCOL_RDP
@@ -279,6 +285,9 @@ struct RdpNego
                 LOG(LOG_INFO, "activating CREDSSP");
                 rdpCredssp credssp(*this->trans,
                                    this->user, this->domain, this->password, this->hostname);
+                if (this->test) {
+                    credssp.hardcodedtests = true;
+                }
                 int res = credssp.credssp_client_authenticate();
                 if (res != 1) {
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
@@ -475,6 +484,72 @@ struct RdpNego
 //        return ret;
     }
 
+
+    void recv_resquest(const char * certificate_password, ClientInfo & client_info,
+                       bool tls_support, bool tls_fallback_legacy) {
+        // Receive Request
+        {
+            BStream stream(65536);
+            X224::RecvFactory fac_x224(*this->trans, stream);
+            X224::CR_TPDU_Recv x224(*this->trans, stream, false);
+            if (x224._header_size != (size_t)(stream.size())){
+                LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
+                    " %d bytes remains", stream.size() - x224._header_size);
+            }
+            this->requested_protocol = x224.rdp_neg_requestedProtocols;
+
+            if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
+                (!tls_support || 0 == (this->requested_protocol & X224::PROTOCOL_TLS))
+                // Fallback to legacy security protocol (RDP) is allowed.
+                && tls_fallback_legacy) {
+                LOG(LOG_INFO, "Fallback to legacy security protocol");
+                this->tls = false;
+            }
+        }
+
+        // Send Response
+        {
+            BStream stream(256);
+            uint8_t rdp_neg_type = 0;
+            uint8_t rdp_neg_flags = 0;
+            uint32_t rdp_neg_code = 0;
+            if (this->nla) {
+                LOG(LOG_INFO, "-----------------> Front::NLA Support Enabled");
+                if (this->requested_protocol & X224::PROTOCOL_HYBRID) {
+                    rdp_neg_type = X224::RDP_NEG_RSP;
+                    rdp_neg_code = X224::PROTOCOL_HYBRID;
+                    client_info.encryptionLevel = 0;
+                }
+                else {
+                    rdp_neg_type = X224::RDP_NEG_FAILURE;
+                    rdp_neg_code = X224::HYBRID_REQUIRED_BY_SERVER;
+                    // Fallback to tls ?
+                }
+            }
+            else if (this->tls) {
+                LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
+                if (this->requested_protocol & X224::PROTOCOL_TLS) {
+                    rdp_neg_type = X224::RDP_NEG_RSP;
+                    rdp_neg_code = X224::PROTOCOL_TLS;
+                    client_info.encryptionLevel = 0;
+                }
+                else {
+                    rdp_neg_type = X224::RDP_NEG_FAILURE;
+                    rdp_neg_code = X224::SSL_REQUIRED_BY_SERVER;
+                }
+            }
+            else {
+                LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
+            }
+
+            X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
+            this->trans->send(stream);
+
+            if (this->tls){
+                this->trans->enable_server_tls(certificate_password);
+            }
+        }
+    }
 
 };
 

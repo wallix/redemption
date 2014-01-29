@@ -1290,7 +1290,7 @@ public:
             {
                 BStream stream(65536);
                 X224::RecvFactory fac_x224(*this->trans, stream);
-                X224::CR_TPDU_Recv x224(*this->trans, stream, *this->ini);
+                X224::CR_TPDU_Recv x224(*this->trans, stream, this->ini->client.bogus_neg_request);
                 if (x224._header_size != (size_t)(stream.size())){
                     LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
                                  " %d bytes remains", stream.size() - x224._header_size);

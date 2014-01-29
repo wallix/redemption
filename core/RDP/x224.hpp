@@ -558,7 +558,7 @@ namespace X224
         uint16_t rdp_neg_length;
         uint32_t rdp_neg_requestedProtocols;
 
-        CR_TPDU_Recv(Transport & t, Stream & stream, Inifile & ini, uint32_t verbose = 0)
+        CR_TPDU_Recv(Transport & t, Stream & stream, bool bogus_neg_req, uint32_t verbose = 0)
         : Recv(t, stream)
         , rdp_neg_type(0)
         , rdp_neg_flags(0)
@@ -616,7 +616,7 @@ namespace X224
                 if (verbose){
                     LOG(LOG_INFO, "Found RDP Negotiation Request Structure");
                 }
-                if (this->rdp_neg_type == X224::RDP_NEG_NONE && ini.client.bogus_neg_request){
+                if (this->rdp_neg_type == X224::RDP_NEG_NONE && bogus_neg_req){
                     // for broken clients like jrdp
                     stream.p = end_of_header;
                 }
