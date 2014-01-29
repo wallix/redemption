@@ -963,6 +963,20 @@ namespace GCC
         // present. If this field is not present, all of the subsequent fields
         // MUST NOT be present.
 
+        enum {
+              RNS_UD_CS_SUPPORT_ERRINFO_PDU        = 0x0001
+            , RNS_UD_CS_WANT_32BPP_SESSION         = 0x0002
+            , RNS_UD_CS_SUPPORT_STATUSINFO_PDU     = 0x0004
+            , RNS_UD_CS_STRONG_ASYMMETRIC_KEYS     = 0x0008
+            , RNS_UD_CS_UNUSED                     = 0x0010
+            , RNS_UD_CS_VALID_CONNECTION_TYPE      = 0x0020
+            , RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU = 0x0040
+            , RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT = 0x0080
+            , RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL = 0x0100
+            , RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE  = 0x0200
+            , RNS_UD_CS_SUPPORT_HEARTBEAT_PDU      = 0x0400
+        };
+
         // clientDigProductId (64 bytes): Contains a value that uniquely
         //                                identifies the client. If this field
         //                                is present, all of the preceding
