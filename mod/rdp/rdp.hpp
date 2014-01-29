@@ -2135,8 +2135,9 @@ struct mod_rdp : public mod_api {
         confirm_active_pdu.emit_capability_set(general_caps);
 
         BitmapCaps bitmap_caps;
-        //bitmap_caps.preferredBitsPerPixel = this->bpp;
-        bitmap_caps.preferredBitsPerPixel = this->front_bpp;
+        TODO("Client SHOULD set this field to the color depth requested in the Client Core Data")
+        bitmap_caps.preferredBitsPerPixel = this->bpp;
+        //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
         bitmap_caps.desktopWidth          = this->front_width;
         bitmap_caps.desktopHeight         = this->front_height;
         bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
