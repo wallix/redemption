@@ -24,10 +24,33 @@
 #define BOOST_TEST_MODULE TestXXX
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
+#include "RDP/nego.hpp"
+#include "testtransport.hpp"
 
-
-BOOST_AUTO_TEST_CASE(TestXXX)
+BOOST_AUTO_TEST_CASE(TestNego)
 {
+    const char client[65000] =
+/* 0000 */ "\x03\x00\x00\x2a\x25\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...*%......Cooki
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x74\x65\x73\x74" //e: mstshash=test
+/* 0020 */ "\x0d\x0a\x01\x00\x08\x00\x03\x00\x00\x00"                         //..........
+        ;
+    const char server[65000] = {};
+    TestTransport logtrans("test", server, sizeof(server), client, sizeof(client));
+    RdpNego nego(true, &logtrans, "test", true);
+    nego.server_event(true);
+}
+
+
+BOOST_AUTO_TEST_CASE(TestNego2)
+{
+    const char client[65000] =
+/* 0000 */ "\x03\x00\x00\x2a\x25\xe0\x00\x00\x00\x00\x00\x43\x6f\x6f\x6b\x69" //...*%......Cooki
+/* 0010 */ "\x65\x3a\x20\x6d\x73\x74\x73\x68\x61\x73\x68\x3d\x74\x65\x73\x74" //e: mstshash=test
+/* 0020 */ "\x0d\x0a\x01\x00\x08\x00\x03\x00\x00\x00"                         //..........
+        ;
+    const char server[65000] = {};
+    TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
+    RdpNego nego(true, &logtrans, "test", true);
 }

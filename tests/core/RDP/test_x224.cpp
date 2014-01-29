@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_no_factory)
 
     Inifile ini;
     BStream stream(65536);
-    X224::CR_TPDU_Recv x224(t, stream, ini);
+    X224::CR_TPDU_Recv x224(t, stream, false);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_overfull_stream)
     try {
         Inifile ini;
 
-        X224::CR_TPDU_Recv x224(t, stream, ini);
+        X224::CR_TPDU_Recv x224(t, stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_TPDU_truncated_header)
     try {
         Inifile ini;
 
-        X224::CR_TPDU_Recv x224(t, stream, ini);
+        X224::CR_TPDU_Recv x224(t, stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_Wrong_opcode)
     try {
         Inifile ini;
 
-        X224::CR_TPDU_Recv x224(t, stream, ini);
+        X224::CR_TPDU_Recv x224(t, stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_truncated_header)
     try {
         Inifile ini;
 
-        X224::CR_TPDU_Recv x224(t, stream, ini);
+        X224::CR_TPDU_Recv x224(t, stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_NEG_REQ_MISSING)
     try {
         Inifile ini;
 
-        X224::CR_TPDU_Recv x224(t, stream, ini);
+        X224::CR_TPDU_Recv x224(t, stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_trailing_data)
     try {
         Inifile ini;
 
-        X224::CR_TPDU_Recv x224(t, stream, ini);
+        X224::CR_TPDU_Recv x224(t, stream, false);
         BOOST_CHECK(false);
     }
     catch (Error & e) {
@@ -219,7 +219,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory)
 
     Inifile ini;
 
-    X224::CR_TPDU_Recv x224(t, stream, ini);
+    X224::CR_TPDU_Recv x224(t, stream, false);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(11, x224.tpkt.len);
@@ -257,7 +257,7 @@ BOOST_AUTO_TEST_CASE(TestReceive_CR_TPDU_with_factory_TLS_Negotiation_packet)
 
     Inifile ini;
 
-    X224::CR_TPDU_Recv x224(t, stream, ini);
+    X224::CR_TPDU_Recv x224(t, stream, false);
 
     BOOST_CHECK_EQUAL(3, x224.tpkt.version);
     BOOST_CHECK_EQUAL(tpkt_len, x224.tpkt.len);

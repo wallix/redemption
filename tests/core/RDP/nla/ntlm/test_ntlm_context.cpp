@@ -566,13 +566,11 @@ BOOST_AUTO_TEST_CASE(TestSetters)
 BOOST_AUTO_TEST_CASE(TestWrittersReaders)
 {
     NTLMContext context_write;
-    // context_write.init();
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
 
     NTLMContext context_read;
     context_read.server = true;
-    // context_read.init();
     SEC_STATUS status;
     SecBuffer nego;
     status = context_write.write_negotiate(&nego);

@@ -24,6 +24,9 @@
 #ifndef _REDEMPTION_CORE_RDP_NEGO_HPP_
 #define _REDEMPTION_CORE_RDP_NEGO_HPP_
 #include "RDP/nla/nla.hpp"
+#include "RDP/x224.hpp"
+// #include "RDP/mcs.hpp"
+// #include "RDP/gcc.hpp"
 struct RdpNego
 {
     enum {
@@ -475,6 +478,54 @@ struct RdpNego
 //        return ret;
     }
 
+
+    // void recv_resquest() {
+    //     BStream stream(65536);
+    //     X224::RecvFactory fac_x224(*this->trans, stream);
+    //     X224::CR_TPDU_Recv x224(*this->trans, stream, *this->ini);
+    //     if (x224._header_size != (size_t)(stream.size())){
+    //         LOG(LOG_ERR, "Front::incoming::connection request : all data should have been consumed,"
+    //             " %d bytes remains", stream.size() - x224._header_size);
+    //     }
+    //     this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
+
+    //     if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
+    //         (!this->ini->client.tls_support || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
+    //         // Fallback to legacy security protocol (RDP) is allowed.
+    //         && this->ini->client.tls_fallback_legacy) {
+    //         LOG(LOG_INFO, "Fallback to legacy security protocol");
+    //         this->tls_client_active = false;
+    //     }
+    // }
+
+    // {
+    //     BStream stream(256);
+    //     uint8_t rdp_neg_type = 0;
+    //     uint8_t rdp_neg_flags = 0;
+    //     uint32_t rdp_neg_code = 0;
+    //     if (this->tls_client_active){
+    //         LOG(LOG_INFO, "-----------------> Front::TLS Support Enabled");
+    //         if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
+    //             rdp_neg_type = X224::RDP_NEG_RSP;
+    //             rdp_neg_code = X224::PROTOCOL_TLS;
+    //             this->client_info.encryptionLevel = 0;
+    //         }
+    //         else {
+    //             rdp_neg_type = X224::RDP_NEG_FAILURE;
+    //             rdp_neg_code = X224::SSL_REQUIRED_BY_SERVER;
+    //         }
+    //     }
+    //     else {
+    //         LOG(LOG_INFO, "-----------------> Front::TLS Support not Enabled");
+    //     }
+
+    //     X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
+    //     this->trans->send(stream);
+
+    //     if (this->tls_client_active){
+    //         this->trans->enable_server_tls(this->ini->globals.certificate_password);
+    //     }
+    // }
 
 };
 
