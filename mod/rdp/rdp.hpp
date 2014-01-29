@@ -738,8 +738,15 @@ struct mod_rdp : public mod_api {
                             cs_core.version = this->use_rdp5?0x00080004:0x00080001;
                             cs_core.desktopWidth = this->front_width;
                             cs_core.desktopHeight = this->front_height;
-                            cs_core.highColorDepth = this->front_bpp;
+                            //cs_core.highColorDepth = this->front_bpp;
+                            cs_core.highColorDepth = ((this->front_bpp == 32)
+                                ? GCC::UserData::HIGH_COLOR_24BPP : this->front_bpp);
                             cs_core.keyboardLayout = this->keylayout;
+                            if (this->front_bpp == 32) {
+                                cs_core.supportedColorDepths = 15;
+                                cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
+                            }
+
                             uint16_t hostlen = strlen(hostname);
                             uint16_t maxhostlen = std::min((uint16_t)15, hostlen);
                             for (size_t i = 0; i < maxhostlen ; i++){
@@ -2128,7 +2135,8 @@ struct mod_rdp : public mod_api {
         confirm_active_pdu.emit_capability_set(general_caps);
 
         BitmapCaps bitmap_caps;
-        bitmap_caps.preferredBitsPerPixel = this->bpp;
+        //bitmap_caps.preferredBitsPerPixel = this->bpp;
+        bitmap_caps.preferredBitsPerPixel = this->front_bpp;
         bitmap_caps.desktopWidth          = this->front_width;
         bitmap_caps.desktopHeight         = this->front_height;
         bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;

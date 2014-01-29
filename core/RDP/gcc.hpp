@@ -901,6 +901,14 @@ namespace GCC
         // present. If this field is not present, all of the subsequent fields
         // MUST NOT be present.
 
+        enum {
+              HIGH_COLOR_4BPP  = 0x0004
+            , HIGH_COLOR_8BPP  = 0x0008
+            , HIGH_COLOR_15BPP = 0x000F
+            , HIGH_COLOR_16BPP = 0x0010
+            , HIGH_COLOR_24BPP = 0x0018
+        };
+
         // supportedColorDepths (2 bytes): A 16-bit, unsigned integer. Specifies
         //                                 the high color depths that the client
         //                                 is capable of supporting.

@@ -545,11 +545,13 @@ struct Inifile : public FieldObserver {
 
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
 
-        int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1 (not yet supported)
+        int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
+
+        uint32_t max_color_depth;   // 0 - Default, 1 - 8-bit, 2 - 15-bit, 3 - 16-bit, 4 - 24-bit, 5 - 32-bit (not yet supported)
     } client;
 
     struct {
-        int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1 (not yet supported)
+        int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
         bool disconnect_on_logon_user_change;
 
@@ -876,19 +878,17 @@ public:
         this->client.tls_support                         = true;
         this->client.bogus_neg_request                   = false;
         this->client.rdp_compression                     = 0;
+        this->client.max_color_depth                     = 0;
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
         // End Section "client"
 
         // Begin section "mod_rdp"
-        this->mod_rdp.rdp_compression = 0;
-
-        this->mod_rdp.disconnect_on_logon_user_change = false;
-
-        this->mod_rdp.open_session_timeout = 0;
-
-        this->mod_rdp.certificate_change_action = 0;
+        this->mod_rdp.rdp_compression                   = 0;
+        this->mod_rdp.disconnect_on_logon_user_change   = false;
+        this->mod_rdp.open_session_timeout              = 0;
+        this->mod_rdp.certificate_change_action         = 0;
 
         this->mod_rdp.extra_orders.empty();
         // End Section "mod_rdp"
@@ -1297,6 +1297,15 @@ public:
             }
             else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")){
                 this->client.disable_tsk_switch_shortcuts.set_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "max_color_depth")){
+                this->client.max_color_depth = ulong_from_cstr(value);
+                if ((this->client.max_color_depth != 8) &&
+                    (this->client.max_color_depth != 15) &&
+                    (this->client.max_color_depth != 16) &&
+                    (this->client.max_color_depth != 24) &&
+                    (this->client.max_color_depth != 32))
+                    this->client.max_color_depth = 0;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

@@ -195,7 +195,7 @@ struct RDPBitmapData {
     uint16_t height;
     uint16_t bits_per_pixel;
     uint16_t flags;
-    
+
     uint16_t bitmap_length;
 
     // Compressed Data Header (TS_CD_HEADER)
@@ -283,7 +283,8 @@ struct RDPBitmapData {
         this->flags          = stream.in_uint16_le();
         this->bitmap_length  = stream.in_uint16_le();
 
-        assert(   (this->bits_per_pixel == 24)
+        assert(   (this->bits_per_pixel == 32)
+               || (this->bits_per_pixel == 23)
                || (this->bits_per_pixel == 16)
                || (this->bits_per_pixel == 15)
                || (this->bits_per_pixel == 8 ));
