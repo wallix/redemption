@@ -547,7 +547,7 @@ struct Inifile : public FieldObserver {
 
         int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
-        uint32_t max_color_depth;   // 0 - Default, 1 - 8-bit, 2 - 15-bit, 3 - 16-bit, 4 - 24-bit, 5 - 32-bit (not yet supported)
+        uint32_t max_color_depth;   // 0 - Default (24-bit), 1 - 8-bit, 2 - 15-bit, 3 - 16-bit, 4 - 24-bit, 5 - 32-bit (not yet supported)
     } client;
 
     struct {
@@ -878,7 +878,7 @@ public:
         this->client.tls_support                         = true;
         this->client.bogus_neg_request                   = false;
         this->client.rdp_compression                     = 0;
-        this->client.max_color_depth                     = 0;
+        this->client.max_color_depth                     = 24;
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
@@ -1305,7 +1305,7 @@ public:
                     (this->client.max_color_depth != 16) &&
                     (this->client.max_color_depth != 24) &&
                     (this->client.max_color_depth != 32))
-                    this->client.max_color_depth = 0;
+                    this->client.max_color_depth = 24;
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
