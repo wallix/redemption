@@ -29,8 +29,8 @@
 #define BOOST_TEST_MODULE TestGenRandom
 #include <boost/test/auto_unit_test.hpp>
 
+#define LOGPRINT
 #include "log.hpp"
-#define LOGNULL
 
 #include "genrandom.hpp"
 
@@ -76,6 +76,34 @@ BOOST_AUTO_TEST_CASE(TestGenRandom)
         rnd.random(mem2, sizeof(mem2));
 
         BOOST_CHECK(memcmp(mem, mem2, sizeof(mem)) != 0);
+        uint8_t mem3[1024] = {};
+        rnd.random(mem3, sizeof(mem3));
+        hexdump_c(mem3, sizeof(mem3));
+
+    }
+    {
+        LCGRand rnd(0);
+        unsigned mem[128] = {};
+        rnd.random(mem, sizeof(mem));
+        unsigned count_null = 0;
+        for (size_t i = 0; i < 128 ; i++){
+            if (!mem[i]) { count_null++; }
+        }
+        // well, theoratically as we are testing a random generator,
+        // this test may possibly fail and even generator yield as many zeroes
+        // as we (dont) want.
+        // however this should be quite rare.
+        // so, if the test fails, I guess we should just run it again
+        BOOST_CHECK(count_null == 0);
+
+        unsigned mem2[1024] = {};
+        rnd.random(mem2, sizeof(mem2));
+
+        BOOST_CHECK(memcmp(mem, mem2, sizeof(mem)) != 0);
+
+        uint8_t mem3[1024] = {};
+        rnd.random(mem3, sizeof(mem3));
+        hexdump_c(mem3, sizeof(mem3));
     }
 
 }

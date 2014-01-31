@@ -25,6 +25,41 @@
 #include <sys/time.h>
 #include <stdint.h>
 
+class TimeObj {
+public:
+    virtual ~TimeObj() {}
+    virtual timeval get_time() = 0;
+};
+
+class TimeSystem : public TimeObj {
+public:
+    TimeSystem() {}
+    virtual ~TimeSystem() {}
+    virtual timeval get_time() {
+        timeval tv;
+        gettimeofday(&tv, 0);
+        return tv;
+    }
+};
+
+class LCGTime : public TimeObj {
+    uint32_t seed;
+public:
+    LCGTime(uint32_t seed = 7984813UL)
+        : seed(seed)
+    {}
+    virtual ~LCGTime() {}
+    virtual timeval get_time() {
+        timeval tv;
+        tv.tv_sec = this->rand32();
+        tv.tv_usec = this->rand32();
+        return tv;
+    }
+    uint32_t rand32() {
+        return this->seed = 6843513UL * this->seed + 451209UL;
+    }
+};
+
 static inline uint64_t ustime(const timeval & now) {
     return static_cast<uint64_t>(now.tv_sec)*1000000LL + static_cast<uint64_t>(now.tv_usec);
 }

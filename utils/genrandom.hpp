@@ -65,6 +65,30 @@ class LCGRandom : public Random
     }
 };
 
+class LCGRand : public Random
+{
+    uint64_t seed;
+    public:
+        LCGRand(uint32_t seed)
+        : seed(seed)
+        {
+        }
+
+    virtual ~LCGRand() {}
+
+    virtual void random(void * dest, size_t size)
+    {
+        for (size_t x = 0; x < size ; x++){
+            ((uint32_t*)dest)[x / sizeof(uint32_t)] = this->rand32();
+        }
+    }
+
+    uint32_t rand32()
+    {
+        return this->seed = (uint64_t)999331UL * (uint64_t)this->seed + 7913UL;
+    }
+};
+
 class UdevRandom : public Random
 {
     public:
