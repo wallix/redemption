@@ -25,6 +25,7 @@
 #include "ssl_calls.hpp"
 #include "server.hpp"
 #include "session.hpp"
+#include "rio/cryptokeyholder.hpp"
 
 class SessionServer : public Server
 {
@@ -32,15 +33,13 @@ class SessionServer : public Server
     unsigned uid;
     unsigned gid;
 
-    const char * key0;
-    const char * key1;
+    crypto_key_holder & cryptoKeyHldr;
 
 public:
-    SessionServer(unsigned uid, unsigned gid, const char * key0, const char * key1)
+    SessionServer(unsigned uid, unsigned gid, crypto_key_holder & cryptoKeyHldr)
         : uid(uid)
         , gid(gid)
-        , key0(key0)
-        , key1(key1) {
+        , cryptoKeyHldr(cryptoKeyHldr) {
     }
 
     virtual Server_status start(int incoming_sck)
@@ -80,8 +79,8 @@ public:
                 Inifile ini;
                 ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
-                memcpy(ini.crypto.key0, this->key0, sizeof(ini.crypto.key0));
-                memcpy(ini.crypto.key1, this->key1, sizeof(ini.crypto.key1));
+                memcpy(ini.crypto.key0, this->cryptoKeyHldr.get_key_0(), sizeof(ini.crypto.key0));
+                memcpy(ini.crypto.key1, this->cryptoKeyHldr.get_key_1(), sizeof(ini.crypto.key1));
 
                 if (ini.debug.session){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);

@@ -368,8 +368,10 @@ int main(int argc, char** argv)
         }
     }
 
+    crypto_key_holder cryptoKeyHldr;
+
     LOG(LOG_INFO, "ReDemPtion " VERSION " starting");
-    redemption_main_loop(ini, euid, egid);
+    redemption_main_loop(ini, euid, egid, cryptoKeyHldr);
 
     /* delete the .pid file if it exists */
     /* don't care about errors. */

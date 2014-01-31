@@ -1409,8 +1409,15 @@ public:
                         this->client_info.bpp = 8;
                         switch (cs_core.postBeta2ColorDepth){
                         case 0xca01:
+                            /*
                             this->client_info.bpp =
                                 (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
+                            */
+                            this->client_info.bpp = (
+                                      (cs_core.earlyCapabilityFlags & GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION)
+                                    ? 32
+                                    : cs_core.highColorDepth
+                                );
                         break;
                         case 0xca02:
                             this->client_info.bpp = 15;
@@ -1423,6 +1430,10 @@ public:
                         break;
                         default:
                         break;
+                        }
+                        if (this->ini->client.max_color_depth) {
+                            this->client_info.bpp = std::min<int>(
+                                this->client_info.bpp, this->ini->client.max_color_depth);
                         }
                     }
                     break;
@@ -2972,9 +2983,11 @@ public:
                     if (this->verbose) {
                         this->client_bitmap_caps.log("Receiving from client");
                     }
+/*
                     this->client_info.bpp    =
                           (this->client_bitmap_caps.preferredBitsPerPixel >= 24)
                         ? 24 : this->client_bitmap_caps.preferredBitsPerPixel;
+*/
                     // Fixed bug in rdesktop
                     // Desktop size in Client Core Data != Desktop size in Bitmap Capability Set
                     if (!this->client_info.width || !this->client_info.height)
