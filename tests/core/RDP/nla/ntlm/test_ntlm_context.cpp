@@ -38,7 +38,8 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     context.NTLMv2 = true;
     context.confidentiality = true;
     context.ntlm_set_negotiate_flags();
-    context.hardcoded_tests = true;
+    context.set_tests();
+    // context.hardcoded_tests = true;
 
     // NtlmNegotiateFlags ntlm_nego_flag;
 
@@ -113,9 +114,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     BOOST_CHECK_EQUAL(memcmp(
 /* 0000 */ "\x11\x1b\x69\x4b\xdb\x30\x53\x91\xef\x94\x8b\x20\x83\xbd\x07\x43" //..iK.0S.... ...C
 /* 0010 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d"                                 //.l....0.
-// "\xa0\x98\x01\x10\x19\xbb\x5d\x00"
-// "\xf6\xbe\x00\x33\x90\x20\x34\xb3"
-// "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43"
 ,
                              LmChallengeResponse.get_data(),
                              LmChallengeResponse.size()),
@@ -131,13 +129,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
 /* 0040 */ "\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00" //N.7.....w.i.n.7.
 /* 0050 */ "\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00\x07\x00\x08\x00" //....w.i.n.7.....
 /* 0060 */ "\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00\x00\x00\x00\x00" //....l...........
-// "\x01\x4a\xd0\x8c\x24\xb4\x90\x74\x39\x68\xe8\xbd\x0d\x2b\x70\x10"
-// "\x01\x01\x00\x00\x00\x00\x00\x00\xc3\x83\xa2\x1c\x6c\xb0\xcb\x01"
-// "\x47\xa2\xe5\xcf\x27\xf7\x3c\x43\x00\x00\x00\x00\x02\x00\x08\x00"
-// "\x57\x00\x49\x00\x4e\x00\x37\x00\x01\x00\x08\x00\x57\x00\x49\x00"
-// "\x4e\x00\x37\x00\x04\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00"
-// "\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00\x07\x00\x08\x00"
-// "\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00\x00\x00\x00\x00"
 ,
                              NtChallengeResponse.get_data(),
                              NtChallengeResponse.size()),
@@ -147,7 +138,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     // hexdump_c(context.SessionBaseKey, 16);
     BOOST_CHECK_EQUAL(memcmp(
 /* 0000 */ "\x1b\x76\xfd\xe3\x46\x77\x60\x04\x39\x7a\x47\x8a\x60\x92\x0c\x4c" //.v..Fw`.9zG.`..L
-// "\x6e\xf1\x6b\x79\x88\xf2\x3d\x7e\x54\x2a\x1a\x38\x4e\xa0\x6b\x52"
 ,
                              context.SessionBaseKey,
                              16),
@@ -169,7 +159,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     // hexdump_c(context.ClientSigningKey, 16);
     BOOST_CHECK_EQUAL(memcmp(
 /* 0000 */ "\xb6\x18\x61\x5b\xdb\x97\x6c\x62\xfd\xd5\x72\xab\x37\x24\xd1\x38" //..a[..lb..r.7$.8
-// "\xbf\x5e\x42\x76\x55\x68\x38\x97\x45\xd3\xb4\x9f\x5e\x2f\xbc\x89"
 ,
                              context.ClientSigningKey,
                              16),
@@ -179,7 +168,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     // hexdump_c(context.ClientSealingKey, 16);
     BOOST_CHECK_EQUAL(memcmp(
 /* 0000 */ "\x02\x46\xea\x18\xc8\xba\x71\xf3\xc1\x06\xb9\xf0\x54\x37\x44\x01" //.F....q.....T7D.
-// "\xca\x41\xcd\x08\x48\x07\x22\x6e\x0d\x84\xc3\x88\xa5\x07\xa9\x73"
 ,
                              context.ClientSealingKey,
                              16),
@@ -189,7 +177,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     // hexdump_c(context.ServerSigningKey, 16);
     BOOST_CHECK_EQUAL(memcmp(
 /* 0000 */ "\x56\x66\xbd\xc3\x82\xda\xb7\x70\x08\x36\xb3\xed\xcd\x67\x8b\x5a" //Vf.....p.6...g.Z
-// "\x9b\x3b\x64\x89\xda\x84\x52\x17\xd5\xc2\x6e\x90\x16\x3b\x42\x11"
 ,
                              context.ServerSigningKey,
                              16),
@@ -199,7 +186,6 @@ BOOST_AUTO_TEST_CASE(TestNtlmContext)
     // hexdump_c(context.ServerSealingKey, 16);
     BOOST_CHECK_EQUAL(memcmp(
 /* 0000 */ "\x19\x3a\x3f\x24\x89\x27\xd3\x8b\x4b\xf5\x63\x2d\xa4\xc2\xb2\x78" //.:?$.'..K.c-...x
-// "\x14\xb7\x1d\x06\x2c\x68\x2e\xad\x4b\x0e\x95\x23\x70\x91\x98\x90"
 ,
                              context.ServerSealingKey,
                              16),

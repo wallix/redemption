@@ -63,6 +63,7 @@ struct RdpNego
 //        void* data;
 //        int length;
 //    } * routing_token;
+
     uint32_t selected_protocol;
     uint32_t requested_protocol;
     uint32_t enabled_protocols;
