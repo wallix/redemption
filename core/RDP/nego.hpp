@@ -327,6 +327,11 @@ struct RdpNego
                 this->state = NEGO_STATE_RDP;
                 this->enabled_protocols = RdpNego::PROTOCOL_RDP;
             }
+            else {
+                LOG(LOG_INFO, "Enable NLA is probably required");
+                this->trans->disconnect();
+                throw Error(ERR_SOCKET_CONNECT_FAILED);
+            }
             TODO("Other cases are errors, set an appropriate error message");
         }
         else {
