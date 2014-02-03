@@ -177,6 +177,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -430,6 +431,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -696,6 +698,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -759,6 +762,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
+                          "enable_nla=yes\n"
                           "open_session_timeout=45\n"
                           "certificate_change_action=1\n"
                           "extra_orders=22\n"
@@ -927,6 +931,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(45,                               ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string("22"),                ini.mod_rdp.extra_orders.c_str());
@@ -986,6 +991,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "rdp_compression=2\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=no\n"
+                          "enable_nla=no\n"
                           "open_session_timeout=30\n"
                           "certificate_change_action=0\n"
                           "[video]\n"
@@ -1137,6 +1143,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     BOOST_CHECK_EQUAL(2,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(30,                               ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -1325,6 +1332,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -1498,6 +1506,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -1664,6 +1673,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -1829,6 +1839,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -1994,6 +2005,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
@@ -2149,6 +2161,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.enable_nla);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
