@@ -91,7 +91,8 @@ public:
     mutable uint8_t * data_compressed;
     mutable size_t data_compressed_size;
 
-    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size, bool compressed=false)
+    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy,
+           const uint8_t * data, const size_t size, bool compressed = false)
         : original_bpp(bpp)
         , cx(align4(cx))
         , cy(cy)
@@ -102,7 +103,7 @@ public:
         , data_compressed_size(0)
     {
         this->data_bitmap.alloc(this->bmp_size);
-//        LOG(LOG_ERR, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
+        LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
         if (bpp == 8){
             if (palette){
                 memcpy(&this->original_palette, palette, sizeof(BGRPalette));
@@ -113,7 +114,12 @@ public:
         }
 
         if (compressed) {
-            this->decompress(data, cx, cy, size);
+            if (bpp == 32) {
+                this->decompress60(data, cx, cy, size);
+            }
+            else {
+                this->decompress(data, cx, cy, size);
+            }
         } else {
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = data;
@@ -143,7 +149,7 @@ public:
     {
         this->data_bitmap.alloc(this->bmp_size);
 
-//        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+        LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
         if (this->original_bpp == 8){
             memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
         }
@@ -184,7 +190,7 @@ public:
         , data_compressed_size(0)
 
     {
-//        LOG(LOG_ERR, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+        //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
         this->data_bitmap.alloc(this->bmp_size);
 
@@ -871,6 +877,180 @@ private:
         return;
     }
 
+
+
+// [MS-RDPEGDI] 2.2.2.5.1 RDP 6.0 Bitmap Compressed Bitmap Stream
+//  (RDP6_BITMAP_STREAM)
+// ==============================================================
+
+// The RDP6_BITMAP_STREAM structure contains a stream of bitmap data
+//  compressed using RDP 6.0 Bitmap Compression techniques (section 3.1.9).
+//  Depending on the compression techniques employed, the bitmap data is
+//  represented using the AYCoCg or ARGB color space (section 3.1.9.1.2).
+
+// Compressed bitmap data is sent encapsulated in a Bitmap Update
+//  ([MS-RDPBCGR] section 2.2.9.1.1.3.1.2), Fast-Path Bitmap Update
+//  ([MS-RDPBCGR] section 2.2.9.1.2.1.2 ), Cache Bitmap -Revision 1 (section
+//  2.2.2.2.1.2.2) Secondary Drawing Orders, or Cache Bitmap - Revision 2
+//  (section 2.2.2.2.1.2.3) Secondary Drawing Orders. In all of these cases,
+//  the data is encapsulated inside a Bitmap Data structure ([MS-RDPBCGR]
+//  section 2.2.9.1.1.3.1.2.2).
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// |  FormatHeader |             AlphaPlane (variable)             |
+// +---------------+-----------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |                   LumaOrRedPlane (variable)                   |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |              OrangeChromaOrGreenPlane (variable)              |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------------------------------------------------------+
+// |               GreenChromaOrBluePlane (variable)               |
+// +---------------------------------------------------------------+
+// |                              ...                              |
+// +---------------+-----------------------------------------------+
+// | Pad (optional)|
+// +---------------+
+
+// FormatHeader (1 byte): An 8-bit, unsigned integer. This field contains a
+//  1-byte, bit-packed update header as follows.
+
+//  The format of the update header byte is described by the following
+//   bitmask diagram.
+
+//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+//  |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+//  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//  | CLL |C|R|N|Res|
+//  |     |S|L|A|erv|
+//  |     | |E| | ed|
+//  +-----+-+-+-+---+
+
+//   CLL (3 bits): A 3-bit, unsigned integer field that indicates the Color
+//    Loss Level (section 3.1.9.1.4). If CLL is set to 0, the color space
+//    used is ARGB. Otherwise, CLL MUST be in the range 1 to 7 (inclusive),
+//    and the color space used is AYCoCg.
+
+//   CS (1 bit): A 1-bit field that indicates whether chroma subsampling is
+//    being used (section 3.1.9.1.3). If CS is equal to 1, chroma subsampling
+//    is being used, and the CLL field MUST be greater than 0, as chroma
+//    subsampling applies only to the AYCoCg color space.
+
+//   RLE (1 bit): A 1-bit field. If RLE is equal to 1, RDP 6.0 RLE is used to
+//    compress the color planes (section 3.1.9.2). If not, RLE is equal to 0,
+//    and the color plane is sent uncompressed.
+
+//   NA (1 bit): A 1-bit field. Indicates if an alpha plane is present. If NA
+//    is equal to 1, there is no alpha plane. The values of the alpha plane
+//    are then assumed to be 0xFF (fully opaque), and the bitmap data
+//    contains only three color planes. If NA is equal to 0, the alpha plane
+//    is sent as the first color plane.
+
+//   Reserved (2 bits): A 2-bit, unsigned integer field. Reserved for future
+//    use.
+
+// AlphaPlane (variable): A variable-length field that contains the alpha
+//  plane. If the RLE subfield in the FormatHeader indicates that all of the
+//  color planes are RLE compressed (section 3.1.9.2), this field contains an
+//  RDP 6.0 RLE Segments (section 2.2.2.5.1.1) structure. Otherwise, it
+//  contains the raw bytes of the color plane.
+
+// LumaOrRedPlane (variable): A variable-length field that contains the luma
+//  plane (AYCoCg color space) or the red plane (ARGB color space). If the
+//  CLL subfield of the FormatHeader is greater than 0, the AYCoCg color
+//  space MUST be used. Otherwise, the ARGB color space MUST be used.
+
+//  If the RLE subfield in the FormatHeader indicates that all of the color
+//   planes are RLE compressed (section 3.1.9.2), this field contains an RDP
+//   6.0 RLE Segments (section 2.2.2.5.1.1) structure. Otherwise, it contains
+//   the raw bytes of the color plane.
+
+// OrangeChromaOrGreenPlane (variable): A variable-length field that contains
+//  the orange chroma plane (AYCoCg color space) or the green plane (ARGB
+//  color space). If the CLL subfield of the FormatHeader is greater than 0,
+//  the AYCoCg color space MUST be used. Otherwise, the ARGB color space MUST
+//  be used.
+
+//  If the RLE subfield in the FormatHeader indicates that all of the color
+//   planes are RLE compressed (section 3.1.9.2), this field contains an RDP
+//   6.0 RLE Segments (section 2.2.2.5.1.1) structure. Otherwise, it contains
+//   the raw bytes of the color plane.
+
+//  Depending on the values of the CLL and CS subfields of the FormatHeader
+//   (in the case of the AYCoCg color space), the orange chroma plane may
+//   have been transformed by color loss reduction (section 3.1.9.1.4) and
+//   chroma subsampling (section 3.1.9.1.3).
+
+// GreenChromaOrBluePlane (variable): A variable-length field that contains
+//  the green chroma plane (AYCoCg color space) or the blue plane (ARGB color
+//  space). If the CLL subfield of the FormatHeader is greater than 0, the
+//  AYCoCg color space MUST be used. Otherwise, the ARGB color space MUST be
+//  used.
+
+//  If the RLE subfield in the FormatHeader indicates that all of the color
+//   planes are RLE compressed (section 3.1.9.2), this field contains an RDP
+//   6.0 RLE Segments (section 2.2.2.5.1.1) structure. Otherwise, it contains
+//   the raw bytes of the color plane.
+
+//  Depending on the values of the CLL and CS subfields of the FormatHeader
+//   (in the case of the AYCoCg color space), the green chroma plane may have
+//   been transformed by color loss reduction (section 3.1.9.1.4) and chroma
+//   subsampling (section 3.1.9.1.3).
+
+// Pad (1 byte): An 8-bit, unsigned integer containing padding values that
+//  MUST be ignored. This optional field is only present if the RLE subfield
+//  of the FormatHeader field is zero.
+
+    void decompress60(const uint8_t * input, uint16_t src_cx,
+        uint16_t src_cy, size_t size) const
+    {
+        REDASSERT((original_bpp == 24) || (original_bpp == 32));
+
+        //LOG(LOG_INFO, "input size=%u cx=%u cy=%u", size, src_cx, src_cy);
+        //hexdump_d(input, size);
+        uint8_t FormatHeader = *input++;
+        size--;
+
+        uint8_t color_loss_level   =   (FormatHeader & 0x07);
+        bool    chroma_subsampling = (((FormatHeader & 0x08) >> 3) == 1);
+        bool    rle                = (((FormatHeader & 0x10) >> 4) == 1);
+        bool    no_alpha_plane     = (((FormatHeader & 0x20) >> 5) == 1);
+
+        LOG(LOG_INFO, "FormatHeader=0x%02X color_loss_level=%d chroma_subsampling=%s rle=%s no_alpha_plane=%s",
+            FormatHeader, color_loss_level, (chroma_subsampling ? "yes" : "no"), (rle ? "yes" : "no"),
+            (no_alpha_plane ? "yes" : "no"));
+
+        uint8_t * dest = this->data_bitmap.get();
+
+        uint8_t * red_plane = dest;
+(void)red_plane;
+
+        uint8_t controlByte = *input++;
+        size--;
+
+        uint8_t nRunLength =  (controlByte & 0x0F);
+        uint8_t cRawBytes  = ((controlByte & 0xF0) >> 4);
+
+        if (nRunLength == 1) {
+            nRunLength = 16 + cRawBytes;
+            cRawBytes  = 0;
+        }
+        else if (nRunLength == 2) {
+            nRunLength = 32 + cRawBytes;
+            cRawBytes  = 0;
+        }
+
+        LOG(LOG_INFO, "nRunLength=%d cRawBytes=%d", nRunLength, cRawBytes);
+    }
+
 public:
 
     enum {
@@ -1033,6 +1213,12 @@ public:
             outbuffer.out_copy_bytes(this->data_compressed, this->data_compressed_size);
             return;
         }
+
+/*
+        if (this->original_bpp == 32) {
+            return this->compress60(outbuffer);
+        }
+*/
 
         struct RLE_OutStream {
             Stream & stream;
@@ -1568,6 +1754,260 @@ public:
         }
     }
 
+    static void get_run(const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint16_t & run_length,
+        uint8_t & raw_bytes)
+    {
+        const uint8_t * data_save = data;
+
+        run_length = 0;
+        raw_bytes  = 0;
+
+        while (data_size) {
+            raw_bytes++;
+            data_size--;
+
+            //LOG(LOG_INFO, "row_value=%c", *data);
+            uint8_t last_raw_value = *(data++);
+
+            for (; data_size && (*data == last_raw_value); run_length++, data_size--, data++)
+                /*LOG(LOG_INFO, "run=%c", *data)*/;
+
+            if (run_length >= 3) {
+                break;
+            }
+
+            raw_bytes += run_length;
+
+            run_length = 0;
+        }
+
+        if ((raw_bytes == 1) && run_length && (*data_save == last_raw)) {
+            // [MS-RDPEGDI] Previous base value assumed to be 0.
+            raw_bytes = 0;
+            run_length++;
+        }
+
+        //LOG(LOG_INFO, "");
+    }
+
+    static void compress_color_plane(uint16_t cx, uint16_t cy, Stream & outbuffer, uint8_t * color_plane) {
+        LOG(LOG_INFO, "compress_color_plane: cx=%u cy=%u", cx, cy);
+        //hexdump_d(color_plane, cx * cy);
+
+        uint16_t plane_line_size = cx * sizeof(uint8_t);
+
+        // Converts to delta values.
+        for (uint8_t * ypos_rbegin = color_plane + (cy - 1) * plane_line_size, * ypos_rend = color_plane;
+             ypos_rbegin != ypos_rend; ypos_rbegin -= plane_line_size) {
+            //LOG(LOG_INFO, "Line");
+            for (uint8_t * xpos_begin = ypos_rbegin, * xpos_end = xpos_begin + plane_line_size;
+                 xpos_begin != xpos_end; xpos_begin += sizeof(uint8_t)) {
+                //LOG(LOG_INFO, "delta=%d", *xpos_begin);
+
+                int8_t delta = (
+                      (  static_cast<int16_t>(*xpos_begin                    )
+                       - static_cast<int16_t>(*(xpos_begin - plane_line_size)))
+                    & 0xFF
+                );
+
+                //LOG(LOG_INFO, "delta(1)=%d", delta);
+
+                if (delta >= 0) {
+                    delta <<= 1;
+                }
+                else {
+                    delta = (((~delta + 1) << 1) - 1) & 0xFF;
+                    //LOG(LOG_INFO, "delta(2)=%d", delta);
+                }
+
+                *xpos_begin = static_cast<uint8_t>(delta);
+            }
+        }
+
+        //LOG(LOG_INFO, "After delta conversion");
+        //hexdump_d(color_plane, cx * cy);
+
+uint16_t pixel_count = 0;
+
+        for (const uint8_t * ypos_begin = color_plane, * ypos_end = color_plane + cy * plane_line_size;
+             ypos_begin != ypos_end; ypos_begin += plane_line_size) {
+            uint16_t data_size = plane_line_size;
+            //LOG(LOG_INFO, "Line");
+            uint8_t  last_raw  = 0;
+
+            for (const uint8_t * xpos = ypos_begin; data_size; ) {
+                uint16_t run_length;
+                uint8_t  raw_bytes;
+
+                Bitmap::get_run(xpos, data_size, last_raw, run_length, raw_bytes);
+
+                LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
+
+                while (run_length || raw_bytes) {
+                    if ((run_length > 0) && (run_length < 3)) {
+                        break;
+                    }
+
+                    if (!raw_bytes) {
+                        if (run_length > 47) {
+                            outbuffer.out_uint8((15                << 4) | 2         ); // Control byte
+                            LOG(LOG_INFO, "controlByte: (15, 2); rawValues: <none>");
+                            xpos        += 47;
+                            data_size   -= 47;
+pixel_count += 47;
+                            run_length  -= 47;
+                        }
+                        else if (run_length > 31) {
+                            outbuffer.out_uint8(((run_length - 32) << 4) | 2         ); // Control byte
+                            LOG(LOG_INFO, "controlByte(1): (%d, 2); rawValues: <none>", run_length - 32);
+                            xpos        += run_length;
+                            data_size   -= run_length;
+pixel_count += run_length;
+                            run_length  =  0;
+                        }
+                        else if (run_length > 15) {
+                            outbuffer.out_uint8(((run_length - 16) << 4) | 1         ); // Control byte
+                            LOG(LOG_INFO, "controlByte(2): (%d, 1); rawValues: <none>", run_length - 16);
+                            xpos        += run_length;
+                            data_size   -= run_length;
+pixel_count += run_length;
+                            run_length  =  0;
+                        }
+                        else {
+                            outbuffer.out_uint8((0                 << 4) | run_length); // Control byte
+                            LOG(LOG_INFO, "controlByte(3): (0, %d); rawValues: <none>", run_length);
+                            xpos        += run_length;
+                            data_size   -= run_length;
+pixel_count += run_length;
+                            run_length  =  0;
+                        }
+                    }
+                    else if (raw_bytes > 15) {
+                        uint8_t rb[16];
+                        memset(rb, 0, sizeof(rb));
+                        memcpy(rb, xpos, 15);
+
+                        outbuffer.out_uint8((15 << 4) | 0); // Control byte
+                        LOG(LOG_INFO, "controlByte(6): (15, 0); rawValues: %s", rb);
+                        hexdump_d(rb, 15);
+                        outbuffer.out_copy_bytes(xpos, 15);
+                        xpos        += 15;
+                        data_size   -= 15;
+pixel_count += 15;
+                        raw_bytes   -= 15;
+                    }
+                    else/* if (raw_bytes < 16)*/ {
+                        uint8_t rb[16];
+                        memset(rb, 0, sizeof(rb));
+                        memcpy(rb, xpos, raw_bytes);
+
+                        if (run_length > 15) {
+                            outbuffer.out_uint8((raw_bytes << 4) | 15        ); // Control byte
+                            LOG(LOG_INFO, "controlByte(4): (%d, 15); rawValues: %s", raw_bytes, rb);
+                            hexdump_d(rb, raw_bytes);
+                            outbuffer.out_copy_bytes(xpos, raw_bytes);
+                            xpos        += raw_bytes + 15;
+                            data_size   -= raw_bytes + 15;
+pixel_count += raw_bytes + 15;
+                            run_length  -= 15;
+                            raw_bytes   =  0;
+                        }
+                        else {
+                            outbuffer.out_uint8((raw_bytes << 4) | run_length); // Control byte
+                            LOG(LOG_INFO, "controlByte(5): (%d, %d); rawValues: %s", raw_bytes, run_length, rb);
+                            hexdump_d(rb, raw_bytes);
+                            outbuffer.out_copy_bytes(xpos, raw_bytes);
+                            xpos        += raw_bytes + run_length;
+                            data_size   -= raw_bytes + run_length;
+pixel_count += raw_bytes + run_length;
+                            run_length  = 0;
+                            raw_bytes   = 0;
+                        }
+
+                    }
+                }
+
+                last_raw = *(xpos - 1);
+            }
+        }
+
+REDASSERT(pixel_count == cx * cy);
+        LOG(LOG_INFO, "compress_color_plane: exit");
+    }
+
+    void compress60(Stream & outbuffer) const {
+        LOG(LOG_INFO, "compress60");
+
+        REDASSERT(this->original_bpp == 32);
+
+        const uint32_t color_plane_size = this->cx * sizeof(uint8_t) * this->cy;
+
+        uint8_t * red_plane   = static_cast<uint8_t *>(alloca(color_plane_size));
+        uint8_t * green_plane = static_cast<uint8_t *>(alloca(color_plane_size));
+        uint8_t * blue_plane  = static_cast<uint8_t *>(alloca(color_plane_size));
+
+        const uint8_t   byte_per_color = 4;
+        const uint8_t * data = this->data_bitmap.get();
+
+        uint8_t * pixel_over_red_plane   = red_plane;
+        uint8_t * pixel_over_green_plane = green_plane;
+        uint8_t * pixel_over_blue_plane  = blue_plane;
+
+        for (size_t y = 0; y < this->cy; y++) {
+            for (size_t x = 0; x < this->cx; x++) {
+                uint32_t pixel = in_uint32_from_nb_bytes_le(byte_per_color, data);
+
+                uint8_t b =  ( pixel        & 0xFF);
+                uint8_t g =  ((pixel >> 8 ) & 0xFF);
+                uint8_t r =  ((pixel >> 16) & 0xFF);
+                uint8_t a =  ((pixel >> 24) & 0xFF);
+
+                (void)a;
+
+                *(pixel_over_red_plane++)   = r;
+                *(pixel_over_green_plane++) = g;
+                *(pixel_over_blue_plane++)  = b;
+
+                data += byte_per_color;
+            }
+        }
+
+
+        /*
+        REDASSERT(outbuffer.has_room(1 + color_plane_size * 3));
+
+        outbuffer.out_uint8(
+              (1 << 5)  // No alpha plane
+            );
+        outbuffer.out_copy_bytes(red_plane,   color_plane_size);
+        outbuffer.out_copy_bytes(green_plane, color_plane_size);
+        outbuffer.out_copy_bytes(blue_plane,  color_plane_size);
+        outbuffer.out_uint8(0);
+        */
+
+/*
+memset(red_plane, 0, this->cx * this->cy);
+memset(green_plane, 0, this->cx * this->cy);
+
+int y = 28;
+int x = 0;
+memset(blue_plane + this->cx * y + x, 0, this->cx * (this->cy - y) - x);
+*/
+
+        outbuffer.out_uint8(
+              (1 << 5)  // No alpha plane
+            | (1 << 4)  // RLE
+            );
+        Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, red_plane);
+        Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, green_plane);
+        Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, blue_plane);
+/*
+
+        extern bool ___debug;
+        ___debug = true;
+*/
+    }
+
     void compute_sha1(uint8_t (&sig)[20]) const
     {
         SslSha1 sha1;
@@ -1596,7 +2036,7 @@ public:
     , data_compressed_size(0)
 
     {
-//        LOG(LOG_ERR, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+        LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
         if (out_bpp != bmp.original_bpp){
             this->data_bitmap.alloc(this->bmp_size);
@@ -1654,7 +2094,7 @@ public:
         , data_compressed_size(0)
     {
         this->data_bitmap.alloc(this->bmp_size);
-//        LOG(LOG_ERR, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
+        //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
         if (bpp == 8){
             if (palette){
                 memcpy(&this->original_palette, palette, sizeof(BGRPalette));
