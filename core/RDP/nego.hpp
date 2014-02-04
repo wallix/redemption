@@ -327,21 +327,31 @@ struct RdpNego
                 this->state = NEGO_STATE_RDP;
                 this->enabled_protocols = RdpNego::PROTOCOL_RDP;
             }
-            else {
+            else if (x224.rdp_neg_type == X224::RDP_NEG_FAILURE
+                     && x224.rdp_neg_code == X224::HYBRID_REQUIRED_BY_SERVER) {
                 LOG(LOG_INFO, "Enable NLA is probably required");
                 this->trans->disconnect();
-                throw Error(ERR_SOCKET_CONNECT_FAILED);
+                throw Error(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
             }
-            TODO("Other cases are errors, set an appropriate error message");
+            else {
+                // "Other cases are errors, set an appropriate error message"
+                this->trans->disconnect();
+                x224.throw_error();
+            }
         }
         else {
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_RDP){
                 this->state = NEGO_STATE_FINAL;
             }
+            else {
+                // Other cases are errors, set an appropriate error message
+                LOG(LOG_INFO, "Enable TLS is probably required");
+                this->trans->disconnect();
+                x224.throw_error();
+            }
             TODO("Check tpdu has no embedded negotiation code");
             this->state = NEGO_STATE_FINAL;
-            TODO("Other cases are errors, set an appropriate error message");
         }
         LOG(LOG_INFO, "RdpNego::recv_connection_confirm done");
     }

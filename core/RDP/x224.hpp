@@ -981,6 +981,37 @@ namespace X224
             }
             this->_header_size = stream.get_offset();
         }
+
+        void throw_error() {
+            if (this->rdp_neg_type == X224::RDP_NEG_FAILURE) {
+                switch (this->rdp_neg_code){
+                case X224::SSL_REQUIRED_BY_SERVER:
+                    LOG(LOG_INFO, "SSL_REQUIRED_BY_SERVER");
+                    throw Error(ERR_NEGO_SSL_REQUIRED_BY_SERVER);
+                    break;
+                case X224::SSL_NOT_ALLOWED_BY_SERVER:
+                    LOG(LOG_INFO, "SSL_NOT_ALLOWED_BY_SERVER");
+                    throw Error(ERR_NEGO_SSL_NOT_ALLOWED_BY_SERVER);
+                    break;
+                case X224::SSL_CERT_NOT_ON_SERVER:
+                    LOG(LOG_INFO, "SSL_CERT_NOT_ON_SERVER");
+                    throw Error(ERR_NEGO_SSL_CERT_NOT_ON_SERVER);
+                    break;
+                case X224::INCONSISTENT_FLAGS:
+                    LOG(LOG_INFO, "INCONSISTENT_FLAGS");
+                    throw Error(ERR_NEGO_INCONSISTENT_FLAGS);
+                    break;
+                case X224::HYBRID_REQUIRED_BY_SERVER:
+                    LOG(LOG_INFO, "HYBRID_REQUIRED_BY_SERVER");
+                    throw Error(ERR_NEGO_HYBRID_REQUIRED_BY_SERVER);
+                    break;
+                default:
+                    LOG(LOG_INFO, "Unknown failure code %u", this->rdp_neg_code);
+                    break;
+                }
+            }
+        };
+
     }; // END CLASS CC_TPDU_Recv
 
     struct CC_TPDU_Send
