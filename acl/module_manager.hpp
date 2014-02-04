@@ -678,8 +678,8 @@ public:
                         this->ini.context.target_password.get_cstr(),
                         "0.0.0.0",  // client ip is silenced
                         this->front,
-                        true,          // tls
-                        true,          // nla
+                        true,                                  // tls
+                        this->ini.mod_rdp.enable_nla,          // nla
                         client_info,
                         &gen,
                         this->front.keymap.key_flags,

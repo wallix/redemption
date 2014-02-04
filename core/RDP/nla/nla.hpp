@@ -661,8 +661,8 @@ struct rdpCredssp
         TimeStamp expiration;
 
         status = this->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
-                                                       SECPKG_CRED_INBOUND,
-                                                       NULL, NULL, NULL, NULL,
+                                                       SECPKG_CRED_INBOUND, NULL,
+                                                       NULL, NULL, NULL,
                                                        &credentials, &expiration);
 
         if (status != SEC_E_OK) {

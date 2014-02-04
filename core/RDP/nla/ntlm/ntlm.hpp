@@ -169,7 +169,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             // context->init();
             context->server = false;
             if (Reserved1 == 1) {
-                context->hardcoded_tests = true;
+                context->set_tests();
             }
             if (fContextReq & ISC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;
@@ -281,11 +281,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
             if (!context) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
-            // context->init();
+
             context->server = true;
             if (*pfContextAttr == 1) {
-                context->hardcoded_tests = true;
-                // TODO
+                context->set_tests();
             }
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
                 context->confidentiality = true;

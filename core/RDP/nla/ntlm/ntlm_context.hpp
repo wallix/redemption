@@ -54,7 +54,13 @@ struct NTLMContext {
 
     UdevRandom randgen;
     LCGRandom lcgrand;
-    LCGTime time_obj;
+
+    TimeSystem timesys;
+    LCGTime lcgtime;
+
+    TimeObj * timeobj;
+    Random * rand;
+
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool hardcoded_tests;
     bool server;
@@ -69,7 +75,6 @@ struct NTLMContext {
     bool SendVersionInfo;
     bool confidentiality;
 
-
     SslRC4 SendRc4Seal;
     SslRC4 RecvRc4Seal;
     uint8_t* SendSigningKey;
@@ -80,7 +85,6 @@ struct NTLMContext {
     uint32_t NegotiateFlags;
 
     int LmCompatibilityLevel;
-    // int SuppressExtendedProtection;
     bool SendWorkstationName;
     Array Workstation;
     Array ServicePrincipalName;
@@ -88,9 +92,9 @@ struct NTLMContext {
 
     // uint8_t* ChannelBindingToken;
     // uint8_t ChannelBindingsHash[16];
-
     // SecPkgContext_Bindings Bindings;
-    bool SendSingleHostData;
+
+    // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
     NTLMNegotiateMessage NEGOTIATE_MESSAGE;
     NTLMChallengeMessage CHALLENGE_MESSAGE;
@@ -118,37 +122,75 @@ struct NTLMContext {
     // uint8_t NtProofStr[16];
 
     NTLMContext()
-        : lcgrand(LCGRandom(0))
-        , time_obj(LCGTime())
+        : randgen(UdevRandom())
+        , lcgrand(LCGRandom(0))
+        , timesys(TimeSystem())
+        , lcgtime(LCGTime())
+        , timeobj(&this->timesys)
+        , rand(&this->randgen)
+        , hardcoded_tests(false)
+        , server(false)
+        , NTLMv2(true)
+        , UseMIC(false)
+        , state(NTLM_STATE_INITIAL)
+        , SendSeqNum(0)
+        , RecvSeqNum(0)
+        , SendVersionInfo(true)
+        , confidentiality(true)
+        , SendRc4Seal(SslRC4())
+        , RecvRc4Seal(SslRC4())
+        , SendSigningKey(NULL)
+        , RecvSigningKey(NULL)
+        , SendSealingKey(NULL)
+        , RecvSealingKey(NULL)
+        , NegotiateFlags(0)
+        , LmCompatibilityLevel(3)
+        , SendWorkstationName(true)
+        // , SendSingleHostData(false)
     {
-        this->init();
-    }
-
-    void init() {
-        this->server = false;
         this->SavedNegotiateMessage.init(0);
         this->SavedChallengeMessage.init(0);
         this->SavedAuthenticateMessage.init(0);
-        this->NTLMv2 = true;
-        this->UseMIC = false;
-        this->state = NTLM_STATE_INITIAL;
-        this->SendVersionInfo = true;
-        this->SendSingleHostData = false;
-        this->SendWorkstationName = true;
-        this->NegotiateFlags = 0;
         this->LmCompatibilityLevel = 3;
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
         memset(this->MessageIntegrityCheck, 0x00, sizeof(this->MessageIntegrityCheck));
 
+        memset(this->Timestamp, 0x00, 8);
+        memset(this->ChallengeTimestamp, 0x00, 8);
+        memset(this->ServerChallenge, 0x00, 8);
+        memset(this->ClientChallenge, 0x00, 8);
+        memset(this->SessionBaseKey, 0x00, 16);
+        memset(this->KeyExchangeKey, 0x00, 16);
+        memset(this->RandomSessionKey, 0x00, 16);
+        memset(this->ExportedSessionKey, 0x00, 16);
+        memset(this->EncryptedRandomSessionKey, 0x00, 16);
+        memset(this->ClientSigningKey, 0x00, 16);
+        memset(this->ClientSealingKey, 0x00, 16);
+        memset(this->ServerSigningKey, 0x00, 16);
+        memset(this->ServerSealingKey, 0x00, 16);
+
         this->Workstation.init(0);
         this->ServicePrincipalName.init(0);
 
-        this->confidentiality = true;
-        this->hardcoded_tests = false;
-
         if (this->NTLMv2)
             this->UseMIC = true;
-    };
+    }
+
+    virtual ~NTLMContext() {
+    }
+
+    void set_tests() {
+        this->hardcoded_tests = true;
+        this->timeobj = &(this->lcgtime);
+        this->rand = &(this->lcgrand);
+    }
+
+    void unset_tests() {
+        this->hardcoded_tests = false;
+        this->timeobj = &(this->timesys);
+        this->rand = &(this->randgen);
+    }
+
     /**
      * Generate timestamp for AUTHENTICATE_MESSAGE.
      * @param NTLM context
@@ -161,24 +203,7 @@ struct NTLMContext {
 	if (memcmp(ZeroTimestamp, this->ChallengeTimestamp, 8) != 0)
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
 	else {
-            timeval tv = tvtime();
-            struct {
-                uint32_t low;
-                uint32_t high;
-            } timestamp;
-            timestamp.low = tv.tv_usec;
-            timestamp.high = tv.tv_sec;
-            memcpy(this->Timestamp, &timestamp, sizeof(timestamp));
-        }
-
-        if (this->hardcoded_tests) {
-            // TESTS ONLY
-            // const uint8_t ClientTimeStamp[] = {
-            //     0xc3, 0x83, 0xa2, 0x1c, 0x6c, 0xb0, 0xcb, 0x01
-            // };
-            // memcpy(this->Timestamp, ClientTimeStamp, sizeof(ClientTimeStamp));
-
-            timeval tv = this->time_obj.get_time();
+            timeval tv = this->timeobj->get_time();
             struct {
                 uint32_t low;
                 uint32_t high;
@@ -197,18 +222,8 @@ struct NTLMContext {
     void ntlm_generate_client_challenge()
     {
 	// /* ClientChallenge is used in computation of LMv2 and NTLMv2 responses */
-        this->randgen.random(this->ClientChallenge, 8);
+        this->rand->random(this->ClientChallenge, 8);
 
-        if (this->hardcoded_tests) {
-            // TEST ONLY
-            // nonce generated by client
-            // const uint8_t ClientChallenge[] = {
-            //     0x47, 0xa2, 0xe5, 0xcf, 0x27, 0xf7, 0x3c, 0x43
-            // };
-            // memcpy(this->ClientChallenge, ClientChallenge, 8);
-
-            this->lcgrand.random(this->ClientChallenge, 8);
-        }
     }
     /**
      * Generate server challenge (8-byte nonce).
@@ -217,16 +232,7 @@ struct NTLMContext {
     // server method
     void ntlm_generate_server_challenge()
     {
-        this->randgen.random(this->ServerChallenge, 8);
-        if (this->hardcoded_tests) {
-            // TEST ONLY
-            // nonce generated by client
-            // const uint8_t ServerChallenge[] = {
-            //     0x26, 0x6e, 0xcd, 0x75, 0xaa, 0x41, 0xe7, 0x6f
-            // };
-            // memcpy(this->ServerChallenge, ServerChallenge, 8);
-            this->lcgrand.random(this->ServerChallenge, 8);
-        }
+        this->rand->random(this->ServerChallenge, 8);
     }
     // client method
     void ntlm_get_server_challenge() {
@@ -240,21 +246,11 @@ struct NTLMContext {
     // client method
     void ntlm_generate_random_session_key()
     {
-        this->randgen.random(this->RandomSessionKey, 16);
+        this->rand->random(this->RandomSessionKey, 16);
     }
     // client method ??
     void ntlm_generate_exported_session_key() {
-        this->randgen.random(this->ExportedSessionKey, 16);
-
-        if (this->hardcoded_tests) {
-            // TEST ONLY
-            // uint8_t ExportedSessionKey[16] = {
-            //     0x89, 0x90, 0x0d, 0x5d, 0x2c, 0x53, 0x2b, 0x36,
-            //     0x31, 0xcc, 0x1a, 0x46, 0xce, 0xa9, 0x34, 0xf1
-            // };
-            // memcpy(this->ExportedSessionKey, ExportedSessionKey, 16);
-            this->lcgrand.random(this->ExportedSessionKey, 16);
-        }
+        this->rand->random(this->ExportedSessionKey, 16);
     }
 
     // client method
@@ -912,6 +908,12 @@ struct NTLMContext {
         //     this->identity.Domain.size(),
         //     this->identity.Password.size());
 
+        // Hardcoded Tests
+        if (this->hardcoded_tests) {
+            uint8_t pass[] = "Pénélope";
+            this->identity.SetPasswordFromUtf8(pass);
+        }
+
         if (this->identity.Password.size() > 0) {
             // password is available
             this->hash_password(this->identity.Password.get_data(),
@@ -1091,12 +1093,6 @@ struct NTLMContext {
         this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.Buffer.get_data(),
                                     this->AUTHENTICATE_MESSAGE.DomainName.Buffer.size());
 
-
-        // TODO tests
-        if (this->hardcoded_tests) {
-            uint8_t pass[] = "Pénélope";
-            this->identity.SetPasswordFromUtf8(pass);
-        }
 
         uint8_t hash[16];
         this->ntlm_server_fetch_hash(hash);

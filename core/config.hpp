@@ -560,6 +560,8 @@ struct Inifile : public FieldObserver {
         unsigned certificate_change_action;  // 0 - Interrupt connection, 1 - Replace certificate then continue
 
         redemption::string extra_orders;
+
+        bool enable_nla;
     } mod_rdp;
 
     struct
@@ -880,6 +882,7 @@ public:
         this->client.rdp_compression                     = 0;
         this->client.max_color_depth                     = 24;
 
+
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
         // End Section "client"
@@ -887,6 +890,7 @@ public:
         // Begin section "mod_rdp"
         this->mod_rdp.rdp_compression                   = 0;
         this->mod_rdp.disconnect_on_logon_user_change   = false;
+        this->mod_rdp.enable_nla                        = true;
         this->mod_rdp.open_session_timeout              = 0;
         this->mod_rdp.certificate_change_action         = 0;
 
@@ -1330,6 +1334,9 @@ public:
             }
             else if (0 == strcmp(key, "extra_orders")) {
                 this->mod_rdp.extra_orders.copy_c_str(value);
+            }
+            else if (0 == strcmp(key, "enable_nla")) {
+                this->mod_rdp.enable_nla = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

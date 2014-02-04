@@ -701,9 +701,6 @@ class Sesman():
                 self.send_data(data_to_send)
                 continue
 
-            if _status is None:
-                self.engine.NotifyPrimaryConnectionFailed(self.shared.get(u'login'),
-                                                          self.shared.get(u'ip_client'))
             tries = tries - 1
             if _status is None and tries > 0:
                 Logger().info(
@@ -728,6 +725,8 @@ class Sesman():
         if tries <= 0:
             Logger().info(u"Too many login failures")
             _status, _error = False, TR(u"Too many login failures or selector orders, closing")
+            self.engine.NotifyPrimaryConnectionFailed(self.shared.get(u'login'),
+                                                      self.shared.get(u'ip_client'))
 
         if _status:
             Logger().info(u"Asking service %s@%s" % (self.shared.get(u'target_login'), self.shared.get(u'target_device')))
