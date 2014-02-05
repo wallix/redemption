@@ -205,8 +205,9 @@ public:
     // if not send previous orders we got and init a new packet
     void reserve_order(size_t asked_size)
     {
-//        LOG(LOG_INFO, "RDPSerializer::reserve_order %u (avail=%u)", asked_size, this->stream_orders.size());
-        size_t max_packet_size = std::min(this->stream_orders.get_capacity(), static_cast<size_t>(16384));
+        //LOG(LOG_INFO, "RDPSerializer::reserve_order %u (avail=%u)", asked_size, this->stream_orders.size());
+        // To support 64x64 32-bit bitmap.
+        size_t max_packet_size = std::min(this->stream_orders.get_capacity(), static_cast<size_t>(16384 + 256));
         size_t used_size = this->stream_orders.get_offset();
         if (this->ini.debug.primary_orders > 3){
             LOG( LOG_INFO
@@ -231,12 +232,12 @@ public:
             this->flush_orders();
         }
         this->order_count++;
-//    LOG(LOG_INFO, "RDPSerializer::reserve_order done");
+        //LOG(LOG_INFO, "RDPSerializer::reserve_order done");
     }
 
     virtual void draw(const RDPOpaqueRect & cmd, const Rect & clip)
     {
-//    LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
+        //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect");
         this->reserve_order(23);
         RDPOrderCommon newcommon(RDP::RECT, clip);
         cmd.emit(this->stream_orders, newcommon, this->common, this->opaquerect);
@@ -246,7 +247,7 @@ public:
         if (this->ini.debug.primary_orders){
             cmd.log(LOG_INFO, common.clip);
         }
-//    LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect done");
+        //LOG(LOG_INFO, "RDPSerializer::draw::RDPOpaqueRect done");
     }
 
     virtual void draw(const RDPScrBlt & cmd, const Rect &clip)

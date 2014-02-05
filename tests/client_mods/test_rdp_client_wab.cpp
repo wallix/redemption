@@ -165,9 +165,9 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     char message[1024];
     if (!check_sig(front.gd.drawable, message,
-    "\x4e\x34\x75\x6d\xd5\x9a\xf0\x53\xe9\xda\x0f\x15\x42\xc4\x8f\x47\x26\xc7\x0a\xa2"
+    "\x8b\xf9\x8e\x38\x8f\x8e\x56\x49\x5a\x85\x40\x90\xfe\xa2\xf6\xd0\xa6\x11\x38\x3b"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
-    // front.dump_png("trace_wab_");
+    //front.dump_png("trace_wab_");
 }

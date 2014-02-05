@@ -2141,6 +2141,8 @@ struct mod_rdp : public mod_api {
         bitmap_caps.desktopWidth          = this->front_width;
         bitmap_caps.desktopHeight         = this->front_height;
         bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
+        //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
+        bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
         if (this->verbose) {
             bitmap_caps.log("Sending bitmap caps to server");
         }

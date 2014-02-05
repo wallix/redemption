@@ -103,7 +103,7 @@ public:
         , data_compressed_size(0)
     {
         this->data_bitmap.alloc(this->bmp_size);
-        LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
+        //LOG(LOG_INFO, "Creating bitmap (%p) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, size, bpp);
         if (bpp == 8){
             if (palette){
                 memcpy(&this->original_palette, palette, sizeof(BGRPalette));
@@ -149,7 +149,7 @@ public:
     {
         this->data_bitmap.alloc(this->bmp_size);
 
-        LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+        //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
         if (this->original_bpp == 8){
             memcpy(this->original_palette, src_bmp.original_palette, sizeof(BGRPalette));
         }
@@ -230,7 +230,7 @@ public:
         , data_compressed_size(0)
 
     {
-        LOG(LOG_INFO, "loading bitmap %s", filename);
+        //LOG(LOG_INFO, "loading bitmap %s", filename);
 
         openfile_t res = this->check_file_type(filename);
 
@@ -1009,6 +1009,67 @@ private:
 //  MUST be ignored. This optional field is only present if the RLE subfield
 //  of the FormatHeader field is zero.
 
+    static void decompress_color_plane(uint16_t cx, uint16_t cy, const uint8_t * & data,
+         size_t & data_size, uint16_t line_cx, uint8_t * color_plane)
+    {
+        uint32_t   size        = sizeof(uint8_t) * cx * cy;
+        uint16_t   line_size   = cx;
+        uint8_t  * line_start  = color_plane;
+        uint8_t  * write_point = line_start;
+
+        while (size) {
+            REDASSERT(data_size);
+
+            uint8_t controlByte = *data++;
+            data_size--;
+
+            uint8_t nRunLength =  (controlByte & 0x0F);
+            uint8_t cRawBytes  = ((controlByte & 0xF0) >> 4);
+
+            LOG(LOG_INFO, "    nRunLength=%d cRawBytes=%d", nRunLength, cRawBytes);
+
+            if (nRunLength == 1) {
+                nRunLength = 16 + cRawBytes;
+                cRawBytes  = 0;
+            }
+            else if (nRunLength == 2) {
+                if (cRawBytes == 15) {
+                    nRunLength = 47;
+                    cRawBytes  = 0;
+                }
+                else {
+                    nRunLength = 32 + cRawBytes;
+                    cRawBytes  = 0;
+                }
+            }
+
+            LOG(LOG_INFO, "(1) nRunLength=%d cRawBytes=%d", nRunLength, cRawBytes);
+
+            if (cRawBytes) {
+                ::memcpy(write_point, data, cRawBytes);
+                write_point += cRawBytes;
+                data        += cRawBytes;
+                data_size   -= cRawBytes;
+                line_size   -= cRawBytes;
+                size        -= cRawBytes;
+            }
+
+            if (nRunLength) {
+                ::memset(write_point, ((line_size == cx) ? 0 : *(data - 1)), nRunLength);
+                write_point += nRunLength;
+                line_size   -= nRunLength;
+                size        -= nRunLength;
+            }
+
+            if (!line_size) {
+                line_size  =  cx;
+                line_start += line_cx;
+            }
+        }
+
+        REDASSERT(!size);
+    }
+
     void decompress60(const uint8_t * input, uint16_t src_cx,
         uint16_t src_cy, size_t size) const
     {
@@ -1028,27 +1089,35 @@ private:
             FormatHeader, color_loss_level, (chroma_subsampling ? "yes" : "no"), (rle ? "yes" : "no"),
             (no_alpha_plane ? "yes" : "no"));
 
-        uint8_t * dest = this->data_bitmap.get();
-
-        uint8_t * red_plane = dest;
-(void)red_plane;
-
-        uint8_t controlByte = *input++;
-        size--;
-
-        uint8_t nRunLength =  (controlByte & 0x0F);
-        uint8_t cRawBytes  = ((controlByte & 0xF0) >> 4);
-
-        if (nRunLength == 1) {
-            nRunLength = 16 + cRawBytes;
-            cRawBytes  = 0;
-        }
-        else if (nRunLength == 2) {
-            nRunLength = 32 + cRawBytes;
-            cRawBytes  = 0;
+        if (color_loss_level || chroma_subsampling) {
+            LOG(LOG_INFO, "Unsupported compression options", color_loss_level & (chroma_subsampling << 3));
+            return;
         }
 
-        LOG(LOG_INFO, "nRunLength=%d cRawBytes=%d", nRunLength, cRawBytes);
+        const uint32_t color_plane_size = sizeof(uint8_t) * this->cx * this->cy;
+
+        uint8_t * red_plane   = static_cast<uint8_t *>(alloca(color_plane_size));
+        uint8_t * green_plane = static_cast<uint8_t *>(alloca(color_plane_size));
+        uint8_t * blue_plane  = static_cast<uint8_t *>(alloca(color_plane_size));
+
+        if (!no_alpha_plane) {
+            Bitmap::decompress_color_plane(src_cx, src_cy, input, size, this->cx, red_plane);
+        }
+
+        Bitmap::decompress_color_plane(src_cx, src_cy, input, size, this->cx, red_plane);
+        Bitmap::decompress_color_plane(src_cx, src_cy, input, size, this->cx, green_plane);
+        Bitmap::decompress_color_plane(src_cx, src_cy, input, size, this->cx, blue_plane);
+
+        uint8_t  * r     = red_plane;
+        uint8_t  * g     = green_plane;
+        uint8_t  * b     = blue_plane;
+        uint32_t * pixel = reinterpret_cast<uint32_t *>(this->data_bitmap.get());
+
+        for (uint16_t y = 0; y < src_cy; y++) {
+            for (uint16_t x = 0; x < src_cx; x++) {
+                (*pixel++) = (0xFF << 24) | ((*r) << 16) | ((*g) << 8) | (*b);
+            }
+        }
     }
 
 public:
@@ -1214,11 +1283,9 @@ public:
             return;
         }
 
-/*
         if (this->original_bpp == 32) {
             return this->compress60(outbuffer);
         }
-*/
 
         struct RLE_OutStream {
             Stream & stream;
@@ -1791,7 +1858,7 @@ public:
     }
 
     static void compress_color_plane(uint16_t cx, uint16_t cy, Stream & outbuffer, uint8_t * color_plane) {
-        LOG(LOG_INFO, "compress_color_plane: cx=%u cy=%u", cx, cy);
+        //LOG(LOG_INFO, "compress_color_plane: cx=%u cy=%u", cx, cy);
         //hexdump_d(color_plane, cx * cy);
 
         uint16_t plane_line_size = cx * sizeof(uint8_t);
@@ -1841,7 +1908,7 @@ uint16_t pixel_count = 0;
 
                 Bitmap::get_run(xpos, data_size, last_raw, run_length, raw_bytes);
 
-                LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
+                //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
 
                 while (run_length || raw_bytes) {
                     if ((run_length > 0) && (run_length < 3)) {
@@ -1851,7 +1918,7 @@ uint16_t pixel_count = 0;
                     if (!raw_bytes) {
                         if (run_length > 47) {
                             outbuffer.out_uint8((15                << 4) | 2         ); // Control byte
-                            LOG(LOG_INFO, "controlByte: (15, 2); rawValues: <none>");
+                            //LOG(LOG_INFO, "controlByte: (15, 2); rawValues: <none>");
                             xpos        += 47;
                             data_size   -= 47;
 pixel_count += 47;
@@ -1859,7 +1926,7 @@ pixel_count += 47;
                         }
                         else if (run_length > 31) {
                             outbuffer.out_uint8(((run_length - 32) << 4) | 2         ); // Control byte
-                            LOG(LOG_INFO, "controlByte(1): (%d, 2); rawValues: <none>", run_length - 32);
+                            //LOG(LOG_INFO, "controlByte(1): (%d, 2); rawValues: <none>", run_length - 32);
                             xpos        += run_length;
                             data_size   -= run_length;
 pixel_count += run_length;
@@ -1867,7 +1934,7 @@ pixel_count += run_length;
                         }
                         else if (run_length > 15) {
                             outbuffer.out_uint8(((run_length - 16) << 4) | 1         ); // Control byte
-                            LOG(LOG_INFO, "controlByte(2): (%d, 1); rawValues: <none>", run_length - 16);
+                            //LOG(LOG_INFO, "controlByte(2): (%d, 1); rawValues: <none>", run_length - 16);
                             xpos        += run_length;
                             data_size   -= run_length;
 pixel_count += run_length;
@@ -1875,7 +1942,11 @@ pixel_count += run_length;
                         }
                         else {
                             outbuffer.out_uint8((0                 << 4) | run_length); // Control byte
-                            LOG(LOG_INFO, "controlByte(3): (0, %d); rawValues: <none>", run_length);
+                            //LOG(LOG_INFO, "controlByte(3): (0, %d); rawValues: <none>", run_length);
+if (run_length && (run_length < 3)) {
+    LOG(LOG_ERR, "run_length < 3");
+    BOOM;
+}
                             xpos        += run_length;
                             data_size   -= run_length;
 pixel_count += run_length;
@@ -1888,8 +1959,8 @@ pixel_count += run_length;
                         memcpy(rb, xpos, 15);
 
                         outbuffer.out_uint8((15 << 4) | 0); // Control byte
-                        LOG(LOG_INFO, "controlByte(6): (15, 0); rawValues: %s", rb);
-                        hexdump_d(rb, 15);
+                        //LOG(LOG_INFO, "controlByte(6): (15, 0); rawValues: %s", rb);
+                        //hexdump_d(rb, 15);
                         outbuffer.out_copy_bytes(xpos, 15);
                         xpos        += 15;
                         data_size   -= 15;
@@ -1903,8 +1974,8 @@ pixel_count += 15;
 
                         if (run_length > 15) {
                             outbuffer.out_uint8((raw_bytes << 4) | 15        ); // Control byte
-                            LOG(LOG_INFO, "controlByte(4): (%d, 15); rawValues: %s", raw_bytes, rb);
-                            hexdump_d(rb, raw_bytes);
+                            //LOG(LOG_INFO, "controlByte(4): (%d, 15); rawValues: %s", raw_bytes, rb);
+                            //hexdump_d(rb, raw_bytes);
                             outbuffer.out_copy_bytes(xpos, raw_bytes);
                             xpos        += raw_bytes + 15;
                             data_size   -= raw_bytes + 15;
@@ -1914,8 +1985,12 @@ pixel_count += raw_bytes + 15;
                         }
                         else {
                             outbuffer.out_uint8((raw_bytes << 4) | run_length); // Control byte
-                            LOG(LOG_INFO, "controlByte(5): (%d, %d); rawValues: %s", raw_bytes, run_length, rb);
-                            hexdump_d(rb, raw_bytes);
+                            //LOG(LOG_INFO, "controlByte(5): (%d, %d); rawValues: %s", raw_bytes, run_length, rb);
+                            //hexdump_d(rb, raw_bytes);
+if (run_length && (run_length < 3)) {
+    LOG(LOG_ERR, "run_length < 3 (2)");
+    BOOM;
+}
                             outbuffer.out_copy_bytes(xpos, raw_bytes);
                             xpos        += raw_bytes + run_length;
                             data_size   -= raw_bytes + run_length;
@@ -1932,7 +2007,7 @@ pixel_count += raw_bytes + run_length;
         }
 
 REDASSERT(pixel_count == cx * cy);
-        LOG(LOG_INFO, "compress_color_plane: exit");
+        //LOG(LOG_INFO, "compress_color_plane: exit");
     }
 
     void compress60(Stream & outbuffer) const {
@@ -1940,7 +2015,9 @@ REDASSERT(pixel_count == cx * cy);
 
         REDASSERT(this->original_bpp == 32);
 
-        const uint32_t color_plane_size = this->cx * sizeof(uint8_t) * this->cy;
+        uint8_t * tmp_data_compressed = outbuffer.p;
+
+        const uint32_t color_plane_size = sizeof(uint8_t) * this->cx * this->cy;
 
         uint8_t * red_plane   = static_cast<uint8_t *>(alloca(color_plane_size));
         uint8_t * green_plane = static_cast<uint8_t *>(alloca(color_plane_size));
@@ -2006,6 +2083,15 @@ memset(blue_plane + this->cx * y + x, 0, this->cx * (this->cy - y) - x);
         extern bool ___debug;
         ___debug = true;
 */
+
+        // Memoize result of compression
+        this->data_compressed_size = outbuffer.p - tmp_data_compressed;
+        this->data_compressed = static_cast<uint8_t*>(malloc(this->data_compressed_size));
+        if (this->data_compressed) {
+            memcpy(this->data_compressed, tmp_data_compressed, this->data_compressed_size);
+        }
+
+        LOG(LOG_INFO, "compress60: exit");
     }
 
     void compute_sha1(uint8_t (&sig)[20]) const
@@ -2036,7 +2122,7 @@ memset(blue_plane + this->cx * y + x, 0, this->cx * (this->cy - y) - x);
     , data_compressed_size(0)
 
     {
-        LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
+        //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, original_bpp);
 
         if (out_bpp != bmp.original_bpp){
             this->data_bitmap.alloc(this->bmp_size);

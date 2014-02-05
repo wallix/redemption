@@ -29,7 +29,7 @@
 #include <algorithm>
 
 #define LOGNULL
-// #define LOGPRINT
+//#define LOGPRINT
 #include "test_orders.hpp"
 
 #include "stream.hpp"
@@ -332,11 +332,11 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 
     const char * name = "RDP W2000 Target";
 
-    // int client_sck = ip_connect("10.10.46.64", 3389, 3, 1000, verbose);
+    // int client_sck = ip_connect("10.10.47.39", 3389, 3, 1000, verbose);
     // redemption::string error_message;
     // SocketTransport t( name
     //                  , client_sck
-    //                  , "10.10.46.64"
+    //                  , "10.10.47.39"
     //                  , 3389
     //                  , verbose
     //                  , &error_message
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     struct mod_api * mod = new mod_rdp(
         &t,
         "administrateur",
-        "SecureLinux$42",
+        "SecureLinux",
         "0.0.0.0",
         front,
         false,      // tls

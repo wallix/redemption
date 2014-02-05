@@ -28,6 +28,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include <errno.h>
@@ -60,11 +61,16 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
 //        virtual Server_status start(int incoming_sck)
 //        {
-//            struct sockaddr_in sin;
-//            unsigned int sin_size = sizeof(struct sockaddr_in);
-//            memset(&sin, 0, sin_size);
-//            this->sck = accept(incoming_sck, (struct sockaddr*)&sin, &sin_size);
-//            strcpy(ip_source, inet_ntoa(sin.sin_addr));
+//            union {
+//                struct sockaddr s;
+//                struct sockaddr_storage ss;
+//                struct sockaddr_in s4;
+//                struct sockaddr_in6 s6;
+//            } u;
+//            unsigned int sin_size = sizeof(u);
+//            ::memset(&u, 0, sin_size);
+//            this->sck = ::accept(incoming_sck, &u.s, &sin_size);
+//            strcpy(ip_source, ::inet_ntoa(u.s4.sin_addr));
 //            LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
 //            return START_WANT_STOP;
 //        }
@@ -111,7 +117,6 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     }
 
     LOG(LOG_INFO, "hostname=%s",front.client_info.hostname);
-    BOOST_CHECK_EQUAL(0, memcmp(front.client_info.hostname, "MATHIEU-LAPTOP\0\0", 16));
 
     BOOST_CHECK_EQUAL(1, front.up_and_running);
     TestCardMod mod(front, front.client_info.width, front.client_info.height);

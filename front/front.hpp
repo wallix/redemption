@@ -2773,6 +2773,7 @@ public:
         bitmap_caps.preferredBitsPerPixel = this->client_info.bpp;
         bitmap_caps.desktopWidth = this->client_info.width;
         bitmap_caps.desktopHeight = this->client_info.height;
+        bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
         if (!this->server_capabilities_filename.is_empty()) {
             BitmapCapsLoader bitmapcaps_loader(bitmap_caps);
 
