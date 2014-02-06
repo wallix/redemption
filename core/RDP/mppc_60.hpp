@@ -777,6 +777,8 @@ private:
 
         this->flags = PACKET_COMPR_TYPE_RDP6;
 
+        this->hash_tab_mgr.clear_undo_history();
+
         if ((uncompressed_data == NULL) || (uncompressed_data_size <= 0) ||
             (uncompressed_data_size >= RDP_60_HIST_BUF_LEN - 1))
             return;
