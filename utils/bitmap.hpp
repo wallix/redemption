@@ -114,12 +114,16 @@ public:
         }
 
         if (compressed) {
+/*
             if (bpp == 32) {
                 this->decompress60(cx, cy, data, size);
             }
             else {
+*/
                 this->decompress(data, cx, cy, size);
+/*
             }
+*/
         } else {
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = data;
@@ -1315,9 +1319,11 @@ public:
             return;
         }
 
+/*
         if (this->original_bpp == 32) {
             return this->compress60(outbuffer);
         }
+*/
 
         struct RLE_OutStream {
             Stream & stream;
