@@ -291,6 +291,7 @@ struct RdpNego
                 }
                 int res = credssp.credssp_client_authenticate();
                 if (res != 1) {
+                    LOG(LOG_ERR, "NLA/CREDSSP Authentication Failed");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
                 this->state = NEGO_STATE_FINAL;
