@@ -24,7 +24,7 @@
 #include "RDP/nla/sspi.hpp"
 #include "RDP/nla/credssp.hpp"
 #include "RDP/nla/ntlm/ntlm.hpp"
-
+#include "RDP/nla/kerberos/kerberos.hpp"
 #include "transport.hpp"
 
 #define NLA_PKG_NAME NTLMSP_NAME
@@ -53,6 +53,8 @@ struct rdpCredssp
     PSecurityFunctionTable table;
     SecPkgContext_Sizes ContextSizes;
     bool RestrictedAdminMode;
+    SecInterface sec_interface;
+
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool hardcodedtests;
@@ -74,7 +76,7 @@ struct rdpCredssp
     {
         this->SspiModule.init(0);
         this->set_credentials(user, domain, pass, hostname);
-
+        this->sec_interface = NTLM_Interface;
     }
 
     ~rdpCredssp()
@@ -95,7 +97,7 @@ struct rdpCredssp
         // hexdump_c(domain, strlen((char*)domain));
         // hexdump_c(pass, strlen((char*)pass));
         // hexdump_c(hostname, strlen((char*)hostname));
-
+        this->identity.SetKrbAuthIdentity(user, pass);
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
@@ -117,6 +119,9 @@ struct rdpCredssp
         }
         if (secInter == NTLM_Interface) {
             this->table = new Ntlm_SecurityFunctionTable;
+        }
+        if (secInter == Kerberos_Interface) {
+            this->table = new Kerberos_SecurityFunctionTable;
         }
         else if (this->table == NULL) {
             this->table = new SecurityFunctionTable;
@@ -455,7 +460,7 @@ struct rdpCredssp
         if (this->credssp_ntlm_client_init() == 0) {
             return 0;
         }
-        this->InitSecurityInterface(NTLM_Interface);
+        this->InitSecurityInterface(this->sec_interface);
 
         SecPkgInfo packageInfo;
         if (this->table == NULL) {
