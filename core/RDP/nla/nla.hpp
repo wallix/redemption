@@ -519,7 +519,6 @@ struct rdpCredssp
             output_buffer_desc.pBuffers = &output_buffer;
             output_buffer.BufferType = SECBUFFER_TOKEN;
             output_buffer.Buffer.init(cbMaxToken);
-
             status = this->table->InitializeSecurityContext(&credentials,
                                                             (have_context) ?
                                                             &this->context : NULL,
@@ -529,13 +528,19 @@ struct rdpCredssp
                                                             (have_input_buffer) ?
                                                             &input_buffer_desc : NULL,
                                                             0, &this->context,
-                                                            &output_buffer_desc, &pfContextAttr,
+                                                            &output_buffer_desc,
+                                                            &pfContextAttr,
                                                             &expiration);
+
+            if (status == SEC_E_INVALID_TOKEN) {
+                LOG(LOG_ERR, "Initialize Security Context Error !");
+                this->table->FreeCredentialsHandle(&credentials);
+                return -1;
+            }
 
             if (have_input_buffer && (input_buffer.Buffer.size() > 0)) {
                 input_buffer.Buffer.init(0);
             }
-
             if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
                 (status == SEC_I_COMPLETE_NEEDED) ||
                 (status == SEC_E_OK)) {

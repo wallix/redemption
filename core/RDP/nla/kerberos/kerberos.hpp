@@ -107,7 +107,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         int pid = getpid();
         char cache[256];
         snprintf(cache, 255, "FILE:/tmp/krb_red_%d", pid);
-        setenv("KRB5CCNAME", cache, 1);
+        // setenv("KRB5CCNAME", cache, 1);
         if (identity) {
             int ret = credentials->get_credentials(identity->princname, identity->princpass, NULL);
             if (!ret) {
@@ -176,40 +176,48 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t* credentials = NULL;
+        gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
         if (phCredential) {
             credentials =  (gss_cred_id_t*) phCredential->SecureHandleGetLowerPointer();
         }
         if (!credentials) {
-            *credentials = GSS_C_NO_CREDENTIAL;
+            credentials = &gss_no_cred;
         }
         gss_ctx_id_t * gss_ctx = NULL;
+        gss_ctx_id_t gss_no_ctx = GSS_C_NO_CONTEXT;
         if (phContext) {
             gss_ctx = (gss_ctx_id_t*) phContext->SecureHandleGetLowerPointer();
         }
         if (!gss_ctx) {
-            *gss_ctx = GSS_C_NO_CONTEXT;
+            gss_ctx = &gss_no_ctx;
         }
-
         // Target name (server name, ip ...)
 	gss_name_t target_name;
 	this->get_service_name(pszTargetName, &target_name);
-
         // Token Buffer
 	gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
-        if (pInput->cBuffers < 1) {
-            input_tok.length = 0;
+        if (pInput) {
+            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
+            if (input_buffer) {
+                input_tok.length = input_buffer->Buffer.size();
+                input_tok.value = input_buffer->Buffer.get_data();
+            }
+            else {
+                input_tok.length = 0;
+            }
         }
         else {
-            SecBuffer input_buffer = *(pInput->FindSecBuffer(SECBUFFER_TOKEN));
-            input_tok.length = input_buffer.Buffer.size();
-            input_tok.value = input_buffer.Buffer.get_data();
+            input_tok.length = 0;
         }
-
 	OM_uint32 actual_services;
 	OM_uint32 actual_time;
 	gss_OID actual_mech;
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
+        if (!this->mech_available(desired_mech)) {
+            LOG(LOG_ERR, "Desired Mech unavailable");
+            return SEC_E_INVALID_TOKEN;
+        }
 // OM_uint32 gss_init_sec_context
 //                  (OM_uint32 ,             /* minor_status */
 //                   const gss_cred_id_t,    /* initiator_cred_handle */
@@ -226,9 +234,9 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 //                   OM_uint32 ,             /* ret_flags */
 //                   OM_uint32 *             /* time_rec */
 //                  );
-
         major_status = gss_init_sec_context(&minor_status,
-                                            *credentials,
+                                            // *credentials,
+                                            gss_no_cred,
                                             gss_ctx,
                                             target_name,
                                             desired_mech,
@@ -238,13 +246,23 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                             &input_tok,
                                             &actual_mech,
                                             &output_tok, &actual_services, &actual_time);
-        SecBuffer output_buffer = *(pOutput->FindSecBuffer(SECBUFFER_TOKEN));
+
+        if (GSS_ERROR(major_status)) {
+            LOG(LOG_INFO, "MAJOR ERROR");
+            this->report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
+                               major_status, minor_status);
+            return SEC_E_INVALID_TOKEN;
+        }
+
+        PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
+
+        LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         if (output_tok.length < 1) {
-            output_buffer.Buffer.init(0);
+            output_buffer->Buffer.init(0);
         }
         else {
-            output_buffer.Buffer.init(output_tok.length);
-            output_buffer.Buffer.copy((const uint8_t*)output_tok.value, output_tok.length);
+            output_buffer->Buffer.init(output_tok.length);
+            output_buffer->Buffer.copy((const uint8_t*)output_tok.value, output_tok.length);
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
@@ -257,11 +275,16 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         // phCredential->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
 
         if (GSS_ERROR(major_status)) {
+            LOG(LOG_INFO, "MAJOR ERROR");
+            this->report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
+                               major_status, minor_status);
             return SEC_E_INVALID_TOKEN;
         }
         if (major_status & GSS_S_CONTINUE_NEEDED) {
+            LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
             return SEC_I_CONTINUE_NEEDED;
         }
+        LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
         return SEC_I_COMPLETE_NEEDED;
     }
 
@@ -399,6 +422,72 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     virtual SEC_STATUS RevertSecurityContext(PCtxtHandle phContext) {
         return SEC_E_OK;
     }
+
+    void report_error(OM_uint32 code, const char *str,
+                      OM_uint32 major_status, OM_uint32 minor_status)
+    {
+        OM_uint32 msgctx = 0, ms;
+        gss_buffer_desc status_string;
+
+        LOG(LOG_ERR, "GSS error [%d:%d:%d]: %s\n",
+            (major_status & 0xff000000) >> 24,	// Calling error
+            (major_status & 0xff0000) >> 16,	// Routine error
+            major_status & 0xffff,	// Supplementary info bits
+            str);
+
+        LOG(LOG_ERR, "GSS Minor status error [%d:%d:%d]: %s\n",
+            (minor_status & 0xff000000) >> 24,	// Calling error
+            (minor_status & 0xff0000) >> 16,	// Routine error
+            minor_status & 0xffff,	// Supplementary info bits
+            str);
+
+        do {
+                ms = gss_display_status(&minor_status, major_status,
+                                        code, GSS_C_NULL_OID, &msgctx, &status_string);
+        	if (ms != GSS_S_COMPLETE)
+                    continue;
+
+                LOG(LOG_ERR," - %s\n", status_string.value);
+        }
+        while (ms == GSS_S_COMPLETE && msgctx);
+
+    }
+
+    bool mech_available(gss_OID mech)
+    {
+        int mech_found;
+        OM_uint32 major_status, minor_status;
+        gss_OID_set mech_set;
+
+        mech_found = 0;
+
+        if (mech == GSS_C_NO_OID)
+            return true;
+
+        major_status = gss_indicate_mechs(&minor_status, &mech_set);
+        if (!mech_set)
+            return false;
+
+        if (GSS_ERROR(major_status)) {
+            this->report_error(GSS_C_GSS_CODE, "Failed to get available mechs on system",
+                               major_status, minor_status);
+            return false;
+        }
+
+        gss_test_oid_set_member(&minor_status, mech, mech_set, &mech_found);
+
+        if (GSS_ERROR(major_status)) {
+            this->report_error(GSS_C_GSS_CODE, "Failed to match mechanism in set",
+                                  major_status, minor_status);
+            return false;
+        }
+
+        if (!mech_found)
+            return false;
+
+        return true;
+    }
+
 };
 
 #endif
