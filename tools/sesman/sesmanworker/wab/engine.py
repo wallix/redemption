@@ -316,8 +316,8 @@ class Engine(object):
                     elif restriction.action == 'notify':
                         notify_patterns.append(restriction.data)
 
-            self.pattern_kill = u"|".join(kill_patterns)
-            self.pattern_notify = u"|".join(notify_patterns)
+            self.pattern_kill = u"\x01".join(kill_patterns)
+            self.pattern_notify = u"\x01".join(notify_patterns)
             Logger().info("pattern_kill = [%s]" % (self.pattern_kill))
             Logger().info("pattern_notify = [%s]" % (self.pattern_notify))
         except Exception, e:
