@@ -855,6 +855,14 @@ private:
                     }
                 }
 
+                /////////////////////////////////////////////////////////////
+                // Fix 'short compressed stream' issue with MSTSC. Length of
+                //  compressed stream must be greater than 3 bytes.
+                /////////////////////////////////////////////////////////////
+                if (lom == uncompressed_data_size) {
+                    lom--;
+                }
+
                 //if (this->verbose & 512) {
                 //    LOG(LOG_INFO, "LoM=%u", lom);
                 //}
