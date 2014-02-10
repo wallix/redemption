@@ -175,14 +175,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
         OM_uint32 major_status, minor_status;
 
-        gss_cred_id_t* credentials = NULL;
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        if (phCredential) {
-            credentials =  (gss_cred_id_t*) phCredential->SecureHandleGetLowerPointer();
-        }
-        if (!credentials) {
-            credentials = &gss_no_cred;
-        }
         gss_ctx_id_t * gss_ctx = NULL;
         gss_ctx_id_t gss_no_ctx = GSS_C_NO_CONTEXT;
         if (phContext) {
@@ -235,7 +228,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 //                   OM_uint32 *             /* time_rec */
 //                  );
         major_status = gss_init_sec_context(&minor_status,
-                                            // *credentials,
                                             gss_no_cred,
                                             gss_ctx,
                                             target_name,
@@ -270,9 +262,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
         phNewContext->SecureHandleSetLowerPointer(gss_ctx);
         phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
-
-        // phCredential->SecureHandleSetLowerPointer(credentials);
-        // phCredential->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
 
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");

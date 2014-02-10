@@ -956,6 +956,7 @@ unit-test test_ber : tests/core/RDP/nla/asn1/test_ber.cpp libboost_unit_test ope
 unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test openssl crypto ;
 unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
+
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test openssl crypto ;
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
