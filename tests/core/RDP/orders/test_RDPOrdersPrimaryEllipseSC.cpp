@@ -28,6 +28,10 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <algorithm>
 
+#define LOGNULL
+//#define LOGPRINT
+#include "log.hpp"
+
 #include "RDP/orders/RDPOrdersCommon.hpp"
 #include "RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
 

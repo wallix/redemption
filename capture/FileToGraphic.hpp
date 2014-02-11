@@ -284,7 +284,7 @@ struct FileToGraphic
                 case TS_CACHE_BITMAP_UNCOMPRESSED:
                 {
                     RDPBmpCache cmd;
-                    cmd.receive(this->stream, control, header, this->palette);
+                    cmd.receive(this->info_bpp, this->stream, control, header, this->palette);
                     if (this->verbose > 32){
                         cmd.log(LOG_INFO);
                     }
@@ -835,7 +835,8 @@ struct FileToGraphic
 
                 const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
 
-                Bitmap bitmap( bitmap_data.bits_per_pixel
+                Bitmap bitmap( this->info_bpp
+                             , bitmap_data.bits_per_pixel
                              , /*0*/&this->palette
                              , bitmap_data.width
                              , bitmap_data.height

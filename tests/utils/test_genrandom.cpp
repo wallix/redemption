@@ -29,7 +29,8 @@
 #define BOOST_TEST_MODULE TestGenRandom
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "genrandom.hpp"

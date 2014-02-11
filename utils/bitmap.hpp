@@ -91,7 +91,7 @@ public:
     mutable uint8_t * data_compressed;
     mutable size_t data_compressed_size;
 
-    Bitmap(uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy,
+    Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy,
            const uint8_t * data, const size_t size, bool compressed = false)
         : original_bpp(bpp)
         , cx(align4(cx))
@@ -114,16 +114,12 @@ public:
         }
 
         if (compressed) {
-/*
-            if (bpp == 32) {
+            if ((session_color_depth == 32) && ((bpp == 24) || (bpp == 32))) {
                 this->decompress60(cx, cy, data, size);
             }
             else {
-*/
                 this->decompress(data, cx, cy, size);
-/*
             }
-*/
         } else {
             uint8_t * dest = this->data_bitmap.get();
             const uint8_t * src = data;
@@ -1022,7 +1018,7 @@ private:
         uint8_t  * write_point = line_start;
 
         while (size) {
-            LOG(LOG_INFO, "size=%u data_size=%u", size, data_size);
+            //LOG(LOG_INFO, "size=%u data_size=%u", size, data_size);
             REDASSERT(data_size);
 
             uint8_t controlByte = *data++;
@@ -1031,7 +1027,7 @@ private:
             uint8_t nRunLength =  (controlByte & 0x0F);
             uint8_t cRawBytes  = ((controlByte & 0xF0) >> 4);
 
-            LOG(LOG_INFO, "    nRunLength=%d cRawBytes=%d", nRunLength, cRawBytes);
+            //LOG(LOG_INFO, "    nRunLength=%d cRawBytes=%d", nRunLength, cRawBytes);
 
             if (nRunLength == 1) {
                 nRunLength = 16 + cRawBytes;
@@ -1048,7 +1044,7 @@ private:
                 }
             }
 
-            LOG(LOG_INFO, "(1) nRunLength=%d cRawBytes=%d", nRunLength, cRawBytes);
+            //LOG(LOG_INFO, "(1) nRunLength=%d cRawBytes=%d", nRunLength, cRawBytes);
 
             if (cRawBytes) {
                 ::memcpy(write_point, data, cRawBytes);
@@ -1091,9 +1087,13 @@ private:
 
     void decompress60(uint16_t src_cx, uint16_t src_cy, const uint8_t * data, size_t data_size) const
     {
+        LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
+const uint8_t * save_data      = data;
+      size_t    save_data_size = data_size;
+
         REDASSERT((original_bpp == 24) || (original_bpp == 32));
 
-        LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
+        //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
         //hexdump_d(data, data_size);
         uint8_t FormatHeader = *data++;
         data_size--;
@@ -1103,9 +1103,11 @@ private:
         bool    rle                = (((FormatHeader & 0x10) >> 4) == 1);
         bool    no_alpha_plane     = (((FormatHeader & 0x20) >> 5) == 1);
 
+        /*
         LOG(LOG_INFO, "FormatHeader=0x%02X color_loss_level=%d chroma_subsampling=%s rle=%s no_alpha_plane=%s",
             FormatHeader, color_loss_level, (chroma_subsampling ? "yes" : "no"), (rle ? "yes" : "no"),
             (no_alpha_plane ? "yes" : "no"));
+        */
 
         if (color_loss_level || chroma_subsampling) {
             LOG(LOG_INFO, "Unsupported compression options", color_loss_level & (chroma_subsampling << 3));
@@ -1141,7 +1143,7 @@ private:
             data_size--;    // Pad
         }
 
-        LOG(LOG_INFO, "data_size=%u", data_size);
+        //LOG(LOG_INFO, "data_size=%u", data_size);
         REDASSERT(!data_size);
 
         uint8_t  * r     = red_plane;
@@ -1154,6 +1156,18 @@ private:
                 (*pixel++) = (0xFF << 24) | ((*r) << 16) | ((*g) << 8) | (*b);
             }
         }
+
+BStream compressed_bitmap_data(65536);
+this->compress60(compressed_bitmap_data);
+compressed_bitmap_data.mark_end();
+if (((save_data_size != compressed_bitmap_data.size()) ||
+     memcmp(save_data, compressed_bitmap_data.get_data(), save_data_size)) &&
+    (compressed_bitmap_data.size() < 1024)
+   ) {
+    hexdump_d(save_data, save_data_size);
+}
+
+        LOG(LOG_INFO, "bmp decompress60: done");
     }
 
 public:
@@ -1312,18 +1326,16 @@ public:
     }
 
     TODO(" simplify and enhance compression using 1 pixel orders BLACK or WHITE.");
-    void compress(Stream & outbuffer) const
+    void compress(uint8_t session_color_depth, Stream & outbuffer) const
     {
         if (this->data_compressed) {
             outbuffer.out_copy_bytes(this->data_compressed, this->data_compressed_size);
             return;
         }
 
-/*
-        if (this->original_bpp == 32) {
+        if ((session_color_depth == 32) && ((this->original_bpp == 24) || (this->original_bpp == 32))) {
             return this->compress60(outbuffer);
         }
-*/
 
         struct RLE_OutStream {
             Stream & stream;
@@ -2049,7 +2061,7 @@ REDASSERT(pixel_count == cx * cy);
     }
 
     void compress60(Stream & outbuffer) const {
-        LOG(LOG_INFO, "compress60");
+        //LOG(LOG_INFO, "bmp compress60");
 
         REDASSERT(this->original_bpp == 32);
 
@@ -2129,7 +2141,7 @@ memset(blue_plane + this->cx * y + x, 0, this->cx * (this->cy - y) - x);
             memcpy(this->data_compressed, tmp_data_compressed, this->data_compressed_size);
         }
 
-        LOG(LOG_INFO, "compress60: exit");
+        //LOG(LOG_INFO, "bmp compress60: done");
     }
 
     void compute_sha1(uint8_t (&sig)[20]) const

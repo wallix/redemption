@@ -4454,7 +4454,8 @@ public:
                 //                    bufsize, bitmap.bmp_size, width, height, bpp);
                 //            }
                 const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
-            Bitmap bitmap( bmpdata.bits_per_pixel
+            Bitmap bitmap( this->bpp
+                           , bmpdata.bits_per_pixel
                            , &this->orders.global_palette
                            , bmpdata.width
                            , bmpdata.height

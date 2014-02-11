@@ -319,7 +319,7 @@ public:
         }
         RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini.debug.primary_orders);
         this->reserve_order(cmd_cache.bmp->bmp_size + 16);
-        cmd_cache.emit( this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
+        cmd_cache.emit( this->bpp, this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
                       , this->op2);
 
         if (this->ini.debug.secondary_orders){
