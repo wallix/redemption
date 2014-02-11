@@ -513,7 +513,7 @@ struct rdpCredssp
         unsigned long pfContextAttr;
         unsigned long fContextReq = 0;
         fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
-
+        int i = 0;
         while (true) {
             output_buffer_desc.ulVersion = SECBUFFER_VERSION;
             output_buffer_desc.cBuffers = 1;
@@ -523,8 +523,9 @@ struct rdpCredssp
             status = this->table->InitializeSecurityContext(&credentials,
                                                             (have_context) ?
                                                             &this->context : NULL,
-                                                            (char*) this->ServicePrincipalName.get_data(),
-                                                            fContextReq, this->hardcodedtests?1:0,
+                                                            (char*)this->ServicePrincipalName.get_data(),
+                                                            fContextReq,
+                                                            this->hardcodedtests?1:0,
                                                             SECURITY_NATIVE_DREP,
                                                             (have_input_buffer) ?
                                                             &input_buffer_desc : NULL,
@@ -532,7 +533,8 @@ struct rdpCredssp
                                                             &output_buffer_desc,
                                                             &pfContextAttr,
                                                             &expiration);
-
+            if (++i == 2)
+                status = SEC_E_INVALID_TOKEN;
             if (status == SEC_E_INVALID_TOKEN) {
                 LOG(LOG_ERR, "Initialize Security Context Error !");
                 this->table->FreeCredentialsHandle(&credentials);

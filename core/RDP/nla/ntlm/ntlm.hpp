@@ -481,10 +481,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     // DECRYPT_MESSAGE DecryptMessage;
     virtual SEC_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) {
-        int index;
-        int length;
-        uint8_t* data;
-        uint32_t SeqNo;
+        int index = 0;
+        int length = 0;
+        uint8_t* data = NULL;
+        uint32_t SeqNo = 0;
         uint8_t digest[16] = {};
         uint8_t checksum[8] = {};
         uint32_t version = 1;

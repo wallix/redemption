@@ -41,6 +41,7 @@ static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
 
 struct KERBEROSContext {
     gss_ctx_id_t * gss_ctx;
+    gss_name_t target_name;
     OM_uint32 actual_services;
     OM_uint32 actual_time;
     gss_OID actual_mech;
@@ -58,6 +59,7 @@ struct KERBEROSContext {
             major_status = gss_delete_sec_context(&minor_status, this->gss_ctx,
                                                   output_token);
             (void) major_status;
+            LOG(LOG_INFO, "DELETE KERBEROS CONTEXT");
         }
     }
 };
@@ -226,17 +228,17 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
             phNewContext->SecureHandleSetLowerPointer(krb_ctx);
             phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
+
+            // Target name (server name, ip ...)
+            if (!this->get_service_name(pszTargetName, &krb_ctx->target_name)) {
+                return SEC_E_INVALID_TOKEN;
+            }
         }
         else {
             LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
         }
 
 
-        // Target name (server name, ip ...)
-	gss_name_t target_name;
-        if (!this->get_service_name(pszTargetName, &target_name)) {
-            return SEC_E_INVALID_TOKEN;
-        }
         // Token Buffer
 	gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
@@ -282,7 +284,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         major_status = gss_init_sec_context(&minor_status,
                                             gss_no_cred,
                                             krb_ctx->gss_ctx,
-                                            target_name,
+                                            krb_ctx->target_name,
                                             desired_mech,
                                             GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG,
                                             GSS_C_INDEFINITE,
@@ -346,7 +348,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
-        KERBEROSContext* toDelete = (KERBEROSContext*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
+        KERBEROSContext* toDelete = (KERBEROSContext*)((PCtxtHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
         if (toDelete) {
             delete toDelete;
             toDelete = NULL;
@@ -371,10 +373,10 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 	OM_uint32 major_status;
 	OM_uint32 minor_status;
 	int conf_state;
-        gss_ctx_id_t* context = NULL;
+        KERBEROSContext* context = NULL;
 
         if (phContext) {
-            context = (gss_ctx_id_t*) phContext->SecureHandleGetLowerPointer();
+            context = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
         }
         if (!context) {
             return SEC_E_NO_CONTEXT;
@@ -393,7 +395,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         else {
             return SEC_E_INVALID_TOKEN;
         }
-	major_status = gss_wrap(&minor_status, *context, true,
+	major_status = gss_wrap(&minor_status, *context->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
         (void) major_status;
         // TODO check status
@@ -422,10 +424,10 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 	OM_uint32 minor_status;
 	int conf_state;
         gss_qop_t qop_state;
-        gss_ctx_id_t* context = NULL;
+        KERBEROSContext* context = NULL;
 
         if (phContext) {
-            context = (gss_ctx_id_t*) phContext->SecureHandleGetLowerPointer();
+            context = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
         }
         if (!context) {
             return SEC_E_NO_CONTEXT;
@@ -444,7 +446,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         else {
             return SEC_E_INVALID_TOKEN;
         }
-	major_status = gss_unwrap(&minor_status, *context, &inbuf, &outbuf,
+	major_status = gss_unwrap(&minor_status, *context->gss_ctx, &inbuf, &outbuf,
                                   &conf_state, &qop_state);
         (void) major_status;
         // TODO Check Status !!!
