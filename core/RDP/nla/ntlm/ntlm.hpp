@@ -369,7 +369,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
         NTLMContext * toDelete = (NTLMContext*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
-        if (!toDelete) {
+        if (toDelete) {
             delete toDelete;
             toDelete = NULL;
         }

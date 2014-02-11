@@ -39,6 +39,30 @@ const SecPkgInfo KERBEROS_SecPkgInfo = {
 static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
 	{ 9, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
 
+struct KERBEROSContext {
+    gss_ctx_id_t * gss_ctx;
+    OM_uint32 actual_services;
+    OM_uint32 actual_time;
+    gss_OID actual_mech;
+
+    KERBEROSContext()
+        : gss_ctx(NULL)
+    {
+    }
+
+    virtual ~KERBEROSContext() {
+        OM_uint32 major_status, minor_status;
+        if (this->gss_ctx) {
+            gss_buffer_t output_token;
+            output_token = GSS_C_NO_BUFFER;
+            major_status = gss_delete_sec_context(&minor_status, this->gss_ctx,
+                                                  output_token);
+            (void) major_status;
+        }
+    }
+};
+
+
 struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
     virtual ~Kerberos_SecurityFunctionTable() {}
@@ -93,6 +117,16 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                                 PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
+        Array * spn = (Array *) pvLogonID;
+        const char * p = pszPrincipal;
+        size_t length = 0;
+        if (p) {
+            length = strlen(p);
+        }
+        spn->init(length + 1);
+        spn->copy((const uint8_t *)pszPrincipal, length);
+        spn->get_data()[length] = 0;
+
         Krb5Creds * credentials = new Krb5Creds;
         phCredential->SecureHandleSetLowerPointer((void*) credentials);
         phCredential->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
@@ -107,7 +141,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         int pid = getpid();
         char cache[256];
         snprintf(cache, 255, "FILE:/tmp/krb_red_%d", pid);
-        // setenv("KRB5CCNAME", cache, 1);
+        setenv("KRB5CCNAME", cache, 1);
         if (identity) {
             int ret = credentials->get_credentials(identity->princname, identity->princpass, NULL);
             if (!ret) {
@@ -143,7 +177,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         output.value = malloc(size);
         snprintf((char*)output.value, size, "%s@%s", service_name, server);
         output.length = strlen((const char*)output.value) + 1;
-
+        LOG(LOG_INFO, "GSS IMPORT NAME : %s", output.value);
         major_status = gss_import_name(&minor_status, &output, type, name);
 
         if (GSS_ERROR(major_status)) {
@@ -176,36 +210,66 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        gss_ctx_id_t * gss_ctx = NULL;
         gss_ctx_id_t gss_no_ctx = GSS_C_NO_CONTEXT;
+        // gss_ctx_id_t * gss_ctx = NULL;
+        // if (phContext) {
+        //     gss_ctx = (gss_ctx_id_t*) phContext->SecureHandleGetLowerPointer();
+        // }
+        // if (!gss_ctx) {
+        //     LOG(LOG_INFO, "Initialiaze Sec CTX: NO CONTEXT");
+        //     gss_ctx = &gss_no_ctx;
+        // }
+        // else {
+        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
+        // }
+        KERBEROSContext * krb_ctx = NULL;
         if (phContext) {
-            gss_ctx = (gss_ctx_id_t*) phContext->SecureHandleGetLowerPointer();
+            krb_ctx = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
         }
-        if (!gss_ctx) {
-            gss_ctx = &gss_no_ctx;
+        if (!krb_ctx) {
+            LOG(LOG_INFO, "Initialiaze Sec CTX: NO CONTEXT");
+            krb_ctx = new KERBEROSContext;
+            if (!krb_ctx) {
+                return SEC_E_INSUFFICIENT_MEMORY;
+            }
+            krb_ctx->gss_ctx = &gss_no_ctx;
+
+            phNewContext->SecureHandleSetLowerPointer(krb_ctx);
+            phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
         }
+        else {
+            LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
+        }
+
+
         // Target name (server name, ip ...)
 	gss_name_t target_name;
-	this->get_service_name(pszTargetName, &target_name);
+        if (!this->get_service_name(pszTargetName, &target_name)) {
+            return SEC_E_INVALID_TOKEN;
+        }
         // Token Buffer
 	gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
         if (pInput) {
             PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
             if (input_buffer) {
+                LOG(LOG_INFO, "GOT INPUT BUFFER: length %d", input_buffer->Buffer.size());
                 input_tok.length = input_buffer->Buffer.size();
                 input_tok.value = input_buffer->Buffer.get_data();
+                hexdump_c((uint8_t *)input_tok.value, input_tok.length);
             }
             else {
+                LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
                 input_tok.length = 0;
             }
         }
         else {
+            LOG(LOG_INFO, "NO INPUT BUFFER DESC");
             input_tok.length = 0;
         }
-	OM_uint32 actual_services;
-	OM_uint32 actual_time;
-	gss_OID actual_mech;
+	// OM_uint32 actual_services;
+	// OM_uint32 actual_time;
+	// gss_OID actual_mech;
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
             LOG(LOG_ERR, "Desired Mech unavailable");
@@ -229,15 +293,30 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 //                  );
         major_status = gss_init_sec_context(&minor_status,
                                             gss_no_cred,
-                                            gss_ctx,
+                                            krb_ctx->gss_ctx,
                                             target_name,
                                             desired_mech,
                                             GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG,
                                             GSS_C_INDEFINITE,
                                             GSS_C_NO_CHANNEL_BINDINGS,
                                             &input_tok,
-                                            &actual_mech,
-                                            &output_tok, &actual_services, &actual_time);
+                                            &krb_ctx->actual_mech,
+                                            &output_tok,
+                                            &krb_ctx->actual_services,
+                                            &krb_ctx->actual_time);
+
+        // major_status = gss_init_sec_context(&minor_status,
+        //                                     gss_no_cred,
+        //                                     gss_ctx,
+        //                                     target_name,
+        //                                     desired_mech,
+        //                                     GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG,
+        //                                     GSS_C_INDEFINITE,
+        //                                     GSS_C_NO_CHANNEL_BINDINGS,
+        //                                     &input_tok,
+        //                                     &actual_mech,
+        //                                     &output_tok,
+        //                                     &actual_services, &actual_time);
 
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -260,8 +339,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         (void) gss_release_buffer(&minor_status, &output_tok);
         (void) gss_release_buffer(&minor_status, &input_tok);
 
-        phNewContext->SecureHandleSetLowerPointer(gss_ctx);
-        phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
+        // phNewContext->SecureHandleSetLowerPointer(gss_ctx);
+        // phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
 
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -292,14 +371,20 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
-        gss_ctx_id_t* toDelete = (gss_ctx_id_t*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
-        OM_uint32 major_status, minor_status;
+        // gss_ctx_id_t* toDelete = (gss_ctx_id_t*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
+        // OM_uint32 major_status, minor_status;
+        // if (!toDelete) {
+        //     gss_buffer_t output_token;
+        //     output_token = GSS_C_NO_BUFFER;
+        //     major_status = gss_delete_sec_context(&minor_status, toDelete, output_token);
+        //     (void) major_status;
+        // }
+        KERBEROSContext* toDelete = (KERBEROSContext*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
         if (!toDelete) {
-            gss_buffer_t output_token;
-            output_token = GSS_C_NO_BUFFER;
-            major_status = gss_delete_sec_context(&minor_status, toDelete, output_token);
-            (void) major_status;
+            delete toDelete;
+            toDelete = NULL;
         }
+
         return SEC_E_OK;
     }
 
@@ -424,10 +509,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             major_status & 0xffff,	// Supplementary info bits
             str);
 
-        LOG(LOG_ERR, "GSS Minor status error [%d:%d:%d]: %s\n",
+        LOG(LOG_ERR, "GSS Minor status error [%d:%d:%d]:%d %s\n",
             (minor_status & 0xff000000) >> 24,	// Calling error
             (minor_status & 0xff0000) >> 16,	// Routine error
             minor_status & 0xffff,	// Supplementary info bits
+            minor_status,
             str);
 
         do {

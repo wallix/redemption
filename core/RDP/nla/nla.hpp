@@ -478,8 +478,9 @@ struct rdpCredssp
         CredHandle credentials;
         TimeStamp expiration;
 
-        status = this->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
-                                                       SECPKG_CRED_OUTBOUND, NULL,
+        status = this->table->AcquireCredentialsHandle("10.10.47.128", NLA_PKG_NAME,
+                                                       SECPKG_CRED_OUTBOUND,
+                                                       &this->ServicePrincipalName,
                                                        &this->identity, NULL, NULL,
                                                        &credentials, &expiration);
 

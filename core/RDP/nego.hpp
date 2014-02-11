@@ -289,6 +289,10 @@ struct RdpNego
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }
+                LOG(LOG_INFO, "CREDSSP: Domain %s", this->domain);
+                if (!memcmp(this->domain, "RED", 3)) {
+                    credssp.sec_interface = Kerberos_Interface;
+                }
                 int res = credssp.credssp_client_authenticate();
                 if (res != 1) {
                     LOG(LOG_ERR, "NLA/CREDSSP Authentication Failed");
