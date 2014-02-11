@@ -40,7 +40,7 @@ static gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
 	{ 9, (void *) "\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
 
 struct KERBEROSContext {
-    gss_ctx_id_t * gss_ctx;
+    gss_ctx_id_t gss_ctx;
     gss_name_t target_name;
     OM_uint32 actual_services;
     OM_uint32 actual_time;
@@ -53,14 +53,13 @@ struct KERBEROSContext {
 
     virtual ~KERBEROSContext() {
         OM_uint32 major_status, minor_status;
-        if (this->gss_ctx) {
-            gss_buffer_t output_token;
-            output_token = GSS_C_NO_BUFFER;
-            major_status = gss_delete_sec_context(&minor_status, this->gss_ctx,
-                                                  output_token);
+
+        if (this->gss_ctx != GSS_C_NO_CONTEXT) {
+            major_status = gss_delete_sec_context(&minor_status, &this->gss_ctx,
+                                                  GSS_C_NO_BUFFER);
             (void) major_status;
-            LOG(LOG_INFO, "DELETE KERBEROS CONTEXT");
         }
+        LOG(LOG_INFO, "DELETE KERBEROS CONTEXT");
     }
 };
 
@@ -213,7 +212,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
-        gss_ctx_id_t gss_no_ctx = GSS_C_NO_CONTEXT;
         KERBEROSContext * krb_ctx = NULL;
         if (phContext) {
             krb_ctx = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
@@ -224,7 +222,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             if (!krb_ctx) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
-            krb_ctx->gss_ctx = &gss_no_ctx;
+            krb_ctx->gss_ctx = GSS_C_NO_CONTEXT;
 
             phNewContext->SecureHandleSetLowerPointer(krb_ctx);
             phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
@@ -283,7 +281,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 //                  );
         major_status = gss_init_sec_context(&minor_status,
                                             gss_no_cred,
-                                            krb_ctx->gss_ctx,
+                                            &krb_ctx->gss_ctx,
                                             krb_ctx->target_name,
                                             desired_mech,
                                             GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG,
@@ -314,10 +312,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
-        (void) gss_release_buffer(&minor_status, &input_tok);
-
-        // phNewContext->SecureHandleSetLowerPointer(gss_ctx);
-        // phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
 
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -327,6 +321,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
         if (major_status & GSS_S_CONTINUE_NEEDED) {
             LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
+            (void) gss_release_buffer(&minor_status, &input_tok);
             return SEC_I_CONTINUE_NEEDED;
         }
         LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
@@ -395,7 +390,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         else {
             return SEC_E_INVALID_TOKEN;
         }
-	major_status = gss_wrap(&minor_status, *context->gss_ctx, true,
+	major_status = gss_wrap(&minor_status, context->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
         (void) major_status;
         // TODO check status
@@ -446,7 +441,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         else {
             return SEC_E_INVALID_TOKEN;
         }
-	major_status = gss_unwrap(&minor_status, *context->gss_ctx, &inbuf, &outbuf,
+	major_status = gss_unwrap(&minor_status, context->gss_ctx, &inbuf, &outbuf,
                                   &conf_state, &qop_state);
         (void) major_status;
         // TODO Check Status !!!
