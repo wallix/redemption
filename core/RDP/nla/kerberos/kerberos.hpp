@@ -117,16 +117,17 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                                 PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
-        Array * spn = (Array *) pvLogonID;
-        const char * p = pszPrincipal;
-        size_t length = 0;
-        if (p) {
-            length = strlen(p);
+        if (pszPrincipal && pvLogonID) {
+            Array * spn = (Array *) pvLogonID;
+            const char * p = pszPrincipal;
+            size_t length = 0;
+            if (p) {
+                length = strlen(p);
+            }
+            spn->init(length + 1);
+            spn->copy((const uint8_t *)pszPrincipal, length);
+            spn->get_data()[length] = 0;
         }
-        spn->init(length + 1);
-        spn->copy((const uint8_t *)pszPrincipal, length);
-        spn->get_data()[length] = 0;
-
         Krb5Creds * credentials = new Krb5Creds;
         phCredential->SecureHandleSetLowerPointer((void*) credentials);
         phCredential->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
