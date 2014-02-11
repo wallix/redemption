@@ -53,13 +53,11 @@ struct KERBEROSContext {
 
     virtual ~KERBEROSContext() {
         OM_uint32 major_status, minor_status;
-
         if (this->gss_ctx != GSS_C_NO_CONTEXT) {
             major_status = gss_delete_sec_context(&minor_status, &this->gss_ctx,
                                                   GSS_C_NO_BUFFER);
             (void) major_status;
         }
-        LOG(LOG_INFO, "DELETE KERBEROS CONTEXT");
     }
 };
 
@@ -145,7 +143,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         snprintf(cache, 255, "FILE:/tmp/krb_red_%d", pid);
         setenv("KRB5CCNAME", cache, 1);
         if (identity) {
-            int ret = credentials->get_credentials(identity->princname, identity->princpass, NULL);
+            int ret = credentials->get_credentials(identity->princname,
+                                                   identity->princpass, NULL);
             if (!ret) {
                 return SEC_E_OK;
             }
@@ -165,6 +164,8 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         credentials->destroy_credentials(NULL);
         delete credentials;
         credentials = NULL;
+
+        unsetenv("KRB5CCNAME");
 
         return SEC_E_OK;
     }
@@ -217,7 +218,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             krb_ctx = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
         }
         if (!krb_ctx) {
-            LOG(LOG_INFO, "Initialiaze Sec CTX: NO CONTEXT");
+            // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
             krb_ctx = new KERBEROSContext;
             if (!krb_ctx) {
                 return SEC_E_INSUFFICIENT_MEMORY;
@@ -232,9 +233,9 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                 return SEC_E_INVALID_TOKEN;
             }
         }
-        else {
-            LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
-        }
+        // else {
+        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
+        // }
 
 
         // Token Buffer
@@ -243,17 +244,18 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         if (pInput) {
             PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
             if (input_buffer) {
-                LOG(LOG_INFO, "GOT INPUT BUFFER: length %d", input_buffer->Buffer.size());
+                // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
+                //     input_buffer->Buffer.size());
                 input_tok.length = input_buffer->Buffer.size();
                 input_tok.value = input_buffer->Buffer.get_data();
             }
             else {
-                LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
+                // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
                 input_tok.length = 0;
             }
         }
         else {
-            LOG(LOG_INFO, "NO INPUT BUFFER DESC");
+            // LOG(LOG_INFO, "NO INPUT BUFFER DESC");
             input_tok.length = 0;
         }
 
@@ -301,7 +303,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
         PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
 
-        LOG(LOG_INFO, "output tok length : %d", output_tok.length);
+        // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         if (output_tok.length < 1) {
             output_buffer->Buffer.init(0);
         }
@@ -312,18 +314,12 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 
-        if (GSS_ERROR(major_status)) {
-            LOG(LOG_INFO, "MAJOR ERROR");
-            this->report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
-                               major_status, minor_status);
-            return SEC_E_INVALID_TOKEN;
-        }
         if (major_status & GSS_S_CONTINUE_NEEDED) {
-            LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
+            // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
             (void) gss_release_buffer(&minor_status, &input_tok);
             return SEC_I_CONTINUE_NEEDED;
         }
-        LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
+        // LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
         return SEC_I_COMPLETE_NEEDED;
     }
 
@@ -389,6 +385,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         else {
             return SEC_E_INVALID_TOKEN;
         }
+        // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
 	major_status = gss_wrap(&minor_status, context->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
         if (GSS_ERROR(major_status)) {
@@ -397,10 +394,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                major_status, minor_status);
             return SEC_E_INVALID_TOKEN;
         }
+        // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
+        data_buffer->Buffer.init(outbuf.length);
         data_buffer->Buffer.copy((const uint8_t *)outbuf.value, outbuf.length);
 	gss_release_buffer(&minor_status, &outbuf);
 
-        LOG(LOG_INFO, "GSS_WRAP Success");
         return SEC_E_OK;
     }
 
@@ -445,6 +443,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         else {
             return SEC_E_INVALID_TOKEN;
         }
+        // LOG(LOG_INFO, "GSS_UNWRAP inbuf length : %d", inbuf.length);
 	major_status = gss_unwrap(&minor_status, context->gss_ctx, &inbuf, &outbuf,
                                   &conf_state, &qop_state);
         if (GSS_ERROR(major_status)) {
@@ -453,10 +452,10 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                major_status, minor_status);
             return SEC_E_INVALID_TOKEN;
         }
+        // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
+        data_buffer->Buffer.init(outbuf.length);
         data_buffer->Buffer.copy((const uint8_t *)outbuf.value, outbuf.length);
 	gss_release_buffer(&minor_status, &outbuf);
-
-        LOG(LOG_INFO, "GSS_UNWRAP Success");
         return SEC_E_OK;
     }
 

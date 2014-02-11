@@ -225,8 +225,8 @@ struct rdpCredssp
             return status;
         }
 
-        this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
-
+        // this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
+        this->pubKeyAuth.init(Buffers[0].Buffer.size() + Buffers[1].Buffer.size());
         this->pubKeyAuth.copy(Buffers[0].Buffer.get_data(),
                               Buffers[0].Buffer.size());
         this->pubKeyAuth.copy(Buffers[1].Buffer.get_data(),
@@ -237,22 +237,18 @@ struct rdpCredssp
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
-        int length;
+        int length = 0;
         unsigned long pfQOP = 0;
-        uint8_t* public_key1;
-        uint8_t* public_key2;
-        int public_key_length;
+        uint8_t* public_key1 = NULL;
+        uint8_t* public_key2 = NULL;
+        unsigned int public_key_length = 0;
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
 
-        if (this->PublicKey.size() + this->ContextSizes.cbMaxSignature != this->pubKeyAuth.size()) {
+        if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
             LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%d\n",
                 (int) this->pubKeyAuth.size());
-            LOG(LOG_ERR, "size expected: %d = %d + %d\n",
-                this->PublicKey.size() + this->ContextSizes.cbMaxSignature,
-                this->PublicKey.size(), this->ContextSizes.cbMaxSignature);
-
             return SEC_E_INVALID_TOKEN;
         }
         length = this->pubKeyAuth.size();
@@ -284,17 +280,22 @@ struct rdpCredssp
         public_key1 = this->PublicKey.get_data();
         public_key2 = Buffers[1].Buffer.get_data();
 
+        if (Buffers[1].Buffer.size() != public_key_length) {
+            LOG(LOG_ERR, "Decrypted Pub Key length does not match !");
+            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+        }
+
         if (!this->server) {
             /* server echos the public key +1 */
             ap_integer_decrement_le(public_key2, public_key_length);
         }
         if (memcmp(public_key1, public_key2, public_key_length) != 0) {
-            LOG(LOG_ERR, "Could not verify server's public key echo\n");
+            LOG(LOG_ERR, "Could not verify server's public key echo");
 
-            LOG(LOG_ERR, "Expected (length = %d):\n", public_key_length);
+            LOG(LOG_ERR, "Expected (length = %d):", public_key_length);
             hexdump_c(public_key1, public_key_length);
 
-            LOG(LOG_ERR, "Actual (length = %d):\n", public_key_length);
+            LOG(LOG_ERR, "Actual (length = %d):", public_key_length);
             hexdump_c(public_key2, public_key_length);
 
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
@@ -351,7 +352,9 @@ struct rdpCredssp
         if (status != SEC_E_OK)
             return status;
 
-        this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
+        // this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
+        this->authInfo.init(Buffers[0].Buffer.size() + Buffers[1].Buffer.size());
+
         this->authInfo.copy(Buffers[0].Buffer.get_data(),
                             Buffers[0].Buffer.size());
         this->authInfo.copy(Buffers[1].Buffer.get_data(),

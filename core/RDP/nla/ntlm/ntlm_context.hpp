@@ -172,8 +172,9 @@ struct NTLMContext {
         this->Workstation.init(0);
         this->ServicePrincipalName.init(0);
 
-        if (this->NTLMv2)
+        if (this->NTLMv2) {
             this->UseMIC = true;
+        }
     }
 
     virtual ~NTLMContext() {
