@@ -211,17 +211,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
         gss_ctx_id_t gss_no_ctx = GSS_C_NO_CONTEXT;
-        // gss_ctx_id_t * gss_ctx = NULL;
-        // if (phContext) {
-        //     gss_ctx = (gss_ctx_id_t*) phContext->SecureHandleGetLowerPointer();
-        // }
-        // if (!gss_ctx) {
-        //     LOG(LOG_INFO, "Initialiaze Sec CTX: NO CONTEXT");
-        //     gss_ctx = &gss_no_ctx;
-        // }
-        // else {
-        //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
-        // }
         KERBEROSContext * krb_ctx = NULL;
         if (phContext) {
             krb_ctx = (KERBEROSContext*) phContext->SecureHandleGetLowerPointer();
@@ -267,9 +256,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             LOG(LOG_INFO, "NO INPUT BUFFER DESC");
             input_tok.length = 0;
         }
-	// OM_uint32 actual_services;
-	// OM_uint32 actual_time;
-	// gss_OID actual_mech;
+
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
             LOG(LOG_ERR, "Desired Mech unavailable");
@@ -304,19 +291,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                             &output_tok,
                                             &krb_ctx->actual_services,
                                             &krb_ctx->actual_time);
-
-        // major_status = gss_init_sec_context(&minor_status,
-        //                                     gss_no_cred,
-        //                                     gss_ctx,
-        //                                     target_name,
-        //                                     desired_mech,
-        //                                     GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG,
-        //                                     GSS_C_INDEFINITE,
-        //                                     GSS_C_NO_CHANNEL_BINDINGS,
-        //                                     &input_tok,
-        //                                     &actual_mech,
-        //                                     &output_tok,
-        //                                     &actual_services, &actual_time);
 
         if (GSS_ERROR(major_status)) {
             LOG(LOG_INFO, "MAJOR ERROR");
@@ -371,20 +345,11 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
-        // gss_ctx_id_t* toDelete = (gss_ctx_id_t*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
-        // OM_uint32 major_status, minor_status;
-        // if (!toDelete) {
-        //     gss_buffer_t output_token;
-        //     output_token = GSS_C_NO_BUFFER;
-        //     major_status = gss_delete_sec_context(&minor_status, toDelete, output_token);
-        //     (void) major_status;
-        // }
         KERBEROSContext* toDelete = (KERBEROSContext*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
-        if (!toDelete) {
+        if (toDelete) {
             delete toDelete;
             toDelete = NULL;
         }
-
         return SEC_E_OK;
     }
 
