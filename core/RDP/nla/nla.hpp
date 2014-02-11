@@ -36,6 +36,7 @@ struct rdpCredssp
     int recv_seq_num;
 
     CtxtHandle context;
+    CredHandle credentials;
 
     Array SspiModule;
 
@@ -83,6 +84,7 @@ struct rdpCredssp
     {
         if (this->table) {
             this->table->FreeContextBuffer(&this->context);
+            this->table->FreeCredentialsHandle(&this->credentials);
             delete this->table;
             this->table = NULL;
         }
@@ -475,18 +477,16 @@ struct rdpCredssp
         }
 
         unsigned long cbMaxToken = packageInfo.cbMaxToken;
-        CredHandle credentials;
         TimeStamp expiration;
 
         status = this->table->AcquireCredentialsHandle("10.10.47.128", NLA_PKG_NAME,
                                                        SECPKG_CRED_OUTBOUND,
                                                        &this->ServicePrincipalName,
                                                        &this->identity, NULL, NULL,
-                                                       &credentials, &expiration);
+                                                       &this->credentials, &expiration);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
-            this->table->FreeCredentialsHandle(&credentials);
             return 0;
         }
 
@@ -520,7 +520,7 @@ struct rdpCredssp
             output_buffer_desc.pBuffers = &output_buffer;
             output_buffer.BufferType = SECBUFFER_TOKEN;
             output_buffer.Buffer.init(cbMaxToken);
-            status = this->table->InitializeSecurityContext(&credentials,
+            status = this->table->InitializeSecurityContext(&this->credentials,
                                                             (have_context) ?
                                                             &this->context : NULL,
                                                             (char*)this->ServicePrincipalName.get_data(),
@@ -535,33 +535,31 @@ struct rdpCredssp
                                                             &expiration);
             if (status == SEC_E_INVALID_TOKEN) {
                 LOG(LOG_ERR, "Initialize Security Context Error !");
-                this->table->FreeCredentialsHandle(&credentials);
                 return -1;
             }
 
             if (have_input_buffer && (input_buffer.Buffer.size() > 0)) {
                 input_buffer.Buffer.init(0);
             }
+            SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
             if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
                 (status == SEC_I_COMPLETE_NEEDED) ||
                 (status == SEC_E_OK)) {
-
                 this->table->CompleteAuthToken(&this->context, &output_buffer_desc);
 
                 // have_pub_key_auth = true;
-
                 if (this->table->QueryContextAttributes(&this->context, SECPKG_ATTR_SIZES,
                                                         &this->ContextSizes) != SEC_E_OK) {
                     LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
                     return 0;
                 }
-
-                this->credssp_encrypt_public_key_echo();
-
-                if (status == SEC_I_COMPLETE_NEEDED)
+                encrypted = this->credssp_encrypt_public_key_echo();
+                if (status == SEC_I_COMPLETE_NEEDED) {
                     status = SEC_E_OK;
-                else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+                }
+                else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
                     status = SEC_I_CONTINUE_NEEDED;
+                }
             }
 
             /* send authentication token to server */
@@ -580,6 +578,11 @@ struct rdpCredssp
                 this->credssp_send();
                 this->credssp_buffer_free();
             }
+            else if (encrypted == SEC_E_OK) {
+                this->negoToken.init(0);
+                this->credssp_send();
+                this->credssp_buffer_free();
+            }
 
             if (status != SEC_I_CONTINUE_NEEDED)
                 break;
@@ -593,7 +596,6 @@ struct rdpCredssp
 
             if (this->credssp_recv() < 0) {
                 LOG(LOG_ERR, "NEGO Token Expected!");
-                this->table->FreeCredentialsHandle(&credentials);
                 return -1;
             }
             // #ifdef WITH_DEBUG_CREDSSP
@@ -612,7 +614,6 @@ struct rdpCredssp
         /* Encrypted Public Key +1 */
         if (this->credssp_recv() < 0) {
             LOG(LOG_ERR, "Encrypted Public Key Expected!");
-            this->table->FreeCredentialsHandle(&credentials);
             return -1;
         }
 
@@ -624,7 +625,6 @@ struct rdpCredssp
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "Could not verify public key echo!\n");
             this->credssp_buffer_free();
-            this->table->FreeCredentialsHandle(&credentials);
             return -1;
         }
 
@@ -634,16 +634,14 @@ struct rdpCredssp
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
-            this->table->FreeCredentialsHandle(&credentials);
             return 0;
         }
 
         this->credssp_send();
-        this->credssp_buffer_free();
 
         /* Free resources */
+        this->credssp_buffer_free();
 
-        this->table->FreeCredentialsHandle(&credentials);
 
         return 1;
     }
@@ -668,13 +666,12 @@ struct rdpCredssp
         }
 
         unsigned long cbMaxToken = packageInfo.cbMaxToken;
-        CredHandle credentials;
         TimeStamp expiration;
 
         status = this->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
                                                        SECPKG_CRED_INBOUND, NULL,
                                                        NULL, NULL, NULL,
-                                                       &credentials, &expiration);
+                                                       &this->credentials, &expiration);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
@@ -743,7 +740,7 @@ struct rdpCredssp
             output_buffer.BufferType = SECBUFFER_TOKEN;
             output_buffer.Buffer.init(cbMaxToken);
 
-            status = this->table->AcceptSecurityContext(&credentials,
+            status = this->table->AcceptSecurityContext(&this->credentials,
                                                         have_context? &this->context: NULL,
                                                         &input_buffer_desc, fContextReq,
                                                         SECURITY_NATIVE_DREP, &this->context,

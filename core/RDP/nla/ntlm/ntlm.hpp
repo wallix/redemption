@@ -142,12 +142,16 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-                                                 char* pszTargetName, unsigned long fContextReq,
+    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential,
+                                                 PCtxtHandle phContext,
+                                                 char* pszTargetName,
+                                                 unsigned long fContextReq,
                                                  unsigned long Reserved1,
                                                  unsigned long TargetDataRep,
-                                                 SecBufferDesc * pInput, unsigned long Reserved2,
-                                                 PCtxtHandle phNewContext, SecBufferDesc * pOutput,
+                                                 SecBufferDesc * pInput,
+                                                 unsigned long Reserved2,
+                                                 PCtxtHandle phNewContext,
+                                                 SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
         NTLMContext* context = NULL;

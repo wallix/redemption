@@ -246,7 +246,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                 LOG(LOG_INFO, "GOT INPUT BUFFER: length %d", input_buffer->Buffer.size());
                 input_tok.length = input_buffer->Buffer.size();
                 input_tok.value = input_buffer->Buffer.get_data();
-                hexdump_c((uint8_t *)input_tok.value, input_tok.length);
             }
             else {
                 LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
@@ -392,11 +391,16 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
 	major_status = gss_wrap(&minor_status, context->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
-        (void) major_status;
-        // TODO check status
+        if (GSS_ERROR(major_status)) {
+            LOG(LOG_INFO, "MAJOR ERROR");
+            this->report_error(GSS_C_GSS_CODE, "CredSSP: GSS WRAP failed.",
+                               major_status, minor_status);
+            return SEC_E_INVALID_TOKEN;
+        }
         data_buffer->Buffer.copy((const uint8_t *)outbuf.value, outbuf.length);
 	gss_release_buffer(&minor_status, &outbuf);
 
+        LOG(LOG_INFO, "GSS_WRAP Success");
         return SEC_E_OK;
     }
 
@@ -443,11 +447,16 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
 	major_status = gss_unwrap(&minor_status, context->gss_ctx, &inbuf, &outbuf,
                                   &conf_state, &qop_state);
-        (void) major_status;
-        // TODO Check Status !!!
+        if (GSS_ERROR(major_status)) {
+            LOG(LOG_INFO, "MAJOR ERROR");
+            this->report_error(GSS_C_GSS_CODE, "CredSSP: GSS UNWRAP failed.",
+                               major_status, minor_status);
+            return SEC_E_INVALID_TOKEN;
+        }
         data_buffer->Buffer.copy((const uint8_t *)outbuf.value, outbuf.length);
 	gss_release_buffer(&minor_status, &outbuf);
 
+        LOG(LOG_INFO, "GSS_UNWRAP Success");
         return SEC_E_OK;
     }
 
