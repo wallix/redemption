@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestNego)
     uint8_t domain[] = "Ithaque";
     uint8_t pass[] = "Pénélope";
     uint8_t host[] = "Télémaque";
-    RdpNego nego(true, &logtrans, "test", true, "127.0.0.1");
+    RdpNego nego(true, &logtrans, "test", true, "127.0.0.1", false);
     nego.test = true;
     nego.set_identity(user, domain, pass, host);
     nego.server_event(true);
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestNego2)
 /* 0010 */ "\x00\x00\x00"                                                     //...
         ;
     TestTransport logtrans("test", client, sizeof(client), server, sizeof(server));
-    RdpNego nego(true, &logtrans, "test", true, "127.0.0.1");
+    RdpNego nego(true, &logtrans, "test", true, "127.0.0.1", false);
     ClientInfo client_info(0, true, true);
     nego.recv_resquest(NULL, client_info, true, true);
 }

@@ -181,6 +181,7 @@ int main(int argc, char * argv[]) {
                     front,
                     true,               // tls
                     true,               // nla
+                    false,              // kerberos
                     client_info,
                     &gen,
                     front.keymap.key_flags,

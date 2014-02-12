@@ -133,6 +133,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         front,
         tls,
         false,      // nla
+        false,      // krb
         info,
         &gen,
         7,

@@ -282,7 +282,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
                                             &krb_ctx->gss_ctx,
                                             krb_ctx->target_name,
                                             desired_mech,
-                                            GSS_C_MUTUAL_FLAG | GSS_C_DELEG_FLAG,
+                                            GSS_C_MUTUAL_FLAG,
                                             GSS_C_INDEFINITE,
                                             GSS_C_NO_CHANNEL_BINDINGS,
                                             &input_tok,

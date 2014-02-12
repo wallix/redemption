@@ -44,6 +44,7 @@ struct RdpNego
     uint32_t flags;
     bool tls;
     bool nla;
+    bool krb;
 //    char* hostname;
 //    char* cookie;
 
@@ -80,10 +81,11 @@ struct RdpNego
     bool test;
 
     RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla,
-            const char * target_device)
+            const char * target_device, const char krb)
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
+    , krb(nla && krb)
     , state(NEGO_STATE_INITIAL)
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
@@ -105,9 +107,9 @@ struct RdpNego
         this->username[127] = 0;
 
         memset(this->hostname, 0, sizeof(this->hostname));
-        memset(this->user, 0, sizeof(this->user));
+        memset(this->user,     0, sizeof(this->user));
         memset(this->password, 0, sizeof(this->password));
-        memset(this->domain, 0, sizeof(this->domain));
+        memset(this->domain,   0, sizeof(this->domain));
     }
 
     virtual ~RdpNego() {
@@ -289,7 +291,7 @@ struct RdpNego
                 LOG(LOG_INFO, "activating CREDSSP");
                 rdpCredssp credssp(*this->trans, this->user,
                                    this->domain, this->password,
-                                   this->hostname, this->target_device);
+                                   this->hostname, this->target_device, this->krb);
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }

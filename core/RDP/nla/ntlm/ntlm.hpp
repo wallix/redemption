@@ -426,7 +426,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
-        hmac_md5.update((uint8_t*) &(SeqNo), 4);
+        hmac_md5.update((uint8_t*) &SeqNo, 4);
         hmac_md5.update(data, length);
         hmac_md5.final(digest, sizeof(digest));
 
@@ -467,9 +467,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         signature = signature_buffer->Buffer.get_data();
 
         /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(signature, (void*) & version, 4);
+        memcpy(signature, (void*) &version, 4);
         memcpy(&signature[4], checksum, 8);
-        memcpy(&signature[12], (void*) &(SeqNo), 4);
+        memcpy(&signature[12], (void*) &SeqNo, 4);
         context->SendSeqNum++;
 
 // #ifdef WITH_DEBUG_NTLM
@@ -536,7 +536,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(context->RecvSigningKey, 16);
-        hmac_md5.update((uint8_t*) &(SeqNo), 4);
+        hmac_md5.update((uint8_t*) &SeqNo, 4);
         hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
         hmac_md5.final(digest, sizeof(digest));
 
@@ -567,7 +567,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         /* Concatenate version, ciphertext and sequence number to build signature */
         memcpy(expected_signature, (void*) &version, 4);
         memcpy(&expected_signature[4], checksum, 8);
-        memcpy(&expected_signature[12], (void*) &(SeqNo), 4);
+        memcpy(&expected_signature[12], (void*) &SeqNo, 4);
         context->RecvSeqNum++;
 
         if (memcmp(signature_buffer->Buffer.get_data(), expected_signature, 16) != 0) {

@@ -186,6 +186,7 @@ struct mod_rdp : public mod_api {
            , struct FrontAPI & front
            , const bool enable_tls
            , const bool enable_nla
+           , const bool enable_krb
            , const ClientInfo & info
            , Random * gen
            , int key_flags
@@ -233,7 +234,7 @@ struct mod_rdp : public mod_api {
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
         , acl(acl)
-        , nego(enable_tls, trans, target_user, enable_nla, target_device)
+        , nego(enable_tls, trans, target_user, enable_nla, target_device, enable_krb)
         , enable_bitmap_update(enable_bitmap_update)
         , enable_clipboard(enable_clipboard)
         , enable_fastpath(enable_fastpath)

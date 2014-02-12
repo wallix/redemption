@@ -681,6 +681,7 @@ public:
                         this->front,
                         true,                                  // tls
                         this->ini.mod_rdp.enable_nla,          // nla
+                        this->ini.mod_rdp.enable_kerberos,     // kerberos
                         client_info,
                         &gen,
                         this->front.keymap.key_flags,

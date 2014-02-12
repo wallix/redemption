@@ -66,7 +66,8 @@ struct rdpCredssp
                uint8_t * domain,
                uint8_t * pass,
                uint8_t * hostname,
-               const char * target_device)
+               const char * target_device,
+               const bool krb)
         : send_seq_num(0)
         , recv_seq_num(0)
         , trans(transport)
@@ -75,12 +76,12 @@ struct rdpCredssp
         , authInfo(ts_request.authInfo)
         , table(new SecurityFunctionTable)
         , RestrictedAdminMode(false)
+        , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_device(target_device)
         , hardcodedtests(false)
     {
         this->SspiModule.init(0);
         this->set_credentials(user, domain, pass, hostname);
-        this->sec_interface = NTLM_Interface;
     }
 
     ~rdpCredssp()
@@ -120,6 +121,8 @@ struct rdpCredssp
 
     void InitSecurityInterface(SecInterface secInter) {
         if (this->table) {
+            this->table->FreeContextBuffer(&this->context);
+            this->table->FreeCredentialsHandle(&this->credentials);
             delete this->table;
             this->table = NULL;
         }
@@ -471,28 +474,41 @@ struct rdpCredssp
         if (this->credssp_ntlm_client_init() == 0) {
             return 0;
         }
-        this->InitSecurityInterface(this->sec_interface);
-
+        TimeStamp expiration;
         SecPkgInfo packageInfo;
-        if (this->table == NULL) {
-            LOG(LOG_ERR, "Could not Initiate %s Security Interface!", NTLM_Interface);
-            return 0;
-        }
-        status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
+        bool interface_changed = false;
+        do {
+            interface_changed = false;
+            this->InitSecurityInterface(this->sec_interface);
 
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
-            return 0;
-        }
+            if (this->table == NULL) {
+                LOG(LOG_ERR, "Could not Initiate %s Security Interface!", this->sec_interface);
+                return 0;
+            }
+            status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
+
+            if (status != SEC_E_OK) {
+                LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+                return 0;
+            }
+
+
+            status = this->table->AcquireCredentialsHandle(this->target_device,
+                                                           NLA_PKG_NAME,
+                                                           SECPKG_CRED_OUTBOUND,
+                                                           &this->ServicePrincipalName,
+                                                           &this->identity, NULL, NULL,
+                                                           &this->credentials, &expiration);
+            if (status == SEC_E_NO_CREDENTIALS) {
+                if (this->sec_interface != NTLM_Interface) {
+                    this->sec_interface = NTLM_Interface;
+                    interface_changed = true;
+                    LOG(LOG_INFO, "Credssp: No Kerberos Credentials, fallback to NTLM");
+                }
+            }
+        } while (interface_changed);
 
         unsigned long cbMaxToken = packageInfo.cbMaxToken;
-        TimeStamp expiration;
-
-        status = this->table->AcquireCredentialsHandle(this->target_device, NLA_PKG_NAME,
-                                                       SECPKG_CRED_OUTBOUND,
-                                                       &this->ServicePrincipalName,
-                                                       &this->identity, NULL, NULL,
-                                                       &this->credentials, &expiration);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);

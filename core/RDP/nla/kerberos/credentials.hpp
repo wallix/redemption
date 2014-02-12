@@ -84,7 +84,7 @@ public:
                                            (char*)password, NULL, NULL, 0, NULL, NULL);
 
         if (ret) {
-            LOG(LOG_ERR, "ERREUR Init creds password %s", password);
+            LOG(LOG_INFO, "Init creds password failed: Wrong password or no such user");
             goto cleanup;
         }
         // ret = krb5_verify_init_creds(this->ctx, &creds, NULL, NULL, NULL, NULL);

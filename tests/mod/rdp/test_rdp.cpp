@@ -103,6 +103,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
             front,
             false,      // tls
             false,      // nla
+            false,      // krb
             info,
             &gen,
             7,          // key flags
@@ -194,6 +195,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         front,
         false,      // tls
         false,      // nla
+        false,      // krb
         info,
         &gen,
         2,          // key flags
@@ -275,6 +277,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         front,
         false,      // tls
         false,      // nla
+        false,      // krb
         info,
         &gen,
         2,          // key flags
@@ -364,6 +367,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         front,
         false,      // tls
         false,      // nla
+        false,      // krb
         info,
         &gen,
         2,          // key flags
