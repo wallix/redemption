@@ -44,6 +44,7 @@ struct RdpNego
     uint32_t flags;
     bool tls;
     bool nla;
+    bool krb;
 //    char* hostname;
 //    char* cookie;
 
@@ -74,18 +75,22 @@ struct RdpNego
     uint8_t user[128];
     uint8_t password[256];
     uint8_t domain[256];
+    const char * target_device;
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool test;
 
-    RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla)
+    RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla,
+            const char * target_device, const char krb)
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
+    , krb(nla && krb)
     , state(NEGO_STATE_INITIAL)
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
     , trans(socket_trans)
+    , target_device(target_device)
     , test(false)
     {
         if (this->tls){
@@ -102,9 +107,9 @@ struct RdpNego
         this->username[127] = 0;
 
         memset(this->hostname, 0, sizeof(this->hostname));
-        memset(this->user, 0, sizeof(this->user));
+        memset(this->user,     0, sizeof(this->user));
         memset(this->password, 0, sizeof(this->password));
-        memset(this->domain, 0, sizeof(this->domain));
+        memset(this->domain,   0, sizeof(this->domain));
     }
 
     virtual ~RdpNego() {
@@ -284,13 +289,19 @@ struct RdpNego
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_client_tls(ignore_certificate_change);
                 LOG(LOG_INFO, "activating CREDSSP");
-                rdpCredssp credssp(*this->trans,
-                                   this->user, this->domain, this->password, this->hostname);
+                rdpCredssp credssp(*this->trans, this->user,
+                                   this->domain, this->password,
+                                   this->hostname, this->target_device, this->krb);
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }
+                // LOG(LOG_INFO, "CREDSSP: Domain %s", this->domain);
+                // if (!memcmp(this->domain, "RED", 3)) {
+                //     credssp.sec_interface = Kerberos_Interface;
+                // }
                 int res = credssp.credssp_client_authenticate();
                 if (res != 1) {
+                    LOG(LOG_ERR, "NLA/CREDSSP Authentication Failed");
                     throw Error(ERR_SOCKET_CONNECT_FAILED);
                 }
                 this->state = NEGO_STATE_FINAL;

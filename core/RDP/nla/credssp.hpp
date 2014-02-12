@@ -169,6 +169,7 @@ struct TSRequest {
 
         /* [1] negoTokens (NegoData) */
 	if (nego_tokens_length > 0) {
+            LOG(LOG_INFO, "Credssp: TSCredentials::emit() NegoToken");
             length = nego_tokens_length;
 
             int sequence_length   = BER::sizeof_sequence_octet_string(this->negoTokens.size());
@@ -187,6 +188,7 @@ struct TSRequest {
 
         /* [2] authInfo (OCTET STRING) */
 	if (auth_info_length > 0) {
+            LOG(LOG_INFO, "Credssp: TSCredentials::emit() AuthInfo");
             length = auth_info_length;
             length -= BER::write_sequence_octet_string(stream, 2,
                                                        this->authInfo.get_data(),
@@ -196,6 +198,7 @@ struct TSRequest {
 
         /* [3] pubKeyAuth (OCTET STRING) */
         if (pub_key_auth_length > 0) {
+            LOG(LOG_INFO, "Credssp: TSCredentials::emit() pubKeyAuth");
             length = pub_key_auth_length;
             length -= BER::write_sequence_octet_string(stream, 3,
                                                        this->pubKeyAuth.get_data(),
@@ -214,7 +217,7 @@ struct TSRequest {
         status = stream.size();
 
         if (status < 0) {
-            LOG(LOG_ERR, "Credssp TSCredentials::recv() error: %d\n" , status);
+            LOG(LOG_ERR, "Credssp TSCredentials::recv() error: %d" , status);
             return -1;
         }
 
@@ -227,7 +230,7 @@ struct TSRequest {
 
         /* [1] negoTokens (NegoData) */
 	if (BER::read_contextual_tag(stream, 1, length, true) != false)	{
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS\n");
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() NEGOTOKENS");
 
             if (!BER::read_sequence_tag(stream, length) || /* SEQUENCE OF NegoDataItem */
                 !BER::read_sequence_tag(stream, length) || /* NegoDataItem */
@@ -243,7 +246,7 @@ struct TSRequest {
 
 	/* [2] authInfo (OCTET STRING) */
 	if (BER::read_contextual_tag(stream, 2, length, true) != false) {
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO\n");
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() AUTHINFO");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;
@@ -255,7 +258,7 @@ struct TSRequest {
 
 	/* [3] pubKeyAuth (OCTET STRING) */
 	if (BER::read_contextual_tag(stream, 3, length, true) != false)	{
-            LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH\n");
+            LOG(LOG_INFO, "Credssp TSCredentials::recv() PUBKEYAUTH");
             if(!BER::read_octet_string_tag(stream, length) || /* OCTET STRING */
                !stream.in_check_rem(length)) {
                 return -1;

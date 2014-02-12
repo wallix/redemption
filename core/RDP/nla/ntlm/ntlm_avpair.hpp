@@ -131,9 +131,11 @@ struct NtlmAvPair {
         , AvLen(length)
         , Value(BStream(length))
     {
-        this->Value.out_copy_bytes(value, length);
-        this->Value.mark_end();
-        this->Value.rewind();
+        if (value) {
+            this->Value.out_copy_bytes(value, length);
+            this->Value.mark_end();
+            this->Value.rewind();
+        }
     }
 
     void emit(Stream & stream) {

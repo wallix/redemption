@@ -142,12 +142,16 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-                                                 char* pszTargetName, unsigned long fContextReq,
+    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential,
+                                                 PCtxtHandle phContext,
+                                                 char* pszTargetName,
+                                                 unsigned long fContextReq,
                                                  unsigned long Reserved1,
                                                  unsigned long TargetDataRep,
-                                                 SecBufferDesc * pInput, unsigned long Reserved2,
-                                                 PCtxtHandle phNewContext, SecBufferDesc * pOutput,
+                                                 SecBufferDesc * pInput,
+                                                 unsigned long Reserved2,
+                                                 PCtxtHandle phNewContext,
+                                                 SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
         NTLMContext* context = NULL;
@@ -369,7 +373,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     virtual SEC_STATUS FreeContextBuffer(void* pvContextBuffer) {
         NTLMContext * toDelete = (NTLMContext*) ((PSecHandle)pvContextBuffer)->SecureHandleGetLowerPointer();
-        if (!toDelete) {
+        if (toDelete) {
             delete toDelete;
             toDelete = NULL;
         }
@@ -422,7 +426,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(context->SendSigningKey, 16);
-        hmac_md5.update((uint8_t*) &(SeqNo), 4);
+        hmac_md5.update((uint8_t*) &SeqNo, 4);
         hmac_md5.update(data, length);
         hmac_md5.final(digest, sizeof(digest));
 
@@ -463,9 +467,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         signature = signature_buffer->Buffer.get_data();
 
         /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(signature, (void*) & version, 4);
+        memcpy(signature, (void*) &version, 4);
         memcpy(&signature[4], checksum, 8);
-        memcpy(&signature[12], (void*) &(SeqNo), 4);
+        memcpy(&signature[12], (void*) &SeqNo, 4);
         context->SendSeqNum++;
 
 // #ifdef WITH_DEBUG_NTLM
@@ -481,10 +485,10 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     // DECRYPT_MESSAGE DecryptMessage;
     virtual SEC_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) {
-        int index;
-        int length;
-        uint8_t* data;
-        uint32_t SeqNo;
+        int index = 0;
+        int length = 0;
+        uint8_t* data = NULL;
+        uint32_t SeqNo = 0;
         uint8_t digest[16] = {};
         uint8_t checksum[8] = {};
         uint32_t version = 1;
@@ -532,7 +536,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(context->RecvSigningKey, 16);
-        hmac_md5.update((uint8_t*) &(SeqNo), 4);
+        hmac_md5.update((uint8_t*) &SeqNo, 4);
         hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
         hmac_md5.final(digest, sizeof(digest));
 
@@ -563,7 +567,7 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
         /* Concatenate version, ciphertext and sequence number to build signature */
         memcpy(expected_signature, (void*) &version, 4);
         memcpy(&expected_signature[4], checksum, 8);
-        memcpy(&expected_signature[12], (void*) &(SeqNo), 4);
+        memcpy(&expected_signature[12], (void*) &SeqNo, 4);
         context->RecvSeqNum++;
 
         if (memcmp(signature_buffer->Buffer.get_data(), expected_signature, 16) != 0) {

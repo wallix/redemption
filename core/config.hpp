@@ -562,6 +562,7 @@ struct Inifile : public FieldObserver {
         redemption::string extra_orders;
 
         bool enable_nla;
+        bool enable_kerberos;
     } mod_rdp;
 
     struct
@@ -891,6 +892,7 @@ public:
         this->mod_rdp.rdp_compression                   = 0;
         this->mod_rdp.disconnect_on_logon_user_change   = false;
         this->mod_rdp.enable_nla                        = true;
+        this->mod_rdp.enable_kerberos                   = false;
         this->mod_rdp.open_session_timeout              = 0;
         this->mod_rdp.certificate_change_action         = 0;
 
@@ -1337,6 +1339,9 @@ public:
             }
             else if (0 == strcmp(key, "enable_nla")) {
                 this->mod_rdp.enable_nla = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "enable_kerberos")) {
+                this->mod_rdp.enable_kerberos = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

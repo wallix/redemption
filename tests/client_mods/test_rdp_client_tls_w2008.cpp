@@ -97,10 +97,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         &t,
         "administrateur@qa",
         "S3cur3!1nux",
+        "192.168.1.50",
         "192.168.1.100",
         front,
         tls,
         false,      // nla
+        false,      // krb
         info,
         &gen,
         7,

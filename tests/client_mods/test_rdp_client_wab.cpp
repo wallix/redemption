@@ -128,10 +128,12 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         &t,
         "x",
         "x",
+        "10.10.47.32",
         "192.168.1.100",
         front,
         tls,
         false,      // nla
+        false,      // krb
         info,
         &gen,
         7,

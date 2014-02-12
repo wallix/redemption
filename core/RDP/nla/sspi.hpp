@@ -133,6 +133,8 @@ enum SecIdFlag {
 
 struct SEC_WINNT_AUTH_IDENTITY
 {
+    char princname[256];
+    char princpass[256];
     Array User;
     Array Domain;
     Array Password;
@@ -170,6 +172,33 @@ struct SEC_WINNT_AUTH_IDENTITY
             this->Password.init(0);
 	}
     }
+    void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass) {
+        if (user) {
+            const char * p = (char *)user;
+            size_t length = 0;
+            if (p) {
+                length = strlen(p);
+                if (length > 256) {
+                    length = 255;
+                }
+            }
+            memcpy(this->princname, user, length);
+            this->princname[length] = 0;
+        }
+        if (pass) {
+            const char * p = (char *)pass;
+            size_t length = 0;
+            if (p) {
+                length = strlen(p);
+                if (length > 256) {
+                    length = 255;
+                }
+            }
+            memcpy(this->princpass, pass, length);
+            this->princpass[length] = 0;
+        }
+    }
+
     void SetAuthIdentityFromUtf8(const uint8_t * user, const uint8_t * domain,
                                  const uint8_t * password) {
         this->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;

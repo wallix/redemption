@@ -176,10 +176,12 @@ int main(int argc, char * argv[]) {
         mod_rdp mod(&mod_trans,
                     username.c_str(),
                     password.c_str(),
+                    target_device.c_str(),
                     "0.0.0.0",
                     front,
                     true,               // tls
                     true,               // nla
+                    false,              // kerberos
                     client_info,
                     &gen,
                     front.keymap.key_flags,

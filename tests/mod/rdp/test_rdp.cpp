@@ -98,10 +98,12 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
             &t,
             "xavier",
             "SecureLinux",
+            "10.10.47.175",
             "10.10.9.161",
             front,
             false,      // tls
             false,      // nla
+            false,      // krb
             info,
             &gen,
             7,          // key flags
@@ -188,10 +190,12 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         &t,
         "administrateur@qa",
         "S3cur3!1nux",
+        "10.10.46.78",
         "10.10.9.161",
         front,
         false,      // tls
         false,      // nla
+        false,      // krb
         info,
         &gen,
         2,          // key flags
@@ -268,10 +272,12 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         &t,
         "administrateur",
         "SecureLinux",
+        "10.10.47.205",
         "0.0.0.0",
         front,
         false,      // tls
         false,      // nla
+        false,      // krb
         info,
         &gen,
         2,          // key flags
@@ -356,10 +362,12 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         &t,
         "administrateur",
         "SecureLinux",
+        "10.10.47.39",
         "0.0.0.0",
         front,
         false,      // tls
         false,      // nla
+        false,      // krb
         info,
         &gen,
         2,          // key flags

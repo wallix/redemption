@@ -24,7 +24,7 @@
 #include "RDP/nla/sspi.hpp"
 #include "RDP/nla/credssp.hpp"
 #include "RDP/nla/ntlm/ntlm.hpp"
-
+#include "RDP/nla/kerberos/kerberos.hpp"
 #include "transport.hpp"
 
 #define NLA_PKG_NAME NTLMSP_NAME
@@ -36,6 +36,7 @@ struct rdpCredssp
     int recv_seq_num;
 
     CtxtHandle context;
+    CredHandle credentials;
 
     Array SspiModule;
 
@@ -53,6 +54,9 @@ struct rdpCredssp
     PSecurityFunctionTable table;
     SecPkgContext_Sizes ContextSizes;
     bool RestrictedAdminMode;
+    SecInterface sec_interface;
+
+    const char * target_device;
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool hardcodedtests;
@@ -61,7 +65,9 @@ struct rdpCredssp
                uint8_t * user,
                uint8_t * domain,
                uint8_t * pass,
-               uint8_t * hostname)
+               uint8_t * hostname,
+               const char * target_device,
+               const bool krb)
         : send_seq_num(0)
         , recv_seq_num(0)
         , trans(transport)
@@ -70,23 +76,26 @@ struct rdpCredssp
         , authInfo(ts_request.authInfo)
         , table(new SecurityFunctionTable)
         , RestrictedAdminMode(false)
+        , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
+        , target_device(target_device)
         , hardcodedtests(false)
     {
         this->SspiModule.init(0);
         this->set_credentials(user, domain, pass, hostname);
-
     }
 
     ~rdpCredssp()
     {
         if (this->table) {
             this->table->FreeContextBuffer(&this->context);
+            this->table->FreeCredentialsHandle(&this->credentials);
             delete this->table;
             this->table = NULL;
         }
     }
 
-    void set_credentials(uint8_t * user, uint8_t * domain, uint8_t * pass, uint8_t * hostname) {
+    void set_credentials(uint8_t * user, uint8_t * domain,
+                         uint8_t * pass, uint8_t * hostname) {
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
@@ -95,7 +104,7 @@ struct rdpCredssp
         // hexdump_c(domain, strlen((char*)domain));
         // hexdump_c(pass, strlen((char*)pass));
         // hexdump_c(hostname, strlen((char*)hostname));
-
+        this->identity.SetKrbAuthIdentity(user, pass);
     }
 
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
@@ -112,11 +121,18 @@ struct rdpCredssp
 
     void InitSecurityInterface(SecInterface secInter) {
         if (this->table) {
+            this->table->FreeContextBuffer(&this->context);
+            this->table->FreeCredentialsHandle(&this->credentials);
             delete this->table;
             this->table = NULL;
         }
         if (secInter == NTLM_Interface) {
+            LOG(LOG_INFO, "Credssp: NTLM Authentication");
             this->table = new Ntlm_SecurityFunctionTable;
+        }
+        if (secInter == Kerberos_Interface) {
+            LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
+            this->table = new Kerberos_SecurityFunctionTable;
         }
         else if (this->table == NULL) {
             this->table = new SecurityFunctionTable;
@@ -218,8 +234,8 @@ struct rdpCredssp
             return status;
         }
 
-        this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
-
+        // this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
+        this->pubKeyAuth.init(Buffers[0].Buffer.size() + Buffers[1].Buffer.size());
         this->pubKeyAuth.copy(Buffers[0].Buffer.get_data(),
                               Buffers[0].Buffer.size());
         this->pubKeyAuth.copy(Buffers[1].Buffer.get_data(),
@@ -230,22 +246,18 @@ struct rdpCredssp
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
-        int length;
+        int length = 0;
         unsigned long pfQOP = 0;
-        uint8_t* public_key1;
-        uint8_t* public_key2;
-        int public_key_length;
+        uint8_t* public_key1 = NULL;
+        uint8_t* public_key2 = NULL;
+        unsigned int public_key_length = 0;
         SecBuffer Buffers[2];
         SecBufferDesc Message;
         SEC_STATUS status;
 
-        if (this->PublicKey.size() + this->ContextSizes.cbMaxSignature != this->pubKeyAuth.size()) {
+        if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
             LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%d\n",
                 (int) this->pubKeyAuth.size());
-            LOG(LOG_ERR, "size expected: %d = %d + %d\n",
-                this->PublicKey.size() + this->ContextSizes.cbMaxSignature,
-                this->PublicKey.size(), this->ContextSizes.cbMaxSignature);
-
             return SEC_E_INVALID_TOKEN;
         }
         length = this->pubKeyAuth.size();
@@ -277,17 +289,22 @@ struct rdpCredssp
         public_key1 = this->PublicKey.get_data();
         public_key2 = Buffers[1].Buffer.get_data();
 
+        if (Buffers[1].Buffer.size() != public_key_length) {
+            LOG(LOG_ERR, "Decrypted Pub Key length does not match !");
+            return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
+        }
+
         if (!this->server) {
             /* server echos the public key +1 */
             ap_integer_decrement_le(public_key2, public_key_length);
         }
         if (memcmp(public_key1, public_key2, public_key_length) != 0) {
-            LOG(LOG_ERR, "Could not verify server's public key echo\n");
+            LOG(LOG_ERR, "Could not verify server's public key echo");
 
-            LOG(LOG_ERR, "Expected (length = %d):\n", public_key_length);
+            LOG(LOG_ERR, "Expected (length = %d):", public_key_length);
             hexdump_c(public_key1, public_key_length);
 
-            LOG(LOG_ERR, "Actual (length = %d):\n", public_key_length);
+            LOG(LOG_ERR, "Actual (length = %d):", public_key_length);
             hexdump_c(public_key2, public_key_length);
 
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
@@ -344,7 +361,9 @@ struct rdpCredssp
         if (status != SEC_E_OK)
             return status;
 
-        this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
+        // this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
+        this->authInfo.init(Buffers[0].Buffer.size() + Buffers[1].Buffer.size());
+
         this->authInfo.copy(Buffers[0].Buffer.get_data(),
                             Buffers[0].Buffer.size());
         this->authInfo.copy(Buffers[1].Buffer.get_data(),
@@ -455,32 +474,44 @@ struct rdpCredssp
         if (this->credssp_ntlm_client_init() == 0) {
             return 0;
         }
-        this->InitSecurityInterface(NTLM_Interface);
-
+        TimeStamp expiration;
         SecPkgInfo packageInfo;
-        if (this->table == NULL) {
-            LOG(LOG_ERR, "Could not Initiate %s Security Interface!", NTLM_Interface);
-            return 0;
-        }
-        status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
+        bool interface_changed = false;
+        do {
+            interface_changed = false;
+            this->InitSecurityInterface(this->sec_interface);
 
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
-            return 0;
-        }
+            if (this->table == NULL) {
+                LOG(LOG_ERR, "Could not Initiate %s Security Interface!", this->sec_interface);
+                return 0;
+            }
+            status = this->table->QuerySecurityPackageInfo(NLA_PKG_NAME, &packageInfo);
+
+            if (status != SEC_E_OK) {
+                LOG(LOG_ERR, "QuerySecurityPackageInfo status: 0x%08X\n", status);
+                return 0;
+            }
+
+
+            status = this->table->AcquireCredentialsHandle(this->target_device,
+                                                           NLA_PKG_NAME,
+                                                           SECPKG_CRED_OUTBOUND,
+                                                           &this->ServicePrincipalName,
+                                                           &this->identity, NULL, NULL,
+                                                           &this->credentials, &expiration);
+            if (status == SEC_E_NO_CREDENTIALS) {
+                if (this->sec_interface != NTLM_Interface) {
+                    this->sec_interface = NTLM_Interface;
+                    interface_changed = true;
+                    LOG(LOG_INFO, "Credssp: No Kerberos Credentials, fallback to NTLM");
+                }
+            }
+        } while (interface_changed);
 
         unsigned long cbMaxToken = packageInfo.cbMaxToken;
-        CredHandle credentials;
-        TimeStamp expiration;
-
-        status = this->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
-                                                       SECPKG_CRED_OUTBOUND, NULL,
-                                                       &this->identity, NULL, NULL,
-                                                       &credentials, &expiration);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
-            this->table->FreeCredentialsHandle(&credentials);
             return 0;
         }
 
@@ -514,43 +545,46 @@ struct rdpCredssp
             output_buffer_desc.pBuffers = &output_buffer;
             output_buffer.BufferType = SECBUFFER_TOKEN;
             output_buffer.Buffer.init(cbMaxToken);
-
-            status = this->table->InitializeSecurityContext(&credentials,
+            status = this->table->InitializeSecurityContext(&this->credentials,
                                                             (have_context) ?
                                                             &this->context : NULL,
-                                                            (char*) this->ServicePrincipalName.get_data(),
-                                                            fContextReq, this->hardcodedtests?1:0,
+                                                            (char*)this->ServicePrincipalName.get_data(),
+                                                            fContextReq,
+                                                            this->hardcodedtests?1:0,
                                                             SECURITY_NATIVE_DREP,
                                                             (have_input_buffer) ?
                                                             &input_buffer_desc : NULL,
                                                             0, &this->context,
-                                                            &output_buffer_desc, &pfContextAttr,
+                                                            &output_buffer_desc,
+                                                            &pfContextAttr,
                                                             &expiration);
+            if (status == SEC_E_INVALID_TOKEN) {
+                LOG(LOG_ERR, "Initialize Security Context Error !");
+                return -1;
+            }
 
             if (have_input_buffer && (input_buffer.Buffer.size() > 0)) {
                 input_buffer.Buffer.init(0);
             }
-
+            SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
             if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
                 (status == SEC_I_COMPLETE_NEEDED) ||
                 (status == SEC_E_OK)) {
-
                 this->table->CompleteAuthToken(&this->context, &output_buffer_desc);
 
                 // have_pub_key_auth = true;
-
                 if (this->table->QueryContextAttributes(&this->context, SECPKG_ATTR_SIZES,
                                                         &this->ContextSizes) != SEC_E_OK) {
                     LOG(LOG_ERR, "QueryContextAttributes SECPKG_ATTR_SIZES failure\n");
                     return 0;
                 }
-
-                this->credssp_encrypt_public_key_echo();
-
-                if (status == SEC_I_COMPLETE_NEEDED)
+                encrypted = this->credssp_encrypt_public_key_echo();
+                if (status == SEC_I_COMPLETE_NEEDED) {
                     status = SEC_E_OK;
-                else if (status == SEC_I_COMPLETE_AND_CONTINUE)
+                }
+                else if (status == SEC_I_COMPLETE_AND_CONTINUE) {
                     status = SEC_I_CONTINUE_NEEDED;
+                }
             }
 
             /* send authentication token to server */
@@ -569,6 +603,11 @@ struct rdpCredssp
                 this->credssp_send();
                 this->credssp_buffer_free();
             }
+            else if (encrypted == SEC_E_OK) {
+                this->negoToken.init(0);
+                this->credssp_send();
+                this->credssp_buffer_free();
+            }
 
             if (status != SEC_I_CONTINUE_NEEDED)
                 break;
@@ -582,7 +621,6 @@ struct rdpCredssp
 
             if (this->credssp_recv() < 0) {
                 LOG(LOG_ERR, "NEGO Token Expected!");
-                this->table->FreeCredentialsHandle(&credentials);
                 return -1;
             }
             // #ifdef WITH_DEBUG_CREDSSP
@@ -601,7 +639,6 @@ struct rdpCredssp
         /* Encrypted Public Key +1 */
         if (this->credssp_recv() < 0) {
             LOG(LOG_ERR, "Encrypted Public Key Expected!");
-            this->table->FreeCredentialsHandle(&credentials);
             return -1;
         }
 
@@ -613,7 +650,6 @@ struct rdpCredssp
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "Could not verify public key echo!\n");
             this->credssp_buffer_free();
-            this->table->FreeCredentialsHandle(&credentials);
             return -1;
         }
 
@@ -623,16 +659,14 @@ struct rdpCredssp
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "credssp_encrypt_ts_credentials status: 0x%08X\n", status);
-            this->table->FreeCredentialsHandle(&credentials);
             return 0;
         }
 
         this->credssp_send();
-        this->credssp_buffer_free();
 
         /* Free resources */
+        this->credssp_buffer_free();
 
-        this->table->FreeCredentialsHandle(&credentials);
 
         return 1;
     }
@@ -657,13 +691,12 @@ struct rdpCredssp
         }
 
         unsigned long cbMaxToken = packageInfo.cbMaxToken;
-        CredHandle credentials;
         TimeStamp expiration;
 
         status = this->table->AcquireCredentialsHandle(NULL, NLA_PKG_NAME,
                                                        SECPKG_CRED_INBOUND, NULL,
                                                        NULL, NULL, NULL,
-                                                       &credentials, &expiration);
+                                                       &this->credentials, &expiration);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X\n", status);
@@ -732,7 +765,7 @@ struct rdpCredssp
             output_buffer.BufferType = SECBUFFER_TOKEN;
             output_buffer.Buffer.init(cbMaxToken);
 
-            status = this->table->AcceptSecurityContext(&credentials,
+            status = this->table->AcceptSecurityContext(&this->credentials,
                                                         have_context? &this->context: NULL,
                                                         &input_buffer_desc, fContextReq,
                                                         SECURITY_NATIVE_DREP, &this->context,

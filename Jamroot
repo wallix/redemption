@@ -164,6 +164,9 @@ lib Xfixes : : <name>Xfixes <link>static ;
 lib pthread : : <name>pthread <link>shared ;
 lib pam : : <name>pam <link>static ;
 
+lib krb5 : : <name>krb5 <link>shared ;
+lib gssglue : : <name>gssglue <link>shared ;
+
 lib crypto : : <name>crypto <link>static ;
 lib z : : <name>z <link>static ;
 lib snappy : : <name>snappy <link>shared ;
@@ -215,6 +218,9 @@ exe rdpproxy
 
         snappy
         libboost_program_options
+
+        krb5
+        gssglue
     :
         <link>static
     ;
@@ -251,6 +257,9 @@ exe rdptproxy
 
         snappy
         libboost_program_options
+
+        krb5
+        gssglue
     :
         <link>static
     ;
@@ -453,8 +462,8 @@ unit-test test_RefreshRectPDU : tests/core/RDP/test_RefreshRectPDU.cpp cryptofil
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test ;
 unit-test test_logon : tests/core/RDP/test_logon.cpp libboost_unit_test gcov : <variant>coverage ;
 
-unit-test test_nego : tests/core/RDP/test_nego.cpp cryptofile openssl snappy libboost_unit_test ;
-unit-test test_nego : tests/core/RDP/test_nego.cpp cryptofile openssl snappy libboost_unit_test gcov : <variant>coverage ;
+unit-test test_nego : tests/core/RDP/test_nego.cpp cryptofile openssl snappy krb5 gssglue libboost_unit_test ;
+unit-test test_nego : tests/core/RDP/test_nego.cpp cryptofile openssl snappy krb5 gssglue libboost_unit_test gcov : <variant>coverage ;
 
 unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp libboost_unit_test ;
 unit-test test_RDPOrdersCommon : tests/core/RDP/orders/test_RDPOrdersCommon.cpp libboost_unit_test gcov : <variant>coverage ;
@@ -689,13 +698,13 @@ unit-test test_libpng : tests/test_libpng.cpp png z libboost_unit_test ;
 
 #unit-test test_convert_bitmap : tests/test_convert_bitmap.cpp png z openssl crypto libboost_unit_test ;
 
-unit-test test_rdp : tests/mod/rdp/test_rdp.cpp cryptofile png openssl crypto d3des z dl snappy libboost_unit_test ;
-unit-test test_rdp : tests/mod/rdp/test_rdp.cpp cryptofile png openssl crypto d3des z dl snappy libboost_unit_test gcov : <variant>coverage ;
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp cryptofile krb5 gssglue png openssl crypto d3des z dl snappy libboost_unit_test ;
+unit-test test_rdp : tests/mod/rdp/test_rdp.cpp cryptofile krb5 gssglue png openssl crypto d3des z dl snappy libboost_unit_test gcov : <variant>coverage ;
 
 
 unit-test test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card.cpp cryptofile z png openssl crypto snappy libboost_unit_test ;
-unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp cryptofile png openssl crypto d3des z dl snappy libboost_unit_test ;
-unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp cryptofile png openssl crypto d3des z dl snappy libboost_unit_test ;
+unit-test test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008.cpp cryptofile png openssl crypto d3des z dl snappy krb5 gssglue libboost_unit_test ;
+unit-test test_rdp_client_wab : tests/client_mods/test_rdp_client_wab.cpp cryptofile png openssl crypto d3des z dl snappy krb5 gssglue libboost_unit_test ;
 unit-test test_vnc_client_simple : tests/client_mods/test_vnc_client_simple.cpp cryptofile png openssl crypto d3des z dl snappy libboost_unit_test ;
 unit-test test_rdesktop_client : tests/server/test_rdesktop_client.cpp cryptofile d3des openssl crypto z dl png snappy libboost_unit_test ;
 unit-test test_mstsc_client : tests/server/test_mstsc_client.cpp cryptofile d3des openssl crypto z dl png snappy libboost_unit_test ;
@@ -947,11 +956,12 @@ unit-test test_ber : tests/core/RDP/nla/asn1/test_ber.cpp libboost_unit_test ope
 unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test openssl crypto ;
 unit-test test_credssp : tests/core/RDP/nla/test_credssp.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
+
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test openssl crypto ;
 unit-test test_sspi : tests/core/RDP/nla/test_sspi.cpp libboost_unit_test openssl crypto gcov : <variant>coverage ;
 
-unit-test test_nla : tests/core/RDP/nla/test_nla.cpp libboost_unit_test openssl crypto cryptofile snappy ;
-unit-test test_nla : tests/core/RDP/nla/test_nla.cpp libboost_unit_test openssl crypto cryptofile snappy gcov : <variant>coverage ;
+unit-test test_nla : tests/core/RDP/nla/test_nla.cpp libboost_unit_test openssl crypto cryptofile snappy krb5 gssglue ;
+unit-test test_nla : tests/core/RDP/nla/test_nla.cpp libboost_unit_test openssl crypto cryptofile snappy krb5 gssglue gcov : <variant>coverage ;
 
 
 alias test_ntlm_suite : test_ntlm_message_negotiate test_ntlm_avpair test_ntlm_message_challenge test_ntlm_message_authenticate test_ntlm_context ;
@@ -973,3 +983,12 @@ unit-test test_ntlm_context : tests/core/RDP/nla/ntlm/test_ntlm_context.cpp libb
 
 unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp libboost_unit_test openssl crypto dl z ;
 unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp libboost_unit_test openssl crypto dl z gcov : <variant>coverage ;
+
+
+
+unit-test test_credentials : tests/core/RDP/nla/kerberos/test_credentials.cpp libboost_unit_test krb5 ;
+unit-test test_credentials : tests/core/RDP/nla/kerberos/test_credentials.cpp libboost_unit_test krb5 gcov : <variant>coverage ;
+
+unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp libboost_unit_test krb5 gssglue ;
+unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp libboost_unit_test krb5 gssglue gcov : <variant>coverage ;
+
