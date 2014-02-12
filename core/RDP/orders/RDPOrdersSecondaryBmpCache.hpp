@@ -804,8 +804,8 @@ class RDPBmpCache {
         uint16_t flags = 0;
 
         // header::extraFlags : (flags:9, bitsPerPixelId:3, cacheId:3)
-        stream.out_uint16_le((flags << 6)
-            |((bitsPerPixelId << 3)& 0x38)
+        stream.out_uint16_le((flags << 7)
+            |((bitsPerPixelId << 3)& 0x78)
             | (this->id & 7));
 
         // header::orderType
