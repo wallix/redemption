@@ -565,14 +565,10 @@ public:
             }
         }
 
-
         return true;
     } // bool open_png_file(const char * filename)
 
 private:
-
-
-
     TODO("move that function to external definition");
 
     const char * get_opcode(uint8_t opcode){
@@ -804,7 +800,7 @@ private:
             }
             lastopcode = opcode;
 
-//            LOG(LOG_INFO, "%s %u", this->get_opcode(opcode), count);
+            //LOG(LOG_INFO, "%s %u", this->get_opcode(opcode), count);
 
             /* Output body */
             while (count > 0) {
@@ -1009,7 +1005,8 @@ private:
 //  MUST be ignored. This optional field is only present if the RLE subfield
 //  of the FormatHeader field is zero.
 
-    static inline void decompress_color_plane(uint16_t src_cx, uint16_t src_cy, const uint8_t * & data,
+public:
+    static inline void decompress_color_plane(uint16_t src_cx, uint16_t src_cy, const uint8_t *& data,
          size_t & data_size, uint16_t cx, uint8_t * color_plane)
     {
         uint32_t   size        = sizeof(uint8_t) * src_cx * src_cy;
@@ -1056,7 +1053,7 @@ private:
             }
 
             if (nRunLength) {
-                ::memset(write_point, ((line_size == src_cx) ? 0 : *(data - 1)), nRunLength);
+                ::memset(write_point, ((line_size == src_cx) ? 0 : *(write_point - 1)), nRunLength);
                 write_point += nRunLength;
                 line_size   -= nRunLength;
                 size        -= nRunLength;
@@ -1068,7 +1065,30 @@ private:
             }
         }
 
-        REDASSERT(!size);
+        for (uint8_t * ypos_begin = color_plane + cx, * ypos_end = color_plane + cx * src_cy;
+             ypos_begin < ypos_end; ypos_begin += cx) {
+            for (uint8_t * xpos_begin = ypos_begin, * xpos_end = xpos_begin + src_cx; xpos_begin < xpos_end; xpos_begin++) {
+                uint8_t delta = *((uint8_t *)xpos_begin);
+
+                //LOG(LOG_INFO, "delta=%d", delta);
+
+                if ((delta % 2) == 0) {
+                    delta >>= 1;
+                    //LOG(LOG_INFO, "delta(o)=%02x", delta);
+                }
+                else {
+                    delta = 255 - ((delta - 1) >> 1);
+                    //LOG(LOG_INFO, "delta(e)=%02x", delta);
+                }
+
+                (*xpos_begin) =
+                      (  *(xpos_begin - cx)
+                       + *(reinterpret_cast<uint8_t *>(&delta))
+                );
+
+                //LOG(LOG_INFO, "delta(1)=%d", (*xpos_begin));
+            }
+        }
     }
 
     static inline void in_copy_color_plan(uint16_t src_cx, uint16_t src_cy, const uint8_t * & data,
@@ -1087,11 +1107,13 @@ private:
 
     void decompress60(uint16_t src_cx, uint16_t src_cy, const uint8_t * data, size_t data_size) const
     {
-        LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
+        //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
+/*
 const uint8_t * save_data      = data;
       size_t    save_data_size = data_size;
+*/
 
-        REDASSERT((original_bpp == 24) || (original_bpp == 32));
+        REDASSERT((this->original_bpp == 24) || (this->original_bpp == 32));
 
         //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
         //hexdump_d(data, data_size);
@@ -1103,11 +1125,9 @@ const uint8_t * save_data      = data;
         bool    rle                = (((FormatHeader & 0x10) >> 4) == 1);
         bool    no_alpha_plane     = (((FormatHeader & 0x20) >> 5) == 1);
 
-        /*
-        LOG(LOG_INFO, "FormatHeader=0x%02X color_loss_level=%d chroma_subsampling=%s rle=%s no_alpha_plane=%s",
-            FormatHeader, color_loss_level, (chroma_subsampling ? "yes" : "no"), (rle ? "yes" : "no"),
-            (no_alpha_plane ? "yes" : "no"));
-        */
+        //LOG(LOG_INFO, "FormatHeader=0x%02X color_loss_level=%d chroma_subsampling=%s rle=%s no_alpha_plane=%s",
+        //    FormatHeader, color_loss_level, (chroma_subsampling ? "yes" : "no"), (rle ? "yes" : "no"),
+        //    (no_alpha_plane ? "yes" : "no"));
 
         if (color_loss_level || chroma_subsampling) {
             LOG(LOG_INFO, "Unsupported compression options", color_loss_level & (chroma_subsampling << 3));
@@ -1143,31 +1163,39 @@ const uint8_t * save_data      = data;
             data_size--;    // Pad
         }
 
+
         //LOG(LOG_INFO, "data_size=%u", data_size);
         REDASSERT(!data_size);
 
-        uint8_t  * r     = red_plane;
-        uint8_t  * g     = green_plane;
-        uint8_t  * b     = blue_plane;
-        uint32_t * pixel = reinterpret_cast<uint32_t *>(this->data_bitmap.get());
+        uint8_t * r     = red_plane;
+        uint8_t * g     = green_plane;
+        uint8_t * b     = blue_plane;
+        uint8_t * pixel = this->data_bitmap.get();
+        uint8_t   bpp   = nbbytes(this->original_bpp);
 
-        for (uint16_t y = 0; y < src_cy; y++) {
-            for (uint16_t x = 0; x < src_cx; x++) {
-                (*pixel++) = (0xFF << 24) | ((*r) << 16) | ((*g) << 8) | (*b);
+        for (uint16_t y = 0; y < this->cy; y++) {
+            for (uint16_t x = 0; x < this->cx; x++) {
+                uint32_t color = (0xFF << 24) | ((*r++) << 16) | ((*g++) << 8) | (*b++);
+
+                ::out_bytes_le(pixel, bpp, color);
+                pixel += bpp;
             }
         }
 
+/*
 BStream compressed_bitmap_data(65536);
 this->compress60(compressed_bitmap_data);
 compressed_bitmap_data.mark_end();
 if (((save_data_size != compressed_bitmap_data.size()) ||
-     memcmp(save_data, compressed_bitmap_data.get_data(), save_data_size)) &&
+     ::memcmp(save_data, compressed_bitmap_data.get_data(), save_data_size)) &&
     (compressed_bitmap_data.size() < 1024)
    ) {
+    LOG(LOG_INFO, "compressed bmp size=%u", compressed_bitmap_data.size());
     hexdump_d(save_data, save_data_size);
 }
+*/
 
-        LOG(LOG_INFO, "bmp decompress60: done");
+        //LOG(LOG_INFO, "bmp decompress60: done");
     }
 
 public:
@@ -1712,8 +1740,6 @@ public:
                     this->stream.out_uint16_le(in_count / 2);
                 }
             }
-
-
         } out(outbuffer);
 
         uint8_t * tmp_data_compressed = out.stream.p;
@@ -1871,8 +1897,8 @@ public:
         }
     }
 
-    static void get_run(const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint16_t & run_length,
-        uint8_t & raw_bytes)
+    static void get_run(const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint32_t & run_length,
+        uint32_t & raw_bytes)
     {
         const uint8_t * data_save = data;
 
@@ -1953,8 +1979,8 @@ uint16_t pixel_count = 0;
             uint8_t  last_raw  = 0;
 
             for (const uint8_t * xpos = ypos_begin; data_size; ) {
-                uint16_t run_length;
-                uint8_t  raw_bytes;
+                uint32_t run_length;
+                uint32_t raw_bytes;
 
                 Bitmap::get_run(xpos, data_size, last_raw, run_length, raw_bytes);
 
@@ -2063,7 +2089,7 @@ REDASSERT(pixel_count == cx * cy);
     void compress60(Stream & outbuffer) const {
         //LOG(LOG_INFO, "bmp compress60");
 
-        REDASSERT(this->original_bpp == 32);
+        REDASSERT((this->original_bpp == 24) || (this->original_bpp == 32));
 
         uint8_t * tmp_data_compressed = outbuffer.p;
 
@@ -2073,7 +2099,7 @@ REDASSERT(pixel_count == cx * cy);
         uint8_t * green_plane = static_cast<uint8_t *>(alloca(color_plane_size));
         uint8_t * blue_plane  = static_cast<uint8_t *>(alloca(color_plane_size));
 
-        const uint8_t   byte_per_color = 4;
+        const uint8_t   byte_per_color = nbbytes(this->original_bpp);
         const uint8_t * data = this->data_bitmap.get();
 
         uint8_t * pixel_over_red_plane   = red_plane;
@@ -2099,7 +2125,6 @@ REDASSERT(pixel_count == cx * cy);
             }
         }
 
-
         /*
         REDASSERT(outbuffer.has_room(1 + color_plane_size * 3));
 
@@ -2112,15 +2137,6 @@ REDASSERT(pixel_count == cx * cy);
         outbuffer.out_uint8(0);
         */
 
-/*
-memset(red_plane, 0, this->cx * this->cy);
-memset(green_plane, 0, this->cx * this->cy);
-
-int y = 28;
-int x = 0;
-memset(blue_plane + this->cx * y + x, 0, this->cx * (this->cy - y) - x);
-*/
-
         outbuffer.out_uint8(
               (1 << 5)  // No alpha plane
             | (1 << 4)  // RLE
@@ -2128,14 +2144,10 @@ memset(blue_plane + this->cx * y + x, 0, this->cx * (this->cy - y) - x);
         Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, red_plane);
         Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, green_plane);
         Bitmap::compress_color_plane(this->cx, this->cy, outbuffer, blue_plane);
-/*
-
-        extern bool ___debug;
-        ___debug = true;
-*/
 
         // Memoize result of compression
         this->data_compressed_size = outbuffer.p - tmp_data_compressed;
+        //LOG(LOG_INFO, "data_compressed_size=%u", this->data_compressed_size);
         this->data_compressed = static_cast<uint8_t*>(malloc(this->data_compressed_size));
         if (this->data_compressed) {
             memcpy(this->data_compressed, tmp_data_compressed, this->data_compressed_size);

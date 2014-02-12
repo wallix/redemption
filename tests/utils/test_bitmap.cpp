@@ -15,7 +15,7 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010
-   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan, Raphael Zhou
    Based on xrdp Copyright (C) Jay Sorg 2004-2010
 
    Unit test for bitmap class (mostly tests of compression/decompression)
@@ -27,8 +27,8 @@
 #include <boost/test/auto_unit_test.hpp>
 #include <boost/test/unit_test.hpp>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "bitmap.hpp"
@@ -4065,8 +4065,8 @@ BOOST_AUTO_TEST_CASE(TestBitmapOpenFiles) {
 
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapGetRun) {
-    uint16_t run_length;
-    uint8_t  raw_bytes;
+    uint32_t run_length;
+    uint32_t raw_bytes;
 
     Bitmap::get_run(reinterpret_cast<const uint8_t *>("AAAABBCCCCCD"), 12, 0, run_length, raw_bytes);
     //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
@@ -4165,8 +4165,6 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
     BOOST_CHECK_EQUAL(0,               memcmp(outbuffer.get_data(), result, outbuffer.size()));
 }
 
-bool ___debug = false;
-
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
     uint8_t data[] = {
 /* 0000 */ 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x60, 0xff, 0xff, 0xff, 0xff, 0xff,  // ..........`.....
@@ -4239,19 +4237,146 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
 
     Bitmap::compress_color_plane(32, 32, outbuffer, data);
 
-/*
     outbuffer.mark_end();
 
     uint8_t result[] = {
-        0x13, 0xFF,
-        0x20, 0xFE, 0xFD,
-        0x60, 0x01, 0x7D, 0xF5, 0xC2, 0x9A, 0x38,
-        0x60, 0x01, 0x67, 0x8B, 0xA3, 0x78, 0xAF
+/* 0000 */ 0x19, 0x08, 0x25, 0x60, 0xff, 0x28, 0x30, 0x08, 0x23, 0x28, 0xff, 0x0a, 0x24, 0x9e, 0x00, 0x38,  // ..%`.(0.#(..$..8
+/* 0010 */ 0x2f, 0x4f, 0x00, 0x50, 0x3f, 0x7f, 0x00, 0x00, 0x00, 0x0a, 0x24, 0x80, 0x00, 0x2a, 0x8f, 0x00,  // /O.P?.....$..*..
+/* 0020 */ 0x40, 0xcd, 0x00, 0x00, 0x00, 0x09, 0x34, 0x70, 0x20, 0x00, 0x2a, 0x7d, 0x00, 0x40, 0x9f, 0x1f,  // @.....4p .*}.@..
+/* 0030 */ 0x00, 0x00, 0x09, 0x25, 0x80, 0x00, 0x2b, 0xad, 0x00, 0x30, 0xbf, 0x00, 0x00, 0x09, 0x24, 0x9e,  // ...%..+..0....$.
+/* 0040 */ 0x00, 0x3b, 0x5f, 0x01, 0x00, 0x30, 0xbd, 0x00, 0x00, 0x08, 0x34, 0x20, 0x60, 0x00, 0x2c, 0x9d,  // .;_..0....4 `.,.
+/* 0050 */ 0x00, 0x30, 0x4f, 0x6f, 0x00, 0x08, 0x25, 0x90, 0x00, 0x2d, 0x7f, 0x00, 0x20, 0xbd, 0x00, 0x08,  // .0Oo..%..-.. ...
+/* 0060 */ 0x24, 0x7e, 0x00, 0x3d, 0x1f, 0x6f, 0x00, 0x20, 0xbf, 0x0f, 0x08, 0x24, 0xa0, 0x00, 0x2f, 0x7f,  // $~.=.o. ...$../.
+/* 0070 */ 0x00, 0x10, 0xbf, 0x07, 0x34, 0x60, 0x20, 0x00, 0x2f, 0x9d, 0x00, 0x10, 0xbd, 0x07, 0x25, 0x90,  // ....4` ./.....%.
+/* 0080 */ 0x00, 0x2f, 0x7f, 0x00, 0x10, 0x5f, 0x07, 0x24, 0x7e, 0x00, 0x3f, 0x4f, 0x2f, 0x00, 0x10, 0x00,  // ./..._.$~.?O/...
+/* 0090 */ 0x06, 0x34, 0x02, 0x80, 0x00, 0x2f, 0x8f, 0x00, 0x20, 0x00, 0x00, 0x06, 0x25, 0x9e, 0x00, 0x2f,  // .4.../.. ...%../
+/* 00a0 */ 0x9d, 0x00, 0x20, 0x00, 0x00, 0x06, 0x24, 0x8e, 0x00, 0x3f, 0x0f, 0x6f, 0x00, 0x20, 0x00, 0x00,  // .. ...$..?.o. ..
+/* 00b0 */ 0x06, 0x24, 0x80, 0x00, 0x2f, 0x7f, 0x00, 0x03, 0x05, 0x34, 0x50, 0x40, 0x00, 0x2f, 0x8d, 0x00,  // .$../....4P@./..
+/* 00c0 */ 0x03, 0x05, 0x25, 0x90, 0x00, 0x2f, 0x8f, 0x00, 0x03, 0x05, 0x24, 0x8e, 0x00, 0x3f, 0x3f, 0x3f,  // ..%../....$..???
+/* 00d0 */ 0x00, 0x03, 0x05, 0x24, 0x70, 0x00, 0x2f, 0x8f, 0x00, 0x04, 0x04, 0x34, 0x90, 0x10, 0x00, 0x2f,  // ...$p./....4.../
+/* 00e0 */ 0x8d, 0x00, 0x04, 0x04, 0x24, 0x8e, 0x00, 0x3f, 0x0f, 0x8d, 0x00, 0x04, 0x04, 0x24, 0x90, 0x00,  // ....$..?.....$..
+/* 00f0 */ 0x3f, 0x6f, 0x01, 0x00, 0x04, 0x64, 0x00, 0x00, 0x00, 0x30, 0x40, 0x00, 0x2f, 0x7d, 0x00, 0x05,  // ?o...d...0@./}..
+/* 0100 */ 0x55, 0x00, 0x00, 0x00, 0xa0, 0x00, 0x2f, 0x9f, 0x00, 0x05, 0x54, 0x00, 0x00, 0x00, 0x8e, 0x00,  // U...../...T.....
+/* 0110 */ 0x3f, 0x2f, 0x4f, 0x00, 0x05, 0x54, 0x00, 0x00, 0x00, 0x80, 0x00, 0x2f, 0x8f, 0x00, 0x06, 0x54,  // ?/O..T...../...T
+/* 0120 */ 0x00, 0x00, 0x70, 0x10, 0x00, 0x2f, 0x7d, 0x00, 0x06, 0x45, 0x00, 0x00, 0x9e, 0x00, 0x2f, 0xad,  // ..p../}..E..../.
+/* 0130 */ 0x00, 0x06, 0x44, 0x00, 0x00, 0x90, 0x00, 0x3f, 0x6f, 0x01, 0x00, 0x06, 0x44, 0x00, 0x00, 0x62,  // ..D....?o...D..b
+/* 0140 */ 0x12, 0x2f, 0x82, 0x00, 0x07,                                   // ./...
     };
 
     BOOST_CHECK_EQUAL(sizeof(result),  outbuffer.size());
     BOOST_CHECK_EQUAL(0,               memcmp(outbuffer.get_data(), result, outbuffer.size()));
+}
+
+/*
+BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
+    BGRPalette palette332;
+    init_palette332(palette332);
+
+    const char * filename = "tests/fixtures/color_image_160x120.png";
+
+    Bitmap bmp(filename);
+
+    BStream compressed_bitmap_data(65536);
+    bmp.compress(32, compressed_bitmap_data);
+    compressed_bitmap_data.mark_end();
+
+    Bitmap bmp2(32, 24, &palette332, bmp.cx, bmp.cy, compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+
+    BOOST_CHECK_EQUAL(0, memcmp(bmp.data_bitmap.get(), bmp2.data_bitmap.get(), bmp.bmp_size));
+}
+
+BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
+    BGRPalette palette332;
+    init_palette332(palette332);
+
+    const char * filename = "tests/fixtures/color_image_40x30.png";
+
+    Bitmap bmp(filename);
+
+    BStream compressed_bitmap_data(65536);
+    bmp.compress(32, compressed_bitmap_data);
+    compressed_bitmap_data.mark_end();
+
+    Bitmap bmp2(32, 24, &palette332, bmp.cx, bmp.cy, compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+
+    BOOST_CHECK_EQUAL(0, memcmp(bmp.data_bitmap.get(), bmp2.data_bitmap.get(), bmp.bmp_size));
+}
+
+BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
+    BGRPalette palette332;
+    init_palette332(palette332);
+
+    const char * filename = "tests/fixtures/red_box.png";
+
+    Bitmap bmp(filename);
+
+    BStream compressed_bitmap_data(65536);
+    bmp.compress(32, compressed_bitmap_data);
+    compressed_bitmap_data.mark_end();
+
+    Bitmap bmp2(32, 24, &palette332, bmp.cx, bmp.cy, compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+
+    BOOST_CHECK_EQUAL(0, memcmp(bmp.data_bitmap.get(), bmp2.data_bitmap.get(), bmp.bmp_size));
+}
+
+BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
+    BGRPalette palette332;
+    init_palette332(palette332);
+
+    const char * filename = "tests/fixtures/wablogoblue_220x76.png";
+
+    Bitmap bmp(filename);
+
+    BStream compressed_bitmap_data(65536);
+    bmp.compress(32, compressed_bitmap_data);
+    compressed_bitmap_data.mark_end();
+
+    Bitmap bmp2(32, 24, &palette332, bmp.cx, bmp.cy, compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+
+    BOOST_CHECK_EQUAL(0, memcmp(bmp.data_bitmap.get(), bmp2.data_bitmap.get(), bmp.bmp_size));
+}
 */
+
+BOOST_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
+    BGRPalette palette332;
+    init_palette332(palette332);
+
+    const char * filename = "tests/fixtures/red_box_20x20.png";
+
+    Bitmap bmp(filename);
+
+    BStream compressed_bitmap_data(65536);
+    bmp.compress(32, compressed_bitmap_data);
+    compressed_bitmap_data.mark_end();
+
+    Bitmap bmp2(32, 24, &palette332, bmp.cx, bmp.cy, compressed_bitmap_data.get_data(), compressed_bitmap_data.size(), true);
+
+    BOOST_CHECK_EQUAL(0, memcmp(bmp.data_bitmap.get(), bmp2.data_bitmap.get(), bmp.bmp_size));
+}
+
+BOOST_AUTO_TEST_CASE(TestRDP60BitmapDecompressColorPlane) {
+    uint8_t data[] = {
+        0x13, 0xFF, 0x20, 0xFE, 0xFD,
+        0x60, 0x01, 0x7D, 0xF5, 0xC2, 0x9A, 0x38,
+        0x60, 0x01, 0x67, 0x8B, 0xA3, 0x78, 0xAF
+    };
+
+    BStream outbuffer(1024);
+
+    const uint8_t * compressed_data      = data;
+    size_t          compressed_data_size = sizeof(data);
+
+    uint8_t color_plane[6 * 3];
+
+    Bitmap::decompress_color_plane(6, 3, compressed_data, compressed_data_size, 6, color_plane);
+
+    uint8_t result[] = {
+        255, 255, 255, 255, 254, 253,
+        254, 192, 132, 96,  75,  25,
+        253, 140, 62,  14,  135, 193
+    };
+
+    BOOST_CHECK_EQUAL(0, memcmp(color_plane, result, sizeof(color_plane)));
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapDecompression) {
@@ -4303,7 +4428,6 @@ BOOST_AUTO_TEST_CASE(TestRDP60BitmapDecompression) {
     BOOST_CHECK_EQUAL(sizeof(bitmap_data), bitmap_data_size);
 
     Bitmap bmp(bpp, bpp, NULL, cx, cy, bitmap_data, bitmap_data_size, true);
-(void)bitmap_data;
 }
 
 BOOST_AUTO_TEST_CASE(TestRDP60BitmapDecompression1) {
