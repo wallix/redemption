@@ -676,6 +676,7 @@ public:
                         t,
                         this->ini.globals.target_user.get_cstr(),
                         this->ini.context.target_password.get_cstr(),
+                        this->ini.globals.target_device.get_cstr(),
                         "0.0.0.0",  // client ip is silenced
                         this->front,
                         true,                                  // tls

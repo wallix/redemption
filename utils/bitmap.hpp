@@ -483,8 +483,8 @@ public:
     } // openfile_t check_file_type(const char * filename)
 
     bool open_png_file(const char * filename) {
-
-        png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+        png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
+                                                     NULL, NULL, NULL);
         if (!png_ptr) {
             return false;
         }

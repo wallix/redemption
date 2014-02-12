@@ -56,6 +56,7 @@ struct rdpCredssp
     bool RestrictedAdminMode;
     SecInterface sec_interface;
 
+    const char * target_device;
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool hardcodedtests;
@@ -64,7 +65,8 @@ struct rdpCredssp
                uint8_t * user,
                uint8_t * domain,
                uint8_t * pass,
-               uint8_t * hostname)
+               uint8_t * hostname,
+               const char * target_device)
         : send_seq_num(0)
         , recv_seq_num(0)
         , trans(transport)
@@ -73,6 +75,7 @@ struct rdpCredssp
         , authInfo(ts_request.authInfo)
         , table(new SecurityFunctionTable)
         , RestrictedAdminMode(false)
+        , target_device(target_device)
         , hardcodedtests(false)
     {
         this->SspiModule.init(0);
@@ -90,7 +93,8 @@ struct rdpCredssp
         }
     }
 
-    void set_credentials(uint8_t * user, uint8_t * domain, uint8_t * pass, uint8_t * hostname) {
+    void set_credentials(uint8_t * user, uint8_t * domain,
+                         uint8_t * pass, uint8_t * hostname) {
         this->identity.SetUserFromUtf8(user);
         this->identity.SetDomainFromUtf8(domain);
         this->identity.SetPasswordFromUtf8(pass);
@@ -482,7 +486,7 @@ struct rdpCredssp
         unsigned long cbMaxToken = packageInfo.cbMaxToken;
         TimeStamp expiration;
 
-        status = this->table->AcquireCredentialsHandle("10.10.47.128", NLA_PKG_NAME,
+        status = this->table->AcquireCredentialsHandle(this->target_device, NLA_PKG_NAME,
                                                        SECPKG_CRED_OUTBOUND,
                                                        &this->ServicePrincipalName,
                                                        &this->identity, NULL, NULL,

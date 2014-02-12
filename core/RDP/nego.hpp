@@ -74,11 +74,13 @@ struct RdpNego
     uint8_t user[128];
     uint8_t password[256];
     uint8_t domain[256];
+    const char * target_device;
 
     TODO("Should not have such variable, but for input/output tests timestamp (and generated nonce) should be static");
     bool test;
 
-    RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla)
+    RdpNego(const bool tls, Transport * socket_trans, const char * username, bool nla,
+            const char * target_device)
     : flags(0)
     , tls(nla || tls)
     , nla(nla)
@@ -86,6 +88,7 @@ struct RdpNego
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
     , trans(socket_trans)
+    , target_device(target_device)
     , test(false)
     {
         if (this->tls){
@@ -284,15 +287,16 @@ struct RdpNego
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_client_tls(ignore_certificate_change);
                 LOG(LOG_INFO, "activating CREDSSP");
-                rdpCredssp credssp(*this->trans,
-                                   this->user, this->domain, this->password, this->hostname);
+                rdpCredssp credssp(*this->trans, this->user,
+                                   this->domain, this->password,
+                                   this->hostname, this->target_device);
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }
-                LOG(LOG_INFO, "CREDSSP: Domain %s", this->domain);
-                if (!memcmp(this->domain, "RED", 3)) {
-                    credssp.sec_interface = Kerberos_Interface;
-                }
+                // LOG(LOG_INFO, "CREDSSP: Domain %s", this->domain);
+                // if (!memcmp(this->domain, "RED", 3)) {
+                //     credssp.sec_interface = Kerberos_Interface;
+                // }
                 int res = credssp.credssp_client_authenticate();
                 if (res != 1) {
                     LOG(LOG_ERR, "NLA/CREDSSP Authentication Failed");

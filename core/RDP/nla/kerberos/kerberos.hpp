@@ -46,10 +46,7 @@ struct KERBEROSContext {
     OM_uint32 actual_time;
     gss_OID actual_mech;
 
-    KERBEROSContext()
-        : gss_ctx(NULL)
-    {
-    }
+    KERBEROSContext() {}
 
     virtual ~KERBEROSContext() {
         OM_uint32 major_status, minor_status;
