@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
     Kerberos_SecurityFunctionTable table;
     SEC_STATUS status;
     uint8_t name[] = "tartempion";
-    uint8_t pass[] = "SecureLinux$42";
+    uint8_t pass[] = "a";
     SEC_WINNT_AUTH_IDENTITY id;
     id.SetKrbAuthIdentity(name, pass);
     CredHandle credentials;
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
                                             &credentials, &expiration);
 
 
-    BOOST_CHECK_EQUAL(status, SEC_E_OK);
+    BOOST_CHECK_EQUAL(status, SEC_E_NO_CREDENTIALS);
     // CREDENTIALS * creds = (CREDENTIALS*)credentials.SecureHandleGetLowerPointer();
     // BOOST_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
     //                     creds->identity.User.get_data(),
