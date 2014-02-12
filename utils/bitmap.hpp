@@ -1108,10 +1108,6 @@ public:
     void decompress60(uint16_t src_cx, uint16_t src_cy, const uint8_t * data, size_t data_size) const
     {
         //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
-/*
-const uint8_t * save_data      = data;
-      size_t    save_data_size = data_size;
-*/
 
         REDASSERT((this->original_bpp == 24) || (this->original_bpp == 32));
 
@@ -1182,24 +1178,10 @@ const uint8_t * save_data      = data;
             }
         }
 
-/*
-BStream compressed_bitmap_data(65536);
-this->compress60(compressed_bitmap_data);
-compressed_bitmap_data.mark_end();
-if (((save_data_size != compressed_bitmap_data.size()) ||
-     ::memcmp(save_data, compressed_bitmap_data.get_data(), save_data_size)) &&
-    (compressed_bitmap_data.size() < 1024)
-   ) {
-    LOG(LOG_INFO, "compressed bmp size=%u", compressed_bitmap_data.size());
-    hexdump_d(save_data, save_data_size);
-}
-*/
-
         //LOG(LOG_INFO, "bmp decompress60: done");
     }
 
 public:
-
     enum {
         FLAG_NONE = 0,
         FLAG_FILL = 1,
@@ -1970,7 +1952,6 @@ public:
         //LOG(LOG_INFO, "After delta conversion");
         //hexdump_d(color_plane, cx * cy);
 
-uint16_t pixel_count = 0;
 
         for (const uint8_t * ypos_begin = color_plane, * ypos_end = color_plane + cy * plane_line_size;
              ypos_begin != ypos_end; ypos_begin += plane_line_size) {
@@ -1997,7 +1978,6 @@ uint16_t pixel_count = 0;
                             //LOG(LOG_INFO, "controlByte: (15, 2); rawValues: <none>");
                             xpos        += 47;
                             data_size   -= 47;
-pixel_count += 47;
                             run_length  -= 47;
                         }
                         else if (run_length > 31) {
@@ -2005,7 +1985,6 @@ pixel_count += 47;
                             //LOG(LOG_INFO, "controlByte(1): (%d, 2); rawValues: <none>", run_length - 32);
                             xpos        += run_length;
                             data_size   -= run_length;
-pixel_count += run_length;
                             run_length  =  0;
                         }
                         else if (run_length > 15) {
@@ -2013,19 +1992,14 @@ pixel_count += run_length;
                             //LOG(LOG_INFO, "controlByte(2): (%d, 1); rawValues: <none>", run_length - 16);
                             xpos        += run_length;
                             data_size   -= run_length;
-pixel_count += run_length;
                             run_length  =  0;
                         }
                         else {
                             outbuffer.out_uint8((0                 << 4) | run_length); // Control byte
                             //LOG(LOG_INFO, "controlByte(3): (0, %d); rawValues: <none>", run_length);
-if (run_length && (run_length < 3)) {
-    LOG(LOG_ERR, "run_length < 3");
-    BOOM;
-}
+                            REDASSERT(!run_length || (run_length > 2));
                             xpos        += run_length;
                             data_size   -= run_length;
-pixel_count += run_length;
                             run_length  =  0;
                         }
                     }
@@ -2040,7 +2014,6 @@ pixel_count += run_length;
                         outbuffer.out_copy_bytes(xpos, 15);
                         xpos        += 15;
                         data_size   -= 15;
-pixel_count += 15;
                         raw_bytes   -= 15;
                     }
                     else/* if (raw_bytes < 16)*/ {
@@ -2055,7 +2028,6 @@ pixel_count += 15;
                             outbuffer.out_copy_bytes(xpos, raw_bytes);
                             xpos        += raw_bytes + 15;
                             data_size   -= raw_bytes + 15;
-pixel_count += raw_bytes + 15;
                             run_length  -= 15;
                             raw_bytes   =  0;
                         }
@@ -2063,14 +2035,10 @@ pixel_count += raw_bytes + 15;
                             outbuffer.out_uint8((raw_bytes << 4) | run_length); // Control byte
                             //LOG(LOG_INFO, "controlByte(5): (%d, %d); rawValues: %s", raw_bytes, run_length, rb);
                             //hexdump_d(rb, raw_bytes);
-if (run_length && (run_length < 3)) {
-    LOG(LOG_ERR, "run_length < 3 (2)");
-    BOOM;
-}
+                            REDASSERT(!run_length || (run_length > 2));
                             outbuffer.out_copy_bytes(xpos, raw_bytes);
                             xpos        += raw_bytes + run_length;
                             data_size   -= raw_bytes + run_length;
-pixel_count += raw_bytes + run_length;
                             run_length  = 0;
                             raw_bytes   = 0;
                         }
@@ -2082,7 +2050,6 @@ pixel_count += raw_bytes + run_length;
             }
         }
 
-REDASSERT(pixel_count == cx * cy);
         //LOG(LOG_INFO, "compress_color_plane: exit");
     }
 
