@@ -149,7 +149,7 @@ public:
             0xf0, 0xc0, 0x0f,
         };
 
-        Bitmap bloc64x64(24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
+        Bitmap bloc64x64(24, 24, &this->palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true);
         this->front.draw(RDPMemBlt(0,
             Rect(0, this->get_screen_rect().cy - 64, bloc64x64.cx, bloc64x64.cy), 0xCC,
              32, 32, 0), clip, bloc64x64);

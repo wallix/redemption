@@ -28,6 +28,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include <errno.h>
@@ -60,16 +61,21 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 
 //        virtual Server_status start(int incoming_sck)
 //        {
-//            struct sockaddr_in sin;
-//            unsigned int sin_size = sizeof(struct sockaddr_in);
-//            memset(&sin, 0, sin_size);
-//            this->sck = accept(incoming_sck, (struct sockaddr*)&sin, &sin_size);
-//            strcpy(ip_source, inet_ntoa(sin.sin_addr));
+//            union {
+//                struct sockaddr s;
+//                struct sockaddr_storage ss;
+//                struct sockaddr_in s4;
+//                struct sockaddr_in6 s6;
+//            } u;
+//            unsigned int sin_size = sizeof(u);
+//            ::memset(&u, 0, sin_size);
+//            this->sck = ::accept(incoming_sck, &u.s, &sin_size);
+//            strcpy(ip_source, ::inet_ntoa(u.s4.sin_addr));
 //            LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", sck, ip_source);
 //            return START_WANT_STOP;
 //        }
 //    } one_shot_server;
-//    Listen listener(one_shot_server, 3389, true, 5); // 25 seconds to connect, or timeout
+//    Listen listener(one_shot_server, 0, 3389, true, 5); // 25 seconds to connect, or timeout
 //    listener.run();
 
     Inifile ini;
@@ -80,19 +86,20 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
 //    if (-1 == setsockopt(one_shot_server.sck, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay))){
 //        LOG(LOG_INFO, "Failed to set socket TCP_NODELAY option on client socket");
 //    }
-//    SocketTransport front_trans("RDP Client", one_shot_server.sck, ini.debug.front);
+//    SocketTransport front_trans( "RDP Client", one_shot_server.sck, "0.0.0.0", 0
+//                               , ini.debug.front, 0);
 //    wait_obj front_event(&front_trans);
 
     LCGRandom gen(0);
 
     const char outdata[] =
     {
-        #include "fixtures/trace_rdesktop_client_indata.hpp"
+        #include "fixtures/trace_rdesktop_client_outdata.hpp"
     };
 
     const char indata[] =
     {
-        #include "fixtures/trace_rdesktop_client_outdata.hpp"
+        #include "fixtures/trace_rdesktop_client_indata.hpp"
     };
 
     const char * name = "Test Front Transport";
@@ -109,8 +116,6 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     while (front.up_and_running == 0){
         front.incoming(no_mod);
     }
-
-    BOOST_CHECK_EQUAL(0, memcmp(front.client_info.hostname, "cgrgpu\0\0\0\0\0\0\0\0\0\0", 16));
 
     BOOST_CHECK_EQUAL(1, front.up_and_running);
     TestCardMod mod(front, front.client_info.width, front.client_info.height);

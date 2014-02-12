@@ -2142,6 +2142,8 @@ struct mod_rdp : public mod_api {
         bitmap_caps.desktopWidth          = this->front_width;
         bitmap_caps.desktopHeight         = this->front_height;
         bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
+        //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
+        bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
         if (this->verbose) {
             bitmap_caps.log("Sending bitmap caps to server");
         }
@@ -4453,7 +4455,8 @@ public:
                 //                    bufsize, bitmap.bmp_size, width, height, bpp);
                 //            }
                 const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
-            Bitmap bitmap( bmpdata.bits_per_pixel
+            Bitmap bitmap( this->bpp
+                           , bmpdata.bits_per_pixel
                            , &this->orders.global_palette
                            , bmpdata.width
                            , bmpdata.height

@@ -521,16 +521,16 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap)
     }
     ;
 
-    Bitmap bloc64x64(16, NULL, 64, 64, source64x64, sizeof(source64x64), true );
+    Bitmap bloc64x64(16, 16, NULL, 64, 64, source64x64, sizeof(source64x64), true );
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc64x64.cx, bloc64x64.cy), 0xCC, 0, 0, 0), scr, bloc64x64);
 
     Bitmap good16(24, bloc64x64);
     drawable.draw(RDPMemBlt(0, Rect(200, 200, good16.cx, good16.cy), 0xCC, 0, 0, 0), scr, good16);
 
     BStream stream(8192);
-    good16.compress(stream);
+    good16.compress(24, stream);
     stream.mark_end();
-    Bitmap bogus(24, NULL, 64, 64, stream.get_data(), stream.size(), true);
+    Bitmap bogus(24, 24, NULL, 64, 64, stream.get_data(), stream.size(), true);
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx, bogus.cy), 0xCC, 0, 0, 0), scr, bogus);
 
     d.flush();
@@ -580,7 +580,7 @@ BOOST_AUTO_TEST_CASE(TestBogusBitmap2)
     ;
 
     try {
-        Bitmap bloc32x1(16, NULL, 32, 1, source32x1, sizeof(source32x1)-1, true );
+        Bitmap bloc32x1(16, 16, NULL, 32, 1, source32x1, sizeof(source32x1)-1, true );
         drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx, bloc32x1.cy), 0xCC, 0, 0, 0), scr, bloc32x1);
     } catch (Error e) {
         printf("exception caught e=%u\n", e.id);

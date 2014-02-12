@@ -284,7 +284,7 @@ struct RDPBitmapData {
         this->bitmap_length  = stream.in_uint16_le();
 
         assert(   (this->bits_per_pixel == 32)
-               || (this->bits_per_pixel == 23)
+               || (this->bits_per_pixel == 24)
                || (this->bits_per_pixel == 16)
                || (this->bits_per_pixel == 15)
                || (this->bits_per_pixel == 8 ));

@@ -470,7 +470,7 @@ class RDPBmpCache {
     {
     }
 
-    void emit(Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int use_compact_packets) const
+    void emit(uint8_t session_color_depth, Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int use_compact_packets) const
     {
         using namespace RDP;
         switch (bitmap_cache_version){
@@ -480,7 +480,7 @@ class RDPBmpCache {
                 if (this->verbose){
                     LOG(LOG_INFO, "/* BMP Cache compressed V1*/");
                 }
-                this->emit_v1_compressed(stream, use_compact_packets);
+                this->emit_v1_compressed(session_color_depth, stream, use_compact_packets);
             }
             else {
                 if (this->verbose){
@@ -494,7 +494,7 @@ class RDPBmpCache {
                 if (this->verbose){
                     LOG(LOG_INFO, "/* BMP Cache compressed V2 */");
                 }
-                this->emit_v2_compressed(stream);
+                this->emit_v2_compressed(session_color_depth, stream);
             }
             else {
                 if (this->verbose){
@@ -505,7 +505,7 @@ class RDPBmpCache {
         }
     }
 
-    void emit_v1_compressed(Stream & stream, const int use_compact_packets) const {
+    void emit_v1_compressed(uint8_t session_color_depth, Stream & stream, const int use_compact_packets) const {
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -542,7 +542,7 @@ class RDPBmpCache {
         }
 
         uint32_t offset_buf_start = stream.get_offset();
-        this->bmp->compress(stream);
+        this->bmp->compress(session_color_depth, stream);
         uint32_t bufsize = stream.get_offset() - offset_buf_start;
 
         if (!use_compact_packets){
@@ -759,7 +759,7 @@ class RDPBmpCache {
     //                              defined in [MS-RDPBCGR] section
     //                              2.2.9.1.1.3.1.2.2).
 
-    void emit_v2_compressed(Stream & stream) const
+    void emit_v2_compressed(uint8_t session_color_depth, Stream & stream) const
     {
         using namespace RDP;
 
@@ -781,7 +781,7 @@ class RDPBmpCache {
         stream.out_uint16_be(0);
         stream.out_2BUE(this->idx);
         uint32_t offset_startBitmap = stream.get_offset();
-        this->bmp->compress(stream);
+        this->bmp->compress(session_color_depth, stream);
 
         stream.set_out_uint16_be((stream.get_offset() - offset_startBitmap) | 0x4000, offset_bitmapLength); // set the actual size
         stream.set_out_uint16_le(stream.get_offset() - (offset_header+12), offset_header); // length after type minus 7
@@ -877,14 +877,14 @@ class RDPBmpCache {
 
     }
 
-    void receive(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
+    void receive(uint8_t session_color_depth, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
     {
         switch (header.type){
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
-            this->receive_raw_v1(stream, control, header, palette);
+            this->receive_raw_v1(session_color_depth, stream, control, header, palette);
         break;
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
-            this->receive_compressed_v1(stream, control, header, palette);
+            this->receive_compressed_v1(session_color_depth, stream, control, header, palette);
         break;
         default:
             // can't happen, ensured by caller
@@ -892,13 +892,13 @@ class RDPBmpCache {
         }
     }
 
-    void receive_raw_v2(Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
+    void receive_raw_v2(uint8_t session_color_depth, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
     {
         using namespace RDP;
         TODO(" DO NOT USE : not implemented  we do not know yet how to manage persistant bitmap storage");
     }
 
-    void receive_raw_v1(Stream & stream, const uint8_t control,
+    void receive_raw_v1(uint8_t session_color_depth, Stream & stream, const uint8_t control,
                 const RDPSecondaryOrderHeader & header,
                 const BGRPalette & palette)
     {
@@ -962,7 +962,7 @@ class RDPBmpCache {
         // (including up to three bytes of padding, as necessary).
 
         TODO(" some error may occur inside bitmap (memory allocation  file load  decompression) we should catch thrown exception and emit some explicit log if that occurs (anyway that will lead to end of connection  as we can't do much to repair such problems).");
-        this->bmp = new Bitmap(bpp, &palette, width, height, stream.in_uint8p(bufsize), bufsize);
+        this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, stream.in_uint8p(bufsize), bufsize);
 
         if (bufsize != this->bmp->bmp_size){
             LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
@@ -970,7 +970,7 @@ class RDPBmpCache {
     }
 
 
-    void receive_compressed_v1(Stream & stream, const uint8_t control,
+    void receive_compressed_v1(uint8_t session_color_depth, Stream & stream, const uint8_t control,
         const RDPSecondaryOrderHeader & header,
         const BGRPalette & palette)
     {
@@ -985,7 +985,7 @@ class RDPBmpCache {
 
         if (flags & NO_BITMAP_COMPRESSION_HDR) {
             const uint8_t* data = stream.in_uint8p(bufsize);
-            this->bmp = new Bitmap(bpp, &palette, width, height, data, bufsize, true);
+            this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, data, bufsize, true);
         }
         else {
             stream.in_uint16_le(); // skip padding
@@ -994,7 +994,7 @@ class RDPBmpCache {
             uint16_t final_size = stream.in_uint16_le(); // size of bitmap after decompression
             const uint8_t* data = stream.in_uint8p(size);
 
-            this->bmp = new Bitmap(bpp, &palette, width, height, data, size, true);
+            this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, data, size, true);
             if (row_size != (this->bmp->bmp_size / this->bmp->cy)){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
             }

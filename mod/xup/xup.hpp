@@ -252,7 +252,7 @@ enum {
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        Bitmap bmp(bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
+                        Bitmap bmp(this->bpp, bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
                         this->front.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;

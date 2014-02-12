@@ -124,9 +124,11 @@ struct rdpCredssp
             this->table = NULL;
         }
         if (secInter == NTLM_Interface) {
+            LOG(LOG_INFO, "Credssp: NTLM Authentication");
             this->table = new Ntlm_SecurityFunctionTable;
         }
         if (secInter == Kerberos_Interface) {
+            LOG(LOG_INFO, "Credssp: KERBEROS Authentication");
             this->table = new Kerberos_SecurityFunctionTable;
         }
         else if (this->table == NULL) {
