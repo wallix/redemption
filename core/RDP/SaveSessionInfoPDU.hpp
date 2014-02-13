@@ -18,13 +18,15 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#ifndef _REDEMPTION_CORE_RDP_SAVE_SESSION_INFO_PDU_HPP_
-#define _REDEMPTION_CORE_RDP_SAVE_SESSION_INFO_PDU_HPP_
+#ifndef _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
+#define _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_
 
 namespace RDP {
 
-// 2.2.10.1.1 Save Session Info PDU Data (TS_SAVE_SESSION_INFO_PDU_DATA)
-// =====================================================================
+// [MS-RDPBCGR] - 2.2.10.1.1 Save Session Info PDU Data
+//  (TS_SAVE_SESSION_INFO_PDU_DATA)
+// ====================================================
+
 // The TS_SAVE_SESSION_INFO_PDU_DATA structure is a wrapper around different
 //  classes of user logon information.
 
@@ -90,10 +92,10 @@ namespace RDP {
 // +------------------------------+--------------------------------------------+
 
 enum {
-    INFOTYPE_LOGON               = 0,
-    INFOTYPE_LOGON_LONG          = 1,
-    INFOTYPE_LOGON_PLAINNOTIFY   = 2,
-    INFOTYPE_LOGON_EXTENDED_INFO = 3
+      INFOTYPE_LOGON               = 0
+    , INFOTYPE_LOGON_LONG          = 1
+    , INFOTYPE_LOGON_PLAINNOTIFY   = 2
+    , INFOTYPE_LOGON_EXTENDED_INFO = 3
 };
 
 // infoData (variable): A Logon Info Version 1 (section 2.2.10.1.1.1), Logon
@@ -132,8 +134,9 @@ struct SaveSessionInfoPDUData_Send {
 };
 */
 
-// 2.2.10.1.1.1 Logon Info Version 1 (TS_LOGON_INFO)
-// =================================================
+// [MS-RDPBCGR] - 2.2.10.1.1.1 Logon Info Version 1 (TS_LOGON_INFO)
+// ================================================================
+
 // TS_LOGON_INFO is a fixed-length structure that contains logon information
 //  intended for the client.
 
@@ -288,8 +291,9 @@ struct LogonInfoVersion1_Send {
 };
 */
 
-// 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2)
-// ===========================================================
+// [MS-RDPBCGR] - 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2)
+// ==========================================================================
+
 // TS_LOGON_INFO_VERSION_2 is a variable-length structure that contains logon
 //  information intended for the client.
 
@@ -342,7 +346,7 @@ struct LogonInfoVersion1_Send {
 // +------------------------------+-----------+
 
 enum {
-    SAVE_SESSION_PDU_VERSION_ONE = 1
+      SAVE_SESSION_PDU_VERSION_ONE = 1
 };
 
 // Size (4 bytes): A 32-bit, unsigned integer. The total size in bytes of
@@ -428,8 +432,9 @@ struct LogonInfoVersion2_Recv {
     }   // LogonInfoVersion2_Recv(Stream & stream)
 };  // struct LogonInfoVersion2_Recv
 
-// 2.2.10.1.1.3 Plain Notify (TS_PLAIN_NOTIFY)
-// ===========================================
+// [MS-RDPBCGR] - 2.2.10.1.1.3 Plain Notify (TS_PLAIN_NOTIFY)
+// ==========================================================
+
 // TS_PLAIN_NOTIFY is a fixed-length structure that contains 576 bytes of
 //  padding.
 
@@ -476,8 +481,9 @@ struct PlainNotify_Recv {
     }
 };
 
-// 2.2.10.1.1.4 Logon Info Extended (TS_LOGON_INFO_EXTENDED)
-// =========================================================
+// [MS-RDPBCGR] - 2.2.10.1.1.4 Logon Info Extended (TS_LOGON_INFO_EXTENDED)
+// ========================================================================
+
 // The TS_LOGON_INFO_EXTENDED structure contains RDP 5.2, 6.0, 6.1, 7.0, 7.1,
 //  and 8.0 extended logon information.
 
@@ -534,8 +540,8 @@ struct PlainNotify_Recv {
 // +------------------------------+--------------------------------------------+
 
 enum {
-    LOGON_EX_AUTORECONNECTCOOKIE = 1,
-    LOGON_EX_LOGONERRORS         = 2
+      LOGON_EX_AUTORECONNECTCOOKIE = 1
+    , LOGON_EX_LOGONERRORS         = 2
 };
 
 // LogonFields (variable): Extended logon information fields encapsulated in
@@ -578,8 +584,9 @@ struct LogonInfoExtended_Recv {
     }
 };
 
-// 2.2.10.1.1.4.1 Logon Info Field (TS_LOGON_INFO_FIELD)
-// =====================================================
+// [MS-RDPBCGR] - 2.2.10.1.1.4.1 Logon Info Field (TS_LOGON_INFO_FIELD)
+// ====================================================================
+
 // The TS_LOGON_INFO_FIELD structure is used to encapsulate extended logon
 //  information field data of variable length.
 
@@ -623,8 +630,9 @@ struct LogonInfoField_Recv {
     }
 };
 
-// 2.2.10.1.1.4.1.1 Logon Errors Info (TS_LOGON_ERRORS_INFO)
-// =========================================================
+// [MS-RDPBCGR] - 2.2.10.1.1.4.1.1 Logon Errors Info (TS_LOGON_ERRORS_INFO)
+// ========================================================================
+
 // The TS_LOGON_ERRORS_INFO structure contains information that describes a
 //  logon error notification.
 
@@ -663,11 +671,11 @@ struct LogonInfoField_Recv {
 // +--------------------------------+------------------------------------------+
 
 enum {
-    LOGON_MSG_NO_PERMISSION     = 0xFFFFFFFA,
-    LOGON_MSG_BUMP_OPTIONS      = 0xFFFFFFFB,
-    LOGON_MSG_SESSION_RECONNECT = 0xFFFFFFFC,
-    LOGON_MSG_SESSION_TERMINATE = 0xFFFFFFFD,
-    LOGON_MSG_SESSION_CONTINUE  = 0xFFFFFFFE
+      LOGON_MSG_NO_PERMISSION     = 0xFFFFFFFA
+    , LOGON_MSG_BUMP_OPTIONS      = 0xFFFFFFFB
+    , LOGON_MSG_SESSION_RECONNECT = 0xFFFFFFFC
+    , LOGON_MSG_SESSION_TERMINATE = 0xFFFFFFFD
+    , LOGON_MSG_SESSION_CONTINUE  = 0xFFFFFFFE
 };
 
 // ErrorNotificationType (4 bytes): A 32-bit, unsigned integer. The type code
@@ -695,10 +703,10 @@ enum {
 // +------------------------------+--------------------------------------------+
 
 enum {
-    LOGON_FAILED_BAD_PASSWORD    = 0x00000000,
-    LOGON_FAILED_UPDATE_PASSWORD = 0x00000001,
-    LOGON_FAILED_OTHER           = 0x00000002,
-    LOGON_WARNING                = 0x00000003
+      LOGON_FAILED_BAD_PASSWORD    = 0x00000000
+    , LOGON_FAILED_UPDATE_PASSWORD = 0x00000001
+    , LOGON_FAILED_OTHER           = 0x00000002
+    , LOGON_WARNING                = 0x00000003
 };
 
 struct LogonErrorsInfo_Recv {
@@ -812,4 +820,4 @@ struct LogonErrorsInfo_Recv {
 
 }   // namespace RDP
 
-#endif  // #ifndef _REDEMPTION_CORE_RDP_SAVE_SESSION_INFO_PDU_HPP_
+#endif  // #ifndef _REDEMPTION_CORE_RDP_SAVESESSIONINFOPDU_HPP_

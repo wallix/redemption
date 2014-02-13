@@ -540,14 +540,16 @@ struct Inifile : public FieldObserver {
         bool tls_support;
         bool bogus_neg_request; // needed to connect with jrdp, based on bogus X224 layer code
 
-        BoolField clipboard;             // AUTHID_OPT_CLIPBOARD //
-        BoolField device_redirection;    // AUTHID_OPT_DEVICEREDIRECTION //
+        BoolField clipboard;                // AUTHID_OPT_CLIPBOARD //
+        BoolField device_redirection;       // AUTHID_OPT_DEVICEREDIRECTION //
 
         BoolField disable_tsk_switch_shortcuts; // AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS //
 
         int rdp_compression;    // 0 - Disabled, 1 - RDP 4.0, 2 - RDP 5.0, 3 - RDP 6.0, 4 - RDP 6.1
 
         uint32_t max_color_depth;   // 0 - Default (24-bit), 1 - 8-bit, 2 - 15-bit, 3 - 16-bit, 4 - 24-bit, 5 - 32-bit (not yet supported)
+
+        bool persistent_disk_bitmap_cache;  // default (Disabled)
     } client;
 
     struct {
@@ -563,6 +565,8 @@ struct Inifile : public FieldObserver {
 
         bool enable_nla;
         bool enable_kerberos;
+
+        bool persistent_disk_bitmap_cache;  // default (Disabled)
     } mod_rdp;
 
     struct
@@ -882,7 +886,7 @@ public:
         this->client.bogus_neg_request                   = false;
         this->client.rdp_compression                     = 0;
         this->client.max_color_depth                     = 24;
-
+        this->client.persistent_disk_bitmap_cache        = false;
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
@@ -895,6 +899,7 @@ public:
         this->mod_rdp.enable_kerberos                   = false;
         this->mod_rdp.open_session_timeout              = 0;
         this->mod_rdp.certificate_change_action         = 0;
+        this->mod_rdp.persistent_disk_bitmap_cache      = false;
 
         this->mod_rdp.extra_orders.empty();
         // End Section "mod_rdp"
@@ -1313,6 +1318,9 @@ public:
                     (this->client.max_color_depth != 32))
                     this->client.max_color_depth = 24;
             }
+            else if (0 == strcmp(key, "persistent_disk_bitmap_cache")){
+                this->client.persistent_disk_bitmap_cache = bool_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1342,6 +1350,9 @@ public:
             }
             else if (0 == strcmp(key, "enable_kerberos")) {
                 this->mod_rdp.enable_kerberos = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "persistent_disk_bitmap_cache")){
+                this->mod_rdp.persistent_disk_bitmap_cache = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

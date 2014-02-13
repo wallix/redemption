@@ -81,7 +81,7 @@ struct BitmapCacheHostSupportCaps : public Capability {
     }
 
     void log(const char * msg){
-        LOG(LOG_INFO, "%s OffScreenCache caps (%u bytes)", msg, this->len);
+        LOG(LOG_INFO, "%s BitmapCacheHostSupport caps (%u bytes)", msg, this->len);
         LOG(LOG_INFO, "BitmapCacheHostSupportCaps::%u", this->cacheVersion);
     }
 };
