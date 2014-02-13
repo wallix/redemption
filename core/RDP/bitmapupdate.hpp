@@ -268,8 +268,8 @@ struct RDPBitmapData {
                                    bitsPerPixel(2) + flags(2) + bitmapLength(2) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_ERR
-               , "BitmapData::receive TS_BITMAP_DATA - Truncated data, need=18, remains=%u"
-               , stream.in_remain());
+               , "BitmapData::receive TS_BITMAP_DATA - Truncated data, need=%u, remains=%u"
+               , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
@@ -283,11 +283,11 @@ struct RDPBitmapData {
         this->flags          = stream.in_uint16_le();
         this->bitmap_length  = stream.in_uint16_le();
 
-        assert(   (this->bits_per_pixel == 32)
-               || (this->bits_per_pixel == 24)
-               || (this->bits_per_pixel == 16)
-               || (this->bits_per_pixel == 15)
-               || (this->bits_per_pixel == 8 ));
+        REDASSERT(   (this->bits_per_pixel == 32)
+                  || (this->bits_per_pixel == 24)
+                  || (this->bits_per_pixel == 16)
+                  || (this->bits_per_pixel == 15)
+                  || (this->bits_per_pixel == 8 ));
 
         if (    (this->flags & BITMAP_COMPRESSION)
             && !(this->flags & NO_BITMAP_COMPRESSION_HDR)) {

@@ -67,6 +67,7 @@
 #include "RDP/GraphicUpdatePDU.hpp"
 #include "RDP/capabilities.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
+#include "RDP/PersistentKeyListPDU.hpp"
 
 #include "front_api.hpp"
 #include "genrandom.hpp"
@@ -2535,10 +2536,6 @@ public:
                             if (this->verbose & 1){
                                 LOG(LOG_INFO, "Front received CONFIRMACTIVEPDU done");
                             }
-//this->send_synchronize();
-//this->send_control(RDP_CTL_COOPERATE);
-//this->send_control(RDP_CTL_GRANT_CONTROL);
-//this->send_fontmap();
 
                             break;
                         case PDUTYPE_DATAPDU: /* 7 */
@@ -2548,7 +2545,7 @@ public:
                             // this is rdp_process_data that will set up_and_running to 1
                             // when fonts have been received
                             // we will not exit this loop until we are in this state.
-//                            LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
+                            //LOG(LOG_INFO, "sctrl.payload.len= %u sctrl.len = %u", sctrl.payload.size(), sctrl.len);
                             this->process_data(sctrl.payload, cb);
                             if (this->verbose & 8){
                                 LOG(LOG_INFO, "Front received DATAPDU done");
@@ -2821,6 +2818,15 @@ public:
         }
         order_caps.emit(stream);
         caps_count++;
+
+        if (this->ini->client.persistent_disk_bitmap_cache) {
+            BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
+            if (this->verbose) {
+                bitmap_cache_host_support_caps.log("Sending to client");
+            }
+            bitmap_cache_host_support_caps.emit(stream);
+            caps_count++;
+        }
 
         ColorCacheCaps colorcache_caps;
         if (this->verbose) {
@@ -3577,7 +3583,7 @@ public:
             }
         break;
         case PDUTYPE2_SYNCHRONIZE:  // Synchronize PDU (section 2.2.1.14.1)
-            if (this->verbose){
+            if (this->verbose & 8){
                 LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");
             }
             {
@@ -3838,7 +3844,15 @@ public:
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
 
-            sdata_in.payload.in_skip_bytes(sdata_in.len);
+            {
+                RDP::PersistentKeyListPDUData pklpdud;
+
+                pklpdud.receive(sdata_in.payload);
+                pklpdud.log(LOG_INFO, "Receiving from client Persistent Key List PDU Data");
+            }
+
+            TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
+            sdata_in.payload.p = sdata_in.payload.end;
         break;
         case PDUTYPE2_BITMAPCACHE_ERROR_PDU: // Bitmap Cache Error PDU (see [MS-RDPEGDI] section 2.2.2.3.1)
             if (this->verbose & 8){

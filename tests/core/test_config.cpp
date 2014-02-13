@@ -174,6 +174,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -181,6 +182,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -428,6 +430,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -435,6 +438,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -695,6 +699,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -702,6 +707,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -759,6 +765,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "rdp_compression=1\n"
                           "disable_tsk_switch_shortcuts=yes\n"
                           "max_color_depth=0\n"
+                          "persistent_disk_bitmap_cache=yes\n"
                           "\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
@@ -766,6 +773,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "open_session_timeout=45\n"
                           "certificate_change_action=1\n"
                           "extra_orders=22\n"
+                          "persistent_disk_bitmap_cache=false\n"
                           "\n"
                           "[mod_vnc]\n"
                           "encodings=16,2,0,1,-239\n"
@@ -928,6 +936,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
@@ -935,6 +944,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(45,                               ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(1,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string("22"),                ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string("16,2,0,1,-239"),     ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(true,                             ini.mod_vnc.allow_authentification_retries);
@@ -985,15 +995,16 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "tls_support=yes\n"
                           "rdp_compression=0\n"
                           "max_color_depth=8\n"
+                          "persistent_disk_bitmap_cache=no\n"
                           "[translation]\n"
                           "connection_closed=Connexion\\ fermée\n"
                           "[mod_rdp]\n"
                           "rdp_compression=2\n"
-                          "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=no\n"
                           "enable_nla=no\n"
                           "open_session_timeout=30\n"
                           "certificate_change_action=0\n"
+                          "persistent_disk_bitmap_cache=yes\n"
                           "[video]\n"
                           "hash_path=/mnt/wab/hash/\n"
                           "record_path=/mnt/wab/recorded/rdp/\n"
@@ -1140,6 +1151,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(8,                                ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(2,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1147,6 +1159,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(30,                               ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1194,6 +1207,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "performance_flags_force_present=1\n"
                           "performance_flags_force_not_present=0x\n"
                           "max_color_depth=24\n"
+                          "persistent_disk_bitmap_cache=yes\n"
                           "[mod_rdp]\n"
                           "rdp_compression=0\n"
                           "[video]\n"
@@ -1329,6 +1343,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1336,6 +1351,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1375,6 +1391,9 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           "certificate_password=redemption\n"
                           "enable_ip_transparent=False\n"
                           "shell_working_directory=%HOMEDRIVE%%HOMEPATH%\n"
+                          "\n"
+                          "[mod_rdp]\n"
+                          "persistent_disk_bitmap_cache=true\n"
                           "\n"
                           );
 
@@ -1503,6 +1522,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1510,6 +1530,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1670,6 +1691,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1677,6 +1699,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -1836,6 +1859,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1843,6 +1867,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -2002,6 +2027,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -2009,6 +2035,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
@@ -2158,6 +2185,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.client.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.client.disable_tsk_switch_shortcuts.get());
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
+    BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -2165,6 +2193,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.open_session_timeout);
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.certificate_change_action);
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_rdp.extra_orders.c_str());
+    BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.persistent_disk_bitmap_cache);
 
     BOOST_CHECK_EQUAL(std::string(""),                  ini.mod_vnc.encodings.c_str());
     BOOST_CHECK_EQUAL(false,                            ini.mod_vnc.allow_authentification_retries);
