@@ -71,4 +71,6 @@ BOOST_AUTO_TEST_CASE(TestKerberos)
     SEC_STATUS status;
     status = table.QuerySecurityPackageInfo(KERBEROS_PACKAGE_NAME, &packageInfo);
     BOOST_CHECK_EQUAL(status, SEC_E_OK);
+
+    KERBEROSContext krb_ctx;
 }
