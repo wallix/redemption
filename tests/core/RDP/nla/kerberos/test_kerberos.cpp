@@ -66,5 +66,9 @@ BOOST_AUTO_TEST_CASE(TestAcquireCredentials)
 
 BOOST_AUTO_TEST_CASE(TestKerberos)
 {
-
+    Kerberos_SecurityFunctionTable table;
+    SecPkgInfo packageInfo = {};
+    SEC_STATUS status;
+    status = table.QuerySecurityPackageInfo(KERBEROS_PACKAGE_NAME, &packageInfo);
+    BOOST_CHECK_EQUAL(status, SEC_E_OK);
 }
