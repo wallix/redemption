@@ -46,7 +46,9 @@ struct KERBEROSContext {
     OM_uint32 actual_time;
     gss_OID actual_mech;
 
-    KERBEROSContext() {}
+    KERBEROSContext()
+        : gss_ctx(GSS_C_NO_CONTEXT)
+    {}
 
     virtual ~KERBEROSContext() {
         OM_uint32 major_status, minor_status;
@@ -92,7 +94,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         }
         if (ulAttribute == SECPKG_ATTR_SIZES) {
             SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*) pBuffer;
-            ContextSizes->cbMaxToken = 2010;
+            ContextSizes->cbMaxToken = 4096;
             ContextSizes->cbMaxSignature = 0;
             ContextSizes->cbBlockSize = 0;
             ContextSizes->cbSecurityTrailer = 16;
@@ -220,7 +222,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             if (!krb_ctx) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
-            krb_ctx->gss_ctx = GSS_C_NO_CONTEXT;
 
             phNewContext->SecureHandleSetLowerPointer(krb_ctx);
             phNewContext->SecureHandleSetUpperPointer((void*) KERBEROS_PACKAGE_NAME);
@@ -403,7 +404,6 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
     // DECRYPT_MESSAGE DecryptMessage;
     virtual SEC_STATUS DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                       unsigned long MessageSeqNo, unsigned long * pfQOP) {
-
 
         // OM_uint32 gss_unwrap
         //     (OM_uint32 ,             /* minor_status */
