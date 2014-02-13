@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
 
     Inifile ini;
-    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 3, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
 
@@ -346,7 +346,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 3, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
 
@@ -392,7 +392,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     OutFileTransport trans(fd);
     BOOST_CHECK_EQUAL(0, 0);
     Inifile ini;
-    BmpCache bmp_cache(24, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 3, 600, 256, 300, 1024, 262, 4096);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
     BOOST_CHECK_EQUAL(0, 0);

@@ -72,6 +72,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
     BmpCache bmp_cache(
         player.bmp_cache->bpp,
+        3,
         player.bmp_cache->small_entries,
         player.bmp_cache->small_size,
         player.bmp_cache->medium_entries,
@@ -150,6 +151,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
 //    BmpCache bmp_cache(
 //        player.bmp_cache->bpp,
+//        3,
 //        player.bmp_cache->small_entries,
 //        player.bmp_cache->small_size,
 //        player.bmp_cache->medium_entries,

@@ -130,7 +130,7 @@ struct rdp_orders {
             this->bmp_cache = NULL;
         }
 
-        this->bmp_cache = new BmpCache(bpp, small_entries, small_size, medium_entries, medium_size,
+        this->bmp_cache = new BmpCache(bpp, 3, small_entries, small_size, medium_entries, medium_size,
             big_entries, big_size);
     }
 

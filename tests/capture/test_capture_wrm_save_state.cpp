@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
+    BmpCache bmp_cache(24, 3, 2, 256, 2, 1024, 2, 4096);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);
@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1, 511);
     Inifile ini;
     ini.debug.primary_orders = 1;
-    BmpCache bmp_cache(24, 2, 256, 2, 1024, 2, 4096);
+    BmpCache bmp_cache(24, 3, 2, 256, 2, 1024, 2, 4096);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);

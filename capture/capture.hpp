@@ -113,7 +113,7 @@ public:
             TODO("Also we may wonder why we are encrypting wrm and not png"
                  "(This is related to the path split between png and wrm)."
                  "We should stop and consider what we should actually do")
-            this->pnc_bmp_cache = new BmpCache(24, 600, 768, 300, 3072, 262, 12288);
+            this->pnc_bmp_cache = new BmpCache(24, 3, 600, 768, 300, 3072, 262, 12288);
             if (this->enable_file_encryption) {
                 this->crypto_wrm_trans = new CryptoOutmetaTransport( &this->crypto_ctx
                                                                    , wrm_path, hash_path, basename, now
