@@ -263,9 +263,12 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-                                             SecBufferDesc * pInput, unsigned long fContextReq,
-                                             unsigned long TargetDataRep, PCtxtHandle phNewContext,
+    virtual SEC_STATUS AcceptSecurityContext(PCredHandle phCredential,
+                                             PCtxtHandle phContext,
+                                             SecBufferDesc * pInput,
+                                             unsigned long fContextReq,
+                                             unsigned long TargetDataRep,
+                                             PCtxtHandle phNewContext,
                                              SecBufferDesc * pOutput,
                                              unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
