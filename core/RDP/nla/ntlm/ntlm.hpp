@@ -124,19 +124,17 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
     }
 
     SEC_STATUS FreeCredentialsHandle(PCredHandle phCredential) {
-        CREDENTIALS* credentials;
+        CREDENTIALS* credentials = NULL;
 
         if (!phCredential) {
             return SEC_E_INVALID_HANDLE;
         }
         credentials = (CREDENTIALS*) phCredential->SecureHandleGetLowerPointer();
 
-        if (!credentials) {
-            return SEC_E_INVALID_HANDLE;
+        if (credentials) {
+            delete credentials;
+            credentials = NULL;
         }
-        delete credentials;
-        credentials = NULL;
-
         return SEC_E_OK;
     }
 
@@ -182,7 +180,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
 
             // if (context->Workstation.size() < 1)
             //     context->ntlm_SetContextWorkstation(NULL);
-
+            if (!credentials) {
+                return SEC_E_WRONG_CREDENTIAL_HANDLE;
+            }
             context->ntlm_SetContextWorkstation((uint8_t*)pszTargetName);
             context->ntlm_SetContextServicePrincipalName((uint8_t*)pszTargetName);
 
@@ -297,6 +297,9 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable {
                 context->confidentiality = true;
             }
             credentials = (CREDENTIALS*)phCredential->SecureHandleGetLowerPointer();
+            if (!credentials) {
+                return SEC_E_WRONG_CREDENTIAL_HANDLE;
+            }
             context->identity.CopyAuthIdentity(credentials->identity);
 
             context->ntlm_SetContextServicePrincipalName(NULL);

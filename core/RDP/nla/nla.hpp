@@ -745,10 +745,6 @@ struct rdpCredssp
 
             if (this->credssp_recv() < 0)
                 return -1;
-            // #ifdef WITH_DEBUG_CREDSSP
-            //         LOG(LOG_ERR, "Receiving Authentication Token\n");
-            //         credssp_buffer_print(this);
-            // #endif
 
             input_buffer.Buffer.init(this->negoToken.size());
             input_buffer.Buffer.copy(this->negoToken.get_data(),
@@ -809,11 +805,6 @@ struct rdpCredssp
                 return -1;
             }
 
-            /* send authentication token */
-            // #ifdef WITH_DEBUG_CREDSSP
-            //         LOG(LOG_ERR, "Sending Authentication Token\n");
-            //         credssp_buffer_print(this);
-            // #endif
 
             this->credssp_send();
             this->credssp_buffer_free();

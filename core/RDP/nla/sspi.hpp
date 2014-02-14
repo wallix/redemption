@@ -555,10 +555,14 @@ struct SecurityFunctionTable {
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal, const char * pszPackage,
-                                                unsigned long fCredentialUse, void* pvLogonID,
-                                                void* pAuthData, SEC_GET_KEY_FN pGetKeyFn,
-                                                void* pvGetKeyArgument, PCredHandle phCredential,
+    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
+                                                const char * pszPackage,
+                                                unsigned long fCredentialUse,
+                                                void* pvLogonID,
+                                                void* pAuthData,
+                                                SEC_GET_KEY_FN pGetKeyFn,
+                                                void* pvGetKeyArgument,
+                                                PCredHandle phCredential,
                                                 TimeStamp * ptsExpiry) {
 
          return SEC_E_UNSUPPORTED_FUNCTION;
@@ -574,12 +578,16 @@ struct SecurityFunctionTable {
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-                                                 char* pszTargetName, unsigned long fContextReq,
+    virtual SEC_STATUS InitializeSecurityContext(PCredHandle phCredential,
+                                                 PCtxtHandle phContext,
+                                                 char* pszTargetName,
+                                                 unsigned long fContextReq,
                                                  unsigned long Reserved1,
                                                  unsigned long TargetDataRep,
-                                                 SecBufferDesc * pInput, unsigned long Reserved2,
-                                                 PCtxtHandle phNewContext, SecBufferDesc * pOutput,
+                                                 SecBufferDesc * pInput,
+                                                 unsigned long Reserved2,
+                                                 PCtxtHandle phNewContext,
+                                                 SecBufferDesc * pOutput,
                                                  unsigned long * pfContextAttr,
                                                  TimeStamp * ptsExpiry) {
         return SEC_E_UNSUPPORTED_FUNCTION;
@@ -587,9 +595,12 @@ struct SecurityFunctionTable {
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext,
-                                             SecBufferDesc * pInput, unsigned long fContextReq,
-                                             unsigned long TargetDataRep, PCtxtHandle phNewContext,
+    virtual SEC_STATUS AcceptSecurityContext(PCredHandle phCredential,
+                                             PCtxtHandle phContext,
+                                             SecBufferDesc * pInput,
+                                             unsigned long fContextReq,
+                                             unsigned long TargetDataRep,
+                                             PCtxtHandle phNewContext,
                                              SecBufferDesc * pOutput,
                                              unsigned long * pfContextAttr,
                                              TimeStamp * ptsTimeStamp) {
@@ -650,25 +661,6 @@ struct SecurityFunctionTable {
     // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
     virtual SEC_STATUS QuerySecurityPackageInfo(const char* pszPackageName,
                                                 SecPkgInfo * pPackageInfo) {
-
-	// int index;
-	// uint32_t cPackages;
-
-	// cPackages = sizeof(SecPkgInfo_LIST) / sizeof(*(SecPkgInfo_LIST));
-
-	// for (index = 0; index < (int) cPackages; index++) {
-        //     if (strcmp(pszPackageName, SecPkgInfo_LIST[index]->Name) == 0) {
-
-        //         pPackageInfo->fCapabilities = SecPkgInfo_LIST[index]->fCapabilities;
-        //         pPackageInfo->wVersion = SecPkgInfo_LIST[index]->wVersion;
-        //         pPackageInfo->wRPCID = SecPkgInfo_LIST[index]->wRPCID;
-        //         pPackageInfo->cbMaxToken = SecPkgInfo_LIST[index]->cbMaxToken;
-        //         pPackageInfo->Name = SecPkgInfo_LIST[index]->Name;
-        //         pPackageInfo->Comment = SecPkgInfo_LIST[index]->Comment;
-
-        //         return SEC_E_OK;
-        //     }
-        // }
 
 	return SEC_E_SECPKG_NOT_FOUND;
     }

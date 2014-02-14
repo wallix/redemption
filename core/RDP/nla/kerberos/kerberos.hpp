@@ -231,7 +231,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
 
             // Target name (server name, ip ...)
             if (!this->get_service_name(pszTargetName, &krb_ctx->target_name)) {
-                return SEC_E_INVALID_TOKEN;
+                return SEC_E_WRONG_PRINCIPAL;
             }
         }
         // else {
@@ -263,7 +263,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
             LOG(LOG_ERR, "Desired Mech unavailable");
-            return SEC_E_INVALID_TOKEN;
+            return SEC_E_CRYPTO_SYSTEM_INVALID;
         }
 // OM_uint32 gss_init_sec_context
 //                  (OM_uint32 ,             /* minor_status */
@@ -299,7 +299,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             LOG(LOG_INFO, "MAJOR ERROR");
             this->report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
                                major_status, minor_status);
-            return SEC_E_INVALID_TOKEN;
+            return SEC_E_OUT_OF_SEQUENCE;
         }
 
         PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
@@ -381,7 +381,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
             LOG(LOG_ERR, "Desired Mech unavailable");
-            return SEC_E_INVALID_TOKEN;
+            return SEC_E_CRYPTO_SYSTEM_INVALID;
         }
 
         // acquire delegated credential handle if client has tgt with delegation flag
@@ -418,7 +418,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             LOG(LOG_INFO, "MAJOR ERROR");
             this->report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
                                major_status, minor_status);
-            return SEC_E_INVALID_TOKEN;
+            return SEC_E_OUT_OF_SEQUENCE;
         }
 
         PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
@@ -498,7 +498,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             LOG(LOG_INFO, "MAJOR ERROR");
             this->report_error(GSS_C_GSS_CODE, "CredSSP: GSS WRAP failed.",
                                major_status, minor_status);
-            return SEC_E_INVALID_TOKEN;
+            return SEC_E_ENCRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
         data_buffer->Buffer.init(outbuf.length);
@@ -555,7 +555,7 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
             LOG(LOG_INFO, "MAJOR ERROR");
             this->report_error(GSS_C_GSS_CODE, "CredSSP: GSS UNWRAP failed.",
                                major_status, minor_status);
-            return SEC_E_INVALID_TOKEN;
+            return SEC_E_DECRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
         data_buffer->Buffer.init(outbuf.length);

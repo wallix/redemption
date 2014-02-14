@@ -610,7 +610,7 @@ BOOST_AUTO_TEST_CASE(TestWrittersReaders)
     BOOST_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
     BOOST_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
     status = context_read.read_authenticate(&auth);
-    BOOST_CHECK_EQUAL(status, SEC_E_INVALID_TOKEN);
+    BOOST_CHECK_EQUAL(status, SEC_E_LOGON_DENIED);
 }
 
 BOOST_AUTO_TEST_CASE(TestOutputs)

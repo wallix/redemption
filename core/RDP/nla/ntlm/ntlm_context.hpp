@@ -931,12 +931,12 @@ struct NTLMContext {
         result = this->ntlm_check_nt_response_from_authenticate(hash, 16);
         if (!result) {
             LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
-            return SEC_E_INVALID_TOKEN;
+            return SEC_E_LOGON_DENIED;
         }
         result = this->ntlm_check_lm_response_from_authenticate(hash, 16);
         if (!result) {
             LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
-            return SEC_E_INVALID_TOKEN;
+            return SEC_E_LOGON_DENIED;
         }
         // SERVER COMPUTE SHARED KEY WITH CLIENT
         this->ntlm_compute_session_base_key(hash, 16);
@@ -952,7 +952,7 @@ struct NTLMContext {
             if (memcmp(this->MessageIntegrityCheck,
                        this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                 LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
-                return SEC_E_INVALID_TOKEN;
+                return SEC_E_MESSAGE_ALTERED;
             }
         }
         this->state = NTLM_STATE_FINAL;
