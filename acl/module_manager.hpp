@@ -635,7 +635,7 @@ public:
 
                     ClientInfo client_info = this->front.client_info;
 
-                     if (strcmp(ini.context.mode_console.get_cstr(), "force") == 0) {
+                    if (strcmp(ini.context.mode_console.get_cstr(), "force") == 0) {
                         client_info.console_session = true;
                         LOG(LOG_INFO, "Session::mode console : force");
                     }

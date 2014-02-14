@@ -558,7 +558,10 @@ struct rdpCredssp
                                                             &output_buffer_desc,
                                                             &pfContextAttr,
                                                             &expiration);
-            if (status == SEC_E_INVALID_TOKEN) {
+            if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
+                (status != SEC_I_COMPLETE_NEEDED) &&
+                (status != SEC_E_OK) &&
+                (status != SEC_I_CONTINUE_NEEDED)) {
                 LOG(LOG_ERR, "Initialize Security Context Error !");
                 return -1;
             }
