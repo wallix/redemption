@@ -61,8 +61,9 @@ public:
                 fgcolor, bgcolor, 5)
         , dialog(drawable, 0, 0, *this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
         , challenge(NULL)
-        , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12, fgcolor, bgcolor, 6, 2)
-        , cancel(cancel_text ? new WidgetFlatButton(drawable, 0, 0, *this, this, cancel_text, true, -11, fgcolor, bgcolor, 6, 2) : NULL)
+        , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12,
+             fgcolor, bgcolor, WINBLUE, 6, 2)
+        , cancel(cancel_text ? new WidgetFlatButton(drawable, 0, 0, *this, this, cancel_text, true, -11, fgcolor, bgcolor, WINBLUE, 6, 2) : NULL)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12, LIGHT_BLUE)
         , bgcolor(bgcolor)
     {

@@ -31,6 +31,7 @@
 #include "flat_button.hpp"
 #include "translation.hpp"
 #include "ellipse.hpp"
+
 class FlatLogin : public WidgetParent
 {
 public:
@@ -62,7 +63,8 @@ public:
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
         , version_label(drawable, 0, 0, *this, NULL, caption, true, -15, fgcolor, bgcolor)
-        , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, fgcolor, bgcolor, 6, 2)
+        , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, fgcolor, bgcolor,
+                   WINBLUE, 6, 2)
         , fgcolor(fgcolor)
         , bgcolor(bgcolor)
         , ini(ini)

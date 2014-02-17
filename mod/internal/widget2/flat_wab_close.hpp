@@ -59,18 +59,20 @@ public:
     FlatWabClose(DrawApi& drawable, int16_t width, int16_t height, Widget2& parent,
                    NotifyApi* notifier, const char * diagnostic_text, int group_id,
                    const char * username, const char * target,
-                   int fgcolor, int bgcolor, bool showtimer,
-                   Inifile & ini)
+                   int fgcolor, int bgcolor, bool showtimer, Inifile & ini)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
     , username_label(drawable, (width - 600) / 2, 0, *this, NULL,
                      "Username:", true, -11, fgcolor, bgcolor)
-    , username_label_value(drawable, 0, 0, *this, NULL, username, true, -11, fgcolor, bgcolor)
+    , username_label_value(drawable, 0, 0, *this, NULL, username, true, -11,
+                           fgcolor, bgcolor)
     , target_label(drawable, (width - 600) / 2, 0, *this, NULL,
                    "Target:", true, -12, fgcolor, bgcolor)
     , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12, fgcolor, bgcolor)
-    , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed", ini), true, -13, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14, fgcolor, bgcolor, 6, 2)
+    , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed", ini),
+                              true, -13, fgcolor, bgcolor)
+    , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14, fgcolor, bgcolor,
+             WINBLUE, 6, 2)
     , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL,
                  "Diagnostic:", true, -15, fgcolor, bgcolor)
     , diagnostic_lines(drawable, 0, 0, *this, NULL,

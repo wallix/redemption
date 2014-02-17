@@ -41,7 +41,7 @@ public:
                     int xtext = 0, int ytext = 0, bool pass = false)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,
-                 group_id, bgcolor, bbgcolor, 6, 2)
+                 group_id, bgcolor, bbgcolor, WINBLUE, 6, 2)
         , editbox(pass ? new WidgetPassword(drawable, 0, 0, cx - this->button.cx(), *this, this,
                                             text, group_id, fgcolor, bgcolor, edit_position, 1, 2)
                   : new WidgetEdit(drawable, 0, 0, cx - this->button.cx(), *this, this, text,

@@ -53,6 +53,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 0;
@@ -60,7 +61,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, xtext, ytext);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test1", auto_resize, id, fg_color, bg_color, fc_color, xtext, ytext);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0, 0, wbutton.cx(), wbutton.cy()));
@@ -324,6 +325,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 10;
@@ -331,7 +333,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonDownAndUp)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, xtext, ytext);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, fc_color, xtext, ytext);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
@@ -543,6 +545,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 10;
@@ -550,7 +553,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonFocus)
     int xtext = 4;
     int ytext = 1;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test7", auto_resize, id, fg_color, bg_color, xtext, ytext);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test7", auto_resize, id, fg_color, bg_color, fc_color, xtext, ytext);
 
     wbutton.rdp_input_invalidate(wbutton.rect);
 
