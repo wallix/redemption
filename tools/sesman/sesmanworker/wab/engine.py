@@ -160,8 +160,8 @@ class Engine(object):
         try:
             notif_data = {
                    u'user'   : user
-                 , u'ip'     : ip                   
-                 , u'account': account                   
+                 , u'ip'     : ip
+                 , u'account': account
                  , u'device' : device
              }
 
@@ -219,6 +219,28 @@ class Engine(object):
 #        for r in self.rights:
 #            rrr = RightInfo(r)
 #            Logger().info("%r" % rrr)
+
+    def get_selected_target(self, target_device, target_login, target_protocol):
+        selected_target = None
+        for r in self.rights:
+            if r.resource.application:
+                if target_device != r.resource.application.cn:
+                    continue
+                if target_login != r.account.login:
+                    continue
+                if target_protocol != u'APP':
+                    continue
+            else:
+                if target_device != r.resource.device.cn:
+                    continue
+                if target_login != r.account.login:
+                    continue
+                if target_protocol != r.resource.service.cn:
+                    continue
+            selected_target = r
+            break
+
+        return selected_target
 
     def get_effective_target(self, selected_target):
         Logger().info("Engine get_effective_target: service_login=%s" % selected_target.service_login)
