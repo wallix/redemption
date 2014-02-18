@@ -70,6 +70,8 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -300,6 +302,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     // default config
     Inifile             ini;
     ConfigurationLoader cfg_loader(ini);
+    char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -327,6 +330,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -357,14 +362,14 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
-/*
+
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
                                                         std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
-*/
+
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
 
     BOOST_CHECK_EQUAL(30,                               ini.globals.max_tick);
@@ -566,6 +571,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     std::stringstream   oss("");
     Inifile             ini;
     ConfigurationLoader cfg_loader(ini, oss);
+    char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -593,6 +599,8 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -623,14 +631,14 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
-/*
+
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
                                                         std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
-*/
+
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
@@ -752,6 +760,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "alternate_shell=C:\\\\WINDOWS\\\\NOTEPAD.EXE\n"
                           "shell_working_directory=C:\\\\WINDOWS\\\\\n"
                           "enable_bitmap_update=true\n"
+                          "persistent_path=/var/tmp/wab/persistent/rdp\n"
                           "\n"
                           "[client]\n"
                           "ignore_logon_password=yes\n"
@@ -829,6 +838,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string("/var/tmp/wab/persistent/rdp/"),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -859,11 +870,13 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
+
     BOOST_CHECK_EQUAL(std::string("/mnt/wab/hash/"),    std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string("/mnt/wab/recorded/rdp/"),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string("/mnt/tmp/wab/recorded/rdp/"),
                                                         std::string(ini.video.record_tmp_path));
+
     BOOST_CHECK_EQUAL(1,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(true,                             ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
@@ -1019,6 +1032,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
 
     Inifile             ini;
     ConfigurationLoader cfg_loader(ini, oss);
+    char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1046,6 +1060,8 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1217,6 +1233,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
 
     Inifile             ini;
     ConfigurationLoader cfg_loader(ini, oss);
+    char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1244,6 +1261,8 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1274,14 +1293,14 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
-/*
+
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
                                                         std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
-*/
+
     BOOST_CHECK_EQUAL(4,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
@@ -1399,6 +1418,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
 
     Inifile             ini;
     ConfigurationLoader cfg_loader(ini, oss);
+    char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1426,6 +1446,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1456,14 +1478,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
-/*
+
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
                                                         std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
-*/
+
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
@@ -1595,6 +1617,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1625,14 +1649,14 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
-/*
+
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
                                                         std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
-*/
+
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
@@ -1734,6 +1758,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     // - every characters following # are ignored until end of line (comments)
     Inifile             ini;
     ConfigurationLoader cfg_loader(ini);
+    char                temp_path[1024];
 
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_png);
     BOOST_CHECK_EQUAL(true,                             ini.video.capture_wrm);
@@ -1764,6 +1789,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1794,14 +1821,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
-/*
+
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
                                                         std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
-*/
+
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
@@ -1932,6 +1959,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -1962,14 +1991,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
-/*
+
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
                                                         std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
-*/
+
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);
@@ -2090,6 +2119,8 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(false,                            ini.globals.notimestamp);
     BOOST_CHECK_EQUAL(false,                            ini.globals.autovalidate);
     BOOST_CHECK_EQUAL(std::string("/tmp/rdpproxy/"),    std::string(ini.globals.dynamic_conf_path));
+    BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, PERSISTENT_PATH, sizeof(temp_path))),
+                                                        std::string(ini.globals.persistent_path));
 
     BOOST_CHECK_EQUAL(1,                                ini.video.capture_flags);
     BOOST_CHECK_EQUAL(3000,                             ini.video.png_interval);
@@ -2120,14 +2151,14 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(1024,                             ini.video.h_height);
     BOOST_CHECK_EQUAL(1280,                             ini.video.h_width);
     BOOST_CHECK_EQUAL(15,                               ini.video.h_qscale);
-/*
+
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, HASH_PATH,       sizeof(temp_path))),
                                                         std::string(ini.video.hash_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_PATH,     sizeof(temp_path))),
                                                         std::string(ini.video.record_path));
     BOOST_CHECK_EQUAL(std::string(pathncpy(temp_path, RECORD_TMP_PATH, sizeof(temp_path))),
                                                         std::string(ini.video.record_tmp_path));
-*/
+
     BOOST_CHECK_EQUAL(0,                                ini.video.disable_keyboard_log.get());
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_syslog);
     BOOST_CHECK_EQUAL(false,                            ini.video.disable_keyboard_log_wrm);

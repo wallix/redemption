@@ -92,7 +92,7 @@ struct ClientInfo {
         this->width = 0;
         this->height = 0;
         /* bitmap cache info */
-        this->number_of_cache = 3;
+        this->number_of_cache = 0;
         /* default 8 bit v1 color bitmap cache entries and size */
         this->cache1_entries = 600;
         this->cache1_persistent = false;

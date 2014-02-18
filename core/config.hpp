@@ -92,6 +92,10 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)");
 #define RECORD_PATH "/var/rdpproxy/recorded"
 #endif
 
+#if !defined(PERSISTENT_PATH)
+#define PERSISTENT_PATH "/var/rdpproxy/persistent"
+#endif
+
 #if !defined(RECORD_TMP_PATH)
 #define RECORD_TMP_PATH "/var/rdpproxy/tmp"
 #endif
@@ -512,7 +516,6 @@ struct Inifile : public FieldObserver {
         char png_path[1024];
         char wrm_path[1024];
 
-
         StringField alternate_shell;          // STRAUTHID_ALTERNATE_SHELL //
         StringField shell_working_directory;  // STRAUTHID_SHELL_WORKING_DIRECTORY //
 
@@ -525,6 +528,8 @@ struct Inifile : public FieldObserver {
 
         uint64_t flv_break_interval;  // time between 2 flv movies captures (in seconds)
         unsigned flv_frame_interval;
+
+        char persistent_path[1024];
     } globals;
 
     // section "client"
@@ -857,6 +862,8 @@ public:
         TODO("this could be some kind of enumeration");
         this->globals.video_quality.set_from_cstr("medium");
         this->globals.enable_bitmap_update = false;
+
+        pathncpy(this->globals.persistent_path, PERSISTENT_PATH, sizeof(this->globals.persistent_path));
         // End Init globals
 
         this->globals.flv_break_interval = 600000000l;
@@ -1266,6 +1273,9 @@ public:
             }
             else if (0 == strcmp(key, "enable_bitmap_update")){
                 this->globals.enable_bitmap_update = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "persistent_path")){
+                pathncpy(this->globals.persistent_path, value, sizeof(this->globals.persistent_path));
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
