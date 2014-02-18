@@ -520,6 +520,7 @@ private:
 
 public:
 
+    ColorTheme colors;
     int bgcolor;
     int fgcolor;
     WidgetLabel device_label;
@@ -571,48 +572,68 @@ public:
                    const char * filter_device, const char * filter_target,
                    const char * filter_proto, Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , bgcolor(DARK_BLUE_BIS)
-        , fgcolor(WHITE)
+        , colors(ColorTheme())
+        , bgcolor(this->colors.global.bgcolor)
+        , fgcolor(this->colors.global.fgcolor)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10,
                        this->fgcolor, this->bgcolor)
         , device_target_label(drawable, 15, 0, *this, NULL, TR("target_group", ini), true,
-                              -10, this->fgcolor, MEDIUM_BLUE, 5)
+                              -10, this->colors.selector_label.fgcolor,
+                              this->colors.selector_label.bgcolor, 5)
         , target_label(drawable, 145, 0, *this, NULL, TR("target", ini), true, -10,
-                       this->fgcolor, MEDIUM_BLUE, 5)
+                       this->colors.selector_label.fgcolor,
+                       this->colors.selector_label.bgcolor, 5)
         , protocol_label(drawable, 495, 0, *this, NULL, TR("protocol", ini), true, -10,
-                         this->fgcolor, MEDIUM_BLUE, 5)
+                         this->colors.selector_label.fgcolor,
+                         this->colors.selector_label.bgcolor, 5)
         , close_time_label(drawable, 615, 0, *this, NULL, TR("close_time", ini), true, -10,
-                           this->fgcolor, MEDIUM_BLUE, 5)
+                           this->colors.selector_label.fgcolor,
+                           this->colors.selector_label.bgcolor, 5)
         , selector_lines(drawable, *this, this, 15, 0, 130, 350, 120, 170, -11,
-                         BLACK, BLACK, WHITE, PALE_BLUE, LIGHT_BLUE, MEDIUM_BLUE,
-                         WINBLUE, WHITE, 5, 1, DARK_BLUE_BIS, 1)
-        , filter_device(drawable, 15, 0, 120, *this, this,
-                        filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
-        , filter_target(drawable, 145, 0, 340, *this, this,
-                        filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
-        , filter_proto(drawable, 495, 0, 110, *this, this,
-                       filter_proto?filter_proto:0, -12, BLACK, WHITE, -1, 1, 1)
+                         this->colors.selector_line1.fgcolor,
+                         this->colors.selector_line2.fgcolor,
+                         this->colors.selector_selected.fgcolor,
+                         this->colors.selector_line1.bgcolor,
+                         this->colors.selector_line2.bgcolor,
+                         this->colors.selector_selected.bgcolor,
+                         this->colors.selector_focus.bgcolor,
+                         this->colors.selector_focus.fgcolor,
+                         5, 1, this->colors.global.bgcolor, 1)
+        , filter_device(drawable, 15, 0, 120, *this, this, filter_device?filter_device:0,
+                        -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                        -1, 1, 1)
+        , filter_target(drawable, 145, 0, 340, *this, this, filter_target?filter_target:0,
+                        -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                        -1, 1, 1)
+        , filter_proto(drawable, 495, 0, 110, *this, this, filter_proto?filter_proto:0,
+                       -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor, -1, 1, 1)
           //BEGIN WidgetPager
         , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15,
-                     WHITE, DARK_BLUE_BIS, WINBLUE, 6, 2, true)
+                     this->colors.global.fgcolor, this->colors.global.bgcolor,
+                     this->colors.global.focus_color, 6, 2, true)
         , prev_page(drawable, 0, 0, *this, notifier, "◀", true, -15,
-                    WHITE, DARK_BLUE_BIS, WINBLUE, 6, 2, true)
+                    this->colors.global.fgcolor, this->colors.global.bgcolor,
+                    this->colors.global.focus_color, 6, 2, true)
         , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
-                       current_page ? current_page : "XXXX", -15, BLACK, WHITE, -1, 1, 1)
-        , number_page(drawable, 0, 0, *this, NULL,
-                      number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXX",
-                      true, -100, this->fgcolor, this->bgcolor)
+                       current_page ? current_page : "XXXX", -15,
+                       this->colors.edit.fgcolor, this->colors.edit.bgcolor, -1, 1, 1)
+        , number_page(drawable, 0, 0, *this, NULL, number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXX", true, -100, this->fgcolor, this->bgcolor)
         , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15,
-                    WHITE, DARK_BLUE_BIS, WINBLUE, 6, 2, true)
+                    this->colors.global.fgcolor, this->colors.global.bgcolor,
+                    this->colors.global.focus_color, 6, 2, true)
         , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15,
-                    WHITE, DARK_BLUE_BIS, WINBLUE, 6, 2, true)
+                    this->colors.global.fgcolor, this->colors.global.bgcolor,
+                    this->colors.global.focus_color, 6, 2, true)
           //END WidgetPager
         , logout(drawable, 0, 0, *this, this, TR("logout", ini), true, -16,
-                 WHITE, DARK_BLUE_BIS, WINBLUE, 6, 2)
+                 this->colors.global.fgcolor, this->colors.global.bgcolor,
+                 this->colors.global.focus_color, 6, 2)
         , apply(drawable, 0, 0, *this, this, TR("filter", ini), true, -12,
-                WHITE, DARK_BLUE_BIS, WINBLUE, 6, 2)
+                this->colors.global.fgcolor, this->colors.global.bgcolor,
+                this->colors.global.focus_color, 6, 2)
         , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18,
-                  WHITE, DARK_BLUE_BIS, WINBLUE, 6, 2)
+                  this->colors.global.fgcolor, this->colors.global.bgcolor,
+                  this->colors.global.focus_color, 6, 2)
         // , radiolist(drawable, this->device_label.lx() + 30, this->device_label.dy(), *this, this)
     {
         this->impl = new CompositeTable;

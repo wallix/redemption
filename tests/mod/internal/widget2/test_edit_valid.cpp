@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     size_t edit_pos = 2;
 
     WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, "test1", id,
-                          fg_color, bg_color, DARK_GREY, edit_pos, xtext, ytext);
+                          fg_color, bg_color, DARK_GREY, WINBLUE, edit_pos, xtext, ytext);
 
     parent.set_widget_focus(&wedit);
     // ask to widget to redraw at it's current position
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     size_t edit_pos = -1;
 
     WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, NULL, id,
-                          fg_color, bg_color, DARK_GREY, edit_pos, xtext, ytext);
+                          fg_color, bg_color, DARK_GREY, WINBLUE, edit_pos, xtext, ytext);
 
     parent.add_widget(&wedit);
     // ask to widget to redraw at it's current position
@@ -187,9 +187,9 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
 
     parent.tab_flag = Widget2::NORMAL_TAB;
 
-    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, 0);
+    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, WINBLUE, 0);
 
-    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, 0);
+    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, WINBLUE, 0);
 
     parent.add_widget(&wedit1);
     parent.add_widget(&wedit2);
@@ -305,7 +305,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetEditValid wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE);
+    WidgetEditValid wedit(drawable, x, y, cx, parent, &notifier, "abcdef", 0, BLACK, WHITE, DARK_BLUE, WINBLUE);
 
     parent.add_widget(&wedit);
     parent.set_widget_focus(&wedit);

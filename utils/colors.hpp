@@ -68,6 +68,7 @@ enum {
 };
 static inline unsigned color_from_cstr(const char * str) {
     unsigned res = 0;
+
     if (0 == strcasecmp("BLACK", str)) { res = BLACK; }
     else if (0 == strcasecmp("GREY", str)) { res = GREY; }
     else if (0 == strcasecmp("DARK_GREY", str)) { res = DARK_GREY; }
@@ -99,6 +100,10 @@ static inline unsigned color_from_cstr(const char * str) {
     else if (0 == strcasecmp("PALE_BLUE", str)) { res = PALE_BLUE; }
     else if (0 == strcasecmp("LIGHT_BLUE", str)) { res = LIGHT_BLUE; }
     else if (0 == strcasecmp("WINBLUE", str)) { res = WINBLUE; }
+    else if ((*str == '0') && (*(str + 1) == 'x')){
+        res = strtol(str + 2, 0, 16);
+    }
+    else { res = atol(str); }
 
     return res;
 }

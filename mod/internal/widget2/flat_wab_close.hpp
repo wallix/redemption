@@ -36,6 +36,7 @@
 class FlatWabClose : public WidgetParent
 {
 public:
+    ColorTheme colors;
     WidgetImage img;
     WidgetLabel username_label;
     WidgetLabel username_label_value;
@@ -61,27 +62,33 @@ public:
                    const char * username, const char * target,
                    int fgcolor, int bgcolor, bool showtimer, Inifile & ini)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+    , colors(ColorTheme())
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
-    , username_label(drawable, (width - 600) / 2, 0, *this, NULL,
-                     "Username:", true, -11, fgcolor, bgcolor)
+    , username_label(drawable, (width - 600) / 2, 0, *this, NULL, "Username:", true, -11,
+                     this->colors.global.fgcolor, this->colors.global.bgcolor)
     , username_label_value(drawable, 0, 0, *this, NULL, username, true, -11,
-                           fgcolor, bgcolor)
-    , target_label(drawable, (width - 600) / 2, 0, *this, NULL,
-                   "Target:", true, -12, fgcolor, bgcolor)
-    , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12, fgcolor, bgcolor)
+                           this->colors.global.fgcolor, this->colors.global.bgcolor)
+    , target_label(drawable, (width - 600) / 2, 0, *this, NULL, "Target:", true, -12,
+                   this->colors.global.fgcolor, this->colors.global.bgcolor)
+    , target_label_value(drawable, 0, 0, *this, NULL, target, true, -12,
+                         this->colors.global.fgcolor, this->colors.global.bgcolor)
     , connection_closed_label(drawable, 0, 0, *this, NULL, TR("connection_closed", ini),
-                              true, -13, fgcolor, bgcolor)
-    , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14, fgcolor, bgcolor,
-             WINBLUE, 6, 2)
-    , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL,
-                 "Diagnostic:", true, -15, fgcolor, bgcolor)
-    , diagnostic_lines(drawable, 0, 0, *this, NULL,
-                       diagnostic_text, true, -16, fgcolor, bgcolor)
-    , timeleft_label(drawable, (width - 600) / 2, 0, *this, NULL,
-                     "Time left:", true, -12, fgcolor, bgcolor)
-    , timeleft_value(drawable, 0, 0, *this, NULL, NULL, true, -12, fgcolor, bgcolor)
-    , separator(drawable, Rect(0, 0, width, 2), *this, this, -12, LIGHT_BLUE)
-    , bgcolor(bgcolor)
+                              true, -13, this->colors.global.fgcolor,
+                              this->colors.global.bgcolor)
+    , cancel(drawable, 0, 0, *this, this, TR("close", ini), true, -14,
+             this->colors.global.fgcolor, this->colors.global.bgcolor,
+             this->colors.global.focus_color, 6, 2)
+    , diagnostic(drawable, (width - 600) / 2, 0, *this, NULL, "Diagnostic:", true, -15,
+                 this->colors.global.fgcolor, this->colors.global.bgcolor)
+    , diagnostic_lines(drawable, 0, 0, *this, NULL, diagnostic_text, true, -16,
+                       this->colors.global.fgcolor, this->colors.global.bgcolor)
+    , timeleft_label(drawable, (width - 600) / 2, 0, *this, NULL, "Time left:", true, -12,
+                     this->colors.global.fgcolor, this->colors.global.bgcolor)
+    , timeleft_value(drawable, 0, 0, *this, NULL, NULL, true, -12,
+                     this->colors.global.fgcolor, this->colors.global.bgcolor)
+    , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
+                this->colors.global.separator_color)
+    , bgcolor(this->colors.global.bgcolor)
     , prev_time(0)
     , ini(ini)
     {
