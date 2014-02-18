@@ -62,11 +62,12 @@ class SesmanConfig(object):
             , u'codec_id'          : u'flv'
             }
         , u'sesman' :
-            { u'licence'            : u'localhost'
-            , u'sql'                : u'localhost'
-            , u'x509_authenticated' : u'localhost'
-            , u'record_warning'     : u'True'
-            , u'DEBUG'              : u'False'
+            { u'licence'               : u'localhost'
+            , u'sql'                   : u'localhost'
+            , u'x509_authenticated'    : u'localhost'
+            , u'record_warning'        : u'True'
+            , u'DEBUG'                 : u'False'
+            , u'auth_mode_vmware_view' : u'False'
             }
         , u'fr':
             { u'login'                  : u"Login"

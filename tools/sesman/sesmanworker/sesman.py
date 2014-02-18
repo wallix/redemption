@@ -1,10 +1,10 @@
 #!/usr/bin/python -O
 # -*- coding: utf-8 -*-
 ##
-# Copyright (c) 2010 WALLIX, SARL. All rights reserved.
+# Copyright (c) 2010-2014 WALLIX, SARL. All rights reserved.
 # Licensed computer software. Property of WALLIX.
 # Product name: WALLIX Admin Bastion V 2.x
-# Author(s): Olivier Hervieu
+# Author(s): Olivier Hervieu, Christophe Grosjean, Raphael Zhou, Meng Tan
 # Id: $Id$
 # URL: $URL$
 # Module description:  Sesman Worker
@@ -580,28 +580,6 @@ class Sesman():
         return _status, _error
     # END METHOD - GET_SERVICE
 
-    def get_selected_target(self, target_protocol):
-        selected_target = None
-        for r in self.engine.rights:
-            if r.resource.application:
-                if self.shared.get(u'target_device') != r.resource.application.cn:
-                    continue
-                if self.shared.get(u'target_login') != r.account.login:
-                    continue
-                if target_protocol != u'APP':
-                    continue
-            else:
-                if self.shared.get(u'target_device') != r.resource.device.cn:
-                    continue
-                if self.shared.get(u'target_login') != r.account.login:
-                    continue
-                if target_protocol != r.resource.service.cn:
-                    continue
-            selected_target = r
-            break
-
-        return selected_target
-
     def check_password_expiration_date(self):
         _status, _error = True, u''
         try:
@@ -742,28 +720,21 @@ class Sesman():
             # If service is blank take the first right that match login AND device (may happen with a command
             #  line or a mstsc '.rdp' file connections ; never happens if the selector is used).
             # NB : service names are supposed to be in alphabetical ascending order.
-            try:
-                selected_target = None
-                if self.shared.get(u'proto_dest'):
-                    selected_target = self.get_selected_target(self.shared.get(u'proto_dest'))
+            selected_target = None
+            target_device =  self.shared.get(u'target_device')
+            target_login = self.shared.get(u'target_login')
+            proto_dest= self.shared.get(u'proto_dest')
+            protocols = [proto_dest] if proto_dest else [ u'APP', u'RDP', u'VNC']
+
+            for proto_dest in protocols:
+                selected_target = self.engine.get_selected_target(target_device, target_login, proto_dest)
+                if selected_target:
+                    break
                 else:
-                    selected_target = self.get_selected_target(u'APP')
-                    if not selected_target:
-                        selected_target = self.get_selected_target(u'RDP')
-                    if not selected_target:
-                        selected_target = self.get_selected_target(u'VNC')
-                if not selected_target:
-                    _target = u"%s@%s:%s" % ( self.shared.get(u'target_login')
-                                            , self.shared.get(u'target_device')
-                                            , self.shared.get(u'proto_dest'))
-                    _error_log = u"Target %s not found in user rights" % _target
+                    #TODO: if we are guessing on protocol the message won't be right
+                    _target = u"%s@%s:%s" % ( target_login, target_device, proto_dest )
+                    _error_log = u"Targets %s not found in user rights" % _target
                     _status, _error = False, TR(u"Target %s not found in user rights") % _target
-
-            except Exception, e:
-                _status, _error = False, TR(u"Failed to get authorisations for %s") % self._full_user_device_account
-
-        # Dictionnary that will contain answer to client
-
 
         #TODO: looks like the code below should be done in the instance of some "selected_target" class
         if _status:
@@ -849,7 +820,10 @@ class Sesman():
                 release_reason = u''
 
                 try:
-                    password_of_target = self.engine.get_target_password(physical_target)
+                    if SESMANCONF[u'sesman'][u'auth_mode_vmware_view'].lower() == u'true':
+                        password_of_target = self.shared.get(u'password')
+                    else:
+                        password_of_target = self.engine.get_target_password(physical_target)
                     kv[u'target_password'] = password_of_target
                     if not password_of_target:
                         kv[u'target_password'] = u''

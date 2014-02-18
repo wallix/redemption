@@ -633,6 +633,7 @@ public:
         delete this->bmp_cache;
         this->bmp_cache = new BmpCache(
                         this->client_info.bpp,
+                        3,
                         this->client_info.cache1_entries,
                         this->client_info.cache1_size,
                         this->client_info.cache2_entries,
@@ -3016,12 +3017,18 @@ public:
                     if (this->verbose) {
                         this->client_bmpcache_caps.log("Receiving from client");
                     }
-                    this->client_info.cache1_entries = this->client_bmpcache_caps.cache0Entries;
-                    this->client_info.cache1_size    = this->client_bmpcache_caps.cache0MaximumCellSize;
-                    this->client_info.cache2_entries = this->client_bmpcache_caps.cache1Entries;
-                    this->client_info.cache2_size    = this->client_bmpcache_caps.cache1MaximumCellSize;
-                    this->client_info.cache3_entries = this->client_bmpcache_caps.cache2Entries;
-                    this->client_info.cache3_size    = this->client_bmpcache_caps.cache2MaximumCellSize;
+                    this->client_info.number_of_cache = 3;
+                    this->client_info.cache1_entries    = this->client_bmpcache_caps.cache0Entries;
+                    this->client_info.cache1_persistent = false;
+                    this->client_info.cache1_size       = this->client_bmpcache_caps.cache0MaximumCellSize;
+                    this->client_info.cache2_entries    = this->client_bmpcache_caps.cache1Entries;
+                    this->client_info.cache2_persistent = false;
+                    this->client_info.cache2_size       = this->client_bmpcache_caps.cache1MaximumCellSize;
+                    this->client_info.cache3_entries    = this->client_bmpcache_caps.cache2Entries;
+                    this->client_info.cache3_persistent = false;
+                    this->client_info.cache3_size       = this->client_bmpcache_caps.cache2MaximumCellSize;
+                    this->client_info.bitmap_cache_persist_enable = 0;
+                    this->client_info.bitmap_cache_version        = 0;
                 }
                 break;
             case CAPSTYPE_CONTROL: /* 5 */
@@ -3110,15 +3117,35 @@ public:
                     cap.log("Receiving from client");
 
                     TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
-                    this->client_info.bitmap_cache_version = 2;
+                    this->client_info.number_of_cache = cap.numCellCaches;
                     int Bpp = nbbytes(this->client_info.bpp);
+                    if (cap.numCellCaches > 0) {
+                        this->client_info.cache1_entries    = (cap.bitmapCache0CellInfo & 0x7fffffff);
+                        this->client_info.cache1_persistent = (cap.bitmapCache0CellInfo & 0x80000000);
+                        this->client_info.cache1_size       = 256 * Bpp;
+                    }
+                    if (cap.numCellCaches > 1) {
+                        this->client_info.cache2_entries    = (cap.bitmapCache1CellInfo & 0x7fffffff);
+                        this->client_info.cache2_persistent = (cap.bitmapCache1CellInfo & 0x80000000);
+                        this->client_info.cache2_size       = 1024 * Bpp;
+                    }
+                    if (cap.numCellCaches > 2) {
+                        this->client_info.cache3_entries    = (cap.bitmapCache2CellInfo & 0x7fffffff);
+                        this->client_info.cache3_persistent = (cap.bitmapCache2CellInfo & 0x80000000);
+                        this->client_info.cache3_size       = 4096 * Bpp;
+                    }
+                    if (cap.numCellCaches > 3) {
+                        this->client_info.cache4_entries    = (cap.bitmapCache3CellInfo & 0x7fffffff);
+                        this->client_info.cache4_persistent = (cap.bitmapCache3CellInfo & 0x80000000);
+                        this->client_info.cache4_size       = 6144 * Bpp;
+                    }
+                    if (cap.numCellCaches > 4) {
+                        this->client_info.cache5_entries    = (cap.bitmapCache4CellInfo & 0x7fffffff);
+                        this->client_info.cache5_persistent = (cap.bitmapCache4CellInfo & 0x80000000);
+                        this->client_info.cache5_size       = 8192 * Bpp;
+                    }
                     this->client_info.bitmap_cache_persist_enable = cap.cacheFlags;
-                    this->client_info.cache1_entries = cap.bitmapCache0CellInfo;
-                    this->client_info.cache1_size = 256 * Bpp;
-                    this->client_info.cache2_entries = cap.bitmapCache1CellInfo;
-                    this->client_info.cache2_size = 1024 * Bpp;
-                    this->client_info.cache3_entries = (cap.bitmapCache2CellInfo & 0x7fffffff);
-                    this->client_info.cache3_size = 4096 * Bpp;
+                    this->client_info.bitmap_cache_version        = 2;
                 }
                 break;
             case CAPSTYPE_VIRTUALCHANNEL: /* 20 */

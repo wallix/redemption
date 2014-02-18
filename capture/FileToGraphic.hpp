@@ -577,7 +577,7 @@ struct FileToGraphic
                 this->stream.p = this->stream.end;
 
                 if (!this->meta_ok){
-                    this->bmp_cache = new BmpCache(this->info_bpp, this->info_small_entries,
+                    this->bmp_cache = new BmpCache(this->info_bpp, 3, this->info_small_entries,
                         this->info_small_size, this->info_medium_entries, this->info_medium_size,
                          this->info_big_entries, this->info_big_size);
                     this->screen_rect = Rect(0, 0, this->info_width, this->info_height);

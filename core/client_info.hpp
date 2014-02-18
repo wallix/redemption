@@ -34,15 +34,27 @@ struct ClientInfo {
     int bpp;
     uint16_t width;
     uint16_t height;
+
     /* bitmap cache info */
+    uint8_t number_of_cache;
     uint32_t cache1_entries;
+    bool     cache1_persistent;
     uint32_t cache1_size;
     uint32_t cache2_entries;
+    bool     cache2_persistent;
     uint32_t cache2_size;
     uint32_t cache3_entries;
+    bool     cache3_persistent;
     uint32_t cache3_size;
-    int bitmap_cache_persist_enable; /* 0 or 2 */
+    uint32_t cache4_entries;
+    bool     cache4_persistent;
+    uint32_t cache4_size;
+    uint32_t cache5_entries;
+    bool     cache5_persistent;
+    uint32_t cache5_size;
+    int bitmap_cache_persist_enable; /* 0, 1 or 2 */
     int bitmap_cache_version; /* 0 = original version, 2 = v2 */
+
     /* pointer info */
     int pointer_cache_entries;
     /* other */
@@ -80,13 +92,23 @@ struct ClientInfo {
         this->width = 0;
         this->height = 0;
         /* bitmap cache info */
+        this->number_of_cache = 0;
         /* default 8 bit v1 color bitmap cache entries and size */
         this->cache1_entries = 600;
+        this->cache1_persistent = false;
         this->cache1_size = 256;
         this->cache2_entries = 300;
+        this->cache2_persistent = false;
         this->cache2_size = 1024;
         this->cache3_entries = 262;
+        this->cache3_persistent = false;
         this->cache3_size = 4096;
+        this->cache4_entries = 262;
+        this->cache4_persistent = false;
+        this->cache4_size = 4096;
+        this->cache5_entries = 262;
+        this->cache5_persistent = false;
+        this->cache5_size = 4096;
 
         this->bitmap_cache_persist_enable = 0; /* 0 or 2 */
         this->bitmap_cache_version = 0; /* 0 = original version, 2 = v2 */
