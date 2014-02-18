@@ -558,7 +558,10 @@ struct rdpCredssp
                                                             &output_buffer_desc,
                                                             &pfContextAttr,
                                                             &expiration);
-            if (status == SEC_E_INVALID_TOKEN) {
+            if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
+                (status != SEC_I_COMPLETE_NEEDED) &&
+                (status != SEC_E_OK) &&
+                (status != SEC_I_CONTINUE_NEEDED)) {
                 LOG(LOG_ERR, "Initialize Security Context Error !");
                 return -1;
             }
@@ -745,10 +748,6 @@ struct rdpCredssp
 
             if (this->credssp_recv() < 0)
                 return -1;
-            // #ifdef WITH_DEBUG_CREDSSP
-            //         LOG(LOG_ERR, "Receiving Authentication Token\n");
-            //         credssp_buffer_print(this);
-            // #endif
 
             input_buffer.Buffer.init(this->negoToken.size());
             input_buffer.Buffer.copy(this->negoToken.get_data(),
@@ -809,11 +808,6 @@ struct rdpCredssp
                 return -1;
             }
 
-            /* send authentication token */
-            // #ifdef WITH_DEBUG_CREDSSP
-            //         LOG(LOG_ERR, "Sending Authentication Token\n");
-            //         credssp_buffer_print(this);
-            // #endif
 
             this->credssp_send();
             this->credssp_buffer_free();

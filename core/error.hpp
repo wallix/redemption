@@ -274,7 +274,9 @@ enum {
 
     ERR_RDP61_DECOMPRESS                 = 22000,
     ERR_RDP61_DECOMPRESS_DATA_TRUNCATED,
-    ERR_RDP61_DECOMPRESS_LEVEL_2
+    ERR_RDP61_DECOMPRESS_LEVEL_2,
+
+    ERR_NLA_AUTHENTICATION_FAILED = 23000
 };
 
 class Error {
@@ -294,26 +296,30 @@ class Error {
     const char * errmsg() {
         switch(this->id) {
         case NO_ERROR:
-            snprintf(errstr, sizeof(errstr), "No error");
+            snprintf(this->errstr, sizeof(errstr), "No error");
             break;
         case ERR_SESSION_UNKNOWN_BACKEND:
-            snprintf(errstr, sizeof(errstr), "Unknown Backend");
+            snprintf(this->errstr, sizeof(errstr), "Unknown Backend");
+            break;
+        case ERR_NLA_AUTHENTICATION_FAILED:
+            snprintf(this->errstr, sizeof(errstr), "NLA Authentication Failed");
             break;
         case ERR_TRANSPORT_OPEN_FAILED:
-            snprintf(errstr, sizeof(errstr), "Open file failed");
+            snprintf(this->errstr, sizeof(errstr), "Open file failed");
             break;
         case ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED:
-            snprintf(errstr, sizeof(errstr), "TLS certificate changed");
+            snprintf(this->errstr, sizeof(errstr), "TLS certificate changed");
             break;
         case ERR_VNC_CONNECTION_ERROR:
-            snprintf(errstr, sizeof(errstr), "VNC connection error.");
+            snprintf(this->errstr, sizeof(errstr), "VNC connection error.");
             break;
         case ERR_WIDGET_INVALID_COMPOSITE_DESTROY:
-            snprintf(errstr, sizeof(errstr), "Composite Widget Destroyed without child list not empty.");
+            snprintf(this->errstr, sizeof(errstr), "Composite Widget Destroyed without child list not empty.");
             break;
         default:
-            snprintf(errstr, sizeof(errstr), "Exception Error no : %d", this->id);
+            snprintf(this->errstr, sizeof(errstr), "Exception Error no : %d", this->id);
         }
+        this->errstr[255] = 0;
         return this->errstr;
     }
 };

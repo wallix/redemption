@@ -398,7 +398,30 @@ struct mod_rdp : public mod_api {
         while (UP_AND_RUNNING != this->connection_finalization_state){
             this->draw_event(time(NULL));
             if (this->event.signal != BACK_EVENT_NONE){
-                LOG(LOG_INFO, "Creation of new mod 'RDP' failed");
+                char statestr[256];
+                switch (this->state) {
+                case MOD_RDP_NEGO:
+                    snprintf(statestr, sizeof(statestr), "RDP_NEGO");
+                    break;
+                case MOD_RDP_BASIC_SETTINGS_EXCHANGE:
+                    snprintf(statestr, sizeof(statestr), "RDP_BASIC_SETTINGS_EXCHANGE");
+                    break;
+                case MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER:
+                    snprintf(statestr, sizeof(statestr),
+                             "RDP_CHANNEL_CONNECTION_ATTACH_USER");
+                    break;
+                case MOD_RDP_GET_LICENSE:
+                    snprintf(statestr, sizeof(statestr), "RDP_GET_LICENSE");
+                    break;
+                case MOD_RDP_CONNECTED:
+                    snprintf(statestr, sizeof(statestr), "RDP_CONNECTED");
+                    break;
+                default:
+                    snprintf(statestr, sizeof(statestr), "UNKNOWN");
+                    break;
+                }
+                statestr[255] = 0;
+                LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state", statestr);
                 throw Error(ERR_SESSION_UNKNOWN_BACKEND);
             }
         }
@@ -2034,10 +2057,12 @@ struct mod_rdp : public mod_api {
                 };
                 this->event.signal = BACK_EVENT_NEXT;
 
-                if (e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED)
+                if ((e.id == ERR_TRANSPORT_TLS_CERTIFICATE_CHANGED) ||
+                    (e.id == ERR_NLA_AUTHENTICATION_FAILED))
                 {
                     throw;
                 }
+
             }
         }
 
