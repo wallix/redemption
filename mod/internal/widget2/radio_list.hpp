@@ -33,8 +33,8 @@ public:
     bool selected;
 
     WidgetRadioButton(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
-                      NotifyApi* notifier, const char * text, bool auto_resize = true,
-                      int group_id = 0, int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS,
+                      NotifyApi* notifier, const char * text, bool auto_resize,
+                      int group_id, int fgcolor, int bgcolor,
                       int xtext = 0, int ytext = 0)
         : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
         , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, 4, 2)
@@ -128,8 +128,10 @@ public:
     virtual void add_elem(const char * text) {
         if (this->size == AUTOSIZE)
             return;
-        WidgetRadioButton * radio = new WidgetRadioButton(drawable, this->lx() + 10, this->dy(),
-                                                             this->parent, this, text);
+        WidgetRadioButton * radio = new WidgetRadioButton(drawable, this->lx() + 10,
+                                                          this->dy(),this->parent,
+                                                          this, text, true, 0,
+                                                          WHITE, DARK_BLUE_BIS);
 
         this->child_list[this->size] = radio;
         this->size++;

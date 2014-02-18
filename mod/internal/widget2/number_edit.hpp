@@ -28,9 +28,9 @@ class WidgetNumberEdit : public WidgetEdit
 {
 public:
     WidgetNumberEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx, Widget2 & parent,
-                     NotifyApi* notifier, const char* text, int group_id = 0,
-                     int fgcolor = BLACK, int bgcolor = WHITE, size_t
-                     edit_position = -1, int xtext = 0, int ytext = 0)
+                     NotifyApi* notifier, const char* text, int group_id,
+                     int fgcolor, int bgcolor, size_t edit_position = -1,
+                     int xtext = 0, int ytext = 0)
     : WidgetEdit(drawable, x, y, cx, parent, notifier, text, group_id, fgcolor, bgcolor, edit_position, xtext, ytext)
     {}
 

@@ -88,12 +88,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton2)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test2", auto_resize, id, fg_color, bg_color, fc_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -122,12 +123,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton3)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test3", auto_resize, id, fg_color, bg_color, fc_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -156,12 +158,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton4)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test4", auto_resize, id, fg_color, bg_color, fc_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -190,12 +193,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton5)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test5", auto_resize, id, fg_color, bg_color, fc_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -224,12 +228,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButton6)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, fc_color);
 
     // ask to widget to redraw at it's current position
     wbutton.rdp_input_invalidate(Rect(0 + wbutton.dx(),
@@ -259,11 +264,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip)
     int fg_color = RED;
     int bg_color = YELLOW;
     int id = 0;
+    int fc_color = WINBLUE;
     bool auto_resize = true;
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, fc_color);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
@@ -292,12 +298,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonClip2)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int fc_color = WINBLUE;
     int id = 0;
     bool auto_resize = true;
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color);
+    WidgetFlatButton wbutton(drawable, x, y, parent, notifier, "test6", auto_resize, id, fg_color, bg_color, fc_color);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     wbutton.rdp_input_invalidate(Rect(20 + wbutton.dx(),
@@ -420,7 +427,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonEvent)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetFlatButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize);
+    WidgetFlatButton wbutton(drawable, x, y, parent, &notifier, "", auto_resize, 0, WHITE,
+                             DARK_BLUE_BIS, WINBLUE);
 
     wbutton.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, x, y, 0);
     BOOST_CHECK(widget_for_receive_event.sender == 0);
@@ -487,17 +495,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
     WidgetFlatButton wbutton1(drawable, 0,0, wcomposite, notifier,
-                        "abababab", true, 0, YELLOW, BLACK);
+                              "abababab", true, 0, YELLOW, BLACK, WINBLUE);
     WidgetFlatButton wbutton2(drawable, 0,100, wcomposite, notifier,
-                        "ggghdgh", true, 0, WHITE, RED);
+                              "ggghdgh", true, 0, WHITE, RED, WINBLUE);
     WidgetFlatButton wbutton3(drawable, 100,100, wcomposite, notifier,
-                        "lldlslql", true, 0, BLUE, RED);
+                              "lldlslql", true, 0, BLUE, RED, WINBLUE);
     WidgetFlatButton wbutton4(drawable, 300,300, wcomposite, notifier,
-                        "LLLLMLLM", true, 0, PINK, DARK_GREEN);
+                              "LLLLMLLM", true, 0, PINK, DARK_GREEN, WINBLUE);
     WidgetFlatButton wbutton5(drawable, 700,-10, wcomposite, notifier,
-                        "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
+                              "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE, WINBLUE);
     WidgetFlatButton wbutton6(drawable, -10,550, wcomposite, notifier,
-                        "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
+                              "xxwwp", true, 0, DARK_GREY, PALE_GREEN, WINBLUE);
 
     wcomposite.add_widget(&wbutton1);
     wcomposite.add_widget(&wbutton2);

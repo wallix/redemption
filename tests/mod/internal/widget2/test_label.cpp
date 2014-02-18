@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelEvent)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetLabel wlabel(drawable, x, y, parent, notifier, "", auto_resize);
+    WidgetLabel wlabel(drawable, x, y, parent, notifier, "", auto_resize, 0, BLACK, WHITE);
 
     wlabel.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN, 0, 0, 0);
     BOOST_CHECK(widget_for_receive_event.sender == 0);

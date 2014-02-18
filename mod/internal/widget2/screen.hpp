@@ -33,7 +33,8 @@ public:
     WidgetTooltip * tooltip;
     Widget2 * current_over;
 
-    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
+    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height,
+                 NotifyApi * notifier = NULL)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , tooltip(NULL)
         , current_over(NULL)

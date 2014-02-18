@@ -53,11 +53,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     NotifyApi * notifier = NULL;
 
     FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test1",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(flat_dialog.rect);
@@ -84,11 +85,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     NotifyApi * notifier = NULL;
 
     FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test2",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -118,11 +120,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     NotifyApi * notifier = NULL;
 
     FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test3",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -152,11 +155,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
     NotifyApi * notifier = NULL;
 
     FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test4",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -186,11 +190,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
     NotifyApi * notifier = NULL;
 
     FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test5",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -220,11 +225,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
     NotifyApi * notifier = NULL;
 
     FlatDialog flat_dialog(drawable, 350, 500, parent, notifier, "test6",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     // ask to widget to redraw at it's current position
     flat_dialog.rdp_input_invalidate(Rect(0 + flat_dialog.dx(),
@@ -255,11 +261,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     NotifyApi * notifier = NULL;
 
     FlatDialog flat_dialog(drawable, 300, 600, parent, notifier, "test6",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.dx(),
@@ -289,11 +296,12 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     NotifyApi * notifier = NULL;
 
     FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test6",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_dialog.rdp_input_invalidate(Rect(20 + flat_dialog.dx(),
@@ -344,11 +352,12 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
     } notifier;
 
     FlatDialog flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
-                               "line 1<br>"
-                               "line 2<br>"
-                               "<br>"
-                               "line 3, blah blah<br>"
-                               "line 4");
+                           "line 1<br>"
+                           "line 2<br>"
+                           "<br>"
+                           "line 3, blah blah<br>"
+                           "line 4",
+                           0, WHITE, DARK_BLUE_BIS);
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);
@@ -475,8 +484,8 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
                            "porttitor tortor, sit amet tincidunt odio<br>"
                            "erat ut ligula. Fusce sit amet mauris neque.<br>"
                            "Sed orci augue, luctus in ornare sed,<br>"
-                           "adipiscing et arcu.", 0, "Ok", "Cancel", WHITE, DARK_BLUE_BIS,
-                           CHALLENGE_ECHO);
+                           "adipiscing et arcu.", 0, WHITE, DARK_BLUE_BIS,
+                           "Ok", "Cancel", CHALLENGE_ECHO);
 
     BOOST_CHECK(notifier.sender == 0);
     BOOST_CHECK(notifier.event == 0);

@@ -42,13 +42,11 @@ public:
     int fgcolor;
     int bgcolor;
 
-    FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
-              NotifyApi* notifier, const char* caption,
-              int group_id,
-              const char * password,
-              int fgcolor, int bgcolor,
-              const char * label_text_message,
-              const char * label_text_password)
+    FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height,
+                            Widget2 & parent, NotifyApi* notifier, const char* caption,
+                            int group_id, const char * password, int fgcolor, int bgcolor,
+                            const char * label_text_message,
+                            const char * label_text_password)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13, fgcolor, bgcolor)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)

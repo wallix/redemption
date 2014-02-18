@@ -36,8 +36,8 @@ public:
 
     WidgetEditValid(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
-                    int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
-                    int bbgcolor = DARK_BLUE_BIS, std::size_t edit_position = -1,
+                    int group_id, int fgcolor, int bgcolor,
+                    int bbgcolor, std::size_t edit_position = -1,
                     int xtext = 0, int ytext = 0, bool pass = false)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,

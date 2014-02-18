@@ -37,9 +37,9 @@ public:
     bool logo;
 
     WidgetFlatButton(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
-                     NotifyApi* notifier, const char * text, bool auto_resize = true,
-                     int group_id = 0, int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS,
-                     int focuscolor = WINBLUE, int xtext = 0, int ytext = 0,
+                     NotifyApi* notifier, const char * text, bool auto_resize,
+                     int group_id, int fgcolor, int bgcolor,
+                     int focuscolor, int xtext = 0, int ytext = 0,
                      bool logo = false /*, notify_event_t notify_event = NOTIFY_SUBMIT*/)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , label(drawable, 1, 1, *this, 0, text, auto_resize, 0, fgcolor, bgcolor, xtext, ytext)

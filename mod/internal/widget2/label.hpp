@@ -41,15 +41,15 @@ public:
 
 public:
     WidgetLabel(DrawApi & drawable, int16_t x, int16_t y, Widget2& parent,
-                NotifyApi* notifier, const char * text, bool auto_resize = true,
-                int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
+                NotifyApi* notifier, const char * text, bool auto_resize,
+                int group_id, int fgcolor, int bgcolor,
                 int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,1,1), parent, notifier, group_id)
     , x_text(xtext)
     , y_text(ytext)
     , bg_color(bgcolor)
     , fg_color(fgcolor)
-    , auto_resize(auto_resize) 
+    , auto_resize(auto_resize)
     , w_border(x_text)
     , h_border(y_text)
     {
