@@ -56,7 +56,8 @@ public:
                          this->colors.global.fgcolor, this->colors.global.bgcolor)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
                         this->colors.edit.fgcolor, this->colors.edit.bgcolor,
-                        this->colors.global.bgcolor, -1u, 1, 1, true)
+                        this->colors.global.bgcolor, this->colors.global.focus_color,
+                        -1u, 1, 1, true)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , fgcolor(this->colors.global.fgcolor)
         , bgcolor(this->colors.global.bgcolor)
