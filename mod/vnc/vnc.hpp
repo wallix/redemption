@@ -129,20 +129,20 @@ struct mod_vnc : public InternalMod, public NotifyApi {
            , uint32_t verbose
            )
     //==============================================================================================================
-            : InternalMod(front, front_width, front_height)
-            , challenge(*this, front_width, front_height, this->screen, this,
-                        "Redemption " VERSION,
-                        0, 0, ini.colors,
-                        TR("Authentification required", ini),
-                        TR("VNC password", ini))
+        : InternalMod(front, front_width, front_height, &ini)
+        , challenge(*this, front_width, front_height, this->screen, this,
+                    "Redemption " VERSION,
+                    0, 0, ini.colors,
+                    TR("Authentification required", ini),
+                    TR("VNC password", ini))
             , verbose(verbose)
-            , keymapSym(verbose)
-            , incr(0)
-            , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
-            , opt_clipboard(clipboard)
-            , state(WAIT_SECURITY_TYPES)
-            , ini(ini)
-            , allow_authentification_retries(allow_authentification_retries || !(*password)) {
+        , keymapSym(verbose)
+        , incr(0)
+        , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
+        , opt_clipboard(clipboard)
+        , state(WAIT_SECURITY_TYPES)
+        , ini(ini)
+        , allow_authentification_retries(allow_authentification_retries || !(*password)) {
     //--------------------------------------------------------------------------------------------------------------
         LOG(LOG_INFO, "Creation of new mod 'VNC'");
 

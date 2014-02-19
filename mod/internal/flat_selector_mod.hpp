@@ -46,7 +46,7 @@ class FlatSelectorMod : public InternalMod, public NotifyApi
 
 public:
     FlatSelectorMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height)
-        : InternalMod(front, width, height)
+        : InternalMod(front, width, height, &ini)
         , selector(*this, temporary_login(ini).buffer, width, height, this->screen, this,
                    ini.context.selector_current_page.get_value(),
                    ini.context.selector_number_of_pages.get_value(),

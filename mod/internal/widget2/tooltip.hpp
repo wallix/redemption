@@ -30,14 +30,16 @@ class WidgetTooltip : public Widget2
     uint w_border;
     uint h_border;
     WidgetMultiLine desc;
+    int border_color;
 public:
     WidgetTooltip(DrawApi & drawable, int16_t x, int16_t y, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
-                  int fgcolor, int bgcolor)
+                  int fgcolor, int bgcolor, int border_color = BLACK)
         : Widget2(drawable, Rect(x, y, 100, 100), parent, notifier, 0)
         , w_border(10)
         , h_border(10)
         , desc(WidgetMultiLine(drawable, w_border, h_border, *this, this, text, true, 0, fgcolor, bgcolor, 0, 0))
+        , border_color(border_color)
     {
         this->tab_flag = IGNORE_TAB;
         this->focus_flag = IGNORE_FOCUS;
@@ -82,19 +84,19 @@ public:
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx() - 1, 1
-        )), BLACK), this->rect);
+        )), this->border_color), this->rect);
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), BLACK), this->rect);
+        )), this->border_color), this->rect);
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
-        )), BLACK), this->rect);
+        )), this->border_color), this->rect);
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx() - 1, 1
-        )), BLACK), this->rect);
+        )), this->border_color), this->rect);
     }
 };
 

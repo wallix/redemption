@@ -66,6 +66,7 @@ enum {
     LIGHT_BLUE = 0xebd5cf,
     WINBLUE = 0x9C4D00,
 };
+
 static inline unsigned color_from_cstr(const char * str) {
     unsigned res = 0;
 

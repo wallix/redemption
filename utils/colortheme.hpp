@@ -59,7 +59,7 @@ struct ColorTheme : public ConfigurationHolder {
     } edit;
 
     struct {
-        int fontcolor;
+        int fgcolor;
         int bgcolor;
         int bordercolor;
     } tooltip;
@@ -113,7 +113,7 @@ struct ColorTheme : public ConfigurationHolder {
         this->edit.fgcolor = BLACK;
         this->edit.bordercolor = BLACK;
 
-        this->tooltip.fontcolor = BLACK;
+        this->tooltip.fgcolor = BLACK;
         this->tooltip.bgcolor = LIGHT_YELLOW;
         this->tooltip.bordercolor = BLACK;
 
@@ -149,6 +149,9 @@ struct ColorTheme : public ConfigurationHolder {
 
         this->edit.bgcolor = WHITE;
         this->edit.fgcolor = BLACK;
+
+        this->tooltip.fgcolor = BLACK;
+        this->tooltip.bgcolor = LIGHT_YELLOW;
 
         this->selector_line1.fgcolor = BLACK;
         this->selector_line1.bgcolor = 0x9ad5ff;
@@ -187,6 +190,17 @@ struct ColorTheme : public ConfigurationHolder {
             }
             else if (0 == strcmp(key, "fgcolor")) {
                 this->edit.fgcolor = color_from_cstr(value);
+            }
+        }
+        else if (0 == strcmp(context, "tooltip")) {
+            if (0 == strcmp(key, "bgcolor")) {
+                this->tooltip.bgcolor = color_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "fgcolor")) {
+                this->tooltip.fgcolor = color_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "border_color")) {
+                this->tooltip.bordercolor = color_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "selector")) {
