@@ -521,7 +521,7 @@ private:
 
 public:
 
-    ColorTheme colors;
+    ColorTheme & colors;
     int bgcolor;
     int fgcolor;
     WidgetLabel device_label;

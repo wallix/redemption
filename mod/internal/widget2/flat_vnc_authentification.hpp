@@ -35,7 +35,7 @@
 class FlatVNCAuthentification : public WidgetParent
 {
 public:
-    ColorTheme      colors;
+    ColorTheme &    colors;
     WidgetLabel     message_label;
     WidgetLabel     password_label;
     WidgetEditValid password_edit;
@@ -46,7 +46,7 @@ public:
 
     FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height,
                             Widget2 & parent, NotifyApi* notifier, const char* caption,
-                            int group_id, const char * password, int fgcolor, int bgcolor,
+                            int group_id, const char * password,
                             ColorTheme & colortheme,
                             const char * label_text_message,
                             const char * label_text_password)

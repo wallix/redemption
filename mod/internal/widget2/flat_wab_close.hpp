@@ -37,7 +37,7 @@
 class FlatWabClose : public WidgetParent
 {
 public:
-    ColorTheme colors;
+    ColorTheme & colors;
     WidgetImage img;
     WidgetLabel username_label;
     WidgetLabel username_label_value;
@@ -59,9 +59,9 @@ private:
 
 public:
     FlatWabClose(DrawApi& drawable, int16_t width, int16_t height, Widget2& parent,
-                   NotifyApi* notifier, const char * diagnostic_text, int group_id,
-                   const char * username, const char * target,
-                   int fgcolor, int bgcolor, bool showtimer, Inifile & ini)
+                 NotifyApi* notifier, const char * diagnostic_text, int group_id,
+                 const char * username, const char * target,
+                 bool showtimer, Inifile & ini)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
     , colors(ini.colors)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)

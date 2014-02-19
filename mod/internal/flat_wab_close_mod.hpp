@@ -72,10 +72,7 @@ public:
                    (ini.context_is_asked(AUTHID_TARGET_USER)
                     || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
                     NULL : temporary_text(ini).text,
-                   WHITE, DARK_BLUE_BIS,
-                   showtimer,
-                   ini
-                   )
+                   showtimer, ini)
     , timeout(Timeout(now, ini.globals.close_timeout))
     , showtimer(showtimer)
     {

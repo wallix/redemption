@@ -36,7 +36,7 @@
 class FlatLogin : public WidgetParent
 {
 public:
-    ColorTheme colors;
+    ColorTheme & colors;
     WidgetEditValid  password_edit;
     WidgetLabel login_label;
     WidgetEditValid  login_edit;
@@ -53,7 +53,6 @@ public:
               NotifyApi* notifier, const char* caption,
               bool focus_on_password, int group_id,
               const char * login, const char * password,
-              int fgcolor, int bgcolor,
               const char * label_text_login,
               const char * label_text_password,
               Inifile & ini)

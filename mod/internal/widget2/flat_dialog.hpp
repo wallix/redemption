@@ -40,7 +40,7 @@ enum ChallengeOpt {
 class FlatDialog : public WidgetParent
 {
 public:
-    ColorTheme colors;
+    ColorTheme & colors;
     WidgetImage img;
     WidgetLabel title;
     WidgetMultiLine dialog;
@@ -54,7 +54,7 @@ public:
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id,
-               int fgcolor, int bgcolor, ColorTheme & colortheme,
+               ColorTheme & colortheme,
                const char * ok_text = "Ok", const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
