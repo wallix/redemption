@@ -341,6 +341,13 @@ class Sesman():
                  # Wait for confirmation from GUI (or timeout)
                 if not (self.interactive_ask_x509_connection() and self.engine.x509_authenticate()):
                     return False, TR(u"x509 browser authentication not validated by user")
+            elif SESMANCONF[u'sesman'][u'auth_mode_vmware_view'].lower() == u'true':
+                # Passthrough Authentification
+                if not self.engine.passthrough_authenticate(
+                        wab_login,
+                        self.shared.get(u'ip_client')):
+                    self.engine.challenge = None
+                    return None, TR(u"passthrough_auth_failed_wab %s") % wab_login
             else:
                 # PASSWORD based Authentication
                 if (self.shared.get(u'password') == MAGICASK
