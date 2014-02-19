@@ -34,6 +34,7 @@
 
 #include "flat_button.hpp"
 #include "translation.hpp"
+#include "colortheme.hpp"
 // #include "radio_list.hpp"
 
 class WidgetSelectorFlat : public WidgetParent
@@ -48,20 +49,22 @@ class WidgetSelectorFlat : public WidgetParent
         int border_color;
 
 
-        Line(DrawApi & drawable, Widget2& parent, NotifyApi* notifier, int x, int y, int lcy,
-             int group_w, int target_w, int protocol_w, int closetime_w,
+        Line(DrawApi & drawable, Widget2& parent, NotifyApi* notifier, int x, int y,
+             int lcy, int group_w, int target_w, int protocol_w, int closetime_w,
              const char * device_group, const char * target_label, const char * protocol,
              const char * closetime, int fgcolor, int bgcolor, int x_text, int y_text)
-            : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w, lcy),
+            : Widget2(drawable,
+                      Rect(x, y, group_w + target_w + protocol_w + closetime_w, lcy),
                       parent, notifier)
             , group(WidgetLabel(drawable, x, y, parent, notifier, device_group, false, 0,
                                 fgcolor, bgcolor, x_text, y_text))
-            , target(WidgetLabel(drawable, x + group_w, y, parent, notifier, target_label, false, 0,
-                                 fgcolor, bgcolor, x_text, y_text))
-            , protocol(WidgetLabel(drawable, x + group_w + target_w, y, parent, notifier, protocol,
-                                   false, 0, fgcolor, bgcolor, x_text, y_text))
-            , closetime(WidgetLabel(drawable, x + group_w + target_w + protocol_w, y, parent, notifier,
-                                    closetime, false, 0, fgcolor, bgcolor, x_text, y_text))
+            , target(WidgetLabel(drawable, x + group_w, y, parent, notifier,
+                                 target_label, false, 0, fgcolor, bgcolor, x_text, y_text))
+            , protocol(WidgetLabel(drawable, x + group_w + target_w, y, parent, notifier,
+                                   protocol, false, 0, fgcolor, bgcolor, x_text, y_text))
+            , closetime(WidgetLabel(drawable, x + group_w + target_w + protocol_w, y,
+                                    parent, notifier, closetime, false, 0,
+                                    fgcolor, bgcolor, x_text, y_text))
             , border_color(bgcolor)
         {
             this->group.rect.cx     = group_w;
@@ -114,14 +117,16 @@ private:
     {
     public:
         uint current_index;
-        int current_bg_color;
         int bg_color;
         uint h_border;
         int bg_color1;
         int bg_color2;
-        int current_fg_color;
         int fg_color1;
         int fg_color2;
+        int current_bgcolor;
+        int current_fgcolor;
+        int focus_bgcolor;
+        int focus_fgcolor;
         int h_text;
         int x_text;
         int y_text;
@@ -155,27 +160,29 @@ private:
             }
         } click_interval;
 
-        // TOCHANGE
         WidgetSelectLine(DrawApi& drawable, WidgetSelectorFlat& parent,
                          NotifyApi* notifier, int x, int y,
                          int group_w, int target_w, int protocol_w, int closetime_w,
-                         int group_id = 0,
-                         int fgcolor1 = BLACK, int fgcolor2 = BLACK,
-                         int current_fgcolor = BLACK,
-                         int bgcolor1 = WABGREEN, int bgcolor2 = GREEN,
-                         int current_bgcolor = DARK_GREEN,
-                         int xtext = 0, int ytext = 0,
-                         int bgcolor = GREY, uint border_height = 1)
+                         int group_id,
+                         int fgcolor1, int fgcolor2,
+                         int current_fgcolor,
+                         int bgcolor1, int bgcolor2,
+                         int current_bgcolor,
+                         int focus_bgcolor, int focus_fgcolor,
+                         int xtext, int ytext,
+                         int bgcolor, uint border_height)
             : Widget2(drawable, Rect(x, y, group_w + target_w + protocol_w + closetime_w, 1), parent, notifier, group_id)
             , current_index(-1u)
-            , current_bg_color(current_bgcolor)
             , bg_color(bgcolor)
             , h_border(border_height)
             , bg_color1(bgcolor1)
             , bg_color2(bgcolor2)
-            , current_fg_color(current_fgcolor)
             , fg_color1(fgcolor1)
             , fg_color2(fgcolor2)
+            , current_bgcolor(current_bgcolor)
+            , current_fgcolor(current_fgcolor)
+            , focus_bgcolor(focus_bgcolor)
+            , focus_fgcolor(focus_fgcolor)
             , h_text(0)
             , x_text(xtext)
             , y_text(ytext)
@@ -339,12 +346,12 @@ private:
 
         void set_line_focus_color(Line & line) {
             if (this->has_focus) {
-                line.set_bg_color(WINBLUE);
-                line.set_fg_color(WHITE);
+                line.set_bg_color(this->focus_bgcolor);
+                line.set_fg_color(this->focus_fgcolor);
             }
             else {
-                line.set_bg_color(this->current_bg_color);
-                line.set_fg_color(this->current_fg_color);
+                line.set_bg_color(this->current_bgcolor);
+                line.set_fg_color(this->current_fgcolor);
             }
         }
 
@@ -514,6 +521,7 @@ private:
 
 public:
 
+    ColorTheme & colors;
     int bgcolor;
     int fgcolor;
     WidgetLabel device_label;
@@ -565,45 +573,68 @@ public:
                    const char * filter_device, const char * filter_target,
                    const char * filter_proto, Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , bgcolor(DARK_BLUE_BIS)
-        , fgcolor(WHITE)
+        , colors(ini.colors)
+        , bgcolor(this->colors.global.bgcolor)
+        , fgcolor(this->colors.global.fgcolor)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10,
                        this->fgcolor, this->bgcolor)
-        , device_target_label(drawable, 15, 0, *this, NULL, TR("target_group", ini), true, -10,
-                              this->fgcolor, MEDIUM_BLUE, 5)
+        , device_target_label(drawable, 15, 0, *this, NULL, TR("target_group", ini), true,
+                              -10, this->colors.selector_label.fgcolor,
+                              this->colors.selector_label.bgcolor, 5)
         , target_label(drawable, 145, 0, *this, NULL, TR("target", ini), true, -10,
-                       this->fgcolor, MEDIUM_BLUE, 5)
+                       this->colors.selector_label.fgcolor,
+                       this->colors.selector_label.bgcolor, 5)
         , protocol_label(drawable, 495, 0, *this, NULL, TR("protocol", ini), true, -10,
-                         this->fgcolor, MEDIUM_BLUE, 5)
+                         this->colors.selector_label.fgcolor,
+                         this->colors.selector_label.bgcolor, 5)
         , close_time_label(drawable, 615, 0, *this, NULL, TR("close_time", ini), true, -10,
-                           this->fgcolor, MEDIUM_BLUE, 5)
+                           this->colors.selector_label.fgcolor,
+                           this->colors.selector_label.bgcolor, 5)
         , selector_lines(drawable, *this, this, 15, 0, 130, 350, 120, 170, -11,
-                         BLACK, BLACK, WHITE, PALE_BLUE, LIGHT_BLUE, MEDIUM_BLUE,
-                         5, 1, DARK_BLUE_BIS, 1)
-        , filter_device(drawable, 15, 0, 120, *this, this,
-                        filter_device?filter_device:0, -12, BLACK, WHITE, -1, 1, 1)
-        , filter_target(drawable, 145, 0, 340, *this, this,
-                        filter_target?filter_target:0, -12, BLACK, WHITE, -1, 1, 1)
-        , filter_proto(drawable, 495, 0, 110, *this, this,
-                       filter_proto?filter_proto:0, -12, BLACK, WHITE, -1, 1, 1)
+                         this->colors.selector_line1.fgcolor,
+                         this->colors.selector_line2.fgcolor,
+                         this->colors.selector_selected.fgcolor,
+                         this->colors.selector_line1.bgcolor,
+                         this->colors.selector_line2.bgcolor,
+                         this->colors.selector_selected.bgcolor,
+                         this->colors.selector_focus.bgcolor,
+                         this->colors.selector_focus.fgcolor,
+                         5, 1, this->colors.global.bgcolor, 1)
+        , filter_device(drawable, 15, 0, 120, *this, this, filter_device?filter_device:0,
+                        -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                        -1, 1, 1)
+        , filter_target(drawable, 145, 0, 340, *this, this, filter_target?filter_target:0,
+                        -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                        -1, 1, 1)
+        , filter_proto(drawable, 495, 0, 110, *this, this, filter_proto?filter_proto:0,
+                       -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor, -1, 1, 1)
           //BEGIN WidgetPager
         , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15,
-                     WHITE, DARK_BLUE_BIS, 6, 2, true)
+                     this->colors.global.fgcolor, this->colors.global.bgcolor,
+                     this->colors.global.focus_color, 6, 2, true)
         , prev_page(drawable, 0, 0, *this, notifier, "◀", true, -15,
-                    WHITE, DARK_BLUE_BIS, 6, 2, true)
+                    this->colors.global.fgcolor, this->colors.global.bgcolor,
+                    this->colors.global.focus_color, 6, 2, true)
         , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
-                       current_page ? current_page : "XXXX", -15, BLACK, WHITE, -1, 1, 1)
-        , number_page(drawable, 0, 0, *this, NULL,
-                      number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXX",
-                      true, -100, this->fgcolor, this->bgcolor)
+                       current_page ? current_page : "XXXX", -15,
+                       this->colors.edit.fgcolor, this->colors.edit.bgcolor, -1, 1, 1)
+        , number_page(drawable, 0, 0, *this, NULL, number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXX", true, -100, this->fgcolor, this->bgcolor)
         , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15,
-                    WHITE, DARK_BLUE_BIS, 6, 2, true)
+                    this->colors.global.fgcolor, this->colors.global.bgcolor,
+                    this->colors.global.focus_color, 6, 2, true)
         , last_page(drawable, 0, 0, *this, notifier, "▸▶", true, -15,
-                    WHITE, DARK_BLUE_BIS, 6, 2, true)
+                    this->colors.global.fgcolor, this->colors.global.bgcolor,
+                    this->colors.global.focus_color, 6, 2, true)
           //END WidgetPager
-        , logout(drawable, 0, 0, *this, this, TR("logout", ini), true, -16, WHITE, DARK_BLUE_BIS, 6, 2)
-        , apply(drawable, 0, 0, *this, this, TR("filter", ini), true, -12, WHITE, DARK_BLUE_BIS, 6, 2)
-        , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18, WHITE, DARK_BLUE_BIS, 6, 2)
+        , logout(drawable, 0, 0, *this, this, TR("logout", ini), true, -16,
+                 this->colors.global.fgcolor, this->colors.global.bgcolor,
+                 this->colors.global.focus_color, 6, 2)
+        , apply(drawable, 0, 0, *this, this, TR("filter", ini), true, -12,
+                this->colors.global.fgcolor, this->colors.global.bgcolor,
+                this->colors.global.focus_color, 6, 2)
+        , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18,
+                  this->colors.global.fgcolor, this->colors.global.bgcolor,
+                  this->colors.global.focus_color, 6, 2)
         // , radiolist(drawable, this->device_label.lx() + 30, this->device_label.dy(), *this, this)
     {
         this->impl = new CompositeTable;

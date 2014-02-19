@@ -30,10 +30,12 @@
 #include "composite.hpp"
 #include "flat_button.hpp"
 #include "translation.hpp"
+#include "colortheme.hpp"
 
 class FlatVNCAuthentification : public WidgetParent
 {
 public:
+    ColorTheme &    colors;
     WidgetLabel     message_label;
     WidgetLabel     password_label;
     WidgetEditValid password_edit;
@@ -42,20 +44,25 @@ public:
     int fgcolor;
     int bgcolor;
 
-    FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height, Widget2 & parent,
-              NotifyApi* notifier, const char* caption,
-              int group_id,
-              const char * password,
-              int fgcolor, int bgcolor,
-              const char * label_text_message,
-              const char * label_text_password)
+    FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height,
+                            Widget2 & parent, NotifyApi* notifier, const char* caption,
+                            int group_id, const char * password,
+                            ColorTheme & colortheme,
+                            const char * label_text_message,
+                            const char * label_text_password)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13, fgcolor, bgcolor)
-        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
-        , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, bgcolor, -1u, 1, 1, true)
+        , colors(colortheme)
+        , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13,
+                        this->colors.global.fgcolor, this->colors.global.bgcolor)
+        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
+                         this->colors.global.fgcolor, this->colors.global.bgcolor)
+        , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
+                        this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                        this->colors.global.bgcolor, this->colors.global.focus_color,
+                        -1u, 1, 1, true)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
-        , fgcolor(fgcolor)
-        , bgcolor(bgcolor)
+        , fgcolor(this->colors.global.fgcolor)
+        , bgcolor(this->colors.global.bgcolor)
     {
         this->impl = new CompositeTable;
         this->add_widget(&this->message_label);

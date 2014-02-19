@@ -113,6 +113,7 @@ TODO("move these into configuration");
 
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
+#define RDPCOLOR_INI "rdpcolor.ini"
 
 #define RDPPROXY_CRT "rdpproxy.crt"
 #define RDPPROXY_KEY "rdpproxy.key"
@@ -135,7 +136,7 @@ static inline bool check_ask(const char * str)
 static inline void ask_string(const char * str, char buffer[], bool & flag)
 {
     flag = check_ask(str);
-    if (!flag){
+    if (!flag) {
         strncpy(buffer, str, strlen(str));
         buffer[strlen(str)] = 0;
     }
@@ -476,6 +477,7 @@ static inline const char * string_from_authid(authid_t authid) {
 }
 
 #include "basefield.hpp"
+#include "colortheme.hpp"
 
 struct Inifile : public FieldObserver {
     struct Inifile_globals {
@@ -756,6 +758,8 @@ struct Inifile : public FieldObserver {
 
         BoolField          authentication_challenge; // AUTHID_AUTHENTICATION_CHALLENGE //
     } context;
+
+    ColorTheme colors;
 
     struct IniAccounts account;
 
@@ -1181,75 +1185,75 @@ public:
 
     virtual void set_value(const char * context, const char * key, const char * value)
     {
-        if (0 == strcmp(context, "globals")){
-            if (0 == strcmp(key, "bitmap_cache")){
+        if (0 == strcmp(context, "globals")) {
+            if (0 == strcmp(key, "bitmap_cache")) {
                 this->globals.bitmap_cache = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "bitmap_compression")){
+            else if (0 == strcmp(key, "bitmap_compression")) {
                 this->globals.bitmap_compression = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "port")){
+            else if (0 == strcmp(key, "port")) {
                 this->globals.port = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "nomouse")){
+            else if (0 == strcmp(key, "nomouse")) {
                 this->globals.nomouse = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "notimestamp")){
+            else if (0 == strcmp(key, "notimestamp")) {
                 this->globals.notimestamp = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "encryptionLevel")){
+            else if (0 == strcmp(key, "encryptionLevel")) {
                 this->globals.encryptionLevel = level_from_cstr(value);
             }
-            else if (0 == strcmp(key, "authip")){
+            else if (0 == strcmp(key, "authip")) {
                 strncpy(this->globals.authip, value, sizeof(this->globals.authip));
                 this->globals.authip[sizeof(this->globals.authip) - 1] = 0;
             }
-            else if (0 == strcmp(key, "authport")){
+            else if (0 == strcmp(key, "authport")) {
                 this->globals.authport = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "autovalidate")){
+            else if (0 == strcmp(key, "autovalidate")) {
                 this->globals.autovalidate = bool_from_cstr(value);
             }
             else if (0 == strcmp(key, "max_tick") ||
-                     0 == strcmp(key, "inactivity_time")){
+                     0 == strcmp(key, "inactivity_time")) {
                 this->globals.max_tick = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "keepalive_grace_delay")){
+            else if (0 == strcmp(key, "keepalive_grace_delay")) {
                 this->globals.keepalive_grace_delay = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "close_timeout")){
+            else if (0 == strcmp(key, "close_timeout")) {
                 this->globals.close_timeout = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "internal_domain")){
+            else if (0 == strcmp(key, "internal_domain")) {
                 this->globals.internal_domain = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "dynamic_conf_path")){
+            else if (0 == strcmp(key, "dynamic_conf_path")) {
                 strncpy(this->globals.dynamic_conf_path, value, sizeof(this->globals.dynamic_conf_path));
                 this->globals.dynamic_conf_path[sizeof(this->globals.dynamic_conf_path) - 1] = 0;
             }
-            else if (0 == strcmp(key, "auth_channel")){
+            else if (0 == strcmp(key, "auth_channel")) {
                 strncpy(this->globals.auth_channel, value, 8);
                 this->globals.auth_channel[7] = 0;
             }
-            else if (0 == strcmp(key, "enable_file_encryption")){
+            else if (0 == strcmp(key, "enable_file_encryption")) {
                 this->globals.enable_file_encryption.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "listen_address")){
+            else if (0 == strcmp(key, "listen_address")) {
                 strncpy(this->globals.listen_address, value, sizeof(this->globals.listen_address));
                 this->globals.listen_address[sizeof(this->globals.listen_address) - 1] = 0;
             }
-            else if (0 == strcmp(key, "enable_ip_transparent")){
+            else if (0 == strcmp(key, "enable_ip_transparent")) {
                 this->globals.enable_ip_transparent = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "certificate_password")){
+            else if (0 == strcmp(key, "certificate_password")) {
                 strncpy(this->globals.certificate_password, value, sizeof(this->globals.certificate_password));
                 this->globals.certificate_password[sizeof(this->globals.certificate_password) - 1] = 0;
             }
-            else if (0 == strcmp(key, "png_path")){
+            else if (0 == strcmp(key, "png_path")) {
                 strncpy(this->globals.png_path, value, sizeof(this->globals.png_path));
                 this->globals.png_path[sizeof(this->globals.png_path) - 1] = 0;
             }
-            else if (0 == strcmp(key, "wrm_path")){
+            else if (0 == strcmp(key, "wrm_path")) {
                 strncpy(this->globals.wrm_path, value, sizeof(this->globals.wrm_path));
                 this->globals.wrm_path[sizeof(this->globals.wrm_path) - 1] = 0;
             }
@@ -1262,7 +1266,7 @@ public:
             else if (0 == strcmp(key, "codec_id")) {
                 this->globals.codec_id.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "movie")){
+            else if (0 == strcmp(key, "movie")) {
                 this->globals.movie.set_from_cstr(value);
             }
             else if (0 == strcmp(key, "movie_path")) {
@@ -1271,55 +1275,55 @@ public:
             else if (0 == strcmp(key, "video_quality")) {
                 this->globals.video_quality.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "enable_bitmap_update")){
+            else if (0 == strcmp(key, "enable_bitmap_update")) {
                 this->globals.enable_bitmap_update = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "persistent_path")){
+            else if (0 == strcmp(key, "persistent_path")) {
                 pathncpy(this->globals.persistent_path, value, sizeof(this->globals.persistent_path));
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "client")){
-            if (0 == strcmp(key, "ignore_logon_password")){
+        else if (0 == strcmp(context, "client")) {
+            if (0 == strcmp(key, "ignore_logon_password")) {
                 this->client.ignore_logon_password = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "performance_flags_default")){
+            else if (0 == strcmp(key, "performance_flags_default")) {
                 this->client.performance_flags_default = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "performance_flags_force_present")){
+            else if (0 == strcmp(key, "performance_flags_force_present")) {
                 this->client.performance_flags_force_present = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "performance_flags_force_not_present")){
+            else if (0 == strcmp(key, "performance_flags_force_not_present")) {
                 this->client.performance_flags_force_not_present = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "tls_fallback_legacy")){
+            else if (0 == strcmp(key, "tls_fallback_legacy")) {
                 this->client.tls_fallback_legacy = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "tls_support")){
+            else if (0 == strcmp(key, "tls_support")) {
                 this->client.tls_support = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "bogus_neg_request")){
+            else if (0 == strcmp(key, "bogus_neg_request")) {
                 this->client.bogus_neg_request = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "clipboard")){
+            else if (0 == strcmp(key, "clipboard")) {
                 this->client.clipboard.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "device_redirection")){
+            else if (0 == strcmp(key, "device_redirection")) {
                 this->client.device_redirection.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "rdp_compression")){
+            else if (0 == strcmp(key, "rdp_compression")) {
                 this->client.rdp_compression = ulong_from_cstr(value);
                 if (this->client.rdp_compression < 0)
                     this->client.rdp_compression = 0;
                 else if (this->client.rdp_compression > 4)
                     this->client.rdp_compression = 4;
             }
-            else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")){
+            else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")) {
                 this->client.disable_tsk_switch_shortcuts.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "max_color_depth")){
+            else if (0 == strcmp(key, "max_color_depth")) {
                 this->client.max_color_depth = ulong_from_cstr(value);
                 if ((this->client.max_color_depth != 8) &&
                     (this->client.max_color_depth != 15) &&
@@ -1328,14 +1332,14 @@ public:
                     (this->client.max_color_depth != 32))
                     this->client.max_color_depth = 24;
             }
-            else if (0 == strcmp(key, "persistent_disk_bitmap_cache")){
+            else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
                 this->client.persistent_disk_bitmap_cache = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "mod_rdp")){
+        else if (0 == strcmp(context, "mod_rdp")) {
             if (0 == strcmp(key, "rdp_compression")) {
                 this->mod_rdp.rdp_compression = ulong_from_cstr(value);
                 if (this->mod_rdp.rdp_compression < 0)
@@ -1361,14 +1365,14 @@ public:
             else if (0 == strcmp(key, "enable_kerberos")) {
                 this->mod_rdp.enable_kerberos = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "persistent_disk_bitmap_cache")){
+            else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
                 this->mod_rdp.persistent_disk_bitmap_cache = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "mod_vnc")){
+        else if (0 == strcmp(context, "mod_vnc")) {
             if (0 == strcmp(key, "encodings")) {
                 this->mod_vnc.encodings.copy_c_str(value);
             }
@@ -1379,97 +1383,97 @@ public:
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "video")){
-            if (0 == strcmp(key, "capture_flags")){
+        else if (0 == strcmp(context, "video")) {
+            if (0 == strcmp(key, "capture_flags")) {
                 this->video.capture_flags   = ulong_from_cstr(value);
                 this->video.capture_png = 0 != (this->video.capture_flags & 1);
                 this->video.capture_wrm = 0 != (this->video.capture_flags & 2);
                 this->video.capture_flv = 0 != (this->video.capture_flags & 4);
                 this->video.capture_ocr = 0 != (this->video.capture_flags & 8);
             }
-            else if (0 == strcmp(key, "ocr_interval")){
+            else if (0 == strcmp(key, "ocr_interval")) {
                 this->video.ocr_interval                = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "ocr_on_title_bar_only")){
+            else if (0 == strcmp(key, "ocr_on_title_bar_only")) {
                 this->video.ocr_on_title_bar_only       = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "ocr_max_unrecog_char_rate")){
+            else if (0 == strcmp(key, "ocr_max_unrecog_char_rate")) {
                 this->video.ocr_max_unrecog_char_rate   = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "png_interval")){
+            else if (0 == strcmp(key, "png_interval")) {
                 this->video.png_interval   = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "capture_groupid")){
+            else if (0 == strcmp(key, "capture_groupid")) {
                 this->video.capture_groupid  = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "frame_interval")){
+            else if (0 == strcmp(key, "frame_interval")) {
                 this->video.frame_interval   = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "break_interval")){
+            else if (0 == strcmp(key, "break_interval")) {
                 this->video.break_interval   = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "png_limit")){
+            else if (0 == strcmp(key, "png_limit")) {
                 this->video.png_limit   = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "replay_path")){
+            else if (0 == strcmp(key, "replay_path")) {
                 strncpy(this->video.replay_path, value, sizeof(this->video.replay_path));
                 this->video.replay_path[sizeof(this->video.replay_path) - 1] = 0;
             }
-            else if (0 == strcmp(key, "l_bitrate")){
+            else if (0 == strcmp(key, "l_bitrate")) {
                 this->video.l_bitrate   = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "l_framerate")){
+            else if (0 == strcmp(key, "l_framerate")) {
                 this->video.l_framerate = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "l_height")){
+            else if (0 == strcmp(key, "l_height")) {
                 this->video.l_height    = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "l_width")){
+            else if (0 == strcmp(key, "l_width")) {
                 this->video.l_width     = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "l_qscale")){
+            else if (0 == strcmp(key, "l_qscale")) {
                 this->video.l_qscale    = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "m_bitrate")){
+            else if (0 == strcmp(key, "m_bitrate")) {
                 this->video.m_bitrate   = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "m_framerate")){
+            else if (0 == strcmp(key, "m_framerate")) {
                 this->video.m_framerate = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "m_height")){
+            else if (0 == strcmp(key, "m_height")) {
                 this->video.m_height    = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "m_width")){
+            else if (0 == strcmp(key, "m_width")) {
                 this->video.m_width     = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "m_qscale")){
+            else if (0 == strcmp(key, "m_qscale")) {
                 this->video.m_qscale    = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "h_bitrate")){
+            else if (0 == strcmp(key, "h_bitrate")) {
                 this->video.h_bitrate   = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "h_framerate")){
+            else if (0 == strcmp(key, "h_framerate")) {
                 this->video.h_framerate = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "h_height")){
+            else if (0 == strcmp(key, "h_height")) {
                 this->video.h_height    = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "h_width")){
+            else if (0 == strcmp(key, "h_width")) {
                 this->video.h_width     = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "h_qscale")){
+            else if (0 == strcmp(key, "h_qscale")) {
                 this->video.h_qscale    = ulong_from_cstr(value);
             }
             else if (0 == strcmp(key, "movie_path")) {
                 this->globals.movie_path.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "hash_path")){
+            else if (0 == strcmp(key, "hash_path")) {
                 pathncpy(this->video.hash_path,       value, sizeof(this->video.hash_path));
             }
-            else if (0 == strcmp(key, "record_path")){
+            else if (0 == strcmp(key, "record_path")) {
                 pathncpy(this->video.record_path,     value, sizeof(this->video.record_path));
             }
-            else if (0 == strcmp(key, "record_tmp_path")){
+            else if (0 == strcmp(key, "record_tmp_path")) {
                 pathncpy(this->video.record_tmp_path, value, sizeof(this->video.record_tmp_path));
             }
             else if (0 == strcmp(key, "disable_keyboard_log")) {
@@ -1482,8 +1486,8 @@ public:
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "crypto")){
-            if (0 == strcmp(key, "key0")){
+        else if (0 == strcmp(context, "crypto")) {
+            if (0 == strcmp(key, "key0")) {
                 if (strlen(value) >= sizeof(this->crypto.key0) * 2) {
                     char   hexval[3] = { 0 };
                     char * end;
@@ -1494,7 +1498,7 @@ public:
                     }
                 }
             }
-            else if (0 == strcmp(key, "key1")){
+            else if (0 == strcmp(key, "key1")) {
                 if (strlen(value) >= sizeof(this->crypto.key1) * 2) {
                     char   hexval[3] = { 0 };
                     char * end;
@@ -1509,65 +1513,65 @@ public:
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "debug")){
-            if (0 == strcmp(key, "x224")){
+        else if (0 == strcmp(context, "debug")) {
+            if (0 == strcmp(key, "x224")) {
                 this->debug.x224              = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "mcs")){
+            else if (0 == strcmp(key, "mcs")) {
                 this->debug.mcs               = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "sec")){
+            else if (0 == strcmp(key, "sec")) {
                 this->debug.sec               = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "rdp")){
+            else if (0 == strcmp(key, "rdp")) {
                 this->debug.rdp               = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "primary_orders")){
+            else if (0 == strcmp(key, "primary_orders")) {
                 this->debug.primary_orders    = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "secondary_orders")){
+            else if (0 == strcmp(key, "secondary_orders")) {
                 this->debug.secondary_orders  = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "bitmap")){
+            else if (0 == strcmp(key, "bitmap")) {
                 this->debug.bitmap            = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "capture")){
+            else if (0 == strcmp(key, "capture")) {
                 this->debug.capture           = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "auth")){
+            else if (0 == strcmp(key, "auth")) {
                 this->debug.auth              = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "session")){
+            else if (0 == strcmp(key, "session")) {
                 this->debug.session           = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "front")){
+            else if (0 == strcmp(key, "front")) {
                 this->debug.front             = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "mod_rdp")){
+            else if (0 == strcmp(key, "mod_rdp")) {
                 this->debug.mod_rdp           = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "mod_vnc")){
+            else if (0 == strcmp(key, "mod_vnc")) {
                 this->debug.mod_vnc           = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "mod_int")){
+            else if (0 == strcmp(key, "mod_int")) {
                 this->debug.mod_int           = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "mod_xup")){
+            else if (0 == strcmp(key, "mod_xup")) {
                 this->debug.mod_xup           = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "widget")){
+            else if (0 == strcmp(key, "widget")) {
                 this->debug.widget            = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "input")){
+            else if (0 == strcmp(key, "input")) {
                 this->debug.input             = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "log_type")){
+            else if (0 == strcmp(key, "log_type")) {
                 this->debug.log_type = logtype_from_cstr(value);
             }
-            else if (0 == strcmp(key, "pass_dialog_box")){
+            else if (0 == strcmp(key, "pass_dialog_box")) {
                 this->debug.pass_dialog_box = ulong_from_cstr(value);
             }
-            else if (0 == strcmp(key, "log_file_path")){
+            else if (0 == strcmp(key, "log_file_path")) {
                 strncpy(this->debug.log_file_path, value, sizeof(this->debug.log_file_path));
                 this->debug.log_file_path[sizeof(this->debug.log_file_path) - 1] = 0;
             }
@@ -1575,51 +1579,59 @@ public:
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
         }
-        else if (0 == strcmp(context, "translation")){
-            if (0 == strcmp(key, "language")){
+        else if (0 == strcmp(context, "translation")) {
+            if (0 == strcmp(key, "language")) {
                 if ((0 == strcmp(value, "en")) ||
                     (0 == strcmp(value, "fr"))) {
                     this->translation.language.set_from_cstr(value);
                 }
             }
-            else if (0 == strcmp(key, "button_ok")){
+            else if (0 == strcmp(key, "button_ok")) {
                 this->translation.button_ok.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "button_cancel")){
+            else if (0 == strcmp(key, "button_cancel")) {
                 this->translation.button_cancel.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "button_help")){
+            else if (0 == strcmp(key, "button_help")) {
                 this->translation.button_help.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "button_close")){
+            else if (0 == strcmp(key, "button_close")) {
                 this->translation.button_close.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "button_refused")){
+            else if (0 == strcmp(key, "button_refused")) {
                 this->translation.button_refused.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "login")){
+            else if (0 == strcmp(key, "login")) {
                 this->translation.login.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "username")){
+            else if (0 == strcmp(key, "username")) {
                 this->translation.username.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "password")){
+            else if (0 == strcmp(key, "password")) {
                 this->translation.password.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "target")){
+            else if (0 == strcmp(key, "target")) {
                 this->translation.target.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "diagnostic")){
+            else if (0 == strcmp(key, "diagnostic")) {
                 this->translation.diagnostic.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "connection_closed")){
+            else if (0 == strcmp(key, "connection_closed")) {
                 this->translation.connection_closed.set_from_cstr(value);
             }
-            else if (0 == strcmp(key, "help_message")){
+            else if (0 == strcmp(key, "help_message")) {
                 this->translation.help_message.set_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+            }
+        }
+        else if (0 == strcmp(context, "internal_mod")) {
+            if (0 == strcmp(key, "load_color")) {
+                if (bool_from_cstr(value)) {
+                    ConfigurationLoader color_load(this->colors,
+                                                   CFG_PATH "/" RDPCOLOR_INI);
+                }
             }
         }
         else {
@@ -1637,7 +1649,7 @@ public:
             res = field->has_changed();
             field->use();
         }
-        catch (const std::out_of_range & oor){
+        catch (const std::out_of_range & oor) {
             LOG(LOG_WARNING, "Inifile::context_is_asked(id): unknown authid=%d", authid);
             res = false;
         }
@@ -1661,7 +1673,7 @@ public:
                     field->set_from_acl(value);
                 }
             }
-            catch (const std::out_of_range & oor){
+            catch (const std::out_of_range & oor) {
                 LOG(LOG_WARNING, "Inifile::set_from_acl(id): unknown authid=%d", authid);
             }
         }
@@ -1680,7 +1692,7 @@ public:
                 BaseField * field = this->field_list.at(authid);
                 field->ask_from_acl();
             }
-            catch (const std::out_of_range & oor){
+            catch (const std::out_of_range & oor) {
                 LOG(LOG_WARNING, "Inifile::ask_from_acl(id): unknown authid=%d", authid);
             }
         }
@@ -1712,7 +1724,7 @@ public:
                     BaseField * field = this->field_list.at(authid);
                     field->set_from_cstr(value);
                 }
-                catch (const std::out_of_range & oor){
+                catch (const std::out_of_range & oor) {
                     LOG(LOG_WARNING, "Inifile::context_set_value(id): unknown authid=%d", authid);
                 }
                 break;
@@ -1745,7 +1757,7 @@ public:
                     if (!field->is_asked())
                         pszReturn = field->get_value();
                 }
-                catch (const std::out_of_range & oor){
+                catch (const std::out_of_range & oor) {
                     LOG(LOG_WARNING, "Inifile::context_get_value(id): unknown authid=\"%d\"", authid);
                 }
                 break;
@@ -1768,7 +1780,7 @@ public:
         try{
             this->field_list.at(authid)->ask();
         }
-        catch (const std::out_of_range & oor){
+        catch (const std::out_of_range & oor) {
             LOG(LOG_WARNING, "Inifile::context_ask(id): unknown authid=%d", authid);
         }
     }

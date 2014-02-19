@@ -36,16 +36,17 @@ public:
 
     WidgetEditValid(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
-                    int group_id = 0, int fgcolor = BLACK, int bgcolor = WHITE,
-                    int bbgcolor = DARK_BLUE_BIS, std::size_t edit_position = -1,
+                    int group_id, int fgcolor, int bgcolor,
+                    int bbgcolor, int focus_color, std::size_t edit_position = -1,
                     int xtext = 0, int ytext = 0, bool pass = false)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,
-                 group_id, bgcolor, bbgcolor, 6, 2)
-        , editbox(pass ? new WidgetPassword(drawable, 0, 0, cx - this->button.cx(), *this, this,
-                                            text, group_id, fgcolor, bgcolor, edit_position, 1, 2)
-                  : new WidgetEdit(drawable, 0, 0, cx - this->button.cx(), *this, this, text,
-                                   group_id, fgcolor, bgcolor, edit_position, 1, 2))
+                 group_id, bgcolor, bbgcolor, focus_color, 6, 2)
+        , editbox(pass ? new WidgetPassword(drawable, 0, 0, cx - this->button.cx(), *this,
+                                            this, text, group_id, fgcolor, bgcolor,
+                                            edit_position, 1, 2)
+                  : new WidgetEdit(drawable, 0, 0, cx - this->button.cx(), *this, this,
+                                   text, group_id, fgcolor, bgcolor, edit_position, 1, 2))
     {
         this->button.set_button_x(this->editbox->lx());
         this->editbox->set_edit_cy(this->button.cy());

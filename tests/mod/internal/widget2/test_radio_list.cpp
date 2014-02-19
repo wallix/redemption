@@ -52,13 +52,13 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioButton)
 
 
     WidgetRadioButton radio0(drawable, 10, 300, parent, NULL,
-                             "Alphabetical");
+                             "Alphabetical", true, 0, WHITE, DARK_BLUE_BIS);
 
     WidgetRadioButton radio1(drawable, radio0.lx() + 10, 300, parent, NULL,
-                            "Most Used First");
+                            "Most Used First", true, 0, WHITE, DARK_BLUE_BIS);
 
     WidgetRadioButton radio2(drawable, radio1.lx() + 10, 300, parent, NULL,
-                            "Last Used First");
+                            "Last Used First", true, 0, WHITE, DARK_BLUE_BIS);
     // ask to widget to redraw at it's current position
     parent.add_widget(&radio0);
     parent.add_widget(&radio1);

@@ -31,9 +31,12 @@
 #include "flat_button.hpp"
 #include "translation.hpp"
 #include "ellipse.hpp"
+#include "colortheme.hpp"
+
 class FlatLogin : public WidgetParent
 {
 public:
+    ColorTheme & colors;
     WidgetEditValid  password_edit;
     WidgetLabel login_label;
     WidgetEditValid  login_edit;
@@ -50,21 +53,31 @@ public:
               NotifyApi* notifier, const char* caption,
               bool focus_on_password, int group_id,
               const char * login, const char * password,
-              int fgcolor, int bgcolor,
               const char * label_text_login,
               const char * label_text_password,
               Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , password_edit(drawable, 0, 0, 400, *this, this, password, -14, BLACK, WHITE, bgcolor, -1u, 1, 1, true)
-        , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11, fgcolor, bgcolor)
+        , colors(ini.colors)
+        , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
+                        this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                        this->colors.global.bgcolor, this->colors.global.focus_color,
+                        -1u, 1, 1, true)
+        , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11,
+                      this->colors.global.fgcolor, this->colors.global.bgcolor)
         , login_edit(drawable, 0, 0, 400, *this, this, login, -12,
-                     BLACK, WHITE, bgcolor, -1u, 1, 1)
+                     this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                     this->colors.global.bgcolor, this->colors.global.focus_color,
+                     -1u, 1, 1)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
-        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13, fgcolor, bgcolor)
-        , version_label(drawable, 0, 0, *this, NULL, caption, true, -15, fgcolor, bgcolor)
-        , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16, fgcolor, bgcolor, 6, 2)
-        , fgcolor(fgcolor)
-        , bgcolor(bgcolor)
+        , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
+                         this->colors.global.fgcolor, this->colors.global.bgcolor)
+        , version_label(drawable, 0, 0, *this, NULL, caption, true, -15,
+                        this->colors.global.fgcolor, this->colors.global.bgcolor)
+        , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16,
+                   this->colors.global.fgcolor, this->colors.global.bgcolor,
+                   this->colors.global.focus_color, 6, 2)
+        , fgcolor(this->colors.global.fgcolor)
+        , bgcolor(this->colors.global.bgcolor)
         , ini(ini)
     {
         this->impl = new CompositeTable;

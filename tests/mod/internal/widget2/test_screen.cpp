@@ -72,10 +72,14 @@ BOOST_AUTO_TEST_CASE(TestScreenEvent)
     Notify notifier3;
     Notify notifier4;
 
-    WidgetFlatButton wbutton1(drawable, 0, 0, wscreen, &notifier1, "button 1");
-    WidgetFlatButton wbutton2(drawable, 0, 30, wscreen, &notifier2, "button 2");
-    WidgetFlatButton wbutton3(drawable, 100, 0, wscreen, &notifier3, "button 3");
-    WidgetFlatButton wbutton4(drawable, 100, 30, wscreen, &notifier4, "button 4");
+    WidgetFlatButton wbutton1(drawable, 0, 0, wscreen, &notifier1, "button 1",
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE);
+    WidgetFlatButton wbutton2(drawable, 0, 30, wscreen, &notifier2, "button 2",
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE);
+    WidgetFlatButton wbutton3(drawable, 100, 0, wscreen, &notifier3, "button 3",
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE);
+    WidgetFlatButton wbutton4(drawable, 100, 30, wscreen, &notifier4, "button 4",
+                              true, 0, WHITE, DARK_BLUE_BIS, WINBLUE);
 
     wscreen.add_widget(&wbutton1);
     wscreen.add_widget(&wbutton2);

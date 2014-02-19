@@ -44,6 +44,7 @@ enum {
     PINK       = 0xff00ff,
     GREEN      = 0x00ff00,
     YELLOW     = 0x00ffff,
+    LIGHT_YELLOW = 0x9fffff,
     CYAN       = 0xffff00,
     WABGREEN   = 0x2BBE91,
     WABGREEN_BIS  = 0x08ff7b,
@@ -65,6 +66,47 @@ enum {
     LIGHT_BLUE = 0xebd5cf,
     WINBLUE = 0x9C4D00,
 };
+static inline unsigned color_from_cstr(const char * str) {
+    unsigned res = 0;
+
+    if (0 == strcasecmp("BLACK", str)) { res = BLACK; }
+    else if (0 == strcasecmp("GREY", str)) { res = GREY; }
+    else if (0 == strcasecmp("DARK_GREY", str)) { res = DARK_GREY; }
+    else if (0 == strcasecmp("ANTHRACITE", str)) { res = ANTHRACITE; }
+    else if (0 == strcasecmp("BLUE", str)) { res = BLUE; }
+    else if (0 == strcasecmp("DARK_BLUE", str)) { res = DARK_BLUE; }
+    else if (0 == strcasecmp("WHITE", str)) { res = WHITE; }
+    else if (0 == strcasecmp("RED", str)) { res = RED; }
+    else if (0 == strcasecmp("PINK", str)) { res = PINK; }
+    else if (0 == strcasecmp("GREEN", str)) { res = GREEN; }
+    else if (0 == strcasecmp("YELLOW", str)) { res = YELLOW; }
+    else if (0 == strcasecmp("LIGHT_YELLOW", str)) { res = LIGHT_YELLOW; }
+    else if (0 == strcasecmp("CYAN", str)) { res = CYAN; }
+    else if (0 == strcasecmp("WABGREEN", str)) { res = WABGREEN; }
+    else if (0 == strcasecmp("WABGREEN_BIS", str)) { res = WABGREEN_BIS; }
+    else if (0 == strcasecmp("DARK_WABGREEN", str)) { res = DARK_WABGREEN; }
+    else if (0 == strcasecmp("INV_DARK_WABGREEN", str)) { res = INV_DARK_WABGREEN; }
+    else if (0 == strcasecmp("DARK_GREEN", str)) { res = DARK_GREEN; }
+    else if (0 == strcasecmp("INV_DARK_GREEN", str)) { res = INV_DARK_GREEN; }
+    else if (0 == strcasecmp("LIGHT_GREEN", str)) { res = LIGHT_GREEN; }
+    else if (0 == strcasecmp("INV_LIGHT_GREEN", str)) { res = INV_LIGHT_GREEN; }
+    else if (0 == strcasecmp("PALE_GREEN", str)) { res = PALE_GREEN; }
+    else if (0 == strcasecmp("INV_PALE_GREEN", str)) { res = INV_PALE_GREEN; }
+    else if (0 == strcasecmp("MEDIUM_GREEN", str)) { res = MEDIUM_GREEN; }
+    else if (0 == strcasecmp("INV_MEDIUM_GREEN", str)) { res = INV_MEDIUM_GREEN; }
+    else if (0 == strcasecmp("DARK_BLUE_WIN", str)) { res = DARK_BLUE_WIN; }
+    else if (0 == strcasecmp("DARK_BLUE_BIS", str)) { res = DARK_BLUE_BIS; }
+    else if (0 == strcasecmp("MEDIUM_BLUE", str)) { res = MEDIUM_BLUE; }
+    else if (0 == strcasecmp("PALE_BLUE", str)) { res = PALE_BLUE; }
+    else if (0 == strcasecmp("LIGHT_BLUE", str)) { res = LIGHT_BLUE; }
+    else if (0 == strcasecmp("WINBLUE", str)) { res = WINBLUE; }
+    else if ((*str == '0') && (*(str + 1) == 'x')){
+        res = strtol(str + 2, 0, 16);
+    }
+    else { res = atol(str); }
+
+    return res;
+}
 
 static inline BGRColor RGBtoBGR(const BGRColor & c){
     return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);

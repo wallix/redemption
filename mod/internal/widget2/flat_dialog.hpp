@@ -29,6 +29,7 @@
 #include "widget2_rect.hpp"
 #include "edit.hpp"
 #include "password.hpp"
+#include "colortheme.hpp"
 
 enum ChallengeOpt {
     NO_CHALLENGE = 0x00,
@@ -39,6 +40,7 @@ enum ChallengeOpt {
 class FlatDialog : public WidgetParent
 {
 public:
+    ColorTheme & colors;
     WidgetImage img;
     WidgetLabel title;
     WidgetMultiLine dialog;
@@ -51,20 +53,30 @@ public:
 
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
-               const char* caption, const char * text, int group_id = 0,
+               const char* caption, const char * text, int group_id,
+               ColorTheme & colortheme,
                const char * ok_text = "Ok", const char * cancel_text = "Cancel",
-               int fgcolor = WHITE, int bgcolor = DARK_BLUE_BIS,
                ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
+        , colors(colortheme)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -8)
         , title(drawable, 0, 0, *this, NULL, caption, true, -9,
-                fgcolor, bgcolor, 5)
-        , dialog(drawable, 0, 0, *this, NULL, text, true, -10, fgcolor, bgcolor, 10, 2)
+                this->colors.global.fgcolor, this->colors.global.bgcolor, 5)
+        , dialog(drawable, 0, 0, *this, NULL, text, true, -10,
+                 this->colors.global.fgcolor, this->colors.global.bgcolor, 10, 2)
         , challenge(NULL)
-        , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12, fgcolor, bgcolor, 6, 2)
-        , cancel(cancel_text ? new WidgetFlatButton(drawable, 0, 0, *this, this, cancel_text, true, -11, fgcolor, bgcolor, 6, 2) : NULL)
-        , separator(drawable, Rect(0, 0, width, 2), *this, this, -12, LIGHT_BLUE)
-        , bgcolor(bgcolor)
+        , ok(drawable, 0, 0, *this, this, ok_text ? ok_text : "Ok", true, -12,
+             this->colors.global.fgcolor, this->colors.global.bgcolor,
+             this->colors.global.focus_color, 6, 2)
+        , cancel(cancel_text ? new WidgetFlatButton(drawable, 0, 0, *this, this,
+                                                    cancel_text, true, -11,
+                                                    this->colors.global.fgcolor,
+                                                    this->colors.global.bgcolor,
+                                                    this->colors.global.focus_color,
+                                                    6, 2) : NULL)
+        , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
+                    this->colors.global.separator_color)
+        , bgcolor(this->colors.global.bgcolor)
     {
         this->impl = new CompositeTable;
 
@@ -90,11 +102,14 @@ public:
             if (CHALLENGE_ECHO == has_challenge) {
                 this->challenge = new WidgetEdit(this->drawable, this->separator.rect.x + 10, y,
                                                  total_width - 20, *this, this, 0, -13,
-                                                 BLACK, WHITE, -1u, 1, 1);
+                                                 this->colors.edit.fgcolor,
+                                                 this->colors.edit.bgcolor, -1u, 1, 1);
             } else {
-                this->challenge = new WidgetPassword(this->drawable, this->separator.rect.x + 10,
-                                                     y, total_width - 20, *this, this, 0, -13,
-                                                     BLACK, WHITE, -1u, 1, 1);
+                this->challenge = new WidgetPassword(this->drawable,
+                                                     this->separator.rect.x + 10,
+                                                     y, total_width - 20, *this, this, 0,
+                                                     -13, this->colors.edit.fgcolor,
+                                                     this->colors.edit.bgcolor, -1u, 1, 1);
             }
             this->add_widget(this->challenge);
             total_height += this->challenge->cy() + 10;

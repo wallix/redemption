@@ -33,7 +33,8 @@ public:
     WidgetTooltip * tooltip;
     Widget2 * current_over;
 
-    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height, NotifyApi * notifier = NULL)
+    WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height,
+                 NotifyApi * notifier = NULL)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
         , tooltip(NULL)
         , current_over(NULL)
@@ -63,7 +64,8 @@ public:
             this->tooltip = new WidgetTooltip(this->drawable,
                                               x, y,
                                               *this, widget,
-                                              text);
+                                              text,
+                                              BLACK, LIGHT_YELLOW);
             int w = this->tooltip->get_tooltip_cx();
             int h = this->tooltip->get_tooltip_cy();
             int sw = this->rect.cx;

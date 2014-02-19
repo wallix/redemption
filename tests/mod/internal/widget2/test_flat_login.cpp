@@ -59,8 +59,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
     Inifile ini;
 
     FlatLogin flat_login(drawable, parent.cx(), parent.cy(), parent, notifier, "test1",
-        false, id, "rec", "rec",
-        WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
+                         false, id, "rec", "rec", "Login", "Password", ini);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(flat_login.rect);
@@ -88,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
     Inifile ini;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test2",
-         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
+                         false, 0, 0, 0, "Login", "Password", ini);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -140,7 +139,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 
     Inifile ini;
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test3",
-         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
+                         false, 0, 0, 0, "Login", "Password", ini);
 
     flat_login.set_widget_focus(&flat_login.password_edit);
 
@@ -192,7 +191,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test4",
-         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
+                         false, 0, 0, 0, "Login", "Password", ini);
 
     // ask to widget to redraw at it's current position
     flat_login.rdp_input_invalidate(Rect(0 + flat_login.dx(),
@@ -235,7 +234,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
     Inifile ini;
 
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
-         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
+                         false, 0, 0, 0, "Login", "Password", ini);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -264,7 +263,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip2)
 
     Inifile ini;
     FlatLogin flat_login(drawable, 800, 600, parent, notifier, "test6",
-         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
+                         false, 0, 0, 0, "Login", "Password", ini);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_login.rdp_input_invalidate(Rect(20 + flat_login.dx(),
@@ -307,7 +306,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOk)
     Inifile ini;
 
     FlatLogin flat_login(drawable, 800, 600, parent, &notifier, "test6",
-         false, 0, 0, 0, WHITE, DARK_BLUE_BIS, "Login", "Password", ini);
+                         false, 0, 0, 0, "Login", "Password", ini);
 }
 
 
