@@ -29,6 +29,7 @@
 #include "widget2_rect.hpp"
 #include "edit.hpp"
 #include "password.hpp"
+#include "colortheme.hpp"
 
 enum ChallengeOpt {
     NO_CHALLENGE = 0x00,
@@ -53,11 +54,11 @@ public:
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id,
-               int fgcolor, int bgcolor,
+               int fgcolor, int bgcolor, ColorTheme & colortheme,
                const char * ok_text = "Ok", const char * cancel_text = "Cancel",
                ChallengeOpt has_challenge = NO_CHALLENGE)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , colors(ColorTheme())
+        , colors(colortheme)
         , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -8)
         , title(drawable, 0, 0, *this, NULL, caption, true, -9,
                 this->colors.global.fgcolor, this->colors.global.bgcolor, 5)

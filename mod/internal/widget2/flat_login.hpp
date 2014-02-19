@@ -31,6 +31,7 @@
 #include "flat_button.hpp"
 #include "translation.hpp"
 #include "ellipse.hpp"
+#include "colortheme.hpp"
 
 class FlatLogin : public WidgetParent
 {
@@ -57,7 +58,7 @@ public:
               const char * label_text_password,
               Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , colors(ColorTheme())
+        , colors(ini.colors)
         , password_edit(drawable, 0, 0, 400, *this, this, password, -14,
                         this->colors.edit.fgcolor, this->colors.edit.bgcolor,
                         this->colors.global.bgcolor, this->colors.global.focus_color,

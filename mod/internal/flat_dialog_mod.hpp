@@ -42,7 +42,8 @@ public:
                   time_t now,  ChallengeOpt has_challenge = NO_CHALLENGE)
     : InternalMod(front, width, height)
     , dialog_widget(*this, width, height, this->screen, this, caption, message,
-                    0, WHITE, DARK_BLUE_BIS, TR("OK", ini), cancel_text, has_challenge)
+                    0, WHITE, DARK_BLUE_BIS, ini.colors, TR("OK", ini), cancel_text,
+                    has_challenge)
     , ini(ini)
     , timeout(Timeout(now, ini.debug.pass_dialog_box))
     {

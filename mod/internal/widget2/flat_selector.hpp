@@ -34,6 +34,7 @@
 
 #include "flat_button.hpp"
 #include "translation.hpp"
+#include "colortheme.hpp"
 // #include "radio_list.hpp"
 
 class WidgetSelectorFlat : public WidgetParent
@@ -572,7 +573,7 @@ public:
                    const char * filter_device, const char * filter_target,
                    const char * filter_proto, Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , colors(ColorTheme())
+        , colors(ini.colors)
         , bgcolor(this->colors.global.bgcolor)
         , fgcolor(this->colors.global.fgcolor)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10,

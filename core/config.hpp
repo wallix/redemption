@@ -113,6 +113,7 @@ TODO("move these into configuration");
 
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
+#define RDPCOLOR_INI "rdpcolor.ini"
 
 #define RDPPROXY_CRT "rdpproxy.crt"
 #define RDPPROXY_KEY "rdpproxy.key"
@@ -476,6 +477,7 @@ static inline const char * string_from_authid(authid_t authid) {
 }
 
 #include "basefield.hpp"
+#include "colortheme.hpp"
 
 struct Inifile : public FieldObserver {
     struct Inifile_globals {
@@ -756,6 +758,8 @@ struct Inifile : public FieldObserver {
 
         BoolField          authentication_challenge; // AUTHID_AUTHENTICATION_CHALLENGE //
     } context;
+
+    ColorTheme colors;
 
     struct IniAccounts account;
 
@@ -1177,6 +1181,8 @@ public:
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
+
+        ConfigurationLoader color_load(this->colors, CFG_PATH "/" RDPCOLOR_INI);
     };
 
     virtual void set_value(const char * context, const char * key, const char * value)

@@ -30,6 +30,7 @@
 #include "composite.hpp"
 #include "flat_button.hpp"
 #include "translation.hpp"
+#include "colortheme.hpp"
 
 class FlatVNCAuthentification : public WidgetParent
 {
@@ -46,10 +47,11 @@ public:
     FlatVNCAuthentification(DrawApi& drawable, uint16_t width, uint16_t height,
                             Widget2 & parent, NotifyApi* notifier, const char* caption,
                             int group_id, const char * password, int fgcolor, int bgcolor,
+                            ColorTheme & colortheme,
                             const char * label_text_message,
                             const char * label_text_password)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , colors(ColorTheme())
+        , colors(colortheme)
         , message_label(drawable, 0, 0, *this, NULL, label_text_message, true, -13,
                         this->colors.global.fgcolor, this->colors.global.bgcolor)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,

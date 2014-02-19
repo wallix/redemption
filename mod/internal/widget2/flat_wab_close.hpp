@@ -30,6 +30,7 @@
 #include "multiline.hpp"
 #include "translation.hpp"
 #include "widget2_rect.hpp"
+#include "colortheme.hpp"
 
 #include <vector>
 
@@ -62,7 +63,7 @@ public:
                    const char * username, const char * target,
                    int fgcolor, int bgcolor, bool showtimer, Inifile & ini)
     : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-    , colors(ColorTheme())
+    , colors(ini.colors)
     , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
     , username_label(drawable, (width - 600) / 2, 0, *this, NULL, "Username:", true, -11,
                      this->colors.global.fgcolor, this->colors.global.bgcolor)

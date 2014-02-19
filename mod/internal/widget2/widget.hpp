@@ -28,7 +28,6 @@
 #include <rect.hpp>
 #include <callback.hpp>
 #include "RDP/pointer.hpp"
-#include "theme.hpp"
 
 class Keymap2;
 

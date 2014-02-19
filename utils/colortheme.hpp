@@ -18,8 +18,8 @@
  *   Author(s): Christophe Grosjean, Meng Tan
  */
 
-#ifndef REDEMPTION_MOD_INTERNAL_WIDGET2_THEME_HPP
-#define REDEMPTION_MOD_INTERNAL_WIDGET2_THEME_HPP
+#ifndef REDEMPTION_UTILS_COLOR_THEME_HPP
+#define REDEMPTION_UTILS_COLOR_THEME_HPP
 
 #include "colors.hpp"
 #include "cfgloader.hpp"
