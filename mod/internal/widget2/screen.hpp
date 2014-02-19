@@ -70,7 +70,7 @@ public:
                                               text,
                                               this->colors.tooltip.fgcolor,
                                               this->colors.tooltip.bgcolor,
-                                              this->colors.tooltip.bordercolor);
+                                              this->colors.tooltip.border_color);
             int w = this->tooltip->get_tooltip_cx();
             int h = this->tooltip->get_tooltip_cy();
             int sw = this->rect.cx;

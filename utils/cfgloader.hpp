@@ -46,17 +46,17 @@ struct ConfigurationLoader {
         this->cparse(configuration_holder, filename);
     }
 
-    ConfigurationLoader(ConfigurationHolder & configuration_holder, istream & Inifile_stream) {
+    ConfigurationLoader(ConfigurationHolder & configuration_holder, std::istream & Inifile_stream) {
         this->cparse(configuration_holder, Inifile_stream);
     }
 
     void cparse(ConfigurationHolder & configuration_holder, const char * filename) {
-        ifstream inifile(filename);
+        std::ifstream inifile(filename);
 
         this->cparse(configuration_holder, inifile);
     }
 
-    void cparse(ConfigurationHolder & configuration_holder, istream & ifs) {
+    void cparse(ConfigurationHolder & configuration_holder, std::istream & ifs) {
         const size_t maxlen = 256;
         char line[maxlen];
         char context[128] = { 0 };

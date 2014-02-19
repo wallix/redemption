@@ -401,6 +401,9 @@ unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test 
 unit-test test_config : tests/core/test_config.cpp libboost_unit_test ;
 unit-test test_config : tests/core/test_config.cpp libboost_unit_test gcov : <variant>coverage ;
 
+unit-test test_colortheme : tests/utils/test_colortheme.cpp libboost_unit_test ;
+unit-test test_colortheme : tests/utils/test_colortheme.cpp libboost_unit_test gcov : <variant>coverage ;
+
 unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp libboost_unit_test ;
 unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp libboost_unit_test gcov : <variant>coverage ;
 
