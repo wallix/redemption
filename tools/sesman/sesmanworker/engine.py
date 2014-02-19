@@ -1551,6 +1551,7 @@ class Engine(object):
         {
             'is_x509_connected': False,
             'x509_authenticate': False,
+            'passthrough_authenticate': False,
             'password': 'apass',
             'preferredLanguage': u'en',
             'rights':
@@ -1562,6 +1563,7 @@ class Engine(object):
         {
             'is_x509_connected': False,
             'x509_authenticate': False,
+            'passthrough_authenticate': False,
             'password': 'bad',
             'preferredLanguage': u'en',
             'rights':
@@ -1574,6 +1576,7 @@ class Engine(object):
         {
             'is_x509_connected': False,
             'x509_authenticate': False,
+            'passthrough_authenticate': False,
             'password': 'internalpass',
             'preferredLanguage': u'en',
             'rights':
@@ -1588,6 +1591,7 @@ class Engine(object):
         {
             'is_x509_connected': False,
             'x509_authenticate': False,
+            'passthrough_authenticate': False,
             'password': 'recpass',
             'preferredLanguage': u'en',
             'rights':
@@ -1605,6 +1609,7 @@ class Engine(object):
         {
             'is_x509_connected': False,
             'x509_authenticate': False,
+            'passthrough_authenticate': False,
             'password': 'xpass',
             'preferredLanguage': u'en',
             'rights':
@@ -1626,6 +1631,7 @@ class Engine(object):
         {
             'is_x509_connected': False,
             'x509_authenticate': False,
+            'passthrough_authenticate': False,
             'password': 'frpass',
             'preferredLanguage': u'fr',
             'rights':
@@ -1640,6 +1646,7 @@ class Engine(object):
         {
             'is_x509_connected': False,
             'x509_authenticate': False,
+            'passthrough_authenticate': False,
             'password': 'challengepass',
             'response': 'yes',
             'preferredLanguage': u'en',
@@ -1655,6 +1662,7 @@ class Engine(object):
         {
             'is_x509_connected': True,
             'x509_authenticate': True,
+            'passthrough_authenticate': False,
             'password': 'x509pass',
             'preferredLanguage': u'en',
             'rights':
@@ -1724,6 +1732,17 @@ class Engine(object):
         except:
             pass
         return res
+
+    def passthrough_authenticate(self, wab_login, ip_client):
+        print ('passthrough_authenticate(%s %s)' % (wab_login, ip_client))
+        try:
+            if self.config_users[self.wab_login]['passthrough_authenticate']:
+                self.user.preferredLanguage = self.config_users[self.wab_login][u'preferredLanguage']
+                return True
+            return False
+        except:
+            self.wab_login = None
+        return False
 
     def get_license_status(self):
         return True

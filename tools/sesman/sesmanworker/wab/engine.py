@@ -89,6 +89,27 @@ class Engine(object):
             Logger().info("Engine password_authenticate failed: (((%s)))" % traceback.format_exc(e))
         return False
 
+    def passthrough_authenticate(self, wab_login, ip_client):
+        try:
+            from wabengine.client.sync_client import SynClient
+            self.client = SynClient('localhost', 'tcp:8803')
+            self.wabengine = self.client.authenticate_gssapi(wab_login, "realm",
+                                                             ip_client)
+            self.challenge = None
+            if self.wabengine is not None:
+                self.user = self.wabengine.who_am_i()
+                return True
+        except AuthenticationChallenged, e:
+            self.challenge = e.challenge
+        except AuthenticationFailed, e:
+            self.challenge = None
+            pass
+        except Exception, e:
+            self.challenge = None
+            import traceback
+            Logger().info("Engine passthrough_authenticate failed: (((%s)))" % traceback.format_exc(e))
+        return False
+
     def get_license_status(self):
         u""" Three checks : expiration, primary limits, secondary limit
         If at least one fails, user can't connect at all to any device,
