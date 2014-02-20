@@ -14,7 +14,7 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  *
  *   Product name: redemption, a FLOSS RDP proxy
- *   Copyright (C) Wallix 2010-2013
+ *   Copyright (C) Wallix 2010-2014
  *   Author(s): Christophe Grosjean, Meng Tan
  */
 
@@ -40,7 +40,7 @@ struct ColorTheme : public ConfigurationHolder {
     struct {
         int bgcolor;
         int fgcolor;
-        int border_color;
+        int focus_color;
     } edit;
 
     struct {
@@ -96,7 +96,7 @@ struct ColorTheme : public ConfigurationHolder {
 
         this->edit.bgcolor = WHITE;
         this->edit.fgcolor = BLACK;
-        this->edit.border_color = BLACK;
+        this->edit.focus_color = DARK_BLUE_BIS;
 
         this->tooltip.fgcolor = BLACK;
         this->tooltip.bgcolor = LIGHT_YELLOW;
@@ -146,6 +146,9 @@ struct ColorTheme : public ConfigurationHolder {
             }
             else if (0 == strcmp(key, "fgcolor")) {
                 this->edit.fgcolor = color_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "focus_color")) {
+                this->edit.focus_color = color_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "tooltip")) {

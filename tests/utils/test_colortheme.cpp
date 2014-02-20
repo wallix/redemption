@@ -14,11 +14,8 @@
   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
   Product name: redemption, a FLOSS RDP proxy
-  Copyright (C) Wallix 2012-2013
+  Copyright (C) Wallix 2012-2014
   Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan
-
-  Unit test to config.cpp file
-  Using lib boost functions, some tests need to be added
 */
 
 #define BOOST_AUTO_TEST_MAIN
