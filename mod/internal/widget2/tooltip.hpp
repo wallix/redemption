@@ -34,7 +34,7 @@ class WidgetTooltip : public Widget2
 public:
     WidgetTooltip(DrawApi & drawable, int16_t x, int16_t y, Widget2 & parent,
                   NotifyApi* notifier, const char * text,
-                  int fgcolor, int bgcolor, int border_color = BLACK)
+                  int fgcolor, int bgcolor, int border_color)
         : Widget2(drawable, Rect(x, y, 100, 100), parent, notifier, 0)
         , w_border(10)
         , h_border(10)
