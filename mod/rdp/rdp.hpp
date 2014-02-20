@@ -323,15 +323,13 @@ struct mod_rdp : public mod_api {
         this->decrypt.encryptionMethod = 2; /* 128 bits */
         this->encrypt.encryptionMethod = 2; /* 128 bits */
 
-        TODO("CGR: and if hostname is really larger  what happens ? We should at least emit a warning log");
         if (::strlen(info.hostname) >= sizeof(this->hostname)) {
-            LOG(LOG_INFO, "mod_rdp: hostname too long! %u >= %u", ::strlen(info.hostname), sizeof(this->hostname));
+            LOG(LOG_WARNING, "mod_rdp: hostname too long! %u >= %u", ::strlen(info.hostname), sizeof(this->hostname));
         }
         strncpy(this->hostname, info.hostname, 15);
         this->hostname[15] = 0;
 
 
-        TODO("CGR: and if username is really larger  what happens ? We should at least emit a warning log");
         const char * domain_pos   = 0;
         size_t       domain_len   = 0;
         const char * username_pos = 0;
@@ -1738,9 +1736,9 @@ struct mod_rdp : public mod_api {
 
                                 TODO("RZ: Don't reject clipboard update, this can block rdesktop.");
 
-                                    if (this->verbose) {
-                                        LOG(LOG_INFO, "mod_rdp clipboard PDU");
-                                    }
+                                if (this->verbose) {
+                                    LOG(LOG_INFO, "mod_rdp clipboard PDU");
+                                }
 
                                 uint16_t msgType = sec.payload.in_uint16_le();
 
@@ -1760,15 +1758,15 @@ struct mod_rdp : public mod_api {
 
                                     const CHANNELS::ChannelDef * mod_channel =
                                         this->mod_channel_list.get_by_name(
-                                            CLIPBOARD_VIRTUAL_CHANNEL_NAME);
+                                                                           CLIPBOARD_VIRTUAL_CHANNEL_NAME);
 
                                     if (mod_channel) {
-                                        this->send_to_channel( *mod_channel
-                                                             , out_s
-                                                             , out_s.size()
-                                                             ,   CHANNELS::CHANNEL_FLAG_FIRST
-                                                               | CHANNELS::CHANNEL_FLAG_LAST
-                                                             );
+                                        this->send_to_channel(*mod_channel
+                                                              , out_s
+                                                              , out_s.size()
+                                                              ,   CHANNELS::CHANNEL_FLAG_FIRST
+                                                              | CHANNELS::CHANNEL_FLAG_LAST
+                                                              );
                                     }
                                 }
                             }

@@ -111,7 +111,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     Inifile ini;
     ini.translation.target.set_from_cstr("Target");
 
-    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier,
+                                "1", "1", 0, 0, 0, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP", "2013-04-20 19:56:50");

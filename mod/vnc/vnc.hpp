@@ -135,7 +135,7 @@ struct mod_vnc : public InternalMod, public NotifyApi {
                     0, 0, ini.colors,
                     TR("Authentification required", ini),
                     TR("VNC password", ini))
-            , verbose(verbose)
+        , verbose(verbose)
         , keymapSym(verbose)
         , incr(0)
         , to_vnc_large_clipboard_data(2 * MAX_VNC_2_RDP_CLIP_DATA_SIZE + 2)
@@ -2090,13 +2090,15 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
     {
         switch (event) {
         case NOTIFY_SUBMIT:
-            this->ini.context_set_value(AUTHID_PASSWORD, this->challenge.password_edit.get_text());
+            this->ini.context_set_value(AUTHID_PASSWORD,
+                                        this->challenge.password_edit.get_text());
 
             this->screen.clear();
 
             memset(this->password, 0, 256);
 
-            memcpy(this->password, this->challenge.password_edit.get_text(), sizeof(this->password) - 1);
+            memcpy(this->password, this->challenge.password_edit.get_text(),
+                   sizeof(this->password) - 1);
             this->password[sizeof(this->password) - 1] = 0;
 
             this->state = RETRY_CONNECTION;
