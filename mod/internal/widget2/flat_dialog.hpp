@@ -49,8 +49,6 @@ public:
     WidgetFlatButton * cancel;
     WidgetRect separator;
 
-    int bgcolor;
-
     FlatDialog(DrawApi& drawable, int16_t width, int16_t height,
                Widget2 & parent, NotifyApi* notifier,
                const char* caption, const char * text, int group_id,
@@ -76,7 +74,6 @@ public:
                                                     6, 2) : NULL)
         , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                     this->colors.global.separator_color)
-        , bgcolor(this->colors.global.bgcolor)
     {
         this->impl = new CompositeTable;
 
@@ -100,16 +97,20 @@ public:
 
         if (has_challenge) {
             if (CHALLENGE_ECHO == has_challenge) {
-                this->challenge = new WidgetEdit(this->drawable, this->separator.rect.x + 10, y,
+                this->challenge = new WidgetEdit(this->drawable,
+                                                 this->separator.rect.x + 10, y,
                                                  total_width - 20, *this, this, 0, -13,
                                                  this->colors.edit.fgcolor,
-                                                 this->colors.edit.bgcolor, -1u, 1, 1);
+                                                 this->colors.edit.bgcolor,
+                                                 this->colors.edit.focus_color, -1u, 1, 1);
             } else {
                 this->challenge = new WidgetPassword(this->drawable,
                                                      this->separator.rect.x + 10,
                                                      y, total_width - 20, *this, this, 0,
                                                      -13, this->colors.edit.fgcolor,
-                                                     this->colors.edit.bgcolor, -1u, 1, 1);
+                                                     this->colors.edit.bgcolor,
+                                                     this->colors.edit.focus_color,
+                                                     -1u, 1, 1);
             }
             this->add_widget(this->challenge);
             total_height += this->challenge->cy() + 10;
@@ -168,7 +169,7 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->bgcolor);
+        this->draw_inner_free(clip.intersect(this->rect), this->colors.global.bgcolor);
     }
 
     virtual void draw_inner_free(const Rect& clip, int bg_color) {

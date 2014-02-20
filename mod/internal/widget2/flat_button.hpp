@@ -146,7 +146,6 @@ public:
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
               this->dx(), this->dy() + this->cy() - 2, this->cx(), 2
               )), this->fg_color), this->rect);
-
     }
 
     virtual void draw(const Rect& clip)

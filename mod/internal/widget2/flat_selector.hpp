@@ -522,8 +522,6 @@ private:
 public:
 
     ColorTheme & colors;
-    int bgcolor;
-    int fgcolor;
     WidgetLabel device_label;
     WidgetLabel device_target_label;
     WidgetLabel target_label;
@@ -574,10 +572,8 @@ public:
                    const char * filter_proto, Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , colors(ini.colors)
-        , bgcolor(this->colors.global.bgcolor)
-        , fgcolor(this->colors.global.fgcolor)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10,
-                       this->fgcolor, this->bgcolor)
+                       this->colors.global.fgcolor, this->colors.global.bgcolor)
         , device_target_label(drawable, 15, 0, *this, NULL, TR("target_group", ini), true,
                               -10, this->colors.selector_label.fgcolor,
                               this->colors.selector_label.bgcolor, 5)
@@ -602,12 +598,13 @@ public:
                          5, 1, this->colors.global.bgcolor, 1)
         , filter_device(drawable, 15, 0, 120, *this, this, filter_device?filter_device:0,
                         -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor,
-                        -1, 1, 1)
+                        this->colors.edit.focus_color, -1, 1, 1)
         , filter_target(drawable, 145, 0, 340, *this, this, filter_target?filter_target:0,
                         -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor,
-                        -1, 1, 1)
+                        this->colors.edit.focus_color, -1, 1, 1)
         , filter_proto(drawable, 495, 0, 110, *this, this, filter_proto?filter_proto:0,
-                       -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor, -1, 1, 1)
+                       -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                       this->colors.edit.focus_color, -1, 1, 1)
           //BEGIN WidgetPager
         , first_page(drawable, 0, 0, *this, notifier, "◀◂", true, -15,
                      this->colors.global.fgcolor, this->colors.global.bgcolor,
@@ -617,8 +614,12 @@ public:
                     this->colors.global.focus_color, 6, 2, true)
         , current_page(drawable, 0, 0, this->first_page.cy(), *this, notifier,
                        current_page ? current_page : "XXXX", -15,
-                       this->colors.edit.fgcolor, this->colors.edit.bgcolor, -1, 1, 1)
-        , number_page(drawable, 0, 0, *this, NULL, number_of_page ? temporary_number_of_page(number_of_page).buffer : "/XXX", true, -100, this->fgcolor, this->bgcolor)
+                       this->colors.edit.fgcolor, this->colors.edit.bgcolor,
+                       this->colors.edit.focus_color, -1, 1, 1)
+        , number_page(drawable, 0, 0, *this, NULL,
+                      number_of_page ? temporary_number_of_page(number_of_page).buffer
+                      : "/XXX", true, -100, this->colors.global.fgcolor,
+                      this->colors.global.bgcolor)
         , next_page(drawable, 0, 0, *this, notifier, "▶", true, -15,
                     this->colors.global.fgcolor, this->colors.global.bgcolor,
                     this->colors.global.focus_color, 6, 2, true)
@@ -807,7 +808,7 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->bgcolor);
+        this->draw_inner_free(clip.intersect(this->rect), this->colors.global.bgcolor);
     }
 
     virtual void notify(Widget2* widget, notify_event_t event)

@@ -96,7 +96,7 @@ struct ColorTheme : public ConfigurationHolder {
 
         this->edit.bgcolor = WHITE;
         this->edit.fgcolor = BLACK;
-        this->edit.focus_color = DARK_BLUE_BIS;
+        this->edit.focus_color = WINBLUE;
 
         this->tooltip.fgcolor = BLACK;
         this->tooltip.bgcolor = LIGHT_YELLOW;

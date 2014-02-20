@@ -29,9 +29,10 @@ class WidgetNumberEdit : public WidgetEdit
 public:
     WidgetNumberEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx, Widget2 & parent,
                      NotifyApi* notifier, const char* text, int group_id,
-                     int fgcolor, int bgcolor, size_t edit_position = -1,
+                     int fgcolor, int bgcolor, int focus_color, size_t edit_position = -1,
                      int xtext = 0, int ytext = 0)
-    : WidgetEdit(drawable, x, y, cx, parent, notifier, text, group_id, fgcolor, bgcolor, edit_position, xtext, ytext)
+    : WidgetEdit(drawable, x, y, cx, parent, notifier, text, group_id, fgcolor, bgcolor,
+                 focus_color, edit_position, xtext, ytext)
     {}
 
     virtual void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap)
