@@ -547,6 +547,7 @@ public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
     //WidgetPager pager;
+
     // WidgetRadioList radiolist;
 
 
@@ -636,7 +637,7 @@ public:
         , connect(drawable, 0, 0, *this, this, TR("connect", ini), true, -18,
                   this->colors.global.fgcolor, this->colors.global.bgcolor,
                   this->colors.global.focus_color, 6, 2)
-        // , radiolist(drawable, this->device_label.lx() + 30, this->device_label.dy(), *this, this)
+        // , radiolist(drawable, this->device_label.lx() + 30, this->device_label.dy(), *this, this, -19, this->colors.global.fgcolr, this->colors.global.bgcolor)
     {
         this->impl = new CompositeTable;
 
@@ -658,6 +659,7 @@ public:
         this->add_widget(&this->last_page);
         this->add_widget(&this->logout);
         this->add_widget(&this->connect);
+
         // this->add_widget(&this->radiolist);
 
         // radiolist.add_elem("Alphabetical");
