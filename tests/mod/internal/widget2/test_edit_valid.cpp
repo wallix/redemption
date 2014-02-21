@@ -265,6 +265,268 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit3)
     }
 }
 
+
+BOOST_AUTO_TEST_CASE(TraceWidgetEditLabels)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    NotifyApi * notifier = NULL;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int bbg_color = GREEN;
+    int id = 0;
+
+    parent.tab_flag = Widget2::NORMAL_TAB;
+
+    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, 0, 0, 0, false, "edition1");
+
+    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, 0, 0, 0, false, "edition2");
+
+    parent.add_widget(&wedit1);
+    parent.add_widget(&wedit2);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel1.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x70\x36\xa0\xc0\x16\x20\xbc\x08\x2a\x06"
+                   "\x4c\x69\x2e\x87\xa3\x97\x60\x1a\x65\xac"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                          wedit1.centerx(), wedit1.centery(), NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                          wedit1.centerx(), wedit1.centery(), NULL);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel2.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x2a\x09\x42\xa4\xf7\xc6\x8b\x5a\x11\xda"
+                   "\x47\x8c\x3b\xc0\x0a\x0d\x0f\x78\x5c\xa1"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    Keymap2 keymap;
+    const int layout = 0x040C;
+    keymap.init_layout(layout);
+    BStream decoded_data(256);
+    bool    ctrl_alt_del;
+    uint16_t keyboardFlags = 0 ;
+    uint16_t keyCode = 0;
+    keyboardFlags = 0 ;
+    keyCode = 16 ; // key is 'a'
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel3.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x18\xba\xdc\xab\x2e\x15\xb9\xeb\x6b\x25"
+                   "\xec\x67\x4c\x83\x7f\xfe\x4e\x36\x0d\xcf"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel4.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x14\xd8\x17\x26\x71\xcd\xd1\x0e\xd0\x4a"
+                   "\x94\xb8\xe9\x25\x87\x84\x8b\x72\x84\x7a"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel5.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x8a\xda\xbb\x2f\x91\xa0\x97\x3c\x70\xe4"
+                   "\x05\x13\xbd\x24\x11\x8b\xa2\x68\x62\xad"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel6.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x3f\xea\xbb\x60\xc6\x4c\x6a\x8c\xf0\xe7"
+                   "\x3f\x88\x46\x16\xd6\x0d\x8e\xfa\xe7\x59"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabel7.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x2a\x09\x42\xa4\xf7\xc6\x8b\x5a\x11\xda"
+                   "\x47\x8c\x3b\xc0\x0a\x0d\x0f\x78\x5c\xa1"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+}
+BOOST_AUTO_TEST_CASE(TraceWidgetEditLabelsPassword)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetEdit is a edit widget of size 100x20 at position 770,500 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    NotifyApi * notifier = NULL;
+    int fg_color = RED;
+    int bg_color = YELLOW;
+    int bbg_color = GREEN;
+    int id = 0;
+
+    parent.tab_flag = Widget2::NORMAL_TAB;
+
+    WidgetEditValid wedit1(drawable, 54, 105, 150, parent, notifier, "dLorz", id, fg_color, bg_color, bbg_color, 0, 0, 0, true, "edition1");
+
+    WidgetEditValid wedit2(drawable, 400, 354, 200, parent, notifier, "", id, WHITE, DARK_BLUE, RED, 0, 0, 0, true, "edition2");
+
+    parent.add_widget(&wedit1);
+    parent.add_widget(&wedit2);
+    // ask to widget to redraw at it's current position
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass1.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x00\xbf\x12\x52\xa8\xad\x8e\x3f\x5a\x6a"
+                   "\xdc\x26\x1a\x10\x0b\x46\x29\xa1\xc4\xcc"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                          wedit1.centerx(), wedit1.centery(), NULL);
+    parent.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                          wedit1.centerx(), wedit1.centery(), NULL);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass2.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xcd\xca\x28\x8f\x2d\xe7\x07\xab\x82\x62"
+                   "\x14\x57\x18\x80\xa9\x8f\xc9\x74\x7b\x7c"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    Keymap2 keymap;
+    const int layout = 0x040C;
+    keymap.init_layout(layout);
+    BStream decoded_data(256);
+    bool    ctrl_alt_del;
+    uint16_t keyboardFlags = 0 ;
+    uint16_t keyCode = 0;
+    keyboardFlags = 0 ;
+    keyCode = 16 ; // key is 'a'
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass3.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x00\x24\x21\xf5\x22\xf2\x99\x3c\x9f\x63"
+                   "\x2a\xa9\xb7\x04\x8e\x9a\x6a\x8e\x91\x72"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+
+    keymap.event(keyboardFlags, keyCode, decoded_data, ctrl_alt_del);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass4.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xd4\xe7\x43\x1d\x6d\x74\x17\x10\xbb\x46"
+                   "\xb1\xae\xe6\xa9\x60\x76\x41\x3a\x6c\xd8"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    parent.rdp_input_invalidate(parent.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass5.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xc3\x26\xf7\xf8\xcd\x69\x5a\xb7\xa6\x62"
+                   "\xc5\xe4\x86\xfb\x68\x4a\x01\xc8\x65\x06"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    keymap.push_kevent(Keymap2::KEVENT_BACKSPACE);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass6.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x35\x7a\x44\x04\x82\x88\xa1\xc1\xc5\x4f"
+                   "\xdb\xc6\xa1\x78\xef\x09\xc4\xab\xb3\xfb"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    parent.rdp_input_scancode(0, 0, 0, 0, &keymap);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "editvalidlabelpass7.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\xcd\xca\x28\x8f\x2d\xe7\x07\xab\x82\x62"
+                   "\x14\x57\x18\x80\xa9\x8f\xc9\x74\x7b\x7c"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+}
+
 BOOST_AUTO_TEST_CASE(EventWidgetEditEvents)
 {
     TestDraw drawable(800, 600);
