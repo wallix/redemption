@@ -62,7 +62,7 @@ public:
     enum OptionFocus {
         IGNORE_FOCUS = 0x00,
         NORMAL_FOCUS = 0x01,
-        FORCE_FOCUS  = 0x04
+        // FORCE_FOCUS  = 0x04
     };
 
     // Warning: these numbers are not random but associed to Front pointer cache index

@@ -59,13 +59,16 @@ public:
         strcpy(basename, "replay"); // default value actual one should come from movie_path
         strcpy(extension, ".mwrm"); // extension is currently ignored
         char prefix[4096];
-
-        canonical_path( this->movie
-                      , path, sizeof(path)
-                      , basename, sizeof(basename)
-                      , extension, sizeof(extension)
-                      );
-        TODO("put a log if buffer overflowed and throw some exception");
+        bool res = true;
+        res = canonical_path( this->movie
+                            , path, sizeof(path)
+                            , basename, sizeof(basename)
+                            , extension, sizeof(extension)
+                            );
+        if (!res) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
         snprintf(prefix,  sizeof(prefix), "%s%s", path, basename);
 
         this->in_trans = new InByMetaSequenceTransport(prefix, extension);

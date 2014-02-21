@@ -489,9 +489,14 @@ public:
             strcpy(path, WRM_PATH "/");     // default value, actual one should come from movie_path
             strcpy(basename, "redemption"); // default value actual one should come from movie_path
             strcpy(extension, "");          // extension is currently ignored
-            canonical_path(ini.globals.movie_path.get_cstr(), path,
-                sizeof(path), basename, sizeof(basename), extension,
-                sizeof(extension));
+            bool res = true;
+            res = canonical_path(ini.globals.movie_path.get_cstr(), path,
+                                 sizeof(path), basename, sizeof(basename), extension,
+                                 sizeof(extension));
+            if (!res) {
+                LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+                throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+            }
             this->capture = new Capture( now, width, height
                                        , ini.video.record_path
                                        , ini.video.record_tmp_path
