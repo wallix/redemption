@@ -36,7 +36,7 @@ enum EventType {
     FOCUS_END,
     TEXT_CHANGED,
     WIDGET_SUBMIT,
-    WIDGET_CANCEL
+    WIDGET_CANCEL,
 };
 
 enum NotifyEventType {

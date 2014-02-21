@@ -68,8 +68,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x9e\xf7\xa0\x89\xc7\xe0\x6c\x08\xf0\xe6"
-                   "\x5b\x77\xb2\xdf\x14\xf1\x01\xf0\x2d\x06"
+                   "\x90\xa3\x09\xe6\x63\x02\x8d\xa2\xf3\x92"
+                   "\x78\x94\x0b\xa8\xcf\xf6\x93\xe5\x39\x72"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -99,8 +99,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin2)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x9b\xb2\xe7\x6f\x82\x60\x36\xbd\x08\x42"
-                   "\xc9\x24\x6a\x23\x5e\xbd\xa6\xdd\xc7\x1e"
+                   "\xfb\xce\x45\xd0\xb2\x55\x3a\x94\x2c\xff"
+                   "\xf0\x38\xc6\x6e\x89\x05\x32\x95\xcc\xe1"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -163,8 +163,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLogin3)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xf5\xce\xa3\xfe\xad\xf8\x4c\x85\x17\x2b"
-                   "\xac\xe0\x24\x0a\xd1\x1c\x9c\x1c\xd8\x0e"
+                   "\xb9\x79\xed\xd8\x69\xd8\x35\x6a\xc4\x3e"
+                   "\xb6\xf4\x2d\x19\x59\x58\x76\xe5\x1c\x73"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -203,8 +203,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x9c\x7a\xff\xf1\x50\x76\xb3\x56\x3f\x38"
-                   "\x6e\xbb\x3a\xab\x07\x9c\xb6\x74\x4c\xd5"
+                   "\xa3\xe3\x36\xea\x5b\x59\x69\x93\xae\x0b"
+                   "\xab\xf9\x2e\xa6\x77\xa6\x21\x31\x0b\x62"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -215,8 +215,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginHelp)
     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_login-help2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xf1\xe9\x9e\xa5\x45\xac\x18\x41\xce\x1c"
-                   "\x9e\x88\x08\x16\xb7\x88\x4a\xd9\x38\xdd"
+                   "\xf8\xa8\xf4\x62\x05\x1c\x00\x8b\xc5\x46"
+                   "\x67\x5f\x0e\xf5\x99\x7f\x78\x5b\xce\x75"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -246,8 +246,8 @@ BOOST_AUTO_TEST_CASE(TraceFlatLoginClip)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xa3\xcc\x9e\xa5\xea\xdd\x20\xd0\xb7\xf4"
-                   "\x00\x12\x09\x89\xd7\x7a\xf1\x42\xb6\xc5"
+                   "\x0c\x61\x34\x92\xe7\x7f\xd0\xa0\xfb\x17"
+                   "\xd5\x7d\xa7\xb5\x0d\xd5\x77\x48\x66\x52"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

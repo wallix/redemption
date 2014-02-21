@@ -74,8 +74,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPassword)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x17\x50\x9f\x13\xed\xc3\x94\x32\x44\xde"
-                   "\x0d\xe1\x60\x8c\x66\x82\x23\x81\x21\xfc"
+                   "\x38\xb3\xcb\x69\xda\x40\x30\xe8\x19\xb7"
+                   "\xc0\x90\x2e\x3a\x97\xc8\x41\xe7\xf9\x9a"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "abcdef", 0, YELLOW, 0x0000FF, 0x0000FF);
     wpassword.focus();
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit1-e1.png");
@@ -546,17 +546,17 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     WidgetComposite wcomposite(drawable, Rect(0,0,800,600), parent, notifier);
 
     WidgetPassword wpassword1(drawable, 0,0, 50, wcomposite, notifier,
-                        "abababab", 4, YELLOW, BLACK);
+                        "abababab", 4, YELLOW, BLACK, BLACK);
     WidgetPassword wpassword2(drawable, 0,100, 50, wcomposite, notifier,
-                        "ggghdgh", 2, WHITE, RED);
+                        "ggghdgh", 2, WHITE, RED, RED);
     WidgetPassword wpassword3(drawable, 100,100, 50, wcomposite, notifier,
-                        "lldlslql", 1, BLUE, RED);
+                        "lldlslql", 1, BLUE, RED, RED);
     WidgetPassword wpassword4(drawable, 300,300, 50, wcomposite, notifier,
-                        "LLLLMLLM", 20, PINK, DARK_GREEN);
+                        "LLLLMLLM", 20, PINK, DARK_GREEN, DARK_GREEN);
     WidgetPassword wpassword5(drawable, 700,-10, 50, wcomposite, notifier,
-                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE);
+                        "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE);
     WidgetPassword wpassword6(drawable, -10,550, 50, wcomposite, notifier,
-                        "xxwwp", 2, DARK_GREY, PALE_GREEN);
+                        "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN);
 
     wcomposite.add_widget(&wpassword1);
     wcomposite.add_widget(&wpassword2);
@@ -572,8 +572,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x74\xc1\x7c\xfc\xda\x78\x4d\x41\x32\xd9"
-                   "\x4f\x57\xbd\x4d\xf2\xba\x36\x99\x5b\xce"
+                   "\x6f\x49\xbc\xf9\x4d\x3b\xe0\x1f\x5b\x0b"
+                   "\x54\xb1\x60\xaa\xc1\x7d\xf8\x56\xb5\x1b"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -584,8 +584,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetPasswordAndComposite)
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-compo2.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x25\xd1\x91\xb9\x3e\xde\x79\x3d\x3a\x63"
-                   "\xb4\x4d\x50\x92\xed\xc3\xd2\x7a\xc8\xa7"
+                   "\xbf\x35\x23\x69\xa6\x66\x9b\x46\xa7\x41"
+                   "\x26\x86\x4d\x92\x81\xca\x9f\xd3\xe4\xdc"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -616,7 +616,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF);
     wpassword.focus();
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit2-e1.png");
@@ -718,7 +718,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword2)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF);
     wpassword.focus();
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit3-e1.png");
@@ -833,7 +833,7 @@ BOOST_AUTO_TEST_CASE(DataWidgetPassword3)
     int16_t y = 0;
     uint16_t cx = 100;
 
-    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF);
+    WidgetPassword wpassword(drawable, x, y, cx, parent, &notifier, "aurélie", 0, YELLOW, 0x0000FF, 0x0000FF);
     wpassword.focus();
     wpassword.rdp_input_invalidate(wpassword.rect);
     // drawable.save_to_png(OUTPUT_FILE_PATH "password-edit4-e1.png");

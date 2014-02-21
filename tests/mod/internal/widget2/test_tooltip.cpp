@@ -53,11 +53,12 @@ BOOST_AUTO_TEST_CASE(TraceWidgetTooltip)
     NotifyApi * notifier = NULL;
     int fg_color = RED;
     int bg_color = YELLOW;
+    int border_color = BLACK;
     int16_t x = 10;
     int16_t y = 10;
     const char * tooltiptext = "testémq";
 
-    WidgetTooltip wtooltip(drawable, x, y, parent, notifier, tooltiptext, fg_color, bg_color);
+    WidgetTooltip wtooltip(drawable, x, y, parent, notifier, tooltiptext, fg_color, bg_color, border_color);
 
     // ask to widget to redraw
     wtooltip.rdp_input_invalidate(Rect(0, 0, 100, 100));

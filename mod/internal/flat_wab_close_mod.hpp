@@ -62,19 +62,19 @@ private:
 
 public:
     FlatWabCloseMod(Inifile& ini, FrontAPI& front, uint16_t width, uint16_t height, time_t now, bool showtimer = false)
-    : InternalMod(front, width, height)
-    , ini(ini)
-    , close_widget(*this, width, height, this->screen, this,
-                   ini.context.auth_error_message.c_str(), 0,
-                   (ini.context_is_asked(AUTHID_AUTH_USER)
-                    || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-                    NULL : ini.globals.auth_user.get_cstr(),
-                   (ini.context_is_asked(AUTHID_TARGET_USER)
-                    || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
-                    NULL : temporary_text(ini).text,
-                   showtimer, ini)
-    , timeout(Timeout(now, ini.globals.close_timeout))
-    , showtimer(showtimer)
+        : InternalMod(front, width, height, &ini)
+        , ini(ini)
+        , close_widget(*this, width, height, this->screen, this,
+                       ini.context.auth_error_message.c_str(), 0,
+                       (ini.context_is_asked(AUTHID_AUTH_USER)
+                        || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
+                       NULL : ini.globals.auth_user.get_cstr(),
+                       (ini.context_is_asked(AUTHID_TARGET_USER)
+                        || ini.context_is_asked(AUTHID_TARGET_DEVICE)) ?
+                       NULL : temporary_text(ini).text,
+                       showtimer, ini)
+        , timeout(Timeout(now, ini.globals.close_timeout))
+        , showtimer(showtimer)
     {
         LOG(LOG_INFO, "WabCloseMod: Ending session in %u seconds", ini.globals.close_timeout);
         this->screen.add_widget(&this->close_widget);

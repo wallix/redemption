@@ -36,10 +36,11 @@ public:
 //     Widget2 * dragging_window;
 //     RDPBrush brush;
 
-    InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height)
-    : mod_api(front_width, front_height)
-    , front(front)
-    , screen(*this, front_width, front_height)
+    InternalMod(FrontAPI & front, uint16_t front_width, uint16_t front_height,
+                Inifile * ini = NULL)
+        : mod_api(front_width, front_height)
+        , front(front)
+        , screen(*this, front_width, front_height, NULL, ini ? &(ini->colors): NULL)
     {
         this->front.server_resize(front_width, front_height, 24);
         /* dragging info */

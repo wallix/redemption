@@ -374,7 +374,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     WidgetLabel wlabel5(drawable, 700,-10, wcomposite, notifier,
                         "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE);
     WidgetLabel wlabel6(drawable, -10,550, wcomposite, notifier,
-                        "xxwwp", true, 0, DARK_GREY, PALE_GREEN);
+                        "xxwwp", true, 0, ANTHRACITE, PALE_GREEN);
 
     wcomposite.add_widget(&wlabel1);
     wcomposite.add_widget(&wlabel2);
@@ -398,7 +398,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetLabelAndComposite)
     //ask to widget to redraw at it's current position
     wcomposite.rdp_input_invalidate(Rect(0, 0, wcomposite.cx(), wcomposite.cy()));
 
-   //drawable.save_to_png(OUTPUT_FILE_PATH "label10.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "label10.png");
 
     if (!check_sig(drawable.gd.drawable, message,
         "\x47\x60\x43\x39\x74\x53\x46\x46\xd0\x1a"

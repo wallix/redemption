@@ -63,6 +63,7 @@ struct Notify : public NotifyApi {
 BOOST_AUTO_TEST_CASE(TestScreenEvent)
 {
     TestDraw drawable(800, 600);
+    ColorTheme colors;
     WidgetScreen wscreen(drawable, drawable.gd.drawable.width, drawable.gd.drawable.height);
 
     wscreen.refresh(wscreen.rect);

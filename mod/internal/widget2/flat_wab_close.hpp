@@ -51,7 +51,6 @@ public:
     WidgetLabel timeleft_value;
     WidgetRect separator;
 
-    int bgcolor;
 private:
     long prev_time;
 
@@ -89,7 +88,6 @@ public:
                      this->colors.global.fgcolor, this->colors.global.bgcolor)
     , separator(drawable, Rect(0, 0, width, 2), *this, this, -12,
                 this->colors.global.separator_color)
-    , bgcolor(this->colors.global.bgcolor)
     , prev_time(0)
     , ini(ini)
     {
@@ -245,7 +243,7 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->bgcolor);
+        this->draw_inner_free(clip.intersect(this->rect), this->colors.global.bgcolor);
     }
 
     virtual void draw_inner_free(const Rect& clip, int bg_color) {

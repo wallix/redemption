@@ -38,18 +38,23 @@ public:
     int w_text;
     int h_text;
     int cursor_color;
+    int focus_color;
     bool drawall;
+    bool draw_border_focus;
 
     WidgetEdit(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                Widget2 & parent, NotifyApi* notifier, const char * text,
-               int group_id, int fgcolor, int bgcolor,
+               int group_id, int fgcolor, int bgcolor, int focus_color,
                std::size_t edit_position = -1, int xtext = 0, int ytext = 0)
     : Widget2(drawable, Rect(x,y,cx,1), parent, notifier, group_id)
     , label(drawable, 0, 0, *this, 0, text, false, 0, fgcolor, bgcolor, xtext, ytext)
     , w_text(0)
     , h_text(0)
     , cursor_color(0x888888)
+    // , cursor_color(fgcolor)
+    , focus_color(focus_color)
     , drawall(false)
+    , draw_border_focus(true)
     {
         if (text) {
             this->buffer_size = strlen(text);
@@ -154,34 +159,33 @@ public:
         this->label.draw(clip);
         if (this->has_focus) {
             this->draw_cursor(this->get_cursor_rect());
+            if (this->draw_border_focus) {
+                this->draw_border(clip, this->focus_color);
+            }
         }
-        this->draw_border(clip);
+        else {
+            this->draw_border(clip, this->label.bg_color);
+        }
     }
 
-    void draw_border(const Rect& clip)
+    void draw_border(const Rect& clip, int color)
     {
         //top
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy(), this->cx() - 1, 1
-        )), this->label.bg_color), this->rect);
+        )), color), this->rect);
         //left
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + 1, 1, this->cy() - 2
-        )), this->label.bg_color), this->rect);
+        )), color), this->rect);
         //right
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
-        )), this->label.bg_color), this->rect);
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + this->cx() - 2, this->dy() + 1, 1, this->cy() - 3
-        )), this->label.bg_color), this->rect);
+        )), color), this->rect);
         //bottom
         this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
             this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
-        )), this->label.bg_color), this->rect);
-        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
-            this->dx() + 1, this->dy() + this->cy() - 2, this->cx() - 2, 1
-        )), this->label.bg_color), this->rect);
+        )), color), this->rect);
     }
 
     virtual Rect get_cursor_rect() const
@@ -192,6 +196,11 @@ public:
                     this->h_text);
     }
 
+    void draw_current_cursor() {
+        if (this->has_focus) {
+            this->draw_cursor(this->get_cursor_rect());
+        }
+    }
     void draw_cursor(const Rect& clip)
     {
         if (!clip.isempty()) {
@@ -237,7 +246,8 @@ public:
         char c = this->label.buffer[this->edit_buffer_pos];
         this->label.buffer[this->edit_buffer_pos] = 0;
         int w;
-        this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos - len, w, this->h_text);
+        this->drawable.text_metrics(this->label.buffer + this->edit_buffer_pos - len,
+                                    w, this->h_text);
         this->cursor_px_pos -= w;
         this->label.buffer[this->edit_buffer_pos] = c;
         this->edit_buffer_pos -= len;

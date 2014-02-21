@@ -33,32 +33,52 @@ class WidgetEditValid : public Widget2 {
 public:
     WidgetFlatButton button;
     WidgetEdit * editbox;
+    WidgetLabel * label;
 
     WidgetEditValid(DrawApi& drawable, int16_t x, int16_t y, uint16_t cx,
                     Widget2 & parent, NotifyApi* notifier, const char * text,
                     int group_id, int fgcolor, int bgcolor,
-                    int bbgcolor, int focus_color, std::size_t edit_position = -1,
-                    int xtext = 0, int ytext = 0, bool pass = false)
+                    int focus_color, std::size_t edit_position = -1,
+                    int xtext = 0, int ytext = 0, bool pass = false,
+                    const char * title = NULL)
         : Widget2(drawable, Rect(0, 0, cx, 1), parent, notifier, group_id)
         , button(drawable, 0, 0, *this, this, "\xe2\x9e\x9c", true,
-                 group_id, bgcolor, bbgcolor, focus_color, 6, 2)
+                 group_id, bgcolor, focus_color, focus_color, 6, 2)
         , editbox(pass ? new WidgetPassword(drawable, 0, 0, cx - this->button.cx(), *this,
                                             this, text, group_id, fgcolor, bgcolor,
-                                            edit_position, 1, 2)
+                                            focus_color, edit_position, 1, 2)
                   : new WidgetEdit(drawable, 0, 0, cx - this->button.cx(), *this, this,
-                                   text, group_id, fgcolor, bgcolor, edit_position, 1, 2))
+                                   text, group_id, fgcolor, bgcolor, focus_color,
+                                   edit_position, 1, 2))
+        , label(title ? new WidgetLabel(drawable, 0, 0, *this, 0, title, true,
+                                        group_id, MED_GREY, bgcolor, 1, 2)
+                : NULL)
     {
-        this->button.set_button_x(this->editbox->lx());
+        this->button.set_button_x(this->editbox->lx() - 1);
         this->editbox->set_edit_cy(this->button.cy());
         this->rect.cy = this->editbox->cy();
         this->rect.cx = this->button.lx() - this->rect.x;
         this->set_xy(x, y);
+        this->editbox->draw_border_focus = false;
+
+        if (this->label) {
+            this->label->rect.cx = this->editbox->rect.cx - 1;
+            this->label->rect.cy = this->editbox->rect.cy - 1;
+            ++this->label->rect.x;
+            ++this->label->rect.y;
+        }
     }
 
     virtual ~WidgetEditValid()
     {
-        if (this->editbox)
+        if (this->editbox) {
             delete this->editbox;
+            this->editbox = NULL;
+        }
+        if (this->label) {
+            delete this->label;
+            this->label = NULL;
+        }
     }
 
     virtual void set_text(const char * text/*, int position = 0*/)
@@ -75,7 +95,11 @@ public:
     {
         this->rect.x = x;
         this->editbox->set_edit_x(x);
-        this->button.set_button_x(this->editbox->lx());
+        this->button.set_button_x(this->editbox->lx() - 1);
+
+        if (this->label) {
+            this->label->rect.x = x + 1;
+        }
     }
 
     virtual void set_edit_y(int y)
@@ -83,6 +107,10 @@ public:
         this->rect.y = y;
         this->editbox->set_edit_y(y);
         this->button.set_button_y(y);
+
+        if (this->label) {
+            this->label->rect.y = y + 1;
+        }
     }
 
     // virtual void set_edit_cx(int w)
@@ -101,22 +129,47 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->editbox->draw(clip);
+        if (this->label) {
+            if (this->editbox->num_chars == 0) {
+                this->label->draw(clip);
+                this->editbox->draw_current_cursor();
+            }
+        }
         if (this->has_focus) {
             this->button.draw(clip);
+            this->draw_border(clip, this->button.focus_color);
         }
         else {
             this->drawable.draw(RDPOpaqueRect(clip.intersect(this->button.rect),
                                               this->button.fg_color), clip);
         }
     }
-
+    void draw_border(const Rect& clip, int color)
+    {
+        //top
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy(), this->cx() - 1, 1
+        )), color), this->rect);
+        //left
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + 1, 1, this->cy() - 2
+        )), color), this->rect);
+        //right
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx() + this->cx() - 1, this->dy(), 1, this->cy()
+        )), color), this->rect);
+        //bottom
+        this->drawable.draw(RDPOpaqueRect(clip.intersect(Rect(
+            this->dx(), this->dy() + this->cy() - 1, this->cx(), 1
+        )), color), this->rect);
+    }
     virtual void focus() {
-        Widget2::focus();
         this->editbox->focus();
+        Widget2::focus();
     }
     virtual void blur() {
-        Widget2::blur();
         this->editbox->blur();
+        Widget2::blur();
     }
 
     virtual Widget2 * widget_at_pos(int16_t x, int16_t y)
@@ -132,12 +185,13 @@ public:
     {
         if (x > this->editbox->lx()) {
             this->button.rdp_input_mouse(device_flags, x, y, keymap);
+            this->refresh(this->button.rect);
         }
         else {
             if ((device_flags == MOUSE_FLAG_BUTTON1)
                 && this->button.state) {
                 this->button.state = 0;
-                this->button.swap_border_color();
+                this->refresh(this->button.rect);
             }
             this->editbox->rdp_input_mouse(device_flags, x, y, keymap);
         }
@@ -153,6 +207,13 @@ public:
     {
         if (event == NOTIFY_SUBMIT) {
             this->send_notify(NOTIFY_SUBMIT);
+        }
+        if ((event == NOTIFY_TEXT_CHANGED) &&
+            (widget == this->editbox) &&
+            (this->label)) {
+            if (this->editbox->num_chars == 1) {
+                this->editbox->draw(this->rect);
+            }
         }
     }
 };

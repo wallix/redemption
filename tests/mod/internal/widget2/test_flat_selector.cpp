@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.rect);
 
-//    drawable.save_to_png(OUTPUT_FILE_PATH "selector1.png");
+    // drawable.save_to_png(OUTPUT_FILE_PATH "selector1.png");
 
     char message[1024];
     if (!check_sig(drawable.gd.drawable, message,
@@ -111,7 +111,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatResize)
     Inifile ini;
     ini.translation.target.set_from_cstr("Target");
 
-    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier,
+                                "1", "1", 0, 0, 0, ini);
 
     selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
                         "RDP", "2013-04-20 19:56:50");
@@ -442,8 +443,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     char message[1024];
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x8a\x25\x30\x50\x6f\x1c\xa5\x52\x5a\x25"
-                   "\x2e\xc8\x9e\xf7\xca\x56\x1b\x53\x7f\x78"
+                   "\x18\xee\xe4\x8b\x13\x37\x5a\x5c\x23\x59"
+                   "\x94\x7c\x34\x54\x08\x12\x87\xcd\xdd\xd6"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -461,8 +462,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
 
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xb8\x3b\x86\x28\xc8\x7b\x0a\xd4\x4b\x45"
-                   "\x34\xbe\xe7\x2a\xd2\xf0\x88\xdb\x62\x68"
+                   "\xb5\x73\xc3\x32\x5d\x4f\x79\x63\xfc\x20"
+                   "\xe9\xb0\x34\x13\xf0\x52\xd7\x0a\xa5\x79"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -475,8 +476,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-3.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x59\x34\x0a\x59\x47\xc9\x3f\xf8\xec\xc7"
-                   "\xd9\xcb\xde\xec\x06\xe2\xe9\xcc\x9d\x90"
+                   "\x1a\x62\x2e\x39\xc4\x07\xbb\x06\x8d\xc8"
+                   "\x54\x0b\x07\x45\x9a\x58\xd1\xdf\x49\xce"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -554,8 +555,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatFilter)
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector7-8.png");
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xe6\x34\x5d\xb9\x6a\xe5\x10\x77\xe3\x08"
-                   "\x2a\xc6\xa4\x15\xd3\x58\x82\xd4\x67\x16"
+                   "\x0f\x14\xf1\xc5\x86\x4b\xaf\x82\x82\x8c"
+                   "\x61\x52\x60\x62\x40\x1f\xf5\x9b\x40\x27"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -640,8 +641,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
     char message[1024];
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xfc\x0e\x56\x51\x65\xc3\x02\xc3\x88\xe1"
-                   "\x63\x36\x4d\x23\x9e\xdb\x61\xab\x89\x6d"
+                   "\x36\xf9\x92\x34\x51\xa3\xe6\x18\xb8\xbb"
+                   "\x7d\xd9\xa2\x92\x14\xe8\x40\xb3\x04\x2f"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -669,8 +670,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-2.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x6d\x73\x5a\x99\xe2\x44\xe5\x0a\x09\x04"
-                   "\x09\xa0\x82\x2d\xf9\xb8\x9c\x53\xa8\xea"
+                   "\x08\x3d\xdd\xe9\x60\x8b\xf9\xc9\x74\xcc"
+                   "\xb3\x4c\xb4\x1d\xa4\x85\x3f\xdd\xe1\xad"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -698,8 +699,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-3.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xea\xac\x4e\x3f\xfe\x36\x95\xf6\x69\x1c"
-                   "\x2c\x04\xb0\x24\x8f\xa1\x34\x3e\x3f\xa3"
+                   "\x6d\x23\xab\x06\x73\x7c\xbe\x69\x6b\x33"
+                   "\xd4\x94\x7a\x4c\xc7\x38\x68\x01\xcd\xcf"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -726,8 +727,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust-4.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x23\xcf\x81\x59\xfa\x63\xdb\x85\xea\x02"
-                   "\x55\x24\x1e\xa5\xbc\x2f\x02\x6c\x82\xe4"
+                   "\x82\x5c\xe0\x0e\x0e\xcb\x63\x48\x64\xb7"
+                   "\x6f\x05\xa8\x92\x40\xe6\x51\x7f\x20\x32"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -784,8 +785,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
     char message[1024];
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xa4\x95\x0f\xe8\x17\x4b\xd7\x05\xe5\xa8"
-                   "\xff\x37\x11\x5c\xee\x22\x68\x3e\x3a\x16"
+                   "\xc3\x87\x52\xfc\xbc\x47\x3d\x20\x34\x33"
+                   "\x7c\x54\xcd\x65\xf1\x3f\xab\xc3\x12\x64"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -814,8 +815,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-2.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x0c\x4a\x35\x4e\x14\x47\xaa\xc4\x45\x23"
-                   "\x66\x66\xa1\x89\xd5\x4a\xa8\x0f\x19\x18"
+                   "\x88\xff\x6f\x35\xb6\xca\xf3\x61\x5a\x8c"
+                   "\xcf\x4b\xa0\x27\x98\x4e\xe4\x0a\x38\x2d"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -844,8 +845,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-3.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x7a\x71\x3e\x26\x23\xee\x1d\x7e\x10\x4b"
-                   "\xc2\x7c\xbe\xe9\x37\xaa\x5e\x33\x37\xd5"
+                   "\x04\xf1\xeb\x69\xe9\xbc\xda\x26\xd4\xe0"
+                   "\x96\xd1\xa7\x59\x52\x0a\x2e\x7d\x44\x01"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -873,8 +874,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns2)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust2-4.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xaf\x94\x59\xd1\x45\x0e\xd9\x15\xe1\x82"
-                   "\xab\xb9\x69\xa3\xd2\xeb\xa5\x48\x16\x1e"
+                   "\x8d\x52\x86\xa1\xbe\x32\x62\xa9\x14\xc6"
+                   "\x06\xea\xa6\x27\x18\x10\x8b\xa8\x4b\xe7"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -932,8 +933,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
     char message[1024];
 
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x75\xf9\x1b\xd3\xfb\xa7\x8f\xe1\xf1\xcb"
-                   "\x51\xde\x7a\xea\x0f\x25\x96\x82\x10\xe7"
+                   "\x7d\x56\xc8\x95\xa9\xb2\x32\x5c\x7d\x61"
+                   "\x7f\x06\x0b\x3c\x6b\x1f\x37\x71\xad\x28"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -962,8 +963,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-2.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\x4e\xb1\x2a\x7f\x44\x9d\xf3\xae\xb2\x69"
-                   "\xe1\xff\x20\x63\x82\x12\x35\xea\xea\x02"
+                   "\x4c\x80\xba\x39\xfc\xc3\xbe\x2a\x1f\xc4"
+                   "\x25\xdf\xcf\xc7\x13\x57\x8d\xb0\xfa\xad"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -992,8 +993,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-3.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xb7\x3d\x64\xff\xcd\x52\x27\xe0\xf3\x80"
-                   "\xf2\x54\x3d\x5c\x12\xdb\x00\xbc\xd6\xea"
+                   "\x8a\xb8\x20\xdf\xad\x13\x4e\x70\x6f\x7a"
+                   "\xe3\xc6\x21\x8d\xa6\x3b\xa5\x16\x84\xe7"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }
@@ -1021,8 +1022,8 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
 
     // drawable.save_to_png(OUTPUT_FILE_PATH "selector-adjust3-4.png");
     if (!check_sig(drawable.gd.drawable, message,
-                   "\xdd\x2c\x02\xe9\x31\xa0\xb8\x52\xc2\x0f"
-                   "\xb9\xde\x64\xfe\xbc\x0d\x13\xdb\xdd\x9d"
+                   "\x1a\x2f\xf3\x80\x9f\x43\x8d\x11\xd5\x1a"
+                   "\x56\xf6\xd4\xfc\xef\x4a\x3a\xc0\x80\x3c"
                    )){
         BOOST_CHECK_MESSAGE(false, message);
     }

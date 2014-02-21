@@ -67,6 +67,7 @@ utils/stream 100 100
 utils/string 100 100
 utils/utf 100 100
 utils/zlib 100 100
+utils/colortheme 100 100
 acl/authentifier 100 100
 acl/acl_serializer 100 100
 capture/capture 100 100
