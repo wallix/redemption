@@ -35,7 +35,8 @@ typedef BGRColor BGRPalette[256];
 enum {
     BLACK      = 0x000000,
     GREY       = 0xc0c0c0,
-    DARK_GREY  = 0x808080,
+    MED_GREY   = 0xa0a0a0,
+    DARK_GREY  = 0x8c8a8c,
     ANTHRACITE = 0x808080,
     BLUE       = 0xff0000,
     DARK_BLUE  = 0x7f0000,

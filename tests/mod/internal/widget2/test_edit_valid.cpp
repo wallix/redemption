@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit)
     size_t edit_pos = 2;
 
     WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, "test1", id,
-                          fg_color, bg_color, DARK_GREY, edit_pos, xtext, ytext);
+                          fg_color, bg_color, ANTHRACITE, edit_pos, xtext, ytext);
 
     parent.set_widget_focus(&wedit);
     // ask to widget to redraw at it's current position
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEdit2)
     size_t edit_pos = -1;
 
     WidgetEditValid wedit(drawable, x, y, cx, parent, notifier, NULL, id,
-                          fg_color, bg_color, DARK_GREY, edit_pos, xtext, ytext);
+                          fg_color, bg_color, ANTHRACITE, edit_pos, xtext, ytext);
 
     parent.add_widget(&wedit);
     // ask to widget to redraw at it's current position

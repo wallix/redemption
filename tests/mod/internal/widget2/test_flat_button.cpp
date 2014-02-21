@@ -505,7 +505,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetFlatButtonAndComposite)
     WidgetFlatButton wbutton5(drawable, 700,-10, wcomposite, notifier,
                               "dsdsdjdjs", true, 0, LIGHT_GREEN, DARK_BLUE, WINBLUE);
     WidgetFlatButton wbutton6(drawable, -10,550, wcomposite, notifier,
-                              "xxwwp", true, 0, DARK_GREY, PALE_GREEN, WINBLUE);
+                              "xxwwp", true, 0, ANTHRACITE, PALE_GREEN, WINBLUE);
 
     wcomposite.add_widget(&wbutton1);
     wcomposite.add_widget(&wbutton2);

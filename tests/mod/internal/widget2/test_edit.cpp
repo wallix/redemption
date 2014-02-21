@@ -684,7 +684,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetEditAndComposite)
     WidgetEdit wedit5(drawable, 700,-10, 50, wcomposite, notifier,
                         "dsdsdjdjs", 0, LIGHT_GREEN, DARK_BLUE, DARK_BLUE);
     WidgetEdit wedit6(drawable, -10,550, 50, wcomposite, notifier,
-                        "xxwwp", 2, DARK_GREY, PALE_GREEN, PALE_GREEN);
+                        "xxwwp", 2, ANTHRACITE, PALE_GREEN, PALE_GREEN);
 
     wcomposite.add_widget(&wedit1);
     wcomposite.add_widget(&wedit2);

@@ -51,6 +51,7 @@ public:
     , w_text(0)
     , h_text(0)
     , cursor_color(0x888888)
+    // , cursor_color(fgcolor)
     , focus_color(focus_color)
     , drawall(false)
     , draw_border_focus(true)
@@ -195,6 +196,11 @@ public:
                     this->h_text);
     }
 
+    void draw_current_cursor() {
+        if (this->has_focus) {
+            this->draw_cursor(this->get_cursor_rect());
+        }
+    }
     void draw_cursor(const Rect& clip)
     {
         if (!clip.isempty()) {
