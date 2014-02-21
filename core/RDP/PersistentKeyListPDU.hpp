@@ -310,6 +310,8 @@ struct PersistentKeyListPDUData {
         this->totalEntriesCache4 = stream.in_uint16_le();
         this->bBitMask           = stream.in_uint8();
 
+        stream.in_skip_bytes(3);    // Pad2(1) + Pad3(2)
+
         for (uint32_t i = 0,
                       c = std::min<uint32_t>(this->numEntriesCache0 + this->numEntriesCache1 + this->numEntriesCache2 +
                                                  this->numEntriesCache3 + this->numEntriesCache4,
@@ -339,7 +341,17 @@ struct PersistentKeyListPDUData {
             if (i) {
                 lg += snprintf(buffer + lg, sz - lg, " ");
             }
-            lg += snprintf(buffer + lg, sz - lg, "(%08X%08X)", this->entries[i].Key1, this->entries[i].Key2);
+
+            if (i > 20) {
+                lg += snprintf(buffer + lg, sz - lg, "...");
+                break;
+            }
+
+            uint8_t keys[8];
+            memcpy(keys,     &this->entries[i].Key1, 4);
+            memcpy(keys + 4, &this->entries[i].Key2, 4);
+            lg += snprintf(buffer + lg, sz - lg, "(%02X%02X%02X%02X%02X%02X%02X%02X)", keys[0], keys[1],
+                keys[2], keys[3], keys[4], keys[5], keys[6], keys[7]);
         }
         lg += snprintf(buffer + lg, sz - lg, "))");
         buffer[sizeof(buffer) - 1] = 0;
