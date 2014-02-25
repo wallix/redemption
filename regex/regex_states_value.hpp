@@ -55,14 +55,12 @@ namespace re {
 
         void set_num_at(const State * st, unsigned count)
         {
-            assert(st == this->states[(st->is_cap() ? this->states.size() - this->nb_cap : -this->nb_cap) + st->num]);
             assert(this->states.size() > st->num);
             this->nums[st->num] = count;
         }
 
         unsigned get_num_at(const State * st) const
         {
-            assert(st == this->states[(st->is_cap() ? this->states.size() - this->nb_cap : -this->nb_cap) + st->num]);
             assert(this->states.size() > st->num);
             return this->nums[st->num];
         }
