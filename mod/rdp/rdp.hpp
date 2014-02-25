@@ -1869,7 +1869,8 @@ struct mod_rdp : public mod_api {
                                                     SlowPath::GraphicsUpdate_Recv gur(sdata.payload);
                                                     switch (gur.update_type) {
                                                     case RDP_UPDATE_ORDERS:
-                                                        if (this->verbose & 8){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS");}
+                                                        if (this->verbose & 8){
+LOG(LOG_INFO, "RDP_UPDATE_ORDERS");}
                                                         this->front.begin_update();
                                                         this->orders.process_orders(this->bpp, sdata.payload, false, this);
                                                         this->front.end_update();

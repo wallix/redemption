@@ -48,7 +48,7 @@ static inline int filesize(const char * path)
     return -1;
 }
 
-static inline void canonical_path( const char * fullpath, char * path, size_t path_len
+static inline bool canonical_path( const char * fullpath, char * path, size_t path_len
                                  , char * basename, size_t basename_len, char * extension
                                  , size_t extension_len, uint32_t verbose = 255)
 {
@@ -58,8 +58,11 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
             memcpy(path, fullpath, end_of_path + 1 - fullpath);
             path[end_of_path + 1 - fullpath] = 0;
         }
-        else if (verbose >= 255) {
-            LOG(LOG_ERR, "canonical_path : Path too long for the buffer\n");
+        else {
+            if (verbose >= 255) {
+                LOG(LOG_ERR, "canonical_path : Path too long for the buffer\n");
+            }
+            return false;
         }
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
         if (start_of_extension){
@@ -70,8 +73,11 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
                     memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
                     basename[start_of_extension - end_of_path - 1] = 0;
                 }
-                else if (verbose >= 255) {
-                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
+                else {
+                    if (verbose >= 255) {
+                        LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
+                    }
+                    return false;
                 }
             }
             // else no basename : leave output buffer for name untouched
@@ -99,8 +105,11 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
                     memcpy(basename, fullpath, start_of_extension - fullpath);
                     basename[start_of_extension - fullpath] = 0;
                 }
-                else if (verbose >= 255) {
-                    LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
+                else {
+                    if (verbose >= 255) {
+                        LOG(LOG_ERR, "canonical_path : basename too long for the buffer\n");
+                    }
+                    return false;
                 }
             }
             // else no basename : leave output buffer for name untouched
@@ -120,6 +129,7 @@ static inline void canonical_path( const char * fullpath, char * path, size_t pa
     if (verbose >= 255) {
         LOG(LOG_INFO, "canonical_path : %s%s%s\n", path, basename, extension);
     }
+    return true;
 }
 
 static inline char * pathncpy(char * dest, const char * src, const size_t n) {

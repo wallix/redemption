@@ -51,7 +51,7 @@ public:
                                    text, group_id, fgcolor, bgcolor, focus_color,
                                    edit_position, 1, 2))
         , label(title ? new WidgetLabel(drawable, 0, 0, *this, 0, title, true,
-                                        group_id, MED_GREY, bgcolor, 1, 2)
+                                        group_id, MEDIUM_GREY, bgcolor, 1, 2)
                 : NULL)
     {
         this->button.set_button_x(this->editbox->lx() - 1);

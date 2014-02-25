@@ -106,13 +106,17 @@ class WidgetRadioList : public Widget2
     WidgetRadioButton * child_list[AUTOSIZE];
     size_t size;
     int selected;
+    int fgcolor;
+    int bgcolor;
 
 public:
     WidgetRadioList(DrawApi & drawable, int x, int y, Widget2 & parent,
-                    NotifyApi * notifier, int group_id = 0)
+                    NotifyApi * notifier, int group_id, int fgcolor, int bgcolor)
         : Widget2(drawable, Rect(x, y, 1, 1), parent, notifier, group_id)
         , size(0)
         , selected(-1)
+        , fgcolor(fgcolor)
+        , bgcolor(bgcolor)
     {
         this->focus_flag = IGNORE_FOCUS;
         this->tab_flag = IGNORE_TAB;
@@ -131,7 +135,7 @@ public:
         WidgetRadioButton * radio = new WidgetRadioButton(drawable, this->lx() + 10,
                                                           this->dy(),this->parent,
                                                           this, text, true, 0,
-                                                          WHITE, DARK_BLUE_BIS);
+                                                          this->fgcolor, this->bgcolor);
 
         this->child_list[this->size] = radio;
         this->size++;

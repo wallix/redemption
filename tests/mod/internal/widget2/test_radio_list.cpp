@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioList)
     WidgetScreen parent(drawable, 800, 600);
 
 
-    WidgetRadioList radiolist(drawable, 50, 70, parent, NULL);
+    WidgetRadioList radiolist(drawable, 50, 70, parent, NULL, 0, WHITE, DARK_BLUE_BIS);
 
     parent.add_widget(&radiolist);
 
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetRadioListNotify)
         }
     } notifier;
 
-    WidgetRadioList radiolist(drawable, 50, 30, parent, &notifier);
+    WidgetRadioList radiolist(drawable, 50, 30, parent, &notifier, 0, WHITE, DARK_BLUE_BIS);
 
     parent.add_widget(&radiolist);
 
