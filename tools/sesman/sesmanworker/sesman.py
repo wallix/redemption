@@ -659,7 +659,9 @@ class Sesman():
                             pass
                         data_to_send[u'message'] = cut_message(message)
 
-                    _status, _error = self.interactive_accept_message(data_to_send)
+                        _status, _error = self.interactive_accept_message(data_to_send)
+                    else:
+                        _status, _error = True, u''
 
         except Exception, e:
             if DEBUG:

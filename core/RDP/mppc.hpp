@@ -547,7 +547,7 @@ public:
             ((compressedType & PACKET_COMPRESSED) ? compressed_data_size :
                 uncompressed_data_size);
 
-        if (verbose & 512) {
+        if (verbose & 128) {
             LOG(LOG_INFO, "compressedType=0x%02X", compressedType);
             LOG(LOG_INFO, "uncompressed_data_size=%u compressed_data_size=%u rate=%.2f",
                 uncompressed_data_size, compressed_data_size,

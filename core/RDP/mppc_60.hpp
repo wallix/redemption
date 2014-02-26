@@ -44,7 +44,7 @@ static uint8_t HuffLenLEC[] = {
 
     0xd, 0xd, 0x7, 0x7, 0xa, 0x7, 0x7, 0x6, 0x6, 0x6, 0x6, 0x5, 0x6, 0x6, 0x6, 0x5,
     0x6, 0x5, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6, 0x6,
-    0x8, 0x5, 0x6, 0x7, 0x7
+    0x8, 0x5, 0x6, 0x7, 0x7, 0xd
 };
 
 static uint16_t HuffCodeLEC[] =
@@ -85,7 +85,7 @@ static uint16_t HuffCodeLEC[] =
     0x000c, 0x002c, 0x001c, 0x0000, 0x003c, 0x0002, 0x0022, 0x0010,
     0x0012, 0x0008, 0x0032, 0x000a, 0x002a, 0x001a, 0x003a, 0x0006,
     0x0026, 0x0016, 0x0036, 0x000e, 0x002e, 0x001e, 0x003e, 0x0001,
-    0x00ed, 0x0018, 0x0021, 0x0025, 0x0065
+    0x00ed, 0x0018, 0x0021, 0x0025, 0x0065, 0x1fff
 };
 
 static uint16_t HuffIndexLEC[512] = {
@@ -186,17 +186,23 @@ static uint16_t LOMBaseLUT[] = {
     82, 98, 114, 130, 194, 258, 514, 2, 2
 };
 
-static const size_t RDP_60_HIST_BUF_LEN      = 1024 * 64;
-static const size_t RDP_60_HIST_BUF_MIDDLE   = 32768;
+static const size_t RDP_60_HIST_BUF_LEN      = 65536;
+static const size_t RDP_60_HIST_BUF_MIDDLE   = RDP_60_HIST_BUF_LEN / 2;
 static const size_t RDP_60_OFFSET_CACHE_SIZE = 8;
 
 static inline void cache_add(uint16_t * offset_cache, uint16_t copy_offset) {
+    REDASSERT(copy_offset);
+    REDASSERT((copy_offset != offset_cache[0]) && (copy_offset != offset_cache[1]) &&
+        (copy_offset != offset_cache[2]) && (copy_offset != offset_cache[3]))
+
     *((uint32_t*)(offset_cache+2)) <<= 16;
     *((uint32_t*)(offset_cache+2)) |=  (*((uint32_t*)offset_cache) >> 16);
     *((uint32_t*)offset_cache)     =   (*((uint32_t*)offset_cache) << 16) | copy_offset;
 }
 
 static inline void cache_swap(uint16_t * offset_cache, uint16_t LUTIndex) {
+    REDASSERT(LUTIndex);
+
     uint16_t t = *offset_cache;
     *offset_cache              = *(offset_cache + LUTIndex);
     *(offset_cache + LUTIndex) = t;
@@ -620,12 +626,18 @@ public:
 
 ////////////////////
 //
-// Decompressor
+// Compressor
 //
 ////////////////////
 
 static inline void insert_n_bits_60(uint8_t n, uint32_t data,
-    uint8_t * outputBuffer, uint8_t & bits_left, uint16_t & opb_index) {
+    uint8_t * outputBuffer, uint8_t & bits_left, uint16_t & opb_index, uint32_t verbose) {
+
+    if (verbose & 512) {
+        LOG(LOG_INFO, "data=%u bit=%u", data, n);
+    }
+
+    REDASSERT(bits_left > 0);
 
     while (n)
     {
@@ -650,9 +662,9 @@ static inline void insert_n_bits_60(uint8_t n, uint32_t data,
 }
 
 static inline void encode_literal_60(uint16_t c, uint8_t * outputBuffer,
-    uint8_t & bits_left, uint16_t & opb_index) {
+    uint8_t & bits_left, uint16_t & opb_index, uint32_t verbose) {
     insert_n_bits_60(HuffLenLEC[c], HuffCodeLEC[c],
-        outputBuffer, bits_left, opb_index);
+        outputBuffer, bits_left, opb_index, verbose);
 }
 
 struct rdp_mppc_60_enc : public rdp_mppc_enc {
@@ -699,7 +711,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         , outputBuffer(NULL)
         , bytes_in_opb(0)
         , flags(0)
-        , flagsHold(0)
+        , flagsHold(PACKET_FLUSHED)
         , hash_tab_mgr(MINIMUM_MATCH_LENGTH,
               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {
@@ -720,7 +732,7 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc {
         //this->bytes_in_opb = 0;
 
         //this->flags      = 0;
-        //this->flagsHold  = 0;
+        //this->flagsHold  = PACKET_FLUSHED;
     }
 
     virtual ~rdp_mppc_60_enc()
@@ -818,7 +830,7 @@ private:
             for (offset_type i = 0; i < ctr; i++) {
                 ::encode_literal_60(
                     this->historyBuffer[this->historyOffset + i],
-                    this->outputBuffer, bits_left, opb_index);
+                    this->outputBuffer, bits_left, opb_index, this->verbose);
             }
 
             this->hash_tab_mgr.update_indirect(this->historyBuffer, 0);
@@ -839,7 +851,7 @@ private:
 
             if (0 != ::memcmp(data, this->historyBuffer + previous_match, MINIMUM_MATCH_LENGTH)) {
                 // no match found; encode literal uint8_t
-                ::encode_literal_60(*data, this->outputBuffer, bits_left, opb_index);
+                ::encode_literal_60(*data, this->outputBuffer, bits_left, opb_index, this->verbose);
                 lom = 1;
             }
             else {
@@ -855,6 +867,8 @@ private:
                     }
                 }
 
+                REDASSERT(!::memcmp(this->historyBuffer + previous_match, this->historyBuffer + offset, lom));
+
                 /////////////////////////////////////////////////////////////
                 // Fix 'short compressed stream' issue with MSTSC. Length of
                 //  compressed stream must be greater than 3 bytes.
@@ -863,64 +877,96 @@ private:
                     lom--;
                 }
 
-                //if (this->verbose & 512) {
-                //    LOG(LOG_INFO, "LoM=%u", lom);
-                //}
-
                 // encode copy_offset and insert into output buffer
                 uint32_t copy_offset = offset - previous_match;
+
+                if (this->verbose & 512) {
+                    LOG(LOG_INFO, "LoM=%u copy_offset=%u", lom, copy_offset);
+                }
 
                 int offsetCacheIndex;
                 int LUTIndex;
                 if ((offsetCacheIndex = cache_find(this->offsetCache, copy_offset)) != -1) {
+                    REDASSERT((offsetCacheIndex >= 0) && (offsetCacheIndex <= 3));
+
+                    if (this->verbose & 512) {
+                        LOG(LOG_INFO, "offsetCacheIndex=%u", offsetCacheIndex);
+                    }
 
                     if (offsetCacheIndex != 0) {
                         cache_swap(this->offsetCache, offsetCacheIndex);
                     }
 
                     LUTIndex = offsetCacheIndex + 289;
+                    if (this->verbose & 256) {
+                        LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                    }
 
                     ::insert_n_bits_60(HuffLenLEC[LUTIndex], HuffCodeLEC[LUTIndex],
-                        this->outputBuffer, bits_left, opb_index);
+                        this->outputBuffer, bits_left, opb_index, this->verbose);
                 }
                 else {
                     cache_add(this->offsetCache, copy_offset);
 
                     LUTIndex = indexOfEqualOrSmallerEntry<uint32_t>(copy_offset + 1,
                         CopyOffsetBaseLUT);
+                    REDASSERT((CopyOffsetBaseLUT[LUTIndex] == (copy_offset + 1)) ||
+                        ((CopyOffsetBaseLUT[LUTIndex] < (copy_offset + 1)) &&
+                         (CopyOffsetBaseLUT[LUTIndex + 1] > (copy_offset + 1))));
+                    if (this->verbose & 256) {
+                        LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                    }
                     int HuffmanIndex = LUTIndex + 257;
                     ::insert_n_bits_60(HuffLenLEC[HuffmanIndex], HuffCodeLEC[HuffmanIndex],
-                        this->outputBuffer, bits_left, opb_index);
+                        this->outputBuffer, bits_left, opb_index, this->verbose);
 
                     int ExtraBitsLength = CopyOffsetBitsLUT[LUTIndex];
-                    int ExtraBits       = copy_offset & ((1 << ExtraBitsLength) - 1);
                     if (ExtraBitsLength) {
+                        if (this->verbose & 256) {
+                            LOG(LOG_INFO, "ExtraBitsLength=%u", ExtraBitsLength);
+                        }
+                        int ExtraBits   = copy_offset & ((1 << ExtraBitsLength) - 1);
+                        if (this->verbose & 256) {
+                            LOG(LOG_INFO, "ExtraBits=%u", ExtraBits);
+                        }
                         ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
-                            bits_left, opb_index);
+                            bits_left, opb_index, this->verbose);
                     }
                 }
 
+                REDASSERT(lom <= 514);
                 LUTIndex = indexOfEqualOrSmallerEntry<uint16_t>(lom, LOMBaseLUT);
+                REDASSERT((LOMBaseLUT[LUTIndex] == lom) ||
+                    ((LOMBaseLUT[LUTIndex] < lom) && (LOMBaseLUT[LUTIndex + 1] > lom)));
+                if (this->verbose & 256) {
+                    LOG(LOG_INFO, "LUTIndex=%u", LUTIndex);
+                }
                 ::insert_n_bits_60(HuffLenLOM[LUTIndex], HuffCodeLOM[LUTIndex],
-                    this->outputBuffer, bits_left, opb_index);
+                    this->outputBuffer, bits_left, opb_index, this->verbose);
 
                 int ExtraBitsLength = LOMBitsLUT[LUTIndex];
-                int ExtraBits = (lom - 2) & ((1 << ExtraBitsLength) - 1);
                 if (ExtraBitsLength) {
+                    if (this->verbose & 256) {
+                        LOG(LOG_INFO, "ExtraBitsLength=%u", ExtraBitsLength);
+                    }
+                    int ExtraBits   = (lom - 2) & ((1 << ExtraBitsLength) - 1);
+                    if (this->verbose & 256) {
+                        LOG(LOG_INFO, "ExtraBits=%u", ExtraBits);
+                    }
                     ::insert_n_bits_60(ExtraBitsLength, ExtraBits, this->outputBuffer,
-                        bits_left, opb_index);
+                        bits_left, opb_index, this->verbose);
                 }
             }
         }
 
         // add remaining data if any to the output
         while (uncompressed_data_size - ctr > 0) {
-            ::encode_literal_60(uncompressed_data[ctr], this->outputBuffer, bits_left, opb_index);
+            ::encode_literal_60(uncompressed_data[ctr], this->outputBuffer, bits_left, opb_index, this->verbose);
             ctr++;
         }
 
         // add End-of-Stream (EOS) marker
-        ::encode_literal_60(256, this->outputBuffer, bits_left, opb_index);
+        ::encode_literal_60(256, this->outputBuffer, bits_left, opb_index, this->verbose);
 
         if (opb_index >= uncompressed_data_size) {
             if (this->verbose & 512) {
@@ -943,7 +989,7 @@ private:
                 this->hash_tab_mgr.reset();
 
                 if (this->verbose & 512) {
-                    LOG(LOG_INFO, "Unable to undo changes made in hash table.");
+                    LOG(LOG_INFO, "compress_60: Unable to undo changes made in hash table.");
                 }
             }
             else

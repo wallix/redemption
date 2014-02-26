@@ -23,8 +23,8 @@
 #define BOOST_TEST_MODULE TestMPPC60
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 #include "log.hpp"
 
 #include "RDP/mppc.hpp"
@@ -47,8 +47,8 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukCompression)
 
     BOOST_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
 
-    //LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc->bytes_in_opb);
-    //hexdump_d(mppc_enc->outputBuffer, mppc_enc->bytes_in_opb);
+    LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc->bytes_in_opb);
+    hexdump_d(mppc_enc->outputBuffer, mppc_enc->bytes_in_opb);
 
     delete mppc_enc;
 
@@ -433,4 +433,88 @@ BOOST_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
     hexdump_d(rdata, rlen);
 
     delete(mppc_dec);
+}
+
+BOOST_AUTO_TEST_CASE(TestCacheAdd) {
+    uint16_t offset_cache[4] = { 0, 0, 0, 0 };
+
+    cache_add(offset_cache, 15);
+    BOOST_CHECK_EQUAL(offset_cache[0], 15);
+    BOOST_CHECK_EQUAL(offset_cache[1], 0);
+    BOOST_CHECK_EQUAL(offset_cache[2], 0);
+    BOOST_CHECK_EQUAL(offset_cache[3], 0);
+
+    cache_add(offset_cache, 7);
+    BOOST_CHECK_EQUAL(offset_cache[0], 7);
+    BOOST_CHECK_EQUAL(offset_cache[1], 15);
+    BOOST_CHECK_EQUAL(offset_cache[2], 0);
+    BOOST_CHECK_EQUAL(offset_cache[3], 0);
+
+    cache_add(offset_cache, 23);
+    BOOST_CHECK_EQUAL(offset_cache[0], 23);
+    BOOST_CHECK_EQUAL(offset_cache[1], 7);
+    BOOST_CHECK_EQUAL(offset_cache[2], 15);
+    BOOST_CHECK_EQUAL(offset_cache[3], 0);
+
+    cache_add(offset_cache, 152);
+    BOOST_CHECK_EQUAL(offset_cache[0], 152);
+    BOOST_CHECK_EQUAL(offset_cache[1], 23);
+    BOOST_CHECK_EQUAL(offset_cache[2], 7);
+    BOOST_CHECK_EQUAL(offset_cache[3], 15);
+
+    cache_add(offset_cache, 65000);
+    BOOST_CHECK_EQUAL(offset_cache[0], 65000);
+    BOOST_CHECK_EQUAL(offset_cache[1], 152);
+    BOOST_CHECK_EQUAL(offset_cache[2], 23);
+    BOOST_CHECK_EQUAL(offset_cache[3], 7);
+}
+
+BOOST_AUTO_TEST_CASE(TestCacheFindSwap) {
+    uint16_t offset_cache[4] = { 0, 0, 0, 0 };
+
+    cache_add(offset_cache, 15);
+    BOOST_CHECK_EQUAL(offset_cache[0], 15);
+    BOOST_CHECK_EQUAL(offset_cache[1], 0);
+    BOOST_CHECK_EQUAL(offset_cache[2], 0);
+    BOOST_CHECK_EQUAL(offset_cache[3], 0);
+
+    cache_add(offset_cache, 7);
+    BOOST_CHECK_EQUAL(offset_cache[0], 7);
+    BOOST_CHECK_EQUAL(offset_cache[1], 15);
+    BOOST_CHECK_EQUAL(offset_cache[2], 0);
+    BOOST_CHECK_EQUAL(offset_cache[3], 0);
+
+    cache_add(offset_cache, 23);
+    BOOST_CHECK_EQUAL(offset_cache[0], 23);
+    BOOST_CHECK_EQUAL(offset_cache[1], 7);
+    BOOST_CHECK_EQUAL(offset_cache[2], 15);
+    BOOST_CHECK_EQUAL(offset_cache[3], 0);
+
+    cache_add(offset_cache, 152);
+    BOOST_CHECK_EQUAL(offset_cache[0], 152);
+    BOOST_CHECK_EQUAL(offset_cache[1], 23);
+    BOOST_CHECK_EQUAL(offset_cache[2], 7);
+    BOOST_CHECK_EQUAL(offset_cache[3], 15);
+
+    cache_add(offset_cache, 65000);
+    BOOST_CHECK_EQUAL(offset_cache[0], 65000);
+    BOOST_CHECK_EQUAL(offset_cache[1], 152);
+    BOOST_CHECK_EQUAL(offset_cache[2], 23);
+    BOOST_CHECK_EQUAL(offset_cache[3], 7);
+
+    BOOST_CHECK_EQUAL(-1, rdp_mppc_60_enc::cache_find(offset_cache, 736));
+
+    BOOST_CHECK_EQUAL(2, rdp_mppc_60_enc::cache_find(offset_cache, 23));
+    cache_swap(offset_cache, 2);
+    BOOST_CHECK_EQUAL(offset_cache[0], 23);
+    BOOST_CHECK_EQUAL(offset_cache[1], 152);
+    BOOST_CHECK_EQUAL(offset_cache[2], 65000);
+    BOOST_CHECK_EQUAL(offset_cache[3], 7);
+
+    BOOST_CHECK_EQUAL(3, rdp_mppc_60_enc::cache_find(offset_cache, 7));
+    cache_swap(offset_cache, 3);
+    BOOST_CHECK_EQUAL(offset_cache[0], 7);
+    BOOST_CHECK_EQUAL(offset_cache[1], 152);
+    BOOST_CHECK_EQUAL(offset_cache[2], 65000);
+    BOOST_CHECK_EQUAL(offset_cache[3], 23);
 }
