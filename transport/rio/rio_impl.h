@@ -50,7 +50,6 @@
 
 #include "rio/rio_generator.h"
 #include "rio/rio_check.h"
-#include "rio/rio_test.h"
 #include "rio/rio_outfile.h"
 #include "rio/rio_infile.h"
 #include "rio/rio_socket.h"
