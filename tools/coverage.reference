@@ -11,6 +11,7 @@ mod/rdp/rdp 100 100
 mod/rdp/rdp_orders 100 100
 mod/vnc/vnc 100 100
 mod/xup/xup 100 100
+transport/counttransport 100 100
 transport/inbymetasequencetransport 100 100
 transport/infilenametransport 100 100
 transport/infiletransport 100 100
@@ -36,7 +37,6 @@ transport/rio/rio_outsequence 100 100
 transport/rio/rio_socket 100 100
 transport/rio/rio_socket 100 100
 transport/rio/rio_socket_TLS 100 100
-transport/rio/rio_test 100 100
 transport/rio/sq_cryptooutfilename 100 100
 transport/rio/sq_cryptoouttracker 100 100
 transport/rio/sq_inmeta 100 100
