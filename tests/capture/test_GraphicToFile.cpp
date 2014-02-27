@@ -26,6 +26,7 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 
 #include "test_orders.hpp"
 #include "transport.hpp"
@@ -39,9 +40,10 @@
 #include "image_capture.hpp"
 
 const char expected_stripped_wrm[] =
-/* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\xEE\x03\x2A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=42 0001: 1 order
            "\x03\x00\x20\x03\x58\x02\x18\x00" // WRM version = 3, width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+           "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 // initial screen content PNG image
 /* 0000 */ "\x00\x10\xcc\x05\x00\x00\x01\x00"
@@ -176,7 +178,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
 
     Inifile ini;
-    BmpCache bmp_cache(24, 3, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 3, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
 
@@ -213,9 +215,10 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
 }
 
 const char expected_stripped_wrm2[] =
-/* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=16 0001: 1 order
+/* 0000 */ "\xEE\x03\x2A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=42 0001: 1 order
            "\x03\x00\x20\x03\x58\x02\x18\x00" // WRM version = 3, width = 800, height=600, bpp=24
            "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
+           "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 
 // initial screen content PNG image
 /* 0000 */ "\x00\x10\xcc\x05\x00\x00\x01\x00"
@@ -346,7 +349,7 @@ BOOST_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     BStream stream(65536);
     CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 3, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
 
@@ -392,7 +395,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     OutFileTransport trans(fd);
     BOOST_CHECK_EQUAL(0, 0);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, 600, 256, 300, 1024, 262, 4096);
+    BmpCache bmp_cache(24, 3, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
     GraphicToFile consumer(now, &trans, screen_rect.cx, screen_rect.cy, 24, bmp_cache, drawable, ini);
     BOOST_CHECK_EQUAL(0, 0);
@@ -415,7 +418,7 @@ BOOST_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     consumer.flush();
     BOOST_CHECK_EQUAL(0, 0);
     rio_clear(&trans.rio); // close file before reading filesize
-    BOOST_CHECK_EQUAL(1588, filesize(filename));
+    BOOST_CHECK_EQUAL(1602, filesize(filename));
 
     char in_path[1024];
     len = strlen(filename);

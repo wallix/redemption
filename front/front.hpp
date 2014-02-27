@@ -271,6 +271,7 @@ public:
         }
 
         if (this->bmp_cache) {
+            this->save_persistent_disk_bitmap_cache();
             delete this->bmp_cache;
         }
 
@@ -585,6 +586,25 @@ public:
         return compress_type_selector[client_supported_type][front_supported_type];
     }
 
+    void save_persistent_disk_bitmap_cache() const {
+        const char * client_persistent_path = PERSISTENT_PATH "/client";
+        if ((this->client_info.number_of_cache > 0) && this->client_info.cache1_persistent) {
+            this->bmp_cache->save_to_disk(client_persistent_path, 0);
+        }
+        if ((this->client_info.number_of_cache > 1) && this->client_info.cache2_persistent) {
+            this->bmp_cache->save_to_disk(client_persistent_path, 1);
+        }
+        if ((this->client_info.number_of_cache > 2) && this->client_info.cache3_persistent) {
+            this->bmp_cache->save_to_disk(client_persistent_path, 2);
+        }
+        if ((this->client_info.number_of_cache > 3) && this->client_info.cache4_persistent) {
+            this->bmp_cache->save_to_disk(client_persistent_path, 3);
+        }
+        if ((this->client_info.number_of_cache > 4) && this->client_info.cache5_persistent) {
+            this->bmp_cache->save_to_disk(client_persistent_path, 4);
+        }
+    }
+
     virtual void reset(){
         if (this->verbose & 1){
             LOG(LOG_INFO, "Front::reset()");
@@ -620,31 +640,29 @@ public:
             break;
         }
 
-/*
-        if (this->client_info.rdp_compression && this->rdp_compression) {
-            if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_RDP6) {
-                this->mppc_enc = new rdp_mppc_60_enc();
-            }
-            else if (this->client_info.rdp_compression_type >= PACKET_COMPR_TYPE_64K) {
-                this->mppc_enc = new rdp_mppc_50_enc();
-            }
-            else {
-                this->mppc_enc = new rdp_mppc_40_enc();
-            }
-        }
-*/
-
         // reset outgoing orders and reset caches
-        delete this->bmp_cache;
+        if (this->bmp_cache) {
+            this->save_persistent_disk_bitmap_cache();
+            delete this->bmp_cache;
+        }
         this->bmp_cache = new BmpCache(
                         this->client_info.bpp,
-                        3,
+                        this->client_info.number_of_cache,
                         this->client_info.cache1_entries,
                         this->client_info.cache1_size,
+                        this->client_info.cache1_persistent,
                         this->client_info.cache2_entries,
                         this->client_info.cache2_size,
+                        this->client_info.cache2_persistent,
                         this->client_info.cache3_entries,
-                        this->client_info.cache3_size);
+                        this->client_info.cache3_size,
+                        this->client_info.cache3_persistent,
+                        this->client_info.cache4_entries,
+                        this->client_info.cache4_size,
+                        this->client_info.cache4_persistent,
+                        this->client_info.cache5_entries,
+                        this->client_info.cache5_size,
+                        this->client_info.cache5_persistent);
 
         delete this->orders;
         this->orders = new GraphicsUpdatePDU(
@@ -3032,6 +3050,8 @@ public:
                     this->client_info.cache3_entries    = this->client_bmpcache_caps.cache2Entries;
                     this->client_info.cache3_persistent = false;
                     this->client_info.cache3_size       = this->client_bmpcache_caps.cache2MaximumCellSize;
+                    this->client_info.cache4_entries    = 0;
+                    this->client_info.cache5_entries    = 0;
                     this->client_info.bitmap_cache_persist_enable = 0;
                     this->client_info.bitmap_cache_version        = 0;
                 }
@@ -3129,25 +3149,40 @@ public:
                         this->client_info.cache1_persistent = (cap.bitmapCache0CellInfo & 0x80000000);
                         this->client_info.cache1_size       = 256 * Bpp;
                     }
+                    else {
+                        this->client_info.cache1_entries = 0;
+                    }
                     if (cap.numCellCaches > 1) {
                         this->client_info.cache2_entries    = (cap.bitmapCache1CellInfo & 0x7fffffff);
                         this->client_info.cache2_persistent = (cap.bitmapCache1CellInfo & 0x80000000);
                         this->client_info.cache2_size       = 1024 * Bpp;
+                    }
+                    else {
+                        this->client_info.cache2_entries = 0;
                     }
                     if (cap.numCellCaches > 2) {
                         this->client_info.cache3_entries    = (cap.bitmapCache2CellInfo & 0x7fffffff);
                         this->client_info.cache3_persistent = (cap.bitmapCache2CellInfo & 0x80000000);
                         this->client_info.cache3_size       = 4096 * Bpp;
                     }
+                    else {
+                        this->client_info.cache3_entries = 0;
+                    }
                     if (cap.numCellCaches > 3) {
                         this->client_info.cache4_entries    = (cap.bitmapCache3CellInfo & 0x7fffffff);
                         this->client_info.cache4_persistent = (cap.bitmapCache3CellInfo & 0x80000000);
                         this->client_info.cache4_size       = 6144 * Bpp;
                     }
+                    else {
+                        this->client_info.cache4_entries = 0;
+                    }
                     if (cap.numCellCaches > 4) {
                         this->client_info.cache5_entries    = (cap.bitmapCache4CellInfo & 0x7fffffff);
                         this->client_info.cache5_persistent = (cap.bitmapCache4CellInfo & 0x80000000);
                         this->client_info.cache5_size       = 8192 * Bpp;
+                    }
+                    else {
+                        this->client_info.cache5_entries = 0;
                     }
                     this->client_info.bitmap_cache_persist_enable = cap.cacheFlags;
                     this->client_info.bitmap_cache_version        = 2;
@@ -3881,6 +3916,30 @@ public:
 
                 pklpdud.receive(sdata_in.payload);
                 pklpdud.log(LOG_INFO, "Receiving from client Persistent Key List PDU Data");
+
+                const char                                * client_persistent_path = PERSISTENT_PATH "/client";
+                      RDP::BitmapCachePersistentListEntry * entries                = pklpdud.entries;
+
+                if (pklpdud.numEntriesCache0) {
+                    this->bmp_cache->load_from_disk(client_persistent_path, 0, entries, pklpdud.numEntriesCache0);
+                    entries += pklpdud.numEntriesCache0;
+                }
+                if (pklpdud.numEntriesCache1) {
+                    this->bmp_cache->load_from_disk(client_persistent_path, 1, entries, pklpdud.numEntriesCache1);
+                    entries += pklpdud.numEntriesCache1;
+                }
+                if (pklpdud.numEntriesCache2) {
+                    this->bmp_cache->load_from_disk(client_persistent_path, 2, entries, pklpdud.numEntriesCache2);
+                    entries += pklpdud.numEntriesCache2;
+                }
+                if (pklpdud.numEntriesCache3) {
+                    this->bmp_cache->load_from_disk(client_persistent_path, 3, entries, pklpdud.numEntriesCache3);
+                    entries += pklpdud.numEntriesCache3;
+                }
+                if (pklpdud.numEntriesCache4) {
+                    this->bmp_cache->load_from_disk(client_persistent_path, 4, entries, pklpdud.numEntriesCache4);
+                    entries += pklpdud.numEntriesCache4;
+                }
             }
 
             TODO("this quickfix prevents a tech crash, but consuming the data should be a better behaviour")
@@ -4153,8 +4212,8 @@ public:
         }
 
         // if not we have to split it
-        const uint16_t TILE_CX = 32;
-        const uint16_t TILE_CY = 32;
+        const uint16_t TILE_CX = 64;
+        const uint16_t TILE_CY = 64;
 
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;
@@ -4272,8 +4331,8 @@ public:
         }
 
         // if not we have to split it
-        const uint16_t TILE_CX = 32;
-        const uint16_t TILE_CY = 32;
+        const uint16_t TILE_CX = 64;
+        const uint16_t TILE_CY = 64;
 
         const uint16_t dst_x = cmd.rect.x;
         const uint16_t dst_y = cmd.rect.y;

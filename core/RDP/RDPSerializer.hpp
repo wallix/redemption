@@ -309,15 +309,19 @@ public:
         }
     }
 
-    void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx)
+    void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx, bool in_wait_list)
     {
-        const Bitmap * bmp = this->bmp_cache.get(cache_id, cache_idx);
+        const Bitmap * bmp = this->bmp_cache.get(
+            (in_wait_list ? BmpCache::MAXIMUM_NUMBER_OF_CACHES : cache_id), cache_idx);
         if (!bmp) {
 //            LOG(LOG_INFO, "skipping RDPSerializer::emit_bmp_cache for %u:%u (entry not used)",
 //                cache_id, cache_idx);
             return;
         }
-        RDPBmpCache cmd_cache(bmp, cache_id, cache_idx, this->ini.debug.primary_orders);
+
+        RDPBmpCache cmd_cache(bmp, cache_id, cache_idx,
+            this->bmp_cache.is_cache_persistent(cache_id), in_wait_list,
+            this->ini.debug.primary_orders);
         this->reserve_order(cmd_cache.bmp->bmp_size + 16);
         cmd_cache.emit( this->bpp, this->stream_orders, this->bitmap_cache_version, this->use_bitmap_comp
                       , this->op2);
@@ -329,17 +333,23 @@ public:
 
     virtual void draw(const RDPMemBlt & cmd, const Rect & clip, const Bitmap & oldbmp)
     {
-        uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
-        uint8_t cache_id = (res >> 16) & 0x3;
-        uint16_t cache_idx = res;
+        uint32_t res          = this->bmp_cache.cache_bitmap(oldbmp);
+        bool     in_wait_list = (res >> 16) & 0x80;
+        uint8_t  cache_id     = (res >> 16) & 0x7;
+        uint16_t cache_idx    = res;
+
+        if (this->verbose & 512) {
+            LOG(LOG_INFO, "RDPSerializer: draw MemBlt, cache_id=%u cache_index=%u in_wait_list=%s",
+                cache_id, cache_idx, (in_wait_list ? "true" : "false"));
+        }
 
         if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
-            this->emit_bmp_cache(cache_id, cache_idx);
+            this->emit_bmp_cache(cache_id, cache_idx, in_wait_list);
         }
 
         RDPMemBlt newcmd = cmd;
         newcmd.cache_id = cache_id;
-        newcmd.cache_idx = cache_idx;
+        newcmd.cache_idx = (in_wait_list ? RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX : cache_idx);
 
         this->reserve_order(30);
         RDPOrderCommon newcommon(RDP::MEMBLT, clip);
@@ -352,17 +362,23 @@ public:
     }
 
     virtual void draw(const RDPMem3Blt & cmd, const Rect & clip, const Bitmap & oldbmp) {
-        uint32_t res = this->bmp_cache.cache_bitmap(oldbmp);
-        uint8_t cache_id = (res >> 16) & 0x3;
-        uint16_t cache_idx = res;
+        uint32_t res          = this->bmp_cache.cache_bitmap(oldbmp);
+        bool     in_wait_list = (res >> 16) & 0x80;
+        uint8_t  cache_id     = (res >> 16) & 0x7;
+        uint16_t cache_idx    = res;
+
+        if (this->verbose & 512) {
+            LOG(LOG_INFO, "RDPSerializer: draw Mem3Blt, cache_id=%u cache_index=%u in_wait_list=%s",
+                cache_id, cache_idx, (in_wait_list ? "true" : "false"));
+        }
 
         if ((res >> 24) == BITMAP_ADDED_TO_CACHE){
-            this->emit_bmp_cache(cache_id, cache_idx);
+            this->emit_bmp_cache(cache_id, cache_idx, in_wait_list);
         }
 
         RDPMem3Blt newcmd = cmd;
         newcmd.cache_id = cache_id;
-        newcmd.cache_idx = cache_idx;
+        newcmd.cache_idx = (in_wait_list ? RDPBmpCache::BITMAPCACHE_WAITING_LIST_INDEX : cache_idx);
 
         this->reserve_order(60);
         RDPOrderCommon newcommon(RDP::MEM3BLT, clip);

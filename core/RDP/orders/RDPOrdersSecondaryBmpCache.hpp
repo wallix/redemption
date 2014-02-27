@@ -452,25 +452,27 @@ class RDPBmpCache {
     // +----------------------+------------------------------------------------+
 
     public:
-    int id;
-    int idx;
-    const Bitmap * bmp;
+    int      id;
+    int      idx;
+    const    Bitmap * bmp;
+    bool     persistent;
+    bool     do_not_cache;
     uint32_t verbose;
 
-    RDPBmpCache(const Bitmap * bmp, int id, int idx, int verbose = 0)
-        : id(id), idx(idx), bmp(bmp), verbose(verbose)
-    {
+    RDPBmpCache(const Bitmap * bmp, int id, int idx, bool persistent, bool do_not_cache, int verbose = 0)
+        : id(id), idx(idx), bmp(bmp), persistent(persistent), do_not_cache(do_not_cache),
+          verbose(verbose) {
     }
 
-    RDPBmpCache() : id(0), idx(0), bmp(NULL), verbose(0)
-    {
+    RDPBmpCache()
+        : id(0), idx(0), bmp(NULL), persistent(false), do_not_cache(false), verbose(0) {
     }
 
-    ~RDPBmpCache()
-    {
+    ~RDPBmpCache() {
     }
 
-    void emit(uint8_t session_color_depth, Stream & stream, const int bitmap_cache_version, const int use_bitmap_comp, const int use_compact_packets) const
+    void emit(uint8_t session_color_depth, Stream & stream, const int bitmap_cache_version,
+        const int use_bitmap_comp, const int use_compact_packets) const
     {
         using namespace RDP;
         switch (bitmap_cache_version){
@@ -759,6 +761,10 @@ class RDPBmpCache {
     //                              defined in [MS-RDPBCGR] section
     //                              2.2.9.1.1.3.1.2.2).
 
+    enum {
+          BITMAPCACHE_WAITING_LIST_INDEX = 32767
+    };
+
     void emit_v2_compressed(uint8_t session_color_depth, Stream & stream) const
     {
         using namespace RDP;
@@ -769,17 +775,37 @@ class RDPBmpCache {
 
         uint32_t offset_header = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for length after type minus 7
-        uint16_t cbr2_flags = (CBR2_NO_BITMAP_COMPRESSION_HEADER << 7) & 0xFF80;
+        uint16_t cbr2_flags = (((  CBR2_NO_BITMAP_COMPRESSION_HEADER
+                                 | (this->persistent   ? CBR2_PERSISTENT_KEY_PRESENT : 0)
+                                 | (this->do_not_cache ? CBR2_DO_NOT_CACHE           : 0)) << 7) & 0xFF80);
         uint16_t cbr2_bpp = (((Bpp + 2) << 3) & 0x78);
         stream.out_uint16_le(cbr2_flags | cbr2_bpp | (this->id & 7));
         stream.out_uint8(TS_CACHE_BITMAP_COMPRESSED_REV2); // type
+
+
+        if (this->persistent) {
+            union {
+                uint8_t  sig_8[20];
+                uint32_t sig_32[5];
+            } sig;
+            this->bmp->compute_sha1(sig.sig_8);
+            uint32_t * Key1 = sig.sig_32;
+            uint32_t * Key2 = Key1 + 1;
+            stream.out_uint32_le(*Key1);
+            stream.out_uint32_le(*Key2);
+            if (id == 2) {
+                LOG(LOG_INFO, "id=%u Key1=%08X Key2=%08X", this->id, *Key1, *Key2);
+                LOG(LOG_INFO, "Persistent key");
+                hexdump_d(sig.sig_8, 8);
+            }
+        }
 
         stream.out_2BUE(this->bmp->cx);
         stream.out_2BUE(this->bmp->cy);
         uint32_t offset_bitmapLength = stream.get_offset();
         TODO("define out_4BUE in stream and find a way to predict compressed bitmap size (the problem is to write to it afterward). May be we can keep a compressed version of the bitmap instead of recompressing every time. The first time we would use a conservative encoding for length based on cx and cy.");
         stream.out_uint16_be(0);
-        stream.out_2BUE(this->idx);
+        stream.out_2BUE(this->do_not_cache ? BITMAPCACHE_WAITING_LIST_INDEX : this->idx);
         uint32_t offset_startBitmap = stream.get_offset();
         this->bmp->compress(session_color_depth, stream);
 
@@ -801,7 +827,8 @@ class RDPBmpCache {
         int bitsPerPixelId = nbbytes(this->bmp->original_bpp)+2;
 
         TODO(" some optimisations are possible here if we manage flags  but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.");
-        uint16_t flags = 0;
+        uint16_t flags = ((this->persistent   ? CBR2_PERSISTENT_KEY_PRESENT : 0) |
+                          (this->do_not_cache ? CBR2_DO_NOT_CACHE           : 0));
 
         // header::extraFlags : (flags:9, bitsPerPixelId:3, cacheId:3)
         stream.out_uint16_le((flags << 7)
@@ -810,6 +837,23 @@ class RDPBmpCache {
 
         // header::orderType
         stream.out_uint8(TS_CACHE_BITMAP_UNCOMPRESSED_REV2);
+
+        if (this->persistent) {
+            union {
+                uint8_t  sig_8[20];
+                uint32_t sig_32[5];
+            } sig;
+            this->bmp->compute_sha1(sig.sig_8);
+            uint32_t * Key1 = sig.sig_32;
+            uint32_t * Key2 = Key1 + 1;
+            stream.out_uint32_le(*Key1);
+            stream.out_uint32_le(*Key2);
+            if (id == 2) {
+                LOG(LOG_INFO, "Key1=%08X Key2=%08X", *Key1, *Key2);
+                LOG(LOG_INFO, "Persistent key");
+                hexdump_d(sig.sig_8, 8);
+            }
+        }
 
         // key1 and key1 are not here because flags is not set
         // to CBR2_PERSISTENT_KEY_PRESENT
@@ -847,7 +891,7 @@ class RDPBmpCache {
         //                        the CBR2_DO_NOT_CACHE flag is set, the cacheIndex
         //                        MUST be set to BITMAPCACHE_WAITING_LIST_INDEX
         //                        (32767).
-        stream.out_2BUE(this->idx);
+        stream.out_2BUE(this->do_not_cache ? BITMAPCACHE_WAITING_LIST_INDEX : this->idx);
 
         // No compression header in our case
         // ---------------------------------
@@ -874,7 +918,6 @@ class RDPBmpCache {
         stream.out_copy_bytes(this->bmp->data(), this->bmp->bmp_size);
 
         stream.set_out_uint16_le(stream.get_offset() - (offset_header + 12), offset_header);
-
     }
 
     void receive(uint8_t session_color_depth, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header, const BGRPalette & palette)

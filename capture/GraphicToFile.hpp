@@ -196,17 +196,31 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
     void send_meta_chunk(void)
     {
         BStream header(8);
-        BStream payload(20);
+        BStream payload(34);
         payload.out_uint16_le(3); // WRM FORMAT VERSION 3
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
         payload.out_uint16_le(this->bpp);
-        payload.out_uint16_le(this->bmp_cache.small_entries);
-        payload.out_uint16_le(this->bmp_cache.small_size);
-        payload.out_uint16_le(this->bmp_cache.medium_entries);
-        payload.out_uint16_le(this->bmp_cache.medium_size);
-        payload.out_uint16_le(this->bmp_cache.big_entries);
-        payload.out_uint16_le(this->bmp_cache.big_size);
+        payload.out_uint16_le(this->bmp_cache.cache_0_entries);
+        payload.out_uint16_le(this->bmp_cache.cache_0_size);
+        payload.out_uint16_le(this->bmp_cache.cache_1_entries);
+        payload.out_uint16_le(this->bmp_cache.cache_1_size);
+        payload.out_uint16_le(this->bmp_cache.cache_2_entries);
+        payload.out_uint16_le(this->bmp_cache.cache_2_size);
+
+        payload.out_uint8(this->bmp_cache.number_of_cache);
+
+        payload.out_uint8(this->bmp_cache.cache_0_persistent ? 1 : 0);
+        payload.out_uint8(this->bmp_cache.cache_1_persistent ? 1 : 0);
+        payload.out_uint8(this->bmp_cache.cache_2_persistent ? 1 : 0);
+
+        payload.out_uint16_le(this->bmp_cache.cache_3_entries);
+        payload.out_uint16_le(this->bmp_cache.cache_3_size);
+        payload.out_uint8(this->bmp_cache.cache_3_persistent ? 1 : 0);
+        payload.out_uint16_le(this->bmp_cache.cache_4_entries);
+        payload.out_uint16_le(this->bmp_cache.cache_4_size);
+        payload.out_uint8(this->bmp_cache.cache_4_persistent ? 1 : 0);
+
         payload.mark_end();
 
         WRMChunk_Send chunk(header, META_FILE, payload.size(), 1);
@@ -419,14 +433,30 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void save_bmp_caches()
     {
-        for (size_t i = 0; i < this->bmp_cache.small_entries ; i++){
-            this->emit_bmp_cache(0, i);
+        if (this->bmp_cache.number_of_cache > 0) {
+            for (size_t i = 0; i < this->bmp_cache.cache_0_entries; i++){
+                this->emit_bmp_cache(0, i, false);
+            }
         }
-        for (size_t i = 0; i < this->bmp_cache.medium_entries ; i++){
-            this->emit_bmp_cache(1, i);
+        if (this->bmp_cache.number_of_cache > 1) {
+            for (size_t i = 0; i < this->bmp_cache.cache_1_entries; i++){
+                this->emit_bmp_cache(1, i, false);
+            }
         }
-        for (size_t i = 0; i < this->bmp_cache.big_entries ; i++){
-            this->emit_bmp_cache(2, i);
+        if (this->bmp_cache.number_of_cache > 2) {
+            for (size_t i = 0; i < this->bmp_cache.cache_2_entries; i++){
+                this->emit_bmp_cache(2, i, false);
+            }
+        }
+        if (this->bmp_cache.number_of_cache > 3) {
+            for (size_t i = 0; i < this->bmp_cache.cache_3_entries; i++){
+                this->emit_bmp_cache(3, i, false);
+            }
+        }
+        if (this->bmp_cache.number_of_cache > 4) {
+            for (size_t i = 0; i < this->bmp_cache.cache_4_entries; i++){
+                this->emit_bmp_cache(4, i, false);
+            }
         }
     }
 

@@ -25,7 +25,8 @@
 #define BOOST_TEST_MODULE TestWrmCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "capture.hpp"
 
 BOOST_AUTO_TEST_CASE(TestSplittedCapture)
@@ -104,13 +105,13 @@ BOOST_AUTO_TEST_CASE(TestSplittedCapture)
 
         SQ wrm_seq;
         sq_init_outfilename(&wrm_seq, SQF_PATH_FILE_PID_COUNT_EXTENSION, "./", "capture", ".wrm", groupid);
-        BOOST_CHECK_EQUAL((unsigned)1625, (unsigned)sq_outfilename_filesize(&wrm_seq, 0));
+        BOOST_CHECK_EQUAL((unsigned)1639, (unsigned)sq_outfilename_filesize(&wrm_seq, 0));
         sq_outfilename_unlink(&wrm_seq, 0);
         // Mem3Blt save state = 34 bytes
-        BOOST_CHECK_EQUAL(static_cast<unsigned>(3410) + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(3458), (unsigned)sq_outfilename_filesize(&wrm_seq, 1));
         sq_outfilename_unlink(&wrm_seq, 1);
         // Mem3Blt save state = 34 bytes
-        BOOST_CHECK_EQUAL(static_cast<unsigned>(3386) + 34, (unsigned)sq_outfilename_filesize(&wrm_seq, 2));
+        BOOST_CHECK_EQUAL(static_cast<unsigned>(3434), (unsigned)sq_outfilename_filesize(&wrm_seq, 2));
         sq_outfilename_unlink(&wrm_seq, 2);
         // The destruction of capture object will finalize the metafile content
     }
