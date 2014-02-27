@@ -793,7 +793,7 @@ class RDPBmpCache {
             uint32_t * Key2 = Key1 + 1;
             stream.out_uint32_le(*Key1);
             stream.out_uint32_le(*Key2);
-            if (id == 2) {
+            if (this->verbose & 512) {
                 LOG(LOG_INFO, "id=%u Key1=%08X Key2=%08X", this->id, *Key1, *Key2);
                 LOG(LOG_INFO, "Persistent key");
                 hexdump_d(sig.sig_8, 8);
@@ -848,7 +848,7 @@ class RDPBmpCache {
             uint32_t * Key2 = Key1 + 1;
             stream.out_uint32_le(*Key1);
             stream.out_uint32_le(*Key2);
-            if (id == 2) {
+            if (this->verbose & 512) {
                 LOG(LOG_INFO, "Key1=%08X Key2=%08X", *Key1, *Key2);
                 LOG(LOG_INFO, "Persistent key");
                 hexdump_d(sig.sig_8, 8);

@@ -320,12 +320,16 @@ struct BmpCache {
                 snprintf(filename, sizeof(filename) - 1, "%s/%02X%02X%02X%02X%02X%02X%02X%02X",
                     persistent_path, sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7]);
                 filename[sizeof(filename) - 1] = '\0';
-                LOG(LOG_INFO, "BmpCache: Load from disk cache, filename=\"%s\"", filename);
+                if (this->verbose & 512) {
+                    LOG(LOG_INFO, "BmpCache: Load from disk cache, filename=\"%s\"", filename);
+                }
 
                 FILE * fd = ::fopen(filename, "r");
                 if (!fd) {
-                    LOG(LOG_INFO, "BmpCache: Failed to open persistent disk bitmap file for reading - \"%s\"",
-                        filename);
+                    if (this->verbose & 512) {
+                        LOG(LOG_INFO, "BmpCache: Persistent disk bitmap file \"%s\" does not exist",
+                            filename);
+                    }
                     continue;
                 }
                 uint8_t    original_bpp;
