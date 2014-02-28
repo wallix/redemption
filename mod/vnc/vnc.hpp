@@ -2114,6 +2114,9 @@ TODO(" we should manage cursors bigger then 32 x 32  this is not an RDP protocol
             break;
         }
     }
+    virtual bool is_up_and_running() {
+        return (UP_AND_RUNNING == this->state);
+    }
 };
 
 #endif

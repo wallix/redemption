@@ -4681,6 +4681,10 @@ public:
     {
         this->front.draw(cmd);
     }
+
+    virtual bool is_up_and_running() {
+        return (UP_AND_RUNNING == this->connection_finalization_state);
+    }
 };
 
 #endif

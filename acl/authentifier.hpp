@@ -180,6 +180,8 @@ private:
     KeepAlive keepalive;
     Inactivity inactivity;
 
+    bool wait_for_capture;
+
 public:
     SessionManager(Inifile * ini, Transport & _auth_trans, time_t start_time, time_t acl_start_time)
         : ini(ini)
@@ -190,6 +192,7 @@ public:
         , verbose(ini->debug.auth)
         , keepalive(KeepAlive(ini->globals.keepalive_grace_delay, ini->debug.auth))
         , inactivity(Inactivity(ini->globals.max_tick, acl_start_time, ini->debug.auth))
+        , wait_for_capture(true)
     {
         if (this->verbose & 0x10) {
             LOG(LOG_INFO, "auth::SessionManager");
@@ -328,6 +331,11 @@ public:
                     this->keepalive.start(now);
                 }
             }
+        }
+        if (this->wait_for_capture &&
+            mm.is_up_and_running()) {
+            mm.record(this);
+            this->wait_for_capture = false;
         }
 
         // LOG(LOG_INFO, "connect=%s ini->check=%s", this->connected?"Y":"N", this->ini->check()?"Y":"N");
