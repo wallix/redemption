@@ -3917,28 +3917,44 @@ public:
                 pklpdud.receive(sdata_in.payload);
                 pklpdud.log(LOG_INFO, "Receiving from client Persistent Key List PDU Data");
 
+                static uint16_t cache_0_entry_index = 0;
+                static uint16_t cache_1_entry_index = 0;
+                static uint16_t cache_2_entry_index = 0;
+                static uint16_t cache_3_entry_index = 0;
+                static uint16_t cache_4_entry_index = 0;
+
                 const char                                * client_persistent_path = PERSISTENT_PATH "/client";
                       RDP::BitmapCachePersistentListEntry * entries                = pklpdud.entries;
 
                 if (pklpdud.numEntriesCache0) {
-                    this->bmp_cache->load_from_disk(client_persistent_path, 0, entries, pklpdud.numEntriesCache0);
-                    entries += pklpdud.numEntriesCache0;
+                    this->bmp_cache->load_from_disk(client_persistent_path, 0, entries, pklpdud.numEntriesCache0,
+                        cache_0_entry_index);
+                    entries             += pklpdud.numEntriesCache0;
+                    cache_0_entry_index += pklpdud.numEntriesCache0;
                 }
                 if (pklpdud.numEntriesCache1) {
-                    this->bmp_cache->load_from_disk(client_persistent_path, 1, entries, pklpdud.numEntriesCache1);
-                    entries += pklpdud.numEntriesCache1;
+                    this->bmp_cache->load_from_disk(client_persistent_path, 1, entries, pklpdud.numEntriesCache1,
+                        cache_1_entry_index);
+                    entries             += pklpdud.numEntriesCache1;
+                    cache_1_entry_index += pklpdud.numEntriesCache1;
                 }
                 if (pklpdud.numEntriesCache2) {
-                    this->bmp_cache->load_from_disk(client_persistent_path, 2, entries, pklpdud.numEntriesCache2);
-                    entries += pklpdud.numEntriesCache2;
+                    this->bmp_cache->load_from_disk(client_persistent_path, 2, entries, pklpdud.numEntriesCache2,
+                        cache_2_entry_index);
+                    entries             += pklpdud.numEntriesCache2;
+                    cache_2_entry_index += pklpdud.numEntriesCache2;
                 }
                 if (pklpdud.numEntriesCache3) {
-                    this->bmp_cache->load_from_disk(client_persistent_path, 3, entries, pklpdud.numEntriesCache3);
-                    entries += pklpdud.numEntriesCache3;
+                    this->bmp_cache->load_from_disk(client_persistent_path, 3, entries, pklpdud.numEntriesCache3,
+                        cache_3_entry_index);
+                    entries             += pklpdud.numEntriesCache3;
+                    cache_3_entry_index += pklpdud.numEntriesCache3;
                 }
                 if (pklpdud.numEntriesCache4) {
-                    this->bmp_cache->load_from_disk(client_persistent_path, 4, entries, pklpdud.numEntriesCache4);
-                    entries += pklpdud.numEntriesCache4;
+                    this->bmp_cache->load_from_disk(client_persistent_path, 4, entries, pklpdud.numEntriesCache4,
+                        cache_4_entry_index);
+                    entries             += pklpdud.numEntriesCache4;
+                    cache_4_entry_index += pklpdud.numEntriesCache4;
                 }
             }
 

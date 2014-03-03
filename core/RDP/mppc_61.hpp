@@ -222,8 +222,8 @@ public:
     virtual int decompress(uint8_t * compressed_data, int compressed_data_size,
         int compressionFlags, const uint8_t *& uncompressed_data, uint32_t & uncompressed_data_size)
     {
-        LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
-            this->historyOffset, compressed_data_size, compressionFlags);
+        //LOG(LOG_INFO, "decompress_61: historyOffset=%d compressed_data_size=%d compressionFlags=0x%X",
+        //    this->historyOffset, compressed_data_size, compressionFlags);
 
         uncompressed_data      = NULL;
         uncompressed_data_size = 0;
