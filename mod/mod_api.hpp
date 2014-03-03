@@ -107,6 +107,8 @@ struct mod_api : public Callback, public DrawApi {
     // it usually perform some task identical to what constructor does
     // henceforth it should often be called by constructors
     virtual void refresh_context(Inifile & ini) {}
+
+    virtual bool is_up_and_running() { return false; }
 };
 
 #endif

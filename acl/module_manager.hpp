@@ -82,8 +82,9 @@ public:
     bool last_module;
     bool connected;
 
-    MMApi() : last_module(false)
-            , connected(false) {}
+    MMApi() : mod(NULL)
+        , last_module(false)
+        , connected(false) {}
     virtual ~MMApi() {}
     virtual void remove_mod() = 0;
     virtual void new_mod(int target_module, time_t now, auth_api * acl) = 0;
@@ -99,6 +100,14 @@ public:
     virtual bool is_connected() {
         return this->connected;
     }
+    virtual bool is_up_and_running() {
+        bool res = false;
+        if (this->mod) {
+            res = this->mod->is_up_and_running();
+        }
+        return res;
+    }
+    virtual void record(auth_api * acl) {}
 };
 
 class MMIni : public MMApi {
@@ -766,11 +775,11 @@ public:
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
                 }
             }
-        if (this->connected) this->record(acl);
+        // if (this->connected) this->record(acl);
     }
 
     // Check movie start/stop/pause
-    void record(auth_api * acl)
+    virtual void record(auth_api * acl)
     {
         if (this->ini.globals.movie.get()) {
             //TODO("Move start/stop capture management into module manager. It allows to remove front knwoledge from authentifier and module manager knows when video should or shouldn't be started (creating/closing external module mod_rdp or mod_vnc)") DONE ?

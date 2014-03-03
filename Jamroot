@@ -226,6 +226,7 @@ exe rdpproxy
     :
         <link>static
         <variant>coverage:<library>gcov
+        <variant>coverage:<build>no
     ;
 
 exe redrec
@@ -245,6 +246,7 @@ exe redrec
     :
         <link>static
         <variant>coverage:<library>gcov
+        <variant>coverage:<build>no
     ;
 
 exe rdptproxy
@@ -267,6 +269,7 @@ exe rdptproxy
     :
         <link>static
         <variant>coverage:<library>gcov
+        <variant>coverage:<build>no
     ;
 
 #
@@ -275,15 +278,21 @@ exe rdptproxy
 
 exe tls_test_client 
     : ftests/tls_test_client.cpp cryptofile openssl crypto png z dl snappy 
-    : <link>static <variant>coverage:<library>gcov
+    : <link>static 
+    <variant>coverage:<library>gcov
+    <variant>coverage:<build>no
  ;
 exe tls_test_server 
     : ftests/tls_test_server.cpp cryptofile openssl crypto png z dl snappy 
-    : <link>static <variant>coverage:<library>gcov
+    : <link>static 
+    <variant>coverage:<library>gcov
+    <variant>coverage:<build>no
 ;
 exe rgx_cmp 
     : ftests/rgx_cmp.cpp 
-    : <link>static <variant>coverage:<library>gcov
+    : <link>static 
+    <variant>coverage:<library>gcov
+    <variant>coverage:<build>no
 ;
 
 #exe freetype_draw : ftests/freetype_draw.cpp freetype 
@@ -482,7 +491,6 @@ unit-test test_keymapSym : tests/test_keymapSym.cpp libboost_unit_test : <varian
 
 unit-test test_rio_generator : tests/transport/rio/test_rio_generator.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rio_check : tests/transport/rio/test_rio_check.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_rio_test : tests/transport/rio/test_rio_test.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rio_socket : tests/transport/rio/test_rio_socket.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;
 #unit-test test_rio_socket_tls : tests/transport/rio/test_rio_socket_tls.cpp openssl crypto z dl libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_rio_insequence : tests/transport/rio/test_rio_insequence.cpp cryptofile openssl crypto z dl snappy libboost_unit_test : <variant>coverage:<library>gcov ;

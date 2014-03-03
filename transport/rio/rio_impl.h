@@ -50,7 +50,6 @@
 
 #include "rio/rio_generator.h"
 #include "rio/rio_check.h"
-#include "rio/rio_test.h"
 #include "rio/rio_outfile.h"
 #include "rio/rio_infile.h"
 #include "rio/rio_socket.h"
@@ -88,7 +87,6 @@ extern "C" {
 typedef enum {
     RIO_TYPE_GENERATOR,
     RIO_TYPE_CHECK,
-    RIO_TYPE_TEST,
     RIO_TYPE_OUTFILE,
     RIO_TYPE_INFILE,
     RIO_TYPE_SOCKET,
@@ -140,7 +138,6 @@ struct RIO {
     union {
       struct RIOGenerator         generator;
       struct RIOCheck             check;
-      struct RIOTest              test;
       struct RIOOutfile           outfile;
       struct RIOInfile            infile;
       struct RIOSocket            socket;
@@ -767,30 +764,6 @@ RIO * rio_new_check(RIO_ERROR * error, const void * data, size_t len)
 }
 
 
-RIO_ERROR rio_init_test(RIO * self, const void * data_check, size_t len_check, const void * data_gen, size_t len_gen)
-{
-    self->rt_type = RIO_TYPE_TEST;
-    self->err = rio_m_RIOTest_constructor(&(self->u.test), data_check, len_check, data_gen, len_gen);
-    return self->err;
-}
-
-RIO * rio_new_test(RIO_ERROR * error, const void * data_check, size_t len_check, const void * data_gen, size_t len_gen)
-{
-    RIO * self = (RIO *)malloc(sizeof(RIO));
-    if (self == 0){
-        if (error){ *error = RIO_ERROR_MALLOC; }
-        return NULL;
-    }
-    RIO_ERROR res = rio_init_test(self, data_check, len_check, data_gen, len_gen);
-    if (error) { *error = res; }
-    if (res != RIO_ERROR_OK){
-        free(self);
-        return NULL;
-    }
-    return self;
-}
-
-
 RIO_ERROR rio_init_socket(RIO * self, int sck)
 {
     self->rt_type = RIO_TYPE_SOCKET;
@@ -1002,9 +975,6 @@ RIO_ERROR rio_seek(RIO * rt, int64_t offset, int whence)
         case RIO_TYPE_CHECK:
             rt->err = rio_m_RIOCheck_seek(&(rt->u.check), offset, whence);
         break;
-        case RIO_TYPE_TEST:
-            rt->err = rio_m_RIOTest_seek(&(rt->u.test), offset, whence);
-        break;
         case RIO_TYPE_OUTFILE:
             rt->err = rio_m_RIOOutfile_seek(&(rt->u.outfile), offset, whence);
         break;
@@ -1064,9 +1034,6 @@ RIO_ERROR rio_get_status(RIO * rt)
         break;
         case RIO_TYPE_CHECK:
             rt->err = rio_m_RIOCheck_get_status(&(rt->u.check));
-        break;
-        case RIO_TYPE_TEST:
-            rt->err = rio_m_RIOTest_get_status(&(rt->u.test));
         break;
         case RIO_TYPE_OUTFILE:
             rt->err = rio_m_RIOOutfile_get_status(&(rt->u.outfile));
@@ -1129,11 +1096,6 @@ ssize_t rio_recv(RIO * rt, void * data, size_t len)
     }
     case RIO_TYPE_CHECK:{
         ssize_t res = rio_m_RIOCheck_recv(&(rt->u.check), data, len);
-        if (res < 0){ rt->err = (RIO_ERROR)-res; }
-        return res;
-    }
-    case RIO_TYPE_TEST:{
-        ssize_t res = rio_m_RIOTest_recv(&(rt->u.test), data, len);
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
@@ -1219,11 +1181,6 @@ ssize_t rio_send(RIO * rt, const void * data, size_t len)
     }
     case RIO_TYPE_CHECK: {
         ssize_t res = rio_m_RIOCheck_send(&(rt->u.check), data, len);
-        if (res < 0){ rt->err = (RIO_ERROR)-res; }
-        return res;
-    }
-    case RIO_TYPE_TEST: {
-        ssize_t res = rio_m_RIOTest_send(&(rt->u.test), data, len);
         if (res < 0){ rt->err = (RIO_ERROR)-res; }
         return res;
     }
@@ -1313,9 +1270,6 @@ void rio_clear(RIO * rt)
         case RIO_TYPE_CHECK:
             rt->err = rio_m_RIOCheck_destructor(&(rt->u.check));
         break;
-        case RIO_TYPE_TEST:
-            rt->err = rio_m_RIOTest_destructor(&(rt->u.test));
-        break;
         case RIO_TYPE_OUTFILE:
             rt->err = rio_m_RIOOutfile_destructor(&(rt->u.outfile));
         break;
@@ -1395,9 +1349,6 @@ RIO_ERROR rio_sign(RIO * rt, unsigned char * buf, size_t size, size_t * len)
         break;
         case RIO_TYPE_CHECK:
             rt->err = rio_m_RIOCheck_sign(&(rt->u.check), buf, size, len);
-        break;
-        case RIO_TYPE_TEST:
-            rt->err = rio_m_RIOTest_sign(&(rt->u.test), buf, size, len);
         break;
         case RIO_TYPE_OUTFILE:
             rt->err = rio_m_RIOOutfile_sign(&(rt->u.outfile), buf, size, len);
