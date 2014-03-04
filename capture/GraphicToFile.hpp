@@ -195,9 +195,11 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
 
     void send_meta_chunk(void)
     {
+        uint8_t wrm_format_version = 3;
+
         BStream header(8);
-        BStream payload(34);
-        payload.out_uint16_le(3); // WRM FORMAT VERSION 3
+        BStream payload(35);
+        payload.out_uint16_le(wrm_format_version);
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
         payload.out_uint16_le(this->bpp);
@@ -208,18 +210,21 @@ REDOC("To keep things easy all chunks have 8 bytes headers"
         payload.out_uint16_le(this->bmp_cache.cache_2_entries);
         payload.out_uint16_le(this->bmp_cache.cache_2_size);
 
-        payload.out_uint8(this->bmp_cache.number_of_cache);
+        if (wrm_format_version > 3) {
+            payload.out_uint8(this->bmp_cache.number_of_cache);
+            payload.out_uint8(this->bmp_cache.use_waiting_list ? 1 : 0);
 
-        payload.out_uint8(this->bmp_cache.cache_0_persistent ? 1 : 0);
-        payload.out_uint8(this->bmp_cache.cache_1_persistent ? 1 : 0);
-        payload.out_uint8(this->bmp_cache.cache_2_persistent ? 1 : 0);
+            payload.out_uint8(this->bmp_cache.cache_0_persistent ? 1 : 0);
+            payload.out_uint8(this->bmp_cache.cache_1_persistent ? 1 : 0);
+            payload.out_uint8(this->bmp_cache.cache_2_persistent ? 1 : 0);
 
-        payload.out_uint16_le(this->bmp_cache.cache_3_entries);
-        payload.out_uint16_le(this->bmp_cache.cache_3_size);
-        payload.out_uint8(this->bmp_cache.cache_3_persistent ? 1 : 0);
-        payload.out_uint16_le(this->bmp_cache.cache_4_entries);
-        payload.out_uint16_le(this->bmp_cache.cache_4_size);
-        payload.out_uint8(this->bmp_cache.cache_4_persistent ? 1 : 0);
+            payload.out_uint16_le(this->bmp_cache.cache_3_entries);
+            payload.out_uint16_le(this->bmp_cache.cache_3_size);
+            payload.out_uint8(this->bmp_cache.cache_3_persistent ? 1 : 0);
+            payload.out_uint16_le(this->bmp_cache.cache_4_entries);
+            payload.out_uint16_le(this->bmp_cache.cache_4_size);
+            payload.out_uint8(this->bmp_cache.cache_4_persistent ? 1 : 0);
+        }
 
         payload.mark_end();
 

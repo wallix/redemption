@@ -38,6 +38,7 @@ struct BmpCache {
     const uint8_t bpp;
 
     uint8_t number_of_cache;
+    bool    use_waiting_list;
 
     uint16_t cache_0_entries;
     uint16_t cache_0_size;
@@ -67,6 +68,7 @@ struct BmpCache {
     public:
         BmpCache(const uint8_t bpp,
                  uint8_t number_of_cache,
+                 bool use_waiting_list,
                  uint16_t cache_0_entries,     uint16_t cache_0_size,     bool cache_0_persistent,
                  uint16_t cache_1_entries,     uint16_t cache_1_size,     bool cache_1_persistent,
                  uint16_t cache_2_entries,     uint16_t cache_2_size,     bool cache_2_persistent,
@@ -75,6 +77,7 @@ struct BmpCache {
                  uint32_t verbose = 0)
             : bpp(bpp)
             , number_of_cache(number_of_cache)
+            , use_waiting_list(use_waiting_list)
             , cache_0_entries   (cache_0_entries)
             , cache_0_size      (cache_0_size)
             , cache_0_persistent(cache_0_persistent)
@@ -90,6 +93,7 @@ struct BmpCache {
             , cache_4_entries   (cache_4_entries)
             , cache_4_size      (cache_4_size)
             , cache_4_persistent(cache_4_persistent)
+            , stamp(0)
             , verbose(verbose)
         {
             if (this->number_of_cache > MAXIMUM_NUMBER_OF_CACHES) {
@@ -221,15 +225,15 @@ struct BmpCache {
             }
             id = id_real;
 
-            unsigned oldstamp = this->stamps[id_real][0];
+            unsigned oldstamp = this->stamps[id][0];
 
             for (uint16_t cidx = 0 ; cidx < entries; cidx++) {
-                if (0 == memcmp(bmp_sha1, this->sha1[id_real][cidx], sizeof(bmp_sha1))) {
-                    //LOG(LOG_INFO, "Bitmap already in cache: this->cache[%u][%u]=%p", id_real, cidx,
-                    //    this->cache[id_real][cidx]);
+                if (0 == memcmp(bmp_sha1, this->sha1[id][cidx], sizeof(bmp_sha1))) {
+                    //LOG(LOG_INFO, "Bitmap already in cache: this->cache[%u][%u]=%p", id, cidx,
+                    //    this->cache[id][cidx]);
                     //hexdump_d(bmp_sha1, sizeof(bmp_sha1));
-                    if (this->cache[id_real][cidx]->cx == bmp->cx) {
-                        if (this->cache[id_real][cidx]->cy == bmp->cy) {
+                    if (this->cache[id][cidx]->cx == bmp->cx) {
+                        if (this->cache[id][cidx]->cy == bmp->cy) {
                             if (this->verbose & 512) {
                                 if (persistent) {
                                     LOG(LOG_INFO,
@@ -239,13 +243,13 @@ struct BmpCache {
                                 }
                             }
                             delete bmp;
-                            return (BITMAP_FOUND_IN_CACHE << 24) | (id_real << 16) | cidx;
+                            return (BITMAP_FOUND_IN_CACHE << 24) | (id << 16) | cidx;
                         }
                     }
                 }
-                if (this->stamps[id_real][cidx] < oldstamp) {
+                if (this->stamps[id][cidx] < oldstamp) {
                     oldest_cidx = cidx;
-                    oldstamp    = this->stamps[id_real][cidx];
+                    oldstamp    = this->stamps[id][cidx];
                 }
             }
 

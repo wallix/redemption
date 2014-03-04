@@ -52,7 +52,7 @@ struct ClientInfo {
     uint32_t cache5_entries;
     bool     cache5_persistent;
     uint32_t cache5_size;
-    int bitmap_cache_persist_enable; /* 0, 1 or 2 */
+    int cache_flags;
     int bitmap_cache_version; /* 0 = original version, 2 = v2 */
 
     /* pointer info */
@@ -110,7 +110,7 @@ struct ClientInfo {
         this->cache5_persistent = false;
         this->cache5_size = 4096;
 
-        this->bitmap_cache_persist_enable = 0; /* 0 or 2 */
+        this->cache_flags = 0;
         this->bitmap_cache_version = 0; /* 0 = original version, 2 = v2 */
         /* pointer info */
         this->pointer_cache_entries = 0;

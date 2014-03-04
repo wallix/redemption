@@ -557,6 +557,7 @@ struct Inifile : public FieldObserver {
         uint32_t max_color_depth;   // 0 - Default (24-bit), 1 - 8-bit, 2 - 15-bit, 3 - 16-bit, 4 - 24-bit, 5 - 32-bit (not yet supported)
 
         bool persistent_disk_bitmap_cache;  // default (Disabled)
+        bool cache_waiting_list;            // default (Enable)
     } client;
 
     struct {
@@ -574,6 +575,7 @@ struct Inifile : public FieldObserver {
         bool enable_kerberos;
 
         bool persistent_disk_bitmap_cache;  // default (Disabled)
+        bool cache_waiting_list;            // default (Enable)
     } mod_rdp;
 
     struct
@@ -898,6 +900,7 @@ public:
         this->client.rdp_compression                     = 0;
         this->client.max_color_depth                     = 24;
         this->client.persistent_disk_bitmap_cache        = false;
+        this->client.cache_waiting_list                  = true;
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
@@ -911,6 +914,7 @@ public:
         this->mod_rdp.open_session_timeout              = 0;
         this->mod_rdp.certificate_change_action         = 0;
         this->mod_rdp.persistent_disk_bitmap_cache      = false;
+        this->mod_rdp.cache_waiting_list                = true;
 
         this->mod_rdp.extra_orders.empty();
         // End Section "mod_rdp"
@@ -1335,6 +1339,9 @@ public:
             else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
                 this->client.persistent_disk_bitmap_cache = bool_from_cstr(value);
             }
+            else if (0 == strcmp(key, "cache_waiting_list")) {
+                this->client.cache_waiting_list = bool_from_cstr(value);
+            }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
             }
@@ -1367,6 +1374,9 @@ public:
             }
             else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
                 this->mod_rdp.persistent_disk_bitmap_cache = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "cache_waiting_list")) {
+                this->mod_rdp.cache_waiting_list = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

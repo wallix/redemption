@@ -38,10 +38,10 @@
 #include "image_capture.hpp"
 
 const char expected_Red_on_Blue_wrm[] =
-/* 0000 */ "\xEE\x03\x2A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=42 0001: 1 order
+/* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
            "\x03\x00\x64\x00\x64\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
-           "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+           //"\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // For WRM version >3
 
 /* 0000 */ "\x00\x10\x75\x00\x00\x00\x01\x00"
 /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(TestSaveCache)
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, 2, 256, false, 2, 1024, false, 2, 4096, false);
+    BmpCache bmp_cache(24, 3, false, 2, 256, false, 2, 1024, false, 2, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);
@@ -140,10 +140,10 @@ BOOST_AUTO_TEST_CASE(TestReloadSaveCache)
 }
 
 const char expected_reset_rect_wrm[] =
-/* 0000 */ "\xEE\x03\x2A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=42 0001: 1 order
+/* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
            "\x03\x00\x64\x00\x64\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
            "\x02\x00\x00\x01\x02\x00\x00\x04\x02\x00\x00\x10"  // caches sizes
-           "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+           //"\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // For WRM version >3
 
 /* 0000 */ "\x00\x10\x75\x00\x00\x00\x01\x00"
 /* 0000 */ "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52" //.PNG........IHDR
@@ -219,7 +219,7 @@ BOOST_AUTO_TEST_CASE(TestSaveOrderStates)
     CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1, 511);
     Inifile ini;
     ini.debug.primary_orders = 1;
-    BmpCache bmp_cache(24, 3, 2, 256, false, 2, 1024, false, 2, 4096, false);
+    BmpCache bmp_cache(24, 3, false, 2, 256, false, 2, 1024, false, 2, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.timestamp(now);

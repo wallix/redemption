@@ -929,8 +929,8 @@ struct InfoPacket {
                 throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
             }
 
-            stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientAddress, 
-                                        this->extendedInfoPacket.cbClientAddress, 
+            stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientAddress,
+                                        this->extendedInfoPacket.cbClientAddress,
                                         sizeof(this->extendedInfoPacket.clientAddress));
 
             // cbClientDir
@@ -952,7 +952,7 @@ struct InfoPacket {
                 throw Error(ERR_MCS_INFOPACKET_TRUNCATED);
             }
 
-            stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientDir, 
+            stream.in_uni_to_ascii_str(this->extendedInfoPacket.clientDir,
                                         this->extendedInfoPacket.cbClientDir,
                                         sizeof(this->extendedInfoPacket.clientDir)
                                         );
@@ -974,7 +974,7 @@ struct InfoPacket {
             // Performance Flags
             if (stream.p + 4 > stream.end){
                 LOG(LOG_ERR, "Missing InfoPacket.performanceFlags");
-                return; 
+                return;
             }
             this->extendedInfoPacket.performanceFlags = stream.in_uint32_le();
 
@@ -984,13 +984,13 @@ struct InfoPacket {
                 return;
             }
             this->extendedInfoPacket.cbAutoReconnectLen = stream.in_uint16_le();
-            
+
             if (stream.p + this->extendedInfoPacket.cbAutoReconnectLen > stream.end) {
                 LOG(LOG_ERR, "Missing data for InfoPacket.cbAutoReconnectLen");
                 this->extendedInfoPacket.cbAutoReconnectLen = 0;
                 return;
             }
-            stream.in_uni_to_ascii_str(this->extendedInfoPacket.autoReconnectCookie, 
+            stream.in_uni_to_ascii_str(this->extendedInfoPacket.autoReconnectCookie,
                                         this->extendedInfoPacket.cbAutoReconnectLen,
                                         sizeof(this->extendedInfoPacket.autoReconnectCookie));
 
@@ -1012,7 +1012,7 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::flags %#x", this->flags);
         LOG(LOG_INFO, "InfoPacket::flags:INFO_MOUSE %s",              (flags & INFO_MOUSE)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_DISABLECTRLALTDEL %s",  (flags & INFO_DISABLECTRLALTDEL)?"yes":"no");
-        LOG(LOG_INFO, "InfoPacket::flags:INFO_AUTOLOGON %s",          (flags & INFO_AUTOLOGON)?"yes":"no");
+        LOG(LOG_INFO, "InfoPacket::flags:INFO_AUTOLOGON %s",          (((this->Password[1]|this->Password[0]) != 0) * INFO_AUTOLOGON)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_UNICODE %s",            (flags & INFO_UNICODE)?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_MAXIMIZESHELL  %s",     (flags & INFO_MAXIMIZESHELL )?"yes":"no");
         LOG(LOG_INFO, "InfoPacket::flags:INFO_LOGONNOTIFY %s",        (flags & INFO_LOGONNOTIFY)?"yes":"no");

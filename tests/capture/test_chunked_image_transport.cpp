@@ -40,10 +40,10 @@
 BOOST_AUTO_TEST_CASE(TestImageChunk)
 {
     const char expected_stripped_wrm[] =
-    /* 0000 */ "\xEE\x03\x2A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=42 0001: 1 order
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-               "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+               //"\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // For WRM version >3
 
 // Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(TestImageChunk)
         Rect scr(0, 0, 20, 10);
         CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1, 511);
         Inifile ini;
-        BmpCache bmp_cache(24, 3, 600, 256, false, 300, 1024, false, 262, 4096, false);
+        BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
         RDPDrawable drawable(scr.cx, scr.cy);
         GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
         consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -102,10 +102,10 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
     const char expected[] =
-    /* 0000 */ "\xEE\x03\x2A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=42 0001: 1 order
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-               "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+               //"\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // For WRM version >3
 
 // Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGMediumChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, 600, 256, false, 300, 1024, false, 262, 4096, false);
+    BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);
@@ -174,10 +174,10 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     // Easier to do than write tests with huge pngs to force PNG chunking.
 
     const char expected[] =
-    /* 0000 */ "\xEE\x03\x2A\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=42 0001: 1 order
+    /* 0000 */ "\xEE\x03\x1C\x00\x00\x00\x01\x00" // 03EE: META 0010: chunk_len=28 0001: 1 order
                "\x03\x00\x14\x00\x0A\x00\x18\x00" // WRM version = 3, width = 20, height=10, bpp=24
                "\x58\x02\x00\x01\x2c\x01\x00\x04\x06\x01\x00\x10"
-               "\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+               //"\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // For WRM version >3
 
 // Initial black PNG image
 /* 0000 */ "\x00\x10\x50\x00\x00\x00\x01\x00"
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(TestImagePNGSmallChunks)
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1, 511);
     Inifile ini;
-    BmpCache bmp_cache(24, 3, 600, 256, false, 300, 1024, false, 262, 4096, false);
+    BmpCache bmp_cache(24, 3, false, 600, 256, false, 300, 1024, false, 262, 4096, false);
     RDPDrawable drawable(scr.cx, scr.cy);
     GraphicToFile consumer(now, &trans, scr.cx, scr.cy, 24, bmp_cache, drawable, ini);
     consumer.draw(RDPOpaqueRect(scr, RED), scr);

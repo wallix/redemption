@@ -64,6 +64,11 @@
 // |                                      | is sent twice before it is cached).|
 // +--------------------------------------+------------------------------------+
 
+enum {
+      PERSISTENT_KEYS_EXPECTED_FLAG = 0x0001
+    , ALLOW_CACHE_WAITING_LIST_FLAG = 0x0002
+};
+
 // pad2 (1 byte): An 8-bit, unsigned integer. Padding. Values in this field MUST
 //   be ignored.
 
@@ -166,7 +171,7 @@ struct BmpCache2Caps : public Capability {
         this->bitmapCache3CellInfo = stream.in_uint32_le();
         this->bitmapCache4CellInfo = stream.in_uint32_le();
         stream.in_skip_bytes(12);
-      }
+    }
 
     void log(const char * msg){
         LOG(LOG_INFO, "%s BitmapCache2 caps (%u bytes)", msg, this->len);
@@ -174,15 +179,25 @@ struct BmpCache2Caps : public Capability {
         LOG(LOG_INFO, "BitmapCache2 caps::pad1 %u", this->pad1);
         LOG(LOG_INFO, "BitmapCache2 caps::numCellCache %u", this->numCellCaches);
         if (this->numCellCaches < 1){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache0CellInfo %u", this->bitmapCache0CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache0CellInfo NumEntries=%u persistent=%s",
+            (this->bitmapCache0CellInfo & 0x7fffffff),
+            (this->bitmapCache0CellInfo & 0x80000000) ? "yes" : "no");
         if (this->numCellCaches < 2){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache1CellInfo %u", this->bitmapCache1CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache1CellInfo NumEntries=%u persistent=%s",
+            (this->bitmapCache1CellInfo & 0x7fffffff),
+            (this->bitmapCache1CellInfo & 0x80000000) ? "yes" : "no");
         if (this->numCellCaches < 3){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache2CellInfo %u", this->bitmapCache2CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache2CellInfo NumEntries=%u persistent=%s",
+            (this->bitmapCache2CellInfo & 0x7fffffff),
+            (this->bitmapCache2CellInfo & 0x80000000) ? "yes" : "no");
         if (this->numCellCaches < 4){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache3CellInfo %u", this->bitmapCache3CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache3CellInfo NumEntries=%u persistent=%s",
+            (this->bitmapCache3CellInfo & 0x7fffffff),
+            (this->bitmapCache3CellInfo & 0x80000000) ? "yes" : "no");
         if (this->numCellCaches < 5){ return; }
-        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache4CellInfo %u", this->bitmapCache4CellInfo);
+        LOG(LOG_INFO, "BitmapCache2 caps::bitampCache4CellInfo NumEntries=%u persistent=%s",
+            (this->bitmapCache4CellInfo & 0x7fffffff),
+            (this->bitmapCache4CellInfo & 0x80000000) ? "yes" : "no");
     }
 };
 

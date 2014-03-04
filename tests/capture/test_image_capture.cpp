@@ -25,7 +25,8 @@
 #define BOOST_TEST_MODULE TestImageCapture
 #include <boost/test/auto_unit_test.hpp>
 
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "test_orders.hpp"
 
 #include "transport.hpp"

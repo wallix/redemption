@@ -21,10 +21,11 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestXXX
+#define BOOST_TEST_MODULE TestFileToGraphic
 #include <boost/test/auto_unit_test.hpp>
 
 #define LOGNULL
+//#define LOGPRINT
 
 #include "outfilenametransport.hpp"
 #include "infiletransport.hpp"
@@ -73,6 +74,7 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     BmpCache bmp_cache(
         player.bmp_cache->bpp,
         player.bmp_cache->number_of_cache,
+        player.bmp_cache->use_waiting_list,
         player.bmp_cache->cache_0_entries,
         player.bmp_cache->cache_0_size,
         player.bmp_cache->cache_0_persistent,
@@ -111,13 +113,13 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 
-    BOOST_CHECK_EQUAL((unsigned)499921, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 0));
+    BOOST_CHECK_EQUAL((unsigned)490531, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 0));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 0);
     // Mem3Blt save state = 34 bytes
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(1264003), (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(1249590), (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
     // Mem3Blt save state = 34 bytes
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(360530), (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(365256), (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
 }
 
@@ -161,13 +163,23 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
 
 //    BmpCache bmp_cache(
 //        player.bmp_cache->bpp,
-//        3,
-//        player.bmp_cache->small_entries,
-//        player.bmp_cache->small_size,
-//        player.bmp_cache->medium_entries,
-//        player.bmp_cache->medium_size,
-//        player.bmp_cache->big_entries,
-//        player.bmp_cache->big_size);
+//        player.bmp_cache->number_of_cache,
+//        player.bmp_cache->use_waiting_list,
+//        player.bmp_cache->cache_0_entries,
+//        player.bmp_cache->cache_0_size,
+//        player.bmp_cache->cache_0_persistent,
+//        player.bmp_cache->cache_1_entries,
+//        player.bmp_cache->cache_1_size,
+//        player.bmp_cache->cache_1_persistent,
+//        player.bmp_cache->cache_2_entries,
+//        player.bmp_cache->cache_2_size,
+//        player.bmp_cache->cache_2_persistent,
+//        player.bmp_cache->cache_3_entries,
+//        player.bmp_cache->cache_3_size,
+//        player.bmp_cache->cache_3_persistent,
+//        player.bmp_cache->cache_4_entries,
+//        player.bmp_cache->cache_4_size,
+//        player.bmp_cache->cache_4_persistent);
 
 //    RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
 //    NativeCapture wrm_recorder(

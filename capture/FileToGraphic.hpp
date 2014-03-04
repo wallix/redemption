@@ -110,21 +110,22 @@ struct FileToGraphic
     uint16_t info_height;
     uint16_t info_bpp;
     uint16_t info_number_of_cache;
+    bool     info_use_waiting_list;
     uint16_t info_cache_0_entries;
     uint16_t info_cache_0_size;
-    uint16_t info_cache_0_persistent;
+    bool     info_cache_0_persistent;
     uint16_t info_cache_1_entries;
     uint16_t info_cache_1_size;
-    uint16_t info_cache_1_persistent;
+    bool     info_cache_1_persistent;
     uint16_t info_cache_2_entries;
     uint16_t info_cache_2_size;
-    uint16_t info_cache_2_persistent;
+    bool     info_cache_2_persistent;
     uint16_t info_cache_3_entries;
     uint16_t info_cache_3_size;
-    uint16_t info_cache_3_persistent;
+    bool     info_cache_3_persistent;
     uint16_t info_cache_4_entries;
     uint16_t info_cache_4_size;
-    uint16_t info_cache_4_persistent;
+    bool     info_cache_4_persistent;
 
     bool ignore_frame_in_timeval;
 
@@ -170,21 +171,22 @@ struct FileToGraphic
         , info_height(0)
         , info_bpp(0)
         , info_number_of_cache(0)
+        , info_use_waiting_list(true)
         , info_cache_0_entries(0)
         , info_cache_0_size(0)
-        , info_cache_0_persistent(0)
+        , info_cache_0_persistent(false)
         , info_cache_1_entries(0)
         , info_cache_1_size(0)
-        , info_cache_1_persistent(0)
+        , info_cache_1_persistent(false)
         , info_cache_2_entries(0)
         , info_cache_2_size(0)
-        , info_cache_2_persistent(0)
+        , info_cache_2_persistent(false)
         , info_cache_3_entries(0)
         , info_cache_3_size(0)
-        , info_cache_3_persistent(0)
+        , info_cache_3_persistent(false)
         , info_cache_4_entries(0)
         , info_cache_4_size(0)
-        , info_cache_4_persistent(0)
+        , info_cache_4_persistent(false)
         , ignore_frame_in_timeval(false)
     {
         init_palette332(this->palette); // We don't really care movies are always 24 bits for now
@@ -595,10 +597,16 @@ struct FileToGraphic
                 this->info_cache_2_size           = this->stream.in_uint16_le();
 
                 if (this->info_version <= 3) {
-                    this->info_number_of_cache = 3;
+                    this->info_number_of_cache  = 3;
+                    this->info_use_waiting_list = true;
+
+                    this->info_cache_0_persistent = false;
+                    this->info_cache_1_persistent = false;
+                    this->info_cache_2_persistent = false;
                 }
                 else {
-                    this->info_number_of_cache = this->stream.in_uint8();
+                    this->info_number_of_cache  = this->stream.in_uint8();
+                    this->info_use_waiting_list = (this->stream.in_uint8() ? true : false);
 
                     this->info_cache_0_persistent = (this->stream.in_uint8() ? true : false);
                     this->info_cache_1_persistent = (this->stream.in_uint8() ? true : false);
@@ -617,6 +625,7 @@ struct FileToGraphic
 
                 if (!this->meta_ok){
                     this->bmp_cache = new BmpCache(this->info_bpp, this->info_number_of_cache,
+                        this->info_use_waiting_list,
                         this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent,
                         this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent,
                         this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent,
