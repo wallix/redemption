@@ -588,21 +588,7 @@ public:
 
     void save_persistent_disk_bitmap_cache() const {
         const char * client_persistent_path = PERSISTENT_PATH "/client";
-        if ((this->client_info.number_of_cache > 0) && this->client_info.cache1_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 0);
-        }
-        if ((this->client_info.number_of_cache > 1) && this->client_info.cache2_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 1);
-        }
-        if ((this->client_info.number_of_cache > 2) && this->client_info.cache3_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 2);
-        }
-        if ((this->client_info.number_of_cache > 3) && this->client_info.cache4_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 3);
-        }
-        if ((this->client_info.number_of_cache > 4) && this->client_info.cache5_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 4);
-        }
+        this->bmp_cache->save_all_to_disk(client_persistent_path);
     }
 
     virtual void reset(){

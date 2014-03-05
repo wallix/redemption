@@ -175,6 +175,28 @@ struct BmpCache {
             return false;
         }
 
+        inline uint16_t get_cache_usage(uint8_t cache_id, uint16_t max_cache_entries) {
+            REDASSERT((cache_id & IN_WAIT_LIST) == 0);
+
+            uint16_t cache_entries = 0;
+            for (unsigned cache_index = 0; cache_index < max_cache_entries; cache_index++) {
+                if (this->cache[cache_id][cache_index]) {
+                    cache_entries++;
+                }
+            }
+
+            return cache_entries;
+        }
+
+        void log() {
+            LOG(LOG_INFO, "BmpCache: (0=>%u, %u) (1=>%u, %u) (2=>%u, %u) (3=>%u, %u) (4=>%u, %u)",
+                get_cache_usage(0, this->cache_0_entries), this->cache_0_entries,
+                get_cache_usage(1, this->cache_1_entries), this->cache_1_entries,
+                get_cache_usage(2, this->cache_2_entries), this->cache_2_entries,
+                get_cache_usage(3, this->cache_3_entries), this->cache_3_entries,
+                get_cache_usage(4, this->cache_4_entries), this->cache_4_entries);
+        }
+
         TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap");
         uint32_t cache_bitmap(const Bitmap & oldbmp) {
             const Bitmap * bmp = new Bitmap(this->bpp, oldbmp);
@@ -378,6 +400,24 @@ struct BmpCache {
                         "BmpCache: Load from disk cache, cache_id=%u cache_index=%u cx=%u cy=%u size=%u",
                         cache_id, cache_index, bmp->cx, bmp->cy, bmp->bmp_size);
                 }
+            }
+        }
+
+        void save_all_to_disk(const char * persistent_path) {
+                 if ((this->number_of_cache > 0) && this->cache_0_persistent) {
+                this->save_to_disk(persistent_path, 0);
+            }
+            else if ((this->number_of_cache > 1) && this->cache_1_persistent) {
+                this->save_to_disk(persistent_path, 1);
+            }
+            else if ((this->number_of_cache > 2) && this->cache_2_persistent) {
+                this->save_to_disk(persistent_path, 2);
+            }
+            else if ((this->number_of_cache > 3) && this->cache_3_persistent) {
+                this->save_to_disk(persistent_path, 3);
+            }
+            else if ((this->number_of_cache > 4) && this->cache_4_persistent) {
+                this->save_to_disk(persistent_path, 4);
             }
         }
 
