@@ -211,7 +211,7 @@ struct mod_rdp : public mod_api {
         , front(front)
         , use_rdp5(1)
         , keylayout(info.keylayout)
-        , orders(0)
+        , orders(verbose)
         , share_id(0)
         , userid(0)
         , version(0)
