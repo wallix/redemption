@@ -275,7 +275,7 @@ struct BmpCache {
                 }
             }
 
-            if (persistent) {
+            if (persistent & this->use_waiting_list) {
                 // The bitmap cache is persistent.
                 bool bitmap_encountered = false;
 
@@ -301,7 +301,7 @@ struct BmpCache {
                                     LOG(LOG_INFO,
                                         "BmpCache: Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u",
                                         bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3],
-                                        bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7], cidx);
+                                        bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7], oldest_cidx);
                                 }
 
                                 break;
