@@ -171,7 +171,7 @@ public:
         , orders(NULL)
         , up_and_running(0)
         , share_id(65538)
-        , client_info(ini->globals.encryptionLevel, ini->globals.bitmap_compression, ini->globals.bitmap_cache)
+        , client_info(ini->globals.encryptionLevel, ini->client.bitmap_compression, ini->globals.bitmap_cache)
         , packet_number(1)
         , trans(trans)
         , userid(0)

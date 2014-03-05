@@ -492,7 +492,6 @@ struct Inifile : public FieldObserver {
 
         // BEGIN globals
         bool bitmap_cache;                // default true
-        bool bitmap_compression;          // default true
         int  port;                        // default 3389
         bool nomouse;
         bool notimestamp;
@@ -556,8 +555,10 @@ struct Inifile : public FieldObserver {
 
         uint32_t max_color_depth;   // 0 - Default (24-bit), 1 - 8-bit, 2 - 15-bit, 3 - 16-bit, 4 - 24-bit, 5 - 32-bit (not yet supported)
 
-        bool persistent_disk_bitmap_cache;  // default (Disabled)
-        bool cache_waiting_list;            // default (Enable)
+        bool persistent_disk_bitmap_cache;  // default false
+        bool cache_waiting_list;            // default true
+
+        bool bitmap_compression;            // default true
     } client;
 
     struct {
@@ -567,15 +568,15 @@ struct Inifile : public FieldObserver {
 
         uint32_t open_session_timeout;
 
-        unsigned certificate_change_action;  // 0 - Interrupt connection, 1 - Replace certificate then continue
+        unsigned certificate_change_action; // 0 - Interrupt connection, 1 - Replace certificate then continue
 
         redemption::string extra_orders;
 
         bool enable_nla;
         bool enable_kerberos;
 
-        bool persistent_disk_bitmap_cache;  // default (Disabled)
-        bool cache_waiting_list;            // default (Enable)
+        bool persistent_disk_bitmap_cache;  // default false
+        bool cache_waiting_list;            // default true
     } mod_rdp;
 
     struct
@@ -827,7 +828,6 @@ public:
 
         // Init globals
         this->globals.bitmap_cache = true;
-        this->globals.bitmap_compression = true;
         this->globals.port = 3389;
         this->globals.nomouse = false;
         this->globals.notimestamp = false;
@@ -904,6 +904,8 @@ public:
 
         this->client.disable_tsk_switch_shortcuts.attach_ini(this, AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS);
         this->client.disable_tsk_switch_shortcuts.set(false);
+
+        this->client.bitmap_compression = true;
         // End Section "client"
 
         // Begin section "mod_rdp"
@@ -1193,9 +1195,6 @@ public:
             if (0 == strcmp(key, "bitmap_cache")) {
                 this->globals.bitmap_cache = bool_from_cstr(value);
             }
-            else if (0 == strcmp(key, "bitmap_compression")) {
-                this->globals.bitmap_compression = bool_from_cstr(value);
-            }
             else if (0 == strcmp(key, "port")) {
                 this->globals.port = ulong_from_cstr(value);
             }
@@ -1341,6 +1340,9 @@ public:
             }
             else if (0 == strcmp(key, "cache_waiting_list")) {
                 this->client.cache_waiting_list = bool_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "bitmap_compression")) {
+                this->client.bitmap_compression = bool_from_cstr(value);
             }
             else {
                 LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
