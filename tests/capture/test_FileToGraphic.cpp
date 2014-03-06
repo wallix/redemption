@@ -113,13 +113,11 @@ BOOST_AUTO_TEST_CASE(TestSample0WRM)
     BOOST_CHECK_EQUAL((unsigned)21280, (unsigned)sq_outfilename_filesize(&(out_png_trans.seq), 0));
     sq_outfilename_unlink(&(out_png_trans.seq), 0);
 
-    BOOST_CHECK_EQUAL((unsigned)490531, (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 0));
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(490438),  static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 0)));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 0);
-    // Mem3Blt save state = 34 bytes
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(1249590), (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 1));
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(1247451), static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 1)));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 1);
-    // Mem3Blt save state = 34 bytes
-    BOOST_CHECK_EQUAL(static_cast<unsigned>(365256), (unsigned)sq_outfilename_filesize(&(out_wrm_trans.seq), 2));
+    BOOST_CHECK_EQUAL(static_cast<unsigned>(363487),  static_cast<unsigned>(sq_outfilename_filesize(&(out_wrm_trans.seq), 2)));
     sq_outfilename_unlink(&(out_wrm_trans.seq), 2);
 }
 

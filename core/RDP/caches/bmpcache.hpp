@@ -21,6 +21,8 @@
 #ifndef _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
 #define _REDEMPTION_CORE_RDP_CACHES_BMPCACHE_HPP_
 
+#include <map>
+
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
 
@@ -60,6 +62,79 @@ struct BmpCache {
     const Bitmap * cache [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
     uint32_t       stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
     uint8_t        sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
+
+    class Finder {
+    public:
+        static const uint32_t invalid_cache_index = 0xFFFFFFFF;
+
+    private:
+        struct map_value {
+            const Bitmap * bmp;
+            uint16_t       cache_index;
+        };
+
+        typedef std::map<std::string, map_value> container_type;
+
+        container_type bmp_map;
+
+        inline void get_key(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy, char (& key)[51]) {
+            ::snprintf( key, sizeof(key)
+                      , "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
+                        "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X"
+                        "_%dx%d"
+                      , sha1[ 0], sha1[ 1], sha1[ 2], sha1[ 3], sha1[ 4]
+                      , sha1[ 5], sha1[ 6], sha1[ 7], sha1[ 8], sha1[ 9]
+                      , sha1[10], sha1[11], sha1[12], sha1[13], sha1[14]
+                      , sha1[15], sha1[16], sha1[17], sha1[18], sha1[19]
+                      , cx, cy
+                      );
+        }
+
+    public:
+        inline void add( const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy, const Bitmap * bmp
+                       , uint16_t cache_index) {
+            char key[51];
+            get_key(sha1, cx, cy, key);
+
+            map_value val;
+            val.bmp         = bmp;
+            val.cache_index = cache_index;
+
+            bmp_map[key] = val;
+        }
+
+        inline void clear() {
+            bmp_map.clear();
+        }
+
+        inline uint32_t get_cache_index(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy) {
+            char key[51];
+            get_key(sha1, cx, cy, key);
+
+            container_type::const_iterator it;
+
+            it = bmp_map.find(key);
+            if (it == bmp_map.end()) {
+                return invalid_cache_index;
+            }
+
+            return it->second.cache_index;
+        }
+
+        inline void remove(const uint8_t (& sha1)[20], uint16_t cx, uint16_t cy) {
+            char key[51];
+            get_key(sha1, cx, cy, key);
+
+            container_type::iterator it;
+
+            it = bmp_map.find(key);
+            if (it != bmp_map.end()) {
+                bmp_map.erase(it);
+            }
+        }
+    };
+
+    Finder finder[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */];
 
     public:
     uint32_t stamp;
@@ -114,6 +189,7 @@ struct BmpCache {
                 for (uint16_t cidx = 0; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
                     delete this->cache[cid][cidx];
                 }
+                this->finder[cid].clear();
             }
         }
 
@@ -125,6 +201,7 @@ struct BmpCache {
                     this->stamps[cid][cidx] = 0;
                     bzero(this->sha1[cid][cidx], sizeof(this->sha1[cid][cidx]));
                 }
+                this->finder[cid].clear();
             }
         }
 
@@ -136,10 +213,15 @@ struct BmpCache {
 
         void put(uint8_t id, uint16_t idx, const Bitmap * const bmp) {
             REDASSERT((id & IN_WAIT_LIST) == 0);
-            delete this->cache[id][idx];
+            if (this->cache[id][idx]) {
+                this->finder[id].remove(this->sha1[id][idx], this->cache[id][idx]->cx,
+                    this->cache[id][idx]->cy);
+                delete this->cache[id][idx];
+            }
             this->cache[id][idx]  = bmp;
             this->stamps[id][idx] = ++this->stamp;
             bmp->compute_sha1(this->sha1[id][idx]);
+            this->finder[id].add(this->sha1[id][idx], bmp->cx, bmp->cy, bmp, idx);
         }
 
         void restamp(uint8_t id, uint16_t idx) {
@@ -206,11 +288,10 @@ struct BmpCache {
 
             uint16_t oldest_cidx = 0;
 
-            uint16_t entries    = 0;
-            uint8_t  id_real    = 0;
-            uint8_t  id         = 0;
-            uint32_t bmp_size   = bmp->bmp_size;
-            bool     persistent = false;
+            uint16_t   entries    = 0;
+            uint8_t    id_real    = 0;
+            bool       persistent = false;
+            uint32_t   bmp_size   = bmp->bmp_size;
 
                    if (this->cache_0_entries && (bmp_size <= this->cache_0_size)) {
                 entries    = this->cache_0_entries;
@@ -245,79 +326,51 @@ struct BmpCache {
                 REDASSERT(0);
                 throw Error(ERR_BITMAP_CACHE_TOO_BIG);
             }
-            id = id_real;
 
-            unsigned oldstamp = this->stamps[id][0];
+            uint8_t   id     = id_real;
+            Finder  & finder = this->finder[id];
 
-            for (uint16_t cidx = 0 ; cidx < entries; cidx++) {
-                if (0 == memcmp(bmp_sha1, this->sha1[id][cidx], sizeof(bmp_sha1))) {
-                    //LOG(LOG_INFO, "Bitmap already in cache: this->cache[%u][%u]=%p", id, cidx,
-                    //    this->cache[id][cidx]);
-                    //hexdump_d(bmp_sha1, sizeof(bmp_sha1));
-                    if (this->cache[id][cidx]->cx == bmp->cx) {
-                        if (this->cache[id][cidx]->cy == bmp->cy) {
-                            if (this->verbose & 512) {
-                                if (persistent) {
-                                    LOG(LOG_INFO,
-                                        "BmpCache: use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache",
-                                        bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3],
-                                        bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
-                                }
-                            }
-                            delete bmp;
-                            return (BITMAP_FOUND_IN_CACHE << 24) | (id << 16) | cidx;
-                        }
+            uint32_t cache_index_32 = finder.get_cache_index(bmp_sha1, bmp->cx, bmp->cy);
+            if (cache_index_32 == Finder::invalid_cache_index) {
+                unsigned oldstamp = this->stamps[id][0];
+                for (uint16_t cidx = 0 ; cidx < entries; cidx++) {
+                    if (this->stamps[id][cidx] < oldstamp) {
+                        oldest_cidx = cidx;
+                        oldstamp    = this->stamps[id][cidx];
                     }
                 }
-                if (this->stamps[id][cidx] < oldstamp) {
-                    oldest_cidx = cidx;
-                    oldstamp    = this->stamps[id][cidx];
+            }
+            else {
+                if (this->verbose & 512) {
+                    if (persistent) {
+                        LOG(LOG_INFO,
+                            "BmpCache: use bitmap %02X%02X%02X%02X%02X%02X%02X%02X stored in persistent disk bitmap cache",
+                            bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3],
+                            bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
+                    }
                 }
+                this->stamps[id][cache_index_32] = ++this->stamp;
+                delete bmp;
+                return (BITMAP_FOUND_IN_CACHE << 24) | (id << 16) | cache_index_32;
             }
 
             if (persistent & this->use_waiting_list) {
                 // The bitmap cache is persistent.
-                bool bitmap_encountered = false;
 
-                uint16_t wait_list_oldest_cidx = 0;
-                unsigned wait_list_oldstamp    = this->stamps[MAXIMUM_NUMBER_OF_CACHES][0];
+                Finder & wait_list_finder = this->finder[MAXIMUM_NUMBER_OF_CACHES];
 
-                for (uint16_t cidx = 0 ; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
-                    if (0 == memcmp(bmp_sha1, this->sha1[MAXIMUM_NUMBER_OF_CACHES][cidx],
-                                    sizeof(bmp_sha1))) {
-                        //LOG(LOG_INFO, "Bitmap already in wait list: wait_list[%u]=%p", cidx,
-                        //    this->cache[MAXIMUM_NUMBER_OF_CACHES][cidx]);
-                        //hexdump_d(bmp_sha1, sizeof(bmp_sha1));
-                        if (this->cache[MAXIMUM_NUMBER_OF_CACHES][cidx]->cx == bmp->cx) {
-                            if (this->cache[MAXIMUM_NUMBER_OF_CACHES][cidx]->cy == bmp->cy) {
-                                bitmap_encountered = true;
-
-                                this->cache [MAXIMUM_NUMBER_OF_CACHES][cidx] = NULL;
-                                this->stamps[MAXIMUM_NUMBER_OF_CACHES][cidx] = 0;
-                                bzero(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cidx],
-                                      sizeof(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cidx]));
-
-                                if (this->verbose & 512) {
-                                    LOG(LOG_INFO,
-                                        "BmpCache: Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u",
-                                        bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3],
-                                        bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7], oldest_cidx);
-                                }
-
-                                break;
-                            }
+                cache_index_32 = wait_list_finder.get_cache_index(bmp_sha1, bmp->cx, bmp->cy);
+                if (cache_index_32 == Finder::invalid_cache_index) {
+                    unsigned oldstamp = this->stamps[MAXIMUM_NUMBER_OF_CACHES][0];
+                    for (uint16_t cidx = 0 ; cidx < MAXIMUM_NUMBER_OF_CACHE_ENTRIES; cidx++) {
+                        if (this->stamps[MAXIMUM_NUMBER_OF_CACHES][cidx] < oldstamp) {
+                            oldest_cidx = cidx;
+                            oldstamp    = this->stamps[MAXIMUM_NUMBER_OF_CACHES][cidx];
                         }
                     }
-                    if (this->stamps[MAXIMUM_NUMBER_OF_CACHES][cidx] < wait_list_oldstamp) {
-                        wait_list_oldest_cidx = cidx;
-                        wait_list_oldstamp    = this->stamps[MAXIMUM_NUMBER_OF_CACHES][cidx];
-                    }
-                }
 
-                if (!bitmap_encountered) {
                     id_real     =  MAXIMUM_NUMBER_OF_CACHES;
                     id          |= IN_WAIT_LIST;
-                    oldest_cidx =  wait_list_oldest_cidx;
 
                     if (this->verbose & 512) {
                         LOG(LOG_INFO, "BmpCache: Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into wait list.",
@@ -325,13 +378,33 @@ struct BmpCache {
                             bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7]);
                     }
                 }
+                else {
+                    this->cache [MAXIMUM_NUMBER_OF_CACHES][cache_index_32] = NULL;
+                    this->stamps[MAXIMUM_NUMBER_OF_CACHES][cache_index_32] = 0;
+                    bzero(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32],
+                          sizeof(this->sha1[MAXIMUM_NUMBER_OF_CACHES][cache_index_32]));
+
+                    wait_list_finder.remove(bmp_sha1, bmp->cx, bmp->cy);
+
+                    if (this->verbose & 512) {
+                        LOG(LOG_INFO,
+                            "BmpCache: Put bitmap %02X%02X%02X%02X%02X%02X%02X%02X into persistent cache, cache_index=%u",
+                            bmp_sha1[0], bmp_sha1[1], bmp_sha1[2], bmp_sha1[3],
+                            bmp_sha1[4], bmp_sha1[5], bmp_sha1[6], bmp_sha1[7], oldest_cidx);
+                    }
+                }
             }
 
             // find oldest stamp (or 0) and replace bitmap
-            delete this->cache[id_real][oldest_cidx];
+            if (this->cache[id_real][oldest_cidx]) {
+                this->finder[id_real].remove(this->sha1[id_real][oldest_cidx],
+                    this->cache[id_real][oldest_cidx]->cx, this->cache[id_real][oldest_cidx]->cy);
+                delete this->cache[id_real][oldest_cidx];
+            }
             this->cache [id_real][oldest_cidx] = bmp;
             this->stamps[id_real][oldest_cidx] = ++this->stamp;
             ::memcpy(this->sha1[id_real][oldest_cidx], bmp_sha1, 20);
+            this->finder[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp, oldest_cidx);
             return (BITMAP_ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;
         }
 
