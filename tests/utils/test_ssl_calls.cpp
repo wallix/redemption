@@ -839,6 +839,29 @@ BOOST_AUTO_TEST_CASE(TestNTLMAUTH)
                              sizeof(ServerSealKey)),
                       0);
 
+}
 
+BOOST_AUTO_TEST_CASE(TestAES)
+{
+    SslAES aes;
+
+    uint8_t key24[] = "clef très très secrete";
+    uint8_t iv[] = "vecteur d'initialisation pas secret du tout";
+    uint8_t iv2[] = "vecteur d'initialisation pas secret du tout";
+
+    uint8_t inbuf[1024]= "secret très confidentiel";
+    uint8_t outbuf[1024] = {};
+    uint8_t decrypted[1024] = {};
+
+    aes.set_key(key24, 24);
+
+    aes.crypt_cbc(25, iv, inbuf, outbuf);
+
+    aes.decrypt_cbc(25, iv2, outbuf, decrypted);
+
+    BOOST_CHECK_EQUAL(memcmp(inbuf,
+                             decrypted,
+                             25),
+                      0);
 
 }

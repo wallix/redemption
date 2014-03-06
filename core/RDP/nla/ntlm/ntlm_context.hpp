@@ -462,7 +462,7 @@ struct NTLMContext {
 
     void ntlm_generate_client_signing_key()
     {
-	this->ntlm_generate_signing_key(client_sign_magic, sizeof(client_sign_magic),
+        this->ntlm_generate_signing_key(client_sign_magic, sizeof(client_sign_magic),
                                         this->ClientSigningKey);
     }
 
@@ -474,8 +474,8 @@ struct NTLMContext {
 
     void ntlm_generate_server_signing_key()
     {
-	ntlm_generate_signing_key(server_sign_magic, sizeof(server_sign_magic),
-                                  this->ServerSigningKey);
+        this->ntlm_generate_signing_key(server_sign_magic, sizeof(server_sign_magic),
+                                        this->ServerSigningKey);
     }
 
 

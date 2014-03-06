@@ -34,5 +34,7 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/x509v3.h>
+#include <openssl/evp.h>
+#include <openssl/aes.h>
 
 #endif
