@@ -593,7 +593,6 @@ public:
 
     virtual void reset(){
         if (this->verbose & 1){
-            LOG(LOG_INFO, "Front::reset()");
             LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->client_info.use_bitmap_comp);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
@@ -611,17 +610,29 @@ public:
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->rdp_compression - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front: Use RDP 6.1 Bulk compression");
+            }
             this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
             this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder);
             break;
         case PACKET_COMPR_TYPE_RDP6:
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front: Use RDP 6.0 Bulk compression");
+            }
             this->mppc_enc = new rdp_mppc_60_enc();
             break;
         case PACKET_COMPR_TYPE_64K:
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front: Use RDP 5.0 Bulk compression");
+            }
             this->mppc_enc = new rdp_mppc_50_enc();
             break;
         case PACKET_COMPR_TYPE_8K:
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
+            }
             this->mppc_enc = new rdp_mppc_40_enc();
             break;
         }
