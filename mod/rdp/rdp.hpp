@@ -81,8 +81,6 @@ struct mod_rdp : public mod_api {
     int      share_id;
     uint16_t userid;
 
-    int bitmap_compression;
-
     int version;
 
     char hostname[16];
@@ -213,10 +211,9 @@ struct mod_rdp : public mod_api {
         , front(front)
         , use_rdp5(1)
         , keylayout(info.keylayout)
-        , orders(0)
+        , orders(verbose)
         , share_id(0)
         , userid(0)
-        , bitmap_compression(1)
         , version(0)
         , bpp(0)
         , encryptionLevel(0)
@@ -2165,7 +2162,7 @@ struct mod_rdp : public mod_api {
         //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
         bitmap_caps.desktopWidth          = this->front_width;
         bitmap_caps.desktopHeight         = this->front_height;
-        bitmap_caps.bitmapCompressionFlag = this->bitmap_compression;
+        bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
         //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
         bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
         if (this->verbose) {

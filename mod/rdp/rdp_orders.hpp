@@ -141,7 +141,7 @@ public:
         if (this->verbose & 64) {
             LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", bpp);
         }
-        RDPBmpCache bmp;
+        RDPBmpCache bmp(this->verbose);
         bmp.receive(bpp, stream, control, header, this->global_palette);
 
         this->recv_bmp_cache_count++;

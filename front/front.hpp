@@ -171,7 +171,7 @@ public:
         , orders(NULL)
         , up_and_running(0)
         , share_id(65538)
-        , client_info(ini->globals.encryptionLevel, ini->globals.bitmap_compression, ini->globals.bitmap_cache)
+        , client_info(ini->globals.encryptionLevel, ini->client.bitmap_compression, ini->globals.bitmap_cache)
         , packet_number(1)
         , trans(trans)
         , userid(0)
@@ -588,26 +588,11 @@ public:
 
     void save_persistent_disk_bitmap_cache() const {
         const char * client_persistent_path = PERSISTENT_PATH "/client";
-        if ((this->client_info.number_of_cache > 0) && this->client_info.cache1_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 0);
-        }
-        if ((this->client_info.number_of_cache > 1) && this->client_info.cache2_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 1);
-        }
-        if ((this->client_info.number_of_cache > 2) && this->client_info.cache3_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 2);
-        }
-        if ((this->client_info.number_of_cache > 3) && this->client_info.cache4_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 3);
-        }
-        if ((this->client_info.number_of_cache > 4) && this->client_info.cache5_persistent) {
-            this->bmp_cache->save_to_disk(client_persistent_path, 4);
-        }
+        this->bmp_cache->save_all_to_disk(client_persistent_path);
     }
 
     virtual void reset(){
         if (this->verbose & 1){
-            LOG(LOG_INFO, "Front::reset()");
             LOG(LOG_INFO, "Front::reset::use_bitmap_comp=%u", this->client_info.use_bitmap_comp);
             LOG(LOG_INFO, "Front::reset::use_compact_packets=%u", this->client_info.use_compact_packets);
             LOG(LOG_INFO, "Front::reset::bitmap_cache_version=%u", this->client_info.bitmap_cache_version);
@@ -625,17 +610,29 @@ public:
         switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->rdp_compression - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front: Use RDP 6.1 Bulk compression");
+            }
             this->mppc_enc_match_finder = new rdp_mppc_61_enc_hash_based_match_finder();
             //this->mppc_enc_match_finder = new rdp_mppc_61_enc_sequential_search_match_finder();
             this->mppc_enc = new rdp_mppc_61_enc(this->mppc_enc_match_finder);
             break;
         case PACKET_COMPR_TYPE_RDP6:
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front: Use RDP 6.0 Bulk compression");
+            }
             this->mppc_enc = new rdp_mppc_60_enc();
             break;
         case PACKET_COMPR_TYPE_64K:
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front: Use RDP 5.0 Bulk compression");
+            }
             this->mppc_enc = new rdp_mppc_50_enc();
             break;
         case PACKET_COMPR_TYPE_8K:
+            if (this->verbose & 1) {
+                LOG(LOG_INFO, "Front: Use RDP 4.0 Bulk compression");
+            }
             this->mppc_enc = new rdp_mppc_40_enc();
             break;
         }

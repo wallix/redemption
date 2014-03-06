@@ -61,7 +61,6 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -178,6 +177,7 @@ BOOST_AUTO_TEST_CASE(TestConfigFromFile)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -323,7 +323,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -439,6 +438,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -594,7 +594,6 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -713,6 +712,7 @@ BOOST_AUTO_TEST_CASE(TestConfigDefault)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -754,7 +754,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "[globals]\n"
                           "movie=yes\n"
                           "bitmap_cache=yes\n"
-                          "bitmap_compression=true\n"
                           "port=3390\n"
                           "encryptionLevel=low\n"
                           "enable_file_encryption=yes\n"
@@ -782,6 +781,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
                           "max_color_depth=0\n"
                           "persistent_disk_bitmap_cache=yes\n"
                           "cache_waiting_list=no\n"
+                          "bitmap_compression=true\n"
                           "\n"
                           "[mod_rdp]\n"
                           "disconnect_on_logon_user_change=yes\n"
@@ -837,7 +837,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -959,6 +958,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(true,                             ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1000,7 +1000,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     std::stringstream oss(
                           "[globals]\n"
                           "bitmap_cache=true\n"
-                          "bitmap_compression=on\n"
                           "encryptionLevel=medium\n"
                           "enable_file_encryption=no\n"
                           "listen_address=0.0.0.0\n"
@@ -1020,6 +1019,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
                           "max_color_depth=8\n"
                           "persistent_disk_bitmap_cache=no\n"
                           "cache_waiting_list=yes\n"
+                          "bitmap_compression=on\n"
                           "[translation]\n"
                           "connection_closed=Connexion\\ fermée\n"
                           "[mod_rdp]\n"
@@ -1063,7 +1063,6 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(1,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -1181,6 +1180,7 @@ BOOST_AUTO_TEST_CASE(TestConfig1bis)
     BOOST_CHECK_EQUAL(8,                                ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(2,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1221,7 +1221,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     std::stringstream oss(
                           "[globals]\n"
                           "bitmap_cache=no\n"
-                          "bitmap_compression=false\n"
                           "encryptionLevel=high\n"
                           "enable_file_encryption=true\n"
                           "listen_address=127.0.0.1\n"
@@ -1239,6 +1238,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
                           "max_color_depth=24\n"
                           "persistent_disk_bitmap_cache=yes\n"
                           "cache_waiting_list=no\n"
+                          "bitmap_compression=false\n"
                           "[mod_rdp]\n"
                           "rdp_compression=0\n"
                           "[video]\n"
@@ -1267,7 +1267,6 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(2,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -1379,6 +1378,7 @@ BOOST_AUTO_TEST_CASE(TestConfig2)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(true,                             ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(false,                            ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1419,7 +1419,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     std::stringstream oss(
                           "[globals]\n"
                           "bitmap_cache=no\n"
-                          "bitmap_compression=TRuE\n"
                           "port=3390\n"
                           "encryptionLevel=low\n"
                           "enable_file_encryption=False\n"
@@ -1427,6 +1426,8 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
                           "certificate_password=redemption\n"
                           "enable_ip_transparent=False\n"
                           "shell_working_directory=%HOMEDRIVE%%HOMEPATH%\n"
+                          "[client]\n"
+                          "bitmap_compression=TRuE\n"
                           "\n"
                           "[mod_rdp]\n"
                           "persistent_disk_bitmap_cache=true\n"
@@ -1455,7 +1456,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -1564,6 +1564,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1601,11 +1602,12 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     // see we can change configuration using parse without default setting of existing ini
     std::stringstream oss2(
                            "[globals]\n"
-                           "bitmap_compression=no\n"
                            "enable_file_encryption=yes\n"
                            "listen_address=192.168.1.1\n"
                            "certificate_password=\n"
                            "enable_ip_transparent=yes\n"
+                           "[client]\n"
+                           "bitmap_compression=no\n"
                            "[debug]\n"
                            "log_type=encryptedfile\n"
                            );
@@ -1628,7 +1630,6 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3390,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -1737,6 +1738,7 @@ BOOST_AUTO_TEST_CASE(TestMultiple)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1802,7 +1804,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -1910,6 +1911,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -1947,12 +1949,13 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     std::stringstream ifs2(
                            "# Here we put global values\n"
                            "[globals]\n"
-                           "bitmap_compression=no # here we have a comment to end of line\n"
                            "# below we have lines with syntax errors, but they are just ignored\n"
                            "yyy\n"
                            "zzz\n"
                            "# unknwon keys are also ignored\n"
                            "yyy=1\n"
+                           "[client]\n"
+                           "bitmap_compression=no # here we have a comment to end of line\n"
                            );
 
     cfg_loader.cparse(ini, ifs2);
@@ -1974,7 +1977,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(false,                            ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -2082,6 +2084,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(false,                            ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);
@@ -2136,7 +2139,6 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(0,                                memcmp(ini.globals.auth_channel, "\0\0\0\0\0\0\0\0", 8));
 
     BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_cache);
-    BOOST_CHECK_EQUAL(true,                             ini.globals.bitmap_compression);
     BOOST_CHECK_EQUAL(3389,                             ini.globals.port);
     BOOST_CHECK_EQUAL(0,                                ini.globals.encryptionLevel);
     BOOST_CHECK_EQUAL(std::string("127.0.0.1"),         std::string(ini.globals.authip));
@@ -2244,6 +2246,7 @@ BOOST_AUTO_TEST_CASE(TestNewConf)
     BOOST_CHECK_EQUAL(24,                               ini.client.max_color_depth);
     BOOST_CHECK_EQUAL(false,                            ini.client.persistent_disk_bitmap_cache);
     BOOST_CHECK_EQUAL(true,                             ini.client.cache_waiting_list);
+    BOOST_CHECK_EQUAL(true,                             ini.client.bitmap_compression);
 
     BOOST_CHECK_EQUAL(0,                                ini.mod_rdp.rdp_compression);
     BOOST_CHECK_EQUAL(false,                            ini.mod_rdp.disconnect_on_logon_user_change);

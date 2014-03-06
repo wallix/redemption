@@ -464,8 +464,8 @@ class RDPBmpCache {
           verbose(verbose) {
     }
 
-    RDPBmpCache()
-        : id(0), idx(0), bmp(NULL), persistent(false), do_not_cache(false), verbose(0) {
+    RDPBmpCache(int verbose = 0)
+        : id(0), idx(0), bmp(NULL), persistent(false), do_not_cache(false), verbose(verbose) {
     }
 
     ~RDPBmpCache() {
@@ -1028,6 +1028,16 @@ class RDPBmpCache {
 
         if (flags & NO_BITMAP_COMPRESSION_HDR) {
             const uint8_t* data = stream.in_uint8p(bufsize);
+            if (this->verbose & 0x8000) {
+                LOG(LOG_INFO,
+                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    session_color_depth, bpp, width, height, bufsize);
+                LOG(LOG_INFO, "Palette");
+                hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+                LOG(LOG_INFO, "Bitmap");
+                hexdump_d(data, bufsize);
+                LOG(LOG_INFO, "");
+            }
             this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, data, bufsize, true);
         }
         else {
@@ -1037,6 +1047,16 @@ class RDPBmpCache {
             uint16_t final_size = stream.in_uint16_le(); // size of bitmap after decompression
             const uint8_t* data = stream.in_uint8p(size);
 
+            if (this->verbose & 0x8000) {
+                LOG(LOG_INFO,
+                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    session_color_depth, bpp, width, height, size);
+                LOG(LOG_INFO, "Palette");
+                hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+                LOG(LOG_INFO, "Bitmap");
+                hexdump_d(data, size);
+                LOG(LOG_INFO, "");
+            }
             this->bmp = new Bitmap(session_color_depth, bpp, &palette, width, height, data, size, true);
             if (row_size != (this->bmp->bmp_size / this->bmp->cy)){
                 LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
