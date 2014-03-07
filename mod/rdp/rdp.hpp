@@ -59,6 +59,7 @@
 #include "RDP/RefreshRectPDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "RDP/pointer.hpp"
+#include "rdp_params.hpp"
 
 #include "genrandom.hpp"
 
@@ -177,47 +178,22 @@ struct mod_rdp : public mod_api {
     //uint64_t total_data_received;
 
     mod_rdp( Transport * trans
-           , const char * target_user
-           , const char * target_password
-           , const char * target_device
-           , const char * client_address
            , struct FrontAPI & front
-           , const bool enable_tls
-           , const bool enable_nla
-           , const bool enable_krb
            , const ClientInfo & info
            , Random & gen
-           , int key_flags
-           , auth_api * acl
-           , const char * auth_channel
-           , const char * alternate_shell
-           , const char * shell_working_directory
-           , bool enable_clipboard
-           , bool enable_fastpath    // If true, fast-path must be supported
-           , bool enable_mem3blt
-           , bool enable_bitmap_update
-           , uint32_t verbose = 0
-           , bool enable_new_pointer = false
-           , int rdp_compression = 0
-           , redemption::string * error_message = NULL
-           , bool disconnect_on_logon_user_change = false
-           , uint32_t open_session_timeout = 0
-           , unsigned certificate_change_action = 0
-           , bool enable_transparent_mode = false
-           , const char * output_filename = ""
-           , const char * extra_orders = ""
+           , const ModRDPParams & mod_rdp_params
            )
         : mod_api(info.width, info.height)
         , front(front)
         , use_rdp5(1)
         , keylayout(info.keylayout)
-        , orders(verbose)
+        , orders(mod_rdp_params.verbose)
         , share_id(0)
         , userid(0)
         , version(0)
         , bpp(0)
         , encryptionLevel(0)
-        , key_flags(key_flags)
+        , key_flags(mod_rdp_params.key_flags)
         , server_public_key_len(0)
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO)
@@ -226,28 +202,29 @@ struct mod_rdp : public mod_api {
         , front_bpp(info.bpp)
         , performanceFlags(info.rdp5_performanceflags)
         , gen(gen)
-        , verbose(verbose)
+        , verbose(mod_rdp_params.verbose)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
         , auth_channel_state(0) // 0 means unused
-        , acl(acl)
-        , nego(enable_tls, trans, target_user, enable_nla, target_device, enable_krb)
-        , enable_bitmap_update(enable_bitmap_update)
-        , enable_clipboard(enable_clipboard)
-        , enable_fastpath(enable_fastpath)
+        , acl(mod_rdp_params.acl)
+        , nego( mod_rdp_params.enable_tls, trans, mod_rdp_params.target_user
+              , mod_rdp_params.enable_nla, mod_rdp_params.target_device, mod_rdp_params.enable_krb)
+        , enable_bitmap_update(mod_rdp_params.enable_bitmap_update)
+        , enable_clipboard(mod_rdp_params.enable_clipboard)
+        , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
-        , enable_fastpath_server_update(enable_fastpath)
-        , enable_mem3blt(enable_mem3blt)
-        , enable_new_pointer(enable_new_pointer)
-        , rdp_compression(rdp_compression)
-        , enable_transparent_mode(enable_transparent_mode)
+        , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
+        , enable_mem3blt(mod_rdp_params.enable_mem3blt)
+        , enable_new_pointer(mod_rdp_params.enable_new_pointer)
+        , rdp_compression(mod_rdp_params.rdp_compression)
+        , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
         , recv_bmp_update(0)
-        , error_message(error_message)
-        , disconnect_on_logon_user_change(disconnect_on_logon_user_change)
-        , open_session_timeout(open_session_timeout)
+        , error_message(mod_rdp_params.error_message)
+        , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
+        , open_session_timeout(mod_rdp_params.open_session_timeout)
         , open_session_timeout_checker(0)
-        , output_filename(output_filename)
-        , certificate_change_action(certificate_change_action)
+        , output_filename(mod_rdp_params.output_filename)
+        , certificate_change_action(mod_rdp_params.certificate_change_action)
         , enable_polygonsc(false)
         , enable_polygoncb(false)
         , enable_polyline(false)
@@ -257,36 +234,30 @@ struct mod_rdp : public mod_api {
         , enable_multiopaquerect(false)
         //, total_data_received(0)
     {
-        if (this->verbose & 1)
-        {
-            if (!enable_transparent_mode)
-            {
+        if (this->verbose & 1) {
+            if (!enable_transparent_mode) {
                 LOG(LOG_INFO, "Creation of new mod 'RDP'");
             }
-            else
-            {
+            else {
                 LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
 
-                if (this->output_filename.is_empty())
-                {
+                if (this->output_filename.is_empty()) {
                     LOG(LOG_INFO, "Use transparent capabilities.");
                 }
-                else
-                {
+                else {
                     LOG(LOG_INFO, "Use proxy default capabilities.");
                 }
             }
         }
-        this->configure_extra_orders(extra_orders);
+        this->configure_extra_orders(mod_rdp_params.extra_orders);
 
         this->event.object_and_time = (this->open_session_timeout > 0);
 
         memset(this->auth_channel, 0, sizeof(this->auth_channel));
-        strncpy(this->auth_channel, auth_channel, sizeof(this->auth_channel) - 1);
+        strncpy(this->auth_channel, mod_rdp_params.auth_channel, sizeof(this->auth_channel) - 1);
 
         memset(this->clientAddr, 0, sizeof(this->clientAddr));
-        strncpy(this->clientAddr, client_address, sizeof(this->clientAddr) - 1);
-
+        strncpy(this->clientAddr, mod_rdp_params.client_address, sizeof(this->clientAddr) - 1);
         this->lic_layer_license_data = 0;
         this->lic_layer_license_size = 0;
         memset(this->lic_layer_license_key, 0, 16);
@@ -331,28 +302,28 @@ struct mod_rdp : public mod_api {
         size_t       domain_len   = 0;
         const char * username_pos = 0;
         size_t       username_len = 0;
-        const char * separator = strchr(target_user, '\\');
+        const char * separator = strchr(mod_rdp_params.target_user, '\\');
         if (separator)
         {
-            domain_pos   = target_user;
-            domain_len   = separator - target_user;
+            domain_pos   = mod_rdp_params.target_user;
+            domain_len   = separator - mod_rdp_params.target_user;
             username_pos = ++separator;
             username_len = strlen(username_pos);
         }
         else
         {
-            separator = strchr(target_user, '@');
+            separator = strchr(mod_rdp_params.target_user, '@');
             if (separator)
             {
                 domain_pos   = separator + 1;
                 domain_len   = strlen(domain_pos);
-                username_pos = target_user;
-                username_len = separator - target_user;
+                username_pos = mod_rdp_params.target_user;
+                username_len = separator - mod_rdp_params.target_user;
                 LOG(LOG_INFO, "mod_rdp: username_len=%u", username_len);
             }
             else
             {
-                username_pos = target_user;
+                username_pos = mod_rdp_params.target_user;
                 username_len = strlen(username_pos);
             }
         }
@@ -371,16 +342,17 @@ struct mod_rdp : public mod_api {
         if (count > 0) strncpy(this->domain, domain_pos, count);
         this->domain[count] = 0;
 
-        LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"", this->domain, this->username, this->hostname);
+        LOG(LOG_INFO, "Remote RDP Server domain=\"%s\" login=\"%s\" host=\"%s\"",
+            this->domain, this->username, this->hostname);
 
 
-        strncpy(this->password, target_password, sizeof(this->password) - 1);
+        strncpy(this->password, mod_rdp_params.target_password, sizeof(this->password) - 1);
         this->password[sizeof(this->password) - 1] = 0;
 
 
-        strncpy(this->program, alternate_shell, sizeof(this->program) - 1);
+        strncpy(this->program, mod_rdp_params.alternate_shell, sizeof(this->program) - 1);
         this->program[sizeof(this->program) - 1] = 0;
-        strncpy(this->directory, shell_working_directory, sizeof(this->directory) - 1);
+        strncpy(this->directory, mod_rdp_params.shell_working_directory, sizeof(this->directory) - 1);
         this->directory[sizeof(this->directory) - 1] = 0;
 
         LOG(LOG_INFO, "Server key layout is %x", this->keylayout);
@@ -421,8 +393,7 @@ struct mod_rdp : public mod_api {
             }
         }
 
-        if (this->acl)
-        {
+        if (this->acl) {
             this->acl->report("CONNECTION_SUCCESSFUL", "Ok.");
         }
 
