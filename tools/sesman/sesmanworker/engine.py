@@ -599,108 +599,6 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-
-        'rec_xp_any@10.10.47.143:VNC': RightInfo(
-            account = AccountInfo(
-                isAgentForwardable = u'0',
-                login = u'any',
-                password = PASSWORD4,
-                pubkey = None,
-                isKeyAuth = None
-            ),
-            group_targets =
-            [
-                GroupTargetInfo(
-                    cn = u'vnc1'
-                )
-            ],
-            target_groups = u'vnc1',
-            resource = ResourceInfo(
-                device = DeviceInfo(
-                    cn = u'10.10.47.143',
-                    uid = u'140ee23607907e970800279eed97',
-                    deviceAlias = u'',
-                    host = u'10.10.47.143',
-                    isKeyAuth = None
-                ),
-                application = None,
-                service = ServiceInfo(
-                    authmechanism = BlobInfo(
-                        data = u''
-                    ),
-                    protocol = ProtocolInfo(
-                        cn = u'VNC'
-                    ),
-                    cn = u'VNC',
-                    port = u'5900'
-                )
-            ),
-            auth_mode = u'NAM',
-            authorization = AuthorizationInfo(
-                isCritical = False,
-                isRecorded = True
-            ),
-            service_login = u'any@10.10.47.143:VNC',
-            subprotocols =
-            [
-                SubprotocolInfo(
-                    cn = u'VNC',
-                    uid = u'140ed5f39235d74d0800279eed97'
-                )
-            ],
-            deconnection_time = u'2099-12-30 23:59:59'
-        ),
-        'rec_w2k3_any@10.10.42.13:VNC': RightInfo(
-            account = AccountInfo(
-                isAgentForwardable = u'0',
-                login = u'any',
-                password = PASSWORD4,
-                pubkey = None,
-                isKeyAuth = None
-            ),
-            group_targets =
-            [
-                GroupTargetInfo(
-                    cn = u'vnc1'
-                )
-            ],
-            target_groups = u'vnc1',
-            resource = ResourceInfo(
-                device = DeviceInfo(
-                    cn = u'10.10.42.13',
-                    uid = u'140ee23607907e970800279eed97',
-                    deviceAlias = u'',
-                    host = u'10.10.42.13',
-                    isKeyAuth = None
-                ),
-                application = None,
-                service = ServiceInfo(
-                    authmechanism = BlobInfo(
-                        data = u''
-                    ),
-                    protocol = ProtocolInfo(
-                        cn = u'VNC'
-                    ),
-                    cn = u'VNC',
-                    port = u'5900'
-                )
-            ),
-            auth_mode = u'NAM',
-            authorization = AuthorizationInfo(
-                isCritical = False,
-                isRecorded = True
-            ),
-            service_login = u'any@10.10.42.13:VNC',
-            subprotocols =
-            [
-                SubprotocolInfo(
-                    cn = u'VNC',
-                    uid = u'140ed5f39235d74d0800279eed97'
-                )
-            ],
-            deconnection_time = u'2099-12-30 23:59:59'
-        ),
-
         'rec_w2k3_qa\\administrateur@10.10.46.70:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -1057,114 +955,11 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-
-        'xp_any@10.10.47.143:VNC': RightInfo(
-            account = AccountInfo(
-                isAgentForwardable = u'0',
-                login = u'any',
-                password = PASSWORD4,
-                pubkey = None,
-                isKeyAuth = None
-            ),
-            group_targets =
-            [
-                GroupTargetInfo(
-                    cn = u'vnc1'
-                )
-            ],
-            target_groups = u'vnc1',
-            resource = ResourceInfo(
-                device = DeviceInfo(
-                    cn = u'10.10.47.143',
-                    uid = u'140ee23607907e970800279eed97',
-                    deviceAlias = u'',
-                    host = u'10.10.47.143',
-                    isKeyAuth = None
-                ),
-                application = None,
-                service = ServiceInfo(
-                    authmechanism = BlobInfo(
-                        data = u''
-                    ),
-                    protocol = ProtocolInfo(
-                        cn = u'VNC'
-                    ),
-                    cn = u'VNC',
-                    port = u'5900'
-                )
-            ),
-            auth_mode = u'NAM',
-            authorization = AuthorizationInfo(
-                isCritical = False,
-                isRecorded = False
-            ),
-            service_login = u'any@10.10.47.143:VNC',
-            subprotocols =
-            [
-                SubprotocolInfo(
-                    cn = u'VNC',
-                    uid = u'140ed5f39235d74d0800279eed97'
-                )
-            ],
-            deconnection_time = u'2099-12-30 23:59:59'
-        ),
-        'w2k3_any@10.10.42.13:VNC': RightInfo(
-            account = AccountInfo(
-                isAgentForwardable = u'0',
-                login = u'any',
-                password = PASSWORD4,
-                pubkey = None,
-                isKeyAuth = None
-            ),
-            group_targets =
-            [
-                GroupTargetInfo(
-                    cn = u'vnc1'
-                )
-            ],
-            target_groups = u'vnc1',
-            resource = ResourceInfo(
-                device = DeviceInfo(
-                    cn = u'10.10.42.13',
-                    uid = u'140ee23607907e970800279eed97',
-                    deviceAlias = u'',
-                    host = u'10.10.42.13',
-                    isKeyAuth = None
-                ),
-                application = None,
-                service = ServiceInfo(
-                    authmechanism = BlobInfo(
-                        data = u''
-                    ),
-                    protocol = ProtocolInfo(
-                        cn = u'VNC'
-                    ),
-                    cn = u'VNC',
-                    port = u'5900'
-                )
-            ),
-            auth_mode = u'NAM',
-            authorization = AuthorizationInfo(
-                isCritical = False,
-                isRecorded = False
-            ),
-            service_login = u'any@10.10.42.13:VNC',
-            subprotocols =
-            [
-                SubprotocolInfo(
-                    cn = u'VNC',
-                    uid = u'140ed5f39235d74d0800279eed97'
-                )
-            ],
-            deconnection_time = u'2099-12-30 23:59:59'
-        ),
-
         'w2k8_administrateur@qa@10.10.146.78:RDP': RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'administrateur@qa',
-                #password = PASSWORD1,
-                password = u'',
+                password = PASSWORD1,
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -1373,8 +1168,7 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'qa\\administrateur',
-                #password = PASSWORD1,
-                password = u'',
+                password = PASSWORD1,
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -1526,56 +1320,6 @@ class Engine(object):
             ],
             deconnection_time = u'2099-12-30 23:59:59'
         ),
-        'wxp_administrateur@10.10.47.206:RDP' : RightInfo(
-            account = AccountInfo(
-                isAgentForwardable = u'0',
-                login = u'administrateur',
-                password = u'zxwaqs',
-                pubkey = None,
-                isKeyAuth = None
-            ),
-            group_targets =
-            [
-                GroupTargetInfo(
-                    cn = u'win1'
-                )
-            ],
-            target_groups = u'win1',
-            resource = ResourceInfo(
-                device = DeviceInfo(
-                    cn = u'10.10.47.206',
-                    uid = u'140ee23607907e970800279eed97',
-                    deviceAlias = u'',
-                    host = u'10.10.47.206',
-                    isKeyAuth = None
-                ),
-                application = None,
-                service = ServiceInfo(
-                    authmechanism = BlobInfo(
-                        data = u''
-                    ),
-                    protocol = ProtocolInfo(
-                        cn = u'RDP'
-                    ),
-                    cn = u'RDP',
-                    port = u'3389'
-                )
-            ),
-            auth_mode = u'NAM',
-            authorization = AuthorizationInfo(
-                isCritical = False,
-                isRecorded = False
-            ),
-            service_login = u'administrateur@10.10.47.206:RDP',
-            subprotocols =
-            [
-                SubprotocolInfo(
-                    cn = u'RDP',
-                    uid = u'140ed5f39235d74d0800279eed97'
-                )
-            ],
-            deconnection_time = u'2099-12-30 23:59:59'
-        ),
         'w2k8erpm\\administrateur@10.10.46.110:RDP' : RightInfo(
             account = AccountInfo(
                 isAgentForwardable = u'0',
@@ -1717,12 +1461,6 @@ class Engine(object):
         ),
         TargetPasswordInfo(
             account = u'administrateur',
-            resource = u'10.10.47.206',
-            protocol = u'RDP',
-            password = u'zxwaqs'
-        ),
-        TargetPasswordInfo(
-            account = u'administrateur',
             resource = u'10.10.47.205',
             protocol = u'RDP',
             password = PASSWORD2
@@ -1737,8 +1475,7 @@ class Engine(object):
             account = u'administrateur@qa',
             resource = u'10.10.146.78',
             protocol = u'RDP',
-            #password = PASSWORD1
-            password = u''
+            password = PASSWORD1
         ),
         TargetPasswordInfo(
             account = u'qa\\administrateur',
@@ -1748,15 +1485,9 @@ class Engine(object):
         ),
         TargetPasswordInfo(
             account = u'any',
-            resource = u'10.10.42.13',
+            resource = u'10.10.46.70',
             protocol = u'VNC',
-            password = u'linux'
-        ),
-        TargetPasswordInfo(
-            account = u'any',
-            resource = u'10.10.47.143',
-            protocol = u'VNC',
-            password = u'linux'
+            password = PASSWORD4
         ),
         TargetPasswordInfo(
             account = u'administrateur',
@@ -1792,8 +1523,7 @@ class Engine(object):
             account = u'qa\\administrateur',
             resource = u'10.10.46.78',
             protocol = u'RDP',
-            #password = PASSWORD1
-            password = u''
+            password = PASSWORD1
         ),
         TargetPasswordInfo(
             account = u'qa\\administrateur',
@@ -1870,8 +1600,6 @@ class Engine(object):
                 'rec_w2k_administrateur@10.10.47.39:RDP',
                 'rec_w2k3_administrateur@10.10.47.205:RDP',
                 'rec_w2k3_any@10.10.46.70:VNC',
-                'rec_xp_any@10.10.47.143:VNC',
-                'rec_w2k3_any@10.10.42.13:VNC',
                 'rec_w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'rec_w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'rec_wxp_administrateur@10.10.47.175:RDP'
@@ -1890,14 +1618,11 @@ class Engine(object):
                 'w2k_administrateur@10.10.47.39:RDP',
                 'w2k3_administrateur@10.10.47.205:RDP',
                 'w2k3_any@10.10.46.70:VNC',
-                'xp_any@10.10.47.143:VNC',
-                'w2k3_any@10.10.42.13:VNC',
                 'w2k3_qa\\administrateur@10.10.46.70:RDP',
                 'w2k8_administrateur@10.10.47.228:RDP',
                 'w2k8_qa\\administrateur@10.10.46.78:RDP',
                 'w2k8_qa\\administrateur@10.10.46.88:RDP',
                 'wxp_administrateur@10.10.47.175:RDP',
-                'wxp_administrateur@10.10.47.206:RDP',
                 'w2k8erpm\\administrateur@10.10.46.110:RDP',
                 'w2k8erpm\\special@10.10.46.110:RDP'
             ]

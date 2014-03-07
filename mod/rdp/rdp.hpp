@@ -248,6 +248,8 @@ struct mod_rdp : public mod_api {
                     LOG(LOG_INFO, "Use proxy default capabilities.");
                 }
             }
+
+            mod_rdp_params.log();
         }
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
