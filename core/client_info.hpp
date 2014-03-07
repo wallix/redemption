@@ -162,7 +162,8 @@ struct ClientInfo {
         }
         else{
             if (verbose){
-                LOG(LOG_INFO, "client info: logon password <hidden> ignored");
+                LOG(LOG_INFO, "client info: logon password %s ignored",
+                    (this->password[0] ? "<hidden>" : "<null>"));
             }
         }
         memcpy(this->program, this->infoPacket.AlternateShell, sizeof(this->infoPacket.AlternateShell));

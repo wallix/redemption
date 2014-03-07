@@ -164,16 +164,14 @@ struct FieldObserver : public ConfigurationHolder {
                 LOG(LOG_INFO, "sending %s=ASK", key);
             }
             else {
-                const char * tmp = this->get_value();
-                n = snprintf(buff, size, "%s\n!%s\n",key,tmp);
+                const char * val         = this->get_value();
+                const char * display_val = val;
+                n = snprintf(buff, size, "%s\n!%s\n", key, val);
                 if ((strncasecmp("password", static_cast<const char*>(key), 8) == 0)
                     ||(strncasecmp("target_password", static_cast<const char*>(key), 15) == 0)){
-                    LOG(LOG_INFO, "sending %s=<hidden>", key);
+                    display_val = ((*val) ? "<hidden>" : "<null>");
                 }
-                else {
-                    // LOG(LOG_INFO, "sending %s=%s", key, output);
-                    LOG(LOG_INFO, "sending %s=%s", key, tmp);
-                }
+                LOG(LOG_INFO, "sending %s=%s", key, display_val);
             }
             if (n < 0 || static_cast<size_t>(n) >= size ) {
                 LOG(LOG_ERR, "Sending Data to ACL Error: Buffer overflow,"

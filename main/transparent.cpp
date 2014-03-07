@@ -23,6 +23,7 @@
 #include <boost/program_options/options_description.hpp>
 #include <string>
 
+#define LOGNULL
 #include "listen.hpp"
 //#include "rdp/rdp.hpp"
 #include "session.hpp"
@@ -180,8 +181,8 @@ int main(int argc, char * argv[]) {
                     "0.0.0.0",
                     front,
                     true,               // tls
-                    true,               // nla
-                    false,              // kerberos
+                    ini.mod_rdp.enable_nla,
+                    ini.mod_rdp.enable_kerberos,
                     client_info,
                     &gen,
                     front.keymap.key_flags,
@@ -189,19 +190,20 @@ int main(int argc, char * argv[]) {
                     ini.globals.auth_channel,
                     ini.globals.alternate_shell.get_cstr(),
                     ini.globals.shell_working_directory.get_cstr(),
-                    true,               // clipboard
+                    ini.client.clipboard.get(),
                     true,               // fast-path
                     true,               // mem3blt
-                    true,               // bitmap update
+                    ini.globals.enable_bitmap_update,
                     ini.debug.mod_rdp,  // Verbose
                     true,               // new pointer
-                    4,                  // rdp compression
+                    ini.mod_rdp.rdp_compression,
                     NULL,               // error message
-                    false,              // disconnect on logon user change
-                    0,                  // open session timeout
+                    ini.mod_rdp.disconnect_on_logon_user_change,
+                    ini.mod_rdp.open_session_timeout,
                     0,                  // on server certificate change
                     true,               // enable transparent mode
-                    output_filename.c_str());
+                    output_filename.c_str(),
+                    ini.mod_rdp.extra_orders.c_str());
         mod.event.st = &mod_trans;
 
         struct      timeval time_mark = { 0, 50000 };

@@ -1163,7 +1163,8 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'administrateur@qa',
-                password = PASSWORD1,
+                #password = PASSWORD1,
+                password = u'',
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -1372,7 +1373,8 @@ class Engine(object):
             account = AccountInfo(
                 isAgentForwardable = u'0',
                 login = u'qa\\administrateur',
-                password = PASSWORD1,
+                #password = PASSWORD1,
+                password = u'',
                 pubkey = None,
                 isKeyAuth = None
             ),
@@ -1735,7 +1737,8 @@ class Engine(object):
             account = u'administrateur@qa',
             resource = u'10.10.146.78',
             protocol = u'RDP',
-            password = PASSWORD1
+            #password = PASSWORD1
+            password = u''
         ),
         TargetPasswordInfo(
             account = u'qa\\administrateur',
@@ -1789,7 +1792,8 @@ class Engine(object):
             account = u'qa\\administrateur',
             resource = u'10.10.46.78',
             protocol = u'RDP',
-            password = PASSWORD1
+            #password = PASSWORD1
+            password = u''
         ),
         TargetPasswordInfo(
             account = u'qa\\administrateur',
