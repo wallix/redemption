@@ -252,6 +252,9 @@ typedef enum
 
         AUTHID_AUTHENTICATION_CHALLENGE,
 
+        AUTHID_TICKET,
+        AUTHID_COMMENT,
+
         AUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
         AUTHID_DISABLE_KEYBOARD_LOG,
@@ -349,7 +352,8 @@ typedef enum
 #define STRAUTHID_REAL_TARGET_DEVICE       "real_target_device"
 
 #define STRAUTHID_AUTHENTICATION_CHALLENGE "authentication_challenge"
-
+#define STRAUTHID_TICKET                   "ticket"
+#define STRAUTHID_COMMENT                  "comment"
 #define STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS        "disable_tsk_switch_shortcuts"
 
 #define STRAUTHID_DISABLE_KEYBOARD_LOG     "disable_keyboard_log"
@@ -451,6 +455,9 @@ static const std::string authstr[MAX_AUTHID - 1] = {
     STRAUTHID_REAL_TARGET_DEVICE,
 
     STRAUTHID_AUTHENTICATION_CHALLENGE,
+
+    STRAUTHID_TICKET,
+    STRAUTHID_COMMENT,
 
     STRAUTHID_DISABLE_TSK_SWITCH_SHORTCUTS,
 
@@ -760,6 +767,9 @@ struct Inifile : public FieldObserver {
         StringField        real_target_device;       // AUHTID_REAL_TARGET_DEVICE  //
 
         BoolField          authentication_challenge; // AUTHID_AUTHENTICATION_CHALLENGE //
+
+        StringField        ticket;                   // AUTHID_TICKET //
+        StringField        comment;                  // AUTHID_COMMENT //
     } context;
 
     ColorTheme colors;
@@ -1156,6 +1166,17 @@ public:
 
         this->context.authentication_challenge.ask();
         this->context.authentication_challenge.attach_ini(this, AUTHID_AUTHENTICATION_CHALLENGE);
+
+        this->to_send_set.insert(AUTHID_TICKET);
+        this->to_send_set.insert(AUTHID_COMMENT);
+
+        this->context.ticket.set_from_cstr("");
+        this->context.ticket.attach_ini(this, AUTHID_TICKET);
+        this->context.ticket.use();
+        this->context.comment.set_from_cstr("");
+        this->context.comment.attach_ini(this, AUTHID_COMMENT);
+        this->context.comment.use();
+
         // Attaching ini struct to values
         this->context.opt_bpp.attach_ini(this,AUTHID_OPT_BPP);
         this->context.opt_height.attach_ini(this,AUTHID_OPT_HEIGHT);

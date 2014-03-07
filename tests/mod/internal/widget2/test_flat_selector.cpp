@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     if (!check_sig(drawable.gd.drawable, message,
                    "\x97\x81\x51\x5c\x82\x59\xc1\x12\x08\x1a"
                    "\xf7\xcd\x50\xe5\x84\xa3\xd5\x61\x3d\xd1"
-                   )){
+                   )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -1028,4 +1028,60 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescField)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    NotifyApi * notifier = NULL;
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    Inifile ini;
+
+    ini.translation.target.set_from_cstr("Target");
+
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, notifier, "1", "1", 0, 0, 0, ini);
+
+    selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.27",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.33",
+                        "RDP", "2013-04-20 19:56:50");
+
+    selector.selector_lines.set_current_index(0);
+
+    // ask to widget to redraw at it's current position
+    selector.rdp_input_invalidate(selector.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "selector-desc1.png");
+
+    char message[1024];
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x97\x81\x51\x5c\x82\x59\xc1\x12\x08\x1a"
+                   "\xf7\xcd\x50\xe5\x84\xa3\xd5\x61\x3d\xd1"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
+
+    selector.selector_lines.set_current_index(1);
+
+    // ask to widget to redraw at it's current position
+    selector.rdp_input_invalidate(selector.rect);
+
+    drawable.save_to_png(OUTPUT_FILE_PATH "selector-desc2.png");
+
+    if (!check_sig(drawable.gd.drawable, message,
+                   "\x68\xaf\xe3\x65\xa1\x8d\xdf\xf5\x40\xb1"
+                   "\x4f\x42\x98\x3e\xde\xda\x74\x5b\x8e\xba"
+                   )){
+        BOOST_CHECK_MESSAGE(false, message);
+    }
 }
