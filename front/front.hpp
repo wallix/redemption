@@ -661,7 +661,7 @@ public:
                         this->client_info.cache4_persistent,
                         this->client_info.cache5_entries,
                         this->client_info.cache5_size,
-                        this->client_info.cache5_persistent);
+                        this->client_info.cache5_persistent/*, 8192*/);
 
         delete this->orders;
         this->orders = new GraphicsUpdatePDU(
