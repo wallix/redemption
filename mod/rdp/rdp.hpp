@@ -124,7 +124,7 @@ struct mod_rdp : public mod_api {
     const int brush_cache_code;
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
-    Random * gen;
+    Random & gen;
     uint32_t verbose;
 
     char auth_channel[8];
@@ -186,7 +186,7 @@ struct mod_rdp : public mod_api {
            , const bool enable_nla
            , const bool enable_krb
            , const ClientInfo & info
-           , Random * gen
+           , Random & gen
            , int key_flags
            , auth_api * acl
            , const char * auth_channel
@@ -1010,7 +1010,7 @@ struct mod_rdp : public mod_api {
                                         memset(client_random, 0, sizeof(SEC_RANDOM_SIZE));
 
                                         /* Generate a client random, and determine encryption keys */
-                                        this->gen->random(client_random, SEC_RANDOM_SIZE);
+                                        this->gen.random(client_random, SEC_RANDOM_SIZE);
 
                                         ssllib ssl;
 

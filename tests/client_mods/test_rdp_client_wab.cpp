@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
         false,      // nla
         false,      // krb
         info,
-        &gen,
+        gen,
         7,
         NULL,       // auth_api
         "",

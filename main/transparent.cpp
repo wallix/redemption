@@ -184,7 +184,7 @@ int main(int argc, char * argv[]) {
                     ini.mod_rdp.enable_nla,
                     ini.mod_rdp.enable_kerberos,
                     client_info,
-                    &gen,
+                    gen,
                     front.keymap.key_flags,
                     NULL,               // auth_api
                     ini.globals.auth_channel,

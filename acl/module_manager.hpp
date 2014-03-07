@@ -692,7 +692,7 @@ public:
                         this->ini.mod_rdp.enable_nla,          // nla
                         this->ini.mod_rdp.enable_kerberos,     // kerberos
                         client_info,
-                        &gen,
+                        gen,
                         this->front.keymap.key_flags,
                         acl,
                         this->ini.globals.auth_channel,

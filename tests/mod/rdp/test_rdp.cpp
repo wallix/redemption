@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
             false,      // nla
             false,      // krb
             info,
-            &gen,
+            gen,
             7,          // key flags
             NULL,       // auth_api
             "",         // auth channel
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
         false,      // nla
         false,      // krb
         info,
-        &gen,
+        gen,
         2,          // key flags
         NULL,       // auth_api
         "",         // auth channel
@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
         false,      // nla
         false,      // krb
         info,
-        &gen,
+        gen,
         2,          // key flags
         NULL,       // auth_api
         "",         // auth channel
@@ -369,7 +369,7 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
         false,      // nla
         false,      // krb
         info,
-        &gen,
+        gen,
         2,          // key flags
         NULL,       // auth_api
         "",         // auth channel
