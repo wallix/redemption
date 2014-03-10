@@ -103,8 +103,7 @@ public:
             this->event.set();
         }
         else if (NOTIFY_SUBMIT == event) {
-            if (widget == &this->selector.connect
-                /*|| widget->group_id == this->selector.selector_lines.group_id*/) {
+            if (widget == &this->selector.connect) {
                 char buffer[1024];
                 snprintf(buffer, sizeof(buffer), "%s:%s",
                          this->selector.selector_lines.get_current_index(WidgetSelectorFlat::COLUMN_TARGET),

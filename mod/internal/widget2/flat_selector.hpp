@@ -915,9 +915,6 @@ public:
             if (NOTIFY_SUBMIT == event) {
                 this->ask_for_connection();
             }
-            else if (this->notifier) {
-                this->notifier->notify(widget, event);
-            }
         }
         else if (widget->group_id == this->ticket_edit.group_id) {
             if (NOTIFY_SUBMIT == event) {
@@ -931,9 +928,11 @@ public:
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (device_flags == MOUSE_FLAG_MOVE) {
-            Widget2 * w = this->widget_at_pos(x, y);
-            if (w != &this->selector_lines) {
-                this->selector_lines.col = COLUMN_UNKNOWN;
+            if (this->selector_lines.col != COLUMN_UNKNOWN) {
+                Widget2 * w = this->widget_at_pos(x, y);
+                if (w != &this->selector_lines) {
+                    this->selector_lines.col = COLUMN_UNKNOWN;
+                }
             }
         }
         WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);
