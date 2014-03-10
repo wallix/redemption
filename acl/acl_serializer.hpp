@@ -111,18 +111,15 @@ public:
                         //                         (char *)output);
                         this->ini->set_from_acl((char *)keyword,
                                                 (char *)value + (value[0] == '!' ? 1 : 0));
+                        const char * val         = this->ini->context_get_value_by_string(reinterpret_cast<const char*>(keyword));
+                        const char * display_val = val;
                         if ((strncasecmp("password", reinterpret_cast<const char*>(keyword),
                                          9 ) == 0) ||
                             (strncasecmp("target_password", reinterpret_cast<const char*>(keyword),
                                          16) == 0)) {
-                            LOG(LOG_INFO, "receiving '%s'=<hidden>",
-                                reinterpret_cast<const char*>(keyword));
+                            display_val = ((*val) ? "<hidden>" : "<null>");
                         }
-                        else {
-                            LOG(LOG_INFO, "receiving '%s'='%s'",
-                                keyword,
-                                this->ini->context_get_value_by_string(reinterpret_cast<const char*>(keyword)));
-                        }
+                        LOG(LOG_INFO, "receiving '%s'='%s'", keyword, display_val);
                     }
 
                     stream.p = stream.p+1;
@@ -183,19 +180,18 @@ public:
             stream.out_copy_bytes("\nASK\n",5);
         }
         else {
-            const char * tmp = this->ini->context_get_value(authid);
+            const char * val         = this->ini->context_get_value(authid);
+            const char * display_val = val;
 
             if ((strncasecmp("password", static_cast<const char*>(key), 8) == 0)
                 ||(strncasecmp("target_password", static_cast<const char*>(key), 15) == 0)){
-                LOG(LOG_INFO, "sending (from authid) %s=<hidden>", key);
+                display_val = ((*val) ? "<hidden>" : "<null>");
             }
-            else {
-                LOG(LOG_INFO, "sending (from authid) %s=%s", key, tmp);
-            }
+            LOG(LOG_INFO, "sending (from authid) %s=%s", key, display_val);
             stream.out_copy_bytes(key, strlen(key));
             stream.out_uint8('\n');
             stream.out_uint8('!');
-            stream.out_copy_bytes(tmp, strlen(tmp));
+            stream.out_copy_bytes(val, strlen(val));
             stream.out_uint8('\n');
         }
     }

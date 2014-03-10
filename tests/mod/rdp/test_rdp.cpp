@@ -54,7 +54,6 @@
 
 BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 {
-    BOOST_CHECK(1);
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -66,7 +65,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     snprintf(info.hostname,sizeof(info.hostname),"test");
     int verbose = 511;
 
-    BOOST_CHECK(1);
     FakeFront front(info, verbose);
 
     const char * name = "RDP XP Target";
@@ -85,39 +83,36 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
     #include "fixtures/dump_xp_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
-    // To always get the same client random, in tests
-    LCGRandom gen(0);
-
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
     try {
-        BOOST_CHECK(1);
-        struct mod_api * mod = new mod_rdp(
-            &t,
-            "xavier",
-            "SecureLinux",
-            "10.10.47.175",
-            "10.10.9.161",
-            front,
-            false,      // tls
-            false,      // nla
-            false,      // krb
-            info,
-            &gen,
-            7,          // key flags
-            NULL,       // auth_api
-            "",         // auth channel
-            "",         // alternate_shell
-            "",         // shell_working_directory
-            true,       // clipboard
-            false,      // fast-path support
-            true,       // mem3blt support
-            false,      // bitmap update support
-            verbose,
-            false       // enable new pointer
-        );
+        ModRDPParams mod_rdp_param( "xavier"
+                                  , "SecureLinux"
+                                  , "10.10.47.175"
+                                  , "10.10.9.161"
+                                  , 7
+                                  , verbose
+                                  );
+        mod_rdp_param.enable_tls                      = false;
+        mod_rdp_param.enable_nla                      = false;
+        //mod_rdp_param.enable_krb                      = false;
+        //mod_rdp_param.enable_clipboard                = true;
+        mod_rdp_param.enable_fastpath                 = false;
+        //mod_rdp_param.enable_mem3blt                  = true;
+        //mod_rdp_param.enable_bitmap_update            = false;
+        mod_rdp_param.enable_new_pointer              = false;
+        //mod_rdp_param.rdp_compression                 = 0;
+        //mod_rdp_param.error_message                   = NULL;
+        //mod_rdp_param.disconnect_on_logon_user_change = false;
+        //mod_rdp_param.open_session_timeout            = 0;
+        //mod_rdp_param.certificate_change_action       = 0;
+        //mod_rdp_param.extra_orders                    = "";
+
+        // To always get the same client random, in tests
+        LCGRandom gen(0);
+        struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
 
         if (verbose > 2){
             LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -128,7 +123,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
         uint32_t count = 0;
         BackEvent_t res = BACK_EVENT_NONE;
-        BOOST_CHECK(1);
         while (res == BACK_EVENT_NONE){
             LOG(LOG_INFO, "=======================> count=%u", count);
 
@@ -150,7 +144,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPXPServer)
 
 BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 {
-    BOOST_CHECK(1);
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -179,36 +172,35 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
     #include "fixtures/dump_w2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
-    // To always get the same client random, in tests
-    LCGRandom gen(0);
-
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp(
-        &t,
-        "administrateur@qa",
-        "S3cur3!1nux",
-        "10.10.46.78",
-        "10.10.9.161",
-        front,
-        false,      // tls
-        false,      // nla
-        false,      // krb
-        info,
-        &gen,
-        2,          // key flags
-        NULL,       // auth_api
-        "",         // auth channel
-        "",         // alternate_shell
-        "",         // shell_working_directory
-        true,       // clipboard
-        false,      // fast-path support
-        false,      // bitmap update support
-        511,          // verbose
-        false       // enable new pointer
-    );
+    ModRDPParams mod_rdp_param( "administrateur@qa"
+                              , "S3cur3!1nux"
+                              , "10.10.46.78"
+                              , "10.10.9.161"
+                              , 2
+                              , 0
+                              );
+    mod_rdp_param.enable_tls                      = false;
+    mod_rdp_param.enable_nla                      = false;
+    //mod_rdp_param.enable_krb                      = false;
+    //mod_rdp_param.enable_clipboard                = true;
+    mod_rdp_param.enable_fastpath                 = false;
+    mod_rdp_param.enable_mem3blt                  = false;
+    mod_rdp_param.enable_bitmap_update            = true;
+    mod_rdp_param.enable_new_pointer              = false;
+    //mod_rdp_param.rdp_compression                 = 0;
+    //mod_rdp_param.error_message                   = NULL;
+    //mod_rdp_param.disconnect_on_logon_user_change = false;
+    //mod_rdp_param.open_session_timeout            = 0;
+    //mod_rdp_param.certificate_change_action       = 0;
+    //mod_rdp_param.extra_orders                    = "";
+
+    // To always get the same client random, in tests
+    LCGRandom gen(0);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -230,8 +222,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPWin2008Server)
 
 BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 {
-    BOOST_CHECK(1);
-
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -261,37 +251,35 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
     #include "fixtures/dump_w2003_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
-    // To always get the same client random, in tests
-    LCGRandom gen(0);
-
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp(
-        &t,
-        "administrateur",
-        "SecureLinux",
-        "10.10.47.205",
-        "0.0.0.0",
-        front,
-        false,      // tls
-        false,      // nla
-        false,      // krb
-        info,
-        &gen,
-        2,          // key flags
-        NULL,       // auth_api
-        "",         // auth channel
-        "",         // alternate_shell
-        "",         // shell_working_directory
-        true,       // clipbaord
-        false,      // fast-path support
-        true,       // mem3blt support
-        false,      // bitmap update support
-        511,          // verbose
-        false       // enable new pointer
-    );
+    ModRDPParams mod_rdp_param( "administrateur"
+                              , "SecureLinux"
+                              , "10.10.47.205"
+                              , "0.0.0.0"
+                              , 2
+                              , 511
+                              );
+    mod_rdp_param.enable_tls                      = false;
+    mod_rdp_param.enable_nla                      = false;
+    //mod_rdp_param.enable_krb                      = false;
+    //mod_rdp_param.enable_clipboard                = true;
+    mod_rdp_param.enable_fastpath                 = false;
+    //mod_rdp_param.enable_mem3blt                  = true;
+    //mod_rdp_param.enable_bitmap_update            = false;
+    mod_rdp_param.enable_new_pointer              = false;
+    //mod_rdp_param.rdp_compression                 = 0;
+    //mod_rdp_param.error_message                   = NULL;
+    //mod_rdp_param.disconnect_on_logon_user_change = false;
+    //mod_rdp_param.open_session_timeout            = 0;
+    //mod_rdp_param.certificate_change_action       = 0;
+    //mod_rdp_param.extra_orders                    = "";
+
+    // To always get the same client random, in tests
+    LCGRandom gen(0);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -321,8 +309,6 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2003Server)
 
 BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
 {
-    BOOST_CHECK(1);
-
     ClientInfo info(1, true, true);
     info.keylayout = 0x04C;
     info.console_session = 0;
@@ -351,43 +337,35 @@ BOOST_AUTO_TEST_CASE(TestModRDPW2000Server)
     #include "fixtures/dump_w2000_mem3blt.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
-    // To always get the same client random, in tests
-    LCGRandom gen(0);
-
     if (verbose > 2){
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
 
-    struct mod_api * mod = new mod_rdp(
-        &t,
-        "administrateur",
-        "SecureLinux",
-        "10.10.47.39",
-        "0.0.0.0",
-        front,
-        false,      // tls
-        false,      // nla
-        false,      // krb
-        info,
-        &gen,
-        2,          // key flags
-        NULL,       // auth_api
-        "",         // auth channel
-        "",         // alternate_shell
-        "",         // shell_working_directory
-        true,       // clipbaord
-        false,      // fast-path support
-        true,       // mem3blt support
-        false,      // bitmap update support
-        0,          // verbose
-        false,      // enable new pointer
-        false,      // enable rdp bulk compression
-        NULL,       // error message
-        false,      // disconnect on logon user change
-        0,          // open session timeout
-        false,      // enable transparent mode
-        ""
-    );
+    ModRDPParams mod_rdp_param( "administrateur"
+                              , "SecureLinux"
+                              , "10.10.47.39"
+                              , "0.0.0.0"
+                              , 2
+                              , 0
+                              );
+    mod_rdp_param.enable_tls                      = false;
+    mod_rdp_param.enable_nla                      = false;
+    //mod_rdp_param.enable_krb                      = false;
+    //mod_rdp_param.enable_clipboard                = true;
+    mod_rdp_param.enable_fastpath                 = false;
+    //mod_rdp_param.enable_mem3blt                  = true;
+    //mod_rdp_param.enable_bitmap_update            = false;
+    mod_rdp_param.enable_new_pointer              = false;
+    //mod_rdp_param.rdp_compression                 = 0;
+    //mod_rdp_param.error_message                   = NULL;
+    //mod_rdp_param.disconnect_on_logon_user_change = false;
+    //mod_rdp_param.open_session_timeout            = 0;
+    //mod_rdp_param.certificate_change_action       = 0;
+    //mod_rdp_param.extra_orders                    = "";
+
+    // To always get the same client random, in tests
+    LCGRandom gen(0);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

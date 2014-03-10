@@ -83,40 +83,37 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     #include "fixtures/dump_TLSw2008.hpp"
     TestTransport t(name, indata, sizeof(indata), outdata, sizeof(outdata), verbose);
 
-    // To always get the same client random, in tests
-    LCGRandom gen(0);
-
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
-    const bool tls = true;
 
-    snprintf(info.hostname,sizeof(info.hostname),"192-168-1-100");
+    snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
-    struct mod_api * mod = new mod_rdp(
-        &t,
-        "administrateur@qa",
-        "S3cur3!1nux",
-        "192.168.1.50",
-        "192.168.1.100",
-        front,
-        tls,
-        false,      // nla
-        false,      // krb
-        info,
-        &gen,
-        7,
-        NULL,   // auth_api
-        "",
-        "",     // alternate_shell
-        "",     // shell_working_directory
-        true,   // clipboard
-        false,  // fast-path support
-        false,  // mem3blt support
-        false,  // bitmap update support
-        511,    // verbose
-        false
-    ); // enable new pointer
+    ModRDPParams mod_rdp_param( "administrateur@qa"
+                              , "S3cur3!1nux"
+                              , "192.168.1.50"
+                              , "192.168.1.100"
+                              , 7
+                              , 511
+                              );
+    //mod_rdp_param.enable_tls                      = true;
+    mod_rdp_param.enable_nla                      = false;
+    //mod_rdp_param.enable_krb                      = false;
+    //mod_rdp_param.enable_clipboard                = true;
+    mod_rdp_param.enable_fastpath                 = false;
+    mod_rdp_param.enable_mem3blt                  = false;
+    //mod_rdp_param.enable_bitmap_update            = false;
+    mod_rdp_param.enable_new_pointer              = false;
+    //mod_rdp_param.rdp_compression                 = 0;
+    //mod_rdp_param.error_message                   = NULL;
+    //mod_rdp_param.disconnect_on_logon_user_change = false;
+    //mod_rdp_param.open_session_timeout            = 0;
+    //mod_rdp_param.certificate_change_action       = 0;
+    //mod_rdp_param.extra_orders                    = "";
+
+    // To always get the same client random, in tests
+    LCGRandom gen(0);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

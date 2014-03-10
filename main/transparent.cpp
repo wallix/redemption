@@ -23,6 +23,7 @@
 #include <boost/program_options/options_description.hpp>
 #include <string>
 
+#define LOGNULL
 #include "listen.hpp"
 //#include "rdp/rdp.hpp"
 #include "session.hpp"
@@ -173,35 +174,33 @@ int main(int argc, char * argv[]) {
     try {
         ClientInfo client_info = front.client_info;
 
-        mod_rdp mod(&mod_trans,
-                    username.c_str(),
-                    password.c_str(),
-                    target_device.c_str(),
-                    "0.0.0.0",
-                    front,
-                    true,               // tls
-                    true,               // nla
-                    false,              // kerberos
-                    client_info,
-                    &gen,
-                    front.keymap.key_flags,
-                    NULL,               // auth_api
-                    ini.globals.auth_channel,
-                    ini.globals.alternate_shell.get_cstr(),
-                    ini.globals.shell_working_directory.get_cstr(),
-                    true,               // clipboard
-                    true,               // fast-path
-                    true,               // mem3blt
-                    true,               // bitmap update
-                    ini.debug.mod_rdp,  // Verbose
-                    true,               // new pointer
-                    4,                  // rdp compression
-                    NULL,               // error message
-                    false,              // disconnect on logon user change
-                    0,                  // open session timeout
-                    0,                  // on server certificate change
-                    true,               // enable transparent mode
-                    output_filename.c_str());
+        ModRDPParams mod_rdp_param( username.c_str()
+                                  , password.c_str()
+                                  , target_device.c_str()
+                                  , "0.0.0.0"   // client ip is silenced
+                                  , front.keymap.key_flags
+                                  , ini.debug.mod_rdp
+                                  );
+        //mod_rdp_param.enable_tls                      = true;
+        mod_rdp_param.enable_nla                      = ini.mod_rdp.enable_nla;
+        mod_rdp_param.enable_krb                      = ini.mod_rdp.enable_kerberos;
+        mod_rdp_param.enable_clipboard                = ini.client.clipboard.get();
+        //mod_rdp_param.enable_fastpath                 = true;
+        //mod_rdp_param.enable_mem3blt                  = true;
+        mod_rdp_param.enable_bitmap_update            = ini.globals.enable_bitmap_update;
+        //mod_rdp_param.enable_new_pointer              = true;
+        mod_rdp_param.enable_transparent_mode         = true;
+        mod_rdp_param.output_filename                 = output_filename.c_str();
+        mod_rdp_param.auth_channel                    = ini.globals.auth_channel;
+        mod_rdp_param.alternate_shell                 = ini.globals.alternate_shell.get_cstr();
+        mod_rdp_param.shell_working_directory         = ini.globals.shell_working_directory.get_cstr();
+        mod_rdp_param.rdp_compression                 = ini.mod_rdp.rdp_compression;
+        mod_rdp_param.disconnect_on_logon_user_change = ini.mod_rdp.disconnect_on_logon_user_change;
+        mod_rdp_param.open_session_timeout            = ini.mod_rdp.open_session_timeout;
+        mod_rdp_param.certificate_change_action       = ini.mod_rdp.certificate_change_action;
+        mod_rdp_param.extra_orders                    = ini.mod_rdp.extra_orders.c_str();
+
+        mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_param);
         mod.event.st = &mod_trans;
 
         struct      timeval time_mark = { 0, 50000 };

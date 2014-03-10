@@ -25,6 +25,7 @@
 
 #include "bitmap.hpp"
 #include "RDP/PersistentKeyListPDU.hpp"
+#include "fileutils.hpp"
 
 enum {
       BITMAP_FOUND_IN_CACHE
@@ -63,6 +64,7 @@ struct BmpCache {
     uint32_t       stamps[MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES];
     uint8_t        sha1  [MAXIMUM_NUMBER_OF_CACHES + 1 /* wait_list */][MAXIMUM_NUMBER_OF_CACHE_ENTRIES][20];
 
+    // Map based bitmap finder.
     class Finder {
     public:
         static const uint32_t invalid_cache_index = 0xFFFFFFFF;
@@ -179,7 +181,17 @@ struct BmpCache {
 
         {
             if (this->verbose) {
-                LOG(LOG_INFO, "BmpCache: bpp=%u", this->bpp);
+                LOG( LOG_INFO
+                   , "BmpCache: bpp=%u number_of_cache=%u use_waiting_list=%s "
+                     "cache_0(%u, %u, %s) cache_1(%u, %u, %s) cache_2(%u, %u, %s) "
+                     "cache_3(%u, %u, %s) cache_4(%u, %u, %s)"
+                   , this->bpp, this->number_of_cache, (this->use_waiting_list ? "yes" : "no")
+                   , this->cache_0_entries, this->cache_0_size, (cache_0_persistent ? "yes" : "no")
+                   , this->cache_1_entries, this->cache_1_size, (cache_1_persistent ? "yes" : "no")
+                   , this->cache_2_entries, this->cache_2_size, (cache_2_persistent ? "yes" : "no")
+                   , this->cache_3_entries, this->cache_3_size, (cache_3_persistent ? "yes" : "no")
+                   , this->cache_4_entries, this->cache_4_size, (cache_4_persistent ? "yes" : "no")
+                   );
             }
 
             if (this->number_of_cache > MAXIMUM_NUMBER_OF_CACHES) {
@@ -298,6 +310,25 @@ struct BmpCache {
 
         TODO("palette to use for conversion when we are in 8 bits mode should be passed from memblt.cache_id, not stored in bitmap");
         uint32_t cache_bitmap(const Bitmap & oldbmp) {
+            // Generating source code for unit test.
+            //if (this->verbose & 8192) {
+            //    if (this->finding_counter == 500) {
+            //        BOOM;
+            //    }
+            //    LOG(LOG_INFO, "uint8_t palette_data_%d[] = {", this->finding_counter);
+            //    hexdump_d((const char *)(void *)oldbmp.original_palette, sizeof(oldbmp.original_palette));
+            //    LOG(LOG_INFO, "};", this->finding_counter);
+            //    LOG(LOG_INFO, "uint8_t bitmap_data_%d[] = {", this->finding_counter);
+            //    hexdump_d((const char *)(void *)oldbmp.data_bitmap.get(), oldbmp.bmp_size);
+            //    LOG(LOG_INFO, "};", this->finding_counter);
+            //    LOG(LOG_INFO, "memcpy(palette, palette_data_%d, sizeof(palette));", this->finding_counter);
+            //    LOG(LOG_INFO, "init_palette332(palette);", this->finding_counter);
+            //    LOG(LOG_INFO,
+            //        "Bitmap * bmp_%d = new Bitmap(%u, %u, &palette, %u, %u, bitmap_data_%d, %u, false);",
+            //        this->finding_counter, this->bpp, oldbmp.original_bpp, oldbmp.cx, oldbmp.cy,
+            //        this->finding_counter, oldbmp.bmp_size);
+            //}
+
             this->finding_counter++;
 
             const Bitmap * bmp = new Bitmap(this->bpp, oldbmp);
@@ -371,6 +402,17 @@ struct BmpCache {
                 this->stamps[id][cache_index_32] = ++this->stamp;
                 delete bmp;
                 this->found_counter++;
+                // Generating source code for unit test.
+                //if (this->verbose & 8192) {
+                //    LOG(LOG_INFO, "cache_id    = %u;", id);
+                //    LOG(LOG_INFO, "cache_index = %u;", cache_index_32);
+                //    LOG(LOG_INFO,
+                //        "BOOST_CHECK_EQUAL(((BITMAP_FOUND_IN_CACHE << 24) | (cache_id << 16) | cache_index), "
+                //            "bmp_cache.cache_bitmap(*bmp_%d));",
+                //        this->finding_counter - 1);
+                //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
+                //    LOG(LOG_INFO, "");
+                //}
                 return (BITMAP_FOUND_IN_CACHE << 24) | (id << 16) | cache_index_32;
             }
 
@@ -427,6 +469,17 @@ struct BmpCache {
             this->stamps[id_real][oldest_cidx] = ++this->stamp;
             ::memcpy(this->sha1[id_real][oldest_cidx], bmp_sha1, 20);
             this->finders[id_real].add(bmp_sha1, bmp->cx, bmp->cy, bmp, oldest_cidx);
+            // Generating source code for unit test.
+            //if (this->verbose & 8192) {
+            //    LOG(LOG_INFO, "cache_id    = %u;", id);
+            //    LOG(LOG_INFO, "cache_index = %u;", oldest_cidx);
+            //    LOG(LOG_INFO,
+            //        "BOOST_CHECK_EQUAL(((BITMAP_ADDED_TO_CACHE << 24) | (cache_id << 16) | cache_index), "
+            //            "bmp_cache.cache_bitmap(*bmp_%d));",
+            //        this->finding_counter - 1);
+            //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
+            //    LOG(LOG_INFO, "");
+            //}
             return (BITMAP_ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;
         }
 
