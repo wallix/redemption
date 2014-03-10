@@ -126,7 +126,7 @@ struct mod_rdp : public mod_api {
     const uint8_t front_bpp;
     const uint32_t performanceFlags;
     Random & gen;
-    uint32_t verbose;
+    const uint32_t verbose;
 
     char auth_channel[8];
     int  auth_channel_flags;
@@ -139,15 +139,15 @@ struct mod_rdp : public mod_api {
 
     char clientAddr[512];
 
-    bool enable_bitmap_update;
-    bool enable_clipboard;                   // true clipboard available, false clipboard unavailable
-    bool enable_fastpath;                    // choice of programmer
-    bool enable_fastpath_client_input_event; // choice of programmer + capability of server
-    bool enable_fastpath_server_update;      // = choice of programmer
-    bool enable_mem3blt;
-    bool enable_new_pointer;
-    int  rdp_compression;
-    bool enable_transparent_mode;
+    const bool enable_bitmap_update;
+    const bool enable_clipboard;                   // true clipboard available, false clipboard unavailable
+    const bool enable_fastpath;                    // choice of programmer
+          bool enable_fastpath_client_input_event; // choice of programmer + capability of server
+    const bool enable_fastpath_server_update;      // = choice of programmer
+    const bool enable_mem3blt;
+    const bool enable_new_pointer;
+    const int  rdp_compression;
+    const bool enable_transparent_mode;
 
     size_t recv_bmp_update;
 
@@ -155,8 +155,8 @@ struct mod_rdp : public mod_api {
 
     redemption::string * error_message;
 
-    bool     disconnect_on_logon_user_change;
-    uint32_t open_session_timeout;
+    const bool     disconnect_on_logon_user_change;
+    const uint32_t open_session_timeout;
 
     Timeout  open_session_timeout_checker;
 
@@ -165,7 +165,7 @@ struct mod_rdp : public mod_api {
     redemption::string end_session_reason;
     redemption::string end_session_message;
 
-    unsigned certificate_change_action;
+    const unsigned certificate_change_action;
 
     bool enable_polygonsc;
     bool enable_polygoncb;
