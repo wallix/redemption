@@ -91,8 +91,9 @@ public:
     mutable uint8_t * data_compressed;
     mutable size_t data_compressed_size;
 
-    Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette, uint16_t cx, uint16_t cy,
-           const uint8_t * data, const size_t size, bool compressed = false)
+    Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
+           uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
+           bool compressed = false)
         : original_bpp(bpp)
         , cx(align4(cx))
         , cy(cy)

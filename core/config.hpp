@@ -1673,6 +1673,13 @@ public:
                     if (this->theme.global.logo) {
                         char logo_path[1024] = {};
                         snprintf(logo_path, 1024, CFG_PATH "/%s/" LOGO_PNG, value);
+                        if (!file_exist(logo_path)) {
+                            snprintf(logo_path, 1024, CFG_PATH "/%s/" LOGO_BMP, value);
+                            if (!file_exist(logo_path)) {
+                                this->theme.global.logo = false;
+                                return;
+                            }
+                        }
                         this->theme.set_logo_path(logo_path);
                     }
                 }
