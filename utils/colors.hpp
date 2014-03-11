@@ -38,28 +38,11 @@ enum {
     MEDIUM_GREY= 0xa0a0a0,
     DARK_GREY  = 0x8c8a8c,
     ANTHRACITE = 0x808080,
+    WHITE      = 0xffffff,
+
     BLUE       = 0xff0000,
     DARK_BLUE  = 0x7f0000,
-    WHITE      = 0xffffff,
-    RED        = 0x0000ff,
-    PINK       = 0xff00ff,
-    GREEN      = 0x00ff00,
-    YELLOW     = 0x00ffff,
-    LIGHT_YELLOW = 0x9fffff,
     CYAN       = 0xffff00,
-    WABGREEN   = 0x2BBE91,
-    WABGREEN_BIS  = 0x08ff7b,
-    DARK_WABGREEN = 0x91BE2B,
-    INV_DARK_WABGREEN = 0x2BBE91,
-    DARK_GREEN    = 0x499F74,
-    INV_DARK_GREEN    = 0x749F49,
-//    LIGHT_GREEN   = 0x37E58E,
-    LIGHT_GREEN   = 0x90ffe0, // lighter version to improve contrast in textboxes
-    INV_LIGHT_GREEN   = 0x8EE537,
-    PALE_GREEN    = 0xE1FAF0,
-    INV_PALE_GREEN    = 0xF0FAE1,
-    MEDIUM_GREEN  = 0xACE4C8,
-    INV_MEDIUM_GREEN  = 0xC8E4AC,
     DARK_BLUE_WIN = 0x602000,
     DARK_BLUE_BIS = 0x601f08,
     MEDIUM_BLUE = 0xC47244,
@@ -67,12 +50,33 @@ enum {
     LIGHT_BLUE = 0xebd5cf,
     WINBLUE = 0x9C4D00,
 
-    ORANGE = 0x1580DD,
+
+    RED        = 0x0000ff,
     DARK_RED = 0x221CAD,
-    BROWN   = 0x006AC5,
+    MEDIUM_RED = 0x302DB7,
+    PINK       = 0xff00ff,
+
+    GREEN      = 0x00ff00,
+    WABGREEN   = 0x2BBE91,
+    WABGREEN_BIS  = 0x08ff7b,
+    DARK_WABGREEN = 0x91BE2B,
+    INV_DARK_WABGREEN = 0x2BBE91,
+    DARK_GREEN    = 0x499F74,
+    INV_DARK_GREEN    = 0x749F49,
+    LIGHT_GREEN   = 0x90ffe0, // lighter version to improve contrast in textboxes
+    INV_LIGHT_GREEN   = 0x8EE537,
+    PALE_GREEN    = 0xE1FAF0,
+    INV_PALE_GREEN    = 0xF0FAE1,
+    MEDIUM_GREEN  = 0xACE4C8,
+    INV_MEDIUM_GREEN  = 0xC8E4AC,
+
+    YELLOW     = 0x00ffff,
+    LIGHT_YELLOW = 0x9fffff,
+
+    ORANGE = 0x1580DD,
     LIGHT_ORANGE = 0x64BFFF,
     PALE_ORANGE = 0x9AD5FF,
-    MEDIUM_RED = 0x302DB7,
+    BROWN   = 0x006AC5,
 
 };
 

@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog)
     // FlatDialog is a flat_dialog widget at position 0,0 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test1",
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog2)
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test2",
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog3)
     // FlatDialog is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test3",
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog4)
     // FlatDialog is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
     WidgetScreen parent(drawable, 1280, 1024);
     NotifyApi * notifier = NULL;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 1280, 1024, parent, notifier, "test4",
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog5)
     // FlatDialog is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
     WidgetScreen parent(drawable, 640, 480);
     NotifyApi * notifier = NULL;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 640, 480, parent, notifier, "test5",
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialog6)
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 300, 600);
     NotifyApi * notifier = NULL;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 350, 500, parent, notifier, "test6",
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip)
     // FlatDialog is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 300, 600, parent, notifier, "test6",
@@ -308,7 +308,7 @@ BOOST_AUTO_TEST_CASE(TraceFlatDialogClip2)
     // FlatDialog is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
     WidgetScreen parent(drawable, 800, 600);
     NotifyApi * notifier = NULL;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 800, 600, parent, notifier, "test6",
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetOkCancel)
             this->event = event;
         }
     } notifier;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
@@ -487,7 +487,7 @@ BOOST_AUTO_TEST_CASE(EventWidgetChallenge)
             this->event = event;
         }
     } notifier;
-    ColorTheme colors;
+    Theme colors;
     colors.global.bgcolor = DARK_BLUE_BIS;
     colors.global.fgcolor = WHITE;
     FlatDialog flat_dialog(drawable, 800, 600, parent, &notifier, "test6",

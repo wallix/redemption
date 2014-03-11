@@ -24,21 +24,21 @@
 
 #include "composite.hpp"
 #include "tooltip.hpp"
-#include "colortheme.hpp"
+#include "theme.hpp"
 
 #include <typeinfo>
 
 class WidgetScreen : public WidgetParent
 {
 public:
-    ColorTheme colors;
+    Theme theme;
     WidgetTooltip * tooltip;
     Widget2 * current_over;
 
     WidgetScreen(DrawApi& drawable, uint16_t width, uint16_t height,
-                 NotifyApi * notifier = NULL, ColorTheme * colortheme = NULL)
+                 NotifyApi * notifier = NULL, Theme * theme = NULL)
         : WidgetParent(drawable, Rect(0, 0, width, height), *this, notifier)
-        , colors(colortheme ? *colortheme : ColorTheme())
+        , theme(theme ? *theme : Theme())
         , tooltip(NULL)
         , current_over(NULL)
     {
@@ -68,9 +68,9 @@ public:
                                               x, y,
                                               *this, widget,
                                               text,
-                                              this->colors.tooltip.fgcolor,
-                                              this->colors.tooltip.bgcolor,
-                                              this->colors.tooltip.border_color);
+                                              this->theme.tooltip.fgcolor,
+                                              this->theme.tooltip.bgcolor,
+                                              this->theme.tooltip.border_color);
             int w = this->tooltip->get_tooltip_cx();
             int h = this->tooltip->get_tooltip_cy();
             int sw = this->rect.cx;

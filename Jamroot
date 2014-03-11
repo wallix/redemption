@@ -349,7 +349,7 @@ unit-test test_check_files : tests/core/test_check_files.cpp libboost_unit_test 
 unit-test test_cipher : tests/core/test_cipher.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_client_info : tests/core/test_client_info.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_config : tests/core/test_config.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
-unit-test test_colortheme : tests/utils/test_colortheme.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
+unit-test test_theme : tests/utils/test_theme.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_confdescriptor : tests/utils/test_confdescriptor.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_constants : tests/core/test_constants.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_error : tests/core/test_error.cpp libboost_unit_test : <variant>coverage:<library>gcov ;
