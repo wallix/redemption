@@ -47,6 +47,7 @@ struct RdpNego
     bool krb;
 //    char* hostname;
 //    char* cookie;
+    bool restricted_admin_mode;
 
     enum
     {
@@ -86,6 +87,7 @@ struct RdpNego
     , tls(nla || tls)
     , nla(nla)
     , krb(nla && krb)
+    , restricted_admin_mode(false)
     , state(NEGO_STATE_INITIAL)
     , selected_protocol(PROTOCOL_RDP)
     , requested_protocol(PROTOCOL_RDP)
@@ -286,12 +288,17 @@ struct RdpNego
         if (this->nla) {
             if (x224.rdp_neg_type == X224::RDP_NEG_RSP
             && x224.rdp_neg_code == X224::PROTOCOL_HYBRID){
+                // if (x224.rdp_neg_flags & X224::RESTRICTED_ADMIN_MODE_SUPPORTED) {
+                //     LOG(LOG_INFO, "Restricted Admin Mode Supported");
+                //     this->restricted_admin_mode = true;
+                // }
                 LOG(LOG_INFO, "activating SSL");
                 this->trans->enable_client_tls(ignore_certificate_change);
                 LOG(LOG_INFO, "activating CREDSSP");
                 rdpCredssp credssp(*this->trans, this->user,
                                    this->domain, this->password,
-                                   this->hostname, this->target_device, this->krb);
+                                   this->hostname, this->target_device,
+                                   this->krb, this->restricted_admin_mode);
                 if (this->test) {
                     credssp.hardcodedtests = true;
                 }
@@ -411,9 +418,10 @@ struct RdpNego
         }
 
         X224::CR_TPDU_Send(stream, cookie,
-            this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
-            0,
-            rdp_neg_requestedProtocols);
+                           this->tls?(X224::RDP_NEG_REQ):(X224::RDP_NEG_NONE),
+                           // X224::RESTRICTED_ADMIN_MODE_REQUIRED,
+                           0,
+                           rdp_neg_requestedProtocols);
         this->trans->send(stream);
         LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
     }
