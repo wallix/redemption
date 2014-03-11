@@ -38,7 +38,7 @@ struct ModRDPParams {
 
     bool         enable_transparent_mode;
     const char * output_filename;
-    Transport  * rectrans;
+    Transport  * transparent_recorder_transport;
 
     int      key_flags;
 
@@ -83,7 +83,7 @@ struct ModRDPParams {
 
         , enable_transparent_mode(false)
         , output_filename("")
-        , rectrans(NULL)
+        , transparent_recorder_transport(NULL)
 
         , key_flags(key_flags)
 

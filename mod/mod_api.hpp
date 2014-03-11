@@ -109,6 +109,9 @@ struct mod_api : public Callback, public DrawApi {
     virtual void refresh_context(Inifile & ini) {}
 
     virtual bool is_up_and_running() { return false; }
+
+    virtual void send_fastpath_data(Stream & data) {}
+    virtual void send_data_indication_ex(uint16_t channelId, HStream & stream) {}
 };
 
 #endif

@@ -60,6 +60,7 @@
 #include "RDP/SaveSessionInfoPDU.hpp"
 #include "RDP/pointer.hpp"
 #include "rdp_params.hpp"
+#include "transparentrecorder.hpp"
 
 #include "genrandom.hpp"
 
@@ -175,6 +176,8 @@ struct mod_rdp : public mod_api {
     bool enable_multidstblt;
     bool enable_multiopaquerect;
 
+    TransparentRecorder * transparent_recorder;
+
     //uint64_t total_data_received;
 
     mod_rdp( Transport * trans
@@ -232,6 +235,7 @@ struct mod_rdp : public mod_api {
         , enable_ellipsecb(false)
         , enable_multidstblt(false)
         , enable_multiopaquerect(false)
+        , transparent_recorder(NULL)
         //, total_data_received(0)
     {
         if (this->verbose & 1) {
@@ -251,6 +255,11 @@ struct mod_rdp : public mod_api {
 
             mod_rdp_params.log();
         }
+
+        if (mod_rdp_params.transparent_recorder_transport) {
+            this->transparent_recorder = new TransparentRecorder(mod_rdp_params.transparent_recorder_transport);
+        }
+
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
         this->event.object_and_time = (this->open_session_timeout > 0);
@@ -405,6 +414,8 @@ struct mod_rdp : public mod_api {
 
     virtual ~mod_rdp()
     {
+        delete this->transparent_recorder;
+
         if (this->acl && !this->end_session_reason.is_empty() &&
             !this->end_session_message.is_empty()) {
             this->acl->report(this->end_session_reason.c_str(),
@@ -524,6 +535,11 @@ struct mod_rdp : public mod_api {
 
     virtual void send_to_front_channel( const char * const mod_channel_name, uint8_t * data
                                         , size_t length, size_t chunk_size, int flags) {
+        if (this->transparent_recorder) {
+            this->transparent_recorder->send_to_front_channel( mod_channel_name, data, length
+                                                             , chunk_size, flags);
+        }
+
         const CHANNELS::ChannelDef * front_channel =
             this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
@@ -1563,6 +1579,9 @@ struct mod_rdp : public mod_api {
                             if (this->enable_transparent_mode) {
                                 //total_data_received += su.payload.size();
                                 //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
+                                if (this->transparent_recorder) {
+                                    this->transparent_recorder->send_fastpath_data(su.payload);
+                                }
                                 this->front.send_fastpath_data(su.payload);
 
                                 break;
@@ -1814,6 +1833,10 @@ struct mod_rdp : public mod_api {
                                             //total_data_received += copy_stream.size();
                                             //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
 
+                                            if (this->transparent_recorder) {
+                                                this->transparent_recorder->send_data_indication_ex(mcs.channelId,
+                                                    copy_stream);
+                                            }
                                             this->front.send_data_indication_ex(mcs.channelId, copy_stream);
 
                                             next_packet = sec.payload.end;
@@ -1974,6 +1997,10 @@ struct mod_rdp : public mod_api {
                                             this->send_fonts(2);
                                         }
                                         LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
+                                        if (this->transparent_recorder) {
+                                            this->transparent_recorder->server_resize(this->front_width,
+                                                this->front_height, this->bpp);
+                                        }
                                         if (-1 == this->front.server_resize(this->front_width, this->front_height, this->bpp)){
                                             LOG(LOG_WARNING, "Resize not available on older clients,"
                                                 " change client resolution to match server resolution");
