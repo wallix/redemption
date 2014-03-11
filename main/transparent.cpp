@@ -24,10 +24,15 @@
 #include <string>
 
 #define LOGNULL
+//#define LOGPRINT
+
 #include "listen.hpp"
-//#include "rdp/rdp.hpp"
 #include "session.hpp"
 #include "sockettransport.hpp"
+#include "outfiletransport.hpp"
+#include "internal/transparent_replay_mod.hpp"
+
+void run_mod(mod_api & mod, Front & front, wait_obj & front_event);
 
 int main(int argc, char * argv[]) {
     openlog("transparent", LOG_CONS | LOG_PERROR, LOG_USER);
@@ -35,7 +40,7 @@ int main(int argc, char * argv[]) {
     const char * copyright_notice =
         "\n"
         "ReDemPtion Transparent Proxy " VERSION ".\n"
-        "Copyright (C) Wallix 2010-2013.\n"
+        "Copyright (C) Wallix 2010-2014.\n"
         "Christophe Grosjean, Raphael Zhou.\n"
         "\n"
         ;
@@ -46,6 +51,8 @@ int main(int argc, char * argv[]) {
     uint32_t    target_port;
     std::string username;
     std::string password;
+    std::string record_filename;
+    std::string play_filename;
 
     target_port = 3389;
 
@@ -59,6 +66,9 @@ int main(int argc, char * argv[]) {
     ("target-device,t", boost::program_options::value(&target_device),   "target device[:port]")
     ("username,u",      boost::program_options::value(&username),        "username")
     ("password,p",      boost::program_options::value(&password),        "password")
+
+    ("record-file,r",   boost::program_options::value(&record_filename), "record file name")
+    ("play-file,d",     boost::program_options::value(&play_filename),   "play file name")
     ;
 
     boost::program_options::variables_map options;
@@ -80,35 +90,50 @@ int main(int argc, char * argv[]) {
         exit(-1);
     }
 
-    if (   (input_filename.c_str()[0] == 0)
-        && (output_filename.c_str()[0] == 0)) {
-        cout << "Missing input or output ini file name : use -i filename or -o filename\n\n";
+    if (   target_device.empty()
+        && play_filename.empty()) {
+        cout << "Missing target device or play file name: use -t target or -d filename\n\n";
         exit(-1);
     }
 
-    if (   (input_filename.c_str()[0] != 0)
-        && (output_filename.c_str()[0] != 0)) {
-        cout << "use -i filename or -o filename\n\n";
+    if (   !target_device.empty()
+        && !play_filename.empty()) {
+        cout << "Use -t target or -d filename\n\n";
         exit(-1);
     }
 
-    if (target_device.c_str()[0] == 0) {
-        cout << "Missing target device : use -t target_device[:port]\n\n";
+    if (   !output_filename.empty()
+        && !play_filename.empty()) {
+        cout << "Use -o filename or -d filename\n\n";
         exit(-1);
     }
 
-    size_t pos = target_device.find(':');
-    if (pos != string::npos) {
-        target_port = ::atoi(target_device.substr(pos + 1).c_str());
-        target_device.resize(pos);
-    }
-
-    if (username.c_str()[0] == 0) {
-        cout << "Missing username : use -u username\n\n";
+    if (   !record_filename.empty()
+        && !play_filename.empty()) {
+        cout << "Use -r filename or -d filename\n\n";
         exit(-1);
     }
 
-    if (password.c_str()[0] == 0) {
+    if (   !input_filename.empty()
+        && !output_filename.empty()) {
+        cout << "Use -i filename or -o filename\n\n";
+        exit(-1);
+    }
+
+    if (!target_device.empty()) {
+        size_t pos = target_device.find(':');
+        if (pos != string::npos) {
+            target_port = ::atoi(target_device.substr(pos + 1).c_str());
+            target_device.resize(pos);
+        }
+
+        if (username.c_str()[0] == 0) {
+            cout << "Missing username : use -u username\n\n";
+            exit(-1);
+        }
+    }
+
+    if (password.empty()) {
         password = "";
     }
 
@@ -165,116 +190,83 @@ int main(int argc, char * argv[]) {
         front.incoming(no_mod);
     }
 
-    LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
+    LOG(LOG_INFO, "hostname=\"%s\"", front.client_info.hostname);
 
-    int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.debug.mod_rdp);
-    SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
-                             , ini.debug.mod_rdp, &ini.context.auth_error_message);
 
     try {
-        ClientInfo client_info = front.client_info;
+        if (target_device.empty()) {
+            TransparentReplayMod mod(front, play_filename.c_str(),
+                front.client_info.width, front.client_info.height, NULL);
 
-        ModRDPParams mod_rdp_param( username.c_str()
-                                  , password.c_str()
-                                  , target_device.c_str()
-                                  , "0.0.0.0"   // client ip is silenced
-                                  , front.keymap.key_flags
-                                  , ini.debug.mod_rdp
-                                  );
-        //mod_rdp_param.enable_tls                      = true;
-        mod_rdp_param.enable_nla                      = ini.mod_rdp.enable_nla;
-        mod_rdp_param.enable_krb                      = ini.mod_rdp.enable_kerberos;
-        mod_rdp_param.enable_clipboard                = ini.client.clipboard.get();
-        //mod_rdp_param.enable_fastpath                 = true;
-        //mod_rdp_param.enable_mem3blt                  = true;
-        mod_rdp_param.enable_bitmap_update            = ini.globals.enable_bitmap_update;
-        //mod_rdp_param.enable_new_pointer              = true;
-        mod_rdp_param.enable_transparent_mode         = true;
-        mod_rdp_param.output_filename                 = output_filename.c_str();
-        mod_rdp_param.auth_channel                    = ini.globals.auth_channel;
-        mod_rdp_param.alternate_shell                 = ini.globals.alternate_shell.get_cstr();
-        mod_rdp_param.shell_working_directory         = ini.globals.shell_working_directory.get_cstr();
-        mod_rdp_param.rdp_compression                 = ini.mod_rdp.rdp_compression;
-        mod_rdp_param.disconnect_on_logon_user_change = ini.mod_rdp.disconnect_on_logon_user_change;
-        mod_rdp_param.open_session_timeout            = ini.mod_rdp.open_session_timeout;
-        mod_rdp_param.certificate_change_action       = ini.mod_rdp.certificate_change_action;
-        mod_rdp_param.extra_orders                    = ini.mod_rdp.extra_orders.c_str();
+            run_mod(mod, front, front_event);
+        }
+        else {
+            OutFileTransport * oft = NULL;
+            int                fd  = -1;
 
-        mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_param);
-        mod.event.st = &mod_trans;
-
-        struct      timeval time_mark = { 0, 50000 };
-        bool        run_session       = true;
-        BackEvent_t mod_event_signal  = BACK_EVENT_NONE;
-
-        while (run_session) {
-            try {
-                unsigned max = 0;
-                fd_set   rfds;
-                fd_set   wfds;
-
-                FD_ZERO(&rfds);
-                FD_ZERO(&wfds);
-                struct timeval timeout = time_mark;
-
-                front_event.add_to_fd_set(rfds, max, timeout);
-                mod.event.add_to_fd_set(rfds, max, timeout);
-
-                if (mod.event.is_set(rfds)) {
-                    timeout.tv_sec  = 0;
-                    timeout.tv_usec = 0;
+            if (!record_filename.empty()) {
+                fd = ::open(record_filename.c_str(), O_CREAT | O_TRUNC | O_WRONLY,
+                            S_IRUSR | S_IWUSR | S_IRGRP);
+                if (fd != -1) {
+                    oft = new OutFileTransport(fd);
                 }
+            }
 
-                int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+            int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.debug.mod_rdp);
+            SocketTransport mod_trans( "RDP Server", client_sck, target_device.c_str(), target_port
+                                     , ini.debug.mod_rdp, &ini.context.auth_error_message);
 
-                if (num < 0) {
-                    if (errno == EINTR) {
-                        continue;
-                    }
+            ClientInfo client_info = front.client_info;
 
-                    // Socket error
-                    break;
-                }
+            ModRDPParams mod_rdp_param( username.c_str()
+                                      , password.c_str()
+                                      , target_device.c_str()
+                                      , "0.0.0.0"   // client ip is silenced
+                                      , front.keymap.key_flags
+                                      , ini.debug.mod_rdp
+                                      );
+            //mod_rdp_param.enable_tls                      = true;
+            mod_rdp_param.enable_nla                      = ini.mod_rdp.enable_nla;
+            mod_rdp_param.enable_krb                      = ini.mod_rdp.enable_kerberos;
+            mod_rdp_param.enable_clipboard                = ini.client.clipboard.get();
+            //mod_rdp_param.enable_fastpath                 = true;
+            //mod_rdp_param.enable_mem3blt                  = true;
+            mod_rdp_param.enable_bitmap_update            = ini.globals.enable_bitmap_update;
+            //mod_rdp_param.enable_new_pointer              = true;
+            mod_rdp_param.enable_transparent_mode         = true;
+            mod_rdp_param.output_filename                 = (output_filename.empty() ? "" : output_filename.c_str());
+            mod_rdp_param.transparent_recorder_transport  = oft;
+            mod_rdp_param.auth_channel                    = ini.globals.auth_channel;
+            mod_rdp_param.alternate_shell                 = ini.globals.alternate_shell.get_cstr();
+            mod_rdp_param.shell_working_directory         = ini.globals.shell_working_directory.get_cstr();
+            mod_rdp_param.rdp_compression                 = ini.mod_rdp.rdp_compression;
+            mod_rdp_param.disconnect_on_logon_user_change = ini.mod_rdp.disconnect_on_logon_user_change;
+            mod_rdp_param.open_session_timeout            = ini.mod_rdp.open_session_timeout;
+            mod_rdp_param.certificate_change_action       = ini.mod_rdp.certificate_change_action;
+            mod_rdp_param.extra_orders                    = ini.mod_rdp.extra_orders.c_str();
 
-                if (front_event.is_set(rfds)) {
-                    try {
-                        front.incoming(mod);
-                    }
-                    catch (...) {
-                        run_session = false;
-                        continue;
-                    };
-                }
+            mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_param);
+            mod.event.st = &mod_trans;
 
-                if (front.up_and_running) {
-                    if (mod.event.is_set(rfds)) {
-                        mod.draw_event(time(NULL));
-                        if (mod.event.signal != BACK_EVENT_NONE) {
-                            mod_event_signal = mod.event.signal;
+            run_mod(mod, front, front_event);
 
-                            mod.event.reset();
-                        }
-                        mod.event.reset();
+            if (client_sck != -1) {
+                shutdown(client_sck, 2);
+                close(client_sck);
+            }
 
-                        if (mod_event_signal == BACK_EVENT_NEXT) {
-                            run_session = false;
-                        }
-                    }
-                }
-            } catch (Error & e) {
-                LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
-                run_session = false;
-            };
-        }   // while (run_session)
+            if (fd != -1) {
+                delete oft;
+
+                close(fd);
+            }
+        }
     }   // try
     catch (Error & e) {
         LOG(LOG_ERR, "errid = %d", e.id);
     }
 
     front.disconnect();
-
-    shutdown(client_sck, 2);
-    close(client_sck);
 
     shutdown(one_shot_server.sck, 2);
     close(one_shot_server.sck);
@@ -283,4 +275,70 @@ int main(int argc, char * argv[]) {
     LOG(LOG_INFO, "Incoming socket %d (ip=%s)\n", one_shot_server.sck, one_shot_server.ip_source);
 
     return 0;
+}
+
+void run_mod(mod_api & mod, Front & front, wait_obj & front_event) {
+    struct      timeval time_mark = { 0, 50000 };
+    bool        run_session       = true;
+    BackEvent_t mod_event_signal  = BACK_EVENT_NONE;
+
+    while (run_session) {
+        try {
+            unsigned max = 0;
+            fd_set   rfds;
+            fd_set   wfds;
+
+            FD_ZERO(&rfds);
+            FD_ZERO(&wfds);
+            struct timeval timeout = time_mark;
+
+            front_event.add_to_fd_set(rfds, max, timeout);
+            mod.event.add_to_fd_set(rfds, max, timeout);
+
+            if (mod.event.is_set(rfds)) {
+                timeout.tv_sec  = 0;
+                timeout.tv_usec = 0;
+            }
+
+            int num = select(max + 1, &rfds, &wfds, 0, &timeout);
+
+            if (num < 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+
+                // Socket error
+                break;
+            }
+
+            if (front_event.is_set(rfds)) {
+                try {
+                    front.incoming(mod);
+                }
+                catch (...) {
+                    run_session = false;
+                    continue;
+                };
+            }
+
+            if (front.up_and_running) {
+                if (mod.event.is_set(rfds)) {
+                    mod.event.reset();
+                    mod.draw_event(time(NULL));
+                    if (mod.event.signal != BACK_EVENT_NONE) {
+                        mod_event_signal = mod.event.signal;
+                    }
+
+                    if (mod_event_signal == BACK_EVENT_NEXT) {
+                        run_session = false;
+                    }
+                }
+            }
+            else {
+            }
+        } catch (Error & e) {
+            LOG(LOG_INFO, "Session::Session exception = %d!\n", e.id);
+            run_session = false;
+        };
+    }   // while (run_session)
 }
