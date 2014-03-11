@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(TestManyRandom)
     Base64 b64converter;
 
     LCGRandom rand(0x123ABC);
-    for (unsigned i = 0xF; i < 0xFFFF; i++) {
+    for (unsigned i = 0; i < 0xf; i++) {
         testrandom(rand.rand32()*i, b64converter);
     }
 }
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(TestManyRandomWithoutFiller)
     b64converter.remove_filler();
 
     LCGRandom rand(0x123ABC);
-    for (unsigned i = 0xF; i < 0xFFFF; i++) {
+    for (unsigned i = 0; i < 0xf; i++) {
         testrandom(rand.rand32()*i, b64converter);
     }
 }

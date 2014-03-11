@@ -37,6 +37,14 @@
 #include "colortheme.hpp"
 // #include "radio_list.hpp"
 
+enum {
+    NONE = 0x00,
+    TICKET_VISIBLE = 0x01,
+    TICKET_MANDATORY = 0x03,
+    COMMENT_VISIBLE = 0x04,
+    COMMENT_MANDATORY = 0x0c
+};
+
 class WidgetSelectorFlat : public WidgetParent
 {
 
@@ -550,6 +558,12 @@ public:
 
     // WidgetRadioList radiolist;
 
+    WidgetLabel ticket_label;
+    WidgetEdit ticket_edit;
+    WidgetLabel comment_label;
+    WidgetEdit comment_edit;
+
+    int tc_flag;
 
 public:
     struct temporary_number_of_page {
@@ -566,11 +580,11 @@ public:
 
 
 public:
-    WidgetSelectorFlat(DrawApi& drawable, const char * device_name,
-                   uint16_t width, uint16_t height, Widget2 & parent, NotifyApi* notifier,
-                   const char * current_page, const char * number_of_page,
-                   const char * filter_device, const char * filter_target,
-                   const char * filter_proto, Inifile & ini)
+    WidgetSelectorFlat(DrawApi& drawable, const char * device_name, uint16_t width,
+                       uint16_t height, Widget2 & parent, NotifyApi* notifier,
+                       const char * current_page, const char * number_of_page,
+                       const char * filter_device, const char * filter_target,
+                       const char * filter_proto, Inifile & ini, int ticcom_flag = 0)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
         , colors(ini.colors)
         , device_label(drawable, 20, 10, *this, NULL, device_name, true, -10,
@@ -638,6 +652,17 @@ public:
                   this->colors.global.fgcolor, this->colors.global.bgcolor,
                   this->colors.global.focus_color, 6, 2)
         // , radiolist(drawable, this->device_label.lx() + 30, this->device_label.dy(), *this, this, -19, this->colors.global.fgcolr, this->colors.global.bgcolor)
+        , ticket_label(drawable, 15, 10, *this, NULL, TR("Ticket n°", ini), true, -20,
+                       this->colors.global.fgcolor, this->colors.global.bgcolor)
+        , ticket_edit(drawable, 15, 0, 200, *this, this,
+                      filter_target?filter_target:0, -20, this->colors.edit.fgcolor,
+                      this->colors.edit.bgcolor, this->colors.edit.focus_color, -1, 1, 1)
+        , comment_label(drawable, 15, 10, *this, NULL, TR("comment", ini), true, -20,
+                       this->colors.global.fgcolor, this->colors.global.bgcolor)
+        , comment_edit(drawable, 15, 0, 200, *this, this,
+                    filter_device?filter_device:0, -20, this->colors.edit.fgcolor,
+                    this->colors.edit.bgcolor, this->colors.edit.focus_color, -1, 1, 1)
+        , tc_flag(ticcom_flag)
     {
         this->impl = new CompositeTable;
 
@@ -651,6 +676,16 @@ public:
         this->add_widget(&this->filter_proto);
         this->add_widget(&this->apply);
         this->add_widget(&this->selector_lines);
+
+        if (this->tc_flag & TICKET_VISIBLE) {
+            this->add_widget(&this->ticket_label);
+            this->add_widget(&this->ticket_edit);
+        }
+        if (this->tc_flag & COMMENT_VISIBLE) {
+            this->add_widget(&this->comment_label);
+            this->add_widget(&this->comment_edit);
+        }
+
         this->add_widget(&this->first_page);
         this->add_widget(&this->prev_page);
         this->add_widget(&this->current_page);
@@ -708,6 +743,7 @@ public:
             this->filter_proto.set_edit_cx(this->selector_lines.protocol_w - 10);
         }
 
+        // Adjust labels according to filter boxes
         this->device_target_label.rect.y = this->device_label.cy() + this->device_label.dy() + 15;
         this->target_label.rect.y = this->device_target_label.dy();
         this->protocol_label.rect.y = this->device_target_label.dy();
@@ -723,6 +759,7 @@ public:
         this->filter_proto.set_edit_y(this->filter_device.dy());
         this->selector_lines.rect.y = this->filter_device.dy() + this->filter_device.cy() + 5;
 
+        // set right bottom navigation buttons positions
         this->connect.set_button_y(this->cy() - (this->logout.cy() + 10));
         this->logout.set_button_y(this->connect.dy());
 
@@ -748,6 +785,29 @@ public:
         this->connect.set_button_x(this->last_page.lx() - nav_w/4 - this->connect.cx()/2);
         this->logout.set_button_x(this->first_page.dx() + nav_w/4 - this->logout.cx()/2);
 
+        // Comment fields
+        {
+            int tc_label_max = 0;
+            if (this->tc_flag & TICKET_VISIBLE) {
+                tc_label_max = this->ticket_label.lx();
+            }
+            if ((this->tc_flag & COMMENT_VISIBLE) &&
+                (tc_label_max < this->comment_label.lx())) {
+                tc_label_max = this->comment_label.lx();
+            }
+
+            this->ticket_edit.set_edit_x(tc_label_max + 10);
+            this->comment_edit.set_edit_x(tc_label_max + 10);
+
+            this->ticket_edit.set_edit_cx((this->logout.dx() - tc_label_max - 45) / 2);
+            this->comment_edit.set_edit_cx(this->logout.dx() - tc_label_max - 45);
+
+            this->ticket_label.rect.y = this->current_page.dy();
+            this->comment_label.rect.y = this->logout.dy();
+            this->ticket_edit.set_edit_y(this->current_page.dy());
+            this->comment_edit.set_edit_y(this->comment_label.dy());
+        }
+        // top right filter button
         this->apply.set_button_y(this->device_label.dy());
         this->apply.set_button_x(this->cx() - (this->apply.cx() + 20));
 
@@ -813,13 +873,28 @@ public:
         this->draw_inner_free(clip.intersect(this->rect), this->colors.global.bgcolor);
     }
 
+    void ask_for_connection() {
+        if (((this->tc_flag & TICKET_MANDATORY) == TICKET_MANDATORY) &&
+            (this->ticket_edit.num_chars == 0)) {
+            this->set_widget_focus(&this->ticket_edit);
+            return;
+        }
+        if (((this->tc_flag & COMMENT_MANDATORY) == COMMENT_MANDATORY) &&
+            (this->comment_edit.num_chars == 0)) {
+            this->set_widget_focus(&this->comment_edit);
+            return;
+        }
+        if (this->notifier) {
+            this->notifier->notify(&this->connect, NOTIFY_SUBMIT);
+        }
+    }
+
+
     virtual void notify(Widget2* widget, notify_event_t event)
     {
         if (widget->group_id == this->selector_lines.group_id) {
             if (NOTIFY_SUBMIT == event) {
-                if (this->notifier) {
-                    this->notifier->notify(widget, event);
-                }
+                this->ask_for_connection();
             }
         }
         else if (widget->group_id == this->apply.group_id) {
@@ -837,8 +912,13 @@ public:
             }
         }
         else if (widget->group_id == this->connect.group_id) {
-            if (this->notifier) {
-                this->notifier->notify(widget, event);
+            if (NOTIFY_SUBMIT == event) {
+                this->ask_for_connection();
+            }
+        }
+        else if (widget->group_id == this->ticket_edit.group_id) {
+            if (NOTIFY_SUBMIT == event) {
+                this->ask_for_connection();
             }
         }
         else {
@@ -848,9 +928,11 @@ public:
     virtual void rdp_input_mouse(int device_flags, int x, int y, Keymap2 * keymap)
     {
         if (device_flags == MOUSE_FLAG_MOVE) {
-            Widget2 * w = this->widget_at_pos(x, y);
-            if (w != &this->selector_lines) {
-                this->selector_lines.col = COLUMN_UNKNOWN;
+            if (this->selector_lines.col != COLUMN_UNKNOWN) {
+                Widget2 * w = this->widget_at_pos(x, y);
+                if (w != &this->selector_lines) {
+                    this->selector_lines.col = COLUMN_UNKNOWN;
+                }
             }
         }
         WidgetParent::rdp_input_mouse(device_flags, x, y, keymap);

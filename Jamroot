@@ -276,26 +276,26 @@ exe rdptproxy
 # Functional tests (run by hand)
 #
 
-exe tls_test_client 
-    : ftests/tls_test_client.cpp cryptofile openssl crypto png z dl snappy 
-    : <link>static 
+exe tls_test_client
+    : ftests/tls_test_client.cpp cryptofile openssl crypto png z dl snappy
+    : <link>static
     <variant>coverage:<library>gcov
     <variant>coverage:<build>no
  ;
-exe tls_test_server 
-    : ftests/tls_test_server.cpp cryptofile openssl crypto png z dl snappy 
-    : <link>static 
+exe tls_test_server
+    : ftests/tls_test_server.cpp cryptofile openssl crypto png z dl snappy
+    : <link>static
     <variant>coverage:<library>gcov
     <variant>coverage:<build>no
 ;
-exe rgx_cmp 
-    : ftests/rgx_cmp.cpp 
-    : <link>static 
+exe rgx_cmp
+    : ftests/rgx_cmp.cpp
+    : <link>static
     <variant>coverage:<library>gcov
     <variant>coverage:<build>no
 ;
 
-#exe freetype_draw : ftests/freetype_draw.cpp freetype 
+#exe freetype_draw : ftests/freetype_draw.cpp freetype
 #    : <link>static <variant>coverage:<library>gcov
 #;
 
@@ -573,3 +573,5 @@ unit-test test_ntlm : tests/core/RDP/nla/ntlm/test_ntlm.cpp openssl crypto dl z 
 unit-test test_credentials : tests/core/RDP/nla/kerberos/test_credentials.cpp krb5 libboost_unit_test : <variant>coverage:<library>gcov ;
 unit-test test_kerberos : tests/core/RDP/nla/kerberos/test_kerberos.cpp krb5 gssglue libboost_unit_test : <variant>coverage:<library>gcov ;
 
+
+unit-test test_gap_buffer : tests/utils/test_gap_buffer.cpp libboost_unit_test : <variant>coverage:<library>gcov ;

@@ -139,6 +139,42 @@ class SslRC4
     }
 };
 
+class SslAES
+{
+    AES_KEY e_key;
+    AES_KEY d_key;
+
+    uint8_t iv;
+
+    public:
+    SslAES(){}
+
+    void set_key(const uint8_t * const key,  size_t key_size)
+    {
+        if ((key_size != 16) &&
+            (key_size != 24) &&
+            (key_size != 32)) {
+            LOG(LOG_ERR, "Unexpected AES Key size");
+            return;
+        }
+
+        AES_set_encrypt_key(key, key_size * 8, &(this->e_key));
+        AES_set_decrypt_key(key, key_size * 8, &(this->d_key));
+    }
+
+    void crypt_cbc(size_t data_size, uint8_t * ivec,
+                   const uint8_t * const indata, uint8_t * const outdata) {
+        AES_cbc_encrypt(indata, outdata, data_size, &(this->e_key), ivec, AES_ENCRYPT);
+    }
+
+    void decrypt_cbc(size_t data_size, uint8_t * ivec,
+                     const uint8_t * const indata, uint8_t * const outdata) {
+        AES_cbc_encrypt(indata, outdata, data_size, &(this->d_key), ivec, AES_DECRYPT);
+    }
+};
+
+
+
 class SslHMAC
 {
     HMAC_CTX hmac;

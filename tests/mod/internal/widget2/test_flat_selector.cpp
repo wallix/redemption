@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlat)
     if (!check_sig(drawable.gd.drawable, message,
                    "\x97\x81\x51\x5c\x82\x59\xc1\x12\x08\x1a"
                    "\xf7\xcd\x50\xe5\x84\xa3\xd5\x61\x3d\xd1"
-                   )){
+                   )) {
         BOOST_CHECK_MESSAGE(false, message);
     }
 
@@ -1028,4 +1028,319 @@ BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatAdjustColumns3)
         BOOST_CHECK_MESSAGE(false, message);
     }
 
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVV)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    struct Notify : NotifyApi {
+        Widget2* sender;
+        notify_event_t event;
+
+        Notify()
+        : sender(0)
+        , event(0)
+        {}
+
+        virtual void notify(Widget2* sender, notify_event_t event)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    Inifile ini;
+
+    ini.translation.target.set_from_cstr("Target");
+
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, ini, TICKET_VISIBLE | COMMENT_VISIBLE);
+
+    selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.27",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.33",
+                        "RDP", "2013-04-20 19:56:50");
+
+    selector.set_widget_focus(&selector.selector_lines);
+    selector.selector_lines.set_current_index(0);
+
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    // selector.selector_lines.set_current_index(1);
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == NULL);
+
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+
+    BOOST_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
+    BOOST_CHECK(notifier.sender == &selector.connect);
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldVM)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    struct Notify : NotifyApi {
+        Widget2* sender;
+        notify_event_t event;
+
+        Notify()
+        : sender(0)
+        , event(0)
+        {}
+
+        virtual void notify(Widget2* sender, notify_event_t event)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    Inifile ini;
+
+    ini.translation.target.set_from_cstr("Target");
+
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, ini, TICKET_VISIBLE | COMMENT_MANDATORY);
+
+    selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.27",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.33",
+                        "RDP", "2013-04-20 19:56:50");
+
+    selector.set_widget_focus(&selector.selector_lines);
+    selector.selector_lines.set_current_index(0);
+
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    // selector.selector_lines.set_current_index(1);
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == NULL);
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == NULL);
+    BOOST_CHECK(selector.current_focus == &selector.comment_edit);
+
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == NULL);
+    BOOST_CHECK(selector.current_focus == &selector.comment_edit);
+
+    selector.comment_edit.set_text("I would like to log on please !");
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    BOOST_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
+    BOOST_CHECK(notifier.sender == &selector.connect);
+}
+
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMV)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    struct Notify : NotifyApi {
+        Widget2* sender;
+        notify_event_t event;
+
+        Notify()
+        : sender(0)
+        , event(0)
+        {}
+
+        virtual void notify(Widget2* sender, notify_event_t event)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    Inifile ini;
+
+    ini.translation.target.set_from_cstr("Target");
+
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, ini, TICKET_MANDATORY | COMMENT_VISIBLE);
+
+    selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.27",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.33",
+                        "RDP", "2013-04-20 19:56:50");
+
+    selector.set_widget_focus(&selector.selector_lines);
+    selector.selector_lines.set_current_index(0);
+
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == NULL);
+
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(selector.current_focus == &selector.ticket_edit);
+
+    keymap.push_kevent(Keymap2::KEVENT_TAB);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(selector.current_focus == &selector.comment_edit);
+    selector.comment_edit.set_text("I would like to log on please !");
+    notifier.event = 0;
+    notifier.sender = 0;
+    selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
+                             selector.connect.centerx(),
+                             selector.connect.centery(),
+                             NULL);
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(selector.current_focus == &selector.connect);
+    notifier.event = 0;
+    notifier.sender = 0;
+    selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1,
+                             selector.connect.centerx(),
+                             selector.connect.centery(),
+                             NULL);
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(selector.current_focus == &selector.ticket_edit);
+
+
+    selector.ticket_edit.set_text("18752");
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    BOOST_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
+    BOOST_CHECK(notifier.sender == &selector.connect);
+}
+
+
+BOOST_AUTO_TEST_CASE(TraceWidgetSelectorFlatDescFieldMM)
+{
+    TestDraw drawable(800, 600);
+
+    // WidgetSelectorFlat is a selector widget at position 0,0 in it's parent context
+    WidgetScreen parent(drawable, 800, 600);
+    struct Notify : NotifyApi {
+        Widget2* sender;
+        notify_event_t event;
+
+        Notify()
+        : sender(0)
+        , event(0)
+        {}
+
+        virtual void notify(Widget2* sender, notify_event_t event)
+        {
+            this->sender = sender;
+            this->event = event;
+        }
+    } notifier;
+
+    int16_t w = drawable.gd.drawable.width;
+    int16_t h = drawable.gd.drawable.height;
+    Inifile ini;
+
+    ini.translation.target.set_from_cstr("Target");
+
+    WidgetSelectorFlat selector(drawable, "x@127.0.0.1", w, h, parent, &notifier, "1", "1", 0, 0, 0, ini, TICKET_MANDATORY | COMMENT_MANDATORY);
+
+    selector.add_device("rdp", "qa\\administrateur@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.111",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.27",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.103",
+                        "RDP", "2013-04-20 19:56:50");
+    selector.add_device("rdp", "administrateur@qa@10.10.14.33",
+                        "RDP", "2013-04-20 19:56:50");
+
+    selector.set_widget_focus(&selector.selector_lines);
+    selector.selector_lines.set_current_index(0);
+
+    Keymap2 keymap;
+    keymap.init_layout(0x040C);
+    keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == NULL);
+
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(selector.current_focus == &selector.ticket_edit);
+
+    selector.ticket_edit.set_text("18752");
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    BOOST_CHECK_EQUAL(notifier.event, 0);
+    BOOST_CHECK(notifier.sender == 0);
+    BOOST_CHECK(selector.current_focus == &selector.comment_edit);
+    selector.comment_edit.set_text("I would like to log on please !");
+
+    keymap.push_kevent(Keymap2::KEVENT_ENTER);
+    selector.rdp_input_scancode(0,0,0,0, &keymap);
+
+    BOOST_CHECK_EQUAL(notifier.event, NOTIFY_SUBMIT);
+    BOOST_CHECK(notifier.sender == &selector.connect);
 }

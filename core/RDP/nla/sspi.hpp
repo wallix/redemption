@@ -701,7 +701,8 @@ struct SecurityFunctionTable {
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     virtual SEC_STATUS EncryptMessage(PCtxtHandle phContext, unsigned long fQOP,
-                                       SecBufferDesc * pMessage, unsigned long MessageSeqNo) {
+                                      SecBufferDesc * pMessage,
+                                      unsigned long MessageSeqNo) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
@@ -713,7 +714,8 @@ struct SecurityFunctionTable {
     }
 
     // SET_CONTEXT_ATTRIBUTES SetContextAttributes;
-    virtual SEC_STATUS SetContextAttributes(PCtxtHandle phContext, unsigned long ulAttribute,
+    virtual SEC_STATUS SetContextAttributes(PCtxtHandle phContext,
+                                            unsigned long ulAttribute,
                                             void* pBuffer, unsigned long cbBuffer) {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }

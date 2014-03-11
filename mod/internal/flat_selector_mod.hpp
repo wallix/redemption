@@ -53,7 +53,8 @@ public:
                    ini.context.selector_group_filter.get_cstr(),
                    ini.context.selector_device_filter.get_cstr(),
                    ini.context.selector_proto_filter.get_cstr(),
-                   ini
+                   ini,
+                   NONE/* | TICKET_VISIBLE | COMMENT_VISIBLE */
                    )
         , current_page(atoi(this->selector.current_page.get_text()))
         , number_page(atoi(this->selector.number_page.get_text()+1))
@@ -102,14 +103,18 @@ public:
             this->event.set();
         }
         else if (NOTIFY_SUBMIT == event) {
-            if (widget == &this->selector.connect
-                || widget->group_id == this->selector.selector_lines.group_id) {
+            if (widget == &this->selector.connect) {
                 char buffer[1024];
                 snprintf(buffer, sizeof(buffer), "%s:%s",
                          this->selector.selector_lines.get_current_index(WidgetSelectorFlat::COLUMN_TARGET),
                          this->ini.globals.auth_user.get_cstr()
                          );
                 this->ini.parse_username(buffer);
+
+                this->ini.context.ticket.set_from_cstr(this->selector.ticket_edit.get_text());
+                this->ini.context.comment.set_from_cstr(this->selector.comment_edit.get_text());
+
+
                 this->event.signal = BACK_EVENT_NEXT;
                 this->event.set();
             }
