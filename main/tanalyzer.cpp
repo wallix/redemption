@@ -51,6 +51,44 @@ private:
     RDPMultiOpaqueRect multiopaquerect;
     RDPPolyline        polyline;
 
+    struct Statistic {
+        uint32_t cache_bitmap_compressed_count;
+        uint32_t cache_bitmap_uncompressed_count;
+        uint32_t cache_bitmap_compressed_rev2_count;
+        uint32_t cache_bitmap_uncompressed_rev2_count;
+        uint32_t cache_bitmap_compressed_rev3_count;
+
+        uint32_t bitmapupdate_count;
+
+        uint32_t dstblt_count;
+        uint32_t patblt_count;
+        uint32_t scrblt_count;
+        uint32_t lineto_count;
+        uint32_t opaquerect_count;
+        uint32_t memblt_count;
+        uint32_t mem3blt_count;
+        uint32_t multiopaquerect_count;
+        uint32_t polyline_count;
+
+        Statistic()
+        : cache_bitmap_compressed_count(0)
+        , cache_bitmap_uncompressed_count(0)
+        , cache_bitmap_compressed_rev2_count(0)
+        , cache_bitmap_uncompressed_rev2_count(0)
+        , cache_bitmap_compressed_rev3_count(0)
+        , bitmapupdate_count(0)
+        , dstblt_count(0)
+        , patblt_count(0)
+        , scrblt_count(0)
+        , lineto_count(0)
+        , opaquerect_count(0)
+        , memblt_count(0)
+        , mem3blt_count(0)
+        , multiopaquerect_count(0)
+        , polyline_count(0)
+        {}
+    } statistic;
+
 public:
     // RDPGraphicDevice
     virtual void draw(const RDPOpaqueRect      & cmd, const Rect & clip) { REDASSERT(false); }
@@ -108,23 +146,42 @@ public:
         switch (sctrl.pdu_type1) {
             case PDUTYPE_DATAPDU:
             {
-                LOG(LOG_INFO, "send_data_indication_ex: PDUTYPE_DATAPDU(0x%X)", sctrl.pdu_type1);
+                LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE_DATAPDU(0x%X)", sctrl.pdu_type1);
 
                 ShareData sdata(stream);
                 sdata.recv_begin(&this->mppc_dec);
                 switch (sdata.pdutype2) {
                     case PDUTYPE2_UPDATE:
-                        LOG(LOG_INFO, "send_data_indication_ex: PDUTYPE2_UPDATE(0x%X)", sdata.pdutype2);
+                    {
+                        LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE2_UPDATE(0x%X)", sdata.pdutype2);
+                        SlowPath::GraphicsUpdate_Recv gp_udp_r(sdata.payload);
+                        switch (gp_udp_r.update_type) {
+                            case RDP_UPDATE_ORDERS:
+                                LOG(LOG_INFO, "send_data_indication_ex: Received RDP_UPDATE_ORDERS(0x%X)", gp_udp_r.update_type);
+                                this->process_orders(sdata.payload, false);
+                            break;
+                            case RDP_UPDATE_BITMAP:
+                                LOG(LOG_INFO, "send_data_indication_ex: Received UPDATETYPE_BITMAP(0x%X)", gp_udp_r.update_type);
+                                this->statistic.bitmapupdate_count++;
+                            break;
+                            case RDP_UPDATE_PALETTE:
+                                LOG(LOG_INFO, "send_data_indication_ex: Received UPDATETYPE_PALETTE(0x%X)", gp_udp_r.update_type);
+                            break;
+                            case RDP_UPDATE_SYNCHRONIZE:
+                                LOG(LOG_INFO, "send_data_indication_ex: Received UPDATETYPE_SYNCHRONIZE(0x%X)", gp_udp_r.update_type);
+                            break;
+                            default:
+                                LOG(LOG_INFO, "send_data_indication_ex: Received unexpected Server Graphics Update Type (0x%X)", gp_udp_r.update_type);
+                            break;
+                        }
+                    }
                     break;
-
                     case PDUTYPE2_SAVE_SESSION_INFO:
-                        LOG(LOG_INFO, "send_data_indication_ex: PDUTYPE2_SAVE_SESSION_INFO(0x%X)", sdata.pdutype2);
+                        LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE2_SAVE_SESSION_INFO(0x%X)", sdata.pdutype2);
                     break;
-
                     case PDUTYPE2_SET_ERROR_INFO_PDU:
-                        LOG(LOG_INFO, "send_data_indication_ex: PDUTYPE2_SET_ERROR_INFO_PDU(0x%X)", sdata.pdutype2);
+                        LOG(LOG_INFO, "send_data_indication_ex: Received PDUTYPE2_SET_ERROR_INFO_PDU(0x%X)", sdata.pdutype2);
                     break;
-
                     default:
                         LOG(LOG_INFO, "send_data_indication_ex: ***** Received unexpected data PDU, pdu_type2=0x%X *****", sdata.pdutype2);
                     break;
@@ -143,144 +200,149 @@ public:
 
         while (data.in_remain()) {
             FastPath::Update_Recv fp_upd_r(data, &this->mppc_dec);
-
             switch (fp_upd_r.updateCode) {
                 case FastPath::FASTPATH_UPDATETYPE_ORDERS:
-                {
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_ORDERS(0x%X)", fp_upd_r.updateCode);
-
-                    RDP::OrdersUpdate_Recv odrs_upd_r(fp_upd_r.payload, true);
-
-                    int processed = 0;
-                    while (processed < odrs_upd_r.number_orders) {
-                        RDP::DrawingOrder_RecvFactory drawodr_rf(fp_upd_r.payload);
-
-                        if (!drawodr_rf.control_flags & RDP::STANDARD) {
-                            LOG(LOG_ERR, "Non standard order detected : protocol error");
-                            throw Error(ERR_RDP_PROTOCOL);
-                        }
-                        if (drawodr_rf.control_flags & RDP::SECONDARY) {
-                            RDPSecondaryOrderHeader sec_odr_h(fp_upd_r.payload);
-                            uint8_t * next_order = fp_upd_r.payload.p + sec_odr_h.order_data_length();
-                            switch (sec_odr_h.type) {
-                                case RDP::TS_CACHE_BITMAP_COMPRESSED:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_BITMAP(0x%X)", sec_odr_h.type);
-                                break;
-                                case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_BITMAP_UNCOMPRESSED(0x%X)", sec_odr_h.type);
-                                break;
-                                case RDP::TS_CACHE_COLOR_TABLE:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_COLOR_TABLE(0x%X)", sec_odr_h.type);
-                                break;
-                                case RDP::TS_CACHE_GLYPH:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_GLYPH(0x%X)", sec_odr_h.type);
-                                break;
-                                case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_BITMAP_COMPRESSED_REV2(0x%X)", sec_odr_h.type);
-                                break;
-                                case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_BITMAP_UNCOMPRESSED_REV2(0x%X)", sec_odr_h.type);
-                                break;
-                                case RDP::TS_CACHE_BITMAP_COMPRESSED_REV3:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_BITMAP_COMPRESSED_REV3(0x%X)", sec_odr_h.type);
-                                break;
-                                default:
-                                    LOG(LOG_INFO, "send_fastpath_data: ***** Received unexpected Secondary Drawing Order, type=0x%X *****", sec_odr_h.type);
-                                break;
-                            }
-                            fp_upd_r.payload.p = next_order;
-                        }
-                        else {
-                            RDPPrimaryOrderHeader pri_ord_h = this->common.receive(fp_upd_r.payload, drawodr_rf.control_flags);
-                            switch (this->common.order) {
-/*
-                                case RDP::DESTBLT:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_DSTBLT_ORDER(0x%X)", this->common.order);
-                                    this->destblt.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-*/
-                                case RDP::PATBLT:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_PATBLT_ORDER(0x%X)", this->common.order);
-                                    this->patblt.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-                                case RDP::SCREENBLT:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_SCRBLT_ORDER(0x%X)", this->common.order);
-                                    this->scrblt.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-                                case RDP::MEMBLT:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_MEMBLT_ORDER(0x%X)", this->common.order);
-                                    this->memblt.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-                                case RDP::MEM3BLT:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_MEM3BLT_ORDER(0x%X)", this->common.order);
-                                    this->mem3blt.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-                                case RDP::LINE:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_LINETO_ORDER(0x%X)", this->common.order);
-                                    this->lineto.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-                                case RDP::RECT:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_OPAQUERECT_ORDER(0x%X)", this->common.order);
-                                    this->opaquerect.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-                                case RDP::MULTIOPAQUERECT:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_MULTIOPAQUERECT_ORDER(0x%X)", this->common.order);
-                                    this->multiopaquerect.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-                                case RDP::POLYLINE:
-                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_POLYLINE_ORDER(0x%X)", this->common.order);
-                                    this->polyline.receive(fp_upd_r.payload, pri_ord_h);
-                                break;
-                                default:
-                                    LOG(LOG_INFO, "send_fastpath_data: ***** Received unexpected Primary Drawing Order, type=0x%X *****", this->common.order);
-                                break;
-                            }
-                        }
-                        processed++;
-                    }
-                }
+                    this->process_orders(fp_upd_r.payload, true);
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_BITMAP:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_BITMAP(0x%X)", fp_upd_r.updateCode);
+                    this->statistic.bitmapupdate_count++;
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_PALETTE:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PALETTE(0x%X)", fp_upd_r.updateCode);
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_SYNCHRONIZE(0x%X)", fp_upd_r.updateCode);
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_NULL(0x%X)", fp_upd_r.updateCode);
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_DEFAULT(0x%X)", fp_upd_r.updateCode);
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_POSITION(0x%X)", fp_upd_r.updateCode);
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_COLOR:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_COLOR(0x%X)", fp_upd_r.updateCode);
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_POINTER:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_POINTER(0x%X)", fp_upd_r.updateCode);
                 break;
-
                 case FastPath::FASTPATH_UPDATETYPE_CACHED:
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_CACHED(0x%X)", fp_upd_r.updateCode);
                 break;
-
                 default:
                     LOG(LOG_INFO, "send_fastpath_data: ***** Received unexpected fast-past PDU, updateCode=0x%X *****", fp_upd_r.updateCode);
                 break;
             }
+        }
+    }
+
+    void process_orders(Stream & stream, bool fast_path) {
+        RDP::OrdersUpdate_Recv odrs_upd_r(stream, fast_path);
+
+        int processed = 0;
+        while (processed < odrs_upd_r.number_orders) {
+            RDP::DrawingOrder_RecvFactory drawodr_rf(stream);
+
+            if (!drawodr_rf.control_flags & RDP::STANDARD) {
+                LOG(LOG_ERR, "process_orders: Non standard order detected, protocol error");
+                throw Error(ERR_RDP_PROTOCOL);
+            }
+            if (drawodr_rf.control_flags & RDP::SECONDARY) {
+                RDPSecondaryOrderHeader sec_odr_h(stream);
+                uint8_t * next_order = stream.p + sec_odr_h.order_data_length();
+                switch (sec_odr_h.type) {
+                    case RDP::TS_CACHE_BITMAP_COMPRESSED:
+                        LOG(LOG_INFO, "process_orders: Received FASTPATH_UPDATETYPE_BITMAP(0x%X)", sec_odr_h.type);
+                        this->statistic.cache_bitmap_compressed_count++;
+                    break;
+                    case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
+                        LOG(LOG_INFO, "process_orders: Received TS_CACHE_BITMAP_UNCOMPRESSED(0x%X)", sec_odr_h.type);
+                        this->statistic.cache_bitmap_uncompressed_count++;
+                    break;
+                    case RDP::TS_CACHE_COLOR_TABLE:
+                        LOG(LOG_INFO, "process_orders: Received TS_CACHE_COLOR_TABLE(0x%X)", sec_odr_h.type);
+                    break;
+                    case RDP::TS_CACHE_GLYPH:
+                        LOG(LOG_INFO, "process_orders: Received TS_CACHE_GLYPH(0x%X)", sec_odr_h.type);
+                    break;
+                    case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
+                        LOG(LOG_INFO, "process_orders: Received TS_CACHE_BITMAP_COMPRESSED_REV2(0x%X)", sec_odr_h.type);
+                        this->statistic.cache_bitmap_compressed_rev2_count++;
+                    break;
+                    case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+                        LOG(LOG_INFO, "process_orders: Received TS_CACHE_BITMAP_UNCOMPRESSED_REV2(0x%X)", sec_odr_h.type);
+                        this->statistic.cache_bitmap_uncompressed_rev2_count++;
+                    break;
+                    case RDP::TS_CACHE_BITMAP_COMPRESSED_REV3:
+                        LOG(LOG_INFO, "process_orders: Received TS_CACHE_BITMAP_COMPRESSED_REV3(0x%X)", sec_odr_h.type);
+                        this->statistic.cache_bitmap_compressed_rev3_count++;
+                    break;
+                    default:
+                        LOG(LOG_INFO, "process_orders: ***** Received unexpected Secondary Drawing Order, type=0x%X *****", sec_odr_h.type);
+                    break;
+                }
+                stream.p = next_order;
+            }
+            else {
+                RDPPrimaryOrderHeader pri_ord_h = this->common.receive(stream, drawodr_rf.control_flags);
+                switch (this->common.order) {
+/*
+                    case RDP::DESTBLT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_DSTBLT_ORDER(0x%X)", this->common.order);
+                        this->destblt.receive(stream, pri_ord_h);
+                        this->statistic.dstblt_count++;
+                    break;
+*/
+                    case RDP::PATBLT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_PATBLT_ORDER(0x%X)", this->common.order);
+                        this->patblt.receive(stream, pri_ord_h);
+                        this->statistic.patblt_count++;
+                    break;
+                    case RDP::SCREENBLT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_SCRBLT_ORDER(0x%X)", this->common.order);
+                        this->scrblt.receive(stream, pri_ord_h);
+                        this->statistic.scrblt_count++;
+                    break;
+                    case RDP::MEMBLT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_MEMBLT_ORDER(0x%X)", this->common.order);
+                        this->memblt.receive(stream, pri_ord_h);
+                        this->statistic.memblt_count++;
+                    break;
+                    case RDP::MEM3BLT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_MEM3BLT_ORDER(0x%X)", this->common.order);
+                        this->mem3blt.receive(stream, pri_ord_h);
+                        this->statistic.mem3blt_count++;
+                    break;
+                    case RDP::LINE:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_LINETO_ORDER(0x%X)", this->common.order);
+                        this->lineto.receive(stream, pri_ord_h);
+                        this->statistic.lineto_count++;
+                    break;
+                    case RDP::RECT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_OPAQUERECT_ORDER(0x%X)", this->common.order);
+                        this->opaquerect.receive(stream, pri_ord_h);
+                        this->statistic.opaquerect_count++;
+                    break;
+                    case RDP::MULTIOPAQUERECT:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_MULTIOPAQUERECT_ORDER(0x%X)", this->common.order);
+                        this->multiopaquerect.receive(stream, pri_ord_h);
+                        this->statistic.multiopaquerect_count++;
+                    break;
+                    case RDP::POLYLINE:
+                        LOG(LOG_INFO, "process_orders: Received TS_ENC_POLYLINE_ORDER(0x%X)", this->common.order);
+                        this->polyline.receive(stream, pri_ord_h);
+                        this->statistic.polyline_count++;
+                    break;
+                    default:
+                        LOG(LOG_INFO, "process_orders: ***** Received unexpected Primary Drawing Order, type=0x%X *****", this->common.order);
+                    break;
+                }
+            }
+            processed++;
         }
     }
 
@@ -321,6 +383,27 @@ public:
         channel_item.flags  = 0xc0a00000;
         channel_item.chanid = 1007;
         this->channel_list.push_back(channel_item);
+    }
+
+    void show_statistic() {
+        LOG(LOG_INFO, "****************************************");
+        LOG(LOG_INFO, "cache_bitmap_compressed count=%u",        this->statistic.cache_bitmap_compressed_count);
+        LOG(LOG_INFO, "cache_bitmap_uncompressed count=%u",      this->statistic.cache_bitmap_uncompressed_count);
+        LOG(LOG_INFO, "cache_bitmap_compressed_rev2 count=%u",   this->statistic.cache_bitmap_compressed_rev2_count);
+        LOG(LOG_INFO, "cache_bitmap_uncompressed_rev2 count=%u", this->statistic.cache_bitmap_uncompressed_rev2_count);
+
+        LOG(LOG_INFO, "bitmapupdate count=%u", this->statistic.bitmapupdate_count);
+
+        LOG(LOG_INFO, "dstblt count=%u",          this->statistic.dstblt_count);
+        LOG(LOG_INFO, "patblt count=%u",          this->statistic.patblt_count);
+        LOG(LOG_INFO, "scrblt count=%u",          this->statistic.scrblt_count);
+        LOG(LOG_INFO, "lineto count=%u",          this->statistic.lineto_count);
+        LOG(LOG_INFO, "opaquerect count=%u",      this->statistic.opaquerect_count);
+        LOG(LOG_INFO, "memblt count=%u",          this->statistic.memblt_count);
+        LOG(LOG_INFO, "mem3blt count=%u",         this->statistic.mem3blt_count);
+        LOG(LOG_INFO, "multiopaquerect count=%u", this->statistic.multiopaquerect_count);
+        LOG(LOG_INFO, "polyline count=%u",        this->statistic.polyline_count);
+        LOG(LOG_INFO, "****************************************");
     }
 };  // class Analyzer
 
@@ -378,6 +461,9 @@ int main(int argc, char * argv[]) {
             TransparentPlayer player(&trans, &analyzer);
 
             while (player.interpret_chunk(/*real_time = */false));
+
+            LOG(LOG_INFO, "");
+            analyzer.show_statistic();
         }
 
         close(fd);
