@@ -1667,14 +1667,17 @@ public:
             if (0 == strcmp(key, "load_theme")) {
                 if (value) {
                     char theme_path[1024] = {};
-                    snprintf(theme_path, 1024, CFG_PATH "/%s/" THEME_INI, value);
+                    snprintf(theme_path, 1024, CFG_PATH "/themes/%s/" THEME_INI, value);
                     theme_path[sizeof(theme_path) - 1] = 0;
                     ConfigurationLoader theme_load(this->theme, theme_path);
                     if (this->theme.global.logo) {
                         char logo_path[1024] = {};
-                        snprintf(logo_path, 1024, CFG_PATH "/%s/" LOGO_PNG, value);
+                        snprintf(logo_path, 1024, CFG_PATH "/themes/%s/" LOGO_PNG, value);
+                        logo_path[sizeof(logo_path) - 1] = 0;
                         if (!file_exist(logo_path)) {
-                            snprintf(logo_path, 1024, CFG_PATH "/%s/" LOGO_BMP, value);
+                            snprintf(logo_path, 1024, CFG_PATH "/themes/%s/" LOGO_BMP,
+                                     value);
+                            logo_path[sizeof(logo_path) - 1] = 0;
                             if (!file_exist(logo_path)) {
                                 this->theme.global.logo = false;
                                 return;
