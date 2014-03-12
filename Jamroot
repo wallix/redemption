@@ -131,10 +131,10 @@ project redemption
 
 ;
 
-explicit install instexe install-bin install-etc install-share check_coverage exe ;
+explicit install instexe install-bin install-etc install-etc-themes install-share check_coverage exe ;
 
 alias instexe : install-bin ;
-alias install : install-bin install-etc install-share ;
+alias install : install-bin install-etc install-etc-themes install-share ;
 alias exe     : rdpproxy redrec ;
 
 #alias test_suite_widget2 : test_widget2_rect test_image test_label test_tooltip test_edit test_multiline test_password test_number_edit test_widget test_composite test_window_dialog test_window_login test_window_wab_close test_widget2_window test_wab_close test_selector test_screen ;
@@ -156,6 +156,12 @@ install install-etc
     : [ glob sys/etc/rdpproxy/*ini sys/etc/rdpproxy/*pem sys/etc/rdpproxy/*crt sys/etc/rdpproxy/*key sys/etc/rdpproxy/*p12 ]
     :
     : <location>$(INSTALLDIR)/etc/rdpproxy
+    ;
+
+install install-etc-themes
+    : [ glob sys/etc/rdpproxy/themes/HOWTO ]
+    :
+    : <location>$(INSTALLDIR)/etc/rdpproxy/themes
     ;
 
 lib libboost_unit_test : : <name>boost_unit_test_framework <link>shared ;
