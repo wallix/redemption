@@ -22,6 +22,7 @@
 #define _REDEMPTION_CAPTURE_TRANSPARENTPLAYER_HPP_
 
 #include "transport.hpp"
+#include "transparentchunk.hpp"
 
 class TransparentPlayer {
 private:
@@ -41,7 +42,7 @@ public:
         }
     }
 
-    bool interpret_chunk() {
+    bool interpret_chunk(bool real_time = true) {
         try {
             BStream header(TRANSPARENT_CHUNT_HEADER_SIZE);
             this->t->recv(&header.end, TRANSPARENT_CHUNT_HEADER_SIZE);
@@ -124,7 +125,7 @@ public:
                     break;
             }
 
-            if (chunk_type != CHUNK_TYPE_META) {
+            if (real_time && (chunk_type != CHUNK_TYPE_META)) {
                 timeval  now     = tvtime();
                 uint64_t elapsed = difftimeval(now, this->replay_now);
 

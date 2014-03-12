@@ -1827,7 +1827,7 @@ struct mod_rdp : public mod_api {
 
                                             HStream copy_stream(1024, 65535);
 
-                                            copy_stream.out_copy_bytes(sec.payload.p, sec.payload.in_remain());
+                                            copy_stream.out_copy_bytes(current_packet, next_packet - current_packet);
                                             copy_stream.mark_end();
 
                                             //total_data_received += copy_stream.size();
@@ -2151,6 +2151,9 @@ struct mod_rdp : public mod_api {
             ? FASTPATH_OUTPUT_SUPPORTED
             : 0
             ;
+        if (this->enable_transparent_mode) {
+            this->front.retrieve_client_capability_set(general_caps);
+        }
         if (this->verbose) {
             general_caps.log("Sending to server");
         }
@@ -2165,6 +2168,9 @@ struct mod_rdp : public mod_api {
         bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
         //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
         bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
+        if (this->enable_transparent_mode) {
+            this->front.retrieve_client_capability_set(bitmap_caps);
+        }
         if (this->verbose) {
             bitmap_caps.log("Sending bitmap caps to server");
         }
@@ -2219,11 +2225,15 @@ struct mod_rdp : public mod_api {
 
         // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
         //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
+        if (this->enable_transparent_mode) {
+            this->front.retrieve_client_capability_set(order_caps);
+        }
         if (this->verbose) {
             order_caps.log("Sending order caps to server");
         }
         confirm_active_pdu.emit_capability_set(order_caps);
 
+        bool use_bitmapcache_rev2 = false;
         BmpCacheCaps bmp_cache_caps;
         bmp_cache_caps.cache0Entries         = 0x258;
         bmp_cache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
@@ -2231,19 +2241,38 @@ struct mod_rdp : public mod_api {
         bmp_cache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
         bmp_cache_caps.cache2Entries         = 0x106;
         bmp_cache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
-        if (this->verbose) {
-            bmp_cache_caps.log("Sending bmp cache caps to server");
+        if (this->enable_transparent_mode) {
+            if (!this->front.retrieve_client_capability_set(bmp_cache_caps)) {
+                use_bitmapcache_rev2 = true;
+            }
         }
-        confirm_active_pdu.emit_capability_set(bmp_cache_caps);
+        if (use_bitmapcache_rev2) {
+            BmpCache2Caps bmpcache2_caps;
+            bmpcache2_caps.numCellCaches = 3;
+            bmpcache2_caps.bitmapCache0CellInfo = 2000;
+            bmpcache2_caps.bitmapCache1CellInfo = 2000;
+            bmpcache2_caps.bitmapCache2CellInfo = 2000;
+            this->front.retrieve_client_capability_set(bmpcache2_caps);
+            if (this->verbose) {
+                bmpcache2_caps.log("Sending bmp cache rev 2 caps to server");
+            }
+            confirm_active_pdu.emit_capability_set(bmpcache2_caps);
+        }
+        else {
+            if (this->verbose) {
+                bmp_cache_caps.log("Sending bmp cache caps to server");
+            }
+            confirm_active_pdu.emit_capability_set(bmp_cache_caps);
+        }
 
-        //            if(this->use_rdp5){
-        //                BmpCache2Caps bmpcache2_caps;
-        //                bmpcache2_caps.numCellCaches = 3;
-        //                bmpcache2_caps.bitmapCache0CellInfo = 2000;
-        //                bmpcache2_caps.bitmapCache1CellInfo = 2000;
-        //                bmpcache2_caps.bitmapCache2CellInfo = 2000;
-        //                confirm_active_pdu.emit_capability_set(bmpcache2_caps);
-        //            }
+        //if(this->use_rdp5){
+        //    BmpCache2Caps bmpcache2_caps;
+        //    bmpcache2_caps.numCellCaches = 3;
+        //    bmpcache2_caps.bitmapCache0CellInfo = 2000;
+        //    bmpcache2_caps.bitmapCache1CellInfo = 2000;
+        //    bmpcache2_caps.bitmapCache2CellInfo = 2000;
+        //    confirm_active_pdu.emit_capability_set(bmpcache2_caps);
+        //}
 
         ColorCacheCaps colorcache_caps;
         if (this->verbose) {

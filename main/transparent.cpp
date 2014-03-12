@@ -80,7 +80,7 @@ int main(int argc, char * argv[]) {
 
     if (options.count("help") > 0) {
         cout << copyright_notice;
-        cout << "Usage: redver [options]\n\n";
+        cout << "Usage: rdptproxy [options]\n\n";
         cout << desc << endl;
         exit(-1);
     }

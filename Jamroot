@@ -278,6 +278,29 @@ exe rdptproxy
         <variant>coverage:<build>no
     ;
 
+exe rdptanalyzer
+    :
+        main/tanalyzer.cpp
+
+        cryptofile
+
+        openssl
+        crypto
+        png
+        z
+        dl
+
+        snappy
+        libboost_program_options
+
+        krb5
+        gssglue
+    :
+        <link>static
+        <variant>coverage:<library>gcov
+        <variant>coverage:<build>no
+    ;
+
 #
 # Functional tests (run by hand)
 #
