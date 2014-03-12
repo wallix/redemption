@@ -20,7 +20,7 @@
 
 #define BOOST_AUTO_TEST_MAIN
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE TestColorTheme
+#define BOOST_TEST_MODULE TestTheme
 #include <boost/test/auto_unit_test.hpp>
 #include <stdio.h>
 
@@ -28,11 +28,11 @@
 #define LOGNULL
 //#define LOGPRINT
 
-#include "colortheme.hpp"
+#include "theme.hpp"
 BOOST_AUTO_TEST_CASE(TestColorFromFile)
 {
     // test we can read from a file (and not only from a stream)
-    ColorTheme colors;
+    Theme colors;
 
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(TestColorFromFile)
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
 {
     std::stringstream   oss("");
-    ColorTheme          colors;
+    Theme          colors;
     ConfigurationLoader cfg_loader(colors, oss);
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE(TestConfigPartial)
                             "selected_fgcolor=0xab5e00\n"
                             "\n"
                             );
-    ColorTheme          colors;
+    Theme          colors;
     ConfigurationLoader cfg_loader(colors, oss);
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(GREY),           colors.global.fgcolor);

@@ -137,7 +137,7 @@ public:
                 LOG(LOG_INFO, "No Credential cache to destroy");
             }
         } else {
-            LOG(LOG_INFO, "Credential Cache Succesfully destroyed");
+            LOG(LOG_INFO, "Credentials Cache Succesfully destroyed");
         }
         return ret;
     }

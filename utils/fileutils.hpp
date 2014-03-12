@@ -37,6 +37,7 @@
 #include <ctype.h>
 #include "log.hpp"
 #include "error.hpp"
+#include <sys/stat.h>
 
 static inline int filesize(const char * path)
 {
@@ -46,6 +47,11 @@ static inline int filesize(const char * path)
         return sb.st_size;
     }
     return -1;
+}
+
+static inline bool file_exist(const char * filename) {
+    struct stat buffer;
+    return (stat (filename, &buffer) == 0);
 }
 
 static inline bool canonical_path( const char * fullpath, char * path, size_t path_len

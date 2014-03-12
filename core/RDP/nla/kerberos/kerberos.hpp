@@ -143,7 +143,9 @@ struct Kerberos_SecurityFunctionTable : public SecurityFunctionTable {
         int pid = getpid();
         char cache[256];
         snprintf(cache, 255, "FILE:/tmp/krb_red_%d", pid);
+        cache[255] = 0;
         setenv("KRB5CCNAME", cache, 1);
+        LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
         if (identity) {
             int ret = credentials->get_credentials(identity->princname,
                                                    identity->princpass, NULL);

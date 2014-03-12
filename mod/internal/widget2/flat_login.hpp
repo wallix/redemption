@@ -31,12 +31,12 @@
 #include "flat_button.hpp"
 #include "translation.hpp"
 #include "ellipse.hpp"
-#include "colortheme.hpp"
+#include "theme.hpp"
 
 class FlatLogin : public WidgetParent
 {
 public:
-    ColorTheme & colors;
+    Theme & theme;
     WidgetEditValid  password_edit;
     WidgetLabel login_label;
     WidgetEditValid  login_edit;
@@ -55,25 +55,28 @@ public:
               const char * label_text_password,
               Inifile & ini)
         : WidgetParent(drawable, Rect(0, 0, width, height), parent, notifier)
-        , colors(ini.colors)
+        , theme(ini.theme)
         , password_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                        password, -14, this->colors.edit.fgcolor,
-                        this->colors.edit.bgcolor, this->colors.edit.focus_color,
+                        password, -14, this->theme.edit.fgcolor,
+                        this->theme.edit.bgcolor, this->theme.edit.focus_color,
                         -1u, 1, 1, true, (width <= 640) ? label_text_password : NULL)
         , login_label(drawable, 0, 0, *this, NULL, label_text_login, true, -11,
-                      this->colors.global.fgcolor, this->colors.global.bgcolor)
+                      this->theme.global.fgcolor, this->theme.global.bgcolor)
         , login_edit(drawable, 0, 0, (width >= 420) ? 400 : width - 20, *this, this,
-                     login, -12, this->colors.edit.fgcolor, this->colors.edit.bgcolor,
-                     this->colors.edit.focus_color, -1u, 1, 1, false,
+                     login, -12, this->theme.edit.fgcolor, this->theme.edit.bgcolor,
+                     this->theme.edit.focus_color, -1u, 1, 1, false,
                      (width <= 640) ? label_text_login : NULL)
-        , img(drawable, 0, 0, SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
+        // , img(drawable, 0, 0, ini.theme.global.logo_path, *this, NULL, -10)
+        , img(drawable, 0, 0,
+              theme.global.logo ? theme.global.logo_path :
+              SHARE_PATH "/" LOGIN_WAB_BLUE, *this, NULL, -10)
         , password_label(drawable, 0, 0, *this, NULL, label_text_password, true, -13,
-                         this->colors.global.fgcolor, this->colors.global.bgcolor)
+                         this->theme.global.fgcolor, this->theme.global.bgcolor)
         , version_label(drawable, 0, 0, *this, NULL, caption, true, -15,
-                        this->colors.global.fgcolor, this->colors.global.bgcolor)
+                        this->theme.global.fgcolor, this->theme.global.bgcolor)
         , helpicon(drawable, 0, 0, *this, NULL, "?", true, -16,
-                   this->colors.global.fgcolor, this->colors.global.bgcolor,
-                   this->colors.global.focus_color, 6, 2)
+                   this->theme.global.fgcolor, this->theme.global.bgcolor,
+                   this->theme.global.focus_color, 6, 2)
         , ini(ini)
     {
         this->impl = new CompositeTable;
@@ -138,7 +141,7 @@ public:
     virtual void draw(const Rect& clip)
     {
         this->impl->draw(clip);
-        this->draw_inner_free(clip.intersect(this->rect), this->colors.global.bgcolor);
+        this->draw_inner_free(clip.intersect(this->rect), this->theme.global.bgcolor);
 
     }
 

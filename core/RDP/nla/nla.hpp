@@ -67,7 +67,8 @@ struct rdpCredssp
                uint8_t * pass,
                uint8_t * hostname,
                const char * target_device,
-               const bool krb)
+               const bool krb,
+               const bool restricted_admin_mode)
         : send_seq_num(0)
         , recv_seq_num(0)
         , trans(transport)
@@ -75,7 +76,7 @@ struct rdpCredssp
         , pubKeyAuth(ts_request.pubKeyAuth)
         , authInfo(ts_request.authInfo)
         , table(new SecurityFunctionTable)
-        , RestrictedAdminMode(false)
+        , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_device(target_device)
         , hardcodedtests(false)
@@ -315,6 +316,7 @@ struct rdpCredssp
 
     void credssp_encode_ts_credentials() {
         if (this->RestrictedAdminMode) {
+            LOG(LOG_INFO, "Restricted Admin Mode");
             this->ts_credentials.set_credentials(NULL, 0,
                                                  NULL, 0,
                                                  NULL, 0);

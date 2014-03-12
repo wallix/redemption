@@ -40,7 +40,7 @@ public:
                 Inifile * ini = NULL)
         : mod_api(front_width, front_height)
         , front(front)
-        , screen(*this, front_width, front_height, NULL, ini ? &(ini->colors): NULL)
+        , screen(*this, front_width, front_height, NULL, ini ? &(ini->theme): NULL)
     {
         this->front.server_resize(front_width, front_height, 24);
         /* dragging info */

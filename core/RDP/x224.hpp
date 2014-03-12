@@ -291,6 +291,18 @@ namespace X224
     };
 
     enum {
+        RESTRICTED_ADMIN_MODE_REQUIRED = 0x01,
+        CORRELATION_INFO_PRESENT = 0x08
+    };
+
+    enum {
+        EXTENDED_CLIENT_DATA_SUPPORTED  = 0x01,
+        DYNVC_GFX_PROTOCOL_SUPPORTED    = 0x02,
+        NEGRSP_FLAG_RESERVED            = 0x04,
+        RESTRICTED_ADMIN_MODE_SUPPORTED = 0x08
+    };
+
+    enum {
         PROTOCOL_RDP    = 0,
         PROTOCOL_TLS    = 1,
         PROTOCOL_HYBRID = 2,

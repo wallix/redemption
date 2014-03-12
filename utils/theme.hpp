@@ -18,24 +18,22 @@
  *   Author(s): Christophe Grosjean, Meng Tan
  */
 
-#ifndef REDEMPTION_UTILS_COLOR_THEME_HPP
-#define REDEMPTION_UTILS_COLOR_THEME_HPP
+#ifndef REDEMPTION_UTILS_THEME_HPP
+#define REDEMPTION_UTILS_THEME_HPP
 
 #include "colors.hpp"
 #include "cfgloader.hpp"
 
-struct ColorTheme : public ConfigurationHolder {
+
+struct Theme : public ConfigurationHolder {
     struct {
         int bgcolor;
         int fgcolor;
         int separator_color;
         int focus_color;
+        bool logo;
+        char logo_path[1024];
     } global;
-
-    // struct {
-    //     int bgcolor;
-    //     int fgcolor;
-    // } label;
 
     struct {
         int bgcolor;
@@ -48,17 +46,6 @@ struct ColorTheme : public ConfigurationHolder {
         int bgcolor;
         int border_color;
     } tooltip;
-
-    // struct {
-    //     int bgcolor;
-    //     int fgcolor;
-    //     int bordercolor;
-    // } button;
-    // struct {
-    //     int bgcolor;
-    //     int fgcolor;
-    //     int bordercolor;
-    // } button_focus;
 
     struct {
         int bgcolor;
@@ -81,18 +68,17 @@ struct ColorTheme : public ConfigurationHolder {
         int fgcolor;
     } selector_label;
 
-    ColorTheme() {
+    Theme() {
         this->init();
     }
 
     void init() {
+        this->global.logo = false;
+        this->global.logo_path[0] = 0;
         this->global.bgcolor = DARK_BLUE_BIS;
         this->global.fgcolor = WHITE;
         this->global.separator_color = LIGHT_BLUE;
         this->global.focus_color = WINBLUE;
-
-        // this->label.bgcolor = DARK_BLUE_BIS;
-        // this->label.fgcolor = WHITE;
 
         this->edit.bgcolor = WHITE;
         this->edit.fgcolor = BLACK;
@@ -101,14 +87,6 @@ struct ColorTheme : public ConfigurationHolder {
         this->tooltip.fgcolor = BLACK;
         this->tooltip.bgcolor = LIGHT_YELLOW;
         this->tooltip.border_color = BLACK;
-
-        // this->button.bgcolor = DARK_BLUE_BIS;
-        // this->button.fgcolor = WHITE;
-        // this->button.bordercolor = WHITE;
-
-        // this->button_focus.bgcolor = WINBLUE;
-        // this->button_focus.fgcolor = WHITE;
-        // this->button_focus.bordercolor = WHITE;
 
         this->selector_line1.fgcolor = BLACK;
         this->selector_line1.bgcolor = PALE_BLUE;
@@ -138,6 +116,9 @@ struct ColorTheme : public ConfigurationHolder {
             }
             else if (0 == strcmp(key, "focus_color")){
                 this->global.focus_color = color_from_cstr(value);
+            }
+            else if (0 == strcmp(key, "logo")){
+                this->global.logo = bool_from_cstr(value);
             }
         }
         else if (0 == strcmp(context, "edit")) {
@@ -194,6 +175,11 @@ struct ColorTheme : public ConfigurationHolder {
                 this->selector_label.fgcolor = color_from_cstr(value);
             }
         }
+    }
+
+    void set_logo_path(const char * logopath) {
+        strncpy(this->global.logo_path, logopath, sizeof(this->global.logo_path));
+        this->global.logo_path[sizeof(this->global.logo_path) - 1] = 0;
     }
 };
 

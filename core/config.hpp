@@ -103,6 +103,8 @@ TODO("move CERTIF_PATH to configuration (still used in sockettransport)");
 TODO("move these into configuration");
 #define LOGIN_LOGO24 "ad24b.png"
 #define LOGIN_WAB_BLUE "wablogoblue.png"
+#define LOGO_PNG "logo.png"
+#define LOGO_BMP "logo.bmp"
 #define HELP_ICON "helpicon.png"
 #define CURSOR0 "cursor0.cur"
 #define CURSOR1 "cursor1.cur"
@@ -113,7 +115,7 @@ TODO("move these into configuration");
 
 #define RSAKEYS_INI "rsakeys.ini"
 #define RDPPROXY_INI "rdpproxy.ini"
-#define RDPCOLOR_INI "rdpcolor.ini"
+#define THEME_INI    "theme.ini"
 
 #define RDPPROXY_CRT "rdpproxy.crt"
 #define RDPPROXY_KEY "rdpproxy.key"
@@ -484,7 +486,7 @@ static inline const char * string_from_authid(authid_t authid) {
 }
 
 #include "basefield.hpp"
-#include "colortheme.hpp"
+#include "theme.hpp"
 
 struct Inifile : public FieldObserver {
     struct Inifile_globals {
@@ -772,7 +774,7 @@ struct Inifile : public FieldObserver {
         StringField        comment;                  // AUTHID_COMMENT //
     } context;
 
-    ColorTheme colors;
+    Theme theme;
 
     struct IniAccounts account;
 
@@ -1208,6 +1210,8 @@ public:
         this->context.authchannel_result.attach_ini(this,AUTHID_AUTHCHANNEL_RESULT);
         this->context.keepalive.attach_ini(this,AUTHID_KEEPALIVE);
         this->context.trace_seal.attach_ini(this,AUTHID_TRACE_SEAL);
+
+
     };
 
     virtual void set_value(const char * context, const char * key, const char * value)
@@ -1660,10 +1664,24 @@ public:
             }
         }
         else if (0 == strcmp(context, "internal_mod")) {
-            if (0 == strcmp(key, "load_color")) {
-                if (bool_from_cstr(value)) {
-                    ConfigurationLoader color_load(this->colors,
-                                                   CFG_PATH "/" RDPCOLOR_INI);
+            if (0 == strcmp(key, "load_theme")) {
+                if (value) {
+                    char theme_path[1024] = {};
+                    snprintf(theme_path, 1024, CFG_PATH "/%s/" THEME_INI, value);
+                    theme_path[sizeof(theme_path) - 1] = 0;
+                    ConfigurationLoader theme_load(this->theme, theme_path);
+                    if (this->theme.global.logo) {
+                        char logo_path[1024] = {};
+                        snprintf(logo_path, 1024, CFG_PATH "/%s/" LOGO_PNG, value);
+                        if (!file_exist(logo_path)) {
+                            snprintf(logo_path, 1024, CFG_PATH "/%s/" LOGO_BMP, value);
+                            if (!file_exist(logo_path)) {
+                                this->theme.global.logo = false;
+                                return;
+                            }
+                        }
+                        this->theme.set_logo_path(logo_path);
+                    }
                 }
             }
         }
