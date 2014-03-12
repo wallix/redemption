@@ -2227,6 +2227,8 @@ struct mod_rdp : public mod_api {
         //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
         if (this->enable_transparent_mode) {
             this->front.retrieve_client_capability_set(order_caps);
+            order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX] = 0;
+            order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 0;
         }
         if (this->verbose) {
             order_caps.log("Sending order caps to server");
@@ -2249,9 +2251,9 @@ struct mod_rdp : public mod_api {
         if (use_bitmapcache_rev2) {
             BmpCache2Caps bmpcache2_caps;
             bmpcache2_caps.numCellCaches = 3;
-            bmpcache2_caps.bitmapCache0CellInfo = 2000;
-            bmpcache2_caps.bitmapCache1CellInfo = 2000;
-            bmpcache2_caps.bitmapCache2CellInfo = 2000;
+            bmpcache2_caps.bitmapCache0CellInfo = 120;
+            bmpcache2_caps.bitmapCache1CellInfo = 120;
+            bmpcache2_caps.bitmapCache2CellInfo = 2553;
             this->front.retrieve_client_capability_set(bmpcache2_caps);
             if (this->verbose) {
                 bmpcache2_caps.log("Sending bmp cache rev 2 caps to server");

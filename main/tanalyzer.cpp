@@ -30,6 +30,7 @@
 #include "channel_list.hpp"
 #include "front_api.hpp"
 #include "infiletransport.hpp"
+#include "RDP/protocol.hpp"
 #include "transparentplayer.hpp"
 #include "version.hpp"
 
@@ -38,6 +39,17 @@ private:
     CHANNELS::ChannelDefArray channel_list;
 
     rdp_mppc_unified_dec mppc_dec;
+
+    RDPOrderCommon     common;
+    RDPDestBlt         destblt;
+    RDPPatBlt          patblt;
+    RDPScrBlt          scrblt;
+    RDPLineTo          lineto;
+    RDPOpaqueRect      opaquerect;
+    RDPMemBlt          memblt;
+    RDPMem3Blt         mem3blt;
+    RDPMultiOpaqueRect multiopaquerect;
+    RDPPolyline        polyline;
 
 public:
     // RDPGraphicDevice
@@ -134,7 +146,99 @@ public:
 
             switch (fp_upd_r.updateCode) {
                 case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+                {
                     LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_ORDERS(0x%X)", fp_upd_r.updateCode);
+
+                    RDP::OrdersUpdate_Recv odrs_upd_r(fp_upd_r.payload, true);
+
+                    int processed = 0;
+                    while (processed < odrs_upd_r.number_orders) {
+                        RDP::DrawingOrder_RecvFactory drawodr_rf(fp_upd_r.payload);
+
+                        if (!drawodr_rf.control_flags & RDP::STANDARD) {
+                            LOG(LOG_ERR, "Non standard order detected : protocol error");
+                            throw Error(ERR_RDP_PROTOCOL);
+                        }
+                        if (drawodr_rf.control_flags & RDP::SECONDARY) {
+                            RDPSecondaryOrderHeader sec_odr_h(fp_upd_r.payload);
+                            uint8_t * next_order = fp_upd_r.payload.p + sec_odr_h.order_data_length();
+                            switch (sec_odr_h.type) {
+                                case RDP::TS_CACHE_BITMAP_COMPRESSED:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_BITMAP(0x%X)", sec_odr_h.type);
+                                break;
+                                case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_BITMAP_UNCOMPRESSED(0x%X)", sec_odr_h.type);
+                                break;
+                                case RDP::TS_CACHE_COLOR_TABLE:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_COLOR_TABLE(0x%X)", sec_odr_h.type);
+                                break;
+                                case RDP::TS_CACHE_GLYPH:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_GLYPH(0x%X)", sec_odr_h.type);
+                                break;
+                                case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_BITMAP_COMPRESSED_REV2(0x%X)", sec_odr_h.type);
+                                break;
+                                case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_BITMAP_UNCOMPRESSED_REV2(0x%X)", sec_odr_h.type);
+                                break;
+                                case RDP::TS_CACHE_BITMAP_COMPRESSED_REV3:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_CACHE_BITMAP_COMPRESSED_REV3(0x%X)", sec_odr_h.type);
+                                break;
+                                default:
+                                    LOG(LOG_INFO, "send_fastpath_data: ***** Received unexpected Secondary Drawing Order, type=0x%X *****", sec_odr_h.type);
+                                break;
+                            }
+                            fp_upd_r.payload.p = next_order;
+                        }
+                        else {
+                            RDPPrimaryOrderHeader pri_ord_h = this->common.receive(fp_upd_r.payload, drawodr_rf.control_flags);
+                            switch (this->common.order) {
+/*
+                                case RDP::DESTBLT:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_DSTBLT_ORDER(0x%X)", this->common.order);
+                                    this->destblt.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+*/
+                                case RDP::PATBLT:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_PATBLT_ORDER(0x%X)", this->common.order);
+                                    this->patblt.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+                                case RDP::SCREENBLT:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_SCRBLT_ORDER(0x%X)", this->common.order);
+                                    this->scrblt.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+                                case RDP::MEMBLT:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_MEMBLT_ORDER(0x%X)", this->common.order);
+                                    this->memblt.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+                                case RDP::MEM3BLT:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_MEM3BLT_ORDER(0x%X)", this->common.order);
+                                    this->mem3blt.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+                                case RDP::LINE:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_LINETO_ORDER(0x%X)", this->common.order);
+                                    this->lineto.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+                                case RDP::RECT:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_OPAQUERECT_ORDER(0x%X)", this->common.order);
+                                    this->opaquerect.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+                                case RDP::MULTIOPAQUERECT:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_MULTIOPAQUERECT_ORDER(0x%X)", this->common.order);
+                                    this->multiopaquerect.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+                                case RDP::POLYLINE:
+                                    LOG(LOG_INFO, "send_fastpath_data: Received TS_ENC_POLYLINE_ORDER(0x%X)", this->common.order);
+                                    this->polyline.receive(fp_upd_r.payload, pri_ord_h);
+                                break;
+                                default:
+                                    LOG(LOG_INFO, "send_fastpath_data: ***** Received unexpected Primary Drawing Order, type=0x%X *****", this->common.order);
+                                break;
+                            }
+                        }
+                        processed++;
+                    }
+                }
                 break;
 
                 case FastPath::FASTPATH_UPDATETYPE_BITMAP:
@@ -180,7 +284,18 @@ public:
         }
     }
 
-    Analyzer() : FrontAPI(false, false) {
+    Analyzer()
+    : FrontAPI(false, false)
+    , common(RDP::PATBLT, Rect(0, 0, 1, 1))
+    , destblt(Rect(), 0)
+    , patblt(Rect(), 0, 0, 0, RDPBrush())
+    , scrblt(Rect(), 0, 0, 0)
+    , lineto(0, 0, 0, 0, 0, 0, 0, RDPPen(0, 0, 0))
+    , opaquerect(Rect(), 0)
+    , memblt(0, Rect(), 0, 0, 0, 0)
+    , mem3blt(0, Rect(), 0, 0, 0, 0, 0, RDPBrush(), 0)
+    , multiopaquerect()
+    , polyline() {
         InitializeVirtualChannelList();
     }
 

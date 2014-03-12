@@ -23,8 +23,8 @@
 #include <boost/program_options/options_description.hpp>
 #include <string>
 
-#define LOGNULL
-//#define LOGPRINT
+//#define LOGNULL
+#define LOGPRINT
 
 #include "listen.hpp"
 #include "session.hpp"
