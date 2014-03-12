@@ -147,6 +147,8 @@ public:
     OrderCaps          client_order_caps;
     BmpCacheCaps       client_bmpcache_caps;
     OffScreenCacheCaps client_offscreencache_caps;
+    BmpCache2Caps      client_bmpcache2_caps;
+    bool               use_bitmapcache_rev2;
 
     redemption::string server_capabilities_filename;
 
@@ -192,6 +194,7 @@ public:
         , rdp_compression(rdp_compression)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
+        , use_bitmapcache_rev2(false)
         , server_capabilities_filename(server_capabilities_filename)
         , mppc_enc(NULL)
         , mppc_enc_match_finder(NULL)
@@ -2680,6 +2683,41 @@ public:
         this->trans->send(fastpath_header, stream);
     }
 
+    virtual bool retrieve_client_capability_set(Capability & caps) {
+        switch (caps.capabilityType) {
+            case CAPSTYPE_GENERAL:
+                ::memcpy(&caps, &this->client_general_caps, sizeof(this->client_general_caps));
+            break;
+
+            case CAPSTYPE_BITMAP:
+                ::memcpy(&caps, &this->client_bitmap_caps, sizeof(this->client_bitmap_caps));
+            break;
+
+            case CAPSTYPE_ORDER:
+                ::memcpy(&caps, &this->client_order_caps, sizeof(this->client_order_caps));
+            break;
+
+            case CAPSTYPE_BITMAPCACHE:
+                if (use_bitmapcache_rev2) {
+                    return false;
+                }
+                ::memcpy(&caps, &this->client_bmpcache_caps, sizeof(this->client_bmpcache_caps));
+            break;
+
+            case CAPSTYPE_OFFSCREENCACHE:
+                ::memcpy(&caps, &this->client_offscreencache_caps, sizeof(this->client_offscreencache_caps));
+            break;
+
+            case CAPSTYPE_BITMAPCACHE_REV2:
+                if (!use_bitmapcache_rev2) {
+                    return false;
+                }
+                ::memcpy(&caps, &this->client_bmpcache2_caps, sizeof(this->client_bmpcache2_caps));
+            break;
+        }
+        return true;
+    }
+
     /*****************************************************************************/
     void send_data_update_sync() throw (Error)
     {
@@ -3136,54 +3174,55 @@ public:
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
-                    BmpCache2Caps cap;
-                    cap.recv(stream, capset_length);
-                    cap.log("Receiving from client");
+                    this->use_bitmapcache_rev2 = true;
+
+                    this->client_bmpcache2_caps.recv(stream, capset_length);
+                    this->client_bmpcache2_caps.log("Receiving from client");
 
                     TODO("We only use the first 3 caches (those existing in Rev1), we should have 2 more caches for rev2")
-                    this->client_info.number_of_cache = cap.numCellCaches;
+                    this->client_info.number_of_cache = this->client_bmpcache2_caps.numCellCaches;
                     int Bpp = nbbytes(this->client_info.bpp);
-                    if (cap.numCellCaches > 0) {
-                        this->client_info.cache1_entries    = (cap.bitmapCache0CellInfo & 0x7fffffff);
-                        this->client_info.cache1_persistent = (cap.bitmapCache0CellInfo & 0x80000000);
+                    if (this->client_bmpcache2_caps.numCellCaches > 0) {
+                        this->client_info.cache1_entries    = (this->client_bmpcache2_caps.bitmapCache0CellInfo & 0x7fffffff);
+                        this->client_info.cache1_persistent = (this->client_bmpcache2_caps.bitmapCache0CellInfo & 0x80000000);
                         this->client_info.cache1_size       = 256 * Bpp;
                     }
                     else {
                         this->client_info.cache1_entries = 0;
                     }
-                    if (cap.numCellCaches > 1) {
-                        this->client_info.cache2_entries    = (cap.bitmapCache1CellInfo & 0x7fffffff);
-                        this->client_info.cache2_persistent = (cap.bitmapCache1CellInfo & 0x80000000);
+                    if (this->client_bmpcache2_caps.numCellCaches > 1) {
+                        this->client_info.cache2_entries    = (this->client_bmpcache2_caps.bitmapCache1CellInfo & 0x7fffffff);
+                        this->client_info.cache2_persistent = (this->client_bmpcache2_caps.bitmapCache1CellInfo & 0x80000000);
                         this->client_info.cache2_size       = 1024 * Bpp;
                     }
                     else {
                         this->client_info.cache2_entries = 0;
                     }
-                    if (cap.numCellCaches > 2) {
-                        this->client_info.cache3_entries    = (cap.bitmapCache2CellInfo & 0x7fffffff);
-                        this->client_info.cache3_persistent = (cap.bitmapCache2CellInfo & 0x80000000);
+                    if (this->client_bmpcache2_caps.numCellCaches > 2) {
+                        this->client_info.cache3_entries    = (this->client_bmpcache2_caps.bitmapCache2CellInfo & 0x7fffffff);
+                        this->client_info.cache3_persistent = (this->client_bmpcache2_caps.bitmapCache2CellInfo & 0x80000000);
                         this->client_info.cache3_size       = 4096 * Bpp;
                     }
                     else {
                         this->client_info.cache3_entries = 0;
                     }
-                    if (cap.numCellCaches > 3) {
-                        this->client_info.cache4_entries    = (cap.bitmapCache3CellInfo & 0x7fffffff);
-                        this->client_info.cache4_persistent = (cap.bitmapCache3CellInfo & 0x80000000);
+                    if (this->client_bmpcache2_caps.numCellCaches > 3) {
+                        this->client_info.cache4_entries    = (this->client_bmpcache2_caps.bitmapCache3CellInfo & 0x7fffffff);
+                        this->client_info.cache4_persistent = (this->client_bmpcache2_caps.bitmapCache3CellInfo & 0x80000000);
                         this->client_info.cache4_size       = 6144 * Bpp;
                     }
                     else {
                         this->client_info.cache4_entries = 0;
                     }
-                    if (cap.numCellCaches > 4) {
-                        this->client_info.cache5_entries    = (cap.bitmapCache4CellInfo & 0x7fffffff);
-                        this->client_info.cache5_persistent = (cap.bitmapCache4CellInfo & 0x80000000);
+                    if (this->client_bmpcache2_caps.numCellCaches > 4) {
+                        this->client_info.cache5_entries    = (this->client_bmpcache2_caps.bitmapCache4CellInfo & 0x7fffffff);
+                        this->client_info.cache5_persistent = (this->client_bmpcache2_caps.bitmapCache4CellInfo & 0x80000000);
                         this->client_info.cache5_size       = 8192 * Bpp;
                     }
                     else {
                         this->client_info.cache5_entries = 0;
                     }
-                    this->client_info.cache_flags          = cap.cacheFlags;
+                    this->client_info.cache_flags          = this->client_bmpcache2_caps.cacheFlags;
                     this->client_info.bitmap_cache_version = 2;
                 }
                 break;

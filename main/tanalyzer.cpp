@@ -37,6 +37,8 @@ class Analyzer : public FrontAPI {
 private:
     CHANNELS::ChannelDefArray channel_list;
 
+    rdp_mppc_unified_dec mppc_dec;
+
 public:
     // RDPGraphicDevice
     virtual void draw(const RDPOpaqueRect      & cmd, const Rect & clip) { REDASSERT(false); }
@@ -86,10 +88,96 @@ public:
 
     virtual void send_data_indication_ex(uint16_t channelId, HStream & stream) {
         LOG(LOG_INFO, "send_data_indication_ex: channelId=%u stream_size=%u", channelId, stream.size());
+
+        stream.p = stream.get_data();
+
+        ShareControl_Recv sctrl(stream);
+
+        switch (sctrl.pdu_type1) {
+            case PDUTYPE_DATAPDU:
+            {
+                LOG(LOG_INFO, "send_data_indication_ex: PDUTYPE_DATAPDU(0x%X)", sctrl.pdu_type1);
+
+                ShareData sdata(stream);
+                sdata.recv_begin(&this->mppc_dec);
+                switch (sdata.pdutype2) {
+                    case PDUTYPE2_UPDATE:
+                        LOG(LOG_INFO, "send_data_indication_ex: PDUTYPE2_UPDATE(0x%X)", sdata.pdutype2);
+                    break;
+
+                    case PDUTYPE2_SAVE_SESSION_INFO:
+                        LOG(LOG_INFO, "send_data_indication_ex: PDUTYPE2_SAVE_SESSION_INFO(0x%X)", sdata.pdutype2);
+                    break;
+
+                    case PDUTYPE2_SET_ERROR_INFO_PDU:
+                        LOG(LOG_INFO, "send_data_indication_ex: PDUTYPE2_SET_ERROR_INFO_PDU(0x%X)", sdata.pdutype2);
+                    break;
+
+                    default:
+                        LOG(LOG_INFO, "send_data_indication_ex: ***** Received unexpected data PDU, pdu_type2=0x%X *****", sdata.pdutype2);
+                    break;
+                }
+            }
+            break;
+
+            default:
+                LOG(LOG_INFO, "send_data_indication_ex: ***** Received unexpected PDU, pdu_type1=0x%X *****", sctrl.pdu_type1);
+            break;
+        }
     }
 
     virtual void send_fastpath_data(Stream & data) {
         LOG(LOG_INFO, "send_fastpath_data: data_size=%u", data.size());
+
+        while (data.in_remain()) {
+            FastPath::Update_Recv fp_upd_r(data, &this->mppc_dec);
+
+            switch (fp_upd_r.updateCode) {
+                case FastPath::FASTPATH_UPDATETYPE_ORDERS:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_ORDERS(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_BITMAP:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_BITMAP(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_PALETTE:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PALETTE(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_SYNCHRONIZE:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_SYNCHRONIZE(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_PTR_NULL:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_NULL(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_PTR_DEFAULT:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_DEFAULT(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_PTR_POSITION:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_PTR_POSITION(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_COLOR:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_COLOR(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_POINTER:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_POINTER(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                case FastPath::FASTPATH_UPDATETYPE_CACHED:
+                    LOG(LOG_INFO, "send_fastpath_data: Received FASTPATH_UPDATETYPE_CACHED(0x%X)", fp_upd_r.updateCode);
+                break;
+
+                default:
+                    LOG(LOG_INFO, "send_fastpath_data: ***** Received unexpected fast-past PDU, updateCode=0x%X *****", fp_upd_r.updateCode);
+                break;
+            }
+        }
     }
 
     Analyzer() : FrontAPI(false, false) {
