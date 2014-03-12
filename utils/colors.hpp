@@ -32,6 +32,11 @@
 typedef uint32_t BGRColor;
 typedef BGRColor BGRPalette[256];
 
+static inline BGRColor RGBtoBGR(const BGRColor & c){
+    return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
+}
+
+// Those are in BGR
 enum {
     BLACK      = 0x000000,
     GREY       = 0xc0c0c0,
@@ -80,6 +85,7 @@ enum {
 
 };
 
+
 static inline unsigned color_from_cstr(const char * str) {
     unsigned res = 0;
 
@@ -121,15 +127,11 @@ static inline unsigned color_from_cstr(const char * str) {
     else if (0 == strcasecmp("PALE_ORANGE", str))       { res = PALE_ORANGE; }
     else if (0 == strcasecmp("MEDIUM_RED", str))        { res = MEDIUM_RED; }
     else if ((*str == '0') && (*(str + 1) == 'x')){
-        res = strtol(str + 2, 0, 16);
+        res = RGBtoBGR(strtol(str + 2, 0, 16));
     }
-    else { res = atol(str); }
+    else { res = RGBtoBGR(atol(str)); }
 
     return res;
-}
-
-static inline BGRColor RGBtoBGR(const BGRColor & c){
-    return ((c << 16) & 0xFF0000)|(c & 0x00FF00)|((c>>16) & 0x0000FF);
 }
 
 // colorN (variable): an index into the current palette or an RGB triplet

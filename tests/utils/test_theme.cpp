@@ -60,10 +60,10 @@ BOOST_AUTO_TEST_CASE(TestColorFromFile)
 
     ConfigurationLoader cfg_loader(colors, FIXTURES_PATH "/rdpcolor.ini");
 
-    BOOST_CHECK_EQUAL(0x1581dc,                         colors.global.bgcolor);
+    BOOST_CHECK_EQUAL(0xdc8115,                         colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.global.fgcolor);
-    BOOST_CHECK_EQUAL(0x006ac4,                         colors.global.separator_color);
-    BOOST_CHECK_EQUAL(0x221c9d,                         colors.global.focus_color);
+    BOOST_CHECK_EQUAL(0xc46a00,                         colors.global.separator_color);
+    BOOST_CHECK_EQUAL(0x9d1c22,                         colors.global.focus_color);
 
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.edit.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(BLACK),          colors.edit.fgcolor);
@@ -72,15 +72,15 @@ BOOST_AUTO_TEST_CASE(TestColorFromFile)
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_BLUE),      colors.tooltip.fgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_GREEN),     colors.tooltip.border_color);
 
-    BOOST_CHECK_EQUAL(0x9ad5ff,                         colors.selector_line1.bgcolor);
+    BOOST_CHECK_EQUAL(0xffd59a,                         colors.selector_line1.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line1.fgcolor);
-    BOOST_CHECK_EQUAL(0x64bfff,                         colors.selector_line2.bgcolor);
+    BOOST_CHECK_EQUAL(0xffbf64,                         colors.selector_line2.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line2.fgcolor);
-    BOOST_CHECK_EQUAL(0x302db7,                         colors.selector_selected.bgcolor);
+    BOOST_CHECK_EQUAL(0xb72d30,                         colors.selector_selected.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_selected.fgcolor);
-    BOOST_CHECK_EQUAL(0x221c9d,                         colors.selector_focus.bgcolor);
+    BOOST_CHECK_EQUAL(0x9d1c22,                         colors.selector_focus.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_focus.fgcolor);
-    BOOST_CHECK_EQUAL(0x302db7,                         colors.selector_label.bgcolor);
+    BOOST_CHECK_EQUAL(0xb72d30,                         colors.selector_label.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_label.fgcolor);
 }
 BOOST_AUTO_TEST_CASE(TestConfigDefault)
@@ -132,7 +132,7 @@ BOOST_AUTO_TEST_CASE(TestConfigPartial)
     BOOST_CHECK_EQUAL(static_cast<int>(DARK_BLUE_BIS),  colors.global.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(GREY),           colors.global.fgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(RED),            colors.global.separator_color);
-    BOOST_CHECK_EQUAL(0x565412,                         colors.global.focus_color);
+    BOOST_CHECK_EQUAL(0x125456,                         colors.global.focus_color);
 
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.edit.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(BLACK),          colors.edit.fgcolor);
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(TestConfigPartial)
     BOOST_CHECK_EQUAL(static_cast<int>(GREEN),          colors.selector_line2.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(BLACK),          colors.selector_line2.fgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_selected.bgcolor);
-    BOOST_CHECK_EQUAL(0xab5e00,                         colors.selector_selected.fgcolor);
+    BOOST_CHECK_EQUAL(0x005eab,                         colors.selector_selected.fgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WINBLUE),        colors.selector_focus.bgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(WHITE),          colors.selector_focus.fgcolor);
     BOOST_CHECK_EQUAL(static_cast<int>(MEDIUM_BLUE),    colors.selector_label.bgcolor);
