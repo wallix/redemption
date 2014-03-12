@@ -105,11 +105,13 @@ BOOST_AUTO_TEST_CASE(TestIncomingConnection)
     TestTransport front_trans(name, indata, sizeof(indata), outdata, sizeof(outdata),
         verbose);
 
-    const bool fastpath_support = true;
-    ini.client.tls_support      = true;
+    ini.client.tls_support         = true;
     ini.client.tls_fallback_legacy = false;
+
+    const bool fastpath_support = true;
     const bool mem3blt_support  = false;
-    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini, fastpath_support, mem3blt_support);
+    const int  rdp_compression  = 0;
+    Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini, fastpath_support, mem3blt_support, rdp_compression);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0){

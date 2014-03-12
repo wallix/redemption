@@ -163,7 +163,7 @@ public:
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
-          , int rdp_compression = 0
+          , int rdp_compression
           , const char * server_capabilities_filename = ""
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
