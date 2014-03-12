@@ -53,22 +53,25 @@ int main(int argc, char * argv[]) {
     std::string password;
     std::string record_filename;
     std::string play_filename;
+    std::string persistent_key_list_filename;
 
-    target_port = 3389;
+    persistent_key_list_filename = "./PersistentKeyList.bin";
+    target_port                  = 3389;
 
     boost::program_options::options_description desc("Options");
     desc.add_options()
     ("help,h",    "produce help message")
     ("version,v", "show software version")
 
-    ("input-file,i",    boost::program_options::value(&input_filename),  "input ini file name")
-    ("output-file,o",   boost::program_options::value(&output_filename), "output int file name")
-    ("target-device,t", boost::program_options::value(&target_device),   "target device[:port]")
-    ("username,u",      boost::program_options::value(&username),        "username")
-    ("password,p",      boost::program_options::value(&password),        "password")
+    ("input-file,i",    boost::program_options::value(&input_filename),               "input ini file name")
+    ("output-file,o",   boost::program_options::value(&output_filename),              "output int file name")
+    ("target-device,t", boost::program_options::value(&target_device),                "target device[:port]")
+    ("username,u",      boost::program_options::value(&username),                     "username")
+    ("password,p",      boost::program_options::value(&password),                     "password")
+    ("key-list-file,k", boost::program_options::value(&persistent_key_list_filename), "persistent key list file name")
 
-    ("record-file,r",   boost::program_options::value(&record_filename), "record file name")
-    ("play-file,d",     boost::program_options::value(&play_filename),   "play file name")
+    ("record-file,r",   boost::program_options::value(&record_filename),              "record file name")
+    ("play-file,d",     boost::program_options::value(&play_filename),                "play file name")
     ;
 
     boost::program_options::variables_map options;
@@ -180,10 +183,13 @@ int main(int argc, char * argv[]) {
 
     LCGRandom gen(0);
 
+    // Remove existing Persistent Key List file.
+    unlink(persistent_key_list_filename.c_str());
+
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
     Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
-        fastpath_support, mem3blt_support, true, input_filename.c_str());
+        fastpath_support, mem3blt_support, input_filename.c_str());
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {

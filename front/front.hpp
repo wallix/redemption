@@ -137,7 +137,6 @@ public:
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_client_active;
     bool mem3blt_support;
-    int rdp_compression;
     int clientRequestedProtocols;
 
     uint32_t bitmap_update_count;
@@ -150,7 +149,8 @@ public:
     BmpCache2Caps      client_bmpcache2_caps;
     bool               use_bitmapcache_rev2;
 
-    redemption::string server_capabilities_filename;
+    redemption::string   server_capabilities_filename;
+    Transport          * persistent_key_list_transport;
 
     rdp_mppc_enc              * mppc_enc;
     rdp_mppc_enc_match_finder * mppc_enc_match_finder;
@@ -163,8 +163,8 @@ public:
           , Inifile * ini
           , bool fp_support // If true, fast-path must be supported
           , bool mem3blt_support
-          , int rdp_compression
           , const char * server_capabilities_filename = ""
+          , Transport * persistent_key_list_transport = NULL
           )
         : FrontAPI(ini->globals.notimestamp, ini->globals.nomouse)
         , capture_state(CAPTURE_STATE_UNKNOWN)
@@ -191,11 +191,11 @@ public:
         , server_fastpath_update_support(false)
         , tls_client_active(true)
         , mem3blt_support(mem3blt_support)
-        , rdp_compression(rdp_compression)
         , clientRequestedProtocols(X224::PROTOCOL_RDP)
         , bitmap_update_count(0)
         , use_bitmapcache_rev2(false)
         , server_capabilities_filename(server_capabilities_filename)
+        , persistent_key_list_transport(persistent_key_list_transport)
         , mppc_enc(NULL)
         , mppc_enc_match_finder(NULL)
         , authentifier(NULL)
@@ -610,7 +610,7 @@ public:
             this->mppc_enc_match_finder = NULL;
         }
 
-        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->rdp_compression - 1))
+        switch (Front::get_appropriate_compression_type(this->client_info.rdp_compression_type, this->ini->client.rdp_compression - 1))
         {
         case PACKET_COMPR_TYPE_RDP61:
             if (this->verbose & 1) {
@@ -681,8 +681,8 @@ public:
             , this->client_info.use_compact_packets
             , this->server_fastpath_update_support
             , this->mppc_enc
-            , this->rdp_compression ? this->client_info.rdp_compression : 0
-            , this->rdp_compression ? this->client_info.rdp_compression_type : 0
+            , this->ini->client.rdp_compression ? this->client_info.rdp_compression : 0
+            , this->ini->client.rdp_compression ? this->client_info.rdp_compression_type : 0
             );
 
         this->pointer_cache.reset(this->client_info);
