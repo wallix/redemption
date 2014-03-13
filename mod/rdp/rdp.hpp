@@ -148,8 +148,10 @@ struct mod_rdp : public mod_api {
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_mem3blt;
     const bool enable_new_pointer;
-    const int  rdp_compression;
     const bool enable_transparent_mode;
+    const bool enable_persistent_disk_bitmap_cache;
+    const bool ebable_cache_waiting_list;
+    const int  rdp_compression;
 
     size_t recv_bmp_update;
 
@@ -221,8 +223,10 @@ struct mod_rdp : public mod_api {
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
-        , rdp_compression(mod_rdp_params.rdp_compression)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
+        , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
+        , ebable_cache_waiting_list(mod_rdp_params.ebable_cache_waiting_list)
+        , rdp_compression(mod_rdp_params.rdp_compression)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -1985,14 +1989,11 @@ struct mod_rdp : public mod_api {
                                         this->send_synchronise();
                                         this->send_control(RDP_CTL_COOPERATE);
                                         this->send_control(RDP_CTL_REQUEST_CONTROL);
-                                        this->send_persistent_key_list();
-
-                                        this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
 
                                         /* Including RDP 5.0 capabilities */
                                         if (this->use_rdp5){
                                             LOG(LOG_INFO, "use rdp5");
-                                            this->enum_bmpcache2();
+                                            this->send_persistent_key_list();
                                             this->send_fonts(3);
                                         }
                                         else{
@@ -2000,6 +2001,9 @@ struct mod_rdp : public mod_api {
                                             this->send_fonts(1);
                                             this->send_fonts(2);
                                         }
+
+                                        this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
+
                                         LOG(LOG_INFO, "Resizing to %ux%ux%u", this->front_width, this->front_height, this->bpp);
                                         if (this->transparent_recorder) {
                                             this->transparent_recorder->server_resize(this->front_width,
@@ -3712,8 +3716,8 @@ struct mod_rdp : public mod_api {
                     this->front_width = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
 
-                    this->orders.create_cache_bitmap(this->bpp, 0x258, nbbytes(this->bpp) * 0x100,
-                        0x12c, nbbytes(this->bpp) * 0x400, 0x106, nbbytes(this->bpp) * 0x1000);
+                    this->orders.create_cache_bitmap(this->bpp, 0x258, nbbytes(this->bpp) * 0x100, false,
+                        0x12c, nbbytes(this->bpp) * 0x400, false, 0x106, nbbytes(this->bpp) * 0x1000, false);
                 }
                 break;
             case CAPSTYPE_ORDER:
@@ -3791,6 +3795,12 @@ struct mod_rdp : public mod_api {
         }
     }
 
+    /* Send persistent bitmap cache enumeration PDU's
+       Not implemented yet because it should be implemented
+       before in process_data case. The problem is that
+       we don't save the bitmap key list attached with rdp_bmpcache2 capability
+       message so we can't develop this function yet */
+
     void send_persistent_key_list() throw(Error) {
         if (!this->enable_transparent_mode || !this->persistent_key_list_transport) {
             return;
@@ -3825,7 +3835,7 @@ struct mod_rdp : public mod_api {
 
                 this->persistent_key_list_transport->recv(&persistent_key_list_stream.end, pdu_size);
 
-                if (this->verbose & 18) {
+                if (this->verbose & 1) {
                     FixedSizeStream pdu_stream(pdu_start_pos, persistent_key_list_stream.end - pdu_start_pos);
                     RDP::PersistentKeyListPDUData pklpdu;
                     pklpdu.receive(pdu_stream);
@@ -3930,13 +3940,6 @@ struct mod_rdp : public mod_api {
     }
 
 public:
-    /* Send persistent bitmap cache enumeration PDU's
-       Not implemented yet because it should be implemented
-       before in process_data case. The problem is that
-       we don't save the bitmap key list attached with rdp_bmpcache2 capability
-       message so we can't develop this function yet */
-
-    void enum_bmpcache2() {}
 
     void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) throw(Error)
     {

@@ -121,17 +121,18 @@ struct rdp_orders {
         }
     }
 
-    void create_cache_bitmap(const uint8_t bpp, uint16_t small_entries,
-        uint16_t small_size, uint16_t medium_entries, uint16_t medium_size,
-        uint16_t big_entries, uint16_t big_size)
+    void create_cache_bitmap(const uint8_t bpp,
+        uint16_t small_entries, uint16_t small_size, bool small_persistent,
+        uint16_t medium_entries, uint16_t medium_size, bool medium_persistent,
+        uint16_t big_entries, uint16_t big_size, bool big_persistent)
     {
         if (this->bmp_cache) {
             delete this->bmp_cache;
             this->bmp_cache = NULL;
         }
 
-        this->bmp_cache = new BmpCache(bpp, 3, false, small_entries, small_size, false,
-            medium_entries, medium_size, false, big_entries, big_size, false);
+        this->bmp_cache = new BmpCache(bpp, 3, false, small_entries, small_size, small_persistent,
+            medium_entries, medium_size, medium_persistent, big_entries, big_size, big_persistent);
     }
 
 public:
