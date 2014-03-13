@@ -55,6 +55,7 @@
 #include "RDP/bitmapupdate.hpp"
 #include "RDP/clipboard.hpp"
 #include "RDP/fastpath.hpp"
+#include "RDP/PersistentKeyListPDU.hpp"
 #include "RDP/protocol.hpp"
 #include "RDP/RefreshRectPDU.hpp"
 #include "RDP/SaveSessionInfoPDU.hpp"
@@ -177,6 +178,7 @@ struct mod_rdp : public mod_api {
     bool enable_multiopaquerect;
 
     TransparentRecorder * transparent_recorder;
+    Transport           * persistent_key_list_transport;
 
     //uint64_t total_data_received;
 
@@ -236,6 +238,7 @@ struct mod_rdp : public mod_api {
         , enable_multidstblt(false)
         , enable_multiopaquerect(false)
         , transparent_recorder(NULL)
+        , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
     {
         if (this->verbose & 1) {
@@ -1982,6 +1985,7 @@ struct mod_rdp : public mod_api {
                                         this->send_synchronise();
                                         this->send_control(RDP_CTL_COOPERATE);
                                         this->send_control(RDP_CTL_REQUEST_CONTROL);
+                                        this->send_persistent_key_list();
 
                                         this->send_input(0, RDP_INPUT_SYNCHRONIZE, 0, 0, 0);
 
@@ -2048,7 +2052,7 @@ struct mod_rdp : public mod_api {
                     LOG(LOG_INFO, "Connection to server closed");
                 }
                 catch(Error e){
-                    LOG(LOG_INFO, "Connection to server Already closed", e.id);
+                    LOG(LOG_INFO, "Connection to server Already closed: error=%d", e.id);
                 };
                 this->event.signal = BACK_EVENT_NEXT;
 
@@ -2172,7 +2176,7 @@ struct mod_rdp : public mod_api {
             this->front.retrieve_client_capability_set(bitmap_caps);
         }
         if (this->verbose) {
-            bitmap_caps.log("Sending bitmap caps to server");
+            bitmap_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(bitmap_caps);
 
@@ -2231,7 +2235,7 @@ struct mod_rdp : public mod_api {
             order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX] = 0;
         }
         if (this->verbose) {
-            order_caps.log("Sending order caps to server");
+            order_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(order_caps);
 
@@ -2256,13 +2260,13 @@ struct mod_rdp : public mod_api {
             bmpcache2_caps.bitmapCache2CellInfo = 2553;
             this->front.retrieve_client_capability_set(bmpcache2_caps);
             if (this->verbose) {
-                bmpcache2_caps.log("Sending bmp cache rev 2 caps to server");
+                bmpcache2_caps.log("Sending to server");
             }
             confirm_active_pdu.emit_capability_set(bmpcache2_caps);
         }
         else {
             if (this->verbose) {
-                bmp_cache_caps.log("Sending bmp cache caps to server");
+                bmp_cache_caps.log("Sending to server");
             }
             confirm_active_pdu.emit_capability_set(bmp_cache_caps);
         }
@@ -2278,19 +2282,19 @@ struct mod_rdp : public mod_api {
 
         ColorCacheCaps colorcache_caps;
         if (this->verbose) {
-            colorcache_caps.log("Sending colorcache caps to server");
+            colorcache_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(colorcache_caps);
 
         ActivationCaps activation_caps;
         if (this->verbose) {
-            activation_caps.log("Sending activation caps to server");
+            activation_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(activation_caps);
 
         ControlCaps control_caps;
         if (this->verbose) {
-            control_caps.log("Sending control caps to server");
+            control_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(control_caps);
 
@@ -2302,37 +2306,37 @@ struct mod_rdp : public mod_api {
             pointer_caps.len                   = 8;
         }
         if (this->verbose) {
-            pointer_caps.log("Sending pointer caps to server");
+            pointer_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(pointer_caps);
 
         ShareCaps share_caps;
         if (this->verbose) {
-            share_caps.log("Sending share caps to server");
+            share_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(share_caps);
 
         InputCaps input_caps;
         if (this->verbose) {
-            input_caps.log("Sending input caps to server");
+            input_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(input_caps);
 
         SoundCaps sound_caps;
         if (this->verbose) {
-            sound_caps.log("Sending sound caps to server");
+            sound_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(sound_caps);
 
         FontCaps font_caps;
         if (this->verbose) {
-            font_caps.log("Sending font caps to server");
+            font_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(font_caps);
 
         GlyphSupportCaps glyphsupport_caps;
         if (this->verbose) {
-            glyphsupport_caps.log("Sending glyphsupport caps to server");
+            glyphsupport_caps.log("Sending to server");
         }
         confirm_active_pdu.emit_capability_set(glyphsupport_caps);
 
@@ -3787,8 +3791,79 @@ struct mod_rdp : public mod_api {
         }
     }
 
+    void send_persistent_key_list() throw(Error) {
+        if (!this->enable_transparent_mode || !this->persistent_key_list_transport) {
+            return;
+        }
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list");
+        }
+
+        BStream persistent_key_list_stream(65535);
+
+        bool bContinue = true;
+        while (bContinue) {
+            try
+            {
+                persistent_key_list_stream.reset();
+
+                this->persistent_key_list_transport->recv(&persistent_key_list_stream.end, 2/*pdu_size(2)*/);
+
+                uint16_t pdu_size = persistent_key_list_stream.in_uint16_le();
+
+
+                persistent_key_list_stream.reset();
+
+                ShareData sdata(persistent_key_list_stream);
+                sdata.emit_begin(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, this->share_id, RDP::STREAM_MED);
+
+                // Payload
+                persistent_key_list_stream.mark_end();
+
+                uint8_t * pdu_start_pos = persistent_key_list_stream.end;
+
+                this->persistent_key_list_transport->recv(&persistent_key_list_stream.end, pdu_size);
+
+                if (this->verbose & 18) {
+                    FixedSizeStream pdu_stream(pdu_start_pos, persistent_key_list_stream.end - pdu_start_pos);
+                    RDP::PersistentKeyListPDUData pklpdu;
+                    pklpdu.receive(pdu_stream);
+                    pklpdu.log(LOG_INFO, "Send to server");
+                }
+
+                // Packet trailer
+                persistent_key_list_stream.p = persistent_key_list_stream.end;
+                sdata.emit_end();
+
+                BStream sctrl_header(256);
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->userid + GCC::MCS_USERCHANNEL_BASE, persistent_key_list_stream.size());
+
+                HStream target_stream(1024, 65536);
+                target_stream.out_copy_bytes(sctrl_header);
+                target_stream.out_copy_bytes(persistent_key_list_stream);
+                target_stream.mark_end();
+
+                this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
+            }
+            catch (Error e)
+            {
+                if (e.id != ERR_TRANSPORT_READ_FAILED) {
+                    LOG(LOG_ERR, "mod_rdp::send_persistent_key_list: error=%u", e.id);
+                    throw;
+                }
+
+                bContinue = false;
+            }
+        }
+
+        if (this->verbose & 1) {
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list done");
+        }
+    }
+
     TODO("CGR: duplicated code in front");
-    void send_synchronise() throw (Error)
+    void send_synchronise() throw(Error)
     {
         if (this->verbose & 1){
             LOG(LOG_INFO, "mod_rdp::send_synchronise");

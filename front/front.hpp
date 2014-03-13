@@ -3953,7 +3953,7 @@ public:
                 RDP::PersistentKeyListPDUData pklpdud;
 
                 pklpdud.receive(sdata_in.payload);
-                pklpdud.log(LOG_INFO, "Receiving from client Persistent Key List PDU Data");
+                pklpdud.log(LOG_INFO, "Receiving from client");
 
                 static uint16_t cache_0_entry_index = 0;
                 static uint16_t cache_1_entry_index = 0;
@@ -3993,6 +3993,22 @@ public:
                         cache_4_entry_index);
                     entries             += pklpdud.numEntriesCache4;
                     cache_4_entry_index += pklpdud.numEntriesCache4;
+                }
+
+                if (this->persistent_key_list_transport) {
+                    BStream persistent_key_list_stream(65535);
+
+                    uint16_t pdu_size_offset = persistent_key_list_stream.get_offset();
+                    persistent_key_list_stream.out_clear_bytes(2);  // Size of Persistent Key List PDU.
+
+                    pklpdud.emit(persistent_key_list_stream);
+                    persistent_key_list_stream.mark_end();
+
+                    persistent_key_list_stream.set_out_uint16_le(
+                          persistent_key_list_stream.size() - 2 /* Size of Persistent Key List PDU(2) */
+                        , pdu_size_offset);
+
+                    this->persistent_key_list_transport->send(persistent_key_list_stream);
                 }
             }
 

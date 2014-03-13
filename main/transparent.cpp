@@ -126,7 +126,7 @@ int main(int argc, char * argv[]) {
     if (!target_device.empty()) {
         size_t pos = target_device.find(':');
         if (pos != string::npos) {
-            target_port = ::atoi(target_device.substr(pos + 1).c_str());
+            target_port = atoi(target_device.substr(pos + 1).c_str());
             target_device.resize(pos);
         }
 
@@ -160,8 +160,8 @@ int main(int argc, char * argv[]) {
             } u;
             unsigned int sin_size = sizeof(u);
             memset(&u, 0, sin_size);
-            this->sck = ::accept(incoming_sck, &u.s, &sin_size);
-            ::strcpy(this->ip_source, ::inet_ntoa(u.s4.sin_addr));
+            this->sck = accept(incoming_sck, &u.s, &sin_size);
+            strcpy(this->ip_source, inet_ntoa(u.s4.sin_addr));
             LOG(LOG_INFO, "Incoming socket to %d (ip=%s)\n", this->sck, this->ip_source);
             return START_WANT_STOP;
         }
@@ -169,7 +169,7 @@ int main(int argc, char * argv[]) {
     Listen listener(one_shot_server, 0, 3389, true, 5);  // 25 seconds to connect, or timeout
     listener.run();
 
-    Inifile ini;
+    Inifile             ini;
     ConfigurationLoader cfg_loader(ini, CFG_PATH "/" RDPPROXY_INI);
 
     int nodelay = 1;
@@ -186,10 +186,23 @@ int main(int argc, char * argv[]) {
     // Remove existing Persistent Key List file.
     unlink(persistent_key_list_filename.c_str());
 
+    OutFileTransport * persistent_key_list_oft = NULL;
+    int                persistent_key_list_ofd;
+
+    persistent_key_list_ofd = open(persistent_key_list_filename.c_str(),
+                                   O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP);
+    if (persistent_key_list_ofd != -1) {
+        persistent_key_list_oft = new OutFileTransport(persistent_key_list_ofd);
+    }
+    else {
+        LOG(LOG_ERR, "Failed to open Persistent Key List file to writing: name=\"%s\"",
+            persistent_key_list_filename.c_str());
+    }
+
     const bool fastpath_support = true;
     const bool mem3blt_support  = false;
     Front front(&front_trans, SHARE_PATH "/" DEFAULT_FONT_NAME, &gen, &ini,
-        fastpath_support, mem3blt_support, input_filename.c_str());
+        fastpath_support, mem3blt_support, input_filename.c_str(), persistent_key_list_oft);
     null_mod no_mod(front);
 
     while (front.up_and_running == 0) {
@@ -207,15 +220,31 @@ int main(int argc, char * argv[]) {
             run_mod(mod, front, front_event);
         }
         else {
-            OutFileTransport * oft = NULL;
-            int                fd  = -1;
+            OutFileTransport * record_oft = NULL;
+            int                record_fd  = -1;
 
             if (!record_filename.empty()) {
-                fd = ::open(record_filename.c_str(), O_CREAT | O_TRUNC | O_WRONLY,
-                            S_IRUSR | S_IWUSR | S_IRGRP);
-                if (fd != -1) {
-                    oft = new OutFileTransport(fd);
+                record_fd = open(record_filename.c_str(), O_CREAT | O_TRUNC | O_WRONLY,
+                                   S_IRUSR | S_IWUSR | S_IRGRP);
+                if (record_fd != -1) {
+                    record_oft = new OutFileTransport(record_fd);
                 }
+                else {
+                    LOG(LOG_ERR, "Failed to open record file to writing: name=\"%s\"",
+                        record_filename.c_str());
+                }
+            }
+
+            InFileTransport * persistent_key_list_ift = NULL;
+            int               persistent_key_list_ifd;
+
+            persistent_key_list_ifd = open(persistent_key_list_filename.c_str(), O_RDONLY);
+            if (persistent_key_list_ifd != -1) {
+                persistent_key_list_ift = new InFileTransport(persistent_key_list_ifd);
+            }
+            else {
+                LOG(LOG_ERR, "Failed to open Persistent Key List file to reading: name=\"%s\"",
+                    persistent_key_list_filename.c_str());
             }
 
             int client_sck = ip_connect(target_device.c_str(), target_port, 3, 1000, ini.debug.mod_rdp);
@@ -224,34 +253,35 @@ int main(int argc, char * argv[]) {
 
             ClientInfo client_info = front.client_info;
 
-            ModRDPParams mod_rdp_param( username.c_str()
-                                      , password.c_str()
-                                      , target_device.c_str()
-                                      , "0.0.0.0"   // client ip is silenced
-                                      , front.keymap.key_flags
-                                      , ini.debug.mod_rdp
-                                      );
-            //mod_rdp_param.enable_tls                      = true;
-            mod_rdp_param.enable_nla                      = ini.mod_rdp.enable_nla;
-            mod_rdp_param.enable_krb                      = ini.mod_rdp.enable_kerberos;
-            mod_rdp_param.enable_clipboard                = ini.client.clipboard.get();
-            //mod_rdp_param.enable_fastpath                 = true;
-            //mod_rdp_param.enable_mem3blt                  = true;
-            mod_rdp_param.enable_bitmap_update            = ini.globals.enable_bitmap_update;
-            //mod_rdp_param.enable_new_pointer              = true;
-            mod_rdp_param.enable_transparent_mode         = true;
-            mod_rdp_param.output_filename                 = (output_filename.empty() ? "" : output_filename.c_str());
-            mod_rdp_param.transparent_recorder_transport  = oft;
-            mod_rdp_param.auth_channel                    = ini.globals.auth_channel;
-            mod_rdp_param.alternate_shell                 = ini.globals.alternate_shell.get_cstr();
-            mod_rdp_param.shell_working_directory         = ini.globals.shell_working_directory.get_cstr();
-            mod_rdp_param.rdp_compression                 = ini.mod_rdp.rdp_compression;
-            mod_rdp_param.disconnect_on_logon_user_change = ini.mod_rdp.disconnect_on_logon_user_change;
-            mod_rdp_param.open_session_timeout            = ini.mod_rdp.open_session_timeout;
-            mod_rdp_param.certificate_change_action       = ini.mod_rdp.certificate_change_action;
-            mod_rdp_param.extra_orders                    = ini.mod_rdp.extra_orders.c_str();
+            ModRDPParams mod_rdp_params( username.c_str()
+                                       , password.c_str()
+                                       , target_device.c_str()
+                                       , "0.0.0.0"   // client ip is silenced
+                                       , front.keymap.key_flags
+                                       , ini.debug.mod_rdp
+                                       );
+            //mod_rdp_params.enable_tls                      = true;
+            mod_rdp_params.enable_nla                      = ini.mod_rdp.enable_nla;
+            mod_rdp_params.enable_krb                      = ini.mod_rdp.enable_kerberos;
+            mod_rdp_params.enable_clipboard                = ini.client.clipboard.get();
+            //mod_rdp_params.enable_fastpath                 = true;
+            //mod_rdp_params.enable_mem3blt                  = true;
+            mod_rdp_params.enable_bitmap_update            = ini.globals.enable_bitmap_update;
+            //mod_rdp_params.enable_new_pointer              = true;
+            mod_rdp_params.enable_transparent_mode         = true;
+            mod_rdp_params.output_filename                 = (output_filename.empty() ? "" : output_filename.c_str());
+            mod_rdp_params.persistent_key_list_transport   = persistent_key_list_ift;
+            mod_rdp_params.transparent_recorder_transport  = record_oft;
+            mod_rdp_params.auth_channel                    = ini.globals.auth_channel;
+            mod_rdp_params.alternate_shell                 = ini.globals.alternate_shell.get_cstr();
+            mod_rdp_params.shell_working_directory         = ini.globals.shell_working_directory.get_cstr();
+            mod_rdp_params.rdp_compression                 = ini.mod_rdp.rdp_compression;
+            mod_rdp_params.disconnect_on_logon_user_change = ini.mod_rdp.disconnect_on_logon_user_change;
+            mod_rdp_params.open_session_timeout            = ini.mod_rdp.open_session_timeout;
+            mod_rdp_params.certificate_change_action       = ini.mod_rdp.certificate_change_action;
+            mod_rdp_params.extra_orders                    = ini.mod_rdp.extra_orders.c_str();
 
-            mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_param);
+            mod_rdp mod(&mod_trans, front, client_info, gen, mod_rdp_params);
             mod.event.st = &mod_trans;
 
             run_mod(mod, front, front_event);
@@ -261,10 +291,16 @@ int main(int argc, char * argv[]) {
                 close(client_sck);
             }
 
-            if (fd != -1) {
-                delete oft;
+            if (persistent_key_list_ifd != -1) {
+                delete persistent_key_list_ift;
 
-                close(fd);
+                close(persistent_key_list_ifd);
+            }
+
+            if (record_fd != -1) {
+                delete record_oft;
+
+                close(record_fd);
             }
         }
     }   // try
@@ -273,6 +309,12 @@ int main(int argc, char * argv[]) {
     }
 
     front.disconnect();
+
+    if (persistent_key_list_ofd != -1) {
+        delete persistent_key_list_oft;
+
+        close(persistent_key_list_ofd);
+    }
 
     shutdown(one_shot_server.sck, 2);
     close(one_shot_server.sck);

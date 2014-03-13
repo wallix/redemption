@@ -312,24 +312,59 @@ struct PersistentKeyListPDUData {
 
         stream.in_skip_bytes(3);    // Pad2(1) + Pad3(2)
 
+        unsigned int count = std::min<uint32_t>( this->numEntriesCache0 + this->numEntriesCache1 +
+                                                 this->numEntriesCache2 + this->numEntriesCache3 +
+                                                 this->numEntriesCache4
+                                               , PersistentKeyListPDUData::MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
+
+        expected = count * 8; /* count * (Key1(4) + Key2(4)) */
+        if (!stream.in_check_rem(expected)) {
+            LOG( LOG_ERR
+               , "PersistentKeyListPDUData::receive  - Truncated entries, need=%u, remains=%u"
+               , expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        for (unsigned int index = 0; index < count; index++) {
+            this->entries[index].Key1 = stream.in_uint32_le();
+            this->entries[index].Key2 = stream.in_uint32_le();
+        }
+    }
+
+    void emit(Stream & stream) {
+        stream.out_uint16_le(this->numEntriesCache0);
+        stream.out_uint16_le(this->numEntriesCache1);
+        stream.out_uint16_le(this->numEntriesCache2);
+        stream.out_uint16_le(this->numEntriesCache3);
+        stream.out_uint16_le(this->numEntriesCache4);
+        stream.out_uint16_le(this->totalEntriesCache0);
+        stream.out_uint16_le(this->totalEntriesCache1);
+        stream.out_uint16_le(this->totalEntriesCache2);
+        stream.out_uint16_le(this->totalEntriesCache3);
+        stream.out_uint16_le(this->totalEntriesCache4);
+        stream.out_uint8(this->bBitMask);
+
+        stream.out_skip_bytes(3);    // Pad2(1) + Pad3(2)
+
         for (uint32_t i = 0,
                       c = std::min<uint32_t>(this->numEntriesCache0 + this->numEntriesCache1 + this->numEntriesCache2 +
                                                  this->numEntriesCache3 + this->numEntriesCache4,
                                              PersistentKeyListPDUData::MAXIMUM_ENCAPSULATED_BITMAP_KEYS);
              i < c; i++) {
-            this->entries[i].Key1 = stream.in_uint32_le();
-            this->entries[i].Key2 = stream.in_uint32_le();
+            stream.out_uint32_le(this->entries[i].Key1);
+            stream.out_uint32_le(this->entries[i].Key2);
         }
     }
 
-    void log(int level, const char * pessage) const {
+    void log(int level, const char * message) const {
         char   buffer[2048];
         size_t sz = sizeof(buffer);
         size_t lg = 0;
         lg += snprintf(buffer + lg, sz - lg,
-            "PersistentKeyListPDUData(numEntriesCache0=%u numEntriesCache1=%u numEntriesCache2=%u numEntriesCache3=%u "
+            "%s PersistentKeyListPDUData(numEntriesCache0=%u numEntriesCache1=%u numEntriesCache2=%u numEntriesCache3=%u "
                 "numEntriesCache4=%u totalEntriesCache0=%u totalEntriesCache1=%u totalEntriesCache2=%u"
                 " totalEntriesCache3=%u totalEntriesCache4=%u bBitMask=%u entries(",
+            message,
             this->numEntriesCache0, this->numEntriesCache1, this->numEntriesCache2, this->numEntriesCache3,
             this->numEntriesCache4, this->totalEntriesCache0, this->totalEntriesCache1, this->totalEntriesCache2,
             this->totalEntriesCache3, this->totalEntriesCache4, this->bBitMask);
