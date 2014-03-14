@@ -388,6 +388,104 @@ public:
         return length;
     }
 
+// [MS-RDPEGDI] - 2.2.2.2.1.2.1.4 Four-Byte Unsigned Encoding
+// (FOUR_BYTE_UNSIGNED_ENCODING)
+// ==========================================================
+
+// The FOUR_BYTE_UNSIGNED_ENCODING structure is used to encode a value in the
+//  range 0x00000000 to 0x3FFFFFFF by using a variable number of bytes. For
+//  example, 0x001A1B1C is encoded as { 0x9A, 0x1B, 0x1C }. The two most
+//  significant bits of the first byte encode the number of bytes in the
+//  structure.
+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+// |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// | c |    val1   |val2 (optional)|val3 (optional)|val4 (optional)|
+// +---+-----------+---------------+---------------+---------------+
+
+// c (2 bits): A 2-bit, unsigned integer field containing an encoded
+//  representation of the number of bytes in this structure.
+
+// +----------------+----------------------------------------------------------+
+// | Value          | Meaning                                                  |
+// +----------------+----------------------------------------------------------+
+// | ONE_BYTE_VAL   | Implies that the optional val2, val3, and val4 fields    |
+// | 0              | are not present. Hence, the structure is 1 byte in size. |
+// +----------------+----------------------------------------------------------+
+// | TWO_BYTE_VAL   | Implies that the optional val2 field is present while    |
+// | 1              | the optional val3 and val4 fields are not present.       |
+// |                | Hence, the structure is 2 bytes in size.                 |
+// +----------------+----------------------------------------------------------+
+// | THREE_BYTE_VAL | Implies that the optional val2 and val3 fields are       |
+// | 2              | present while the optional val4 fields are not present.  |
+// |                | Hence, the structure is 3 bytes in size.                 |
+// +----------------+----------------------------------------------------------+
+// | FOUR_BYTE_VAL  | Implies that the optional val2, val3, and val4 fields    |
+// | 3              | are all present. Hence, the structure is 4 bytes in      |
+// |                | size.                                                    |
+// +----------------+----------------------------------------------------------+
+
+// val1 (6 bits): A 6-bit, unsigned integer field containing the most
+//  significant 6 bits of the value represented by this structure.
+
+// val2 (1 byte): An 8-bit, unsigned integer containing the second most
+//  significant bits of the value represented by this structure.
+
+// val3 (1 byte): An 8-bit, unsigned integer containing the third most
+//  significant bits of the value represented by this structure.
+
+// val4 (1 byte): An 8-bit, unsigned integer containing the least significant
+//  bits of the value represented by this structure.
+
+    uint32_t in_4BUE()
+    {
+        uint32_t length = this->in_uint8();
+        switch (length & 0xC0)
+        {
+            case 0xC0:
+                length =  ((length & 0x3F)  << 24);
+                length += (this->in_uint8() << 16);
+                length += (this->in_uint8() << 8 );
+                length +=  this->in_uint8();
+            break;
+            case 0x80:
+                length =  ((length & 0x3F)  << 16);
+                length += (this->in_uint8() << 8 );
+                length +=  this->in_uint8();
+            break;
+            case 0x40:
+                length =  ((length & 0x3F)  << 8 );
+                length +=  this->in_uint8();
+            break;
+        }
+
+        return length;
+    }
+
+    void out_4BUE(uint32_t v){
+        REDASSERT(!(v & 0xC0000000));
+             if (v <= 0x3F      ) {
+            this->out_uint8(static_cast<uint8_t>(v));
+        }
+        else if (v <= 0x3FFF    ) {
+            this->out_uint8(0x40 | ((v >> 8 ) & 0x3F));
+            this->out_uint8(         v        & 0xFF );
+        }
+        else if (v <= 0x3FFFFF  ) {
+            this->out_uint8(0x80 | ((v >> 16) & 0x3F));
+            this->out_uint8(        (v >> 8 ) & 0xFF );
+            this->out_uint8(         v        & 0xFF );
+        }
+        else/* if (v <= 0x3FFFFFFF)*/ {
+            this->out_uint8(0xC0 | ((v >> 24) & 0x3F));
+            this->out_uint8(        (v >> 16) & 0xFF );
+            this->out_uint8(        (v >> 8 ) & 0xFF );
+            this->out_uint8(         v        & 0xFF );
+        }
+    }
+
 
     // MS-RDPEGDI : 2.2.2.2.1.1.1.4 Delta-Encoded Points (DELTA_PTS_FIELD)
     // ===================================================================

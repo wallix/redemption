@@ -27,8 +27,8 @@
 #define BOOST_TEST_MODULE TestStream
 #include <boost/test/auto_unit_test.hpp>
 
-//#define LOGNULL
-#define LOGPRINT
+#define LOGNULL
+//#define LOGPRINT
 #include "log.hpp"
 
 #include "stream.hpp"
@@ -370,8 +370,8 @@ BOOST_AUTO_TEST_CASE(TestStream_HStream)
     BOOST_CHECK_EQUAL(512, stream.get_capacity());
     BOOST_CHECK_EQUAL(502, stream.tailroom());
     BOOST_CHECK_EQUAL(10, stream.size());
-    
-    
+
+
     const uint8_t header3[] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g'};
     stream.copy_to_head(header3, 7);
 
@@ -399,8 +399,8 @@ BOOST_AUTO_TEST_CASE(TestStream_HStream)
     stream.mark_end();
 
 
-    const uint8_t expected[] = { '#', '*', '!', '+', '-', '_', 
-                               'A', 'B', 'C', 'D', 'E', 'F', 'G', 
+    const uint8_t expected[] = { '#', '*', '!', '+', '-', '_',
+                               'A', 'B', 'C', 'D', 'E', 'F', 'G',
                                'a', 'b', 'c', 'd', 'e', 'f', 'g',
                                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
 
@@ -418,4 +418,32 @@ BOOST_AUTO_TEST_CASE(TestStream_HStream)
     BOOST_CHECK_EQUAL(2048,  stream.tailroom());
     BOOST_CHECK_EQUAL(true,  stream.has_room(2048));
     BOOST_CHECK_EQUAL(false, stream.has_room(2049));
+}
+
+BOOST_AUTO_TEST_CASE(TestStream_2BUE)
+{
+    BStream stream(256);
+
+    stream.out_2BUE(0x1A1B);
+    stream.mark_end();
+
+    //hexdump_d(stream.get_data(), stream.size());
+
+    stream.rewind();
+
+    BOOST_CHECK_EQUAL(0x1A1B, stream.in_2BUE());
+}
+
+BOOST_AUTO_TEST_CASE(TestStream_4BUE)
+{
+    BStream stream(256);
+
+    stream.out_4BUE(0x001A1B1C);
+    stream.mark_end();
+
+    //hexdump_d(stream.get_data(), stream.size());
+
+    stream.rewind();
+
+    BOOST_CHECK_EQUAL(0x001A1B1C, stream.in_4BUE());
 }

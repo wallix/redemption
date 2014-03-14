@@ -150,7 +150,7 @@ struct mod_rdp : public mod_api {
     const bool enable_new_pointer;
     const bool enable_transparent_mode;
     const bool enable_persistent_disk_bitmap_cache;
-    const bool ebable_cache_waiting_list;
+    const bool enable_cache_waiting_list;
     const int  rdp_compression;
 
     size_t recv_bmp_update;
@@ -225,7 +225,7 @@ struct mod_rdp : public mod_api {
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
-        , ebable_cache_waiting_list(mod_rdp_params.ebable_cache_waiting_list)
+        , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , rdp_compression(mod_rdp_params.rdp_compression)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -2243,26 +2243,35 @@ struct mod_rdp : public mod_api {
         }
         confirm_active_pdu.emit_capability_set(order_caps);
 
+
+        BmpCacheCaps bmpcache_caps;
+        bmpcache_caps.cache0Entries         = 0x258;
+        bmpcache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
+        bmpcache_caps.cache1Entries         = 0x12c;
+        bmpcache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
+        bmpcache_caps.cache2Entries         = 0x106;
+        bmpcache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
+
+        BmpCache2Caps bmpcache2_caps;
+        bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG | (this->enable_cache_waiting_list ? ALLOW_CACHE_WAITING_LIST_FLAG : 0);
+        bmpcache2_caps.numCellCaches        = 3;
+        bmpcache2_caps.bitmapCache0CellInfo = 120;
+        bmpcache2_caps.bitmapCache1CellInfo = 120;
+        bmpcache2_caps.bitmapCache2CellInfo = (2553 | 0x80000000);
+
         bool use_bitmapcache_rev2 = false;
-        BmpCacheCaps bmp_cache_caps;
-        bmp_cache_caps.cache0Entries         = 0x258;
-        bmp_cache_caps.cache0MaximumCellSize = nbbytes(this->bpp) * 0x100;
-        bmp_cache_caps.cache1Entries         = 0x12c;
-        bmp_cache_caps.cache1MaximumCellSize = nbbytes(this->bpp) * 0x400;
-        bmp_cache_caps.cache2Entries         = 0x106;
-        bmp_cache_caps.cache2MaximumCellSize = nbbytes(this->bpp) * 0x1000;
+
         if (this->enable_transparent_mode) {
-            if (!this->front.retrieve_client_capability_set(bmp_cache_caps)) {
+            if (!this->front.retrieve_client_capability_set(bmpcache_caps)) {
+                this->front.retrieve_client_capability_set(bmpcache2_caps);
                 use_bitmapcache_rev2 = true;
             }
         }
+        else {
+            use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache;
+        }
+
         if (use_bitmapcache_rev2) {
-            BmpCache2Caps bmpcache2_caps;
-            bmpcache2_caps.numCellCaches = 3;
-            bmpcache2_caps.bitmapCache0CellInfo = 120;
-            bmpcache2_caps.bitmapCache1CellInfo = 120;
-            bmpcache2_caps.bitmapCache2CellInfo = 2553;
-            this->front.retrieve_client_capability_set(bmpcache2_caps);
             if (this->verbose) {
                 bmpcache2_caps.log("Sending to server");
             }
@@ -2270,9 +2279,9 @@ struct mod_rdp : public mod_api {
         }
         else {
             if (this->verbose) {
-                bmp_cache_caps.log("Sending to server");
+                bmpcache_caps.log("Sending to server");
             }
-            confirm_active_pdu.emit_capability_set(bmp_cache_caps);
+            confirm_active_pdu.emit_capability_set(bmpcache_caps);
         }
 
         //if(this->use_rdp5){
@@ -2283,6 +2292,7 @@ struct mod_rdp : public mod_api {
         //    bmpcache2_caps.bitmapCache2CellInfo = 2000;
         //    confirm_active_pdu.emit_capability_set(bmpcache2_caps);
         //}
+
 
         ColorCacheCaps colorcache_caps;
         if (this->verbose) {
@@ -3716,8 +3726,16 @@ struct mod_rdp : public mod_api {
                     this->front_width = bitmap_caps.desktopWidth;
                     this->front_height = bitmap_caps.desktopHeight;
 
-                    this->orders.create_cache_bitmap(this->bpp, 0x258, nbbytes(this->bpp) * 0x100, false,
-                        0x12c, nbbytes(this->bpp) * 0x400, false, 0x106, nbbytes(this->bpp) * 0x1000, false);
+                    if (this->enable_persistent_disk_bitmap_cache) {
+                        this->orders.create_cache_bitmap(this->bpp,
+                            120,  nbbytes(this->bpp) * 16 * 16, false,
+                            120,  nbbytes(this->bpp) * 32 * 32, false,
+                            2553, nbbytes(this->bpp) * 64 * 64, true);
+                    }
+                    else {
+                        this->orders.create_cache_bitmap(this->bpp, 0x258, nbbytes(this->bpp) * 0x100, false,
+                            0x12c, nbbytes(this->bpp) * 0x400, false, 0x106, nbbytes(this->bpp) * 0x1000, false);
+                    }
                 }
                 break;
             case CAPSTYPE_ORDER:

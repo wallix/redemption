@@ -117,35 +117,34 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
     }
-//    const bool tls = false;
 
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
-    ModRDPParams mod_rdp_param( "x"
-                              , "x"
-                              , "10.10.47.32"
-                              , "192.168.1.100"
-                              , 7
-                              , 511
-                              );
-    mod_rdp_param.enable_tls                      = false;
-    mod_rdp_param.enable_nla                      = false;
-    //mod_rdp_param.enable_krb                      = false;
-    //mod_rdp_param.enable_clipboard                = true;
-    mod_rdp_param.enable_fastpath                 = false;
-    mod_rdp_param.enable_mem3blt                  = false;
-    //mod_rdp_param.enable_bitmap_update            = false;
-    mod_rdp_param.enable_new_pointer              = false;
-    //mod_rdp_param.rdp_compression                 = 0;
-    //mod_rdp_param.error_message                   = NULL;
-    //mod_rdp_param.disconnect_on_logon_user_change = false;
-    //mod_rdp_param.open_session_timeout            = 0;
-    //mod_rdp_param.certificate_change_action       = 0;
-    //mod_rdp_param.extra_orders                    = "";
+    ModRDPParams mod_rdp_params( "x"
+                               , "x"
+                               , "10.10.47.32"
+                               , "192.168.1.100"
+                               , 7
+                               , 511
+                               );
+    mod_rdp_params.enable_tls                      = false;
+    mod_rdp_params.enable_nla                      = false;
+    //mod_rdp_params.enable_krb                      = false;
+    //mod_rdp_params.enable_clipboard                = true;
+    mod_rdp_params.enable_fastpath                 = false;
+    mod_rdp_params.enable_mem3blt                  = false;
+    //mod_rdp_params.enable_bitmap_update            = false;
+    mod_rdp_params.enable_new_pointer              = false;
+    //mod_rdp_params.rdp_compression                 = 0;
+    //mod_rdp_params.error_message                   = NULL;
+    //mod_rdp_params.disconnect_on_logon_user_change = false;
+    //mod_rdp_params.open_session_timeout            = 0;
+    //mod_rdp_params.certificate_change_action       = 0;
+    //mod_rdp_params.extra_orders                    = "";
 
     // To always get the same client random, in tests
     LCGRandom gen(0);
-    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_param);
+    struct mod_api * mod = new mod_rdp(&t, front, info, gen, mod_rdp_params);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -165,7 +164,7 @@ BOOST_AUTO_TEST_CASE(TestDecodePacket)
 
     char message[1024];
     if (!check_sig(front.gd.drawable, message,
-    "\x8b\xf9\x8e\x38\x8f\x8e\x56\x49\x5a\x85\x40\x90\xfe\xa2\xf6\xd0\xa6\x11\x38\x3b"
+    "\x3e\x25\x2c\x6c\xc4\xa0\xd4\xd2\x0a\x6c\x46\xa4\xb5\xca\x0f\x84\xd1\xac\xfe\x73"
     )){
         BOOST_CHECK_MESSAGE(false, message);
     }

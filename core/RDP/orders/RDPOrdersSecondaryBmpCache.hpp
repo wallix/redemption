@@ -630,10 +630,9 @@ class RDPBmpCache {
     enum {
         CBR2_HEIGHT_SAME_AS_WIDTH = 0x01,
         CBR2_PERSISTENT_KEY_PRESENT = 0x02,
-        CBR2_NO_BITMAP_COMPRESSION_HEADER = 0x08,
+        CBR2_NO_BITMAP_COMPRESSION_HDR = 0x08,
         CBR2_DO_NOT_CACHE = 0x10
     };
-
 
     // MS-RDPEGDI 2.2.2.2.1.2.3
     // ========================
@@ -702,7 +701,7 @@ class RDPBmpCache {
     // |                                        | and the key1 and key2 fields |
     // |                                        | MUST be present.             |
     // +----------------------------------------+------------------------------+
-    // | 0x08 CBR2_NO_BITMAP_COMPRESSION_HEADER | Indicates that the           |
+    // | 0x08 CBR2_NO_BITMAP_COMPRESSION_HDR    | Indicates that the           |
     // |                                        | bitmapComprHdr field is not  |
     // |                                        | present (removed for         |
     // |                                        | bandwidth efficiency to save |
@@ -775,7 +774,7 @@ class RDPBmpCache {
 
         uint32_t offset_header = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for length after type minus 7
-        uint16_t cbr2_flags = (((  CBR2_NO_BITMAP_COMPRESSION_HEADER
+        uint16_t cbr2_flags = (((  CBR2_NO_BITMAP_COMPRESSION_HDR
                                  | (this->persistent   ? CBR2_PERSISTENT_KEY_PRESENT : 0)
                                  | (this->do_not_cache ? CBR2_DO_NOT_CACHE           : 0)) << 7) & 0xFF80);
         uint16_t cbr2_bpp = (((Bpp + 2) << 3) & 0x78);
@@ -929,21 +928,86 @@ class RDPBmpCache {
         case RDP::TS_CACHE_BITMAP_COMPRESSED:
             this->receive_compressed_v1(session_color_depth, stream, control, header, palette);
         break;
+        case RDP::TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
+            this->receive_raw_v2(session_color_depth, stream, control, header, palette);
+        break;
+        case RDP::TS_CACHE_BITMAP_COMPRESSED_REV2:
+            this->receive_compressed_v2(session_color_depth, stream, control, header, palette);
+        break;
         default:
             // can't happen, ensured by caller
             LOG(LOG_ERR, "Unexpected header type %u in rdp_orders_bmp_cache", header.type);
         }
     }
 
-    void receive_raw_v2(uint8_t session_color_depth, Stream & stream, const uint8_t control, const RDPSecondaryOrderHeader & header)
+    void receive_raw_v2(uint8_t session_color_depth, Stream & stream, const uint8_t control,
+        const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
     {
         using namespace RDP;
         TODO(" DO NOT USE : not implemented  we do not know yet how to manage persistant bitmap storage");
+        LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_UNCOMPRESSED_REV2 (%d)"
+           , header.type);
+
+        uint16_t extraFlags = header.flags;
+        this->id            =   extraFlags & 0x0007;
+        uint8_t cbr2_bpp    = ((extraFlags & 0x0078) >> 3);
+        uint8_t bpp;
+        switch (cbr2_bpp) {
+            case CBR2_8BPP:
+                bpp = 8;
+            break;
+            case CBR2_16BPP:
+                bpp = 16;
+            break;
+            case CBR2_24BPP:
+                bpp = 24;
+            break;
+            case CBR2_32BPP:
+                bpp = 32;
+            break;
+            default:
+                LOG(LOG_ERR, "RDPBmpCache::receive_compressed_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
+                throw Error(ERR_RDP_PROTOCOL);
+            break;
+        }
+        uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
+
+        //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
+
+        if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
+            uint32_t key1 = stream.in_uint32_le();
+(void)key1;
+            uint32_t key2 = stream.in_uint32_le();
+(void)key2;
+        }
+
+        uint16_t bitmapWidth  = stream.in_2BUE();
+        uint16_t bitmapHeight;
+        if (cbr2_flags & CBR2_HEIGHT_SAME_AS_WIDTH) {
+            bitmapHeight = bitmapWidth;
+        }
+        else {
+            bitmapHeight = stream.in_2BUE();
+        }
+
+        uint32_t bitmapLength = stream.in_4BUE();
+        //LOG(LOG_INFO, "bitmapWidth=%u bitmapHeight=%u bitmapLength=%u", bitmapWidth, bitmapHeight, bitmapLength);
+
+        this->idx = stream.in_2BUE();
+        //LOG(LOG_INFO, "cache_id=%u cacheIndex=%u", this->id, this->idx);
+        TODO("Support of flag CBR2_DO_NOT_CACHE");
+
+        const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
+        this->bmp = new Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
+            bitmapDataStream, bitmapLength, false);
+
+        if (bitmapLength != this->bmp->bmp_size){
+            LOG(LOG_WARNING, "broadcasted bufsize should be the same as bmp size computed from cx, cy, bpp and alignment rules");
+        }
     }
 
     void receive_raw_v1(uint8_t session_color_depth, Stream & stream, const uint8_t control,
-                const RDPSecondaryOrderHeader & header,
-                const BGRPalette & palette)
+        const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
     {
 //        LOG(LOG_INFO, "receive raw v1");
         using namespace RDP;
@@ -1012,10 +1076,110 @@ class RDPBmpCache {
         }
     }
 
+    void receive_compressed_v2(uint8_t session_color_depth, Stream & stream, const uint8_t control,
+        const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
+    {
+        using namespace RDP;
+        TODO(" DO NOT USE : not implemented  we do not know yet how to manage persistant bitmap storage");
+        LOG( LOG_ERR, "unsupported SECONDARY ORDER TS_CACHE_BITMAP_COMPRESSED_REV2 (%d)"
+           , header.type);
+
+        uint16_t extraFlags = header.flags;
+        this->id            =   extraFlags & 0x0007;
+        uint8_t cbr2_bpp    = ((extraFlags & 0x0078) >> 3);
+        uint8_t bpp;
+        switch (cbr2_bpp) {
+            case CBR2_8BPP:
+                bpp = 8;
+            break;
+            case CBR2_16BPP:
+                bpp = 16;
+            break;
+            case CBR2_24BPP:
+                bpp = 24;
+            break;
+            case CBR2_32BPP:
+                bpp = 32;
+            break;
+            default:
+                LOG(LOG_ERR, "RDPBmpCache::receive_compressed_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
+                throw Error(ERR_RDP_PROTOCOL);
+            break;
+        }
+        uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
+
+        //LOG(LOG_INFO, "cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
+
+        if (cbr2_flags & CBR2_PERSISTENT_KEY_PRESENT) {
+            uint32_t key1 = stream.in_uint32_le();
+(void)key1;
+            uint32_t key2 = stream.in_uint32_le();
+(void)key2;
+        }
+
+        uint16_t bitmapWidth  = stream.in_2BUE();
+        uint16_t bitmapHeight;
+        if (cbr2_flags & CBR2_HEIGHT_SAME_AS_WIDTH) {
+            bitmapHeight = bitmapWidth;
+        }
+        else {
+            bitmapHeight = stream.in_2BUE();
+        }
+
+        uint32_t bitmapLength = stream.in_4BUE();
+        //LOG(LOG_INFO, "bitmapWidth=%u bitmapHeight=%u bitmapLength=%u", bitmapWidth, bitmapHeight, bitmapLength);
+
+        this->idx = stream.in_2BUE();
+        //LOG(LOG_INFO, "cache_id=%u cacheIndex=%u", this->id, this->idx);
+        TODO("Support of flag CBR2_DO_NOT_CACHE");
+
+        if (cbr2_flags & CBR2_NO_BITMAP_COMPRESSION_HDR) {
+            const uint8_t * bitmapDataStream = stream.in_uint8p(bitmapLength);
+            if (this->verbose & 0x8000) {
+                LOG(LOG_INFO,
+                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    session_color_depth, bpp, bitmapWidth, bitmapHeight, bitmapLength);
+                LOG(LOG_INFO, "Palette");
+                hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+                LOG(LOG_INFO, "Bitmap");
+                hexdump_d(bitmapDataStream, bitmapLength);
+                LOG(LOG_INFO, "");
+            }
+            this->bmp = new Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
+                bitmapDataStream, bitmapLength, true);
+        }
+        else {
+            // Compressed Data Header (TS_CD_HEADER).
+            stream.in_skip_bytes(2);    /* cbCompFirstRowSize(2) */
+            uint16_t cbCompMainBodySize = stream.in_uint16_le();
+            uint16_t cbScanWidth        = stream.in_uint16_le();
+            uint16_t cbUncompressedSize = stream.in_uint16_le();
+
+            const uint8_t * bitmapDataStream = stream.in_uint8p(cbCompMainBodySize);
+
+            if (this->verbose & 0x8000) {
+                LOG(LOG_INFO,
+                    "Compressed bitmap: session_bpp=%u bpp=%u width=%u height=%u size=%u",
+                    session_color_depth, bpp, bitmapWidth, bitmapWidth, cbCompMainBodySize);
+                LOG(LOG_INFO, "Palette");
+                hexdump_d(static_cast<const char *>(static_cast<const void *>(&palette[0])), sizeof(palette));
+                LOG(LOG_INFO, "Bitmap");
+                hexdump_d(bitmapDataStream, cbCompMainBodySize);
+                LOG(LOG_INFO, "");
+            }
+            this->bmp = new Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
+                bitmapDataStream, cbCompMainBodySize, true);
+            if (cbScanWidth != (this->bmp->bmp_size / this->bmp->cy)){
+                LOG(LOG_WARNING, "broadcasted row_size should be the same as line size computed from cx, bpp and alignment rules");
+            }
+            if (cbUncompressedSize != this->bmp->bmp_size){
+                LOG(LOG_WARNING, "broadcasted final_size should be the same as bmp size computed from cx, cy, bpp and alignment rules");
+            }
+        }
+    }
 
     void receive_compressed_v1(uint8_t session_color_depth, Stream & stream, const uint8_t control,
-        const RDPSecondaryOrderHeader & header,
-        const BGRPalette & palette)
+        const RDPSecondaryOrderHeader & header, const BGRPalette & palette)
     {
         int flags = header.flags;
         this->id = stream.in_uint8();
